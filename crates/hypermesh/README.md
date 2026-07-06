@@ -511,7 +511,10 @@ current task can be certified as a leaf, and it reports
 before appending output outside the depth-limit branch. Certified BSP leaf
 validation and coplanar effective-`delta_w` accumulation now also share one
 exact leaf-analysis pass instead of rebuilding the same local leaf polygon,
-witness family, and per-polygon leaf-test relations twice per fragment. Full
+witness family, and per-polygon leaf-test relations twice per fragment, and the
+same certified leaf interior witness family is now reused directly by BSP-fragment
+leaf classification instead of being rebuilt again inside `classify_leaf_polygon`.
+Full
 arrangement-isolation termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,

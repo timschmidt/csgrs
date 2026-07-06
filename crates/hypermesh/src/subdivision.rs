@@ -11,7 +11,8 @@ use crate::local_bsp::LocalBsp;
 use crate::output::ClassifiedPolygon;
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
-    affine_from_planes, axis_plane_definition, certified_leaf_test_points, classify_leaf_polygon,
+    affine_from_planes, axis_plane_definition, certified_leaf_interior_points,
+    classify_leaf_polygon, classify_leaf_polygon_from_interior_points,
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
@@ -201,11 +202,12 @@ fn process_leaf_into_inner(
             if leaf.edges.len() < 3 {
                 continue;
             }
-            let effective_delta_w = certify_bsp_leaf_and_delta_w(polygon, &leaf.edges, polygons)?;
+            let (interior_points, effective_delta_w) =
+                certify_bsp_leaf_and_delta_w(polygon, &leaf.edges, polygons)?;
             stats.bsp_leaf_count += 1;
-            let w_front = classify_leaf_polygon(
+            let w_front = classify_leaf_polygon_from_interior_points(
+                &interior_points,
                 &polygon.support,
-                &leaf.edges,
                 ref_point,
                 ref_definitions,
                 ref_wnv,
@@ -531,7 +533,7 @@ fn certify_bsp_leaf_and_delta_w(
     polygon: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<i32>> {
+) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
     let leaf_polygon = ConvexPolygon {
         support: polygon.support.clone(),
         edges: leaf_edges.to_vec(),
@@ -540,7 +542,22 @@ fn certify_bsp_leaf_and_delta_w(
         delta_w: polygon.delta_w.clone(),
         approx_bounds: None,
     };
-    let leaf_test_points = leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?;
+    let interior_points =
+        certified_leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?;
+    if interior_points.is_empty() {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+    let leaf_test_points = interior_points
+        .iter()
+        .map(|point| {
+            HomogeneousPoint3::new(
+                point.point.x.clone(),
+                point.point.y.clone(),
+                point.point.z.clone(),
+                Real::one(),
+            )
+        })
+        .collect::<Vec<_>>();
     let mut delta_w = polygon.delta_w.clone();
 
     for other in polygons {
@@ -592,18 +609,7 @@ fn certify_bsp_leaf_and_delta_w(
         }
     }
 
-    Ok(delta_w)
-}
-
-fn leaf_interior_points(
-    support: &crate::geometry::Plane,
-    edges: &[crate::geometry::Plane],
-) -> HypermeshResult<Vec<HomogeneousPoint3>> {
-    let points = certified_leaf_test_points(support, edges)?;
-    if points.is_empty() {
-        return Err(crate::error::HypermeshError::UnknownClassification);
-    }
-    Ok(points)
+    Ok((interior_points, delta_w))
 }
 
 fn classify_leaf_test_relation(
@@ -651,7 +657,7 @@ fn certify_bsp_leaf_has_no_interior_intersections(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     match certify_bsp_leaf_and_delta_w(host, leaf_edges, polygons) {
-        Ok(_) => Ok(true),
+        Ok((_interior_points, _delta_w)) => Ok(true),
         Err(crate::error::HypermeshError::UnknownClassification) => Ok(false),
         Err(err) => Err(err),
     }

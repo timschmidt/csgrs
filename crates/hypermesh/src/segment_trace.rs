@@ -37,8 +37,8 @@ struct PlaneDefinedPoint {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct InteriorLeafPoint {
-    point: Point3,
+pub(crate) struct InteriorLeafPoint {
+    pub(crate) point: Point3,
     planes: Vec<[Plane; 3]>,
 }
 
@@ -1089,18 +1089,31 @@ pub fn classify_leaf_polygon(
     bounds: &Aabb,
     host_delta_w: &[i32],
 ) -> HypermeshResult<WindingNumberVector> {
-    let leaf = ConvexPolygon {
-        support: support.clone(),
-        edges: leaf_edges.to_vec(),
-        mesh_index: -1,
-        polygon_index: -1,
-        delta_w: WindingNumberTransitionVector::new(),
-        approx_bounds: None,
-    };
-
-    let interior_points = interior_leaf_points(&leaf)?;
-    search_leaf_probe_families(
+    let interior_points = certified_leaf_interior_points(support, leaf_edges)?;
+    classify_leaf_polygon_from_interior_points(
         &interior_points,
+        support,
+        ref_point,
+        ref_definitions,
+        ref_wnv,
+        polygons,
+        bounds,
+        host_delta_w,
+    )
+}
+
+pub(crate) fn classify_leaf_polygon_from_interior_points(
+    interior_points: &[InteriorLeafPoint],
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    host_delta_w: &[i32],
+) -> HypermeshResult<WindingNumberVector> {
+    search_leaf_probe_families(
+        interior_points,
         |point, positive_side| {
             bounded_probes_from_interior(point, support, bounds, positive_side, polygons)
         },
@@ -2226,15 +2239,7 @@ pub(crate) fn certified_leaf_test_point(
     support: &Plane,
     edges: &[Plane],
 ) -> HypermeshResult<Option<HomogeneousPoint3>> {
-    let leaf = ConvexPolygon {
-        support: support.clone(),
-        edges: edges.to_vec(),
-        mesh_index: -1,
-        polygon_index: -1,
-        delta_w: WindingNumberTransitionVector::new(),
-        approx_bounds: None,
-    };
-    let points = interior_leaf_points(&leaf)?;
+    let points = certified_leaf_interior_points(support, edges)?;
     let Some(point) = points
         .iter()
         .find(|point| !point.planes.is_empty())
@@ -2254,6 +2259,18 @@ pub(crate) fn certified_leaf_test_points(
     support: &Plane,
     edges: &[Plane],
 ) -> HypermeshResult<Vec<HomogeneousPoint3>> {
+    Ok(certified_leaf_interior_points(support, edges)?
+        .into_iter()
+        .map(|point| {
+            HomogeneousPoint3::new(point.point.x, point.point.y, point.point.z, Real::one())
+        })
+        .collect())
+}
+
+pub(crate) fn certified_leaf_interior_points(
+    support: &Plane,
+    edges: &[Plane],
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let leaf = ConvexPolygon {
         support: support.clone(),
         edges: edges.to_vec(),
@@ -2262,12 +2279,7 @@ pub(crate) fn certified_leaf_test_points(
         delta_w: WindingNumberTransitionVector::new(),
         approx_bounds: None,
     };
-    Ok(interior_leaf_points(&leaf)?
-        .into_iter()
-        .map(|point| {
-            HomogeneousPoint3::new(point.point.x, point.point.y, point.point.z, Real::one())
-        })
-        .collect())
+    interior_leaf_points(&leaf)
 }
 
 fn shifted_edge_interior_points(
