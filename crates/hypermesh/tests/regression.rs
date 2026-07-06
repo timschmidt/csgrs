@@ -621,6 +621,70 @@ fn disjoint_boxes_use_general_leaf_path() -> HypermeshResult<()> {
 }
 
 #[test]
+fn same_surface_solids_use_general_leaf_path_in_one_leaf() -> HypermeshResult<()> {
+    let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
+    let same_surface = InputMesh {
+        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        triangles: vec![
+            Triangle::new(1, 2, 0),
+            Triangle::new(1, 0, 3),
+            Triangle::new(0, 2, 3),
+            Triangle::new(2, 1, 3),
+        ],
+    };
+    let refs = [left.as_ref(), same_surface.as_ref()];
+    let config = EmberConfig {
+        leaf_threshold: usize::MAX,
+        ..config()
+    };
+
+    let union = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Union,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&union);
+
+    let difference = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert!(difference.triangles.is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn partial_face_boundary_touch_uses_general_leaf_path() -> HypermeshResult<()> {
+    let left = tetrahedron([[0, 0, 0], [6, 0, 0], [0, 6, 0], [0, 0, 6]]);
+    let right = tetrahedron([[2, 2, 2], [4, 1, 1], [1, 4, 1], [3, 3, 3]]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let left_soup = passthrough(&left).unwrap();
+    let config = EmberConfig {
+        leaf_threshold: usize::MAX,
+        ..config()
+    };
+
+    let intersection = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Intersection,
+        config,
+    )?)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&difference);
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
+
+    Ok(())
+}
+
+#[test]
 fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
     let left = octahedron([r(0), r(0), r(0)], r(3));
     let right = octahedron([r(1), r(1), r(1)], r(3));
