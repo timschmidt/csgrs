@@ -1698,11 +1698,11 @@ fn trace_reference_target(
         &target.definitions,
     ) {
         Ok(winding) => return Ok(Some(winding)),
-        Err(crate::error::HypermeshError::UnknownClassification) => {}
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
         Err(err) => return Err(err),
     }
-
-    Ok(None)
 }
 
 fn is_valid_reference_for_bounds(
@@ -3351,7 +3351,7 @@ mod tests {
     }
 
     #[test]
-    fn trace_reference_target_rejects_uncertified_targets() {
+    fn trace_reference_target_rejects_invalid_targets() {
         let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
         wall.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -3380,6 +3380,32 @@ mod tests {
             .unwrap(),
             None
         );
+    }
+
+    #[test]
+    fn trace_reference_target_reports_unknown_for_uncertified_valid_target() {
+        let ref_point = p(0, 0, 0);
+        let target_point = p(2, 1, 0);
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
+
+        assert_eq!(
+            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &[wall.clone()]),
+            Err(crate::error::HypermeshError::UnknownClassification)
+        );
+
+        let err = trace_reference_target(
+            &ref_point,
+            &axis_defs(&ref_point),
+            &[0],
+            &bounds,
+            &[wall],
+            &ReferenceTarget::axis_defined(target_point),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]

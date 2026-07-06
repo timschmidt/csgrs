@@ -179,6 +179,10 @@ is uncertified, that local projected-family search returns
 `UnknownClassification` instead of silently collapsing to `None`, and only the
 broader full child-cell support fallback boundary intentionally downgrades that
 local failure so a later certified support-cell construction can still run.
+At the target level, a projected/support reference point that is strictly
+inside the child cell but whose retained-definition trace is uncertified now
+surfaces `UnknownClassification` instead of being treated like a simple absent
+target.
 It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit
