@@ -151,16 +151,22 @@ fn config() -> EmberConfig {
 
 fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
-    triangulate_and_resolve_certified(&boolean_operation(&refs, op, config())?)
+    let result = boolean_operation(&refs, op, config())?;
+    assert_output_polygons_closed(&result);
+    triangulate_and_resolve_certified(&result)
 }
 
 fn run_certified_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
     let refs = [a.as_ref(), b.as_ref()];
-    triangulate_and_resolve_certified(&boolean_operation(&refs, op, config())?)
+    let result = boolean_operation(&refs, op, config())?;
+    assert_output_polygons_closed(&result);
+    triangulate_and_resolve_certified(&result)
 }
 
 fn run_op_refs(meshes: &[MeshRef<'_>], op: BooleanOp) -> HypermeshResult<TriangleSoup> {
-    triangulate_and_resolve_certified(&boolean_operation(meshes, op, config())?)
+    let result = boolean_operation(meshes, op, config())?;
+    assert_output_polygons_closed(&result);
+    triangulate_and_resolve_certified(&result)
 }
 
 fn vertex_key(vertex: &OutputVertex) -> [String; 3] {
