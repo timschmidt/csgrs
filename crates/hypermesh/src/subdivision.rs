@@ -2208,6 +2208,15 @@ fn support_plane_cell_search_with_queries<T>(
     }
 
     if polygon_index < polygons.len() {
+        let polygon_index = advance_fixed_support_search_index(polygons, polygon_index, halfspaces);
+        if polygon_index >= polygons.len() {
+            return if saw_unknown {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            } else {
+                Ok(None)
+            };
+        }
+
         let mut tried_unchanged_branch = false;
         for positive in support_side_search_order(preferred_point, &polygons[polygon_index].support)
         {
@@ -2297,6 +2306,24 @@ fn support_plane_cell_search_with_queries<T>(
     } else {
         Ok(None)
     }
+}
+
+fn advance_fixed_support_search_index(
+    polygons: &[ConvexPolygon],
+    mut polygon_index: usize,
+    halfspaces: &[LimitPlane3],
+) -> usize {
+    while polygon_index < polygons.len() {
+        let negative = support_side_halfspace(&polygons[polygon_index].support, false);
+        let positive = support_side_halfspace(&polygons[polygon_index].support, true);
+        let has_negative = halfspaces.iter().any(|halfspace| halfspace == &negative);
+        let has_positive = halfspaces.iter().any(|halfspace| halfspace == &positive);
+        if has_negative == has_positive {
+            break;
+        }
+        polygon_index += 1;
+    }
+    polygon_index
 }
 
 fn halfspaces_force_support_plane_contact(
@@ -5645,6 +5672,41 @@ mod tests {
 
         assert_eq!(found, None);
         assert!(!duplicate_branch_count_seen);
+    }
+
+    #[test]
+    fn support_plane_cell_search_skips_already_fixed_support_plane_states() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![
+            support_only_polygon(Plane::axis_aligned(0, r(2))),
+            support_only_polygon(Plane::axis_aligned(0, r(2))),
+        ];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        halfspaces.push(support_side_halfspace(&polygons[0].support, false));
+        let mut report_calls = 0;
+        let mut accept_calls = 0;
+
+        let found = support_plane_cell_search_with_queries(
+            Some(&p(1, 1, 1)),
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            &mut |_halfspaces| Ok(true),
+            &mut |_halfspaces, _report| {
+                accept_calls += 1;
+                Ok(None::<ReferenceTarget>)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, None);
+        assert_eq!(report_calls, 1);
+        assert_eq!(accept_calls, 1);
     }
 
     #[test]

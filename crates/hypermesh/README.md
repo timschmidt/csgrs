@@ -390,8 +390,10 @@ opposite side, and repeated identical support-side halfspaces no longer
 spawn redundant duplicate branch states. Exact opposite support halfspace
 pairs are now also skipped before any feasibility query or deeper recursion.
 Support-cell search now also prunes any state that already forces the
-reference onto a local support plane before report or acceptance queries run.
-The
+reference onto a local support plane before report or acceptance queries run,
+and once the current halfspace state already fixes a polygon's support side,
+later unchanged recursion through repeated fixed support-plane states is
+skipped entirely. The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
 reject that target afterward. The
