@@ -239,7 +239,10 @@ inside the child cell but whose retained-definition trace is uncertified now
 surfaces `UnknownClassification` instead of being treated like a simple absent
 target. Within one feasible support cell, that same rule now also applies
 across the whole retained target family: one uncertified target trace no
-longer aborts the cell before later certified targets are tried.
+longer aborts the cell before later certified targets are tried. The outer
+support-cell wrapper now also treats an uncertified root feasibility check as
+another local backtracking point instead of aborting support propagation before
+later support-side branches are explored.
 It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit

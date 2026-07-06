@@ -1880,9 +1880,40 @@ fn support_plane_cell_reference_with_halfspaces(
     polygons: &[ConvexPolygon],
     mut halfspaces: Vec<LimitPlane3>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    if halfspaces.is_empty() || !halfspace_system_is_feasible(&halfspaces)? {
+    support_plane_cell_reference_with_queries(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        bounds,
+        polygons,
+        &mut halfspaces,
+        &mut |halfspaces| halfspace_system_report(halfspaces),
+        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+    )
+}
+
+fn support_plane_cell_reference_with_queries(
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    halfspaces: &mut Vec<LimitPlane3>,
+    report_for: &mut impl FnMut(
+        &[LimitPlane3],
+    ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>>,
+    feasible_for: &mut impl FnMut(&[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    if halfspaces.is_empty() {
         return Ok(None);
     }
+
+    let initial_feasible_unknown = match feasible_for(halfspaces) {
+        Ok(true) => false,
+        Ok(false) => return Ok(None),
+        Err(crate::error::HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
 
     let mut accept = |halfspaces: &[LimitPlane3],
                       report: hyperlimit::HalfspaceFeasibilityReport|
@@ -1902,12 +1933,22 @@ fn support_plane_cell_reference_with_halfspaces(
         )
     };
 
-    if let Some(found) =
-        support_plane_cell_search_from(bounds, polygons, 0, &mut halfspaces, &mut accept)?
-    {
-        return Ok(Some(found));
+    match support_plane_cell_search_with_queries(
+        bounds,
+        polygons,
+        0,
+        halfspaces,
+        report_for,
+        feasible_for,
+        &mut accept,
+    ) {
+        Ok(Some(found)) => Ok(Some(found)),
+        Ok(None) if initial_feasible_unknown => {
+            Err(crate::error::HypermeshError::UnknownClassification)
+        }
+        Ok(None) => Ok(None),
+        Err(err) => Err(err),
     }
-    Ok(None)
 }
 
 fn trace_reference_targets_backtracking_unknown(
@@ -4833,6 +4874,67 @@ mod tests {
             &mut |_halfspaces| Err(crate::error::HypermeshError::UnknownClassification),
             &mut |_halfspaces| Err(crate::error::HypermeshError::UnknownClassification),
             &mut |_halfspaces, _report| Ok(Some(ReferenceTarget::axis_defined(p(1, 1, 1)))),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn support_plane_cell_reference_backtracks_after_uncertified_initial_feasibility_check() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(-1, 1, 1);
+        let old_defs = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let root_halfspace_count = halfspaces.len();
+
+        let found = support_plane_cell_reference_with_queries(
+            &old_ref,
+            &old_defs,
+            &old_wnv,
+            &bounds,
+            &polygons,
+            &mut halfspaces,
+            &mut |halfspaces| {
+                if halfspaces.len() == root_halfspace_count {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    halfspace_system_report(halfspaces)
+                }
+            },
+            &mut |halfspaces| {
+                if halfspaces.len() == root_halfspace_count {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    halfspace_system_is_feasible(halfspaces)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(found.is_some());
+    }
+
+    #[test]
+    fn support_plane_cell_reference_reports_unknown_if_initial_feasibility_and_search_fail() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(-1, 1, 1);
+        let old_defs = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let err = support_plane_cell_reference_with_queries(
+            &old_ref,
+            &old_defs,
+            &old_wnv,
+            &bounds,
+            &polygons,
+            &mut halfspaces,
+            &mut |_halfspaces| Ok(None),
+            &mut |_halfspaces| Err(crate::error::HypermeshError::UnknownClassification),
         )
         .unwrap_err();
 
