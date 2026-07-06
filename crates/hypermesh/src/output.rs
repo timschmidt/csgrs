@@ -88,7 +88,7 @@ impl BooleanResult {
     ) -> Self {
         output.polygons.clear();
         let mut classifications = Vec::with_capacity(classified.len());
-        let mut winding_pairs = Vec::with_capacity(classified.len());
+        let mut winding_pairs: Vec<Option<WindingPair>> = Vec::with_capacity(classified.len());
 
         for classified_polygon in classified {
             let classification = classified_polygon.classification;
@@ -98,6 +98,17 @@ impl BooleanResult {
             } else {
                 classified_polygon.polygon
             };
+            if let Some(existing_index) = output.polygons.iter().zip(&classifications).position(
+                |(existing, existing_classification)| {
+                    *existing_classification == classification
+                        && polygons_match_output_geometry(existing, &polygon)
+                },
+            ) {
+                if winding_pairs[existing_index].is_none() {
+                    winding_pairs[existing_index] = winding;
+                }
+                continue;
+            }
             output.polygons.push(polygon);
             classifications.push(classification);
             winding_pairs.push(winding);
@@ -124,6 +135,37 @@ impl BooleanResult {
     pub fn winding_pairs(&self) -> &[Option<WindingPair>] {
         &self.winding_pairs
     }
+}
+
+fn polygons_match_output_geometry(left: &ConvexPolygon, right: &ConvexPolygon) -> bool {
+    left.support == right.support && edge_cycles_match_up_to_rotation(&left.edges, &right.edges)
+}
+
+fn edge_cycles_match_up_to_rotation(
+    left: &[crate::geometry::Plane],
+    right: &[crate::geometry::Plane],
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+
+    for offset in 0..left.len() {
+        let mut all_match = true;
+        for index in 0..left.len() {
+            if left[index] != right[(index + offset) % right.len()] {
+                all_match = false;
+                break;
+            }
+        }
+        if all_match {
+            return true;
+        }
+    }
+
+    false
 }
 
 /// Extracted output polygon with explicit vertices.
@@ -1024,6 +1066,41 @@ mod tests {
                 w_front: vec![0],
                 w_back: vec![1],
             })
+        );
+    }
+
+    #[test]
+    fn boolean_result_dedupes_exact_duplicate_oriented_classified_polygons() {
+        let mut first = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            1,
+        );
+        first.winding = Some(WindingPair {
+            w_front: vec![0],
+            w_back: vec![1],
+        });
+        let second = ClassifiedPolygon::new(
+            make_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 7),
+            1,
+        );
+
+        let result = BooleanResult::from_classified(
+            PolygonSoup {
+                polygons: Vec::new(),
+                bounds: Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+                num_meshes: 2,
+            },
+            vec![first, second],
+        );
+
+        assert_eq!(result.output().polygons.len(), 1);
+        assert_eq!(result.classifications(), &[1]);
+        assert_eq!(
+            result.winding_pairs(),
+            &[Some(WindingPair {
+                w_front: vec![0],
+                w_back: vec![1],
+            })]
         );
     }
 

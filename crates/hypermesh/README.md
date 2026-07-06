@@ -528,6 +528,10 @@ operation fails certification. The emitted polygon arrangement is now checked
 for exact boundary closure before any triangulation cleanup runs, so
 `resolve_tjunctions` only cleans triangle-soup representation artifacts and is
 not allowed to turn an open polygon arrangement into a certified result.
+Exact duplicate oriented output polygons are now also suppressed when the
+classified arrangement is materialized into `BooleanResult`, so shared-face and
+coplanar duplicate surfaces are reduced before closure checking and
+triangulation cleanup run.
 `certify_output_polygon_closure` exposes that pre-triangulation check directly
 for callers and regressions that want to validate closure on the classified
 polygon arrangement itself.
