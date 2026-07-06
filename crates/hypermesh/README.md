@@ -354,7 +354,9 @@ dedupe those seeds in first-occurrence order before rerunning the same shifted
 cell construction from multiple equivalent points, and the projected-side seed
 builders now reuse one exact feasible-vertex / geometry-seed family per cell
 instead of recomputing those raw families separately for strict and shifted
-search. Support-side seed builders now do the same before widening into
+search. Projected escape-target construction now reuses that same per-cell
+projected seed family instead of rebuilding it before widening into escape
+targets, and support-side seed builders now do the same before widening into
 shifted support-cell target search.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by

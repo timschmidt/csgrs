@@ -1415,21 +1415,13 @@ fn projected_reference_escape_targets_from_optional_report(
     let mut targets = projected_targets.to_vec();
     let mut saw_unknown = false;
 
-    let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_optional_report(bounds, halfspaces, report),
-        &mut saw_unknown,
-    )?;
-    let shifted_vertices =
-        point3_family_or_empty(feasible_support_cell_vertices(halfspaces), &mut saw_unknown)?;
-    let shifted_geometry_seeds = point3_family_or_empty(
-        support_cell_geometry_seed_candidates(halfspaces),
-        &mut saw_unknown,
-    )?;
-    let mut shifted_seed_search_order = Vec::new();
-    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
-    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
-    let shifted_geometry_seeds =
-        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        projected_cell_seed_families_from_optional_report(
+            bounds,
+            halfspaces,
+            report,
+            &mut saw_unknown,
+        )?;
     let report_witness = report.and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
