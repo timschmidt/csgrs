@@ -129,13 +129,13 @@ axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit
 out to the child AABB boundary, using `hyperlimit` witness search instead of
 midpoint sampling and backtracking past uncertified or empty earlier corridor
-searches. If those direct one-axis corridors still cannot be traced, it builds the
-certified axis-aligned escape box bounded by the nearest exact axis crossings
-or child AABB faces around that projected target, then asks `hyperlimit` for a
-replayable halfspace-feasibility witness inside that box while backtracking
-over certified slack sides of local support planes. If that tighter escape cell
-is uncertified or still cannot be traced, it falls back to the full child-cell
-support search.
+searches. If those direct one-axis corridors still cannot be traced, it next
+searches the ordered exact escape-box family bounded by certified axis stop
+values and child AABB faces around that projected target, asking `hyperlimit`
+for a replayable halfspace-feasibility witness inside each box while
+backtracking over certified slack sides of local support planes. If that
+tighter escape-cell family is uncertified or still cannot be traced, it falls
+back to the full child-cell support search.
 Segment tracing uses
 direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered

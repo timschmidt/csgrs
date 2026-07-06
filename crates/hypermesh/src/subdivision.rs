@@ -1213,68 +1213,124 @@ fn projection_escape_reference_with_search(
     polygons: &[ConvexPolygon],
     mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let Some(escape_bounds) = projection_escape_bounds(projected, bounds, polygons)? else {
-        return Ok(None);
-    };
-    if escape_bounds == *bounds {
-        return Ok(None);
+    for escape_bounds in projection_escape_bounds_family(projected, bounds, polygons)? {
+        if escape_bounds == *bounds {
+            continue;
+        }
+        match search(&escape_bounds) {
+            Ok(Some(found)) => return Ok(Some(found)),
+            Ok(None) | Err(crate::error::HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        }
     }
-    match search(&escape_bounds) {
-        Ok(found) => Ok(found),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
-        Err(err) => Err(err),
-    }
+    Ok(None)
 }
 
+#[cfg(test)]
 fn projection_escape_bounds(
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<Aabb>> {
-    let mut min = projected.clone();
-    let mut max = projected.clone();
-
-    for axis in 0..3 {
-        let bound_min = axis_ref(&bounds.min, axis);
-        let bound_max = axis_ref(&bounds.max, axis);
-        if compare_real(bound_min, bound_max)?.is_eq() {
-            *axis_mut(&mut min, axis) = bound_min.clone();
-            *axis_mut(&mut max, axis) = bound_max.clone();
-            continue;
-        }
-
-        let Some(lower) =
-            escaped_reference_axis_stop_value(projected, bounds, polygons, axis, false)?
-        else {
-            return Ok(None);
-        };
-        let Some(upper) =
-            escaped_reference_axis_stop_value(projected, bounds, polygons, axis, true)?
-        else {
-            return Ok(None);
-        };
-        if !compare_real(&lower, &upper)?.is_lt() {
-            return Ok(None);
-        }
-        *axis_mut(&mut min, axis) = lower;
-        *axis_mut(&mut max, axis) = upper;
-    }
-
-    Ok(Some(Aabb::new(min, max)))
+    Ok(
+        projection_escape_bounds_family(projected, bounds, polygons)?
+            .into_iter()
+            .next(),
+    )
 }
 
-fn escaped_reference_axis_stop_value(
+fn projection_escape_bounds_family(
+    projected: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<Aabb>> {
+    let axis_options = (0..3)
+        .map(|axis| projection_escape_axis_options(projected, bounds, polygons, axis))
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    if axis_options.len() != 3 {
+        return Ok(Vec::new());
+    }
+
+    let mut keyed_boxes = Vec::new();
+    for lower_x in 0..axis_options[0].0.len() {
+        for upper_x in 0..axis_options[0].1.len() {
+            for lower_y in 0..axis_options[1].0.len() {
+                for upper_y in 0..axis_options[1].1.len() {
+                    for lower_z in 0..axis_options[2].0.len() {
+                        for upper_z in 0..axis_options[2].1.len() {
+                            let min = Point3::new(
+                                axis_options[0].0[lower_x].clone(),
+                                axis_options[1].0[lower_y].clone(),
+                                axis_options[2].0[lower_z].clone(),
+                            );
+                            let max = Point3::new(
+                                axis_options[0].1[upper_x].clone(),
+                                axis_options[1].1[upper_y].clone(),
+                                axis_options[2].1[upper_z].clone(),
+                            );
+                            let escape_bounds = Aabb::new(min, max);
+                            if !aabb_has_positive_or_zero_extents(&escape_bounds)? {
+                                continue;
+                            }
+                            keyed_boxes.push((
+                                (
+                                    lower_x + upper_x + lower_y + upper_y + lower_z + upper_z,
+                                    lower_x,
+                                    upper_x,
+                                    lower_y,
+                                    upper_y,
+                                    lower_z,
+                                    upper_z,
+                                ),
+                                escape_bounds,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    keyed_boxes.sort_by(|left, right| left.0.cmp(&right.0));
+
+    let mut family = Vec::new();
+    for (_, escape_bounds) in keyed_boxes {
+        if !family.iter().any(|existing| existing == &escape_bounds) {
+            family.push(escape_bounds);
+        }
+    }
+
+    Ok(family)
+}
+
+fn projection_escape_axis_options(
     projected: &Point3,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     axis: usize,
-    direction_positive: bool,
-) -> HypermeshResult<Option<Real>> {
-    Ok(
-        escaped_reference_axis_stop_values(projected, bounds, polygons, axis, direction_positive)?
-            .into_iter()
-            .next(),
-    )
+) -> HypermeshResult<(Vec<Real>, Vec<Real>)> {
+    let bound_min = axis_ref(&bounds.min, axis);
+    let bound_max = axis_ref(&bounds.max, axis);
+    if compare_real(bound_min, bound_max)?.is_eq() {
+        return Ok((vec![bound_min.clone()], vec![bound_max.clone()]));
+    }
+
+    let lower = escaped_reference_axis_stop_values(projected, bounds, polygons, axis, false)?;
+    let upper = escaped_reference_axis_stop_values(projected, bounds, polygons, axis, true)?;
+    if lower.is_empty() || upper.is_empty() {
+        return Ok((Vec::new(), Vec::new()));
+    }
+
+    Ok((lower, upper))
+}
+
+fn aabb_has_positive_or_zero_extents(bounds: &Aabb) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        if compare_real(axis_ref(&bounds.min, axis), axis_ref(&bounds.max, axis))?.is_gt() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn escaped_reference_axis_stop_values(
@@ -2982,6 +3038,31 @@ mod tests {
     }
 
     #[test]
+    fn projection_escape_bounds_family_includes_later_exact_boxes() {
+        let mut x_wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+        x_wall.delta_w = vec![1];
+        let mut y_wall = make_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+        y_wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let family =
+            projection_escape_bounds_family(&p(1, 3, 3), &bounds, &[x_wall, y_wall]).unwrap();
+
+        assert!(family.len() >= 4);
+        assert_eq!(family[0], Aabb::new(p(0, 0, 0), p(4, 5, 6)));
+        assert!(
+            family
+                .iter()
+                .any(|bounds| *bounds == Aabb::new(p(0, 0, 0), p(6, 5, 6)))
+        );
+        assert!(
+            family
+                .iter()
+                .any(|bounds| *bounds == Aabb::new(p(0, 0, 0), p(4, 6, 6)))
+        );
+    }
+
+    #[test]
     fn projection_axis_escape_reference_finds_corridor_witness() {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
@@ -3109,6 +3190,40 @@ mod tests {
         .unwrap();
 
         assert_eq!(found, None);
+    }
+
+    #[test]
+    fn projection_escape_reference_backtracks_after_empty_tighter_box() {
+        let mut x_wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+        x_wall.delta_w = vec![1];
+        let mut y_wall = make_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+        y_wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+        let mut searched_boxes = Vec::new();
+
+        let found = projection_escape_reference_with_search(
+            &p(1, 3, 3),
+            &bounds,
+            &[x_wall, y_wall],
+            |escape_bounds| {
+                searched_boxes.push(escape_bounds.clone());
+                if *escape_bounds == Aabb::new(p(0, 0, 0), p(4, 5, 6)) {
+                    Ok(None)
+                } else if *escape_bounds == Aabb::new(p(0, 0, 0), p(6, 5, 6)) {
+                    Ok(Some((ReferenceTarget::axis_defined(p(5, 4, 3)), vec![11])))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(searched_boxes.contains(&Aabb::new(p(0, 0, 0), p(4, 5, 6))));
+        assert!(searched_boxes.contains(&Aabb::new(p(0, 0, 0), p(6, 5, 6))));
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(5, 4, 3)), vec![11]))
+        );
     }
 
     #[test]
