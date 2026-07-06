@@ -1315,14 +1315,6 @@ fn projected_reference_escape_targets_from_report(
     let mut targets = projected_targets.to_vec();
     let mut saw_unknown = false;
 
-    if let Some(witness) = &report.witness
-        && point_satisfies_halfspaces(witness, halfspaces)?
-        && let Some(target) =
-            reference_target_from_halfspace_witness(witness, halfspaces, report.active_planes)?
-    {
-        push_unique_reference_target(&mut targets, target);
-    }
-
     let strict_seeds = point3_family_or_empty(
         strict_projected_cell_seeds_from_report(bounds, halfspaces, report),
         &mut saw_unknown,
@@ -1345,6 +1337,17 @@ fn projected_reference_escape_targets_from_report(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
+            reference_target_family_from_witness(
+                report.witness.as_ref(),
+                |witness| point_satisfies_halfspaces(witness, halfspaces),
+                |witness| {
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        halfspaces,
+                        report.active_planes,
+                    )
+                },
+            ),
             collect_reference_target_family(strict_seeds, |seed| {
                 projected_escape_targets_from_seed(bounds, halfspaces, &seed)
             }),
@@ -1653,6 +1656,22 @@ fn collect_reference_target_family<T>(
     let mut targets = Vec::new();
     extend_reference_targets_backtracking_unknown(&mut targets, candidates, build)?;
     Ok(targets)
+}
+
+fn reference_target_family_from_witness(
+    witness: Option<&Point3>,
+    mut include: impl FnMut(&Point3) -> HypermeshResult<bool>,
+    mut build: impl FnMut(&Point3) -> HypermeshResult<Option<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let Some(witness) = witness else {
+        return Ok(Vec::new());
+    };
+    collect_reference_target_family(std::iter::once(witness.clone()), |candidate| {
+        if !include(&candidate)? {
+            return Ok(Vec::new());
+        }
+        Ok(build(&candidate)?.into_iter().collect())
+    })
 }
 
 fn extend_reference_target_families_backtracking_unknown(
@@ -2224,15 +2243,6 @@ fn strict_projected_cell_targets(
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
-    if report.status == HalfspaceFeasibility::Feasible
-        && let Some(witness) = &report.witness
-        && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
-        && let Some(target) =
-            reference_target_from_halfspace_witness(witness, halfspaces, report.active_planes)?
-    {
-        push_unique_reference_target(&mut targets, target);
-    }
-
     let strict_seeds = point3_family_or_empty(
         strict_projected_cell_seeds_from_report(bounds, halfspaces, report),
         &mut saw_unknown,
@@ -2254,6 +2264,21 @@ fn strict_projected_cell_targets(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
+            if report.status == HalfspaceFeasibility::Feasible {
+                reference_target_family_from_witness(
+                    report.witness.as_ref(),
+                    |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
+                    |witness| {
+                        reference_target_from_halfspace_witness(
+                            witness,
+                            halfspaces,
+                            report.active_planes,
+                        )
+                    },
+                )
+            } else {
+                Ok(Vec::new())
+            },
             collect_reference_target_family(strict_seeds, |seed| {
                 shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
@@ -2321,14 +2346,6 @@ fn shifted_projected_cell_targets_from_seed(
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
-    if let Some(witness) = &report.witness
-        && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
-        && let Some(target) =
-            reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)?
-    {
-        push_unique_reference_target(&mut targets, target);
-    }
-
     let strict_seeds = point3_family_or_empty(
         strict_projected_cell_seeds_from_report(bounds, &shifted, &report),
         &mut saw_unknown,
@@ -2338,6 +2355,13 @@ fn shifted_projected_cell_targets_from_seed(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
+            reference_target_family_from_witness(
+                report.witness.as_ref(),
+                |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
+                |witness| {
+                    reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)
+                },
+            ),
             collect_reference_target_family(strict_seeds, |witness| {
                 if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
@@ -2392,14 +2416,6 @@ fn projected_escape_targets_from_seed(
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
-    if let Some(witness) = &report.witness
-        && point_satisfies_halfspaces(witness, halfspaces)?
-        && let Some(target) =
-            reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)?
-    {
-        push_unique_reference_target(&mut targets, target);
-    }
-
     let strict_seeds = point3_family_or_empty(
         strict_projected_cell_seeds_from_report(bounds, &shifted, &report),
         &mut saw_unknown,
@@ -2409,6 +2425,13 @@ fn projected_escape_targets_from_seed(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
+            reference_target_family_from_witness(
+                report.witness.as_ref(),
+                |witness| point_satisfies_halfspaces(witness, halfspaces),
+                |witness| {
+                    reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)
+                },
+            ),
             collect_reference_target_family(strict_seeds, |witness| {
                 if !point_satisfies_halfspaces(&witness, halfspaces)? {
                     return Ok(Vec::new());
@@ -2485,15 +2508,6 @@ fn strict_support_cell_targets(
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
-    if report.status == HalfspaceFeasibility::Feasible
-        && let Some(witness) = &report.witness
-        && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
-        && let Some(target) =
-            reference_target_from_halfspace_witness(witness, halfspaces, report.active_planes)?
-    {
-        push_unique_reference_target(&mut targets, target);
-    }
-
     let strict_seeds = point3_family_or_empty(
         strict_support_cell_seeds_from_report(bounds, halfspaces, report),
         &mut saw_unknown,
@@ -2515,6 +2529,21 @@ fn strict_support_cell_targets(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
+            if report.status == HalfspaceFeasibility::Feasible {
+                reference_target_family_from_witness(
+                    report.witness.as_ref(),
+                    |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
+                    |witness| {
+                        reference_target_from_halfspace_witness(
+                            witness,
+                            halfspaces,
+                            report.active_planes,
+                        )
+                    },
+                )
+            } else {
+                Ok(Vec::new())
+            },
             collect_reference_target_family(strict_seeds, |seed| {
                 shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
@@ -2691,14 +2720,6 @@ fn shifted_support_cell_targets_from_seed(
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
-    if let Some(witness) = &report.witness
-        && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
-        && let Some(target) =
-            reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)?
-    {
-        push_unique_reference_target(&mut targets, target);
-    }
-
     let strict_seeds = point3_family_or_empty(
         strict_support_cell_seeds_from_report(bounds, &shifted, &report),
         &mut saw_unknown,
@@ -2708,6 +2729,13 @@ fn shifted_support_cell_targets_from_seed(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
+            reference_target_family_from_witness(
+                report.witness.as_ref(),
+                |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
+                |witness| {
+                    reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)
+                },
+            ),
             collect_reference_target_family(strict_seeds, |witness| {
                 if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
@@ -3659,6 +3687,30 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_target_family_from_witness_reports_unknown_for_uncertified_witness() {
+        let err = reference_target_family_from_witness(
+            Some(&p(1, 2, 3)),
+            |_candidate| Err(crate::error::HypermeshError::UnknownClassification),
+            |_candidate| Ok(Some(ReferenceTarget::axis_defined(p(9, 9, 9)))),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_target_family_from_witness_returns_direct_target_when_certified() {
+        let targets = reference_target_family_from_witness(
+            Some(&p(1, 2, 3)),
+            |_candidate| Ok(true),
+            |candidate| Ok(Some(ReferenceTarget::axis_defined(candidate.clone()))),
+        )
+        .unwrap();
+
+        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
     }
 
     #[test]

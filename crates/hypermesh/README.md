@@ -193,6 +193,9 @@ ordered shifted projected/support subfamilies inside one retained target
 builder: an earlier uncertified strict-seed expansion no longer prevents later
 raw shifted-vertex expansions from contributing certified targets, and only an
 entirely uncertified local multi-family search surfaces `UnknownClassification`.
+Direct feasibility witnesses inside those projected/support target builders now
+participate in that same family backtracking order instead of being tried as a
+special pre-pass that could cut off later strict-seed or exact-vertex families.
 The top-level projected direct/escape search now does the same: if every
 projected direct trace, projected-support search, and projected escape search
 is uncertified, that local projected-family search returns
