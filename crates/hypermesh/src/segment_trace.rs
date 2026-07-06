@@ -50,6 +50,13 @@ struct ProbePoint {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct ProbeWindingCacheEntry {
+    point: Point3,
+    planes: Vec<[Plane; 3]>,
+    winding: HypermeshResult<WindingNumberVector>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -1112,6 +1119,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
     bounds: &Aabb,
     host_delta_w: &[i32],
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut probe_winding_cache = Vec::new();
     search_leaf_probe_families(
         interior_points,
         |point, positive_side| {
@@ -1124,8 +1132,9 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
             if !probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons)? {
                 return Ok(None);
             }
-            let mut winding =
-                trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)?;
+            let mut winding = cached_probe_winding_with(&mut probe_winding_cache, &probe, || {
+                trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)
+            })?;
             if probe.side == Classification::Negative {
                 apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
             }
@@ -1133,6 +1142,27 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
         },
     )?
     .ok_or(HypermeshError::UnknownClassification)
+}
+
+fn cached_probe_winding_with(
+    cache: &mut Vec<ProbeWindingCacheEntry>,
+    probe: &ProbePoint,
+    trace: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
+) -> HypermeshResult<WindingNumberVector> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.point == probe.point && existing.planes == probe.planes)
+    {
+        return existing.winding.clone();
+    }
+
+    let winding = trace();
+    cache.push(ProbeWindingCacheEntry {
+        point: probe.point.clone(),
+        planes: probe.planes.clone(),
+        winding: winding.clone(),
+    });
+    winding
 }
 
 fn search_leaf_probe_families<'a>(
@@ -5016,6 +5046,38 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn cached_probe_winding_reuses_equivalent_trace_across_probe_sides() {
+        let definition = axis_plane_definition(&p(1, 2, 3));
+        let positive = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Positive,
+            planes: vec![definition.clone()],
+        };
+        let negative = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Negative,
+            planes: vec![definition],
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_probe_winding_with(&mut cache, &positive, || {
+            calls += 1;
+            Ok(vec![7])
+        })
+        .unwrap();
+        let second = cached_probe_winding_with(&mut cache, &negative, || {
+            calls += 1;
+            Ok(vec![9])
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, vec![7]);
+        assert_eq!(second, vec![7]);
     }
 
     #[test]

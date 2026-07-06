@@ -157,6 +157,10 @@ witness builders now also dedupe later shifted seed families against the
 report witness itself so they do not rebuild that same direct witness through
 later strict-seed,
 exact-vertex, or geometry-seed families,
+and equivalent certified probes inside one leaf classification now reuse the
+same retained-definition winding trace instead of retracing the same exact
+probe point/definition family repeatedly across probe sides or repeated probe
+families,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
