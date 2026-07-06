@@ -643,6 +643,62 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
 }
 
 #[test]
+fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 1, 0], [2, 2, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let left_soup = passthrough(&left).unwrap();
+    let config = EmberConfig {
+        leaf_threshold: 1,
+        ..config()
+    };
+
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+    assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(2), r(1)])?;
+    assert_volume_numerator(&union, r(12));
+
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert_same_shape(&difference, &left_soup);
+
+    Ok(())
+}
+
+#[test]
+fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 1, 1], [2, 2, 2]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let left_soup = passthrough(&left).unwrap();
+    let config = EmberConfig {
+        leaf_threshold: 1,
+        ..config()
+    };
+
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+    assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(2), r(2)])?;
+    assert_volume_numerator(&union, r(12));
+
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert_same_shape(&difference, &left_soup);
+
+    Ok(())
+}
+
+#[test]
 fn hypermesh_identical_and_same_surface_solids_regularize() {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
     let identical = left.clone();
