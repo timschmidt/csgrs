@@ -159,6 +159,11 @@ backtracks past uncertified shifted projected seeds and projected vertices
 instead of aborting the whole projected target family, and witness points whose
 retained plane-definition reconstruction is uncertified are now still retained
 as exact axis-defined targets rather than being discarded candidate-locally.
+If a whole projected witness or seed family has no certified target and only
+uncertified candidates, that local family now returns
+`UnknownClassification` so later projected/support/escape backtracking can
+decide whether to keep searching or fail, instead of silently collapsing the
+local family to an empty target set.
 It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit
@@ -211,6 +216,10 @@ points whose retained plane-definition reconstruction is uncertified are now
 also skipped candidate-locally instead of aborting those support-cell target
 families. Direct projected/support seed collection now also skips uncertified
 strictness checks candidate-locally instead of aborting the whole seed family.
+As with the projected-child families, those candidate-local skips now surface
+`UnknownClassification` when an entire local projected/support seed or target
+family is uncertified and no certified witness survives, rather than silently
+degenerating that family to empty.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh

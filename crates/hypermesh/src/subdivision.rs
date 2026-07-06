@@ -1527,6 +1527,7 @@ fn extend_reference_targets_backtracking_unknown<T>(
     candidates: impl IntoIterator<Item = T>,
     mut build: impl FnMut(T) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
     for candidate in candidates {
         match build(candidate) {
             Ok(found) => {
@@ -1534,11 +1535,17 @@ fn extend_reference_targets_backtracking_unknown<T>(
                     push_unique_reference_target(targets, target);
                 }
             }
-            Err(crate::error::HypermeshError::UnknownClassification) => continue,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
             Err(err) => return Err(err),
         }
     }
-    Ok(())
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
 }
 
 fn reference_target_from_halfspace_witness(
@@ -2324,15 +2331,22 @@ fn extend_point3_backtracking_unknown(
     candidates: impl IntoIterator<Item = Point3>,
     mut keep: impl FnMut(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
     for candidate in candidates {
         match keep(&candidate) {
             Ok(true) => push_unique_point3(points, candidate),
             Ok(false) => {}
-            Err(crate::error::HypermeshError::UnknownClassification) => continue,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
             Err(err) => return Err(err),
         }
     }
-    Ok(())
+    if points.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
 }
 
 fn shifted_support_cell_targets_from_seed(
@@ -3147,6 +3161,19 @@ mod tests {
     }
 
     #[test]
+    fn reference_target_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let mut targets = Vec::new();
+
+        let err =
+            extend_reference_targets_backtracking_unknown(&mut targets, [0, 1], |_candidate| {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            })
+            .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn reference_target_family_or_empty_skips_uncertified_family() {
         let target = ReferenceTarget::axis_defined(p(1, 2, 3));
 
@@ -3937,6 +3964,21 @@ mod tests {
         .unwrap();
 
         assert_eq!(points, vec![second]);
+    }
+
+    #[test]
+    fn point3_seed_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut points = Vec::new();
+
+        let err =
+            extend_point3_backtracking_unknown(&mut points, vec![first, second], |_candidate| {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            })
+            .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]
