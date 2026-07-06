@@ -344,6 +344,7 @@ fn polygon_edge_counts(
     polygons: &[Vec<usize>],
 ) -> HypermeshResult<BTreeMap<[usize; 2], usize>> {
     let mut counts = BTreeMap::new();
+    let mut split_edge_cache: BTreeMap<[usize; 2], Vec<[usize; 2]>> = BTreeMap::new();
 
     for polygon in polygons {
         if polygon.len() < 2 {
@@ -356,36 +357,54 @@ fn polygon_edge_counts(
             if start == end {
                 continue;
             }
-
-            let mut on_edge = Vec::new();
-            for vertex_index in 0..vertices.len() {
-                if vertex_index == start || vertex_index == end {
-                    continue;
-                }
-                if point_on_segment_exact(
-                    &vertices[vertex_index],
-                    &vertices[start],
-                    &vertices[end],
-                )? {
-                    on_edge.push(vertex_index);
-                }
-            }
-
-            let mut chain = Vec::with_capacity(on_edge.len() + 2);
-            chain.push(start);
-            chain.extend(sort_along_segment(&on_edge, start, end, vertices)?);
-            chain.push(end);
-
-            for pair in chain.windows(2) {
-                if pair[0] == pair[1] {
-                    continue;
-                }
-                *counts.entry(sorted_edge([pair[0], pair[1]])).or_insert(0) += 1;
+            for subedge in split_segment_subedges_exact(
+                &mut split_edge_cache,
+                vertices,
+                sorted_edge([start, end]),
+            )? {
+                *counts.entry(subedge).or_insert(0) += 1;
             }
         }
     }
 
     Ok(counts)
+}
+
+fn split_segment_subedges_exact(
+    cache: &mut BTreeMap<[usize; 2], Vec<[usize; 2]>>,
+    vertices: &[OutputVertex],
+    edge: [usize; 2],
+) -> HypermeshResult<Vec<[usize; 2]>> {
+    let edge = sorted_edge(edge);
+    if let Some(subedges) = cache.get(&edge) {
+        return Ok(subedges.clone());
+    }
+
+    let mut on_edge = Vec::new();
+    for vertex_index in 0..vertices.len() {
+        if vertex_index == edge[0] || vertex_index == edge[1] {
+            continue;
+        }
+        if point_on_segment_exact(
+            &vertices[vertex_index],
+            &vertices[edge[0]],
+            &vertices[edge[1]],
+        )? {
+            on_edge.push(vertex_index);
+        }
+    }
+
+    let mut chain = Vec::with_capacity(on_edge.len() + 2);
+    chain.push(edge[0]);
+    chain.extend(sort_along_segment(&on_edge, edge[0], edge[1], vertices)?);
+    chain.push(edge[1]);
+
+    let subedges: Vec<[usize; 2]> = chain
+        .windows(2)
+        .filter_map(|pair| (pair[0] != pair[1]).then_some(sorted_edge([pair[0], pair[1]])))
+        .collect();
+    cache.insert(edge, subedges.clone());
+    Ok(subedges)
 }
 
 fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
@@ -1018,6 +1037,24 @@ mod tests {
 
         assert_eq!(counts.get(&[0, 3]), Some(&2));
         assert_eq!(counts.get(&[1, 3]), Some(&2));
+    }
+
+    #[test]
+    fn split_segment_subedges_exact_reuses_undirected_edge_cache() {
+        let polygons = vec![
+            op(vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0)]),
+            op(vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, -1, 0)]),
+            op(vec![ov(2, 0, 0), ov(0, 0, 0), ov(2, -1, 0)]),
+        ];
+        let (vertices, _indexed) = merge_duplicate_polygon_vertices(&polygons);
+        let mut cache = BTreeMap::new();
+
+        let forward = split_segment_subedges_exact(&mut cache, &vertices, [0, 1]).unwrap();
+        let reversed = split_segment_subedges_exact(&mut cache, &vertices, [1, 0]).unwrap();
+
+        assert_eq!(forward, vec![[0, 3], [1, 3]]);
+        assert_eq!(reversed, forward);
+        assert_eq!(cache.len(), 1);
     }
 
     #[test]

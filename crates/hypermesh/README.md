@@ -552,6 +552,9 @@ coplanar duplicate surfaces are reduced before closure checking and
 triangulation cleanup run. The same exact-geometry duplicate suppression now
 also runs earlier at subdivision emission time, so duplicate classified
 polygons are merged before they ever reach the final classified arrangement.
+The exact closure check now also caches split subedges per undirected polygon
+edge, so repeated coincident segments do not rescan and re-sort the same merged
+vertex chain before counting boundary usage.
 `certify_output_polygon_closure` exposes that pre-triangulation check directly
 for callers and regressions that want to validate closure on the classified
 polygon arrangement itself.
