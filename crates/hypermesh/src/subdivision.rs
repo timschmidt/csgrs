@@ -3110,7 +3110,9 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
 mod tests {
     use super::*;
     use crate::geometry::Plane;
+    use crate::mesh::prepare_input;
     use crate::polygon::make_triangle;
+    use crate::{InputMesh, Triangle};
 
     fn r(value: i32) -> Real {
         value.into()
@@ -3130,6 +3132,35 @@ mod tests {
 
     fn axis_defs(point: &Point3) -> Vec<[Plane; 3]> {
         vec![axis_plane_definition(point)]
+    }
+
+    fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> InputMesh {
+        InputMesh::new(
+            vec![a, b, c, apex],
+            vec![
+                Triangle::new(0, 2, 1),
+                Triangle::new(0, 1, 3),
+                Triangle::new(0, 3, 2),
+                Triangle::new(1, 2, 3),
+            ],
+        )
+    }
+
+    fn axis_face_polygon(polygons: &[ConvexPolygon], axis: usize, value: i32) -> ConvexPolygon {
+        polygons
+            .iter()
+            .find(|polygon| {
+                compare_real(axis_ref(&polygon.support.normal, axis), &Real::zero())
+                    .unwrap()
+                    .is_gt()
+                    && polygon
+                        .vertices()
+                        .unwrap()
+                        .iter()
+                        .all(|vertex| axis_ref(vertex, axis) == &r(value))
+            })
+            .cloned()
+            .expect("expected axis-aligned support face in prepared mesh soup")
     }
 
     fn definition_uses_non_axis_plane(definition: &[Plane; 3]) -> bool {
@@ -3511,6 +3542,88 @@ mod tests {
             support_plane_cell_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons)
                 .unwrap();
 
+        let (point, definitions, winding) =
+            compute_new_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons).unwrap();
+
+        assert_eq!(projected, None);
+        let support = support.expect("support-cell fallback should find a witness");
+        assert_eq!(point, support.0.point);
+        assert_eq!(definitions, support.0.definitions);
+        assert_eq!(winding, support.1);
+    }
+
+    #[test]
+    fn support_cell_reference_fallback_uses_closed_mesh_polygons() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+
+        let polygons = vec![
+            axis_face_polygon(&soup.polygons, 0, 5),
+            axis_face_polygon(&soup.polygons, 1, 5),
+            axis_face_polygon(&soup.polygons, 2, 5),
+        ];
+        let old_ref = p(0, 5, 5);
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let old_defs = axis_defs(&old_ref);
+        let old_wnv = vec![0; soup.num_meshes];
+
+        let projected_targets = projected_reference_targets(&old_ref, &bounds).unwrap();
+        let projected_halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let projected_escape_targets =
+            projected_reference_escape_targets(&bounds, &projected_halfspaces, &projected_targets)
+                .unwrap();
+
+        let projected = projected_reference_search_or_none(search_projected_reference_families(
+            &projected_targets,
+            &projected_escape_targets,
+            || {
+                projected_support_plane_cell_reference(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &bounds,
+                    &polygons,
+                    projected_halfspaces.clone(),
+                )
+            },
+            |projected_target| {
+                trace_reference_target(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &bounds,
+                    &polygons,
+                    projected_target,
+                )
+            },
+            |projected_target| {
+                projection_axis_escape_reference(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &projected_target.point,
+                    &bounds,
+                    &polygons,
+                )
+            },
+            |projected_target| {
+                projection_escape_reference(
+                    &old_ref,
+                    &old_defs,
+                    &old_wnv,
+                    &projected_target.point,
+                    &bounds,
+                    &polygons,
+                )
+            },
+        ))
+        .unwrap();
+
+        let support =
+            support_plane_cell_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons)
+                .unwrap();
         let (point, definitions, winding) =
             compute_new_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons).unwrap();
 
