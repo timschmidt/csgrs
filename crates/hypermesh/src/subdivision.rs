@@ -1297,13 +1297,24 @@ fn projected_reference_escape_targets(
     halfspaces: &[LimitPlane3],
     projected_targets: &[ReferenceTarget],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let Some(report) = halfspace_system_report(halfspaces)? else {
-        return Ok(projected_targets.to_vec());
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, saw_unknown) = optional_halfspace_system_report(halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(projected_targets.to_vec());
     }
-    projected_reference_escape_targets_from_report(bounds, halfspaces, projected_targets, &report)
+    let targets = projected_reference_escape_targets_from_optional_report(
+        bounds,
+        halfspaces,
+        projected_targets,
+        report.as_ref(),
+    )?;
+    if targets.len() == projected_targets.len() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
 }
 
 fn projected_reference_escape_targets_from_report(
@@ -1312,11 +1323,25 @@ fn projected_reference_escape_targets_from_report(
     projected_targets: &[ReferenceTarget],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
+    projected_reference_escape_targets_from_optional_report(
+        bounds,
+        halfspaces,
+        projected_targets,
+        Some(report),
+    )
+}
+
+fn projected_reference_escape_targets_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    projected_targets: &[ReferenceTarget],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
     let mut saw_unknown = false;
 
     let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_report(bounds, halfspaces, report),
+        strict_projected_cell_seeds_from_optional_report(bounds, halfspaces, report),
         &mut saw_unknown,
     )?;
     let shifted_vertices =
@@ -1325,7 +1350,7 @@ fn projected_reference_escape_targets_from_report(
         support_cell_geometry_seed_candidates(halfspaces),
         &mut saw_unknown,
     )?;
-    let report_witness = report.witness.clone();
+    let report_witness = report.and_then(|report| report.witness.clone());
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_seeds {
         if !report_witness
@@ -1342,13 +1367,13 @@ fn projected_reference_escape_targets_from_report(
         &mut targets,
         [
             reference_target_family_from_witness(
-                report.witness.as_ref(),
+                report.and_then(|report| report.witness.as_ref()),
                 |witness| point_satisfies_halfspaces(witness, halfspaces),
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
                         halfspaces,
-                        report.active_planes,
+                        active_planes_from_optional_halfspace_report(report, witness),
                     )
                 },
             ),
@@ -2208,6 +2233,28 @@ fn halfspace_system_report(
     }
 }
 
+fn optional_halfspace_system_report(
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<(Option<hyperlimit::HalfspaceFeasibilityReport>, bool)> {
+    match classify_halfspace_feasibility3(halfspaces) {
+        PredicateOutcome::Decided { value, .. } => Ok((Some(value), false)),
+        PredicateOutcome::Unknown { .. } => Ok((None, true)),
+    }
+}
+
+fn active_planes_from_optional_halfspace_report(
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    witness: &Point3,
+) -> [Option<usize>; 3] {
+    report.map_or([None, None, None], |report| {
+        if report.witness.as_ref() == Some(witness) {
+            report.active_planes
+        } else {
+            [None, None, None]
+        }
+    })
+}
+
 fn reference_definitions_from_active_halfspaces(
     witness: &Point3,
     halfspaces: &[LimitPlane3],
@@ -2293,13 +2340,20 @@ fn projected_reference_targets(
     bounds: &Aabb,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
-    let Some(report) = halfspace_system_report(&halfspaces)? else {
-        return Ok(Vec::new());
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, saw_unknown) = optional_halfspace_system_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
-    strict_projected_cell_targets(bounds, &halfspaces, &report)
+    let targets =
+        strict_projected_cell_targets_from_optional_report(bounds, &halfspaces, report.as_ref())?;
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
 }
 
 fn projected_reference_halfspaces(
@@ -2324,11 +2378,19 @@ fn strict_projected_cell_targets(
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
+    strict_projected_cell_targets_from_optional_report(bounds, halfspaces, Some(report))
+}
+
+fn strict_projected_cell_targets_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
     let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_report(bounds, halfspaces, report),
+        strict_projected_cell_seeds_from_optional_report(bounds, halfspaces, report),
         &mut saw_unknown,
     )?;
     let shifted_vertices =
@@ -2337,7 +2399,7 @@ fn strict_projected_cell_targets(
         support_cell_geometry_seed_candidates(halfspaces),
         &mut saw_unknown,
     )?;
-    let report_witness = report.witness.clone();
+    let report_witness = report.and_then(|report| report.witness.clone());
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_seeds {
         if !report_witness
@@ -2352,21 +2414,17 @@ fn strict_projected_cell_targets(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
-            if report.status == HalfspaceFeasibility::Feasible {
-                reference_target_family_from_witness(
-                    report.witness.as_ref(),
-                    |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
-                    |witness| {
-                        reference_target_from_halfspace_witness(
-                            witness,
-                            halfspaces,
-                            report.active_planes,
-                        )
-                    },
-                )
-            } else {
-                Ok(Vec::new())
-            },
+            reference_target_family_from_witness(
+                report.and_then(|report| report.witness.as_ref()),
+                |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
+                |witness| {
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        halfspaces,
+                        active_planes_from_optional_halfspace_report(report, witness),
+                    )
+                },
+            ),
             collect_reference_target_family(strict_seeds, |seed| {
                 shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
@@ -2394,13 +2452,21 @@ fn strict_projected_cell_seeds_from_report(
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<Point3>> {
+    strict_projected_cell_seeds_from_optional_report(bounds, halfspaces, Some(report))
+}
+
+fn strict_projected_cell_seeds_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
 
     extend_point3_families_backtracking_unknown(
         &mut seeds,
         [
-            if report.status == HalfspaceFeasibility::Feasible
-                && let Some(witness) = &report.witness
+            if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
                     point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
@@ -2427,18 +2493,19 @@ fn shifted_projected_cell_targets_from_seed(
     seed: &Point3,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
-    let Some(report) = halfspace_system_report(&shifted)? else {
-        return Ok(Vec::new());
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, saw_report_unknown) = optional_halfspace_system_report(&shifted)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
 
     let mut targets = Vec::new();
-    let mut saw_unknown = false;
+    let mut saw_unknown = saw_report_unknown;
 
     let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_report(bounds, &shifted, &report),
+        strict_projected_cell_seeds_from_optional_report(bounds, &shifted, report.as_ref()),
         &mut saw_unknown,
     )?;
     let shifted_vertices =
@@ -2447,14 +2514,19 @@ fn shifted_projected_cell_targets_from_seed(
         support_cell_geometry_seed_candidates(&shifted),
         &mut saw_unknown,
     )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
             reference_target_family_from_witness(
-                report.witness.as_ref(),
+                report_witness.as_ref(),
                 |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
                 |witness| {
-                    reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        &shifted,
+                        active_planes_from_optional_halfspace_report(report.as_ref(), witness),
+                    )
                 },
             ),
             collect_reference_target_family(strict_seeds, |witness| {
@@ -2515,18 +2587,19 @@ fn projected_escape_targets_from_seed(
     seed: &Point3,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
-    let Some(report) = halfspace_system_report(&shifted)? else {
-        return Ok(Vec::new());
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, saw_report_unknown) = optional_halfspace_system_report(&shifted)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
 
     let mut targets = Vec::new();
-    let mut saw_unknown = false;
+    let mut saw_unknown = saw_report_unknown;
 
     let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_report(bounds, &shifted, &report),
+        strict_projected_cell_seeds_from_optional_report(bounds, &shifted, report.as_ref()),
         &mut saw_unknown,
     )?;
     let shifted_vertices =
@@ -2535,14 +2608,19 @@ fn projected_escape_targets_from_seed(
         support_cell_geometry_seed_candidates(&shifted),
         &mut saw_unknown,
     )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
             reference_target_family_from_witness(
-                report.witness.as_ref(),
+                report_witness.as_ref(),
                 |witness| point_satisfies_halfspaces(witness, halfspaces),
                 |witness| {
-                    reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        &shifted,
+                        active_planes_from_optional_halfspace_report(report.as_ref(), witness),
+                    )
                 },
             ),
             collect_reference_target_family(strict_seeds, |witness| {
@@ -2619,12 +2697,13 @@ fn strict_support_cell_target(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<ReferenceTarget>> {
-    let Some(report) = halfspace_system_report(halfspaces)? else {
-        return Ok(None);
-    };
-    Ok(strict_support_cell_targets(bounds, halfspaces, &report)?
-        .into_iter()
-        .next())
+    let (report, saw_unknown) = optional_halfspace_system_report(halfspaces)?;
+    let targets =
+        strict_support_cell_targets_from_optional_report(bounds, halfspaces, report.as_ref())?;
+    if targets.is_empty() && saw_unknown {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+    Ok(targets.into_iter().next())
 }
 
 fn strict_support_cell_targets(
@@ -2632,11 +2711,19 @@ fn strict_support_cell_targets(
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
+    strict_support_cell_targets_from_optional_report(bounds, halfspaces, Some(report))
+}
+
+fn strict_support_cell_targets_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
     let strict_seeds = point3_family_or_empty(
-        strict_support_cell_seeds_from_report(bounds, halfspaces, report),
+        strict_support_cell_seeds_from_optional_report(bounds, halfspaces, report),
         &mut saw_unknown,
     )?;
     let shifted_vertices =
@@ -2645,7 +2732,7 @@ fn strict_support_cell_targets(
         support_cell_geometry_seed_candidates(halfspaces),
         &mut saw_unknown,
     )?;
-    let report_witness = report.witness.clone();
+    let report_witness = report.and_then(|report| report.witness.clone());
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_seeds {
         if !report_witness
@@ -2660,21 +2747,17 @@ fn strict_support_cell_targets(
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
-            if report.status == HalfspaceFeasibility::Feasible {
-                reference_target_family_from_witness(
-                    report.witness.as_ref(),
-                    |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
-                    |witness| {
-                        reference_target_from_halfspace_witness(
-                            witness,
-                            halfspaces,
-                            report.active_planes,
-                        )
-                    },
-                )
-            } else {
-                Ok(Vec::new())
-            },
+            reference_target_family_from_witness(
+                report.and_then(|report| report.witness.as_ref()),
+                |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
+                |witness| {
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        halfspaces,
+                        active_planes_from_optional_halfspace_report(report, witness),
+                    )
+                },
+            ),
             collect_reference_target_family(strict_seeds, |seed| {
                 shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
@@ -2702,13 +2785,21 @@ fn strict_support_cell_seeds_from_report(
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<Point3>> {
+    strict_support_cell_seeds_from_optional_report(bounds, halfspaces, Some(report))
+}
+
+fn strict_support_cell_seeds_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
 
     extend_point3_families_backtracking_unknown(
         &mut seeds,
         [
-            if report.status == HalfspaceFeasibility::Feasible
-                && let Some(witness) = &report.witness
+            if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
                     point_strictly_inside_support_cell(candidate, bounds, halfspaces)
@@ -2862,17 +2953,18 @@ fn shifted_support_cell_targets_from_seed(
     seed: &Point3,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, &seed)?;
-    let Some(report) = halfspace_system_report(&shifted)? else {
-        return Ok(Vec::new());
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, saw_report_unknown) = optional_halfspace_system_report(&shifted)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
     let mut targets = Vec::new();
-    let mut saw_unknown = false;
+    let mut saw_unknown = saw_report_unknown;
 
     let strict_seeds = point3_family_or_empty(
-        strict_support_cell_seeds_from_report(bounds, &shifted, &report),
+        strict_support_cell_seeds_from_optional_report(bounds, &shifted, report.as_ref()),
         &mut saw_unknown,
     )?;
     let shifted_vertices =
@@ -2881,14 +2973,19 @@ fn shifted_support_cell_targets_from_seed(
         support_cell_geometry_seed_candidates(&shifted),
         &mut saw_unknown,
     )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
             reference_target_family_from_witness(
-                report.witness.as_ref(),
+                report_witness.as_ref(),
                 |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
                 |witness| {
-                    reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        &shifted,
+                        active_planes_from_optional_halfspace_report(report.as_ref(), witness),
+                    )
                 },
             ),
             collect_reference_target_family(strict_seeds, |witness| {
@@ -5253,6 +5350,24 @@ mod tests {
     }
 
     #[test]
+    fn strict_projected_cell_seeds_include_strict_geometry_seeds_without_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let triangle_center = Point3::new(q(4, 3), q(4, 3), q(8, 3));
+        let tetra_center = p(1, 1, 1);
+
+        let seeds =
+            strict_projected_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            point_strictly_inside_projected_cell(&triangle_center, &bounds, &halfspaces).unwrap()
+        );
+        assert!(point_strictly_inside_projected_cell(&tetra_center, &bounds, &halfspaces).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &triangle_center));
+        assert!(seeds.iter().any(|seed| seed == &tetra_center));
+    }
+
+    #[test]
     fn point3_seed_collection_backtracks_after_uncertified_candidate() {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -5321,6 +5436,34 @@ mod tests {
     }
 
     #[test]
+    fn strict_projected_cell_targets_include_direct_strict_seed_targets_without_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+
+        let targets =
+            strict_projected_cell_targets_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            targets
+                .iter()
+                .any(|target| target.point == Point3::new(r(1), r(2), r(3)))
+        );
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == Point3::new(r(1), r(2), r(3)))
+                .is_some_and(|target| !target.definitions.is_empty())
+        );
+    }
+
+    #[test]
     fn strict_support_cell_seeds_include_strict_feasible_vertices() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = vec![
@@ -5361,6 +5504,24 @@ mod tests {
     }
 
     #[test]
+    fn strict_support_cell_seeds_include_strict_geometry_seeds_without_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let triangle_center = Point3::new(q(4, 3), q(4, 3), q(8, 3));
+        let tetra_center = p(1, 1, 1);
+
+        let seeds =
+            strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            point_strictly_inside_support_cell(&triangle_center, &bounds, &halfspaces).unwrap()
+        );
+        assert!(point_strictly_inside_support_cell(&tetra_center, &bounds, &halfspaces).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &triangle_center));
+        assert!(seeds.iter().any(|seed| seed == &tetra_center));
+    }
+
+    #[test]
     fn support_cell_targets_try_shifted_targets_from_all_strict_seeds() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -5381,6 +5542,34 @@ mod tests {
                 .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
         );
         assert!(targets.iter().any(|target| target.point != direct));
+    }
+
+    #[test]
+    fn support_cell_targets_include_direct_strict_feasibility_witness_without_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+
+        let targets =
+            strict_support_cell_targets_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            targets
+                .iter()
+                .any(|target| target.point == Point3::new(r(1), r(2), r(3)))
+        );
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == Point3::new(r(1), r(2), r(3)))
+                .is_some_and(|target| !target.definitions.is_empty())
+        );
     }
 
     #[test]

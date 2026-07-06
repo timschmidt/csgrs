@@ -232,6 +232,10 @@ entirely uncertified local multi-family search surfaces `UnknownClassification`.
 Direct feasibility witnesses inside those projected/support target builders now
 participate in that same family backtracking order instead of being tried as a
 special pre-pass that could cut off later strict-seed or exact-vertex families.
+Those projected/support target builders now also continue past an uncertified
+root halfspace report by still searching the later exact-vertex and closed-cell
+geometry seed families, instead of requiring a certified report witness before
+those exact seed families run.
 The top-level projected direct/escape search now does the same: if every
 projected direct trace, projected-support search, and projected escape search
 is uncertified, that local projected-family search returns
