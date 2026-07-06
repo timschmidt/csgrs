@@ -345,7 +345,8 @@ suffice, and support-side branches whose feasibility precheck is
 uncertified are now searched instead of being discarded immediately. The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
-vertex family on the first uncertified candidate. The
+vertex family on the first uncertified candidate, and the leaf/probe-side
+exact halfspace-cell vertex family now does the same. The
 focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. Full
 EMBER plane-replacement

@@ -4054,7 +4054,17 @@ fn active_planes_from_optional_report(
 }
 
 fn feasible_halfspace_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
+    feasible_halfspace_cell_vertices_with_contains(halfspaces, |point, halfspaces| {
+        point_satisfies_halfspaces(point, halfspaces)
+    })
+}
+
+fn feasible_halfspace_cell_vertices_with_contains(
+    halfspaces: &[LimitPlane3],
+    mut contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<Vec<Point3>> {
     let mut vertices = Vec::new();
+    let mut saw_unknown = false;
     for first in 0..halfspaces.len() {
         for second in (first + 1)..halfspaces.len() {
             for third in (second + 1)..halfspaces.len() {
@@ -4066,15 +4076,26 @@ fn feasible_halfspace_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResu
                 let Ok(point) = candidate.to_affine_point() else {
                     continue;
                 };
-                if point_satisfies_halfspaces(&point, halfspaces)?
-                    && !vertices.iter().any(|existing| existing == &point)
-                {
-                    vertices.push(point);
+                match contains(&point, halfspaces) {
+                    Ok(true) => {
+                        if !vertices.iter().any(|existing| existing == &point) {
+                            vertices.push(point);
+                        }
+                    }
+                    Ok(false) => {}
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
                 }
             }
         }
     }
-    Ok(vertices)
+    if vertices.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(vertices)
+    }
 }
 
 fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
@@ -4351,6 +4372,50 @@ mod tests {
                 point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
             );
         }
+    }
+
+    #[test]
+    fn feasible_halfspace_cell_vertices_backtrack_after_uncertified_candidate() {
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(0)),
+            axis_halfspace(0, false, r(0)),
+            axis_halfspace(1, true, r(0)),
+            axis_halfspace(1, false, r(0)),
+            axis_halfspace(2, true, r(0)),
+            axis_halfspace(2, false, r(1)),
+        ];
+        let first = p(0, 0, 0);
+        let second = p(0, 0, 1);
+
+        let vertices = feasible_halfspace_cell_vertices_with_contains(&halfspaces, |point, _| {
+            if point == &first {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                Ok(point == &second)
+            }
+        })
+        .unwrap();
+
+        assert_eq!(vertices, vec![second]);
+    }
+
+    #[test]
+    fn feasible_halfspace_cell_vertices_report_unknown_if_all_candidates_are_uncertified() {
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(0)),
+            axis_halfspace(0, false, r(0)),
+            axis_halfspace(1, true, r(0)),
+            axis_halfspace(1, false, r(0)),
+            axis_halfspace(2, true, r(0)),
+            axis_halfspace(2, false, r(1)),
+        ];
+
+        let err = feasible_halfspace_cell_vertices_with_contains(&halfspaces, |_point, _| {
+            Err(HypermeshError::UnknownClassification)
+        })
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
