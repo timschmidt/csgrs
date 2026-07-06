@@ -96,7 +96,9 @@ instead of silently treating the ordering as merely blocked, and probe
 reachability now also backtracks across uncertified start/end definition pairs
 before giving up on the whole local plane-replacement family, while skipping
 exact duplicate retained-definition plane triples before expanding those local
-pair searches. Probe winding fallback
+pair searches. Probe-family collection now also skips duplicate retained
+definition triples before rerunning the same constrained corridor searches.
+Probe winding fallback
 from retained reference/probe definitions now uses that same bounded detour
 family on its replacement steps as well, again without recursing into another
 plane-replacement layer, and that retained-definition segment search now also

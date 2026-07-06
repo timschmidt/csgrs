@@ -1172,6 +1172,7 @@ fn trace_probe_winding(
     {
         probe_definitions.push(axis_definition);
     }
+    probe_definitions = unique_definition_family(&probe_definitions);
 
     trace_segment_from_definitions_with_step_detoured_plane_replacement(
         ref_point,
@@ -1431,8 +1432,10 @@ fn probe_reaches_adjacent_cell_from_interior(
         &mut start_definitions,
         axis_plane_definition(&interior.point),
     );
+    start_definitions = unique_definition_family(&start_definitions);
     let mut end_definitions = probe.planes.clone();
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
+    end_definitions = unique_definition_family(&end_definitions);
 
     probe_reaches_adjacent_cell_with_definitions_budget(
         &interior.point,
@@ -2876,7 +2879,8 @@ fn collect_normal_probe_targets(
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
     let mut saw_unknown = false;
-    for definition in definitions {
+    let definitions = unique_definition_family(definitions);
+    for definition in &definitions {
         match search(Some(definition)) {
             Ok(found) => {
                 for probe in found {
@@ -3177,7 +3181,8 @@ fn collect_axis_probe_targets(
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
     let mut saw_unknown = false;
-    for definition in definitions {
+    let definitions = unique_definition_family(definitions);
+    for definition in &definitions {
         match search(Some(definition)) {
             Ok(found) => {
                 for probe in found {
@@ -5032,6 +5037,41 @@ mod tests {
     }
 
     #[test]
+    fn collect_normal_probe_targets_skips_duplicate_definition_families() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let mut definition_calls = 0;
+        let mut unrestricted_calls = 0;
+
+        let probes =
+            collect_normal_probe_targets(&[definition.clone(), definition.clone()], |candidate| {
+                match candidate {
+                    Some(found_definition) => {
+                        definition_calls += 1;
+                        assert_eq!(found_definition, &definition);
+                        Ok(vec![ProbePoint {
+                            point: p(0, 0, 1),
+                            side: Classification::Positive,
+                            planes: vec![definition.clone()],
+                        }])
+                    }
+                    None => {
+                        unrestricted_calls += 1;
+                        Ok(Vec::new())
+                    }
+                }
+            })
+            .unwrap();
+
+        assert_eq!(definition_calls, 1);
+        assert_eq!(unrestricted_calls, 1);
+        assert_eq!(probes.len(), 1);
+    }
+
+    #[test]
     fn collect_normal_probe_targets_backtracks_after_uncertified_definition() {
         let definition = [
             Plane::axis_aligned(2, r(0)),
@@ -5176,6 +5216,41 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn collect_axis_probe_targets_skips_duplicate_definition_families() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let mut definition_calls = 0;
+        let mut unrestricted_calls = 0;
+
+        let probes =
+            collect_axis_probe_targets(&[definition.clone(), definition.clone()], |candidate| {
+                match candidate {
+                    Some(found_definition) => {
+                        definition_calls += 1;
+                        assert_eq!(found_definition, &definition);
+                        Ok(vec![ProbePoint {
+                            point: p(1, 0, 0),
+                            side: Classification::Positive,
+                            planes: vec![definition.clone()],
+                        }])
+                    }
+                    None => {
+                        unrestricted_calls += 1;
+                        Ok(Vec::new())
+                    }
+                }
+            })
+            .unwrap();
+
+        assert_eq!(definition_calls, 1);
+        assert_eq!(unrestricted_calls, 1);
+        assert_eq!(probes.len(), 1);
     }
 
     #[test]
