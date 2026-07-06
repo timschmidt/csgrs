@@ -226,8 +226,10 @@ it widens into shifted projected escape cells. Support-cell witnesses are now co
 closed support-side cells by enumerating exact feasible cell vertices and
 asking `hyperlimit` for replayable witnesses inside inward-shifted strict
 cells. When `hyperlimit` already provides a strict feasible witness for the
-closed support cell, hypermesh now tries that richer direct witness first, then
-shifted replayable witnesses built from every available strict support-cell
+closed support cell, hypermesh now tries that richer direct witness first, and
+support-cell search now also accepts the current feasible child/support cell
+before forcing any further support-side assignment, then shifted replayable
+witnesses built from every available strict support-cell
 witness and from every exact feasible support-cell vertex, and finally any
 remaining strict direct witnesses of the closed cell. That lets reference
 propagation backtrack across multiple certified direct and shifted targets

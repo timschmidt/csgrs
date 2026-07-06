@@ -1901,16 +1901,14 @@ fn support_plane_cell_search_from<T>(
 ) -> HypermeshResult<Option<T>> {
     let mut saw_unknown = false;
 
-    if polygon_index > 0 || polygons.is_empty() {
-        if let Some(report) = halfspace_system_report(halfspaces)? {
-            match accept(halfspaces, report) {
-                Ok(Some(target)) => return Ok(Some(target)),
-                Ok(None) => {}
-                Err(crate::error::HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                }
-                Err(err) => return Err(err),
+    if let Some(report) = halfspace_system_report(halfspaces)? {
+        match accept(halfspaces, report) {
+            Ok(Some(target)) => return Ok(Some(target)),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
             }
+            Err(err) => return Err(err),
         }
     }
 
@@ -3938,6 +3936,7 @@ mod tests {
             support_only_polygon(Plane::axis_aligned(1, r(2))),
         ];
         let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let root_halfspace_count = halfspaces.len();
         let mut calls = 0;
 
         let found = support_plane_cell_search_from(
@@ -3945,13 +3944,14 @@ mod tests {
             &polygons,
             0,
             &mut halfspaces,
-            &mut |_halfspaces, _report| {
+            &mut |halfspaces, _report| {
                 calls += 1;
                 if calls == 1 {
+                    assert_eq!(halfspaces.len(), root_halfspace_count);
                     Ok(Some(ReferenceTarget::axis_defined(p(1, 1, 1))))
                 } else {
                     panic!(
-                        "search should have accepted the partially assigned support cell before \
+                        "search should have accepted the current feasible support cell before \
                          exhausting later polygon branches"
                     );
                 }
@@ -3971,6 +3971,8 @@ mod tests {
             support_only_polygon(Plane::axis_aligned(1, r(2))),
         ];
         let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let root_halfspace_count = halfspaces.len();
+        let mut call_halfspace_counts = Vec::new();
         let mut calls = 0;
 
         let found = support_plane_cell_search_from(
@@ -3978,8 +3980,9 @@ mod tests {
             &polygons,
             0,
             &mut halfspaces,
-            &mut |_halfspaces, _report| {
+            &mut |halfspaces, _report| {
                 calls += 1;
+                call_halfspace_counts.push(halfspaces.len());
                 if calls == 1 {
                     Err(crate::error::HypermeshError::UnknownClassification)
                 } else {
@@ -3990,6 +3993,12 @@ mod tests {
         .unwrap();
 
         assert!(calls >= 2);
+        assert_eq!(call_halfspace_counts[0], root_halfspace_count);
+        assert!(
+            call_halfspace_counts[1..]
+                .iter()
+                .any(|count| *count > root_halfspace_count)
+        );
         assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
     }
 
