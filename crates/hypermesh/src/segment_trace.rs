@@ -2629,15 +2629,36 @@ fn collect_normal_probe_targets(
     mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
+    let mut saw_unknown = false;
     for definition in definitions {
-        for probe in search(Some(definition))? {
-            push_unique_probe_point(&mut probes, probe);
+        match search(Some(definition)) {
+            Ok(found) => {
+                for probe in found {
+                    push_unique_probe_point(&mut probes, probe);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
     }
-    for probe in search(None)? {
-        push_unique_probe_point(&mut probes, probe);
+    match search(None) {
+        Ok(found) => {
+            for probe in found {
+                push_unique_probe_point(&mut probes, probe);
+            }
+        }
+        Err(HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
     }
-    Ok(probes)
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(probes)
+    }
 }
 
 fn normal_probe_definition_preserves_support_direction(
@@ -2900,15 +2921,36 @@ fn collect_axis_probe_targets(
     mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
+    let mut saw_unknown = false;
     for definition in definitions {
-        for probe in search(Some(definition))? {
-            push_unique_probe_point(&mut probes, probe);
+        match search(Some(definition)) {
+            Ok(found) => {
+                for probe in found {
+                    push_unique_probe_point(&mut probes, probe);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
     }
-    for probe in search(None)? {
-        push_unique_probe_point(&mut probes, probe);
+    match search(None) {
+        Ok(found) => {
+            for probe in found {
+                push_unique_probe_point(&mut probes, probe);
+            }
+        }
+        Err(HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
     }
-    Ok(probes)
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(probes)
+    }
 }
 
 fn axis_probe_definition_preserves_axis_direction(
@@ -3880,6 +3922,45 @@ mod tests {
     }
 
     #[test]
+    fn collect_normal_probe_targets_backtracks_after_uncertified_definition() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let unrestricted_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+        };
+
+        let probes = collect_normal_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Err(HypermeshError::UnknownClassification),
+            None => Ok(vec![unrestricted_probe.clone()]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].point, unrestricted_probe.point);
+    }
+
+    #[test]
+    fn collect_normal_probe_targets_report_unknown_if_all_families_are_uncertified() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+
+        let err = collect_normal_probe_targets(&[definition], |_candidate| {
+            Err(HypermeshError::UnknownClassification)
+        })
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -3903,6 +3984,45 @@ mod tests {
         assert!(compare_real(&probe.point.x, &r(4)).unwrap().is_lt());
         assert_eq!(probe.point.y, r(1));
         assert_eq!(probe.point.z, r(1));
+    }
+
+    #[test]
+    fn collect_axis_probe_targets_backtracks_after_uncertified_definition() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let unrestricted_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+        };
+
+        let probes = collect_axis_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Err(HypermeshError::UnknownClassification),
+            None => Ok(vec![unrestricted_probe.clone()]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].point, unrestricted_probe.point);
+    }
+
+    #[test]
+    fn collect_axis_probe_targets_report_unknown_if_all_families_are_uncertified() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+
+        let err = collect_axis_probe_targets(&[definition], |_candidate| {
+            Err(HypermeshError::UnknownClassification)
+        })
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

@@ -114,7 +114,10 @@ replay reconstruction fails. Definition-preserving normal-probe search now
 also augments, rather than suppresses, the broader certified normal-corridor
 witness family when both are available, and axis-direction probe search now
 does the same for retained interior definitions whose non-support planes
-preserve the moved axis. The stricter replayable leaf cell
+preserve the moved axis. Both retained-definition probe families now also
+backtrack past uncertified local candidate searches instead of aborting the
+whole local probe-family search on the first `UnknownClassification`. The
+stricter replayable leaf cell
 built from an interior witness now also contributes its own shifted witness
 family and shifted exact vertices instead of collapsing to one witness plus
 raw cell vertices, and the direct strict leaf witness family now also expands
