@@ -1953,6 +1953,33 @@ fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
     )))
 }
 
+fn halfspace_cell_geometry_seed_candidates(
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Vec<Point3>> {
+    let vertices = feasible_halfspace_cell_vertices(halfspaces)?;
+    let mut candidates = Vec::new();
+
+    for first in 0..vertices.len() {
+        for second in (first + 1)..vertices.len() {
+            for third in (second + 1)..vertices.len() {
+                if let Some(center) = centroid(&[
+                    vertices[first].clone(),
+                    vertices[second].clone(),
+                    vertices[third].clone(),
+                ])? {
+                    push_unique_halfspace_seed(&mut candidates, center);
+                }
+            }
+        }
+    }
+
+    if let Some(center) = centroid(&vertices)? {
+        push_unique_halfspace_seed(&mut candidates, center);
+    }
+
+    Ok(candidates)
+}
+
 fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let vertices = leaf.vertices()?;
     if vertices.is_empty() {
@@ -2055,11 +2082,11 @@ fn strict_leaf_witness_seeds(
 ) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = strict_halfspace_cell_seeds_from_report(bounds, halfspaces, report)?;
 
-    if let Some(center) = centroid(&feasible_halfspace_cell_vertices(halfspaces)?)?
-        && point_strictly_inside_leaf(&center, leaf)?
-    {
-        push_unique_halfspace_seed(&mut seeds, center);
-    }
+    extend_strict_halfspace_seeds_backtracking_unknown(
+        &mut seeds,
+        halfspace_cell_geometry_seed_candidates(halfspaces)?,
+        |candidate| point_strictly_inside_leaf(candidate, leaf),
+    )?;
 
     Ok(seeds)
 }
@@ -3695,7 +3722,7 @@ fn probe_axes(support: &Plane) -> HypermeshResult<Vec<usize>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polygon::make_triangle;
+    use crate::polygon::{make_quad, make_triangle};
 
     fn r(value: i32) -> Real {
         value.into()
@@ -3974,7 +4001,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_seeds_include_strict_halfspace_vertex_centroid() {
+    fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
         let bounds = leaf_bounds(&vertices).unwrap();
@@ -3989,6 +4016,24 @@ mod tests {
 
         assert!(point_strictly_inside_leaf(&center, &leaf).unwrap());
         assert!(seeds.iter().any(|seed| seed == &center));
+    }
+
+    #[test]
+    fn strict_leaf_witness_seeds_include_strict_halfspace_geometry_family() {
+        let leaf = make_quad(&p(0, 0, 0), &p(4, 0, 0), &p(4, 4, 0), &p(0, 4, 0), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+        let bounds = leaf_bounds(&vertices).unwrap();
+        let halfspaces = leaf_halfspaces(&leaf);
+        let report = halfspace_feasibility_report(&halfspaces).unwrap();
+        let triangle_center = centroid(&[p(0, 0, 0), p(4, 0, 0), p(4, 4, 0)])
+            .unwrap()
+            .unwrap();
+
+        let seeds =
+            strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, &report).unwrap();
+
+        assert!(point_strictly_inside_leaf(&triangle_center, &leaf).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &triangle_center));
     }
 
     #[test]
