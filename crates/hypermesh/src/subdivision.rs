@@ -318,73 +318,80 @@ fn subdivide_into_inner(
         });
     }
 
-    let (split_axis, split_value) = select_subdivision_split(&task.bounds, &task.polygons)?;
-    let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
-    let left_bounds = task.bounds.left_half(split_axis, split_value.clone());
-    let right_bounds = task.bounds.right_half(split_axis, split_value);
+    let split_candidates = ordered_subdivision_splits(&task.bounds, &task.polygons)?;
+    let certified_output =
+        try_ordered_subdivision_splits(&split_candidates, |split_axis, split_value| {
+            let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
+            let left_bounds = task.bounds.left_half(split_axis, split_value.clone());
+            let right_bounds = task.bounds.right_half(split_axis, split_value.clone());
 
-    let mut left_polys = Vec::with_capacity(task.polygons.len());
-    let mut right_polys = Vec::with_capacity(task.polygons.len());
-    for polygon in &task.polygons {
-        let clipped = clip_polygon(polygon, &split_plane)?;
-        match clipped.side {
-            ClipSide::Left => left_polys.push(polygon.clone()),
-            ClipSide::Right => right_polys.push(polygon.clone()),
-            ClipSide::Both => {
-                left_polys.push(clipped.left);
-                right_polys.push(clipped.right);
+            let mut left_polys = Vec::with_capacity(task.polygons.len());
+            let mut right_polys = Vec::with_capacity(task.polygons.len());
+            for polygon in &task.polygons {
+                let clipped = clip_polygon(polygon, &split_plane)?;
+                match clipped.side {
+                    ClipSide::Left => left_polys.push(polygon.clone()),
+                    ClipSide::Right => right_polys.push(polygon.clone()),
+                    ClipSide::Both => {
+                        left_polys.push(clipped.left);
+                        right_polys.push(clipped.right);
+                    }
+                }
             }
-        }
-    }
 
-    if !left_polys.is_empty() {
-        let (left_ref, left_ref_definitions, left_wnv) = compute_new_reference(
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            &left_bounds,
-            &task.polygons,
-        )?;
-        subdivide_into_inner(
-            SubdivisionTask {
-                polygons: left_polys,
-                bounds: left_bounds,
-                ref_point: left_ref,
-                ref_definitions: left_ref_definitions,
-                ref_wnv: left_wnv,
-                depth: task.depth + 1,
-            },
-            indicator,
-            config,
-            reachability_op,
-            output,
-        )?;
-    }
+            let mut candidate_output = Vec::new();
 
-    if !right_polys.is_empty() {
-        let (right_ref, right_ref_definitions, right_wnv) = compute_new_reference(
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            &right_bounds,
-            &task.polygons,
-        )?;
-        subdivide_into_inner(
-            SubdivisionTask {
-                polygons: right_polys,
-                bounds: right_bounds,
-                ref_point: right_ref,
-                ref_definitions: right_ref_definitions,
-                ref_wnv: right_wnv,
-                depth: task.depth + 1,
-            },
-            indicator,
-            config,
-            reachability_op,
-            output,
-        )?;
-    }
+            if !left_polys.is_empty() {
+                let (left_ref, left_ref_definitions, left_wnv) = compute_new_reference(
+                    &task.ref_point,
+                    &task.ref_definitions,
+                    &task.ref_wnv,
+                    &left_bounds,
+                    &task.polygons,
+                )?;
+                subdivide_into_inner(
+                    SubdivisionTask {
+                        polygons: left_polys,
+                        bounds: left_bounds,
+                        ref_point: left_ref,
+                        ref_definitions: left_ref_definitions,
+                        ref_wnv: left_wnv,
+                        depth: task.depth + 1,
+                    },
+                    indicator,
+                    config,
+                    reachability_op,
+                    &mut candidate_output,
+                )?;
+            }
 
+            if !right_polys.is_empty() {
+                let (right_ref, right_ref_definitions, right_wnv) = compute_new_reference(
+                    &task.ref_point,
+                    &task.ref_definitions,
+                    &task.ref_wnv,
+                    &right_bounds,
+                    &task.polygons,
+                )?;
+                subdivide_into_inner(
+                    SubdivisionTask {
+                        polygons: right_polys,
+                        bounds: right_bounds,
+                        ref_point: right_ref,
+                        ref_definitions: right_ref_definitions,
+                        ref_wnv: right_wnv,
+                        depth: task.depth + 1,
+                    },
+                    indicator,
+                    config,
+                    reachability_op,
+                    &mut candidate_output,
+                )?;
+            }
+
+            Ok(candidate_output)
+        })?;
+    output.extend(certified_output);
     Ok(())
 }
 
@@ -756,48 +763,135 @@ fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
     Ok(false)
 }
 
+#[cfg(test)]
 fn select_subdivision_split(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(usize, Real)> {
-    let (mut best_axis, mut best_value, baseline_counts) = best_midpoint_split(bounds, polygons)?;
-    let mut best_counts = baseline_counts;
-
-    for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
-            continue;
-        }
-        consider_split_candidates(
-            &mut best_axis,
-            &mut best_value,
-            &mut best_counts,
-            axis,
-            arrangement_split_candidates(bounds, polygons, axis)?
-                .into_iter()
-                .map(|(_gap, value)| value),
-            |value| split_child_counts(polygons, axis, value),
-        )?;
-    }
-
-    for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
-            continue;
-        }
-        consider_split_candidates(
-            &mut best_axis,
-            &mut best_value,
-            &mut best_counts,
-            axis,
-            intersection_split_candidates(bounds, polygons, axis)?,
-            |value| split_child_counts(polygons, axis, value),
-        )?;
-    }
-
-    Ok((best_axis, best_value))
+    ordered_subdivision_splits(bounds, polygons)?
+        .into_iter()
+        .next()
+        .ok_or(crate::error::HypermeshError::UnknownClassification)
 }
 
 type SplitCounts = (usize, usize, usize, usize);
 
+#[derive(Clone, Debug, PartialEq)]
+struct SplitCandidate {
+    axis: usize,
+    value: Real,
+    counts: SplitCounts,
+}
+
+fn ordered_subdivision_splits(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<(usize, Real)>> {
+    let mut candidates = Vec::new();
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        push_split_candidate(&mut candidates, polygons, axis, bounds.midpoint(axis))?;
+    }
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        for (_gap, value) in arrangement_split_candidates(bounds, polygons, axis)? {
+            push_split_candidate(&mut candidates, polygons, axis, value)?;
+        }
+    }
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        for value in intersection_split_candidates(bounds, polygons, axis)? {
+            push_split_candidate(&mut candidates, polygons, axis, value)?;
+        }
+    }
+
+    candidates.sort_by(|left, right| left.counts.cmp(&right.counts));
+    Ok(candidates
+        .into_iter()
+        .map(|candidate| (candidate.axis, candidate.value))
+        .collect())
+}
+
+fn push_split_candidate(
+    candidates: &mut Vec<SplitCandidate>,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: Real,
+) -> HypermeshResult<()> {
+    for existing in candidates.iter() {
+        if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
+            return Ok(());
+        }
+    }
+
+    candidates.push(SplitCandidate {
+        axis,
+        counts: split_child_counts(polygons, axis, &value)?,
+        value,
+    });
+    Ok(())
+}
+
+fn try_ordered_subdivision_splits<T>(
+    split_candidates: &[(usize, Real)],
+    mut attempt: impl FnMut(usize, &Real) -> HypermeshResult<T>,
+) -> HypermeshResult<T> {
+    let mut best_failure = None;
+
+    for (axis, value) in split_candidates {
+        match attempt(*axis, value) {
+            Ok(result) => return Ok(result),
+            Err(err) if is_backtrackable_split_error(&err) => {
+                record_split_failure(&mut best_failure, err);
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
+}
+
+fn is_backtrackable_split_error(err: &crate::error::HypermeshError) -> bool {
+    matches!(
+        err,
+        crate::error::HypermeshError::UnknownClassification
+            | crate::error::HypermeshError::ReferencePropagationFailed
+            | crate::error::HypermeshError::SubdivisionDepthLimit { .. }
+    )
+}
+
+fn record_split_failure(
+    best_failure: &mut Option<crate::error::HypermeshError>,
+    candidate: crate::error::HypermeshError,
+) {
+    let candidate_priority = split_failure_priority(&candidate);
+    if best_failure
+        .as_ref()
+        .is_none_or(|existing| candidate_priority > split_failure_priority(existing))
+    {
+        *best_failure = Some(candidate);
+    }
+}
+
+fn split_failure_priority(err: &crate::error::HypermeshError) -> u8 {
+    match err {
+        crate::error::HypermeshError::SubdivisionDepthLimit { .. } => 3,
+        crate::error::HypermeshError::ReferencePropagationFailed => 2,
+        crate::error::HypermeshError::UnknownClassification => 1,
+        _ => 0,
+    }
+}
+
+#[cfg(test)]
 fn consider_split_candidates(
     best_axis: &mut usize,
     best_value: &mut Real,
@@ -817,6 +911,7 @@ fn consider_split_candidates(
     Ok(())
 }
 
+#[cfg(test)]
 fn best_midpoint_split(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -841,6 +936,7 @@ fn best_midpoint_split(
     Ok((best_axis, best_value, best_counts))
 }
 
+#[cfg(test)]
 fn split_counts_strictly_better(candidate: SplitCounts, baseline: SplitCounts) -> bool {
     candidate.0 < baseline.0
         || (candidate.0 == baseline.0
@@ -2646,6 +2742,68 @@ mod tests {
         assert_eq!(best_axis, 0);
         assert_eq!(best_value, r(5));
         assert_eq!(best_counts, (4, 0, 2, 0));
+    }
+
+    #[test]
+    fn ordered_subdivision_splits_rank_best_candidate_first() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+            make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        ];
+
+        let ordered = ordered_subdivision_splits(&bounds, &polygons).unwrap();
+
+        assert!(!ordered.is_empty());
+        assert_eq!(ordered[0], (0, q(3, 2)));
+    }
+
+    #[test]
+    fn ordered_subdivision_split_search_backtracks_after_unknown_candidate() {
+        let candidates = vec![(0, r(1)), (1, r(2))];
+        let mut visited = Vec::new();
+
+        let found = try_ordered_subdivision_splits(&candidates, |axis, value| {
+            visited.push((axis, value.clone()));
+            if axis == 0 {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            } else {
+                Ok((axis, value.clone()))
+            }
+        })
+        .unwrap();
+
+        assert_eq!(visited, candidates);
+        assert_eq!(found, (1, r(2)));
+    }
+
+    #[test]
+    fn ordered_subdivision_split_search_keeps_strongest_failure() {
+        let candidates = vec![(0, r(1)), (1, r(2)), (2, r(3))];
+
+        let err = try_ordered_subdivision_splits(&candidates, |axis, _value| match axis {
+            0 => Err::<(usize, Real), crate::error::HypermeshError>(
+                crate::error::HypermeshError::UnknownClassification,
+            ),
+            1 => Err::<(usize, Real), crate::error::HypermeshError>(
+                crate::error::HypermeshError::ReferencePropagationFailed,
+            ),
+            _ => Err::<(usize, Real), crate::error::HypermeshError>(
+                crate::error::HypermeshError::SubdivisionDepthLimit {
+                    depth: 7,
+                    polygon_count: 11,
+                },
+            ),
+        })
+        .unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::SubdivisionDepthLimit {
+                depth: 7,
+                polygon_count: 11,
+            }
+        );
     }
 
     #[test]

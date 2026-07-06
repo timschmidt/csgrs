@@ -262,9 +262,13 @@ has already improved that midpoint baseline, before keeping the best remaining
 split. Split ranking now also penalizes empty-child cuts explicitly, so a cut
 that leaves all polygons on one side is no longer preferred over a non-empty
 branching cut with the same maximum child load just because it duplicates fewer
-polygons. If a task reaches `max_depth` while it still contains
-more polygons than the leaf threshold and the bounds remain splittable,
-hypermesh attempts to certify the current task as a leaf using the same exact
+polygons. The recursion now backtracks across that ordered exact local split
+family instead of committing to one chosen split candidate: if a higher-ranked
+split hits `UnknownClassification`, `ReferencePropagationFailed`, or
+`SubdivisionDepthLimit`, later exact local split candidates are still tried
+before the task gives up. If a task reaches `max_depth` while the bounds remain
+splittable, hypermesh attempts to certify the current task as a leaf using the
+same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
 checks prove they have no remaining interior segment intersections with local
 polygons; segment intersections are now checked by exact open-interval
@@ -277,11 +281,11 @@ witness when no strict contained vertex exists. Face-local BSP duplicate-overlap
 suppression now uses the same certified leaf witness-family relation instead of
 one centroid-style representative point. Splittable tasks now also try
 that same certified leaf path exactly once before subdivision, regardless of
-leaf-threshold sizing, and if that exact leaf attempt still returns
+former leaf-threshold sizing, and if that exact leaf attempt still returns
 `UnknownClassification` while the bounds remain splittable, hypermesh keeps
-subdividing instead of treating the threshold as a hard completeness boundary.
-That lets exact local arrangement isolation continue past heuristic leaf sizing
-until the depth budget or a certified leaf result stops the branch. Hypermesh reports
+subdividing instead of treating heuristic leaf sizing as a hard completeness
+boundary. That lets exact local arrangement isolation continue until the depth
+budget or a certified leaf result stops the branch. Hypermesh reports
 `SubdivisionDepthLimit` if the configured depth budget is reached before the
 current task can be certified as a leaf, and it reports
 `UnknownClassification` if leaf classification or this isolation check fails
