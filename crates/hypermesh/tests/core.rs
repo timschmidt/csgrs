@@ -821,6 +821,40 @@ fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
 }
 
 #[test]
+fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_closed_meshes() {
+    let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
+    let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
+    let soup = prepare_input(&[left.as_ref(), right.as_ref()]).unwrap();
+    let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6));
+    let ref_point = p(1, 3, 3);
+    let ref_wnv = vec![0; soup.num_meshes];
+    let cases = [
+        (BooleanOp::Union, 8usize),
+        (BooleanOp::Intersection, 0usize),
+        (BooleanOp::Difference, 4usize),
+        (BooleanOp::SymmetricDifference, 8usize),
+    ];
+
+    for (op, expected_count) in cases {
+        let indicator = make_indicator(op, soup.num_meshes);
+        let output = subdivide(
+            SubdivisionTask::new(
+                soup.polygons.clone(),
+                bounds.clone(),
+                ref_point.clone(),
+                ref_wnv.clone(),
+            ),
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+        )
+        .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}"));
+
+        assert_eq!(output.len(), expected_count, "{op:?}");
+        assert!(output.iter().all(|polygon| polygon.winding().is_some()));
+    }
+}
+
+#[test]
 fn disjoint_cube_booleans_have_expected_polygon_counts() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(4, 6);
