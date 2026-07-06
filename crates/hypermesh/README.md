@@ -44,12 +44,12 @@ explicit certification errors.
 Leaf classification currently searches certified off-face probes from exact
 leaf interior points by building strict witness cells along the support normal
 or a support-axis direction inside the open interval before the nearest crossed
-local surface or AABB boundary. The centroid is still used as a deterministic
-seed when needed to derive stricter constructions, but leaf interior targets
-now come only from replayable strict halfspace witnesses and deterministic
-EMBER-style points formed by shifting adjacent edge planes inward and
-intersecting them with the support plane; the implementation no longer falls
-back to treating the naked centroid as a certified leaf witness. If a
+local surface or AABB boundary. Leaf interior targets now first come from the
+closed leaf halfspace cell and its shifted strict witness family, and only if
+that family is exhausted does the implementation fall back to using the vertex
+centroid as a deterministic seed for stricter replayable constructions. The
+implementation no longer falls back to treating the naked centroid as a
+certified leaf witness. If a
 probe lies on a traced surface,
 cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
@@ -75,8 +75,9 @@ instead of collapsing each step back to axis-only endpoint definitions. Probe wi
 from retained reference/probe definitions now uses that same bounded detour
 family on its replacement steps as well, again without recursing into another
 plane-replacement layer. Leaf interior
-construction also asks `hyperlimit` for a strict replayable halfspace witness
-inside the leaf so probe generation can retain multiple certified plane
+construction now asks `hyperlimit` for strict replayable witnesses from the
+closed leaf cell and its shifted witness family before it falls back to a
+centroid seed, so probe generation can retain multiple certified plane
 definitions, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes

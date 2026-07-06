@@ -1819,23 +1819,118 @@ fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
 
 fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let vertices = leaf.vertices()?;
-    let Some(center) = centroid(&vertices)? else {
-        return Ok(Vec::new());
-    };
-
-    if !point_strictly_inside_leaf(&center, leaf)? {
+    if vertices.is_empty() {
         return Ok(Vec::new());
     }
 
-    let mut points = Vec::with_capacity(vertices.len() + 1);
-    for point in strict_leaf_cell_points(leaf, &center)? {
-        push_unique_interior_point(&mut points, point);
+    let mut points = strict_leaf_witness_points(leaf, &vertices)?;
+    if points.is_empty() {
+        if let Some(center) = centroid(&vertices)? {
+            if point_strictly_inside_leaf(&center, leaf)? {
+                for point in strict_leaf_cell_points(leaf, &center)? {
+                    push_unique_interior_point(&mut points, point);
+                }
+                for candidate in shifted_edge_interior_points(leaf, &center)? {
+                    push_unique_interior_point(&mut points, candidate);
+                }
+            }
+        }
     }
-    for candidate in shifted_edge_interior_points(leaf, &center)? {
-        push_unique_interior_point(&mut points, candidate);
+    let witness_points = points
+        .iter()
+        .map(|point| point.point.clone())
+        .collect::<Vec<_>>();
+    for witness in &witness_points {
+        for candidate in shifted_edge_interior_points(leaf, witness)? {
+            push_unique_interior_point(&mut points, candidate);
+        }
     }
 
     Ok(points)
+}
+
+fn strict_leaf_witness_points(
+    leaf: &ConvexPolygon,
+    vertices: &[Point3],
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
+    let bounds = leaf_bounds(vertices)?;
+    let halfspaces = leaf_halfspaces(leaf);
+    let report = halfspace_feasibility_report(&halfspaces)?;
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(Vec::new());
+    }
+
+    let report_witness = report.witness.clone();
+    let mut points = Vec::new();
+
+    for seed in strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)? {
+        let active_planes = if report_witness
+            .as_ref()
+            .is_some_and(|witness| witness == &seed)
+        {
+            report.active_planes
+        } else {
+            [None, None, None]
+        };
+        if let Some(point) = build_strict_leaf_point(leaf, &seed, &halfspaces, active_planes)? {
+            push_unique_interior_point(&mut points, point);
+        }
+
+        for shifted in shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &seed)? {
+            if let Some(point) = build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )? {
+                push_unique_interior_point(&mut points, point);
+            }
+        }
+    }
+
+    for shifted in shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)? {
+        if let Some(point) = build_strict_leaf_point(
+            leaf,
+            &shifted.point,
+            &shifted.halfspaces,
+            shifted.active_planes,
+        )? {
+            push_unique_interior_point(&mut points, point);
+        }
+    }
+
+    Ok(points)
+}
+
+fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
+    let Some(first) = vertices.first() else {
+        return Err(HypermeshError::UnknownClassification);
+    };
+
+    let mut min = first.clone();
+    let mut max = first.clone();
+    for vertex in &vertices[1..] {
+        for axis in 0..3 {
+            if compare_real(axis_ref(vertex, axis), axis_ref(&min, axis))?.is_lt() {
+                *axis_mut(&mut min, axis) = axis_ref(vertex, axis).clone();
+            }
+            if compare_real(axis_ref(vertex, axis), axis_ref(&max, axis))?.is_gt() {
+                *axis_mut(&mut max, axis) = axis_ref(vertex, axis).clone();
+            }
+        }
+    }
+
+    Ok(Aabb::new(min, max))
+}
+
+fn leaf_halfspaces(leaf: &ConvexPolygon) -> Vec<LimitPlane3> {
+    let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
+    halfspaces.push(limit_plane_from_plane(&leaf.support));
+    halfspaces.push(limit_plane_from_plane(&leaf.support.inverted()));
+    for edge in &leaf.edges {
+        halfspaces.push(limit_plane_from_plane(edge));
+    }
+    halfspaces
 }
 
 #[cfg(test)]
@@ -3449,6 +3544,21 @@ mod tests {
         for interior in &interiors {
             assert!(point_strictly_inside_leaf(&interior.point, &leaf).unwrap());
         }
+    }
+
+    #[test]
+    fn strict_leaf_witness_points_include_shifted_leaf_vertices_without_centroid_seed() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+
+        let interiors = strict_leaf_witness_points(&leaf, &vertices).unwrap();
+
+        assert!(
+            interiors
+                .iter()
+                .any(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
+        );
+        assert!(interiors.iter().all(|point| !point.planes.is_empty()));
     }
 
     #[test]
