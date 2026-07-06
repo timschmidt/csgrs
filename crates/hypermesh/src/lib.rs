@@ -48,6 +48,7 @@
 //! that invariant directly on the classified polygon arrangement before any
 //! triangulation cleanup runs.
 
+#![deny(dead_code)]
 #![warn(missing_docs)]
 
 pub mod bvh;

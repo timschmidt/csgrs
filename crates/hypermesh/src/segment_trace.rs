@@ -438,30 +438,6 @@ fn definition_pair_trace_backtracking_unknown(
 }
 
 #[cfg(test)]
-fn trace_segment_with_detours_without_plane_replacement(
-    start: &Point3,
-    end: &Point3,
-    winding: &[i32],
-    polygons: &[ConvexPolygon],
-    remaining_detours: usize,
-) -> HypermeshResult<Option<WindingNumberVector>> {
-    let mut trace_without_detours = |start: &Point3, end: &Point3, winding: &[i32]| {
-        trace_segment_without_detours(start, end, winding, polygons)
-    };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    trace_segment_with_detours_without_plane_replacement_impl(
-        start,
-        end,
-        winding,
-        polygons,
-        remaining_detours,
-        &mut trace_without_detours,
-        &mut detours_for,
-    )
-}
-
-#[cfg(test)]
 fn trace_segment_with_detours_without_plane_replacement_impl(
     start: &Point3,
     end: &Point3,
@@ -643,6 +619,7 @@ fn axis_plane_defined_point(point: &Point3) -> PlaneDefinedPoint {
     }
 }
 
+#[cfg(test)]
 fn retryable_trace<T>(result: HypermeshResult<T>) -> HypermeshResult<Option<T>> {
     match result {
         Ok(value) => Ok(Some(value)),
@@ -1762,78 +1739,6 @@ fn definition_pair_reachability_backtracking_unknown(
     } else {
         Ok(false)
     }
-}
-
-#[cfg(test)]
-fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
-    start: &Point3,
-    end: &Point3,
-    host_support: &Plane,
-    polygons: &[ConvexPolygon],
-    remaining_detours: usize,
-) -> HypermeshResult<bool> {
-    let mut trace_without_detours = |start: &Point3, end: &Point3| {
-        probe_reaches_adjacent_cell(start, end, host_support, polygons)
-    };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
-        start,
-        end,
-        polygons,
-        remaining_detours,
-        &mut trace_without_detours,
-        &mut detours_for,
-    )
-}
-
-#[cfg(test)]
-fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
-    start: &Point3,
-    end: &Point3,
-    polygons: &[ConvexPolygon],
-    remaining_detours: usize,
-    trace_without_detours: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<bool>,
-    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
-) -> HypermeshResult<bool> {
-    if trace_without_detours(start, end)? {
-        return Ok(true);
-    }
-
-    if remaining_detours == 0 {
-        return Ok(false);
-    }
-
-    for detour in detours_for(start, end)? {
-        if detour.point == *start
-            || detour.point == *end
-            || point_lies_on_traced_surface(&detour.point, polygons)?
-        {
-            continue;
-        }
-        if !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
-            start,
-            &detour.point,
-            polygons,
-            remaining_detours - 1,
-            trace_without_detours,
-            detours_for,
-        )? {
-            continue;
-        }
-        if probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
-            &detour.point,
-            end,
-            polygons,
-            remaining_detours - 1,
-            trace_without_detours,
-            detours_for,
-        )? {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
 }
 
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
@@ -3578,6 +3483,56 @@ fn normal_stop_halfspace(plane: &Plane, stop_point: &Point3, positive_side: bool
     }
 }
 
+#[cfg(test)]
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    remaining_detours: usize,
+    trace_without_detours: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    if trace_without_detours(start, end)? {
+        return Ok(true);
+    }
+
+    if remaining_detours == 0 {
+        return Ok(false);
+    }
+
+    for detour in detours_for(start, end)? {
+        if detour.point == *start
+            || detour.point == *end
+            || point_lies_on_traced_surface(&detour.point, polygons)?
+        {
+            continue;
+        }
+        if !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            start,
+            &detour.point,
+            polygons,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
+        )? {
+            continue;
+        }
+        if probe_reaches_adjacent_cell_with_detours_without_plane_replacement_impl(
+            &detour.point,
+            end,
+            polygons,
+            remaining_detours - 1,
+            trace_without_detours,
+            detours_for,
+        )? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+#[cfg(test)]
 fn strict_halfspace_cell_seeds_from_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3787,6 +3742,7 @@ fn shifted_halfspace_cell_witnesses_from_seed(
     }
 }
 
+#[cfg(test)]
 fn shifted_halfspace_cell_vertex_witnesses(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3800,6 +3756,7 @@ fn shifted_halfspace_cell_vertex_witnesses(
     Ok(witnesses)
 }
 
+#[cfg(test)]
 fn shifted_halfspace_cell_geometry_witnesses(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3908,6 +3865,7 @@ fn shifted_halfspace_witness_family_or_empty(
     }
 }
 
+#[cfg(test)]
 fn halfspace_feasibility_report(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<hyperlimit::HalfspaceFeasibilityReport> {
