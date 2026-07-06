@@ -57,6 +57,21 @@ struct ProbeWindingCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct ProbeSurfaceCacheEntry {
+    point: Point3,
+    on_surface: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ProbeReachabilityCacheEntry {
+    interior_point: Point3,
+    interior_planes: Vec<[Plane; 3]>,
+    probe_point: Point3,
+    probe_planes: Vec<[Plane; 3]>,
+    reachable: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -1120,16 +1135,25 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
     host_delta_w: &[i32],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut probe_winding_cache = Vec::new();
+    let mut probe_surface_cache = Vec::new();
+    let mut probe_reachability_cache = Vec::new();
     search_leaf_probe_families(
         interior_points,
         |point, positive_side| {
             bounded_probes_from_interior(point, support, bounds, positive_side, polygons)
         },
         |point, _positive_side, probe| {
-            if point_lies_on_traced_surface(&probe.point, polygons)? {
+            if cached_probe_surface_with(&mut probe_surface_cache, &probe.point, || {
+                point_lies_on_traced_surface(&probe.point, polygons)
+            })? {
                 return Ok(None);
             }
-            if !probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons)? {
+            if !cached_probe_reachability_with(
+                &mut probe_reachability_cache,
+                point,
+                &probe,
+                || probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons),
+            )? {
                 return Ok(None);
             }
             let mut winding = cached_probe_winding_with(&mut probe_winding_cache, &probe, || {
@@ -1163,6 +1187,49 @@ fn cached_probe_winding_with(
         winding: winding.clone(),
     });
     winding
+}
+
+fn cached_probe_surface_with(
+    cache: &mut Vec<ProbeSurfaceCacheEntry>,
+    point: &Point3,
+    query: impl FnOnce() -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache.iter().find(|existing| existing.point == *point) {
+        return existing.on_surface.clone();
+    }
+
+    let on_surface = query();
+    cache.push(ProbeSurfaceCacheEntry {
+        point: point.clone(),
+        on_surface: on_surface.clone(),
+    });
+    on_surface
+}
+
+fn cached_probe_reachability_with(
+    cache: &mut Vec<ProbeReachabilityCacheEntry>,
+    interior: &InteriorLeafPoint,
+    probe: &ProbePoint,
+    query: impl FnOnce() -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.interior_point == interior.point
+            && existing.interior_planes == interior.planes
+            && existing.probe_point == probe.point
+            && existing.probe_planes == probe.planes
+    }) {
+        return existing.reachable.clone();
+    }
+
+    let reachable = query();
+    cache.push(ProbeReachabilityCacheEntry {
+        interior_point: interior.point.clone(),
+        interior_planes: interior.planes.clone(),
+        probe_point: probe.point.clone(),
+        probe_planes: probe.planes.clone(),
+        reachable: reachable.clone(),
+    });
+    reachable
 }
 
 fn search_leaf_probe_families<'a>(
@@ -5078,6 +5145,54 @@ mod tests {
         assert_eq!(calls, 1);
         assert_eq!(first, vec![7]);
         assert_eq!(second, vec![7]);
+    }
+
+    #[test]
+    fn cached_probe_surface_and_reachability_reuse_equivalent_queries() {
+        let definition = axis_plane_definition(&p(1, 2, 3));
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![axis_plane_definition(&p(0, 0, 0))],
+        };
+        let probe = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Positive,
+            planes: vec![definition],
+        };
+        let mut surface_cache = Vec::new();
+        let mut reachability_cache = Vec::new();
+        let mut surface_calls = 0;
+        let mut reachability_calls = 0;
+
+        let first_surface = cached_probe_surface_with(&mut surface_cache, &probe.point, || {
+            surface_calls += 1;
+            Ok(false)
+        })
+        .unwrap();
+        let second_surface = cached_probe_surface_with(&mut surface_cache, &probe.point, || {
+            surface_calls += 1;
+            Ok(true)
+        })
+        .unwrap();
+        let first_reachability =
+            cached_probe_reachability_with(&mut reachability_cache, &interior, &probe, || {
+                reachability_calls += 1;
+                Ok(true)
+            })
+            .unwrap();
+        let second_reachability =
+            cached_probe_reachability_with(&mut reachability_cache, &interior, &probe, || {
+                reachability_calls += 1;
+                Ok(false)
+            })
+            .unwrap();
+
+        assert_eq!(surface_calls, 1);
+        assert!(!first_surface);
+        assert!(!second_surface);
+        assert_eq!(reachability_calls, 1);
+        assert!(first_reachability);
+        assert!(second_reachability);
     }
 
     #[test]
