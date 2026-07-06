@@ -1135,18 +1135,14 @@ fn projected_reference_escape_targets(
     halfspaces: &[LimitPlane3],
     projected_targets: &[ReferenceTarget],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    if !projected_targets.is_empty() {
+    let Some(report) = halfspace_system_report(halfspaces)? else {
+        return Ok(projected_targets.to_vec());
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
         return Ok(projected_targets.to_vec());
     }
 
-    let Some(report) = halfspace_system_report(halfspaces)? else {
-        return Ok(Vec::new());
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
-        return Ok(Vec::new());
-    }
-
-    let mut targets = Vec::new();
+    let mut targets = projected_targets.to_vec();
 
     if let Some(witness) = &report.witness
         && point_satisfies_halfspaces(witness, halfspaces)?
@@ -2819,6 +2815,20 @@ mod tests {
             assert_eq!(axis_ref(&target.point, 1), &r(2));
             assert!(point_satisfies_halfspaces(&target.point, &halfspaces).unwrap());
         }
+    }
+
+    #[test]
+    fn projected_reference_escape_targets_extend_direct_projected_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = projected_reference_halfspaces(&p(-2, 2, 7), &bounds).unwrap();
+        let direct = ReferenceTarget::axis_defined(p(2, 2, 2));
+
+        let targets =
+            projected_reference_escape_targets(&bounds, &halfspaces, std::slice::from_ref(&direct))
+                .unwrap();
+
+        assert!(targets.iter().any(|target| target.point == direct.point));
+        assert!(targets.len() > 1);
     }
 
     #[test]

@@ -115,7 +115,9 @@ child cell that preserves every axis already strict in the parent reference,
 then asks `hyperlimit` for strict witnesses and exact feasible vertices in that
 projected cell before tracing from the parent reference. If the first
 projected target family is exhausted, later certified projected escape
-witnesses are now also retried by direct tracing before the implementation
+witnesses now augment that direct projected target family rather than being
+discarded when direct projected targets already exist, and they are retried by
+direct tracing before the implementation
 relaxes into escape search. If those projected
 targets still cannot be traced directly, the implementation next tries local
 support-side cell search inside that same certified projected cell before it
