@@ -304,7 +304,10 @@ longer aborts the cell before later certified targets are tried. The outer
 projected direct/escape search also no longer retraces the exact same
 projected target just because it appears in both the direct and escape
 families; it skips that duplicate direct trace and proceeds straight to the
-escape-specific searches for that target. The outer
+escape-specific searches for that target. For one projected target, the later
+axis-corridor and tight escape-box searches now also reuse the same exact
+axis stop families instead of recomputing those surface-crossing families
+independently before each escape layer. The outer
 support-cell wrapper now also treats an uncertified root feasibility check as
 another local backtracking point instead of aborting support propagation before
 later support-side branches are explored.
