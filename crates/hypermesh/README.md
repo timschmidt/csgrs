@@ -324,7 +324,10 @@ whole local target builder before later exact families run. As with the
 projected-child families, those candidate-local skips now surface
 `UnknownClassification` when an entire local projected/support seed or target
 family is uncertified and no certified witness survives, rather than silently
-degenerating that family to empty.
+degenerating that family to empty. When those shifted target builders receive
+overlapping strict-seed, exact-vertex, and geometry-seed families, they now
+dedupe those seeds in first-occurrence order before rerunning the same shifted
+cell construction from multiple equivalent points.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh

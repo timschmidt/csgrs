@@ -1376,6 +1376,11 @@ fn projected_reference_escape_targets_from_optional_report(
         support_cell_geometry_seed_candidates(halfspaces),
         &mut saw_unknown,
     )?;
+    let mut shifted_seed_search_order = Vec::new();
+    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
+    let shifted_geometry_seeds =
+        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
@@ -1392,11 +1397,11 @@ fn projected_reference_escape_targets_from_optional_report(
                 },
             ),
             deferred_projected_escape_direct_targets(
-                &strict_seeds,
+                &strict_shift_seeds,
                 report_witness.as_ref(),
                 halfspaces,
             ),
-            collect_reference_target_family(strict_seeds, |seed| {
+            collect_reference_target_family(strict_shift_seeds, |seed| {
                 projected_escape_targets_from_seed(bounds, halfspaces, &seed)
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
@@ -2497,9 +2502,14 @@ fn strict_projected_cell_targets_from_optional_report(
         support_cell_geometry_seed_candidates(halfspaces),
         &mut saw_unknown,
     )?;
+    let mut shifted_seed_search_order = Vec::new();
+    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
+    let shifted_geometry_seeds =
+        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.and_then(|report| report.witness.clone());
     let mut deferred_direct_targets = Vec::new();
-    for seed in &strict_seeds {
+    for seed in &strict_shift_seeds {
         if !report_witness
             .as_ref()
             .is_some_and(|witness| witness == seed)
@@ -2523,7 +2533,7 @@ fn strict_projected_cell_targets_from_optional_report(
                     )
                 },
             ),
-            collect_reference_target_family(strict_seeds, |seed| {
+            collect_reference_target_family(strict_shift_seeds, |seed| {
                 shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
@@ -2612,6 +2622,11 @@ fn shifted_projected_cell_targets_from_seed(
         support_cell_geometry_seed_candidates(&shifted),
         &mut saw_unknown,
     )?;
+    let mut shifted_seed_search_order = Vec::new();
+    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
+    let shifted_geometry_seeds =
+        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.as_ref().and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
@@ -2627,7 +2642,7 @@ fn shifted_projected_cell_targets_from_seed(
                     )
                 },
             ),
-            collect_reference_target_family(strict_seeds, |witness| {
+            collect_reference_target_family(strict_shift_seeds, |witness| {
                 if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
@@ -2830,9 +2845,14 @@ fn strict_support_cell_targets_from_optional_report(
         support_cell_geometry_seed_candidates(halfspaces),
         &mut saw_unknown,
     )?;
+    let mut shifted_seed_search_order = Vec::new();
+    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
+    let shifted_geometry_seeds =
+        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.and_then(|report| report.witness.clone());
     let mut deferred_direct_targets = Vec::new();
-    for seed in &strict_seeds {
+    for seed in &strict_shift_seeds {
         if !report_witness
             .as_ref()
             .is_some_and(|witness| witness == seed)
@@ -2856,7 +2876,7 @@ fn strict_support_cell_targets_from_optional_report(
                     )
                 },
             ),
-            collect_reference_target_family(strict_seeds, |seed| {
+            collect_reference_target_family(strict_shift_seeds, |seed| {
                 shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
@@ -2951,6 +2971,18 @@ fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
     if !points.iter().any(|existing| existing == &point) {
         points.push(point);
     }
+}
+
+fn take_new_point_family(points: Vec<Point3>, seen: &mut Vec<Point3>) -> Vec<Point3> {
+    let mut fresh = Vec::new();
+    for point in points {
+        if seen.iter().any(|existing| existing == &point) {
+            continue;
+        }
+        seen.push(point.clone());
+        fresh.push(point);
+    }
+    fresh
 }
 
 fn point3_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
@@ -3056,6 +3088,11 @@ fn shifted_support_cell_targets_from_seed(
         support_cell_geometry_seed_candidates(&shifted),
         &mut saw_unknown,
     )?;
+    let mut shifted_seed_search_order = Vec::new();
+    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
+    let shifted_geometry_seeds =
+        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.as_ref().and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
@@ -3071,7 +3108,7 @@ fn shifted_support_cell_targets_from_seed(
                     )
                 },
             ),
-            collect_reference_target_family(strict_seeds, |witness| {
+            collect_reference_target_family(strict_shift_seeds, |witness| {
                 if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
@@ -5504,6 +5541,18 @@ mod tests {
                 .iter()
                 .any(definition_uses_non_axis_plane)
         );
+    }
+
+    #[test]
+    fn take_new_point_family_preserves_first_occurrence_order() {
+        let mut seen = vec![p(0, 0, 0)];
+        let fresh = take_new_point_family(
+            vec![p(1, 0, 0), p(0, 0, 0), p(2, 0, 0), p(1, 0, 0)],
+            &mut seen,
+        );
+
+        assert_eq!(fresh, vec![p(1, 0, 0), p(2, 0, 0)]);
+        assert_eq!(seen, vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)]);
     }
 
     #[test]
