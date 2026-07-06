@@ -56,6 +56,23 @@ impl ClassifiedPolygon {
     }
 }
 
+pub(crate) fn push_unique_classified_polygon(
+    classified: &mut Vec<ClassifiedPolygon>,
+    candidate: ClassifiedPolygon,
+) {
+    if let Some(existing) = classified.iter_mut().find(|existing| {
+        existing.classification == candidate.classification
+            && polygons_match_output_geometry(&existing.polygon, &candidate.polygon)
+    }) {
+        if existing.winding.is_none() {
+            existing.winding = candidate.winding;
+        }
+        existing.is_bsp_fragment |= candidate.is_bsp_fragment;
+        return;
+    }
+    classified.push(candidate);
+}
+
 /// Result of a boolean operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BooleanResult {
@@ -1102,6 +1119,37 @@ mod tests {
                 w_back: vec![1],
             })]
         );
+    }
+
+    #[test]
+    fn push_unique_classified_polygon_merges_duplicate_classified_output() {
+        let mut output = Vec::new();
+        let first = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            1,
+        );
+        let mut second = ClassifiedPolygon::new(
+            make_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 3),
+            1,
+        );
+        second.winding = Some(WindingPair {
+            w_front: vec![2],
+            w_back: vec![3],
+        });
+        second.is_bsp_fragment = true;
+
+        push_unique_classified_polygon(&mut output, first);
+        push_unique_classified_polygon(&mut output, second);
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(
+            output[0].winding,
+            Some(WindingPair {
+                w_front: vec![2],
+                w_back: vec![3],
+            })
+        );
+        assert!(output[0].is_bsp_fragment);
     }
 
     #[test]

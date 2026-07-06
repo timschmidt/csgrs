@@ -8,7 +8,7 @@ use crate::geometry::{
 };
 use crate::intersection::{PairwiseIntersection, PairwiseIntersectionType, intersect_polygons};
 use crate::local_bsp::LocalBsp;
-use crate::output::ClassifiedPolygon;
+use crate::output::{ClassifiedPolygon, push_unique_classified_polygon};
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, certified_leaf_interior_points,
@@ -224,7 +224,7 @@ fn process_leaf_into_inner(
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });
                 classified.is_bsp_fragment = true;
-                output.push(classified);
+                push_unique_classified_polygon(output, classified);
                 stats.bsp_fragment_count += 1;
             }
         }
@@ -523,7 +523,7 @@ fn emit_one_direct(
     if classification != 0 {
         let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);
         classified.winding = Some(WindingPair { w_front, w_back });
-        output.push(classified);
+        push_unique_classified_polygon(output, classified);
         return Ok(true);
     }
     Ok(false)
