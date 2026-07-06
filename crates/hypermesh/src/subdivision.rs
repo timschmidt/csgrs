@@ -2114,6 +2114,29 @@ fn cached_halfspace_feasibility_with(
     feasible
 }
 
+#[derive(Clone)]
+struct ReferenceTargetTraceCacheEntry {
+    target: ReferenceTarget,
+    winding: HypermeshResult<Option<Vec<i32>>>,
+}
+
+fn cached_reference_target_trace_with(
+    cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
+    target: &ReferenceTarget,
+    trace: impl FnOnce(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+) -> HypermeshResult<Option<Vec<i32>>> {
+    if let Some(existing) = cache.iter().find(|existing| existing.target == *target) {
+        return existing.winding.clone();
+    }
+
+    let winding = trace(target);
+    cache.push(ReferenceTargetTraceCacheEntry {
+        target: target.clone(),
+        winding: winding.clone(),
+    });
+    winding
+}
+
 type ProjectionEscapeAxisOptions = Vec<(Vec<Real>, Vec<Real>)>;
 
 #[derive(Clone)]
@@ -2392,6 +2415,8 @@ fn support_plane_cell_reference_with_queries(
         return Ok(None);
     }
 
+    let trace_cache = std::cell::RefCell::new(Vec::new());
+
     let initial_feasible_unknown = match feasible_for(halfspaces) {
         Ok(true) => false,
         Ok(false) => return Ok(None),
@@ -2406,13 +2431,19 @@ fn support_plane_cell_reference_with_queries(
             strict_support_cell_targets_from_optional_report(bounds, halfspaces, report.as_ref())?,
             polygons,
             |target| {
-                trace_reference_target(
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
-                    bounds,
-                    polygons,
+                cached_reference_target_trace_with(
+                    &mut trace_cache.borrow_mut(),
                     target,
+                    |target| {
+                        trace_reference_target(
+                            old_ref,
+                            old_ref_definitions,
+                            old_wnv,
+                            bounds,
+                            polygons,
+                            target,
+                        )
+                    },
                 )
             },
         )
@@ -5708,6 +5739,27 @@ mod tests {
         let second = cached_halfspace_feasibility_with(&mut cache, &halfspaces, |_halfspaces| {
             calls += 1;
             Ok(false)
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_reference_target_trace_reuses_identical_target() {
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_reference_target_trace_with(&mut cache, &target, |_target| {
+            calls += 1;
+            Ok(Some(vec![17]))
+        })
+        .unwrap();
+        let second = cached_reference_target_trace_with(&mut cache, &target, |_target| {
+            calls += 1;
+            Ok(Some(vec![99]))
         })
         .unwrap();
 

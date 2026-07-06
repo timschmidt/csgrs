@@ -436,7 +436,9 @@ later unchanged recursion through repeated fixed support-plane states is
 skipped entirely. Identical support halfspace states now also reuse cached
 feasibility/report queries at the live support-reference boundary instead of
 reissuing the same exact halfspace query family each time that state is
-revisited. The
+revisited, and repeated retained-definition trace attempts on the same support
+target are now reused at that same boundary instead of retracing identical
+reference targets when support states converge. The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
 reject that target afterward. The
