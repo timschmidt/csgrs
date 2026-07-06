@@ -1892,18 +1892,6 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
     }
 
     let mut points = strict_leaf_witness_points(leaf, &vertices)?;
-    if points.is_empty() {
-        if let Some(center) = centroid(&vertices)? {
-            if point_strictly_inside_leaf(&center, leaf)? {
-                for point in strict_leaf_cell_points(leaf, &center)? {
-                    push_unique_interior_point(&mut points, point);
-                }
-                for candidate in shifted_edge_interior_points(leaf, &center)? {
-                    push_unique_interior_point(&mut points, candidate);
-                }
-            }
-        }
-    }
     let witness_points = points
         .iter()
         .map(|point| point.point.clone())
@@ -1964,6 +1952,17 @@ fn strict_leaf_witness_points(
             shifted.active_planes,
         )? {
             push_unique_interior_point(&mut points, point);
+        }
+    }
+
+    if let Some(center) = centroid(vertices)?
+        && point_strictly_inside_leaf(&center, leaf)?
+    {
+        for point in strict_leaf_cell_points(leaf, &center)? {
+            push_unique_interior_point(&mut points, point);
+        }
+        for candidate in shifted_edge_interior_points(leaf, &center)? {
+            push_unique_interior_point(&mut points, candidate);
         }
     }
 
@@ -3629,7 +3628,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_points_include_shifted_leaf_vertices_without_centroid_seed() {
+    fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
 
