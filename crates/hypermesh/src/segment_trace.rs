@@ -1988,6 +1988,16 @@ fn strict_leaf_witness_points(
         }
     }
 
+    let direct_witnesses = points
+        .iter()
+        .map(|point| point.point.clone())
+        .collect::<Vec<_>>();
+    for witness in direct_witnesses {
+        for point in strict_leaf_cell_points(leaf, &witness)? {
+            push_unique_interior_point(&mut points, point);
+        }
+    }
+
     if let Some(center) = centroid(vertices)?
         && point_strictly_inside_leaf(&center, leaf)?
     {
@@ -3939,6 +3949,49 @@ mod tests {
                 .any(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
         );
         assert!(interiors.iter().all(|point| !point.planes.is_empty()));
+    }
+
+    #[test]
+    fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+        let bounds = leaf_bounds(&vertices).unwrap();
+        let halfspaces = leaf_halfspaces(&leaf);
+        let report = halfspace_feasibility_report(&halfspaces).unwrap();
+        let report_witness = report.witness.clone();
+        let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        let mut direct_points = Vec::new();
+        for seed in &seeds {
+            let active_planes = if report_witness.as_ref().is_some_and(|point| point == seed) {
+                report.active_planes
+            } else {
+                [None, None, None]
+            };
+            if let Some(point) =
+                build_strict_leaf_point(&leaf, seed, &halfspaces, active_planes).unwrap()
+            {
+                direct_points.push(point.point);
+            }
+        }
+
+        let mut stricter_points = Vec::new();
+        for point in &direct_points {
+            for stricter in strict_leaf_cell_points(&leaf, point).unwrap() {
+                if !direct_points.iter().any(|direct| direct == &stricter.point) {
+                    stricter_points.push(stricter.point);
+                }
+            }
+        }
+
+        let interiors = strict_leaf_witness_points(&leaf, &vertices).unwrap();
+
+        assert!(!stricter_points.is_empty());
+        assert!(
+            stricter_points
+                .iter()
+                .any(|point| interiors.iter().any(|interior| &interior.point == point))
+        );
     }
 
     #[test]
