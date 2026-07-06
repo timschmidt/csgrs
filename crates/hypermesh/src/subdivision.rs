@@ -3670,44 +3670,50 @@ mod tests {
     }
 
     #[test]
-    fn alternate_support_reference_matches_general_union_result() {
+    fn alternate_support_reference_matches_general_boolean_results() {
         let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
         let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
         let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
         let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
-        let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+        let refs = [x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()];
 
-        let classified = subdivide(
-            SubdivisionTask::new(
-                soup.polygons.clone(),
-                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
-                p(0, 5, 5),
-                vec![0; soup.num_meshes],
-            ),
-            &indicator,
-            SubdivisionConfig { max_depth: 4 },
-        )
-        .unwrap();
-
-        let alternate_result = BooleanResult::from_classified(
-            PolygonSoup {
-                polygons: Vec::new(),
-                bounds: soup.bounds.clone(),
-                num_meshes: soup.num_meshes,
-            },
-            classified,
-        );
-        let alternate_soup = triangulate_and_resolve_certified(&alternate_result).unwrap();
-
-        let general_result = boolean_operation(
-            &[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()],
+        for op in [
             BooleanOp::Union,
-            EmberConfig { max_depth: 4 },
-        )
-        .unwrap();
-        let general_soup = triangulate_and_resolve_certified(&general_result).unwrap();
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::SymmetricDifference,
+        ] {
+            let indicator = make_indicator(op, soup.num_meshes);
+            let classified = subdivide(
+                SubdivisionTask::new(
+                    soup.polygons.clone(),
+                    Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                    p(0, 5, 5),
+                    vec![0; soup.num_meshes],
+                ),
+                &indicator,
+                SubdivisionConfig { max_depth: 4 },
+            )
+            .unwrap_or_else(|err| panic!("alternate {op:?} failed: {err:?}"));
 
-        assert_same_shape(&alternate_soup, &general_soup);
+            let alternate_result = BooleanResult::from_classified(
+                PolygonSoup {
+                    polygons: Vec::new(),
+                    bounds: soup.bounds.clone(),
+                    num_meshes: soup.num_meshes,
+                },
+                classified,
+            );
+            let alternate_soup = triangulate_and_resolve_certified(&alternate_result)
+                .unwrap_or_else(|err| panic!("alternate triangulation {op:?} failed: {err:?}"));
+
+            let general_result = boolean_operation(&refs, op, EmberConfig { max_depth: 4 })
+                .unwrap_or_else(|err| panic!("general {op:?} failed: {err:?}"));
+            let general_soup = triangulate_and_resolve_certified(&general_result)
+                .unwrap_or_else(|err| panic!("general triangulation {op:?} failed: {err:?}"));
+
+            assert_same_shape(&alternate_soup, &general_soup);
+        }
     }
 
     #[test]
