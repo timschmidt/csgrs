@@ -241,7 +241,15 @@ pub fn subdivide(
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    subdivide_into_inner(task, indicator, config, None, &mut output)?;
+    let mut process_leaf = process_leaf_task_into;
+    subdivide_into_inner_with(
+        task,
+        indicator,
+        config,
+        None,
+        &mut output,
+        &mut process_leaf,
+    )?;
     Ok(output)
 }
 
@@ -252,7 +260,15 @@ pub(crate) fn subdivide_for_operation(
     op: BooleanOp,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    subdivide_into_inner(task, indicator, config, Some(op), &mut output)?;
+    let mut process_leaf = process_leaf_task_into;
+    subdivide_into_inner_with(
+        task,
+        indicator,
+        config,
+        Some(op),
+        &mut output,
+        &mut process_leaf,
+    )?;
     Ok(output)
 }
 
@@ -268,17 +284,30 @@ pub fn subdivide_into(
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<()> {
     let mut certified_output = Vec::new();
-    subdivide_into_inner(task, indicator, config, None, &mut certified_output)?;
+    let mut process_leaf = process_leaf_task_into;
+    subdivide_into_inner_with(
+        task,
+        indicator,
+        config,
+        None,
+        &mut certified_output,
+        &mut process_leaf,
+    )?;
     output.extend(certified_output);
     Ok(())
 }
 
-fn subdivide_into_inner(
+fn subdivide_into_inner_with(
     task: SubdivisionTask,
     indicator: &Indicator,
     config: SubdivisionConfig,
     reachability_op: Option<BooleanOp>,
     output: &mut Vec<ClassifiedPolygon>,
+    process_leaf: &mut impl FnMut(
+        &SubdivisionTask,
+        &Indicator,
+        &mut Vec<ClassifiedPolygon>,
+    ) -> HypermeshResult<LeafProcessingStats>,
 ) -> HypermeshResult<()> {
     if task.polygons.is_empty() {
         return Ok(());
@@ -292,21 +321,17 @@ fn subdivide_into_inner(
 
     let can_split = can_split_bounds(&task.bounds)?;
 
-    if let Some(certified_output) = certified_leaf_output_if_complete(&task, indicator)? {
-        output.extend(certified_output);
+    if !can_split {
+        process_leaf(&task, indicator, output)?;
         return Ok(());
     }
 
-    if !can_split {
-        process_leaf_into(
-            &task.polygons,
-            &task.bounds,
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            indicator,
-            output,
-        )?;
+    if let Some(certified_output) =
+        certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+            process_leaf(task, indicator, output)
+        })?
+    {
+        output.extend(certified_output);
         return Ok(());
     }
 
@@ -348,7 +373,7 @@ fn subdivide_into_inner(
                     &left_bounds,
                     &task.polygons,
                 )?;
-                subdivide_into_inner(
+                subdivide_into_inner_with(
                     SubdivisionTask {
                         polygons: left_polys,
                         bounds: left_bounds,
@@ -361,6 +386,7 @@ fn subdivide_into_inner(
                     config,
                     reachability_op,
                     &mut candidate_output,
+                    process_leaf,
                 )?;
             }
 
@@ -372,7 +398,7 @@ fn subdivide_into_inner(
                     &right_bounds,
                     &task.polygons,
                 )?;
-                subdivide_into_inner(
+                subdivide_into_inner_with(
                     SubdivisionTask {
                         polygons: right_polys,
                         bounds: right_bounds,
@@ -385,6 +411,7 @@ fn subdivide_into_inner(
                     config,
                     reachability_op,
                     &mut candidate_output,
+                    process_leaf,
                 )?;
             }
 
@@ -394,21 +421,20 @@ fn subdivide_into_inner(
     Ok(())
 }
 
-fn certified_leaf_output_if_complete(
+fn process_leaf_task_into(
     task: &SubdivisionTask,
     indicator: &Indicator,
-) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
-    certified_leaf_output_if_complete_with(task, indicator, |task, indicator, output| {
-        process_leaf_into(
-            &task.polygons,
-            &task.bounds,
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            indicator,
-            output,
-        )
-    })
+    output: &mut Vec<ClassifiedPolygon>,
+) -> HypermeshResult<LeafProcessingStats> {
+    process_leaf_into(
+        &task.polygons,
+        &task.bounds,
+        &task.ref_point,
+        &task.ref_definitions,
+        &task.ref_wnv,
+        indicator,
+        output,
+    )
 }
 
 fn certified_leaf_output_if_complete_with(
@@ -1195,6 +1221,7 @@ fn compute_new_reference(
     reference_result_or_error(projected, support, projected_unknown)
 }
 
+#[cfg(test)]
 fn reference_target_family_or_empty(
     result: HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
@@ -1219,6 +1246,7 @@ fn reference_target_family_or_empty_tracking_unknown(
     }
 }
 
+#[cfg(test)]
 fn projected_reference_search_or_none(
     result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
@@ -4750,6 +4778,36 @@ mod tests {
 
         assert_eq!(attempts, 1);
         assert_eq!(output, None);
+    }
+
+    #[test]
+    fn unsplittable_subdivision_runs_leaf_processor_once() {
+        let task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(0, 0, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let indicator = crate::winding::make_indicator(BooleanOp::Union, 1);
+        let mut attempts = 0;
+        let mut output = Vec::new();
+
+        let err = subdivide_into_inner_with(
+            task,
+            &indicator,
+            SubdivisionConfig { max_depth: 0 },
+            None,
+            &mut output,
+            &mut |_task, _indicator, _output| {
+                attempts += 1;
+                Err(crate::error::HypermeshError::UnknownClassification)
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(attempts, 1);
+        assert!(output.is_empty());
     }
 
     #[test]

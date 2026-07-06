@@ -2164,6 +2164,7 @@ fn leaf_witness_seed_families(
     }
 }
 
+#[cfg(test)]
 fn strict_leaf_witness_seeds(
     leaf: &ConvexPolygon,
     vertices: &[Point3],
@@ -3562,6 +3563,7 @@ fn strict_halfspace_cell_seeds_from_report(
     strict_halfspace_cell_seeds_from_optional_report(bounds, halfspaces, Some(report))
 }
 
+#[cfg(test)]
 fn strict_halfspace_cell_seeds_from_optional_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
