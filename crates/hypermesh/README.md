@@ -146,7 +146,9 @@ deduping overlapping strict-seed, exact-vertex, and geometry-seed inputs in
 first-occurrence order before rerunning the same shifted witness-cell
 construction from equivalent points, and the halfspace-cell seed builders now
 reuse one exact feasible-vertex / geometry-seed family per local cell before
-widening into shifted witness-cell search,
+widening into shifted witness-cell search. The leaf-witness builders now reuse
+that same raw local family instead of recomputing feasible vertices and
+geometry seeds after deriving strict leaf seeds,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,

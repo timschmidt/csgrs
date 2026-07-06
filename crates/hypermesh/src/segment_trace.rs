@@ -2064,10 +2064,8 @@ fn strict_leaf_witness_points(
     }
 
     let mut points = Vec::new();
-    let seeds = halfspace_seed_family_or_empty(
-        strict_leaf_witness_seeds(leaf, vertices, &bounds, &halfspaces, report.as_ref()),
-        &mut saw_unknown,
-    )?;
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        leaf_witness_seed_families(leaf, vertices, &bounds, &halfspaces, report.as_ref())?;
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
@@ -2079,11 +2077,7 @@ fn strict_leaf_witness_points(
             let mut shifted_witnesses = Vec::new();
             extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
-                [
-                    seeds,
-                    feasible_halfspace_cell_vertices(&halfspaces)?,
-                    halfspace_cell_geometry_seed_candidates(&halfspaces)?,
-                ],
+                [seeds, shifted_vertices, shifted_geometry_seeds],
                 |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
             )?;
             Ok(shifted_witnesses)
@@ -2119,28 +2113,27 @@ fn strict_leaf_witness_points(
     }
 }
 
-fn strict_leaf_witness_seeds(
+fn leaf_witness_seed_families(
     leaf: &ConvexPolygon,
     _vertices: &[Point3],
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
-) -> HypermeshResult<Vec<Point3>> {
-    let mut seeds = Vec::new();
+) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let mut saw_unknown = false;
-
-    let generic_seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_optional_report(bounds, halfspaces, report),
-        &mut saw_unknown,
-    )?;
-    for seed in generic_seeds {
-        push_unique_halfspace_seed(&mut seeds, seed);
-    }
+    let (generic_seeds, shifted_vertices, shifted_geometry_seeds) =
+        halfspace_cell_seed_families_from_optional_report(
+            bounds,
+            halfspaces,
+            report,
+            &mut saw_unknown,
+        )?;
+    let mut seeds = generic_seeds;
 
     extend_strict_halfspace_seed_families_backtracking_unknown(
         &mut seeds,
         [collect_strict_halfspace_seed_family(
-            halfspace_cell_geometry_seed_candidates(halfspaces),
+            Ok(shifted_geometry_seeds.clone()),
             |candidate| point_strictly_inside_leaf(candidate, leaf),
         )],
     )?;
@@ -2148,8 +2141,19 @@ fn strict_leaf_witness_seeds(
     if seeds.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
-        Ok(seeds)
+        Ok((seeds, shifted_vertices, shifted_geometry_seeds))
     }
+}
+
+fn strict_leaf_witness_seeds(
+    leaf: &ConvexPolygon,
+    vertices: &[Point3],
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<Point3>> {
+    leaf_witness_seed_families(leaf, vertices, bounds, halfspaces, report)
+        .map(|(seeds, _shifted_vertices, _shifted_geometry_seeds)| seeds)
 }
 
 fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
