@@ -433,7 +433,10 @@ Support-cell search now also prunes any state that already forces the
 reference onto a local support plane before report or acceptance queries run,
 and once the current halfspace state already fixes a polygon's support side,
 later unchanged recursion through repeated fixed support-plane states is
-skipped entirely. The
+skipped entirely. Identical support halfspace states now also reuse cached
+feasibility/report queries at the live support-reference boundary instead of
+reissuing the same exact halfspace query family each time that state is
+revisited. The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
 reject that target afterward. The

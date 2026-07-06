@@ -2060,6 +2060,60 @@ fn point3_family_or_empty(
     }
 }
 
+#[derive(Clone)]
+struct HalfspaceReportCacheEntry {
+    halfspaces: Vec<LimitPlane3>,
+    report: HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>>,
+}
+
+fn cached_halfspace_report_with(
+    cache: &mut Vec<HalfspaceReportCacheEntry>,
+    halfspaces: &[LimitPlane3],
+    query: impl FnOnce(
+        &[LimitPlane3],
+    ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>>,
+) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.halfspaces == halfspaces)
+    {
+        return existing.report.clone();
+    }
+
+    let report = query(halfspaces);
+    cache.push(HalfspaceReportCacheEntry {
+        halfspaces: halfspaces.to_vec(),
+        report: report.clone(),
+    });
+    report
+}
+
+#[derive(Clone)]
+struct HalfspaceFeasibilityCacheEntry {
+    halfspaces: Vec<LimitPlane3>,
+    feasible: HypermeshResult<bool>,
+}
+
+fn cached_halfspace_feasibility_with(
+    cache: &mut Vec<HalfspaceFeasibilityCacheEntry>,
+    halfspaces: &[LimitPlane3],
+    query: impl FnOnce(&[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.halfspaces == halfspaces)
+    {
+        return existing.feasible.clone();
+    }
+
+    let feasible = query(halfspaces);
+    cache.push(HalfspaceFeasibilityCacheEntry {
+        halfspaces: halfspaces.to_vec(),
+        feasible: feasible.clone(),
+    });
+    feasible
+}
+
 type ProjectionEscapeAxisOptions = Vec<(Vec<Real>, Vec<Real>)>;
 
 #[derive(Clone)]
@@ -2298,6 +2352,8 @@ fn support_plane_cell_reference_with_halfspaces(
     polygons: &[ConvexPolygon],
     mut halfspaces: Vec<LimitPlane3>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let report_cache = std::cell::RefCell::new(Vec::new());
+    let feasible_cache = std::cell::RefCell::new(Vec::new());
     support_plane_cell_reference_with_queries(
         old_ref,
         old_ref_definitions,
@@ -2305,8 +2361,18 @@ fn support_plane_cell_reference_with_halfspaces(
         bounds,
         polygons,
         &mut halfspaces,
-        &mut |halfspaces| halfspace_system_report(halfspaces),
-        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut |halfspaces| {
+            cached_halfspace_report_with(&mut report_cache.borrow_mut(), halfspaces, |halfspaces| {
+                halfspace_system_report(halfspaces)
+            })
+        },
+        &mut |halfspaces| {
+            cached_halfspace_feasibility_with(
+                &mut feasible_cache.borrow_mut(),
+                halfspaces,
+                |halfspaces| halfspace_system_is_feasible(halfspaces),
+            )
+        },
     )
 }
 
@@ -5594,6 +5660,54 @@ mod tests {
         let second = cached_projection_escape_axis_options_with(&mut cache, &projected, || {
             calls += 1;
             Ok(vec![(vec![r(0)], vec![r(6)]); 3])
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_halfspace_report_reuses_identical_state() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_halfspace_report_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(1, 1, 1),
+                [None, None, None],
+            )))
+        })
+        .unwrap();
+        let second = cached_halfspace_report_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(2, 2, 2),
+                [Some(0), None, None],
+            )))
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_halfspace_feasibility_reuses_identical_state() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_halfspace_feasibility_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(true)
+        })
+        .unwrap();
+        let second = cached_halfspace_feasibility_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(false)
         })
         .unwrap();
 
