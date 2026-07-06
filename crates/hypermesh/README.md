@@ -163,7 +163,9 @@ probe point/definition family repeatedly across probe sides or repeated probe
 families. Equivalent per-leaf probe surface-hit checks and retained-definition
 probe reachability checks are now likewise cached by exact probe and
 interior/probe definition families instead of being recomputed for repeated
-local probe families,
+local probe families, and repeated detour-point surface-hit checks inside the
+live segment/probe detour searches now reuse the same exact local surface test
+instead of rerunning it for duplicate detour points,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,

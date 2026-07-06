@@ -59,7 +59,7 @@ struct ProbeWindingCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct ProbeSurfaceCacheEntry {
+struct SurfaceCacheEntry {
     point: Point3,
     on_surface: HypermeshResult<bool>,
 }
@@ -349,10 +349,13 @@ fn trace_segment_via_detours_with_definitions_budget(
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let mut saw_unknown = false;
+    let mut surface_cache = Vec::new();
     for detour in detours {
         if detour.point == *start
             || detour.point == *end
-            || point_lies_on_traced_surface(&detour.point, polygons)?
+            || cached_surface_query_with(&mut surface_cache, &detour.point, || {
+                point_lies_on_traced_surface(&detour.point, polygons)
+            })?
         {
             if detour.uncertified_definition_fallback {
                 saw_unknown = true;
@@ -1149,7 +1152,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
             bounded_probes_from_interior(point, support, bounds, positive_side, polygons)
         },
         |point, _positive_side, probe| {
-            if cached_probe_surface_with(&mut probe_surface_cache, &probe.point, || {
+            if cached_surface_query_with(&mut probe_surface_cache, &probe.point, || {
                 point_lies_on_traced_surface(&probe.point, polygons)
             })? {
                 return Ok(None);
@@ -1195,8 +1198,8 @@ fn cached_probe_winding_with(
     winding
 }
 
-fn cached_probe_surface_with(
-    cache: &mut Vec<ProbeSurfaceCacheEntry>,
+fn cached_surface_query_with(
+    cache: &mut Vec<SurfaceCacheEntry>,
     point: &Point3,
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
@@ -1205,7 +1208,7 @@ fn cached_probe_surface_with(
     }
 
     let on_surface = query();
-    cache.push(ProbeSurfaceCacheEntry {
+    cache.push(SurfaceCacheEntry {
         point: point.clone(),
         on_surface: on_surface.clone(),
     });
@@ -1720,10 +1723,13 @@ fn probe_reaches_adjacent_cell_via_detours_with_budget(
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
+    let mut surface_cache = Vec::new();
     for detour in detours_for(start, end)? {
         if detour.point == *start
             || detour.point == *end
-            || point_lies_on_traced_surface(&detour.point, polygons)?
+            || cached_surface_query_with(&mut surface_cache, &detour.point, || {
+                point_lies_on_traced_surface(&detour.point, polygons)
+            })?
         {
             if detour.uncertified_definition_fallback {
                 saw_unknown = true;
@@ -5237,7 +5243,7 @@ mod tests {
     }
 
     #[test]
-    fn cached_probe_surface_and_reachability_reuse_equivalent_queries() {
+    fn cached_surface_and_probe_reachability_reuse_equivalent_queries() {
         let definition = axis_plane_definition(&p(1, 2, 3));
         let interior = InteriorLeafPoint {
             point: p(0, 0, 0),
@@ -5255,12 +5261,12 @@ mod tests {
         let mut surface_calls = 0;
         let mut reachability_calls = 0;
 
-        let first_surface = cached_probe_surface_with(&mut surface_cache, &probe.point, || {
+        let first_surface = cached_surface_query_with(&mut surface_cache, &probe.point, || {
             surface_calls += 1;
             Ok(false)
         })
         .unwrap();
-        let second_surface = cached_probe_surface_with(&mut surface_cache, &probe.point, || {
+        let second_surface = cached_surface_query_with(&mut surface_cache, &probe.point, || {
             surface_calls += 1;
             Ok(true)
         })
