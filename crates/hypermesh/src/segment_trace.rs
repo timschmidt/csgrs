@@ -3490,6 +3490,11 @@ fn strict_halfspace_cell_seeds_from_report(
         feasible_halfspace_cell_vertices(halfspaces)?,
         |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
     )?;
+    extend_strict_halfspace_seeds_backtracking_unknown(
+        &mut seeds,
+        halfspace_cell_geometry_seed_candidates(halfspaces)?,
+        |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
+    )?;
 
     Ok(seeds)
 }
@@ -4025,6 +4030,20 @@ mod tests {
         let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seeds_include_strict_geometry_seeds() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            Point3::new(r(0), r(0), r(0)),
+            [None, None, None],
+        );
+
+        let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(seeds.iter().any(|seed| seed == &p(2, 2, 2)));
     }
 
     #[test]
@@ -5522,7 +5541,7 @@ mod tests {
     }
 
     #[test]
-    fn probe_reachability_surfaces_unknown_when_arrangement_detour_needs_uncertified_replacement_leg() {
+    fn probe_reachability_uses_geometry_seeded_arrangement_detour_replacement_leg() {
         let host_support = Plane::axis_aligned(2, r(0));
         let start = p(0, 0, 0);
         let end = p(4, 4, 4);
@@ -5543,7 +5562,7 @@ mod tests {
         }
 
         assert!(!probe_reaches_adjacent_cell(&start, &end, &host_support, &blockers).unwrap());
-        assert_eq!(
+        assert!(
             probe_reaches_adjacent_cell_via_detours(
                 &start,
                 &end,
@@ -5552,8 +5571,7 @@ mod tests {
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
             )
-            .unwrap_err(),
-            HypermeshError::UnknownClassification
+            .unwrap()
         );
     }
 

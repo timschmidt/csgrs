@@ -101,16 +101,17 @@ quietly collapsing that local family to an empty witness set.
 definitions, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes
-its own strict feasibility witness and exact feasible vertices rather than a
-centroid seed family or one chosen feasibility witness. Normal- and axis-direction probe
-witnesses now do the same for their strict witness cells instead of keeping
-only a hand-built definition family, and they now reuse any strict closed-cell
-feasibility witness that `hyperlimit` already provides before falling back to
-additional shifted-cell witnesses. Those shifted witness searches now also
-start from the exact feasible vertices of the local witness cell rather than a
-centroid seed family, and each shifted witness cell now contributes its own
-strict witness family and exact feasible vertices instead of collapsing to one
-chosen feasibility witness. Axis-direction probes are now
+its own strict feasibility witness, exact feasible vertices, and exact
+closed-cell geometry seeds rather than a centroid seed family or one chosen
+feasibility witness. Normal- and axis-direction probe witnesses now do the
+same for their strict witness cells instead of keeping only a hand-built
+definition family, and they now reuse any strict closed-cell feasibility
+witness that `hyperlimit` already provides before falling back to additional
+shifted-cell witnesses. Those shifted witness searches now also start from the
+exact feasible vertices and exact closed-cell geometry seeds of the local
+witness cell rather than a centroid seed family, and each shifted witness cell
+now contributes its own strict witness family and exact feasible vertices
+instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
 rather than by midpoint sampling. Full
