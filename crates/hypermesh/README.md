@@ -112,7 +112,10 @@ replay fails. Certified endpoint-box detour witnesses now also retain exact
 axis-defined target definitions instead of being dropped when richer probe
 replay reconstruction fails. Definition-preserving normal-probe search now
 also augments, rather than suppresses, the broader certified normal-corridor
-witness family when both are available.
+witness family when both are available. The stricter replayable leaf cell
+built from an interior witness now also contributes its own shifted witness
+family and shifted exact vertices instead of collapsing to one witness plus
+raw cell vertices.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.

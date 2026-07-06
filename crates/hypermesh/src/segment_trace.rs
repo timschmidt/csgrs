@@ -2149,6 +2149,8 @@ fn strict_leaf_cell_points(
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
+    let vertices = leaf.vertices()?;
+    let bounds = leaf_bounds(&vertices)?;
     let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
     halfspaces.push(limit_plane_from_plane(&leaf.support));
@@ -2173,18 +2175,46 @@ fn strict_leaf_cell_points(
     }
 
     let mut points = Vec::new();
-    if let Some(witness) = report.witness.as_ref()
-        && let Some(point) =
-            build_strict_leaf_point(leaf, witness, &halfspaces, report.active_planes)?
-    {
-        push_unique_interior_point(&mut points, point);
+    let report_witness = report.witness.clone();
+    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)?;
+    for witness in &seeds {
+        let active_planes = if report_witness
+            .as_ref()
+            .is_some_and(|point| point == witness)
+        {
+            report.active_planes
+        } else {
+            [None, None, None]
+        };
+        if let Some(point) = build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)? {
+            push_unique_interior_point(&mut points, point);
+        }
     }
 
-    let vertices = feasible_halfspace_cell_vertices(&halfspaces)?;
-    for witness in vertices {
-        if let Some(point) =
-            build_strict_leaf_point(leaf, &witness, &halfspaces, [None, None, None])?
-        {
+    let mut shifted_witnesses = Vec::new();
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut shifted_witnesses,
+        seeds,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+    )?;
+    for shifted in shifted_witnesses {
+        if let Some(point) = build_strict_leaf_point(
+            leaf,
+            &shifted.point,
+            &shifted.halfspaces,
+            shifted.active_planes,
+        )? {
+            push_unique_interior_point(&mut points, point);
+        }
+    }
+
+    for shifted in shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)? {
+        if let Some(point) = build_strict_leaf_point(
+            leaf,
+            &shifted.point,
+            &shifted.halfspaces,
+            shifted.active_planes,
+        )? {
             push_unique_interior_point(&mut points, point);
         }
     }
@@ -3843,20 +3873,44 @@ mod tests {
     fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let center = p(1, 1, 1);
+        let vertices = leaf.vertices().unwrap();
+        let bounds = leaf_bounds(&vertices).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let mut halfspaces = vec![
+            limit_plane_from_plane(&leaf.support),
+            limit_plane_from_plane(&leaf.support.inverted()),
+        ];
+        for edge in &leaf.edges {
+            let margin = edge.expression_at_point(&center);
+            halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
+                edge, &margin, &half,
+            )));
+        }
+
+        let report = halfspace_feasibility_report(&halfspaces).unwrap();
+        let report_witness = report.witness.clone();
+        let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+        let mut direct_points = Vec::new();
+        for seed in seeds {
+            let active_planes = if report_witness.as_ref().is_some_and(|point| point == &seed) {
+                report.active_planes
+            } else {
+                [None, None, None]
+            };
+            if let Some(point) =
+                build_strict_leaf_point(&leaf, &seed, &halfspaces, active_planes).unwrap()
+            {
+                direct_points.push(point.point);
+            }
+        }
 
         let interiors = strict_leaf_cell_points(&leaf, &center).unwrap();
+        let shifted = interiors
+            .iter()
+            .find(|point| !direct_points.iter().any(|direct| direct == &point.point))
+            .expect("shifted strict leaf witness family should extend direct seed points");
 
-        assert!(
-            interiors
-                .iter()
-                .any(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
-        );
-        assert!(
-            interiors
-                .iter()
-                .find(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
-                .is_some_and(|point| !point.planes.is_empty())
-        );
+        assert!(!shifted.planes.is_empty());
     }
 
     #[test]
