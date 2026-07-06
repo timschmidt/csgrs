@@ -152,7 +152,7 @@ const AXIS_ORDERINGS: [[usize; 3]; 6] = [
     [2, 1, 0],
 ];
 
-const DETOUR_RECURSION_LIMIT: usize = 2;
+const MIN_DETOUR_RECURSION_LIMIT: usize = 2;
 const PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
 
 /// Traces an axis-aligned polyline using several axis orderings and returns
@@ -190,7 +190,7 @@ pub(crate) fn trace_segment_from_definitions(
         polygons,
         start_definitions,
         end_definitions,
-        DETOUR_RECURSION_LIMIT,
+        detour_recursion_limit(polygons),
     )
 }
 
@@ -1402,6 +1402,15 @@ fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [P
     }
 }
 
+fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
+    MIN_DETOUR_RECURSION_LIMIT.max(
+        polygons
+            .iter()
+            .filter(|polygon| polygon.mesh_index >= 0)
+            .count(),
+    )
+}
+
 fn probe_reaches_adjacent_cell(
     start: &Point3,
     probe: &Point3,
@@ -1475,7 +1484,7 @@ fn probe_reaches_adjacent_cell_from_interior(
         polygons,
         &start_definitions,
         &end_definitions,
-        DETOUR_RECURSION_LIMIT,
+        detour_recursion_limit(polygons),
     )
 }
 
@@ -1598,7 +1607,7 @@ fn probe_reaches_adjacent_cell_via_detours(
         polygons,
         start_definitions,
         end_definitions,
-        DETOUR_RECURSION_LIMIT,
+        detour_recursion_limit(polygons),
         &mut trace_without_detours,
         &mut detours_for,
     )
@@ -6902,6 +6911,78 @@ mod tests {
         )
         .unwrap();
         assert_eq!(with_nested, vec![0]);
+    }
+
+    #[test]
+    fn detour_recursion_limit_scales_with_local_polygon_count() {
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
+            make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        ];
+
+        assert_eq!(detour_recursion_limit(&[]), 2);
+        assert_eq!(detour_recursion_limit(&polygons), 3);
+    }
+
+    #[test]
+    fn polygon_scaled_detour_budget_allows_two_nested_detours() {
+        let start = p(0, 0, 0);
+        let inner = p(1, 0, 0);
+        let outer = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let polygons = vec![
+            make_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
+            make_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
+            make_triangle(&p(0, 10, 2), &p(1, 10, 2), &p(0, 11, 2), 0, 2),
+        ];
+        let outer_target = DetourTarget {
+            point: outer.clone(),
+            definitions: vec![axis_plane_definition(&outer)],
+        };
+        let inner_target = DetourTarget {
+            point: inner.clone(),
+            definitions: vec![axis_plane_definition(&inner)],
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             winding: &[i32],
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                if (*from == start && *to == inner)
+                    || (*from == inner && *to == outer)
+                    || (*from == outer && *to == end)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else {
+                    Ok(None)
+                }
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![outer_target.clone()])
+            } else if *from == start && *to == outer {
+                Ok(vec![inner_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let traced = trace_segment_from_definitions_with_budget_impl(
+            &start,
+            &end,
+            &[0],
+            &polygons,
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            detour_recursion_limit(&polygons),
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap();
+
+        assert_eq!(traced, vec![0]);
     }
 
     #[test]

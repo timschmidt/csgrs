@@ -278,7 +278,9 @@ Those detour witnesses now also retain replayable plane definitions, and
 chosen detour legs retry certified plane-replacement traces from those
 definitions after the axis-ordered/direct leg search fails. Retained-definition
 segment tracing now also allows a bounded nested detour retry on those legs
-instead of collapsing every detour leg to the no-detour family immediately. If none trace
+instead of collapsing every detour leg to the no-detour family immediately,
+and that detour budget now scales with the local real-polygon count instead of
+using one fixed global recursion constant. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples, and projected / projected-escape
