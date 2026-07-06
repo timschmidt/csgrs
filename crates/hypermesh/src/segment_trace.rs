@@ -869,11 +869,14 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
             &mut targets,
             DetourTarget {
                 point: seed.clone(),
-                definitions: probe_definitions_from_active_halfspaces(
+                definitions: probe_definitions_or_axis(
                     &seed,
-                    &halfspaces,
-                    active_planes,
-                    &[],
+                    probe_definitions_from_active_halfspaces(
+                        &seed,
+                        &halfspaces,
+                        active_planes,
+                        &[],
+                    ),
                 )?,
             },
         );
@@ -883,11 +886,14 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
                 &mut targets,
                 DetourTarget {
                     point: point.clone(),
-                    definitions: probe_definitions_from_active_halfspaces(
+                    definitions: probe_definitions_or_axis(
                         &point,
-                        &witness.halfspaces,
-                        witness.active_planes,
-                        &[],
+                        probe_definitions_from_active_halfspaces(
+                            &point,
+                            &witness.halfspaces,
+                            witness.active_planes,
+                            &[],
+                        ),
                     )?,
                 },
             );
@@ -900,11 +906,14 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
             &mut targets,
             DetourTarget {
                 point: point.clone(),
-                definitions: probe_definitions_from_active_halfspaces(
+                definitions: probe_definitions_or_axis(
                     &point,
-                    &witness.halfspaces,
-                    witness.active_planes,
-                    &[],
+                    probe_definitions_from_active_halfspaces(
+                        &point,
+                        &witness.halfspaces,
+                        witness.active_planes,
+                        &[],
+                    ),
                 )?,
             },
         );
@@ -2362,6 +2371,17 @@ fn probe_definitions_from_active_halfspaces(
     Ok(definitions)
 }
 
+fn probe_definitions_or_axis(
+    witness: &Point3,
+    result: HypermeshResult<Vec<[Plane; 3]>>,
+) -> HypermeshResult<Vec<[Plane; 3]>> {
+    match result {
+        Ok(planes) => Ok(planes),
+        Err(HypermeshError::UnknownClassification) => Ok(vec![axis_plane_definition(witness)]),
+        Err(err) => Err(err),
+    }
+}
+
 fn push_verified_probe_definition(
     definitions: &mut Vec<[Plane; 3]>,
     definition: [Plane; 3],
@@ -2807,16 +2827,15 @@ fn build_probe_point(
     Ok(Some(ProbePoint {
         point: witness.clone(),
         side,
-        planes: match probe_definitions_from_active_halfspaces(
+        planes: probe_definitions_or_axis(
             witness,
-            halfspaces,
-            active_planes,
-            &all_extra_planes,
-        ) {
-            Ok(planes) => planes,
-            Err(HypermeshError::UnknownClassification) => vec![axis_plane_definition(witness)],
-            Err(err) => return Err(err),
-        },
+            probe_definitions_from_active_halfspaces(
+                witness,
+                halfspaces,
+                active_planes,
+                &all_extra_planes,
+            ),
+        )?,
     }))
 }
 
@@ -2839,18 +2858,10 @@ fn build_axis_probe_point(
     Ok(Some(ProbePoint {
         point: witness.clone(),
         side,
-        planes: match axis_probe_definitions(
-            interior,
-            support,
-            axis,
-            halfspaces,
-            active_planes,
+        planes: probe_definitions_or_axis(
             witness,
-        ) {
-            Ok(planes) => planes,
-            Err(HypermeshError::UnknownClassification) => vec![axis_plane_definition(witness)],
-            Err(err) => return Err(err),
-        },
+            axis_probe_definitions(interior, support, axis, halfspaces, active_planes, witness),
+        )?,
     }))
 }
 
@@ -3674,6 +3685,17 @@ mod tests {
         for definition in &definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
+    }
+
+    #[test]
+    fn probe_definitions_or_axis_falls_back_to_axis_definition() {
+        let witness = p(1, 2, 3);
+
+        let definitions =
+            probe_definitions_or_axis(&witness, Err(HypermeshError::UnknownClassification))
+                .unwrap();
+
+        assert_eq!(definitions, vec![axis_plane_definition(&witness)]);
     }
 
     #[test]

@@ -103,7 +103,9 @@ points whose richer active-plane replay fails are now still retained as exact
 axis-defined interior witnesses rather than forcing an immediate centroid-seed
 fallback, and the same axis-defined retention now applies to certified normal
 and axis probe witnesses instead of discarding them when richer probe-plane
-replay fails.
+replay fails. Certified endpoint-box detour witnesses now also retain exact
+axis-defined target definitions instead of being dropped when richer probe
+replay reconstruction fails.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.
