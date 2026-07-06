@@ -2073,6 +2073,23 @@ fn halfspace_cell_geometry_seed_candidates(
         }
     }
 
+    for first in 0..vertices.len() {
+        for second in (first + 1)..vertices.len() {
+            for third in (second + 1)..vertices.len() {
+                for fourth in (third + 1)..vertices.len() {
+                    if let Some(center) = centroid(&[
+                        vertices[first].clone(),
+                        vertices[second].clone(),
+                        vertices[third].clone(),
+                        vertices[fourth].clone(),
+                    ])? {
+                        push_unique_halfspace_seed(&mut candidates, center);
+                    }
+                }
+            }
+        }
+    }
+
     if let Some(center) = centroid(&vertices)? {
         push_unique_halfspace_seed(&mut candidates, center);
     }
@@ -4234,10 +4251,12 @@ mod tests {
             Point3::new(r(0), r(0), r(0)),
             [None, None, None],
         );
+        let tetra_center = p(1, 1, 1);
 
         let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert!(seeds.iter().any(|seed| seed == &p(2, 2, 2)));
+        assert!(seeds.iter().any(|seed| seed == &tetra_center));
     }
 
     #[test]

@@ -48,8 +48,8 @@ local surface or AABB boundary. Leaf interior targets now first come from the
 closed leaf halfspace cell and its shifted strict witness family, and that
 same witness family now also includes stricter replayable constructions seeded
 from exact closed leaf halfspace-cell geometry: strict direct witnesses,
-shifted witnesses, exact shifted vertices, and strict triangle/full centroids
-of the feasible closed-cell vertices instead of running a separate centroid
+shifted witnesses, exact shifted vertices, and strict triangle/tetra/full
+centroids of the feasible closed-cell vertices instead of running a separate centroid
 fallback branch afterward. The implementation no longer falls back to treating
 the naked centroid as a certified leaf witness. If a
 probe lies on a traced surface,
@@ -174,7 +174,8 @@ points and not on local surfaces. Otherwise hypermesh builds the projected
 child cell that preserves every axis already strict in the parent reference,
 then asks `hyperlimit` for strict witnesses, exact feasible vertices, and exact
 closed-cell geometry seeds derived from those feasible vertices in that
-projected cell before tracing from the parent reference. If the first
+projected cell, including tetra/full centroids when that projected cell is
+full-dimensional, before tracing from the parent reference. If the first
 projected target family is exhausted, later certified projected escape
 witnesses now augment that direct projected target family rather than being
 discarded when direct projected targets already exist, and they are retried by

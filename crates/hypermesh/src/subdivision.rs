@@ -2615,6 +2615,23 @@ fn support_cell_geometry_seed_candidates(
         }
     }
 
+    for first in 0..vertices.len() {
+        for second in (first + 1)..vertices.len() {
+            for third in (second + 1)..vertices.len() {
+                for fourth in (third + 1)..vertices.len() {
+                    if let Some(center) = point3_centroid(&[
+                        vertices[first].clone(),
+                        vertices[second].clone(),
+                        vertices[third].clone(),
+                        vertices[fourth].clone(),
+                    ])? {
+                        push_unique_point3(&mut candidates, center);
+                    }
+                }
+            }
+        }
+    }
+
     if let Some(center) = point3_centroid(&vertices)? {
         push_unique_point3(&mut candidates, center);
     }
@@ -4642,13 +4659,16 @@ mod tests {
         let report =
             hyperlimit::HalfspaceFeasibilityReport::feasible(Point3::origin(), [None, None, None]);
         let triangle_center = Point3::new(q(4, 3), q(4, 3), q(8, 3));
+        let tetra_center = p(1, 1, 1);
 
         let seeds = strict_projected_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert!(
             point_strictly_inside_projected_cell(&triangle_center, &bounds, &halfspaces).unwrap()
         );
+        assert!(point_strictly_inside_projected_cell(&tetra_center, &bounds, &halfspaces).unwrap());
         assert!(seeds.iter().any(|seed| seed == &triangle_center));
+        assert!(seeds.iter().any(|seed| seed == &tetra_center));
     }
 
     #[test]
@@ -4747,13 +4767,16 @@ mod tests {
         let report =
             hyperlimit::HalfspaceFeasibilityReport::feasible(Point3::origin(), [None, None, None]);
         let triangle_center = Point3::new(q(4, 3), q(4, 3), q(8, 3));
+        let tetra_center = p(1, 1, 1);
 
         let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert!(
             point_strictly_inside_support_cell(&triangle_center, &bounds, &halfspaces).unwrap()
         );
+        assert!(point_strictly_inside_support_cell(&tetra_center, &bounds, &halfspaces).unwrap());
         assert!(seeds.iter().any(|seed| seed == &triangle_center));
+        assert!(seeds.iter().any(|seed| seed == &tetra_center));
     }
 
     #[test]
