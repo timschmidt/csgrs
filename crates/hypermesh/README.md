@@ -122,7 +122,10 @@ built from an interior witness now also contributes its own shifted witness
 family and shifted exact vertices instead of collapsing to one witness plus
 raw cell vertices, and the direct strict leaf witness family now also expands
 through that stricter replayable leaf-cell construction instead of leaving it
-only to the barycenter branch.
+only to the barycenter branch. Those stricter leaf-cell and shifted-edge
+interior witness expansions now likewise backtrack past uncertified local
+candidate searches instead of aborting the whole leaf witness family on the
+first `UnknownClassification`.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.

@@ -1922,11 +1922,11 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
         .iter()
         .map(|point| point.point.clone())
         .collect::<Vec<_>>();
-    for witness in &witness_points {
-        for candidate in shifted_edge_interior_points(leaf, witness)? {
-            push_unique_interior_point(&mut points, candidate);
-        }
-    }
+    extend_interior_leaf_points_backtracking_unknown(
+        &mut points,
+        witness_points.iter(),
+        |witness| shifted_edge_interior_points(leaf, witness),
+    )?;
 
     Ok(points)
 }
@@ -1992,20 +1992,40 @@ fn strict_leaf_witness_points(
         .iter()
         .map(|point| point.point.clone())
         .collect::<Vec<_>>();
-    for witness in direct_witnesses {
-        for point in strict_leaf_cell_points(leaf, &witness)? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+    extend_interior_leaf_points_backtracking_unknown(
+        &mut points,
+        direct_witnesses.iter(),
+        |witness| strict_leaf_cell_points(leaf, witness),
+    )?;
 
     if let Some(center) = centroid(vertices)?
         && point_strictly_inside_leaf(&center, leaf)?
     {
-        for point in strict_leaf_cell_points(leaf, &center)? {
-            push_unique_interior_point(&mut points, point);
+        let mut saw_unknown = false;
+        match strict_leaf_cell_points(leaf, &center) {
+            Ok(found) => {
+                for point in found {
+                    push_unique_interior_point(&mut points, point);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
-        for candidate in shifted_edge_interior_points(leaf, &center)? {
-            push_unique_interior_point(&mut points, candidate);
+        match shifted_edge_interior_points(leaf, &center) {
+            Ok(found) => {
+                for candidate in found {
+                    push_unique_interior_point(&mut points, candidate);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+        if points.is_empty() && saw_unknown {
+            return Err(HypermeshError::UnknownClassification);
         }
     }
 
@@ -2152,6 +2172,32 @@ fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: Interi
         }
     } else {
         points.push(point);
+    }
+}
+
+fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
+    points: &mut Vec<InteriorLeafPoint>,
+    candidates: impl IntoIterator<Item = &'a T>,
+    mut build: impl FnMut(&'a T) -> HypermeshResult<Vec<InteriorLeafPoint>>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for candidate in candidates {
+        match build(candidate) {
+            Ok(found) => {
+                for point in found {
+                    push_unique_interior_point(points, point);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if points.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
     }
 }
 
@@ -4246,6 +4292,48 @@ mod tests {
                 .iter()
                 .any(|point| interiors.iter().any(|interior| &interior.point == point))
         );
+    }
+
+    #[test]
+    fn interior_leaf_point_collection_backtracks_after_uncertified_candidate() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_interior_leaf_points_backtracking_unknown(
+            &mut points,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                if *candidate == first {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![InteriorLeafPoint {
+                        point: candidate.clone(),
+                        planes: vec![axis_plane_definition(candidate)],
+                    }])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].point, second);
+    }
+
+    #[test]
+    fn interior_leaf_point_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        let err = extend_interior_leaf_points_backtracking_unknown(
+            &mut points,
+            [first, second].iter(),
+            |_candidate| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
