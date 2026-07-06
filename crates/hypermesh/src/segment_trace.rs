@@ -894,8 +894,12 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut targets = Vec::new();
+    let mut saw_unknown = false;
     let report_witness = report.witness.clone();
-    let seeds = strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report)?;
+    let seeds = halfspace_seed_family_or_empty(
+        strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report),
+        &mut saw_unknown,
+    )?;
 
     for seed in &seeds {
         let active_planes = if report_witness
@@ -923,11 +927,17 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         );
     }
 
-    let mut shifted_witnesses = Vec::new();
-    extend_shifted_halfspace_witnesses_backtracking_unknown(
-        &mut shifted_witnesses,
-        seeds,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_witnesses_backtracking_unknown(
+                &mut shifted_witnesses,
+                seeds,
+                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
     )?;
     for witness in shifted_witnesses {
         let point = witness.point;
@@ -948,7 +958,11 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         );
     }
 
-    for witness in shifted_halfspace_cell_vertex_witnesses(bounds, &halfspaces)? {
+    let shifted_vertices = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_vertex_witnesses(bounds, &halfspaces),
+        &mut saw_unknown,
+    )?;
+    for witness in shifted_vertices {
         let point = witness.point;
         push_unique_detour_target(
             &mut targets,
@@ -967,7 +981,11 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         );
     }
 
-    Ok(targets)
+    if targets.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
 }
 
 fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) {
@@ -2078,7 +2096,11 @@ fn strict_leaf_witness_points(
 
     let report_witness = report.witness.clone();
     let mut points = Vec::new();
-    let seeds = strict_leaf_witness_seeds(leaf, vertices, &bounds, &halfspaces, &report)?;
+    let mut saw_unknown = false;
+    let seeds = halfspace_seed_family_or_empty(
+        strict_leaf_witness_seeds(leaf, vertices, &bounds, &halfspaces, &report),
+        &mut saw_unknown,
+    )?;
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = if report_witness
@@ -2092,11 +2114,17 @@ fn strict_leaf_witness_points(
         build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)
     })?;
 
-    let mut shifted_witnesses = Vec::new();
-    extend_shifted_halfspace_witnesses_backtracking_unknown(
-        &mut shifted_witnesses,
-        seeds,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_witnesses_backtracking_unknown(
+                &mut shifted_witnesses,
+                seeds,
+                |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
     )?;
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
@@ -2111,7 +2139,10 @@ fn strict_leaf_witness_points(
         },
     )?;
 
-    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)?;
+    let shifted_vertices = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
         shifted_vertices.iter(),
@@ -2135,7 +2166,11 @@ fn strict_leaf_witness_points(
         |witness| strict_leaf_cell_points(leaf, witness),
     )?;
 
-    Ok(points)
+    if points.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(points)
+    }
 }
 
 fn strict_leaf_witness_seeds(
@@ -2145,15 +2180,30 @@ fn strict_leaf_witness_seeds(
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<Point3>> {
-    let mut seeds = strict_halfspace_cell_seeds_from_report(bounds, halfspaces, report)?;
+    let mut seeds = Vec::new();
+    let mut saw_unknown = false;
 
-    extend_strict_halfspace_seeds_backtracking_unknown(
+    let generic_seeds = halfspace_seed_family_or_empty(
+        strict_halfspace_cell_seeds_from_report(bounds, halfspaces, report),
+        &mut saw_unknown,
+    )?;
+    for seed in generic_seeds {
+        push_unique_halfspace_seed(&mut seeds, seed);
+    }
+
+    extend_strict_halfspace_seed_families_backtracking_unknown(
         &mut seeds,
-        halfspace_cell_geometry_seed_candidates(halfspaces)?,
-        |candidate| point_strictly_inside_leaf(candidate, leaf),
+        [collect_strict_halfspace_seed_family(
+            halfspace_cell_geometry_seed_candidates(halfspaces),
+            |candidate| point_strictly_inside_leaf(candidate, leaf),
+        )],
     )?;
 
-    Ok(seeds)
+    if seeds.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(seeds)
+    }
 }
 
 fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
@@ -2378,8 +2428,12 @@ fn strict_leaf_cell_points(
     }
 
     let mut points = Vec::new();
+    let mut saw_unknown = false;
     let report_witness = report.witness.clone();
-    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)?;
+    let seeds = halfspace_seed_family_or_empty(
+        strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report),
+        &mut saw_unknown,
+    )?;
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
         let active_planes = if report_witness
             .as_ref()
@@ -2392,11 +2446,17 @@ fn strict_leaf_cell_points(
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)
     })?;
 
-    let mut shifted_witnesses = Vec::new();
-    extend_shifted_halfspace_witnesses_backtracking_unknown(
-        &mut shifted_witnesses,
-        seeds,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_witnesses_backtracking_unknown(
+                &mut shifted_witnesses,
+                seeds,
+                |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
     )?;
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
@@ -2411,7 +2471,10 @@ fn strict_leaf_cell_points(
         },
     )?;
 
-    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)?;
+    let shifted_vertices = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
         shifted_vertices.iter(),
@@ -2425,7 +2488,11 @@ fn strict_leaf_cell_points(
         },
     )?;
 
-    Ok(points)
+    if points.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(points)
+    }
 }
 
 fn build_strict_leaf_point(
@@ -2916,8 +2983,12 @@ fn strict_normal_probe_targets(
 
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut probes = Vec::new();
+    let mut saw_unknown = false;
     let mut extra_planes = Vec::new();
-    let seeds = strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)?;
+    let seeds = halfspace_seed_family_or_empty(
+        strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report),
+        &mut saw_unknown,
+    )?;
     for definition in &interior.planes {
         for plane in &definition[1..] {
             if !extra_planes.iter().any(|existing| existing == plane) {
@@ -2936,11 +3007,17 @@ fn strict_normal_probe_targets(
         )
     })?;
 
-    let mut shifted_witnesses = Vec::new();
-    extend_shifted_halfspace_witnesses_backtracking_unknown(
-        &mut shifted_witnesses,
-        seeds,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_witnesses_backtracking_unknown(
+                &mut shifted_witnesses,
+                seeds,
+                |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
     )?;
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
@@ -2956,7 +3033,10 @@ fn strict_normal_probe_targets(
         },
     )?;
 
-    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)?;
+    let shifted_vertices = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
         shifted_vertices.iter(),
@@ -2971,7 +3051,11 @@ fn strict_normal_probe_targets(
         },
     )?;
 
-    Ok(probes)
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(probes)
+    }
 }
 
 fn bounds_between_points(start: &Point3, end: &Point3) -> HypermeshResult<Aabb> {
@@ -3230,7 +3314,11 @@ fn strict_axis_probe_targets(
     halfspaces.push(support_side_halfspace(support, positive_side));
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut probes = Vec::new();
-    let seeds = strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)?;
+    let mut saw_unknown = false;
+    let seeds = halfspace_seed_family_or_empty(
+        strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report),
+        &mut saw_unknown,
+    )?;
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_axis_probe_point(
@@ -3244,11 +3332,17 @@ fn strict_axis_probe_targets(
         )
     })?;
 
-    let mut shifted_witnesses = Vec::new();
-    extend_shifted_halfspace_witnesses_backtracking_unknown(
-        &mut shifted_witnesses,
-        seeds,
-        |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_witnesses_backtracking_unknown(
+                &mut shifted_witnesses,
+                seeds,
+                |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
     )?;
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
@@ -3266,7 +3360,10 @@ fn strict_axis_probe_targets(
         },
     )?;
 
-    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)?;
+    let shifted_vertices = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
         shifted_vertices.iter(),
@@ -3283,7 +3380,11 @@ fn strict_axis_probe_targets(
         },
     )?;
 
-    Ok(probes)
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(probes)
+    }
 }
 
 fn build_probe_point(
@@ -3485,15 +3586,18 @@ fn strict_halfspace_cell_seeds_from_report(
         )?;
     }
 
-    extend_strict_halfspace_seeds_backtracking_unknown(
+    extend_strict_halfspace_seed_families_backtracking_unknown(
         &mut seeds,
-        feasible_halfspace_cell_vertices(halfspaces)?,
-        |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
-    )?;
-    extend_strict_halfspace_seeds_backtracking_unknown(
-        &mut seeds,
-        halfspace_cell_geometry_seed_candidates(halfspaces)?,
-        |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
+        [
+            collect_strict_halfspace_seed_family(
+                feasible_halfspace_cell_vertices(halfspaces),
+                |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
+            ),
+            collect_strict_halfspace_seed_family(
+                halfspace_cell_geometry_seed_candidates(halfspaces),
+                |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
+            ),
+        ],
     )?;
 
     Ok(seeds)
@@ -3528,6 +3632,56 @@ fn extend_strict_halfspace_seeds_backtracking_unknown(
     }
 }
 
+fn collect_strict_halfspace_seed_family(
+    candidates: HypermeshResult<Vec<Point3>>,
+    mut is_strict_seed: impl FnMut(&Point3) -> HypermeshResult<bool>,
+) -> HypermeshResult<Vec<Point3>> {
+    let mut seeds = Vec::new();
+    extend_strict_halfspace_seeds_backtracking_unknown(&mut seeds, candidates?, |candidate| {
+        is_strict_seed(candidate)
+    })?;
+    Ok(seeds)
+}
+
+fn extend_strict_halfspace_seed_families_backtracking_unknown(
+    seeds: &mut Vec<Point3>,
+    families: impl IntoIterator<Item = HypermeshResult<Vec<Point3>>>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for family in families {
+        match family {
+            Ok(found) => {
+                for seed in found {
+                    push_unique_halfspace_seed(seeds, seed);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if seeds.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
+}
+
+fn halfspace_seed_family_or_empty(
+    result: HypermeshResult<Vec<Point3>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Vec<Point3>> {
+    match result {
+        Ok(seeds) => Ok(seeds),
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(Vec::new())
+        }
+        Err(err) => Err(err),
+    }
+}
+
 struct ShiftedHalfspaceWitness {
     point: Point3,
     halfspaces: Vec<LimitPlane3>,
@@ -3547,7 +3701,16 @@ fn shifted_halfspace_cell_witnesses_from_seed(
 
     let report_witness = shifted_report.witness.clone();
     let mut witnesses = Vec::new();
-    for witness in strict_halfspace_cell_seeds_from_report(bounds, &shifted, &shifted_report)? {
+    let mut saw_unknown = false;
+    let strict_seeds = halfspace_seed_family_or_empty(
+        strict_halfspace_cell_seeds_from_report(bounds, &shifted, &shifted_report),
+        &mut saw_unknown,
+    )?;
+    let shifted_vertices = halfspace_seed_family_or_empty(
+        feasible_halfspace_cell_vertices(&shifted),
+        &mut saw_unknown,
+    )?;
+    for witness in strict_seeds {
         let active_planes = if report_witness
             .as_ref()
             .is_some_and(|point| point == &witness)
@@ -3565,7 +3728,7 @@ fn shifted_halfspace_cell_witnesses_from_seed(
             },
         );
     }
-    for witness in feasible_halfspace_cell_vertices(&shifted)? {
+    for witness in shifted_vertices {
         if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
             continue;
         }
@@ -3579,7 +3742,11 @@ fn shifted_halfspace_cell_witnesses_from_seed(
         );
     }
 
-    Ok(witnesses)
+    if witnesses.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(witnesses)
+    }
 }
 
 fn shifted_halfspace_cell_vertex_witnesses(
@@ -3630,6 +3797,20 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
         Err(HypermeshError::UnknownClassification)
     } else {
         Ok(())
+    }
+}
+
+fn shifted_halfspace_witness_family_or_empty(
+    result: HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
+    match result {
+        Ok(witnesses) => Ok(witnesses),
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(Vec::new())
+        }
+        Err(err) => Err(err),
     }
 }
 
@@ -4078,6 +4259,38 @@ mod tests {
             &mut seeds,
             vec![first, second],
             |_candidate| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seed_family_search_backtracks_after_uncertified_earlier_family() {
+        let mut seeds = Vec::new();
+
+        extend_strict_halfspace_seed_families_backtracking_unknown(
+            &mut seeds,
+            [
+                Err(HypermeshError::UnknownClassification),
+                Ok(vec![p(2, 2, 2)]),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(seeds, vec![p(2, 2, 2)]);
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seed_family_search_reports_unknown_if_all_families_are_uncertified() {
+        let mut seeds = Vec::new();
+
+        let err = extend_strict_halfspace_seed_families_backtracking_unknown(
+            &mut seeds,
+            [
+                Err(HypermeshError::UnknownClassification),
+                Err(HypermeshError::UnknownClassification),
+            ],
         )
         .unwrap_err();
 

@@ -111,6 +111,8 @@ shifted-cell witnesses. Those shifted witness searches now also start from the
 exact feasible vertices and exact closed-cell geometry seeds of the local
 witness cell rather than a centroid seed family, and each shifted witness cell
 now contributes its own strict witness family and exact feasible vertices
+while backtracking past wholly uncertified strict-seed subfamilies before
+giving up on the later exact-vertex families,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
