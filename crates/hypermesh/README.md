@@ -84,7 +84,11 @@ family on its replacement steps as well, again without recursing into another
 plane-replacement layer, and that retained-definition segment search now also
 backtracks across uncertified direct definition pairs and continues into
 certified detour families instead of collapsing an all-uncertified direct
-family to `None`. The plain no-detour segment tracer below that retained path
+family to `None`. The retained-definition entry path above the step-detoured
+plane-replacement fallback now also surfaces an uncertified direct trace family
+explicitly and lets that broader replacement search decide the fallback,
+instead of flattening the uncertified direct trace to absence first. The plain
+no-detour segment tracer below that retained path
 family now also surfaces `UnknownClassification` when its local axis/direct
 trace family is uncertified, and the broader retained-definition and detour
 search layers make the fallback decision explicitly instead of treating that

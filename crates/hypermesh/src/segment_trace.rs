@@ -1230,15 +1230,17 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Some(winding) = retryable_trace(trace_segment_from_definitions(
+    match trace_segment_from_definitions(
         start,
         end,
         winding,
         polygons,
         start_definitions,
         end_definitions,
-    ))? {
-        return Ok(winding);
+    ) {
+        Ok(winding) => return Ok(winding),
+        Err(HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
     }
 
     trace_from_definition_sets_with_step_detoured_plane_replacement(
@@ -1316,14 +1318,20 @@ fn trace_plane_replacement_path_with_step_detours(
         winding,
         polygons,
         |current, next, attempt, polygons, current_definitions, next_definitions| {
-            retryable_trace(trace_segment_from_definitions(
+            match trace_segment_from_definitions(
                 current,
                 next,
                 attempt,
                 polygons,
                 current_definitions,
                 next_definitions,
-            ))
+            ) {
+                Ok(winding) => Ok(Some(winding)),
+                Err(HypermeshError::UnknownClassification) => {
+                    Err(HypermeshError::UnknownClassification)
+                }
+                Err(err) => Err(err),
+            }
         },
     )
 }
@@ -5397,6 +5405,44 @@ mod tests {
 
         let winding =
             trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap();
+
+        assert_eq!(winding, vec![0]);
+    }
+
+    #[test]
+    fn retained_definition_segment_search_continues_after_uncertified_direct_family() {
+        let ref_point = p(0, 0, 0);
+        let ref_definitions = [[
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+        ]];
+        let invalid_probe_definition = [
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(0, r(0)),
+        ];
+        let probe_point = p(2, 1, 0);
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        wall.delta_w = vec![1];
+
+        assert_eq!(
+            trace_segment(&ref_point, &probe_point, &[0], &[wall.clone()]),
+            Err(HypermeshError::UnknownClassification)
+        );
+
+        let winding = trace_segment_from_definitions_with_step_detoured_plane_replacement(
+            &ref_point,
+            &probe_point,
+            &[0],
+            &[wall],
+            &ref_definitions,
+            &[
+                invalid_probe_definition,
+                axis_plane_definition(&probe_point),
+            ],
+        )
+        .unwrap();
 
         assert_eq!(winding, vec![0]);
     }
