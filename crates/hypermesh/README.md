@@ -440,7 +440,10 @@ revisited, and repeated retained-definition trace attempts on the same support
 target are now reused at that same boundary instead of retracing identical
 reference targets when support states converge. Identical support states also
 reuse the exact support target-family construction itself before those traces
-run, instead of rebuilding the same retained target family on each revisit. The
+run, instead of rebuilding the same retained target family on each revisit, and
+the full accepted support-reference result is now reused on identical
+support-state/report revisits instead of rerunning that whole acceptance layer.
+The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
 reject that target afterward. The
