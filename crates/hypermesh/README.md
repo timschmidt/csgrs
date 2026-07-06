@@ -262,7 +262,10 @@ points whose retained plane-definition reconstruction is uncertified are now
 also skipped candidate-locally instead of aborting those support-cell target
 families. Direct projected/support seed collection now also skips uncertified
 strictness checks candidate-locally instead of aborting the whole seed family.
-As with the projected-child families, those candidate-local skips now surface
+Projected/support target construction now also backtracks across wholly
+uncertified strict-seed and raw-vertex subfamilies instead of aborting the
+whole local target builder before later exact families run. As with the
+projected-child families, those candidate-local skips now surface
 `UnknownClassification` when an entire local projected/support seed or target
 family is uncertified and no certified witness survives, rather than silently
 degenerating that family to empty.

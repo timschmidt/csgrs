@@ -722,7 +722,8 @@ fn nested_closed_tetrahedra_use_general_leaf_path() -> HypermeshResult<()> {
     assert_no_boundary_edges(&difference);
     assert!(difference.triangles.len() >= outer_soup.triangles.len());
 
-    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference_result =
+        boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     assert_output_polygons_closed(&reverse_difference_result);
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert!(reverse_difference.triangles.is_empty());

@@ -5910,18 +5910,20 @@ mod tests {
         let start_ok = axis_plane_definition(&p(1, 0, 0));
         let end = axis_plane_definition(&p(2, 0, 0));
 
-        assert!(definition_pair_reachability_backtracking_unknown(
-            &[start_unknown.clone(), start_ok.clone()],
-            std::slice::from_ref(&end),
-            |start_definition, end_definition| {
-                if start_definition == &start_unknown && end_definition == &end {
-                    Err(HypermeshError::UnknownClassification)
-                } else {
-                    Ok(start_definition == &start_ok && end_definition == &end)
-                }
-            },
-        )
-        .unwrap());
+        assert!(
+            definition_pair_reachability_backtracking_unknown(
+                &[start_unknown.clone(), start_ok.clone()],
+                std::slice::from_ref(&end),
+                |start_definition, end_definition| {
+                    if start_definition == &start_unknown && end_definition == &end {
+                        Err(HypermeshError::UnknownClassification)
+                    } else {
+                        Ok(start_definition == &start_ok && end_definition == &end)
+                    }
+                },
+            )
+            .unwrap()
+        );
     }
 
     #[test]
@@ -6097,8 +6099,8 @@ mod tests {
             Err(HypermeshError::UnknownClassification)
         );
 
-        let err = trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall])
-            .unwrap_err();
+        let err =
+            trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall]).unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
     }
