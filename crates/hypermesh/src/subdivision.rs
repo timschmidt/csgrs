@@ -15,8 +15,7 @@ use crate::segment_trace::{
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
-    BooleanOp, EXACT_REACHABILITY_STATE_LIMIT, Indicator, WindingPair,
-    can_boolean_op_be_inside_with_component_ranges,
+    BooleanOp, Indicator, WindingPair, can_boolean_op_be_inside_with_component_ranges,
     can_boolean_op_be_inside_with_transition_reachability, classify_polygon_output, propagate_wnv,
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
@@ -439,19 +438,6 @@ fn can_discard_by_winding_reachability(
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let transitions = polygons
-        .iter()
-        .map(|polygon| polygon.delta_w.clone())
-        .collect::<Vec<_>>();
-    if let Some(can_be_inside) = can_boolean_op_be_inside_with_transition_reachability(
-        op,
-        ref_wnv,
-        &transitions,
-        EXACT_REACHABILITY_STATE_LIMIT,
-    )? {
-        return Ok(!can_be_inside);
-    }
-
     let mut lower = ref_wnv.to_vec();
     let mut upper = ref_wnv.to_vec();
     for polygon in polygons {
@@ -471,8 +457,18 @@ fn can_discard_by_winding_reachability(
         }
     }
 
-    Ok(!can_boolean_op_be_inside_with_component_ranges(
-        op, &lower, &upper,
+    if !can_boolean_op_be_inside_with_component_ranges(op, &lower, &upper)? {
+        return Ok(true);
+    }
+
+    let transitions = polygons
+        .iter()
+        .map(|polygon| polygon.delta_w.clone())
+        .collect::<Vec<_>>();
+    Ok(!can_boolean_op_be_inside_with_transition_reachability(
+        op,
+        ref_wnv,
+        &transitions,
     )?)
 }
 

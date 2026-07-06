@@ -386,12 +386,13 @@ The regression suite now also forces the root certified leaf classifier
 closed containment, disconnected closed containment, crossing octahedra, and
 affine-box overlap cases instead of relying on deeper subdivision to rescue
 those paths.
-Subdivision first applies exact local WNV-transition reachability when the
-reachable state set stays small, and otherwise falls back to conservative
-per-component reachable winding ranges. A task is discarded only when those
-exact or range-based bounds make the Boolean indicator impossible for every
-reachable winding vector in the approximation. Full arrangement-complete
-finite-automaton WNV reachability remains an implementation target.
+Subdivision first applies conservative per-component reachable winding ranges.
+If those ranges still allow the Boolean indicator, it then checks exact local
+WNV-transition reachability across the full transition family instead of
+stopping at a fixed reachable-state cutoff. A task is discarded only when the
+range precheck or the exact reachable winding set makes the Boolean indicator
+impossible. Full arrangement-complete finite-automaton WNV reachability
+remains an implementation target.
 
 Subdivision depth is a certification budget, not a permission to guess. Bounds
 remain splittable whenever any axis has certified positive extent; there is no

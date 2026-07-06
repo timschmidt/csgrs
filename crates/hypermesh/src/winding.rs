@@ -35,8 +35,6 @@ pub enum BooleanOp {
 /// Borrowable indicator function object.
 pub type Indicator = dyn Fn(&[i32]) -> bool + Send + Sync + 'static;
 
-pub(crate) const EXACT_REACHABILITY_STATE_LIMIT: usize = 4096;
-
 /// Creates a boolean operation indicator.
 pub fn make_indicator(op: BooleanOp, _num_meshes: usize) -> Box<Indicator> {
     match op {
@@ -85,17 +83,15 @@ pub(crate) fn can_boolean_op_be_inside_with_component_ranges(
 
 /// Returns whether `op` can classify some winding vector as inside among the
 /// exact reachable states formed by applying each transition with coefficient
-/// `-1`, `0`, or `+1`. Returns `Ok(None)` if the exact state set would exceed
-/// `state_limit`, so callers can fall back to a coarser conservative bound.
+/// `-1`, `0`, or `+1`.
 pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
     op: BooleanOp,
     ref_wnv: &[i32],
     transitions: &[WindingNumberTransitionVector],
-    state_limit: usize,
-) -> HypermeshResult<Option<bool>> {
+) -> HypermeshResult<bool> {
     let indicator = make_indicator(op, ref_wnv.len());
     if indicator(ref_wnv) {
-        return Ok(Some(true));
+        return Ok(true);
     }
 
     let mut states = HashSet::from([ref_wnv.to_vec()]);
@@ -111,17 +107,14 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
             next.insert(apply_transition(state, 1, transition)?);
         }
 
-        if next.len() > state_limit {
-            return Ok(None);
-        }
         if next.iter().any(|state| indicator(state)) {
-            return Ok(Some(true));
+            return Ok(true);
         }
 
         states = next;
     }
 
-    Ok(Some(false))
+    Ok(false)
 }
 
 /// Classifies a polygon output transition.
@@ -282,10 +275,9 @@ mod tests {
                 BooleanOp::Difference,
                 &[1, 1],
                 &[vec![1, 1]],
-                EXACT_REACHABILITY_STATE_LIMIT,
             )
             .unwrap(),
-            Some(false)
+            false
         );
 
         assert!(
@@ -299,16 +291,15 @@ mod tests {
     }
 
     #[test]
-    fn exact_transition_reachability_returns_none_when_state_limit_is_exceeded() {
+    fn exact_transition_reachability_handles_independent_transition_grid() {
         assert_eq!(
             can_boolean_op_be_inside_with_transition_reachability(
                 BooleanOp::Intersection,
                 &[0, 0, 0],
                 &[vec![1, 0, 0], vec![0, 1, 0], vec![0, 0, 1]],
-                8,
             )
             .unwrap(),
-            None
+            true
         );
     }
 }
