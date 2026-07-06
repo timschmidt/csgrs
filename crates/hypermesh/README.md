@@ -341,6 +341,10 @@ An uncertified retained-definition no-detour reachability family now also
 falls through to the detour search layer instead of aborting before any
 certified detour family is tried, and only surfaces
 `UnknownClassification` if no certified detour path succeeds.
+Likewise, an uncertified direct geometric probe-reachability check no longer
+blocks retained-definition plane-replacement reachability from being tried;
+that direct layer now leaves the fallback decision to the retained-definition
+search instead of failing one layer too early.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

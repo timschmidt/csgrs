@@ -1678,18 +1678,12 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    if probe_reaches_adjacent_cell(start, end, host_support, polygons)? {
-        return Ok(true);
-    }
-
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
-
-    definition_pair_reachability_backtracking_unknown(
-        &start_definitions,
-        &end_definitions,
+    probe_reaches_adjacent_cell_with_definition_search(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        || probe_reaches_adjacent_cell(start, end, host_support, polygons),
         |start_definition, end_definition| {
             plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
                 start_definition,
@@ -1709,18 +1703,12 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    if probe_reaches_adjacent_cell(start, end, host_support, polygons)? {
-        return Ok(true);
-    }
-
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
-
-    definition_pair_reachability_backtracking_unknown(
-        &start_definitions,
-        &end_definitions,
+    probe_reaches_adjacent_cell_with_definition_search(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        || probe_reaches_adjacent_cell(start, end, host_support, polygons),
         |start_definition, end_definition| {
             plane_replacement_path_reaches_adjacent_cell_without_step_detours(
                 start_definition,
@@ -1730,6 +1718,44 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
             )
         },
     )
+}
+
+fn probe_reaches_adjacent_cell_with_definition_search(
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    mut direct_reaches: impl FnMut() -> HypermeshResult<bool>,
+    mut replacement_reaches: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    let direct_unknown = match direct_reaches() {
+        Ok(true) => return Ok(true),
+        Ok(false) => false,
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
+
+    let mut start_definitions = start_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+
+    match definition_pair_reachability_backtracking_unknown(
+        &start_definitions,
+        &end_definitions,
+        |start_definition, end_definition| replacement_reaches(start_definition, end_definition),
+    ) {
+        Ok(true) => Ok(true),
+        Ok(false) => {
+            if direct_unknown {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                Ok(false)
+            }
+        }
+        Err(HypermeshError::UnknownClassification) => Err(HypermeshError::UnknownClassification),
+        Err(err) => Err(err),
+    }
 }
 
 fn definition_pair_reachability_backtracking_unknown(
@@ -6017,6 +6043,43 @@ mod tests {
             &[blocker],
         )
         .unwrap());
+    }
+
+    #[test]
+    fn probe_reachability_definition_search_continues_after_uncertified_direct_check() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+
+        assert!(
+            probe_reaches_adjacent_cell_with_definition_search(
+                &start,
+                &end,
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                || Err(HypermeshError::UnknownClassification),
+                |_start_definition, _end_definition| Ok(true),
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_definition_search_reports_unknown_when_direct_check_is_uncertified_and_replacements_fail()
+     {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+
+        let err = probe_reaches_adjacent_cell_with_definition_search(
+            &start,
+            &end,
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            || Err(HypermeshError::UnknownClassification),
+            |_start_definition, _end_definition| Ok(false),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
