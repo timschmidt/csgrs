@@ -2002,6 +2002,7 @@ fn support_plane_cell_reference_with_queries(
     };
 
     match support_plane_cell_search_with_queries(
+        Some(old_ref),
         bounds,
         polygons,
         0,
@@ -2097,6 +2098,7 @@ fn support_plane_cell_search_from<T>(
     ) -> HypermeshResult<Option<T>>,
 ) -> HypermeshResult<Option<T>> {
     support_plane_cell_search_with_queries(
+        None,
         bounds,
         polygons,
         polygon_index,
@@ -2108,6 +2110,7 @@ fn support_plane_cell_search_from<T>(
 }
 
 fn support_plane_cell_search_with_queries<T>(
+    preferred_point: Option<&Point3>,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     polygon_index: usize,
@@ -2142,7 +2145,8 @@ fn support_plane_cell_search_with_queries<T>(
     }
 
     if polygon_index < polygons.len() {
-        for positive in [false, true] {
+        for positive in support_side_search_order(preferred_point, &polygons[polygon_index].support)
+        {
             halfspaces.push(support_side_halfspace(
                 &polygons[polygon_index].support,
                 positive,
@@ -2162,6 +2166,7 @@ fn support_plane_cell_search_with_queries<T>(
             };
             if feasible || feasibility_unknown {
                 match support_plane_cell_search_with_queries(
+                    preferred_point,
                     bounds,
                     polygons,
                     polygon_index + 1,
@@ -2240,6 +2245,20 @@ fn support_side_halfspace(plane: &crate::geometry::Plane, positive: bool) -> Lim
         )
     } else {
         LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
+    }
+}
+
+fn support_side_search_order(
+    preferred_point: Option<&Point3>,
+    plane: &crate::geometry::Plane,
+) -> [bool; 2] {
+    let Some(point) = preferred_point else {
+        return [false, true];
+    };
+    match classify_real(&plane.expression_at_point(point)) {
+        Ok(Classification::Negative) => [false, true],
+        Ok(Classification::Positive) => [true, false],
+        Ok(Classification::On) | Err(_) => [false, true],
     }
 }
 
@@ -5093,6 +5112,7 @@ mod tests {
         let mut accept_counts = Vec::new();
 
         let found = support_plane_cell_search_with_queries(
+            None,
             &bounds,
             &polygons,
             0,
@@ -5126,6 +5146,7 @@ mod tests {
         let mut accepted_counts = Vec::new();
 
         let found = support_plane_cell_search_with_queries(
+            None,
             &bounds,
             &polygons,
             0,
@@ -5165,6 +5186,7 @@ mod tests {
         let mut accepted_counts = Vec::new();
 
         let found = support_plane_cell_search_with_queries(
+            None,
             &bounds,
             &polygons,
             0,
@@ -5203,6 +5225,7 @@ mod tests {
         let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
         let err = support_plane_cell_search_with_queries(
+            None,
             &bounds,
             &polygons,
             0,
@@ -5218,6 +5241,39 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn support_plane_cell_search_prefers_reference_side_first() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let root_halfspace_count = halfspaces.len();
+        let mut accepted_branch = None;
+
+        let found = support_plane_cell_search_with_queries(
+            Some(&p(1, 1, 1)),
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |halfspaces| halfspace_system_report(halfspaces),
+            &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+            &mut |halfspaces, _report| {
+                if halfspaces.len() == root_halfspace_count + 1 {
+                    accepted_branch = Some(
+                        halfspaces.last().unwrap()
+                            == &support_side_halfspace(&polygons[0].support, false),
+                    );
+                    return Ok(Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
+                }
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
+        assert_eq!(accepted_branch, Some(true));
     }
 
     #[test]

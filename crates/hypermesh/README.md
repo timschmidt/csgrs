@@ -346,7 +346,10 @@ later support-side branches instead of cutting off that broader search at the
 current node, the current support cell is still allowed to attempt certified
 target construction without a report witness when later exact seed families
 suffice, and support-side branches whose feasibility precheck is
-uncertified are now searched instead of being discarded immediately. The
+uncertified are now searched instead of being discarded immediately. When
+support fallback does branch on a support plane, it now tries the side
+containing the current reference point first before backtracking across the
+opposite side. The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
 vertex family on the first uncertified candidate, and the leaf/probe-side
