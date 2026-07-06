@@ -1095,6 +1095,10 @@ fn search_projected_reference_families(
     }
 
     for projected_target in projected_escape_targets {
+        if let Some(winding) = trace_projected_target(projected_target)? {
+            return Ok(Some((projected_target.clone(), winding)));
+        }
+
         if let Some(found) = axis_escape_search(projected_target)? {
             return Ok(Some(found));
         }
@@ -2539,7 +2543,7 @@ mod tests {
         assert_eq!(found, Some((axis_target, vec![11])));
         assert_eq!(
             *calls.borrow(),
-            vec!["direct", "projected_support", "axis_escape"]
+            vec!["direct", "projected_support", "direct", "axis_escape"]
         );
     }
 
@@ -2608,7 +2612,44 @@ mod tests {
         .unwrap();
 
         assert_eq!(found, Some((axis_target, vec![17])));
-        assert_eq!(*calls.borrow(), vec!["projected_support", "axis_escape"]);
+        assert_eq!(
+            *calls.borrow(),
+            vec!["projected_support", "direct", "axis_escape"]
+        );
+    }
+
+    #[test]
+    fn projected_reference_search_tries_direct_escape_targets_before_axis_escape() {
+        use std::cell::RefCell;
+
+        let escape_target = ReferenceTarget::axis_defined(p(2, 2, 2));
+        let calls = RefCell::new(Vec::new());
+
+        let found = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || {
+                calls.borrow_mut().push("projected_support");
+                Ok(None)
+            },
+            |target| {
+                calls.borrow_mut().push("direct");
+                assert_eq!(target, &escape_target);
+                Ok(Some(vec![23]))
+            },
+            |_target| {
+                calls.borrow_mut().push("axis_escape");
+                Ok(None)
+            },
+            |_target| {
+                calls.borrow_mut().push("tight_escape");
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((escape_target, vec![23])));
+        assert_eq!(*calls.borrow(), vec!["projected_support", "direct"]);
     }
 
     #[test]

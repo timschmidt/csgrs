@@ -104,7 +104,10 @@ Existing references are reused only when they are strict child-cell interior
 points and not on local surfaces. Otherwise hypermesh builds the projected
 child cell that preserves every axis already strict in the parent reference,
 then asks `hyperlimit` for strict witnesses and exact feasible vertices in that
-projected cell before tracing from the parent reference. If those projected
+projected cell before tracing from the parent reference. If the first
+projected target family is exhausted, later certified projected escape
+witnesses are now also retried by direct tracing before the implementation
+relaxes into escape search. If those projected
 targets still cannot be traced directly, the implementation next tries local
 support-side cell search inside that same certified projected cell before it
 starts relaxing the geometry into broader escape families, and uncertified
