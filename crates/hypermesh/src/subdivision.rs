@@ -2280,19 +2280,18 @@ fn strict_projected_cell_seeds_from_report(
 ) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
 
-    if report.status == HalfspaceFeasibility::Feasible
-        && let Some(witness) = &report.witness
-    {
-        extend_point3_backtracking_unknown(
-            &mut seeds,
-            std::iter::once(witness.clone()),
-            |candidate| point_strictly_inside_projected_cell(candidate, bounds, halfspaces),
-        )?;
-    }
-
     extend_point3_families_backtracking_unknown(
         &mut seeds,
         [
+            if report.status == HalfspaceFeasibility::Feasible
+                && let Some(witness) = &report.witness
+            {
+                collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+                })
+            } else {
+                Ok(Vec::new())
+            },
             collect_point3_family(feasible_support_cell_vertices(halfspaces), |candidate| {
                 point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
             }),
@@ -2542,19 +2541,18 @@ fn strict_support_cell_seeds_from_report(
 ) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
 
-    if report.status == HalfspaceFeasibility::Feasible
-        && let Some(witness) = &report.witness
-    {
-        extend_point3_backtracking_unknown(
-            &mut seeds,
-            std::iter::once(witness.clone()),
-            |candidate| point_strictly_inside_support_cell(candidate, bounds, halfspaces),
-        )?;
-    }
-
     extend_point3_families_backtracking_unknown(
         &mut seeds,
         [
+            if report.status == HalfspaceFeasibility::Feasible
+                && let Some(witness) = &report.witness
+            {
+                collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_support_cell(candidate, bounds, halfspaces)
+                })
+            } else {
+                Ok(Vec::new())
+            },
             collect_point3_family(feasible_support_cell_vertices(halfspaces), |candidate| {
                 point_strictly_inside_support_cell(candidate, bounds, halfspaces)
             }),

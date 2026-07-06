@@ -3576,19 +3576,18 @@ fn strict_halfspace_cell_seeds_from_report(
 ) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
 
-    if report.status == HalfspaceFeasibility::Feasible
-        && let Some(witness) = &report.witness
-    {
-        extend_strict_halfspace_seeds_backtracking_unknown(
-            &mut seeds,
-            std::iter::once(witness.clone()),
-            |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
-        )?;
-    }
-
     extend_strict_halfspace_seed_families_backtracking_unknown(
         &mut seeds,
         [
+            if report.status == HalfspaceFeasibility::Feasible
+                && let Some(witness) = &report.witness
+            {
+                collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces)
+                })
+            } else {
+                Ok(Vec::new())
+            },
             collect_strict_halfspace_seed_family(
                 feasible_halfspace_cell_vertices(halfspaces),
                 |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
