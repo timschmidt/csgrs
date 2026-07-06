@@ -3837,47 +3837,49 @@ fn shifted_halfspace_cell_witnesses_from_seed(
         halfspace_cell_geometry_seed_candidates(&shifted),
         &mut saw_unknown,
     )?;
-    for witness in strict_seeds {
-        let active_planes = witness_active_planes(
-            report_witness.as_ref(),
-            shifted_report.active_planes,
-            &witness,
-        );
-        push_unique_shifted_halfspace_witness(
-            &mut witnesses,
-            ShiftedHalfspaceWitness {
-                point: witness,
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut witnesses,
+        strict_seeds,
+        |witness| {
+            Ok(vec![ShiftedHalfspaceWitness {
+                active_planes: witness_active_planes(
+                    report_witness.as_ref(),
+                    shifted_report.active_planes,
+                    &witness,
+                ),
                 halfspaces: shifted.clone(),
-                active_planes,
-            },
-        );
-    }
-    for witness in shifted_vertices {
-        if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        push_unique_shifted_halfspace_witness(
-            &mut witnesses,
-            ShiftedHalfspaceWitness {
-                point: witness,
-                halfspaces: shifted.clone(),
-                active_planes: [None, None, None],
-            },
-        );
-    }
-    for witness in shifted_geometry_seeds {
-        if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        push_unique_shifted_halfspace_witness(
-            &mut witnesses,
-            ShiftedHalfspaceWitness {
-                point: witness,
+                point: witness.clone(),
+            }])
+        },
+    )?;
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut witnesses,
+        shifted_vertices,
+        |witness| {
+            if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(vec![ShiftedHalfspaceWitness {
+                point: witness.clone(),
                 halfspaces: shifted.clone(),
                 active_planes: [None, None, None],
-            },
-        );
-    }
+            }])
+        },
+    )?;
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut witnesses,
+        shifted_geometry_seeds,
+        |witness| {
+            if !point_strictly_inside_halfspace_cell(&witness, bounds, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(vec![ShiftedHalfspaceWitness {
+                point: witness.clone(),
+                halfspaces: shifted.clone(),
+                active_planes: [None, None, None],
+            }])
+        },
+    )?;
 
     if witnesses.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
@@ -4313,6 +4315,49 @@ mod tests {
                 .find(|witness| witness.point == Point3::new(r(1), q(7, 6), q(13, 6)))
                 .is_some_and(|witness| witness.active_planes == [None, None, None])
         );
+    }
+
+    #[test]
+    fn shifted_halfspace_witness_collection_backtracks_after_uncertified_candidate() {
+        let mut witnesses = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_shifted_halfspace_witnesses_backtracking_unknown(
+            &mut witnesses,
+            [first.clone(), second.clone()],
+            |candidate| {
+                if *candidate == first {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![ShiftedHalfspaceWitness {
+                        point: candidate.clone(),
+                        halfspaces: Vec::new(),
+                        active_planes: [None, None, None],
+                    }])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].point, second);
+    }
+
+    #[test]
+    fn shifted_halfspace_witness_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let mut witnesses = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        let err = extend_shifted_halfspace_witnesses_backtracking_unknown(
+            &mut witnesses,
+            [first, second],
+            |_candidate| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

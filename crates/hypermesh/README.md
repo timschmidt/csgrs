@@ -181,8 +181,11 @@ only to the closed-cell geometry seed branch. Those stricter leaf-cell and shift
 interior witness expansions now likewise backtrack past uncertified local
 candidate searches instead of aborting the whole leaf witness family on the
 first `UnknownClassification`, and the underlying strict leaf-witness build
-steps now do the same candidate-locally for direct, shifted, and shifted
-vertex witness points.
+steps now do the same candidate-locally for direct, shifted, shifted-vertex,
+and shifted-geometry witness points. Shifted witness cells now also backtrack
+past uncertified strictness checks on their raw shifted-vertex and raw
+shifted-geometry seed sources instead of aborting that whole shifted witness
+family before later certified candidates run.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.
