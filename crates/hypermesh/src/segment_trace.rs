@@ -1066,30 +1066,72 @@ pub fn classify_leaf_polygon(
     };
 
     let interior_points = interior_leaf_points(&leaf)?;
-    for point in &interior_points {
+    search_leaf_probe_families(
+        &interior_points,
+        |point, positive_side| {
+            bounded_probes_from_interior(point, support, bounds, positive_side, polygons)
+        },
+        |point, _positive_side, probe| {
+            if point_lies_on_traced_surface(&probe.point, polygons)? {
+                return Ok(None);
+            }
+            if !probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons)? {
+                return Ok(None);
+            }
+            let Some(mut winding) =
+                trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)?
+            else {
+                return Ok(None);
+            };
+            if probe.side == Classification::Negative {
+                apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
+            }
+            Ok(Some(winding))
+        },
+    )?
+    .ok_or(HypermeshError::UnknownClassification)
+}
+
+fn search_leaf_probe_families<'a>(
+    interior_points: &'a [InteriorLeafPoint],
+    mut probes_for: impl FnMut(&'a InteriorLeafPoint, bool) -> HypermeshResult<Vec<ProbePoint>>,
+    mut handle_probe: impl FnMut(
+        &'a InteriorLeafPoint,
+        bool,
+        ProbePoint,
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut saw_unknown = false;
+
+    for point in interior_points {
         for positive_side in [true, false] {
-            for probe in
-                bounded_probes_from_interior(point, support, bounds, positive_side, polygons)?
-            {
-                if point_lies_on_traced_surface(&probe.point, polygons)? {
+            let probes = match probes_for(point, positive_side) {
+                Ok(probes) => probes,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
                     continue;
                 }
-                if !probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons)? {
-                    continue;
+                Err(err) => return Err(err),
+            };
+
+            for probe in probes {
+                match handle_probe(point, positive_side, probe) {
+                    Ok(Some(winding)) => return Ok(Some(winding)),
+                    Ok(None) => {}
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
                 }
-                let winding =
-                    trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)?;
-                let Some(mut winding) = winding else {
-                    continue;
-                };
-                if probe.side == Classification::Negative {
-                    apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
-                }
-                return Ok(winding);
             }
         }
     }
-    Err(HypermeshError::UnknownClassification)
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 fn trace_probe_winding(
@@ -4043,6 +4085,93 @@ mod tests {
 
         assert!(saw_unknown);
         assert!(probes.is_empty());
+    }
+
+    #[test]
+    fn leaf_probe_family_search_backtracks_after_uncertified_probe_family() {
+        let first = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+        };
+        let second = InteriorLeafPoint {
+            point: p(2, 2, 2),
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+        };
+        let winning_probe = ProbePoint {
+            point: p(3, 3, 3),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(3, 3, 3))],
+        };
+
+        let winding = search_leaf_probe_families(
+            &[first.clone(), second.clone()],
+            |point, _positive_side| {
+                if point.point == first.point {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![winning_probe.clone()])
+                }
+            },
+            |point, _positive_side, _probe| {
+                if point.point == second.point {
+                    Ok(Some(vec![1]))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![1]));
+    }
+
+    #[test]
+    fn leaf_probe_family_search_backtracks_after_uncertified_probe_check() {
+        let first = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+        };
+        let second = InteriorLeafPoint {
+            point: p(2, 2, 2),
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+        };
+        let probe = ProbePoint {
+            point: p(3, 3, 3),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(3, 3, 3))],
+        };
+
+        let winding = search_leaf_probe_families(
+            &[first.clone(), second.clone()],
+            |_point, _positive_side| Ok(vec![probe.clone()]),
+            |point, _positive_side, _probe| {
+                if point.point == first.point {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(vec![2]))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![2]));
+    }
+
+    #[test]
+    fn leaf_probe_family_search_reports_unknown_if_all_families_are_uncertified() {
+        let point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+        };
+
+        let err = search_leaf_probe_families(
+            &[point],
+            |_point, _positive_side| Err(HypermeshError::UnknownClassification),
+            |_point, _positive_side, _probe| Ok(Some(vec![1])),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

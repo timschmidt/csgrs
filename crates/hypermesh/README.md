@@ -125,7 +125,10 @@ probe witness build steps inside those families now likewise skip
 probe witness set when later certified witnesses still exist, and the
 top-level bounded probe search from one interior witness now also backtracks
 past uncertified normal or axis probe families instead of aborting before
-later certified probe directions are tried. The
+later certified probe directions are tried. Leaf classification now also
+backtracks past uncertified interior/side probe families and uncertified
+probe reachability checks instead of aborting before later certified interior
+witnesses or probe paths are tried. The
 stricter replayable leaf cell
 built from an interior witness now also contributes its own shifted witness
 family and shifted exact vertices instead of collapsing to one witness plus
