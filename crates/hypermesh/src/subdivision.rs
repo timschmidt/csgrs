@@ -2611,12 +2611,14 @@ fn strict_projected_cell_targets_from_optional_report(
             report,
             &mut saw_unknown,
         )?;
-    let mut shifted_seed_search_order = Vec::new();
-    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
-    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
-    let shifted_geometry_seeds =
-        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.and_then(|report| report.witness.clone());
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_target_seed_families(
+            report_witness.as_ref(),
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_shift_seeds {
         if !report_witness
@@ -2974,12 +2976,14 @@ fn strict_support_cell_targets_from_optional_report(
             report,
             &mut saw_unknown,
         )?;
-    let mut shifted_seed_search_order = Vec::new();
-    let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
-    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
-    let shifted_geometry_seeds =
-        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
     let report_witness = report.and_then(|report| report.witness.clone());
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_target_seed_families(
+            report_witness.as_ref(),
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_shift_seeds {
         if !report_witness

@@ -324,6 +324,8 @@ targets whose points are already present in the projected target family.
 Shifted projected/support direct-target builders now also seed their family
 dedupe with the report witness itself, so they do not rebuild that same direct
 target again through later strict-seed, exact-vertex, or geometry-seed families.
+The top-level projected/support target builders now do the same before they
+widen into shifted target search from those same exact seed families.
 Support-cell witnesses are now constructed from
 closed support-side cells by enumerating exact feasible cell vertices and
 asking `hyperlimit` for replayable witnesses inside inward-shifted strict
