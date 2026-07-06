@@ -823,23 +823,35 @@ fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
 fn crossing_octahedra_use_general_path() -> HypermeshResult<()> {
     let left = octahedron([r(0), r(0), r(0)], r(3));
     let right = octahedron([r(1), r(1), r(1)], r(3));
+    let union = run_op(&left, &right, BooleanOp::Union)?;
+    assert!(!union.triangles.is_empty());
+    assert_no_boundary_edges(&union);
+    assert_closed_triangle_soup(&union);
 
-    for op in [
-        BooleanOp::Union,
-        BooleanOp::Intersection,
-        BooleanOp::Difference,
-        BooleanOp::SymmetricDifference,
-    ] {
-        let result = run_op(&left, &right, op)?;
-        assert!(
-            !result.triangles.is_empty(),
-            "{op:?} should produce non-empty output",
-        );
-        assert_no_boundary_edges(&result);
-        if op != BooleanOp::SymmetricDifference {
-            assert_closed_triangle_soup(&result);
-        }
-    }
+    let reverse_union = run_op(&right, &left, BooleanOp::Union)?;
+    assert_same_shape(&reverse_union, &union);
+
+    let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
+    assert!(!intersection.triangles.is_empty());
+    assert_no_boundary_edges(&intersection);
+    assert_closed_triangle_soup(&intersection);
+
+    let difference = run_op(&left, &right, BooleanOp::Difference)?;
+    assert!(!difference.triangles.is_empty());
+    assert_no_boundary_edges(&difference);
+    assert_closed_triangle_soup(&difference);
+
+    let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
+    assert!(!reverse_difference.triangles.is_empty());
+    assert_no_boundary_edges(&reverse_difference);
+    assert_closed_triangle_soup(&reverse_difference);
+
+    let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
+    assert!(!xor.triangles.is_empty());
+    assert_no_boundary_edges(&xor);
+
+    let reverse_xor = run_op(&right, &left, BooleanOp::SymmetricDifference)?;
+    assert_same_shape(&reverse_xor, &xor);
 
     Ok(())
 }
@@ -873,23 +885,35 @@ fn affine_boxes_use_general_leaf_path() -> HypermeshResult<()> {
 #[test]
 fn affine_boxes_use_general_path() -> HypermeshResult<()> {
     let (left, right) = affine_box_pair();
+    let union = run_op(&left, &right, BooleanOp::Union)?;
+    assert_no_boundary_edges(&union);
+    assert_closed_triangle_soup(&union);
+    assert_volume_numerator(&union, r(96));
 
-    for op in [
-        BooleanOp::Union,
-        BooleanOp::Intersection,
-        BooleanOp::Difference,
-        BooleanOp::SymmetricDifference,
-    ] {
-        let result = run_op(&left, &right, op)?;
-        assert!(
-            !result.triangles.is_empty(),
-            "{op:?} should produce non-empty output",
-        );
-        assert_no_boundary_edges(&result);
-        if op != BooleanOp::SymmetricDifference {
-            assert_closed_triangle_soup(&result);
-        }
-    }
+    let reverse_union = run_op(&right, &left, BooleanOp::Union)?;
+    assert_same_shape(&reverse_union, &union);
+
+    let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
+    assert_no_boundary_edges(&intersection);
+    assert_closed_triangle_soup(&intersection);
+    assert_volume_numerator(&intersection, r(32));
+
+    let difference = run_op(&left, &right, BooleanOp::Difference)?;
+    assert_no_boundary_edges(&difference);
+    assert_closed_triangle_soup(&difference);
+    assert_volume_numerator(&difference, r(32));
+
+    let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
+    assert_no_boundary_edges(&reverse_difference);
+    assert_closed_triangle_soup(&reverse_difference);
+    assert_volume_numerator(&reverse_difference, r(32));
+
+    let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
+    assert_no_boundary_edges(&xor);
+    assert_volume_numerator(&xor, r(64));
+
+    let reverse_xor = run_op(&right, &left, BooleanOp::SymmetricDifference)?;
+    assert_same_shape(&reverse_xor, &xor);
 
     Ok(())
 }
