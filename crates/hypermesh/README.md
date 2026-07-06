@@ -250,6 +250,10 @@ backtracks past uncertified shifted projected seeds and projected vertices
 instead of aborting the whole projected target family, and witness points whose
 retained plane-definition reconstruction is uncertified are now still retained
 as exact axis-defined targets rather than being discarded candidate-locally.
+If one of those fallback axis-defined targets later proves unusable and no
+other certified reference target succeeds, that uncertified reconstruction now
+still surfaces `UnknownClassification` instead of being flattened back into a
+plain absent target.
 If a whole projected witness or seed family has no certified target and only
 uncertified candidates, that local family now returns
 `UnknownClassification` so later projected/support/escape backtracking can

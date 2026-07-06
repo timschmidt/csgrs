@@ -1423,7 +1423,11 @@ fn search_projected_reference_families(
         traced_direct_targets.push(projected_target.clone());
         match trace_projected_target(projected_target) {
             Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
-            Ok(None) => {}
+            Ok(None) => {
+                if projected_target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -1447,7 +1451,11 @@ fn search_projected_reference_families(
         {
             match trace_projected_target(projected_target) {
                 Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
-                Ok(None) => {}
+                Ok(None) => {
+                    if projected_target.uncertified_definition_fallback {
+                        saw_unknown = true;
+                    }
+                }
                 Err(crate::error::HypermeshError::UnknownClassification) => {
                     saw_unknown = true;
                 }
@@ -1840,6 +1848,7 @@ fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: Refe
                 existing.definitions.push(definition);
             }
         }
+        existing.uncertified_definition_fallback |= target.uncertified_definition_fallback;
     } else {
         targets.push(target);
     }
@@ -1984,9 +1993,9 @@ fn reference_target_from_halfspace_witness(
             point.clone(),
             definitions,
         ))),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(Some(
-            ReferenceTarget::with_definitions(point.clone(), vec![axis_plane_definition(point)]),
-        )),
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            Ok(Some(ReferenceTarget::axis_defined_fallback(point.clone())))
+        }
         Err(err) => Err(err),
     }
 }
@@ -2056,6 +2065,7 @@ fn axis_escape_bounds(projected: &Point3, axis: usize, stop_value: Real) -> Hype
 struct ReferenceTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
+    uncertified_definition_fallback: bool,
 }
 
 impl ReferenceTarget {
@@ -2064,11 +2074,24 @@ impl ReferenceTarget {
         Self {
             definitions: vec![axis_plane_definition(&point)],
             point,
+            uncertified_definition_fallback: false,
+        }
+    }
+
+    fn axis_defined_fallback(point: Point3) -> Self {
+        Self {
+            definitions: vec![axis_plane_definition(&point)],
+            point,
+            uncertified_definition_fallback: true,
         }
     }
 
     fn with_definitions(point: Point3, definitions: Vec<[Plane; 3]>) -> Self {
-        Self { point, definitions }
+        Self {
+            point,
+            definitions,
+            uncertified_definition_fallback: false,
+        }
     }
 }
 
@@ -2216,11 +2239,18 @@ fn trace_reference_targets_backtracking_unknown(
 
     for target in targets {
         if point_lies_on_any_support_plane(&target.point, polygons)? {
+            if target.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
             continue;
         }
         match trace(&target) {
             Ok(Some(winding)) => return Ok(Some((target, winding))),
-            Ok(None) => {}
+            Ok(None) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -4639,6 +4669,22 @@ mod tests {
     }
 
     #[test]
+    fn projected_reference_search_reports_unknown_when_fallback_target_cannot_trace() {
+        let projected = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
+        let err = search_projected_reference_families(
+            std::slice::from_ref(&projected),
+            &[],
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn projected_reference_search_or_none_skips_uncertified_local_search() {
         let target = ReferenceTarget::axis_defined(p(1, 2, 3));
         assert_eq!(
@@ -5102,6 +5148,7 @@ mod tests {
 
         let target = target.expect("witness target should still be retained");
         assert_eq!(target.point, p(1, 2, 3));
+        assert!(!target.uncertified_definition_fallback);
         assert!(
             target
                 .definitions
@@ -6480,6 +6527,20 @@ mod tests {
 
         assert_eq!(trace_calls, 1);
         assert_eq!(found, Some((interior, vec![13])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_reports_unknown_when_fallback_surface_target_is_skipped() {
+        let polygon = support_only_polygon(Plane::axis_aligned(0, r(2)));
+        let surface = ReferenceTarget::axis_defined_fallback(p(2, 1, 1));
+
+        let err =
+            trace_reference_targets_backtracking_unknown(vec![surface], &[polygon], |_target| {
+                Ok(Some(vec![13]))
+            })
+            .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]
