@@ -105,7 +105,9 @@ fallback, and the same axis-defined retention now applies to certified normal
 and axis probe witnesses instead of discarding them when richer probe-plane
 replay fails. Certified endpoint-box detour witnesses now also retain exact
 axis-defined target definitions instead of being dropped when richer probe
-replay reconstruction fails.
+replay reconstruction fails. Definition-preserving normal-probe search now
+also augments, rather than suppresses, the broader certified normal-corridor
+witness family when both are available.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.

@@ -2533,37 +2533,21 @@ fn adjacent_normal_probes(
     }
     let stop_point = offset_point(&interior.point, &direction, &stop_t);
     let corridor = bounds_between_points(&interior.point, &stop_point)?;
-    let mut probes = Vec::new();
-    for definition in &interior.planes {
-        if !normal_probe_definition_preserves_support_direction(definition, support)? {
-            continue;
+    collect_normal_probe_targets(&interior.planes, |definition| {
+        if let Some(definition) = definition
+            && !normal_probe_definition_preserves_support_direction(definition, support)?
+        {
+            return Ok(Vec::new());
         }
-        for probe in strict_normal_probe_targets(
+        strict_normal_probe_targets(
             interior,
             support,
             &corridor,
-            Some(definition),
+            definition,
             &stop_point,
             positive_side,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
-
-    if probes.is_empty() {
-        for probe in strict_normal_probe_targets(
-            interior,
-            support,
-            &corridor,
-            None,
-            &stop_point,
-            positive_side,
-        )? {
-            probes.push(probe);
-        }
-    }
-
-    Ok(probes)
+        )
+    })
 }
 
 fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) {
@@ -2583,6 +2567,22 @@ fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) {
     } else {
         probes.push(probe);
     }
+}
+
+fn collect_normal_probe_targets(
+    definitions: &[[Plane; 3]],
+    mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
+) -> HypermeshResult<Vec<ProbePoint>> {
+    let mut probes = Vec::new();
+    for definition in definitions {
+        for probe in search(Some(definition))? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+    }
+    for probe in search(None)? {
+        push_unique_probe_point(&mut probes, probe);
+    }
+    Ok(probes)
 }
 
 fn normal_probe_definition_preserves_support_direction(
@@ -3581,6 +3581,79 @@ mod tests {
         let blocker_value = blocker.support.expression_at_point(&probe.point);
         assert!(compare_real(&probe_value, &start_value).unwrap().is_gt());
         assert!(compare_real(&blocker_value, &Real::zero()).unwrap().is_lt());
+    }
+
+    #[test]
+    fn collect_normal_probe_targets_keeps_unrestricted_family_after_definition_hits() {
+        let support = Plane::axis_aligned(2, r(0));
+        let definition = [
+            support.clone(),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let constrained_probe = ProbePoint {
+            point: p(1, 1, 1),
+            side: Classification::Positive,
+            planes: vec![definition.clone()],
+        };
+        let unrestricted_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+        };
+
+        let probes = collect_normal_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Ok(vec![constrained_probe.clone()]),
+            None => Ok(vec![unrestricted_probe.clone()]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 2);
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.point == constrained_probe.point)
+        );
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.point == unrestricted_probe.point)
+        );
+    }
+
+    #[test]
+    fn collect_normal_probe_targets_merges_duplicate_unrestricted_probe_definitions() {
+        let support = Plane::axis_aligned(2, r(0));
+        let definition_probe = ProbePoint {
+            point: p(1, 1, 1),
+            side: Classification::Positive,
+            planes: vec![[
+                support.clone(),
+                Plane::axis_aligned(0, r(1)),
+                Plane::axis_aligned(1, r(1)),
+            ]],
+        };
+        let extra_definition = [
+            support,
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(2, r(1)),
+        ];
+
+        let probes =
+            collect_normal_probe_targets(&[definition_probe.planes[0].clone()], |candidate| {
+                match candidate {
+                    Some(_) => Ok(vec![definition_probe.clone()]),
+                    None => Ok(vec![ProbePoint {
+                        point: definition_probe.point.clone(),
+                        side: definition_probe.side,
+                        planes: vec![extra_definition.clone()],
+                    }]),
+                }
+            })
+            .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].planes.len(), 2);
     }
 
     #[test]
