@@ -2186,6 +2186,10 @@ fn support_plane_cell_search_with_queries<T>(
         Option<hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Option<T>>,
 ) -> HypermeshResult<Option<T>> {
+    if halfspaces_force_support_plane_contact(halfspaces, polygons) {
+        return Ok(None);
+    }
+
     let mut saw_unknown = false;
 
     let current_report = match report_for(halfspaces) {
@@ -2296,6 +2300,18 @@ fn support_plane_cell_search_with_queries<T>(
     } else {
         Ok(None)
     }
+}
+
+fn halfspaces_force_support_plane_contact(
+    halfspaces: &[LimitPlane3],
+    polygons: &[ConvexPolygon],
+) -> bool {
+    polygons.iter().any(|polygon| {
+        let negative = support_side_halfspace(&polygon.support, false);
+        let positive = support_side_halfspace(&polygon.support, true);
+        halfspaces.iter().any(|halfspace| halfspace == &negative)
+            && halfspaces.iter().any(|halfspace| halfspace == &positive)
+    })
 }
 
 fn aabb_core_halfspaces(bounds: &Aabb) -> HypermeshResult<Vec<LimitPlane3>> {
@@ -5666,6 +5682,40 @@ mod tests {
 
         assert_eq!(found, None);
         assert!(!opposite_branch_count_seen);
+    }
+
+    #[test]
+    fn support_plane_cell_search_skips_surface_forcing_halfspace_states() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygon = support_only_polygon(Plane::axis_aligned(0, r(2)));
+        let polygons = vec![polygon.clone()];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        halfspaces.push(support_side_halfspace(&polygon.support, false));
+        halfspaces.push(support_side_halfspace(&polygon.support, true));
+        let mut report_calls = 0;
+        let mut accept_calls = 0;
+
+        let found = support_plane_cell_search_with_queries(
+            Some(&p(1, 1, 1)),
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            &mut |_halfspaces| Ok(true),
+            &mut |_halfspaces, _report| {
+                accept_calls += 1;
+                Ok(None::<ReferenceTarget>)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, None);
+        assert_eq!(report_calls, 0);
+        assert_eq!(accept_calls, 0);
     }
 
     #[test]

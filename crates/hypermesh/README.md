@@ -387,6 +387,8 @@ containing the current reference point first before backtracking across the
 opposite side, and repeated identical support-side halfspaces no longer
 spawn redundant duplicate branch states. Exact opposite support halfspace
 pairs are now also skipped before any feasibility query or deeper recursion.
+Support-cell search now also prunes any state that already forces the
+reference onto a local support plane before report or acceptance queries run.
 The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
