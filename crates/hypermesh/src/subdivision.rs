@@ -1445,7 +1445,9 @@ fn reference_target_from_halfspace_witness(
             point.clone(),
             definitions,
         ))),
-        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(Some(
+            ReferenceTarget::with_definitions(point.clone(), vec![axis_plane_definition(point)]),
+        )),
         Err(err) => Err(err),
     }
 }
@@ -2879,7 +2881,8 @@ mod tests {
     }
 
     #[test]
-    fn reference_target_from_halfspace_witness_skips_uncertified_definitions() {
+    fn reference_target_from_halfspace_witness_retains_axis_definition_when_active_definitions_fail()
+     {
         let halfspaces = vec![axis_halfspace(0, false, r(1))];
 
         let target = reference_target_from_halfspace_witness(
@@ -2889,7 +2892,13 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(target, None);
+        assert_eq!(
+            target,
+            Some(ReferenceTarget::with_definitions(
+                p(1, 2, 3),
+                vec![axis_plane_definition(&p(1, 2, 3))]
+            ))
+        );
     }
 
     #[test]

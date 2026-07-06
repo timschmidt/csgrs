@@ -123,8 +123,9 @@ or being skipped entirely. If those projected
 support cells still cannot be certified, the implementation now also
 backtracks past uncertified shifted projected seeds and projected vertices
 instead of aborting the whole projected target family, and witness points whose
-retained plane-definition reconstruction is uncertified are now skipped
-candidate-locally there as well. It then tries local
+retained plane-definition reconstruction is uncertified are now still retained
+as exact axis-defined targets rather than being discarded candidate-locally.
+It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit
 out to the child AABB boundary, using `hyperlimit` witness search instead of
