@@ -508,7 +508,10 @@ the depth budget or a certified leaf result stops the branch. Hypermesh reports
 `SubdivisionDepthLimit` if the configured depth budget is reached before the
 current task can be certified as a leaf, and it reports
 `UnknownClassification` if leaf classification or this isolation check fails
-before appending output outside the depth-limit branch. Full
+before appending output outside the depth-limit branch. Certified BSP leaf
+validation and coplanar effective-`delta_w` accumulation now also share one
+exact leaf-analysis pass instead of rebuilding the same local leaf polygon,
+witness family, and per-polygon leaf-test relations twice per fragment. Full
 arrangement-isolation termination is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,

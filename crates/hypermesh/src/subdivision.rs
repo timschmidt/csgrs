@@ -201,11 +201,8 @@ fn process_leaf_into_inner(
             if leaf.edges.len() < 3 {
                 continue;
             }
-            if !certify_bsp_leaf_has_no_interior_intersections(polygon, &leaf.edges, polygons)? {
-                return Err(crate::error::HypermeshError::UnknownClassification);
-            }
+            let effective_delta_w = certify_bsp_leaf_and_delta_w(polygon, &leaf.edges, polygons)?;
             stats.bsp_leaf_count += 1;
-            let effective_delta_w = effective_leaf_delta_w(polygon, &leaf.edges, polygons)?;
             let w_front = classify_leaf_polygon(
                 &polygon.support,
                 &leaf.edges,
@@ -530,13 +527,21 @@ fn emit_one_direct(
     Ok(false)
 }
 
-fn effective_leaf_delta_w(
+fn certify_bsp_leaf_and_delta_w(
     polygon: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<i32>> {
+    let leaf_polygon = ConvexPolygon {
+        support: polygon.support.clone(),
+        edges: leaf_edges.to_vec(),
+        mesh_index: polygon.mesh_index,
+        polygon_index: polygon.polygon_index,
+        delta_w: polygon.delta_w.clone(),
+        approx_bounds: None,
+    };
+    let leaf_test_points = leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?;
     let mut delta_w = polygon.delta_w.clone();
-    let test_points = leaf_interior_points(&polygon.support, leaf_edges)?;
 
     for other in polygons {
         if other.polygon_index == polygon.polygon_index && other.mesh_index == polygon.mesh_index {
@@ -545,7 +550,34 @@ fn effective_leaf_delta_w(
         if delta_w.len() != other.delta_w.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        let Some(strictly_inside) = classify_leaf_test_relation(&test_points, other)? else {
+        let relation = classify_leaf_test_relation(&leaf_test_points, other)?;
+        let intersection = intersect_polygons(&leaf_polygon, other, 0)?;
+        match intersection.kind {
+            PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
+            PairwiseIntersectionType::Segment => {
+                let Some(segment) = intersection.segment else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                if segment_has_strict_interior_point_in_both(
+                    &segment.v0,
+                    &segment.v1,
+                    &leaf_polygon,
+                    other,
+                )? {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+            }
+            PairwiseIntersectionType::Overlap => {
+                let Some(strictly_inside) = relation else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                if leaf_polygon_key(polygon) > leaf_polygon_key(other) && strictly_inside {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+            }
+        }
+
+        let Some(strictly_inside) = relation else {
             return Err(crate::error::HypermeshError::UnknownClassification);
         };
         if strictly_inside {
@@ -612,55 +644,17 @@ fn supports_have_same_direction(
     Ok(crate::geometry::classify_real(&dot)? != Classification::Negative)
 }
 
+#[cfg(test)]
 fn certify_bsp_leaf_has_no_interior_intersections(
     host: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let leaf_polygon = ConvexPolygon {
-        support: host.support.clone(),
-        edges: leaf_edges.to_vec(),
-        mesh_index: host.mesh_index,
-        polygon_index: host.polygon_index,
-        delta_w: host.delta_w.clone(),
-        approx_bounds: None,
-    };
-    let leaf_test_points = leaf_interior_points(&leaf_polygon.support, &leaf_polygon.edges)?;
-
-    for other in polygons {
-        if other.mesh_index == host.mesh_index && other.polygon_index == host.polygon_index {
-            continue;
-        }
-
-        let intersection = intersect_polygons(&leaf_polygon, other, 0)?;
-        match intersection.kind {
-            PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
-            PairwiseIntersectionType::Segment => {
-                let Some(segment) = intersection.segment else {
-                    return Ok(false);
-                };
-                if segment_has_strict_interior_point_in_both(
-                    &segment.v0,
-                    &segment.v1,
-                    &leaf_polygon,
-                    other,
-                )? {
-                    return Ok(false);
-                }
-            }
-            PairwiseIntersectionType::Overlap => {
-                let Some(strictly_inside) = classify_leaf_test_relation(&leaf_test_points, other)?
-                else {
-                    return Ok(false);
-                };
-                if leaf_polygon_key(host) > leaf_polygon_key(other) && strictly_inside {
-                    return Ok(false);
-                }
-            }
-        }
+    match certify_bsp_leaf_and_delta_w(host, leaf_edges, polygons) {
+        Ok(_) => Ok(true),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(false),
+        Err(err) => Err(err),
     }
-
-    Ok(true)
 }
 
 fn segment_has_strict_interior_point_in_both(
