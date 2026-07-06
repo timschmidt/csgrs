@@ -455,10 +455,10 @@ Shared-face box contact is now likewise covered through that public general
 path as separate per-op regressions, so each Boolean op stays individually
 bounded and debuggable instead of hiding behind one oversized bundled case.
 The regression suite now also forces the root certified leaf classifier
-(`max_depth: 0`) through same-surface contact, shared-edge box contact,
-shared-vertex box contact, partial-face contact, nested closed containment,
-disconnected closed containment, crossing octahedra, and affine-box overlap
-cases instead of relying on deeper subdivision to rescue those paths.
+(`max_depth: 0`) through same-surface contact, shared-face/shared-edge/shared-vertex
+box contact, partial-face contact, nested closed containment, disconnected
+closed containment, crossing octahedra, and affine-box overlap cases instead
+of relying on deeper subdivision to rescue those paths.
 Subdivision first applies conservative per-component reachable winding ranges.
 If those ranges still allow the Boolean indicator, it then checks exact local
 WNV-transition reachability across the full transition family instead of

@@ -1102,6 +1102,94 @@ fn edge_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
 }
 
 #[test]
+fn boundary_touching_boxes_union_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let config = EmberConfig { max_depth: 0 };
+
+    let union =
+        triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
+    assert_no_boundary_edges(&union);
+    assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(1), r(1)])?;
+    assert_volume_numerator(&union, r(12));
+
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_intersection_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let config = EmberConfig { max_depth: 0 };
+
+    let intersection = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Intersection,
+        config,
+    )?)?;
+    assert!(intersection.triangles.is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_difference_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let config = EmberConfig { max_depth: 0 };
+
+    let difference = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&difference);
+    assert_volume_numerator(&difference, r(6));
+
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_reverse_difference_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [right.as_ref(), left.as_ref()];
+    let right_soup = passthrough(&right).unwrap();
+    let config = EmberConfig { max_depth: 0 };
+
+    let difference = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::Difference,
+        config,
+    )?)?;
+    assert_same_shape(&difference, &right_soup);
+
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_xor_use_general_leaf_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+    let config = EmberConfig { max_depth: 0 };
+
+    let xor = triangulate_and_resolve_certified(&boolean_operation(
+        &refs,
+        BooleanOp::SymmetricDifference,
+        config,
+    )?)?;
+    assert_no_boundary_edges(&xor);
+    assert_bounds(&xor, [r(0), r(0), r(0)], [r(2), r(1), r(1)]).unwrap();
+    assert_volume_numerator(&xor, r(12));
+
+    Ok(())
+}
+
+#[test]
 fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 1, 1], [2, 2, 2]);
