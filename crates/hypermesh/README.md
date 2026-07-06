@@ -337,6 +337,10 @@ lower definition-based reachability retry of their own before the search gives
 up, without opening another nested step-detoured plane-replacement layer, and
 arrangement-detour reachability now backtracks past uncertified detour legs
 instead of aborting the whole probe search on the first uncertified detour.
+An uncertified retained-definition no-detour reachability family now also
+falls through to the detour search layer instead of aborting before any
+certified detour family is tried, and only surfaces
+`UnknownClassification` if no certified detour path succeeds.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,

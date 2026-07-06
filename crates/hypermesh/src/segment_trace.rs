@@ -1528,15 +1528,23 @@ fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
     ) -> HypermeshResult<bool>,
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
-    if trace_without_detours(start, end, start_definitions, end_definitions)? {
-        return Ok(true);
-    }
+    let no_detour_unknown =
+        match trace_without_detours(start, end, start_definitions, end_definitions) {
+            Ok(true) => return Ok(true),
+            Ok(false) => false,
+            Err(HypermeshError::UnknownClassification) => true,
+            Err(err) => return Err(err),
+        };
 
     if remaining_detours == 0 {
-        return Ok(false);
+        return if no_detour_unknown {
+            Err(HypermeshError::UnknownClassification)
+        } else {
+            Ok(false)
+        };
     }
 
-    probe_reaches_adjacent_cell_via_detours_with_budget(
+    let detour_result = probe_reaches_adjacent_cell_via_detours_with_budget(
         start,
         end,
         polygons,
@@ -1545,7 +1553,15 @@ fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
         remaining_detours,
         trace_without_detours,
         detours_for,
-    )
+    )?;
+
+    if detour_result {
+        Ok(true)
+    } else if no_detour_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -6182,6 +6198,92 @@ mod tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn probe_reachability_continues_after_uncertified_no_detour_family() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                if *from == start && *to == end {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok((*from == start && *to == detour) || (*from == detour && *to == end))
+                }
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            probe_reaches_adjacent_cell_with_definitions_budget_impl(
+                &start,
+                &end,
+                &[],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                1,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_reports_unknown_when_no_detour_family_is_uncertified_and_detours_fail() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                if *from == start && *to == end {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err = probe_reaches_adjacent_cell_with_definitions_budget_impl(
+            &start,
+            &end,
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            1,
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
