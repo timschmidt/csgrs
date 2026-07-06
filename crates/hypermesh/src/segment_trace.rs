@@ -971,7 +971,29 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         shifted_halfspace_cell_vertex_witnesses(bounds, &halfspaces),
         &mut saw_unknown,
     )?;
+    let shifted_geometry_witnesses = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_geometry_witnesses(bounds, &halfspaces),
+        &mut saw_unknown,
+    )?;
     for witness in shifted_vertices {
+        let point = witness.point;
+        push_unique_detour_target(
+            &mut targets,
+            DetourTarget {
+                point: point.clone(),
+                definitions: probe_definitions_or_axis(
+                    &point,
+                    probe_definitions_from_active_halfspaces(
+                        &point,
+                        &witness.halfspaces,
+                        witness.active_planes,
+                        &[],
+                    ),
+                )?,
+            },
+        );
+    }
+    for witness in shifted_geometry_witnesses {
         let point = witness.point;
         push_unique_detour_target(
             &mut targets,
@@ -2171,9 +2193,25 @@ fn strict_leaf_witness_points(
         shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces),
         &mut saw_unknown,
     )?;
+    let shifted_geometry_witnesses = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_geometry_witnesses(&bounds, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
         shifted_vertices.iter(),
+        |shifted| {
+            build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
+    extend_leaf_point_builds_backtracking_unknown(
+        &mut points,
+        shifted_geometry_witnesses.iter(),
         |shifted| {
             build_strict_leaf_point(
                 leaf,
@@ -2497,9 +2535,25 @@ fn strict_leaf_cell_points(
         shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces),
         &mut saw_unknown,
     )?;
+    let shifted_geometry_witnesses = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_geometry_witnesses(&bounds, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_leaf_point_builds_backtracking_unknown(
         &mut points,
         shifted_vertices.iter(),
+        |shifted| {
+            build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
+    extend_leaf_point_builds_backtracking_unknown(
+        &mut points,
+        shifted_geometry_witnesses.iter(),
         |shifted| {
             build_strict_leaf_point(
                 leaf,
@@ -3071,9 +3125,26 @@ fn strict_normal_probe_targets(
         shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces),
         &mut saw_unknown,
     )?;
+    let shifted_geometry_witnesses = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_geometry_witnesses(corridor, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
         shifted_vertices.iter(),
+        |witness| {
+            build_probe_point(
+                &witness.point,
+                support,
+                &witness.halfspaces,
+                witness.active_planes,
+                &extra_planes,
+            )
+        },
+    )?;
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_geometry_witnesses.iter(),
         |witness| {
             build_probe_point(
                 &witness.point,
@@ -3398,9 +3469,28 @@ fn strict_axis_probe_targets(
         shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces),
         &mut saw_unknown,
     )?;
+    let shifted_geometry_witnesses = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_geometry_witnesses(corridor, &halfspaces),
+        &mut saw_unknown,
+    )?;
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
         shifted_vertices.iter(),
+        |witness| {
+            build_axis_probe_point(
+                &witness.point,
+                interior,
+                support,
+                axis,
+                definition,
+                &witness.halfspaces,
+                witness.active_planes,
+            )
+        },
+    )?;
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_geometry_witnesses.iter(),
         |witness| {
             build_axis_probe_point(
                 &witness.point,
@@ -3792,6 +3882,19 @@ fn shifted_halfspace_cell_vertex_witnesses(
     Ok(witnesses)
 }
 
+fn shifted_halfspace_cell_geometry_witnesses(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
+    let mut witnesses: Vec<ShiftedHalfspaceWitness> = Vec::new();
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut witnesses,
+        halfspace_cell_geometry_seed_candidates(halfspaces)?,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, halfspaces, seed),
+    )?;
+    Ok(witnesses)
+}
+
 fn push_unique_shifted_halfspace_witness(
     witnesses: &mut Vec<ShiftedHalfspaceWitness>,
     witness: ShiftedHalfspaceWitness,
@@ -4113,6 +4216,21 @@ mod tests {
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
         let witnesses = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces).unwrap();
+
+        assert!(!witnesses.is_empty());
+        for witness in &witnesses {
+            assert!(
+                point_strictly_inside_halfspace_cell(&witness.point, &bounds, &halfspaces).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn shifted_halfspace_cell_geometry_witnesses_return_strict_points() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let witnesses = shifted_halfspace_cell_geometry_witnesses(&bounds, &halfspaces).unwrap();
 
         assert!(!witnesses.is_empty());
         for witness in &witnesses {

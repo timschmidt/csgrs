@@ -1321,6 +1321,10 @@ fn projected_reference_escape_targets_from_report(
     )?;
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(halfspaces), &mut saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(halfspaces),
+        &mut saw_unknown,
+    )?;
     let report_witness = report.witness.clone();
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_seeds {
@@ -1353,6 +1357,9 @@ fn projected_reference_escape_targets_from_report(
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
                 projected_escape_targets_from_seed(bounds, halfspaces, &vertex)
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |seed| {
+                projected_escape_targets_from_seed(bounds, halfspaces, &seed)
             }),
         ],
     )?;
@@ -2249,6 +2256,10 @@ fn strict_projected_cell_targets(
     )?;
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(halfspaces), &mut saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(halfspaces),
+        &mut saw_unknown,
+    )?;
     let report_witness = report.witness.clone();
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_seeds {
@@ -2284,6 +2295,9 @@ fn strict_projected_cell_targets(
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
                 shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex)
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |seed| {
+                shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
         ],
     )?;
@@ -2352,6 +2366,10 @@ fn shifted_projected_cell_targets_from_seed(
     )?;
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(&shifted), &mut saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(&shifted),
+        &mut saw_unknown,
+    )?;
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
@@ -2377,6 +2395,20 @@ fn shifted_projected_cell_targets_from_seed(
                 )
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
+                if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                    return Ok(Vec::new());
+                }
+                Ok(
+                    reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
+                    .into_iter()
+                    .collect(),
+                )
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |witness| {
                 if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
@@ -2422,6 +2454,10 @@ fn projected_escape_targets_from_seed(
     )?;
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(&shifted), &mut saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(&shifted),
+        &mut saw_unknown,
+    )?;
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
@@ -2447,6 +2483,20 @@ fn projected_escape_targets_from_seed(
                 )
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
+                if !point_satisfies_halfspaces(&witness, halfspaces)? {
+                    return Ok(Vec::new());
+                }
+                Ok(
+                    reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
+                    .into_iter()
+                    .collect(),
+                )
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |witness| {
                 if !point_satisfies_halfspaces(&witness, halfspaces)? {
                     return Ok(Vec::new());
                 }
@@ -2514,6 +2564,10 @@ fn strict_support_cell_targets(
     )?;
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(halfspaces), &mut saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(halfspaces),
+        &mut saw_unknown,
+    )?;
     let report_witness = report.witness.clone();
     let mut deferred_direct_targets = Vec::new();
     for seed in &strict_seeds {
@@ -2549,6 +2603,9 @@ fn strict_support_cell_targets(
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
                 shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex)
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |seed| {
+                shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)
             }),
         ],
     )?;
@@ -2743,6 +2800,10 @@ fn shifted_support_cell_targets_from_seed(
     )?;
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(&shifted), &mut saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(&shifted),
+        &mut saw_unknown,
+    )?;
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
@@ -2768,6 +2829,20 @@ fn shifted_support_cell_targets_from_seed(
                 )
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
+                if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                    return Ok(Vec::new());
+                }
+                Ok(
+                    reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
+                    .into_iter()
+                    .collect(),
+                )
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |witness| {
                 if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
@@ -4816,6 +4891,34 @@ mod tests {
                 .any(|target| { target.point == Point3::new(r(1), q(1, 2), q(3, 2)) })
         );
         assert!(targets.iter().all(|target| !target.definitions.is_empty()));
+    }
+
+    #[test]
+    fn shifted_projected_cell_targets_from_geometry_seed_return_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let targets =
+            shifted_projected_cell_targets_from_seed(&bounds, &halfspaces, &p(1, 1, 1)).unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(targets.iter().all(|target| {
+            point_strictly_inside_projected_cell(&target.point, &bounds, &halfspaces).unwrap()
+        }));
+    }
+
+    #[test]
+    fn shifted_support_cell_targets_from_geometry_seed_return_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let targets =
+            shifted_support_cell_targets_from_seed(&bounds, &halfspaces, &p(1, 1, 1)).unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(targets.iter().all(|target| {
+            point_strictly_inside_support_cell(&target.point, &bounds, &halfspaces).unwrap()
+        }));
     }
 
     #[test]

@@ -123,7 +123,7 @@ exact feasible vertices and exact closed-cell geometry seeds of the local
 witness cell rather than a centroid seed family, and each shifted witness cell
 now contributes its own strict witness family and exact feasible vertices
 while backtracking past wholly uncertified strict-seed subfamilies before
-giving up on the later exact-vertex families,
+giving up on the later exact-vertex and raw geometry-seed families,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
@@ -272,8 +272,8 @@ propagation backtrack across multiple certified direct and shifted targets
 inside one feasible support-side cell instead of collapsing the cell to one
 point. Each shifted support cell now also contributes every strict target
 recovered from its own certified witness family and its own exact feasible
-vertices instead of only the first feasibility witness selected by the
-halfspace predicate, and uncertified shifted support seeds or shifted support
+vertices and raw geometry seeds instead of only the first feasibility witness
+selected by the halfspace predicate, and uncertified shifted support seeds or shifted support
 vertices now no longer abort the whole support-cell target family. Witness
 points whose retained plane-definition reconstruction is uncertified are now
 also skipped candidate-locally instead of aborting those support-cell target
