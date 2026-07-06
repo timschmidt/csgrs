@@ -2927,8 +2927,15 @@ fn dedupe_shifted_target_seed_families(
     shifted_vertices: Vec<Point3>,
     shifted_geometry_seeds: Vec<Point3>,
 ) -> (Vec<Point3>, Vec<Point3>, Vec<Point3>) {
-    let mut shifted_seed_search_order = report_witness.into_iter().cloned().collect::<Vec<_>>();
+    let mut shifted_seed_search_order = Vec::new();
     let strict_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    if let Some(report_witness) = report_witness
+        && !shifted_seed_search_order
+            .iter()
+            .any(|existing| existing == report_witness)
+    {
+        shifted_seed_search_order.push(report_witness.clone());
+    }
     let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
     let shifted_geometry_seeds =
         take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
@@ -5957,7 +5964,7 @@ mod tests {
     }
 
     #[test]
-    fn shifted_target_seed_families_skip_report_witness_duplicates() {
+    fn shifted_target_seed_families_preserve_direct_report_witness_and_skip_later_duplicates() {
         let witness = p(1, 1, 1);
         let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
             dedupe_shifted_target_seed_families(
@@ -5967,7 +5974,7 @@ mod tests {
                 vec![p(3, 1, 1), witness.clone(), p(4, 1, 1)],
             );
 
-        assert_eq!(strict_seeds, vec![p(2, 1, 1)]);
+        assert_eq!(strict_seeds, vec![witness, p(2, 1, 1)]);
         assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
         assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
     }

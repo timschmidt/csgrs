@@ -325,8 +325,8 @@ of using those points only as shifted-seed sources. The projected escape-target
 family now retains those same remaining strict direct projected witnesses before
 it widens into shifted projected escape cells, and it no longer rebuilds direct
 targets whose points are already present in the projected target family.
-Shifted projected/support direct-target builders now also seed their family
-dedupe with the report witness itself, so they do not rebuild that same direct
+Shifted projected/support direct-target builders now also dedupe later shifted
+seed families against the report witness itself, so they do not rebuild that same direct
 target again through later strict-seed, exact-vertex, or geometry-seed families.
 The top-level projected/support target builders now do the same before they
 widen into shifted target search from those same exact seed families.
