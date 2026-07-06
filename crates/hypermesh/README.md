@@ -319,6 +319,9 @@ instead of aborting the whole probe search on the first uncertified detour.
 path. The previous same-surface, disjoint-bound, strict-containment,
 boundary-contact, and oriented-box shortcuts have been removed, so public
 boolean results either certify through the general path or return an error.
+The public regression suite now also exercises crossing octahedra and
+affine-box overlap through that normal subdivision/reference path, not only
+through the root one-leaf classifier.
 The regression suite now also forces the root certified leaf classifier
 (`max_depth: 0`) through same-surface contact, partial-face contact, nested
 closed containment, disconnected closed containment, crossing octahedra, and

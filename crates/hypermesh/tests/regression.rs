@@ -820,6 +820,31 @@ fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
 }
 
 #[test]
+fn crossing_octahedra_use_general_path() -> HypermeshResult<()> {
+    let left = octahedron([r(0), r(0), r(0)], r(3));
+    let right = octahedron([r(1), r(1), r(1)], r(3));
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
+    ] {
+        let result = run_op(&left, &right, op)?;
+        assert!(
+            !result.triangles.is_empty(),
+            "{op:?} should produce non-empty output",
+        );
+        assert_no_boundary_edges(&result);
+        if op != BooleanOp::SymmetricDifference {
+            assert_closed_triangle_soup(&result);
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
 fn affine_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let (left, right) = affine_box_pair();
     let refs = [left.as_ref(), right.as_ref()];
@@ -832,6 +857,30 @@ fn affine_boxes_use_general_leaf_path() -> HypermeshResult<()> {
         BooleanOp::SymmetricDifference,
     ] {
         let result = triangulate_and_resolve_certified(&boolean_operation(&refs, op, config)?)?;
+        assert!(
+            !result.triangles.is_empty(),
+            "{op:?} should produce non-empty output",
+        );
+        assert_no_boundary_edges(&result);
+        if op != BooleanOp::SymmetricDifference {
+            assert_closed_triangle_soup(&result);
+        }
+    }
+
+    Ok(())
+}
+
+#[test]
+fn affine_boxes_use_general_path() -> HypermeshResult<()> {
+    let (left, right) = affine_box_pair();
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
+    ] {
+        let result = run_op(&left, &right, op)?;
         assert!(
             !result.triangles.is_empty(),
             "{op:?} should produce non-empty output",
