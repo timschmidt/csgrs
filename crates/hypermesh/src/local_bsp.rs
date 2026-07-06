@@ -239,8 +239,16 @@ impl LocalBsp {
                 return Ok(());
             }
             BspNode::Branch {
-                negative, positive, ..
-            } => (*negative, *positive),
+                split_plane,
+                negative,
+                positive,
+            } => {
+                let split_inverted = split.inverted();
+                if split_plane.as_ref() == split || split_plane.as_ref() == &split_inverted {
+                    return Ok(());
+                }
+                (*negative, *positive)
+            }
         };
         self.add_plane_split_recursive(children.0, split)?;
         self.add_plane_split_recursive(children.1, split)
@@ -364,5 +372,23 @@ mod tests {
             classify_overlap_test_relation(&[strict_inside, boundary_only], &other).unwrap(),
             Some(true)
         );
+    }
+
+    #[test]
+    fn repeated_overlap_plane_splits_do_not_grow_bsp_again() {
+        let host = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        let other = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
+        let overlap = OverlapInfo {
+            other_polygon_idx: 0,
+            other_edges: other.edges.clone(),
+            other_support: other.support.clone(),
+        };
+        let mut bsp = LocalBsp::new(&host);
+
+        bsp.add_overlap(&other, &overlap).unwrap();
+        let first_node_count = bsp.node_count();
+        bsp.add_overlap(&other, &overlap).unwrap();
+
+        assert_eq!(bsp.node_count(), first_node_count);
     }
 }

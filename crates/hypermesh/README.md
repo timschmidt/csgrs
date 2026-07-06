@@ -492,7 +492,9 @@ point, and pairwise coplanar overlap detection now reuses that certified
 convex-polygon interior witness construction instead of a standalone centroid
 witness when no strict contained vertex exists. Face-local BSP duplicate-overlap
 suppression now uses the same certified leaf witness-family relation instead of
-one centroid-style representative point. Splittable tasks now also try
+one centroid-style representative point, and repeated coplanar overlap splits
+now stop at an existing matching local BSP split plane instead of replaying the
+same exact branch split through both subtrees again. Splittable tasks now also try
 that same certified leaf path exactly once before subdivision, regardless of
 former leaf-threshold sizing, and if that exact leaf attempt still returns
 `UnknownClassification` while the bounds remain splittable, hypermesh keeps
