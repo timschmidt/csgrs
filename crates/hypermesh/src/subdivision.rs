@@ -776,11 +776,19 @@ fn select_subdivision_split(
 
 type SplitCounts = (usize, usize, usize, usize);
 
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum SplitSource {
+    Intersection,
+    Arrangement,
+    Midpoint,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct SplitCandidate {
     axis: usize,
     value: Real,
     counts: SplitCounts,
+    source: SplitSource,
 }
 
 fn ordered_subdivision_splits(
@@ -793,7 +801,13 @@ fn ordered_subdivision_splits(
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
             continue;
         }
-        push_split_candidate(&mut candidates, polygons, axis, bounds.midpoint(axis))?;
+        push_split_candidate(
+            &mut candidates,
+            polygons,
+            axis,
+            bounds.midpoint(axis),
+            SplitSource::Midpoint,
+        )?;
     }
 
     for axis in 0..3 {
@@ -801,7 +815,13 @@ fn ordered_subdivision_splits(
             continue;
         }
         for (_gap, value) in arrangement_split_candidates(bounds, polygons, axis)? {
-            push_split_candidate(&mut candidates, polygons, axis, value)?;
+            push_split_candidate(
+                &mut candidates,
+                polygons,
+                axis,
+                value,
+                SplitSource::Arrangement,
+            )?;
         }
     }
 
@@ -810,11 +830,21 @@ fn ordered_subdivision_splits(
             continue;
         }
         for value in intersection_split_candidates(bounds, polygons, axis)? {
-            push_split_candidate(&mut candidates, polygons, axis, value)?;
+            push_split_candidate(
+                &mut candidates,
+                polygons,
+                axis,
+                value,
+                SplitSource::Intersection,
+            )?;
         }
     }
 
-    candidates.sort_by(|left, right| left.counts.cmp(&right.counts));
+    candidates.sort_by(|left, right| {
+        left.counts
+            .cmp(&right.counts)
+            .then_with(|| left.source.cmp(&right.source))
+    });
     Ok(candidates
         .into_iter()
         .map(|candidate| (candidate.axis, candidate.value))
@@ -826,6 +856,7 @@ fn push_split_candidate(
     polygons: &[ConvexPolygon],
     axis: usize,
     value: Real,
+    source: SplitSource,
 ) -> HypermeshResult<()> {
     for existing in candidates.iter() {
         if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
@@ -836,6 +867,7 @@ fn push_split_candidate(
     candidates.push(SplitCandidate {
         axis,
         counts: split_child_counts(polygons, axis, &value)?,
+        source,
         value,
     });
     Ok(())
@@ -2820,6 +2852,48 @@ mod tests {
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
         assert_eq!(best_counts, (4, 0, 0, 0));
+    }
+
+    #[test]
+    fn exact_split_sources_win_midpoint_ties() {
+        let mut candidates = vec![
+            SplitCandidate {
+                axis: 0,
+                value: r(5),
+                counts: (4, 0, 1, 0),
+                source: SplitSource::Midpoint,
+            },
+            SplitCandidate {
+                axis: 1,
+                value: r(2),
+                counts: (4, 0, 1, 0),
+                source: SplitSource::Arrangement,
+            },
+            SplitCandidate {
+                axis: 2,
+                value: r(1),
+                counts: (4, 0, 1, 0),
+                source: SplitSource::Intersection,
+            },
+        ];
+
+        candidates.sort_by(|left, right| {
+            left.counts
+                .cmp(&right.counts)
+                .then_with(|| left.source.cmp(&right.source))
+        });
+
+        assert_eq!(
+            candidates
+                .into_iter()
+                .map(|candidate| (candidate.axis, candidate.value, candidate.source))
+                .collect::<Vec<_>>(),
+            vec![
+                (2, r(1), SplitSource::Intersection),
+                (1, r(2), SplitSource::Arrangement),
+                (0, r(5), SplitSource::Midpoint),
+            ]
+        );
     }
 
     #[test]
