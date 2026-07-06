@@ -2185,9 +2185,10 @@ fn cached_support_reference_accept_with(
         Option<&hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        existing.halfspaces == halfspaces && existing.report.as_ref() == report
-    }) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.halfspaces == halfspaces && existing.report.as_ref() == report)
+    {
         return existing.accepted.clone();
     }
 
@@ -2198,6 +2199,34 @@ fn cached_support_reference_accept_with(
         accepted: accepted.clone(),
     });
     accepted
+}
+
+#[derive(Clone)]
+struct SupportPlaneCellSearchCacheEntry<T: Clone> {
+    polygon_index: usize,
+    halfspaces: Vec<LimitPlane3>,
+    result: HypermeshResult<Option<T>>,
+}
+
+fn cached_support_plane_cell_search_with<T: Clone>(
+    cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<T>>>,
+    polygon_index: usize,
+    halfspaces: Vec<LimitPlane3>,
+    search: impl FnOnce() -> HypermeshResult<Option<T>>,
+) -> HypermeshResult<Option<T>> {
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.polygon_index == polygon_index && existing.halfspaces == halfspaces
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = search();
+    cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
+        polygon_index,
+        halfspaces,
+        result: result.clone(),
+    });
+    result
 }
 
 type ProjectionEscapeAxisOptions = Vec<(Vec<Real>, Vec<Real>)>;
@@ -2637,7 +2666,10 @@ fn support_plane_cell_search_from<T>(
         &[LimitPlane3],
         Option<hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Option<T>>,
-) -> HypermeshResult<Option<T>> {
+) -> HypermeshResult<Option<T>>
+where
+    T: Clone,
+{
     support_plane_cell_search_with_queries(
         None,
         bounds,
@@ -2664,34 +2696,159 @@ fn support_plane_cell_search_with_queries<T>(
         &[LimitPlane3],
         Option<hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Option<T>>,
-) -> HypermeshResult<Option<T>> {
-    if halfspaces_force_support_plane_contact(halfspaces, polygons) {
-        return Ok(None);
-    }
+) -> HypermeshResult<Option<T>>
+where
+    T: Clone,
+{
+    let cache = std::cell::RefCell::new(Vec::new());
+    support_plane_cell_search_with_queries_cached(
+        preferred_point,
+        bounds,
+        polygons,
+        polygon_index,
+        halfspaces,
+        report_for,
+        feasible_for,
+        accept,
+        &cache,
+    )
+}
 
-    let mut saw_unknown = false;
-
-    let current_report = match report_for(halfspaces) {
-        Ok(report) => report,
-        Err(crate::error::HypermeshError::UnknownClassification) => {
-            saw_unknown = true;
-            None
+fn support_plane_cell_search_with_queries_cached<T>(
+    preferred_point: Option<&Point3>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    polygon_index: usize,
+    halfspaces: &mut Vec<LimitPlane3>,
+    report_for: &mut impl FnMut(
+        &[LimitPlane3],
+    ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>>,
+    feasible_for: &mut impl FnMut(&[LimitPlane3]) -> HypermeshResult<bool>,
+    accept: &mut impl FnMut(
+        &[LimitPlane3],
+        Option<hyperlimit::HalfspaceFeasibilityReport>,
+    ) -> HypermeshResult<Option<T>>,
+    cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<T>>>,
+) -> HypermeshResult<Option<T>>
+where
+    T: Clone,
+{
+    cached_support_plane_cell_search_with(cache, polygon_index, halfspaces.to_vec(), || {
+        if halfspaces_force_support_plane_contact(halfspaces, polygons) {
+            return Ok(None);
         }
-        Err(err) => return Err(err),
-    };
 
-    match accept(halfspaces, current_report) {
-        Ok(Some(target)) => return Ok(Some(target)),
-        Ok(None) => {}
-        Err(crate::error::HypermeshError::UnknownClassification) => {
-            saw_unknown = true;
+        let mut saw_unknown = false;
+
+        let current_report = match report_for(halfspaces) {
+            Ok(report) => report,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                None
+            }
+            Err(err) => return Err(err),
+        };
+
+        match accept(halfspaces, current_report) {
+            Ok(Some(target)) => return Ok(Some(target)),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
-        Err(err) => return Err(err),
-    }
 
-    if polygon_index < polygons.len() {
-        let polygon_index = advance_fixed_support_search_index(polygons, polygon_index, halfspaces);
-        if polygon_index >= polygons.len() {
+        if polygon_index < polygons.len() {
+            let polygon_index =
+                advance_fixed_support_search_index(polygons, polygon_index, halfspaces);
+            if polygon_index >= polygons.len() {
+                return if saw_unknown {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(None)
+                };
+            }
+
+            let mut tried_unchanged_branch = false;
+            for positive in
+                support_side_search_order(preferred_point, &polygons[polygon_index].support)
+            {
+                let branch_halfspace =
+                    support_side_halfspace(&polygons[polygon_index].support, positive);
+                if halfspaces
+                    .iter()
+                    .any(|halfspace| halfspace == &branch_halfspace)
+                {
+                    if tried_unchanged_branch {
+                        continue;
+                    }
+                    tried_unchanged_branch = true;
+                    match support_plane_cell_search_with_queries_cached(
+                        preferred_point,
+                        bounds,
+                        polygons,
+                        polygon_index + 1,
+                        halfspaces,
+                        report_for,
+                        feasible_for,
+                        accept,
+                        cache,
+                    ) {
+                        Ok(Some(target)) => return Ok(Some(target)),
+                        Ok(None) => {}
+                        Err(crate::error::HypermeshError::UnknownClassification) => {
+                            saw_unknown = true;
+                        }
+                        Err(err) => return Err(err),
+                    }
+                    continue;
+                }
+                if halfspace_has_opposite_pair(&branch_halfspace, halfspaces) {
+                    continue;
+                }
+
+                halfspaces.push(branch_halfspace);
+                let mut feasibility_unknown = false;
+                let feasible = match feasible_for(halfspaces) {
+                    Ok(feasible) => feasible,
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        feasibility_unknown = true;
+                        true
+                    }
+                    Err(err) => {
+                        halfspaces.pop();
+                        return Err(err);
+                    }
+                };
+                if feasible || feasibility_unknown {
+                    match support_plane_cell_search_with_queries_cached(
+                        preferred_point,
+                        bounds,
+                        polygons,
+                        polygon_index + 1,
+                        halfspaces,
+                        report_for,
+                        feasible_for,
+                        accept,
+                        cache,
+                    ) {
+                        Ok(Some(target)) => {
+                            halfspaces.pop();
+                            return Ok(Some(target));
+                        }
+                        Ok(None) => {}
+                        Err(crate::error::HypermeshError::UnknownClassification) => {
+                            saw_unknown = true;
+                        }
+                        Err(err) => {
+                            halfspaces.pop();
+                            return Err(err);
+                        }
+                    }
+                }
+                halfspaces.pop();
+            }
             return if saw_unknown {
                 Err(crate::error::HypermeshError::UnknownClassification)
             } else {
@@ -2699,95 +2856,12 @@ fn support_plane_cell_search_with_queries<T>(
             };
         }
 
-        let mut tried_unchanged_branch = false;
-        for positive in support_side_search_order(preferred_point, &polygons[polygon_index].support)
-        {
-            let branch_halfspace =
-                support_side_halfspace(&polygons[polygon_index].support, positive);
-            if halfspaces
-                .iter()
-                .any(|halfspace| halfspace == &branch_halfspace)
-            {
-                if tried_unchanged_branch {
-                    continue;
-                }
-                tried_unchanged_branch = true;
-                match support_plane_cell_search_with_queries(
-                    preferred_point,
-                    bounds,
-                    polygons,
-                    polygon_index + 1,
-                    halfspaces,
-                    report_for,
-                    feasible_for,
-                    accept,
-                ) {
-                    Ok(Some(target)) => return Ok(Some(target)),
-                    Ok(None) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
-                        saw_unknown = true;
-                    }
-                    Err(err) => return Err(err),
-                }
-                continue;
-            }
-            if halfspace_has_opposite_pair(&branch_halfspace, halfspaces) {
-                continue;
-            }
-
-            halfspaces.push(branch_halfspace);
-            let mut feasibility_unknown = false;
-            let feasible = match feasible_for(halfspaces) {
-                Ok(feasible) => feasible,
-                Err(crate::error::HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    feasibility_unknown = true;
-                    true
-                }
-                Err(err) => {
-                    halfspaces.pop();
-                    return Err(err);
-                }
-            };
-            if feasible || feasibility_unknown {
-                match support_plane_cell_search_with_queries(
-                    preferred_point,
-                    bounds,
-                    polygons,
-                    polygon_index + 1,
-                    halfspaces,
-                    report_for,
-                    feasible_for,
-                    accept,
-                ) {
-                    Ok(Some(target)) => {
-                        halfspaces.pop();
-                        return Ok(Some(target));
-                    }
-                    Ok(None) => {}
-                    Err(crate::error::HypermeshError::UnknownClassification) => {
-                        saw_unknown = true;
-                    }
-                    Err(err) => {
-                        halfspaces.pop();
-                        return Err(err);
-                    }
-                }
-            }
-            halfspaces.pop();
-        }
-        return if saw_unknown {
+        if saw_unknown {
             Err(crate::error::HypermeshError::UnknownClassification)
         } else {
             Ok(None)
-        };
-    }
-
-    if saw_unknown {
-        Err(crate::error::HypermeshError::UnknownClassification)
-    } else {
-        Ok(None)
-    }
+        }
+    })
 }
 
 fn advance_fixed_support_search_index(
@@ -5897,7 +5971,10 @@ mod tests {
             Some(&report),
             |_halfspaces, _report| {
                 calls += 1;
-                Ok(Some((ReferenceTarget::axis_defined(bounds.min.clone()), vec![23])))
+                Ok(Some((
+                    ReferenceTarget::axis_defined(bounds.min.clone()),
+                    vec![23],
+                )))
             },
         )
         .unwrap();
@@ -5910,6 +5987,27 @@ mod tests {
                 Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
             },
         )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_plane_cell_search_reuses_identical_state_and_index() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let cache = std::cell::RefCell::new(Vec::new());
+        let mut calls = 0;
+
+        let first = cached_support_plane_cell_search_with(&cache, 3, halfspaces.clone(), || {
+            calls += 1;
+            Ok(Some(17))
+        })
+        .unwrap();
+        let second = cached_support_plane_cell_search_with(&cache, 3, halfspaces, || {
+            calls += 1;
+            Ok(Some(99))
+        })
         .unwrap();
 
         assert_eq!(calls, 1);

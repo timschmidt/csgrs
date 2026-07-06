@@ -443,6 +443,9 @@ reuse the exact support target-family construction itself before those traces
 run, instead of rebuilding the same retained target family on each revisit, and
 the full accepted support-reference result is now reused on identical
 support-state/report revisits instead of rerunning that whole acceptance layer.
+Identical `(polygon_index, support halfspace state)` recursive support-search
+states are also now reused instead of replaying the same downstream accept and
+branch search after converging to that exact state again.
 The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
