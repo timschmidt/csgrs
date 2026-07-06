@@ -1335,15 +1335,18 @@ fn projected_reference_escape_targets_from_report(
             push_unique_reference_target(&mut deferred_direct_targets, target);
         }
     }
-    extend_reference_targets_backtracking_unknown(
+    extend_reference_target_families_backtracking_unknown(
         &mut targets,
-        strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
-        |seed| projected_escape_targets_from_seed(bounds, halfspaces, &seed),
-    )?;
-    extend_reference_targets_backtracking_unknown(
-        &mut targets,
-        feasible_support_cell_vertices(halfspaces)?,
-        |vertex| projected_escape_targets_from_seed(bounds, halfspaces, &vertex),
+        [
+            collect_reference_target_family(
+                strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
+                |seed| projected_escape_targets_from_seed(bounds, halfspaces, &seed),
+            ),
+            collect_reference_target_family(
+                feasible_support_cell_vertices(halfspaces)?,
+                |vertex| projected_escape_targets_from_seed(bounds, halfspaces, &vertex),
+            ),
+        ],
     )?;
     for target in deferred_direct_targets {
         push_unique_reference_target(&mut targets, target);
@@ -1616,6 +1619,40 @@ fn extend_reference_targets_backtracking_unknown<T>(
     let mut saw_unknown = false;
     for candidate in candidates {
         match build(candidate) {
+            Ok(found) => {
+                for target in found {
+                    push_unique_reference_target(targets, target);
+                }
+            }
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
+}
+
+fn collect_reference_target_family<T>(
+    candidates: impl IntoIterator<Item = T>,
+    build: impl FnMut(T) -> HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = Vec::new();
+    extend_reference_targets_backtracking_unknown(&mut targets, candidates, build)?;
+    Ok(targets)
+}
+
+fn extend_reference_target_families_backtracking_unknown(
+    targets: &mut Vec<ReferenceTarget>,
+    families: impl IntoIterator<Item = HypermeshResult<Vec<ReferenceTarget>>>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for family in families {
+        match family {
             Ok(found) => {
                 for target in found {
                     push_unique_reference_target(targets, target);
@@ -2184,15 +2221,18 @@ fn strict_projected_cell_targets(
             push_unique_reference_target(&mut deferred_direct_targets, target);
         }
     }
-    extend_reference_targets_backtracking_unknown(
+    extend_reference_target_families_backtracking_unknown(
         &mut targets,
-        strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
-        |seed| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed),
-    )?;
-    extend_reference_targets_backtracking_unknown(
-        &mut targets,
-        feasible_support_cell_vertices(halfspaces)?,
-        |vertex| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex),
+        [
+            collect_reference_target_family(
+                strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
+                |seed| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &seed),
+            ),
+            collect_reference_target_family(
+                feasible_support_cell_vertices(halfspaces)?,
+                |vertex| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex),
+            ),
+        ],
     )?;
     for target in deferred_direct_targets {
         push_unique_reference_target(&mut targets, target);
@@ -2250,33 +2290,39 @@ fn shifted_projected_cell_targets_from_seed(
         push_unique_reference_target(&mut targets, target);
     }
 
-    extend_reference_targets_backtracking_unknown(
+    extend_reference_target_families_backtracking_unknown(
         &mut targets,
-        strict_projected_cell_seeds_from_report(bounds, &shifted, &report)?,
-        |witness| {
-            if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
-                return Ok(Vec::new());
-            }
-            Ok(
-                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+        [
+            collect_reference_target_family(
+                strict_projected_cell_seeds_from_report(bounds, &shifted, &report)?,
+                |witness| {
+                    if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                        return Ok(Vec::new());
+                    }
+                    Ok(reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
+                    .into_iter()
+                    .collect())
+                },
+            ),
+            collect_reference_target_family(feasible_support_cell_vertices(&shifted)?, |witness| {
+                if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                    return Ok(Vec::new());
+                }
+                Ok(
+                    reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
                     .into_iter()
                     .collect(),
-            )
-        },
-    )?;
-    extend_reference_targets_backtracking_unknown(
-        &mut targets,
-        feasible_support_cell_vertices(&shifted)?,
-        |witness| {
-            if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
-                return Ok(Vec::new());
-            }
-            Ok(
-                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
-                    .into_iter()
-                    .collect(),
-            )
-        },
+                )
+            }),
+        ],
     )?;
 
     Ok(targets)
@@ -2305,33 +2351,39 @@ fn projected_escape_targets_from_seed(
         push_unique_reference_target(&mut targets, target);
     }
 
-    extend_reference_targets_backtracking_unknown(
+    extend_reference_target_families_backtracking_unknown(
         &mut targets,
-        strict_projected_cell_seeds_from_report(bounds, &shifted, &report)?,
-        |witness| {
-            if !point_satisfies_halfspaces(&witness, halfspaces)? {
-                return Ok(Vec::new());
-            }
-            Ok(
-                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+        [
+            collect_reference_target_family(
+                strict_projected_cell_seeds_from_report(bounds, &shifted, &report)?,
+                |witness| {
+                    if !point_satisfies_halfspaces(&witness, halfspaces)? {
+                        return Ok(Vec::new());
+                    }
+                    Ok(reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
+                    .into_iter()
+                    .collect())
+                },
+            ),
+            collect_reference_target_family(feasible_support_cell_vertices(&shifted)?, |witness| {
+                if !point_satisfies_halfspaces(&witness, halfspaces)? {
+                    return Ok(Vec::new());
+                }
+                Ok(
+                    reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
                     .into_iter()
                     .collect(),
-            )
-        },
-    )?;
-    extend_reference_targets_backtracking_unknown(
-        &mut targets,
-        feasible_support_cell_vertices(&shifted)?,
-        |witness| {
-            if !point_satisfies_halfspaces(&witness, halfspaces)? {
-                return Ok(Vec::new());
-            }
-            Ok(
-                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
-                    .into_iter()
-                    .collect(),
-            )
-        },
+                )
+            }),
+        ],
     )?;
 
     Ok(targets)
@@ -2395,15 +2447,18 @@ fn strict_support_cell_targets(
             push_unique_reference_target(&mut deferred_direct_targets, target);
         }
     }
-    extend_reference_targets_backtracking_unknown(
+    extend_reference_target_families_backtracking_unknown(
         &mut targets,
-        strict_support_cell_seeds_from_report(bounds, halfspaces, report)?,
-        |seed| shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed),
-    )?;
-    extend_reference_targets_backtracking_unknown(
-        &mut targets,
-        feasible_support_cell_vertices(halfspaces)?,
-        |vertex| shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex),
+        [
+            collect_reference_target_family(
+                strict_support_cell_seeds_from_report(bounds, halfspaces, report)?,
+                |seed| shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed),
+            ),
+            collect_reference_target_family(
+                feasible_support_cell_vertices(halfspaces)?,
+                |vertex| shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex),
+            ),
+        ],
     )?;
     for target in deferred_direct_targets {
         push_unique_reference_target(&mut targets, target);
@@ -2489,33 +2544,39 @@ fn shifted_support_cell_targets_from_seed(
         push_unique_reference_target(&mut targets, target);
     }
 
-    extend_reference_targets_backtracking_unknown(
+    extend_reference_target_families_backtracking_unknown(
         &mut targets,
-        strict_support_cell_seeds_from_report(bounds, &shifted, &report)?,
-        |witness| {
-            if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
-                return Ok(Vec::new());
-            }
-            Ok(
-                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+        [
+            collect_reference_target_family(
+                strict_support_cell_seeds_from_report(bounds, &shifted, &report)?,
+                |witness| {
+                    if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                        return Ok(Vec::new());
+                    }
+                    Ok(reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
+                    .into_iter()
+                    .collect())
+                },
+            ),
+            collect_reference_target_family(feasible_support_cell_vertices(&shifted)?, |witness| {
+                if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                    return Ok(Vec::new());
+                }
+                Ok(
+                    reference_target_from_halfspace_witness(
+                        &witness,
+                        &shifted,
+                        [None, None, None],
+                    )?
                     .into_iter()
                     .collect(),
-            )
-        },
-    )?;
-    extend_reference_targets_backtracking_unknown(
-        &mut targets,
-        feasible_support_cell_vertices(&shifted)?,
-        |witness| {
-            if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
-                return Ok(Vec::new());
-            }
-            Ok(
-                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
-                    .into_iter()
-                    .collect(),
-            )
-        },
+                )
+            }),
+        ],
     )?;
 
     Ok(targets)
@@ -3400,6 +3461,38 @@ mod tests {
                 Err(crate::error::HypermeshError::UnknownClassification)
             })
             .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_target_family_search_backtracks_after_uncertified_earlier_family() {
+        let mut targets = Vec::new();
+
+        extend_reference_target_families_backtracking_unknown(
+            &mut targets,
+            [
+                Err(crate::error::HypermeshError::UnknownClassification),
+                Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))]),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
+    fn reference_target_family_search_reports_unknown_if_all_families_are_uncertified() {
+        let mut targets = Vec::new();
+
+        let err = extend_reference_target_families_backtracking_unknown(
+            &mut targets,
+            [
+                Err(crate::error::HypermeshError::UnknownClassification),
+                Err(crate::error::HypermeshError::UnknownClassification),
+            ],
+        )
+        .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }

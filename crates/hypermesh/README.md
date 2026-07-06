@@ -172,7 +172,11 @@ If a whole projected witness or seed family has no certified target and only
 uncertified candidates, that local family now returns
 `UnknownClassification` so later projected/support/escape backtracking can
 decide whether to keep searching or fail, instead of silently collapsing the
-local family to an empty target set.
+local family to an empty target set. The same rule now also applies across the
+ordered shifted projected/support subfamilies inside one retained target
+builder: an earlier uncertified strict-seed expansion no longer prevents later
+raw shifted-vertex expansions from contributing certified targets, and only an
+entirely uncertified local multi-family search surfaces `UnknownClassification`.
 The top-level projected direct/escape search now does the same: if every
 projected direct trace, projected-support search, and projected escape search
 is uncertified, that local projected-family search returns
