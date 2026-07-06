@@ -190,6 +190,10 @@ If leaf-interior or probe definition reconstruction is itself uncertified, the
 fallback axis-defined candidate is still explored, but if no later certified
 probe family or probe path succeeds that branch now surfaces
 `UnknownClassification` instead of being flattened into plain absence.
+The same now applies to fallback-built detour targets: if an uncertified
+axis-defined detour is later skipped or cannot certify either leg, that local
+detour family also surfaces `UnknownClassification` instead of reading as an
+ordinary missing detour.
 Definition-preserving normal-probe search also now
 also augments, rather than suppresses, the broader certified normal-corridor
 witness family when both are available, and axis-direction probe search now

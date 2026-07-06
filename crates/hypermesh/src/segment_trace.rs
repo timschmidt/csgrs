@@ -77,6 +77,7 @@ struct ProbeReachabilityCacheEntry {
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
+    uncertified_definition_fallback: bool,
 }
 
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
@@ -935,20 +936,16 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
 
     for seed in &seeds {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
+        let (definitions, uncertified_definition_fallback) = probe_definitions_or_axis(
+            &seed,
+            probe_definitions_from_active_halfspaces(&seed, &halfspaces, active_planes, &[]),
+        )?;
         push_unique_detour_target(
             &mut targets,
             DetourTarget {
                 point: seed.clone(),
-                definitions: probe_definitions_or_axis(
-                    &seed,
-                    probe_definitions_from_active_halfspaces(
-                        &seed,
-                        &halfspaces,
-                        active_planes,
-                        &[],
-                    ),
-                )?
-                .0,
+                definitions,
+                uncertified_definition_fallback,
             },
         );
     }
@@ -967,20 +964,21 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     )?;
     for witness in shifted_witnesses {
         let point = witness.point;
+        let (definitions, uncertified_definition_fallback) = probe_definitions_or_axis(
+            &point,
+            probe_definitions_from_active_halfspaces(
+                &point,
+                &witness.halfspaces,
+                witness.active_planes,
+                &[],
+            ),
+        )?;
         push_unique_detour_target(
             &mut targets,
             DetourTarget {
                 point: point.clone(),
-                definitions: probe_definitions_or_axis(
-                    &point,
-                    probe_definitions_from_active_halfspaces(
-                        &point,
-                        &witness.halfspaces,
-                        witness.active_planes,
-                        &[],
-                    ),
-                )?
-                .0,
+                definitions,
+                uncertified_definition_fallback,
             },
         );
     }
@@ -996,6 +994,7 @@ fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarg
         .iter_mut()
         .find(|existing| existing.point == target.point)
     {
+        existing.uncertified_definition_fallback |= target.uncertified_definition_fallback;
         for definition in target.definitions {
             if !existing
                 .definitions
@@ -1723,6 +1722,9 @@ fn probe_reaches_adjacent_cell_via_detours_with_budget(
             || detour.point == *end
             || point_lies_on_traced_surface(&detour.point, polygons)?
         {
+            if detour.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
             continue;
         }
         let first_leg = match probe_reaches_adjacent_cell_with_definitions_budget_impl(
@@ -1743,6 +1745,9 @@ fn probe_reaches_adjacent_cell_via_detours_with_budget(
             Err(err) => return Err(err),
         };
         if !first_leg {
+            if detour.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
             continue;
         }
         match probe_reaches_adjacent_cell_with_definitions_budget_impl(
@@ -1756,7 +1761,11 @@ fn probe_reaches_adjacent_cell_via_detours_with_budget(
             detours_for,
         ) {
             Ok(true) => return Ok(true),
-            Ok(false) => {}
+            Ok(false) => {
+                if detour.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -6433,6 +6442,7 @@ mod tests {
             &[DetourTarget {
                 point: p(1, 1, 1),
                 definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+                uncertified_definition_fallback: false,
             }],
             &[axis_plane_definition(&p(0, 0, 0))],
             &[axis_plane_definition(&p(2, 2, 2))],
@@ -6465,6 +6475,7 @@ mod tests {
                 Plane::axis_aligned(1, r(1)),
                 Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
             ]],
+            uncertified_definition_fallback: false,
         };
 
         assert_eq!(
@@ -6513,6 +6524,7 @@ mod tests {
         let detour = DetourTarget {
             point: p(2, 1, 0),
             definitions: vec![axis_plane_definition(&p(2, 1, 0))],
+            uncertified_definition_fallback: false,
         };
 
         let without_retained_start = trace_segment_via_detours_with_definitions_budget(
@@ -6575,6 +6587,7 @@ mod tests {
         let detour = DetourTarget {
             point: detour_point.clone(),
             definitions: vec![axis_plane_definition(&detour_point)],
+            uncertified_definition_fallback: false,
         };
 
         let traced = trace_segment_from_definitions_with_budget_impl(
@@ -6617,6 +6630,7 @@ mod tests {
         let detour = DetourTarget {
             point: detour_point,
             definitions: vec![axis_plane_definition(&p(1, 0, 0))],
+            uncertified_definition_fallback: false,
         };
 
         let err = trace_segment_via_detours_with_definitions_budget(
@@ -6827,10 +6841,12 @@ mod tests {
         let outer_target = DetourTarget {
             point: outer.clone(),
             definitions: vec![axis_plane_definition(&outer)],
+            uncertified_definition_fallback: false,
         };
         let inner_target = DetourTarget {
             point: inner.clone(),
             definitions: vec![axis_plane_definition(&inner)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -6889,10 +6905,12 @@ mod tests {
         let blocked_target = DetourTarget {
             point: blocked.clone(),
             definitions: vec![axis_plane_definition(&blocked)],
+            uncertified_definition_fallback: false,
         };
         let good_target = DetourTarget {
             point: good.clone(),
             definitions: vec![axis_plane_definition(&good)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -6936,6 +6954,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour.clone(),
             definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -6979,6 +6998,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour.clone(),
             definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -7022,6 +7042,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour.clone(),
             definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |_from: &Point3,
@@ -7054,6 +7075,90 @@ mod tests {
     }
 
     #[test]
+    fn probe_reachability_reports_unknown_when_fallback_detour_has_no_path() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: true,
+        };
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| Ok(false);
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err = probe_reaches_adjacent_cell_via_detours_with_budget(
+            &start,
+            &end,
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            1,
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_reachability_reports_unknown_when_fallback_surface_detour_is_skipped() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: true,
+        };
+        let polygons = vec![ConvexPolygon {
+            support: Plane::axis_aligned(0, r(1)),
+            edges: Vec::new(),
+            mesh_index: 0,
+            polygon_index: 0,
+            delta_w: Vec::new(),
+            approx_bounds: None,
+        }];
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| Ok(false);
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err = probe_reaches_adjacent_cell_via_detours_with_budget(
+            &start,
+            &end,
+            &polygons,
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            1,
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn probe_plane_replacement_step_detour_budget_uses_single_detour() {
         let start = p(0, 0, 0);
         let detour_point = p(1, 0, 0);
@@ -7061,6 +7166,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour_point.clone(),
             definitions: vec![axis_plane_definition(&detour_point)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours = |from: &Point3, to: &Point3| {
             Ok((*from == start && *to == detour_point) || (*from == detour_point && *to == end))
@@ -7106,6 +7212,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour_point.clone(),
             definitions: vec![axis_plane_definition(&detour_point)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours = |from: &Point3, to: &Point3, winding: &[i32]| {
             if (*from == start && *to == detour_point) || (*from == detour_point && *to == end) {
@@ -7159,6 +7266,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour_point.clone(),
             definitions: vec![axis_plane_definition(&detour_point)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours = |from: &Point3, to: &Point3, winding: &[i32]| {
             if *from == start && *to == end {
@@ -7213,6 +7321,7 @@ mod tests {
         let detour_target = DetourTarget {
             point: detour_point.clone(),
             definitions: vec![detour_definition.clone()],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -7411,10 +7520,12 @@ mod tests {
         let outer_target = DetourTarget {
             point: outer.clone(),
             definitions: vec![axis_plane_definition(&outer)],
+            uncertified_definition_fallback: false,
         };
         let inner_target = DetourTarget {
             point: inner.clone(),
             definitions: vec![axis_plane_definition(&inner)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -7508,10 +7619,12 @@ mod tests {
         let outer_target = DetourTarget {
             point: outer.clone(),
             definitions: vec![axis_plane_definition(&outer)],
+            uncertified_definition_fallback: false,
         };
         let inner_target = DetourTarget {
             point: inner.clone(),
             definitions: vec![axis_plane_definition(&inner)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
@@ -7567,10 +7680,12 @@ mod tests {
         let outer_target = DetourTarget {
             point: outer.clone(),
             definitions: vec![axis_plane_definition(&outer)],
+            uncertified_definition_fallback: false,
         };
         let inner_target = DetourTarget {
             point: inner.clone(),
             definitions: vec![axis_plane_definition(&inner)],
+            uncertified_definition_fallback: false,
         };
         let mut trace_without_detours =
             |from: &Point3,
