@@ -81,7 +81,10 @@ reachability now also backtracks across uncertified start/end definition pairs
 before giving up on the whole local plane-replacement family. Probe winding fallback
 from retained reference/probe definitions now uses that same bounded detour
 family on its replacement steps as well, again without recursing into another
-plane-replacement layer. Leaf interior
+plane-replacement layer, and that retained-definition segment search now also
+backtracks across uncertified direct definition pairs and continues into
+certified detour families instead of collapsing an all-uncertified direct
+family to `None`. Leaf interior
 construction now asks `hyperlimit` for strict replayable witnesses from the
 closed leaf cell and its shifted witness family before it falls back to a
 centroid seed, so probe generation can retain multiple certified plane

@@ -250,10 +250,11 @@ fn trace_segment_from_definitions_with_budget_impl(
     ) -> HypermeshResult<Option<WindingNumberVector>>,
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Some(winding) =
-        trace_without_detours(start, end, winding, start_definitions, end_definitions)?
-    {
-        return Ok(winding);
+    match trace_without_detours(start, end, winding, start_definitions, end_definitions) {
+        Ok(Some(winding)) => return Ok(winding),
+        Ok(None) => {}
+        Err(HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
     }
 
     if remaining_detours == 0 {
@@ -316,6 +317,7 @@ fn trace_segment_via_detours_with_definitions_budget(
     ) -> HypermeshResult<Option<WindingNumberVector>>,
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut saw_unknown = false;
     for detour in detours {
         if detour.point == *start
             || detour.point == *end
@@ -323,7 +325,7 @@ fn trace_segment_via_detours_with_definitions_budget(
         {
             continue;
         }
-        let Some(first_leg) = retryable_trace(trace_segment_from_definitions_with_budget_impl(
+        let first_leg = match trace_segment_from_definitions_with_budget_impl(
             start,
             &detour.point,
             winding,
@@ -333,11 +335,15 @@ fn trace_segment_via_detours_with_definitions_budget(
             remaining_detours - 1,
             trace_without_detours,
             detours_for,
-        ))?
-        else {
-            continue;
+        ) {
+            Ok(first_leg) => first_leg,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
         };
-        let Some(second_leg) = retryable_trace(trace_segment_from_definitions_with_budget_impl(
+        let second_leg = match trace_segment_from_definitions_with_budget_impl(
             &detour.point,
             end,
             &first_leg,
@@ -347,14 +353,22 @@ fn trace_segment_via_detours_with_definitions_budget(
             remaining_detours - 1,
             trace_without_detours,
             detours_for,
-        ))?
-        else {
-            continue;
+        ) {
+            Ok(second_leg) => second_leg,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
         };
         return Ok(Some(second_leg));
     }
 
-    Ok(None)
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 fn trace_segment_with_definitions_no_detours(
@@ -374,20 +388,44 @@ fn trace_segment_with_definitions_no_detours(
     let mut end_definitions = end_definitions.to_vec();
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
 
-    for start_definition in &start_definitions {
-        for end_definition in &end_definitions {
-            if let Some(winding) = retryable_trace(trace_plane_replacement_path_without_detours(
+    definition_pair_trace_backtracking_unknown(
+        &start_definitions,
+        &end_definitions,
+        |start_definition, end_definition| {
+            trace_plane_replacement_path_without_detours(
                 start_definition,
                 end_definition,
                 winding,
                 polygons,
-            ))? {
-                return Ok(Some(winding));
+            )
+        },
+    )
+}
+
+fn definition_pair_trace_backtracking_unknown(
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    mut trace: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<WindingNumberVector>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut saw_unknown = false;
+
+    for start_definition in start_definitions {
+        for end_definition in end_definitions {
+            match trace(start_definition, end_definition) {
+                Ok(winding) => return Ok(Some(winding)),
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                }
+                Err(err) => return Err(err),
             }
         }
     }
 
-    Ok(None)
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
@@ -5117,6 +5155,43 @@ mod tests {
     }
 
     #[test]
+    fn definition_pair_trace_backtracks_after_uncertified_pair() {
+        let start_unknown = axis_plane_definition(&p(0, 0, 0));
+        let start_ok = axis_plane_definition(&p(1, 0, 0));
+        let end = axis_plane_definition(&p(2, 0, 0));
+
+        let traced = definition_pair_trace_backtracking_unknown(
+            &[start_unknown.clone(), start_ok.clone()],
+            std::slice::from_ref(&end),
+            |start_definition, end_definition| {
+                if start_definition == &start_unknown && end_definition == &end {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![1])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(traced, Some(vec![1]));
+    }
+
+    #[test]
+    fn definition_pair_trace_reports_unknown_if_all_pairs_are_uncertified() {
+        let start = axis_plane_definition(&p(0, 0, 0));
+        let end = axis_plane_definition(&p(1, 0, 0));
+
+        let err = definition_pair_trace_backtracking_unknown(
+            std::slice::from_ref(&start),
+            std::slice::from_ref(&end),
+            |_start_definition, _end_definition| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn detour_legs_retry_direct_paths_when_axis_order_fails() {
         let blockers = vec![
             make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
@@ -5245,9 +5320,11 @@ mod tests {
                 )
             },
             &mut |_start, _end| Ok(Vec::new()),
-        )
-        .unwrap();
-        assert_eq!(without_retained_start, None);
+        );
+        assert_eq!(
+            without_retained_start.unwrap_err(),
+            HypermeshError::UnknownClassification
+        );
 
         let with_retained_start = trace_segment_via_detours_with_definitions_budget(
             &start,
@@ -5273,6 +5350,77 @@ mod tests {
         .unwrap();
 
         assert_eq!(with_retained_start, Some(vec![0]));
+    }
+
+    #[test]
+    fn detour_search_continues_after_uncertified_no_detour_family() {
+        let start = p(0, 0, 0);
+        let detour_point = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour = DetourTarget {
+            point: detour_point.clone(),
+            definitions: vec![axis_plane_definition(&detour_point)],
+        };
+
+        let traced = trace_segment_from_definitions_with_budget_impl(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            1,
+            &mut |from, to, winding, _start_definitions, _end_definitions| {
+                if *from == start && *to == end {
+                    Err(HypermeshError::UnknownClassification)
+                } else if (*from == start && *to == detour_point)
+                    || (*from == detour_point && *to == end)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else {
+                    Ok(None)
+                }
+            },
+            &mut |from, to| {
+                if *from == start && *to == end {
+                    Ok(vec![detour.clone()])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(traced, vec![0]);
+    }
+
+    #[test]
+    fn detour_search_reports_unknown_if_all_detours_are_uncertified() {
+        let start = p(0, 0, 0);
+        let detour_point = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour = DetourTarget {
+            point: detour_point,
+            definitions: vec![axis_plane_definition(&p(1, 0, 0))],
+        };
+
+        let err = trace_segment_via_detours_with_definitions_budget(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[detour],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            1,
+            &mut |_from, _to, _winding, _start_definitions, _end_definitions| {
+                Err(HypermeshError::UnknownClassification)
+            },
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
