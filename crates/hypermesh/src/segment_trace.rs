@@ -901,6 +901,13 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
             report.as_ref(),
             &mut saw_unknown,
         )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) = dedupe_shifted_halfspace_seed_families(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    );
 
     for seed in &seeds {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
@@ -2085,6 +2092,13 @@ fn strict_leaf_witness_points(
     let mut points = Vec::new();
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         leaf_witness_seed_families(leaf, vertices, &bounds, &halfspaces, report.as_ref())?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) = dedupe_shifted_halfspace_seed_families(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    );
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
@@ -2405,6 +2419,13 @@ fn strict_leaf_cell_points(
             report.as_ref(),
             &mut saw_unknown,
         )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) = dedupe_shifted_halfspace_seed_families(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    );
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), witness);
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)
@@ -2956,6 +2977,13 @@ fn strict_normal_probe_targets(
             report.as_ref(),
             &mut saw_unknown,
         )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) = dedupe_shifted_halfspace_seed_families(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    );
     for definition in &interior.planes {
         for plane in &definition[1..] {
             if !extra_planes.iter().any(|existing| existing == plane) {
@@ -3276,6 +3304,13 @@ fn strict_axis_probe_targets(
             report.as_ref(),
             &mut saw_unknown,
         )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) = dedupe_shifted_halfspace_seed_families(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    );
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_axis_probe_point(
@@ -3681,12 +3716,16 @@ fn shifted_halfspace_cell_witnesses_from_seed(
             shifted_report.as_ref(),
             &mut saw_unknown,
         )?;
-    let mut shifted_seed_search_order = Vec::new();
-    let strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut shifted_seed_search_order);
-    let shifted_vertices =
-        take_new_halfspace_seed_family(shifted_vertices, &mut shifted_seed_search_order);
-    let shifted_geometry_seeds =
-        take_new_halfspace_seed_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
+    let report_witness = shifted_report
+        .as_ref()
+        .and_then(|report| report.witness.as_ref());
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(
+            report_witness,
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
     extend_shifted_halfspace_witnesses_backtracking_unknown(
         &mut witnesses,
         strict_seeds,
@@ -3829,6 +3868,19 @@ fn take_new_halfspace_seed_family(points: Vec<Point3>, seen: &mut Vec<Point3>) -
         fresh.push(point);
     }
     fresh
+}
+
+fn dedupe_shifted_halfspace_seed_families(
+    report_witness: Option<&Point3>,
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+) -> (Vec<Point3>, Vec<Point3>, Vec<Point3>) {
+    let mut seen = report_witness.into_iter().cloned().collect::<Vec<_>>();
+    let strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut seen);
+    let shifted_vertices = take_new_halfspace_seed_family(shifted_vertices, &mut seen);
+    let shifted_geometry_seeds = take_new_halfspace_seed_family(shifted_geometry_seeds, &mut seen);
+    (strict_seeds, shifted_vertices, shifted_geometry_seeds)
 }
 
 fn extend_shifted_halfspace_seed_families_backtracking_unknown(
@@ -4592,6 +4644,22 @@ mod tests {
 
         assert_eq!(fresh, vec![p(1, 1, 1), p(2, 2, 2)]);
         assert_eq!(seen, vec![p(0, 0, 0), p(1, 1, 1), p(2, 2, 2)]);
+    }
+
+    #[test]
+    fn shifted_halfspace_seed_families_skip_report_witness_duplicates() {
+        let witness = p(1, 1, 1);
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+            dedupe_shifted_halfspace_seed_families(
+                Some(&witness),
+                vec![witness.clone(), p(2, 1, 1)],
+                vec![p(2, 1, 1), witness.clone(), p(3, 1, 1)],
+                vec![p(3, 1, 1), witness.clone(), p(4, 1, 1)],
+            );
+
+        assert_eq!(strict_seeds, vec![p(2, 1, 1)]);
+        assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
+        assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
     }
 
     #[test]
