@@ -4,7 +4,7 @@ use crate::bvh::ExactBvh;
 use crate::clip::{ClipSide, clip_polygon};
 use crate::error::HypermeshResult;
 use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_real, compare_real,
 };
 use crate::intersection::{PairwiseIntersection, PairwiseIntersectionType, intersect_polygons};
 use crate::local_bsp::LocalBsp;
@@ -653,18 +653,11 @@ fn segment_has_strict_interior_point_in_both(
 ) -> HypermeshResult<bool> {
     let mut lower = Real::zero();
     let mut upper = Real::one();
-    if !constrain_open_segment_interval_to_polygon(a, b, left, &mut lower, &mut upper)?
-        || !constrain_open_segment_interval_to_polygon(a, b, right, &mut lower, &mut upper)?
-        || !compare_real(&lower, &upper)?.is_lt()
-    {
-        return Ok(false);
-    }
-
-    let t = ((&lower + &upper) / Real::from(2))
-        .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
-    let witness = interpolate_segment_point(a, b, &t);
-    Ok(affine_point_strictly_in_polygon(&witness, left)?
-        && affine_point_strictly_in_polygon(&witness, right)?)
+    Ok(
+        constrain_open_segment_interval_to_polygon(a, b, left, &mut lower, &mut upper)?
+            && constrain_open_segment_interval_to_polygon(a, b, right, &mut lower, &mut upper)?
+            && compare_real(&lower, &upper)?.is_lt(),
+    )
 }
 
 fn constrain_open_segment_interval_to_polygon(
@@ -727,29 +720,6 @@ fn update_open_segment_upper(upper: &mut Real, candidate: &Real) -> HypermeshRes
         *upper = candidate.clone();
     }
     Ok(compare_real(&Real::zero(), upper)?.is_lt())
-}
-
-fn interpolate_segment_point(start: &Point3, end: &Point3, t: &Real) -> Point3 {
-    Point3::new(
-        &start.x + &(t.clone() * (&end.x - &start.x)),
-        &start.y + &(t.clone() * (&end.y - &start.y)),
-        &start.z + &(t.clone() * (&end.z - &start.z)),
-    )
-}
-
-fn affine_point_strictly_in_polygon(
-    point: &Point3,
-    polygon: &ConvexPolygon,
-) -> HypermeshResult<bool> {
-    if classify_point(point, &polygon.support)? != Classification::On {
-        return Ok(false);
-    }
-    for edge in &polygon.edges {
-        if classify_point(point, edge)?.is_non_negative() {
-            return Ok(false);
-        }
-    }
-    Ok(true)
 }
 
 fn leaf_polygon_key(polygon: &ConvexPolygon) -> (isize, isize) {
