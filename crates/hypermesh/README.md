@@ -354,6 +354,10 @@ focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. Full
 EMBER plane-replacement
 coverage for every reference construction remains unfinished.
+The subdivision-entry support-fallback slice is also now checked against the
+public boolean path on the prepared closed-face union fixture, so that
+alternate support-reference propagation is covered above the private helper
+layer as well.
 Leaf probe reachability now also gives retained plane-replacement steps one
 lower definition-based reachability retry of their own before the search gives
 up, without opening another nested step-detoured plane-replacement layer, and

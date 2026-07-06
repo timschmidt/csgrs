@@ -903,6 +903,35 @@ fn subdivision_support_reference_fallback_on_prepared_closed_mesh_faces() {
 }
 
 #[test]
+fn subdivision_support_reference_fallback_matches_general_union_count() {
+    let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+    let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+    let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let polygons = vec![
+        prepared_axis_face(&soup.polygons, 0, 5),
+        prepared_axis_face(&soup.polygons, 1, 5),
+        prepared_axis_face(&soup.polygons, 2, 5),
+    ];
+    let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(10, 10, 10));
+    let ref_point = p(0, 5, 5);
+    let ref_wnv = vec![0; soup.num_meshes];
+    let mesh_refs = [x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()];
+    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let alternate = subdivide(
+        SubdivisionTask::new(polygons, bounds, ref_point, ref_wnv),
+        &indicator,
+        SubdivisionConfig { max_depth: 4 },
+    )
+    .unwrap_or_else(|err| panic!("alternate support reference union failed: {err:?}"));
+    let general = boolean_operation(&mesh_refs, BooleanOp::Union, EmberConfig { max_depth: 4 })
+        .unwrap_or_else(|err| panic!("general union failed: {err:?}"));
+
+    assert_eq!(alternate.len(), general.output().polygons.len());
+    assert!(alternate.iter().all(|polygon| polygon.winding().is_some()));
+}
+
+#[test]
 fn disjoint_cube_booleans_have_expected_polygon_counts() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(4, 6);
