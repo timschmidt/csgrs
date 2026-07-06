@@ -299,24 +299,9 @@ fn subdivide_into_inner(
 
     let can_split = can_split_bounds(&task.bounds)?;
 
-    if task.polygons.len() <= config.leaf_threshold {
-        let mut certified_output = Vec::new();
-        match process_leaf_into(
-            &task.polygons,
-            &task.bounds,
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            indicator,
-            &mut certified_output,
-        ) {
-            Ok(_) => {
-                output.extend(certified_output);
-                return Ok(());
-            }
-            Err(crate::error::HypermeshError::UnknownClassification) if can_split => {}
-            Err(err) => return Err(err),
-        }
+    if let Some(certified_output) = certified_leaf_output_if_complete(&task, indicator)? {
+        output.extend(certified_output);
+        return Ok(());
     }
 
     if !can_split {
@@ -329,11 +314,6 @@ fn subdivide_into_inner(
             indicator,
             output,
         )?;
-        return Ok(());
-    }
-
-    if let Some(certified_output) = certified_leaf_output_if_complete(&task, indicator)? {
-        output.extend(certified_output);
         return Ok(());
     }
 
@@ -418,16 +398,30 @@ fn certified_leaf_output_if_complete(
     task: &SubdivisionTask,
     indicator: &Indicator,
 ) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
+    certified_leaf_output_if_complete_with(task, indicator, |task, indicator, output| {
+        process_leaf_into(
+            &task.polygons,
+            &task.bounds,
+            &task.ref_point,
+            &task.ref_definitions,
+            &task.ref_wnv,
+            indicator,
+            output,
+        )
+    })
+}
+
+fn certified_leaf_output_if_complete_with(
+    task: &SubdivisionTask,
+    indicator: &Indicator,
+    mut process_leaf: impl FnMut(
+        &SubdivisionTask,
+        &Indicator,
+        &mut Vec<ClassifiedPolygon>,
+    ) -> HypermeshResult<LeafProcessingStats>,
+) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
     let mut certified_output = Vec::new();
-    let stats = match process_leaf_into(
-        &task.polygons,
-        &task.bounds,
-        &task.ref_point,
-        &task.ref_definitions,
-        &task.ref_wnv,
-        indicator,
-        &mut certified_output,
-    ) {
+    let stats = match process_leaf(task, indicator, &mut certified_output) {
         Ok(stats) => stats,
         Err(crate::error::HypermeshError::UnknownClassification) => return Ok(None),
         Err(err) => return Err(err),
@@ -2981,6 +2975,31 @@ mod tests {
             )),
             Err(crate::error::HypermeshError::ReferencePropagationFailed)
         );
+    }
+
+    #[test]
+    fn certified_leaf_output_helper_runs_leaf_attempt_once() {
+        let task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(1, 1, 1)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let indicator = crate::winding::make_indicator(BooleanOp::Union, 1);
+        let mut attempts = 0;
+
+        let output = certified_leaf_output_if_complete_with(
+            &task,
+            &indicator,
+            |_task, _indicator, _output| {
+                attempts += 1;
+                Err(crate::error::HypermeshError::UnknownClassification)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(attempts, 1);
+        assert_eq!(output, None);
     }
 
     #[test]

@@ -252,9 +252,9 @@ convex-polygon interior witness construction instead of a standalone centroid
 witness when no strict contained vertex exists. Face-local BSP duplicate-overlap
 suppression now uses the same certified leaf witness-family relation instead of
 one centroid-style representative point. Splittable tasks now also try
-that same certified leaf path before subdivision once they are above the leaf
-threshold, and if a below-threshold leaf attempt still returns
-`UnknownClassification` while the bounds remain splittable, hypermesh now keeps
+that same certified leaf path exactly once before subdivision, regardless of
+leaf-threshold sizing, and if that exact leaf attempt still returns
+`UnknownClassification` while the bounds remain splittable, hypermesh keeps
 subdividing instead of treating the threshold as a hard completeness boundary.
 That lets exact local arrangement isolation continue past heuristic leaf sizing
 until the depth budget or a certified leaf result stops the branch. Hypermesh reports
