@@ -1141,7 +1141,15 @@ fn projected_reference_escape_targets(
     if report.status != HalfspaceFeasibility::Feasible {
         return Ok(projected_targets.to_vec());
     }
+    projected_reference_escape_targets_from_report(bounds, halfspaces, projected_targets, &report)
+}
 
+fn projected_reference_escape_targets_from_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    projected_targets: &[ReferenceTarget],
+    report: &hyperlimit::HalfspaceFeasibilityReport,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
 
     if let Some(witness) = &report.witness
@@ -1152,9 +1160,22 @@ fn projected_reference_escape_targets(
         push_unique_reference_target(&mut targets, target);
     }
 
+    let report_witness = report.witness.clone();
+    let mut deferred_direct_targets = Vec::new();
+    for seed in strict_projected_cell_seeds_from_report(bounds, halfspaces, report)? {
+        if !report_witness
+            .as_ref()
+            .is_some_and(|witness| witness == &seed)
+            && point_satisfies_halfspaces(&seed, halfspaces)?
+            && let Some(target) =
+                reference_target_from_halfspace_witness(&seed, halfspaces, [None, None, None])?
+        {
+            push_unique_reference_target(&mut deferred_direct_targets, target);
+        }
+    }
     extend_reference_targets_backtracking_unknown(
         &mut targets,
-        strict_projected_cell_seeds_from_report(bounds, halfspaces, &report)?,
+        strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
         |seed| projected_escape_targets_from_seed(bounds, halfspaces, &seed),
     )?;
     extend_reference_targets_backtracking_unknown(
@@ -1162,6 +1183,9 @@ fn projected_reference_escape_targets(
         feasible_support_cell_vertices(halfspaces)?,
         |vertex| projected_escape_targets_from_seed(bounds, halfspaces, &vertex),
     )?;
+    for target in deferred_direct_targets {
+        push_unique_reference_target(&mut targets, target);
+    }
 
     Ok(targets)
 }
@@ -2862,6 +2886,38 @@ mod tests {
 
         assert!(targets.iter().any(|target| target.point == direct.point));
         assert!(targets.len() > 1);
+    }
+
+    #[test]
+    fn projected_reference_escape_targets_include_direct_strict_seed_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+        let report = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            Point3::new(r(1), r(2), r(0)),
+            [None, None, None],
+        );
+
+        let targets = projected_reference_escape_targets_from_report(&bounds, &halfspaces, &[], &report)
+            .unwrap();
+
+        assert!(
+            targets
+                .iter()
+                .any(|target| target.point == Point3::new(r(1), r(2), r(3)))
+        );
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == Point3::new(r(1), r(2), r(3)))
+                .is_some_and(|target| !target.definitions.is_empty())
+        );
     }
 
     #[test]

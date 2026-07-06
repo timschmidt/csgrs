@@ -165,7 +165,9 @@ references now keep certified halfspace-derived plane definitions when those
 can be reconstructed instead of collapsing every witness back to one axis-plane
 triple. Closed projected child cells now also retain any remaining strict
 direct witnesses of the cell, including strict exact feasible vertices, instead
-of using those points only as shifted-seed sources. Support-cell witnesses are now constructed from
+of using those points only as shifted-seed sources. The projected escape-target
+family now retains those same remaining strict direct projected witnesses before
+it widens into shifted projected escape cells. Support-cell witnesses are now constructed from
 closed support-side cells by enumerating exact feasible cell vertices and
 asking `hyperlimit` for replayable witnesses inside inward-shifted strict
 cells. When `hyperlimit` already provides a strict feasible witness for the
