@@ -699,6 +699,7 @@ fn nested_closed_tetrahedra_use_general_leaf_path() -> HypermeshResult<()> {
     let outer = tetrahedron([[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]]);
     let inner = tetrahedron([[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]]);
     let refs = [outer.as_ref(), inner.as_ref()];
+    let reverse_refs = [inner.as_ref(), outer.as_ref()];
     let outer_soup = passthrough(&outer).unwrap();
     let inner_soup = passthrough(&inner).unwrap();
     let config = EmberConfig { max_depth: 0 };
@@ -720,6 +721,20 @@ fn nested_closed_tetrahedra_use_general_leaf_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
     assert!(difference.triangles.len() >= outer_soup.triangles.len());
+
+    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&reverse_difference_result);
+    let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
+    assert!(reverse_difference.triangles.is_empty());
+
+    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+    assert_output_polygons_closed(&xor_result);
+    let xor = triangulate_and_resolve_certified(&xor_result)?;
+    assert_no_boundary_edges(&xor);
+    assert_volume_numerator(
+        &xor,
+        signed_volume_numerator(&outer_soup) - signed_volume_numerator(&inner_soup),
+    );
 
     Ok(())
 }
@@ -752,6 +767,24 @@ fn disconnected_container_uses_general_leaf_path() -> HypermeshResult<()> {
     assert_output_polygons_closed(&difference_result);
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert!(difference.triangles.is_empty());
+
+    let forward_difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&forward_difference_result);
+    let forward_difference = triangulate_and_resolve_certified(&forward_difference_result)?;
+    assert_no_boundary_edges(&forward_difference);
+    assert_volume_numerator(
+        &forward_difference,
+        signed_volume_numerator(&container_soup) - signed_volume_numerator(&contained_soup),
+    );
+
+    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+    assert_output_polygons_closed(&xor_result);
+    let xor = triangulate_and_resolve_certified(&xor_result)?;
+    assert_no_boundary_edges(&xor);
+    assert_volume_numerator(
+        &xor,
+        signed_volume_numerator(&container_soup) - signed_volume_numerator(&contained_soup),
+    );
 
     Ok(())
 }
