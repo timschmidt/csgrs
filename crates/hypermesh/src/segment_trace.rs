@@ -1834,12 +1834,6 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
     for candidate in shifted_edge_interior_points(leaf, &center)? {
         push_unique_interior_point(&mut points, candidate);
     }
-    if points.is_empty() {
-        points.push(InteriorLeafPoint {
-            point: center,
-            planes: Vec::new(),
-        });
-    }
 
     Ok(points)
 }

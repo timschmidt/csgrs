@@ -45,9 +45,11 @@ Leaf classification currently searches certified off-face probes from exact
 leaf interior points by building strict witness cells along the support normal
 or a support-axis direction inside the open interval before the nearest crossed
 local surface or AABB boundary. The centroid is still used as a deterministic
-seed when needed, but replayable leaf interior targets now prefer strict
-halfspace witnesses and deterministic EMBER-style points formed by shifting
-adjacent edge planes inward and intersecting them with the support plane. If a
+seed when needed to derive stricter constructions, but leaf interior targets
+now come only from replayable strict halfspace witnesses and deterministic
+EMBER-style points formed by shifting adjacent edge planes inward and
+intersecting them with the support plane; the implementation no longer falls
+back to treating the naked centroid as a certified leaf witness. If a
 probe lies on a traced surface,
 cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
@@ -75,8 +77,7 @@ family on its replacement steps as well, again without recursing into another
 plane-replacement layer. Leaf interior
 construction also asks `hyperlimit` for a strict replayable halfspace witness
 inside the leaf so probe generation can retain multiple certified plane
-definitions even when the affine interior point itself came from
-centroid-style construction, and those retained definitions now include every
+definitions, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes
 its own strict feasibility witness and exact feasible vertices rather than a
