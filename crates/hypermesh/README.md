@@ -173,6 +173,12 @@ uncertified candidates, that local family now returns
 `UnknownClassification` so later projected/support/escape backtracking can
 decide whether to keep searching or fail, instead of silently collapsing the
 local family to an empty target set.
+The top-level projected direct/escape search now does the same: if every
+projected direct trace, projected-support search, and projected escape search
+is uncertified, that local projected-family search returns
+`UnknownClassification` instead of silently collapsing to `None`, and only the
+broader full child-cell support fallback boundary intentionally downgrades that
+local failure so a later certified support-cell construction can still run.
 It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit

@@ -1109,50 +1109,52 @@ fn compute_new_reference(
         projected_reference_escape_targets(bounds, &projected_halfspaces, &projected_targets),
     )?;
 
-    if let Some((target, winding)) = search_projected_reference_families(
-        &projected_targets,
-        &projected_escape_targets,
-        || {
-            projected_support_plane_cell_reference(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                bounds,
-                polygons,
-                projected_halfspaces.clone(),
-            )
-        },
-        |projected_target| {
-            trace_reference_target(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                bounds,
-                polygons,
-                projected_target,
-            )
-        },
-        |projected_target| {
-            projection_axis_escape_reference(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                &projected_target.point,
-                bounds,
-                polygons,
-            )
-        },
-        |projected_target| {
-            projection_escape_reference(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                &projected_target.point,
-                bounds,
-                polygons,
-            )
-        },
-    )? {
+    if let Some((target, winding)) =
+        projected_reference_search_or_none(search_projected_reference_families(
+            &projected_targets,
+            &projected_escape_targets,
+            || {
+                projected_support_plane_cell_reference(
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    bounds,
+                    polygons,
+                    projected_halfspaces.clone(),
+                )
+            },
+            |projected_target| {
+                trace_reference_target(
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    bounds,
+                    polygons,
+                    projected_target,
+                )
+            },
+            |projected_target| {
+                projection_axis_escape_reference(
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    &projected_target.point,
+                    bounds,
+                    polygons,
+                )
+            },
+            |projected_target| {
+                projection_escape_reference(
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    &projected_target.point,
+                    bounds,
+                    polygons,
+                )
+            },
+        ))?
+    {
         return Ok((target.point, target.definitions, winding));
     }
 
@@ -1175,6 +1177,16 @@ fn reference_target_family_or_empty(
     }
 }
 
+fn projected_reference_search_or_none(
+    result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    match result {
+        Ok(found) => Ok(found),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(err) => Err(err),
+    }
+}
+
 fn search_projected_reference_families(
     projected_targets: &[ReferenceTarget],
     projected_escape_targets: &[ReferenceTarget],
@@ -1187,33 +1199,62 @@ fn search_projected_reference_families(
         &ReferenceTarget,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let mut saw_unknown = false;
+
     for projected_target in projected_targets {
-        if let Some(winding) = trace_projected_target(projected_target)? {
-            return Ok(Some((projected_target.clone(), winding)));
+        match trace_projected_target(projected_target) {
+            Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
     }
 
     match projected_support_search() {
         Ok(Some(found)) => return Ok(Some(found)),
-        Ok(None) | Err(crate::error::HypermeshError::UnknownClassification) => {}
+        Ok(None) => {}
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
         Err(err) => return Err(err),
     }
 
     for projected_target in projected_escape_targets {
-        if let Some(winding) = trace_projected_target(projected_target)? {
-            return Ok(Some((projected_target.clone(), winding)));
+        match trace_projected_target(projected_target) {
+            Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
 
-        if let Some(found) = axis_escape_search(projected_target)? {
-            return Ok(Some(found));
+        match axis_escape_search(projected_target) {
+            Ok(Some(found)) => return Ok(Some(found)),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
 
-        if let Some(found) = tight_escape_search(projected_target)? {
-            return Ok(Some(found));
+        match tight_escape_search(projected_target) {
+            Ok(Some(found)) => return Ok(Some(found)),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
     }
 
-    Ok(None)
+    if saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 fn projected_reference_escape_targets(
@@ -3074,6 +3115,44 @@ mod tests {
 
         assert_eq!(found, Some((escape_target, vec![23])));
         assert_eq!(*calls.borrow(), vec!["projected_support", "direct"]);
+    }
+
+    #[test]
+    fn projected_reference_search_reports_unknown_if_all_families_are_uncertified() {
+        let projected = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let err = search_projected_reference_families(
+            std::slice::from_ref(&projected),
+            std::slice::from_ref(&projected),
+            || Err(crate::error::HypermeshError::UnknownClassification),
+            |_target| Err(crate::error::HypermeshError::UnknownClassification),
+            |_target| Err(crate::error::HypermeshError::UnknownClassification),
+            |_target| Err(crate::error::HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projected_reference_search_or_none_skips_uncertified_local_search() {
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        assert_eq!(
+            projected_reference_search_or_none(Err(
+                crate::error::HypermeshError::UnknownClassification
+            ))
+            .unwrap(),
+            None
+        );
+        assert_eq!(
+            projected_reference_search_or_none(Ok(Some((target.clone(), vec![29])))).unwrap(),
+            Some((target, vec![29]))
+        );
+        assert_eq!(
+            projected_reference_search_or_none(Err(
+                crate::error::HypermeshError::ReferencePropagationFailed
+            )),
+            Err(crate::error::HypermeshError::ReferencePropagationFailed)
+        );
     }
 
     #[test]
