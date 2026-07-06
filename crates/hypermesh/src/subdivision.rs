@@ -1131,15 +1131,19 @@ fn compute_new_reference(
         ));
     }
 
-    let projected_targets =
-        reference_target_family_or_empty(projected_reference_targets(old_ref, bounds))?;
+    let mut projected_unknown = false;
+    let projected_targets = reference_target_family_or_empty_tracking_unknown(
+        projected_reference_targets(old_ref, bounds),
+        &mut projected_unknown,
+    )?;
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
-    let projected_escape_targets = reference_target_family_or_empty(
+    let projected_escape_targets = reference_target_family_or_empty_tracking_unknown(
         projected_reference_escape_targets(bounds, &projected_halfspaces, &projected_targets),
+        &mut projected_unknown,
     )?;
 
-    if let Some((target, winding)) =
-        projected_reference_search_or_none(search_projected_reference_families(
+    let projected = projected_reference_search_or_none_tracking_unknown(
+        search_projected_reference_families(
             &projected_targets,
             &projected_escape_targets,
             || {
@@ -1182,18 +1186,13 @@ fn compute_new_reference(
                     polygons,
                 )
             },
-        ))?
-    {
-        return Ok((target.point, target.definitions, winding));
-    }
+        ),
+        &mut projected_unknown,
+    )?;
+    let support =
+        support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, bounds, polygons)?;
 
-    if let Some((target, winding)) =
-        support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, bounds, polygons)?
-    {
-        return Ok((target.point, target.definitions, winding));
-    }
-
-    Err(crate::error::HypermeshError::ReferencePropagationFailed)
+    reference_result_or_error(projected, support, projected_unknown)
 }
 
 fn reference_target_family_or_empty(
@@ -1206,6 +1205,20 @@ fn reference_target_family_or_empty(
     }
 }
 
+fn reference_target_family_or_empty_tracking_unknown(
+    result: HypermeshResult<Vec<ReferenceTarget>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    match result {
+        Ok(targets) => Ok(targets),
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(Vec::new())
+        }
+        Err(err) => Err(err),
+    }
+}
+
 fn projected_reference_search_or_none(
     result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
@@ -1213,6 +1226,38 @@ fn projected_reference_search_or_none(
         Ok(found) => Ok(found),
         Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
         Err(err) => Err(err),
+    }
+}
+
+fn projected_reference_search_or_none_tracking_unknown(
+    result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    match result {
+        Ok(found) => Ok(found),
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(None)
+        }
+        Err(err) => Err(err),
+    }
+}
+
+fn reference_result_or_error(
+    projected: Option<(ReferenceTarget, Vec<i32>)>,
+    support: Option<(ReferenceTarget, Vec<i32>)>,
+    projected_unknown: bool,
+) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    if let Some((target, winding)) = projected {
+        return Ok((target.point, target.definitions, winding));
+    }
+    if let Some((target, winding)) = support {
+        return Ok((target.point, target.definitions, winding));
+    }
+    if projected_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Err(crate::error::HypermeshError::ReferencePropagationFailed)
     }
 }
 
@@ -4332,6 +4377,33 @@ mod tests {
     }
 
     #[test]
+    fn projected_reference_search_or_none_tracking_sets_unknown_flag() {
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let mut saw_unknown = false;
+
+        assert_eq!(
+            projected_reference_search_or_none_tracking_unknown(
+                Err(crate::error::HypermeshError::UnknownClassification),
+                &mut saw_unknown,
+            )
+            .unwrap(),
+            None
+        );
+        assert!(saw_unknown);
+
+        saw_unknown = false;
+        assert_eq!(
+            projected_reference_search_or_none_tracking_unknown(
+                Ok(Some((target.clone(), vec![29]))),
+                &mut saw_unknown,
+            )
+            .unwrap(),
+            Some((target, vec![29]))
+        );
+        assert!(!saw_unknown);
+    }
+
+    #[test]
     fn projected_reference_escape_targets_use_certified_projected_cell_family() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = projected_reference_halfspaces(&p(-2, 2, 7), &bounds).unwrap();
@@ -4590,6 +4662,68 @@ mod tests {
                 crate::error::HypermeshError::ReferencePropagationFailed
             )),
             Err(crate::error::HypermeshError::ReferencePropagationFailed)
+        );
+    }
+
+    #[test]
+    fn reference_target_family_or_empty_tracking_sets_unknown_flag() {
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let mut saw_unknown = false;
+
+        assert_eq!(
+            reference_target_family_or_empty_tracking_unknown(
+                Err(crate::error::HypermeshError::UnknownClassification),
+                &mut saw_unknown,
+            )
+            .unwrap(),
+            Vec::<ReferenceTarget>::new()
+        );
+        assert!(saw_unknown);
+
+        saw_unknown = false;
+        assert_eq!(
+            reference_target_family_or_empty_tracking_unknown(
+                Ok(vec![target.clone()]),
+                &mut saw_unknown
+            )
+            .unwrap(),
+            vec![target]
+        );
+        assert!(!saw_unknown);
+    }
+
+    #[test]
+    fn reference_result_or_error_prefers_support_after_uncertified_projected_search() {
+        let projected_unknown = true;
+        let support_target = ReferenceTarget::axis_defined(p(4, 5, 6));
+
+        let (point, definitions, winding) = reference_result_or_error(
+            None,
+            Some((support_target.clone(), vec![11])),
+            projected_unknown,
+        )
+        .unwrap();
+
+        assert_eq!(point, support_target.point);
+        assert_eq!(definitions, support_target.definitions);
+        assert_eq!(winding, vec![11]);
+    }
+
+    #[test]
+    fn reference_result_or_error_reports_unknown_after_uncertified_projected_search() {
+        let err = reference_result_or_error(None, None, true).unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_result_or_error_reports_reference_failure_when_all_families_are_certified_absent()
+    {
+        let err = reference_result_or_error(None, None, false).unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::ReferencePropagationFailed
         );
     }
 

@@ -254,6 +254,12 @@ is uncertified, that local projected-family search returns
 `UnknownClassification` instead of silently collapsing to `None`, and only the
 broader full child-cell support fallback boundary intentionally downgrades that
 local failure so a later certified support-cell construction can still run.
+Projected target-family construction now also tracks that same uncertified
+state explicitly at the `compute_new_reference(...)` boundary: if projected
+direct/escape target-family construction was uncertified and support fallback
+still finds no witness, the final result is now
+`UnknownClassification` instead of a plain
+`ReferencePropagationFailed`.
 At the target level, a projected/support reference point that is strictly
 inside the child cell but whose retained-definition trace is uncertified now
 surfaces `UnknownClassification` instead of being treated like a simple absent
