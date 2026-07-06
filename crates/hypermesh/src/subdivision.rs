@@ -808,13 +808,15 @@ fn select_subdivision_split(
     Ok((best_axis, best_value))
 }
 
+type SplitCounts = (usize, usize, usize, usize);
+
 fn consider_split_candidates(
     best_axis: &mut usize,
     best_value: &mut Real,
-    best_counts: &mut (usize, usize, usize),
+    best_counts: &mut SplitCounts,
     axis: usize,
     candidates: impl IntoIterator<Item = Real>,
-    mut split_counts: impl FnMut(&Real) -> HypermeshResult<(usize, usize, usize)>,
+    mut split_counts: impl FnMut(&Real) -> HypermeshResult<SplitCounts>,
 ) -> HypermeshResult<()> {
     for value in candidates {
         let counts = split_counts(&value)?;
@@ -830,7 +832,7 @@ fn consider_split_candidates(
 fn best_midpoint_split(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<(usize, Real, (usize, usize, usize))> {
+) -> HypermeshResult<(usize, Real, SplitCounts)> {
     let mut best_axis = bounds.longest_axis()?;
     let mut best_value = bounds.midpoint(best_axis);
     let mut best_counts = split_child_counts(polygons, best_axis, &best_value)?;
@@ -851,14 +853,13 @@ fn best_midpoint_split(
     Ok((best_axis, best_value, best_counts))
 }
 
-fn split_counts_strictly_better(
-    candidate: (usize, usize, usize),
-    baseline: (usize, usize, usize),
-) -> bool {
+fn split_counts_strictly_better(candidate: SplitCounts, baseline: SplitCounts) -> bool {
     candidate.0 < baseline.0
         || (candidate.0 == baseline.0
             && (candidate.1 < baseline.1
-                || (candidate.1 == baseline.1 && candidate.2 < baseline.2)))
+                || (candidate.1 == baseline.1
+                    && (candidate.2 < baseline.2
+                        || (candidate.2 == baseline.2 && candidate.3 < baseline.3)))))
 }
 
 fn arrangement_split_candidates(
@@ -976,7 +977,7 @@ fn split_child_counts(
     polygons: &[ConvexPolygon],
     axis: usize,
     value: &Real,
-) -> HypermeshResult<(usize, usize, usize)> {
+) -> HypermeshResult<SplitCounts> {
     let split_plane = Plane::axis_aligned(axis, value.clone());
     let mut left_count = 0;
     let mut right_count = 0;
@@ -996,6 +997,7 @@ fn split_child_counts(
 
     Ok((
         left_count.max(right_count),
+        usize::from(left_count == 0 || right_count == 0),
         both_count,
         left_count.abs_diff(right_count),
     ))
@@ -2521,14 +2523,14 @@ mod tests {
     }
 
     #[test]
-    fn select_subdivision_split_keeps_midpoint_when_arrangement_cut_is_not_better() {
+    fn select_subdivision_split_avoids_empty_child_midpoint_when_nonempty_midpoint_exists() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let polygons = vec![make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 0, 0)];
 
         let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
 
-        assert_eq!(axis, 0);
-        assert_eq!(value, r(5));
+        assert_eq!(axis, 1);
+        assert_eq!(value, r(1));
     }
 
     #[test]
@@ -2566,7 +2568,7 @@ mod tests {
     fn intersection_split_candidates_can_beat_arrangement_improvement() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (6, 3, 2);
+        let mut best_counts = (6, 0, 3, 2);
 
         consider_split_candidates(
             &mut best_axis,
@@ -2574,13 +2576,13 @@ mod tests {
             &mut best_counts,
             0,
             [r(4)],
-            |_value| Ok((5, 2, 1)),
+            |_value| Ok((5, 0, 2, 1)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 0);
         assert_eq!(best_value, r(4));
-        assert_eq!(best_counts, (5, 2, 1));
+        assert_eq!(best_counts, (5, 0, 2, 1));
 
         consider_split_candidates(
             &mut best_axis,
@@ -2588,13 +2590,34 @@ mod tests {
             &mut best_counts,
             1,
             [r(2)],
-            |_value| Ok((4, 0, 0)),
+            |_value| Ok((4, 0, 0, 0)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
-        assert_eq!(best_counts, (4, 0, 0));
+        assert_eq!(best_counts, (4, 0, 0, 0));
+    }
+
+    #[test]
+    fn split_ranking_penalizes_empty_child_splits() {
+        let mut best_axis = 0;
+        let mut best_value = r(5);
+        let mut best_counts = (4, 0, 2, 0);
+
+        consider_split_candidates(
+            &mut best_axis,
+            &mut best_value,
+            &mut best_counts,
+            1,
+            [r(1)],
+            |_value| Ok((4, 1, 0, 4)),
+        )
+        .unwrap();
+
+        assert_eq!(best_axis, 0);
+        assert_eq!(best_value, r(5));
+        assert_eq!(best_counts, (4, 0, 2, 0));
     }
 
     #[test]
