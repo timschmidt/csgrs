@@ -1272,16 +1272,9 @@ fn compute_new_reference(
         ));
     }
 
-    let mut projected_unknown = false;
-    let projected_targets = reference_target_family_or_empty_tracking_unknown(
-        projected_reference_targets(old_ref, bounds),
-        &mut projected_unknown,
-    )?;
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
-    let projected_escape_targets = reference_target_family_or_empty_tracking_unknown(
-        projected_reference_escape_targets(bounds, &projected_halfspaces, &projected_targets),
-        &mut projected_unknown,
-    )?;
+    let (projected_targets, projected_escape_targets, mut projected_unknown) =
+        projected_root_reference_families(bounds, &projected_halfspaces)?;
     let projection_escape_axis_options_cache = std::cell::RefCell::new(Vec::new());
     let projection_escape_search_cache = std::cell::RefCell::new(Vec::new());
 
@@ -1380,6 +1373,54 @@ fn compute_new_reference(
         support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, bounds, polygons)?;
 
     reference_result_or_error(projected, support, projected_unknown)
+}
+
+fn projected_root_reference_families(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<(Vec<ReferenceTarget>, Vec<ReferenceTarget>, bool)> {
+    let (report, saw_report_unknown) = optional_halfspace_system_report(halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok((Vec::new(), Vec::new(), saw_report_unknown));
+    }
+
+    let mut saw_unknown = saw_report_unknown;
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        projected_cell_seed_families_from_optional_report(
+            bounds,
+            halfspaces,
+            report.as_ref(),
+            &mut saw_unknown,
+        )?;
+    let projected_targets = strict_projected_cell_targets_from_seed_families(
+        bounds,
+        halfspaces,
+        report.as_ref(),
+        strict_seeds.clone(),
+        shifted_vertices.clone(),
+        shifted_geometry_seeds.clone(),
+    )?;
+    let projected_escape_targets = projected_reference_escape_targets_from_seed_families(
+        bounds,
+        halfspaces,
+        &projected_targets,
+        report.as_ref(),
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )?;
+    let projected_unknown = saw_unknown
+        && (projected_targets.is_empty()
+            || projected_escape_targets.len() == projected_targets.len());
+
+    Ok((
+        projected_targets,
+        projected_escape_targets,
+        projected_unknown,
+    ))
 }
 
 #[cfg(test)]
@@ -1581,20 +1622,45 @@ fn projected_reference_escape_targets_from_optional_report(
     projected_targets: &[ReferenceTarget],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let mut targets = projected_targets.to_vec();
     let mut saw_unknown = false;
-    let existing_direct_points = projected_targets
-        .iter()
-        .map(|target| target.point.clone())
-        .collect::<Vec<_>>();
-
-    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
             bounds,
             halfspaces,
             report,
             &mut saw_unknown,
         )?;
+    let targets = projected_reference_escape_targets_from_seed_families(
+        bounds,
+        halfspaces,
+        projected_targets,
+        report,
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )?;
+
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
+}
+
+fn projected_reference_escape_targets_from_seed_families(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    projected_targets: &[ReferenceTarget],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    strict_shift_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = projected_targets.to_vec();
+    let existing_direct_points = projected_targets
+        .iter()
+        .map(|target| target.point.clone())
+        .collect::<Vec<_>>();
     let report_witness = report.and_then(|report| report.witness.clone());
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
@@ -1635,12 +1701,7 @@ fn projected_reference_escape_targets_from_optional_report(
             }),
         ],
     )?;
-
-    if targets.is_empty() && saw_unknown {
-        Err(crate::error::HypermeshError::UnknownClassification)
-    } else {
-        Ok(targets)
-    }
+    Ok(targets)
 }
 
 fn projected_support_plane_cell_reference(
@@ -3099,9 +3160,23 @@ fn projected_reference_targets(
     {
         return Ok(Vec::new());
     }
-    let targets =
-        strict_projected_cell_targets_from_optional_report(bounds, &halfspaces, report.as_ref())?;
-    if targets.is_empty() && saw_unknown {
+    let mut seed_unknown = saw_unknown;
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        projected_cell_seed_families_from_optional_report(
+            bounds,
+            &halfspaces,
+            report.as_ref(),
+            &mut seed_unknown,
+        )?;
+    let targets = strict_projected_cell_targets_from_seed_families(
+        bounds,
+        &halfspaces,
+        report.as_ref(),
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )?;
+    if targets.is_empty() && seed_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
         Ok(targets)
@@ -3139,9 +3214,7 @@ fn strict_projected_cell_targets_from_optional_report(
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let mut targets = Vec::new();
     let mut saw_unknown = false;
-
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
         projected_cell_seed_families_from_optional_report(
             bounds,
@@ -3149,6 +3222,31 @@ fn strict_projected_cell_targets_from_optional_report(
             report,
             &mut saw_unknown,
         )?;
+    let targets = strict_projected_cell_targets_from_seed_families(
+        bounds,
+        halfspaces,
+        report,
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )?;
+
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
+}
+
+fn strict_projected_cell_targets_from_seed_families(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = Vec::new();
     let report_witness = report.and_then(|report| report.witness.clone());
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         dedupe_shifted_target_seed_families(
@@ -3197,11 +3295,7 @@ fn strict_projected_cell_targets_from_optional_report(
         push_unique_reference_target(&mut targets, target);
     }
 
-    if targets.is_empty() && saw_unknown {
-        Err(crate::error::HypermeshError::UnknownClassification)
-    } else {
-        Ok(targets)
-    }
+    Ok(targets)
 }
 
 #[cfg(test)]

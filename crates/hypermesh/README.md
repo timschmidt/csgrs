@@ -309,7 +309,11 @@ axis-corridor and tight escape-box searches now also reuse the same exact
 axis stop families instead of recomputing those surface-crossing families
 independently before each escape layer, and identical escape `Aabb` support
 searches are now reused across those later escape layers instead of rerunning
-the same support-cell search for duplicate bounds. The outer
+the same support-cell search for duplicate bounds. At the root projected-cell
+boundary, direct projected targets and projected-escape targets now also share
+one exact halfspace report and one exact projected seed-family construction
+instead of rebuilding that same root projected-cell evidence twice before
+search begins. The outer
 support-cell wrapper now also treats an uncertified root feasibility check as
 another local backtracking point instead of aborting support propagation before
 later support-side branches are explored.
