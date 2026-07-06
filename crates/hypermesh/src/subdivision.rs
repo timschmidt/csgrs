@@ -858,8 +858,11 @@ fn push_split_candidate(
     value: Real,
     source: SplitSource,
 ) -> HypermeshResult<()> {
-    for existing in candidates.iter() {
+    for existing in candidates.iter_mut() {
         if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
+            if source < existing.source {
+                existing.source = source;
+            }
             return Ok(());
         }
     }
@@ -2894,6 +2897,39 @@ mod tests {
                 (0, r(5), SplitSource::Midpoint),
             ]
         );
+    }
+
+    #[test]
+    fn duplicate_split_candidate_promotes_to_exact_source() {
+        let polygons = vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)];
+        let mut candidates = vec![SplitCandidate {
+            axis: 0,
+            value: r(5),
+            counts: (1, 0, 0, 0),
+            source: SplitSource::Midpoint,
+        }];
+
+        push_split_candidate(
+            &mut candidates,
+            &polygons,
+            0,
+            r(5),
+            SplitSource::Arrangement,
+        )
+        .unwrap();
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].source, SplitSource::Arrangement);
+
+        push_split_candidate(
+            &mut candidates,
+            &polygons,
+            0,
+            r(5),
+            SplitSource::Intersection,
+        )
+        .unwrap();
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].source, SplitSource::Intersection);
     }
 
     #[test]

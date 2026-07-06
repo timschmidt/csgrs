@@ -302,7 +302,9 @@ split hits `UnknownClassification`, `ReferencePropagationFailed`, or
 `SubdivisionDepthLimit`, later exact local split candidates are still tried
 before the task gives up. When split counts tie, exact arrangement/intersection
 candidates now win over raw midpoint cuts instead of inheriting the old
-midpoint-first insertion order. If a task reaches `max_depth` while the bounds remain
+midpoint-first insertion order, and duplicate midpoint-valued candidates are
+now promoted when a later exact arrangement/intersection source reaches the
+same split plane. If a task reaches `max_depth` while the bounds remain
 splittable, hypermesh attempts to certify the current task as a leaf using the
 same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
