@@ -354,6 +354,9 @@ fn trace_segment_via_detours_with_definitions_budget(
             || detour.point == *end
             || point_lies_on_traced_surface(&detour.point, polygons)?
         {
+            if detour.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
             continue;
         }
         let first_leg = match trace_segment_from_definitions_with_budget_impl(
@@ -6645,6 +6648,42 @@ mod tests {
             &mut |_from, _to, _winding, _start_definitions, _end_definitions| {
                 Err(HypermeshError::UnknownClassification)
             },
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn detour_trace_reports_unknown_when_fallback_surface_detour_is_skipped() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let fallback_detour = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: true,
+        };
+        let polygons = vec![ConvexPolygon {
+            support: Plane::axis_aligned(0, r(1)),
+            edges: Vec::new(),
+            mesh_index: 0,
+            polygon_index: 0,
+            delta_w: Vec::new(),
+            approx_bounds: None,
+        }];
+
+        let err = trace_segment_via_detours_with_definitions_budget(
+            &start,
+            &end,
+            &[0],
+            &polygons,
+            &[fallback_detour],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            1,
+            &mut |_from, _to, _winding, _start_definitions, _end_definitions| Ok(None),
             &mut |_from, _to| Ok(Vec::new()),
         )
         .unwrap_err();
