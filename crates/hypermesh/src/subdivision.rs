@@ -779,33 +779,52 @@ fn select_subdivision_split(
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
             continue;
         }
-        for (_gap, value) in arrangement_split_candidates(bounds, polygons, axis)? {
-            let counts = split_child_counts(polygons, axis, &value)?;
-            if split_counts_strictly_better(counts, best_counts) {
-                best_counts = counts;
-                best_value = value;
-                best_axis = axis;
-            }
-        }
+        consider_split_candidates(
+            &mut best_axis,
+            &mut best_value,
+            &mut best_counts,
+            axis,
+            arrangement_split_candidates(bounds, polygons, axis)?
+                .into_iter()
+                .map(|(_gap, value)| value),
+            |value| split_child_counts(polygons, axis, value),
+        )?;
     }
 
-    if best_counts == baseline_counts {
-        for axis in 0..3 {
-            if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
-                continue;
-            }
-            for value in intersection_split_candidates(bounds, polygons, axis)? {
-                let counts = split_child_counts(polygons, axis, &value)?;
-                if split_counts_strictly_better(counts, best_counts) {
-                    best_counts = counts;
-                    best_value = value;
-                    best_axis = axis;
-                }
-            }
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
         }
+        consider_split_candidates(
+            &mut best_axis,
+            &mut best_value,
+            &mut best_counts,
+            axis,
+            intersection_split_candidates(bounds, polygons, axis)?,
+            |value| split_child_counts(polygons, axis, value),
+        )?;
     }
 
     Ok((best_axis, best_value))
+}
+
+fn consider_split_candidates(
+    best_axis: &mut usize,
+    best_value: &mut Real,
+    best_counts: &mut (usize, usize, usize),
+    axis: usize,
+    candidates: impl IntoIterator<Item = Real>,
+    mut split_counts: impl FnMut(&Real) -> HypermeshResult<(usize, usize, usize)>,
+) -> HypermeshResult<()> {
+    for value in candidates {
+        let counts = split_counts(&value)?;
+        if split_counts_strictly_better(counts, *best_counts) {
+            *best_axis = axis;
+            *best_value = value;
+            *best_counts = counts;
+        }
+    }
+    Ok(())
 }
 
 fn best_midpoint_split(
@@ -2402,6 +2421,41 @@ mod tests {
 
         assert_eq!(axis, 1);
         assert_eq!(value, r(2));
+    }
+
+    #[test]
+    fn intersection_split_candidates_can_beat_arrangement_improvement() {
+        let mut best_axis = 0;
+        let mut best_value = r(5);
+        let mut best_counts = (6, 3, 2);
+
+        consider_split_candidates(
+            &mut best_axis,
+            &mut best_value,
+            &mut best_counts,
+            0,
+            [r(4)],
+            |_value| Ok((5, 2, 1)),
+        )
+        .unwrap();
+
+        assert_eq!(best_axis, 0);
+        assert_eq!(best_value, r(4));
+        assert_eq!(best_counts, (5, 2, 1));
+
+        consider_split_candidates(
+            &mut best_axis,
+            &mut best_value,
+            &mut best_counts,
+            1,
+            [r(2)],
+            |_value| Ok((4, 0, 0)),
+        )
+        .unwrap();
+
+        assert_eq!(best_axis, 1);
+        assert_eq!(best_value, r(2));
+        assert_eq!(best_counts, (4, 0, 0));
     }
 
     #[test]

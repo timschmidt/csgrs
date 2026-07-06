@@ -211,9 +211,10 @@ coordinate-scale cutoff. The fallback midpoint split is now chosen by actual
 child clip counts across every positive-extent axis rather than by longest-axis
 geometry alone. When local polygon vertices provide an exact interior
 arrangement gap, subdivision now prefers that gap over that midpoint baseline
-for the next split plane, and when vertex-only candidates do not improve the
-split it now also considers exact local pairwise-intersection segment endpoints
-before keeping the midpoint fallback. If a task reaches `max_depth` while it still contains
+for the next split plane, and it now continues to consider exact local
+pairwise-intersection segment endpoints even after an arrangement-gap candidate
+has already improved that midpoint baseline, before keeping the best remaining
+split. If a task reaches `max_depth` while it still contains
 more polygons than the leaf threshold and the bounds remain splittable,
 hypermesh attempts to certify the current task as a leaf using the same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
