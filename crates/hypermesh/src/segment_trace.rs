@@ -907,18 +907,21 @@ fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aa
 
 fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
-    let report = halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(Vec::new());
+    }
     let mut targets = Vec::new();
-    let mut saw_unknown = false;
-    let report_witness = report.witness.clone();
     let seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report),
+        strict_halfspace_cell_seeds_from_optional_report(bounds, &halfspaces, report.as_ref()),
         &mut saw_unknown,
     )?;
 
     for seed in &seeds {
-        let active_planes =
-            witness_active_planes(report_witness.as_ref(), report.active_planes, seed);
+        let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
         push_unique_detour_target(
             &mut targets,
             DetourTarget {
@@ -2187,22 +2190,22 @@ fn strict_leaf_witness_points(
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let bounds = leaf_bounds(vertices)?;
     let halfspaces = leaf_halfspaces(leaf);
-    let report = halfspace_feasibility_report(&halfspaces)?;
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
 
-    let report_witness = report.witness.clone();
     let mut points = Vec::new();
-    let mut saw_unknown = false;
     let seeds = halfspace_seed_family_or_empty(
-        strict_leaf_witness_seeds(leaf, vertices, &bounds, &halfspaces, &report),
+        strict_leaf_witness_seeds(leaf, vertices, &bounds, &halfspaces, report.as_ref()),
         &mut saw_unknown,
     )?;
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
-        let active_planes =
-            witness_active_planes(report_witness.as_ref(), report.active_planes, seed);
+        let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
         build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)
     })?;
 
@@ -2286,13 +2289,13 @@ fn strict_leaf_witness_seeds(
     _vertices: &[Point3],
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
-    report: &hyperlimit::HalfspaceFeasibilityReport,
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
     let mut saw_unknown = false;
 
     let generic_seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_report(bounds, halfspaces, report),
+        strict_halfspace_cell_seeds_from_optional_report(bounds, halfspaces, report),
         &mut saw_unknown,
     )?;
     for seed in generic_seeds {
@@ -2527,24 +2530,21 @@ fn strict_leaf_cell_points(
         )));
     }
 
-    let report = match classify_halfspace_feasibility3(&halfspaces) {
-        PredicateOutcome::Decided { value, .. } => value,
-        PredicateOutcome::Unknown { .. } => return Err(HypermeshError::UnknownClassification),
-    };
-    if report.status != HalfspaceFeasibility::Feasible {
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
 
     let mut points = Vec::new();
-    let mut saw_unknown = false;
-    let report_witness = report.witness.clone();
     let seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report),
+        strict_halfspace_cell_seeds_from_optional_report(&bounds, &halfspaces, report.as_ref()),
         &mut saw_unknown,
     )?;
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
-        let active_planes =
-            witness_active_planes(report_witness.as_ref(), report.active_planes, witness);
+        let active_planes = active_planes_from_optional_report(report.as_ref(), witness);
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)
     })?;
 
@@ -3111,12 +3111,17 @@ fn strict_normal_probe_targets(
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
-    let report = halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(Vec::new());
+    }
     let mut probes = Vec::new();
-    let mut saw_unknown = false;
     let mut extra_planes = Vec::new();
     let seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report),
+        strict_halfspace_cell_seeds_from_optional_report(corridor, &halfspaces, report.as_ref()),
         &mut saw_unknown,
     )?;
     for definition in &interior.planes {
@@ -3132,7 +3137,7 @@ fn strict_normal_probe_targets(
             witness,
             support,
             &halfspaces,
-            witness_active_planes(report.witness.as_ref(), report.active_planes, witness),
+            active_planes_from_optional_report(report.as_ref(), witness),
             &extra_planes,
         )
     })?;
@@ -3459,11 +3464,16 @@ fn strict_axis_probe_targets(
         push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
     }
     halfspaces.push(support_side_halfspace(support, positive_side));
-    let report = halfspace_feasibility_report(&halfspaces)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(Vec::new());
+    }
     let mut probes = Vec::new();
-    let mut saw_unknown = false;
     let seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report),
+        strict_halfspace_cell_seeds_from_optional_report(corridor, &halfspaces, report.as_ref()),
         &mut saw_unknown,
     )?;
 
@@ -3475,7 +3485,7 @@ fn strict_axis_probe_targets(
             axis,
             definition,
             &halfspaces,
-            witness_active_planes(report.witness.as_ref(), report.active_planes, witness),
+            active_planes_from_optional_report(report.as_ref(), witness),
         )
     })?;
 
@@ -3740,13 +3750,21 @@ fn strict_halfspace_cell_seeds_from_report(
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<Point3>> {
+    strict_halfspace_cell_seeds_from_optional_report(bounds, halfspaces, Some(report))
+}
+
+fn strict_halfspace_cell_seeds_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = Vec::new();
 
     extend_strict_halfspace_seed_families_backtracking_unknown(
         &mut seeds,
         [
-            if report.status == HalfspaceFeasibility::Feasible
-                && let Some(witness) = &report.witness
+            if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
                     point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces)
@@ -3859,16 +3877,17 @@ fn shifted_halfspace_cell_witnesses_from_seed(
     seed: &Point3,
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
     let shifted = shifted_halfspace_cell(bounds, halfspaces, seed)?;
-    let shifted_report = halfspace_feasibility_report(&shifted)?;
-    if shifted_report.status != HalfspaceFeasibility::Feasible {
+    let (shifted_report, mut saw_unknown) = optional_halfspace_feasibility_report(&shifted)?;
+    if shifted_report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
         return Ok(Vec::new());
     }
 
-    let report_witness = shifted_report.witness.clone();
     let mut witnesses = Vec::new();
-    let mut saw_unknown = false;
     let strict_seeds = halfspace_seed_family_or_empty(
-        strict_halfspace_cell_seeds_from_report(bounds, &shifted, &shifted_report),
+        strict_halfspace_cell_seeds_from_optional_report(bounds, &shifted, shifted_report.as_ref()),
         &mut saw_unknown,
     )?;
     let shifted_vertices = halfspace_seed_family_or_empty(
@@ -3884,9 +3903,8 @@ fn shifted_halfspace_cell_witnesses_from_seed(
         strict_seeds,
         |witness| {
             Ok(vec![ShiftedHalfspaceWitness {
-                active_planes: witness_active_planes(
-                    report_witness.as_ref(),
-                    shifted_report.active_planes,
+                active_planes: active_planes_from_optional_report(
+                    shifted_report.as_ref(),
                     &witness,
                 ),
                 halfspaces: shifted.clone(),
@@ -4015,6 +4033,24 @@ fn halfspace_feasibility_report(
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
     }
+}
+
+fn optional_halfspace_feasibility_report(
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<(Option<hyperlimit::HalfspaceFeasibilityReport>, bool)> {
+    match classify_halfspace_feasibility3(halfspaces) {
+        PredicateOutcome::Decided { value, .. } => Ok((Some(value), false)),
+        PredicateOutcome::Unknown { .. } => Ok((None, true)),
+    }
+}
+
+fn active_planes_from_optional_report(
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    witness: &Point3,
+) -> [Option<usize>; 3] {
+    report.map_or([None, None, None], |report| {
+        witness_active_planes(report.witness.as_ref(), report.active_planes, witness)
+    })
 }
 
 fn feasible_halfspace_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
@@ -4573,6 +4609,26 @@ mod tests {
     }
 
     #[test]
+    fn strict_halfspace_cell_seeds_include_strict_geometry_seeds_without_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let triangle_center = centroid(&[p(0, 0, 0), p(4, 0, 0), p(4, 4, 4)])
+            .unwrap()
+            .unwrap();
+        let tetra_center = p(1, 1, 1);
+
+        let seeds =
+            strict_halfspace_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            point_strictly_inside_halfspace_cell(&triangle_center, &bounds, &halfspaces).unwrap()
+        );
+        assert!(point_strictly_inside_halfspace_cell(&tetra_center, &bounds, &halfspaces).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &triangle_center));
+        assert!(seeds.iter().any(|seed| seed == &tetra_center));
+    }
+
+    #[test]
     fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
@@ -4584,7 +4640,8 @@ mod tests {
             .unwrap();
 
         let seeds =
-            strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, &report).unwrap();
+            strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, Some(&report))
+                .unwrap();
 
         assert!(point_strictly_inside_leaf(&center, &leaf).unwrap());
         assert!(seeds.iter().any(|seed| seed == &center));
@@ -4602,7 +4659,8 @@ mod tests {
             .unwrap();
 
         let seeds =
-            strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, &report).unwrap();
+            strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, Some(&report))
+                .unwrap();
 
         assert!(point_strictly_inside_leaf(&triangle_center, &leaf).unwrap());
         assert!(seeds.iter().any(|seed| seed == &triangle_center));
