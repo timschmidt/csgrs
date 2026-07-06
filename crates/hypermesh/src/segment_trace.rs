@@ -3355,15 +3355,22 @@ fn extend_strict_halfspace_seeds_backtracking_unknown(
     candidates: impl IntoIterator<Item = Point3>,
     mut is_strict_seed: impl FnMut(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
     for candidate in candidates {
         match is_strict_seed(&candidate) {
             Ok(true) => push_unique_halfspace_seed(seeds, candidate),
             Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
             Err(err) => return Err(err),
         }
     }
-    Ok(())
+    if seeds.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
 }
 
 struct ShiftedHalfspaceWitness {
@@ -3450,6 +3457,7 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
     seeds: impl IntoIterator<Item = Point3>,
     mut build: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
 ) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
     for seed in seeds {
         match build(&seed) {
             Ok(found) => {
@@ -3457,11 +3465,17 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
             }
-            Err(HypermeshError::UnknownClassification) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
             Err(err) => return Err(err),
         }
     }
-    Ok(())
+    if witnesses.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
 }
 
 fn halfspace_feasibility_report(
@@ -3814,6 +3828,22 @@ mod tests {
     }
 
     #[test]
+    fn shifted_halfspace_witness_collection_reports_unknown_if_all_seeds_are_uncertified() {
+        let first_seed = p(1, 1, 1);
+        let second_seed = p(2, 2, 2);
+        let mut witnesses = Vec::new();
+
+        let err = extend_shifted_halfspace_witnesses_backtracking_unknown(
+            &mut witnesses,
+            vec![first_seed, second_seed],
+            |_seed| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn strict_halfspace_cell_seeds_include_direct_strict_feasibility_witness() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -3867,6 +3897,22 @@ mod tests {
         .unwrap();
 
         assert_eq!(seeds, vec![second]);
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seed_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut seeds = Vec::new();
+
+        let err = extend_strict_halfspace_seeds_backtracking_unknown(
+            &mut seeds,
+            vec![first, second],
+            |_candidate| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

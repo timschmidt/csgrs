@@ -83,6 +83,9 @@ witness expansions now also backtrack past uncertified shifted seeds instead of
 aborting the whole local witness family, and strict halfspace-cell seed
 collection now does the same for uncertified strictness checks on candidate
 direct witnesses.
+If one of those local witness or seed families is entirely uncertified and no
+certified candidate survives, it now returns `UnknownClassification` instead of
+quietly collapsing that local family to an empty witness set.
 definitions, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes
