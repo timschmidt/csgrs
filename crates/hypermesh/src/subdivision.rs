@@ -2722,63 +2722,21 @@ fn projected_escape_targets_from_seed(
         &mut saw_unknown,
     )?;
     let report_witness = report.as_ref().and_then(|report| report.witness.clone());
-    extend_reference_target_families_backtracking_unknown(
+    collect_shifted_projected_escape_target_families(
         &mut targets,
-        [
-            reference_target_family_from_witness(
-                report_witness.as_ref(),
-                |witness| point_satisfies_halfspaces(witness, halfspaces),
-                |witness| {
-                    reference_target_from_halfspace_witness(
-                        witness,
-                        &shifted,
-                        active_planes_from_optional_halfspace_report(report.as_ref(), witness),
-                    )
-                },
-            ),
-            collect_reference_target_family(strict_seeds, |witness| {
-                if !point_satisfies_halfspaces(&witness, halfspaces)? {
-                    return Ok(Vec::new());
-                }
-                Ok(
-                    reference_target_from_halfspace_witness(
-                        &witness,
-                        &shifted,
-                        [None, None, None],
-                    )?
-                    .into_iter()
-                    .collect(),
-                )
-            }),
-            collect_reference_target_family(shifted_vertices, |witness| {
-                if !point_satisfies_halfspaces(&witness, halfspaces)? {
-                    return Ok(Vec::new());
-                }
-                Ok(
-                    reference_target_from_halfspace_witness(
-                        &witness,
-                        &shifted,
-                        [None, None, None],
-                    )?
-                    .into_iter()
-                    .collect(),
-                )
-            }),
-            collect_reference_target_family(shifted_geometry_seeds, |witness| {
-                if !point_satisfies_halfspaces(&witness, halfspaces)? {
-                    return Ok(Vec::new());
-                }
-                Ok(
-                    reference_target_from_halfspace_witness(
-                        &witness,
-                        &shifted,
-                        [None, None, None],
-                    )?
-                    .into_iter()
-                    .collect(),
-                )
-            }),
-        ],
+        report_witness.as_ref(),
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+        |witness| point_satisfies_halfspaces(witness, halfspaces),
+        |witness| {
+            reference_target_from_halfspace_witness(
+                witness,
+                &shifted,
+                active_planes_from_optional_halfspace_report(report.as_ref(), witness),
+            )
+        },
+        |witness| reference_target_from_halfspace_witness(witness, &shifted, [None, None, None]),
     )?;
 
     if targets.is_empty() && saw_unknown {
@@ -2786,6 +2744,51 @@ fn projected_escape_targets_from_seed(
     } else {
         Ok(targets)
     }
+}
+
+fn collect_shifted_projected_escape_target_families(
+    targets: &mut Vec<ReferenceTarget>,
+    report_witness: Option<&Point3>,
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    mut include: impl FnMut(&Point3) -> HypermeshResult<bool>,
+    mut build_report_target: impl FnMut(&Point3) -> HypermeshResult<Option<ReferenceTarget>>,
+    mut build_shifted_target: impl FnMut(&Point3) -> HypermeshResult<Option<ReferenceTarget>>,
+) -> HypermeshResult<()> {
+    let mut shifted_seed_search_order = Vec::new();
+    let strict_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
+    let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
+    let shifted_geometry_seeds =
+        take_new_point_family(shifted_geometry_seeds, &mut shifted_seed_search_order);
+    extend_reference_target_families_backtracking_unknown(
+        targets,
+        [
+            reference_target_family_from_witness(
+                report_witness,
+                |witness| include(witness),
+                |witness| build_report_target(witness),
+            ),
+            collect_reference_target_family(strict_seeds, |witness| {
+                if !include(&witness)? {
+                    return Ok(Vec::new());
+                }
+                Ok(build_shifted_target(&witness)?.into_iter().collect())
+            }),
+            collect_reference_target_family(shifted_vertices, |witness| {
+                if !include(&witness)? {
+                    return Ok(Vec::new());
+                }
+                Ok(build_shifted_target(&witness)?.into_iter().collect())
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |witness| {
+                if !include(&witness)? {
+                    return Ok(Vec::new());
+                }
+                Ok(build_shifted_target(&witness)?.into_iter().collect())
+            }),
+        ],
+    )
 }
 
 fn push_verified_definition(
@@ -5553,6 +5556,71 @@ mod tests {
 
         assert_eq!(fresh, vec![p(1, 0, 0), p(2, 0, 0)]);
         assert_eq!(seen, vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)]);
+    }
+
+    #[test]
+    fn shifted_projected_escape_target_family_search_skips_duplicate_seed_sources() {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut targets = Vec::new();
+        let visited = std::cell::RefCell::new(Vec::new());
+
+        collect_shifted_projected_escape_target_families(
+            &mut targets,
+            None,
+            vec![first.clone(), second.clone()],
+            vec![second.clone(), first.clone()],
+            Vec::new(),
+            |_candidate| Ok(true),
+            |_candidate| Ok(None),
+            |candidate| {
+                visited.borrow_mut().push(candidate.clone());
+                Ok(Some(ReferenceTarget::axis_defined(candidate.clone())))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![first.clone(), second.clone()]);
+        assert_eq!(
+            targets
+                .into_iter()
+                .map(|target| target.point)
+                .collect::<Vec<_>>(),
+            vec![first, second]
+        );
+    }
+
+    #[test]
+    fn shifted_projected_escape_target_family_search_backtracks_after_uncertified_earlier_family() {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut targets = Vec::new();
+
+        collect_shifted_projected_escape_target_families(
+            &mut targets,
+            None,
+            vec![first.clone()],
+            vec![first, second.clone()],
+            Vec::new(),
+            |_candidate| Ok(true),
+            |_candidate| Ok(None),
+            |candidate| {
+                if *candidate == p(2, 2, 2) {
+                    Ok(Some(ReferenceTarget::axis_defined(candidate.clone())))
+                } else {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            targets
+                .into_iter()
+                .map(|target| target.point)
+                .collect::<Vec<_>>(),
+            vec![second]
+        );
     }
 
     #[test]
