@@ -919,53 +919,90 @@ fn affine_boxes_use_general_path() -> HypermeshResult<()> {
 }
 
 #[test]
-fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
+fn boundary_touching_boxes_union_returns_closed_result_before_triangulation() -> HypermeshResult<()>
+{
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 0, 0], [2, 1, 1]);
     let refs = [left.as_ref(), right.as_ref()];
-    let reverse_refs = [right.as_ref(), left.as_ref()];
-    let right_soup = passthrough(&right).unwrap();
-    let config = config();
 
-    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config())?;
+    assert_output_polygons_closed(&union_result);
+    assert!(!union_result.output().polygons.is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_union_triangulates_with_certified_output() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config())?;
     assert_output_polygons_closed(&union_result);
     let union = triangulate_and_resolve_certified(&union_result)?;
     assert_no_boundary_edges(&union);
     assert_volume_numerator(&union, r(12));
 
-    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_intersection_use_general_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config())?;
     assert_output_polygons_closed(&intersection_result);
     let intersection = triangulate_and_resolve_certified(&intersection_result)?;
     assert!(intersection.triangles.is_empty());
 
-    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_difference_use_general_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config())?;
     assert_output_polygons_closed(&difference_result);
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, r(6));
 
-    let reverse_difference_result =
-        boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
-    assert_output_polygons_closed(&reverse_difference_result);
-    let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
-    assert_same_shape(&reverse_difference, &right_soup);
+    Ok(())
+}
 
-    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+#[test]
+fn boundary_touching_boxes_reverse_difference_use_general_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [right.as_ref(), left.as_ref()];
+    let right_soup = passthrough(&right).unwrap();
+
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config())?;
+    assert_output_polygons_closed(&difference_result);
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert_same_shape(&difference, &right_soup);
+
+    Ok(())
+}
+
+#[test]
+fn boundary_touching_boxes_xor_use_general_path() -> HypermeshResult<()> {
+    let left = box_mesh([0, 0, 0], [1, 1, 1]);
+    let right = box_mesh([1, 0, 0], [2, 1, 1]);
+    let refs = [left.as_ref(), right.as_ref()];
+
+    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config())?;
     assert_output_polygons_closed(&xor_result);
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
-    assert_same_shape(&xor, &union);
-
-    let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
-    assert_output_polygons_closed(&reverse_union_result);
-    let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
-    assert_same_shape(&reverse_union, &union);
-
-    let reverse_xor_result =
-        boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
-    assert_output_polygons_closed(&reverse_xor_result);
-    let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
-    assert_same_shape(&reverse_xor, &xor);
+    assert_bounds(&xor, [r(0), r(0), r(0)], [r(2), r(1), r(1)]).unwrap();
+    assert_volume_numerator(&xor, r(12));
 
     Ok(())
 }

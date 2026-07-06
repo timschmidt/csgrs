@@ -451,6 +451,9 @@ boolean results either certify through the general path or return an error.
 The public regression suite now also exercises crossing octahedra and
 affine-box overlap through that normal subdivision/reference path, not only
 through the root one-leaf classifier.
+Shared-face box contact is now likewise covered through that public general
+path as separate per-op regressions, so each Boolean op stays individually
+bounded and debuggable instead of hiding behind one oversized bundled case.
 The regression suite now also forces the root certified leaf classifier
 (`max_depth: 0`) through same-surface contact, shared-edge box contact,
 shared-vertex box contact, partial-face contact, nested closed containment,
