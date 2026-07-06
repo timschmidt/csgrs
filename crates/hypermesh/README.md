@@ -494,7 +494,9 @@ witness when no strict contained vertex exists. Face-local BSP duplicate-overlap
 suppression now uses the same certified leaf witness-family relation instead of
 one centroid-style representative point, and repeated coplanar overlap splits
 now stop at an existing matching local BSP split plane instead of replaying the
-same exact branch split through both subtrees again. Splittable tasks now also try
+same exact branch split through both subtrees again. The leaf BSP builder also
+dedupes overlap boundary planes across the local pairwise overlap family before
+submitting them to the BSP at all. Splittable tasks now also try
 that same certified leaf path exactly once before subdivision, regardless of
 former leaf-threshold sizing, and if that exact leaf attempt still returns
 `UnknownClassification` while the bounds remain splittable, hypermesh keeps

@@ -180,6 +180,7 @@ fn process_leaf_into_inner(
         }
 
         let mut bsp = LocalBsp::new(polygon);
+        bsp.add_overlap_edges(&unique_overlap_edge_planes(&intersections[index]))?;
         for intersection in &intersections[index] {
             match intersection.kind {
                 PairwiseIntersectionType::Segment => {
@@ -189,7 +190,7 @@ fn process_leaf_into_inner(
                 }
                 PairwiseIntersectionType::Overlap => {
                     if let Some(overlap) = &intersection.overlap {
-                        bsp.add_overlap(&polygons[overlap.other_polygon_idx], overlap)?;
+                        bsp.mark_overlap(&polygons[overlap.other_polygon_idx])?;
                     }
                 }
                 PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
@@ -741,6 +742,28 @@ fn update_open_segment_upper(upper: &mut Real, candidate: &Real) -> HypermeshRes
 
 fn leaf_polygon_key(polygon: &ConvexPolygon) -> (isize, isize) {
     (polygon.mesh_index, polygon.polygon_index)
+}
+
+fn push_unique_overlap_edge_plane(edges: &mut Vec<Plane>, candidate: &Plane) {
+    if edges
+        .iter()
+        .any(|existing| existing == candidate || existing == &candidate.inverted())
+    {
+        return;
+    }
+    edges.push(candidate.clone());
+}
+
+fn unique_overlap_edge_planes(intersections: &[PairwiseIntersection]) -> Vec<Plane> {
+    let mut edges = Vec::new();
+    for intersection in intersections {
+        if let Some(overlap) = &intersection.overlap {
+            for edge in &overlap.other_edges {
+                push_unique_overlap_edge_plane(&mut edges, edge);
+            }
+        }
+    }
+    edges
 }
 
 fn pairwise_intersections_by_polygon(
@@ -3550,6 +3573,7 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
 mod tests {
     use super::*;
     use crate::geometry::Plane;
+    use crate::intersection::OverlapInfo;
     use crate::mesh::{OutputVertex, PolygonSoup, prepare_input};
     use crate::operations::{EmberConfig, boolean_operation};
     use crate::output::{BooleanResult, TriangleSoup, triangulate_and_resolve_certified};
@@ -6316,6 +6340,36 @@ mod tests {
 
         assert_eq!(trace_calls, 1);
         assert_eq!(found, Some((interior, vec![13])));
+    }
+
+    #[test]
+    fn unique_overlap_edge_planes_preserve_first_occurrence_and_skip_inverted_duplicates() {
+        let x0 = Plane::axis_aligned(0, r(0));
+        let y0 = Plane::axis_aligned(1, r(0));
+        let y1 = Plane::axis_aligned(1, r(1));
+        let support = Plane::axis_aligned(2, r(0));
+        let intersections = vec![
+            PairwiseIntersection {
+                kind: PairwiseIntersectionType::Overlap,
+                segment: None,
+                overlap: Some(OverlapInfo {
+                    other_polygon_idx: 0,
+                    other_edges: vec![x0.clone(), y0.clone()],
+                    other_support: support.clone(),
+                }),
+            },
+            PairwiseIntersection {
+                kind: PairwiseIntersectionType::Overlap,
+                segment: None,
+                overlap: Some(OverlapInfo {
+                    other_polygon_idx: 1,
+                    other_edges: vec![x0.inverted(), y1.clone()],
+                    other_support: support,
+                }),
+            },
+        ];
+
+        assert_eq!(unique_overlap_edge_planes(&intersections), vec![x0, y0, y1]);
     }
 
     #[test]

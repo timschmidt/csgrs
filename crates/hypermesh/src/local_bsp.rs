@@ -83,15 +83,27 @@ impl LocalBsp {
         other: &ConvexPolygon,
         overlap: &OverlapInfo,
     ) -> HypermeshResult<()> {
+        self.add_overlap_edges(&overlap.other_edges)?;
+        self.mark_overlap(other)
+    }
+
+    /// Adds coplanar overlap boundary planes.
+    pub fn add_overlap_edges(&mut self, edges: &[Plane]) -> HypermeshResult<()> {
         if let Some(root) = self.root {
-            for edge in &overlap.other_edges {
+            for edge in edges {
                 self.add_plane_split_recursive(root, edge)?;
             }
-            if (self.host_mesh_index, self.host_polygon_index)
+        }
+        Ok(())
+    }
+
+    /// Disables overlap leaves when this host polygon loses the source key tie.
+    pub fn mark_overlap(&mut self, other: &ConvexPolygon) -> HypermeshResult<()> {
+        if let Some(root) = self.root
+            && (self.host_mesh_index, self.host_polygon_index)
                 > (other.mesh_index, other.polygon_index)
-            {
-                self.mark_overlapping_leaves(root, other)?;
-            }
+        {
+            self.mark_overlapping_leaves(root, other)?;
         }
         Ok(())
     }
