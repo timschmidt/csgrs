@@ -857,11 +857,12 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut targets = Vec::new();
     let report_witness = report.witness.clone();
+    let seeds = strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report)?;
 
-    for seed in strict_halfspace_cell_seeds_from_report(bounds, &halfspaces, &report)? {
+    for seed in &seeds {
         let active_planes = if report_witness
             .as_ref()
-            .is_some_and(|witness| witness == &seed)
+            .is_some_and(|witness| witness == seed)
         {
             report.active_planes
         } else {
@@ -882,24 +883,31 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
                 )?,
             },
         );
-        for witness in shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, &seed)? {
-            let point = witness.point;
-            push_unique_detour_target(
-                &mut targets,
-                DetourTarget {
-                    point: point.clone(),
-                    definitions: probe_definitions_or_axis(
+    }
+
+    let mut shifted_witnesses = Vec::new();
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut shifted_witnesses,
+        seeds,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+    )?;
+    for witness in shifted_witnesses {
+        let point = witness.point;
+        push_unique_detour_target(
+            &mut targets,
+            DetourTarget {
+                point: point.clone(),
+                definitions: probe_definitions_or_axis(
+                    &point,
+                    probe_definitions_from_active_halfspaces(
                         &point,
-                        probe_definitions_from_active_halfspaces(
-                            &point,
-                            &witness.halfspaces,
-                            witness.active_planes,
-                            &[],
-                        ),
-                    )?,
-                },
-            );
-        }
+                        &witness.halfspaces,
+                        witness.active_planes,
+                        &[],
+                    ),
+                )?,
+            },
+        );
     }
 
     for witness in shifted_halfspace_cell_vertex_witnesses(bounds, &halfspaces)? {
@@ -1936,29 +1944,36 @@ fn strict_leaf_witness_points(
 
     let report_witness = report.witness.clone();
     let mut points = Vec::new();
+    let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)?;
 
-    for seed in strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)? {
+    for seed in &seeds {
         let active_planes = if report_witness
             .as_ref()
-            .is_some_and(|witness| witness == &seed)
+            .is_some_and(|witness| witness == seed)
         {
             report.active_planes
         } else {
             [None, None, None]
         };
-        if let Some(point) = build_strict_leaf_point(leaf, &seed, &halfspaces, active_planes)? {
+        if let Some(point) = build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)? {
             push_unique_interior_point(&mut points, point);
         }
+    }
 
-        for shifted in shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, &seed)? {
-            if let Some(point) = build_strict_leaf_point(
-                leaf,
-                &shifted.point,
-                &shifted.halfspaces,
-                shifted.active_planes,
-            )? {
-                push_unique_interior_point(&mut points, point);
-            }
+    let mut shifted_witnesses = Vec::new();
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut shifted_witnesses,
+        seeds,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
+    )?;
+    for shifted in shifted_witnesses {
+        if let Some(point) = build_strict_leaf_point(
+            leaf,
+            &shifted.point,
+            &shifted.halfspaces,
+            shifted.active_planes,
+        )? {
+            push_unique_interior_point(&mut points, point);
         }
     }
 
@@ -2616,6 +2631,7 @@ fn strict_normal_probe_targets(
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut probes = Vec::new();
     let mut extra_planes = Vec::new();
+    let seeds = strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)?;
     for definition in &interior.planes {
         for plane in &definition[1..] {
             if !extra_planes.iter().any(|existing| existing == plane) {
@@ -2624,9 +2640,9 @@ fn strict_normal_probe_targets(
         }
     }
 
-    for witness in strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)? {
+    for witness in &seeds {
         if let Some(probe) = build_probe_point(
-            &witness,
+            witness,
             support,
             &halfspaces,
             report.active_planes,
@@ -2634,18 +2650,23 @@ fn strict_normal_probe_targets(
         )? {
             push_unique_probe_point(&mut probes, probe);
         }
+    }
 
-        for shifted in shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &witness)?
-        {
-            if let Some(probe) = build_probe_point(
-                &shifted.point,
-                support,
-                &shifted.halfspaces,
-                shifted.active_planes,
-                &extra_planes,
-            )? {
-                push_unique_probe_point(&mut probes, probe);
-            }
+    let mut shifted_witnesses = Vec::new();
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut shifted_witnesses,
+        seeds,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+    )?;
+    for shifted in shifted_witnesses {
+        if let Some(probe) = build_probe_point(
+            &shifted.point,
+            support,
+            &shifted.halfspaces,
+            shifted.active_planes,
+            &extra_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
         }
     }
 
@@ -2830,10 +2851,11 @@ fn strict_axis_probe_targets(
     halfspaces.push(support_side_halfspace(support, positive_side));
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut probes = Vec::new();
+    let seeds = strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)?;
 
-    for witness in strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)? {
+    for witness in &seeds {
         if let Some(probe) = build_axis_probe_point(
-            &witness,
+            witness,
             interior,
             support,
             axis,
@@ -2842,19 +2864,24 @@ fn strict_axis_probe_targets(
         )? {
             push_unique_probe_point(&mut probes, probe);
         }
+    }
 
-        for shifted in shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &witness)?
-        {
-            if let Some(probe) = build_axis_probe_point(
-                &shifted.point,
-                interior,
-                support,
-                axis,
-                &shifted.halfspaces,
-                shifted.active_planes,
-            )? {
-                push_unique_probe_point(&mut probes, probe);
-            }
+    let mut shifted_witnesses = Vec::new();
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut shifted_witnesses,
+        seeds,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
+    )?;
+    for shifted in shifted_witnesses {
+        if let Some(probe) = build_axis_probe_point(
+            &shifted.point,
+            interior,
+            support,
+            axis,
+            &shifted.halfspaces,
+            shifted.active_planes,
+        )? {
+            push_unique_probe_point(&mut probes, probe);
         }
     }
 
@@ -3131,11 +3158,11 @@ fn shifted_halfspace_cell_vertex_witnesses(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>> {
     let mut witnesses: Vec<ShiftedHalfspaceWitness> = Vec::new();
-    for seed in feasible_halfspace_cell_vertices(halfspaces)? {
-        for witness in shifted_halfspace_cell_witnesses_from_seed(bounds, halfspaces, &seed)? {
-            push_unique_shifted_halfspace_witness(&mut witnesses, witness);
-        }
-    }
+    extend_shifted_halfspace_witnesses_backtracking_unknown(
+        &mut witnesses,
+        feasible_halfspace_cell_vertices(halfspaces)?,
+        |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, halfspaces, seed),
+    )?;
     Ok(witnesses)
 }
 
@@ -3149,6 +3176,25 @@ fn push_unique_shifted_halfspace_witness(
     {
         witnesses.push(witness);
     }
+}
+
+fn extend_shifted_halfspace_witnesses_backtracking_unknown(
+    witnesses: &mut Vec<ShiftedHalfspaceWitness>,
+    seeds: impl IntoIterator<Item = Point3>,
+    mut build: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
+) -> HypermeshResult<()> {
+    for seed in seeds {
+        match build(&seed) {
+            Ok(found) => {
+                for witness in found {
+                    push_unique_shifted_halfspace_witness(witnesses, witness);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(())
 }
 
 fn halfspace_feasibility_report(
@@ -3464,6 +3510,40 @@ mod tests {
                 .find(|witness| witness.point == Point3::new(r(3), q(5, 2), q(7, 2)))
                 .is_some_and(|witness| witness.active_planes == [None, None, None])
         );
+    }
+
+    #[test]
+    fn shifted_halfspace_witness_collection_backtracks_after_uncertified_seed() {
+        let first_seed = p(1, 1, 1);
+        let second_seed = p(2, 2, 2);
+        let kept = ShiftedHalfspaceWitness {
+            point: p(3, 3, 3),
+            halfspaces: Vec::new(),
+            active_planes: [None, None, None],
+        };
+        let mut witnesses = Vec::new();
+
+        extend_shifted_halfspace_witnesses_backtracking_unknown(
+            &mut witnesses,
+            vec![first_seed.clone(), second_seed.clone()],
+            |seed| {
+                if seed == &first_seed {
+                    Err(HypermeshError::UnknownClassification)
+                } else if seed == &second_seed {
+                    Ok(vec![ShiftedHalfspaceWitness {
+                        point: kept.point.clone(),
+                        halfspaces: kept.halfspaces.clone(),
+                        active_planes: kept.active_planes,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].point, kept.point);
     }
 
     #[test]

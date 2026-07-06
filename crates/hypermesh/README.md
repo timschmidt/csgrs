@@ -78,6 +78,9 @@ plane-replacement layer. Leaf interior
 construction now asks `hyperlimit` for strict replayable witnesses from the
 closed leaf cell and its shifted witness family before it falls back to a
 centroid seed, so probe generation can retain multiple certified plane
+definitions across those witness families. Shifted leaf, probe, and detour
+witness expansions now also backtrack past uncertified shifted seeds instead of
+aborting the whole local witness family.
 definitions, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes
