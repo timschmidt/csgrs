@@ -84,7 +84,9 @@ family on its replacement steps as well, again without recursing into another
 plane-replacement layer, and that retained-definition segment search now also
 backtracks across uncertified direct definition pairs and continues into
 certified detour families instead of collapsing an all-uncertified direct
-family to `None`. Leaf interior
+family to `None`. Leaf probe winding now likewise surfaces
+`UnknownClassification` when every retained-definition path is uncertified
+instead of silently treating that probe winding trace as absent. Leaf interior
 construction now asks `hyperlimit` for strict replayable witnesses from the
 closed leaf cell and its shifted witness family before it falls back to a
 centroid seed, so probe generation can retain multiple certified plane
