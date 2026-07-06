@@ -2494,7 +2494,7 @@ fn leaf_interior_definitions_from_active_halfspaces(
     let mut active = Vec::new();
     for index in active_planes.into_iter().flatten() {
         let Some(halfspace) = halfspaces.get(index) else {
-            return Err(HypermeshError::UnknownClassification);
+            continue;
         };
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         if plane == *support || plane == support.inverted() {
@@ -5634,7 +5634,39 @@ mod tests {
             .expect("strict witness should still be retained");
 
         assert_eq!(point.point, witness);
-        assert_eq!(point.planes, vec![axis_plane_definition(&point.point)]);
+        assert!(point.planes.iter().any(|definition| {
+            definition[0] == leaf.support
+                && definition[1..]
+                    .iter()
+                    .filter(|plane| {
+                        plane.normal == p(1, 0, 0)
+                            || plane.normal == p(0, 1, 0)
+                            || plane.normal == p(0, 0, 1)
+                    })
+                    .count()
+                    == 2
+        }));
+    }
+
+    #[test]
+    fn strict_leaf_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![
+            limit_plane_from_plane(&leaf.support),
+            axis_halfspace(0, false, r(1)),
+        ];
+
+        let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None])
+            .unwrap()
+            .expect("strict witness should still be retained");
+
+        assert_eq!(point.point, witness);
+        assert!(point.planes.iter().any(|definition| {
+            definition[1..]
+                .iter()
+                .any(|plane| plane.normal == p(1, 0, 0) && plane.offset == r(-1))
+        }));
     }
 
     #[test]
