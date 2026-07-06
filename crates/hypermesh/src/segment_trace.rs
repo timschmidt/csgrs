@@ -417,9 +417,11 @@ fn definition_pair_trace_backtracking_unknown(
     mut trace: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<WindingNumberVector>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let mut saw_unknown = false;
+    let start_definitions = unique_definition_family(start_definitions);
+    let end_definitions = unique_definition_family(end_definitions);
 
-    for start_definition in start_definitions {
-        for end_definition in end_definitions {
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
             match trace(start_definition, end_definition) {
                 Ok(winding) => return Ok(Some(winding)),
                 Err(HypermeshError::UnknownClassification) => {
@@ -1244,8 +1246,10 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
         &mut start_definitions,
         axis_plane_defined_point(start).planes,
     );
+    start_definitions = unique_definition_family(&start_definitions);
     let mut end_definitions = end_definitions.to_vec();
     append_definition_if_missing(&mut end_definitions, axis_plane_defined_point(end).planes);
+    end_definitions = unique_definition_family(&end_definitions);
 
     for start_definition in &start_definitions {
         for end_definition in &end_definitions {
@@ -1334,6 +1338,16 @@ fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [P
     {
         definitions.push(candidate);
     }
+}
+
+fn unique_definition_family(definitions: &[[Plane; 3]]) -> Vec<[Plane; 3]> {
+    let mut unique = Vec::new();
+    for definition in definitions {
+        if unique.iter().all(|existing| existing != definition) {
+            unique.push(definition.clone());
+        }
+    }
+    unique
 }
 
 fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
@@ -1719,9 +1733,11 @@ fn definition_pair_reachability_backtracking_unknown(
     mut reaches: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
+    let start_definitions = unique_definition_family(start_definitions);
+    let end_definitions = unique_definition_family(end_definitions);
 
-    for start_definition in start_definitions {
-        for end_definition in end_definitions {
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
             match reaches(start_definition, end_definition) {
                 Ok(true) => return Ok(true),
                 Ok(false) => {}
@@ -5861,6 +5877,31 @@ mod tests {
     }
 
     #[test]
+    fn definition_pair_trace_search_skips_duplicate_definition_pairs() {
+        let start_a = axis_plane_definition(&p(0, 0, 0));
+        let start_b = axis_plane_definition(&p(1, 0, 0));
+        let end = axis_plane_definition(&p(2, 0, 0));
+        let mut trace_calls = 0;
+
+        let traced = definition_pair_trace_backtracking_unknown(
+            &[start_a.clone(), start_a.clone(), start_b.clone()],
+            &[end.clone(), end.clone()],
+            |start_definition, end_definition| {
+                trace_calls += 1;
+                if start_definition == &start_a && end_definition == &end {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![1])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(traced, Some(vec![1]));
+        assert_eq!(trace_calls, 2);
+    }
+
+    #[test]
     fn detour_legs_retry_direct_paths_when_axis_order_fails() {
         let blockers = vec![
             make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
@@ -6760,6 +6801,31 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn definition_pair_reachability_search_skips_duplicate_definition_pairs() {
+        let start_a = axis_plane_definition(&p(0, 0, 0));
+        let start_b = axis_plane_definition(&p(1, 0, 0));
+        let end = axis_plane_definition(&p(2, 0, 0));
+        let mut reachability_calls = 0;
+
+        let reaches = definition_pair_reachability_backtracking_unknown(
+            &[start_a.clone(), start_a.clone(), start_b.clone()],
+            &[end.clone(), end.clone()],
+            |start_definition, end_definition| {
+                reachability_calls += 1;
+                if start_definition == &start_a && end_definition == &end {
+                    Ok(false)
+                } else {
+                    Ok(start_definition == &start_b && end_definition == &end)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(reaches);
+        assert_eq!(reachability_calls, 2);
     }
 
     #[test]
