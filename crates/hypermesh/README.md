@@ -101,7 +101,9 @@ and duplicate certified probe witnesses now merge their retained definition
 families instead of dropping later constructions. Strict leaf-cell witness
 points whose richer active-plane replay fails are now still retained as exact
 axis-defined interior witnesses rather than forcing an immediate centroid-seed
-fallback.
+fallback, and the same axis-defined retention now applies to certified normal
+and axis probe witnesses instead of discarding them when richer probe-plane
+replay fails.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.

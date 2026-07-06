@@ -2807,12 +2807,16 @@ fn build_probe_point(
     Ok(Some(ProbePoint {
         point: witness.clone(),
         side,
-        planes: probe_definitions_from_active_halfspaces(
+        planes: match probe_definitions_from_active_halfspaces(
             witness,
             halfspaces,
             active_planes,
             &all_extra_planes,
-        )?,
+        ) {
+            Ok(planes) => planes,
+            Err(HypermeshError::UnknownClassification) => vec![axis_plane_definition(witness)],
+            Err(err) => return Err(err),
+        },
     }))
 }
 
@@ -2835,14 +2839,18 @@ fn build_axis_probe_point(
     Ok(Some(ProbePoint {
         point: witness.clone(),
         side,
-        planes: axis_probe_definitions(
+        planes: match axis_probe_definitions(
             interior,
             support,
             axis,
             halfspaces,
             active_planes,
             witness,
-        )?,
+        ) {
+            Ok(planes) => planes,
+            Err(HypermeshError::UnknownClassification) => vec![axis_plane_definition(witness)],
+            Err(err) => return Err(err),
+        },
     }))
 }
 
@@ -3666,6 +3674,42 @@ mod tests {
         for definition in &definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
+    }
+
+    #[test]
+    fn strict_probe_witness_retains_axis_definition_when_active_replay_fails() {
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![axis_halfspace(2, false, r(1))];
+
+        let probe = build_probe_point(&witness, &support, &halfspaces, [Some(9), None, None], &[])
+            .unwrap()
+            .expect("strict probe witness should still be retained");
+
+        assert_eq!(probe.point, witness);
+        assert_eq!(probe.planes, vec![axis_plane_definition(&probe.point)]);
+    }
+
+    #[test]
+    fn strict_axis_probe_witness_retains_axis_definition_when_active_replay_fails() {
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = p(1, 1, 0);
+        let witness = p(2, 1, 1);
+        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+
+        let probe = build_axis_probe_point(
+            &witness,
+            &interior,
+            &support,
+            0,
+            &halfspaces,
+            [Some(9), None, None],
+        )
+        .unwrap()
+        .expect("strict axis probe witness should still be retained");
+
+        assert_eq!(probe.point, witness);
+        assert_eq!(probe.planes, vec![axis_plane_definition(&probe.point)]);
     }
 
     #[test]
