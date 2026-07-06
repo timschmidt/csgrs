@@ -153,8 +153,9 @@ reuse one exact feasible-vertex / geometry-seed family per local cell before
 widening into shifted witness-cell search. The leaf-witness builders now reuse
 that same raw local family instead of recomputing feasible vertices and
 geometry seeds after deriving strict leaf seeds, and shifted leaf/probe/detour
-witness builders now also seed that dedupe with the report witness itself so
-they do not rebuild the same direct witness through later strict-seed,
+witness builders now also dedupe later shifted seed families against the
+report witness itself so they do not rebuild that same direct witness through
+later strict-seed,
 exact-vertex, or geometry-seed families,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
