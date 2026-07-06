@@ -2143,51 +2143,28 @@ fn halfspace_cell_geometry_seed_candidates(
 ) -> HypermeshResult<Vec<Point3>> {
     let vertices = feasible_halfspace_cell_vertices(halfspaces)?;
     let mut candidates = Vec::new();
-
-    for first in 0..vertices.len() {
-        for second in (first + 1)..vertices.len() {
-            if let Some(center) = centroid(&[vertices[first].clone(), vertices[second].clone()])? {
-                push_unique_halfspace_seed(&mut candidates, center);
-            }
-        }
-    }
-
-    for first in 0..vertices.len() {
-        for second in (first + 1)..vertices.len() {
-            for third in (second + 1)..vertices.len() {
-                if let Some(center) = centroid(&[
-                    vertices[first].clone(),
-                    vertices[second].clone(),
-                    vertices[third].clone(),
-                ])? {
-                    push_unique_halfspace_seed(&mut candidates, center);
-                }
-            }
-        }
-    }
-
-    for first in 0..vertices.len() {
-        for second in (first + 1)..vertices.len() {
-            for third in (second + 1)..vertices.len() {
-                for fourth in (third + 1)..vertices.len() {
-                    if let Some(center) = centroid(&[
-                        vertices[first].clone(),
-                        vertices[second].clone(),
-                        vertices[third].clone(),
-                        vertices[fourth].clone(),
-                    ])? {
-                        push_unique_halfspace_seed(&mut candidates, center);
-                    }
-                }
-            }
-        }
-    }
-
-    if let Some(center) = centroid(&vertices)? {
-        push_unique_halfspace_seed(&mut candidates, center);
-    }
-
+    let mut subset = Vec::new();
+    collect_halfspace_centroid_subset_candidates(&mut candidates, &vertices, 0, &mut subset)?;
     Ok(candidates)
+}
+
+fn collect_halfspace_centroid_subset_candidates(
+    candidates: &mut Vec<Point3>,
+    vertices: &[Point3],
+    start: usize,
+    subset: &mut Vec<Point3>,
+) -> HypermeshResult<()> {
+    for index in start..vertices.len() {
+        subset.push(vertices[index].clone());
+        if subset.len() >= 2
+            && let Some(center) = centroid(subset)?
+        {
+            push_unique_halfspace_seed(candidates, center);
+        }
+        collect_halfspace_centroid_subset_candidates(candidates, vertices, index + 1, subset)?;
+        subset.pop();
+    }
+    Ok(())
 }
 
 fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLeafPoint>> {
@@ -4760,6 +4737,22 @@ mod tests {
 
         assert!(point_strictly_inside_halfspace_cell(&midpoint, &bounds, &halfspaces).unwrap());
         assert!(seeds.iter().any(|seed| seed == &midpoint));
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seeds_include_strict_five_vertex_centroids() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let five_vertex_center = Point3::new(q(8, 5), q(8, 5), q(8, 5));
+
+        let seeds =
+            strict_halfspace_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            point_strictly_inside_halfspace_cell(&five_vertex_center, &bounds, &halfspaces)
+                .unwrap()
+        );
+        assert!(seeds.iter().any(|seed| seed == &five_vertex_center));
     }
 
     #[test]

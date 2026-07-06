@@ -2869,53 +2869,28 @@ fn support_cell_geometry_seed_candidates(
 ) -> HypermeshResult<Vec<Point3>> {
     let vertices = feasible_support_cell_vertices(halfspaces)?;
     let mut candidates = Vec::new();
-
-    for first in 0..vertices.len() {
-        for second in (first + 1)..vertices.len() {
-            if let Some(center) =
-                point3_centroid(&[vertices[first].clone(), vertices[second].clone()])?
-            {
-                push_unique_point3(&mut candidates, center);
-            }
-        }
-    }
-
-    for first in 0..vertices.len() {
-        for second in (first + 1)..vertices.len() {
-            for third in (second + 1)..vertices.len() {
-                if let Some(center) = point3_centroid(&[
-                    vertices[first].clone(),
-                    vertices[second].clone(),
-                    vertices[third].clone(),
-                ])? {
-                    push_unique_point3(&mut candidates, center);
-                }
-            }
-        }
-    }
-
-    for first in 0..vertices.len() {
-        for second in (first + 1)..vertices.len() {
-            for third in (second + 1)..vertices.len() {
-                for fourth in (third + 1)..vertices.len() {
-                    if let Some(center) = point3_centroid(&[
-                        vertices[first].clone(),
-                        vertices[second].clone(),
-                        vertices[third].clone(),
-                        vertices[fourth].clone(),
-                    ])? {
-                        push_unique_point3(&mut candidates, center);
-                    }
-                }
-            }
-        }
-    }
-
-    if let Some(center) = point3_centroid(&vertices)? {
-        push_unique_point3(&mut candidates, center);
-    }
-
+    let mut subset = Vec::new();
+    collect_point3_centroid_subset_candidates(&mut candidates, &vertices, 0, &mut subset)?;
     Ok(candidates)
+}
+
+fn collect_point3_centroid_subset_candidates(
+    candidates: &mut Vec<Point3>,
+    vertices: &[Point3],
+    start: usize,
+    subset: &mut Vec<Point3>,
+) -> HypermeshResult<()> {
+    for index in start..vertices.len() {
+        subset.push(vertices[index].clone());
+        if subset.len() >= 2
+            && let Some(center) = point3_centroid(subset)?
+        {
+            push_unique_point3(candidates, center);
+        }
+        collect_point3_centroid_subset_candidates(candidates, vertices, index + 1, subset)?;
+        subset.pop();
+    }
+    Ok(())
 }
 
 fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
@@ -5686,6 +5661,22 @@ mod tests {
     }
 
     #[test]
+    fn strict_projected_cell_seeds_include_strict_five_vertex_centroids() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let five_vertex_center = Point3::new(q(8, 5), q(8, 5), q(8, 5));
+
+        let seeds =
+            strict_projected_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            point_strictly_inside_projected_cell(&five_vertex_center, &bounds, &halfspaces)
+                .unwrap()
+        );
+        assert!(seeds.iter().any(|seed| seed == &five_vertex_center));
+    }
+
+    #[test]
     fn point3_seed_collection_backtracks_after_uncertified_candidate() {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -5892,6 +5883,21 @@ mod tests {
 
         assert!(point_strictly_inside_support_cell(&midpoint, &bounds, &halfspaces).unwrap());
         assert!(seeds.iter().any(|seed| seed == &midpoint));
+    }
+
+    #[test]
+    fn strict_support_cell_seeds_include_strict_five_vertex_centroids() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let five_vertex_center = Point3::new(q(8, 5), q(8, 5), q(8, 5));
+
+        let seeds =
+            strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(
+            point_strictly_inside_support_cell(&five_vertex_center, &bounds, &halfspaces).unwrap()
+        );
+        assert!(seeds.iter().any(|seed| seed == &five_vertex_center));
     }
 
     #[test]

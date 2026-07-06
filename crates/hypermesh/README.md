@@ -64,8 +64,8 @@ local surface or AABB boundary. Leaf interior targets now first come from the
 closed leaf halfspace cell and its shifted strict witness family, and that
 same witness family now also includes stricter replayable constructions seeded
 from exact closed leaf halfspace-cell geometry: strict direct witnesses,
-shifted witnesses, exact shifted vertices, and strict triangle/tetra/full
-centroids of the feasible closed-cell vertices instead of running a separate centroid
+shifted witnesses, exact shifted vertices, and strict centroids of every
+feasible closed-cell vertex subset of size two or greater instead of running a separate centroid
 fallback branch afterward. The implementation no longer falls back to treating
 the naked centroid as a certified leaf witness. If a
 probe lies on a traced surface,
@@ -126,7 +126,8 @@ definitions, and those retained definitions now include every
 exact witness-active leaf halfspace we can verify rather than only the
 feasibility basis planes. The shifted strict leaf cell now also contributes
 its own strict feasibility witness, exact feasible vertices, and exact
-closed-cell geometry seeds, including strict edge midpoints, rather than a centroid seed family or one chosen
+closed-cell geometry seeds from every feasible vertex subset of size two or
+greater, including strict edge midpoints, rather than a centroid seed family or one chosen
 feasibility witness. Normal- and axis-direction probe witnesses now do the
 same for their strict witness cells instead of keeping only a hand-built
 definition family, and they now reuse any strict closed-cell feasibility
@@ -198,8 +199,8 @@ points and not on local surfaces. Otherwise hypermesh builds the projected
 child cell that preserves every axis already strict in the parent reference,
 then asks `hyperlimit` for strict witnesses, exact feasible vertices, and exact
 closed-cell geometry seeds derived from those feasible vertices in that
-projected cell, including edge, triangle, tetra, and full centroids when those
-full-dimensional, before tracing from the parent reference. If the first
+projected cell, using every feasible vertex subset centroid of size two or
+greater before tracing from the parent reference. If the first
 projected target family is exhausted, later certified projected escape
 witnesses now augment that direct projected target family rather than being
 discarded when direct projected targets already exist, and they are retried by
@@ -299,7 +300,8 @@ support-cell search now also accepts the current feasible child/support cell
 before forcing any further support-side assignment, then shifted replayable
 witnesses built from every available strict support-cell
 witness, every exact feasible support-cell vertex, and exact closed-cell
-geometry seeds derived from those feasible vertices, and finally any
+geometry seeds derived from every feasible support-cell vertex subset of size
+two or greater, and finally any
 remaining strict direct witnesses of the closed cell. That lets reference
 propagation backtrack across multiple certified direct and shifted targets
 inside one feasible support-side cell instead of collapsing the cell to one
