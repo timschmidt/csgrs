@@ -11,13 +11,26 @@
 //! non-PWN surface collections are outside the supported model and are
 //! rejected before the general boolean path runs.
 //!
+//! Within that intended model, the current runtime claim is narrower:
+//! certified results are exact, while uncertified branches remain explicit
+//! failures. If the current EMBER search cannot certify a required sign,
+//! incidence, reachability, reference-propagation step, or output-closure
+//! fact, the operation returns an explicit [`HypermeshError`] such as
+//! [`HypermeshError::UnknownClassification`],
+//! [`HypermeshError::ReferencePropagationFailed`], or
+//! [`HypermeshError::SubdivisionDepthLimit`] instead of guessing through the
+//! unresolved branch. Completion is therefore not yet claimed for the whole
+//! intended closed-PWN model, even though the supported geometry model itself
+//! is broader than the currently certified success set.
+//!
 //! Predicate decisions are routed through the strict `hyperlimit` /
 //! `hyperlattice` exact-predicate stack. Unsupported or uncertifiable
 //! configurations are reported as explicit [`HypermeshError`] values rather
 //! than being guessed with approximate topology. In particular, arbitrary
 //! undecidable computable [`Real`] values remain outside any completeness claim
-//! when strict bounded refinement cannot certify the sign or incidence fact
-//! needed by subdivision, reference propagation, or leaf classification.
+//! when strict bounded refinement cannot certify the sign, incidence, or
+//! ordering fact needed by subdivision, reference propagation, or leaf
+//! classification.
 //!
 //! By default, boolean operations run the general EMBER
 //! subdivision/BSP/classification path; special-case boolean shortcuts are not
