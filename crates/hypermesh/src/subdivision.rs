@@ -16,7 +16,8 @@ use crate::segment_trace::{
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
-    BooleanOp, Indicator, WindingPair, can_boolean_op_be_inside_with_component_ranges,
+    BooleanOp, Indicator, WindingNumberVector, WindingPair,
+    can_boolean_op_be_inside_with_component_ranges,
     can_boolean_op_be_inside_with_transition_reachability, classify_polygon_output, propagate_wnv,
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
@@ -97,6 +98,14 @@ pub struct LeafProcessingStats {
     pub certified_complete: bool,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct LeafClassificationCacheEntry {
+    support: Plane,
+    edges: Vec<Plane>,
+    delta_w: Vec<i32>,
+    winding: HypermeshResult<WindingNumberVector>,
+}
+
 /// Processes one leaf and returns classified output polygons.
 pub fn process_leaf(
     polygons: &[ConvexPolygon],
@@ -156,6 +165,7 @@ fn process_leaf_into_inner(
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
     };
+    let mut leaf_winding_cache = Vec::new();
     if polygons.is_empty() {
         stats.certified_complete = true;
         return Ok(stats);
@@ -174,6 +184,7 @@ fn process_leaf_into_inner(
                 ref_wnv,
                 polygons,
                 indicator,
+                &mut leaf_winding_cache,
                 output,
             )?;
             stats.direct_polygon_count += usize::from(emitted);
@@ -205,15 +216,23 @@ fn process_leaf_into_inner(
             let (interior_points, effective_delta_w) =
                 certify_bsp_leaf_and_delta_w(polygon, &leaf.edges, polygons)?;
             stats.bsp_leaf_count += 1;
-            let w_front = classify_leaf_polygon_from_interior_points(
-                &interior_points,
+            let w_front = cached_leaf_classification_with(
+                &mut leaf_winding_cache,
                 &polygon.support,
-                ref_point,
-                ref_definitions,
-                ref_wnv,
-                polygons,
-                bounds,
+                &leaf.edges,
                 &effective_delta_w,
+                || {
+                    classify_leaf_polygon_from_interior_points(
+                        &interior_points,
+                        &polygon.support,
+                        ref_point,
+                        ref_definitions,
+                        ref_wnv,
+                        polygons,
+                        bounds,
+                        &effective_delta_w,
+                    )
+                },
             )?;
             let w_back = propagate_wnv(&w_front, 1, &effective_delta_w)?;
             let classification = classify_polygon_output(&w_front, &w_back, indicator);
@@ -506,17 +525,26 @@ fn emit_one_direct(
     ref_wnv: &[i32],
     class_polygons: &[ConvexPolygon],
     indicator: &Indicator,
+    cache: &mut Vec<LeafClassificationCacheEntry>,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<bool> {
-    let w_front = classify_leaf_polygon(
+    let w_front = cached_leaf_classification_with(
+        cache,
         &polygon.support,
         &polygon.edges,
-        ref_point,
-        ref_definitions,
-        ref_wnv,
-        class_polygons,
-        bounds,
         &polygon.delta_w,
+        || {
+            classify_leaf_polygon(
+                &polygon.support,
+                &polygon.edges,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                class_polygons,
+                bounds,
+                &polygon.delta_w,
+            )
+        },
     )?;
     let w_back = propagate_wnv(&w_front, 1, &polygon.delta_w)?;
     let classification = classify_polygon_output(&w_front, &w_back, indicator);
@@ -527,6 +555,55 @@ fn emit_one_direct(
         return Ok(true);
     }
     Ok(false)
+}
+
+fn cached_leaf_classification_with(
+    cache: &mut Vec<LeafClassificationCacheEntry>,
+    support: &Plane,
+    edges: &[Plane],
+    delta_w: &[i32],
+    classify: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
+) -> HypermeshResult<WindingNumberVector> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.support == *support
+            && existing.delta_w == delta_w
+            && edge_cycles_match_up_to_rotation(&existing.edges, edges)
+    }) {
+        return existing.winding.clone();
+    }
+
+    let winding = classify();
+    cache.push(LeafClassificationCacheEntry {
+        support: support.clone(),
+        edges: edges.to_vec(),
+        delta_w: delta_w.to_vec(),
+        winding: winding.clone(),
+    });
+    winding
+}
+
+fn edge_cycles_match_up_to_rotation(left: &[Plane], right: &[Plane]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    if left.is_empty() {
+        return true;
+    }
+
+    for offset in 0..left.len() {
+        let mut all_match = true;
+        for index in 0..left.len() {
+            if left[index] != right[(index + offset) % right.len()] {
+                all_match = false;
+                break;
+            }
+        }
+        if all_match {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn certify_bsp_leaf_and_delta_w(
@@ -3666,6 +3743,42 @@ mod tests {
             })
             .cloned()
             .expect("expected axis-aligned support face in prepared mesh soup")
+    }
+
+    #[test]
+    fn cached_leaf_classification_reuses_rotated_edge_cycles() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let mut rotated_edges = polygon.edges[1..].to_vec();
+        rotated_edges.push(polygon.edges[0].clone());
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_leaf_classification_with(
+            &mut cache,
+            &polygon.support,
+            &polygon.edges,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(vec![7])
+            },
+        )
+        .unwrap();
+        let second = cached_leaf_classification_with(
+            &mut cache,
+            &polygon.support,
+            &rotated_edges,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(vec![9])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, vec![7]);
+        assert_eq!(second, vec![7]);
     }
 
     fn vertex_key(vertex: &OutputVertex) -> [String; 3] {

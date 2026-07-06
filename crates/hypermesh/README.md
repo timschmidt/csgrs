@@ -521,6 +521,10 @@ exact leaf-analysis pass instead of rebuilding the same local leaf polygon,
 witness family, and per-polygon leaf-test relations twice per fragment, and the
 same certified leaf interior witness family is now reused directly by BSP-fragment
 leaf classification instead of being rebuilt again inside `classify_leaf_polygon`.
+Exact repeated direct/BSP fragment classifications with the same support, edge
+cycle, and `delta_w` inside one subdivision task now also reuse the same
+certified winding trace instead of retracing equivalent fragments before output
+dedupe removes them.
 Full
 arrangement-isolation termination is still an implementation target.
 
