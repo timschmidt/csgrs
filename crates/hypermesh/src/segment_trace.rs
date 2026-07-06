@@ -2048,14 +2048,14 @@ fn strict_leaf_witness_points(
 
 fn strict_leaf_witness_seeds(
     leaf: &ConvexPolygon,
-    vertices: &[Point3],
+    _vertices: &[Point3],
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: &hyperlimit::HalfspaceFeasibilityReport,
 ) -> HypermeshResult<Vec<Point3>> {
     let mut seeds = strict_halfspace_cell_seeds_from_report(bounds, halfspaces, report)?;
 
-    if let Some(center) = centroid(vertices)?
+    if let Some(center) = centroid(&feasible_halfspace_cell_vertices(halfspaces)?)?
         && point_strictly_inside_leaf(&center, leaf)?
     {
         push_unique_halfspace_seed(&mut seeds, center);
@@ -3974,13 +3974,15 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_seeds_include_strict_vertex_centroid() {
+    fn strict_leaf_witness_seeds_include_strict_halfspace_vertex_centroid() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
         let bounds = leaf_bounds(&vertices).unwrap();
         let halfspaces = leaf_halfspaces(&leaf);
         let report = halfspace_feasibility_report(&halfspaces).unwrap();
-        let center = centroid(&vertices).unwrap().unwrap();
+        let center = centroid(&feasible_halfspace_cell_vertices(&halfspaces).unwrap())
+            .unwrap()
+            .unwrap();
 
         let seeds =
             strict_leaf_witness_seeds(&leaf, &vertices, &bounds, &halfspaces, &report).unwrap();

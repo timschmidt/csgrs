@@ -47,9 +47,9 @@ or a support-axis direction inside the open interval before the nearest crossed
 local surface or AABB boundary. Leaf interior targets now first come from the
 closed leaf halfspace cell and its shifted strict witness family, and that
 same witness family now also includes stricter replayable constructions seeded
-from the exact leaf-vertex barycenter instead of running a separate centroid
-fallback branch afterward. The implementation no longer falls back to treating
-the naked centroid as a certified leaf witness. If a
+from the exact closed leaf halfspace-cell vertex barycenter instead of running
+a separate centroid fallback branch afterward. The implementation no longer
+falls back to treating the naked centroid as a certified leaf witness. If a
 probe lies on a traced surface,
 cannot reach the adjacent cell, or cannot be traced from the reference point,
 that probe is discarded. If no certified probe path remains, the leaf reports
