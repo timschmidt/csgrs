@@ -206,6 +206,14 @@ fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
 /// valence is allowed, but non-empty open, reversed, or zero-volume soups are
 /// reported as uncertified.
 pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
+    let polygon_closure = output_polygon_closure_report(&extract_output(result)?)?;
+    if !polygon_closure.has_no_boundary() {
+        return Err(HypermeshError::OpenOutput {
+            boundary_edges: polygon_closure.boundary_edges,
+            non_manifold_edges: polygon_closure.non_manifold_edges,
+        });
+    }
+
     let soup = resolve_tjunctions(&triangulate_output(result)?)?;
     if soup.triangles.is_empty() {
         return Ok(soup);
@@ -219,6 +227,94 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
     }
     certify_positive_signed_volume(&soup)?;
     Ok(soup)
+}
+
+fn output_polygon_closure_report(
+    polygons: &[OutputPolygon],
+) -> HypermeshResult<TriangleSoupClosureReport> {
+    let (vertices, indexed_polygons) = merge_duplicate_polygon_vertices(polygons);
+    let edge_counts = polygon_edge_counts(&vertices, &indexed_polygons)?;
+    let mut report = TriangleSoupClosureReport::default();
+    for count in edge_counts.values() {
+        if *count == 1 {
+            report.boundary_edges += 1;
+        } else if *count > 2 {
+            report.non_manifold_edges += 1;
+        }
+    }
+    Ok(report)
+}
+
+fn merge_duplicate_polygon_vertices(
+    polygons: &[OutputPolygon],
+) -> (Vec<OutputVertex>, Vec<Vec<usize>>) {
+    let mut vertices = Vec::new();
+    let mut indexed_polygons = Vec::with_capacity(polygons.len());
+
+    for polygon in polygons {
+        let mut indexed = Vec::with_capacity(polygon.vertices.len());
+        for vertex in &polygon.vertices {
+            if let Some(index) = vertices.iter().position(|existing| existing == vertex) {
+                indexed.push(index);
+            } else {
+                let index = vertices.len();
+                vertices.push(vertex.clone());
+                indexed.push(index);
+            }
+        }
+        indexed_polygons.push(indexed);
+    }
+
+    (vertices, indexed_polygons)
+}
+
+fn polygon_edge_counts(
+    vertices: &[OutputVertex],
+    polygons: &[Vec<usize>],
+) -> HypermeshResult<BTreeMap<[usize; 2], usize>> {
+    let mut counts = BTreeMap::new();
+
+    for polygon in polygons {
+        if polygon.len() < 2 {
+            continue;
+        }
+
+        for edge_index in 0..polygon.len() {
+            let start = polygon[edge_index];
+            let end = polygon[(edge_index + 1) % polygon.len()];
+            if start == end {
+                continue;
+            }
+
+            let mut on_edge = Vec::new();
+            for vertex_index in 0..vertices.len() {
+                if vertex_index == start || vertex_index == end {
+                    continue;
+                }
+                if point_on_segment_exact(
+                    &vertices[vertex_index],
+                    &vertices[start],
+                    &vertices[end],
+                )? {
+                    on_edge.push(vertex_index);
+                }
+            }
+
+            let mut chain = Vec::with_capacity(on_edge.len() + 2);
+            chain.push(start);
+            chain.extend(sort_along_segment(&on_edge, start, end, vertices)?);
+            chain.push(end);
+
+            for pair in chain.windows(2) {
+                if pair[0] == pair[1] {
+                    continue;
+                }
+                *counts.entry(sorted_edge([pair[0], pair[1]])).or_insert(0) += 1;
+            }
+        }
+    }
+
+    Ok(counts)
 }
 
 fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
@@ -730,6 +826,14 @@ mod tests {
         }
     }
 
+    fn op(vertices: Vec<OutputVertex>) -> OutputPolygon {
+        OutputPolygon {
+            vertices,
+            source_mesh: 0,
+            source_polygon: 0,
+        }
+    }
+
     fn positive_tetra_soup() -> TriangleSoup {
         TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)],
@@ -809,6 +913,40 @@ mod tests {
         assert_eq!(polygons.len(), 1);
         assert_eq!(polygons[0].vertices.len(), 3);
         assert!(polygons[0].vertices.iter().any(|vertex| vertex.x == r(1)));
+    }
+
+    #[test]
+    fn output_polygon_closure_report_accepts_closed_tetrahedron() {
+        let polygons = vec![
+            op(vec![ov(0, 0, 0), ov(0, 1, 0), ov(1, 0, 0)]),
+            op(vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 0, 1)]),
+            op(vec![ov(0, 0, 0), ov(0, 0, 1), ov(0, 1, 0)]),
+            op(vec![ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)]),
+        ];
+
+        let report = output_polygon_closure_report(&polygons).unwrap();
+
+        assert_eq!(
+            report,
+            TriangleSoupClosureReport {
+                boundary_edges: 0,
+                non_manifold_edges: 0,
+            }
+        );
+    }
+
+    #[test]
+    fn polygon_edge_counts_split_partial_shared_edges_exactly() {
+        let polygons = vec![
+            op(vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0)]),
+            op(vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, -1, 0)]),
+            op(vec![ov(1, 0, 0), ov(2, 0, 0), ov(2, -1, 0)]),
+        ];
+        let (vertices, indexed) = merge_duplicate_polygon_vertices(&polygons);
+        let counts = polygon_edge_counts(&vertices, &indexed).unwrap();
+
+        assert_eq!(counts.get(&[0, 3]), Some(&2));
+        assert_eq!(counts.get(&[1, 3]), Some(&2));
     }
 
     #[test]

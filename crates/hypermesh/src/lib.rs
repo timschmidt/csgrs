@@ -22,8 +22,9 @@
 //! By default, boolean operations run the general EMBER
 //! subdivision/BSP/classification path; special-case boolean shortcuts are not
 //! used to rescue uncertified general results. Public boolean operations
-//! certify that the classified arrangement is already closed after exact
-//! duplicate/T-junction resolution before returning a result. If subdivision
+//! certify that the classified polygon arrangement is already closed before
+//! exact duplicate/T-junction triangulation cleanup runs, and reject open
+//! arrangements rather than letting cleanup repair them. If subdivision
 //! reaches its configured depth budget before a task is certified complete, the
 //! operation fails with [`HypermeshError::SubdivisionDepthLimit`] instead of
 //! guessing through the unfinished branch.

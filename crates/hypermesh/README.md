@@ -337,7 +337,10 @@ edge valence is allowed for closed PWN output. If exact T-junction/crossing
 resolution does not converge within its certification budget, it reports
 `OutputResolutionLimit`. Hypermesh does not expose a repairing triangulation
 path; if the classified arrangement is not emitted closed by construction, the
-operation fails certification.
+operation fails certification. The emitted polygon arrangement is now checked
+for exact boundary closure before any triangulation cleanup runs, so
+`resolve_tjunctions` only cleans triangle-soup representation artifacts and is
+not allowed to turn an open polygon arrangement into a certified result.
 
 ## Building
 
