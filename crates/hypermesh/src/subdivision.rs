@@ -209,8 +209,12 @@ fn process_leaf_into_inner(
             }
         }
 
+        let mut seen_bsp_leaf_edges = Vec::new();
         for leaf in bsp.collect_leaves() {
             if leaf.edges.len() < 3 {
+                continue;
+            }
+            if !take_new_bsp_leaf_edge_cycle(&mut seen_bsp_leaf_edges, &leaf.edges) {
                 continue;
             }
             let (interior_points, effective_delta_w) =
@@ -580,6 +584,17 @@ fn cached_leaf_classification_with(
         winding: winding.clone(),
     });
     winding
+}
+
+fn take_new_bsp_leaf_edge_cycle(seen: &mut Vec<Vec<Plane>>, candidate: &[Plane]) -> bool {
+    if seen
+        .iter()
+        .any(|existing| edge_cycles_match_up_to_rotation(existing, candidate))
+    {
+        return false;
+    }
+    seen.push(candidate.to_vec());
+    true
 }
 
 fn edge_cycles_match_up_to_rotation(left: &[Plane], right: &[Plane]) -> bool {
@@ -3779,6 +3794,18 @@ mod tests {
         assert_eq!(calls, 1);
         assert_eq!(first, vec![7]);
         assert_eq!(second, vec![7]);
+    }
+
+    #[test]
+    fn bsp_leaf_edge_cycle_dedupe_skips_rotated_duplicates() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let mut rotated_edges = polygon.edges[1..].to_vec();
+        rotated_edges.push(polygon.edges[0].clone());
+        let mut seen = Vec::new();
+
+        assert!(take_new_bsp_leaf_edge_cycle(&mut seen, &polygon.edges));
+        assert!(!take_new_bsp_leaf_edge_cycle(&mut seen, &rotated_edges));
+        assert_eq!(seen, vec![polygon.edges.clone()]);
     }
 
     fn vertex_key(vertex: &OutputVertex) -> [String; 3] {

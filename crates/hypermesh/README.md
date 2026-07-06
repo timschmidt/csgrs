@@ -524,7 +524,8 @@ leaf classification instead of being rebuilt again inside `classify_leaf_polygon
 Exact repeated direct/BSP fragment classifications with the same support, edge
 cycle, and `delta_w` inside one subdivision task now also reuse the same
 certified winding trace instead of retracing equivalent fragments before output
-dedupe removes them.
+dedupe removes them, and exact duplicate BSP leaf edge cycles are now skipped
+before leaf certification and coplanar `delta_w` analysis run at all.
 Full
 arrangement-isolation termination is still an implementation target.
 
