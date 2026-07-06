@@ -349,7 +349,8 @@ suffice, and support-side branches whose feasibility precheck is
 uncertified are now searched instead of being discarded immediately. When
 support fallback does branch on a support plane, it now tries the side
 containing the current reference point first before backtracking across the
-opposite side. The
+opposite side, and repeated identical support-side halfspaces no longer
+spawn redundant duplicate branch states. The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
 vertex family on the first uncertified candidate, and the leaf/probe-side

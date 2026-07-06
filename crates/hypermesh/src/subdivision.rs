@@ -2145,12 +2145,40 @@ fn support_plane_cell_search_with_queries<T>(
     }
 
     if polygon_index < polygons.len() {
+        let mut tried_unchanged_branch = false;
         for positive in support_side_search_order(preferred_point, &polygons[polygon_index].support)
         {
-            halfspaces.push(support_side_halfspace(
-                &polygons[polygon_index].support,
-                positive,
-            ));
+            let branch_halfspace =
+                support_side_halfspace(&polygons[polygon_index].support, positive);
+            if halfspaces
+                .iter()
+                .any(|halfspace| halfspace == &branch_halfspace)
+            {
+                if tried_unchanged_branch {
+                    continue;
+                }
+                tried_unchanged_branch = true;
+                match support_plane_cell_search_with_queries(
+                    preferred_point,
+                    bounds,
+                    polygons,
+                    polygon_index + 1,
+                    halfspaces,
+                    report_for,
+                    feasible_for,
+                    accept,
+                ) {
+                    Ok(Some(target)) => return Ok(Some(target)),
+                    Ok(None) => {}
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
+                }
+                continue;
+            }
+
+            halfspaces.push(branch_halfspace);
             let mut feasibility_unknown = false;
             let feasible = match feasible_for(halfspaces) {
                 Ok(feasible) => feasible,
@@ -5274,6 +5302,42 @@ mod tests {
 
         assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
         assert_eq!(accepted_branch, Some(true));
+    }
+
+    #[test]
+    fn support_plane_cell_search_skips_duplicate_support_halfspace_branches() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![
+            support_only_polygon(Plane::axis_aligned(0, r(2))),
+            support_only_polygon(Plane::axis_aligned(0, r(2))),
+        ];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let repeated_branch = support_side_halfspace(&polygons[0].support, false);
+        let mut duplicate_branch_count_seen = false;
+
+        let found = support_plane_cell_search_with_queries(
+            Some(&p(1, 1, 1)),
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |halfspaces| halfspace_system_report(halfspaces),
+            &mut |halfspaces| {
+                let repeated_count = halfspaces
+                    .iter()
+                    .filter(|halfspace| *halfspace == &repeated_branch)
+                    .count();
+                if repeated_count > 1 {
+                    duplicate_branch_count_seen = true;
+                }
+                halfspace_system_is_feasible(halfspaces)
+            },
+            &mut |_halfspaces, _report| Ok(None::<ReferenceTarget>),
+        )
+        .unwrap();
+
+        assert_eq!(found, None);
+        assert!(!duplicate_branch_count_seen);
     }
 
     #[test]
