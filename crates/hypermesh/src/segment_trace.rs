@@ -1484,16 +1484,34 @@ fn trace_plane_replacement_path_with_step_detours_impl(
 fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [Plane; 3]) {
     if definitions
         .iter()
-        .all(|definition| definition != &candidate)
+        .all(|definition| !definition_planes_match_as_sets(definition, &candidate))
     {
         definitions.push(candidate);
     }
 }
 
+fn definition_planes_match_as_sets(left: &[Plane; 3], right: &[Plane; 3]) -> bool {
+    let mut matched = [false; 3];
+    for left_plane in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_plane)| !matched[*index] && *right_plane == left_plane)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+    true
+}
+
 fn unique_definition_family(definitions: &[[Plane; 3]]) -> Vec<[Plane; 3]> {
     let mut unique = Vec::new();
     for definition in definitions {
-        if unique.iter().all(|existing| existing != definition) {
+        if unique
+            .iter()
+            .all(|existing| !definition_planes_match_as_sets(existing, definition))
+        {
             unique.push(definition.clone());
         }
     }
@@ -2752,7 +2770,10 @@ fn push_verified_leaf_definition(
 ) -> HypermeshResult<()> {
     match intersect_three_planes(&definition[0], &definition[1], &definition[2]).to_affine_point() {
         Ok(point) if point == *witness => {
-            if !definitions.iter().any(|existing| existing == &definition) {
+            if !definitions
+                .iter()
+                .any(|existing| definition_planes_match_as_sets(existing, &definition))
+            {
                 definitions.push(definition);
             }
         }
@@ -2953,7 +2974,10 @@ fn push_verified_probe_definition(
 ) -> HypermeshResult<()> {
     match affine_from_planes(&definition) {
         Ok(point) if point == *witness => {
-            if !definitions.iter().any(|existing| existing == &definition) {
+            if !definitions
+                .iter()
+                .any(|existing| definition_planes_match_as_sets(existing, &definition))
+            {
                 definitions.push(definition);
             }
         }
@@ -5472,6 +5496,50 @@ mod tests {
     }
 
     #[test]
+    fn collect_normal_probe_targets_skips_permuted_definition_families() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let permuted_definition = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let mut definition_calls = 0;
+        let mut unrestricted_calls = 0;
+
+        let probes =
+            collect_normal_probe_targets(&[definition.clone(), permuted_definition], |candidate| {
+                match candidate {
+                    Some(found_definition) => {
+                        definition_calls += 1;
+                        assert!(definition_planes_match_as_sets(
+                            found_definition,
+                            &definition
+                        ));
+                        Ok(vec![ProbePoint {
+                            point: p(0, 0, 1),
+                            side: Classification::Positive,
+                            planes: vec![definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    }
+                    None => {
+                        unrestricted_calls += 1;
+                        Ok(Vec::new())
+                    }
+                }
+            })
+            .unwrap();
+
+        assert_eq!(definition_calls, 1);
+        assert_eq!(unrestricted_calls, 1);
+        assert_eq!(probes.len(), 1);
+    }
+
+    #[test]
     fn collect_normal_probe_targets_backtracks_after_uncertified_definition() {
         let definition = [
             Plane::axis_aligned(2, r(0)),
@@ -6446,6 +6514,35 @@ mod tests {
             |start_definition, end_definition| {
                 trace_calls += 1;
                 if start_definition == &start_a && end_definition == &end {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![1])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(traced, Some(vec![1]));
+        assert_eq!(trace_calls, 2);
+    }
+
+    #[test]
+    fn definition_pair_trace_search_skips_permuted_definition_pairs() {
+        let start_a = axis_plane_definition(&p(0, 0, 0));
+        let start_a_permuted = [start_a[1].clone(), start_a[2].clone(), start_a[0].clone()];
+        let start_b = axis_plane_definition(&p(1, 0, 0));
+        let end = axis_plane_definition(&p(2, 0, 0));
+        let end_permuted = [end[2].clone(), end[0].clone(), end[1].clone()];
+        let mut trace_calls = 0;
+
+        let traced = definition_pair_trace_backtracking_unknown(
+            &[start_a.clone(), start_a_permuted, start_b.clone()],
+            &[end.clone(), end_permuted],
+            |start_definition, end_definition| {
+                trace_calls += 1;
+                if definition_planes_match_as_sets(start_definition, &start_a)
+                    && definition_planes_match_as_sets(end_definition, &end)
+                {
                     Err(HypermeshError::UnknownClassification)
                 } else {
                     Ok(vec![1])
@@ -7517,6 +7614,36 @@ mod tests {
                     Ok(false)
                 } else {
                     Ok(start_definition == &start_b && end_definition == &end)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(reaches);
+        assert_eq!(reachability_calls, 2);
+    }
+
+    #[test]
+    fn definition_pair_reachability_search_skips_permuted_definition_pairs() {
+        let start_a = axis_plane_definition(&p(0, 0, 0));
+        let start_a_permuted = [start_a[2].clone(), start_a[0].clone(), start_a[1].clone()];
+        let start_b = axis_plane_definition(&p(1, 0, 0));
+        let end = axis_plane_definition(&p(2, 0, 0));
+        let end_permuted = [end[1].clone(), end[2].clone(), end[0].clone()];
+        let mut reachability_calls = 0;
+
+        let reaches = definition_pair_reachability_backtracking_unknown(
+            &[start_a.clone(), start_a_permuted, start_b.clone()],
+            &[end.clone(), end_permuted],
+            |start_definition, end_definition| {
+                reachability_calls += 1;
+                if definition_planes_match_as_sets(start_definition, &start_a)
+                    && definition_planes_match_as_sets(end_definition, &end)
+                {
+                    Ok(false)
+                } else {
+                    Ok(definition_planes_match_as_sets(start_definition, &start_b)
+                        && definition_planes_match_as_sets(end_definition, &end))
                 }
             },
         )
