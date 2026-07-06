@@ -102,6 +102,18 @@ fn tetrahedron(points: [[i32; 3]; 4]) -> InputMesh {
     )
 }
 
+fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> InputMesh {
+    InputMesh::new(
+        vec![a, b, c, apex],
+        vec![
+            Triangle::new(0, 2, 1),
+            Triangle::new(0, 1, 3),
+            Triangle::new(0, 3, 2),
+            Triangle::new(1, 2, 3),
+        ],
+    )
+}
+
 fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
     let cx = center[0].clone();
     let cy = center[1].clone();
@@ -1183,4 +1195,31 @@ fn hypermesh_borrowed_multi_mesh_union_uses_slice_api() {
     let union = run_op_refs(&refs, BooleanOp::Union).unwrap();
     assert_closed_triangle_soup(&union);
     assert_volume_numerator(&union, r(3));
+}
+
+#[test]
+fn projected_reference_escape_case_uses_general_path() -> HypermeshResult<()> {
+    let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
+    let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
+    let left_soup = passthrough(&left).unwrap();
+    let right_soup = passthrough(&right).unwrap();
+
+    let union = run_op(&left, &right, BooleanOp::Union)?;
+    assert_no_boundary_edges(&union);
+    assert_eq!(union.triangles.len(), 8);
+
+    let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
+    assert!(intersection.triangles.is_empty());
+
+    let difference = run_op(&left, &right, BooleanOp::Difference)?;
+    assert_same_shape(&difference, &left_soup);
+
+    let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
+    assert_same_shape(&reverse_difference, &right_soup);
+
+    let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
+    assert_no_boundary_edges(&xor);
+    assert_eq!(xor.triangles.len(), 8);
+
+    Ok(())
 }
