@@ -2400,7 +2400,7 @@ fn bounded_probes_from_interior(
         }
 
         for probe in adjacent_axis_probes(
-            &interior.point,
+            interior,
             support,
             bounds,
             polygons,
@@ -2816,14 +2816,14 @@ fn offset_point(point: &Point3, direction: &Point3, amount: &Real) -> Point3 {
 }
 
 fn adjacent_axis_probes(
-    interior: &Point3,
+    interior: &InteriorLeafPoint,
     support: &Plane,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     axis: usize,
     direction_positive: bool,
 ) -> HypermeshResult<Vec<ProbePoint>> {
-    let start_value = axis_ref(interior, axis);
+    let start_value = axis_ref(&interior.point, axis);
     let bound_value = if direction_positive {
         axis_ref(&bounds.max, axis)
     } else {
@@ -2833,7 +2833,7 @@ fn adjacent_axis_probes(
         return Ok(Vec::new());
     }
 
-    let mut endpoint = interior.clone();
+    let mut endpoint = interior.point.clone();
     *axis_mut(&mut endpoint, axis) = bound_value.clone();
     let mut stop_value = bound_value.clone();
 
@@ -2842,10 +2842,11 @@ fn adjacent_axis_probes(
             continue;
         }
 
-        let Some(crossing) = segment_plane_crossing(interior, &endpoint, &polygon.support)? else {
+        let Some(crossing) = segment_plane_crossing(&interior.point, &endpoint, &polygon.support)?
+        else {
             continue;
         };
-        if !point_strictly_between_axis(&crossing, interior, &endpoint, axis)? {
+        if !point_strictly_between_axis(&crossing, &interior.point, &endpoint, axis)? {
             continue;
         }
         if !point_lies_on_polygon(&crossing, polygon)? {
@@ -2864,8 +2865,22 @@ fn adjacent_axis_probes(
         return Ok(Vec::new());
     }
 
-    let corridor = axis_probe_bounds(interior, axis, &stop_value)?;
-    strict_axis_probe_targets(interior, support, &corridor, axis, direction_positive)
+    let corridor = axis_probe_bounds(&interior.point, axis, &stop_value)?;
+    collect_axis_probe_targets(&interior.planes, |definition| {
+        if let Some(definition) = definition
+            && !axis_probe_definition_preserves_axis_direction(definition, axis)?
+        {
+            return Ok(Vec::new());
+        }
+        strict_axis_probe_targets(
+            interior,
+            support,
+            &corridor,
+            axis,
+            direction_positive,
+            definition,
+        )
+    })
 }
 
 fn axis_probe_bounds(interior: &Point3, axis: usize, stop_value: &Real) -> HypermeshResult<Aabb> {
@@ -2880,14 +2895,45 @@ fn axis_probe_bounds(interior: &Point3, axis: usize, stop_value: &Real) -> Hyper
     Ok(Aabb::new(min, max))
 }
 
+fn collect_axis_probe_targets(
+    definitions: &[[Plane; 3]],
+    mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
+) -> HypermeshResult<Vec<ProbePoint>> {
+    let mut probes = Vec::new();
+    for definition in definitions {
+        for probe in search(Some(definition))? {
+            push_unique_probe_point(&mut probes, probe);
+        }
+    }
+    for probe in search(None)? {
+        push_unique_probe_point(&mut probes, probe);
+    }
+    Ok(probes)
+}
+
+fn axis_probe_definition_preserves_axis_direction(
+    definition: &[Plane; 3],
+    axis: usize,
+) -> HypermeshResult<bool> {
+    Ok(
+        classify_real(axis_ref(&definition[1].normal, axis))? == Classification::On
+            && classify_real(axis_ref(&definition[2].normal, axis))? == Classification::On,
+    )
+}
+
 fn strict_axis_probe_targets(
-    interior: &Point3,
+    interior: &InteriorLeafPoint,
     support: &Plane,
     corridor: &Aabb,
     axis: usize,
     positive_side: bool,
+    definition: Option<&[Plane; 3]>,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    if let Some(definition) = definition {
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
+    }
     halfspaces.push(support_side_halfspace(support, positive_side));
     let report = halfspace_feasibility_report(&halfspaces)?;
     let mut probes = Vec::new();
@@ -2899,6 +2945,7 @@ fn strict_axis_probe_targets(
             interior,
             support,
             axis,
+            definition,
             &halfspaces,
             report.active_planes,
         )? {
@@ -2918,6 +2965,7 @@ fn strict_axis_probe_targets(
             interior,
             support,
             axis,
+            definition,
             &shifted.halfspaces,
             shifted.active_planes,
         )? {
@@ -2931,6 +2979,7 @@ fn strict_axis_probe_targets(
             interior,
             support,
             axis,
+            definition,
             &witness.halfspaces,
             witness.active_planes,
         )? {
@@ -2984,9 +3033,10 @@ fn build_probe_point(
 
 fn build_axis_probe_point(
     witness: &Point3,
-    interior: &Point3,
+    interior: &InteriorLeafPoint,
     support: &Plane,
     axis: usize,
+    definition: Option<&[Plane; 3]>,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
 ) -> HypermeshResult<Option<ProbePoint>> {
@@ -3003,15 +3053,24 @@ fn build_axis_probe_point(
         side,
         planes: probe_definitions_or_axis(
             witness,
-            axis_probe_definitions(interior, support, axis, halfspaces, active_planes, witness),
+            axis_probe_definitions(
+                interior,
+                support,
+                axis,
+                definition,
+                halfspaces,
+                active_planes,
+                witness,
+            ),
         )?,
     }))
 }
 
 fn axis_probe_definitions(
-    interior: &Point3,
+    interior: &InteriorLeafPoint,
     support: &Plane,
     axis: usize,
+    definition: Option<&[Plane; 3]>,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
     witness: &Point3,
@@ -3021,16 +3080,19 @@ fn axis_probe_definitions(
         &support.offset - &support.expression_at_point(witness),
     );
     let axes = other_axes(axis);
-    probe_definitions_from_active_halfspaces(
-        witness,
-        halfspaces,
-        active_planes,
-        &[
-            shifted_support,
-            Plane::axis_aligned(axes[0], axis_ref(interior, axes[0]).clone()),
-            Plane::axis_aligned(axes[1], axis_ref(interior, axes[1]).clone()),
-        ],
-    )
+    let mut extra_planes = vec![
+        shifted_support,
+        Plane::axis_aligned(axes[0], axis_ref(&interior.point, axes[0]).clone()),
+        Plane::axis_aligned(axes[1], axis_ref(&interior.point, axes[1]).clone()),
+    ];
+    if let Some(definition) = definition {
+        for plane in &definition[1..] {
+            if !extra_planes.iter().any(|existing| existing == plane) {
+                extra_planes.push(plane.clone());
+            }
+        }
+    }
+    probe_definitions_from_active_halfspaces(witness, halfspaces, active_planes, &extra_planes)
 }
 
 fn aabb_core_halfspaces(bounds: &Aabb) -> HypermeshResult<Vec<LimitPlane3>> {
@@ -3821,8 +3883,12 @@ mod tests {
     fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+        };
 
-        let probe = adjacent_axis_probes(&p(1, 1, 1), &leaf.support, &bounds, &[], 0, true)
+        let probe = adjacent_axis_probes(&interior, &leaf.support, &bounds, &[], 0, true)
             .unwrap()
             .into_iter()
             .find(|probe| probe.side == Classification::Positive)
@@ -3837,6 +3903,74 @@ mod tests {
         assert!(compare_real(&probe.point.x, &r(4)).unwrap().is_lt());
         assert_eq!(probe.point.y, r(1));
         assert_eq!(probe.point.z, r(1));
+    }
+
+    #[test]
+    fn collect_axis_probe_targets_keeps_unrestricted_family_after_definition_hits() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let constrained_probe = ProbePoint {
+            point: p(1, 1, 1),
+            side: Classification::Positive,
+            planes: vec![definition.clone()],
+        };
+        let unrestricted_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+        };
+
+        let probes = collect_axis_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Ok(vec![constrained_probe.clone()]),
+            None => Ok(vec![unrestricted_probe.clone()]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 2);
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.point == constrained_probe.point)
+        );
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.point == unrestricted_probe.point)
+        );
+    }
+
+    #[test]
+    fn adjacent_axis_probe_preserves_retained_definition_when_axis_direction_allows() {
+        let support = Plane::axis_aligned(2, r(0));
+        let bounds = Aabb::new(p(0, 0, 0), p(2, 2, 2));
+        let retained = [
+            support.clone(),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![retained.clone()],
+        };
+
+        let probe = adjacent_axis_probes(&interior, &support, &bounds, &[], 2, true)
+            .unwrap()
+            .into_iter()
+            .find(|probe| {
+                probe.side == Classification::Positive
+                    && probe
+                        .planes
+                        .iter()
+                        .any(|planes| planes[1] == retained[1] && planes[2] == retained[2])
+            })
+            .expect("axis-direction probe should preserve retained axis-stable planes");
+
+        assert_eq!(probe.point.x, r(1));
+        assert_eq!(probe.point.y, r(1));
+        assert!(compare_real(&probe.point.z, &r(0)).unwrap().is_gt());
     }
 
     #[test]
@@ -4125,7 +4259,10 @@ mod tests {
     #[test]
     fn strict_axis_probe_witness_retains_axis_definition_when_active_replay_fails() {
         let support = Plane::axis_aligned(2, r(0));
-        let interior = p(1, 1, 0);
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![axis_plane_definition(&p(1, 1, 0))],
+        };
         let witness = p(2, 1, 1);
         let halfspaces = vec![axis_halfspace(0, false, r(2))];
 
@@ -4134,6 +4271,7 @@ mod tests {
             &interior,
             &support,
             0,
+            None,
             &halfspaces,
             [Some(9), None, None],
         )

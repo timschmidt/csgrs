@@ -112,7 +112,9 @@ replay fails. Certified endpoint-box detour witnesses now also retain exact
 axis-defined target definitions instead of being dropped when richer probe
 replay reconstruction fails. Definition-preserving normal-probe search now
 also augments, rather than suppresses, the broader certified normal-corridor
-witness family when both are available. The stricter replayable leaf cell
+witness family when both are available, and axis-direction probe search now
+does the same for retained interior definitions whose non-support planes
+preserve the moved axis. The stricter replayable leaf cell
 built from an interior witness now also contributes its own shifted witness
 family and shifted exact vertices instead of collapsing to one witness plus
 raw cell vertices, and the direct strict leaf witness family now also expands
