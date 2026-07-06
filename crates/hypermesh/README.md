@@ -307,7 +307,9 @@ sets instead of dropping later constructions. The
 support-cell fallback now also backtracks across alternate feasible
 support-side cells when one candidate branch returns
 `UnknownClassification`, rather than aborting the whole search on the first
-uncertified cell. Full EMBER plane-replacement
+uncertified cell. An uncertified feasibility report on the current support
+cell now also falls through to later support-side branches instead of cutting
+off that broader search at the current node. Full EMBER plane-replacement
 coverage for every reference construction remains unfinished.
 Leaf probe reachability now also gives retained plane-replacement steps one
 lower definition-based reachability retry of their own before the search gives
