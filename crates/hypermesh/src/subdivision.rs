@@ -1746,19 +1746,19 @@ fn support_plane_cell_reference_with_halfspaces(
     let mut accept = |halfspaces: &[LimitPlane3],
                       report: hyperlimit::HalfspaceFeasibilityReport|
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-        for target in strict_support_cell_targets(bounds, halfspaces, &report)? {
-            if let Some(winding) = trace_reference_target(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                bounds,
-                polygons,
-                &target,
-            )? {
-                return Ok(Some((target, winding)));
-            }
-        }
-        Ok(None)
+        trace_reference_targets_backtracking_unknown(
+            strict_support_cell_targets(bounds, halfspaces, &report)?,
+            |target| {
+                trace_reference_target(
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    bounds,
+                    polygons,
+                    target,
+                )
+            },
+        )
     };
 
     if let Some(found) =
@@ -1767,6 +1767,30 @@ fn support_plane_cell_reference_with_halfspaces(
         return Ok(Some(found));
     }
     Ok(None)
+}
+
+fn trace_reference_targets_backtracking_unknown(
+    targets: Vec<ReferenceTarget>,
+    mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let mut saw_unknown = false;
+
+    for target in targets {
+        match trace(&target) {
+            Ok(Some(winding)) => return Ok(Some((target, winding))),
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    if saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
@@ -4007,6 +4031,39 @@ mod tests {
         for definition in &target.definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), target.point);
         }
+    }
+
+    #[test]
+    fn reference_target_trace_search_backtracks_after_uncertified_target() {
+        let first = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let second = ReferenceTarget::axis_defined(p(2, 2, 2));
+
+        let found = trace_reference_targets_backtracking_unknown(
+            vec![first.clone(), second.clone()],
+            |target| {
+                if target == &first {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(vec![31]))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((second, vec![31])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_reports_unknown_if_all_targets_are_uncertified() {
+        let first = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let second = ReferenceTarget::axis_defined(p(2, 2, 2));
+
+        let err = trace_reference_targets_backtracking_unknown(vec![first, second], |_target| {
+            Err(crate::error::HypermeshError::UnknownClassification)
+        })
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]

@@ -182,7 +182,9 @@ local failure so a later certified support-cell construction can still run.
 At the target level, a projected/support reference point that is strictly
 inside the child cell but whose retained-definition trace is uncertified now
 surfaces `UnknownClassification` instead of being treated like a simple absent
-target.
+target. Within one feasible support cell, that same rule now also applies
+across the whole retained target family: one uncertified target trace no
+longer aborts the cell before later certified targets are tried.
 It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit
