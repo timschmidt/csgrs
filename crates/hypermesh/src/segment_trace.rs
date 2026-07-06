@@ -3079,16 +3079,19 @@ fn strict_halfspace_cell_seeds_from_report(
 
     if report.status == HalfspaceFeasibility::Feasible
         && let Some(witness) = &report.witness
-        && point_strictly_inside_halfspace_cell(witness, bounds, halfspaces)?
     {
-        push_unique_halfspace_seed(&mut seeds, witness.clone());
+        extend_strict_halfspace_seeds_backtracking_unknown(
+            &mut seeds,
+            std::iter::once(witness.clone()),
+            |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
+        )?;
     }
 
-    for vertex in feasible_halfspace_cell_vertices(halfspaces)? {
-        if point_strictly_inside_halfspace_cell(&vertex, bounds, halfspaces)? {
-            push_unique_halfspace_seed(&mut seeds, vertex);
-        }
-    }
+    extend_strict_halfspace_seeds_backtracking_unknown(
+        &mut seeds,
+        feasible_halfspace_cell_vertices(halfspaces)?,
+        |candidate| point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces),
+    )?;
 
     Ok(seeds)
 }
@@ -3097,6 +3100,22 @@ fn push_unique_halfspace_seed(seeds: &mut Vec<Point3>, seed: Point3) {
     if !seeds.iter().any(|existing| existing == &seed) {
         seeds.push(seed);
     }
+}
+
+fn extend_strict_halfspace_seeds_backtracking_unknown(
+    seeds: &mut Vec<Point3>,
+    candidates: impl IntoIterator<Item = Point3>,
+    mut is_strict_seed: impl FnMut(&Point3) -> HypermeshResult<bool>,
+) -> HypermeshResult<()> {
+    for candidate in candidates {
+        match is_strict_seed(&candidate) {
+            Ok(true) => push_unique_halfspace_seed(seeds, candidate),
+            Ok(false) => {}
+            Err(HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(())
 }
 
 struct ShiftedHalfspaceWitness {
@@ -3578,6 +3597,28 @@ mod tests {
         let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seed_collection_backtracks_after_uncertified_candidate() {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut seeds = Vec::new();
+
+        extend_strict_halfspace_seeds_backtracking_unknown(
+            &mut seeds,
+            vec![first.clone(), second.clone()],
+            |candidate| {
+                if candidate == &first {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(candidate == &second)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(seeds, vec![second]);
     }
 
     #[test]
