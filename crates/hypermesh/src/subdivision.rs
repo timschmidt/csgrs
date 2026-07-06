@@ -1451,6 +1451,7 @@ fn reference_target_family_or_empty(
     }
 }
 
+#[cfg(test)]
 fn reference_target_family_or_empty_tracking_unknown(
     result: HypermeshResult<Vec<ReferenceTarget>>,
     saw_unknown: &mut bool,
@@ -1593,6 +1594,7 @@ fn search_projected_reference_families(
     }
 }
 
+#[cfg(test)]
 fn projected_reference_escape_targets(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -1633,6 +1635,7 @@ fn projected_reference_escape_targets_from_report(
     )
 }
 
+#[cfg(test)]
 fn projected_reference_escape_targets_from_optional_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -1664,6 +1667,7 @@ fn projected_reference_escape_targets_from_optional_report(
     }
 }
 
+#[cfg(test)]
 fn projected_reference_escape_targets_from_seed_families(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -1759,6 +1763,7 @@ fn projected_support_plane_cell_reference(
     )
 }
 
+#[cfg(test)]
 fn projection_escape_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -1787,6 +1792,7 @@ fn projection_escape_reference_with_axis_options(
     projection_escape_reference_with_search_and_axis_options(axis_options, bounds, search)
 }
 
+#[cfg(test)]
 fn projection_escape_reference_with_search(
     projected: &Point3,
     bounds: &Aabb,
@@ -1838,6 +1844,7 @@ fn projection_escape_bounds(
     )
 }
 
+#[cfg(test)]
 fn projection_escape_bounds_family(
     projected: &Point3,
     bounds: &Aabb,
@@ -2425,6 +2432,7 @@ fn reference_target_from_halfspace_witness(
     }
 }
 
+#[cfg(test)]
 fn projection_axis_escape_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -2447,6 +2455,7 @@ fn projection_axis_escape_reference_with_axis_options(
     projection_axis_escape_reference_with_search_and_axis_options(projected, axis_options, search)
 }
 
+#[cfg(test)]
 fn projection_axis_escape_reference_with_search(
     projected: &Point3,
     bounds: &Aabb,
@@ -3218,6 +3227,7 @@ fn reference_definitions_from_active_halfspaces(
     Ok(definitions)
 }
 
+#[cfg(test)]
 fn projected_reference_targets(
     old_ref: &Point3,
     bounds: &Aabb,
@@ -3279,6 +3289,7 @@ fn strict_projected_cell_targets(
     strict_projected_cell_targets_from_optional_report(bounds, halfspaces, Some(report))
 }
 
+#[cfg(test)]
 fn strict_projected_cell_targets_from_optional_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3308,6 +3319,7 @@ fn strict_projected_cell_targets_from_optional_report(
     }
 }
 
+#[cfg(test)]
 fn strict_projected_cell_targets_from_seed_families(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3408,6 +3420,7 @@ fn strict_projected_cell_seeds_from_optional_report(
         .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
 }
 
+#[cfg(test)]
 fn shifted_projected_cell_targets_from_seed(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3540,6 +3553,7 @@ fn shifted_projected_cell_families_from_seed(
     }))
 }
 
+#[cfg(test)]
 fn projected_escape_targets_from_seed(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
