@@ -117,6 +117,9 @@ does the same for retained interior definitions whose non-support planes
 preserve the moved axis. Both retained-definition probe families now also
 backtrack past uncertified local candidate searches instead of aborting the
 whole local probe-family search on the first `UnknownClassification`. The
+probe witness build steps inside those families now likewise skip
+`UnknownClassification` candidate points instead of aborting the whole local
+probe witness set when later certified witnesses still exist. The
 stricter replayable leaf cell
 built from an interior witness now also contributes its own shifted witness
 family and shifted exact vertices instead of collapsing to one witness plus
@@ -125,7 +128,9 @@ through that stricter replayable leaf-cell construction instead of leaving it
 only to the barycenter branch. Those stricter leaf-cell and shifted-edge
 interior witness expansions now likewise backtrack past uncertified local
 candidate searches instead of aborting the whole leaf witness family on the
-first `UnknownClassification`.
+first `UnknownClassification`, and the underlying strict leaf-witness build
+steps now do the same candidate-locally for direct, shifted, and shifted
+vertex witness points.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.

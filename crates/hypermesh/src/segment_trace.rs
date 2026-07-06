@@ -1946,7 +1946,7 @@ fn strict_leaf_witness_points(
     let mut points = Vec::new();
     let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)?;
 
-    for seed in &seeds {
+    extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = if report_witness
             .as_ref()
             .is_some_and(|witness| witness == seed)
@@ -1955,10 +1955,8 @@ fn strict_leaf_witness_points(
         } else {
             [None, None, None]
         };
-        if let Some(point) = build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+        build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)
+    })?;
 
     let mut shifted_witnesses = Vec::new();
     extend_shifted_halfspace_witnesses_backtracking_unknown(
@@ -1966,27 +1964,32 @@ fn strict_leaf_witness_points(
         seeds,
         |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
     )?;
-    for shifted in shifted_witnesses {
-        if let Some(point) = build_strict_leaf_point(
-            leaf,
-            &shifted.point,
-            &shifted.halfspaces,
-            shifted.active_planes,
-        )? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+    extend_leaf_point_builds_backtracking_unknown(
+        &mut points,
+        shifted_witnesses.iter(),
+        |shifted| {
+            build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
 
-    for shifted in shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)? {
-        if let Some(point) = build_strict_leaf_point(
-            leaf,
-            &shifted.point,
-            &shifted.halfspaces,
-            shifted.active_planes,
-        )? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)?;
+    extend_leaf_point_builds_backtracking_unknown(
+        &mut points,
+        shifted_vertices.iter(),
+        |shifted| {
+            build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
 
     let direct_witnesses = points
         .iter()
@@ -2201,6 +2204,29 @@ fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
     }
 }
 
+fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
+    points: &mut Vec<InteriorLeafPoint>,
+    candidates: impl IntoIterator<Item = &'a T>,
+    mut build: impl FnMut(&'a T) -> HypermeshResult<Option<InteriorLeafPoint>>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for candidate in candidates {
+        match build(candidate) {
+            Ok(Some(point)) => push_unique_interior_point(points, point),
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if points.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
+}
+
 fn strict_leaf_cell_points(
     leaf: &ConvexPolygon,
     strict_interior: &Point3,
@@ -2233,7 +2259,7 @@ fn strict_leaf_cell_points(
     let mut points = Vec::new();
     let report_witness = report.witness.clone();
     let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report)?;
-    for witness in &seeds {
+    extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
         let active_planes = if report_witness
             .as_ref()
             .is_some_and(|point| point == witness)
@@ -2242,10 +2268,8 @@ fn strict_leaf_cell_points(
         } else {
             [None, None, None]
         };
-        if let Some(point) = build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+        build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)
+    })?;
 
     let mut shifted_witnesses = Vec::new();
     extend_shifted_halfspace_witnesses_backtracking_unknown(
@@ -2253,27 +2277,32 @@ fn strict_leaf_cell_points(
         seeds,
         |seed| shifted_halfspace_cell_witnesses_from_seed(&bounds, &halfspaces, seed),
     )?;
-    for shifted in shifted_witnesses {
-        if let Some(point) = build_strict_leaf_point(
-            leaf,
-            &shifted.point,
-            &shifted.halfspaces,
-            shifted.active_planes,
-        )? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+    extend_leaf_point_builds_backtracking_unknown(
+        &mut points,
+        shifted_witnesses.iter(),
+        |shifted| {
+            build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
 
-    for shifted in shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)? {
-        if let Some(point) = build_strict_leaf_point(
-            leaf,
-            &shifted.point,
-            &shifted.halfspaces,
-            shifted.active_planes,
-        )? {
-            push_unique_interior_point(&mut points, point);
-        }
-    }
+    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(&bounds, &halfspaces)?;
+    extend_leaf_point_builds_backtracking_unknown(
+        &mut points,
+        shifted_vertices.iter(),
+        |shifted| {
+            build_strict_leaf_point(
+                leaf,
+                &shifted.point,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
 
     Ok(points)
 }
@@ -2747,17 +2776,15 @@ fn strict_normal_probe_targets(
         }
     }
 
-    for witness in &seeds {
-        if let Some(probe) = build_probe_point(
+    extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
+        build_probe_point(
             witness,
             support,
             &halfspaces,
             report.active_planes,
             &extra_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
+        )
+    })?;
 
     let mut shifted_witnesses = Vec::new();
     extend_shifted_halfspace_witnesses_backtracking_unknown(
@@ -2765,29 +2792,34 @@ fn strict_normal_probe_targets(
         seeds,
         |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
     )?;
-    for shifted in shifted_witnesses {
-        if let Some(probe) = build_probe_point(
-            &shifted.point,
-            support,
-            &shifted.halfspaces,
-            shifted.active_planes,
-            &extra_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_witnesses.iter(),
+        |shifted| {
+            build_probe_point(
+                &shifted.point,
+                support,
+                &shifted.halfspaces,
+                shifted.active_planes,
+                &extra_planes,
+            )
+        },
+    )?;
 
-    for witness in shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)? {
-        if let Some(probe) = build_probe_point(
-            &witness.point,
-            support,
-            &witness.halfspaces,
-            witness.active_planes,
-            &extra_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
+    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)?;
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_vertices.iter(),
+        |witness| {
+            build_probe_point(
+                &witness.point,
+                support,
+                &witness.halfspaces,
+                witness.active_planes,
+                &extra_planes,
+            )
+        },
+    )?;
 
     Ok(probes)
 }
@@ -2999,6 +3031,29 @@ fn collect_axis_probe_targets(
     }
 }
 
+fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
+    probes: &mut Vec<ProbePoint>,
+    candidates: impl IntoIterator<Item = &'a T>,
+    mut build: impl FnMut(&'a T) -> HypermeshResult<Option<ProbePoint>>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for candidate in candidates {
+        match build(candidate) {
+            Ok(Some(probe)) => push_unique_probe_point(probes, probe),
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
+}
+
 fn axis_probe_definition_preserves_axis_direction(
     definition: &[Plane; 3],
     axis: usize,
@@ -3027,8 +3082,8 @@ fn strict_axis_probe_targets(
     let mut probes = Vec::new();
     let seeds = strict_halfspace_cell_seeds_from_report(corridor, &halfspaces, &report)?;
 
-    for witness in &seeds {
-        if let Some(probe) = build_axis_probe_point(
+    extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
+        build_axis_probe_point(
             witness,
             interior,
             support,
@@ -3036,10 +3091,8 @@ fn strict_axis_probe_targets(
             definition,
             &halfspaces,
             report.active_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
+        )
+    })?;
 
     let mut shifted_witnesses = Vec::new();
     extend_shifted_halfspace_witnesses_backtracking_unknown(
@@ -3047,33 +3100,38 @@ fn strict_axis_probe_targets(
         seeds,
         |seed| shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, seed),
     )?;
-    for shifted in shifted_witnesses {
-        if let Some(probe) = build_axis_probe_point(
-            &shifted.point,
-            interior,
-            support,
-            axis,
-            definition,
-            &shifted.halfspaces,
-            shifted.active_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_witnesses.iter(),
+        |shifted| {
+            build_axis_probe_point(
+                &shifted.point,
+                interior,
+                support,
+                axis,
+                definition,
+                &shifted.halfspaces,
+                shifted.active_planes,
+            )
+        },
+    )?;
 
-    for witness in shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)? {
-        if let Some(probe) = build_axis_probe_point(
-            &witness.point,
-            interior,
-            support,
-            axis,
-            definition,
-            &witness.halfspaces,
-            witness.active_planes,
-        )? {
-            push_unique_probe_point(&mut probes, probe);
-        }
-    }
+    let shifted_vertices = shifted_halfspace_cell_vertex_witnesses(corridor, &halfspaces)?;
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_vertices.iter(),
+        |witness| {
+            build_axis_probe_point(
+                &witness.point,
+                interior,
+                support,
+                axis,
+                definition,
+                &witness.halfspaces,
+                witness.active_planes,
+            )
+        },
+    )?;
 
     Ok(probes)
 }
@@ -4007,6 +4065,49 @@ mod tests {
     }
 
     #[test]
+    fn probe_point_build_collection_backtracks_after_uncertified_candidate() {
+        let mut probes = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_probe_point_builds_backtracking_unknown(
+            &mut probes,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                if *candidate == first {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(ProbePoint {
+                        point: candidate.clone(),
+                        side: Classification::Positive,
+                        planes: vec![axis_plane_definition(candidate)],
+                    }))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].point, second);
+    }
+
+    #[test]
+    fn probe_point_build_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let mut probes = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        let err = extend_probe_point_builds_backtracking_unknown(
+            &mut probes,
+            [first, second].iter(),
+            |_candidate| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -4327,6 +4428,48 @@ mod tests {
         let second = p(2, 2, 2);
 
         let err = extend_interior_leaf_points_backtracking_unknown(
+            &mut points,
+            [first, second].iter(),
+            |_candidate| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn leaf_point_build_collection_backtracks_after_uncertified_candidate() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_leaf_point_builds_backtracking_unknown(
+            &mut points,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                if *candidate == first {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(InteriorLeafPoint {
+                        point: candidate.clone(),
+                        planes: vec![axis_plane_definition(candidate)],
+                    }))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].point, second);
+    }
+
+    #[test]
+    fn leaf_point_build_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        let err = extend_leaf_point_builds_backtracking_unknown(
             &mut points,
             [first, second].iter(),
             |_candidate| Err(HypermeshError::UnknownClassification),
