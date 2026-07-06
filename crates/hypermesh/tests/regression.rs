@@ -630,6 +630,11 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
         ..config()
     };
 
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+    assert_volume_numerator(&union, r(12));
+
     let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
     let intersection = triangulate_and_resolve_certified(&intersection_result)?;
     assert!(intersection.triangles.is_empty());
@@ -638,6 +643,11 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, r(6));
+
+    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+    let xor = triangulate_and_resolve_certified(&xor_result)?;
+    assert_no_boundary_edges(&xor);
+    assert_same_shape(&xor, &union);
 
     Ok(())
 }
@@ -667,6 +677,11 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
 
+    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+    let xor = triangulate_and_resolve_certified(&xor_result)?;
+    assert_no_boundary_edges(&xor);
+    assert_same_shape(&xor, &union);
+
     Ok(())
 }
 
@@ -694,6 +709,11 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
+
+    let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+    let xor = triangulate_and_resolve_certified(&xor_result)?;
+    assert_no_boundary_edges(&xor);
+    assert_same_shape(&xor, &union);
 
     Ok(())
 }
