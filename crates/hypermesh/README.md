@@ -334,16 +334,18 @@ layer. The same retained
 definitions are used again during leaf classification for plane-defined
 probes, and duplicate certified target points merge their retained definition
 sets instead of dropping later constructions. The
-support-cell fallback now also backtracks across alternate feasible
-support-side cells when one candidate branch returns
-`UnknownClassification`, rather than aborting the whole search on the first
-uncertified cell. An uncertified feasibility report on the current support
-cell now also falls through to later support-side branches instead of cutting
-off that broader search at the current node, and the current support cell is
-still allowed to attempt certified target construction without a report
-witness when later exact seed families suffice. The focused reference tests
-now also cover this support-cell fallback on prepared closed-mesh polygons,
-not only on synthetic support-plane fixtures. Full EMBER plane-replacement
+support-cell fallback now also backtracks across alternate support-side
+branches when one candidate branch returns `UnknownClassification`, rather
+than aborting the whole search on the first uncertified cell. An uncertified
+feasibility report on the current support cell now also falls through to
+later support-side branches instead of cutting off that broader search at the
+current node, the current support cell is still allowed to attempt certified
+target construction without a report witness when later exact seed families
+suffice, and support-side branches whose feasibility precheck is
+uncertified are now searched instead of being discarded immediately. The
+focused reference tests now also cover this support-cell fallback on prepared
+closed-mesh polygons, not only on synthetic support-plane fixtures. Full
+EMBER plane-replacement
 coverage for every reference construction remains unfinished.
 Leaf probe reachability now also gives retained plane-replacement steps one
 lower definition-based reachability retry of their own before the search gives

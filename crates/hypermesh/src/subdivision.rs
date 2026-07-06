@@ -2104,19 +2104,20 @@ fn support_plane_cell_search_with_queries<T>(
                 &polygons[polygon_index].support,
                 positive,
             ));
+            let mut feasibility_unknown = false;
             let feasible = match feasible_for(halfspaces) {
                 Ok(feasible) => feasible,
                 Err(crate::error::HypermeshError::UnknownClassification) => {
                     saw_unknown = true;
-                    halfspaces.pop();
-                    continue;
+                    feasibility_unknown = true;
+                    true
                 }
                 Err(err) => {
                     halfspaces.pop();
                     return Err(err);
                 }
             };
-            if feasible {
+            if feasible || feasibility_unknown {
                 match support_plane_cell_search_with_queries(
                     bounds,
                     polygons,
@@ -4952,6 +4953,42 @@ mod tests {
 
         assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
         assert!(accept_counts.contains(&root_halfspace_count));
+    }
+
+    #[test]
+    fn support_plane_cell_search_backtracks_after_uncertified_branch_feasibility() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let root_halfspace_count = halfspaces.len();
+        let mut accepted_counts = Vec::new();
+
+        let found = support_plane_cell_search_with_queries(
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |halfspaces| halfspace_system_report(halfspaces),
+            &mut |halfspaces| {
+                if halfspaces.len() == root_halfspace_count + 1 {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    halfspace_system_is_feasible(halfspaces)
+                }
+            },
+            &mut |halfspaces, _report| {
+                accepted_counts.push(halfspaces.len());
+                if halfspaces.len() == root_halfspace_count + 1 {
+                    Ok(Some(ReferenceTarget::axis_defined(p(1, 1, 1))))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
+        assert!(accepted_counts.contains(&(root_halfspace_count + 1)));
     }
 
     #[test]
