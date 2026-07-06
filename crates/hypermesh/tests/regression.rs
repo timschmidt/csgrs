@@ -145,10 +145,7 @@ fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
 }
 
 fn config() -> EmberConfig {
-    EmberConfig {
-        leaf_threshold: 1,
-        max_depth: 10,
-    }
+    EmberConfig { max_depth: 10 }
 }
 
 fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
@@ -293,10 +290,7 @@ fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
     let result = boolean_operation(
         &[mesh.as_ref()],
         BooleanOp::Union,
-        EmberConfig {
-            leaf_threshold: usize::MAX,
-            ..config()
-        },
+        EmberConfig { max_depth: 0 },
     )?;
     triangulate_and_resolve_certified(&result)
 }
@@ -599,9 +593,9 @@ fn disjoint_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let refs = [left.as_ref(), right.as_ref()];
     let left_soup = passthrough(&left).unwrap();
     let config = EmberConfig {
-        // Keep this as a single certified leaf so the test exercises the
-        // general classifier without changing the reference triangulation.
-        leaf_threshold: 25,
+        // Keep this at depth zero so the test exercises the root certified
+        // leaf classifier without subdivision.
+        max_depth: 0,
         ..config()
     };
 
@@ -633,10 +627,7 @@ fn same_surface_solids_use_general_leaf_path_in_one_leaf() -> HypermeshResult<()
         ],
     };
     let refs = [left.as_ref(), same_surface.as_ref()];
-    let config = EmberConfig {
-        leaf_threshold: usize::MAX,
-        ..config()
-    };
+    let config = EmberConfig { max_depth: 0 };
 
     let union =
         triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
@@ -658,10 +649,7 @@ fn partial_face_boundary_touch_uses_general_leaf_path() -> HypermeshResult<()> {
     let right = tetrahedron([[2, 2, 2], [4, 1, 1], [1, 4, 1], [3, 3, 3]]);
     let refs = [left.as_ref(), right.as_ref()];
     let left_soup = passthrough(&left).unwrap();
-    let config = EmberConfig {
-        leaf_threshold: usize::MAX,
-        ..config()
-    };
+    let config = EmberConfig { max_depth: 0 };
 
     let intersection = triangulate_and_resolve_certified(&boolean_operation(
         &refs,
@@ -686,10 +674,7 @@ fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
     let left = octahedron([r(0), r(0), r(0)], r(3));
     let right = octahedron([r(1), r(1), r(1)], r(3));
     let refs = [left.as_ref(), right.as_ref()];
-    let config = EmberConfig {
-        leaf_threshold: usize::MAX,
-        ..config()
-    };
+    let config = EmberConfig { max_depth: 0 };
 
     for op in [
         BooleanOp::Union,
@@ -715,10 +700,7 @@ fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
 fn affine_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let (left, right) = affine_box_pair();
     let refs = [left.as_ref(), right.as_ref()];
-    let config = EmberConfig {
-        leaf_threshold: usize::MAX,
-        ..config()
-    };
+    let config = EmberConfig { max_depth: 0 };
 
     for op in [
         BooleanOp::Union,
@@ -747,10 +729,7 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let refs = [left.as_ref(), right.as_ref()];
     let reverse_refs = [right.as_ref(), left.as_ref()];
     let right_soup = passthrough(&right).unwrap();
-    let config = EmberConfig {
-        leaf_threshold: 1,
-        ..config()
-    };
+    let config = config();
 
     let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;
@@ -796,10 +775,7 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let reverse_refs = [right.as_ref(), left.as_ref()];
     let left_soup = passthrough(&left).unwrap();
     let right_soup = passthrough(&right).unwrap();
-    let config = EmberConfig {
-        leaf_threshold: 1,
-        ..config()
-    };
+    let config = config();
 
     let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;
@@ -845,10 +821,7 @@ fn edge_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let reverse_refs = [right.as_ref(), left.as_ref()];
     let left_soup = passthrough(&left).unwrap();
     let right_soup = passthrough(&right).unwrap();
-    let config = EmberConfig {
-        leaf_threshold: usize::MAX,
-        ..config()
-    };
+    let config = EmberConfig { max_depth: 0 };
 
     let union =
         triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
@@ -896,10 +869,7 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let reverse_refs = [right.as_ref(), left.as_ref()];
     let left_soup = passthrough(&left).unwrap();
     let right_soup = passthrough(&right).unwrap();
-    let config = EmberConfig {
-        leaf_threshold: 1,
-        ..config()
-    };
+    let config = config();
 
     let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;
@@ -945,10 +915,7 @@ fn vertex_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let reverse_refs = [right.as_ref(), left.as_ref()];
     let left_soup = passthrough(&left).unwrap();
     let right_soup = passthrough(&right).unwrap();
-    let config = EmberConfig {
-        leaf_threshold: usize::MAX,
-        ..config()
-    };
+    let config = EmberConfig { max_depth: 0 };
 
     let union =
         triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;

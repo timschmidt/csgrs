@@ -722,10 +722,7 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
     let soup = prepare_input(&[mesh.as_ref()]).unwrap();
     let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
     let num_meshes = soup.num_meshes;
-    let config = SubdivisionConfig {
-        leaf_threshold: 0,
-        max_depth: 0,
-    };
+    let config = SubdivisionConfig { max_depth: 0 };
 
     let output = subdivide(
         SubdivisionTask::new(
@@ -744,15 +741,12 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
 }
 
 #[test]
-fn subdivision_accepts_certified_leaf_before_threshold_split() {
+fn subdivision_accepts_certified_leaf_before_split() {
     let mesh = cube_mesh(0, 2);
     let soup = prepare_input(&[mesh.as_ref()]).unwrap();
     let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
     let num_meshes = soup.num_meshes;
-    let config = SubdivisionConfig {
-        leaf_threshold: 0,
-        max_depth: 1,
-    };
+    let config = SubdivisionConfig { max_depth: 1 };
 
     let output = subdivide(
         SubdivisionTask::new(
@@ -777,10 +771,7 @@ fn subdivision_escapes_projected_reference_on_surface() {
     let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let indicator = make_indicator(BooleanOp::Union, 1);
-    let config = SubdivisionConfig {
-        leaf_threshold: 1,
-        max_depth: 4,
-    };
+    let config = SubdivisionConfig { max_depth: 4 };
 
     let result = subdivide(
         SubdivisionTask::new(
@@ -831,10 +822,7 @@ fn disjoint_cube_booleans_have_expected_polygon_counts() {
 fn overlapping_cube_booleans_use_general_path() {
     let cube_a = cube_mesh(0, 2);
     let cube_b = cube_mesh(1, 3);
-    let config = EmberConfig {
-        leaf_threshold: 1,
-        max_depth: 6,
-    };
+    let config = EmberConfig { max_depth: 6 };
 
     let union = hypermesh::boolean_union(cube_a.as_ref(), cube_b.as_ref(), config).unwrap();
     let union_soup = triangulate_and_resolve_certified(&union).unwrap();

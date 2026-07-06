@@ -12,8 +12,6 @@ use crate::winding::{BooleanOp, make_indicator};
 /// Configuration for boolean operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct EmberConfig {
-    /// Polygon-count threshold for leaf processing.
-    pub leaf_threshold: usize,
     /// Maximum recursive subdivision depth.
     pub max_depth: usize,
 }
@@ -21,7 +19,6 @@ pub struct EmberConfig {
 impl Default for EmberConfig {
     fn default() -> Self {
         Self {
-            leaf_threshold: crate::subdivision::DEFAULT_LEAF_THRESHOLD,
             max_depth: crate::subdivision::DEFAULT_MAX_DEPTH,
         }
     }
@@ -54,7 +51,6 @@ fn boolean_operation_general(
         SubdivisionTask::new(soup.polygons.clone(), process_bounds, ref_point, ref_wnv),
         &indicator,
         SubdivisionConfig {
-            leaf_threshold: config.leaf_threshold,
             max_depth: config.max_depth,
         },
         op,

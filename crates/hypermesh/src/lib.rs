@@ -70,8 +70,8 @@ pub use segment_trace::{
     TraceAxisSegmentResult, classify_leaf_polygon, trace_axis_segment, trace_segment,
 };
 pub use subdivision::{
-    DEFAULT_LEAF_THRESHOLD, DEFAULT_MAX_DEPTH, LeafProcessingStats, SubdivisionConfig,
-    SubdivisionTask, process_leaf, process_leaf_into, subdivide, subdivide_into,
+    DEFAULT_MAX_DEPTH, LeafProcessingStats, SubdivisionConfig, SubdivisionTask, process_leaf,
+    process_leaf_into, subdivide, subdivide_into,
 };
 pub use winding::{
     BooleanOp, Indicator, WindingNumberTransitionVector, WindingNumberVector, WindingPair,

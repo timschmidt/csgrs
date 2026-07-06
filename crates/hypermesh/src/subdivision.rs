@@ -24,17 +24,12 @@ use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
 };
 
-/// Default leaf threshold for subdivision.
-pub const DEFAULT_LEAF_THRESHOLD: usize = 25;
-
 /// Default maximum subdivision depth.
 pub const DEFAULT_MAX_DEPTH: usize = 40;
 
 /// Configuration for recursive subdivision.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SubdivisionConfig {
-    /// Polygon-count threshold for leaf processing.
-    pub leaf_threshold: usize,
     /// Maximum recursive depth.
     pub max_depth: usize,
 }
@@ -42,7 +37,6 @@ pub struct SubdivisionConfig {
 impl Default for SubdivisionConfig {
     fn default() -> Self {
         Self {
-            leaf_threshold: DEFAULT_LEAF_THRESHOLD,
             max_depth: DEFAULT_MAX_DEPTH,
         }
     }
@@ -3829,10 +3823,7 @@ mod tests {
         let err = subdivide_into(
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
             &indicator,
-            SubdivisionConfig {
-                leaf_threshold: 0,
-                max_depth: 0,
-            },
+            SubdivisionConfig { max_depth: 0 },
             &mut output,
         )
         .unwrap_err();
@@ -3848,7 +3839,7 @@ mod tests {
     }
 
     #[test]
-    fn subdivision_below_threshold_keeps_splitting_after_uncertified_leaf_failure() {
+    fn subdivision_keeps_splitting_after_uncertified_leaf_failure() {
         let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
         wall.delta_w = vec![1];
         let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
@@ -3862,10 +3853,7 @@ mod tests {
         let err = subdivide_into(
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
             &indicator,
-            SubdivisionConfig {
-                leaf_threshold: 1,
-                max_depth: 0,
-            },
+            SubdivisionConfig { max_depth: 0 },
             &mut output,
         )
         .unwrap_err();
@@ -3890,10 +3878,7 @@ mod tests {
         let output = subdivide_for_operation(
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
             &indicator,
-            SubdivisionConfig {
-                leaf_threshold: 0,
-                max_depth: 0,
-            },
+            SubdivisionConfig { max_depth: 0 },
             BooleanOp::Difference,
         )
         .unwrap();
@@ -3911,10 +3896,7 @@ mod tests {
         let err = subdivide_for_operation(
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0, 0]),
             &indicator,
-            SubdivisionConfig {
-                leaf_threshold: 0,
-                max_depth: 0,
-            },
+            SubdivisionConfig { max_depth: 0 },
             BooleanOp::Difference,
         )
         .unwrap_err();
