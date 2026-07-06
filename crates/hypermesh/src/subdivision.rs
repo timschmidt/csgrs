@@ -1283,6 +1283,7 @@ fn compute_new_reference(
         &mut projected_unknown,
     )?;
     let projection_escape_axis_options_cache = std::cell::RefCell::new(Vec::new());
+    let projection_escape_search_cache = std::cell::RefCell::new(Vec::new());
 
     let projected = projected_reference_search_or_none_tracking_unknown(
         search_projected_reference_families(
@@ -1321,12 +1322,23 @@ fn compute_new_reference(
                     },
                 )?;
                 projection_axis_escape_reference_with_axis_options(
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
                     &projected_target.point,
                     &axis_options,
-                    polygons,
+                    |corridor| {
+                        cached_reference_escape_search_with(
+                            &mut projection_escape_search_cache.borrow_mut(),
+                            corridor,
+                            |corridor| {
+                                support_plane_cell_reference(
+                                    old_ref,
+                                    old_ref_definitions,
+                                    old_wnv,
+                                    corridor,
+                                    polygons,
+                                )
+                            },
+                        )
+                    },
                 )
             },
             |projected_target| {
@@ -1342,12 +1354,23 @@ fn compute_new_reference(
                     },
                 )?;
                 projection_escape_reference_with_axis_options(
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
                     &axis_options,
                     bounds,
-                    polygons,
+                    |escape_bounds| {
+                        cached_reference_escape_search_with(
+                            &mut projection_escape_search_cache.borrow_mut(),
+                            escape_bounds,
+                            |escape_bounds| {
+                                support_plane_cell_reference(
+                                    old_ref,
+                                    old_ref_definitions,
+                                    old_wnv,
+                                    escape_bounds,
+                                    polygons,
+                                )
+                            },
+                        )
+                    },
                 )
             },
         ),
@@ -1647,37 +1670,23 @@ fn projection_escape_reference(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let axis_options = projection_escape_axis_options_family(projected, bounds, polygons)?;
-    projection_escape_reference_with_axis_options(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        &axis_options,
-        bounds,
-        polygons,
-    )
+    projection_escape_reference_with_axis_options(&axis_options, bounds, |escape_bounds| {
+        support_plane_cell_reference(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            escape_bounds,
+            polygons,
+        )
+    })
 }
 
 fn projection_escape_reference_with_axis_options(
-    old_ref: &Point3,
-    old_ref_definitions: &[[Plane; 3]],
-    old_wnv: &[i32],
     axis_options: &ProjectionEscapeAxisOptions,
     bounds: &Aabb,
-    polygons: &[ConvexPolygon],
+    search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    projection_escape_reference_with_search_and_axis_options(
-        axis_options,
-        bounds,
-        |escape_bounds| {
-            support_plane_cell_reference(
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                escape_bounds,
-                polygons,
-            )
-        },
-    )
+    projection_escape_reference_with_search_and_axis_options(axis_options, bounds, search)
 }
 
 fn projection_escape_reference_with_search(
@@ -2076,6 +2085,29 @@ fn cached_projection_escape_axis_options_with(
     Ok(axis_options)
 }
 
+#[derive(Clone)]
+struct ProjectionEscapeSearchCacheEntry {
+    bounds: Aabb,
+    result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+}
+
+fn cached_reference_escape_search_with(
+    cache: &mut Vec<ProjectionEscapeSearchCacheEntry>,
+    bounds: &Aabb,
+    search: impl FnOnce(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    if let Some(existing) = cache.iter().find(|existing| existing.bounds == *bounds) {
+        return existing.result.clone();
+    }
+
+    let result = search(bounds);
+    cache.push(ProjectionEscapeSearchCacheEntry {
+        bounds: bounds.clone(),
+        result: result.clone(),
+    });
+    result
+}
+
 fn reference_target_from_halfspace_witness(
     point: &Point3,
     halfspaces: &[LimitPlane3],
@@ -2102,31 +2134,17 @@ fn projection_axis_escape_reference(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let axis_options = projection_escape_axis_options_family(projected, bounds, polygons)?;
-    projection_axis_escape_reference_with_axis_options(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        projected,
-        &axis_options,
-        polygons,
-    )
+    projection_axis_escape_reference_with_axis_options(projected, &axis_options, |corridor| {
+        support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, corridor, polygons)
+    })
 }
 
 fn projection_axis_escape_reference_with_axis_options(
-    old_ref: &Point3,
-    old_ref_definitions: &[[Plane; 3]],
-    old_wnv: &[i32],
     projected: &Point3,
     axis_options: &ProjectionEscapeAxisOptions,
-    polygons: &[ConvexPolygon],
+    search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    projection_axis_escape_reference_with_search_and_axis_options(
-        projected,
-        axis_options,
-        |corridor| {
-            support_plane_cell_reference(old_ref, old_ref_definitions, old_wnv, corridor, polygons)
-        },
-    )
+    projection_axis_escape_reference_with_search_and_axis_options(projected, axis_options, search)
 }
 
 fn projection_axis_escape_reference_with_search(
@@ -5576,6 +5594,30 @@ mod tests {
         let second = cached_projection_escape_axis_options_with(&mut cache, &projected, || {
             calls += 1;
             Ok(vec![(vec![r(0)], vec![r(6)]); 3])
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_reference_escape_search_reuses_identical_escape_bounds() {
+        let bounds = Aabb::new(p(1, 2, 3), p(4, 5, 6));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_reference_escape_search_with(&mut cache, &bounds, |escape_bounds| {
+            calls += 1;
+            Ok(Some((
+                ReferenceTarget::axis_defined(escape_bounds.min.clone()),
+                vec![11],
+            )))
+        })
+        .unwrap();
+        let second = cached_reference_escape_search_with(&mut cache, &bounds, |_escape_bounds| {
+            calls += 1;
+            Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
         })
         .unwrap();
 

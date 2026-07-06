@@ -307,7 +307,9 @@ families; it skips that duplicate direct trace and proceeds straight to the
 escape-specific searches for that target. For one projected target, the later
 axis-corridor and tight escape-box searches now also reuse the same exact
 axis stop families instead of recomputing those surface-crossing families
-independently before each escape layer. The outer
+independently before each escape layer, and identical escape `Aabb` support
+searches are now reused across those later escape layers instead of rerunning
+the same support-cell search for duplicate bounds. The outer
 support-cell wrapper now also treats an uncertified root feasibility check as
 another local backtracking point instead of aborting support propagation before
 later support-side branches are explored.
