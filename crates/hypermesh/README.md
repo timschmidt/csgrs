@@ -445,10 +445,10 @@ The public regression suite now also exercises crossing octahedra and
 affine-box overlap through that normal subdivision/reference path, not only
 through the root one-leaf classifier.
 The regression suite now also forces the root certified leaf classifier
-(`max_depth: 0`) through same-surface contact, partial-face contact, nested
-closed containment, disconnected closed containment, crossing octahedra, and
-affine-box overlap cases instead of relying on deeper subdivision to rescue
-those paths.
+(`max_depth: 0`) through same-surface contact, shared-edge box contact,
+shared-vertex box contact, partial-face contact, nested closed containment,
+disconnected closed containment, crossing octahedra, and affine-box overlap
+cases instead of relying on deeper subdivision to rescue those paths.
 Subdivision first applies conservative per-component reachable winding ranges.
 If those ranges still allow the Boolean indicator, it then checks exact local
 WNV-transition reachability across the full transition family instead of

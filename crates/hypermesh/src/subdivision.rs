@@ -2675,6 +2675,7 @@ fn strict_projected_cell_seeds_from_report(
     strict_projected_cell_seeds_from_optional_report(bounds, halfspaces, Some(report))
 }
 
+#[cfg(test)]
 fn strict_projected_cell_seeds_from_optional_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3456,7 +3457,6 @@ fn halfspace_is_degenerate_bound(halfspace: &LimitPlane3, bounds: &Aabb) -> Hype
     Ok(false)
 }
 
-#[cfg(test)]
 fn point_lies_on_any_support_plane(
     point: &Point3,
     polygons: &[ConvexPolygon],
