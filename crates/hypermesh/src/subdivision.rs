@@ -1989,16 +1989,19 @@ fn strict_projected_cell_seeds_from_report(
 
     if report.status == HalfspaceFeasibility::Feasible
         && let Some(witness) = &report.witness
-        && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
     {
-        push_unique_point3(&mut seeds, witness.clone());
+        extend_point3_backtracking_unknown(
+            &mut seeds,
+            std::iter::once(witness.clone()),
+            |candidate| point_strictly_inside_projected_cell(candidate, bounds, halfspaces),
+        )?;
     }
 
-    for vertex in feasible_support_cell_vertices(halfspaces)? {
-        if point_strictly_inside_projected_cell(&vertex, bounds, halfspaces)? {
-            push_unique_point3(&mut seeds, vertex);
-        }
-    }
+    extend_point3_backtracking_unknown(
+        &mut seeds,
+        feasible_support_cell_vertices(halfspaces)?,
+        |candidate| point_strictly_inside_projected_cell(candidate, bounds, halfspaces),
+    )?;
 
     Ok(seeds)
 }
@@ -2197,16 +2200,19 @@ fn strict_support_cell_seeds_from_report(
 
     if report.status == HalfspaceFeasibility::Feasible
         && let Some(witness) = &report.witness
-        && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
     {
-        push_unique_point3(&mut seeds, witness.clone());
+        extend_point3_backtracking_unknown(
+            &mut seeds,
+            std::iter::once(witness.clone()),
+            |candidate| point_strictly_inside_support_cell(candidate, bounds, halfspaces),
+        )?;
     }
 
-    for vertex in feasible_support_cell_vertices(halfspaces)? {
-        if point_strictly_inside_support_cell(&vertex, bounds, halfspaces)? {
-            push_unique_point3(&mut seeds, vertex);
-        }
-    }
+    extend_point3_backtracking_unknown(
+        &mut seeds,
+        feasible_support_cell_vertices(halfspaces)?,
+        |candidate| point_strictly_inside_support_cell(candidate, bounds, halfspaces),
+    )?;
 
     Ok(seeds)
 }
@@ -2215,6 +2221,22 @@ fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
     if !points.iter().any(|existing| existing == &point) {
         points.push(point);
     }
+}
+
+fn extend_point3_backtracking_unknown(
+    points: &mut Vec<Point3>,
+    candidates: impl IntoIterator<Item = Point3>,
+    mut keep: impl FnMut(&Point3) -> HypermeshResult<bool>,
+) -> HypermeshResult<()> {
+    for candidate in candidates {
+        match keep(&candidate) {
+            Ok(true) => push_unique_point3(points, candidate),
+            Ok(false) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => continue,
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(())
 }
 
 fn shifted_support_cell_targets_from_seed(
@@ -3735,6 +3757,28 @@ mod tests {
         let seeds = strict_projected_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
+    }
+
+    #[test]
+    fn point3_seed_collection_backtracks_after_uncertified_candidate() {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut points = Vec::new();
+
+        extend_point3_backtracking_unknown(
+            &mut points,
+            vec![first.clone(), second.clone()],
+            |candidate| {
+                if candidate == &first {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(candidate == &second)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points, vec![second]);
     }
 
     #[test]

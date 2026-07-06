@@ -191,7 +191,8 @@ halfspace predicate, and uncertified shifted support seeds or shifted support
 vertices now no longer abort the whole support-cell target family. Witness
 points whose retained plane-definition reconstruction is uncertified are now
 also skipped candidate-locally instead of aborting those support-cell target
-families.
+families. Direct projected/support seed collection now also skips uncertified
+strictness checks candidate-locally instead of aborting the whole seed family.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh
