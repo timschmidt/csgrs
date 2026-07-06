@@ -73,7 +73,12 @@ immediately. Retained plane-replacement fallback now also allows those
 individual replacement steps to use the same bounded detour family, while still
 stopping short of nested plane-replacement recursion, and those probe
 reachability replacement steps now keep their actual intermediate plane triples
-instead of collapsing each step back to axis-only endpoint definitions. Probe winding fallback
+instead of collapsing each step back to axis-only endpoint definitions; if an
+intermediate replacement ordering itself cannot be reconstructed as an affine
+point, that local reachability search now surfaces `UnknownClassification`
+instead of silently treating the ordering as merely blocked, and probe
+reachability now also backtracks across uncertified start/end definition pairs
+before giving up on the whole local plane-replacement family. Probe winding fallback
 from retained reference/probe definitions now uses that same bounded detour
 family on its replacement steps as well, again without recursing into another
 plane-replacement layer. Leaf interior
