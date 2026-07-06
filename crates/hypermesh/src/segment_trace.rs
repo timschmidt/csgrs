@@ -208,17 +208,80 @@ pub(crate) fn trace_segment_from_definitions(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
-    trace_segment_from_definitions_with_budget(
+    let mut trace_without_detours =
+        |start: &Point3,
+         end: &Point3,
+         winding: &[i32],
+         start_definitions: &[[Plane; 3]],
+         end_definitions: &[[Plane; 3]]| {
+            trace_segment_with_definitions_no_detours(
+                start,
+                end,
+                winding,
+                polygons,
+                start_definitions,
+                end_definitions,
+            )
+        };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    trace_segment_from_definitions_with_cycle_guard_impl(
         start,
         end,
         winding,
         polygons,
         start_definitions,
         end_definitions,
-        detour_recursion_limit(polygons),
+        &[start.clone(), end.clone()],
+        &mut trace_without_detours,
+        &mut detours_for,
     )
 }
 
+fn trace_segment_from_definitions_with_cycle_guard_impl(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[Point3],
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[i32],
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<WindingNumberVector> {
+    match trace_without_detours(start, end, winding, start_definitions, end_definitions) {
+        Ok(Some(winding)) => return Ok(winding),
+        Ok(None) => {}
+        Err(HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
+    }
+
+    if let Some(winding) = trace_segment_via_detours_with_cycle_guard(
+        start,
+        end,
+        winding,
+        polygons,
+        &detours_for(start, end)?,
+        start_definitions,
+        end_definitions,
+        visited_points,
+        trace_without_detours,
+        detours_for,
+    )? {
+        return Ok(winding);
+    }
+
+    Err(HypermeshError::UnknownClassification)
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
 fn trace_segment_from_definitions_with_budget(
     start: &Point3,
     end: &Point3,
@@ -302,6 +365,88 @@ fn trace_segment_from_definitions_with_budget_impl(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn trace_segment_via_detours_with_cycle_guard(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    detours: &[DetourTarget],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[Point3],
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[i32],
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut saw_unknown = false;
+    let mut surface_cache = Vec::new();
+    for detour in detours {
+        let already_visited = point_family_contains(visited_points, &detour.point);
+        if already_visited
+            || cached_surface_query_with(&mut surface_cache, &detour.point, || {
+                point_lies_on_traced_surface(&detour.point, polygons)
+            })?
+        {
+            if detour.uncertified_definition_fallback && !already_visited {
+                saw_unknown = true;
+            }
+            continue;
+        }
+
+        let mut next_visited_points = visited_points.to_vec();
+        next_visited_points.push(detour.point.clone());
+
+        let first_leg = match trace_segment_from_definitions_with_cycle_guard_impl(
+            start,
+            &detour.point,
+            winding,
+            polygons,
+            start_definitions,
+            &detour.definitions,
+            &next_visited_points,
+            trace_without_detours,
+            detours_for,
+        ) {
+            Ok(first_leg) => first_leg,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        let second_leg = match trace_segment_from_definitions_with_cycle_guard_impl(
+            &detour.point,
+            end,
+            &first_leg,
+            polygons,
+            &detour.definitions,
+            end_definitions,
+            &next_visited_points,
+            trace_without_detours,
+            detours_for,
+        ) {
+            Ok(second_leg) => second_leg,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        return Ok(Some(second_leg));
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 fn trace_segment_without_detours(
@@ -1518,6 +1663,10 @@ fn unique_definition_family(definitions: &[[Plane; 3]]) -> Vec<[Plane; 3]> {
     unique
 }
 
+fn point_family_contains(points: &[Point3], candidate: &Point3) -> bool {
+    points.iter().any(|point| point == candidate)
+}
+
 fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
     MIN_DETOUR_RECURSION_LIMIT.max(
         polygons
@@ -1604,17 +1753,54 @@ fn probe_reaches_adjacent_cell_from_interior(
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
     end_definitions = unique_definition_family(&end_definitions);
 
-    probe_reaches_adjacent_cell_with_definitions_budget(
+    probe_reaches_adjacent_cell_with_cycle_guard(
         &interior.point,
         &probe.point,
         host_support,
         polygons,
         &start_definitions,
         &end_definitions,
-        detour_recursion_limit(polygons),
     )
 }
 
+fn probe_reaches_adjacent_cell_with_cycle_guard(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<bool> {
+    let mut trace_without_detours =
+        |start: &Point3,
+         end: &Point3,
+         start_definitions: &[[Plane; 3]],
+         end_definitions: &[[Plane; 3]]| {
+            probe_reaches_adjacent_cell_with_definitions_no_detours(
+                start,
+                end,
+                host_support,
+                polygons,
+                start_definitions,
+                end_definitions,
+            )
+        };
+    let mut detours_for =
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    probe_reaches_adjacent_cell_with_cycle_guard_impl(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        &[start.clone(), end.clone()],
+        &mut trace_without_detours,
+        &mut detours_for,
+    )
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
 fn probe_reaches_adjacent_cell_with_definitions_budget(
     start: &Point3,
     end: &Point3,
@@ -1650,6 +1836,49 @@ fn probe_reaches_adjacent_cell_with_definitions_budget(
         &mut trace_without_detours,
         &mut detours_for,
     )
+}
+
+fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[Point3],
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let no_detour_unknown =
+        match trace_without_detours(start, end, start_definitions, end_definitions) {
+            Ok(true) => return Ok(true),
+            Ok(false) => false,
+            Err(HypermeshError::UnknownClassification) => true,
+            Err(err) => return Err(err),
+        };
+
+    let detour_result = probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        visited_points,
+        trace_without_detours,
+        detours_for,
+    )?;
+
+    if detour_result {
+        Ok(true)
+    } else if no_detour_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
 }
 
 fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
@@ -1703,6 +1932,92 @@ fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
     }
 }
 
+fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[Point3],
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let mut saw_unknown = false;
+    let mut surface_cache = Vec::new();
+    for detour in detours_for(start, end)? {
+        let already_visited = point_family_contains(visited_points, &detour.point);
+        if already_visited
+            || cached_surface_query_with(&mut surface_cache, &detour.point, || {
+                point_lies_on_traced_surface(&detour.point, polygons)
+            })?
+        {
+            if detour.uncertified_definition_fallback && !already_visited {
+                saw_unknown = true;
+            }
+            continue;
+        }
+
+        let mut next_visited_points = visited_points.to_vec();
+        next_visited_points.push(detour.point.clone());
+
+        let first_leg = match probe_reaches_adjacent_cell_with_cycle_guard_impl(
+            start,
+            &detour.point,
+            polygons,
+            start_definitions,
+            &detour.definitions,
+            &next_visited_points,
+            trace_without_detours,
+            detours_for,
+        ) {
+            Ok(result) => result,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !first_leg {
+            if detour.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
+            continue;
+        }
+        match probe_reaches_adjacent_cell_with_cycle_guard_impl(
+            &detour.point,
+            end,
+            polygons,
+            &detour.definitions,
+            end_definitions,
+            &next_visited_points,
+            trace_without_detours,
+            detours_for,
+        ) {
+            Ok(true) => return Ok(true),
+            Ok(false) => {
+                if detour.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
+}
+
 #[cfg(test)]
 fn probe_reaches_adjacent_cell_via_detours(
     start: &Point3,
@@ -1728,13 +2043,13 @@ fn probe_reaches_adjacent_cell_via_detours(
         };
     let mut detours_for =
         |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    probe_reaches_adjacent_cell_via_detours_with_budget(
+    probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
         start,
         end,
         polygons,
         start_definitions,
         end_definitions,
-        detour_recursion_limit(polygons),
+        &[start.clone(), end.clone()],
         &mut trace_without_detours,
         &mut detours_for,
     )
@@ -7073,6 +7388,62 @@ mod tests {
     }
 
     #[test]
+    fn probe_reachability_runtime_allows_three_nested_detours() {
+        let start = p(0, 0, 0);
+        let detour_a = p(1, 0, 0);
+        let detour_b = p(2, 0, 0);
+        let detour_c = p(3, 0, 0);
+        let end = p(4, 0, 0);
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                Ok((*from == start && *to == detour_a)
+                    || (*from == detour_a && *to == detour_b)
+                    || (*from == detour_b && *to == detour_c)
+                    || (*from == detour_c && *to == end))
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![DetourTarget {
+                    point: detour_c.clone(),
+                    definitions: vec![axis_plane_definition(&detour_c)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == start && *to == detour_c {
+                Ok(vec![DetourTarget {
+                    point: detour_b.clone(),
+                    definitions: vec![axis_plane_definition(&detour_b)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == start && *to == detour_b {
+                Ok(vec![DetourTarget {
+                    point: detour_a.clone(),
+                    definitions: vec![axis_plane_definition(&detour_a)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            probe_reaches_adjacent_cell_with_cycle_guard_impl(
+                &start,
+                &end,
+                &[],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &[start.clone(), end.clone()],
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
     fn probe_reachability_backtracks_after_uncertified_detour_leg() {
         let start = p(0, 0, 0);
         let blocked = p(1, 0, 0);
@@ -7786,6 +8157,120 @@ mod tests {
         )
         .unwrap();
         assert_eq!(with_nested, vec![0]);
+    }
+
+    #[test]
+    fn trace_segment_from_definitions_runtime_allows_three_nested_detours() {
+        let start = p(0, 0, 0);
+        let detour_a = p(1, 0, 0);
+        let detour_b = p(2, 0, 0);
+        let detour_c = p(3, 0, 0);
+        let end = p(4, 0, 0);
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             winding: &[i32],
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                if (*from == start && *to == detour_a)
+                    || (*from == detour_a && *to == detour_b)
+                    || (*from == detour_b && *to == detour_c)
+                    || (*from == detour_c && *to == end)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else {
+                    Ok(None)
+                }
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![DetourTarget {
+                    point: detour_c.clone(),
+                    definitions: vec![axis_plane_definition(&detour_c)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == start && *to == detour_c {
+                Ok(vec![DetourTarget {
+                    point: detour_b.clone(),
+                    definitions: vec![axis_plane_definition(&detour_b)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == start && *to == detour_b {
+                Ok(vec![DetourTarget {
+                    point: detour_a.clone(),
+                    definitions: vec![axis_plane_definition(&detour_a)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let traced = trace_segment_from_definitions_with_cycle_guard_impl(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap();
+
+        assert_eq!(traced, vec![0]);
+    }
+
+    #[test]
+    fn trace_segment_from_definitions_cycle_guard_skips_revisited_path_points() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _winding: &[i32],
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| { Ok(None) };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![DetourTarget {
+                    point: detour.clone(),
+                    definitions: vec![axis_plane_definition(&detour)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == detour && *to == end {
+                Ok(vec![DetourTarget {
+                    point: start.clone(),
+                    definitions: vec![axis_plane_definition(&start)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == detour && *to == start {
+                Ok(vec![DetourTarget {
+                    point: end.clone(),
+                    definitions: vec![axis_plane_definition(&end)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err = trace_segment_from_definitions_with_cycle_guard_impl(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

@@ -83,8 +83,8 @@ blocked, leaf classification now also retries retained plane-replacement paths
 between the interior and probe definitions before discarding that probe, and it
 now also retries the same certified endpoint-box detour family used by segment
 tracing when straight interior-to-probe reachability is blocked; those probe
-reachability detours now also allow the same bounded nested-detour retry on
-detour legs instead of collapsing every chosen leg to the no-detour family
+reachability detours now also allow the same cycle-guarded nested-detour retry
+on detour legs instead of collapsing every chosen leg to the no-detour family
 immediately. Retained plane-replacement fallback now also allows those
 individual replacement steps to use a locally polygon-scaled bounded detour
 family, while still stopping short of nested plane-replacement recursion, and those probe
@@ -346,10 +346,11 @@ strict shifted-cell witness family instead of midpoint Cartesian sampling.
 Those detour witnesses now also retain replayable plane definitions, and
 chosen detour legs retry certified plane-replacement traces from those
 definitions after the axis-ordered/direct leg search fails. Retained-definition
-segment tracing now also allows a bounded nested detour retry on those legs
-instead of collapsing every detour leg to the no-detour family immediately,
-and that detour budget now scales with the local real-polygon count instead of
-using one fixed global recursion constant. If none trace
+segment tracing and probe reachability now both follow the finite exact local
+detour-point family with cycle-guarded nested detour retries on those legs
+instead of collapsing every detour leg to the no-detour family immediately or
+stopping at a generic local polygon-count recursion cap. Individual
+plane-replacement steps still use their own bounded detour family. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples, and projected / projected-escape
