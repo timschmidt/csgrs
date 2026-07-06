@@ -144,7 +144,9 @@ while backtracking past wholly uncertified strict-seed subfamilies before
 giving up on the later exact-vertex and raw geometry-seed families,
 deduping overlapping strict-seed, exact-vertex, and geometry-seed inputs in
 first-occurrence order before rerunning the same shifted witness-cell
-construction from equivalent points,
+construction from equivalent points, and the halfspace-cell seed builders now
+reuse one exact feasible-vertex / geometry-seed family per local cell before
+widening into shifted witness-cell search,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
