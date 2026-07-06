@@ -2853,6 +2853,16 @@ fn support_cell_geometry_seed_candidates(
 
     for first in 0..vertices.len() {
         for second in (first + 1)..vertices.len() {
+            if let Some(center) =
+                point3_centroid(&[vertices[first].clone(), vertices[second].clone()])?
+            {
+                push_unique_point3(&mut candidates, center);
+            }
+        }
+    }
+
+    for first in 0..vertices.len() {
+        for second in (first + 1)..vertices.len() {
             for third in (second + 1)..vertices.len() {
                 if let Some(center) = point3_centroid(&[
                     vertices[first].clone(),
@@ -3311,6 +3321,44 @@ mod tests {
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
+    }
+
+    fn quadrilateral_reference_cell_fixture() -> (Aabb, Vec<LimitPlane3>, Point3) {
+        let bounds = Aabb::new(p(0, 0, 0), p(5, 4, 0));
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = Point3::new(q(9, 4), r(2), r(0));
+        let vertices = [p(0, 0, 0), p(4, 0, 0), p(5, 4, 0), p(0, 4, 0)];
+        let mut halfspaces = vec![
+            LimitPlane3::new(support.normal.clone(), support.offset.clone()),
+            LimitPlane3::new(
+                support.inverted().normal.clone(),
+                support.inverted().offset.clone(),
+            ),
+        ];
+
+        for index in 0..vertices.len() {
+            let next = (index + 1) % vertices.len();
+            let mut edge_plane = Plane::from_points(
+                &vertices[index],
+                &vertices[next],
+                &Point3::new(
+                    axis_ref(&vertices[index], 0).clone(),
+                    axis_ref(&vertices[index], 1).clone(),
+                    r(1),
+                ),
+            );
+            if classify_real(&edge_plane.expression_at_point(&interior)).unwrap()
+                == Classification::Positive
+            {
+                edge_plane = edge_plane.inverted();
+            }
+            halfspaces.push(LimitPlane3::new(
+                edge_plane.normal.clone(),
+                edge_plane.offset.clone(),
+            ));
+        }
+
+        (bounds, halfspaces, Point3::new(q(5, 2), r(2), r(0)))
     }
 
     fn px(x: Real, y: i32, z: i32) -> Point3 {
@@ -5587,6 +5635,17 @@ mod tests {
     }
 
     #[test]
+    fn strict_projected_cell_seeds_include_strict_edge_midpoints() {
+        let (bounds, halfspaces, midpoint) = quadrilateral_reference_cell_fixture();
+
+        let seeds =
+            strict_projected_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(point_strictly_inside_projected_cell(&midpoint, &bounds, &halfspaces).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &midpoint));
+    }
+
+    #[test]
     fn point3_seed_collection_backtracks_after_uncertified_candidate() {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -5782,6 +5841,17 @@ mod tests {
         assert!(point_strictly_inside_support_cell(&tetra_center, &bounds, &halfspaces).unwrap());
         assert!(seeds.iter().any(|seed| seed == &triangle_center));
         assert!(seeds.iter().any(|seed| seed == &tetra_center));
+    }
+
+    #[test]
+    fn strict_support_cell_seeds_include_strict_edge_midpoints() {
+        let (bounds, halfspaces, midpoint) = quadrilateral_reference_cell_fixture();
+
+        let seeds =
+            strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert!(point_strictly_inside_support_cell(&midpoint, &bounds, &halfspaces).unwrap());
+        assert!(seeds.iter().any(|seed| seed == &midpoint));
     }
 
     #[test]
