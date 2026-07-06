@@ -1971,15 +1971,17 @@ fn strict_support_cell_targets(
                 ),
             );
         }
-        for target in shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed)? {
-            push_unique_reference_target(&mut targets, target);
-        }
     }
-    for vertex in feasible_support_cell_vertices(halfspaces)? {
-        for target in shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex)? {
-            push_unique_reference_target(&mut targets, target);
-        }
-    }
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        strict_support_cell_seeds_from_report(bounds, halfspaces, report)?,
+        |seed| shifted_support_cell_targets_from_seed(bounds, halfspaces, &seed),
+    )?;
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        feasible_support_cell_vertices(halfspaces)?,
+        |vertex| shifted_support_cell_targets_from_seed(bounds, halfspaces, &vertex),
+    )?;
     for target in deferred_direct_targets {
         push_unique_reference_target(&mut targets, target);
     }
@@ -2034,38 +2036,40 @@ fn shifted_support_cell_targets_from_seed(
         );
     }
 
-    for witness in strict_support_cell_seeds_from_report(bounds, &shifted, &report)? {
-        if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        strict_support_cell_seeds_from_report(bounds, &shifted, &report)?,
+        |witness| {
+            if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(vec![ReferenceTarget::with_definitions(
                 witness.clone(),
                 reference_definitions_from_active_halfspaces(
                     &witness,
                     &shifted,
                     [None, None, None],
                 )?,
-            ),
-        );
-    }
-    for witness in feasible_support_cell_vertices(&shifted)? {
-        if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
-            continue;
-        }
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
+            )])
+        },
+    )?;
+    extend_reference_targets_backtracking_unknown(
+        &mut targets,
+        feasible_support_cell_vertices(&shifted)?,
+        |witness| {
+            if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                return Ok(Vec::new());
+            }
+            Ok(vec![ReferenceTarget::with_definitions(
                 witness.clone(),
                 reference_definitions_from_active_halfspaces(
                     &witness,
                     &shifted,
                     [None, None, None],
                 )?,
-            ),
-        );
-    }
+            )])
+        },
+    )?;
 
     Ok(targets)
 }
@@ -2594,6 +2598,26 @@ mod tests {
                 Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))])
             }
         })
+        .unwrap();
+
+        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
+    fn support_target_collection_backtracks_after_uncertified_candidate() {
+        let mut targets = Vec::new();
+
+        extend_reference_targets_backtracking_unknown(
+            &mut targets,
+            [p(0, 0, 0), p(1, 2, 3)],
+            |candidate| {
+                if candidate == p(0, 0, 0) {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![ReferenceTarget::axis_defined(candidate)])
+                }
+            },
+        )
         .unwrap();
 
         assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);

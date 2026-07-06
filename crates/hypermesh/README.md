@@ -153,7 +153,8 @@ inside one feasible support-side cell instead of collapsing the cell to one
 point. Each shifted support cell now also contributes every strict target
 recovered from its own certified witness family and its own exact feasible
 vertices instead of only the first feasibility witness selected by the
-halfspace predicate.
+halfspace predicate, and uncertified shifted support seeds or shifted support
+vertices now no longer abort the whole support-cell target family.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh
