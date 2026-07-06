@@ -975,14 +975,12 @@ fn compute_new_reference(
         ));
     }
 
-    let projected_targets = match projected_reference_targets(old_ref, bounds) {
-        Ok(targets) => targets,
-        Err(crate::error::HypermeshError::UnknownClassification) => Vec::new(),
-        Err(err) => return Err(err),
-    };
+    let projected_targets =
+        reference_target_family_or_empty(projected_reference_targets(old_ref, bounds))?;
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
-    let projected_escape_targets =
-        projected_reference_escape_targets(bounds, &projected_halfspaces, &projected_targets)?;
+    let projected_escape_targets = reference_target_family_or_empty(
+        projected_reference_escape_targets(bounds, &projected_halfspaces, &projected_targets),
+    )?;
 
     if let Some((target, winding)) = search_projected_reference_families(
         &projected_targets,
@@ -1038,6 +1036,16 @@ fn compute_new_reference(
     }
 
     Err(crate::error::HypermeshError::ReferencePropagationFailed)
+}
+
+fn reference_target_family_or_empty(
+    result: HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    match result {
+        Ok(targets) => Ok(targets),
+        Err(crate::error::HypermeshError::UnknownClassification) => Ok(Vec::new()),
+        Err(err) => Err(err),
+    }
 }
 
 fn search_projected_reference_families(
@@ -2651,6 +2659,29 @@ mod tests {
         .unwrap();
 
         assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
+    fn reference_target_family_or_empty_skips_uncertified_family() {
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+
+        assert_eq!(
+            reference_target_family_or_empty(Err(
+                crate::error::HypermeshError::UnknownClassification
+            ))
+            .unwrap(),
+            Vec::<ReferenceTarget>::new()
+        );
+        assert_eq!(
+            reference_target_family_or_empty(Ok(vec![target.clone()])).unwrap(),
+            vec![target]
+        );
+        assert_eq!(
+            reference_target_family_or_empty(Err(
+                crate::error::HypermeshError::ReferencePropagationFailed
+            )),
+            Err(crate::error::HypermeshError::ReferencePropagationFailed)
+        );
     }
 
     #[test]

@@ -113,9 +113,10 @@ relaxes into escape search. If those projected
 targets still cannot be traced directly, the implementation next tries local
 support-side cell search inside that same certified projected cell before it
 starts relaxing the geometry into broader escape families, and uncertified
-projected target-family construction or projected support-cell searches now
-fall through to later certified escape families instead of aborting the whole
-propagation step. When projected target construction yields no certified
+projected target-family construction, projected escape-family construction, or
+projected support-cell searches now fall through to later certified escape
+families instead of aborting the whole propagation step. When projected target
+construction yields no certified
 targets at all, those later escape families now fall back to the certified
 projected-cell witness family itself rather than an old-reference clamp point
 or being skipped entirely. If those projected
