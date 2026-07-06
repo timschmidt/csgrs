@@ -1527,6 +1527,39 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     Ok(false)
 }
 
+fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+    start: &Point3,
+    end: &Point3,
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> HypermeshResult<bool> {
+    if probe_reaches_adjacent_cell(start, end, host_support, polygons)? {
+        return Ok(true);
+    }
+
+    let mut start_definitions = start_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+
+    for start_definition in &start_definitions {
+        for end_definition in &end_definitions {
+            if plane_replacement_path_reaches_adjacent_cell_without_step_detours(
+                start_definition,
+                end_definition,
+                host_support,
+                polygons,
+            )? {
+                return Ok(true);
+            }
+        }
+    }
+
+    Ok(false)
+}
+
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement(
     start: &Point3,
     end: &Point3,
@@ -1609,9 +1642,16 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
-         _start_definitions: &[[Plane; 3]],
-         _end_definitions: &[[Plane; 3]]| {
-            probe_reaches_adjacent_cell(start, end, host_support, polygons)
+         start_definitions: &[[Plane; 3]],
+         end_definitions: &[[Plane; 3]]| {
+            probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+                start,
+                end,
+                host_support,
+                polygons,
+                start_definitions,
+                end_definitions,
+            )
         };
     let mut detours_for =
         |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
@@ -1646,6 +1686,21 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 next_definitions,
                 PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
             )
+        },
+    )
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+        start_planes,
+        end_planes,
+        |current, next, _current_definitions, _next_definitions| {
+            probe_reaches_adjacent_cell(current, next, host_support, polygons)
         },
     )
 }
@@ -4105,6 +4160,42 @@ mod tests {
             &[blocker],
         )
         .unwrap());
+    }
+
+    #[test]
+    fn probe_step_detour_helper_retries_lower_definition_trace() {
+        let host_support = Plane::axis_aligned(2, r(0));
+        let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![[
+                Plane::axis_aligned(0, r(0)),
+                Plane::axis_aligned(1, r(0)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+            ]],
+        };
+        let probe = ProbePoint {
+            point: p(2, 1, 1),
+            side: Classification::Positive,
+            planes: vec![[
+                Plane::axis_aligned(0, r(2)),
+                Plane::axis_aligned(1, r(1)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(-4)),
+            ]],
+        };
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
+                &interior.point,
+                &probe.point,
+                &host_support,
+                &[blocker],
+                &interior.planes,
+                &probe.planes,
+                0,
+            )
+            .unwrap()
+        );
     }
 
     #[test]

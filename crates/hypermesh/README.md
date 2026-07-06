@@ -201,6 +201,9 @@ support-side cells when one candidate branch returns
 `UnknownClassification`, rather than aborting the whole search on the first
 uncertified cell. Full EMBER plane-replacement
 coverage for every reference construction remains unfinished.
+Leaf probe reachability now also gives retained plane-replacement steps one
+lower definition-based reachability retry of their own before the search gives
+up, without opening another nested step-detoured plane-replacement layer.
 
 `EmberConfig::default()` runs only the general subdivision/BSP/classification
 path. The previous same-surface, disjoint-bound, strict-containment,
