@@ -313,7 +313,10 @@ the same support-cell search for duplicate bounds. At the root projected-cell
 boundary, direct projected targets and projected-escape targets now also share
 one exact halfspace report and one exact projected seed-family construction
 instead of rebuilding that same root projected-cell evidence twice before
-search begins. The outer
+search begins, and for one shifted projected seed they now also share one
+exact shifted projected-cell report and shifted projected seed-family build
+across both the shifted direct-target layer and the shifted projected-escape
+layer instead of recomputing that shifted-cell evidence twice per seed. The outer
 support-cell wrapper now also treats an uncertified root feasibility check as
 another local backtracking point instead of aborting support propagation before
 later support-side branches are explored.
