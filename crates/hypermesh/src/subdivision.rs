@@ -772,9 +772,7 @@ fn select_subdivision_split(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(usize, Real)> {
-    let mut best_axis = bounds.longest_axis()?;
-    let mut best_value = bounds.midpoint(best_axis);
-    let baseline_counts = split_child_counts(polygons, best_axis, &best_value)?;
+    let (mut best_axis, mut best_value, baseline_counts) = best_midpoint_split(bounds, polygons)?;
     let mut best_counts = baseline_counts;
 
     for axis in 0..3 {
@@ -808,6 +806,30 @@ fn select_subdivision_split(
     }
 
     Ok((best_axis, best_value))
+}
+
+fn best_midpoint_split(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<(usize, Real, (usize, usize, usize))> {
+    let mut best_axis = bounds.longest_axis()?;
+    let mut best_value = bounds.midpoint(best_axis);
+    let mut best_counts = split_child_counts(polygons, best_axis, &best_value)?;
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        let value = bounds.midpoint(axis);
+        let counts = split_child_counts(polygons, axis, &value)?;
+        if split_counts_strictly_better(counts, best_counts) {
+            best_axis = axis;
+            best_value = value;
+            best_counts = counts;
+        }
+    }
+
+    Ok((best_axis, best_value, best_counts))
 }
 
 fn split_counts_strictly_better(
@@ -2366,6 +2388,20 @@ mod tests {
         let vertex_candidates =
             arrangement_split_candidates(&bounds, &[horizontal, vertical], 0).unwrap();
         assert!(!vertex_candidates.iter().any(|(_, value)| *value == q(1, 2)));
+    }
+
+    #[test]
+    fn select_subdivision_split_uses_best_midpoint_across_axes() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+            make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        ];
+
+        let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
+
+        assert_eq!(axis, 1);
+        assert_eq!(value, r(2));
     }
 
     #[test]
