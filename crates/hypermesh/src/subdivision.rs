@@ -2239,6 +2239,9 @@ fn support_plane_cell_search_with_queries<T>(
                 }
                 continue;
             }
+            if halfspace_has_opposite_pair(&branch_halfspace, halfspaces) {
+                continue;
+            }
 
             halfspaces.push(branch_halfspace);
             let mut feasibility_unknown = false;
@@ -5629,6 +5632,40 @@ mod tests {
 
         assert_eq!(found, None);
         assert!(!duplicate_branch_count_seen);
+    }
+
+    #[test]
+    fn support_plane_cell_search_skips_opposite_support_halfspace_branches() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygon = support_only_polygon(Plane::axis_aligned(0, r(2)));
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        halfspaces.push(support_side_halfspace(&polygon.support, false));
+        let opposite_branch = support_side_halfspace(&polygon.support, true);
+        let mut opposite_branch_count_seen = false;
+
+        let found = support_plane_cell_search_with_queries(
+            Some(&p(1, 1, 1)),
+            &bounds,
+            &[polygon],
+            0,
+            &mut halfspaces,
+            &mut |halfspaces| halfspace_system_report(halfspaces),
+            &mut |halfspaces| {
+                let opposite_count = halfspaces
+                    .iter()
+                    .filter(|halfspace| *halfspace == &opposite_branch)
+                    .count();
+                if opposite_count > 0 {
+                    opposite_branch_count_seen = true;
+                }
+                halfspace_system_is_feasible(halfspaces)
+            },
+            &mut |_halfspaces, _report| Ok(None::<ReferenceTarget>),
+        )
+        .unwrap();
+
+        assert_eq!(found, None);
+        assert!(!opposite_branch_count_seen);
     }
 
     #[test]
