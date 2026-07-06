@@ -695,6 +695,68 @@ fn partial_face_boundary_touch_uses_general_leaf_path() -> HypermeshResult<()> {
 }
 
 #[test]
+fn nested_closed_tetrahedra_use_general_leaf_path() -> HypermeshResult<()> {
+    let outer = tetrahedron([[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]]);
+    let inner = tetrahedron([[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]]);
+    let refs = [outer.as_ref(), inner.as_ref()];
+    let outer_soup = passthrough(&outer).unwrap();
+    let inner_soup = passthrough(&inner).unwrap();
+    let config = EmberConfig { max_depth: 0 };
+
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    assert_output_polygons_closed(&union_result);
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+    assert_volume_numerator(&union, signed_volume_numerator(&outer_soup));
+
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    assert_output_polygons_closed(&intersection_result);
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
+    assert_no_boundary_edges(&intersection);
+    assert_volume_numerator(&intersection, signed_volume_numerator(&inner_soup));
+
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&difference_result);
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert_no_boundary_edges(&difference);
+    assert!(difference.triangles.len() >= outer_soup.triangles.len());
+
+    Ok(())
+}
+
+#[test]
+fn disconnected_container_uses_general_leaf_path() -> HypermeshResult<()> {
+    let outer = tetrahedron([[0, 0, 0], [10, 0, 0], [0, 10, 0], [0, 0, 10]]);
+    let disjoint_shell = tetrahedron([[20, 0, 0], [21, 0, 0], [20, 1, 0], [20, 0, 1]]);
+    let container = combine_meshes(&[outer.clone(), disjoint_shell.clone()]);
+    let contained = tetrahedron([[1, 1, 1], [2, 1, 1], [1, 2, 1], [1, 1, 2]]);
+    let refs = [container.as_ref(), contained.as_ref()];
+    let reverse_refs = [contained.as_ref(), container.as_ref()];
+    let container_soup = passthrough(&container).unwrap();
+    let contained_soup = passthrough(&contained).unwrap();
+    let config = EmberConfig { max_depth: 0 };
+
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    assert_output_polygons_closed(&union_result);
+    let union = triangulate_and_resolve_certified(&union_result)?;
+    assert_no_boundary_edges(&union);
+    assert_volume_numerator(&union, signed_volume_numerator(&container_soup));
+
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    assert_output_polygons_closed(&intersection_result);
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
+    assert_no_boundary_edges(&intersection);
+    assert_volume_numerator(&intersection, signed_volume_numerator(&contained_soup));
+
+    let difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&difference_result);
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
+    assert!(difference.triangles.is_empty());
+
+    Ok(())
+}
+
+#[test]
 fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
     let left = octahedron([r(0), r(0), r(0)], r(3));
     let right = octahedron([r(1), r(1), r(1)], r(3));

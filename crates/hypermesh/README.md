@@ -298,6 +298,11 @@ instead of aborting the whole probe search on the first uncertified detour.
 path. The previous same-surface, disjoint-bound, strict-containment,
 boundary-contact, and oriented-box shortcuts have been removed, so public
 boolean results either certify through the general path or return an error.
+The regression suite now also forces the root certified leaf classifier
+(`max_depth: 0`) through same-surface contact, partial-face contact, nested
+closed containment, disconnected closed containment, crossing octahedra, and
+affine-box overlap cases instead of relying on deeper subdivision to rescue
+those paths.
 Subdivision first applies exact local WNV-transition reachability when the
 reachable state set stays small, and otherwise falls back to conservative
 per-component reachable winding ranges. A task is discarded only when those
