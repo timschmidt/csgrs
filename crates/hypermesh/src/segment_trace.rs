@@ -153,7 +153,7 @@ const AXIS_ORDERINGS: [[usize; 3]; 6] = [
 ];
 
 const MIN_DETOUR_RECURSION_LIMIT: usize = 2;
-const PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
+const MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
 
 /// Traces an axis-aligned polyline using several axis orderings and returns
 /// the first valid winding result. If direct L-shaped paths are blocked by
@@ -1411,6 +1411,15 @@ fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
     )
 }
 
+fn plane_replacement_step_detour_limit(polygons: &[ConvexPolygon]) -> usize {
+    MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT.max(
+        polygons
+            .iter()
+            .filter(|polygon| polygon.mesh_index >= 0)
+            .count(),
+    )
+}
+
 fn probe_reaches_adjacent_cell(
     start: &Point3,
     probe: &Point3,
@@ -1923,7 +1932,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 polygons,
                 current_definitions,
                 next_definitions,
-                PLANE_REPLACEMENT_STEP_DETOUR_LIMIT,
+                plane_replacement_step_detour_limit(polygons),
             )
         },
     )
@@ -6926,6 +6935,17 @@ mod tests {
     }
 
     #[test]
+    fn plane_replacement_step_detour_limit_scales_with_local_polygon_count() {
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
+        ];
+
+        assert_eq!(plane_replacement_step_detour_limit(&[]), 1);
+        assert_eq!(plane_replacement_step_detour_limit(&polygons), 2);
+    }
+
+    #[test]
     fn polygon_scaled_detour_budget_allows_two_nested_detours() {
         let start = p(0, 0, 0);
         let inner = p(1, 0, 0);
@@ -6983,6 +7003,58 @@ mod tests {
         .unwrap();
 
         assert_eq!(traced, vec![0]);
+    }
+
+    #[test]
+    fn polygon_scaled_probe_step_detour_budget_allows_two_nested_detours() {
+        let start = p(0, 0, 0);
+        let inner = p(1, 0, 0);
+        let outer = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let polygons = vec![
+            make_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
+            make_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
+        ];
+        let outer_target = DetourTarget {
+            point: outer.clone(),
+            definitions: vec![axis_plane_definition(&outer)],
+        };
+        let inner_target = DetourTarget {
+            point: inner.clone(),
+            definitions: vec![axis_plane_definition(&inner)],
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                Ok((*from == start && *to == inner)
+                    || (*from == inner && *to == outer)
+                    || (*from == outer && *to == end))
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![outer_target.clone()])
+            } else if *from == start && *to == outer {
+                Ok(vec![inner_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            probe_reaches_adjacent_cell_with_definitions_budget_impl(
+                &start,
+                &end,
+                &polygons,
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                plane_replacement_step_detour_limit(&polygons),
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
     }
 
     #[test]

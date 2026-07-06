@@ -86,8 +86,8 @@ tracing when straight interior-to-probe reachability is blocked; those probe
 reachability detours now also allow the same bounded nested-detour retry on
 detour legs instead of collapsing every chosen leg to the no-detour family
 immediately. Retained plane-replacement fallback now also allows those
-individual replacement steps to use the same bounded detour family, while still
-stopping short of nested plane-replacement recursion, and those probe
+individual replacement steps to use a locally polygon-scaled bounded detour
+family, while still stopping short of nested plane-replacement recursion, and those probe
 reachability replacement steps now keep their actual intermediate plane triples
 instead of collapsing each step back to axis-only endpoint definitions; if an
 intermediate replacement ordering itself cannot be reconstructed as an affine
