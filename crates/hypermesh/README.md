@@ -121,7 +121,8 @@ witness-specific active-plane family only when the witness is the actual
 family instead of inheriting a mismatched active basis.
 exact feasible vertices and exact closed-cell geometry seeds of the local
 witness cell rather than a centroid seed family, and each shifted witness cell
-now contributes its own strict witness family and exact feasible vertices
+now contributes its own strict witness family, exact feasible vertices, and
+raw exact geometry seeds
 while backtracking past wholly uncertified strict-seed subfamilies before
 giving up on the later exact-vertex and raw geometry-seed families,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
