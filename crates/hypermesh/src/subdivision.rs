@@ -1919,6 +1919,18 @@ fn strict_projected_cell_targets(
         push_unique_reference_target(&mut targets, target);
     }
 
+    let report_witness = report.witness.clone();
+    let mut deferred_direct_targets = Vec::new();
+    for seed in strict_projected_cell_seeds_from_report(bounds, halfspaces, report)? {
+        if !report_witness
+            .as_ref()
+            .is_some_and(|witness| witness == &seed)
+            && let Some(target) =
+                reference_target_from_halfspace_witness(&seed, halfspaces, [None, None, None])?
+        {
+            push_unique_reference_target(&mut deferred_direct_targets, target);
+        }
+    }
     extend_reference_targets_backtracking_unknown(
         &mut targets,
         strict_projected_cell_seeds_from_report(bounds, halfspaces, report)?,
@@ -1929,6 +1941,9 @@ fn strict_projected_cell_targets(
         feasible_support_cell_vertices(halfspaces)?,
         |vertex| shifted_projected_cell_targets_from_seed(bounds, halfspaces, &vertex),
     )?;
+    for target in deferred_direct_targets {
+        push_unique_reference_target(&mut targets, target);
+    }
 
     Ok(targets)
 }
@@ -3546,6 +3561,37 @@ mod tests {
         let seeds = strict_projected_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
+    }
+
+    #[test]
+    fn strict_projected_cell_targets_include_direct_strict_seed_targets() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+        let report = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            Point3::new(r(1), r(2), r(0)),
+            [None, None, None],
+        );
+
+        let targets = strict_projected_cell_targets(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(
+            targets
+                .iter()
+                .any(|target| target.point == Point3::new(r(1), r(2), r(3)))
+        );
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == Point3::new(r(1), r(2), r(3)))
+                .is_some_and(|target| !target.definitions.is_empty())
+        );
     }
 
     #[test]
