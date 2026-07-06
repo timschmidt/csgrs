@@ -84,7 +84,11 @@ family on its replacement steps as well, again without recursing into another
 plane-replacement layer, and that retained-definition segment search now also
 backtracks across uncertified direct definition pairs and continues into
 certified detour families instead of collapsing an all-uncertified direct
-family to `None`. Leaf probe winding now likewise surfaces
+family to `None`. The plain no-detour segment tracer below that retained path
+family now also surfaces `UnknownClassification` when its local axis/direct
+trace family is uncertified, and the broader retained-definition and detour
+search layers make the fallback decision explicitly instead of treating that
+uncertified local trace as absent. Leaf probe winding now likewise surfaces
 `UnknownClassification` when every retained-definition path is uncertified
 instead of silently treating that probe winding trace as absent. Leaf interior
 construction now asks `hyperlimit` for strict replayable witnesses from the

@@ -285,18 +285,24 @@ fn trace_segment_without_detours(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    if let Some(winding) = retryable_trace(trace_axis_ordered_paths(start, end, winding, polygons))?
-    {
-        return Ok(Some(winding));
-    }
+    let axis_unknown = match trace_axis_ordered_paths(start, end, winding, polygons) {
+        Ok(winding) => return Ok(Some(winding)),
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
 
-    if let Some(traced) = retryable_trace(trace_direct_segment(start, end, winding, polygons))?
-        && traced.valid
-    {
-        return Ok(Some(traced.winding));
-    }
+    let direct_unknown = match trace_direct_segment(start, end, winding, polygons) {
+        Ok(traced) if traced.valid => return Ok(Some(traced.winding)),
+        Ok(_) => false,
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
 
-    Ok(None)
+    if axis_unknown || direct_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(None)
+    }
 }
 
 fn trace_segment_via_detours_with_definitions_budget(
@@ -379,8 +385,11 @@ fn trace_segment_with_definitions_no_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    if let Some(winding) = trace_segment_without_detours(start, end, winding, polygons)? {
-        return Ok(Some(winding));
+    match trace_segment_without_detours(start, end, winding, polygons) {
+        Ok(Some(winding)) => return Ok(Some(winding)),
+        Ok(None) => {}
+        Err(HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
     }
 
     let mut start_definitions = start_definitions.to_vec();
@@ -466,8 +475,11 @@ fn trace_segment_with_detours_without_plane_replacement_impl(
     ) -> HypermeshResult<Option<WindingNumberVector>>,
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    if let Some(winding) = trace_without_detours(start, end, winding)? {
-        return Ok(Some(winding));
+    match trace_without_detours(start, end, winding) {
+        Ok(Some(winding)) => return Ok(Some(winding)),
+        Ok(None) => {}
+        Err(HypermeshError::UnknownClassification) => {}
+        Err(err) => return Err(err),
     }
 
     if remaining_detours == 0 {
@@ -582,17 +594,20 @@ fn trace_plane_replacement_path_with_tracer(
                 Err(err) => return Err(err),
             };
             if next_point != current_point {
-                let Some(next_winding) = trace_step(
+                let next_winding = match trace_step(
                     &current_point,
                     &next_point,
                     &current_planes,
                     &next_planes,
                     &attempt,
                     polygons,
-                )?
-                else {
-                    valid = false;
-                    break;
+                ) {
+                    Ok(Some(next_winding)) => next_winding,
+                    Ok(None) | Err(HypermeshError::UnknownClassification) => {
+                        valid = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
                 };
                 attempt = next_winding;
                 current_point = next_point;
@@ -5486,8 +5501,8 @@ mod tests {
 
         assert_eq!(
             trace_segment_without_detours(&p(0, 0, 0), &detour.point, &[0], &[wall.clone()])
-                .unwrap(),
-            None
+                .unwrap_err(),
+            HypermeshError::UnknownClassification
         );
 
         let traced = trace_segment_via_detours_with_definitions_budget(
@@ -6041,6 +6056,49 @@ mod tests {
     }
 
     #[test]
+    fn no_detour_segment_search_backtracks_after_uncertified_direct_family() {
+        let start = p(0, 0, 0);
+        let detour_point = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour_point.clone(),
+            definitions: vec![axis_plane_definition(&detour_point)],
+        };
+        let mut trace_without_detours = |from: &Point3, to: &Point3, winding: &[i32]| {
+            if *from == start && *to == end {
+                Err(HypermeshError::UnknownClassification)
+            } else if (*from == start && *to == detour_point)
+                || (*from == detour_point && *to == end)
+            {
+                Ok(Some(winding.to_vec()))
+            } else {
+                Ok(None)
+            }
+        };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert_eq!(
+            trace_segment_with_detours_without_plane_replacement_impl(
+                &start,
+                &end,
+                &[0],
+                &[],
+                1,
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap(),
+            Some(vec![0])
+        );
+    }
+
+    #[test]
     fn probe_plane_replacement_step_detours_preserve_intermediate_definitions() {
         let start = p(0, 0, 0);
         let detour_point = p(1, 0, 0);
@@ -6186,6 +6244,35 @@ mod tests {
                     Ok(Some(attempt.to_vec()))
                 } else {
                     Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
+    fn plane_replacement_step_tracer_backtracks_after_uncertified_step() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-1)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::axis_aligned(2, r(0)),
+        ];
+        let mut first_call = true;
+
+        let winding = trace_plane_replacement_path_with_tracer(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            |_current, _next, _current_planes, _next_planes, attempt, _polygons| {
+                if first_call {
+                    first_call = false;
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(attempt.to_vec()))
                 }
             },
         )
