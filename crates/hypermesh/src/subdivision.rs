@@ -1101,14 +1101,10 @@ fn projected_reference_escape_targets(
 
     if let Some(witness) = &report.witness
         && point_satisfies_halfspaces(witness, halfspaces)?
+        && let Some(target) =
+            reference_target_from_halfspace_witness(witness, halfspaces, report.active_planes)?
     {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                vec![axis_plane_definition(witness)],
-            ),
-        );
+        push_unique_reference_target(&mut targets, target);
     }
 
     extend_reference_targets_backtracking_unknown(
@@ -1895,14 +1891,10 @@ fn projected_escape_targets_from_seed(
 
     if let Some(witness) = &report.witness
         && point_satisfies_halfspaces(witness, halfspaces)?
+        && let Some(target) =
+            reference_target_from_halfspace_witness(witness, &shifted, report.active_planes)?
     {
-        push_unique_reference_target(
-            &mut targets,
-            ReferenceTarget::with_definitions(
-                witness.clone(),
-                vec![axis_plane_definition(witness)],
-            ),
-        );
+        push_unique_reference_target(&mut targets, target);
     }
 
     extend_reference_targets_backtracking_unknown(
@@ -1912,10 +1904,11 @@ fn projected_escape_targets_from_seed(
             if !point_satisfies_halfspaces(&witness, halfspaces)? {
                 return Ok(Vec::new());
             }
-            Ok(vec![ReferenceTarget::with_definitions(
-                witness.clone(),
-                vec![axis_plane_definition(&witness)],
-            )])
+            Ok(
+                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+                    .into_iter()
+                    .collect(),
+            )
         },
     )?;
     extend_reference_targets_backtracking_unknown(
@@ -1925,10 +1918,11 @@ fn projected_escape_targets_from_seed(
             if !point_satisfies_halfspaces(&witness, halfspaces)? {
                 return Ok(Vec::new());
             }
-            Ok(vec![ReferenceTarget::with_definitions(
-                witness.clone(),
-                vec![axis_plane_definition(&witness)],
-            )])
+            Ok(
+                reference_target_from_halfspace_witness(&witness, &shifted, [None, None, None])?
+                    .into_iter()
+                    .collect(),
+            )
         },
     )?;
 
@@ -2631,6 +2625,12 @@ mod tests {
 
         assert!(targets.len() > 1);
         assert!(targets.iter().any(|target| target.point == p(2, 2, 2)));
+        assert!(
+            targets
+                .iter()
+                .find(|target| target.point == p(2, 2, 2))
+                .is_some_and(|target| target.definitions != axis_defs(&target.point))
+        );
         for target in &targets {
             assert_eq!(axis_ref(&target.point, 1), &r(2));
             assert!(point_satisfies_halfspaces(&target.point, &halfspaces).unwrap());

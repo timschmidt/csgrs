@@ -147,8 +147,10 @@ segment tracing now also allows a bounded nested detour retry on those legs
 instead of collapsing every detour leg to the no-detour family immediately. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
-reference point carries retained plane triples; projected/escaped references
-carry axis-plane triples, and support-cell witnesses are now constructed from
+reference point carries retained plane triples, and projected / projected-escape
+references now keep certified halfspace-derived plane definitions when those
+can be reconstructed instead of collapsing every witness back to one axis-plane
+triple. Support-cell witnesses are now constructed from
 closed support-side cells by enumerating exact feasible cell vertices and
 asking `hyperlimit` for replayable witnesses inside inward-shifted strict
 cells. When `hyperlimit` already provides a strict feasible witness for the
