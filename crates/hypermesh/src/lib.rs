@@ -31,7 +31,9 @@
 //!
 //! Use [`triangulate_and_resolve_certified`] to triangulate a boolean result
 //! while preserving the invariant that open or zero-volume output is rejected
-//! rather than repaired.
+//! rather than repaired. Use [`certify_output_polygon_closure`] to validate
+//! that invariant directly on the classified polygon arrangement before any
+//! triangulation cleanup runs.
 
 #![warn(missing_docs)]
 
@@ -63,8 +65,9 @@ pub use operations::{
     EmberConfig, boolean_difference, boolean_intersection, boolean_operation, boolean_union,
 };
 pub use output::{
-    BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureReport, extract_output,
-    triangle_soup_closure_report, triangle_soup_is_closed, triangulate_and_resolve_certified,
+    BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureReport,
+    certify_output_polygon_closure, extract_output, triangle_soup_closure_report,
+    triangle_soup_is_closed, triangulate_and_resolve_certified,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
 pub use segment_trace::{

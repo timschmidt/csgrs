@@ -206,14 +206,7 @@ fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
 /// valence is allowed, but non-empty open, reversed, or zero-volume soups are
 /// reported as uncertified.
 pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
-    let polygon_closure = output_polygon_closure_report(&extract_output(result)?)?;
-    if !polygon_closure.has_no_boundary() {
-        return Err(HypermeshError::OpenOutput {
-            boundary_edges: polygon_closure.boundary_edges,
-            non_manifold_edges: polygon_closure.non_manifold_edges,
-        });
-    }
-
+    certify_output_polygon_closure(result)?;
     let soup = resolve_tjunctions(&triangulate_output(result)?)?;
     if soup.triangles.is_empty() {
         return Ok(soup);
@@ -227,6 +220,25 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
     }
     certify_positive_signed_volume(&soup)?;
     Ok(soup)
+}
+
+/// Certifies that the classified polygon arrangement is already closed before
+/// triangulation cleanup runs.
+///
+/// Non-manifold edge valence is allowed, but any boundary edge is reported as
+/// [`HypermeshError::OpenOutput`] instead of being left for triangle cleanup to
+/// repair.
+pub fn certify_output_polygon_closure(
+    result: &BooleanResult,
+) -> HypermeshResult<TriangleSoupClosureReport> {
+    let polygon_closure = output_polygon_closure_report(&extract_output(result)?)?;
+    if !polygon_closure.has_no_boundary() {
+        return Err(HypermeshError::OpenOutput {
+            boundary_edges: polygon_closure.boundary_edges,
+            non_manifold_edges: polygon_closure.non_manifold_edges,
+        });
+    }
+    Ok(polygon_closure)
 }
 
 fn output_polygon_closure_report(

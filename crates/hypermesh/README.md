@@ -341,6 +341,9 @@ operation fails certification. The emitted polygon arrangement is now checked
 for exact boundary closure before any triangulation cleanup runs, so
 `resolve_tjunctions` only cleans triangle-soup representation artifacts and is
 not allowed to turn an open polygon arrangement into a certified result.
+`certify_output_polygon_closure` exposes that pre-triangulation check directly
+for callers and regressions that want to validate closure on the classified
+polygon arrangement itself.
 
 ## Building
 

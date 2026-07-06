@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::str::FromStr;
 
 use hypermesh::{
-    Aabb, BooleanOp, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef, OutputVertex,
-    Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
-    boolean_operation, boolean_union, prepare_input, triangulate_and_resolve_certified,
+    Aabb, BooleanOp, BooleanResult, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef,
+    OutputVertex, Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
+    boolean_operation, boolean_union, certify_output_polygon_closure, prepare_input,
+    triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -237,6 +238,14 @@ fn assert_no_boundary_edges(soup: &TriangleSoup) {
     );
 }
 
+fn assert_output_polygons_closed(result: &BooleanResult) {
+    let closure = certify_output_polygon_closure(result).unwrap();
+    assert_eq!(
+        closure.boundary_edges, 0,
+        "expected classified polygon output to be closed before cleanup; closure report: {closure:?}",
+    );
+}
+
 fn assert_bounds(soup: &TriangleSoup, min: [Real; 3], max: [Real; 3]) -> HypermeshResult<()> {
     let bounds = Aabb::new(
         pr(min[0].clone(), min[1].clone(), min[2].clone()),
@@ -301,6 +310,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
 
     let union = boolean_union(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
+    assert_output_polygons_closed(&union);
     let union_soup = triangulate_and_resolve_certified(&union).unwrap();
     assert_closed_triangle_soup(&union_soup);
     assert_bounds(
@@ -312,6 +322,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     assert_volume_numerator(&union_soup, ratio(303, 4));
 
     let intersection = boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
+    assert_output_polygons_closed(&intersection);
     let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
     assert_closed_triangle_soup(&intersection_soup);
     assert_bounds(
@@ -323,6 +334,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     assert_volume_numerator(&intersection_soup, ratio(81, 4));
 
     let difference = boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
+    assert_output_polygons_closed(&difference);
     let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
     assert_closed_triangle_soup(&difference_soup);
     assert_bounds(&difference_soup, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
@@ -446,11 +458,11 @@ fn generated_sphere_booleans_are_closed() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let result = triangulate_and_resolve_certified(
-            &boolean_operation(&refs, op, config())
-                .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}")),
-        )
-        .unwrap_or_else(|err| panic!("{op:?} certified output failed: {err:?}"));
+        let boolean = boolean_operation(&refs, op, config())
+            .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}"));
+        assert_output_polygons_closed(&boolean);
+        let result = triangulate_and_resolve_certified(&boolean)
+            .unwrap_or_else(|err| panic!("{op:?} certified output failed: {err:?}"));
         if !result.triangles.is_empty() {
             assert_no_boundary_edges(&result);
             if op != BooleanOp::SymmetricDifference {
@@ -629,15 +641,14 @@ fn same_surface_solids_use_general_leaf_path_in_one_leaf() -> HypermeshResult<()
     let refs = [left.as_ref(), same_surface.as_ref()];
     let config = EmberConfig { max_depth: 0 };
 
-    let union =
-        triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
+    let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    assert_output_polygons_closed(&union_result);
+    let union = triangulate_and_resolve_certified(&union_result)?;
     assert_no_boundary_edges(&union);
 
-    let difference = triangulate_and_resolve_certified(&boolean_operation(
-        &refs,
-        BooleanOp::Difference,
-        config,
-    )?)?;
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&difference_result);
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert!(difference.triangles.is_empty());
 
     Ok(())
@@ -651,18 +662,14 @@ fn partial_face_boundary_touch_uses_general_leaf_path() -> HypermeshResult<()> {
     let left_soup = passthrough(&left).unwrap();
     let config = EmberConfig { max_depth: 0 };
 
-    let intersection = triangulate_and_resolve_certified(&boolean_operation(
-        &refs,
-        BooleanOp::Intersection,
-        config,
-    )?)?;
+    let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    assert_output_polygons_closed(&intersection_result);
+    let intersection = triangulate_and_resolve_certified(&intersection_result)?;
     assert!(intersection.triangles.is_empty());
 
-    let difference = triangulate_and_resolve_certified(&boolean_operation(
-        &refs,
-        BooleanOp::Difference,
-        config,
-    )?)?;
+    let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&difference_result);
+    let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 
@@ -682,7 +689,9 @@ fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let result = triangulate_and_resolve_certified(&boolean_operation(&refs, op, config)?)?;
+        let boolean = boolean_operation(&refs, op, config)?;
+        assert_output_polygons_closed(&boolean);
+        let result = triangulate_and_resolve_certified(&boolean)?;
         assert!(
             !result.triangles.is_empty(),
             "{op:?} should produce non-empty output",
@@ -732,35 +741,42 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let config = config();
 
     let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    assert_output_polygons_closed(&union_result);
     let union = triangulate_and_resolve_certified(&union_result)?;
     assert_no_boundary_edges(&union);
     assert_volume_numerator(&union, r(12));
 
     let intersection_result = boolean_operation(&refs, BooleanOp::Intersection, config)?;
+    assert_output_polygons_closed(&intersection_result);
     let intersection = triangulate_and_resolve_certified(&intersection_result)?;
     assert!(intersection.triangles.is_empty());
 
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&difference_result);
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, r(6));
 
     let reverse_difference_result =
         boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&reverse_difference_result);
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert_same_shape(&reverse_difference, &right_soup);
 
     let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
+    assert_output_polygons_closed(&xor_result);
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
     assert_same_shape(&xor, &union);
 
     let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
+    assert_output_polygons_closed(&reverse_union_result);
     let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
     assert_same_shape(&reverse_union, &union);
 
     let reverse_xor_result =
         boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
+    assert_output_polygons_closed(&reverse_xor_result);
     let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
     assert_same_shape(&reverse_xor, &xor);
 
@@ -1111,10 +1127,12 @@ fn same_surface_solids_use_general_path() -> HypermeshResult<()> {
     let config = config();
 
     let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
+    assert_output_polygons_closed(&union_result);
     let union = triangulate_and_resolve_certified(&union_result)?;
     assert_no_boundary_edges(&union);
 
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
+    assert_output_polygons_closed(&difference_result);
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert!(difference.triangles.is_empty());
 
