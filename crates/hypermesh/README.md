@@ -406,7 +406,9 @@ has already improved that midpoint baseline, before keeping the best remaining
 split. Split ranking now also penalizes empty-child cuts explicitly, so a cut
 that leaves all polygons on one side is no longer preferred over a non-empty
 branching cut with the same maximum child load just because it duplicates fewer
-polygons. The recursion now backtracks across that ordered exact local split
+polygons. When those child-count metrics tie, split ranking now prefers the
+candidate with the lower exact post-split child intersection load before it
+falls back to source kind. The recursion now backtracks across that ordered exact local split
 family instead of committing to one chosen split candidate: if a higher-ranked
 split hits `UnknownClassification`, `ReferencePropagationFailed`, or
 `SubdivisionDepthLimit`, later exact local split candidates are still tried
