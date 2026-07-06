@@ -142,6 +142,9 @@ now contributes its own strict witness family, exact feasible vertices, and
 raw exact geometry seeds
 while backtracking past wholly uncertified strict-seed subfamilies before
 giving up on the later exact-vertex and raw geometry-seed families,
+deduping overlapping strict-seed, exact-vertex, and geometry-seed inputs in
+first-occurrence order before rerunning the same shifted witness-cell
+construction from equivalent points,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
