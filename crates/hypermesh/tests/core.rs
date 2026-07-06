@@ -45,6 +45,18 @@ fn tetra_mesh() -> hypermesh::InputMesh {
     )
 }
 
+fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> hypermesh::InputMesh {
+    hypermesh::InputMesh::new(
+        vec![a, b, c, apex],
+        vec![
+            Triangle::new(0, 2, 1),
+            Triangle::new(0, 1, 3),
+            Triangle::new(0, 3, 2),
+            Triangle::new(1, 2, 3),
+        ],
+    )
+}
+
 fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
     hypermesh::InputMesh::new(
         vec![
@@ -783,6 +795,28 @@ fn subdivision_escapes_projected_reference_on_surface() {
         &indicator,
         config,
     );
+    assert!(result.is_ok());
+}
+
+#[test]
+fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
+    let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
+    let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
+    let soup = prepare_input(&[left.as_ref(), right.as_ref()]).unwrap();
+    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let config = SubdivisionConfig { max_depth: 4 };
+
+    let result = subdivide(
+        SubdivisionTask::new(
+            soup.polygons,
+            hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6)),
+            p(1, 3, 3),
+            vec![0; soup.num_meshes],
+        ),
+        &indicator,
+        config,
+    );
+
     assert!(result.is_ok());
 }
 
