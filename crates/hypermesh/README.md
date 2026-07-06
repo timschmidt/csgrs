@@ -347,6 +347,9 @@ exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
 vertex family on the first uncertified candidate, and the leaf/probe-side
 exact halfspace-cell vertex family now does the same. The
+projected-escape direct-seed family now also backtracks past uncertified
+membership checks instead of letting one uncertified deferred direct seed cut
+off later certified direct escape targets. The
 focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. Full
 EMBER plane-replacement
