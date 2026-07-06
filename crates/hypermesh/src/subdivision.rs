@@ -3110,8 +3110,11 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
 mod tests {
     use super::*;
     use crate::geometry::Plane;
-    use crate::mesh::prepare_input;
+    use crate::mesh::{OutputVertex, PolygonSoup, prepare_input};
+    use crate::operations::{EmberConfig, boolean_operation};
+    use crate::output::{BooleanResult, TriangleSoup, triangulate_and_resolve_certified};
     use crate::polygon::make_triangle;
+    use crate::winding::{BooleanOp, make_indicator};
     use crate::{InputMesh, Triangle};
 
     fn r(value: i32) -> Real {
@@ -3161,6 +3164,38 @@ mod tests {
             })
             .cloned()
             .expect("expected axis-aligned support face in prepared mesh soup")
+    }
+
+    fn vertex_key(vertex: &OutputVertex) -> [String; 3] {
+        [
+            vertex.x.to_string(),
+            vertex.y.to_string(),
+            vertex.z.to_string(),
+        ]
+    }
+
+    fn sorted_triangle_key(soup: &TriangleSoup, triangle: [usize; 3]) -> [[String; 3]; 3] {
+        let mut keys = [
+            vertex_key(&soup.vertices[triangle[0]]),
+            vertex_key(&soup.vertices[triangle[1]]),
+            vertex_key(&soup.vertices[triangle[2]]),
+        ];
+        keys.sort();
+        keys
+    }
+
+    fn assert_same_shape(left: &TriangleSoup, right: &TriangleSoup) {
+        let left_faces = left
+            .triangles
+            .iter()
+            .map(|triangle| sorted_triangle_key(left, *triangle))
+            .collect::<std::collections::BTreeSet<_>>();
+        let right_faces = right
+            .triangles
+            .iter()
+            .map(|triangle| sorted_triangle_key(right, *triangle))
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(left_faces, right_faces);
     }
 
     fn definition_uses_non_axis_plane(definition: &[Plane; 3]) -> bool {
@@ -3632,6 +3667,47 @@ mod tests {
         assert_eq!(point, support.0.point);
         assert_eq!(definitions, support.0.definitions);
         assert_eq!(winding, support.1);
+    }
+
+    #[test]
+    fn alternate_support_reference_matches_general_union_result() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+
+        let classified = subdivide(
+            SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            ),
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+        )
+        .unwrap();
+
+        let alternate_result = BooleanResult::from_classified(
+            PolygonSoup {
+                polygons: Vec::new(),
+                bounds: soup.bounds.clone(),
+                num_meshes: soup.num_meshes,
+            },
+            classified,
+        );
+        let alternate_soup = triangulate_and_resolve_certified(&alternate_result).unwrap();
+
+        let general_result = boolean_operation(
+            &[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()],
+            BooleanOp::Union,
+            EmberConfig { max_depth: 4 },
+        )
+        .unwrap();
+        let general_soup = triangulate_and_resolve_certified(&general_result).unwrap();
+
+        assert_same_shape(&alternate_soup, &general_soup);
     }
 
     #[test]
