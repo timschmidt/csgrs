@@ -2263,6 +2263,11 @@ fn strict_projected_cell_seeds_from_report(
         feasible_support_cell_vertices(halfspaces)?,
         |candidate| point_strictly_inside_projected_cell(candidate, bounds, halfspaces),
     )?;
+    extend_point3_backtracking_unknown(
+        &mut seeds,
+        support_cell_geometry_seed_candidates(halfspaces)?,
+        |candidate| point_strictly_inside_projected_cell(candidate, bounds, halfspaces),
+    )?;
 
     Ok(seeds)
 }
@@ -2489,14 +2494,66 @@ fn strict_support_cell_seeds_from_report(
         feasible_support_cell_vertices(halfspaces)?,
         |candidate| point_strictly_inside_support_cell(candidate, bounds, halfspaces),
     )?;
+    extend_point3_backtracking_unknown(
+        &mut seeds,
+        support_cell_geometry_seed_candidates(halfspaces)?,
+        |candidate| point_strictly_inside_support_cell(candidate, bounds, halfspaces),
+    )?;
 
     Ok(seeds)
+}
+
+fn support_cell_geometry_seed_candidates(
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Vec<Point3>> {
+    let vertices = feasible_support_cell_vertices(halfspaces)?;
+    let mut candidates = Vec::new();
+
+    for first in 0..vertices.len() {
+        for second in (first + 1)..vertices.len() {
+            for third in (second + 1)..vertices.len() {
+                if let Some(center) = point3_centroid(&[
+                    vertices[first].clone(),
+                    vertices[second].clone(),
+                    vertices[third].clone(),
+                ])? {
+                    push_unique_point3(&mut candidates, center);
+                }
+            }
+        }
+    }
+
+    if let Some(center) = point3_centroid(&vertices)? {
+        push_unique_point3(&mut candidates, center);
+    }
+
+    Ok(candidates)
 }
 
 fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
     if !points.iter().any(|existing| existing == &point) {
         points.push(point);
     }
+}
+
+fn point3_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
+    if points.is_empty() {
+        return Ok(None);
+    }
+
+    let mut sum = Point3::origin();
+    for point in points {
+        sum.x += point.x.clone();
+        sum.y += point.y.clone();
+        sum.z += point.z.clone();
+    }
+
+    let denom = Real::from(points.len() as u64);
+    Ok(Some(Point3::new(
+        (sum.x / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.y / denom.clone()).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+        (sum.z / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?,
+    )))
 }
 
 fn extend_point3_backtracking_unknown(
@@ -4388,6 +4445,22 @@ mod tests {
     }
 
     #[test]
+    fn strict_projected_cell_seeds_include_strict_geometry_seeds() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(Point3::origin(), [None, None, None]);
+        let triangle_center = Point3::new(q(4, 3), q(4, 3), q(8, 3));
+
+        let seeds = strict_projected_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(
+            point_strictly_inside_projected_cell(&triangle_center, &bounds, &halfspaces).unwrap()
+        );
+        assert!(seeds.iter().any(|seed| seed == &triangle_center));
+    }
+
+    #[test]
     fn point3_seed_collection_backtracks_after_uncertified_candidate() {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -4477,6 +4550,22 @@ mod tests {
     }
 
     #[test]
+    fn strict_support_cell_seeds_include_strict_geometry_seeds() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(Point3::origin(), [None, None, None]);
+        let triangle_center = Point3::new(q(4, 3), q(4, 3), q(8, 3));
+
+        let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert!(
+            point_strictly_inside_support_cell(&triangle_center, &bounds, &halfspaces).unwrap()
+        );
+        assert!(seeds.iter().any(|seed| seed == &triangle_center));
+    }
+
+    #[test]
     fn support_cell_targets_try_shifted_targets_from_all_strict_seeds() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -4485,8 +4574,8 @@ mod tests {
             hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
 
         let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
-        assert_eq!(seeds.len(), 1);
         assert!(seeds.iter().any(|seed| seed == &direct));
+        assert!(seeds.len() > 1);
 
         let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
 

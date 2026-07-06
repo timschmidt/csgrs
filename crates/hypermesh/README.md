@@ -148,7 +148,8 @@ reference targets, not just a single midpoint-filled representative point.
 Existing references are reused only when they are strict child-cell interior
 points and not on local surfaces. Otherwise hypermesh builds the projected
 child cell that preserves every axis already strict in the parent reference,
-then asks `hyperlimit` for strict witnesses and exact feasible vertices in that
+then asks `hyperlimit` for strict witnesses, exact feasible vertices, and exact
+closed-cell geometry seeds derived from those feasible vertices in that
 projected cell before tracing from the parent reference. If the first
 projected target family is exhausted, later certified projected escape
 witnesses now augment that direct projected target family rather than being
@@ -236,7 +237,8 @@ closed support cell, hypermesh now tries that richer direct witness first, and
 support-cell search now also accepts the current feasible child/support cell
 before forcing any further support-side assignment, then shifted replayable
 witnesses built from every available strict support-cell
-witness and from every exact feasible support-cell vertex, and finally any
+witness, every exact feasible support-cell vertex, and exact closed-cell
+geometry seeds derived from those feasible vertices, and finally any
 remaining strict direct witnesses of the closed cell. That lets reference
 propagation backtrack across multiple certified direct and shifted targets
 inside one feasible support-side cell instead of collapsing the cell to one
