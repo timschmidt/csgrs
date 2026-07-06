@@ -2492,16 +2492,13 @@ fn strict_projected_cell_targets_from_optional_report(
     let mut targets = Vec::new();
     let mut saw_unknown = false;
 
-    let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_optional_report(bounds, halfspaces, report),
-        &mut saw_unknown,
-    )?;
-    let shifted_vertices =
-        point3_family_or_empty(feasible_support_cell_vertices(halfspaces), &mut saw_unknown)?;
-    let shifted_geometry_seeds = point3_family_or_empty(
-        support_cell_geometry_seed_candidates(halfspaces),
-        &mut saw_unknown,
-    )?;
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        projected_cell_seed_families_from_optional_report(
+            bounds,
+            halfspaces,
+            report,
+            &mut saw_unknown,
+        )?;
     let mut shifted_seed_search_order = Vec::new();
     let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
     let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
@@ -2568,31 +2565,9 @@ fn strict_projected_cell_seeds_from_optional_report(
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<Point3>> {
-    let mut seeds = Vec::new();
-
-    extend_point3_families_backtracking_unknown(
-        &mut seeds,
-        [
-            if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
-                && let Some(witness) = report.and_then(|report| report.witness.as_ref())
-            {
-                collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
-                    point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
-                })
-            } else {
-                Ok(Vec::new())
-            },
-            collect_point3_family(feasible_support_cell_vertices(halfspaces), |candidate| {
-                point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
-            }),
-            collect_point3_family(
-                support_cell_geometry_seed_candidates(halfspaces),
-                |candidate| point_strictly_inside_projected_cell(candidate, bounds, halfspaces),
-            ),
-        ],
-    )?;
-
-    Ok(seeds)
+    let mut saw_unknown = false;
+    projected_cell_seed_families_from_optional_report(bounds, halfspaces, report, &mut saw_unknown)
+        .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
 }
 
 fn shifted_projected_cell_targets_from_seed(
@@ -2612,16 +2587,13 @@ fn shifted_projected_cell_targets_from_seed(
     let mut targets = Vec::new();
     let mut saw_unknown = saw_report_unknown;
 
-    let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_optional_report(bounds, &shifted, report.as_ref()),
-        &mut saw_unknown,
-    )?;
-    let shifted_vertices =
-        point3_family_or_empty(feasible_support_cell_vertices(&shifted), &mut saw_unknown)?;
-    let shifted_geometry_seeds = point3_family_or_empty(
-        support_cell_geometry_seed_candidates(&shifted),
-        &mut saw_unknown,
-    )?;
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        projected_cell_seed_families_from_optional_report(
+            bounds,
+            &shifted,
+            report.as_ref(),
+            &mut saw_unknown,
+        )?;
     let mut shifted_seed_search_order = Vec::new();
     let strict_shift_seeds = take_new_point_family(strict_seeds, &mut shifted_seed_search_order);
     let shifted_vertices = take_new_point_family(shifted_vertices, &mut shifted_seed_search_order);
@@ -2711,16 +2683,13 @@ fn projected_escape_targets_from_seed(
     let mut targets = Vec::new();
     let mut saw_unknown = saw_report_unknown;
 
-    let strict_seeds = point3_family_or_empty(
-        strict_projected_cell_seeds_from_optional_report(bounds, &shifted, report.as_ref()),
-        &mut saw_unknown,
-    )?;
-    let shifted_vertices =
-        point3_family_or_empty(feasible_support_cell_vertices(&shifted), &mut saw_unknown)?;
-    let shifted_geometry_seeds = point3_family_or_empty(
-        support_cell_geometry_seed_candidates(&shifted),
-        &mut saw_unknown,
-    )?;
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        projected_cell_seed_families_from_optional_report(
+            bounds,
+            &shifted,
+            report.as_ref(),
+            &mut saw_unknown,
+        )?;
     let report_witness = report.as_ref().and_then(|report| report.witness.clone());
     collect_shifted_projected_escape_target_families(
         &mut targets,
@@ -2743,6 +2712,48 @@ fn projected_escape_targets_from_seed(
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
         Ok(targets)
+    }
+}
+
+fn projected_cell_seed_families_from_optional_report(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
+    let shifted_vertices =
+        point3_family_or_empty(feasible_support_cell_vertices(halfspaces), saw_unknown)?;
+    let shifted_geometry_seeds = point3_family_or_empty(
+        support_cell_geometry_seed_candidates(halfspaces),
+        saw_unknown,
+    )?;
+    let mut strict_seeds = Vec::new();
+
+    extend_point3_families_backtracking_unknown(
+        &mut strict_seeds,
+        [
+            if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = report.and_then(|report| report.witness.as_ref())
+            {
+                collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+                })
+            } else {
+                Ok(Vec::new())
+            },
+            collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
+                point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+            }),
+            collect_point3_family(Ok(shifted_geometry_seeds.clone()), |candidate| {
+                point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+            }),
+        ],
+    )?;
+
+    if strict_seeds.is_empty() && *saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok((strict_seeds, shifted_vertices, shifted_geometry_seeds))
     }
 }
 

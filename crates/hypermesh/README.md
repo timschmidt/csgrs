@@ -330,7 +330,10 @@ family is uncertified and no certified witness survives, rather than silently
 degenerating that family to empty. When those shifted target builders receive
 overlapping strict-seed, exact-vertex, and geometry-seed families, they now
 dedupe those seeds in first-occurrence order before rerunning the same shifted
-cell construction from multiple equivalent points.
+cell construction from multiple equivalent points, and the projected-side seed
+builders now reuse one exact feasible-vertex / geometry-seed family per cell
+instead of recomputing those raw families separately for strict and shifted
+search.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh
