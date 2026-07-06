@@ -625,6 +625,8 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 0, 0], [2, 1, 1]);
     let refs = [left.as_ref(), right.as_ref()];
+    let reverse_refs = [right.as_ref(), left.as_ref()];
+    let right_soup = passthrough(&right).unwrap();
     let config = EmberConfig {
         leaf_threshold: 1,
         ..config()
@@ -644,10 +646,23 @@ fn boundary_touching_boxes_use_general_path() -> HypermeshResult<()> {
     assert_no_boundary_edges(&difference);
     assert_volume_numerator(&difference, r(6));
 
+    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
+    assert_same_shape(&reverse_difference, &right_soup);
+
     let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
     assert_same_shape(&xor, &union);
+
+    let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
+    let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
+    assert_same_shape(&reverse_union, &union);
+
+    let reverse_xor_result =
+        boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
+    let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
+    assert_same_shape(&reverse_xor, &xor);
 
     Ok(())
 }
@@ -657,7 +672,9 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 1, 0], [2, 2, 1]);
     let refs = [left.as_ref(), right.as_ref()];
+    let reverse_refs = [right.as_ref(), left.as_ref()];
     let left_soup = passthrough(&left).unwrap();
+    let right_soup = passthrough(&right).unwrap();
     let config = EmberConfig {
         leaf_threshold: 1,
         ..config()
@@ -677,10 +694,23 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
 
+    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
+    assert_same_shape(&reverse_difference, &right_soup);
+
     let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
     assert_same_shape(&xor, &union);
+
+    let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
+    let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
+    assert_same_shape(&reverse_union, &union);
+
+    let reverse_xor_result =
+        boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
+    let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
+    assert_same_shape(&reverse_xor, &xor);
 
     Ok(())
 }
@@ -690,7 +720,9 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 1, 1], [2, 2, 2]);
     let refs = [left.as_ref(), right.as_ref()];
+    let reverse_refs = [right.as_ref(), left.as_ref()];
     let left_soup = passthrough(&left).unwrap();
+    let right_soup = passthrough(&right).unwrap();
     let config = EmberConfig {
         leaf_threshold: 1,
         ..config()
@@ -710,10 +742,23 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_same_shape(&difference, &left_soup);
 
+    let reverse_difference_result = boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
+    let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
+    assert_same_shape(&reverse_difference, &right_soup);
+
     let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
     assert_same_shape(&xor, &union);
+
+    let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
+    let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
+    assert_same_shape(&reverse_union, &union);
+
+    let reverse_xor_result =
+        boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
+    let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
+    assert_same_shape(&reverse_xor, &xor);
 
     Ok(())
 }
