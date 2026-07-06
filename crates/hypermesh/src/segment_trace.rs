@@ -2102,12 +2102,16 @@ fn build_strict_leaf_point(
         return Ok(None);
     }
 
-    let planes = leaf_interior_definitions_from_active_halfspaces(
+    let planes = match leaf_interior_definitions_from_active_halfspaces(
         witness,
         &leaf.support,
         halfspaces,
         active_planes,
-    )?;
+    ) {
+        Ok(planes) => planes,
+        Err(HypermeshError::UnknownClassification) => vec![axis_plane_definition(witness)],
+        Err(err) => return Err(err),
+    };
     Ok(Some(InteriorLeafPoint {
         point: witness.clone(),
         planes,
@@ -3620,6 +3624,20 @@ mod tests {
             assert_eq!(definition[0], support);
             assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
+    }
+
+    #[test]
+    fn strict_leaf_witness_retains_axis_definition_when_active_replay_fails() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
+
+        let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None])
+            .unwrap()
+            .expect("strict witness should still be retained");
+
+        assert_eq!(point.point, witness);
+        assert_eq!(point.planes, vec![axis_plane_definition(&point.point)]);
     }
 
     #[test]
