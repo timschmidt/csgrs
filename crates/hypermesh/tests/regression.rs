@@ -638,11 +638,8 @@ fn same_surface_solids_use_general_leaf_path_in_one_leaf() -> HypermeshResult<()
         ..config()
     };
 
-    let union = triangulate_and_resolve_certified(&boolean_operation(
-        &refs,
-        BooleanOp::Union,
-        config,
-    )?)?;
+    let union =
+        triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
     assert_no_boundary_edges(&union);
 
     let difference = triangulate_and_resolve_certified(&boolean_operation(
@@ -853,11 +850,8 @@ fn edge_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
         ..config()
     };
 
-    let union = triangulate_and_resolve_certified(&boolean_operation(
-        &refs,
-        BooleanOp::Union,
-        config,
-    )?)?;
+    let union =
+        triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
     assert_no_boundary_edges(&union);
     assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(2), r(1)])?;
     assert_volume_numerator(&union, r(12));
@@ -956,11 +950,8 @@ fn vertex_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
         ..config()
     };
 
-    let union = triangulate_and_resolve_certified(&boolean_operation(
-        &refs,
-        BooleanOp::Union,
-        config,
-    )?)?;
+    let union =
+        triangulate_and_resolve_certified(&boolean_operation(&refs, BooleanOp::Union, config)?)?;
     assert_no_boundary_edges(&union);
     assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(2), r(2)])?;
     assert_volume_numerator(&union, r(12));

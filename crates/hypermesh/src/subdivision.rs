@@ -1944,7 +1944,13 @@ fn strict_projected_cell_seeds_from_report(
         && let Some(witness) = &report.witness
         && point_strictly_inside_projected_cell(witness, bounds, halfspaces)?
     {
-        seeds.push(witness.clone());
+        push_unique_point3(&mut seeds, witness.clone());
+    }
+
+    for vertex in feasible_support_cell_vertices(halfspaces)? {
+        if point_strictly_inside_projected_cell(&vertex, bounds, halfspaces)? {
+            push_unique_point3(&mut seeds, vertex);
+        }
     }
 
     Ok(seeds)
@@ -2146,10 +2152,22 @@ fn strict_support_cell_seeds_from_report(
         && let Some(witness) = &report.witness
         && point_strictly_inside_support_cell(witness, bounds, halfspaces)?
     {
-        seeds.push(witness.clone());
+        push_unique_point3(&mut seeds, witness.clone());
+    }
+
+    for vertex in feasible_support_cell_vertices(halfspaces)? {
+        if point_strictly_inside_support_cell(&vertex, bounds, halfspaces)? {
+            push_unique_point3(&mut seeds, vertex);
+        }
     }
 
     Ok(seeds)
+}
+
+fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
+    if !points.iter().any(|existing| existing == &point) {
+        points.push(point);
+    }
 }
 
 fn shifted_support_cell_targets_from_seed(
@@ -3499,7 +3517,6 @@ mod tests {
             hyperlimit::HalfspaceFeasibilityReport::feasible(direct.clone(), [None, None, None]);
 
         let targets = strict_support_cell_targets(&bounds, &halfspaces, &report).unwrap();
-        dbg!(&targets);
 
         assert!(targets.iter().any(|target| target.point == direct));
         assert!(
@@ -3508,6 +3525,48 @@ mod tests {
                 .find(|target| target.point == direct)
                 .is_some_and(|target| !target.definitions.is_empty())
         );
+    }
+
+    #[test]
+    fn strict_projected_cell_seeds_include_strict_feasible_vertices() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+        let report = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            Point3::new(r(1), r(2), r(0)),
+            [None, None, None],
+        );
+
+        let seeds = strict_projected_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
+    }
+
+    #[test]
+    fn strict_support_cell_seeds_include_strict_feasible_vertices() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+        let report = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            Point3::new(r(1), r(2), r(0)),
+            [None, None, None],
+        );
+
+        let seeds = strict_support_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
     }
 
     #[test]

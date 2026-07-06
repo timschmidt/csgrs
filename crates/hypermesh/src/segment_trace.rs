@@ -3036,10 +3036,22 @@ fn strict_halfspace_cell_seeds_from_report(
         && let Some(witness) = &report.witness
         && point_strictly_inside_halfspace_cell(witness, bounds, halfspaces)?
     {
-        seeds.push(witness.clone());
+        push_unique_halfspace_seed(&mut seeds, witness.clone());
+    }
+
+    for vertex in feasible_halfspace_cell_vertices(halfspaces)? {
+        if point_strictly_inside_halfspace_cell(&vertex, bounds, halfspaces)? {
+            push_unique_halfspace_seed(&mut seeds, vertex);
+        }
     }
 
     Ok(seeds)
+}
+
+fn push_unique_halfspace_seed(seeds: &mut Vec<Point3>, seed: Point3) {
+    if !seeds.iter().any(|existing| existing == &seed) {
+        seeds.push(seed);
+    }
 }
 
 struct ShiftedHalfspaceWitness {
@@ -3447,6 +3459,27 @@ mod tests {
         let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
 
         assert!(seeds.iter().any(|seed| seed == &direct));
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seeds_include_strict_feasible_vertices() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+        ];
+        let report = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            Point3::new(r(1), r(2), r(0)),
+            [None, None, None],
+        );
+
+        let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+
+        assert_eq!(seeds, vec![Point3::new(r(1), r(2), r(3))]);
     }
 
     #[test]
