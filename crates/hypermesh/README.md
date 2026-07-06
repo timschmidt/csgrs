@@ -169,9 +169,12 @@ direct tracing, certified endpoint-box detours, and plane-replacement traces
 between retained definitions, with exact axis-plane definitions appended for
 both endpoints before giving up. Those retained plane-replacement steps now
 also allow the same bounded detour family used by probe winding fallback,
-and each such winding/reference replacement step now gets one bounded lower
-definition-based segment trace of its own before the search gives up, without
-recursing into another step-detoured plane-replacement layer. The same retained
+and each such winding/reference replacement step now keeps the actual
+intermediate plane triples of the current and next replacement points rather
+than collapsing them back to axis-only definitions. Each such step also gets
+one bounded lower definition-based segment trace of its own before the search
+gives up, without recursing into another step-detoured plane-replacement
+layer. The same retained
 definitions are used again during leaf classification for plane-defined
 probes, and duplicate certified target points merge their retained definition
 sets instead of dropping later constructions. The

@@ -483,7 +483,7 @@ pub(crate) fn trace_plane_replacement_path(
         end_planes,
         winding,
         polygons,
-        |current, next, attempt, polygons| {
+        |current, next, _current_planes, _next_planes, attempt, polygons| {
             retryable_trace(trace_segment(current, next, attempt, polygons))
         },
     )
@@ -500,7 +500,9 @@ fn trace_plane_replacement_path_without_detours(
         end_planes,
         winding,
         polygons,
-        trace_segment_without_detours,
+        |current, next, _current_planes, _next_planes, attempt, polygons| {
+            trace_segment_without_detours(current, next, attempt, polygons)
+        },
     )
 }
 
@@ -512,6 +514,8 @@ fn trace_plane_replacement_path_with_tracer(
     mut trace_step: impl FnMut(
         &Point3,
         &Point3,
+        &[Plane; 3],
+        &[Plane; 3],
         &[i32],
         &[ConvexPolygon],
     ) -> HypermeshResult<Option<WindingNumberVector>>,
@@ -527,8 +531,9 @@ fn trace_plane_replacement_path_with_tracer(
         let mut valid = true;
 
         for plane_index in ordering {
-            current_planes[plane_index] = end_planes[plane_index].clone();
-            let next_point = match affine_from_planes(&current_planes) {
+            let mut next_planes = current_planes.clone();
+            next_planes[plane_index] = end_planes[plane_index].clone();
+            let next_point = match affine_from_planes(&next_planes) {
                 Ok(point) => point,
                 Err(HypermeshError::UnknownClassification) => {
                     valid = false;
@@ -537,8 +542,14 @@ fn trace_plane_replacement_path_with_tracer(
                 Err(err) => return Err(err),
             };
             if next_point != current_point {
-                let Some(next_winding) =
-                    trace_step(&current_point, &next_point, &attempt, polygons)?
+                let Some(next_winding) = trace_step(
+                    &current_point,
+                    &next_point,
+                    &current_planes,
+                    &next_planes,
+                    &attempt,
+                    polygons,
+                )?
                 else {
                     valid = false;
                     break;
@@ -546,6 +557,7 @@ fn trace_plane_replacement_path_with_tracer(
                 attempt = next_winding;
                 current_point = next_point;
             }
+            current_planes = next_planes;
         }
 
         if valid {
@@ -1177,20 +1189,52 @@ fn trace_plane_replacement_path_with_step_detours(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    trace_plane_replacement_path_with_tracer(
+    trace_plane_replacement_path_with_step_detours_impl(
         start_planes,
         end_planes,
         winding,
         polygons,
-        |current, next, attempt, polygons| {
+        |current, next, attempt, polygons, current_definitions, next_definitions| {
             retryable_trace(trace_segment_from_definitions(
                 current,
                 next,
                 attempt,
                 polygons,
-                &[axis_plane_definition(current)],
-                &[axis_plane_definition(next)],
+                current_definitions,
+                next_definitions,
             ))
+        },
+    )
+}
+
+fn trace_plane_replacement_path_with_step_detours_impl(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    mut trace_step: impl FnMut(
+        &Point3,
+        &Point3,
+        &[i32],
+        &[ConvexPolygon],
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
+) -> HypermeshResult<WindingNumberVector> {
+    trace_plane_replacement_path_with_tracer(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        |current, next, current_definition, next_definition, attempt, polygons| {
+            trace_step(
+                current,
+                next,
+                attempt,
+                polygons,
+                std::slice::from_ref(current_definition),
+                std::slice::from_ref(next_definition),
+            )
         },
     )
 }
@@ -4015,6 +4059,41 @@ mod tests {
             .unwrap(),
             Some(vec![0])
         );
+    }
+
+    #[test]
+    fn plane_replacement_step_detours_preserve_intermediate_definitions() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = [
+            Plane::from_coefficients(r(1), r(1), r(1), r(-1)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::axis_aligned(2, r(0)),
+        ];
+        let expected_start_definitions = vec![start_definition.clone()];
+        let expected_end_definitions = vec![end_definition.clone()];
+        let expected_start = p(0, 0, 0);
+        let expected_end = p(1, 0, 0);
+
+        let winding = trace_plane_replacement_path_with_step_detours_impl(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            |current, next, attempt, _polygons, current_definitions, next_definitions| {
+                if *current == expected_start
+                    && *next == expected_end
+                    && current_definitions == expected_start_definitions.as_slice()
+                    && next_definitions == expected_end_definitions.as_slice()
+                {
+                    Ok(Some(attempt.to_vec()))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
     }
 
     #[test]
