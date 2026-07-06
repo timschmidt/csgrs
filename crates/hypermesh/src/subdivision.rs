@@ -2418,7 +2418,7 @@ fn reference_definitions_from_active_halfspaces(
     let mut active = Vec::new();
     for index in active_planes.into_iter().flatten() {
         let Some(halfspace) = halfspaces.get(index) else {
-            return Err(crate::error::HypermeshError::UnknownClassification);
+            continue;
         };
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         if !active.iter().any(|existing| existing == &plane) {
@@ -4842,13 +4842,36 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            target,
-            Some(ReferenceTarget::with_definitions(
-                p(1, 2, 3),
-                vec![axis_plane_definition(&p(1, 2, 3))]
-            ))
+        let target = target.expect("witness target should still be retained");
+        assert_eq!(target.point, p(1, 2, 3));
+        assert!(
+            target
+                .definitions
+                .iter()
+                .any(|definition| definition == &axis_plane_definition(&p(1, 2, 3)))
         );
+    }
+
+    #[test]
+    fn reference_target_from_halfspace_witness_salvages_coincident_halfspaces_after_invalid_active_index()
+     {
+        let witness = p(1, 2, 3);
+        let halfspaces = vec![
+            axis_halfspace(0, false, r(1)),
+            LimitPlane3::new(p(1, 1, 1), r(-6)),
+        ];
+
+        let target =
+            reference_target_from_halfspace_witness(&witness, &halfspaces, [Some(9), None, None])
+                .unwrap()
+                .expect("witness target should still be retained");
+
+        assert_eq!(target.point, witness);
+        assert!(target.definitions.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(1, 1, 1) && plane.offset == r(-6))
+        }));
     }
 
     #[test]

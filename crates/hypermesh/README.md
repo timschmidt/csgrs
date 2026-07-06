@@ -169,6 +169,10 @@ and axis probe witnesses instead of discarding them when richer probe-plane
 replay fails. Certified endpoint-box detour witnesses now also retain exact
 axis-defined target definitions instead of being dropped when richer probe
 replay reconstruction fails. Definition-preserving normal-probe search now
+also ignores stale active-plane indices and still salvages coincident local
+halfspace definitions before collapsing all the way to axis-only replay, and
+the same recovery now applies to reference-target definition reconstruction.
+Definition-preserving normal-probe search also now
 also augments, rather than suppresses, the broader certified normal-corridor
 witness family when both are available, and axis-direction probe search now
 does the same for retained interior definitions whose non-support planes

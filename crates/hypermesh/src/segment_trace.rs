@@ -2682,7 +2682,7 @@ fn probe_definitions_from_active_halfspaces(
 
     for index in active_planes.into_iter().flatten() {
         let Some(halfspace) = halfspaces.get(index) else {
-            return Err(HypermeshError::UnknownClassification);
+            continue;
         };
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         if !active.iter().any(|existing| existing == &plane) {
@@ -5702,7 +5702,33 @@ mod tests {
             .expect("strict probe witness should still be retained");
 
         assert_eq!(probe.point, witness);
-        assert_eq!(probe.planes, vec![axis_plane_definition(&probe.point)]);
+        assert!(
+            probe
+                .planes
+                .iter()
+                .any(|definition| definition == &axis_plane_definition(&probe.point))
+        );
+    }
+
+    #[test]
+    fn strict_probe_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![
+            axis_halfspace(2, false, r(1)),
+            LimitPlane3::new(p(1, 1, 1), r(-3)),
+        ];
+
+        let probe = build_probe_point(&witness, &support, &halfspaces, [Some(9), None, None], &[])
+            .unwrap()
+            .expect("strict probe witness should still be retained");
+
+        assert_eq!(probe.point, witness);
+        assert!(probe.planes.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(1, 1, 1) && plane.offset == r(-3))
+        }));
     }
 
     #[test]
@@ -5728,7 +5754,12 @@ mod tests {
         .expect("strict axis probe witness should still be retained");
 
         assert_eq!(probe.point, witness);
-        assert_eq!(probe.planes, vec![axis_plane_definition(&probe.point)]);
+        assert!(
+            probe
+                .planes
+                .iter()
+                .any(|definition| definition == &axis_plane_definition(&probe.point))
+        );
     }
 
     #[test]
