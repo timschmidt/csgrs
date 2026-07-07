@@ -599,6 +599,10 @@ used as a shifted-search root in the projected/support target family instead of
 being treated only as a direct witness. That keeps later shifted target
 construction from silently missing alternate reference paths rooted at the same
 exact witness point.
+The same promotion now also applies to the projected escape-target family:
+when the report witness is not itself a strict direct projected seed, it is
+still used as a shifted projected-escape root instead of being treated only as
+the direct report witness.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same

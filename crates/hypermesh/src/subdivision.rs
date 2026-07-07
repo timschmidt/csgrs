@@ -2061,6 +2061,13 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
     let report_witness = report.and_then(|report| report.witness.clone());
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        shifted_target_seed_families_with_report_seed(
+            report_witness.as_ref(),
+            strict_shift_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
     *saw_unknown |= extend_reference_target_families_collect_unknown(
         &mut targets,
         [
@@ -7614,9 +7621,41 @@ mod tests {
         .unwrap();
 
         assert!(saw_unknown);
-        assert_eq!(targets.len(), 1);
-        assert_eq!(targets[0].point, p(1, 1, 1));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(targets.iter().any(|target| target.point == p(1, 1, 1)));
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn projected_escape_target_family_tries_shifted_search_from_report_witness_seed() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 2, 3), [None, None, None]);
+        let visited = std::cell::RefCell::new(Vec::new());
+        let mut saw_unknown = false;
+
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &halfspaces,
+            &[],
+            Some(&report),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            &mut saw_unknown,
+            |seed| {
+                visited.borrow_mut().push(seed.clone());
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![p(1, 2, 3)]);
+        assert!(targets.iter().any(|target| target.point == p(9, 9, 9)));
+        assert!(!saw_unknown);
     }
 
     #[test]
