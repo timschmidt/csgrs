@@ -5959,10 +5959,12 @@ fn point_lies_on_any_support_plane(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     for polygon in polygons {
-        if crate::geometry::classify_point(point, &polygon.support)?
-            == crate::geometry::Classification::On
-        {
-            return Ok(true);
+        match classify_point_in_local_polygon(point, polygon)? {
+            LocalPolygonPointLocation::Outside => {}
+            LocalPolygonPointLocation::Interior => return Ok(true),
+            LocalPolygonPointLocation::Boundary => {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
         }
     }
     Ok(false)
@@ -10344,6 +10346,22 @@ mod tests {
     }
 
     #[test]
+    fn point_lies_on_any_support_plane_reports_unknown_for_boundary_contact() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+
+        let err = point_lies_on_any_support_plane(&p(2, 0, 0), &[polygon]).unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn point_lies_on_any_support_plane_ignores_coplanar_points_outside_polygon() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+
+        assert!(!point_lies_on_any_support_plane(&p(5, 5, 0), &[polygon]).unwrap());
+    }
+
+    #[test]
     fn support_plane_cell_search_accepts_current_cell_before_full_side_assignment() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let polygons = vec![
@@ -11252,6 +11270,43 @@ mod tests {
 
         assert_eq!(trace_calls, 1);
         assert_eq!(found, Some((interior, vec![13])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_tries_later_target_after_boundary_support_surface_contact() {
+        let polygon = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
+        let boundary = ReferenceTarget::axis_defined(p(2, 0, 2));
+        let interior = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let mut trace_calls = 0;
+
+        let found = trace_reference_targets_backtracking_unknown(
+            vec![boundary, interior.clone()],
+            &[polygon],
+            |target| {
+                trace_calls += 1;
+                assert_eq!(target, &interior);
+                Ok(Some(vec![29]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(trace_calls, 1);
+        assert_eq!(found, Some((interior, vec![29])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_reports_unknown_when_boundary_support_surface_contact_blocks_only_target()
+     {
+        let polygon = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
+        let boundary = ReferenceTarget::axis_defined(p(2, 0, 2));
+
+        let err =
+            trace_reference_targets_backtracking_unknown(vec![boundary], &[polygon], |_target| {
+                Ok(Some(vec![29]))
+            })
+            .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]

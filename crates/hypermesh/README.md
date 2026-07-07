@@ -695,7 +695,10 @@ reference-validity checks now also invalidate only the current target and let
 later exact targets run, instead of aborting the whole target search before
 those siblings get traced. Exact boundary contact on a local polygon now also
 counts as an uncertified reference-validity check in that layer instead of
-ordinary invalid target rejection. The
+ordinary invalid target rejection. Support-surface rejection now also classifies
+against the actual support polygon instead of only its support plane, so exact
+boundary contact there counts as `UnknownClassification` and coplanar points
+outside the polygon are no longer rejected as ordinary surface hits. The
 cycle-guarded detour layers now treat uncertified traced-surface checks the
 same way: one uncertified detour-point surface query no longer aborts the
 whole detour family before later certified detours run. The
