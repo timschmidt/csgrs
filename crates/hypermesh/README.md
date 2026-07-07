@@ -580,7 +580,11 @@ The same per-update projected/support support-search cache set now also reuses
 the feasible support-cell vertex family and derived geometry-seed family for
 identical halfspace states, so projected root-family construction and later
 projected/support target construction do not rebuild that exact seed geometry
-from scratch on each revisit.
+from scratch on each revisit. The support side now also caches shifted
+support-cell halfspace/report/seed families by exact `(bounds, halfspaces,
+seed)` state, so repeated shifted support-target construction does not rebuild
+the same shifted local search stack after earlier support attempts already
+explored it.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when
