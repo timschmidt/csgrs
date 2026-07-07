@@ -8271,6 +8271,29 @@ mod tests {
     }
 
     #[test]
+    fn projected_escape_family_prefers_certified_report_witness_duplicate() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let witness = p(1, 2, 3);
+        let families = ShiftedProjectedCellFamilies {
+            shifted: halfspaces.clone(),
+            report: Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                witness.clone(),
+                [Some(9), None, None],
+            )),
+            saw_unknown: false,
+            strict_seeds: Vec::new(),
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets = projected_escape_targets_from_families(&halfspaces, &families).unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, witness);
+        assert!(!targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn projected_escape_family_marks_surviving_targets_uncertain_after_boundary_report_witness() {
         let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
         let families = ShiftedProjectedCellFamilies {
