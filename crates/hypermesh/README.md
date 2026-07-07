@@ -185,9 +185,10 @@ skips past partially uncertified local surface crossings instead of aborting
 the whole detour-box family before later exact boxes are even formed, and
 exact boundary contacts on those local polygon cuts now count as
 `UnknownClassification` for that cut candidate instead of ordinary accepted
-surface membership. The same detour-box layer now treats exact endpoint
-surface contact the same way, so an endpoint-on-plane local cut no longer
-disappears as ordinary no-crossing before later exact detour boxes run.
+surface membership. The same detour-box layer now treats exact start-point and
+endpoint surface contact the same way, so start-on-plane and endpoint-on-plane
+local cuts no longer disappear as ordinary no-crossing before later exact
+detour boxes run.
 If one of those local witness or seed families is entirely uncertified and no
 certified candidate survives, it now returns `UnknownClassification` instead of
 quietly collapsing that local family to an empty witness set.
