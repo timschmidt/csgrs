@@ -242,7 +242,8 @@ rather than by midpoint sampling, and that axis probe path now also walks the
 ordered exact stop family out to the child boundary instead of stopping at the
 first certified crossing. Partially uncertified local axis crossings no longer
 abort the whole corridor family before later exact corridors run, and exact
-boundary contacts on those local axis corridors now count as
+start-on-plane, boundary, and endpoint-on-plane contacts on those local axis
+corridors now count as
 `UnknownClassification` for that corridor candidate instead of ordinary stop
 membership. Full
 Normal-direction probes now do the same: they walk the ordered exact stop
