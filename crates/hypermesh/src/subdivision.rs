@@ -1874,7 +1874,13 @@ fn search_projected_reference_families(
     }
 
     match projected_support_search() {
-        Ok(Some(found)) => return Ok(Some(found)),
+        Ok(Some(found)) => {
+            if found.0.uncertified_definition_fallback {
+                saw_unknown = true;
+            } else {
+                return Ok(Some(found));
+            }
+        }
         Ok(None) => {}
         Err(crate::error::HypermeshError::UnknownClassification) => {
             saw_unknown = true;
@@ -1908,7 +1914,13 @@ fn search_projected_reference_families(
         }
 
         match axis_escape_search(projected_target) {
-            Ok(Some(found)) => return Ok(Some(found)),
+            Ok(Some(found)) => {
+                if found.0.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(Some(found));
+                }
+            }
             Ok(None) => {
                 if projected_target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -1921,7 +1933,13 @@ fn search_projected_reference_families(
         }
 
         match tight_escape_search(projected_target) {
-            Ok(Some(found)) => return Ok(Some(found)),
+            Ok(Some(found)) => {
+                if found.0.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(Some(found));
+                }
+            }
             Ok(None) => {
                 if projected_target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -7314,6 +7332,50 @@ mod tests {
     }
 
     #[test]
+    fn projected_reference_search_skips_fallback_projected_support_success() {
+        let escape_target = ReferenceTarget::axis_defined(p(4, 2, 3));
+        let found = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || {
+                Ok(Some((
+                    ReferenceTarget::axis_defined_fallback(p(1, 2, 3)),
+                    vec![41],
+                )))
+            },
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(Some((ReferenceTarget::axis_defined(p(5, 2, 3)), vec![43]))),
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(5, 2, 3)), vec![43]))
+        );
+    }
+
+    #[test]
+    fn projected_reference_search_reports_unknown_when_only_fallback_projected_support_succeeds() {
+        let err = search_projected_reference_families(
+            &[],
+            &[],
+            || {
+                Ok(Some((
+                    ReferenceTarget::axis_defined_fallback(p(1, 2, 3)),
+                    vec![41],
+                )))
+            },
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn projected_reference_search_reports_unknown_when_fallback_escape_target_has_no_escape_path() {
         let escape_target = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
         let err = search_projected_reference_families(
@@ -7322,6 +7384,51 @@ mod tests {
             || Ok(None),
             |_target| Ok(None),
             |_target| Ok(None),
+            |_target| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projected_reference_search_skips_fallback_axis_escape_success() {
+        let escape_target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let found = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| {
+                Ok(Some((
+                    ReferenceTarget::axis_defined_fallback(p(2, 2, 3)),
+                    vec![41],
+                )))
+            },
+            |_target| Ok(Some((ReferenceTarget::axis_defined(p(3, 2, 3)), vec![43]))),
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(3, 2, 3)), vec![43]))
+        );
+    }
+
+    #[test]
+    fn projected_reference_search_reports_unknown_when_only_fallback_axis_escape_succeeds() {
+        let escape_target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let err = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| {
+                Ok(Some((
+                    ReferenceTarget::axis_defined_fallback(p(2, 2, 3)),
+                    vec![41],
+                )))
+            },
             |_target| Ok(None),
         )
         .unwrap_err();
@@ -7345,6 +7452,56 @@ mod tests {
         assert_eq!(
             found,
             Some((ReferenceTarget::axis_defined(p(2, 2, 3)), vec![41]))
+        );
+    }
+
+    #[test]
+    fn projected_reference_search_reports_unknown_when_only_fallback_tight_escape_succeeds() {
+        let escape_target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let err = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| {
+                Ok(Some((
+                    ReferenceTarget::axis_defined_fallback(p(2, 2, 3)),
+                    vec![41],
+                )))
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projected_reference_search_skips_fallback_tight_escape_success_for_later_certified_escape() {
+        let first_escape = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let second_escape = ReferenceTarget::axis_defined(p(4, 2, 3));
+        let found = search_projected_reference_families(
+            &[],
+            &[first_escape.clone(), second_escape.clone()],
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |target| {
+                if target == &first_escape {
+                    Ok(Some((
+                        ReferenceTarget::axis_defined_fallback(p(2, 2, 3)),
+                        vec![41],
+                    )))
+                } else {
+                    Ok(Some((ReferenceTarget::axis_defined(p(5, 2, 3)), vec![43])))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(5, 2, 3)), vec![43]))
         );
     }
 

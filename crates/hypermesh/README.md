@@ -617,7 +617,11 @@ flattening the exhausted escape branch into ordinary absence.
 Fallback-marked projected/support `ReferenceTarget`s are also no longer
 accepted as final success just because their winding trace happens to succeed;
 the search now keeps looking for a certified target and only returns success on
-that certified target.
+that certified target. The same contract now also applies to the indirect
+projected-support, axis-escape, and tight-escape branches: if one of those
+helpers produces a fallback-marked success tuple, projected reference search
+keeps looking for a certified later result and otherwise returns
+`UnknownClassification`.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same
