@@ -109,7 +109,11 @@ family to `None`. The retained-definition entry path above the step-detoured
 plane-replacement tracer also now caches exact repeated intermediate steps
 across axis orderings inside one retained path, so equivalent one-plane updates
 do not retrace the same local segment family over and over before that broader
-search moves on. The retained-definition entry path above the step-detoured
+search moves on. The same local plane-replacement walk now also reuses exact
+`affine_from_planes(...)` results across sibling orderings, so equivalent
+intermediate plane triples do not repay the same exact point reconstruction
+before trace or reachability continues. The retained-definition entry path
+above the step-detoured
 plane-replacement fallback now also surfaces an uncertified direct trace family
 explicitly and lets that broader replacement search decide the fallback,
 instead of flattening the uncertified direct trace to absence first. The plain

@@ -84,6 +84,12 @@ struct PlaneReplacementStepCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct PlaneReplacementAffineCacheEntry {
+    planes: [Plane; 3],
+    point: HypermeshResult<Point3>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -808,29 +814,36 @@ fn trace_plane_replacement_path_with_tracer(
         &[ConvexPolygon],
     ) -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut affine_cache = Vec::new();
     let mut step_cache = Vec::new();
 
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
-        let mut current_point = match affine_from_planes(&current_planes) {
-            Ok(point) => point,
-            Err(HypermeshError::UnknownClassification) => continue,
-            Err(err) => return Err(err),
-        };
+        let mut current_point =
+            match cached_affine_from_planes_with(&mut affine_cache, &current_planes, || {
+                affine_from_planes(&current_planes)
+            }) {
+                Ok(point) => point,
+                Err(HypermeshError::UnknownClassification) => continue,
+                Err(err) => return Err(err),
+            };
         let mut attempt = winding.to_vec();
         let mut valid = true;
 
         for plane_index in ordering {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
-            let next_point = match affine_from_planes(&next_planes) {
-                Ok(point) => point,
-                Err(HypermeshError::UnknownClassification) => {
-                    valid = false;
-                    break;
-                }
-                Err(err) => return Err(err),
-            };
+            let next_point =
+                match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
+                    affine_from_planes(&next_planes)
+                }) {
+                    Ok(point) => point,
+                    Err(HypermeshError::UnknownClassification) => {
+                        valid = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
+                };
             if next_point != current_point {
                 let next_winding = match cached_plane_replacement_step_with(
                     &mut step_cache,
@@ -869,6 +882,23 @@ fn trace_plane_replacement_path_with_tracer(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn cached_affine_from_planes_with(
+    cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    planes: &[Plane; 3],
+    compute: impl FnOnce() -> HypermeshResult<Point3>,
+) -> HypermeshResult<Point3> {
+    if let Some(existing) = cache.iter().find(|existing| existing.planes == *planes) {
+        return existing.point.clone();
+    }
+
+    let point = compute();
+    cache.push(PlaneReplacementAffineCacheEntry {
+        planes: planes.clone(),
+        point: point.clone(),
+    });
+    point
 }
 
 fn cached_plane_replacement_step_with(
@@ -2813,31 +2843,38 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     end_planes: &[Plane; 3],
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
+    let mut affine_cache = Vec::new();
     let mut saw_unknown = false;
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
-        let mut current_point = match affine_from_planes(&current_planes) {
-            Ok(point) => point,
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-                continue;
-            }
-            Err(err) => return Err(err),
-        };
+        let mut current_point =
+            match cached_affine_from_planes_with(&mut affine_cache, &current_planes, || {
+                affine_from_planes(&current_planes)
+            }) {
+                Ok(point) => point,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
         let mut valid = true;
 
         for plane_index in ordering {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
-            let next_point = match affine_from_planes(&next_planes) {
-                Ok(point) => point,
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    valid = false;
-                    break;
-                }
-                Err(err) => return Err(err),
-            };
+            let next_point =
+                match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
+                    affine_from_planes(&next_planes)
+                }) {
+                    Ok(point) => point,
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        valid = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
+                };
             if next_point != current_point
                 && !trace_step(
                     &current_point,
@@ -9950,6 +9987,28 @@ mod tests {
 
         assert_eq!(err, HypermeshError::UnknownClassification);
         assert_eq!(step_calls, 1);
+    }
+
+    #[test]
+    fn cached_affine_from_planes_reuses_identical_plane_set() {
+        let planes = axis_plane_definition(&p(1, 2, 3));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_affine_from_planes_with(&mut cache, &planes, || {
+            calls += 1;
+            affine_from_planes(&planes)
+        })
+        .unwrap();
+        let second = cached_affine_from_planes_with(&mut cache, &planes, || {
+            calls += 1;
+            affine_from_planes(&planes)
+        })
+        .unwrap();
+
+        assert_eq!(first, p(1, 2, 3));
+        assert_eq!(second, first);
+        assert_eq!(calls, 1);
     }
 
     #[test]
