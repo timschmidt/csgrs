@@ -5764,10 +5764,30 @@ fn push_unique_shifted_halfspace_witness(
         .iter_mut()
         .find(|existing| existing.point == witness.point)
     {
-        existing.uncertified_definition_fallback |= witness.uncertified_definition_fallback;
+        let merged_uncertified =
+            existing.uncertified_definition_fallback || witness.uncertified_definition_fallback;
+        if shifted_halfspace_witness_is_more_informative(&witness, existing) {
+            *existing = witness;
+        }
+        existing.uncertified_definition_fallback = merged_uncertified;
     } else {
         witnesses.push(witness);
     }
+}
+
+fn shifted_halfspace_witness_is_more_informative(
+    candidate: &ShiftedHalfspaceWitness,
+    existing: &ShiftedHalfspaceWitness,
+) -> bool {
+    let candidate_active = count_active_plane_indices(candidate.active_planes);
+    let existing_active = count_active_plane_indices(existing.active_planes);
+    candidate_active > existing_active
+        || (candidate_active == existing_active
+            && candidate.halfspaces.len() > existing.halfspaces.len())
+}
+
+fn count_active_plane_indices(active_planes: [Option<usize>; 3]) -> usize {
+    active_planes.into_iter().flatten().count()
 }
 
 fn take_new_halfspace_seed_family(points: Vec<Point3>, seen: &mut Vec<Point3>) -> Vec<Point3> {
@@ -6682,6 +6702,34 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, kept.point);
+        assert!(witnesses[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn duplicate_shifted_halfspace_witnesses_keep_richer_active_plane_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let point = p(1, 1, 1);
+        let mut witnesses = vec![ShiftedHalfspaceWitness {
+            point: point.clone(),
+            halfspaces: vec![halfspaces[0].clone()],
+            active_planes: [None, None, None],
+            uncertified_definition_fallback: true,
+        }];
+
+        push_unique_shifted_halfspace_witness(
+            &mut witnesses,
+            ShiftedHalfspaceWitness {
+                point,
+                halfspaces: halfspaces.clone(),
+                active_planes: [Some(0), Some(1), None],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].active_planes, [Some(0), Some(1), None]);
+        assert_eq!(witnesses[0].halfspaces, halfspaces);
         assert!(witnesses[0].uncertified_definition_fallback);
     }
 
