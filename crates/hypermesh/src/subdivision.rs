@@ -2833,7 +2833,6 @@ fn reference_targets_match_for_trace_cache(
     right: &ReferenceTarget,
 ) -> bool {
     left.point == right.point
-        && left.uncertified_definition_fallback == right.uncertified_definition_fallback
         && reference_definition_families_match_as_sets(&left.definitions, &right.definitions)
 }
 
@@ -7646,6 +7645,49 @@ mod tests {
     }
 
     #[test]
+    fn projected_reference_search_skips_duplicate_escape_direct_trace_for_fallback_duplicate() {
+        use std::cell::RefCell;
+
+        let point = p(1, 2, 3);
+        let projected = ReferenceTarget::axis_defined(point.clone());
+        let escape_target = ReferenceTarget::axis_defined_fallback(point);
+        let axis_target = ReferenceTarget::axis_defined(p(2, 2, 4));
+        let calls = RefCell::new(Vec::new());
+
+        let found = search_projected_reference_families(
+            std::slice::from_ref(&projected),
+            std::slice::from_ref(&escape_target),
+            || {
+                calls.borrow_mut().push("projected_support");
+                Ok(None)
+            },
+            |_target| {
+                calls.borrow_mut().push("direct");
+                Ok(None)
+            },
+            |target| {
+                calls.borrow_mut().push("axis_escape");
+                assert!(reference_targets_match_for_trace_cache(
+                    target,
+                    &escape_target
+                ));
+                Ok(Some((axis_target.clone(), vec![41])))
+            },
+            |_target| {
+                calls.borrow_mut().push("tight_escape");
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((axis_target, vec![41])));
+        assert_eq!(
+            *calls.borrow(),
+            vec!["direct", "projected_support", "axis_escape"]
+        );
+    }
+
+    #[test]
     fn projected_reference_search_still_tries_projected_support_without_targets() {
         use std::cell::RefCell;
 
@@ -10836,10 +10878,36 @@ mod tests {
         .unwrap();
 
         assert_eq!(validity_calls.get(), 1);
-        assert_eq!(trace_calls.get(), 2);
+        assert_eq!(trace_calls.get(), 1);
         assert_eq!(first_result, Some(vec![1]));
-        assert_eq!(second_result, Some(vec![2]));
+        assert_eq!(second_result, Some(vec![1]));
         assert_eq!(third_result, Some(vec![1]));
+    }
+
+    #[test]
+    fn cached_reference_target_trace_reuses_certified_and_fallback_duplicates() {
+        use std::cell::Cell;
+
+        let point = p(1, 2, 3);
+        let target = ReferenceTarget::axis_defined(point.clone());
+        let fallback = ReferenceTarget::axis_defined_fallback(point);
+        let mut trace_cache = Vec::new();
+        let calls = Cell::new(0);
+
+        let first = cached_reference_target_trace_with(&mut trace_cache, &fallback, |_target| {
+            calls.set(calls.get() + 1);
+            Ok(Some(vec![7]))
+        })
+        .unwrap();
+        let second = cached_reference_target_trace_with(&mut trace_cache, &target, |_target| {
+            calls.set(calls.get() + 1);
+            Ok(Some(vec![9]))
+        })
+        .unwrap();
+
+        assert_eq!(first, Some(vec![7]));
+        assert_eq!(second, Some(vec![7]));
+        assert_eq!(calls.get(), 1);
     }
 
     #[test]

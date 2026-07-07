@@ -790,7 +790,10 @@ a projected direct target later reappears in support-side search. The
 support/projected reference side now also treats retained definition triples as
 set-equal up to plane permutation when it merges target families and when it
 hits the retained-definition trace cache, so equivalent target definitions do
-not repay the same trace just because the local plane order differs. Identical support states also
+not repay the same trace just because the local plane order differs. The same
+trace cache now also ignores redundant fallback/certified duplication on an
+otherwise identical target, because the retained-definition trace itself does
+not depend on that bookkeeping bit. Identical support states also
 reuse the exact support target-family construction itself before those traces
 run, instead of rebuilding the same retained target family on each revisit, and
 the full accepted support-reference result is now reused on identical
