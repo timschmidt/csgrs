@@ -2121,6 +2121,46 @@ fn reference_target_family_from_witness(
     })
 }
 
+fn deferred_direct_reference_targets_from_strict_seeds(
+    strict_seeds: &[Point3],
+    report_witness: Option<&Point3>,
+    halfspaces: &[LimitPlane3],
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    deferred_direct_reference_targets_from_strict_seeds_with(
+        strict_seeds,
+        report_witness,
+        saw_unknown,
+        |seed| reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
+    )
+}
+
+fn deferred_direct_reference_targets_from_strict_seeds_with(
+    strict_seeds: &[Point3],
+    report_witness: Option<&Point3>,
+    saw_unknown: &mut bool,
+    mut build: impl FnMut(&Point3) -> HypermeshResult<Option<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    match collect_reference_target_family(strict_seeds.iter().cloned(), |seed| {
+        if report_witness.is_some_and(|witness| witness == &seed) {
+            return Ok(Vec::new());
+        }
+        Ok(build(&seed)?.into_iter().collect())
+    }) {
+        Ok(targets) => {
+            *saw_unknown |= targets
+                .iter()
+                .any(|target| target.uncertified_definition_fallback);
+            Ok(targets)
+        }
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(Vec::new())
+        }
+        Err(err) => Err(err),
+    }
+}
+
 fn deferred_projected_escape_direct_targets(
     strict_seeds: &[Point3],
     report_witness: Option<&Point3>,
@@ -3498,17 +3538,12 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
             shifted_vertices,
             shifted_geometry_seeds,
         );
-    let mut deferred_direct_targets = Vec::new();
-    for seed in &strict_shift_seeds {
-        if !report_witness
-            .as_ref()
-            .is_some_and(|witness| witness == seed)
-            && let Some(target) =
-                reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None])?
-        {
-            push_unique_reference_target(&mut deferred_direct_targets, target);
-        }
-    }
+    let deferred_direct_targets = deferred_direct_reference_targets_from_strict_seeds(
+        &strict_shift_seeds,
+        report_witness.as_ref(),
+        halfspaces,
+        saw_unknown,
+    )?;
     *saw_unknown |= extend_reference_target_families_collect_unknown(
         &mut targets,
         [
@@ -3920,17 +3955,12 @@ fn strict_support_cell_targets_from_optional_report(
             shifted_vertices,
             shifted_geometry_seeds,
         );
-    let mut deferred_direct_targets = Vec::new();
-    for seed in &strict_shift_seeds {
-        if !report_witness
-            .as_ref()
-            .is_some_and(|witness| witness == seed)
-            && let Some(target) =
-                reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None])?
-        {
-            push_unique_reference_target(&mut deferred_direct_targets, target);
-        }
-    }
+    let deferred_direct_targets = deferred_direct_reference_targets_from_strict_seeds(
+        &strict_shift_seeds,
+        report_witness.as_ref(),
+        halfspaces,
+        &mut saw_unknown,
+    )?;
     extend_reference_target_families_backtracking_unknown(
         &mut targets,
         [
@@ -5910,6 +5940,50 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn deferred_direct_reference_targets_backtrack_after_uncertified_seed() {
+        let first = p(1, 2, 3);
+        let second = p(1, 2, 4);
+        let mut saw_unknown = false;
+
+        let targets = deferred_direct_reference_targets_from_strict_seeds_with(
+            &[first.clone(), second.clone()],
+            None,
+            &mut saw_unknown,
+            |seed| {
+                if *seed == first {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(ReferenceTarget::axis_defined(seed.clone())))
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, second);
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn deferred_direct_reference_targets_track_unknown_if_all_seeds_are_uncertified() {
+        let first = p(1, 2, 3);
+        let second = p(1, 2, 4);
+        let mut saw_unknown = false;
+
+        let targets = deferred_direct_reference_targets_from_strict_seeds_with(
+            &[first, second],
+            None,
+            &mut saw_unknown,
+            |_seed| Err(crate::error::HypermeshError::UnknownClassification),
+        )
+        .unwrap();
+
+        assert!(targets.is_empty());
+        assert!(saw_unknown);
     }
 
     #[test]
