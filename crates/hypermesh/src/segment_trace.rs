@@ -421,7 +421,7 @@ fn trace_segment_via_detours_with_cycle_guard(
                 point_lies_on_traced_surface(&detour.point, polygons)
             })?
         {
-            if detour.uncertified_definition_fallback && !already_visited {
+            if detour.uncertified_definition_fallback {
                 saw_unknown = true;
             }
             continue;
@@ -2142,7 +2142,7 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
                 point_lies_on_traced_surface(&detour.point, polygons)
             })?
         {
-            if detour.uncertified_definition_fallback && !already_visited {
+            if detour.uncertified_definition_fallback {
                 saw_unknown = true;
             }
             continue;
@@ -2505,7 +2505,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                 point_lies_on_traced_surface(&detour.point, polygons)
             })?
         {
-            if detour.uncertified_definition_fallback && !already_visited {
+            if detour.uncertified_definition_fallback {
                 saw_unknown = true;
             }
             continue;
@@ -8355,6 +8355,32 @@ mod tests {
     }
 
     #[test]
+    fn detour_trace_reports_unknown_when_fallback_revisited_detour_is_skipped() {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let fallback_detour = DetourTarget {
+            point: end.clone(),
+            definitions: vec![axis_plane_definition(&end)],
+            uncertified_definition_fallback: true,
+        };
+
+        let err = trace_segment_from_definitions_with_cycle_guard_impl(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut |_from, _to, _winding, _start_definitions, _end_definitions| Ok(None),
+            &mut |_from, _to| Ok(vec![fallback_detour.clone()]),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
         let ref_point = p(0, 0, 0);
         let ref_definitions = [[
@@ -8813,6 +8839,44 @@ mod tests {
     }
 
     #[test]
+    fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_revisited_detour_is_skipped() {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: end.clone(),
+            definitions: vec![axis_plane_definition(&end)],
+            uncertified_definition_fallback: true,
+        };
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| Ok(false);
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err =
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn probe_reachability_backtracks_after_uncertified_detour_leg() {
         let start = p(0, 0, 0);
         let blocked = p(1, 0, 0);
@@ -9066,6 +9130,43 @@ mod tests {
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
             1,
+            &mut trace_without_detours,
+            &mut detours_for,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_reachability_reports_unknown_when_fallback_revisited_detour_is_skipped() {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: end.clone(),
+            definitions: vec![axis_plane_definition(&end)],
+            uncertified_definition_fallback: true,
+        };
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| Ok(false);
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err = probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
+            &start,
+            &end,
+            &[],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
             &mut trace_without_detours,
             &mut detours_for,
         )
