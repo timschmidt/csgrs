@@ -1989,6 +1989,7 @@ fn compute_new_reference(
         let SupportReferenceQueryCaches {
             seed_geometry_cache,
             reference_witness_cache,
+            strict_contains_cache,
             ..
         } = &mut *query_caches;
         projected_root_reference_families_with_witness_cache(
@@ -1996,6 +1997,7 @@ fn compute_new_reference(
             &projected_halfspaces,
             seed_geometry_cache,
             reference_witness_cache,
+            strict_contains_cache,
         )?
     };
     {
@@ -2145,11 +2147,13 @@ fn projected_root_reference_families(
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     projected_root_reference_families_with_witness_cache(
         bounds,
         halfspaces,
         seed_geometry_cache,
         &reference_witness_cache,
+        &strict_contains_cache,
     )
 }
 
@@ -2158,6 +2162,7 @@ fn projected_root_reference_families_with_witness_cache(
     halfspaces: &[LimitPlane3],
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
     let (report, saw_report_unknown) = optional_halfspace_system_report(halfspaces)?;
     if report
@@ -2192,6 +2197,7 @@ fn projected_root_reference_families_with_witness_cache(
             shifted_geometry_seeds.clone(),
             &mut saw_unknown,
             reference_witness_cache,
+            strict_contains_cache,
             |seed| {
                 shifted_projected_cell_targets_from_seed_with_cache(
                     bounds,
@@ -2199,6 +2205,7 @@ fn projected_root_reference_families_with_witness_cache(
                     seed,
                     &mut shifted_projected_cell_cache.borrow_mut(),
                     reference_witness_cache,
+                    strict_contains_cache,
                 )
             },
         )?;
@@ -3581,6 +3588,14 @@ struct ReferenceBoundsValidityCacheEntry {
 }
 
 #[derive(Clone)]
+struct ReferenceHalfspaceContainmentCacheEntry {
+    bounds: Aabb,
+    point: Point3,
+    halfspaces: Vec<LimitPlane3>,
+    contains: HypermeshResult<bool>,
+}
+
+#[derive(Clone)]
 struct SupportSurfaceCacheEntry {
     point: Point3,
     on_support_surface: HypermeshResult<bool>,
@@ -3601,6 +3616,7 @@ struct SupportReferenceQueryCaches {
     seed_geometry_cache: Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
     trace_cache: Vec<ReferenceTargetTraceCacheEntry>,
     validity_cache: Vec<ReferenceBoundsValidityCacheEntry>,
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
@@ -3726,6 +3742,31 @@ fn cached_reference_bounds_validity_with(
         is_valid: is_valid.clone(),
     });
     is_valid
+}
+
+fn cached_reference_halfspace_containment_with(
+    cache: &mut Vec<ReferenceHalfspaceContainmentCacheEntry>,
+    bounds: &Aabb,
+    point: &Point3,
+    halfspaces: &[LimitPlane3],
+    query: impl FnOnce(&Point3, &Aabb, &[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && existing.point == *point
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+    }) {
+        return existing.contains.clone();
+    }
+
+    let contains = query(point, bounds, halfspaces);
+    cache.push(ReferenceHalfspaceContainmentCacheEntry {
+        bounds: bounds.clone(),
+        point: point.clone(),
+        halfspaces: halfspaces.to_vec(),
+        contains: contains.clone(),
+    });
+    contains
 }
 
 fn cached_support_surface_query_with(
@@ -4555,6 +4596,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     let seed_geometry_cache = &mut query_caches.seed_geometry_cache;
     let shifted_support_family_cache = &mut query_caches.shifted_support_family_cache;
     let reference_witness_cache = &mut query_caches.reference_witness_cache;
+    let strict_contains_cache = &query_caches.strict_contains_cache;
     let trace_cache = &mut query_caches.trace_cache;
     let validity_cache = &mut query_caches.validity_cache;
     let support_surface_cache = &mut query_caches.support_surface_cache;
@@ -4592,6 +4634,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
         seed_geometry_cache,
         shifted_support_family_cache,
         reference_witness_cache,
+        strict_contains_cache,
         target_cache,
         accept_cache,
         search_cache,
@@ -4630,6 +4673,7 @@ fn support_plane_cell_reference_with_queries(
         &mut query_caches.seed_geometry_cache,
         &mut query_caches.shifted_support_family_cache,
         &query_caches.reference_witness_cache,
+        &query_caches.strict_contains_cache,
         &query_caches.target_cache,
         &query_caches.accept_cache,
         &query_caches.search_cache,
@@ -4653,6 +4697,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
     target_cache: &std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
     accept_cache: &std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
     search_cache: &std::cell::RefCell<
@@ -4693,6 +4738,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                                 seed_geometry_cache,
                                 shifted_support_family_cache,
                                 reference_witness_cache,
+                                strict_contains_cache,
                             )
                         },
                     )?,
@@ -5492,6 +5538,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
     build_shifted_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
         bounds,
         halfspaces,
@@ -5501,6 +5548,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
         shifted_geometry_seeds,
         saw_unknown,
         &reference_witness_cache,
+        &strict_contains_cache,
         build_shifted_targets,
     )
 }
@@ -5514,6 +5562,7 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_wi
     shifted_geometry_seeds: Vec<Point3>,
     saw_unknown: &mut bool,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
     mut build_shifted_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
@@ -5548,7 +5597,12 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_wi
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
                 |witness| {
-                    point_strictly_inside_projected_cell_or_unknown(witness, bounds, halfspaces)
+                    cached_point_strictly_inside_projected_cell_or_unknown_with(
+                        &mut strict_contains_cache.borrow_mut(),
+                        witness,
+                        bounds,
+                        halfspaces,
+                    )
                 },
                 |witness| {
                     cached_reference_target_from_halfspace_witness_with(
@@ -5630,6 +5684,7 @@ fn shifted_projected_cell_targets_from_seed_with_cache(
     seed: &Point3,
     cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match cached_shifted_projected_cell_families_with(cache, bounds, halfspaces, seed, || {
         shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)
@@ -5639,6 +5694,7 @@ fn shifted_projected_cell_targets_from_seed_with_cache(
             halfspaces,
             &families,
             reference_witness_cache,
+            strict_contains_cache,
         ),
         None => Ok(Vec::new()),
     }
@@ -5651,11 +5707,13 @@ fn shifted_projected_cell_targets_from_families(
     families: &ShiftedProjectedCellFamilies,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     shifted_projected_cell_targets_from_families_with_witness_cache(
         bounds,
         halfspaces,
         families,
         &reference_witness_cache,
+        &strict_contains_cache,
     )
 }
 
@@ -5664,6 +5722,7 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
     halfspaces: &[LimitPlane3],
     families: &ShiftedProjectedCellFamilies,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = &families.shifted;
     let report = families.report.as_ref();
@@ -5682,7 +5741,12 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
             reference_target_family_from_witness(
                 report_witness.as_ref(),
                 |witness| {
-                    point_strictly_inside_projected_cell_or_unknown(witness, bounds, halfspaces)
+                    cached_point_strictly_inside_projected_cell_or_unknown_with(
+                        &mut strict_contains_cache.borrow_mut(),
+                        witness,
+                        bounds,
+                        halfspaces,
+                    )
                 },
                 |witness| {
                     cached_reference_target_from_halfspace_witness_with(
@@ -5701,7 +5765,12 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                 },
             ),
             collect_reference_target_family(strict_shift_seeds, |witness| {
-                if !point_strictly_inside_projected_cell_or_unknown(&witness, bounds, halfspaces)? {
+                if !cached_point_strictly_inside_projected_cell_or_unknown_with(
+                    &mut strict_contains_cache.borrow_mut(),
+                    &witness,
+                    bounds,
+                    halfspaces,
+                )? {
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
@@ -5721,7 +5790,12 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                 .collect())
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
-                if !point_strictly_inside_projected_cell_or_unknown(&witness, bounds, halfspaces)? {
+                if !cached_point_strictly_inside_projected_cell_or_unknown_with(
+                    &mut strict_contains_cache.borrow_mut(),
+                    &witness,
+                    bounds,
+                    halfspaces,
+                )? {
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
@@ -5741,7 +5815,12 @@ fn shifted_projected_cell_targets_from_families_with_witness_cache(
                 .collect())
             }),
             collect_reference_target_family(shifted_geometry_seeds, |witness| {
-                if !point_strictly_inside_projected_cell_or_unknown(&witness, bounds, halfspaces)? {
+                if !cached_point_strictly_inside_projected_cell_or_unknown_with(
+                    &mut strict_contains_cache.borrow_mut(),
+                    &witness,
+                    bounds,
+                    halfspaces,
+                )? {
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
@@ -6101,6 +6180,7 @@ fn strict_support_cell_targets_from_optional_report(
     let mut seed_geometry_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
         bounds,
         halfspaces,
@@ -6108,6 +6188,7 @@ fn strict_support_cell_targets_from_optional_report(
         &mut seed_geometry_cache,
         &mut shifted_support_family_cache,
         &reference_witness_cache,
+        &strict_contains_cache,
     )
 }
 
@@ -6118,6 +6199,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
     let mut saw_unknown = false;
@@ -6161,7 +6243,12 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
                 |witness| {
-                    point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
+                    cached_point_strictly_inside_support_cell_or_unknown_with(
+                        &mut strict_contains_cache.borrow_mut(),
+                        witness,
+                        bounds,
+                        halfspaces,
+                    )
                 },
                 |witness| {
                     cached_reference_target_from_halfspace_witness_with(
@@ -6187,6 +6274,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     seed_geometry_cache,
                     shifted_support_family_cache,
                     reference_witness_cache,
+                    strict_contains_cache,
                 )
             }),
             collect_reference_target_family(shifted_vertices, |vertex| {
@@ -6197,6 +6285,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     seed_geometry_cache,
                     shifted_support_family_cache,
                     reference_witness_cache,
+                    strict_contains_cache,
                 )
             }),
             collect_reference_target_family(shifted_geometry_seeds, |seed| {
@@ -6207,6 +6296,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     seed_geometry_cache,
                     shifted_support_family_cache,
                     reference_witness_cache,
+                    strict_contains_cache,
                 )
             }),
         ],
@@ -6539,6 +6629,7 @@ fn shifted_support_cell_targets_from_seed(
     let mut seed_geometry_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     shifted_support_cell_targets_from_seed_with_caches(
         bounds,
         halfspaces,
@@ -6546,6 +6637,7 @@ fn shifted_support_cell_targets_from_seed(
         &mut seed_geometry_cache,
         &mut shifted_support_family_cache,
         &reference_witness_cache,
+        &strict_contains_cache,
     )
 }
 
@@ -6556,6 +6648,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match cached_shifted_support_cell_families_with(
         shifted_support_family_cache,
@@ -6569,6 +6662,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
             halfspaces,
             &families,
             reference_witness_cache,
+            strict_contains_cache,
         ),
         None => Ok(Vec::new()),
     }
@@ -6694,6 +6788,7 @@ fn shifted_support_cell_targets_from_families(
     halfspaces: &[LimitPlane3],
     families: &ShiftedSupportCellFamilies,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = &families.shifted;
     let report = families.report.as_ref();
@@ -6712,7 +6807,12 @@ fn shifted_support_cell_targets_from_families(
             reference_target_family_from_witness(
                 report_witness.as_ref(),
                 |witness| {
-                    point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
+                    cached_point_strictly_inside_support_cell_or_unknown_with(
+                        &mut strict_contains_cache.borrow_mut(),
+                        witness,
+                        bounds,
+                        halfspaces,
+                    )
                 },
                 |witness| {
                     cached_reference_target_from_halfspace_witness_with(
@@ -6731,7 +6831,12 @@ fn shifted_support_cell_targets_from_families(
                 },
             ),
             collect_reference_target_family(strict_shift_seeds, |witness| {
-                if !point_strictly_inside_support_cell_or_unknown(&witness, bounds, halfspaces)? {
+                if !cached_point_strictly_inside_support_cell_or_unknown_with(
+                    &mut strict_contains_cache.borrow_mut(),
+                    &witness,
+                    bounds,
+                    halfspaces,
+                )? {
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
@@ -6751,7 +6856,12 @@ fn shifted_support_cell_targets_from_families(
                 .collect())
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
-                if !point_strictly_inside_support_cell_or_unknown(&witness, bounds, halfspaces)? {
+                if !cached_point_strictly_inside_support_cell_or_unknown_with(
+                    &mut strict_contains_cache.borrow_mut(),
+                    &witness,
+                    bounds,
+                    halfspaces,
+                )? {
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
@@ -6771,7 +6881,12 @@ fn shifted_support_cell_targets_from_families(
                 .collect())
             }),
             collect_reference_target_family(shifted_geometry_seeds, |witness| {
-                if !point_strictly_inside_support_cell_or_unknown(&witness, bounds, halfspaces)? {
+                if !cached_point_strictly_inside_support_cell_or_unknown_with(
+                    &mut strict_contains_cache.borrow_mut(),
+                    &witness,
+                    bounds,
+                    halfspaces,
+                )? {
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
@@ -6929,6 +7044,23 @@ fn point_strictly_inside_projected_cell_or_unknown(
     point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
 }
 
+fn cached_point_strictly_inside_projected_cell_or_unknown_with(
+    cache: &mut Vec<ReferenceHalfspaceContainmentCacheEntry>,
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    cached_reference_halfspace_containment_with(
+        cache,
+        bounds,
+        point,
+        halfspaces,
+        |point, bounds, halfspaces| {
+            point_strictly_inside_projected_cell_or_unknown(point, bounds, halfspaces)
+        },
+    )
+}
+
 #[cfg(test)]
 fn point_strictly_inside_support_cell(
     point: &Point3,
@@ -6944,6 +7076,23 @@ fn point_strictly_inside_support_cell_or_unknown(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
     point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
+}
+
+fn cached_point_strictly_inside_support_cell_or_unknown_with(
+    cache: &mut Vec<ReferenceHalfspaceContainmentCacheEntry>,
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    cached_reference_halfspace_containment_with(
+        cache,
+        bounds,
+        point,
+        halfspaces,
+        |point, bounds, halfspaces| {
+            point_strictly_inside_support_cell_or_unknown(point, bounds, halfspaces)
+        },
+    )
 }
 
 #[cfg(test)]
@@ -9886,6 +10035,49 @@ mod tests {
     }
 
     #[test]
+    fn cached_reference_halfspace_containment_reuses_permuted_halfspaces() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let point = p(2, 2, 2);
+        let left = vec![
+            axis_halfspace(0, false, r(0)),
+            axis_halfspace(1, false, r(0)),
+        ];
+        let right = vec![
+            axis_halfspace(1, false, r(0)),
+            axis_halfspace(0, false, r(0)),
+        ];
+        let cache = RefCell::new(Vec::<ReferenceHalfspaceContainmentCacheEntry>::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_reference_halfspace_containment_with(
+            &mut cache.borrow_mut(),
+            &bounds,
+            &point,
+            &left,
+            |_point, _bounds, _halfspaces| {
+                calls.set(calls.get() + 1);
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_reference_halfspace_containment_with(
+            &mut cache.borrow_mut(),
+            &bounds,
+            &point,
+            &right,
+            |_point, _bounds, _halfspaces| {
+                calls.set(calls.get() + 1);
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(calls.get(), 1);
+    }
+
+    #[test]
     fn subdivision_child_partition_dedupe_skips_duplicate_contracted_unchanged_branch() {
         let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
@@ -10434,9 +10626,16 @@ mod tests {
         };
 
         let cache = std::cell::RefCell::new(Vec::<ReferenceWitnessTargetCacheEntry>::new());
-        let targets =
-            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &cache)
-                .unwrap();
+        let strict_contains_cache =
+            std::cell::RefCell::new(Vec::<ReferenceHalfspaceContainmentCacheEntry>::new());
+        let targets = shifted_support_cell_targets_from_families(
+            &bounds,
+            &halfspaces,
+            &families,
+            &cache,
+            &strict_contains_cache,
+        )
+        .unwrap();
 
         assert!(!targets.is_empty());
         assert!(
@@ -10464,9 +10663,16 @@ mod tests {
         };
 
         let cache = std::cell::RefCell::new(Vec::<ReferenceWitnessTargetCacheEntry>::new());
-        let targets =
-            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &cache)
-                .unwrap();
+        let strict_contains_cache =
+            std::cell::RefCell::new(Vec::<ReferenceHalfspaceContainmentCacheEntry>::new());
+        let targets = shifted_support_cell_targets_from_families(
+            &bounds,
+            &halfspaces,
+            &families,
+            &cache,
+            &strict_contains_cache,
+        )
+        .unwrap();
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, witness);

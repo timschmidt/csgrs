@@ -783,6 +783,11 @@ now shares that same witness-target memo across the later support fallback
 phase too, so one `compute_new_reference(...)` update does not rebuild the same
 retained-definition target separately in projected root search and then again
 when support fallback revisits the same witness state.
+The same per-update projected/support query cache now also memoizes exact
+strict point-vs-reference-halfspace-cell containment checks by
+`(bounds, point, halfspaces)`, so repeated projected/support target families do
+not repay the same boundary-aware strict-cell membership predicate each time
+they revisit the same local witness or seed state.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when
