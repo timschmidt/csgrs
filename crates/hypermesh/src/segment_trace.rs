@@ -1676,6 +1676,8 @@ fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
     )
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn plane_replacement_step_detour_limit(polygons: &[ConvexPolygon]) -> usize {
     MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT.max(
         polygons
@@ -2261,7 +2263,6 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    remaining_detours: usize,
 ) -> HypermeshResult<bool> {
     let mut trace_without_detours =
         |start: &Point3,
@@ -2279,16 +2280,77 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         };
     let mut detours_for =
         |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    probe_reaches_adjacent_cell_with_definitions_budget_impl(
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
         start,
         end,
         polygons,
+        &[start.clone(), end.clone()],
         start_definitions,
         end_definitions,
-        remaining_detours,
         &mut trace_without_detours,
         &mut detours_for,
     )
+}
+
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    visited_points: &[Point3],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    if trace_without_detours(start, end, start_definitions, end_definitions)? {
+        return Ok(true);
+    }
+
+    let mut surface_cache = Vec::new();
+    for detour in detours_for(start, end)? {
+        if point_family_contains(visited_points, &detour.point)
+            || cached_surface_query_with(&mut surface_cache, &detour.point, || {
+                point_lies_on_traced_surface(&detour.point, polygons)
+            })?
+        {
+            continue;
+        }
+
+        let mut next_visited_points = visited_points.to_vec();
+        next_visited_points.push(detour.point.clone());
+
+        if !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+            start,
+            &detour.point,
+            polygons,
+            &next_visited_points,
+            start_definitions,
+            &detour.definitions,
+            trace_without_detours,
+            detours_for,
+        )? {
+            continue;
+        }
+        if probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+            &detour.point,
+            end,
+            polygons,
+            &next_visited_points,
+            &detour.definitions,
+            end_definitions,
+            trace_without_detours,
+            detours_for,
+        )? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
 }
 
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
@@ -2308,7 +2370,6 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 polygons,
                 current_definitions,
                 next_definitions,
-                plane_replacement_step_detour_limit(polygons),
             )
         },
     )
@@ -7282,7 +7343,79 @@ mod tests {
                 &[blocker],
                 &interior.planes,
                 &probe.planes,
-                0,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_step_detour_runtime_allows_three_nested_detours() {
+        let start = p(0, 0, 0);
+        let detour_a = p(1, 0, 0);
+        let detour_b = p(2, 0, 0);
+        let detour_c = p(3, 0, 0);
+        let end = p(4, 0, 0);
+        let start_definitions = [axis_plane_definition(&start)];
+        let end_definitions = [axis_plane_definition(&end)];
+        let detour_a_definitions = [axis_plane_definition(&detour_a)];
+        let detour_b_definitions = [axis_plane_definition(&detour_b)];
+        let detour_c_definitions = [axis_plane_definition(&detour_c)];
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             start_definitions_arg: &[[Plane; 3]],
+             end_definitions_arg: &[[Plane; 3]]| {
+                Ok((*from == start
+                    && *to == detour_a
+                    && start_definitions_arg == start_definitions
+                    && end_definitions_arg == detour_a_definitions)
+                    || (*from == detour_a
+                        && *to == detour_b
+                        && start_definitions_arg == detour_a_definitions
+                        && end_definitions_arg == detour_b_definitions)
+                    || (*from == detour_b
+                        && *to == detour_c
+                        && start_definitions_arg == detour_b_definitions
+                        && end_definitions_arg == detour_c_definitions)
+                    || (*from == detour_c
+                        && *to == end
+                        && start_definitions_arg == detour_c_definitions
+                        && end_definitions_arg == end_definitions))
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![DetourTarget {
+                    point: detour_c.clone(),
+                    definitions: vec![axis_plane_definition(&detour_c)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == start && *to == detour_c {
+                Ok(vec![DetourTarget {
+                    point: detour_b.clone(),
+                    definitions: vec![axis_plane_definition(&detour_b)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else if *from == start && *to == detour_b {
+                Ok(vec![DetourTarget {
+                    point: detour_a.clone(),
+                    definitions: vec![axis_plane_definition(&detour_a)],
+                    uncertified_definition_fallback: false,
+                }])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &start_definitions,
+                &end_definitions,
+                &mut trace_without_detours,
+                &mut detours_for,
             )
             .unwrap()
         );
