@@ -586,7 +586,13 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let mut saw_unknown = false;
     for detour in detours {
-        let already_visited = point_family_contains(visited_points, &detour.point);
+        let start_definition_transition = detour.point == *start
+            && !definition_families_match_as_sets(&detour.definitions, start_definitions);
+        let end_definition_transition = detour.point == *end
+            && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+        let already_visited = point_family_contains(visited_points, &detour.point)
+            && !start_definition_transition
+            && !end_definition_transition;
         let on_surface = if already_visited {
             false
         } else {
@@ -609,10 +615,24 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
         }
 
         let mut next_visited_points = visited_points.to_vec();
-        next_visited_points.push(detour.point.clone());
+        if !point_family_contains(&next_visited_points, &detour.point) {
+            next_visited_points.push(detour.point.clone());
+        }
 
-        let first_leg =
-            match trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+        let first_leg = match if start_definition_transition {
+            match trace_without_detours(
+                start,
+                &detour.point,
+                winding,
+                start_definitions,
+                &detour.definitions,
+            ) {
+                Ok(Some(first_leg)) => Ok(first_leg),
+                Ok(None) => Err(HypermeshError::UnknownClassification),
+                Err(err) => Err(err),
+            }
+        } else {
+            trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
                 start,
                 &detour.point,
                 winding,
@@ -624,16 +644,29 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
                 surface_query,
                 trace_without_detours,
                 detours_for,
+            )
+        } {
+            Ok(first_leg) => first_leg,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        let second_leg = match if end_definition_transition {
+            match trace_without_detours(
+                &detour.point,
+                end,
+                &first_leg,
+                &detour.definitions,
+                end_definitions,
             ) {
-                Ok(first_leg) => first_leg,
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    continue;
-                }
-                Err(err) => return Err(err),
-            };
-        let second_leg =
-            match trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+                Ok(Some(second_leg)) => Ok(second_leg),
+                Ok(None) => Err(HypermeshError::UnknownClassification),
+                Err(err) => Err(err),
+            }
+        } else {
+            trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
                 &detour.point,
                 end,
                 &first_leg,
@@ -645,14 +678,15 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
                 surface_query,
                 trace_without_detours,
                 detours_for,
-            ) {
-                Ok(second_leg) => second_leg,
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    continue;
-                }
-                Err(err) => return Err(err),
-            };
+            )
+        } {
+            Ok(second_leg) => second_leg,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
         if detour.uncertified_definition_fallback {
             saw_unknown = true;
             continue;
@@ -3033,7 +3067,13 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     for detour in detours_for(start, end)? {
-        let already_visited = point_family_contains(visited_points, &detour.point);
+        let start_definition_transition = detour.point == *start
+            && !definition_families_match_as_sets(&detour.definitions, start_definitions);
+        let end_definition_transition = detour.point == *end
+            && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+        let already_visited = point_family_contains(visited_points, &detour.point)
+            && !start_definition_transition
+            && !end_definition_transition;
         let on_surface = if already_visited {
             false
         } else {
@@ -3056,20 +3096,26 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
         }
 
         let mut next_visited_points = visited_points.to_vec();
-        next_visited_points.push(detour.point.clone());
+        if !point_family_contains(&next_visited_points, &detour.point) {
+            next_visited_points.push(detour.point.clone());
+        }
 
-        let first_leg = match probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
-            start,
-            &detour.point,
-            polygons,
-            start_definitions,
-            &detour.definitions,
-            &next_visited_points,
-            surface_cache,
-            surface_query,
-            trace_without_detours,
-            detours_for,
-        ) {
+        let first_leg = match if start_definition_transition {
+            trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
+        } else {
+            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+                start,
+                &detour.point,
+                polygons,
+                start_definitions,
+                &detour.definitions,
+                &next_visited_points,
+                surface_cache,
+                surface_query,
+                trace_without_detours,
+                detours_for,
+            )
+        } {
             Ok(result) => result,
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
@@ -3083,18 +3129,22 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
             }
             continue;
         }
-        match probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
-            &detour.point,
-            end,
-            polygons,
-            &detour.definitions,
-            end_definitions,
-            &next_visited_points,
-            surface_cache,
-            surface_query,
-            trace_without_detours,
-            detours_for,
-        ) {
+        match if end_definition_transition {
+            trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
+        } else {
+            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+                &detour.point,
+                end,
+                polygons,
+                &detour.definitions,
+                end_definitions,
+                &next_visited_points,
+                surface_cache,
+                surface_query,
+                trace_without_detours,
+                detours_for,
+            )
+        } {
             Ok(true) => {
                 if detour.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -3517,7 +3567,13 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     }
 
     for detour in detours_for(start, end)? {
-        let already_visited = point_family_contains(visited_points, &detour.point);
+        let start_definition_transition = detour.point == *start
+            && !definition_families_match_as_sets(&detour.definitions, start_definitions);
+        let end_definition_transition = detour.point == *end
+            && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+        let already_visited = point_family_contains(visited_points, &detour.point)
+            && !start_definition_transition
+            && !end_definition_transition;
         let on_surface = if already_visited {
             false
         } else {
@@ -3540,10 +3596,14 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         }
 
         let mut next_visited_points = visited_points.to_vec();
-        next_visited_points.push(detour.point.clone());
+        if !point_family_contains(&next_visited_points, &detour.point) {
+            next_visited_points.push(detour.point.clone());
+        }
 
-        let first_leg =
-            match probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        let first_leg = match if start_definition_transition {
+            trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
+        } else {
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
             start,
             &detour.point,
             polygons,
@@ -3554,7 +3614,8 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             surface_query,
             trace_without_detours,
             detours_for,
-        ) {
+        )
+        } {
             Ok(result) => result,
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
@@ -3568,7 +3629,10 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             }
             continue;
         }
-        match probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        match if end_definition_transition {
+            trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
+        } else {
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
             &detour.point,
             end,
             polygons,
@@ -3579,7 +3643,8 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             surface_query,
             trace_without_detours,
             detours_for,
-        ) {
+        )
+        } {
             Ok(true) => {
                 if detour.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -13423,6 +13488,67 @@ mod tests {
     }
 
     #[test]
+    fn detour_trace_cycle_guard_allows_same_point_definition_transition_at_start() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_start_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
+        ];
+        let winding = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+            &start,
+            &end,
+            &[5],
+            &[],
+            std::slice::from_ref(&start_definition),
+            std::slice::from_ref(&end_definition),
+            &[start.clone(), end.clone()],
+            &mut Vec::new(),
+            &mut |_point| Ok(false),
+            &mut |from, to, winding, start_definitions, end_definitions| {
+                if *from == start
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(None)
+                } else if *from == start
+                    && *to == start
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&lifted_start_definition)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else if *from == start
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&lifted_start_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(Some(vec![7]))
+                } else {
+                    Ok(None)
+                }
+            },
+            &mut |from, to| {
+                if *from == start && *to == end {
+                    Ok(vec![DetourTarget {
+                        point: start.clone(),
+                        definitions: vec![lifted_start_definition.clone()],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
     fn detour_trace_cycle_guard_skips_fallback_detour_even_when_legs_succeed() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
@@ -14189,6 +14315,57 @@ mod tests {
     }
 
     #[test]
+    fn probe_step_detour_cycle_guard_allows_same_point_definition_transition_at_start() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_start_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
+        ];
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                std::slice::from_ref(&start_definition),
+                std::slice::from_ref(&end_definition),
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut |from, to, start_definitions, end_definitions| {
+                    Ok(
+                        (*from == start
+                            && *to == start
+                            && start_definitions == std::slice::from_ref(&start_definition)
+                            && end_definitions == std::slice::from_ref(&lifted_start_definition))
+                            || (*from == start
+                                && *to == end
+                                && start_definitions
+                                    == std::slice::from_ref(&lifted_start_definition)
+                                && end_definitions == std::slice::from_ref(&end_definition)),
+                    )
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: start.clone(),
+                            definitions: vec![lifted_start_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
     fn probe_step_detour_cycle_guard_skips_fallback_detour_even_when_path_succeeds() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
@@ -14852,6 +15029,54 @@ mod tests {
                                 uncertified_definition_fallback: false,
                             },
                         ])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_cycle_guard_allows_same_point_definition_transition_at_start() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_start_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
+        ];
+
+        assert!(
+            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                std::slice::from_ref(&start_definition),
+                std::slice::from_ref(&end_definition),
+                &[start.clone(), end.clone()],
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut |from, to, start_definitions, end_definitions| {
+                    Ok((*from == start
+                        && *to == start
+                        && start_definitions == std::slice::from_ref(&start_definition)
+                        && end_definitions == std::slice::from_ref(&lifted_start_definition))
+                        || (*from == start
+                            && *to == end
+                            && start_definitions == std::slice::from_ref(&lifted_start_definition)
+                            && end_definitions == std::slice::from_ref(&end_definition)))
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: start.clone(),
+                            definitions: vec![lifted_start_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
                     } else {
                         Ok(Vec::new())
                     }

@@ -306,6 +306,10 @@ unreachable result. Retained-definition plane-replacement trace and
 reachability steps now also consult their step tracers even when two distinct
 definition triples land on the same affine point, so same-point definition
 updates cannot silently bypass uncertified local contact.
+The live cycle-guarded detour layers now also allow same-point detours when
+they introduce a new retained-definition family at the current endpoint,
+instead of treating every revisited point as an automatic skip before that
+zero-length definition transition can be tried.
 The reachability-side plane-replacement walk now does the same for its
 intermediate adjacency checks: one uncertified replacement leg only invalidates
 that ordering, rather than cutting off later exact plane-replacement orderings.
