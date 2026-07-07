@@ -293,7 +293,9 @@ shifted witness still surface `UnknownClassification` if that local shifted
 family was only partially certified. When duplicate shifted witness cells
 rediscover the same strict point, hypermesh now also keeps every distinct
 active-plane/halfspace family for that point instead of collapsing the witness
-back to one first-arrival family.
+back to one first-arrival family, while still deduping geometrically identical
+families when the same shifted halfspace state is rediscovered in a different
+local halfspace order.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.

@@ -5946,7 +5946,7 @@ fn push_unique_shifted_halfspace_witness(
             if !existing
                 .families
                 .iter()
-                .any(|candidate| candidate == &family)
+                .any(|candidate| shifted_halfspace_witness_families_match(candidate, &family))
             {
                 existing.families.push(family);
             }
@@ -5954,6 +5954,78 @@ fn push_unique_shifted_halfspace_witness(
     } else {
         witnesses.push(witness);
     }
+}
+
+fn shifted_halfspace_witness_families_match(
+    left: &ShiftedHalfspaceWitnessFamily,
+    right: &ShiftedHalfspaceWitnessFamily,
+) -> bool {
+    limit_plane_families_match_as_sets(&left.halfspaces, &right.halfspaces)
+        && active_halfspace_planes_match_as_sets(
+            &left.halfspaces,
+            left.active_planes,
+            &right.halfspaces,
+            right.active_planes,
+        )
+}
+
+fn limit_plane_families_match_as_sets(left: &[LimitPlane3], right: &[LimitPlane3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_halfspace in left {
+        let Some((index, _)) = right.iter().enumerate().find(|(index, right_halfspace)| {
+            !matched[*index] && *right_halfspace == left_halfspace
+        }) else {
+            return false;
+        };
+        matched[index] = true;
+    }
+    true
+}
+
+fn active_halfspace_planes_match_as_sets(
+    left_halfspaces: &[LimitPlane3],
+    left_active_planes: [Option<usize>; 3],
+    right_halfspaces: &[LimitPlane3],
+    right_active_planes: [Option<usize>; 3],
+) -> bool {
+    let left_planes = mapped_active_halfspace_planes(left_halfspaces, left_active_planes);
+    let right_planes = mapped_active_halfspace_planes(right_halfspaces, right_active_planes);
+    plane_families_match_as_sets(&left_planes, &right_planes)
+}
+
+fn mapped_active_halfspace_planes(
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> Vec<Plane> {
+    active_planes
+        .into_iter()
+        .flatten()
+        .filter_map(|index| halfspaces.get(index))
+        .map(|halfspace| Plane::new(halfspace.normal.clone(), halfspace.offset.clone()))
+        .collect()
+}
+
+fn plane_families_match_as_sets(left: &[Plane], right: &[Plane]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_plane in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_plane)| !matched[*index] && *right_plane == left_plane)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+    true
 }
 
 fn take_new_halfspace_seed_family(points: Vec<Point3>, seen: &mut Vec<Point3>) -> Vec<Point3> {
@@ -6902,6 +6974,34 @@ mod tests {
             family.active_planes == [Some(0), Some(1), None] && family.halfspaces == halfspaces
         }));
         assert!(witnesses[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn duplicate_shifted_halfspace_witnesses_merge_permuted_halfspace_families() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted_halfspaces = halfspaces.clone();
+        permuted_halfspaces.swap(0, 1);
+        let point = p(1, 1, 1);
+        let mut witnesses = vec![ShiftedHalfspaceWitness::with_family(
+            point.clone(),
+            halfspaces,
+            [Some(0), Some(1), None],
+            false,
+        )];
+
+        push_unique_shifted_halfspace_witness(
+            &mut witnesses,
+            ShiftedHalfspaceWitness::with_family(
+                point,
+                permuted_halfspaces,
+                [Some(0), Some(1), None],
+                false,
+            ),
+        );
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].families.len(), 1);
     }
 
     #[test]
