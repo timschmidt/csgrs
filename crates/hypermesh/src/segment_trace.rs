@@ -3692,10 +3692,38 @@ fn halfspace_cell_geometry_seed_candidates(
 fn halfspace_cell_geometry_seed_candidates_from_vertices(
     vertices: &[Point3],
 ) -> HypermeshResult<Vec<Point3>> {
+    Ok(halfspace_centroid_subset_seed_family_from_vertices(vertices)?.seeds)
+}
+
+fn halfspace_centroid_subset_seed_family_from_vertices(
+    vertices: &[Point3],
+) -> HypermeshResult<HalfspaceSeedFamilyState> {
+    halfspace_centroid_subset_seed_family_from_vertices_with(vertices, centroid)
+}
+
+fn halfspace_centroid_subset_seed_family_from_vertices_with(
+    vertices: &[Point3],
+    mut center_of: impl FnMut(&[Point3]) -> HypermeshResult<Option<Point3>>,
+) -> HypermeshResult<HalfspaceSeedFamilyState> {
     let mut candidates = Vec::new();
     let mut subset = Vec::new();
-    collect_halfspace_centroid_subset_candidates(&mut candidates, vertices, 0, &mut subset)?;
-    Ok(candidates)
+    let mut saw_unknown = false;
+    collect_halfspace_centroid_subset_candidates(
+        &mut candidates,
+        vertices,
+        0,
+        &mut subset,
+        &mut saw_unknown,
+        &mut center_of,
+    )?;
+    if candidates.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(HalfspaceSeedFamilyState {
+            seeds: candidates,
+            saw_unknown,
+        })
+    }
 }
 
 fn collect_halfspace_centroid_subset_candidates(
@@ -3703,15 +3731,29 @@ fn collect_halfspace_centroid_subset_candidates(
     vertices: &[Point3],
     start: usize,
     subset: &mut Vec<Point3>,
+    saw_unknown: &mut bool,
+    center_of: &mut impl FnMut(&[Point3]) -> HypermeshResult<Option<Point3>>,
 ) -> HypermeshResult<()> {
     for index in start..vertices.len() {
         subset.push(vertices[index].clone());
-        if subset.len() >= 2
-            && let Some(center) = centroid(subset)?
-        {
-            push_unique_halfspace_seed(candidates, center);
+        if subset.len() >= 2 {
+            match center_of(subset) {
+                Ok(Some(center)) => push_unique_halfspace_seed(candidates, center),
+                Ok(None) => {}
+                Err(HypermeshError::UnknownClassification) => {
+                    *saw_unknown = true;
+                }
+                Err(err) => return Err(err),
+            }
         }
-        collect_halfspace_centroid_subset_candidates(candidates, vertices, index + 1, subset)?;
+        collect_halfspace_centroid_subset_candidates(
+            candidates,
+            vertices,
+            index + 1,
+            subset,
+            saw_unknown,
+            center_of,
+        )?;
         subset.pop();
     }
     Ok(())
@@ -5947,8 +5989,10 @@ fn halfspace_cell_seed_families_from_optional_report(
     let shifted_vertex_family = feasible_halfspace_cell_vertex_family(halfspaces)?;
     *saw_unknown |= shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.seeds;
-    let shifted_geometry_seeds =
-        halfspace_cell_geometry_seed_candidates_from_vertices(&shifted_vertices)?;
+    let shifted_geometry_seed_family =
+        halfspace_centroid_subset_seed_family_from_vertices(&shifted_vertices)?;
+    *saw_unknown |= shifted_geometry_seed_family.saw_unknown;
+    let shifted_geometry_seeds = shifted_geometry_seed_family.seeds;
     let mut strict_seeds = Vec::new();
 
     *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
@@ -7012,6 +7056,25 @@ mod tests {
         let from_query = halfspace_cell_geometry_seed_candidates(&halfspaces).unwrap();
 
         assert_eq!(from_vertices, from_query);
+    }
+
+    #[test]
+    fn halfspace_centroid_subset_seed_family_tracks_unknown_after_later_centroid() {
+        let vertices = vec![p(0, 0, 0), p(2, 0, 0), p(4, 0, 0)];
+        let blocked_subset = vec![vertices[0].clone(), vertices[1].clone()];
+
+        let family =
+            halfspace_centroid_subset_seed_family_from_vertices_with(&vertices, |subset| {
+                if subset == blocked_subset.as_slice() {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    centroid(subset)
+                }
+            })
+            .unwrap();
+
+        assert!(family.saw_unknown);
+        assert!(!family.seeds.is_empty());
     }
 
     #[test]

@@ -5295,10 +5295,38 @@ fn support_cell_geometry_seed_candidates(
 fn support_cell_geometry_seed_candidates_from_vertices(
     vertices: &[Point3],
 ) -> HypermeshResult<Vec<Point3>> {
+    Ok(point3_centroid_subset_family_from_vertices(vertices)?.points)
+}
+
+fn point3_centroid_subset_family_from_vertices(
+    vertices: &[Point3],
+) -> HypermeshResult<Point3FamilyState> {
+    point3_centroid_subset_family_from_vertices_with(vertices, point3_centroid)
+}
+
+fn point3_centroid_subset_family_from_vertices_with(
+    vertices: &[Point3],
+    mut center_of: impl FnMut(&[Point3]) -> HypermeshResult<Option<Point3>>,
+) -> HypermeshResult<Point3FamilyState> {
     let mut candidates = Vec::new();
     let mut subset = Vec::new();
-    collect_point3_centroid_subset_candidates(&mut candidates, vertices, 0, &mut subset)?;
-    Ok(candidates)
+    let mut saw_unknown = false;
+    collect_point3_centroid_subset_candidates(
+        &mut candidates,
+        vertices,
+        0,
+        &mut subset,
+        &mut saw_unknown,
+        &mut center_of,
+    )?;
+    if candidates.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(Point3FamilyState {
+            points: candidates,
+            saw_unknown,
+        })
+    }
 }
 
 fn collect_point3_centroid_subset_candidates(
@@ -5306,15 +5334,29 @@ fn collect_point3_centroid_subset_candidates(
     vertices: &[Point3],
     start: usize,
     subset: &mut Vec<Point3>,
+    saw_unknown: &mut bool,
+    center_of: &mut impl FnMut(&[Point3]) -> HypermeshResult<Option<Point3>>,
 ) -> HypermeshResult<()> {
     for index in start..vertices.len() {
         subset.push(vertices[index].clone());
-        if subset.len() >= 2
-            && let Some(center) = point3_centroid(subset)?
-        {
-            push_unique_point3(candidates, center);
+        if subset.len() >= 2 {
+            match center_of(subset) {
+                Ok(Some(center)) => push_unique_point3(candidates, center),
+                Ok(None) => {}
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    *saw_unknown = true;
+                }
+                Err(err) => return Err(err),
+            }
         }
-        collect_point3_centroid_subset_candidates(candidates, vertices, index + 1, subset)?;
+        collect_point3_centroid_subset_candidates(
+            candidates,
+            vertices,
+            index + 1,
+            subset,
+            saw_unknown,
+            center_of,
+        )?;
         subset.pop();
     }
     Ok(())
@@ -5658,10 +5700,12 @@ fn support_cell_seed_geometry_state(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<SupportCellSeedGeometryState> {
     let shifted_vertex_family = feasible_support_cell_vertex_family(halfspaces)?;
-    let saw_unknown = shifted_vertex_family.saw_unknown;
+    let mut saw_unknown = shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.points;
-    let shifted_geometry_seeds =
-        support_cell_geometry_seed_candidates_from_vertices(&shifted_vertices)?;
+    let shifted_geometry_seed_family =
+        point3_centroid_subset_family_from_vertices(&shifted_vertices)?;
+    saw_unknown |= shifted_geometry_seed_family.saw_unknown;
+    let shifted_geometry_seeds = shifted_geometry_seed_family.points;
     Ok(SupportCellSeedGeometryState {
         shifted_vertices,
         shifted_geometry_seeds,
@@ -11443,6 +11487,24 @@ mod tests {
         let direct = support_cell_geometry_seed_candidates(&halfspaces).unwrap();
 
         assert_eq!(from_vertices, direct);
+    }
+
+    #[test]
+    fn point3_centroid_subset_family_tracks_unknown_after_later_centroid() {
+        let vertices = vec![p(0, 0, 0), p(2, 0, 0), p(4, 0, 0)];
+        let blocked_subset = vec![vertices[0].clone(), vertices[1].clone()];
+
+        let family = point3_centroid_subset_family_from_vertices_with(&vertices, |subset| {
+            if subset == blocked_subset.as_slice() {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            } else {
+                point3_centroid(subset)
+            }
+        })
+        .unwrap();
+
+        assert!(family.saw_unknown);
+        assert!(!family.points.is_empty());
     }
 
     #[test]

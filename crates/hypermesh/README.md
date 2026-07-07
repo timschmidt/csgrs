@@ -161,7 +161,10 @@ instead of being flattened back into an ordinary certified seed family.
 Partially uncertified feasible halfspace-cell vertex families now also keep
 that uncertainty attached when later exact vertices survive, so the later
 strict halfspace seed families and geometry-seed families do not start from an
-apparently fully certified shifted vertex family.
+apparently fully certified shifted vertex family. The same now holds one layer
+deeper for centroid-based geometry-seed subset families on both the leaf and
+reference sides: one uncertified subset centroid no longer aborts the whole
+local geometry-seed family before later exact subset centroids run.
 Likewise, shifted halfspace witness collectors now treat surviving fallback-marked
 shifted witnesses as uncertainty that carries forward across later sibling
 seeds and sibling seed families, instead of only noticing hard
