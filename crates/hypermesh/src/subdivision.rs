@@ -2546,8 +2546,9 @@ fn escaped_reference_axis_stop_values_with_queries(
     } else {
         start_value - bound_value
     };
-    if !compare_real(&room, &Real::zero())?.is_gt() {
-        return Ok((Vec::new(), false));
+    let room_order = compare_real(&room, &Real::zero())?;
+    if !room_order.is_gt() {
+        return Ok((Vec::new(), room_order.is_eq()));
     }
 
     let mut endpoint = projected.clone();
@@ -9073,6 +9074,26 @@ mod tests {
     }
 
     #[test]
+    fn escaped_reference_axis_stop_values_treat_bound_start_contact_as_unknown() {
+        let projected = p(3, 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
+
+        let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+            &projected,
+            &bounds,
+            &[],
+            0,
+            true,
+            |_projected, _endpoint, _polygon, _axis| Ok(None),
+            |_crossing, _polygon| Ok(LocalPolygonPointLocation::Outside),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert!(stop_values.is_empty());
+    }
+
+    #[test]
     fn projection_axis_escape_reference_finds_corridor_witness() {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
@@ -10322,6 +10343,16 @@ mod tests {
             escaped_reference_axis_stop_values(&p(1, 3, 3), &bounds, &[wall], 0, true).unwrap();
 
         assert_eq!(stops, vec![r(4), r(6)]);
+    }
+
+    #[test]
+    fn projection_axis_escape_stop_values_report_unknown_for_bound_start_contact() {
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let err =
+            escaped_reference_axis_stop_values(&p(6, 3, 3), &bounds, &[], 0, true).unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]

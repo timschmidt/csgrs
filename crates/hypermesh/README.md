@@ -575,6 +575,10 @@ of using those points only as shifted-seed sources. The projected escape-target
 family now retains those same remaining strict direct projected witnesses before
 it widens into shifted projected escape cells, and it no longer rebuilds direct
 targets whose points are already present in the projected target family.
+Projected axis-stop corridor search now also treats exact zero-room bound-start
+contact as local `UnknownClassification` instead of ordinary empty stop family,
+matching the later start- and endpoint-boundary handling in that same
+reference-side search layer.
 Shifted projected/support direct-target builders now also dedupe later shifted
 seed families against the report witness itself, so they do not rebuild that same direct
 target again through later strict-seed, exact-vertex, or geometry-seed families.
