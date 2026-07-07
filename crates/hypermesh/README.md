@@ -606,6 +606,10 @@ the direct report witness.
 And if one of those projected escape targets is already fallback-marked, later
 axis-escape and tight-escape failure now preserve that uncertainty instead of
 flattening the exhausted escape branch into ordinary absence.
+Fallback-marked projected/support `ReferenceTarget`s are also no longer
+accepted as final success just because their winding trace happens to succeed;
+the search now keeps looking for a certified target and only returns success on
+that certified target.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same

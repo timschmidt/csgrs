@@ -1854,7 +1854,13 @@ fn search_projected_reference_families(
     for projected_target in projected_targets {
         traced_direct_targets.push(projected_target.clone());
         match trace_projected_target(projected_target) {
-            Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
+            Ok(Some(winding)) => {
+                if projected_target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(Some((projected_target.clone(), winding)));
+                }
+            }
             Ok(None) => {
                 if projected_target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -1882,7 +1888,13 @@ fn search_projected_reference_families(
             .any(|candidate| reference_targets_match_for_trace_cache(candidate, projected_target))
         {
             match trace_projected_target(projected_target) {
-                Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
+                Ok(Some(winding)) => {
+                    if projected_target.uncertified_definition_fallback {
+                        saw_unknown = true;
+                    } else {
+                        return Ok(Some((projected_target.clone(), winding)));
+                    }
+                }
                 Ok(None) => {
                     if projected_target.uncertified_definition_fallback {
                         saw_unknown = true;
@@ -4151,7 +4163,13 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
             continue;
         }
         match trace(&target) {
-            Ok(Some(winding)) => return Ok(Some((target, winding))),
+            Ok(Some(winding)) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                return Ok(Some((target, winding)));
+            }
             Ok(None) => {
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -7235,6 +7253,47 @@ mod tests {
             &[],
             || Ok(None),
             |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projected_reference_search_skips_fallback_projected_target_even_when_trace_succeeds() {
+        let fallback = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
+        let certified = ReferenceTarget::axis_defined(p(2, 2, 3));
+
+        let found = search_projected_reference_families(
+            &[fallback.clone(), certified.clone()],
+            &[],
+            || Ok(None),
+            |target| {
+                if target == &fallback {
+                    Ok(Some(vec![41]))
+                } else {
+                    Ok(Some(vec![43]))
+                }
+            },
+            |_target| Ok(None),
+            |_target| Ok(None),
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((certified, vec![43])));
+    }
+
+    #[test]
+    fn projected_reference_search_reports_unknown_when_only_fallback_projected_target_traces() {
+        let fallback = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
+
+        let err = search_projected_reference_families(
+            std::slice::from_ref(&fallback),
+            &[],
+            || Ok(None),
+            |_target| Ok(Some(vec![41])),
             |_target| Ok(None),
             |_target| Ok(None),
         )
@@ -11976,6 +12035,39 @@ mod tests {
                 Err(crate::error::HypermeshError::UnknownClassification)
             })
             .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_target_trace_search_skips_fallback_target_even_when_trace_succeeds() {
+        let fallback = ReferenceTarget::axis_defined_fallback(p(1, 1, 1));
+        let certified = ReferenceTarget::axis_defined(p(2, 2, 2));
+
+        let found = trace_reference_targets_backtracking_unknown(
+            vec![fallback.clone(), certified.clone()],
+            &[],
+            |target| {
+                if target == &fallback {
+                    Ok(Some(vec![31]))
+                } else {
+                    Ok(Some(vec![37]))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((certified, vec![37])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_reports_unknown_when_only_fallback_target_traces() {
+        let fallback = ReferenceTarget::axis_defined_fallback(p(1, 1, 1));
+
+        let err = trace_reference_targets_backtracking_unknown(vec![fallback], &[], |_target| {
+            Ok(Some(vec![31]))
+        })
+        .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
