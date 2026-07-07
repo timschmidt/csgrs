@@ -1821,7 +1821,7 @@ fn search_projected_reference_families(
     for projected_target in projected_escape_targets {
         if !traced_direct_targets
             .iter()
-            .any(|candidate| candidate == projected_target)
+            .any(|candidate| reference_targets_match_for_trace_cache(candidate, projected_target))
         {
             match trace_projected_target(projected_target) {
                 Ok(Some(winding)) => return Ok(Some((projected_target.clone(), winding))),
@@ -6167,6 +6167,55 @@ mod tests {
         assert_eq!(
             *calls.borrow(),
             vec!["direct", "projected_support", "axis_escape", "tight_escape"]
+        );
+    }
+
+    #[test]
+    fn projected_reference_search_skips_duplicate_escape_direct_trace_for_permuted_definitions() {
+        use std::cell::RefCell;
+
+        let point = p(1, 2, 3);
+        let definition = axis_defs(&point)[0].clone();
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let projected = ReferenceTarget::with_definitions(point.clone(), vec![definition]);
+        let escape_target = ReferenceTarget::with_definitions(point, vec![permuted]);
+        let axis_target = ReferenceTarget::axis_defined(p(2, 2, 4));
+        let calls = RefCell::new(Vec::new());
+
+        let found = search_projected_reference_families(
+            std::slice::from_ref(&projected),
+            std::slice::from_ref(&escape_target),
+            || {
+                calls.borrow_mut().push("projected_support");
+                Ok(None)
+            },
+            |_target| {
+                calls.borrow_mut().push("direct");
+                Ok(None)
+            },
+            |target| {
+                calls.borrow_mut().push("axis_escape");
+                assert!(reference_targets_match_for_trace_cache(
+                    target,
+                    &escape_target
+                ));
+                Ok(Some((axis_target.clone(), vec![37])))
+            },
+            |_target| {
+                calls.borrow_mut().push("tight_escape");
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((axis_target, vec![37])));
+        assert_eq!(
+            *calls.borrow(),
+            vec!["direct", "projected_support", "axis_escape"]
         );
     }
 
