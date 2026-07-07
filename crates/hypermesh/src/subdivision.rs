@@ -4535,6 +4535,7 @@ fn support_plane_cell_search_with_queries_cached<T>(
 where
     T: Clone,
 {
+    let polygon_index = advance_fixed_support_search_index(polygons, polygon_index, halfspaces);
     let preferred_order = if polygon_index < polygons.len() {
         support_side_search_order(preferred_point, &polygons[polygon_index].support)
     } else {
@@ -4572,16 +4573,6 @@ where
             }
 
             if polygon_index < polygons.len() {
-                let polygon_index =
-                    advance_fixed_support_search_index(polygons, polygon_index, halfspaces);
-                if polygon_index >= polygons.len() {
-                    return if saw_unknown {
-                        Err(crate::error::HypermeshError::UnknownClassification)
-                    } else {
-                        Ok(None)
-                    };
-                }
-
                 let mut tried_unchanged_branch = false;
                 for positive in
                     support_side_search_order(preferred_point, &polygons[polygon_index].support)
@@ -9689,7 +9680,7 @@ mod tests {
             shifted_geometry_seeds: Vec::new(),
         };
 
-        let cache = std::cell::RefCell::new(Vec::new());
+        let cache = std::cell::RefCell::new(Vec::<ReferenceWitnessTargetCacheEntry>::new());
         let targets =
             shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &cache)
                 .unwrap();
@@ -9719,7 +9710,7 @@ mod tests {
             shifted_geometry_seeds: Vec::new(),
         };
 
-        let cache = std::cell::RefCell::new(Vec::new());
+        let cache = std::cell::RefCell::new(Vec::<ReferenceWitnessTargetCacheEntry>::new());
         let targets =
             shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &cache)
                 .unwrap();
@@ -11535,6 +11526,62 @@ mod tests {
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn support_plane_cell_search_cache_reuses_same_normalized_polygon_index() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygon = support_only_polygon(Plane::axis_aligned(0, r(2)));
+        let polygons = vec![polygon.clone()];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        halfspaces.push(support_side_halfspace(&polygon.support, false));
+        let cache = std::cell::RefCell::new(
+            Vec::<SupportPlaneCellSearchCacheEntry<ReferenceTarget>>::new(),
+        );
+        let mut report_calls = 0;
+        let mut accept_calls = 0;
+
+        let first = support_plane_cell_search_with_queries_cached(
+            Some(&p(0, 0, 0)),
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            &mut |_halfspaces| Ok(true),
+            &mut |_halfspaces, _report| {
+                accept_calls += 1;
+                Ok(None)
+            },
+            &cache,
+        )
+        .unwrap();
+        let second = support_plane_cell_search_with_queries_cached(
+            Some(&p(9, 9, 9)),
+            &bounds,
+            &polygons,
+            1,
+            &mut halfspaces,
+            &mut |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            &mut |_halfspaces| Ok(true),
+            &mut |_halfspaces, _report| {
+                accept_calls += 1;
+                Ok(None)
+            },
+            &cache,
+        )
+        .unwrap();
+
+        assert_eq!(first, None);
+        assert_eq!(second, None);
+        assert_eq!(report_calls, 1);
+        assert_eq!(accept_calls, 1);
     }
 
     #[test]
