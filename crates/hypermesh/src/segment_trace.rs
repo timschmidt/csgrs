@@ -296,6 +296,28 @@ pub(crate) fn trace_segment_from_definitions(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_cache = Vec::new();
     let mut detour_target_cache = Vec::new();
+    trace_segment_from_definitions_with_caches(
+        start,
+        end,
+        winding,
+        polygons,
+        start_definitions,
+        end_definitions,
+        &mut no_detour_cache,
+        &mut detour_target_cache,
+    )
+}
+
+fn trace_segment_from_definitions_with_caches(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+) -> HypermeshResult<WindingNumberVector> {
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
@@ -303,7 +325,7 @@ pub(crate) fn trace_segment_from_definitions(
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
             cached_definition_no_detour_trace_with(
-                &mut no_detour_cache,
+                &mut *no_detour_cache,
                 start,
                 end,
                 winding,
@@ -322,7 +344,7 @@ pub(crate) fn trace_segment_from_definitions(
             )
         };
     let mut detours_for = |start: &Point3, end: &Point3| {
-        cached_detour_target_family_with(&mut detour_target_cache, start, end, || {
+        cached_detour_target_family_with(&mut *detour_target_cache, start, end, || {
             interior_box_detour_targets(start, end, polygons)
         })
     };
@@ -2037,13 +2059,17 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
-    match trace_segment_from_definitions(
+    let mut no_detour_cache = Vec::new();
+    let mut detour_target_cache = Vec::new();
+    match trace_segment_from_definitions_with_caches(
         start,
         end,
         winding,
         polygons,
         start_definitions,
         end_definitions,
+        &mut no_detour_cache,
+        &mut detour_target_cache,
     ) {
         Ok(winding) => return Ok(winding),
         Err(HypermeshError::UnknownClassification) => {}
@@ -2057,6 +2083,8 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
         end_definitions,
         winding,
         polygons,
+        &mut no_detour_cache,
+        &mut detour_target_cache,
     )
 }
 
@@ -2069,6 +2097,8 @@ fn trace_probe_from_reference_definitions(
     ref_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut no_detour_cache = Vec::new();
+    let mut detour_target_cache = Vec::new();
     trace_from_definition_sets_with_step_detoured_plane_replacement(
         ref_point,
         ref_definitions,
@@ -2076,6 +2106,8 @@ fn trace_probe_from_reference_definitions(
         probe_definitions,
         ref_wnv,
         polygons,
+        &mut no_detour_cache,
+        &mut detour_target_cache,
     )
 }
 
@@ -2086,6 +2118,30 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
     end_definitions: &[[Plane; 3]],
     winding: &[i32],
     polygons: &[ConvexPolygon],
+    no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+) -> HypermeshResult<WindingNumberVector> {
+    trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_caches(
+        start,
+        start_definitions,
+        end,
+        end_definitions,
+        winding,
+        polygons,
+        no_detour_cache,
+        detour_target_cache,
+    )
+}
+
+fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_caches(
+    start: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end: &Point3,
+    end_definitions: &[[Plane; 3]],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut start_definitions = start_definitions.to_vec();
     append_definition_if_missing(
@@ -2101,13 +2157,15 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
 
     for start_definition in &start_definitions {
         for end_definition in &end_definitions {
-            match trace_plane_replacement_path_with_step_detours_with_caches(
+            match trace_plane_replacement_path_with_step_detours_with_query_caches(
                 start_definition,
                 end_definition,
                 winding,
                 polygons,
                 &mut affine_cache,
                 &mut step_cache,
+                no_detour_cache,
+                detour_target_cache,
             ) {
                 Ok(winding) => return Ok(winding),
                 Err(HypermeshError::UnknownClassification) => continue,
@@ -2162,6 +2220,44 @@ fn trace_plane_replacement_path_with_step_detours_with_caches(
                 polygons,
                 current_definitions,
                 next_definitions,
+            ) {
+                Ok(winding) => Ok(Some(winding)),
+                Err(HypermeshError::UnknownClassification) => {
+                    Err(HypermeshError::UnknownClassification)
+                }
+                Err(err) => Err(err),
+            }
+        },
+    )
+}
+
+fn trace_plane_replacement_path_with_step_detours_with_query_caches(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+) -> HypermeshResult<WindingNumberVector> {
+    trace_plane_replacement_path_with_step_detours_impl(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        affine_cache,
+        step_cache,
+        |current, next, attempt, polygons, current_definitions, next_definitions| {
+            match trace_segment_from_definitions_with_caches(
+                current,
+                next,
+                attempt,
+                polygons,
+                current_definitions,
+                next_definitions,
+                no_detour_cache,
+                detour_target_cache,
             ) {
                 Ok(winding) => Ok(Some(winding)),
                 Err(HypermeshError::UnknownClassification) => {
@@ -7314,6 +7410,46 @@ mod tests {
         assert_eq!(first, Some(vec![7]));
         assert_eq!(second, Some(vec![7]));
         assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
+    fn trace_segment_from_definitions_shared_query_caches_reuse_equivalent_calls() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut no_detour_cache = Vec::new();
+        let mut detour_target_cache = Vec::new();
+
+        let first = trace_segment_from_definitions_with_caches(
+            &start,
+            &end,
+            &[7],
+            &[],
+            &start_definitions,
+            &end_definitions,
+            &mut no_detour_cache,
+            &mut detour_target_cache,
+        )
+        .unwrap();
+        let no_detour_len = no_detour_cache.len();
+        let detour_len = detour_target_cache.len();
+        let second = trace_segment_from_definitions_with_caches(
+            &start,
+            &end,
+            &[7],
+            &[],
+            &start_definitions,
+            &end_definitions,
+            &mut no_detour_cache,
+            &mut detour_target_cache,
+        )
+        .unwrap();
+
+        assert_eq!(first, vec![7]);
+        assert_eq!(second, vec![7]);
+        assert_eq!(no_detour_cache.len(), no_detour_len);
+        assert_eq!(detour_target_cache.len(), detour_len);
     }
 
     #[test]
