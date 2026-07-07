@@ -1709,7 +1709,10 @@ fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
     let mut saw_unknown = false;
     for candidate in candidates {
         match build(candidate) {
-            Ok(target) => push_unique_detour_target(targets, target),
+            Ok(target) => {
+                saw_unknown |= target.uncertified_definition_fallback;
+                push_unique_detour_target(targets, target)
+            }
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -1734,6 +1737,9 @@ fn extend_detour_target_families_backtracking_unknown(
     for family in families {
         match family {
             Ok(found) => {
+                saw_unknown |= found
+                    .iter()
+                    .any(|target| target.uncertified_definition_fallback);
                 for target in found {
                     push_unique_detour_target(targets, target);
                 }
@@ -6615,6 +6621,34 @@ mod tests {
     }
 
     #[test]
+    fn detour_target_build_collection_marks_later_targets_uncertain_after_uncertain_candidate_result()
+     {
+        let first = p(1, 2, 3);
+        let second = p(1, 2, 4);
+        let mut targets = Vec::new();
+
+        extend_detour_target_builds_backtracking_unknown(
+            &mut targets,
+            [&first, &second],
+            |point| {
+                Ok(DetourTarget {
+                    point: point.clone(),
+                    definitions: vec![axis_plane_definition(point)],
+                    uncertified_definition_fallback: *point == first,
+                })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 2);
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
     fn detour_target_family_collection_backtracks_after_uncertified_family() {
         let mut targets = Vec::new();
 
@@ -6634,6 +6668,35 @@ mod tests {
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 4));
         assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn detour_target_family_collection_tracks_unknown_after_uncertain_family_result() {
+        let mut targets = Vec::new();
+
+        extend_detour_target_families_backtracking_unknown(
+            &mut targets,
+            [
+                Ok(vec![DetourTarget {
+                    point: p(1, 2, 3),
+                    definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                    uncertified_definition_fallback: true,
+                }]),
+                Ok(vec![DetourTarget {
+                    point: p(1, 2, 4),
+                    definitions: vec![axis_plane_definition(&p(1, 2, 4))],
+                    uncertified_definition_fallback: false,
+                }]),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 2);
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
     }
 
     #[test]

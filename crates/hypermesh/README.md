@@ -164,7 +164,11 @@ seeds and sibling seed families, instead of only noticing hard
 `UnknownClassification` returns. The downstream leaf/probe point collectors now
 do the same for fallback-marked surviving interior/probe candidates, so later
 sibling candidate families no longer look fully certified just because an
-earlier partially uncertified build returned some output. Direct detour-target construction from those strict witnesses
+earlier partially uncertified build returned some output. The detour-target
+collectors now do the same for fallback-marked surviving detour candidates and
+detour families, so valid-path fallback does not silently treat later sibling
+detours as fully certified after an earlier partially uncertified local build.
+Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
 later certified direct or shifted detour targets run, and the surrounding
 endpoint-box detour family now also backtracks past uncertified local boxes
