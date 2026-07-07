@@ -4830,7 +4830,9 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
         [
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
-                |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
+                |witness| {
+                    point_strictly_inside_projected_cell_or_unknown(witness, bounds, halfspaces)
+                },
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
@@ -4931,7 +4933,9 @@ fn shifted_projected_cell_targets_from_families(
         [
             reference_target_family_from_witness(
                 report_witness.as_ref(),
-                |witness| point_strictly_inside_projected_cell(witness, bounds, halfspaces),
+                |witness| {
+                    point_strictly_inside_projected_cell_or_unknown(witness, bounds, halfspaces)
+                },
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
@@ -4941,7 +4945,7 @@ fn shifted_projected_cell_targets_from_families(
                 },
             ),
             collect_reference_target_family(strict_shift_seeds, |witness| {
-                if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                if !point_strictly_inside_projected_cell_or_unknown(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
                 Ok(
@@ -4951,7 +4955,7 @@ fn shifted_projected_cell_targets_from_families(
                 )
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
-                if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                if !point_strictly_inside_projected_cell_or_unknown(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
                 Ok(
@@ -4961,7 +4965,7 @@ fn shifted_projected_cell_targets_from_families(
                 )
             }),
             collect_reference_target_family(shifted_geometry_seeds, |witness| {
-                if !point_strictly_inside_projected_cell(&witness, bounds, halfspaces)? {
+                if !point_strictly_inside_projected_cell_or_unknown(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
                 Ok(
@@ -5300,7 +5304,9 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
         [
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
-                |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
+                |witness| {
+                    point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
+                },
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
@@ -5755,7 +5761,9 @@ fn shifted_support_cell_targets_from_families(
         [
             reference_target_family_from_witness(
                 report_witness.as_ref(),
-                |witness| point_strictly_inside_support_cell(witness, bounds, halfspaces),
+                |witness| {
+                    point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
+                },
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
@@ -5765,7 +5773,7 @@ fn shifted_support_cell_targets_from_families(
                 },
             ),
             collect_reference_target_family(strict_shift_seeds, |witness| {
-                if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                if !point_strictly_inside_support_cell_or_unknown(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
                 Ok(
@@ -5775,7 +5783,7 @@ fn shifted_support_cell_targets_from_families(
                 )
             }),
             collect_reference_target_family(shifted_vertices, |witness| {
-                if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                if !point_strictly_inside_support_cell_or_unknown(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
                 Ok(
@@ -5785,7 +5793,7 @@ fn shifted_support_cell_targets_from_families(
                 )
             }),
             collect_reference_target_family(shifted_geometry_seeds, |witness| {
-                if !point_strictly_inside_support_cell(&witness, bounds, halfspaces)? {
+                if !point_strictly_inside_support_cell_or_unknown(&witness, bounds, halfspaces)? {
                     return Ok(Vec::new());
                 }
                 Ok(
@@ -7491,6 +7499,27 @@ mod tests {
     }
 
     #[test]
+    fn reference_target_family_from_witness_reports_unknown_for_boundary_reference_witness() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let err = reference_target_family_from_witness(
+            Some(&p(0, 2, 2)),
+            |candidate| {
+                point_strictly_inside_reference_halfspace_cell_or_unknown(
+                    candidate,
+                    &bounds,
+                    &halfspaces,
+                )
+            },
+            |candidate| Ok(Some(ReferenceTarget::axis_defined(candidate.clone()))),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn strict_projected_target_family_tracking_preserves_empty_unknown_result() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -7597,6 +7626,34 @@ mod tests {
 
         assert!(!targets.is_empty());
         assert!(targets.iter().any(|target| target.point == first));
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn shifted_projected_target_family_marks_surviving_targets_uncertain_after_boundary_report_witness()
+     {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let families = ShiftedProjectedCellFamilies {
+            shifted: halfspaces.clone(),
+            report: Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(0, 2, 2),
+                [None, None, None],
+            )),
+            saw_unknown: false,
+            strict_seeds: vec![p(1, 1, 1)],
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets =
+            shifted_projected_cell_targets_from_families(&bounds, &halfspaces, &families).unwrap();
+
+        assert!(!targets.is_empty());
         assert!(
             targets
                 .iter()
@@ -8427,6 +8484,34 @@ mod tests {
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 3));
         assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn shifted_support_target_family_marks_surviving_targets_uncertain_after_boundary_report_witness()
+     {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let families = ShiftedSupportCellFamilies {
+            shifted: halfspaces.clone(),
+            report: Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(0, 2, 2),
+                [None, None, None],
+            )),
+            saw_unknown: false,
+            strict_seeds: vec![p(1, 1, 1)],
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets =
+            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families).unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
     }
 
     #[test]
