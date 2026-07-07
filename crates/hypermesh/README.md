@@ -556,7 +556,9 @@ bounds-aware support target-family, accept, recursive support-search,
 reference-validity, and retained-definition trace caches now also stay alive
 across those later support-side calls. Equivalent support halfspace families
 now also hit those support-side caches when the same local halfspaces arrive in
-a different order, instead of missing reuse on permutation-only differences.
+a different order, and the report-sensitive target/accept layers now also treat
+active-plane index permutations on the same geometric halfspace witness as the
+same support state instead of missing reuse on representation-only differences.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when

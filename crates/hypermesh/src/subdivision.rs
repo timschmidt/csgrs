@@ -2973,7 +2973,12 @@ fn cached_support_target_family_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
             && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            && existing.report.as_ref() == report
+            && optional_halfspace_reports_match_for_cache(
+                &existing.halfspaces,
+                existing.report.as_ref(),
+                halfspaces,
+                report,
+            )
     }) {
         return existing.targets.clone();
     }
@@ -3009,7 +3014,12 @@ fn cached_support_reference_accept_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
             && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            && existing.report.as_ref() == report
+            && optional_halfspace_reports_match_for_cache(
+                &existing.halfspaces,
+                existing.report.as_ref(),
+                halfspaces,
+                report,
+            )
     }) {
         return existing.accepted.clone();
     }
@@ -3068,6 +3078,147 @@ fn limit_plane_families_match_as_sets(left: &[LimitPlane3], right: &[LimitPlane3
             .iter()
             .enumerate()
             .find(|(index, right_plane)| !matched[*index] && *right_plane == left_plane)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
+}
+
+fn optional_halfspace_reports_match_for_cache(
+    left_halfspaces: &[LimitPlane3],
+    left: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    right_halfspaces: &[LimitPlane3],
+    right: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> bool {
+    match (left, right) {
+        (None, None) => true,
+        (Some(left), Some(right)) => {
+            left.status == right.status
+                && left.witness == right.witness
+                && optional_halfspace_certificates_match_for_cache(
+                    left_halfspaces,
+                    left.infeasibility_certificate.as_ref(),
+                    right_halfspaces,
+                    right.infeasibility_certificate.as_ref(),
+                )
+                && active_halfspace_reports_match_as_sets(
+                    left_halfspaces,
+                    left.active_planes,
+                    right_halfspaces,
+                    right.active_planes,
+                )
+        }
+        _ => false,
+    }
+}
+
+fn optional_halfspace_certificates_match_for_cache(
+    left_halfspaces: &[LimitPlane3],
+    left: Option<&hyperlimit::HalfspaceInfeasibilityCertificate>,
+    right_halfspaces: &[LimitPlane3],
+    right: Option<&hyperlimit::HalfspaceInfeasibilityCertificate>,
+) -> bool {
+    match (left, right) {
+        (None, None) => true,
+        (Some(left), Some(right)) => {
+            left.offset_sum == right.offset_sum
+                && active_halfspace_certificates_match_as_sets(
+                    left_halfspaces,
+                    left.active_planes,
+                    &left.multipliers,
+                    right_halfspaces,
+                    right.active_planes,
+                    &right.multipliers,
+                )
+        }
+        _ => false,
+    }
+}
+
+fn active_halfspace_reports_match_as_sets(
+    left_halfspaces: &[LimitPlane3],
+    left_active_planes: [Option<usize>; 3],
+    right_halfspaces: &[LimitPlane3],
+    right_active_planes: [Option<usize>; 3],
+) -> bool {
+    let left_planes = mapped_active_halfspace_planes(left_halfspaces, left_active_planes);
+    let right_planes = mapped_active_halfspace_planes(right_halfspaces, right_active_planes);
+    limit_plane_families_match_as_sets(&left_planes, &right_planes)
+}
+
+fn active_halfspace_certificates_match_as_sets(
+    left_halfspaces: &[LimitPlane3],
+    left_active_planes: [Option<usize>; 4],
+    left_multipliers: &[Real; 4],
+    right_halfspaces: &[LimitPlane3],
+    right_active_planes: [Option<usize>; 4],
+    right_multipliers: &[Real; 4],
+) -> bool {
+    let left_pairs = mapped_active_halfspace_certificate_pairs(
+        left_halfspaces,
+        left_active_planes,
+        left_multipliers,
+    );
+    let right_pairs = mapped_active_halfspace_certificate_pairs(
+        right_halfspaces,
+        right_active_planes,
+        right_multipliers,
+    );
+    limit_plane_multiplier_pairs_match_as_sets(&left_pairs, &right_pairs)
+}
+
+fn mapped_active_halfspace_planes(
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+) -> Vec<LimitPlane3> {
+    active_planes
+        .into_iter()
+        .flatten()
+        .filter_map(|index| halfspaces.get(index).cloned())
+        .collect()
+}
+
+fn mapped_active_halfspace_certificate_pairs(
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 4],
+    multipliers: &[Real; 4],
+) -> Vec<(LimitPlane3, Real)> {
+    active_planes
+        .into_iter()
+        .zip(multipliers.iter().cloned())
+        .filter_map(|(index, multiplier)| {
+            index.and_then(|index| {
+                halfspaces
+                    .get(index)
+                    .cloned()
+                    .map(|plane| (plane, multiplier))
+            })
+        })
+        .collect()
+}
+
+fn limit_plane_multiplier_pairs_match_as_sets(
+    left: &[(LimitPlane3, Real)],
+    right: &[(LimitPlane3, Real)],
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for (left_plane, left_multiplier) in left {
+        let Some((index, _)) =
+            right
+                .iter()
+                .enumerate()
+                .find(|(index, (right_plane, right_multiplier))| {
+                    !matched[*index]
+                        && *right_plane == *left_plane
+                        && *right_multiplier == *left_multiplier
+                })
         else {
             return false;
         };
@@ -8421,6 +8572,55 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_target_family_reuses_permuted_state_and_permuted_report_indices() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let witness = p(1, 1, 1);
+        let left_active = [Some(0), Some(1), Some(2)];
+        let right_active = left_active.map(|index| {
+            index.map(|index| {
+                permuted
+                    .iter()
+                    .position(|plane| plane == &halfspaces[index])
+                    .unwrap()
+            })
+        });
+        let left_report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(witness.clone(), left_active);
+        let right_report = hyperlimit::HalfspaceFeasibilityReport::feasible(witness, right_active);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_target_family_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&left_report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))])
+            },
+        )
+        .unwrap();
+        let second = cached_support_target_family_with(
+            &mut cache,
+            &bounds,
+            &permuted,
+            Some(&right_report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_support_reference_accept_reuses_identical_state_and_report() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -8501,6 +8701,58 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_reference_accept_reuses_permuted_state_and_permuted_report_indices() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let witness = p(1, 1, 1);
+        let left_active = [Some(0), Some(1), Some(2)];
+        let right_active = left_active.map(|index| {
+            index.map(|index| {
+                permuted
+                    .iter()
+                    .position(|plane| plane == &halfspaces[index])
+                    .unwrap()
+            })
+        });
+        let left_report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(witness.clone(), left_active);
+        let right_report = hyperlimit::HalfspaceFeasibilityReport::feasible(witness, right_active);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_reference_accept_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&left_report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(Some((
+                    ReferenceTarget::axis_defined(bounds.min.clone()),
+                    vec![23],
+                )))
+            },
+        )
+        .unwrap();
+        let second = cached_support_reference_accept_with(
+            &mut cache,
+            &bounds,
+            &permuted,
+            Some(&right_report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_support_plane_cell_search_reuses_identical_state_and_index() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -8521,6 +8773,43 @@ mod tests {
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn optional_halfspace_reports_match_permuted_infeasibility_certificates() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let left_active = [Some(0), Some(1), None, None];
+        let right_active = left_active.map(|index| {
+            index.map(|index| {
+                permuted
+                    .iter()
+                    .position(|plane| plane == &halfspaces[index])
+                    .unwrap()
+            })
+        });
+        let left = hyperlimit::HalfspaceFeasibilityReport::infeasible(Some(
+            hyperlimit::HalfspaceInfeasibilityCertificate {
+                active_planes: left_active,
+                multipliers: [r(1), r(2), r(0), r(0)],
+                offset_sum: r(3),
+            },
+        ));
+        let right = hyperlimit::HalfspaceFeasibilityReport::infeasible(Some(
+            hyperlimit::HalfspaceInfeasibilityCertificate {
+                active_planes: right_active,
+                multipliers: [r(1), r(2), r(0), r(0)],
+                offset_sum: r(3),
+            },
+        ));
+
+        assert!(optional_halfspace_reports_match_for_cache(
+            &halfspaces,
+            Some(&left),
+            &permuted,
+            Some(&right),
+        ));
     }
 
     #[test]
