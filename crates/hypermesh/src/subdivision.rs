@@ -392,8 +392,15 @@ fn subdivide_into_inner_with(
     let can_split = can_split_bounds(&task.bounds)?;
 
     if !can_split {
-        process_leaf(&task, indicator, output)?;
-        return Ok(());
+        if let Some(certified_output) =
+            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+                process_leaf(task, indicator, output)
+            })?
+        {
+            output.extend(certified_output);
+            return Ok(());
+        }
+        return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
     if let Some(certified_output) =
@@ -10249,6 +10256,69 @@ mod tests {
             }
         );
         assert_eq!(output, vec![sentinel]);
+    }
+
+    #[test]
+    fn unsplittable_task_requires_certified_leaf_completion() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let mut output = Vec::new();
+        let emitted = ClassifiedPolygon::new(wall.clone(), 1);
+        let mut caches = SubdivisionRuntimeCaches::default();
+
+        let err = subdivide_into_inner_with(
+            SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+            None,
+            &mut output,
+            &mut |_task, _indicator, out| {
+                out.push(emitted.clone());
+                Ok(LeafProcessingStats {
+                    polygon_count: 1,
+                    certified_complete: false,
+                    ..LeafProcessingStats::default()
+                })
+            },
+            &mut caches,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn unsplittable_task_accepts_certified_leaf_completion() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let mut output = Vec::new();
+        let emitted = ClassifiedPolygon::new(wall.clone(), 1);
+        let mut caches = SubdivisionRuntimeCaches::default();
+
+        subdivide_into_inner_with(
+            SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+            None,
+            &mut output,
+            &mut |_task, _indicator, out| {
+                out.push(emitted.clone());
+                Ok(LeafProcessingStats {
+                    polygon_count: 1,
+                    certified_complete: true,
+                    ..LeafProcessingStats::default()
+                })
+            },
+            &mut caches,
+        )
+        .unwrap();
+
+        assert_eq!(output, vec![emitted]);
     }
 
     #[test]

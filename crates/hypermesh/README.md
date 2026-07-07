@@ -691,7 +691,10 @@ converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
-through the certified leaf-output helper. That lets exact local arrangement
+through the certified leaf-output helper, but they only succeed if that leaf
+result is explicitly marked `certified_complete`; an unsplittable task whose
+leaf processor returns a non-certified `Ok(...)` now surfaces
+`UnknownClassification` instead of leaking partial output. That lets exact local arrangement
 isolation continue until the depth budget or a certified leaf result stops the
 branch. Hypermesh reports
 `SubdivisionDepthLimit` if the configured depth budget is reached before the
