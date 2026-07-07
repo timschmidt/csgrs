@@ -260,6 +260,9 @@ The direct axis-ordered segment path now also keeps trying later orderings
 when one intermediate surface-membership check or one axis-aligned leg trace
 is uncertified, instead of aborting the whole ordered-path search before those
 later exact orderings run.
+Direct segment tracing now also treats unmatched on-edge crossings as
+`UnknownClassification` instead of flattening them into an ordinary invalid
+path result.
 The reachability-side plane-replacement walk now does the same for its
 intermediate adjacency checks: one uncertified replacement leg only invalidates
 that ordering, rather than cutting off later exact plane-replacement orderings.

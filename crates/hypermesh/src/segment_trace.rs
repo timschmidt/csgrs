@@ -241,12 +241,7 @@ pub fn trace_axis_segment(
         });
     }
 
-    let Some(mut accepted) = accepted_crossing_events(&events) else {
-        return Ok(TraceAxisSegmentResult {
-            winding,
-            valid: false,
-        });
-    };
+    let mut accepted = accepted_crossing_events(&events)?;
 
     sort_crossing_events(&mut accepted, axis, dir_sign)?;
 
@@ -1265,12 +1260,7 @@ fn trace_direct_segment(
         });
     }
 
-    let Some(mut accepted) = accepted_crossing_events(&events) else {
-        return Ok(TraceAxisSegmentResult {
-            winding,
-            valid: false,
-        });
-    };
+    let mut accepted = accepted_crossing_events(&events)?;
     sort_crossing_events(&mut accepted, sort_axis, dir_sign)?;
 
     for event in accepted {
@@ -1283,7 +1273,7 @@ fn trace_direct_segment(
     })
 }
 
-fn accepted_crossing_events(events: &[CrossingEvent]) -> Option<Vec<CrossingEvent>> {
+fn accepted_crossing_events(events: &[CrossingEvent]) -> HypermeshResult<Vec<CrossingEvent>> {
     let mut accepted = Vec::new();
     for (index, event) in events.iter().enumerate() {
         if event.on_edge
@@ -1295,7 +1285,7 @@ fn accepted_crossing_events(events: &[CrossingEvent]) -> Option<Vec<CrossingEven
                     && other.delta_w == event.delta_w
             })
         {
-            return None;
+            return Err(HypermeshError::UnknownClassification);
         }
 
         if accepted.iter().any(|existing: &CrossingEvent| {
@@ -1309,7 +1299,7 @@ fn accepted_crossing_events(events: &[CrossingEvent]) -> Option<Vec<CrossingEven
 
         accepted.push(event.clone());
     }
-    Some(accepted)
+    Ok(accepted)
 }
 
 fn first_changed_axis(start: &Point3, end: &Point3) -> HypermeshResult<Option<usize>> {
@@ -6668,6 +6658,26 @@ mod tests {
 
         assert_eq!(
             trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0, 0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn trace_axis_segment_reports_unknown_for_unmatched_edge_crossing() {
+        let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+
+        assert_eq!(
+            trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
+        let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+
+        assert_eq!(
+            trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]),
             Err(HypermeshError::UnknownClassification)
         );
     }
