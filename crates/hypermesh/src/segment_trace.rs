@@ -80,6 +80,24 @@ struct DetourTarget {
     uncertified_definition_fallback: bool,
 }
 
+fn mark_all_interior_points_uncertified(points: &mut Vec<InteriorLeafPoint>) {
+    for point in points {
+        point.uncertified_definition_fallback = true;
+    }
+}
+
+fn mark_all_probe_points_uncertified(probes: &mut Vec<ProbePoint>) {
+    for probe in probes {
+        probe.uncertified_definition_fallback = true;
+    }
+}
+
+fn mark_all_detour_targets_uncertified(targets: &mut Vec<DetourTarget>) {
+    for target in targets {
+        target.uncertified_definition_fallback = true;
+    }
+}
+
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
 pub fn trace_axis_segment(
     start: &Point3,
@@ -1151,6 +1169,9 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     if targets.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_detour_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -2691,6 +2712,9 @@ fn strict_leaf_witness_points(
     if points.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_interior_points_uncertified(&mut points);
+        }
         Ok(points)
     }
 }
@@ -2905,6 +2929,9 @@ fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
     if points.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_interior_points_uncertified(points);
+        }
         Ok(())
     }
 }
@@ -2928,6 +2955,9 @@ fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
     if points.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_interior_points_uncertified(points);
+        }
         Ok(())
     }
 }
@@ -3218,6 +3248,9 @@ fn bounded_probes_from_interior(
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(&mut probes);
+        }
         Ok(probes)
     }
 }
@@ -3492,6 +3525,9 @@ fn collect_normal_probe_targets(
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(&mut probes);
+        }
         Ok(probes)
     }
 }
@@ -3824,6 +3860,9 @@ fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(probes);
+        }
         Ok(())
     }
 }
@@ -4859,6 +4898,19 @@ mod tests {
             assert!(compare_real(&target.point.y, &r(6)).unwrap().is_lt());
             assert!(!target.definitions.is_empty());
         }
+    }
+
+    #[test]
+    fn detour_target_marking_marks_existing_targets_uncertain() {
+        let mut targets = vec![DetourTarget {
+            point: p(1, 2, 3),
+            definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+            uncertified_definition_fallback: false,
+        }];
+
+        mark_all_detour_targets_uncertified(&mut targets);
+
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -5984,6 +6036,34 @@ mod tests {
     }
 
     #[test]
+    fn probe_point_build_collection_marks_existing_probes_uncertain_after_later_unknown() {
+        let mut probes = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_probe_point_builds_backtracking_unknown(
+            &mut probes,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                if *candidate == second {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(ProbePoint {
+                        point: candidate.clone(),
+                        side: Classification::Positive,
+                        planes: vec![axis_plane_definition(candidate)],
+                        uncertified_definition_fallback: false,
+                    }))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert!(probes[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn probe_point_build_collection_reports_unknown_if_all_candidates_are_uncertified() {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
@@ -6356,6 +6436,33 @@ mod tests {
     }
 
     #[test]
+    fn interior_leaf_point_collection_marks_existing_points_uncertain_after_later_unknown() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_interior_leaf_points_backtracking_unknown(
+            &mut points,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                if *candidate == second {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(vec![InteriorLeafPoint {
+                        point: candidate.clone(),
+                        planes: vec![axis_plane_definition(candidate)],
+                        uncertified_definition_fallback: false,
+                    }])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points.len(), 1);
+        assert!(points[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn interior_leaf_point_collection_reports_unknown_if_all_candidates_are_uncertified() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
@@ -6396,6 +6503,33 @@ mod tests {
 
         assert_eq!(points.len(), 1);
         assert_eq!(points[0].point, second);
+    }
+
+    #[test]
+    fn leaf_point_build_collection_marks_existing_points_uncertain_after_later_unknown() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_leaf_point_builds_backtracking_unknown(
+            &mut points,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                if *candidate == second {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(InteriorLeafPoint {
+                        point: candidate.clone(),
+                        planes: vec![axis_plane_definition(candidate)],
+                        uncertified_definition_fallback: false,
+                    }))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points.len(), 1);
+        assert!(points[0].uncertified_definition_fallback);
     }
 
     #[test]

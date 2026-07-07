@@ -233,7 +233,11 @@ family before later certified candidates run. The remaining strict leaf/probe/
 detour seed builders now also continue past an uncertified root halfspace
 feasibility report by still searching the later exact-vertex and closed-cell
 geometry seed families, instead of treating that root report as a hard local
-failure before those exact seed families run.
+failure before those exact seed families run. If one of those later
+leaf/probe/detour witness families is itself uncertified after earlier
+certified candidates already exist, the surviving candidates now keep that
+uncertainty attached so later failure still surfaces
+`UnknownClassification` instead of being flattened back into ordinary absence.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.
