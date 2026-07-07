@@ -98,6 +98,12 @@ fn mark_all_detour_targets_uncertified(targets: &mut Vec<DetourTarget>) {
     }
 }
 
+fn mark_all_shifted_halfspace_witnesses_uncertified(witnesses: &mut Vec<ShiftedHalfspaceWitness>) {
+    for witness in witnesses {
+        witness.uncertified_definition_fallback = true;
+    }
+}
+
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
 pub fn trace_axis_segment(
     start: &Point3,
@@ -1120,17 +1126,9 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
 
     for seed in &seeds {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
-        let (definitions, uncertified_definition_fallback) = probe_definitions_or_axis(
-            &seed,
-            probe_definitions_from_active_halfspaces(&seed, &halfspaces, active_planes, &[]),
-        )?;
         push_unique_detour_target(
             &mut targets,
-            DetourTarget {
-                point: seed.clone(),
-                definitions,
-                uncertified_definition_fallback,
-            },
+            build_detour_target(seed, &halfspaces, active_planes, false)?,
         );
     }
 
@@ -1147,23 +1145,14 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         &mut saw_unknown,
     )?;
     for witness in shifted_witnesses {
-        let point = witness.point;
-        let (definitions, uncertified_definition_fallback) = probe_definitions_or_axis(
-            &point,
-            probe_definitions_from_active_halfspaces(
-                &point,
-                &witness.halfspaces,
-                witness.active_planes,
-                &[],
-            ),
-        )?;
         push_unique_detour_target(
             &mut targets,
-            DetourTarget {
-                point: point.clone(),
-                definitions,
-                uncertified_definition_fallback,
-            },
+            build_detour_target(
+                &witness.point,
+                &witness.halfspaces,
+                witness.active_planes,
+                witness.uncertified_definition_fallback,
+            )?,
         );
     }
     if targets.is_empty() && saw_unknown {
@@ -1174,6 +1163,24 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         }
         Ok(targets)
     }
+}
+
+fn build_detour_target(
+    point: &Point3,
+    halfspaces: &[LimitPlane3],
+    active_planes: [Option<usize>; 3],
+    inherited_uncertified_definition_fallback: bool,
+) -> HypermeshResult<DetourTarget> {
+    let (definitions, uncertified_definition_fallback) = probe_definitions_or_axis(
+        point,
+        probe_definitions_from_active_halfspaces(point, halfspaces, active_planes, &[]),
+    )?;
+    Ok(DetourTarget {
+        point: point.clone(),
+        definitions,
+        uncertified_definition_fallback: inherited_uncertified_definition_fallback
+            || uncertified_definition_fallback,
+    })
 }
 
 fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) {
@@ -2672,7 +2679,7 @@ fn strict_leaf_witness_points(
 
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |seed| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
-        build_strict_leaf_point(leaf, seed, &halfspaces, active_planes)
+        build_strict_leaf_point(leaf, seed, &halfspaces, active_planes, false)
     })?;
 
     let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
@@ -2696,6 +2703,7 @@ fn strict_leaf_witness_points(
                 &shifted.point,
                 &shifted.halfspaces,
                 shifted.active_planes,
+                shifted.uncertified_definition_fallback,
             )
         },
     )?;
@@ -3008,7 +3016,7 @@ fn strict_leaf_cell_points(
     );
     extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), witness);
-        build_strict_leaf_point(leaf, witness, &halfspaces, active_planes)
+        build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
     })?;
 
     let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
@@ -3032,12 +3040,16 @@ fn strict_leaf_cell_points(
                 &shifted.point,
                 &shifted.halfspaces,
                 shifted.active_planes,
+                shifted.uncertified_definition_fallback,
             )
         },
     )?;
     if points.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_interior_points_uncertified(&mut points);
+        }
         Ok(points)
     }
 }
@@ -3047,6 +3059,7 @@ fn build_strict_leaf_point(
     witness: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
+    inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<InteriorLeafPoint>> {
     if !point_strictly_inside_leaf(witness, leaf)? {
         return Ok(None);
@@ -3068,7 +3081,8 @@ fn build_strict_leaf_point(
     Ok(Some(InteriorLeafPoint {
         point: witness.clone(),
         planes,
-        uncertified_definition_fallback,
+        uncertified_definition_fallback: inherited_uncertified_definition_fallback
+            || uncertified_definition_fallback,
     }))
 }
 
@@ -3598,6 +3612,7 @@ fn strict_normal_probe_targets(
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), witness),
             &extra_planes,
+            false,
         )
     })?;
 
@@ -3623,12 +3638,16 @@ fn strict_normal_probe_targets(
                 &shifted.halfspaces,
                 shifted.active_planes,
                 &extra_planes,
+                shifted.uncertified_definition_fallback,
             )
         },
     )?;
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(&mut probes);
+        }
         Ok(probes)
     }
 }
@@ -3837,6 +3856,9 @@ fn collect_axis_probe_targets(
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(&mut probes);
+        }
         Ok(probes)
     }
 }
@@ -3923,6 +3945,7 @@ fn strict_axis_probe_targets(
             definition,
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), witness),
+            false,
         )
     })?;
 
@@ -3950,12 +3973,16 @@ fn strict_axis_probe_targets(
                 definition,
                 &shifted.halfspaces,
                 shifted.active_planes,
+                shifted.uncertified_definition_fallback,
             )
         },
     )?;
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(&mut probes);
+        }
         Ok(probes)
     }
 }
@@ -3966,6 +3993,7 @@ fn build_probe_point(
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
     extra_planes: &[Plane],
+    inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<ProbePoint>> {
     if !point_satisfies_halfspaces(witness, halfspaces)? {
         return Ok(None);
@@ -3999,7 +4027,8 @@ fn build_probe_point(
         point: witness.clone(),
         side,
         planes,
-        uncertified_definition_fallback,
+        uncertified_definition_fallback: inherited_uncertified_definition_fallback
+            || uncertified_definition_fallback,
     }))
 }
 
@@ -4011,6 +4040,7 @@ fn build_axis_probe_point(
     definition: Option<&[Plane; 3]>,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
+    inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<ProbePoint>> {
     if !point_satisfies_halfspaces(witness, halfspaces)? {
         return Ok(None);
@@ -4036,7 +4066,8 @@ fn build_axis_probe_point(
         point: witness.clone(),
         side,
         planes,
-        uncertified_definition_fallback,
+        uncertified_definition_fallback: inherited_uncertified_definition_fallback
+            || uncertified_definition_fallback,
     }))
 }
 
@@ -4298,6 +4329,7 @@ struct ShiftedHalfspaceWitness {
     point: Point3,
     halfspaces: Vec<LimitPlane3>,
     active_planes: [Option<usize>; 3],
+    uncertified_definition_fallback: bool,
 }
 
 fn shifted_halfspace_cell_witnesses_from_seed(
@@ -4343,6 +4375,7 @@ fn shifted_halfspace_cell_witnesses_from_seed(
                 ),
                 halfspaces: shifted.clone(),
                 point: witness.clone(),
+                uncertified_definition_fallback: false,
             }])
         },
     )?;
@@ -4357,6 +4390,7 @@ fn shifted_halfspace_cell_witnesses_from_seed(
                 halfspaces: shifted.clone(),
                 point: witness.clone(),
                 active_planes: [None, None, None],
+                uncertified_definition_fallback: false,
             }])
         },
     )?;
@@ -4371,6 +4405,7 @@ fn shifted_halfspace_cell_witnesses_from_seed(
                 point: witness.clone(),
                 halfspaces: shifted.clone(),
                 active_planes: [None, None, None],
+                uncertified_definition_fallback: false,
             }])
         },
     )?;
@@ -4378,6 +4413,9 @@ fn shifted_halfspace_cell_witnesses_from_seed(
     if witnesses.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_shifted_halfspace_witnesses_uncertified(&mut witnesses);
+        }
         Ok(witnesses)
     }
 }
@@ -4456,10 +4494,12 @@ fn push_unique_shifted_halfspace_witness(
     witnesses: &mut Vec<ShiftedHalfspaceWitness>,
     witness: ShiftedHalfspaceWitness,
 ) {
-    if !witnesses
-        .iter()
-        .any(|existing| existing.point == witness.point)
+    if let Some(existing) = witnesses
+        .iter_mut()
+        .find(|existing| existing.point == witness.point)
     {
+        existing.uncertified_definition_fallback |= witness.uncertified_definition_fallback;
+    } else {
         witnesses.push(witness);
     }
 }
@@ -4521,6 +4561,9 @@ fn extend_shifted_halfspace_seed_families_backtracking_unknown(
     if witnesses.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
+        }
         Ok(())
     }
 }
@@ -4547,6 +4590,9 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
     if witnesses.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
+        }
         Ok(())
     }
 }
@@ -4914,6 +4960,16 @@ mod tests {
     }
 
     #[test]
+    fn detour_target_build_preserves_inherited_uncertified_definition_fallback() {
+        let point = p(1, 1, 1);
+        let halfspaces = vec![axis_halfspace(2, false, r(1))];
+
+        let target = build_detour_target(&point, &halfspaces, [None, None, None], true).unwrap();
+
+        assert!(target.uncertified_definition_fallback);
+    }
+
+    #[test]
     fn shifted_halfspace_cell_vertex_witnesses_return_strict_points() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -5062,6 +5118,7 @@ mod tests {
                         point: candidate.clone(),
                         halfspaces: Vec::new(),
                         active_planes: [None, None, None],
+                        uncertified_definition_fallback: false,
                     }])
                 }
             },
@@ -5070,6 +5127,7 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, second);
+        assert!(witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -5096,6 +5154,7 @@ mod tests {
             point: p(3, 3, 3),
             halfspaces: Vec::new(),
             active_planes: [None, None, None],
+            uncertified_definition_fallback: false,
         };
         let mut witnesses = Vec::new();
 
@@ -5110,6 +5169,7 @@ mod tests {
                         point: kept.point.clone(),
                         halfspaces: kept.halfspaces.clone(),
                         active_planes: kept.active_planes,
+                        uncertified_definition_fallback: false,
                     }])
                 } else {
                     Ok(Vec::new())
@@ -5120,6 +5180,7 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, kept.point);
+        assert!(witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -5305,6 +5366,7 @@ mod tests {
                     point: seed.clone(),
                     halfspaces: Vec::new(),
                     active_planes: [None, None, None],
+                    uncertified_definition_fallback: false,
                 }])
             },
         )
@@ -5335,6 +5397,7 @@ mod tests {
                         point: seed.clone(),
                         halfspaces: Vec::new(),
                         active_planes: [None, None, None],
+                        uncertified_definition_fallback: false,
                     }])
                 } else {
                     Err(HypermeshError::UnknownClassification)
@@ -5350,6 +5413,36 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![second]
         );
+    }
+
+    #[test]
+    fn shifted_halfspace_witness_seed_family_search_marks_existing_witnesses_uncertain_after_later_unknown()
+     {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut witnesses = Vec::new();
+
+        extend_shifted_halfspace_seed_families_backtracking_unknown(
+            &mut witnesses,
+            [vec![first.clone()], vec![second.clone()]],
+            |seed| {
+                if *seed == first {
+                    Ok(vec![ShiftedHalfspaceWitness {
+                        point: seed.clone(),
+                        halfspaces: Vec::new(),
+                        active_planes: [None, None, None],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Err(HypermeshError::UnknownClassification)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].point, first);
+        assert!(witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -6322,7 +6415,7 @@ mod tests {
                 [None, None, None]
             };
             if let Some(point) =
-                build_strict_leaf_point(&leaf, &seed, &halfspaces, active_planes).unwrap()
+                build_strict_leaf_point(&leaf, &seed, &halfspaces, active_planes, false).unwrap()
             {
                 direct_points.push(point.point);
             }
@@ -6383,7 +6476,7 @@ mod tests {
                 [None, None, None]
             };
             if let Some(point) =
-                build_strict_leaf_point(&leaf, seed, &halfspaces, active_planes).unwrap()
+                build_strict_leaf_point(&leaf, seed, &halfspaces, active_planes, false).unwrap()
             {
                 direct_points.push(point.point);
             }
@@ -6615,9 +6708,10 @@ mod tests {
         let witness = p(1, 1, 1);
         let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
-        let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None])
-            .unwrap()
-            .expect("strict witness should still be retained");
+        let point =
+            build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None], false)
+                .unwrap()
+                .expect("strict witness should still be retained");
 
         assert_eq!(point.point, witness);
         assert!(point.planes.iter().any(|definition| {
@@ -6635,6 +6729,19 @@ mod tests {
     }
 
     #[test]
+    fn strict_leaf_witness_preserves_inherited_uncertified_definition_fallback() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
+
+        let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [None, None, None], true)
+            .unwrap()
+            .expect("strict witness should still be retained");
+
+        assert!(point.uncertified_definition_fallback);
+    }
+
+    #[test]
     fn strict_leaf_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let witness = p(1, 1, 1);
@@ -6643,9 +6750,10 @@ mod tests {
             axis_halfspace(0, false, r(1)),
         ];
 
-        let point = build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None])
-            .unwrap()
-            .expect("strict witness should still be retained");
+        let point =
+            build_strict_leaf_point(&leaf, &witness, &halfspaces, [Some(9), None, None], false)
+                .unwrap()
+                .expect("strict witness should still be retained");
 
         assert_eq!(point.point, witness);
         assert!(point.planes.iter().any(|definition| {
@@ -6716,9 +6824,16 @@ mod tests {
         let witness = p(1, 1, 1);
         let halfspaces = vec![axis_halfspace(2, false, r(1))];
 
-        let probe = build_probe_point(&witness, &support, &halfspaces, [Some(9), None, None], &[])
-            .unwrap()
-            .expect("strict probe witness should still be retained");
+        let probe = build_probe_point(
+            &witness,
+            &support,
+            &halfspaces,
+            [Some(9), None, None],
+            &[],
+            false,
+        )
+        .unwrap()
+        .expect("strict probe witness should still be retained");
 
         assert_eq!(probe.point, witness);
         assert!(
@@ -6730,6 +6845,26 @@ mod tests {
     }
 
     #[test]
+    fn strict_probe_witness_preserves_inherited_uncertified_definition_fallback() {
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = p(1, 1, 1);
+        let halfspaces = vec![axis_halfspace(2, false, r(1))];
+
+        let probe = build_probe_point(
+            &witness,
+            &support,
+            &halfspaces,
+            [None, None, None],
+            &[],
+            true,
+        )
+        .unwrap()
+        .expect("strict probe witness should still be retained");
+
+        assert!(probe.uncertified_definition_fallback);
+    }
+
+    #[test]
     fn strict_probe_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
         let support = Plane::axis_aligned(2, r(0));
         let witness = p(1, 1, 1);
@@ -6738,9 +6873,16 @@ mod tests {
             LimitPlane3::new(p(1, 1, 1), r(-3)),
         ];
 
-        let probe = build_probe_point(&witness, &support, &halfspaces, [Some(9), None, None], &[])
-            .unwrap()
-            .expect("strict probe witness should still be retained");
+        let probe = build_probe_point(
+            &witness,
+            &support,
+            &halfspaces,
+            [Some(9), None, None],
+            &[],
+            false,
+        )
+        .unwrap()
+        .expect("strict probe witness should still be retained");
 
         assert_eq!(probe.point, witness);
         assert!(probe.planes.iter().any(|definition| {
@@ -6769,6 +6911,7 @@ mod tests {
             None,
             &halfspaces,
             [Some(9), None, None],
+            false,
         )
         .unwrap()
         .expect("strict axis probe witness should still be retained");
@@ -6780,6 +6923,33 @@ mod tests {
                 .iter()
                 .any(|definition| definition == &axis_plane_definition(&probe.point))
         );
+    }
+
+    #[test]
+    fn strict_axis_probe_witness_preserves_inherited_uncertified_definition_fallback() {
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![axis_plane_definition(&p(1, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let witness = p(2, 1, 1);
+        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+
+        let probe = build_axis_probe_point(
+            &witness,
+            &interior,
+            &support,
+            0,
+            None,
+            &halfspaces,
+            [None, None, None],
+            true,
+        )
+        .unwrap()
+        .expect("strict axis probe witness should still be retained");
+
+        assert!(probe.uncertified_definition_fallback);
     }
 
     #[test]
