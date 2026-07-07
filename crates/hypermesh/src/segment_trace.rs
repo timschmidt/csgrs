@@ -559,11 +559,21 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
     let mut saw_unknown = false;
     for detour in detours {
         let already_visited = point_family_contains(visited_points, &detour.point);
-        if already_visited
-            || cached_surface_query_with(surface_cache, &detour.point, || {
+        let on_surface = if already_visited {
+            false
+        } else {
+            match cached_surface_query_with(surface_cache, &detour.point, || {
                 surface_query(&detour.point)
-            })?
-        {
+            }) {
+                Ok(on_surface) => on_surface,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }
+        };
+        if already_visited || on_surface {
             if detour.uncertified_definition_fallback {
                 saw_unknown = true;
             }
@@ -2836,11 +2846,21 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
     let mut saw_unknown = false;
     for detour in detours_for(start, end)? {
         let already_visited = point_family_contains(visited_points, &detour.point);
-        if already_visited
-            || cached_surface_query_with(surface_cache, &detour.point, || {
+        let on_surface = if already_visited {
+            false
+        } else {
+            match cached_surface_query_with(surface_cache, &detour.point, || {
                 surface_query(&detour.point)
-            })?
-        {
+            }) {
+                Ok(on_surface) => on_surface,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }
+        };
+        if already_visited || on_surface {
             if detour.uncertified_definition_fallback {
                 saw_unknown = true;
             }
@@ -3298,11 +3318,21 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
 
     for detour in detours_for(start, end)? {
         let already_visited = point_family_contains(visited_points, &detour.point);
-        if already_visited
-            || cached_surface_query_with(surface_cache, &detour.point, || {
+        let on_surface = if already_visited {
+            false
+        } else {
+            match cached_surface_query_with(surface_cache, &detour.point, || {
                 surface_query(&detour.point)
-            })?
-        {
+            }) {
+                Ok(on_surface) => on_surface,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }
+        };
+        if already_visited || on_surface {
             if detour.uncertified_definition_fallback {
                 saw_unknown = true;
             }
@@ -10799,6 +10829,97 @@ mod tests {
     }
 
     #[test]
+    fn detour_trace_cycle_guard_tries_later_detour_after_uncertified_surface_query() {
+        let start = p(0, 0, 0);
+        let first_detour = p(1, 0, 0);
+        let second_detour = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let mut surface_cache = Vec::new();
+
+        let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[
+                DetourTarget {
+                    point: first_detour.clone(),
+                    definitions: vec![axis_plane_definition(&first_detour)],
+                    uncertified_definition_fallback: false,
+                },
+                DetourTarget {
+                    point: second_detour.clone(),
+                    definitions: vec![axis_plane_definition(&second_detour)],
+                    uncertified_definition_fallback: false,
+                },
+            ],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut surface_cache,
+            &mut |point| {
+                if *point == first_detour {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            },
+            &mut |_from, _to, winding, _start_definitions, _end_definitions| {
+                Ok(Some(winding.to_vec()))
+            },
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
+    fn detour_trace_cycle_guard_reports_unknown_when_surface_query_is_uncertified_and_later_detours_fail()
+     {
+        let start = p(0, 0, 0);
+        let first_detour = p(1, 0, 0);
+        let second_detour = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let mut surface_cache = Vec::new();
+
+        let err = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[
+                DetourTarget {
+                    point: first_detour.clone(),
+                    definitions: vec![axis_plane_definition(&first_detour)],
+                    uncertified_definition_fallback: false,
+                },
+                DetourTarget {
+                    point: second_detour.clone(),
+                    definitions: vec![axis_plane_definition(&second_detour)],
+                    uncertified_definition_fallback: false,
+                },
+            ],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut surface_cache,
+            &mut |point| {
+                if *point == first_detour {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            },
+            &mut |_from, _to, _winding, _start_definitions, _end_definitions| Ok(None),
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
         let ref_point = p(0, 0, 0);
         let ref_definitions = [[
@@ -11292,6 +11413,54 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_step_detour_cycle_guard_tries_later_detour_after_uncertified_surface_query() {
+        let start = p(0, 0, 0);
+        let first_detour = p(1, 0, 0);
+        let second_detour = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let mut surface_cache = Vec::new();
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut surface_cache,
+                &mut |point| {
+                    if *point == first_detour {
+                        Err(HypermeshError::UnknownClassification)
+                    } else {
+                        Ok(false)
+                    }
+                },
+                &mut |_from, _to, _start_definitions, _end_definitions| Ok(true),
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![
+                            DetourTarget {
+                                point: first_detour.clone(),
+                                definitions: vec![axis_plane_definition(&first_detour)],
+                                uncertified_definition_fallback: false,
+                            },
+                            DetourTarget {
+                                point: second_detour.clone(),
+                                definitions: vec![axis_plane_definition(&second_detour)],
+                                uncertified_definition_fallback: false,
+                            },
+                        ])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
     }
 
     #[test]
@@ -11830,6 +11999,54 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_reachability_cycle_guard_tries_later_detour_after_uncertified_surface_query() {
+        let start = p(0, 0, 0);
+        let first_detour = p(1, 0, 0);
+        let second_detour = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let mut surface_cache = Vec::new();
+
+        assert!(
+            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &[start.clone(), end.clone()],
+                &mut surface_cache,
+                &mut |point| {
+                    if *point == first_detour {
+                        Err(HypermeshError::UnknownClassification)
+                    } else {
+                        Ok(false)
+                    }
+                },
+                &mut |_from, _to, _start_definitions, _end_definitions| Ok(true),
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![
+                            DetourTarget {
+                                point: first_detour.clone(),
+                                definitions: vec![axis_plane_definition(&first_detour)],
+                                uncertified_definition_fallback: false,
+                            },
+                            DetourTarget {
+                                point: second_detour.clone(),
+                                definitions: vec![axis_plane_definition(&second_detour)],
+                                uncertified_definition_fallback: false,
+                            },
+                        ])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
     }
 
     #[test]

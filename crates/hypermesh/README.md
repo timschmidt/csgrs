@@ -662,6 +662,9 @@ reject that target afterward. Uncertified support-surface rejection or
 reference-validity checks now also invalidate only the current target and let
 later exact targets run, instead of aborting the whole target search before
 those siblings get traced. The
+cycle-guarded detour layers now treat uncertified traced-surface checks the
+same way: one uncertified detour-point surface query no longer aborts the
+whole detour family before later certified detours run. The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
 vertex family on the first uncertified candidate, and the leaf/probe-side
