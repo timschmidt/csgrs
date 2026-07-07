@@ -2667,23 +2667,50 @@ fn escaped_reference_axis_stop_values_with_queries(
     Ok((stop_values, saw_unknown))
 }
 
-fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: ReferenceTarget) {
+fn push_unique_reference_target(
+    targets: &mut Vec<ReferenceTarget>,
+    target: ReferenceTarget,
+) -> bool {
     if let Some(existing) = targets
         .iter_mut()
         .find(|existing| existing.point == target.point)
     {
-        for definition in target.definitions {
+        let incoming_definitions = target.definitions;
+        let incoming_is_fallback = target.uncertified_definition_fallback;
+        let existing_covered_by_incoming = existing.definitions.iter().all(|existing_definition| {
+            incoming_definitions.iter().any(|incoming_definition| {
+                reference_definition_planes_match_as_sets(existing_definition, incoming_definition)
+            })
+        });
+        let mut introduced_new_definition = false;
+        for definition in incoming_definitions {
             if !existing
                 .definitions
                 .iter()
                 .any(|candidate| reference_definition_planes_match_as_sets(candidate, &definition))
             {
                 existing.definitions.push(definition);
+                introduced_new_definition = true;
             }
         }
-        existing.uncertified_definition_fallback |= target.uncertified_definition_fallback;
+
+        if incoming_is_fallback {
+            if introduced_new_definition {
+                existing.uncertified_definition_fallback = true;
+                true
+            } else {
+                false
+            }
+        } else {
+            if existing_covered_by_incoming {
+                existing.uncertified_definition_fallback = false;
+            }
+            false
+        }
     } else {
+        let introduced_uncertified_state = target.uncertified_definition_fallback;
         targets.push(target);
+        introduced_uncertified_state
     }
 }
 
@@ -2735,23 +2762,24 @@ fn extend_reference_targets_backtracking_unknown<T>(
     candidates: impl IntoIterator<Item = T>,
     mut build: impl FnMut(T) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for candidate in candidates {
         match build(candidate) {
             Ok(found) => {
-                saw_unknown |= found
-                    .iter()
-                    .any(|target| target.uncertified_definition_fallback);
                 for target in found {
                     push_unique_reference_target(targets, target);
                 }
             }
             Err(crate::error::HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || targets
+            .iter()
+            .any(|target| target.uncertified_definition_fallback);
     if targets.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
@@ -2879,24 +2907,24 @@ fn extend_reference_target_families_collect_unknown(
     targets: &mut Vec<ReferenceTarget>,
     families: impl IntoIterator<Item = HypermeshResult<Vec<ReferenceTarget>>>,
 ) -> HypermeshResult<bool> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for family in families {
         match family {
             Ok(found) => {
-                saw_unknown |= found
-                    .iter()
-                    .any(|target| target.uncertified_definition_fallback);
                 for target in found {
                     push_unique_reference_target(targets, target);
                 }
             }
             Err(crate::error::HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
-    Ok(saw_unknown)
+    Ok(saw_hard_unknown
+        || targets
+            .iter()
+            .any(|target| target.uncertified_definition_fallback))
 }
 
 #[derive(Clone)]
@@ -7692,6 +7720,32 @@ mod tests {
     }
 
     #[test]
+    fn reference_target_collection_keeps_certified_duplicate_state_certified() {
+        let mut targets = Vec::new();
+        let point = p(1, 2, 3);
+        let definition = axis_plane_definition(&point);
+
+        extend_reference_targets_backtracking_unknown(&mut targets, [0, 1], |candidate| {
+            if candidate == 0 {
+                Ok(vec![ReferenceTarget {
+                    point: point.clone(),
+                    definitions: vec![definition.clone()],
+                    uncertified_definition_fallback: true,
+                }])
+            } else {
+                Ok(vec![ReferenceTarget::with_definitions(
+                    point.clone(),
+                    vec![definition.clone()],
+                )])
+            }
+        })
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert!(!targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn reference_target_family_search_backtracks_after_uncertified_earlier_family() {
         let mut targets = Vec::new();
 
@@ -7747,6 +7801,33 @@ mod tests {
         assert_eq!(targets.len(), 2);
         assert!(targets[0].uncertified_definition_fallback);
         assert!(!targets[1].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn reference_target_family_search_ignores_redundant_fallback_duplicate() {
+        let mut targets = Vec::new();
+        let point = p(1, 2, 3);
+        let definition = axis_plane_definition(&point);
+
+        let saw_unknown = extend_reference_target_families_collect_unknown(
+            &mut targets,
+            [
+                Ok(vec![ReferenceTarget {
+                    point: point.clone(),
+                    definitions: vec![definition.clone()],
+                    uncertified_definition_fallback: true,
+                }]),
+                Ok(vec![ReferenceTarget::with_definitions(
+                    point.clone(),
+                    vec![definition.clone()],
+                )]),
+            ],
+        )
+        .unwrap();
+
+        assert!(!saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -10185,6 +10266,25 @@ mod tests {
             &targets[0].definitions[0],
             &permuted
         ));
+    }
+
+    #[test]
+    fn push_unique_reference_target_prefers_certified_duplicate_definitions() {
+        let point = p(1, 2, 3);
+        let definition = axis_plane_definition(&point);
+        let mut targets = vec![ReferenceTarget {
+            point: point.clone(),
+            definitions: vec![definition.clone()],
+            uncertified_definition_fallback: true,
+        }];
+
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(point, vec![definition]),
+        );
+
+        assert_eq!(targets.len(), 1);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]

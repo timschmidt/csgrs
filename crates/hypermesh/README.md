@@ -602,6 +602,9 @@ The same point-level rule now also applies to the direct projected/support
 target family itself: a strict direct seed that lands on the report witness no
 longer gets skipped before it can merge extra retained plane definitions into
 that same-point `ReferenceTarget`.
+And if a fallback-marked same-point `ReferenceTarget` later gets an exact
+certified duplicate with the same retained definitions, that redundant fallback
+copy no longer poisons the merged target or the surrounding family collector.
 And when the report witness is not itself a strict direct seed, it is now still
 used as a shifted-search root in the projected/support target family instead of
 being treated only as a direct witness. That keeps later shifted target
