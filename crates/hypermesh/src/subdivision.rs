@@ -1897,7 +1897,11 @@ fn search_projected_reference_families(
 
         match axis_escape_search(projected_target) {
             Ok(Some(found)) => return Ok(Some(found)),
-            Ok(None) => {}
+            Ok(None) => {
+                if projected_target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -1906,7 +1910,11 @@ fn search_projected_reference_families(
 
         match tight_escape_search(projected_target) {
             Ok(Some(found)) => return Ok(Some(found)),
-            Ok(None) => {}
+            Ok(None) => {
+                if projected_target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -7233,6 +7241,41 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projected_reference_search_reports_unknown_when_fallback_escape_target_has_no_escape_path() {
+        let escape_target = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
+        let err = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projected_reference_search_accepts_later_tight_escape_after_fallback_escape_axis_failure() {
+        let escape_target = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
+        let found = search_projected_reference_families(
+            &[],
+            std::slice::from_ref(&escape_target),
+            || Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(None),
+            |_target| Ok(Some((ReferenceTarget::axis_defined(p(2, 2, 3)), vec![41]))),
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(2, 2, 3)), vec![41]))
+        );
     }
 
     #[test]

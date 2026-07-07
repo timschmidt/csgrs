@@ -603,6 +603,9 @@ The same promotion now also applies to the projected escape-target family:
 when the report witness is not itself a strict direct projected seed, it is
 still used as a shifted projected-escape root instead of being treated only as
 the direct report witness.
+And if one of those projected escape targets is already fallback-marked, later
+axis-escape and tight-escape failure now preserve that uncertainty instead of
+flattening the exhausted escape branch into ordinary absence.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same
