@@ -1541,6 +1541,7 @@ fn compute_new_reference(
                 trace_projected_reference_target_with_queries(
                     &mut projected_validity_cache.borrow_mut(),
                     &mut projected_trace_cache.borrow_mut(),
+                    bounds,
                     projected_target,
                     |point| is_valid_reference_for_bounds(point, bounds, polygons),
                     |target| {
@@ -2799,6 +2800,7 @@ struct ReferenceTargetTraceCacheEntry {
 
 #[derive(Clone)]
 struct ReferenceBoundsValidityCacheEntry {
+    bounds: Aabb,
     point: Point3,
     is_valid: HypermeshResult<bool>,
 }
@@ -2814,6 +2816,7 @@ struct SupportReferenceQueryCaches {
     report_cache: Vec<HalfspaceReportCacheEntry>,
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     trace_cache: Vec<ReferenceTargetTraceCacheEntry>,
+    validity_cache: Vec<ReferenceBoundsValidityCacheEntry>,
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
     target_cache: std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
     accept_cache: std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
@@ -2840,15 +2843,20 @@ fn cached_reference_target_trace_with(
 
 fn cached_reference_bounds_validity_with(
     cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+    bounds: &Aabb,
     point: &Point3,
     query: impl FnOnce(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| existing.point == *point) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.bounds == *bounds && existing.point == *point)
+    {
         return existing.is_valid.clone();
     }
 
     let is_valid = query(point);
     cache.push(ReferenceBoundsValidityCacheEntry {
+        bounds: bounds.clone(),
         point: point.clone(),
         is_valid: is_valid.clone(),
     });
@@ -3277,11 +3285,12 @@ fn trace_reference_target(
 fn trace_projected_reference_target_with_queries(
     validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
     trace_cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
+    bounds: &Aabb,
     target: &ReferenceTarget,
     valid_for: impl FnOnce(&Point3) -> HypermeshResult<bool>,
     trace: impl FnOnce(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    if !cached_reference_bounds_validity_with(validity_cache, &target.point, valid_for)? {
+    if !cached_reference_bounds_validity_with(validity_cache, bounds, &target.point, valid_for)? {
         return Ok(None);
     }
 
@@ -3391,6 +3400,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     let report_cache = &mut query_caches.report_cache;
     let feasible_cache = &mut query_caches.feasible_cache;
     let trace_cache = &mut query_caches.trace_cache;
+    let validity_cache = &mut query_caches.validity_cache;
     let support_surface_cache = &mut query_caches.support_surface_cache;
     let target_cache = &query_caches.target_cache;
     let accept_cache = &query_caches.accept_cache;
@@ -3413,6 +3423,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
             })
         },
         trace_cache,
+        validity_cache,
         support_surface_cache,
         target_cache,
         accept_cache,
@@ -3434,6 +3445,7 @@ fn support_plane_cell_reference_with_queries(
     feasible_for: &mut impl FnMut(&[LimitPlane3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut trace_cache = Vec::new();
+    let mut validity_cache = Vec::new();
     let mut support_surface_cache = Vec::new();
     let query_caches = SupportReferenceQueryCaches::default();
     support_plane_cell_reference_with_queries_and_trace_surface_caches(
@@ -3446,6 +3458,7 @@ fn support_plane_cell_reference_with_queries(
         report_for,
         feasible_for,
         &mut trace_cache,
+        &mut validity_cache,
         &mut support_surface_cache,
         &query_caches.target_cache,
         &query_caches.accept_cache,
@@ -3465,6 +3478,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>>,
     feasible_for: &mut impl FnMut(&[LimitPlane3]) -> HypermeshResult<bool>,
     trace_cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
     support_surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
     target_cache: &std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
     accept_cache: &std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
@@ -3475,8 +3489,6 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     if halfspaces.is_empty() {
         return Ok(None);
     }
-
-    let reference_validity_cache = std::cell::RefCell::new(Vec::new());
 
     let initial_feasible_unknown = match feasible_for(halfspaces) {
         Ok(true) => false,
@@ -3494,7 +3506,6 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
             halfspaces,
             report.as_ref(),
             |halfspaces, report| {
-                let mut reference_validity_cache = reference_validity_cache.borrow_mut();
                 trace_reference_targets_backtracking_unknown_with_query_caches(
                     cached_support_target_family_with(
                         &mut target_cache.borrow_mut(),
@@ -3508,7 +3519,8 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                         },
                     )?,
                     support_surface_cache,
-                    &mut reference_validity_cache,
+                    validity_cache,
+                    bounds,
                     &mut |point| point_lies_on_any_support_plane(point, polygons),
                     &mut |point| is_valid_reference_for_bounds(point, bounds, polygons),
                     |target| {
@@ -3570,10 +3582,16 @@ fn trace_reference_targets_backtracking_unknown_with_surface_cache(
     trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut validity_cache = Vec::new();
+    let zero = Real::zero();
+    let dummy_bounds = Aabb::new(
+        Point3::new(zero.clone(), zero.clone(), zero.clone()),
+        Point3::new(zero.clone(), zero.clone(), zero),
+    );
     trace_reference_targets_backtracking_unknown_with_query_caches(
         targets,
         surface_cache,
         &mut validity_cache,
+        &dummy_bounds,
         surface_query,
         &mut |_point| Ok(true),
         trace,
@@ -3584,6 +3602,7 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
     targets: Vec<ReferenceTarget>,
     surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
     validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+    bounds: &Aabb,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     validity_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
@@ -3599,7 +3618,7 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
             }
             continue;
         }
-        if !cached_reference_bounds_validity_with(validity_cache, &target.point, |point| {
+        if !cached_reference_bounds_validity_with(validity_cache, bounds, &target.point, |point| {
             validity_query(point)
         })? {
             if target.uncertified_definition_fallback {
@@ -7781,15 +7800,16 @@ mod tests {
     #[test]
     fn cached_reference_bounds_validity_reuses_identical_point() {
         let point = p(1, 2, 3);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let mut cache = Vec::new();
         let mut calls = 0;
 
-        let first = cached_reference_bounds_validity_with(&mut cache, &point, |_point| {
+        let first = cached_reference_bounds_validity_with(&mut cache, &bounds, &point, |_point| {
             calls += 1;
             Ok(true)
         })
         .unwrap();
-        let second = cached_reference_bounds_validity_with(&mut cache, &point, |_point| {
+        let second = cached_reference_bounds_validity_with(&mut cache, &bounds, &point, |_point| {
             calls += 1;
             Ok(false)
         })
@@ -7800,11 +7820,34 @@ mod tests {
     }
 
     #[test]
+    fn cached_reference_bounds_validity_keeps_distinct_bounds_separate() {
+        let point = p(1, 2, 3);
+        let bounds_a = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let bounds_b = Aabb::new(p(0, 0, 0), p(5, 4, 4));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        cached_reference_bounds_validity_with(&mut cache, &bounds_a, &point, |_point| {
+            calls += 1;
+            Ok(true)
+        })
+        .unwrap();
+        cached_reference_bounds_validity_with(&mut cache, &bounds_b, &point, |_point| {
+            calls += 1;
+            Ok(true)
+        })
+        .unwrap();
+
+        assert_eq!(calls, 2);
+    }
+
+    #[test]
     fn projected_reference_trace_helper_reuses_point_validity_and_full_target_trace() {
         use std::cell::Cell;
 
         let first = ReferenceTarget::axis_defined(p(1, 2, 3));
         let second = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let mut validity_cache = Vec::new();
         let mut trace_cache = Vec::new();
         let validity_calls = Cell::new(0);
@@ -7813,6 +7856,7 @@ mod tests {
         let first_result = trace_projected_reference_target_with_queries(
             &mut validity_cache,
             &mut trace_cache,
+            &bounds,
             &first,
             |_point| {
                 validity_calls.set(validity_calls.get() + 1);
@@ -7831,6 +7875,7 @@ mod tests {
         let second_result = trace_projected_reference_target_with_queries(
             &mut validity_cache,
             &mut trace_cache,
+            &bounds,
             &second,
             |_point| {
                 validity_calls.set(validity_calls.get() + 1);
@@ -7849,6 +7894,7 @@ mod tests {
         let third_result = trace_projected_reference_target_with_queries(
             &mut validity_cache,
             &mut trace_cache,
+            &bounds,
             &first,
             |_point| {
                 validity_calls.set(validity_calls.get() + 1);
@@ -9323,6 +9369,7 @@ mod tests {
             vec![first, second],
             &mut surface_cache,
             &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
             &mut |point| {
                 surface_calls.set(surface_calls.get() + 1);
                 Ok(*point == p(2, 1, 1))
@@ -9355,6 +9402,7 @@ mod tests {
             vec![first, second],
             &mut surface_cache,
             &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
             &mut |_point| Ok(false),
             &mut |point| {
                 validity_calls.set(validity_calls.get() + 1);
@@ -9379,6 +9427,7 @@ mod tests {
             vec![target.clone()],
             &mut surface_cache,
             &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
             &mut |_point| Ok(false),
             &mut |point| {
                 validity_calls.set(validity_calls.get() + 1);
@@ -9392,6 +9441,7 @@ mod tests {
             vec![target],
             &mut surface_cache,
             &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
             &mut |_point| Ok(false),
             &mut |point| {
                 validity_calls.set(validity_calls.get() + 1);
@@ -9404,6 +9454,44 @@ mod tests {
         assert_eq!(first, None);
         assert_eq!(second, None);
         assert_eq!(validity_calls.get(), 1);
+    }
+
+    #[test]
+    fn reference_target_trace_search_keeps_distinct_reference_validity_bounds_separate() {
+        let target = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let validity_calls = std::cell::Cell::new(0);
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![target.clone()],
+            &mut surface_cache,
+            &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            &mut |_point| Ok(false),
+            &mut |point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(*point == p(1, 1, 1))
+            },
+            |_target| Ok(None),
+        )
+        .unwrap();
+
+        trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![target],
+            &mut surface_cache,
+            &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(5, 4, 4)),
+            &mut |_point| Ok(false),
+            &mut |point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(*point == p(1, 1, 1))
+            },
+            |_target| Ok(None),
+        )
+        .unwrap();
+
+        assert_eq!(validity_calls.get(), 2);
     }
 
     #[test]

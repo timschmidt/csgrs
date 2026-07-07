@@ -552,9 +552,9 @@ repay the same local support-plane test on each revisit. Within one
 tight-escape support, and final support fallback now also share those same
 safe support-reference query caches instead of rebuilding the same top-level
 halfspace/report/trace state for each later support-side attempt, and the same
-bounds-aware support target-family, accept, and recursive support-search caches
-now also stay alive across those later support-side calls. Identical support
-states also
+bounds-aware support target-family, accept, recursive support-search, and
+reference-validity caches now also stay alive across those later support-side
+calls. Identical support states also
 reuse the exact support target-family construction itself before those traces
 run, instead of rebuilding the same retained target family on each revisit, and
 the full accepted support-reference result is now reused on identical
