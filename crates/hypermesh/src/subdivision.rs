@@ -3530,10 +3530,13 @@ fn reference_target_from_halfspace_witness(
     active_planes: [Option<usize>; 3],
 ) -> HypermeshResult<Option<ReferenceTarget>> {
     match reference_definitions_from_active_halfspaces(point, halfspaces, active_planes) {
-        Ok(definitions) => Ok(Some(ReferenceTarget::with_definitions(
-            point.clone(),
-            definitions,
-        ))),
+        Ok(found) => {
+            let mut target = ReferenceTarget::with_definitions(point.clone(), found.definitions);
+            if found.saw_unknown {
+                target.uncertified_definition_fallback = true;
+            }
+            Ok(Some(target))
+        }
         Err(crate::error::HypermeshError::UnknownClassification) => {
             Ok(Some(ReferenceTarget::axis_defined_fallback(point.clone())))
         }
@@ -4501,9 +4504,10 @@ fn reference_definitions_from_active_halfspaces(
     witness: &Point3,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
-) -> HypermeshResult<Vec<[Plane; 3]>> {
+) -> HypermeshResult<ReferenceDefinitionFamilyState> {
     let axis_definition = axis_plane_definition(witness);
     let mut definitions = Vec::new();
+    let mut saw_unknown = false;
     let mut active = Vec::new();
     for index in active_planes.into_iter().flatten() {
         let Some(halfspace) = halfspaces.get(index) else {
@@ -4536,6 +4540,7 @@ fn reference_definitions_from_active_halfspaces(
                         active[third].clone(),
                     ],
                     witness,
+                    &mut saw_unknown,
                 )?;
             }
         }
@@ -4552,6 +4557,7 @@ fn reference_definitions_from_active_halfspaces(
                         axis_definition[axis].clone(),
                     ],
                     witness,
+                    &mut saw_unknown,
                 )?;
             }
         }
@@ -4568,13 +4574,17 @@ fn reference_definitions_from_active_halfspaces(
                         axis_definition[second_axis].clone(),
                     ],
                     witness,
+                    &mut saw_unknown,
                 )?;
             }
         }
     }
 
-    push_verified_definition(&mut definitions, axis_definition, witness)?;
-    Ok(definitions)
+    push_verified_definition(&mut definitions, axis_definition, witness, &mut saw_unknown)?;
+    Ok(ReferenceDefinitionFamilyState {
+        definitions,
+        saw_unknown,
+    })
 }
 
 #[cfg(test)]
@@ -5133,6 +5143,7 @@ fn push_verified_definition(
     definitions: &mut Vec<[Plane; 3]>,
     definition: [Plane; 3],
     witness: &Point3,
+    saw_unknown: &mut bool,
 ) -> HypermeshResult<()> {
     match affine_from_planes(&definition) {
         Ok(point) if point == *witness => {
@@ -5143,7 +5154,10 @@ fn push_verified_definition(
                 definitions.push(definition);
             }
         }
-        Ok(_) | Err(crate::error::HypermeshError::UnknownClassification) => {}
+        Ok(_) => {}
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+        }
         Err(err) => return Err(err),
     }
     Ok(())
@@ -5371,6 +5385,12 @@ fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
 #[derive(Clone, Debug, PartialEq)]
 struct Point3FamilyState {
     points: Vec<Point3>,
+    saw_unknown: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ReferenceDefinitionFamilyState {
+    definitions: Vec<[Plane; 3]>,
     saw_unknown: bool,
 }
 
@@ -8227,7 +8247,7 @@ mod tests {
 
         let target = target.expect("witness target should still be retained");
         assert_eq!(target.point, p(1, 2, 3));
-        assert!(!target.uncertified_definition_fallback);
+        assert!(target.uncertified_definition_fallback);
         assert!(
             target
                 .definitions
@@ -8251,6 +8271,7 @@ mod tests {
                 .expect("witness target should still be retained");
 
         assert_eq!(target.point, witness);
+        assert!(target.uncertified_definition_fallback);
         assert!(target.definitions.iter().any(|definition| {
             definition
                 .iter()
@@ -9219,9 +9240,17 @@ mod tests {
         ];
         let mut definitions = vec![definition.clone()];
 
-        push_verified_definition(&mut definitions, permuted.clone(), &witness).unwrap();
+        let mut saw_unknown = false;
+        push_verified_definition(
+            &mut definitions,
+            permuted.clone(),
+            &witness,
+            &mut saw_unknown,
+        )
+        .unwrap();
 
         assert_eq!(definitions.len(), 1);
+        assert!(!saw_unknown);
         assert!(reference_definition_planes_match_as_sets(
             &definitions[0],
             &permuted
@@ -11780,8 +11809,13 @@ mod tests {
         )
         .unwrap();
 
-        assert!(definitions.iter().any(definition_uses_non_axis_plane));
-        for definition in &definitions {
+        assert!(
+            definitions
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
+        for definition in &definitions.definitions {
             assert_eq!(affine_from_planes(definition).unwrap(), witness);
         }
     }

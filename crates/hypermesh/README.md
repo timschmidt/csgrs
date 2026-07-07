@@ -322,7 +322,11 @@ rediscover the same strict point, hypermesh now also keeps every distinct
 active-plane/halfspace family for that point instead of collapsing the witness
 back to one first-arrival family, while still deduping geometrically identical
 families when the same shifted halfspace state is rediscovered in a different
-local halfspace order.
+local halfspace order. The direct retained-definition builders behind those
+leaf/probe witnesses now also keep partial uncertainty when one candidate
+plane triple cannot be replayed exactly but a later exact definition still can,
+instead of flattening that local replay search back into an apparently fully
+certified witness.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.
@@ -388,7 +392,11 @@ The candidate-local projected/support target collectors now do the same before
 those sibling families are even formed: if one candidate build already returns
 a fallback-marked target, later candidate targets inherit that uncertainty
 instead of being treated as fully certified siblings of a partially uncertified
-candidate.
+candidate. The direct retained-definition replay inside
+`reference_target_from_halfspace_witness(...)` now follows the same rule:
+later exact active-halfspace definitions still survive after an earlier
+unreplayable plane triple, and the resulting `ReferenceTarget` keeps that
+uncertainty attached instead of looking fully certified.
 The top-level projected direct/escape search now does the same: if every
 projected direct trace, projected-support search, and projected escape search
 is uncertified, that local projected-family search returns
