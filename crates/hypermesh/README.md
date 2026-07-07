@@ -426,9 +426,9 @@ stopping short of recursive step-detoured plane-replacement, and the live
 cycle-guard entry now also reuses identical definition-aware no-detour trace
 and reachability queries across revisited branches instead of reissuing those
 same retained-definition base checks. The same entry layer now also reuses
-identical endpoint-box detour target families for repeated `(start, end)`
-queries instead of rebuilding the same local detour boxes across revisited
-branches. If none trace
+identical endpoint-box detour target families for repeated `(start, end)` or
+reversed `(end, start)` queries instead of rebuilding the same local detour
+boxes across revisited branches. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples, and projected / projected-escape

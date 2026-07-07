@@ -632,10 +632,10 @@ fn cached_detour_target_family_with(
     end: &Point3,
     build: impl FnOnce() -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    if let Some(existing) = cache
-        .iter()
-        .find(|existing| existing.start == *start && existing.end == *end)
-    {
+    if let Some(existing) = cache.iter().find(|existing| {
+        (existing.start == *start && existing.end == *end)
+            || (existing.start == *end && existing.end == *start)
+    }) {
         return existing.targets.clone();
     }
 
@@ -7226,6 +7226,34 @@ mod tests {
         })
         .unwrap();
         let second = cached_detour_target_family_with(&mut cache, &start, &end, || {
+            build_calls += 1;
+            Ok(vec![target.clone()])
+        })
+        .unwrap();
+
+        assert_eq!(first, vec![target.clone()]);
+        assert_eq!(second, vec![target]);
+        assert_eq!(build_calls, 1);
+    }
+
+    #[test]
+    fn cached_detour_target_family_reuses_reversed_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let target = DetourTarget {
+            point: p(0, 1, 0),
+            definitions: vec![axis_plane_definition(&p(0, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut build_calls = 0;
+
+        let first = cached_detour_target_family_with(&mut cache, &start, &end, || {
+            build_calls += 1;
+            Ok(vec![target.clone()])
+        })
+        .unwrap();
+        let second = cached_detour_target_family_with(&mut cache, &end, &start, || {
             build_calls += 1;
             Ok(vec![target.clone()])
         })
