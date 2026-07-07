@@ -3510,7 +3510,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                     Err(err) => return Err(err),
                 };
             if next_point != current_point {
-                let reachable = cached_plane_replacement_reachability_step_with(
+                let reachable = match cached_plane_replacement_reachability_step_with(
                     &mut *step_cache,
                     &current_point,
                     &next_point,
@@ -3524,7 +3524,15 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                             std::slice::from_ref(&next_planes),
                         )
                     },
-                )?;
+                ) {
+                    Ok(reachable) => reachable,
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        valid = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
+                };
                 if !reachable {
                     valid = false;
                     break;
@@ -12055,6 +12063,31 @@ mod tests {
         );
 
         assert_eq!(step_calls, 1);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_tries_later_ordering_after_uncertified_step() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 1, 0));
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
+
+        assert!(
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+                &start_definition,
+                &end_definition,
+                &mut affine_cache,
+                &mut step_cache,
+                |from, to, _start_definitions, _end_definitions| {
+                    if *from == p(0, 0, 0) && *to == p(1, 0, 0) {
+                        Err(HypermeshError::UnknownClassification)
+                    } else {
+                        Ok(true)
+                    }
+                },
+            )
+            .unwrap()
+        );
     }
 
     #[test]

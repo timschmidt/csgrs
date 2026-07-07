@@ -260,6 +260,9 @@ The direct axis-ordered segment path now also keeps trying later orderings
 when one intermediate surface-membership check or one axis-aligned leg trace
 is uncertified, instead of aborting the whole ordered-path search before those
 later exact orderings run.
+The reachability-side plane-replacement walk now does the same for its
+intermediate adjacency checks: one uncertified replacement leg only invalidates
+that ordering, rather than cutting off later exact plane-replacement orderings.
 Strict leaf-witness replay now does the same for stale active-plane indices
 instead of collapsing immediately to support-plus-axis interior replay when
 coincident leaf-cell planes are still available.
