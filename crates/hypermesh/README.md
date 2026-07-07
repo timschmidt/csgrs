@@ -673,11 +673,12 @@ local polygon-family bounds instead of repeatedly bisecting empty space around
 that unchanged arrangement. Different split planes that contract to the same
 child polygon partition are now also skipped before reference propagation and
 recursion rerun that identical branch state, and identical child states now
-also reuse cached reference propagation within one parent split search instead
-of recomputing the same child reference witness each time that state reappears.
-Identical child subdivision tasks within one parent split search now likewise
-reuse cached recursive results instead of replaying the whole child branch when
-alternate splits converge to the same exact child task.
+also reuse cached reference propagation instead of recomputing the same child
+reference witness each time that state reappears. That child reference cache
+and the matching child subdivision cache are now shared across the whole
+top-level subdivision call, not only one parent split search, so recursive
+branches that converge back to the same exact child task can also reuse the
+already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
 through the certified leaf-output helper. That lets exact local arrangement
