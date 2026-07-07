@@ -2197,6 +2197,7 @@ fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
     }
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
     start: &Point3,
     end: &Point3,

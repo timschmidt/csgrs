@@ -619,10 +619,14 @@ that same certified leaf path exactly once before subdivision, regardless of
 former leaf-threshold sizing, and if that exact leaf attempt still returns
 `UnknownClassification` while the bounds remain splittable, hypermesh keeps
 subdividing instead of treating heuristic leaf sizing as a hard completeness
-boundary. Unsplittable tasks now also run the exact leaf processor directly
-once instead of first retrying the same uncertified path through the certified
-leaf-output helper. That lets exact local arrangement isolation continue until
-the depth budget or a certified leaf result stops the branch. Hypermesh reports
+boundary. When a split would otherwise recurse on the exact same polygon family
+with an empty opposite child, the surviving child now contracts to the exact
+local polygon-family bounds instead of repeatedly bisecting empty space around
+that unchanged arrangement. Unsplittable tasks now also run the exact leaf
+processor directly once instead of first retrying the same uncertified path
+through the certified leaf-output helper. That lets exact local arrangement
+isolation continue until the depth budget or a certified leaf result stops the
+branch. Hypermesh reports
 `SubdivisionDepthLimit` if the configured depth budget is reached before the
 current task can be certified as a leaf, and it reports
 `UnknownClassification` if leaf classification or this isolation check fails

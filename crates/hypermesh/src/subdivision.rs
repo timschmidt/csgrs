@@ -389,6 +389,8 @@ fn subdivide_into_inner_with(
             let mut candidate_output = Vec::new();
 
             if !left_polys.is_empty() {
+                let left_bounds =
+                    recursive_child_bounds(&task.polygons, &left_polys, &left_bounds)?;
                 let (left_ref, left_ref_definitions, left_wnv) = compute_new_reference(
                     &task.ref_point,
                     &task.ref_definitions,
@@ -414,6 +416,8 @@ fn subdivide_into_inner_with(
             }
 
             if !right_polys.is_empty() {
+                let right_bounds =
+                    recursive_child_bounds(&task.polygons, &right_polys, &right_bounds)?;
                 let (right_ref, right_ref_definitions, right_wnv) = compute_new_reference(
                     &task.ref_point,
                     &task.ref_definitions,
@@ -442,6 +446,17 @@ fn subdivide_into_inner_with(
         })?;
     output.extend(certified_output);
     Ok(())
+}
+
+fn recursive_child_bounds(
+    parent_polygons: &[ConvexPolygon],
+    child_polygons: &[ConvexPolygon],
+    child_bounds: &Aabb,
+) -> HypermeshResult<Aabb> {
+    if child_polygons == parent_polygons {
+        return polygon_family_bounds(child_polygons);
+    }
+    Ok(child_bounds.clone())
 }
 
 fn process_leaf_task_into(
@@ -898,6 +913,31 @@ fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
         }
     }
     Ok(false)
+}
+
+fn polygon_family_bounds(polygons: &[ConvexPolygon]) -> HypermeshResult<Aabb> {
+    let mut vertices = Vec::new();
+    for polygon in polygons {
+        vertices.extend(polygon.vertices()?);
+    }
+    let first = vertices
+        .pop()
+        .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+    let mut min = first.clone();
+    let mut max = first;
+
+    for vertex in vertices {
+        for axis in 0..3 {
+            if compare_real(axis_ref(&vertex, axis), axis_ref(&min, axis))?.is_lt() {
+                *axis_mut(&mut min, axis) = axis_ref(&vertex, axis).clone();
+            }
+            if compare_real(axis_ref(&vertex, axis), axis_ref(&max, axis))?.is_gt() {
+                *axis_mut(&mut max, axis) = axis_ref(&vertex, axis).clone();
+            }
+        }
+    }
+
+    Ok(Aabb::new(min, max))
 }
 
 #[cfg(test)]
@@ -1826,6 +1866,7 @@ fn projection_escape_reference(
     })
 }
 
+#[cfg(test)]
 fn projection_escape_reference_with_axis_options(
     axis_options: &ProjectionEscapeAxisOptions,
     bounds: &Aabb,
@@ -1864,6 +1905,7 @@ fn projection_escape_reference_with_search(
     projection_escape_reference_with_search_and_axis_options(&axis_options, bounds, &mut search)
 }
 
+#[cfg(test)]
 fn projection_escape_reference_with_search_and_axis_options(
     axis_options: &ProjectionEscapeAxisOptions,
     bounds: &Aabb,
@@ -1953,6 +1995,7 @@ fn projection_escape_bounds_family(
     projection_escape_bounds_family_from_axis_options(&axis_options)
 }
 
+#[cfg(test)]
 fn projection_escape_bounds_family_from_axis_options(
     axis_options: &ProjectionEscapeAxisOptions,
 ) -> HypermeshResult<Vec<Aabb>> {
@@ -2046,6 +2089,7 @@ fn projection_escape_bounds_family_from_axis_options_with_extents(
     Ok((family, saw_unknown))
 }
 
+#[cfg(test)]
 fn projection_escape_axis_options_family(
     projected: &Point3,
     bounds: &Aabb,
@@ -2125,6 +2169,7 @@ fn aabb_has_positive_or_zero_extents(bounds: &Aabb) -> HypermeshResult<bool> {
     Ok(true)
 }
 
+#[cfg(test)]
 fn escaped_reference_axis_stop_values(
     projected: &Point3,
     bounds: &Aabb,
@@ -2811,6 +2856,7 @@ fn projection_axis_escape_reference(
     })
 }
 
+#[cfg(test)]
 fn projection_axis_escape_reference_with_axis_options(
     projected: &Point3,
     axis_options: &ProjectionEscapeAxisOptions,
@@ -2853,6 +2899,7 @@ fn projection_axis_escape_reference_with_search(
     )
 }
 
+#[cfg(test)]
 fn projection_axis_escape_reference_with_search_and_axis_options(
     projected: &Point3,
     axis_options: &ProjectionEscapeAxisOptions,
@@ -2948,6 +2995,7 @@ fn mark_all_reference_targets_uncertified(targets: &mut Vec<ReferenceTarget>) {
     }
 }
 
+#[cfg(test)]
 fn trace_reference_target(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -3157,6 +3205,7 @@ fn support_plane_cell_reference_with_queries(
     }
 }
 
+#[cfg(test)]
 fn trace_reference_targets_backtracking_unknown(
     targets: Vec<ReferenceTarget>,
     polygons: &[ConvexPolygon],
@@ -3171,6 +3220,7 @@ fn trace_reference_targets_backtracking_unknown(
     )
 }
 
+#[cfg(test)]
 fn trace_reference_targets_backtracking_unknown_with_surface_cache(
     targets: Vec<ReferenceTarget>,
     surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
@@ -6491,6 +6541,22 @@ mod tests {
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
         assert_eq!(attempts, 1);
         assert!(output.is_empty());
+    }
+
+    #[test]
+    fn recursive_child_bounds_contract_unchanged_polygon_family() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let child_bounds = parent_bounds.left_half(0, r(5));
+
+        let tightened = recursive_child_bounds(
+            std::slice::from_ref(&polygon),
+            std::slice::from_ref(&polygon),
+            &child_bounds,
+        )
+        .unwrap();
+
+        assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 0)));
     }
 
     #[test]
