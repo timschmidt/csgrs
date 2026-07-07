@@ -3422,7 +3422,7 @@ fn cached_support_reference_accept_with(
 
 #[derive(Clone)]
 struct SupportPlaneCellSearchCacheEntry<T: Clone> {
-    preferred_point: Option<Point3>,
+    preferred_order: [bool; 2],
     bounds: Aabb,
     polygon_index: usize,
     halfspaces: Vec<LimitPlane3>,
@@ -3431,14 +3431,14 @@ struct SupportPlaneCellSearchCacheEntry<T: Clone> {
 
 fn cached_support_plane_cell_search_with<T: Clone>(
     cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<T>>>,
-    preferred_point: Option<&Point3>,
+    preferred_order: [bool; 2],
     bounds: &Aabb,
     polygon_index: usize,
     halfspaces: Vec<LimitPlane3>,
     search: impl FnOnce() -> HypermeshResult<Option<T>>,
 ) -> HypermeshResult<Option<T>> {
     if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.preferred_point.as_ref() == preferred_point
+        existing.preferred_order == preferred_order
             && existing.bounds == *bounds
             && existing.polygon_index == polygon_index
             && limit_plane_families_match_as_sets(&existing.halfspaces, &halfspaces)
@@ -3448,7 +3448,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
 
     let result = search();
     cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
-        preferred_point: preferred_point.cloned(),
+        preferred_order,
         bounds: bounds.clone(),
         polygon_index,
         halfspaces,
@@ -4535,9 +4535,14 @@ fn support_plane_cell_search_with_queries_cached<T>(
 where
     T: Clone,
 {
+    let preferred_order = if polygon_index < polygons.len() {
+        support_side_search_order(preferred_point, &polygons[polygon_index].support)
+    } else {
+        [false, true]
+    };
     cached_support_plane_cell_search_with(
         cache,
-        preferred_point,
+        preferred_order,
         bounds,
         polygon_index,
         halfspaces.to_vec(),
@@ -11351,37 +11356,7 @@ mod tests {
 
         let first = cached_support_plane_cell_search_with(
             &cache,
-            None,
-            &bounds,
-            3,
-            halfspaces.clone(),
-            || {
-                calls += 1;
-                Ok(Some(17))
-            },
-        )
-        .unwrap();
-        let second =
-            cached_support_plane_cell_search_with(&cache, None, &bounds, 3, halfspaces, || {
-                calls += 1;
-                Ok(Some(99))
-            })
-            .unwrap();
-
-        assert_eq!(calls, 1);
-        assert_eq!(first, second);
-    }
-
-    #[test]
-    fn cached_support_plane_cell_search_distinguishes_preferred_point() {
-        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
-        let cache = std::cell::RefCell::new(Vec::new());
-        let mut calls = 0;
-
-        let first = cached_support_plane_cell_search_with(
-            &cache,
-            Some(&p(1, 1, 1)),
+            [false, true],
             &bounds,
             3,
             halfspaces.clone(),
@@ -11393,7 +11368,85 @@ mod tests {
         .unwrap();
         let second = cached_support_plane_cell_search_with(
             &cache,
-            Some(&p(3, 3, 3)),
+            [false, true],
+            &bounds,
+            3,
+            halfspaces,
+            || {
+                calls += 1;
+                Ok(Some(99))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_plane_cell_search_reuses_same_preferred_order() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let cache = std::cell::RefCell::new(Vec::new());
+        let mut calls = 0;
+        let support = Plane::axis_aligned(0, r(2));
+        let first_order = support_side_search_order(Some(&p(1, 1, 1)), &support);
+        let second_order = support_side_search_order(Some(&p(1, 3, 3)), &support);
+
+        assert_eq!(first_order, [false, true]);
+        assert_eq!(first_order, second_order);
+
+        let first = cached_support_plane_cell_search_with(
+            &cache,
+            first_order,
+            &bounds,
+            3,
+            halfspaces.clone(),
+            || {
+                calls += 1;
+                Ok(Some(17))
+            },
+        )
+        .unwrap();
+        let second = cached_support_plane_cell_search_with(
+            &cache,
+            second_order,
+            &bounds,
+            3,
+            halfspaces,
+            || {
+                calls += 1;
+                Ok(Some(99))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_plane_cell_search_distinguishes_preferred_order() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let cache = std::cell::RefCell::new(Vec::new());
+        let mut calls = 0;
+
+        let first = cached_support_plane_cell_search_with(
+            &cache,
+            [false, true],
+            &bounds,
+            3,
+            halfspaces.clone(),
+            || {
+                calls += 1;
+                Ok(Some(17))
+            },
+        )
+        .unwrap();
+        let second = cached_support_plane_cell_search_with(
+            &cache,
+            [true, false],
             &bounds,
             3,
             halfspaces,
@@ -11455,18 +11508,30 @@ mod tests {
         let cache = std::cell::RefCell::new(Vec::new());
         let mut calls = 0;
 
-        let first =
-            cached_support_plane_cell_search_with(&cache, None, &bounds, 3, halfspaces, || {
+        let first = cached_support_plane_cell_search_with(
+            &cache,
+            [false, true],
+            &bounds,
+            3,
+            halfspaces,
+            || {
                 calls += 1;
                 Ok(Some(17))
-            })
-            .unwrap();
-        let second =
-            cached_support_plane_cell_search_with(&cache, None, &bounds, 3, permuted, || {
+            },
+        )
+        .unwrap();
+        let second = cached_support_plane_cell_search_with(
+            &cache,
+            [false, true],
+            &bounds,
+            3,
+            permuted,
+            || {
                 calls += 1;
                 Ok(Some(99))
-            })
-            .unwrap();
+            },
+        )
+        .unwrap();
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
