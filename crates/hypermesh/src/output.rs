@@ -320,23 +320,41 @@ fn merge_duplicate_polygon_vertices(
     polygons: &[OutputPolygon],
 ) -> (Vec<OutputVertex>, Vec<Vec<usize>>) {
     let mut vertices = Vec::new();
+    let mut vertex_indices: BTreeMap<[String; 3], Vec<usize>> = BTreeMap::new();
     let mut indexed_polygons = Vec::with_capacity(polygons.len());
 
     for polygon in polygons {
         let mut indexed = Vec::with_capacity(polygon.vertices.len());
         for vertex in &polygon.vertices {
-            if let Some(index) = vertices.iter().position(|existing| existing == vertex) {
-                indexed.push(index);
-            } else {
-                let index = vertices.len();
-                vertices.push(vertex.clone());
-                indexed.push(index);
+            let key = output_vertex_key(vertex);
+            if let Some(candidates) = vertex_indices.get(&key) {
+                if let Some(index) = candidates
+                    .iter()
+                    .copied()
+                    .find(|index| vertices[*index] == *vertex)
+                {
+                    indexed.push(index);
+                    continue;
+                }
             }
+
+            let index = vertices.len();
+            vertices.push(vertex.clone());
+            vertex_indices.entry(key).or_default().push(index);
+            indexed.push(index);
         }
         indexed_polygons.push(indexed);
     }
 
     (vertices, indexed_polygons)
+}
+
+fn output_vertex_key(vertex: &OutputVertex) -> [String; 3] {
+    [
+        vertex.x.to_string(),
+        vertex.y.to_string(),
+        vertex.z.to_string(),
+    ]
 }
 
 fn polygon_edge_counts(
@@ -1023,6 +1041,20 @@ mod tests {
                 non_manifold_edges: 0,
             }
         );
+    }
+
+    #[test]
+    fn merge_duplicate_polygon_vertices_reuses_exact_vertex_keys() {
+        let polygons = vec![
+            op(vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0)]),
+            op(vec![ov(2, 0, 0), ov(0, 0, 0), ov(0, -1, 0)]),
+        ];
+
+        let (vertices, indexed) = merge_duplicate_polygon_vertices(&polygons);
+
+        assert_eq!(vertices.len(), 4);
+        assert_eq!(indexed[0], vec![0, 1, 2]);
+        assert_eq!(indexed[1], vec![1, 0, 3]);
     }
 
     #[test]
