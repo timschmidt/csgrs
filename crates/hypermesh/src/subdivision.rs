@@ -2507,7 +2507,7 @@ fn escaped_reference_axis_stop_values_tracking_unknown(
         |projected, endpoint, polygon, axis| {
             reference_axis_surface_crossing(projected, endpoint, polygon, axis)
         },
-        |crossing, polygon| point_lies_on_local_polygon(crossing, polygon),
+        |crossing, polygon| classify_point_in_local_polygon(crossing, polygon),
     )?;
     *saw_unknown |= family_unknown;
     Ok(stop_values)
@@ -2525,7 +2525,10 @@ fn escaped_reference_axis_stop_values_with_queries(
         &ConvexPolygon,
         usize,
     ) -> HypermeshResult<Option<Point3>>,
-    mut point_on_polygon: impl FnMut(&Point3, &ConvexPolygon) -> HypermeshResult<bool>,
+    mut classify_point_on_polygon: impl FnMut(
+        &Point3,
+        &ConvexPolygon,
+    ) -> HypermeshResult<LocalPolygonPointLocation>,
 ) -> HypermeshResult<(Vec<Real>, bool)> {
     let start_value = axis_ref(projected, axis);
     let bound_value = if direction_positive {
@@ -2558,16 +2561,21 @@ fn escaped_reference_axis_stop_values_with_queries(
         }) else {
             continue;
         };
-        let on_polygon = match point_on_polygon(&crossing, polygon) {
-            Ok(on_polygon) => on_polygon,
+        let point_location = match classify_point_on_polygon(&crossing, polygon) {
+            Ok(point_location) => point_location,
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
                 continue;
             }
             Err(err) => return Err(err),
         };
-        if !on_polygon {
-            continue;
+        match point_location {
+            LocalPolygonPointLocation::Outside => continue,
+            LocalPolygonPointLocation::Boundary => {
+                saw_unknown = true;
+                continue;
+            }
+            LocalPolygonPointLocation::Interior => {}
         }
 
         let crossing_value = axis_ref(&crossing, axis);
@@ -6015,6 +6023,39 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
     Ok(true)
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum LocalPolygonPointLocation {
+    Outside,
+    Boundary,
+    Interior,
+}
+
+fn classify_point_in_local_polygon(
+    point: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<LocalPolygonPointLocation> {
+    if crate::geometry::classify_point(point, &polygon.support)?
+        != crate::geometry::Classification::On
+    {
+        return Ok(LocalPolygonPointLocation::Outside);
+    }
+    let mut on_edge = false;
+    for edge in &polygon.edges {
+        match crate::geometry::classify_point(point, edge)? {
+            crate::geometry::Classification::Positive => {
+                return Ok(LocalPolygonPointLocation::Outside);
+            }
+            crate::geometry::Classification::On => on_edge = true,
+            crate::geometry::Classification::Negative => {}
+        }
+    }
+    if on_edge {
+        Ok(LocalPolygonPointLocation::Boundary)
+    } else {
+        Ok(LocalPolygonPointLocation::Interior)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -8597,7 +8638,39 @@ mod tests {
                     Ok(Some(p(2, 0, 0)))
                 }
             },
-            |_crossing, _polygon| Ok(true),
+            |_crossing, _polygon| Ok(LocalPolygonPointLocation::Interior),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(stop_values, vec![r(2), r(3)]);
+    }
+
+    #[test]
+    fn escaped_reference_axis_stop_values_treat_boundary_crossing_as_unknown_and_keep_later_corridor()
+     {
+        let projected = p(0, 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
+        let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+            &projected,
+            &bounds,
+            &[first, second],
+            0,
+            true,
+            |_projected, _endpoint, polygon, _axis| {
+                let x = polygon.vertices().unwrap()[0].x.clone();
+                Ok(Some(Point3::new(x, r(0), r(0))))
+            },
+            |_crossing, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(1) {
+                    Ok(LocalPolygonPointLocation::Boundary)
+                } else {
+                    Ok(LocalPolygonPointLocation::Interior)
+                }
+            },
         )
         .unwrap();
 

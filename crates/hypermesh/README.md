@@ -485,7 +485,9 @@ searches; if every corridor in that local family is uncertified, that family
 now surfaces `UnknownClassification` instead of collapsing to `None`. The
 underlying exact stop family now also skips past partially uncertified local
 surface crossings instead of aborting corridor construction before later exact
-stops run, and that uncertainty is preserved through both the later
+stops run, and exact boundary contacts on those local axis-surface crossings
+now count as `UnknownClassification` for that stop candidate instead of
+ordinary stop membership. That uncertainty is preserved through both the later
 axis-corridor search and the tighter escape-box search. If those
 direct one-axis corridors still cannot be traced, it next searches the ordered
 exact escape-box family bounded by certified axis stop values and child AABB
