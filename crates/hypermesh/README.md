@@ -338,9 +338,11 @@ backtracks past uncertified interior/side probe families and uncertified
 probe reachability checks instead of aborting before later certified interior
 witnesses or probe paths are tried. Normal- and axis-probe corridor search now
 also keep exact bound-stop support-plane contacts visible to the local polygon
-classifier instead of dropping them as missing crossings, so later certified
-corridors still run and the surviving family keeps uncertainty attached when
-that endpoint contact is exact. The
+classifier instead of dropping them as missing crossings, and exact zero-room
+bound-start contacts now count as local `UnknownClassification` instead of
+ordinary empty corridor families. Later certified corridors still run and the
+surviving family keeps uncertainty attached when those endpoint or bound-start
+contacts are exact. The
 stricter replayable leaf cell
 built from an interior witness now also contributes its own shifted witness
 family and shifted exact vertices instead of collapsing to one witness plus

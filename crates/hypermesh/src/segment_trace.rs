@@ -4930,12 +4930,12 @@ fn adjacent_normal_probe_stop_values_with_queries(
         &ConvexPolygon,
     ) -> HypermeshResult<PolygonPointLocation>,
 ) -> HypermeshResult<(Vec<Real>, bool)> {
-    let Some(bound_stop) = normal_probe_bounds_stop(interior, direction, bounds)? else {
-        return Ok((Vec::new(), false));
+    let (bound_stop, mut saw_unknown) = normal_probe_bounds_stop(interior, direction, bounds)?;
+    let Some(bound_stop) = bound_stop else {
+        return Ok((Vec::new(), saw_unknown));
     };
 
     let mut stop_values = vec![bound_stop.clone()];
-    let mut saw_unknown = false;
 
     for polygon in polygons {
         if polygon.mesh_index < 0 {
@@ -5241,15 +5241,18 @@ fn normal_probe_bounds_stop(
     interior: &Point3,
     direction: &Point3,
     bounds: &Aabb,
-) -> HypermeshResult<Option<Real>> {
+) -> HypermeshResult<(Option<Real>, bool)> {
     let mut stop_t: Option<Real> = None;
+    let mut saw_unknown = false;
     for axis in 0..3 {
         let component = axis_ref(direction, axis);
         match classify_real(component)? {
             Classification::Positive => {
                 let room = axis_ref(&bounds.max, axis) - axis_ref(interior, axis);
-                if !compare_real(&room, &Real::zero())?.is_gt() {
-                    return Ok(None);
+                let room_order = compare_real(&room, &Real::zero())?;
+                if !room_order.is_gt() {
+                    saw_unknown = room_order.is_eq();
+                    return Ok((None, saw_unknown));
                 }
                 update_positive_stop(
                     &mut stop_t,
@@ -5259,8 +5262,10 @@ fn normal_probe_bounds_stop(
             }
             Classification::Negative => {
                 let room = axis_ref(interior, axis) - axis_ref(&bounds.min, axis);
-                if !compare_real(&room, &Real::zero())?.is_gt() {
-                    return Ok(None);
+                let room_order = compare_real(&room, &Real::zero())?;
+                if !room_order.is_gt() {
+                    saw_unknown = room_order.is_eq();
+                    return Ok((None, saw_unknown));
                 }
                 update_positive_stop(
                     &mut stop_t,
@@ -5271,7 +5276,7 @@ fn normal_probe_bounds_stop(
             Classification::On => {}
         }
     }
-    Ok(stop_t)
+    Ok((stop_t, saw_unknown))
 }
 
 fn update_positive_stop(stop_t: &mut Option<Real>, candidate: Real) -> HypermeshResult<()> {
@@ -5434,7 +5439,7 @@ fn adjacent_axis_probe_stop_values_with_queries(
         axis_ref(&bounds.min, axis)
     };
     if !axis_value_after_start(start_value, bound_value, direction_positive)? {
-        return Ok((Vec::new(), false));
+        return Ok((Vec::new(), compare_real(start_value, bound_value)?.is_eq()));
     }
 
     let mut endpoint = interior.clone();
@@ -9591,6 +9596,55 @@ mod tests {
     }
 
     #[test]
+    fn adjacent_normal_probe_stop_values_treat_bound_start_contact_as_unknown() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = p(4, 1, 1);
+        let direction = support.normal.clone();
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+            &interior,
+            &direction,
+            &support,
+            &bounds,
+            &[],
+            &mut |_interior, direction, polygon| {
+                Ok(dot_direction(&polygon.support.normal, direction))
+            },
+            &mut |_point, _polygon| Ok(PolygonPointLocation::Outside),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert!(stop_values.is_empty());
+    }
+
+    #[test]
+    fn adjacent_normal_probe_reports_unknown_for_bound_start_contact() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(4, 1, 1),
+            planes: vec![axis_plane_definition(&p(4, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let err = adjacent_normal_probes_with_queries(
+            &interior,
+            &support,
+            &bounds,
+            &[],
+            true,
+            |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
+            |_point, _polygon| Ok(PolygonPointLocation::Outside),
+            |_corridor, _stop_point| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn adjacent_normal_probe_accepts_later_corridor_after_boundary_start_contact() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
@@ -10228,6 +10282,52 @@ mod tests {
 
         assert!(saw_unknown);
         assert_eq!(stop_values, vec![r(3), r(4)]);
+    }
+
+    #[test]
+    fn adjacent_axis_probe_stop_values_treat_bound_start_contact_as_unknown() {
+        let interior = p(4, 1, 1);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
+            &interior,
+            &bounds,
+            &[],
+            0,
+            true,
+            &mut |_interior, _endpoint, _polygon, _axis| Ok(None),
+            &mut |_crossing, _polygon| Ok(PolygonPointLocation::Outside),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert!(stop_values.is_empty());
+    }
+
+    #[test]
+    fn adjacent_axis_probe_reports_unknown_for_bound_start_contact() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(4, 1, 1),
+            planes: vec![axis_plane_definition(&p(4, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let err = adjacent_axis_probes_with_queries(
+            &interior,
+            &support,
+            &bounds,
+            &[],
+            0,
+            true,
+            |_interior, _endpoint, _polygon, _axis| Ok(None),
+            |_crossing, _polygon| Ok(PolygonPointLocation::Outside),
+            |_corridor| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
