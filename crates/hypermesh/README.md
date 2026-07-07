@@ -158,6 +158,10 @@ direct witnesses. When one strict halfspace-cell seed family already returns
 surviving strict witnesses after a partially uncertified candidate-local
 search, that uncertainty now stays attached across later sibling seed families
 instead of being flattened back into an ordinary certified seed family.
+Partially uncertified feasible halfspace-cell vertex families now also keep
+that uncertainty attached when later exact vertices survive, so the later
+strict halfspace seed families and geometry-seed families do not start from an
+apparently fully certified shifted vertex family.
 Likewise, shifted halfspace witness collectors now treat surviving fallback-marked
 shifted witnesses as uncertainty that carries forward across later sibling
 seeds and sibling seed families, instead of only noticing hard
