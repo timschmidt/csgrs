@@ -201,7 +201,9 @@ const AXIS_ORDERINGS: [[usize; 3]; 6] = [
     [2, 1, 0],
 ];
 
+#[cfg(test)]
 const MIN_DETOUR_RECURSION_LIMIT: usize = 2;
+#[cfg(test)]
 const MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT: usize = 1;
 
 /// Traces an axis-aligned polyline using several axis orderings and returns
@@ -345,6 +347,7 @@ fn trace_segment_from_definitions_with_budget(
     )
 }
 
+#[cfg(test)]
 fn trace_segment_from_definitions_with_budget_impl(
     start: &Point3,
     end: &Point3,
@@ -499,6 +502,7 @@ fn trace_segment_without_detours(
     }
 }
 
+#[cfg(test)]
 fn trace_segment_via_detours_with_definitions_budget(
     start: &Point3,
     end: &Point3,
@@ -1695,6 +1699,7 @@ fn point_family_contains(points: &[Point3], candidate: &Point3) -> bool {
     points.iter().any(|point| point == candidate)
 }
 
+#[cfg(test)]
 fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
     MIN_DETOUR_RECURSION_LIMIT.max(
         polygons
@@ -1911,6 +1916,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
     }
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_definitions_budget_impl(
     start: &Point3,
     end: &Point3,
@@ -2085,6 +2091,7 @@ fn probe_reaches_adjacent_cell_via_detours(
     )
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_via_detours_with_budget(
     start: &Point3,
     end: &Point3,

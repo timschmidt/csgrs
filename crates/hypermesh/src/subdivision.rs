@@ -1684,6 +1684,7 @@ fn projected_reference_escape_targets_from_seed_families(
     )
 }
 
+#[cfg(test)]
 fn projected_reference_escape_targets_from_seed_families_with(
     _bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -3389,6 +3390,7 @@ fn strict_projected_cell_targets_from_seed_families(
     )
 }
 
+#[cfg(test)]
 fn strict_projected_cell_targets_from_seed_families_with(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
