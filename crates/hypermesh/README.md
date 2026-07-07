@@ -624,7 +624,9 @@ subdividing instead of treating heuristic leaf sizing as a hard completeness
 boundary. When a split would otherwise recurse on the exact same polygon family
 with an empty opposite child, the surviving child now contracts to the exact
 local polygon-family bounds instead of repeatedly bisecting empty space around
-that unchanged arrangement. Unsplittable tasks now also run the exact leaf
+that unchanged arrangement. Different split planes that contract to the same
+child polygon partition are now also skipped before reference propagation and
+recursion rerun that identical branch state. Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
 through the certified leaf-output helper. That lets exact local arrangement
 isolation continue until the depth budget or a certified leaf result stops the

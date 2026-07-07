@@ -106,6 +106,14 @@ struct LeafClassificationCacheEntry {
     winding: HypermeshResult<WindingNumberVector>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct SubdivisionChildPartition {
+    left_polygons: Vec<ConvexPolygon>,
+    left_bounds: Option<Aabb>,
+    right_polygons: Vec<ConvexPolygon>,
+    right_bounds: Option<Aabb>,
+}
+
 /// Processes one leaf and returns classified output polygons.
 pub fn process_leaf(
     polygons: &[ConvexPolygon],
@@ -366,31 +374,60 @@ fn subdivide_into_inner_with(
     }
 
     let split_candidates = ordered_subdivision_splits(&task.bounds, &task.polygons)?;
-    let certified_output =
-        try_ordered_subdivision_splits(&split_candidates, |split_axis, split_value| {
-            let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
-            let left_bounds = task.bounds.left_half(split_axis, split_value.clone());
-            let right_bounds = task.bounds.right_half(split_axis, split_value.clone());
+    let mut best_failure = None;
+    let mut seen_partitions = Vec::new();
 
-            let mut left_polys = Vec::with_capacity(task.polygons.len());
-            let mut right_polys = Vec::with_capacity(task.polygons.len());
-            for polygon in &task.polygons {
-                let clipped = clip_polygon(polygon, &split_plane)?;
-                match clipped.side {
-                    ClipSide::Left => left_polys.push(polygon.clone()),
-                    ClipSide::Right => right_polys.push(polygon.clone()),
-                    ClipSide::Both => {
-                        left_polys.push(clipped.left);
-                        right_polys.push(clipped.right);
-                    }
+    for (split_axis, split_value) in split_candidates {
+        let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
+        let unclipped_left_bounds = task.bounds.left_half(split_axis, split_value.clone());
+        let unclipped_right_bounds = task.bounds.right_half(split_axis, split_value.clone());
+
+        let mut left_polys = Vec::with_capacity(task.polygons.len());
+        let mut right_polys = Vec::with_capacity(task.polygons.len());
+        for polygon in &task.polygons {
+            let clipped = clip_polygon(polygon, &split_plane)?;
+            match clipped.side {
+                ClipSide::Left => left_polys.push(polygon.clone()),
+                ClipSide::Right => right_polys.push(polygon.clone()),
+                ClipSide::Both => {
+                    left_polys.push(clipped.left);
+                    right_polys.push(clipped.right);
                 }
             }
+        }
 
-            let mut candidate_output = Vec::new();
+        let left_bounds = if left_polys.is_empty() {
+            None
+        } else {
+            Some(recursive_child_bounds(
+                &task.polygons,
+                &left_polys,
+                &unclipped_left_bounds,
+            )?)
+        };
+        let right_bounds = if right_polys.is_empty() {
+            None
+        } else {
+            Some(recursive_child_bounds(
+                &task.polygons,
+                &right_polys,
+                &unclipped_right_bounds,
+            )?)
+        };
 
-            if !left_polys.is_empty() {
-                let left_bounds =
-                    recursive_child_bounds(&task.polygons, &left_polys, &left_bounds)?;
+        if !take_new_subdivision_child_partition(
+            &mut seen_partitions,
+            &left_polys,
+            left_bounds.as_ref(),
+            &right_polys,
+            right_bounds.as_ref(),
+        ) {
+            continue;
+        }
+
+        let mut candidate_output = Vec::new();
+        let attempt = (|| -> HypermeshResult<()> {
+            if let Some(left_bounds) = left_bounds {
                 let (left_ref, left_ref_definitions, left_wnv) = compute_new_reference(
                     &task.ref_point,
                     &task.ref_definitions,
@@ -415,9 +452,7 @@ fn subdivide_into_inner_with(
                 )?;
             }
 
-            if !right_polys.is_empty() {
-                let right_bounds =
-                    recursive_child_bounds(&task.polygons, &right_polys, &right_bounds)?;
+            if let Some(right_bounds) = right_bounds {
                 let (right_ref, right_ref_definitions, right_wnv) = compute_new_reference(
                     &task.ref_point,
                     &task.ref_definitions,
@@ -442,10 +477,22 @@ fn subdivide_into_inner_with(
                 )?;
             }
 
-            Ok(candidate_output)
-        })?;
-    output.extend(certified_output);
-    Ok(())
+            Ok(())
+        })();
+
+        match attempt {
+            Ok(()) => {
+                output.extend(candidate_output);
+                return Ok(());
+            }
+            Err(err) if is_backtrackable_split_error(&err) => {
+                record_split_failure(&mut best_failure, err);
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
 }
 
 fn recursive_child_bounds(
@@ -457,6 +504,32 @@ fn recursive_child_bounds(
         return polygon_family_bounds(child_polygons);
     }
     Ok(child_bounds.clone())
+}
+
+fn take_new_subdivision_child_partition(
+    seen: &mut Vec<SubdivisionChildPartition>,
+    left_polygons: &[ConvexPolygon],
+    left_bounds: Option<&Aabb>,
+    right_polygons: &[ConvexPolygon],
+    right_bounds: Option<&Aabb>,
+) -> bool {
+    for existing in seen.iter() {
+        if existing.left_polygons == left_polygons
+            && existing.left_bounds.as_ref() == left_bounds
+            && existing.right_polygons == right_polygons
+            && existing.right_bounds.as_ref() == right_bounds
+        {
+            return false;
+        }
+    }
+
+    seen.push(SubdivisionChildPartition {
+        left_polygons: left_polygons.to_vec(),
+        left_bounds: left_bounds.cloned(),
+        right_polygons: right_polygons.to_vec(),
+        right_bounds: right_bounds.cloned(),
+    });
+    true
 }
 
 fn process_leaf_task_into(
@@ -6557,6 +6630,63 @@ mod tests {
         .unwrap();
 
         assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 0)));
+    }
+
+    #[test]
+    fn subdivision_child_partition_dedupe_skips_duplicate_contracted_unchanged_branch() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let left_x = recursive_child_bounds(
+            std::slice::from_ref(&polygon),
+            std::slice::from_ref(&polygon),
+            &parent_bounds.left_half(0, r(5)),
+        )
+        .unwrap();
+        let left_y = recursive_child_bounds(
+            std::slice::from_ref(&polygon),
+            std::slice::from_ref(&polygon),
+            &parent_bounds.left_half(1, r(5)),
+        )
+        .unwrap();
+        let mut seen = Vec::new();
+
+        assert!(take_new_subdivision_child_partition(
+            &mut seen,
+            std::slice::from_ref(&polygon),
+            Some(&left_x),
+            &[],
+            None,
+        ));
+        assert!(!take_new_subdivision_child_partition(
+            &mut seen,
+            std::slice::from_ref(&polygon),
+            Some(&left_y),
+            &[],
+            None,
+        ));
+    }
+
+    #[test]
+    fn subdivision_child_partition_dedupe_keeps_distinct_nonempty_bounds() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let mut seen = Vec::new();
+        let left_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let left_b = Aabb::new(p(0, 0, 0), p(2, 1, 0));
+
+        assert!(take_new_subdivision_child_partition(
+            &mut seen,
+            std::slice::from_ref(&polygon),
+            Some(&left_a),
+            &[],
+            None,
+        ));
+        assert!(take_new_subdivision_child_partition(
+            &mut seen,
+            std::slice::from_ref(&polygon),
+            Some(&left_b),
+            &[],
+            None,
+        ));
     }
 
     #[test]
