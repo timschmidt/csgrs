@@ -5044,7 +5044,7 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
     let shifted_geometry_seeds = seed_geometry.shifted_geometry_seeds;
     let mut strict_seeds = Vec::new();
 
-    extend_point3_families_backtracking_unknown(
+    *saw_unknown |= extend_point3_families_collect_unknown(
         &mut strict_seeds,
         [
             if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
@@ -5054,7 +5054,10 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                     point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
                 })
             } else {
-                Ok(Vec::new())
+                Ok(Point3FamilyState {
+                    points: Vec::new(),
+                    saw_unknown: false,
+                })
             },
             collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
                 point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
@@ -5337,6 +5340,12 @@ fn push_unique_point3(points: &mut Vec<Point3>, point: Point3) {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct Point3FamilyState {
+    points: Vec<Point3>,
+    saw_unknown: bool,
+}
+
 fn take_new_point_family(points: Vec<Point3>, seen: &mut Vec<Point3>) -> Vec<Point3> {
     let mut fresh = Vec::new();
     for point in points {
@@ -5395,24 +5404,13 @@ fn extend_point3_backtracking_unknown(
 fn collect_point3_family(
     candidates: HypermeshResult<Vec<Point3>>,
     mut keep: impl FnMut(&Point3) -> HypermeshResult<bool>,
-) -> HypermeshResult<Vec<Point3>> {
+) -> HypermeshResult<Point3FamilyState> {
     let mut points = Vec::new();
-    extend_point3_backtracking_unknown(&mut points, candidates?, |candidate| keep(candidate))?;
-    Ok(points)
-}
-
-fn extend_point3_families_backtracking_unknown(
-    points: &mut Vec<Point3>,
-    families: impl IntoIterator<Item = HypermeshResult<Vec<Point3>>>,
-) -> HypermeshResult<()> {
     let mut saw_unknown = false;
-    for family in families {
-        match family {
-            Ok(found) => {
-                for point in found {
-                    push_unique_point3(points, point);
-                }
-            }
+    for candidate in candidates? {
+        match keep(&candidate) {
+            Ok(true) => push_unique_point3(&mut points, candidate),
+            Ok(false) => {}
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -5422,8 +5420,45 @@ fn extend_point3_families_backtracking_unknown(
     if points.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        Ok(Point3FamilyState {
+            points,
+            saw_unknown,
+        })
+    }
+}
+
+fn extend_point3_families_backtracking_unknown(
+    points: &mut Vec<Point3>,
+    families: impl IntoIterator<Item = HypermeshResult<Point3FamilyState>>,
+) -> HypermeshResult<()> {
+    let saw_unknown = extend_point3_families_collect_unknown(points, families)?;
+    if points.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
         Ok(())
     }
+}
+
+fn extend_point3_families_collect_unknown(
+    points: &mut Vec<Point3>,
+    families: impl IntoIterator<Item = HypermeshResult<Point3FamilyState>>,
+) -> HypermeshResult<bool> {
+    let mut saw_unknown = false;
+    for family in families {
+        match family {
+            Ok(found) => {
+                saw_unknown |= found.saw_unknown;
+                for point in found.points {
+                    push_unique_point3(points, point);
+                }
+            }
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(saw_unknown)
 }
 
 #[cfg(test)]
@@ -5495,7 +5530,7 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
     let shifted_geometry_seeds = seed_geometry.shifted_geometry_seeds;
     let mut strict_seeds = Vec::new();
 
-    extend_point3_families_backtracking_unknown(
+    *saw_unknown |= extend_point3_families_collect_unknown(
         &mut strict_seeds,
         [
             if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
@@ -5505,7 +5540,10 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                     point_strictly_inside_support_cell(candidate, bounds, halfspaces)
                 })
             } else {
-                Ok(Vec::new())
+                Ok(Point3FamilyState {
+                    points: Vec::new(),
+                    saw_unknown: false,
+                })
             },
             collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
                 point_strictly_inside_support_cell(candidate, bounds, halfspaces)
@@ -7476,12 +7514,38 @@ mod tests {
             &mut points,
             [
                 Err(crate::error::HypermeshError::UnknownClassification),
-                Ok(vec![p(1, 2, 3)]),
+                Ok(Point3FamilyState {
+                    points: vec![p(1, 2, 3)],
+                    saw_unknown: false,
+                }),
             ],
         )
         .unwrap();
 
         assert_eq!(points, vec![p(1, 2, 3)]);
+    }
+
+    #[test]
+    fn point3_family_search_tracks_unknown_after_uncertain_family_result() {
+        let mut points = Vec::new();
+
+        let saw_unknown = extend_point3_families_collect_unknown(
+            &mut points,
+            [
+                Ok(Point3FamilyState {
+                    points: vec![p(1, 2, 3)],
+                    saw_unknown: true,
+                }),
+                Ok(Point3FamilyState {
+                    points: vec![p(2, 3, 4)],
+                    saw_unknown: false,
+                }),
+            ],
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(points, vec![p(1, 2, 3), p(2, 3, 4)]);
     }
 
     #[test]
@@ -7498,6 +7562,21 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn collect_point3_family_tracks_unknown_after_later_strict_point() {
+        let family = collect_point3_family(Ok(vec![p(1, 2, 3), p(2, 3, 4)]), |candidate| {
+            if *candidate == p(1, 2, 3) {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            } else {
+                Ok(true)
+            }
+        })
+        .unwrap();
+
+        assert_eq!(family.points, vec![p(2, 3, 4)]);
+        assert!(family.saw_unknown);
     }
 
     #[test]
