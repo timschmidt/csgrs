@@ -6140,6 +6140,9 @@ fn extend_shifted_halfspace_seed_families_backtracking_unknown(
             build(seed)
         }) {
             Ok(()) => {
+                saw_unknown |= local
+                    .iter()
+                    .any(|witness| witness.uncertified_definition_fallback);
                 for witness in local {
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
@@ -6169,6 +6172,9 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
     for seed in seeds {
         match build(&seed) {
             Ok(found) => {
+                saw_unknown |= found
+                    .iter()
+                    .any(|witness| witness.uncertified_definition_fallback);
                 for witness in found {
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
@@ -7009,6 +7015,44 @@ mod tests {
     }
 
     #[test]
+    fn shifted_halfspace_witness_collection_marks_later_witnesses_uncertain_after_uncertain_candidate_result()
+     {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut witnesses = Vec::new();
+
+        extend_shifted_halfspace_witnesses_backtracking_unknown(
+            &mut witnesses,
+            [first.clone(), second.clone()],
+            |seed| {
+                if *seed == first {
+                    Ok(vec![ShiftedHalfspaceWitness::with_family(
+                        seed.clone(),
+                        Vec::new(),
+                        [None, None, None],
+                        true,
+                    )])
+                } else {
+                    Ok(vec![ShiftedHalfspaceWitness::with_family(
+                        seed.clone(),
+                        Vec::new(),
+                        [None, None, None],
+                        false,
+                    )])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 2);
+        assert!(
+            witnesses
+                .iter()
+                .all(|witness| witness.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
     fn duplicate_shifted_halfspace_witnesses_merge_distinct_active_plane_families() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -7374,6 +7418,44 @@ mod tests {
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, first);
         assert!(witnesses[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn shifted_halfspace_witness_seed_family_search_marks_later_witnesses_uncertain_after_uncertain_family_result()
+     {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut witnesses = Vec::new();
+
+        extend_shifted_halfspace_seed_families_backtracking_unknown(
+            &mut witnesses,
+            [vec![first.clone()], vec![second.clone()]],
+            |seed| {
+                if *seed == first {
+                    Ok(vec![ShiftedHalfspaceWitness::with_family(
+                        seed.clone(),
+                        Vec::new(),
+                        [None, None, None],
+                        true,
+                    )])
+                } else {
+                    Ok(vec![ShiftedHalfspaceWitness::with_family(
+                        seed.clone(),
+                        Vec::new(),
+                        [None, None, None],
+                        false,
+                    )])
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 2);
+        assert!(
+            witnesses
+                .iter()
+                .all(|witness| witness.uncertified_definition_fallback)
+        );
     }
 
     #[test]

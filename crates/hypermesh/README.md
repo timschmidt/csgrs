@@ -157,7 +157,11 @@ collection now does the same for uncertified strictness checks on candidate
 direct witnesses. When one strict halfspace-cell seed family already returns
 surviving strict witnesses after a partially uncertified candidate-local
 search, that uncertainty now stays attached across later sibling seed families
-instead of being flattened back into an ordinary certified seed family. Direct detour-target construction from those strict witnesses
+instead of being flattened back into an ordinary certified seed family.
+Likewise, shifted halfspace witness collectors now treat surviving fallback-marked
+shifted witnesses as uncertainty that carries forward across later sibling
+seeds and sibling seed families, instead of only noticing hard
+`UnknownClassification` returns. Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
 later certified direct or shifted detour targets run, and the surrounding
 endpoint-box detour family now also backtracks past uncertified local boxes
