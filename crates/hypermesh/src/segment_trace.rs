@@ -183,6 +183,13 @@ pub fn trace_axis_segment(
     let mut winding = start_wnv.to_vec();
     let direction = compare_real(axis_ref(end, axis), axis_ref(start, axis))?;
     if direction.is_eq() {
+        match point_lies_on_traced_surface(start, polygons) {
+            Ok(false) => {}
+            Ok(true) | Err(HypermeshError::UnknownClassification) => {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            Err(err) => return Err(err),
+        }
         return Ok(TraceAxisSegmentResult {
             winding,
             valid: true,
@@ -1217,6 +1224,13 @@ fn trace_direct_segment(
 ) -> HypermeshResult<TraceAxisSegmentResult> {
     let mut winding = start_wnv.to_vec();
     let Some(sort_axis) = first_changed_axis(start, end)? else {
+        match point_lies_on_traced_surface(start, polygons) {
+            Ok(false) => {}
+            Ok(true) | Err(HypermeshError::UnknownClassification) => {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            Err(err) => return Err(err),
+        }
         return Ok(TraceAxisSegmentResult {
             winding,
             valid: true,
@@ -6940,6 +6954,16 @@ mod tests {
     }
 
     #[test]
+    fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
+        let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+
+        assert_eq!(
+            trace_axis_segment(&p(1, 0, 0), &p(1, 0, 0), 0, &[0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
     fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
         let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
@@ -6955,6 +6979,16 @@ mod tests {
 
         assert_eq!(
             trace_direct_segment(&p(1, 0, 0), &p(2, 0, 0), &[0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn trace_direct_segment_reports_unknown_for_zero_length_surface_contact() {
+        let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+
+        assert_eq!(
+            trace_direct_segment(&p(1, 0, 0), &p(1, 0, 0), &[0], &[wall]),
             Err(HypermeshError::UnknownClassification)
         );
     }

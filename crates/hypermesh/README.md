@@ -288,7 +288,10 @@ Direct segment tracing now also treats unmatched on-edge crossings as
 `UnknownClassification` instead of flattening them into an ordinary invalid
 path result. Exact leg endpoints that land on a traced polygon now also count
 as `UnknownClassification` instead of being silently skipped by the direct
-crossing collector. The traced-surface rejection layer used by axis-ordered
+crossing collector. Zero-length direct traces and zero-length axis-segment
+legs now also reject exact traced-surface contact as
+`UnknownClassification` instead of silently passing it through as a valid
+empty trace. The traced-surface rejection layer used by axis-ordered
 direct search and detour fallback now also treats exact boundary contact on a
 traced polygon as `UnknownClassification` instead of ordinary surface
 membership, so later exact orderings or detours still run.
