@@ -180,7 +180,10 @@ in each ordering,
 instead of collapsing to one chosen feasibility witness. Axis-direction probes are now
 constructed from strict
 witness search in the closed axis corridor and desired support-side cell,
-rather than by midpoint sampling. Full
+rather than by midpoint sampling, and that axis probe path now also walks the
+ordered exact stop family out to the child boundary instead of stopping at the
+first certified crossing. Partially uncertified local axis crossings no longer
+abort the whole corridor family before later exact corridors run. Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished, though probe and reference fallback now both retry from the
 reference point's exact axis-plane definition even when other retained start
