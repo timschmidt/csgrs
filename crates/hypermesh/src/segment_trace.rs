@@ -4023,6 +4023,9 @@ fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
     for candidate in candidates {
         match build(candidate) {
             Ok(found) => {
+                saw_unknown |= found
+                    .iter()
+                    .any(|point| point.uncertified_definition_fallback);
                 for point in found {
                     push_unique_interior_point(points, point);
                 }
@@ -4051,7 +4054,10 @@ fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
     let mut saw_unknown = false;
     for candidate in candidates {
         match build(candidate) {
-            Ok(Some(point)) => push_unique_interior_point(points, point),
+            Ok(Some(point)) => {
+                saw_unknown |= point.uncertified_definition_fallback;
+                push_unique_interior_point(points, point)
+            }
             Ok(None) => {}
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
@@ -4407,6 +4413,9 @@ fn extend_probe_families_backtracking_unknown(
 ) -> HypermeshResult<()> {
     match family {
         Ok(found) => {
+            *saw_unknown |= found
+                .iter()
+                .any(|probe| probe.uncertified_definition_fallback);
             for probe in found {
                 push_unique_probe_point(probes, probe);
             }
@@ -5226,7 +5235,10 @@ fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
     let mut saw_unknown = false;
     for candidate in candidates {
         match build(candidate) {
-            Ok(Some(probe)) => push_unique_probe_point(probes, probe),
+            Ok(Some(probe)) => {
+                saw_unknown |= probe.uncertified_definition_fallback;
+                push_unique_probe_point(probes, probe)
+            }
             Ok(None) => {}
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
@@ -7646,6 +7658,40 @@ mod tests {
     }
 
     #[test]
+    fn bounded_probe_family_collection_tracks_unknown_after_uncertain_family_result() {
+        let uncertain_probe = ProbePoint {
+            point: p(1, 1, 1),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: true,
+        };
+        let certain_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
+        };
+        let mut probes = Vec::new();
+        let mut saw_unknown = false;
+
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Ok(vec![uncertain_probe]),
+            &mut saw_unknown,
+        )
+        .unwrap();
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Ok(vec![certain_probe]),
+            &mut saw_unknown,
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(probes.len(), 2);
+    }
+
+    #[test]
     fn leaf_probe_family_search_backtracks_after_uncertified_probe_family() {
         let first = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -8721,6 +8767,35 @@ mod tests {
     }
 
     #[test]
+    fn probe_point_build_collection_marks_later_probes_uncertain_after_uncertain_candidate_result()
+    {
+        let mut probes = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_probe_point_builds_backtracking_unknown(
+            &mut probes,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                Ok(Some(ProbePoint {
+                    point: candidate.clone(),
+                    side: Classification::Positive,
+                    planes: vec![axis_plane_definition(candidate)],
+                    uncertified_definition_fallback: *candidate == first,
+                }))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(probes.len(), 2);
+        assert!(
+            probes
+                .iter()
+                .all(|probe| probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
     fn probe_point_build_collection_reports_unknown_if_all_candidates_are_uncertified() {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
@@ -9230,6 +9305,34 @@ mod tests {
     }
 
     #[test]
+    fn interior_leaf_point_collection_marks_later_points_uncertain_after_uncertain_candidate_result()
+     {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_interior_leaf_points_backtracking_unknown(
+            &mut points,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                Ok(vec![InteriorLeafPoint {
+                    point: candidate.clone(),
+                    planes: vec![axis_plane_definition(candidate)],
+                    uncertified_definition_fallback: *candidate == first,
+                }])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points.len(), 2);
+        assert!(
+            points
+                .iter()
+                .all(|point| point.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
     fn interior_leaf_point_collection_reports_unknown_if_all_candidates_are_uncertified() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
@@ -9297,6 +9400,33 @@ mod tests {
 
         assert_eq!(points.len(), 1);
         assert!(points[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn leaf_point_build_collection_marks_later_points_uncertain_after_uncertain_candidate_result() {
+        let mut points = Vec::new();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        extend_leaf_point_builds_backtracking_unknown(
+            &mut points,
+            [first.clone(), second.clone()].iter(),
+            |candidate| {
+                Ok(Some(InteriorLeafPoint {
+                    point: candidate.clone(),
+                    planes: vec![axis_plane_definition(candidate)],
+                    uncertified_definition_fallback: *candidate == first,
+                }))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(points.len(), 2);
+        assert!(
+            points
+                .iter()
+                .all(|point| point.uncertified_definition_fallback)
+        );
     }
 
     #[test]

@@ -161,7 +161,10 @@ instead of being flattened back into an ordinary certified seed family.
 Likewise, shifted halfspace witness collectors now treat surviving fallback-marked
 shifted witnesses as uncertainty that carries forward across later sibling
 seeds and sibling seed families, instead of only noticing hard
-`UnknownClassification` returns. Direct detour-target construction from those strict witnesses
+`UnknownClassification` returns. The downstream leaf/probe point collectors now
+do the same for fallback-marked surviving interior/probe candidates, so later
+sibling candidate families no longer look fully certified just because an
+earlier partially uncertified build returned some output. Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
 later certified direct or shifted detour targets run, and the surrounding
 endpoint-box detour family now also backtracks past uncertified local boxes
