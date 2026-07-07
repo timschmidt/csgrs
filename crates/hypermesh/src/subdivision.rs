@@ -5256,7 +5256,7 @@ fn collect_shifted_projected_escape_target_families(
     mut build_shifted_target: impl FnMut(&Point3) -> HypermeshResult<Option<ReferenceTarget>>,
 ) -> HypermeshResult<()> {
     let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
-        dedupe_shifted_target_seed_families(
+        shifted_target_seed_families_with_report_seed(
             report_witness,
             strict_seeds,
             shifted_vertices,
@@ -12294,6 +12294,31 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![first, second]
         );
+    }
+
+    #[test]
+    fn shifted_projected_escape_target_family_search_promotes_report_witness_to_shifted_root() {
+        let witness = p(1, 2, 3);
+        let mut targets = Vec::new();
+        let visited = std::cell::RefCell::new(Vec::new());
+
+        collect_shifted_projected_escape_target_families(
+            &mut targets,
+            Some(&witness),
+            Vec::new(),
+            vec![witness.clone()],
+            Vec::new(),
+            |_candidate| Ok(true),
+            |_candidate| Ok(None),
+            |candidate| {
+                visited.borrow_mut().push(candidate.clone());
+                Ok(Some(ReferenceTarget::axis_defined(p(9, 9, 9))))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![witness]);
+        assert!(targets.iter().any(|target| target.point == p(9, 9, 9)));
     }
 
     #[test]
