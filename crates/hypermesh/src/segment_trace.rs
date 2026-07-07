@@ -5185,6 +5185,7 @@ fn strict_normal_probe_targets(
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
             witness,
+            corridor,
             support,
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), witness),
@@ -5208,7 +5209,7 @@ fn strict_normal_probe_targets(
     extend_probe_point_builds_backtracking_unknown(
         &mut probes,
         shifted_witnesses.iter(),
-        |shifted| build_probe_point_from_shifted_witness(shifted, support, &extra_planes),
+        |shifted| build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes),
     )?;
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
@@ -5656,6 +5657,7 @@ fn strict_axis_probe_targets(
         build_axis_probe_point(
             witness,
             interior,
+            corridor,
             support,
             axis,
             definition,
@@ -5682,7 +5684,7 @@ fn strict_axis_probe_targets(
         shifted_witnesses.iter(),
         |shifted| {
             build_axis_probe_point_from_shifted_witness(
-                shifted, interior, support, axis, definition,
+                shifted, interior, corridor, support, axis, definition,
             )
         },
     )?;
@@ -5698,13 +5700,14 @@ fn strict_axis_probe_targets(
 
 fn build_probe_point(
     witness: &Point3,
+    corridor: &Aabb,
     support: &Plane,
     halfspaces: &[LimitPlane3],
     active_planes: [Option<usize>; 3],
     extra_planes: &[Plane],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<ProbePoint>> {
-    if !point_satisfies_halfspaces(witness, halfspaces)? {
+    if !point_strictly_inside_halfspace_cell_or_unknown(witness, corridor, halfspaces)? {
         return Ok(None);
     }
     let side = classify_point(witness, support)?;
@@ -5743,6 +5746,7 @@ fn build_probe_point(
 
 fn build_probe_point_from_shifted_witness(
     witness: &ShiftedHalfspaceWitness,
+    corridor: &Aabb,
     support: &Plane,
     extra_planes: &[Plane],
 ) -> HypermeshResult<Option<ProbePoint>> {
@@ -5764,12 +5768,15 @@ fn build_probe_point_from_shifted_witness(
 
     let mut planes = Vec::new();
     let mut saw_unknown = false;
-    let mut saw_candidate_family = false;
     for family in &witness.families {
-        if !point_satisfies_halfspaces(&witness.point, &family.halfspaces)? {
-            continue;
+        match point_strictly_inside_halfspace_cell_or_unknown(
+            &witness.point,
+            corridor,
+            &family.halfspaces,
+        )? {
+            true => {}
+            false => continue,
         }
-        saw_candidate_family = true;
         match probe_definitions_from_active_halfspaces(
             &witness.point,
             &family.halfspaces,
@@ -5788,7 +5795,7 @@ fn build_probe_point_from_shifted_witness(
     }
 
     if planes.is_empty() {
-        if saw_unknown && saw_candidate_family {
+        if saw_unknown {
             planes.push(axis_plane_definition(&witness.point));
         } else {
             return Ok(None);
@@ -5806,6 +5813,7 @@ fn build_probe_point_from_shifted_witness(
 fn build_axis_probe_point(
     witness: &Point3,
     interior: &InteriorLeafPoint,
+    corridor: &Aabb,
     support: &Plane,
     axis: usize,
     definition: Option<&[Plane; 3]>,
@@ -5813,7 +5821,7 @@ fn build_axis_probe_point(
     active_planes: [Option<usize>; 3],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<ProbePoint>> {
-    if !point_satisfies_halfspaces(witness, halfspaces)? {
+    if !point_strictly_inside_halfspace_cell_or_unknown(witness, corridor, halfspaces)? {
         return Ok(None);
     }
     let side = classify_point(witness, support)?;
@@ -5845,6 +5853,7 @@ fn build_axis_probe_point(
 fn build_axis_probe_point_from_shifted_witness(
     witness: &ShiftedHalfspaceWitness,
     interior: &InteriorLeafPoint,
+    corridor: &Aabb,
     support: &Plane,
     axis: usize,
     definition: Option<&[Plane; 3]>,
@@ -5856,12 +5865,15 @@ fn build_axis_probe_point_from_shifted_witness(
 
     let mut planes = Vec::new();
     let mut saw_unknown = false;
-    let mut saw_candidate_family = false;
     for family in &witness.families {
-        if !point_satisfies_halfspaces(&witness.point, &family.halfspaces)? {
-            continue;
+        match point_strictly_inside_halfspace_cell_or_unknown(
+            &witness.point,
+            corridor,
+            &family.halfspaces,
+        )? {
+            true => {}
+            false => continue,
         }
-        saw_candidate_family = true;
         match axis_probe_definitions(
             interior,
             support,
@@ -5883,7 +5895,7 @@ fn build_axis_probe_point_from_shifted_witness(
     }
 
     if planes.is_empty() {
-        if saw_unknown && saw_candidate_family {
+        if saw_unknown {
             planes.push(axis_plane_definition(&witness.point));
         } else {
             return Ok(None);
@@ -11307,12 +11319,14 @@ mod tests {
 
     #[test]
     fn strict_probe_witness_retains_axis_definition_when_active_replay_fails() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = p(1, 1, 1);
-        let halfspaces = vec![axis_halfspace(2, false, r(1))];
+        let halfspaces = vec![axis_halfspace(2, false, r(2))];
 
         let probe = build_probe_point(
             &witness,
+            &corridor,
             &support,
             &halfspaces,
             [Some(9), None, None],
@@ -11331,12 +11345,14 @@ mod tests {
 
     #[test]
     fn strict_probe_witness_preserves_inherited_uncertified_definition_fallback() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = p(1, 1, 1);
-        let halfspaces = vec![axis_halfspace(2, false, r(1))];
+        let halfspaces = vec![axis_halfspace(2, false, r(2))];
 
         let probe = build_probe_point(
             &witness,
+            &corridor,
             &support,
             &halfspaces,
             [None, None, None],
@@ -11351,13 +11367,15 @@ mod tests {
 
     #[test]
     fn strict_probe_witness_reports_unknown_for_support_boundary_contact() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = p(1, 1, 0);
-        let halfspaces = vec![axis_halfspace(0, false, r(1))];
+        let halfspaces = vec![axis_halfspace(0, false, r(2))];
 
         assert_eq!(
             build_probe_point(
                 &witness,
+                &corridor,
                 &support,
                 &halfspaces,
                 [None, None, None],
@@ -11370,23 +11388,24 @@ mod tests {
 
     #[test]
     fn strict_probe_witness_from_shifted_witness_merges_definition_families() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = ShiftedHalfspaceWitness {
             point: p(1, 1, 1),
             families: vec![
                 ShiftedHalfspaceWitnessFamily {
-                    halfspaces: vec![axis_halfspace(0, false, r(1))],
+                    halfspaces: vec![axis_halfspace(0, false, r(2))],
                     active_planes: [Some(0), None, None],
                 },
                 ShiftedHalfspaceWitnessFamily {
-                    halfspaces: vec![axis_halfspace(1, false, r(1))],
+                    halfspaces: vec![axis_halfspace(1, false, r(2))],
                     active_planes: [Some(0), None, None],
                 },
             ],
             uncertified_definition_fallback: false,
         };
 
-        let probe = build_probe_point_from_shifted_witness(&witness, &support, &[])
+        let probe = build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[])
             .unwrap()
             .expect("shifted witness should still certify a strict probe");
 
@@ -11404,53 +11423,47 @@ mod tests {
 
     #[test]
     fn strict_probe_witness_from_shifted_witness_reports_unknown_for_support_boundary_contact() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = ShiftedHalfspaceWitness {
             point: p(1, 1, 0),
             families: vec![ShiftedHalfspaceWitnessFamily {
-                halfspaces: vec![axis_halfspace(0, false, r(1))],
+                halfspaces: vec![axis_halfspace(0, false, r(2))],
                 active_planes: [Some(0), None, None],
             }],
             uncertified_definition_fallback: false,
         };
 
         assert_eq!(
-            build_probe_point_from_shifted_witness(&witness, &support, &[]),
+            build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[]),
             Err(HypermeshError::UnknownClassification)
         );
     }
 
     #[test]
-    fn strict_probe_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
+    fn strict_probe_witness_reports_unknown_for_halfspace_boundary_contact() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = p(1, 1, 1);
-        let halfspaces = vec![
-            axis_halfspace(2, false, r(1)),
-            LimitPlane3::new(p(1, 1, 1), r(-3)),
-        ];
+        let halfspaces = vec![axis_halfspace(2, false, r(1))];
 
-        let probe = build_probe_point(
-            &witness,
-            &support,
-            &halfspaces,
-            [Some(9), None, None],
-            &[],
-            false,
-        )
-        .unwrap()
-        .expect("strict probe witness should still be retained");
-
-        assert_eq!(probe.point, witness);
-        assert!(probe.uncertified_definition_fallback);
-        assert!(probe.planes.iter().any(|definition| {
-            definition
-                .iter()
-                .any(|plane| plane.normal == p(1, 1, 1) && plane.offset == r(-3))
-        }));
+        assert_eq!(
+            build_probe_point(
+                &witness,
+                &corridor,
+                &support,
+                &halfspaces,
+                [None, None, None],
+                &[],
+                false,
+            ),
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]
     fn strict_axis_probe_witness_retains_axis_definition_when_active_replay_fails() {
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 0),
@@ -11458,11 +11471,12 @@ mod tests {
             uncertified_definition_fallback: false,
         };
         let witness = p(2, 1, 1);
-        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+        let halfspaces = vec![axis_halfspace(0, false, r(3))];
 
         let probe = build_axis_probe_point(
             &witness,
             &interior,
+            &corridor,
             &support,
             0,
             None,
@@ -11482,6 +11496,7 @@ mod tests {
 
     #[test]
     fn strict_axis_probe_witness_preserves_inherited_uncertified_definition_fallback() {
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 0),
@@ -11489,11 +11504,12 @@ mod tests {
             uncertified_definition_fallback: false,
         };
         let witness = p(2, 1, 1);
-        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+        let halfspaces = vec![axis_halfspace(0, false, r(3))];
 
         let probe = build_axis_probe_point(
             &witness,
             &interior,
+            &corridor,
             &support,
             0,
             None,
@@ -11509,6 +11525,7 @@ mod tests {
 
     #[test]
     fn strict_axis_probe_witness_reports_unknown_for_support_boundary_contact() {
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 0),
@@ -11516,12 +11533,13 @@ mod tests {
             uncertified_definition_fallback: false,
         };
         let witness = p(2, 1, 0);
-        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+        let halfspaces = vec![axis_halfspace(0, false, r(3))];
 
         assert_eq!(
             build_axis_probe_point(
                 &witness,
                 &interior,
+                &corridor,
                 &support,
                 0,
                 None,
@@ -11536,6 +11554,7 @@ mod tests {
     #[test]
     fn strict_axis_probe_witness_from_shifted_witness_reports_unknown_for_support_boundary_contact()
     {
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 0),
@@ -11545,14 +11564,63 @@ mod tests {
         let witness = ShiftedHalfspaceWitness {
             point: p(2, 1, 0),
             families: vec![ShiftedHalfspaceWitnessFamily {
-                halfspaces: vec![axis_halfspace(0, false, r(2))],
+                halfspaces: vec![axis_halfspace(0, false, r(3))],
                 active_planes: [Some(0), None, None],
             }],
             uncertified_definition_fallback: false,
         };
 
         assert_eq!(
-            build_axis_probe_point_from_shifted_witness(&witness, &interior, &support, 0, None),
+            build_axis_probe_point_from_shifted_witness(
+                &witness, &interior, &corridor, &support, 0, None
+            ),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn strict_probe_witness_from_shifted_witness_reports_unknown_for_halfspace_boundary_contact() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 1),
+            families: vec![ShiftedHalfspaceWitnessFamily {
+                halfspaces: vec![axis_halfspace(0, false, r(1))],
+                active_planes: [Some(0), None, None],
+            }],
+            uncertified_definition_fallback: false,
+        };
+
+        assert_eq!(
+            build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn strict_axis_probe_witness_reports_unknown_for_halfspace_boundary_contact() {
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![axis_plane_definition(&p(1, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let witness = p(2, 1, 1);
+        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+
+        assert_eq!(
+            build_axis_probe_point(
+                &witness,
+                &interior,
+                &corridor,
+                &support,
+                0,
+                None,
+                &halfspaces,
+                [None, None, None],
+                false,
+            ),
             Err(HypermeshError::UnknownClassification)
         );
     }
