@@ -2822,7 +2822,7 @@ fn cached_halfspace_report_with(
 ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
     if let Some(existing) = cache
         .iter()
-        .find(|existing| existing.halfspaces == halfspaces)
+        .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
     {
         return existing.report.clone();
     }
@@ -2848,7 +2848,7 @@ fn cached_halfspace_feasibility_with(
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache
         .iter()
-        .find(|existing| existing.halfspaces == halfspaces)
+        .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
     {
         return existing.feasible.clone();
     }
@@ -2972,7 +2972,7 @@ fn cached_support_target_family_with(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
-            && existing.halfspaces == halfspaces
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
             && existing.report.as_ref() == report
     }) {
         return existing.targets.clone();
@@ -3008,7 +3008,7 @@ fn cached_support_reference_accept_with(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
-            && existing.halfspaces == halfspaces
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
             && existing.report.as_ref() == report
     }) {
         return existing.accepted.clone();
@@ -3042,7 +3042,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.bounds == *bounds
             && existing.polygon_index == polygon_index
-            && existing.halfspaces == halfspaces
+            && limit_plane_families_match_as_sets(&existing.halfspaces, &halfspaces)
     }) {
         return existing.result.clone();
     }
@@ -3055,6 +3055,26 @@ fn cached_support_plane_cell_search_with<T: Clone>(
         result: result.clone(),
     });
     result
+}
+
+fn limit_plane_families_match_as_sets(left: &[LimitPlane3], right: &[LimitPlane3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_plane in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_plane)| !matched[*index] && *right_plane == left_plane)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -7966,6 +7986,35 @@ mod tests {
     }
 
     #[test]
+    fn cached_halfspace_report_reuses_permuted_state() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_halfspace_report_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(1, 1, 1),
+                [None, None, None],
+            )))
+        })
+        .unwrap();
+        let second = cached_halfspace_report_with(&mut cache, &permuted, |_halfspaces| {
+            calls += 1;
+            Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(2, 2, 2),
+                [Some(0), None, None],
+            )))
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_halfspace_feasibility_reuses_identical_state() {
         let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
         let mut cache = Vec::new();
@@ -7977,6 +8026,29 @@ mod tests {
         })
         .unwrap();
         let second = cached_halfspace_feasibility_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(false)
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_halfspace_feasibility_reuses_permuted_state() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_halfspace_feasibility_with(&mut cache, &halfspaces, |_halfspaces| {
+            calls += 1;
+            Ok(true)
+        })
+        .unwrap();
+        let second = cached_halfspace_feasibility_with(&mut cache, &permuted, |_halfspaces| {
             calls += 1;
             Ok(false)
         })
@@ -8311,6 +8383,44 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_target_family_reuses_permuted_state_and_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_target_family_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))])
+            },
+        )
+        .unwrap();
+        let second = cached_support_target_family_with(
+            &mut cache,
+            &bounds,
+            &permuted,
+            Some(&report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_support_reference_accept_reuses_identical_state_and_report() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -8350,6 +8460,47 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_reference_accept_reuses_permuted_state_and_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_reference_accept_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(Some((
+                    ReferenceTarget::axis_defined(bounds.min.clone()),
+                    vec![23],
+                )))
+            },
+        )
+        .unwrap();
+        let second = cached_support_reference_accept_with(
+            &mut cache,
+            &bounds,
+            &permuted,
+            Some(&report),
+            |_halfspaces, _report| {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_support_plane_cell_search_reuses_identical_state_and_index() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -8363,6 +8514,30 @@ mod tests {
             })
             .unwrap();
         let second = cached_support_plane_cell_search_with(&cache, &bounds, 3, halfspaces, || {
+            calls += 1;
+            Ok(Some(99))
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_plane_cell_search_reuses_permuted_state_and_index() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let cache = std::cell::RefCell::new(Vec::new());
+        let mut calls = 0;
+
+        let first = cached_support_plane_cell_search_with(&cache, &bounds, 3, halfspaces, || {
+            calls += 1;
+            Ok(Some(17))
+        })
+        .unwrap();
+        let second = cached_support_plane_cell_search_with(&cache, &bounds, 3, permuted, || {
             calls += 1;
             Ok(Some(99))
         })

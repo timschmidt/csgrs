@@ -554,7 +554,10 @@ safe support-reference query caches instead of rebuilding the same top-level
 halfspace/report/trace state for each later support-side attempt, and the same
 bounds-aware support target-family, accept, recursive support-search,
 reference-validity, and retained-definition trace caches now also stay alive
-across those later support-side calls. Projected direct target tracing now
+across those later support-side calls. Equivalent support halfspace families
+now also hit those support-side caches when the same local halfspaces arrive in
+a different order, instead of missing reuse on permutation-only differences.
+Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when
 a projected direct target later reappears in support-side search. The
