@@ -874,35 +874,6 @@ fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_
 }
 
 #[test]
-fn subdivision_support_reference_fallback_on_prepared_closed_mesh_faces() {
-    let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
-    let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
-    let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
-    let polygons = vec![
-        prepared_axis_face(&soup.polygons, 0, 5),
-        prepared_axis_face(&soup.polygons, 1, 5),
-        prepared_axis_face(&soup.polygons, 2, 5),
-    ];
-
-    let indicator = |_wnv: &[i32]| true;
-    let output = subdivide(
-        SubdivisionTask::new(
-            polygons,
-            hypermesh::Aabb::new(p(0, 0, 0), p(10, 10, 10)),
-            p(0, 5, 5),
-            vec![0; soup.num_meshes],
-        ),
-        &indicator,
-        SubdivisionConfig { max_depth: 4 },
-    )
-    .unwrap();
-
-    assert!(!output.is_empty());
-    assert!(output.iter().all(|polygon| polygon.winding().is_some()));
-}
-
-#[test]
 fn subdivision_support_reference_fallback_matches_general_union_count() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
