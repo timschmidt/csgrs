@@ -135,7 +135,14 @@ struct ChildSubdivisionCacheEntry {
     result: HypermeshResult<Vec<ClassifiedPolygon>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct PolygonFamilyBoundsCacheEntry {
+    polygons: Vec<ConvexPolygon>,
+    bounds: HypermeshResult<Aabb>,
+}
+
 struct SubdivisionRuntimeCaches {
+    polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
 }
@@ -143,6 +150,7 @@ struct SubdivisionRuntimeCaches {
 impl Default for SubdivisionRuntimeCaches {
     fn default() -> Self {
         Self {
+            polygon_family_bounds: RefCell::new(Vec::new()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
         }
@@ -448,7 +456,8 @@ fn subdivide_into_inner_with(
         let left_bounds = if left_polys.is_empty() {
             None
         } else {
-            Some(recursive_child_bounds(
+            Some(cached_recursive_child_bounds_with(
+                &caches.polygon_family_bounds,
                 &task.polygons,
                 &left_polys,
                 &unclipped_left_bounds,
@@ -457,7 +466,8 @@ fn subdivide_into_inner_with(
         let right_bounds = if right_polys.is_empty() {
             None
         } else {
-            Some(recursive_child_bounds(
+            Some(cached_recursive_child_bounds_with(
+                &caches.polygon_family_bounds,
                 &task.polygons,
                 &right_polys,
                 &unclipped_right_bounds,
@@ -580,6 +590,7 @@ fn subdivide_into_inner_with(
     Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
 }
 
+#[cfg(test)]
 fn recursive_child_bounds(
     parent_polygons: &[ConvexPolygon],
     child_polygons: &[ConvexPolygon],
@@ -587,6 +598,39 @@ fn recursive_child_bounds(
 ) -> HypermeshResult<Aabb> {
     if polygon_families_match_as_multisets(child_polygons, parent_polygons) {
         return polygon_family_bounds(child_polygons);
+    }
+    Ok(child_bounds.clone())
+}
+
+fn cached_polygon_family_bounds_with(
+    cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Aabb>,
+) -> HypermeshResult<Aabb> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .find(|existing| polygon_families_match_as_multisets(&existing.polygons, polygons))
+    {
+        return existing.bounds.clone();
+    }
+
+    let bounds = query(polygons);
+    cache.borrow_mut().push(PolygonFamilyBoundsCacheEntry {
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+    });
+    bounds
+}
+
+fn cached_recursive_child_bounds_with(
+    cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    parent_polygons: &[ConvexPolygon],
+    child_polygons: &[ConvexPolygon],
+    child_bounds: &Aabb,
+) -> HypermeshResult<Aabb> {
+    if polygon_families_match_as_multisets(child_polygons, parent_polygons) {
+        return cached_polygon_family_bounds_with(cache, child_polygons, polygon_family_bounds);
     }
     Ok(child_bounds.clone())
 }
@@ -9268,6 +9312,33 @@ mod tests {
         .unwrap();
 
         assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 1)));
+    }
+
+    #[test]
+    fn cached_polygon_family_bounds_reuses_permuted_polygon_families() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_polygon_family_bounds_with(
+            &cache,
+            &[polygon_a.clone(), polygon_b.clone()],
+            |_polygons| {
+                calls.set(calls.get() + 1);
+                Ok(Aabb::new(p(0, 0, 0), p(1, 1, 1)))
+            },
+        )
+        .unwrap();
+        let second =
+            cached_polygon_family_bounds_with(&cache, &[polygon_b, polygon_a], |_polygons| {
+                calls.set(calls.get() + 1);
+                Ok(Aabb::new(p(0, 0, 0), p(9, 9, 9)))
+            })
+            .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
     }
 
     #[test]
