@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::str::FromStr;
 
 use hypermesh::{
-    Aabb, BooleanOp, BooleanResult, EmberConfig, ExactBvh, HypermeshResult, InputMesh, MeshRef,
-    OutputVertex, Point3, Real, Triangle, TriangleSoup, boolean_difference, boolean_intersection,
-    boolean_operation, boolean_union, certify_output_polygon_closure, prepare_input,
+    Aabb, BooleanOp, BooleanResult, Classification, EmberConfig, ExactBvh, HypermeshResult,
+    InputMesh, MeshRef, OutputVertex, Plane, Point3, Real, Triangle, TriangleSoup,
+    boolean_difference, boolean_intersection, boolean_operation, boolean_union,
+    certify_output_polygon_closure, classify_point, prepare_input,
     triangulate_and_resolve_certified,
 };
 
@@ -320,6 +321,49 @@ fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
         EmberConfig { max_depth: 0 },
     )?;
     triangulate_and_resolve_certified(&result)
+}
+
+fn point_strictly_inside_convex_mesh(point: &Point3, mesh: &InputMesh) -> HypermeshResult<bool> {
+    let mut saw_boundary = false;
+
+    for triangle in &mesh.triangles {
+        let [i0, i1, i2] = triangle.indices();
+        let plane = Plane::from_points(
+            &mesh.positions[i0],
+            &mesh.positions[i1],
+            &mesh.positions[i2],
+        );
+        match classify_point(point, &plane)? {
+            Classification::Positive => return Ok(false),
+            Classification::On => saw_boundary = true,
+            Classification::Negative => {}
+        }
+    }
+
+    Ok(!saw_boundary)
+}
+
+fn assert_no_strictly_contained_source_vertices(
+    left: &InputMesh,
+    right: &InputMesh,
+) -> HypermeshResult<()> {
+    for point in &left.positions {
+        assert!(
+            !point_strictly_inside_convex_mesh(point, right)?,
+            "left source vertex {:?} lies strictly inside right mesh",
+            point_key(point),
+        );
+    }
+
+    for point in &right.positions {
+        assert!(
+            !point_strictly_inside_convex_mesh(point, left)?,
+            "right source vertex {:?} lies strictly inside left mesh",
+            point_key(point),
+        );
+    }
+
+    Ok(())
 }
 
 #[test]
@@ -854,6 +898,13 @@ fn crossing_octahedra_use_general_path() -> HypermeshResult<()> {
     assert_same_shape(&reverse_xor, &xor);
 
     Ok(())
+}
+
+#[test]
+fn crossing_octahedra_have_no_strictly_contained_source_vertices() -> HypermeshResult<()> {
+    let left = octahedron([r(0), r(0), r(0)], r(3));
+    let right = octahedron([r(1), r(1), r(1)], r(3));
+    assert_no_strictly_contained_source_vertices(&left, &right)
 }
 
 #[test]
