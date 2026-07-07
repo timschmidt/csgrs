@@ -109,7 +109,11 @@ family to `None`. The retained-definition entry path above the step-detoured
 plane-replacement tracer also now caches exact repeated intermediate steps
 across axis orderings inside one retained path, so equivalent one-plane updates
 do not retrace the same local segment family over and over before that broader
-search moves on. The same local plane-replacement walk now also reuses exact
+search moves on. The same plane-replacement trace caches are now also shared
+across sibling retained-definition pair attempts in one step-detoured search,
+so converged later replacement steps do not retrace the same local segment
+family again after an earlier pair already explored them. The same local
+plane-replacement walk now also reuses exact
 `affine_from_planes(...)` results across sibling orderings, so equivalent
 intermediate plane triples do not repay the same exact point reconstruction
 before trace or reachability continues, and the reachability-side plane

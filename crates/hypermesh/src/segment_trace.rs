@@ -917,7 +917,7 @@ fn trace_plane_replacement_path_with_tracer(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    mut trace_step: impl FnMut(
+    trace_step: impl FnMut(
         &Point3,
         &Point3,
         &[Plane; 3],
@@ -928,7 +928,33 @@ fn trace_plane_replacement_path_with_tracer(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut affine_cache = Vec::new();
     let mut step_cache = Vec::new();
+    trace_plane_replacement_path_with_tracer_and_caches(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        &mut affine_cache,
+        &mut step_cache,
+        trace_step,
+    )
+}
 
+fn trace_plane_replacement_path_with_tracer_and_caches(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    mut affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    mut step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    mut trace_step: impl FnMut(
+        &Point3,
+        &Point3,
+        &[Plane; 3],
+        &[Plane; 3],
+        &[i32],
+        &[ConvexPolygon],
+    ) -> HypermeshResult<Option<WindingNumberVector>>,
+) -> HypermeshResult<WindingNumberVector> {
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
         let mut current_point =
@@ -2038,14 +2064,18 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
     let mut end_definitions = end_definitions.to_vec();
     append_definition_if_missing(&mut end_definitions, axis_plane_defined_point(end).planes);
     end_definitions = unique_definition_family(&end_definitions);
+    let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
 
     for start_definition in &start_definitions {
         for end_definition in &end_definitions {
-            match trace_plane_replacement_path_with_step_detours(
+            match trace_plane_replacement_path_with_step_detours_with_caches(
                 start_definition,
                 end_definition,
                 winding,
                 polygons,
+                &mut affine_cache,
+                &mut step_cache,
             ) {
                 Ok(winding) => return Ok(winding),
                 Err(HypermeshError::UnknownClassification) => continue,
@@ -2057,17 +2087,41 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
     Err(HypermeshError::UnknownClassification)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn trace_plane_replacement_path_with_step_detours(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
+    trace_plane_replacement_path_with_step_detours_with_caches(
+        start_planes,
+        end_planes,
+        winding,
+        polygons,
+        &mut affine_cache,
+        &mut step_cache,
+    )
+}
+
+fn trace_plane_replacement_path_with_step_detours_with_caches(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_step_detours_impl(
         start_planes,
         end_planes,
         winding,
         polygons,
+        affine_cache,
+        step_cache,
         |current, next, attempt, polygons, current_definitions, next_definitions| {
             match trace_segment_from_definitions(
                 current,
@@ -2092,6 +2146,8 @@ fn trace_plane_replacement_path_with_step_detours_impl(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     mut trace_step: impl FnMut(
         &Point3,
         &Point3,
@@ -2101,11 +2157,13 @@ fn trace_plane_replacement_path_with_step_detours_impl(
         &[[Plane; 3]],
     ) -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<WindingNumberVector> {
-    trace_plane_replacement_path_with_tracer(
+    trace_plane_replacement_path_with_tracer_and_caches(
         start_planes,
         end_planes,
         winding,
         polygons,
+        affine_cache,
+        step_cache,
         |current, next, current_definition, next_definition, attempt, polygons| {
             trace_step(
                 current,
@@ -10566,12 +10624,16 @@ mod tests {
         let expected_end_definitions = vec![end_definition.clone()];
         let expected_start = p(0, 0, 0);
         let expected_end = p(1, 0, 0);
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
 
         let winding = trace_plane_replacement_path_with_step_detours_impl(
             &start_definition,
             &end_definition,
             &[7],
             &[],
+            &mut affine_cache,
+            &mut step_cache,
             |current, next, attempt, _polygons, current_definitions, next_definitions| {
                 if *current == expected_start
                     && *next == expected_end
@@ -10587,6 +10649,46 @@ mod tests {
         .unwrap();
 
         assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
+    fn plane_replacement_tracer_shared_caches_reuse_equivalent_path_across_calls() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 0, 0));
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
+        let mut step_calls = 0;
+
+        let first = trace_plane_replacement_path_with_tracer_and_caches(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            &mut affine_cache,
+            &mut step_cache,
+            |_current, _next, _current_planes, _next_planes, attempt, _polygons| {
+                step_calls += 1;
+                Ok(Some(attempt.to_vec()))
+            },
+        )
+        .unwrap();
+        let second = trace_plane_replacement_path_with_tracer_and_caches(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            &mut affine_cache,
+            &mut step_cache,
+            |_current, _next, _current_planes, _next_planes, attempt, _polygons| {
+                step_calls += 1;
+                Ok(Some(attempt.to_vec()))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(first, vec![7]);
+        assert_eq!(second, vec![7]);
+        assert_eq!(step_calls, 1);
     }
 
     #[test]
