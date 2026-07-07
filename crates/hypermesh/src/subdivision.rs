@@ -5163,6 +5163,7 @@ fn strict_support_cell_targets(
     strict_support_cell_targets_from_optional_report(bounds, halfspaces, Some(report))
 }
 
+#[cfg(test)]
 fn strict_support_cell_targets_from_optional_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -5419,6 +5420,7 @@ fn extend_point3_families_backtracking_unknown(
     }
 }
 
+#[cfg(test)]
 fn shifted_support_cell_targets_from_seed(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -5454,6 +5456,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
     }
 }
 
+#[cfg(test)]
 fn support_cell_seed_families_from_optional_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
