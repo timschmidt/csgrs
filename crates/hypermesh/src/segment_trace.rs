@@ -1504,6 +1504,14 @@ fn interior_box_detour_targets(
         end,
         polygons,
         |edge_start, edge_end, polygon, axis| {
+            let start_class = classify_point(edge_start, &polygon.support)?;
+            let end_class = classify_point(edge_end, &polygon.support)?;
+            if start_class == Classification::On {
+                return Ok(None);
+            }
+            if end_class == Classification::On {
+                return Ok(Some(edge_end.clone()));
+            }
             segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
                 if let Some(crossing) = crossing {
                     if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
@@ -1897,6 +1905,17 @@ fn add_axis_box_surface_cuts_with_queries(
                 }
                 Err(err) => return Err(err),
             };
+            if !point_strictly_between_axis(&crossing, &edge_start, &edge_end, axis)? {
+                if crossing == edge_end
+                    && matches!(
+                        point_location,
+                        PolygonPointLocation::Boundary | PolygonPointLocation::Interior
+                    )
+                {
+                    saw_unknown = true;
+                }
+                continue;
+            }
             match point_location {
                 PolygonPointLocation::Outside => {}
                 PolygonPointLocation::Boundary => {
@@ -7218,7 +7237,41 @@ mod tests {
         .unwrap();
 
         assert!(saw_unknown);
-        assert_eq!(intervals[0], vec![(r(0), r(1)), (r(1), r(2)), (r(2), r(3))]);
+        assert_eq!(intervals[0], vec![(r(0), r(2)), (r(2), r(3))]);
+    }
+
+    #[test]
+    fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_and_keeps_later_cut()
+     {
+        let start = p(0, 0, 0);
+        let end = p(3, 0, 0);
+        let first = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+            &start,
+            &end,
+            &[first, second],
+            &mut |_edge_start, edge_end, polygon, _axis| {
+                let x = polygon.vertices().unwrap()[0].x.clone();
+                if x == r(3) {
+                    Ok(Some(edge_end.clone()))
+                } else {
+                    Ok(Some(Point3::new(x, r(0), r(0))))
+                }
+            },
+            &mut |_crossing, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(3) {
+                    Ok(PolygonPointLocation::Boundary)
+                } else {
+                    Ok(PolygonPointLocation::Interior)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(intervals[0], vec![(r(0), r(2)), (r(2), r(3))]);
     }
 
     #[test]
@@ -7239,6 +7292,53 @@ mod tests {
             },
             |_crossing, polygon| {
                 if polygon.vertices().unwrap()[0].x == r(1) {
+                    Ok(PolygonPointLocation::Boundary)
+                } else {
+                    Ok(PolygonPointLocation::Interior)
+                }
+            },
+            |bounds| {
+                if *bounds == Aabb::new(p(2, 0, 0), p(3, 0, 0)) {
+                    let point = p(2, 0, 0);
+                    Ok(vec![DetourTarget {
+                        point: point.clone(),
+                        definitions: vec![axis_plane_definition(&point)],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(2, 0, 0));
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_endpoint_boundary_surface_cut()
+     {
+        let start = p(0, 0, 0);
+        let end = p(3, 0, 0);
+        let first = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let targets = interior_box_detour_targets_with_queries(
+            &start,
+            &end,
+            &[first, second],
+            |_edge_start, edge_end, polygon, _axis| {
+                let x = polygon.vertices().unwrap()[0].x.clone();
+                if x == r(3) {
+                    Ok(Some(edge_end.clone()))
+                } else {
+                    Ok(Some(Point3::new(x, r(0), r(0))))
+                }
+            },
+            |_crossing, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(3) {
                     Ok(PolygonPointLocation::Boundary)
                 } else {
                     Ok(PolygonPointLocation::Interior)
