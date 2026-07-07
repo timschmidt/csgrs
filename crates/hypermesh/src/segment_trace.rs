@@ -1644,7 +1644,7 @@ fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarg
             if !existing
                 .definitions
                 .iter()
-                .any(|candidate| candidate == &definition)
+                .any(|candidate| definition_planes_match_as_sets(candidate, &definition))
             {
                 existing.definitions.push(definition);
             }
@@ -2036,7 +2036,7 @@ fn trace_probe_winding(
     let axis_definition = axis_plane_defined_point(&probe.point).planes;
     if !probe_definitions
         .iter()
-        .any(|definition| definition == &axis_definition)
+        .any(|definition| definition_planes_match_as_sets(definition, &axis_definition))
     {
         probe_definitions.push(axis_definition);
     }
@@ -3931,7 +3931,11 @@ fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: Interi
         .find(|existing| existing.point == point.point)
     {
         for planes in point.planes {
-            if !existing.planes.iter().any(|candidate| candidate == &planes) {
+            if !existing
+                .planes
+                .iter()
+                .any(|candidate| definition_planes_match_as_sets(candidate, &planes))
+            {
                 existing.planes.push(planes);
             }
         }
@@ -4648,7 +4652,7 @@ fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) {
             if !existing
                 .planes
                 .iter()
-                .any(|candidate| candidate == &definition)
+                .any(|candidate| definition_planes_match_as_sets(candidate, &definition))
             {
                 existing.planes.push(definition);
             }
@@ -6430,6 +6434,38 @@ mod tests {
         let target = build_detour_target(&point, &halfspaces, [None, None, None], true).unwrap();
 
         assert!(target.uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn duplicate_detour_targets_merge_permuted_plane_definitions() {
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let mut targets = vec![DetourTarget {
+            point: point.clone(),
+            definitions: vec![definition],
+            uncertified_definition_fallback: false,
+        }];
+
+        push_unique_detour_target(
+            &mut targets,
+            DetourTarget {
+                point,
+                definitions: vec![permuted.clone()],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].definitions.len(), 1);
+        assert!(definition_planes_match_as_sets(
+            &targets[0].definitions[0],
+            &permuted
+        ));
     }
 
     #[test]
@@ -9024,6 +9060,40 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_probe_points_merge_permuted_plane_definitions() {
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let mut probes = vec![ProbePoint {
+            point: point.clone(),
+            side: Classification::Positive,
+            planes: vec![definition],
+            uncertified_definition_fallback: false,
+        }];
+
+        push_unique_probe_point(
+            &mut probes,
+            ProbePoint {
+                point,
+                side: Classification::Positive,
+                planes: vec![permuted.clone()],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].planes.len(), 1);
+        assert!(definition_planes_match_as_sets(
+            &probes[0].planes[0],
+            &permuted
+        ));
+    }
+
+    #[test]
     fn duplicate_interior_points_merge_plane_definitions() {
         let point = p(1, 1, 1);
         let mut points = vec![InteriorLeafPoint {
@@ -9061,6 +9131,38 @@ mod tests {
 
         assert_eq!(points.len(), 1);
         assert_eq!(points[0].planes, vec![first_definition, second_definition]);
+    }
+
+    #[test]
+    fn duplicate_interior_points_merge_permuted_plane_definitions() {
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let mut points = vec![InteriorLeafPoint {
+            point: point.clone(),
+            planes: vec![definition],
+            uncertified_definition_fallback: false,
+        }];
+
+        push_unique_interior_point(
+            &mut points,
+            InteriorLeafPoint {
+                point,
+                planes: vec![permuted.clone()],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].planes.len(), 1);
+        assert!(definition_planes_match_as_sets(
+            &points[0].planes[0],
+            &permuted
+        ));
     }
 
     #[test]
