@@ -166,10 +166,17 @@ struct SplitChildPartitionCacheEntry {
     result: HypermeshResult<SplitChildPartition>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct PairwiseIntersectionsCacheEntry {
+    polygons: Vec<ConvexPolygon>,
+    result: HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+}
+
 struct SubdivisionRuntimeCaches {
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
 }
@@ -180,6 +187,7 @@ impl Default for SubdivisionRuntimeCaches {
             polygon_family_bounds: RefCell::new(Vec::new()),
             split_candidates: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
+            pairwise_intersections: RefCell::new(Vec::new()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
         }
@@ -241,6 +249,28 @@ fn process_leaf_into_inner(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<LeafProcessingStats> {
+    process_leaf_into_inner_with_pairwise_cache(
+        polygons,
+        bounds,
+        ref_point,
+        ref_definitions,
+        ref_wnv,
+        indicator,
+        output,
+        pairwise_intersections_by_polygon,
+    )
+}
+
+fn process_leaf_into_inner_with_pairwise_cache(
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    indicator: &Indicator,
+    output: &mut Vec<ClassifiedPolygon>,
+    pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+) -> HypermeshResult<LeafProcessingStats> {
     let mut stats = LeafProcessingStats {
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
@@ -251,7 +281,7 @@ fn process_leaf_into_inner(
         return Ok(stats);
     }
 
-    let intersections = pairwise_intersections_by_polygon(polygons)?;
+    let intersections = pairwise_query(polygons)?;
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
 
     for (index, polygon) in polygons.iter().enumerate() {
@@ -344,8 +374,13 @@ pub fn subdivide(
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    let mut process_leaf = process_leaf_task_into;
-    let mut caches = SubdivisionRuntimeCaches::default();
+    let caches = SubdivisionRuntimeCaches::default();
+    let pairwise_cache = &caches.pairwise_intersections;
+    let mut process_leaf = move |task: &SubdivisionTask,
+                                 indicator: &Indicator,
+                                 output: &mut Vec<ClassifiedPolygon>| {
+        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache)
+    };
     subdivide_into_inner_with(
         task,
         indicator,
@@ -353,7 +388,7 @@ pub fn subdivide(
         None,
         &mut output,
         &mut process_leaf,
-        &mut caches,
+        &caches,
     )?;
     Ok(output)
 }
@@ -365,8 +400,13 @@ pub(crate) fn subdivide_for_operation(
     op: BooleanOp,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    let mut process_leaf = process_leaf_task_into;
-    let mut caches = SubdivisionRuntimeCaches::default();
+    let caches = SubdivisionRuntimeCaches::default();
+    let pairwise_cache = &caches.pairwise_intersections;
+    let mut process_leaf = move |task: &SubdivisionTask,
+                                 indicator: &Indicator,
+                                 output: &mut Vec<ClassifiedPolygon>| {
+        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache)
+    };
     subdivide_into_inner_with(
         task,
         indicator,
@@ -374,7 +414,7 @@ pub(crate) fn subdivide_for_operation(
         Some(op),
         &mut output,
         &mut process_leaf,
-        &mut caches,
+        &caches,
     )?;
     Ok(output)
 }
@@ -391,8 +431,13 @@ pub fn subdivide_into(
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<()> {
     let mut certified_output = Vec::new();
-    let mut process_leaf = process_leaf_task_into;
-    let mut caches = SubdivisionRuntimeCaches::default();
+    let caches = SubdivisionRuntimeCaches::default();
+    let pairwise_cache = &caches.pairwise_intersections;
+    let mut process_leaf = move |task: &SubdivisionTask,
+                                 indicator: &Indicator,
+                                 output: &mut Vec<ClassifiedPolygon>| {
+        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache)
+    };
     subdivide_into_inner_with(
         task,
         indicator,
@@ -400,7 +445,7 @@ pub fn subdivide_into(
         None,
         &mut certified_output,
         &mut process_leaf,
-        &mut caches,
+        &caches,
     )?;
     output.extend(certified_output);
     Ok(())
@@ -462,6 +507,7 @@ fn subdivide_into_inner_with(
     let split_candidates = cached_ordered_subdivision_splits_with(
         &caches.split_candidates,
         &caches.split_child_partitions,
+        &caches.pairwise_intersections,
         &task.bounds,
         &task.polygons,
     )?;
@@ -473,6 +519,7 @@ fn subdivide_into_inner_with(
         let unclipped_right_bounds = task.bounds.right_half(split_axis, split_value.clone());
         let split_partition = cached_split_child_partition_with(
             &caches.split_child_partitions,
+            &caches.pairwise_intersections,
             &task.polygons,
             split_axis,
             &split_value,
@@ -665,6 +712,7 @@ fn cached_recursive_child_bounds_with(
 fn cached_ordered_subdivision_splits_with(
     cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<(usize, Real)>> {
@@ -675,8 +723,12 @@ fn cached_ordered_subdivision_splits_with(
         return existing.candidates.clone();
     }
 
-    let candidates =
-        ordered_subdivision_splits_with_partition_cache(bounds, polygons, partition_cache);
+    let candidates = ordered_subdivision_splits_with_partition_cache(
+        bounds,
+        polygons,
+        partition_cache,
+        pairwise_cache,
+    );
     cache.borrow_mut().push(SplitCandidatesCacheEntry {
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
@@ -687,6 +739,7 @@ fn cached_ordered_subdivision_splits_with(
 
 fn cached_split_child_partition_with(
     cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
     axis: usize,
     value: &Real,
@@ -700,7 +753,7 @@ fn cached_split_child_partition_with(
         }
     }
 
-    let result = split_child_partition(polygons, axis, value);
+    let result = split_child_partition(polygons, axis, value, pairwise_cache);
     cache.borrow_mut().push(SplitChildPartitionCacheEntry {
         polygons: polygons.to_vec(),
         axis,
@@ -823,12 +876,16 @@ fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPo
     true
 }
 
-fn process_leaf_task_into(
+fn process_leaf_task_into_with_caches(
     task: &SubdivisionTask,
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<LeafProcessingStats> {
-    process_leaf_into(
+    let pairwise_query = |polygons: &[ConvexPolygon]| {
+        cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)
+    };
+    process_leaf_into_inner_with_pairwise_cache(
         &task.polygons,
         &task.bounds,
         &task.ref_point,
@@ -836,6 +893,7 @@ fn process_leaf_task_into(
         &task.ref_wnv,
         indicator,
         output,
+        pairwise_query,
     )
 }
 
@@ -1270,6 +1328,26 @@ fn pairwise_intersections_by_polygon(
     Ok(by_polygon)
 }
 
+fn cached_pairwise_intersections_by_polygon_with(
+    cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .find(|existing| existing.polygons == polygons)
+    {
+        return existing.result.clone();
+    }
+
+    let result = pairwise_intersections_by_polygon(polygons);
+    cache.borrow_mut().push(PairwiseIntersectionsCacheEntry {
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
+    result
+}
+
 fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
     for axis in 0..3 {
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_gt() {
@@ -1397,6 +1475,7 @@ fn ordered_subdivision_splits_with_partition_cache(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<Vec<(usize, Real)>> {
     let mut candidates = Vec::new();
     let intersection_segments = split_intersection_segments(polygons)?;
@@ -1412,6 +1491,7 @@ fn ordered_subdivision_splits_with_partition_cache(
             bounds.midpoint(axis),
             SplitSource::Midpoint,
             partition_cache,
+            pairwise_cache,
         )?;
     }
 
@@ -1427,6 +1507,7 @@ fn ordered_subdivision_splits_with_partition_cache(
                 value,
                 SplitSource::Arrangement,
                 partition_cache,
+                pairwise_cache,
             )?;
         }
     }
@@ -1445,6 +1526,7 @@ fn ordered_subdivision_splits_with_partition_cache(
                 value,
                 SplitSource::Intersection,
                 partition_cache,
+                pairwise_cache,
             )?;
         }
     }
@@ -1518,6 +1600,7 @@ fn push_split_candidate_with_partition_cache(
     value: Real,
     source: SplitSource,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<()> {
     for existing in candidates.iter_mut() {
         if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
@@ -1528,7 +1611,8 @@ fn push_split_candidate_with_partition_cache(
         }
     }
 
-    let partition = cached_split_child_partition_with(partition_cache, polygons, axis, &value)?;
+    let partition =
+        cached_split_child_partition_with(partition_cache, pairwise_cache, polygons, axis, &value)?;
     let left_count = partition.left_polys.len();
     let right_count = partition.right_polys.len();
     candidates.push(SplitCandidate {
@@ -1741,7 +1825,7 @@ fn split_child_counts(
     axis: usize,
     value: &Real,
 ) -> HypermeshResult<SplitCounts> {
-    let partition = split_child_partition(polygons, axis, value)?;
+    let partition = split_child_partition(polygons, axis, value, &RefCell::new(Vec::new()))?;
     let left_count = partition.left_polys.len();
     let right_count = partition.right_polys.len();
 
@@ -1758,6 +1842,7 @@ fn split_child_partition(
     polygons: &[ConvexPolygon],
     axis: usize,
     value: &Real,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<SplitChildPartition> {
     let split_plane = Plane::axis_aligned(axis, value.clone());
     let mut left_polys = Vec::with_capacity(polygons.len());
@@ -1777,7 +1862,8 @@ fn split_child_partition(
         }
     }
 
-    let child_intersection_count = split_child_intersection_load(&left_polys, &right_polys)?;
+    let child_intersection_count =
+        split_child_intersection_load(&left_polys, &right_polys, pairwise_cache)?;
 
     Ok(SplitChildPartition {
         left_polys,
@@ -1790,12 +1876,13 @@ fn split_child_partition(
 fn split_child_intersection_load(
     left_polys: &[ConvexPolygon],
     right_polys: &[ConvexPolygon],
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<usize> {
-    let left = pairwise_intersections_by_polygon(left_polys)?
+    let left = cached_pairwise_intersections_by_polygon_with(pairwise_cache, left_polys)?
         .iter()
         .map(Vec::len)
         .sum::<usize>();
-    let right = pairwise_intersections_by_polygon(right_polys)?
+    let right = cached_pairwise_intersections_by_polygon_with(pairwise_cache, right_polys)?
         .iter()
         .map(Vec::len)
         .sum::<usize>();
@@ -7450,10 +7537,12 @@ mod tests {
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
+        let pairwise_cache = RefCell::new(Vec::new());
 
         let first = cached_ordered_subdivision_splits_with(
             &cache,
             &partition_cache,
+            &pairwise_cache,
             &bounds,
             &[polygon_a.clone(), polygon_b.clone()],
         )
@@ -7461,6 +7550,7 @@ mod tests {
         let second = cached_ordered_subdivision_splits_with(
             &cache,
             &partition_cache,
+            &pairwise_cache,
             &bounds,
             &[polygon_b, polygon_a],
         )
@@ -7475,12 +7565,14 @@ mod tests {
         let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
+        let pairwise_cache = RefCell::new(Vec::new());
         let first_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let second_bounds = Aabb::new(p(0, 0, 0), p(8, 4, 4));
 
         let first = cached_ordered_subdivision_splits_with(
             &cache,
             &partition_cache,
+            &pairwise_cache,
             &first_bounds,
             std::slice::from_ref(&polygon),
         )
@@ -7488,6 +7580,7 @@ mod tests {
         let second = cached_ordered_subdivision_splits_with(
             &cache,
             &partition_cache,
+            &pairwise_cache,
             &second_bounds,
             &[polygon],
         )
@@ -7506,10 +7599,12 @@ mod tests {
         ];
         let split_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
+        let pairwise_cache = RefCell::new(Vec::new());
 
         let ordered = cached_ordered_subdivision_splits_with(
             &split_cache,
             &partition_cache,
+            &pairwise_cache,
             &bounds,
             &polygons,
         )
@@ -7520,8 +7615,14 @@ mod tests {
         assert!(cached_partition_count > 0);
 
         let (axis, value) = &ordered[0];
-        let _partition =
-            cached_split_child_partition_with(&partition_cache, &polygons, *axis, value).unwrap();
+        let _partition = cached_split_child_partition_with(
+            &partition_cache,
+            &pairwise_cache,
+            &polygons,
+            *axis,
+            value,
+        )
+        .unwrap();
 
         assert_eq!(partition_cache.borrow().len(), cached_partition_count);
     }
@@ -9651,6 +9752,20 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
+        let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+        let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+        let polygons = vec![horizontal, vertical];
+        let cache = RefCell::new(Vec::new());
+
+        let first = cached_pairwise_intersections_by_polygon_with(&cache, &polygons).unwrap();
+        let second = cached_pairwise_intersections_by_polygon_with(&cache, &polygons).unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
     }
 
     #[test]
@@ -15060,7 +15175,7 @@ mod tests {
         let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
         let mut output = Vec::new();
         let emitted = ClassifiedPolygon::new(wall.clone(), 1);
-        let mut caches = SubdivisionRuntimeCaches::default();
+        let caches = SubdivisionRuntimeCaches::default();
 
         let err = subdivide_into_inner_with(
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
@@ -15076,7 +15191,7 @@ mod tests {
                     ..LeafProcessingStats::default()
                 })
             },
-            &mut caches,
+            &caches,
         )
         .unwrap_err();
 
@@ -15092,7 +15207,7 @@ mod tests {
         let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
         let mut output = Vec::new();
         let emitted = ClassifiedPolygon::new(wall.clone(), 1);
-        let mut caches = SubdivisionRuntimeCaches::default();
+        let caches = SubdivisionRuntimeCaches::default();
 
         subdivide_into_inner_with(
             SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
@@ -15108,7 +15223,7 @@ mod tests {
                     ..LeafProcessingStats::default()
                 })
             },
-            &mut caches,
+            &caches,
         )
         .unwrap();
 

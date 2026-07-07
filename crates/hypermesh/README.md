@@ -952,7 +952,11 @@ twice just to rank and then execute the same split. The live split-ranking path
 now also collects pairwise segment intersections only once per polygon family
 and reuses that exact segment set across all three axis-specific intersection
 candidate scans, instead of rebuilding the same BVH and polygon-pair segment
-intersections once per axis. Recursive branches that
+intersections once per axis. The same top-level subdivision runtime now also
+keeps one exact pairwise polygon-intersection family per repeated local polygon
+sequence and reuses it across split child-intersection load and later direct
+leaf/BSP processing, instead of rebuilding the same pairwise polygon relation
+again when recursive branches revisit that exact local family. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
