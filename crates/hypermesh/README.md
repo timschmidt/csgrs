@@ -182,7 +182,10 @@ endpoint-box detour family now also backtracks past uncertified local boxes
 instead of aborting before later certified detour boxes run. The earlier
 axis-interval surface-cut construction feeding those endpoint boxes now also
 skips past partially uncertified local surface crossings instead of aborting
-the whole detour-box family before later exact boxes are even formed.
+the whole detour-box family before later exact boxes are even formed, and
+exact boundary contacts on those local polygon cuts now count as
+`UnknownClassification` for that cut candidate instead of ordinary accepted
+surface membership.
 If one of those local witness or seed families is entirely uncertified and no
 certified candidate survives, it now returns `UnknownClassification` instead of
 quietly collapsing that local family to an empty witness set.
