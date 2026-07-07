@@ -119,7 +119,10 @@ intermediate plane triples do not repay the same exact point reconstruction
 before trace or reachability continues, and the reachability-side plane
 replacement walk now also caches exact repeated intermediate step checks across
 those sibling orderings instead of rerunning the same local adjacency test
-family. The retained-definition entry path
+family. Those reachability-side affine and step caches are now also shared
+across sibling retained-definition pair attempts in one step-detoured search,
+so converged later replacement steps do not recheck the same local adjacency
+family again after an earlier pair already explored them. The retained-definition entry path
 above the step-detoured
 plane-replacement fallback now also surfaces an uncertified direct trace family
 explicitly and lets that broader replacement search decide the fallback,

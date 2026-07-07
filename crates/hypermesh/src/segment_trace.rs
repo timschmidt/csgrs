@@ -2832,6 +2832,8 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
+    let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definition_search(
         start,
         end,
@@ -2839,11 +2841,13 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         end_definitions,
         || probe_reaches_adjacent_cell(start, end, host_support, polygons),
         |start_definition, end_definition| {
-            plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
+            plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
                 start_definition,
                 end_definition,
                 host_support,
                 polygons,
+                &mut affine_cache,
+                &mut step_cache,
             )
         },
     )
@@ -2857,6 +2861,8 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
+    let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definition_search(
         start,
         end,
@@ -2864,11 +2870,13 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
         end_definitions,
         || probe_reaches_adjacent_cell(start, end, host_support, polygons),
         |start_definition, end_definition| {
-            plane_replacement_path_reaches_adjacent_cell_without_step_detours(
+            plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
                 start_definition,
                 end_definition,
                 host_support,
                 polygons,
+                &mut affine_cache,
+                &mut step_cache,
             )
         },
     )
@@ -3145,15 +3153,39 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     }
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
+    let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
+    plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
+        start_planes,
+        end_planes,
+        host_support,
+        polygons,
+        &mut affine_cache,
+        &mut step_cache,
+    )
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+) -> HypermeshResult<bool> {
     plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         start_planes,
         end_planes,
+        affine_cache,
+        step_cache,
         |current, next, current_definitions, next_definitions| {
             probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
                 current,
@@ -3167,15 +3199,39 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     )
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
+    let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
+    plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+        start_planes,
+        end_planes,
+        host_support,
+        polygons,
+        &mut affine_cache,
+        &mut step_cache,
+    )
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+) -> HypermeshResult<bool> {
     plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         start_planes,
         end_planes,
+        affine_cache,
+        step_cache,
         |current, next, _current_definitions, _next_definitions| {
             probe_reaches_adjacent_cell(current, next, host_support, polygons)
         },
@@ -3185,15 +3241,15 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
 fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    let mut affine_cache = Vec::new();
-    let mut step_cache = Vec::new();
     let mut saw_unknown = false;
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
         let mut current_point =
-            match cached_affine_from_planes_with(&mut affine_cache, &current_planes, || {
+            match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
                 Ok(point) => point,
@@ -3209,7 +3265,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
             let next_point =
-                match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
+                match cached_affine_from_planes_with(&mut *affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
                 }) {
                     Ok(point) => point,
@@ -3222,7 +3278,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 };
             if next_point != current_point {
                 let reachable = cached_plane_replacement_reachability_step_with(
-                    &mut step_cache,
+                    &mut *step_cache,
                     &current_point,
                     &next_point,
                     &current_planes,
@@ -10458,11 +10514,15 @@ mod tests {
                 Ok(Vec::new())
             }
         };
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
 
         assert!(
             plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 &start_definition,
                 &end_definition,
+                &mut affine_cache,
+                &mut step_cache,
                 |from, to, start_definitions, end_definitions| {
                     probe_reaches_adjacent_cell_with_definitions_budget_impl(
                         from,
@@ -10488,10 +10548,14 @@ mod tests {
             Plane::axis_aligned(0, r(2)),
             Plane::axis_aligned(2, r(0)),
         ];
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
 
         let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             &start_definition,
             &end_definition,
+            &mut affine_cache,
+            &mut step_cache,
             |_from, _to, _start_definitions, _end_definitions| Ok(false),
         )
         .unwrap_err();
@@ -10503,12 +10567,16 @@ mod tests {
     fn plane_replacement_reachability_step_reuses_equivalent_steps_across_orderings() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
         let mut step_calls = 0;
 
         assert!(
             !plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 &start_definition,
                 &end_definition,
+                &mut affine_cache,
+                &mut step_cache,
                 |_from, _to, _start_definitions, _end_definitions| {
                     step_calls += 1;
                     Ok(false)
@@ -10517,6 +10585,42 @@ mod tests {
             .unwrap()
         );
 
+        assert_eq!(step_calls, 1);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_shared_caches_reuse_equivalent_path_across_calls() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 0, 0));
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
+        let mut step_calls = 0;
+
+        let first = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            &start_definition,
+            &end_definition,
+            &mut affine_cache,
+            &mut step_cache,
+            |_from, _to, _start_definitions, _end_definitions| {
+                step_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            &start_definition,
+            &end_definition,
+            &mut affine_cache,
+            &mut step_cache,
+            |_from, _to, _start_definitions, _end_definitions| {
+                step_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
         assert_eq!(step_calls, 1);
     }
 
