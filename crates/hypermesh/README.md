@@ -172,6 +172,10 @@ uncertainty preserved. The same boundary-aware rule now also applies one layer
 later in the direct report-witness and shifted target-family builders, so an
 exact child-boundary witness no longer gets skipped as ordinary absence before
 later certified projected/support targets run.
+The leaf/probe halfspace-cell side now follows the same rule: exact probe-cell
+boundary candidates in the direct strict seed filter and shifted witness-family
+builder now count as `UnknownClassification` instead of ordinary non-strict
+rejection before later certified witness families run.
 Likewise, shifted halfspace witness collectors now treat surviving fallback-marked
 shifted witnesses as uncertainty that carries forward across later sibling
 seeds and sibling seed families, instead of only noticing hard
