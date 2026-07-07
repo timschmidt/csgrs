@@ -2891,7 +2891,12 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    let mut trace_without_detours =
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
         |start: &Point3,
          end: &Point3,
          start_definitions: &[[Plane; 3]],
@@ -2904,9 +2909,46 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
                 start_definitions,
                 end_definitions,
             )
+        },
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons),
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    mut reach_without_detours: impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    mut detours_for_query: impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let mut no_detour_cache = Vec::new();
+    let mut detour_target_cache = Vec::new();
+    let mut trace_without_detours =
+        |start: &Point3,
+         end: &Point3,
+         start_definitions: &[[Plane; 3]],
+         end_definitions: &[[Plane; 3]]| {
+            cached_definition_no_detour_reachability_with(
+                &mut no_detour_cache,
+                start,
+                end,
+                start_definitions,
+                end_definitions,
+                || reach_without_detours(start, end, start_definitions, end_definitions),
+            )
         };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    let mut detours_for = |start: &Point3, end: &Point3| {
+        cached_detour_target_family_with(&mut detour_target_cache, start, end, || {
+            detours_for_query(start, end)
+        })
+    };
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
         start,
         end,
@@ -9756,6 +9798,65 @@ mod tests {
             .unwrap()
         );
         assert_eq!(query_calls, 3);
+    }
+
+    #[test]
+    fn probe_step_detour_entry_reuses_no_detour_and_detour_family_queries() {
+        let start = p(0, 0, 0);
+        let shared = p(1, 0, 0);
+        let outer_b = p(2, 0, 0);
+        let outer_a = p(3, 0, 0);
+        let end = p(4, 0, 0);
+        let outer_targets = vec![
+            DetourTarget {
+                point: outer_a.clone(),
+                definitions: vec![axis_plane_definition(&outer_a)],
+                uncertified_definition_fallback: false,
+            },
+            DetourTarget {
+                point: outer_b.clone(),
+                definitions: vec![axis_plane_definition(&outer_b)],
+                uncertified_definition_fallback: false,
+            },
+        ];
+        let shared_target = DetourTarget {
+            point: shared.clone(),
+            definitions: vec![axis_plane_definition(&shared)],
+            uncertified_definition_fallback: false,
+        };
+        let mut shared_no_detour_calls = 0;
+        let mut shared_detour_family_calls = 0;
+
+        assert!(
+            !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+                &start,
+                &end,
+                &[],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                |from, to, _start_definitions, _end_definitions| {
+                    if *from == start && *to == shared {
+                        shared_no_detour_calls += 1;
+                    }
+                    Ok(false)
+                },
+                |from, to| {
+                    if *from == start && *to == end {
+                        Ok(outer_targets.clone())
+                    } else if *from == start && (*to == outer_a || *to == outer_b) {
+                        Ok(vec![shared_target.clone()])
+                    } else if *from == start && *to == shared {
+                        shared_detour_family_calls += 1;
+                        Ok(Vec::new())
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+        assert_eq!(shared_no_detour_calls, 1);
+        assert_eq!(shared_detour_family_calls, 1);
     }
 
     #[test]

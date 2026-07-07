@@ -428,7 +428,10 @@ and reachability queries across revisited branches instead of reissuing those
 same retained-definition base checks. The same entry layer now also reuses
 identical endpoint-box detour target families for repeated `(start, end)` or
 reversed `(end, start)` queries instead of rebuilding the same local detour
-boxes across revisited branches. If none trace
+boxes across revisited branches. The live step-detour reachability entry now
+also reuses those same definition-aware no-step-detour checks and endpoint-box
+detour families across failed sibling branches instead of rebuilding them on
+each revisit. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples, and projected / projected-escape
