@@ -2588,6 +2588,14 @@ fn escaped_reference_axis_stop_values_with_queries(
         if (direction_positive && !from_start.is_gt())
             || (!direction_positive && !from_start.is_lt())
         {
+            if from_start.is_eq()
+                && matches!(
+                    point_location,
+                    LocalPolygonPointLocation::Boundary | LocalPolygonPointLocation::Interior
+                )
+            {
+                saw_unknown = true;
+            }
             if compare_real(crossing_value, bound_value)?.is_eq()
                 && matches!(
                     point_location,
@@ -5992,7 +6000,7 @@ fn reference_axis_surface_crossing(
     let start_class = crate::geometry::classify_point(start, &polygon.support)?;
     let endpoint_class = crate::geometry::classify_point(endpoint, &polygon.support)?;
     if start_class == crate::geometry::Classification::On {
-        return Ok(None);
+        return Ok(Some(start.clone()));
     }
     if endpoint_class == crate::geometry::Classification::On {
         return Ok(Some(endpoint.clone()));
@@ -8776,6 +8784,42 @@ mod tests {
     }
 
     #[test]
+    fn escaped_reference_axis_stop_values_treat_start_boundary_contact_as_unknown_and_keep_later_corridor()
+     {
+        let projected = p(0, 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
+        let first = make_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
+            &projected,
+            &bounds,
+            &[first, second],
+            0,
+            true,
+            |projected, _endpoint, polygon, _axis| {
+                let x = polygon.vertices().unwrap()[0].x.clone();
+                if x == r(0) {
+                    Ok(Some(projected.clone()))
+                } else {
+                    Ok(Some(Point3::new(x, r(0), r(0))))
+                }
+            },
+            |_crossing, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(0) {
+                    Ok(LocalPolygonPointLocation::Boundary)
+                } else {
+                    Ok(LocalPolygonPointLocation::Interior)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(stop_values, vec![r(2), r(3)]);
+    }
+
+    #[test]
     fn projection_axis_escape_reference_finds_corridor_witness() {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
@@ -10130,6 +10174,41 @@ mod tests {
         assert_eq!(
             found,
             Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![31]))
+        );
+    }
+
+    #[test]
+    fn projection_axis_escape_reference_accepts_later_corridor_after_boundary_start_contact() {
+        let mut boundary = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        boundary.delta_w = vec![1];
+        let mut interior = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+        interior.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+        let mut searched_corridors = Vec::new();
+
+        let found = projection_axis_escape_reference_with_search(
+            &p(1, 3, 3),
+            &bounds,
+            &[boundary, interior],
+            |corridor| {
+                searched_corridors.push(corridor.clone());
+                if corridor.max.x == r(4) {
+                    Ok(Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![41])))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(
+            searched_corridors
+                .iter()
+                .any(|corridor| corridor.max.x == r(4) && corridor.min.x == r(1))
+        );
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![41]))
         );
     }
 
