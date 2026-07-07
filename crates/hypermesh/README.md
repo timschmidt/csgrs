@@ -295,6 +295,10 @@ Those projected/support target builders now also continue past an uncertified
 root halfspace report by still searching the later exact-vertex and closed-cell
 geometry seed families, instead of requiring a certified report witness before
 those exact seed families run.
+If one of those projected/support local target families is uncertified after
+earlier certified targets already exist, the surviving targets now keep that
+uncertainty attached so a later trace failure still surfaces
+`UnknownClassification` instead of being flattened back into ordinary absence.
 The top-level projected direct/escape search now does the same: if every
 projected direct trace, projected-support search, and projected escape search
 is uncertified, that local projected-family search returns

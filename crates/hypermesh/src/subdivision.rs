@@ -1708,6 +1708,10 @@ fn projected_reference_escape_targets_from_seed_families_with(
     if targets.len() == projected_targets.len() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        let mut targets = targets;
+        if saw_unknown {
+            mark_all_reference_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -2081,6 +2085,9 @@ fn extend_reference_targets_backtracking_unknown<T>(
     if targets.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_reference_targets_uncertified(targets);
+        }
         Ok(())
     }
 }
@@ -2157,6 +2164,9 @@ fn extend_reference_target_families_backtracking_unknown(
     if targets.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_reference_targets_uncertified(targets);
+        }
         Ok(())
     }
 }
@@ -2573,6 +2583,12 @@ impl ReferenceTarget {
             definitions,
             uncertified_definition_fallback: false,
         }
+    }
+}
+
+fn mark_all_reference_targets_uncertified(targets: &mut Vec<ReferenceTarget>) {
+    for target in targets {
+        target.uncertified_definition_fallback = true;
     }
 }
 
@@ -3393,6 +3409,10 @@ fn strict_projected_cell_targets_from_seed_families_with(
     if targets.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        let mut targets = targets;
+        if saw_unknown {
+            mark_all_reference_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -3872,6 +3892,9 @@ fn strict_support_cell_targets_from_optional_report(
     if targets.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_reference_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -4113,6 +4136,9 @@ fn shifted_support_cell_targets_from_seed(
     if targets.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        if saw_unknown {
+            mark_all_reference_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -5506,7 +5532,9 @@ mod tests {
         })
         .unwrap();
 
-        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 2, 3));
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -5535,7 +5563,9 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 2, 3));
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -5636,6 +5666,39 @@ mod tests {
 
         assert!(saw_unknown);
         assert_eq!(targets, projected_targets);
+    }
+
+    #[test]
+    fn strict_projected_target_family_marks_surviving_targets_uncertain_after_unknown() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+
+        let targets = strict_projected_cell_targets_from_seed_families_with(
+            &bounds,
+            &halfspaces,
+            None,
+            vec![first.clone(), second.clone()],
+            Vec::new(),
+            Vec::new(),
+            |seed| {
+                if *seed == second {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(targets.iter().any(|target| target.point == first));
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
     }
 
     #[test]
@@ -5883,7 +5946,9 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 2, 3));
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
