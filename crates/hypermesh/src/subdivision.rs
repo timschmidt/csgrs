@@ -141,8 +141,16 @@ struct PolygonFamilyBoundsCacheEntry {
     bounds: HypermeshResult<Aabb>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct SplitCandidatesCacheEntry {
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    candidates: HypermeshResult<Vec<(usize, Real)>>,
+}
+
 struct SubdivisionRuntimeCaches {
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
 }
@@ -151,6 +159,7 @@ impl Default for SubdivisionRuntimeCaches {
     fn default() -> Self {
         Self {
             polygon_family_bounds: RefCell::new(Vec::new()),
+            split_candidates: RefCell::new(Vec::new()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
         }
@@ -430,7 +439,11 @@ fn subdivide_into_inner_with(
         });
     }
 
-    let split_candidates = ordered_subdivision_splits(&task.bounds, &task.polygons)?;
+    let split_candidates = cached_ordered_subdivision_splits_with(
+        &caches.split_candidates,
+        &task.bounds,
+        &task.polygons,
+    )?;
     let mut best_failure = None;
     let mut seen_partitions = Vec::new();
 
@@ -633,6 +646,27 @@ fn cached_recursive_child_bounds_with(
         return cached_polygon_family_bounds_with(cache, child_polygons, polygon_family_bounds);
     }
     Ok(child_bounds.clone())
+}
+
+fn cached_ordered_subdivision_splits_with(
+    cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<(usize, Real)>> {
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.bounds == *bounds
+            && polygon_families_match_as_multisets(&existing.polygons, polygons)
+    }) {
+        return existing.candidates.clone();
+    }
+
+    let candidates = ordered_subdivision_splits(bounds, polygons);
+    cache.borrow_mut().push(SplitCandidatesCacheEntry {
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        candidates: candidates.clone(),
+    });
+    candidates
 }
 
 fn take_new_subdivision_child_partition(
@@ -7212,6 +7246,47 @@ mod tests {
 
         assert!(!ordered.is_empty());
         assert_eq!(ordered[0], (0, q(3, 2)));
+    }
+
+    #[test]
+    fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let cache = RefCell::new(Vec::new());
+
+        let first = cached_ordered_subdivision_splits_with(
+            &cache,
+            &bounds,
+            &[polygon_a.clone(), polygon_b.clone()],
+        )
+        .unwrap();
+        let second =
+            cached_ordered_subdivision_splits_with(&cache, &bounds, &[polygon_b, polygon_a])
+                .unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
+    }
+
+    #[test]
+    fn cached_ordered_subdivision_splits_distinguish_bounds() {
+        let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let cache = RefCell::new(Vec::new());
+        let first_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let second_bounds = Aabb::new(p(0, 0, 0), p(8, 4, 4));
+
+        let first = cached_ordered_subdivision_splits_with(
+            &cache,
+            &first_bounds,
+            std::slice::from_ref(&polygon),
+        )
+        .unwrap();
+        let second =
+            cached_ordered_subdivision_splits_with(&cache, &second_bounds, &[polygon]).unwrap();
+
+        assert_ne!(first, second);
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]

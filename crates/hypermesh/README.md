@@ -942,7 +942,10 @@ definition families now also hit that child-reference memo even when the same
 three planes arrive in a different local order, and the matching child
 subdivision memo now treats equivalent retained parent definition families the
 same way instead of missing recursive branch reuse on plane-order-only
-differences. Recursive branches that
+differences. The exact ordered split-candidate family is now also cached by
+child bounds plus polygon family, so recursive tasks that differ only in
+reference state no longer repay the same arrangement/intersection split search
+before reference propagation starts. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
