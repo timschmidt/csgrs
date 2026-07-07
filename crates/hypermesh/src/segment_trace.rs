@@ -6554,23 +6554,46 @@ fn shifted_halfspace_cell_geometry_witnesses(
 fn push_unique_shifted_halfspace_witness(
     witnesses: &mut Vec<ShiftedHalfspaceWitness>,
     witness: ShiftedHalfspaceWitness,
-) {
+) -> bool {
     if let Some(existing) = witnesses
         .iter_mut()
         .find(|existing| existing.point == witness.point)
     {
-        existing.uncertified_definition_fallback |= witness.uncertified_definition_fallback;
-        for family in witness.families {
+        let incoming_families = witness.families;
+        let incoming_is_fallback = witness.uncertified_definition_fallback;
+        let existing_covered_by_incoming = existing.families.iter().all(|existing_family| {
+            incoming_families.iter().any(|incoming_family| {
+                shifted_halfspace_witness_families_match(existing_family, incoming_family)
+            })
+        });
+        let mut introduced_new_family = false;
+        for family in incoming_families {
             if !existing
                 .families
                 .iter()
                 .any(|candidate| shifted_halfspace_witness_families_match(candidate, &family))
             {
                 existing.families.push(family);
+                introduced_new_family = true;
             }
         }
+        if incoming_is_fallback {
+            if introduced_new_family {
+                existing.uncertified_definition_fallback = true;
+                true
+            } else {
+                false
+            }
+        } else {
+            if existing_covered_by_incoming {
+                existing.uncertified_definition_fallback = false;
+            }
+            false
+        }
     } else {
+        let introduced_uncertified_state = witness.uncertified_definition_fallback;
         witnesses.push(witness);
+        introduced_uncertified_state
     }
 }
 
@@ -6681,7 +6704,7 @@ fn extend_shifted_halfspace_seed_families_backtracking_unknown(
     families: impl IntoIterator<Item = Vec<Point3>>,
     mut build: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     let mut seen = Vec::new();
     for family in families {
         let fresh = take_new_halfspace_seed_family(family, &mut seen);
@@ -6690,19 +6713,20 @@ fn extend_shifted_halfspace_seed_families_backtracking_unknown(
             build(seed)
         }) {
             Ok(()) => {
-                saw_unknown |= local
-                    .iter()
-                    .any(|witness| witness.uncertified_definition_fallback);
                 for witness in local {
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || witnesses
+            .iter()
+            .any(|witness| witness.uncertified_definition_fallback);
     if witnesses.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -6718,23 +6742,24 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
     seeds: impl IntoIterator<Item = Point3>,
     mut build: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for seed in seeds {
         match build(&seed) {
             Ok(found) => {
-                saw_unknown |= found
-                    .iter()
-                    .any(|witness| witness.uncertified_definition_fallback);
                 for witness in found {
                     push_unique_shifted_halfspace_witness(witnesses, witness);
                 }
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || witnesses
+            .iter()
+            .any(|witness| witness.uncertified_definition_fallback);
     if witnesses.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -8110,6 +8135,32 @@ mod tests {
     }
 
     #[test]
+    fn shifted_halfspace_witness_collection_keeps_certified_duplicate_state_certified() {
+        let first_seed = p(1, 1, 1);
+        let second_seed = p(2, 2, 2);
+        let witness_point = p(3, 3, 3);
+        let mut witnesses = Vec::new();
+
+        extend_shifted_halfspace_witnesses_backtracking_unknown(
+            &mut witnesses,
+            [first_seed, second_seed],
+            |seed| {
+                Ok(vec![ShiftedHalfspaceWitness::with_family(
+                    witness_point.clone(),
+                    Vec::new(),
+                    [None, None, None],
+                    *seed == p(1, 1, 1),
+                )])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].point, witness_point);
+        assert!(!witnesses[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn duplicate_shifted_halfspace_witnesses_merge_distinct_active_plane_families() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -8171,6 +8222,25 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].families.len(), 1);
+    }
+
+    #[test]
+    fn duplicate_shifted_halfspace_witnesses_prefer_certified_duplicate_families() {
+        let point = p(1, 1, 1);
+        let mut witnesses = vec![ShiftedHalfspaceWitness::with_family(
+            point.clone(),
+            Vec::new(),
+            [None, None, None],
+            true,
+        )];
+
+        push_unique_shifted_halfspace_witness(
+            &mut witnesses,
+            ShiftedHalfspaceWitness::with_family(point, Vec::new(), [None, None, None], false),
+        );
+
+        assert_eq!(witnesses.len(), 1);
+        assert!(!witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -8574,6 +8644,30 @@ mod tests {
                 .iter()
                 .all(|witness| witness.uncertified_definition_fallback)
         );
+    }
+
+    #[test]
+    fn shifted_halfspace_witness_seed_family_search_keeps_certified_duplicate_state_certified() {
+        let witness_point = p(3, 3, 3);
+        let mut witnesses = Vec::new();
+
+        extend_shifted_halfspace_seed_families_backtracking_unknown(
+            &mut witnesses,
+            [vec![p(1, 1, 1)], vec![p(2, 2, 2)]],
+            |seed| {
+                Ok(vec![ShiftedHalfspaceWitness::with_family(
+                    witness_point.clone(),
+                    Vec::new(),
+                    [None, None, None],
+                    *seed == p(1, 1, 1),
+                )])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(witnesses.len(), 1);
+        assert_eq!(witnesses[0].point, witness_point);
+        assert!(!witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
