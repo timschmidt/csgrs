@@ -599,9 +599,9 @@ fn take_new_subdivision_child_partition(
     right_bounds: Option<&Aabb>,
 ) -> bool {
     for existing in seen.iter() {
-        if existing.left_polygons == left_polygons
+        if polygon_families_match_as_multisets(&existing.left_polygons, left_polygons)
             && existing.left_bounds.as_ref() == left_bounds
-            && existing.right_polygons == right_polygons
+            && polygon_families_match_as_multisets(&existing.right_polygons, right_polygons)
             && existing.right_bounds.as_ref() == right_bounds
         {
             return false;
@@ -633,7 +633,7 @@ fn cached_child_reference_with(
                 old_ref_definitions,
             )
             && existing.old_wnv == old_wnv
-            && existing.source_polygons == source_polygons
+            && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
             && existing.bounds == *bounds
     }) {
         return existing.result.clone();
@@ -673,7 +673,7 @@ fn cached_child_subdivision_with(
 }
 
 fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &SubdivisionTask) -> bool {
-    left.polygons == right.polygons
+    polygon_families_match_as_multisets(&left.polygons, &right.polygons)
         && left.bounds == right.bounds
         && left.ref_point == right.ref_point
         && reference_definition_families_match_as_sets(
@@ -682,6 +682,26 @@ fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &Subdivision
         )
         && left.ref_wnv == right.ref_wnv
         && left.depth == right.depth
+}
+
+fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPolygon]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_polygon in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_polygon)| !matched[*index] && *right_polygon == left_polygon)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
 }
 
 fn process_leaf_task_into(
@@ -9419,6 +9439,29 @@ mod tests {
     }
 
     #[test]
+    fn subdivision_child_partition_dedupe_skips_permuted_polygon_order() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let left_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let mut seen = Vec::new();
+
+        assert!(take_new_subdivision_child_partition(
+            &mut seen,
+            &[polygon_a.clone(), polygon_b.clone()],
+            Some(&left_bounds),
+            &[],
+            None,
+        ));
+        assert!(!take_new_subdivision_child_partition(
+            &mut seen,
+            &[polygon_b, polygon_a],
+            Some(&left_bounds),
+            &[],
+            None,
+        ));
+    }
+
+    #[test]
     fn cached_child_reference_keeps_distinct_parent_reference_states_separate() {
         let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
@@ -9503,6 +9546,48 @@ mod tests {
     }
 
     #[test]
+    fn cached_child_reference_reuses_permuted_source_polygon_families() {
+        let source_polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let source_polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+        let old_ref = p(0, 0, 0);
+        let old_ref_definitions = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+
+        let first = cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            &[source_polygon_a.clone(), source_polygon_b.clone()],
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(1, 2, 3), axis_defs(&p(1, 2, 3)), vec![7]))
+            },
+        )
+        .unwrap();
+        let second = cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            &[source_polygon_b, source_polygon_a],
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![8]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_child_subdivision_reuses_identical_child_task() {
         let task = SubdivisionTask::new(
             vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
@@ -9581,6 +9666,42 @@ mod tests {
             definition[2].clone(),
             definition[0].clone(),
         ]];
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_child_subdivision_with(&cache, &task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+                1,
+            )])
+        })
+        .unwrap();
+        let second = cached_child_subdivision_with(&cache, &permuted_task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+                1,
+            )])
+        })
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_subdivision_reuses_permuted_polygon_families() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let task = SubdivisionTask::new(
+            vec![polygon_a.clone(), polygon_b.clone()],
+            Aabb::new(p(0, 0, 0), p(1, 1, 1)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let mut permuted_task = task.clone();
+        permuted_task.polygons = vec![polygon_b, polygon_a];
         let cache = RefCell::new(Vec::new());
         let calls = std::cell::Cell::new(0);
 
