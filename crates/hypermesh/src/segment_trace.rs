@@ -9224,6 +9224,40 @@ mod tests {
     }
 
     #[test]
+    fn strict_leaf_witness_from_shifted_witness_merges_definition_families() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 1),
+            families: vec![
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(0, false, r(1))],
+                    active_planes: [Some(0), None, None],
+                },
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(1, false, r(1))],
+                    active_planes: [Some(0), None, None],
+                },
+            ],
+            uncertified_definition_fallback: false,
+        };
+
+        let point = build_strict_leaf_point_from_shifted_witness(&leaf, &witness)
+            .unwrap()
+            .expect("shifted witness should still certify a strict leaf point");
+
+        assert!(point.planes.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(1, 0, 0) && plane.offset == r(-1))
+        }));
+        assert!(point.planes.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(0, 1, 0) && plane.offset == r(-1))
+        }));
+    }
+
+    #[test]
     fn strict_leaf_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let witness = p(1, 1, 1);
@@ -9341,6 +9375,40 @@ mod tests {
         .expect("strict probe witness should still be retained");
 
         assert!(probe.uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn strict_probe_witness_from_shifted_witness_merges_definition_families() {
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 1),
+            families: vec![
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(0, false, r(1))],
+                    active_planes: [Some(0), None, None],
+                },
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(1, false, r(1))],
+                    active_planes: [Some(0), None, None],
+                },
+            ],
+            uncertified_definition_fallback: false,
+        };
+
+        let probe = build_probe_point_from_shifted_witness(&witness, &support, &[])
+            .unwrap()
+            .expect("shifted witness should still certify a strict probe");
+
+        assert!(probe.planes.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(1, 0, 0) && plane.offset == r(-1))
+        }));
+        assert!(probe.planes.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(0, 1, 0) && plane.offset == r(-1))
+        }));
     }
 
     #[test]
