@@ -2818,6 +2818,9 @@ fn extend_reference_target_families_collect_unknown(
     for family in families {
         match family {
             Ok(found) => {
+                saw_unknown |= found
+                    .iter()
+                    .any(|target| target.uncertified_definition_fallback);
                 for target in found {
                     push_unique_reference_target(targets, target);
                 }
@@ -7085,6 +7088,55 @@ mod tests {
 
         assert!(saw_unknown);
         assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
+    fn reference_target_family_search_tracks_unknown_after_uncertain_family_result() {
+        let mut targets = Vec::new();
+
+        let saw_unknown = extend_reference_target_families_collect_unknown(
+            &mut targets,
+            [
+                Ok(vec![ReferenceTarget {
+                    point: p(1, 2, 3),
+                    definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                    uncertified_definition_fallback: true,
+                }]),
+                Ok(vec![ReferenceTarget::axis_defined(p(2, 3, 4))]),
+            ],
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 2);
+        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[1].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn reference_target_family_search_marks_later_targets_uncertain_after_uncertain_family_result()
+    {
+        let mut targets = Vec::new();
+
+        extend_reference_target_families_backtracking_unknown(
+            &mut targets,
+            [
+                Ok(vec![ReferenceTarget {
+                    point: p(1, 2, 3),
+                    definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                    uncertified_definition_fallback: true,
+                }]),
+                Ok(vec![ReferenceTarget::axis_defined(p(2, 3, 4))]),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 2);
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
     }
 
     #[test]
