@@ -625,7 +625,10 @@ fn cached_child_reference_with(
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.old_ref == *old_ref
-            && existing.old_ref_definitions == old_ref_definitions
+            && reference_definition_families_match_as_sets(
+                &existing.old_ref_definitions,
+                old_ref_definitions,
+            )
             && existing.old_wnv == old_wnv
             && existing.source_polygons == source_polygons
             && existing.bounds == *bounds
@@ -7122,6 +7125,52 @@ mod tests {
             || {
                 calls.set(calls.get() + 1);
                 Ok((p(9, 9, 9), axis_defs(&p(9, 9, 9)), vec![99]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_reference_reuses_permuted_parent_definition_families() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+        let old_ref = p(1, 2, 3);
+        let definition = axis_defs(&old_ref)[0].clone();
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let old_wnv = vec![0];
+
+        let first = cached_child_reference_with(
+            &cache,
+            &old_ref,
+            std::slice::from_ref(&definition),
+            &old_wnv,
+            std::slice::from_ref(&polygon),
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![9]))
+            },
+        )
+        .unwrap();
+        let second = cached_child_reference_with(
+            &cache,
+            &old_ref,
+            std::slice::from_ref(&permuted),
+            &old_wnv,
+            std::slice::from_ref(&polygon),
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(7, 8, 9), axis_defs(&p(7, 8, 9)), vec![11]))
             },
         )
         .unwrap();
