@@ -700,7 +700,11 @@ counts as an uncertified reference-validity check in that layer instead of
 ordinary invalid target rejection. Support-surface rejection now also classifies
 against the actual support polygon instead of only its support plane, so exact
 boundary contact there counts as `UnknownClassification` and coplanar points
-outside the polygon are no longer rejected as ordinary surface hits. The
+outside the polygon are no longer rejected as ordinary surface hits. The same
+certified local-polygon validity rule now also applies to the inherited
+reference fast path in `compute_new_reference(...)`, so a boundary old
+reference no longer degrades into ordinary “try another sampled reference”
+failure if every later projected/support path also exhausts. The
 cycle-guarded detour layers now treat uncertified traced-surface checks the
 same way: one uncertified detour-point surface query no longer aborts the
 whole detour family before later certified detours run. The

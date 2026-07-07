@@ -1530,13 +1530,18 @@ fn compute_new_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
-    if is_valid_reference_for_bounds(old_ref, bounds, polygons)? {
-        return Ok((
-            old_ref.clone(),
-            old_ref_definitions.to_vec(),
-            old_wnv.to_vec(),
-        ));
-    }
+    let old_ref_unknown = match is_certified_valid_reference_for_bounds(old_ref, bounds, polygons) {
+        Ok(true) => {
+            return Ok((
+                old_ref.clone(),
+                old_ref_definitions.to_vec(),
+                old_wnv.to_vec(),
+            ));
+        }
+        Ok(false) => false,
+        Err(crate::error::HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
 
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
     let projection_escape_axis_options_cache = std::cell::RefCell::new(Vec::new());
@@ -1559,7 +1564,7 @@ fn compute_new_reference(
             projected_root.saw_unknown,
         );
     }
-    let mut projected_unknown = projected_root.saw_unknown;
+    let mut projected_unknown = projected_root.saw_unknown || old_ref_unknown;
 
     let projected = projected_reference_search_or_none_tracking_unknown(
         search_projected_reference_families(
@@ -8411,6 +8416,20 @@ mod tests {
             is_certified_valid_reference_for_bounds(&p(2, 1, 2), &bounds, &[wall]),
             Err(crate::error::HypermeshError::UnknownClassification)
         );
+    }
+
+    #[test]
+    fn compute_new_reference_reports_unknown_after_boundary_inherited_reference_if_search_exhausts()
+    {
+        let mut wall = make_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let old_ref = p(0, 0, 0);
+        let bounds = Aabb::new(old_ref.clone(), old_ref.clone());
+
+        let err = compute_new_reference(&old_ref, &axis_defs(&old_ref), &[0], &bounds, &[wall])
+            .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]
