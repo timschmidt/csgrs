@@ -1999,6 +1999,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
     Ok(targets)
 }
 
+#[cfg(test)]
 fn projected_support_plane_cell_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -3280,6 +3281,7 @@ fn is_valid_reference_for_bounds(
         && !point_lies_on_local_surface(point, polygons)?)
 }
 
+#[cfg(test)]
 fn support_plane_cell_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -3317,6 +3319,7 @@ fn support_plane_cell_reference_with_query_caches(
     )
 }
 
+#[cfg(test)]
 fn support_plane_cell_reference_with_halfspaces(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -3378,6 +3381,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     )
 }
 
+#[cfg(test)]
 fn support_plane_cell_reference_with_queries(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -3654,6 +3658,7 @@ where
     )
 }
 
+#[cfg(test)]
 fn support_plane_cell_search_with_queries<T>(
     preferred_point: Option<&Point3>,
     bounds: &Aabb,

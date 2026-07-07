@@ -1323,6 +1323,7 @@ fn trace_axis_ordered_paths(
     )
 }
 
+#[cfg(test)]
 fn trace_axis_ordered_paths_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -2197,6 +2198,7 @@ fn trace_plane_replacement_path_with_step_detours(
     )
 }
 
+#[cfg(test)]
 fn trace_plane_replacement_path_with_step_detours_with_caches(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
@@ -3081,6 +3083,7 @@ fn definition_pair_reachability_backtracking_unknown(
     }
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions(
     start: &Point3,
     end: &Point3,
