@@ -5018,7 +5018,7 @@ fn shifted_projected_cell_targets_from_families(
     let mut targets = Vec::new();
     let report_witness = report.and_then(|report| report.witness.clone());
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        dedupe_shifted_target_seed_families(
+        shifted_target_seed_families_with_report_seed(
             report_witness.as_ref(),
             families.strict_seeds.clone(),
             families.shifted_vertices.clone(),
@@ -5876,7 +5876,7 @@ fn shifted_support_cell_targets_from_families(
     let mut targets = Vec::new();
     let report_witness = report.and_then(|report| report.witness.clone());
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        dedupe_shifted_target_seed_families(
+        shifted_target_seed_families_with_report_seed(
             report_witness.as_ref(),
             families.strict_seeds.clone(),
             families.shifted_vertices.clone(),
@@ -8200,6 +8200,31 @@ mod tests {
     }
 
     #[test]
+    fn shifted_projected_target_family_prefers_certified_report_witness_duplicate() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 2, 3);
+        let families = ShiftedProjectedCellFamilies {
+            shifted: halfspaces.clone(),
+            report: Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                witness.clone(),
+                [Some(9), None, None],
+            )),
+            saw_unknown: false,
+            strict_seeds: Vec::new(),
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets =
+            shifted_projected_cell_targets_from_families(&bounds, &halfspaces, &families).unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, witness);
+        assert!(!targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn shifted_projected_target_family_marks_surviving_targets_uncertain_after_unknown() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -9143,6 +9168,31 @@ mod tests {
                 .iter()
                 .all(|target| target.uncertified_definition_fallback)
         );
+    }
+
+    #[test]
+    fn shifted_support_target_family_prefers_certified_report_witness_duplicate() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 2, 3);
+        let families = ShiftedSupportCellFamilies {
+            shifted: halfspaces.clone(),
+            report: Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                witness.clone(),
+                [Some(9), None, None],
+            )),
+            saw_unknown: false,
+            strict_seeds: Vec::new(),
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets =
+            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families).unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, witness);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]

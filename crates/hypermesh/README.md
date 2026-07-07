@@ -645,6 +645,11 @@ seed families against the report witness itself, so they do not rebuild that sam
 target again through later strict-seed, exact-vertex, or geometry-seed families.
 The top-level projected/support target builders now do the same before they
 widen into shifted target search from those same exact seed families.
+And inside the already-shifted projected/support target-family builders, a
+fallback-marked report witness can now still be replayed as a same-point
+strict seed, so a later certified duplicate at that witness point can clear
+redundant fallback state instead of leaving the merged shifted target
+uncertified forever.
 Support-cell witnesses are now constructed from
 closed support-side cells by enumerating exact feasible cell vertices and
 asking `hyperlimit` for replayable witnesses inside inward-shifted strict
