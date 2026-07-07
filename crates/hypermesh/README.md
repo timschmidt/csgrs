@@ -407,7 +407,10 @@ back to the full child-cell support search.
 Segment tracing uses
 direct paths and arrangement-coordinate endpoint-box detours, cut by local
 vertex coordinates and exact endpoint-box surface crossings, when axis-ordered
-paths hit surfaces. Those detour points are now constructed from each
+paths hit surfaces. Equivalent axis-ordered segment legs now also reuse the
+same exact `trace_axis_segment(...)` result across sibling orderings instead of
+rerunning the same leg trace before detour fallback begins. Those detour
+points are now constructed from each
 certified cut endpoint box by first reusing any strict closed-cell feasibility
 witness that `hyperlimit` already provides, then retaining the remaining
 strict shifted-cell witness family instead of midpoint Cartesian sampling.

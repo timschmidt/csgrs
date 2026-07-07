@@ -99,6 +99,15 @@ struct PlaneReplacementReachabilityStepCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct AxisOrderedSegmentTraceCacheEntry {
+    start: Point3,
+    end: Point3,
+    axis: usize,
+    attempt: WindingNumberVector,
+    result: HypermeshResult<TraceAxisSegmentResult>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -1124,11 +1133,20 @@ fn trace_axis_ordered_paths(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
-    trace_axis_ordered_paths_with_surface_query(start, end, winding, polygons, |point| {
-        cached_surface_query_with(&mut surface_cache, point, || {
-            point_lies_on_traced_surface(point, polygons)
-        })
-    })
+    trace_axis_ordered_paths_with_queries(
+        start,
+        end,
+        winding,
+        polygons,
+        |point| {
+            cached_surface_query_with(&mut surface_cache, point, || {
+                point_lies_on_traced_surface(point, polygons)
+            })
+        },
+        |current, next, axis, attempt, polygons| {
+            trace_axis_segment(current, next, axis, attempt, polygons)
+        },
+    )
 }
 
 fn trace_axis_ordered_paths_with_surface_query(
@@ -1136,8 +1154,36 @@ fn trace_axis_ordered_paths_with_surface_query(
     end: &Point3,
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    mut point_lies_on_surface: impl FnMut(&Point3) -> HypermeshResult<bool>,
+    point_lies_on_surface: impl FnMut(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<WindingNumberVector> {
+    trace_axis_ordered_paths_with_queries(
+        start,
+        end,
+        winding,
+        polygons,
+        point_lies_on_surface,
+        |current, next, axis, attempt, polygons| {
+            trace_axis_segment(current, next, axis, attempt, polygons)
+        },
+    )
+}
+
+fn trace_axis_ordered_paths_with_queries(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    mut point_lies_on_surface: impl FnMut(&Point3) -> HypermeshResult<bool>,
+    mut trace_segment_step: impl FnMut(
+        &Point3,
+        &Point3,
+        usize,
+        &[i32],
+        &[ConvexPolygon],
+    ) -> HypermeshResult<TraceAxisSegmentResult>,
+) -> HypermeshResult<WindingNumberVector> {
+    let mut segment_cache = Vec::new();
+
     for ordering in AXIS_ORDERINGS {
         let mut current = start.clone();
         let mut attempt = winding.to_vec();
@@ -1151,7 +1197,14 @@ fn trace_axis_ordered_paths_with_surface_query(
                     valid = false;
                     break;
                 }
-                let traced = trace_axis_segment(&current, &next, axis, &attempt, polygons)?;
+                let traced = cached_axis_ordered_segment_trace_with(
+                    &mut segment_cache,
+                    &current,
+                    &next,
+                    axis,
+                    &attempt,
+                    || trace_segment_step(&current, &next, axis, &attempt, polygons),
+                )?;
                 attempt = traced.winding;
                 valid = traced.valid;
                 current = next;
@@ -1167,6 +1220,34 @@ fn trace_axis_ordered_paths_with_surface_query(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn cached_axis_ordered_segment_trace_with(
+    cache: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
+    start: &Point3,
+    end: &Point3,
+    axis: usize,
+    attempt: &[i32],
+    trace: impl FnOnce() -> HypermeshResult<TraceAxisSegmentResult>,
+) -> HypermeshResult<TraceAxisSegmentResult> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.start == *start
+            && existing.end == *end
+            && existing.axis == axis
+            && existing.attempt == attempt
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = trace();
+    cache.push(AxisOrderedSegmentTraceCacheEntry {
+        start: start.clone(),
+        end: end.clone(),
+        axis,
+        attempt: attempt.to_vec(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn interior_box_detour_targets(
@@ -6781,6 +6862,32 @@ mod tests {
 
         assert_eq!(err, HypermeshError::UnknownClassification);
         assert_eq!(query_calls, 2);
+    }
+
+    #[test]
+    fn trace_axis_ordered_paths_reuse_equivalent_segment_traces() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 0);
+        let mut trace_calls = 0;
+
+        let err = trace_axis_ordered_paths_with_queries(
+            &start,
+            &end,
+            &[0],
+            &[],
+            |_point| Ok(false),
+            |_current, _next, _axis, attempt, _polygons| {
+                trace_calls += 1;
+                Ok(TraceAxisSegmentResult {
+                    winding: attempt.to_vec(),
+                    valid: false,
+                })
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(trace_calls, 2);
     }
 
     #[test]
