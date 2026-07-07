@@ -2752,14 +2752,11 @@ fn deferred_direct_reference_targets_from_strict_seeds(
 
 fn deferred_direct_reference_targets_from_strict_seeds_with(
     strict_seeds: &[Point3],
-    report_witness: Option<&Point3>,
+    _report_witness: Option<&Point3>,
     saw_unknown: &mut bool,
     mut build: impl FnMut(&Point3) -> HypermeshResult<Option<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match collect_reference_target_family(strict_seeds.iter().cloned(), |seed| {
-        if report_witness.is_some_and(|witness| witness == &seed) {
-            return Ok(Vec::new());
-        }
         Ok(build(&seed)?.into_iter().collect())
     }) {
         Ok(targets) => {
@@ -7882,6 +7879,87 @@ mod tests {
 
         assert!(targets.is_empty());
         assert!(saw_unknown);
+    }
+
+    #[test]
+    fn strict_projected_target_family_keeps_same_point_direct_seed_definitions() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let point = p(1, 2, 3);
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+            LimitPlane3::new(p(1, 1, 1), r(-6)),
+            LimitPlane3::new(p(-1, -1, -1), r(6)),
+        ];
+        let mut saw_unknown = false;
+
+        let targets = strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
+            &bounds,
+            &halfspaces,
+            Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
+                point.clone(),
+                [None, None, None],
+            )),
+            vec![point],
+            Vec::new(),
+            Vec::new(),
+            &mut saw_unknown,
+            |_seed| Ok(Vec::new()),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert!(targets[0].uncertified_definition_fallback);
+        assert!(
+            targets[0]
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
+    }
+
+    #[test]
+    fn strict_support_target_family_keeps_same_point_direct_seed_definitions() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let point = p(1, 2, 3);
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+            LimitPlane3::new(p(1, 1, 1), r(-6)),
+            LimitPlane3::new(p(-1, -1, -1), r(6)),
+        ];
+        let mut seed_geometry_cache = Vec::new();
+        let mut shifted_support_family_cache = Vec::new();
+
+        let targets = strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
+            &bounds,
+            &halfspaces,
+            Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
+                point.clone(),
+                [None, None, None],
+            )),
+            &mut seed_geometry_cache,
+            &mut shifted_support_family_cache,
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert!(targets[0].uncertified_definition_fallback);
+        assert!(
+            targets[0]
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
     }
 
     #[test]
