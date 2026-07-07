@@ -2722,6 +2722,7 @@ fn support_plane_cell_reference_with_queries(
     }
 
     let trace_cache = std::cell::RefCell::new(Vec::new());
+    let support_surface_cache = std::cell::RefCell::new(Vec::new());
     let target_cache = std::cell::RefCell::new(Vec::new());
     let accept_cache = std::cell::RefCell::new(Vec::new());
 
@@ -2740,7 +2741,8 @@ fn support_plane_cell_reference_with_queries(
             halfspaces,
             report.as_ref(),
             |halfspaces, report| {
-                trace_reference_targets_backtracking_unknown(
+                let mut support_surface_cache = support_surface_cache.borrow_mut();
+                trace_reference_targets_backtracking_unknown_with_surface_cache(
                     cached_support_target_family_with(
                         &mut target_cache.borrow_mut(),
                         halfspaces,
@@ -2751,7 +2753,8 @@ fn support_plane_cell_reference_with_queries(
                             )
                         },
                     )?,
-                    polygons,
+                    &mut support_surface_cache,
+                    &mut |point| point_lies_on_any_support_plane(point, polygons),
                     |target| {
                         cached_reference_target_trace_with(
                             &mut trace_cache.borrow_mut(),
@@ -2795,25 +2798,41 @@ fn support_plane_cell_reference_with_queries(
 fn trace_reference_targets_backtracking_unknown(
     targets: Vec<ReferenceTarget>,
     polygons: &[ConvexPolygon],
-    mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+    trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let mut surface_cache = Vec::new();
+    trace_reference_targets_backtracking_unknown_with_surface_cache(
+        targets,
+        &mut surface_cache,
+        &mut |point| point_lies_on_any_support_plane(point, polygons),
+        trace,
+    )
+}
+
+fn trace_reference_targets_backtracking_unknown_with_surface_cache(
+    targets: Vec<ReferenceTarget>,
+    surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     trace_reference_targets_backtracking_unknown_with_surface_query(
         targets,
-        &mut |point| point_lies_on_any_support_plane(point, polygons),
+        surface_cache,
+        surface_query,
         trace,
     )
 }
 
 fn trace_reference_targets_backtracking_unknown_with_surface_query(
     targets: Vec<ReferenceTarget>,
+    surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
-    trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+    mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut saw_unknown = false;
-    let mut surface_cache = Vec::new();
 
     for target in targets {
-        if cached_support_surface_query_with(&mut surface_cache, &target.point, |point| {
+        if cached_support_surface_query_with(surface_cache, &target.point, |point| {
             surface_query(point)
         })? {
             if target.uncertified_definition_fallback {
@@ -7742,9 +7761,11 @@ mod tests {
         );
         let second = ReferenceTarget::axis_defined(p(2, 1, 1));
         let surface_calls = std::cell::Cell::new(0);
+        let mut surface_cache = Vec::new();
 
         let found = trace_reference_targets_backtracking_unknown_with_surface_query(
             vec![first, second],
+            &mut surface_cache,
             &mut |point| {
                 surface_calls.set(surface_calls.get() + 1);
                 Ok(*point == p(2, 1, 1))
@@ -7754,6 +7775,39 @@ mod tests {
         .unwrap();
 
         assert_eq!(found, None);
+        assert_eq!(surface_calls.get(), 1);
+    }
+
+    #[test]
+    fn reference_target_trace_search_reuses_support_surface_queries_across_calls() {
+        let target = ReferenceTarget::axis_defined(p(2, 1, 1));
+        let surface_calls = std::cell::Cell::new(0);
+        let mut surface_cache = Vec::new();
+
+        let first = trace_reference_targets_backtracking_unknown_with_surface_cache(
+            vec![target.clone()],
+            &mut surface_cache,
+            &mut |point| {
+                surface_calls.set(surface_calls.get() + 1);
+                Ok(*point == p(2, 1, 1))
+            },
+            |_target| Ok(Some(vec![17])),
+        )
+        .unwrap();
+
+        let second = trace_reference_targets_backtracking_unknown_with_surface_cache(
+            vec![target],
+            &mut surface_cache,
+            &mut |point| {
+                surface_calls.set(surface_calls.get() + 1);
+                Ok(*point == p(2, 1, 1))
+            },
+            |_target| Ok(Some(vec![17])),
+        )
+        .unwrap();
+
+        assert_eq!(first, None);
+        assert_eq!(second, None);
         assert_eq!(surface_calls.get(), 1);
     }
 
