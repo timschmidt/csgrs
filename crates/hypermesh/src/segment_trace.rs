@@ -74,6 +74,14 @@ struct ProbeReachabilityCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct LeafWitnessSeedFamilies {
+    seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    saw_unknown: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct PlaneReplacementStepCacheEntry {
     current_point: Point3,
     next_point: Point3,
@@ -3721,6 +3729,26 @@ fn strict_leaf_witness_points(
     leaf: &ConvexPolygon,
     vertices: &[Point3],
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
+    strict_leaf_witness_points_with_seed_families(
+        leaf,
+        vertices,
+        |leaf, vertices, bounds, halfspaces, report| {
+            leaf_witness_seed_families(leaf, vertices, bounds, halfspaces, report)
+        },
+    )
+}
+
+fn strict_leaf_witness_points_with_seed_families(
+    leaf: &ConvexPolygon,
+    vertices: &[Point3],
+    mut seed_families_for: impl FnMut(
+        &ConvexPolygon,
+        &[Point3],
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    ) -> HypermeshResult<LeafWitnessSeedFamilies>,
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let bounds = leaf_bounds(vertices)?;
     let halfspaces = leaf_halfspaces(leaf);
     let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
@@ -3732,8 +3760,13 @@ fn strict_leaf_witness_points(
     }
 
     let mut points = Vec::new();
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        leaf_witness_seed_families(leaf, vertices, &bounds, &halfspaces, report.as_ref())?;
+    let LeafWitnessSeedFamilies {
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+        saw_unknown: seed_saw_unknown,
+    } = seed_families_for(leaf, vertices, &bounds, &halfspaces, report.as_ref())?;
+    saw_unknown |= seed_saw_unknown;
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) = dedupe_shifted_halfspace_seed_families(
         report_witness,
@@ -3790,7 +3823,7 @@ fn leaf_witness_seed_families(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
-) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
+) -> HypermeshResult<LeafWitnessSeedFamilies> {
     let mut saw_unknown = false;
     let (generic_seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
@@ -3812,7 +3845,12 @@ fn leaf_witness_seed_families(
     if seeds.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
-        Ok((seeds, shifted_vertices, shifted_geometry_seeds))
+        Ok(LeafWitnessSeedFamilies {
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+            saw_unknown,
+        })
     }
 }
 
@@ -3825,7 +3863,7 @@ fn strict_leaf_witness_seeds(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<Point3>> {
     leaf_witness_seed_families(leaf, vertices, bounds, halfspaces, report)
-        .map(|(seeds, _shifted_vertices, _shifted_geometry_seeds)| seeds)
+        .map(|families| families.seeds)
 }
 
 fn leaf_bounds(vertices: &[Point3]) -> HypermeshResult<Aabb> {
@@ -9221,6 +9259,33 @@ mod tests {
             .expect("strict witness should still be retained");
 
         assert!(point.uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+
+        let points = strict_leaf_witness_points_with_seed_families(
+            &leaf,
+            &vertices,
+            |_leaf, _vertices, _bounds, _halfspaces, _report| {
+                Ok(LeafWitnessSeedFamilies {
+                    seeds: vec![p(1, 1, 1)],
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                    saw_unknown: true,
+                })
+            },
+        )
+        .unwrap();
+
+        assert!(points.iter().any(|point| point.point == p(1, 1, 1)));
+        assert!(
+            points
+                .iter()
+                .all(|point| point.uncertified_definition_fallback)
+        );
     }
 
     #[test]

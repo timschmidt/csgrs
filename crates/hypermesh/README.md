@@ -281,7 +281,10 @@ steps now do the same candidate-locally for direct, shifted, shifted-vertex,
 and shifted-geometry witness points. Shifted witness cells now also backtrack
 past uncertified strictness checks on their raw shifted-vertex and raw
 shifted-geometry seed sources instead of aborting that whole shifted witness
-family before later certified candidates run. The remaining strict leaf/probe/
+family before later certified candidates run. When that direct strict leaf
+witness seed-family construction is only partially certified, the surviving
+leaf witnesses now keep that uncertainty attached instead of being flattened
+back to ordinary certified witnesses. The remaining strict leaf/probe/
 detour seed builders now also continue past an uncertified root halfspace
 feasibility report by still searching the later exact-vertex and closed-cell
 geometry seed families, instead of treating that root report as a hard local
