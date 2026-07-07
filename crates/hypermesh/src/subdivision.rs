@@ -121,6 +121,12 @@ struct ChildReferenceCacheEntry {
     result: HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct ChildSubdivisionCacheEntry {
+    task: SubdivisionTask,
+    result: HypermeshResult<Vec<ClassifiedPolygon>>,
+}
+
 /// Processes one leaf and returns classified output polygons.
 pub fn process_leaf(
     polygons: &[ConvexPolygon],
@@ -384,6 +390,7 @@ fn subdivide_into_inner_with(
     let mut best_failure = None;
     let mut seen_partitions = Vec::new();
     let mut child_reference_cache = Vec::new();
+    let mut child_subdivision_cache = Vec::new();
 
     for (split_axis, split_value) in split_candidates {
         let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
@@ -450,21 +457,31 @@ fn subdivide_into_inner_with(
                         )
                     },
                 )?;
-                subdivide_into_inner_with(
-                    SubdivisionTask {
-                        polygons: left_polys,
-                        bounds: left_bounds,
-                        ref_point: left_ref,
-                        ref_definitions: left_ref_definitions,
-                        ref_wnv: left_wnv,
-                        depth: task.depth + 1,
+                let left_task = SubdivisionTask {
+                    polygons: left_polys,
+                    bounds: left_bounds,
+                    ref_point: left_ref,
+                    ref_definitions: left_ref_definitions,
+                    ref_wnv: left_wnv,
+                    depth: task.depth + 1,
+                };
+                let child_output = cached_child_subdivision_with(
+                    &mut child_subdivision_cache,
+                    &left_task,
+                    || {
+                        let mut child_output = Vec::new();
+                        subdivide_into_inner_with(
+                            left_task.clone(),
+                            indicator,
+                            config,
+                            reachability_op,
+                            &mut child_output,
+                            process_leaf,
+                        )?;
+                        Ok(child_output)
                     },
-                    indicator,
-                    config,
-                    reachability_op,
-                    &mut candidate_output,
-                    process_leaf,
                 )?;
+                candidate_output.extend(child_output);
             }
 
             if let Some(right_bounds) = right_bounds {
@@ -482,21 +499,31 @@ fn subdivide_into_inner_with(
                         )
                     },
                 )?;
-                subdivide_into_inner_with(
-                    SubdivisionTask {
-                        polygons: right_polys,
-                        bounds: right_bounds,
-                        ref_point: right_ref,
-                        ref_definitions: right_ref_definitions,
-                        ref_wnv: right_wnv,
-                        depth: task.depth + 1,
+                let right_task = SubdivisionTask {
+                    polygons: right_polys,
+                    bounds: right_bounds,
+                    ref_point: right_ref,
+                    ref_definitions: right_ref_definitions,
+                    ref_wnv: right_wnv,
+                    depth: task.depth + 1,
+                };
+                let child_output = cached_child_subdivision_with(
+                    &mut child_subdivision_cache,
+                    &right_task,
+                    || {
+                        let mut child_output = Vec::new();
+                        subdivide_into_inner_with(
+                            right_task.clone(),
+                            indicator,
+                            config,
+                            reachability_op,
+                            &mut child_output,
+                            process_leaf,
+                        )?;
+                        Ok(child_output)
                     },
-                    indicator,
-                    config,
-                    reachability_op,
-                    &mut candidate_output,
-                    process_leaf,
                 )?;
+                candidate_output.extend(child_output);
             }
 
             Ok(())
@@ -571,6 +598,23 @@ fn cached_child_reference_with(
     cache.push(ChildReferenceCacheEntry {
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
+        result: result.clone(),
+    });
+    result
+}
+
+fn cached_child_subdivision_with(
+    cache: &mut Vec<ChildSubdivisionCacheEntry>,
+    task: &SubdivisionTask,
+    query: impl FnOnce() -> HypermeshResult<Vec<ClassifiedPolygon>>,
+) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+    if let Some(existing) = cache.iter().find(|existing| existing.task == *task) {
+        return existing.result.clone();
+    }
+
+    let result = query();
+    cache.push(ChildSubdivisionCacheEntry {
+        task: task.clone(),
         result: result.clone(),
     });
     result
@@ -6792,6 +6836,69 @@ mod tests {
                 Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![8]))
             },
         )
+        .unwrap();
+
+        assert_eq!(calls.get(), 2);
+    }
+
+    #[test]
+    fn cached_child_subdivision_reuses_identical_child_task() {
+        let task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let mut cache = Vec::new();
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_child_subdivision_with(&mut cache, &task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+                1,
+            )])
+        })
+        .unwrap();
+        let second = cached_child_subdivision_with(&mut cache, &task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+                1,
+            )])
+        })
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_subdivision_keeps_distinct_child_tasks_separate() {
+        let task_a = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let task_b = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let mut cache = Vec::new();
+        let calls = std::cell::Cell::new(0);
+
+        cached_child_subdivision_with(&mut cache, &task_a, || {
+            calls.set(calls.get() + 1);
+            Ok(Vec::new())
+        })
+        .unwrap();
+        cached_child_subdivision_with(&mut cache, &task_b, || {
+            calls.set(calls.get() + 1);
+            Ok(Vec::new())
+        })
         .unwrap();
 
         assert_eq!(calls.get(), 2);

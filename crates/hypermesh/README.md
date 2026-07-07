@@ -629,6 +629,9 @@ child polygon partition are now also skipped before reference propagation and
 recursion rerun that identical branch state, and identical child states now
 also reuse cached reference propagation within one parent split search instead
 of recomputing the same child reference witness each time that state reappears.
+Identical child subdivision tasks within one parent split search now likewise
+reuse cached recursive results instead of replaying the whole child branch when
+alternate splits converge to the same exact child task.
 Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
 through the certified leaf-output helper. That lets exact local arrangement
