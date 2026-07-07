@@ -4390,8 +4390,12 @@ fn build_strict_leaf_point(
     active_planes: [Option<usize>; 3],
     inherited_uncertified_definition_fallback: bool,
 ) -> HypermeshResult<Option<InteriorLeafPoint>> {
-    if !point_strictly_inside_leaf(witness, leaf)? {
-        return Ok(None);
+    match classify_point_in_polygon(witness, leaf)? {
+        PolygonPointLocation::Outside => return Ok(None),
+        PolygonPointLocation::Boundary => {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        PolygonPointLocation::Interior => {}
     }
 
     let (planes, uncertified_definition_fallback) =
@@ -4419,8 +4423,12 @@ fn build_strict_leaf_point_from_shifted_witness(
     leaf: &ConvexPolygon,
     witness: &ShiftedHalfspaceWitness,
 ) -> HypermeshResult<Option<InteriorLeafPoint>> {
-    if !point_strictly_inside_leaf(&witness.point, leaf)? {
-        return Ok(None);
+    match classify_point_in_polygon(&witness.point, leaf)? {
+        PolygonPointLocation::Outside => return Ok(None),
+        PolygonPointLocation::Boundary => {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        PolygonPointLocation::Interior => {}
     }
 
     let mut planes = Vec::new();
@@ -10870,6 +10878,18 @@ mod tests {
     }
 
     #[test]
+    fn strict_leaf_witness_reports_unknown_for_leaf_boundary_contact() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = p(3, 0, 0);
+        let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
+
+        assert_eq!(
+            build_strict_leaf_point(&leaf, &witness, &halfspaces, [None, None, None], false),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
     fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
@@ -10944,6 +10964,24 @@ mod tests {
                 .iter()
                 .any(|plane| plane.normal == p(0, 1, 0) && plane.offset == r(-1))
         }));
+    }
+
+    #[test]
+    fn strict_leaf_witness_from_shifted_witness_reports_unknown_for_leaf_boundary_contact() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = ShiftedHalfspaceWitness {
+            point: p(3, 0, 0),
+            families: vec![ShiftedHalfspaceWitnessFamily {
+                halfspaces: vec![axis_halfspace(0, false, r(3))],
+                active_planes: [Some(0), None, None],
+            }],
+            uncertified_definition_fallback: false,
+        };
+
+        assert_eq!(
+            build_strict_leaf_point_from_shifted_witness(&leaf, &witness),
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]

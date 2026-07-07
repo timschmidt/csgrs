@@ -340,7 +340,9 @@ interior witness expansions now likewise backtrack past uncertified local
 candidate searches instead of aborting the whole leaf witness family on the
 first `UnknownClassification`, and the underlying strict leaf-witness build
 steps now do the same candidate-locally for direct, shifted, shifted-vertex,
-and shifted-geometry witness points. Shifted witness cells now also backtrack
+and shifted-geometry witness points. Exact leaf-boundary contact in the strict
+leaf witness builders now also counts as `UnknownClassification` instead of
+silently disappearing as ordinary absence. Shifted witness cells now also backtrack
 past uncertified strictness checks on their raw shifted-vertex and raw
 shifted-geometry seed sources instead of aborting that whole shifted witness
 family before later certified candidates run. When that direct strict leaf
