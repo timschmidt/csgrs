@@ -576,6 +576,11 @@ When root projected-cell setup already classified the projected halfspace state,
 that exact report/unknown result now also primes the shared support-side
 halfspace caches before projected-support fallback begins, so the same
 projected root state is not reclassified again just to enter support search.
+The same per-update projected/support support-search cache set now also reuses
+the feasible support-cell vertex family and derived geometry-seed family for
+identical halfspace states, so projected root-family construction and later
+projected/support target construction do not rebuild that exact seed geometry
+from scratch on each revisit.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when
