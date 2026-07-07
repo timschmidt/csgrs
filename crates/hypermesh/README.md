@@ -422,7 +422,10 @@ detour-point family with cycle-guarded nested detour retries on those legs
 instead of collapsing every detour leg to the no-detour family immediately or
 stopping at a generic local polygon-count recursion cap. Individual
 plane-replacement steps now do the same within one replacement step while still
-stopping short of recursive step-detoured plane-replacement. If none trace
+stopping short of recursive step-detoured plane-replacement, and the live
+cycle-guard entry now also reuses identical definition-aware no-detour trace
+and reachability queries across revisited branches instead of reissuing those
+same retained-definition base checks. If none trace
 cleanly, it reports
 `ReferencePropagationFailed` instead of using random/interior sampling. The
 reference point carries retained plane triples, and projected / projected-escape

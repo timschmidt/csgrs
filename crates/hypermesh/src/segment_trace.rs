@@ -108,6 +108,25 @@ struct AxisOrderedSegmentTraceCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct DefinitionNoDetourTraceCacheEntry {
+    start: Point3,
+    end: Point3,
+    winding: WindingNumberVector,
+    start_definitions: Vec<[Plane; 3]>,
+    end_definitions: Vec<[Plane; 3]>,
+    result: HypermeshResult<Option<WindingNumberVector>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct DefinitionNoDetourReachabilityCacheEntry {
+    start: Point3,
+    end: Point3,
+    start_definitions: Vec<[Plane; 3]>,
+    end_definitions: Vec<[Plane; 3]>,
+    result: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -268,19 +287,30 @@ pub(crate) fn trace_segment_from_definitions(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut no_detour_cache = Vec::new();
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
          winding: &[i32],
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
-            trace_segment_with_definitions_no_detours(
+            cached_definition_no_detour_trace_with(
+                &mut no_detour_cache,
                 start,
                 end,
                 winding,
-                polygons,
                 start_definitions,
                 end_definitions,
+                || {
+                    trace_segment_with_definitions_no_detours(
+                        start,
+                        end,
+                        winding,
+                        polygons,
+                        start_definitions,
+                        end_definitions,
+                    )
+                },
             )
         };
     let mut detours_for =
@@ -552,6 +582,37 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
     } else {
         Ok(None)
     }
+}
+
+fn cached_definition_no_detour_trace_with(
+    cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    trace: impl FnOnce() -> HypermeshResult<Option<WindingNumberVector>>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.start == *start
+            && existing.end == *end
+            && existing.winding == winding
+            && existing.start_definitions == start_definitions
+            && existing.end_definitions == end_definitions
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = trace();
+    cache.push(DefinitionNoDetourTraceCacheEntry {
+        start: start.clone(),
+        end: end.clone(),
+        winding: winding.to_vec(),
+        start_definitions: start_definitions.to_vec(),
+        end_definitions: end_definitions.to_vec(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn trace_segment_without_detours(
@@ -2173,18 +2234,28 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
+    let mut no_detour_cache = Vec::new();
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
-            probe_reaches_adjacent_cell_with_definitions_no_detours(
+            cached_definition_no_detour_reachability_with(
+                &mut no_detour_cache,
                 start,
                 end,
-                host_support,
-                polygons,
                 start_definitions,
                 end_definitions,
+                || {
+                    probe_reaches_adjacent_cell_with_definitions_no_detours(
+                        start,
+                        end,
+                        host_support,
+                        polygons,
+                        start_definitions,
+                        end_definitions,
+                    )
+                },
             )
         };
     let mut detours_for =
@@ -2238,6 +2309,34 @@ fn probe_reaches_adjacent_cell_with_definitions_budget(
         &mut trace_without_detours,
         &mut detours_for,
     )
+}
+
+fn cached_definition_no_detour_reachability_with(
+    cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    trace: impl FnOnce() -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.start == *start
+            && existing.end == *end
+            && existing.start_definitions == start_definitions
+            && existing.end_definitions == end_definitions
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = trace();
+    cache.push(DefinitionNoDetourReachabilityCacheEntry {
+        start: start.clone(),
+        end: end.clone(),
+        start_definitions: start_definitions.to_vec(),
+        end_definitions: end_definitions.to_vec(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
@@ -6888,6 +6987,86 @@ mod tests {
 
         assert_eq!(err, HypermeshError::UnknownClassification);
         assert_eq!(trace_calls, 2);
+    }
+
+    #[test]
+    fn cached_definition_no_detour_trace_reuses_identical_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut cache = Vec::new();
+        let mut trace_calls = 0;
+
+        let first = cached_definition_no_detour_trace_with(
+            &mut cache,
+            &start,
+            &end,
+            &[7],
+            &start_definitions,
+            &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(Some(vec![7]))
+            },
+        )
+        .unwrap();
+        let second = cached_definition_no_detour_trace_with(
+            &mut cache,
+            &start,
+            &end,
+            &[7],
+            &start_definitions,
+            &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(Some(vec![7]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(first, Some(vec![7]));
+        assert_eq!(second, Some(vec![7]));
+        assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
+    fn cached_definition_no_detour_reachability_reuses_identical_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut cache = Vec::new();
+        let mut trace_calls = 0;
+
+        let first = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(trace_calls, 1);
     }
 
     #[test]
