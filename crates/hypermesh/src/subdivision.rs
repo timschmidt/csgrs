@@ -1214,6 +1214,7 @@ fn push_split_candidate(
     Ok(())
 }
 
+#[cfg(test)]
 fn try_ordered_subdivision_splits<T>(
     split_candidates: &[(usize, Real)],
     mut attempt: impl FnMut(usize, &Real) -> HypermeshResult<T>,
