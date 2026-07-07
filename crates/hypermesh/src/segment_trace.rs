@@ -2339,20 +2339,26 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         return Ok(true);
     }
 
+    let mut saw_unknown = false;
     let mut surface_cache = Vec::new();
     for detour in detours_for(start, end)? {
-        if point_family_contains(visited_points, &detour.point)
+        let already_visited = point_family_contains(visited_points, &detour.point);
+        if already_visited
             || cached_surface_query_with(&mut surface_cache, &detour.point, || {
                 point_lies_on_traced_surface(&detour.point, polygons)
             })?
         {
+            if detour.uncertified_definition_fallback && !already_visited {
+                saw_unknown = true;
+            }
             continue;
         }
 
         let mut next_visited_points = visited_points.to_vec();
         next_visited_points.push(detour.point.clone());
 
-        if !probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+        let first_leg =
+            match probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
             start,
             &detour.point,
             polygons,
@@ -2361,10 +2367,21 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             &detour.definitions,
             trace_without_detours,
             detours_for,
-        )? {
+        ) {
+            Ok(result) => result,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !first_leg {
+            if detour.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
             continue;
         }
-        if probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+        match probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
             &detour.point,
             end,
             polygons,
@@ -2373,12 +2390,25 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             end_definitions,
             trace_without_detours,
             detours_for,
-        )? {
-            return Ok(true);
+        ) {
+            Ok(true) => return Ok(true),
+            Ok(false) => {
+                if detour.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
         }
     }
 
-    Ok(false)
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
 }
 
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
@@ -7878,6 +7908,92 @@ mod tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_detour_has_no_path() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: true,
+        };
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| Ok(false);
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err =
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_surface_detour_is_skipped() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: true,
+        };
+        let polygons = vec![ConvexPolygon {
+            support: Plane::axis_aligned(0, r(1)),
+            edges: Vec::new(),
+            mesh_index: 0,
+            polygon_index: 0,
+            delta_w: Vec::new(),
+            approx_bounds: None,
+        }];
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| Ok(false);
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        let err =
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+                &start,
+                &end,
+                &polygons,
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
