@@ -3082,6 +3082,7 @@ fn support_plane_cell_reference_with_queries(
 
     let trace_cache = std::cell::RefCell::new(Vec::new());
     let support_surface_cache = std::cell::RefCell::new(Vec::new());
+    let reference_validity_cache = std::cell::RefCell::new(Vec::new());
     let target_cache = std::cell::RefCell::new(Vec::new());
     let accept_cache = std::cell::RefCell::new(Vec::new());
 
@@ -3101,7 +3102,8 @@ fn support_plane_cell_reference_with_queries(
             report.as_ref(),
             |halfspaces, report| {
                 let mut support_surface_cache = support_surface_cache.borrow_mut();
-                trace_reference_targets_backtracking_unknown_with_surface_cache(
+                let mut reference_validity_cache = reference_validity_cache.borrow_mut();
+                trace_reference_targets_backtracking_unknown_with_query_caches(
                     cached_support_target_family_with(
                         &mut target_cache.borrow_mut(),
                         halfspaces,
@@ -3113,17 +3115,18 @@ fn support_plane_cell_reference_with_queries(
                         },
                     )?,
                     &mut support_surface_cache,
+                    &mut reference_validity_cache,
                     &mut |point| point_lies_on_any_support_plane(point, polygons),
+                    &mut |point| is_valid_reference_for_bounds(point, bounds, polygons),
                     |target| {
                         cached_reference_target_trace_with(
                             &mut trace_cache.borrow_mut(),
                             target,
                             |target| {
-                                trace_reference_target(
+                                trace_reference_target_from_validated_bounds(
                                     old_ref,
                                     old_ref_definitions,
                                     old_wnv,
-                                    bounds,
                                     polygons,
                                     target,
                                 )
@@ -3174,18 +3177,23 @@ fn trace_reference_targets_backtracking_unknown_with_surface_cache(
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    trace_reference_targets_backtracking_unknown_with_surface_query(
+    let mut validity_cache = Vec::new();
+    trace_reference_targets_backtracking_unknown_with_query_caches(
         targets,
         surface_cache,
+        &mut validity_cache,
         surface_query,
+        &mut |_point| Ok(true),
         trace,
     )
 }
 
-fn trace_reference_targets_backtracking_unknown_with_surface_query(
+fn trace_reference_targets_backtracking_unknown_with_query_caches(
     targets: Vec<ReferenceTarget>,
     surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    validity_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut saw_unknown = false;
@@ -3193,6 +3201,14 @@ fn trace_reference_targets_backtracking_unknown_with_surface_query(
     for target in targets {
         if cached_support_surface_query_with(surface_cache, &target.point, |point| {
             surface_query(point)
+        })? {
+            if target.uncertified_definition_fallback {
+                saw_unknown = true;
+            }
+            continue;
+        }
+        if !cached_reference_bounds_validity_with(validity_cache, &target.point, |point| {
+            validity_query(point)
         })? {
             if target.uncertified_definition_fallback {
                 saw_unknown = true;
@@ -8508,20 +8524,93 @@ mod tests {
         let second = ReferenceTarget::axis_defined(p(2, 1, 1));
         let surface_calls = std::cell::Cell::new(0);
         let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
 
-        let found = trace_reference_targets_backtracking_unknown_with_surface_query(
+        let found = trace_reference_targets_backtracking_unknown_with_query_caches(
             vec![first, second],
             &mut surface_cache,
+            &mut validity_cache,
             &mut |point| {
                 surface_calls.set(surface_calls.get() + 1);
                 Ok(*point == p(2, 1, 1))
             },
+            &mut |_point| Ok(true),
             |_target| Ok(Some(vec![17])),
         )
         .unwrap();
 
         assert_eq!(found, None);
         assert_eq!(surface_calls.get(), 1);
+    }
+
+    #[test]
+    fn reference_target_trace_search_reuses_reference_validity_queries_after_surface_passes() {
+        let first = ReferenceTarget::with_definitions(
+            p(1, 1, 1),
+            vec![[
+                Plane::axis_aligned(0, r(1)),
+                Plane::axis_aligned(1, r(1)),
+                Plane::axis_aligned(2, r(1)),
+            ]],
+        );
+        let second = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let validity_calls = std::cell::Cell::new(0);
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        let found = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![first, second],
+            &mut surface_cache,
+            &mut validity_cache,
+            &mut |_point| Ok(false),
+            &mut |point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(*point == p(1, 1, 1))
+            },
+            |_target| Ok(None),
+        )
+        .unwrap();
+
+        assert_eq!(found, None);
+        assert_eq!(validity_calls.get(), 1);
+    }
+
+    #[test]
+    fn reference_target_trace_search_reuses_reference_validity_queries_across_calls() {
+        let target = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let validity_calls = std::cell::Cell::new(0);
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        let first = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![target.clone()],
+            &mut surface_cache,
+            &mut validity_cache,
+            &mut |_point| Ok(false),
+            &mut |point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(*point == p(1, 1, 1))
+            },
+            |_target| Ok(None),
+        )
+        .unwrap();
+
+        let second = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![target],
+            &mut surface_cache,
+            &mut validity_cache,
+            &mut |_point| Ok(false),
+            &mut |point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(*point == p(1, 1, 1))
+            },
+            |_target| Ok(None),
+        )
+        .unwrap();
+
+        assert_eq!(first, None);
+        assert_eq!(second, None);
+        assert_eq!(validity_calls.get(), 1);
     }
 
     #[test]

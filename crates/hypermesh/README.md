@@ -363,10 +363,13 @@ instead of rebuilding that same root projected-cell evidence twice before
 search begins, and for one shifted projected seed they now also share one
 exact shifted projected-cell report and shifted projected seed-family build
 across both the shifted direct-target layer and the shifted projected-escape
-layer instead of recomputing that shifted-cell evidence twice per seed. The outer
-support-cell wrapper now also treats an uncertified root feasibility check as
-another local backtracking point instead of aborting support propagation before
-later support-side branches are explored.
+layer instead of recomputing that shifted-cell evidence twice per seed. The
+support/reference fallback path now also reuses full reference-validity checks
+for repeated target points across converged support states instead of repaying
+the same `is_valid_reference_for_bounds(...)` query before each retained-target
+trace attempt. The outer support-cell wrapper now also treats an uncertified
+root feasibility check as another local backtracking point instead of aborting
+support propagation before later support-side branches are explored.
 It then tries local
 axis-aligned
 escape corridors across the ordered exact stop family from the next surface hit
