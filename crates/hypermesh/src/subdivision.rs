@@ -585,7 +585,7 @@ fn recursive_child_bounds(
     child_polygons: &[ConvexPolygon],
     child_bounds: &Aabb,
 ) -> HypermeshResult<Aabb> {
-    if child_polygons == parent_polygons {
+    if polygon_families_match_as_multisets(child_polygons, parent_polygons) {
         return polygon_family_bounds(child_polygons);
     }
     Ok(child_bounds.clone())
@@ -9251,6 +9251,23 @@ mod tests {
         .unwrap();
 
         assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 0)));
+    }
+
+    #[test]
+    fn recursive_child_bounds_contracts_permuted_unchanged_polygon_family() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let child_bounds = parent_bounds.left_half(0, r(5));
+
+        let tightened = recursive_child_bounds(
+            &[polygon_a.clone(), polygon_b.clone()],
+            &[polygon_b, polygon_a],
+            &child_bounds,
+        )
+        .unwrap();
+
+        assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 1)));
     }
 
     #[test]
