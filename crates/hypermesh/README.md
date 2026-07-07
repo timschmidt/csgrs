@@ -948,7 +948,11 @@ reference state no longer repay the same arrangement/intersection split search
 before reference propagation starts. Those same cached split candidates now
 also share their exact clipped child polygon partitions with the later split
 attempt loop, so one recursive task no longer clips the same candidate family
-twice just to rank and then execute the same split. Recursive branches that
+twice just to rank and then execute the same split. The live split-ranking path
+now also collects pairwise segment intersections only once per polygon family
+and reuses that exact segment set across all three axis-specific intersection
+candidate scans, instead of rebuilding the same BVH and polygon-pair segment
+intersections once per axis. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf

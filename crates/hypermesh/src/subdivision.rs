@@ -6,7 +6,9 @@ use crate::error::HypermeshResult;
 use crate::geometry::{
     Aabb, Classification, Plane, axis_mut, axis_ref, classify_real, compare_real,
 };
-use crate::intersection::{PairwiseIntersection, PairwiseIntersectionType, intersect_polygons};
+use crate::intersection::{
+    IntersectionSegment, PairwiseIntersection, PairwiseIntersectionType, intersect_polygons,
+};
 use crate::local_bsp::LocalBsp;
 use crate::output::{ClassifiedPolygon, push_unique_classified_polygon};
 use crate::polygon::ConvexPolygon;
@@ -1397,6 +1399,7 @@ fn ordered_subdivision_splits_with_partition_cache(
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
 ) -> HypermeshResult<Vec<(usize, Real)>> {
     let mut candidates = Vec::new();
+    let intersection_segments = split_intersection_segments(polygons)?;
 
     for axis in 0..3 {
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
@@ -1432,7 +1435,9 @@ fn ordered_subdivision_splits_with_partition_cache(
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
             continue;
         }
-        for value in intersection_split_candidates(bounds, polygons, axis)? {
+        for value in
+            intersection_split_candidates_from_segments(bounds, &intersection_segments, axis)?
+        {
             push_split_candidate_with_partition_cache(
                 &mut candidates,
                 polygons,
@@ -1453,6 +1458,31 @@ fn ordered_subdivision_splits_with_partition_cache(
         .into_iter()
         .map(|candidate| (candidate.axis, candidate.value))
         .collect())
+}
+
+fn split_intersection_segments(
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<IntersectionSegment>> {
+    let bvh = ExactBvh::build(polygons)?;
+    let mut candidate_pairs = Vec::new();
+    bvh.intersect_pairs(&bvh, |left, right| {
+        if left < right {
+            candidate_pairs.push((left, right));
+        }
+    })?;
+
+    let mut segments = Vec::new();
+    for (left, right) in candidate_pairs {
+        let intersection = intersect_polygons(&polygons[left], &polygons[right], right)?;
+        if intersection.kind != PairwiseIntersectionType::Segment {
+            continue;
+        }
+        let Some(segment) = intersection.segment else {
+            continue;
+        };
+        segments.push(segment);
+    }
+    Ok(segments)
 }
 
 #[cfg(test)]
@@ -1633,9 +1663,19 @@ fn arrangement_split_candidates(
     Ok(candidates)
 }
 
+#[cfg(test)]
 fn intersection_split_candidates(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
+    axis: usize,
+) -> HypermeshResult<Vec<Real>> {
+    let segments = split_intersection_segments(polygons)?;
+    intersection_split_candidates_from_segments(bounds, &segments, axis)
+}
+
+fn intersection_split_candidates_from_segments(
+    bounds: &Aabb,
+    segments: &[IntersectionSegment],
     axis: usize,
 ) -> HypermeshResult<Vec<Real>> {
     let min = axis_ref(&bounds.min, axis);
@@ -1644,23 +1684,8 @@ fn intersection_split_candidates(
         return Ok(Vec::new());
     }
 
-    let bvh = ExactBvh::build(polygons)?;
-    let mut candidate_pairs = Vec::new();
-    bvh.intersect_pairs(&bvh, |left, right| {
-        if left < right {
-            candidate_pairs.push((left, right));
-        }
-    })?;
-
     let mut values = Vec::new();
-    for (left, right) in candidate_pairs {
-        let intersection = intersect_polygons(&polygons[left], &polygons[right], right)?;
-        if intersection.kind != PairwiseIntersectionType::Segment {
-            continue;
-        }
-        let Some(segment) = intersection.segment else {
-            continue;
-        };
+    for segment in segments {
         for point in [&segment.v0, &segment.v1] {
             let value = axis_ref(point, axis);
             if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
@@ -7402,6 +7427,20 @@ mod tests {
 
         assert!(!ordered.is_empty());
         assert_eq!(ordered[0], (0, q(3, 2)));
+    }
+
+    #[test]
+    fn intersection_split_candidates_from_segments_matches_direct_query() {
+        let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+        let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![horizontal, vertical];
+
+        let direct = intersection_split_candidates(&bounds, &polygons, 0).unwrap();
+        let segments = split_intersection_segments(&polygons).unwrap();
+        let cached = intersection_split_candidates_from_segments(&bounds, &segments, 0).unwrap();
+
+        assert_eq!(direct, cached);
     }
 
     #[test]
