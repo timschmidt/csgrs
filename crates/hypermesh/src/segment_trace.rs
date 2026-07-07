@@ -6119,11 +6119,28 @@ fn halfspace_cell_seed_families_from_optional_report(
         ],
     )?;
 
-    if strict_seeds.is_empty() && *saw_unknown {
+    if seed_family_search_failed_without_any_seed(
+        &strict_seeds,
+        &shifted_vertices,
+        &shifted_geometry_seeds,
+        *saw_unknown,
+    ) {
         Err(HypermeshError::UnknownClassification)
     } else {
         Ok((strict_seeds, shifted_vertices, shifted_geometry_seeds))
     }
+}
+
+fn seed_family_search_failed_without_any_seed(
+    strict_seeds: &[Point3],
+    shifted_vertices: &[Point3],
+    shifted_geometry_seeds: &[Point3],
+    saw_unknown: bool,
+) -> bool {
+    strict_seeds.is_empty()
+        && shifted_vertices.is_empty()
+        && shifted_geometry_seeds.is_empty()
+        && saw_unknown
 }
 
 #[cfg(test)]
@@ -7576,6 +7593,38 @@ mod tests {
 
         assert_eq!(family.seeds, vec![p(2, 2, 2)]);
         assert!(family.saw_unknown);
+    }
+
+    #[test]
+    fn seed_family_search_failure_allows_later_shifted_seeds_after_unknown_strict_family() {
+        assert!(!seed_family_search_failed_without_any_seed(
+            &[],
+            &[p(1, 1, 1)],
+            &[],
+            true,
+        ));
+        assert!(!seed_family_search_failed_without_any_seed(
+            &[],
+            &[],
+            &[p(2, 2, 2)],
+            true,
+        ));
+    }
+
+    #[test]
+    fn seed_family_search_failure_reports_unknown_only_when_every_seed_family_is_empty() {
+        assert!(seed_family_search_failed_without_any_seed(
+            &[],
+            &[],
+            &[],
+            true,
+        ));
+        assert!(!seed_family_search_failed_without_any_seed(
+            &[p(3, 3, 3)],
+            &[],
+            &[],
+            true,
+        ));
     }
 
     #[test]

@@ -5084,7 +5084,12 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
         ],
     )?;
 
-    if strict_seeds.is_empty() && *saw_unknown {
+    if point_seed_family_search_failed_without_any_seed(
+        &strict_seeds,
+        &shifted_vertices,
+        &shifted_geometry_seeds,
+        *saw_unknown,
+    ) {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
         Ok((strict_seeds, shifted_vertices, shifted_geometry_seeds))
@@ -5622,11 +5627,28 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
         ],
     )?;
 
-    if strict_seeds.is_empty() && *saw_unknown {
+    if point_seed_family_search_failed_without_any_seed(
+        &strict_seeds,
+        &shifted_vertices,
+        &shifted_geometry_seeds,
+        *saw_unknown,
+    ) {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
         Ok((strict_seeds, shifted_vertices, shifted_geometry_seeds))
     }
+}
+
+fn point_seed_family_search_failed_without_any_seed(
+    strict_seeds: &[Point3],
+    shifted_vertices: &[Point3],
+    shifted_geometry_seeds: &[Point3],
+    saw_unknown: bool,
+) -> bool {
+    strict_seeds.is_empty()
+        && shifted_vertices.is_empty()
+        && shifted_geometry_seeds.is_empty()
+        && saw_unknown
 }
 
 fn shifted_support_cell_families_from_seed(
@@ -10754,6 +10776,38 @@ mod tests {
         assert_eq!(strict_seeds, vec![witness, p(2, 1, 1)]);
         assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
         assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
+    }
+
+    #[test]
+    fn point_seed_family_search_failure_allows_later_shifted_seeds_after_unknown_strict_family() {
+        assert!(!point_seed_family_search_failed_without_any_seed(
+            &[],
+            &[p(1, 1, 1)],
+            &[],
+            true,
+        ));
+        assert!(!point_seed_family_search_failed_without_any_seed(
+            &[],
+            &[],
+            &[p(2, 2, 2)],
+            true,
+        ));
+    }
+
+    #[test]
+    fn point_seed_family_search_failure_reports_unknown_only_when_every_seed_family_is_empty() {
+        assert!(point_seed_family_search_failed_without_any_seed(
+            &[],
+            &[],
+            &[],
+            true,
+        ));
+        assert!(!point_seed_family_search_failed_without_any_seed(
+            &[p(3, 3, 3)],
+            &[],
+            &[],
+            true,
+        ));
     }
 
     #[test]
