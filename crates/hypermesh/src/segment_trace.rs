@@ -608,8 +608,8 @@ fn cached_definition_no_detour_trace_with(
         existing.start == *start
             && existing.end == *end
             && existing.winding == winding
-            && existing.start_definitions == start_definitions
-            && existing.end_definitions == end_definitions
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
     }) {
         return existing.result.clone();
     }
@@ -2156,6 +2156,24 @@ fn unique_definition_family(definitions: &[[Plane; 3]]) -> Vec<[Plane; 3]> {
     unique
 }
 
+fn definition_families_match_as_sets(left: &[[Plane; 3]], right: &[[Plane; 3]]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_definition in left {
+        let Some((index, _)) = right.iter().enumerate().find(|(index, right_definition)| {
+            !matched[*index] && definition_planes_match_as_sets(left_definition, right_definition)
+        }) else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
+}
+
 fn point_family_contains(points: &[Point3], candidate: &Point3) -> bool {
     points.iter().any(|point| point == candidate)
 }
@@ -2359,8 +2377,8 @@ fn cached_definition_no_detour_reachability_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.start == *start
             && existing.end == *end
-            && existing.start_definitions == start_definitions
-            && existing.end_definitions == end_definitions
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
     }) {
         return existing.result.clone();
     }
@@ -7068,6 +7086,49 @@ mod tests {
     }
 
     #[test]
+    fn cached_definition_no_detour_trace_reuses_permuted_definition_families() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_a = axis_plane_definition(&start);
+        let start_b = axis_plane_definition(&p(0, 1, 0));
+        let end_a = axis_plane_definition(&end);
+        let end_b = axis_plane_definition(&p(1, 1, 0));
+        let mut cache = Vec::new();
+        let mut trace_calls = 0;
+
+        let first = cached_definition_no_detour_trace_with(
+            &mut cache,
+            &start,
+            &end,
+            &[7],
+            &[start_a.clone(), start_b.clone()],
+            &[end_a.clone(), end_b.clone()],
+            || {
+                trace_calls += 1;
+                Ok(Some(vec![7]))
+            },
+        )
+        .unwrap();
+        let second = cached_definition_no_detour_trace_with(
+            &mut cache,
+            &start,
+            &end,
+            &[7],
+            &[start_b, start_a],
+            &[end_b, end_a],
+            || {
+                trace_calls += 1;
+                Ok(Some(vec![7]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(first, Some(vec![7]));
+        assert_eq!(second, Some(vec![7]));
+        assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
     fn cached_definition_no_detour_reachability_reuses_identical_query() {
         let start = p(0, 0, 0);
         let end = p(1, 0, 0);
@@ -7094,6 +7155,47 @@ mod tests {
             &end,
             &start_definitions,
             &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
+    fn cached_definition_no_detour_reachability_reuses_permuted_definition_families() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_a = axis_plane_definition(&start);
+        let start_b = axis_plane_definition(&p(0, 1, 0));
+        let end_a = axis_plane_definition(&end);
+        let end_b = axis_plane_definition(&p(1, 1, 0));
+        let mut cache = Vec::new();
+        let mut trace_calls = 0;
+
+        let first = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &[start_a.clone(), start_b.clone()],
+            &[end_a.clone(), end_b.clone()],
+            || {
+                trace_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &[start_b, start_a],
+            &[end_b, end_a],
             || {
                 trace_calls += 1;
                 Ok(true)
