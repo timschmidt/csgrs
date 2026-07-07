@@ -112,7 +112,10 @@ do not retrace the same local segment family over and over before that broader
 search moves on. The same plane-replacement trace caches are now also shared
 across sibling retained-definition pair attempts in one step-detoured search,
 so converged later replacement steps do not retrace the same local segment
-family again after an earlier pair already explored them. The same local
+family again after an earlier pair already explored them. The retained
+definition no-detour plane-replacement trace now shares those same affine and
+step caches across sibling definition-pair attempts too, instead of rebuilding
+them for each pair. The same local
 plane-replacement walk now also reuses exact
 `affine_from_planes(...)` results across sibling orderings, so equivalent
 intermediate plane triples do not repay the same exact point reconstruction
