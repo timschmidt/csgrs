@@ -297,7 +297,10 @@ traced polygon as `UnknownClassification` instead of ordinary surface
 membership, so later exact orderings or detours still run.
 Direct adjacent-cell reachability now does the same for exact blocker-surface
 contacts: boundary hits surface as `UnknownClassification`, while strict
-interior blocker crossings remain ordinary blocked paths.
+interior blocker crossings remain ordinary blocked paths. Zero-length probe
+reachability checks now also reject exact blocker-surface contact as
+`UnknownClassification` instead of silently collapsing to an ordinary
+unreachable result.
 The reachability-side plane-replacement walk now does the same for its
 intermediate adjacency checks: one uncertified replacement leg only invalidates
 that ordering, rather than cutting off later exact plane-replacement orderings.

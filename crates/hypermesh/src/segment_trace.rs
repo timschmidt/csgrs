@@ -2572,7 +2572,23 @@ fn probe_reaches_adjacent_cell(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     let Some(sort_axis) = first_changed_axis(start, probe)? else {
-        return Ok(false);
+        for polygon in polygons {
+            if polygon.mesh_index < 0 {
+                continue;
+            }
+
+            if planes_are_coplanar(&polygon.support, host_support)? {
+                continue;
+            }
+
+            match classify_point_in_polygon(start, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+            }
+        }
+        return Ok(true);
     };
 
     for polygon in polygons {
@@ -12527,6 +12543,24 @@ mod tests {
 
         assert_eq!(
             probe_reaches_adjacent_cell(&p(0, 0, 0), &p(2, 0, 0), &host_support, &[blocker]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn probe_reaches_adjacent_cell_accepts_zero_length_clear_point() {
+        let host_support = Plane::axis_aligned(2, r(0));
+
+        assert!(probe_reaches_adjacent_cell(&p(1, 1, 1), &p(1, 1, 1), &host_support, &[]).unwrap());
+    }
+
+    #[test]
+    fn probe_reaches_adjacent_cell_reports_unknown_for_zero_length_surface_contact() {
+        let host_support = Plane::axis_aligned(2, r(0));
+        let blocker = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+
+        assert_eq!(
+            probe_reaches_adjacent_cell(&p(1, 0, 0), &p(1, 0, 0), &host_support, &[blocker]),
             Err(HypermeshError::UnknownClassification)
         );
     }
