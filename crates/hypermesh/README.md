@@ -770,6 +770,11 @@ support-cell halfspace/report/seed families by exact `(bounds, halfspaces,
 seed)` state, so repeated shifted support-target construction does not rebuild
 the same shifted local search stack after earlier support attempts already
 explored it.
+Support-side witness replay now also caches
+`reference_target_from_halfspace_witness(...)` by exact witness point plus
+geometric halfspace/active-plane state, so repeated strict and shifted support
+target construction does not rebuild the same retained-definition target at one
+support witness over and over.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when
