@@ -148,9 +148,26 @@ struct SplitCandidatesCacheEntry {
     candidates: HypermeshResult<Vec<(usize, Real)>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct SplitChildPartition {
+    left_polys: Vec<ConvexPolygon>,
+    right_polys: Vec<ConvexPolygon>,
+    both_count: usize,
+    child_intersection_count: usize,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct SplitChildPartitionCacheEntry {
+    polygons: Vec<ConvexPolygon>,
+    axis: usize,
+    value: Real,
+    result: HypermeshResult<SplitChildPartition>,
+}
+
 struct SubdivisionRuntimeCaches {
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
+    split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
 }
@@ -160,6 +177,7 @@ impl Default for SubdivisionRuntimeCaches {
         Self {
             polygon_family_bounds: RefCell::new(Vec::new()),
             split_candidates: RefCell::new(Vec::new()),
+            split_child_partitions: RefCell::new(Vec::new()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
         }
@@ -441,6 +459,7 @@ fn subdivide_into_inner_with(
 
     let split_candidates = cached_ordered_subdivision_splits_with(
         &caches.split_candidates,
+        &caches.split_child_partitions,
         &task.bounds,
         &task.polygons,
     )?;
@@ -448,23 +467,16 @@ fn subdivide_into_inner_with(
     let mut seen_partitions = Vec::new();
 
     for (split_axis, split_value) in split_candidates {
-        let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
         let unclipped_left_bounds = task.bounds.left_half(split_axis, split_value.clone());
         let unclipped_right_bounds = task.bounds.right_half(split_axis, split_value.clone());
-
-        let mut left_polys = Vec::with_capacity(task.polygons.len());
-        let mut right_polys = Vec::with_capacity(task.polygons.len());
-        for polygon in &task.polygons {
-            let clipped = clip_polygon(polygon, &split_plane)?;
-            match clipped.side {
-                ClipSide::Left => left_polys.push(polygon.clone()),
-                ClipSide::Right => right_polys.push(polygon.clone()),
-                ClipSide::Both => {
-                    left_polys.push(clipped.left);
-                    right_polys.push(clipped.right);
-                }
-            }
-        }
+        let split_partition = cached_split_child_partition_with(
+            &caches.split_child_partitions,
+            &task.polygons,
+            split_axis,
+            &split_value,
+        )?;
+        let left_polys = split_partition.left_polys;
+        let right_polys = split_partition.right_polys;
 
         let left_bounds = if left_polys.is_empty() {
             None
@@ -650,6 +662,7 @@ fn cached_recursive_child_bounds_with(
 
 fn cached_ordered_subdivision_splits_with(
     cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<(usize, Real)>> {
@@ -660,13 +673,39 @@ fn cached_ordered_subdivision_splits_with(
         return existing.candidates.clone();
     }
 
-    let candidates = ordered_subdivision_splits(bounds, polygons);
+    let candidates =
+        ordered_subdivision_splits_with_partition_cache(bounds, polygons, partition_cache);
     cache.borrow_mut().push(SplitCandidatesCacheEntry {
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
         candidates: candidates.clone(),
     });
     candidates
+}
+
+fn cached_split_child_partition_with(
+    cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<SplitChildPartition> {
+    for existing in cache.borrow().iter() {
+        if existing.axis == axis
+            && existing.polygons == polygons
+            && compare_real(&existing.value, value)?.is_eq()
+        {
+            return existing.result.clone();
+        }
+    }
+
+    let result = split_child_partition(polygons, axis, value);
+    cache.borrow_mut().push(SplitChildPartitionCacheEntry {
+        polygons: polygons.to_vec(),
+        axis,
+        value: value.clone(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn take_new_subdivision_child_partition(
@@ -1291,6 +1330,7 @@ struct SplitCandidate {
     source: SplitSource,
 }
 
+#[cfg(test)]
 fn ordered_subdivision_splits(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
@@ -1351,6 +1391,71 @@ fn ordered_subdivision_splits(
         .collect())
 }
 
+fn ordered_subdivision_splits_with_partition_cache(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+) -> HypermeshResult<Vec<(usize, Real)>> {
+    let mut candidates = Vec::new();
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        push_split_candidate_with_partition_cache(
+            &mut candidates,
+            polygons,
+            axis,
+            bounds.midpoint(axis),
+            SplitSource::Midpoint,
+            partition_cache,
+        )?;
+    }
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        for (_gap, value) in arrangement_split_candidates(bounds, polygons, axis)? {
+            push_split_candidate_with_partition_cache(
+                &mut candidates,
+                polygons,
+                axis,
+                value,
+                SplitSource::Arrangement,
+                partition_cache,
+            )?;
+        }
+    }
+
+    for axis in 0..3 {
+        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+            continue;
+        }
+        for value in intersection_split_candidates(bounds, polygons, axis)? {
+            push_split_candidate_with_partition_cache(
+                &mut candidates,
+                polygons,
+                axis,
+                value,
+                SplitSource::Intersection,
+                partition_cache,
+            )?;
+        }
+    }
+
+    candidates.sort_by(|left, right| {
+        left.counts
+            .cmp(&right.counts)
+            .then_with(|| left.source.cmp(&right.source))
+    });
+    Ok(candidates
+        .into_iter()
+        .map(|candidate| (candidate.axis, candidate.value))
+        .collect())
+}
+
+#[cfg(test)]
 fn push_split_candidate(
     candidates: &mut Vec<SplitCandidate>,
     polygons: &[ConvexPolygon],
@@ -1370,6 +1475,41 @@ fn push_split_candidate(
     candidates.push(SplitCandidate {
         axis,
         counts: split_child_counts(polygons, axis, &value)?,
+        source,
+        value,
+    });
+    Ok(())
+}
+
+fn push_split_candidate_with_partition_cache(
+    candidates: &mut Vec<SplitCandidate>,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: Real,
+    source: SplitSource,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+) -> HypermeshResult<()> {
+    for existing in candidates.iter_mut() {
+        if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
+            if source < existing.source {
+                existing.source = source;
+            }
+            return Ok(());
+        }
+    }
+
+    let partition = cached_split_child_partition_with(partition_cache, polygons, axis, &value)?;
+    let left_count = partition.left_polys.len();
+    let right_count = partition.right_polys.len();
+    candidates.push(SplitCandidate {
+        axis,
+        counts: (
+            left_count.max(right_count),
+            usize::from(left_count == 0 || right_count == 0),
+            partition.both_count,
+            partition.child_intersection_count,
+            left_count.abs_diff(right_count),
+        ),
         source,
         value,
     });
@@ -1570,11 +1710,30 @@ fn push_unique_ordered_axis_value(values: &mut Vec<Real>, value: Real) -> Hyperm
     Ok(())
 }
 
+#[cfg(test)]
 fn split_child_counts(
     polygons: &[ConvexPolygon],
     axis: usize,
     value: &Real,
 ) -> HypermeshResult<SplitCounts> {
+    let partition = split_child_partition(polygons, axis, value)?;
+    let left_count = partition.left_polys.len();
+    let right_count = partition.right_polys.len();
+
+    Ok((
+        left_count.max(right_count),
+        usize::from(left_count == 0 || right_count == 0),
+        partition.both_count,
+        partition.child_intersection_count,
+        left_count.abs_diff(right_count),
+    ))
+}
+
+fn split_child_partition(
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<SplitChildPartition> {
     let split_plane = Plane::axis_aligned(axis, value.clone());
     let mut left_polys = Vec::with_capacity(polygons.len());
     let mut right_polys = Vec::with_capacity(polygons.len());
@@ -1593,17 +1752,14 @@ fn split_child_counts(
         }
     }
 
-    let left_count = left_polys.len();
-    let right_count = right_polys.len();
     let child_intersection_count = split_child_intersection_load(&left_polys, &right_polys)?;
 
-    Ok((
-        left_count.max(right_count),
-        usize::from(left_count == 0 || right_count == 0),
+    Ok(SplitChildPartition {
+        left_polys,
+        right_polys,
         both_count,
         child_intersection_count,
-        left_count.abs_diff(right_count),
-    ))
+    })
 }
 
 fn split_child_intersection_load(
@@ -7254,16 +7410,22 @@ mod tests {
         let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let cache = RefCell::new(Vec::new());
+        let partition_cache = RefCell::new(Vec::new());
 
         let first = cached_ordered_subdivision_splits_with(
             &cache,
+            &partition_cache,
             &bounds,
             &[polygon_a.clone(), polygon_b.clone()],
         )
         .unwrap();
-        let second =
-            cached_ordered_subdivision_splits_with(&cache, &bounds, &[polygon_b, polygon_a])
-                .unwrap();
+        let second = cached_ordered_subdivision_splits_with(
+            &cache,
+            &partition_cache,
+            &bounds,
+            &[polygon_b, polygon_a],
+        )
+        .unwrap();
 
         assert_eq!(first, second);
         assert_eq!(cache.borrow().len(), 1);
@@ -7273,20 +7435,56 @@ mod tests {
     fn cached_ordered_subdivision_splits_distinguish_bounds() {
         let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let cache = RefCell::new(Vec::new());
+        let partition_cache = RefCell::new(Vec::new());
         let first_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let second_bounds = Aabb::new(p(0, 0, 0), p(8, 4, 4));
 
         let first = cached_ordered_subdivision_splits_with(
             &cache,
+            &partition_cache,
             &first_bounds,
             std::slice::from_ref(&polygon),
         )
         .unwrap();
-        let second =
-            cached_ordered_subdivision_splits_with(&cache, &second_bounds, &[polygon]).unwrap();
+        let second = cached_ordered_subdivision_splits_with(
+            &cache,
+            &partition_cache,
+            &second_bounds,
+            &[polygon],
+        )
+        .unwrap();
 
         assert_ne!(first, second);
         assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_ordered_subdivision_splits_populate_partition_cache() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+            make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        ];
+        let split_cache = RefCell::new(Vec::new());
+        let partition_cache = RefCell::new(Vec::new());
+
+        let ordered = cached_ordered_subdivision_splits_with(
+            &split_cache,
+            &partition_cache,
+            &bounds,
+            &polygons,
+        )
+        .unwrap();
+        let cached_partition_count = partition_cache.borrow().len();
+
+        assert!(!ordered.is_empty());
+        assert!(cached_partition_count > 0);
+
+        let (axis, value) = &ordered[0];
+        let _partition =
+            cached_split_child_partition_with(&partition_cache, &polygons, *axis, value).unwrap();
+
+        assert_eq!(partition_cache.borrow().len(), cached_partition_count);
     }
 
     #[test]

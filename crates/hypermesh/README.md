@@ -945,7 +945,10 @@ same way instead of missing recursive branch reuse on plane-order-only
 differences. The exact ordered split-candidate family is now also cached by
 child bounds plus polygon family, so recursive tasks that differ only in
 reference state no longer repay the same arrangement/intersection split search
-before reference propagation starts. Recursive branches that
+before reference propagation starts. Those same cached split candidates now
+also share their exact clipped child polygon partitions with the later split
+attempt loop, so one recursive task no longer clips the same candidate family
+twice just to rank and then execute the same split. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
