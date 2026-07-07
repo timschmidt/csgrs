@@ -2134,6 +2134,9 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
             }),
         ],
     )?;
+    *saw_unknown |= targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
     if *saw_unknown {
         mark_all_reference_targets_uncertified(&mut targets);
     }
@@ -8012,6 +8015,65 @@ mod tests {
                 .iter()
                 .all(|target| target.uncertified_definition_fallback)
         );
+    }
+
+    #[test]
+    fn projected_escape_target_family_tracking_marks_surviving_targets_uncertain_after_fallback_family()
+     {
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut saw_unknown = false;
+
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &[],
+            &[],
+            None,
+            Vec::new(),
+            vec![first.clone(), second.clone()],
+            Vec::new(),
+            &mut saw_unknown,
+            |seed| {
+                Ok(vec![if *seed == first {
+                    ReferenceTarget::axis_defined_fallback(seed.clone())
+                } else {
+                    ReferenceTarget::axis_defined(seed.clone())
+                }])
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 2);
+        assert!(targets.iter().any(|target| target.point == first));
+        assert!(targets.iter().any(|target| target.point == second));
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn projected_escape_target_family_tracking_ignores_redundant_fallback_duplicate() {
+        let point = p(1, 2, 3);
+        let mut saw_unknown = false;
+
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &[],
+            &[ReferenceTarget::axis_defined(point.clone())],
+            None,
+            Vec::new(),
+            vec![point.clone()],
+            Vec::new(),
+            &mut saw_unknown,
+            |seed| Ok(vec![ReferenceTarget::axis_defined_fallback(seed.clone())]),
+        )
+        .unwrap();
+
+        assert!(!saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, point);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]

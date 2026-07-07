@@ -618,6 +618,10 @@ The same promotion now also applies to the projected escape-target family:
 when the report witness is not itself a strict direct projected seed, it is
 still used as a shifted projected-escape root instead of being treated only as
 the direct report witness.
+And if one projected escape sibling family is only fallback-certified, later
+projected escape siblings now inherit that uncertainty after the merged
+same-point target set is reconciled, instead of looking certified unless a hard
+`UnknownClassification` happened.
 And if one of those projected escape targets is already fallback-marked, later
 axis-escape and tight-escape failure now preserve that uncertainty instead of
 flattening the exhausted escape branch into ordinary absence.
