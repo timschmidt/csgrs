@@ -626,7 +626,10 @@ with an empty opposite child, the surviving child now contracts to the exact
 local polygon-family bounds instead of repeatedly bisecting empty space around
 that unchanged arrangement. Different split planes that contract to the same
 child polygon partition are now also skipped before reference propagation and
-recursion rerun that identical branch state. Unsplittable tasks now also run the exact leaf
+recursion rerun that identical branch state, and identical child states now
+also reuse cached reference propagation within one parent split search instead
+of recomputing the same child reference witness each time that state reappears.
+Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
 through the certified leaf-output helper. That lets exact local arrangement
 isolation continue until the depth budget or a certified leaf result stops the

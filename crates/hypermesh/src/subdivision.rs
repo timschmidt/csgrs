@@ -114,6 +114,13 @@ struct SubdivisionChildPartition {
     right_bounds: Option<Aabb>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct ChildReferenceCacheEntry {
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    result: HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
+}
+
 /// Processes one leaf and returns classified output polygons.
 pub fn process_leaf(
     polygons: &[ConvexPolygon],
@@ -376,6 +383,7 @@ fn subdivide_into_inner_with(
     let split_candidates = ordered_subdivision_splits(&task.bounds, &task.polygons)?;
     let mut best_failure = None;
     let mut seen_partitions = Vec::new();
+    let mut child_reference_cache = Vec::new();
 
     for (split_axis, split_value) in split_candidates {
         let split_plane = crate::geometry::Plane::axis_aligned(split_axis, split_value.clone());
@@ -428,12 +436,19 @@ fn subdivide_into_inner_with(
         let mut candidate_output = Vec::new();
         let attempt = (|| -> HypermeshResult<()> {
             if let Some(left_bounds) = left_bounds {
-                let (left_ref, left_ref_definitions, left_wnv) = compute_new_reference(
-                    &task.ref_point,
-                    &task.ref_definitions,
-                    &task.ref_wnv,
+                let (left_ref, left_ref_definitions, left_wnv) = cached_child_reference_with(
+                    &mut child_reference_cache,
+                    &left_polys,
                     &left_bounds,
-                    &task.polygons,
+                    || {
+                        compute_new_reference(
+                            &task.ref_point,
+                            &task.ref_definitions,
+                            &task.ref_wnv,
+                            &left_bounds,
+                            &task.polygons,
+                        )
+                    },
                 )?;
                 subdivide_into_inner_with(
                     SubdivisionTask {
@@ -453,12 +468,19 @@ fn subdivide_into_inner_with(
             }
 
             if let Some(right_bounds) = right_bounds {
-                let (right_ref, right_ref_definitions, right_wnv) = compute_new_reference(
-                    &task.ref_point,
-                    &task.ref_definitions,
-                    &task.ref_wnv,
+                let (right_ref, right_ref_definitions, right_wnv) = cached_child_reference_with(
+                    &mut child_reference_cache,
+                    &right_polys,
                     &right_bounds,
-                    &task.polygons,
+                    || {
+                        compute_new_reference(
+                            &task.ref_point,
+                            &task.ref_definitions,
+                            &task.ref_wnv,
+                            &right_bounds,
+                            &task.polygons,
+                        )
+                    },
                 )?;
                 subdivide_into_inner_with(
                     SubdivisionTask {
@@ -530,6 +552,28 @@ fn take_new_subdivision_child_partition(
         right_bounds: right_bounds.cloned(),
     });
     true
+}
+
+fn cached_child_reference_with(
+    cache: &mut Vec<ChildReferenceCacheEntry>,
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    query: impl FnOnce() -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
+) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.polygons == polygons && existing.bounds == *bounds)
+    {
+        return existing.result.clone();
+    }
+
+    let result = query();
+    cache.push(ChildReferenceCacheEntry {
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn process_leaf_task_into(
@@ -6687,6 +6731,70 @@ mod tests {
             &[],
             None,
         ));
+    }
+
+    #[test]
+    fn cached_child_reference_reuses_identical_child_state() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let mut cache = Vec::new();
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_child_reference_with(
+            &mut cache,
+            std::slice::from_ref(&polygon),
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(1, 2, 3), axis_defs(&p(1, 2, 3)), vec![7]))
+            },
+        )
+        .unwrap();
+        let second = cached_child_reference_with(
+            &mut cache,
+            std::slice::from_ref(&polygon),
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(9, 9, 9), axis_defs(&p(9, 9, 9)), vec![99]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_reference_keeps_distinct_child_bounds_separate() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let bounds_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let bounds_b = Aabb::new(p(0, 0, 0), p(2, 1, 0));
+        let mut cache = Vec::new();
+        let calls = std::cell::Cell::new(0);
+
+        cached_child_reference_with(
+            &mut cache,
+            std::slice::from_ref(&polygon),
+            &bounds_a,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(1, 2, 3), axis_defs(&p(1, 2, 3)), vec![7]))
+            },
+        )
+        .unwrap();
+        cached_child_reference_with(
+            &mut cache,
+            std::slice::from_ref(&polygon),
+            &bounds_b,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![8]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls.get(), 2);
     }
 
     #[test]
