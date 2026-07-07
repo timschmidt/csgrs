@@ -316,6 +316,10 @@ If leaf-interior or probe definition reconstruction is itself uncertified, the
 fallback axis-defined candidate is still explored, but if no later certified
 probe family or probe path succeeds that branch now surfaces
 `UnknownClassification` instead of being flattened into plain absence.
+And if a fallback-marked interior/probe pair does produce a winding, that no
+longer counts as final success by itself: the leaf search keeps looking for a
+certified path, and returns `UnknownClassification` if only fallback-marked
+probe paths succeed.
 The same now applies to fallback-built detour targets: if an uncertified
 axis-defined detour is later skipped or cannot certify either leg, that local
 detour family also surfaces `UnknownClassification` instead of reading as an

@@ -3796,6 +3796,7 @@ fn trace_reference_target_from_validated_bounds(
     }
 }
 
+#[cfg(test)]
 fn is_valid_reference_for_bounds(
     point: &Point3,
     bounds: &Aabb,
@@ -5428,6 +5429,7 @@ fn support_cell_geometry_seed_candidates(
     support_cell_geometry_seed_candidates_from_vertices(&vertices)
 }
 
+#[cfg(test)]
 fn support_cell_geometry_seed_candidates_from_vertices(
     vertices: &[Point3],
 ) -> HypermeshResult<Vec<Point3>> {
@@ -5548,6 +5550,7 @@ fn point3_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
     )))
 }
 
+#[cfg(test)]
 fn extend_point3_backtracking_unknown(
     points: &mut Vec<Point3>,
     candidates: impl IntoIterator<Item = Point3>,
@@ -5597,6 +5600,7 @@ fn collect_point3_family(
     }
 }
 
+#[cfg(test)]
 fn extend_point3_families_backtracking_unknown(
     points: &mut Vec<Point3>,
     families: impl IntoIterator<Item = HypermeshResult<Point3FamilyState>>,
@@ -5874,6 +5878,7 @@ fn support_cell_seed_geometry_state(
     })
 }
 
+#[cfg(test)]
 fn feasible_support_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
     Ok(feasible_support_cell_vertex_family(halfspaces)?.points)
 }
@@ -5928,6 +5933,7 @@ fn feasible_support_cell_vertex_family_with_contains(
     }
 }
 
+#[cfg(test)]
 fn feasible_support_cell_vertices_with_contains(
     halfspaces: &[LimitPlane3],
     contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
@@ -5964,6 +5970,7 @@ fn point_strictly_inside_halfspaces_or_unknown(
     Ok(true)
 }
 
+#[cfg(test)]
 fn point_strictly_inside_projected_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -5980,6 +5987,7 @@ fn point_strictly_inside_projected_cell_or_unknown(
     point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
 }
 
+#[cfg(test)]
 fn point_strictly_inside_support_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -5996,6 +6004,7 @@ fn point_strictly_inside_support_cell_or_unknown(
     point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
 }
 
+#[cfg(test)]
 fn point_strictly_inside_reference_halfspace_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -6161,6 +6170,7 @@ fn point_strictly_inside_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResul
     Ok(true)
 }
 
+#[cfg(test)]
 fn point_lies_on_local_surface(
     point: &Point3,
     polygons: &[ConvexPolygon],
@@ -6173,6 +6183,7 @@ fn point_lies_on_local_surface(
     Ok(false)
 }
 
+#[cfg(test)]
 fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshResult<bool> {
     if crate::geometry::classify_point(point, &polygon.support)?
         != crate::geometry::Classification::On

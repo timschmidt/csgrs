@@ -2192,7 +2192,13 @@ fn search_leaf_probe_families<'a>(
             for probe in probes {
                 let probe_fallback = probe.uncertified_definition_fallback;
                 match handle_probe(point, positive_side, probe) {
-                    Ok(Some(winding)) => return Ok(Some(winding)),
+                    Ok(Some(winding)) => {
+                        if point.uncertified_definition_fallback || probe_fallback {
+                            saw_unknown = true;
+                            continue;
+                        }
+                        return Ok(Some(winding));
+                    }
                     Ok(None) => {
                         if point.uncertified_definition_fallback || probe_fallback {
                             saw_unknown = true;
@@ -3897,6 +3903,7 @@ fn centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
     )))
 }
 
+#[cfg(test)]
 fn halfspace_cell_geometry_seed_candidates(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<Point3>> {
@@ -3904,6 +3911,7 @@ fn halfspace_cell_geometry_seed_candidates(
     halfspace_cell_geometry_seed_candidates_from_vertices(&vertices)
 }
 
+#[cfg(test)]
 fn halfspace_cell_geometry_seed_candidates_from_vertices(
     vertices: &[Point3],
 ) -> HypermeshResult<Vec<Point3>> {
@@ -4635,6 +4643,7 @@ fn push_verified_leaf_definition(
     Ok(())
 }
 
+#[cfg(test)]
 fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> HypermeshResult<bool> {
     let homogeneous = HomogeneousPoint3::new(
         point.x.clone(),
@@ -6145,6 +6154,7 @@ struct DefinitionFamilyState {
     saw_unknown: bool,
 }
 
+#[cfg(test)]
 fn extend_strict_halfspace_seeds_backtracking_unknown(
     seeds: &mut Vec<Point3>,
     candidates: impl IntoIterator<Item = Point3>,
@@ -6668,6 +6678,7 @@ fn active_planes_from_optional_report(
     })
 }
 
+#[cfg(test)]
 fn feasible_halfspace_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
     Ok(feasible_halfspace_cell_vertex_family(halfspaces)?.seeds)
 }
@@ -6722,6 +6733,7 @@ fn feasible_halfspace_cell_vertex_family_with_contains(
     }
 }
 
+#[cfg(test)]
 fn feasible_halfspace_cell_vertices_with_contains(
     halfspaces: &[LimitPlane3],
     contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
@@ -6739,6 +6751,7 @@ fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> Hyp
     Ok(true)
 }
 
+#[cfg(test)]
 fn point_strictly_inside_halfspace_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -8796,6 +8809,131 @@ mod tests {
             &[point],
             |_point, _positive_side| Ok(Vec::new()),
             |_point, _positive_side, _probe| Ok(Some(vec![1])),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn leaf_probe_family_search_skips_fallback_probe_even_when_winding_succeeds() {
+        let point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let fallback_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: true,
+        };
+        let certified_probe = ProbePoint {
+            point: p(3, 3, 3),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(3, 3, 3))],
+            uncertified_definition_fallback: false,
+        };
+
+        let winding = search_leaf_probe_families(
+            &[point],
+            |_point, positive_side| {
+                if positive_side {
+                    Ok(vec![fallback_probe.clone(), certified_probe.clone()])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+            |_point, _positive_side, probe| {
+                if probe.point == fallback_probe.point {
+                    Ok(Some(vec![11]))
+                } else {
+                    Ok(Some(vec![13]))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![13]));
+    }
+
+    #[test]
+    fn leaf_probe_family_search_reports_unknown_when_only_fallback_probe_succeeds() {
+        let point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let fallback_probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: true,
+        };
+
+        let err = search_leaf_probe_families(
+            &[point],
+            |_point, _positive_side| Ok(vec![fallback_probe.clone()]),
+            |_point, _positive_side, _probe| Ok(Some(vec![11])),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn leaf_probe_family_search_skips_fallback_interior_even_when_winding_succeeds() {
+        let fallback_point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: true,
+        };
+        let certified_point = InteriorLeafPoint {
+            point: p(2, 2, 2),
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
+        };
+        let probe = ProbePoint {
+            point: p(3, 3, 3),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(3, 3, 3))],
+            uncertified_definition_fallback: false,
+        };
+
+        let winding = search_leaf_probe_families(
+            &[fallback_point.clone(), certified_point.clone()],
+            |_point, _positive_side| Ok(vec![probe.clone()]),
+            |point, _positive_side, _probe| {
+                if point.point == fallback_point.point {
+                    Ok(Some(vec![17]))
+                } else {
+                    Ok(Some(vec![19]))
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![19]));
+    }
+
+    #[test]
+    fn leaf_probe_family_search_reports_unknown_when_only_fallback_interior_succeeds() {
+        let fallback_point = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: true,
+        };
+        let probe = ProbePoint {
+            point: p(2, 2, 2),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(2, 2, 2))],
+            uncertified_definition_fallback: false,
+        };
+
+        let err = search_leaf_probe_families(
+            &[fallback_point],
+            |_point, _positive_side| Ok(vec![probe.clone()]),
+            |_point, _positive_side, _probe| Ok(Some(vec![17])),
         )
         .unwrap_err();
 
