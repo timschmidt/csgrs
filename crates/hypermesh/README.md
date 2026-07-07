@@ -586,8 +586,10 @@ triple. Closed projected child cells now also retain any remaining strict
 direct witnesses of the cell, including strict exact feasible vertices, instead
 of using those points only as shifted-seed sources. The projected escape-target
 family now retains those same remaining strict direct projected witnesses before
-it widens into shifted projected escape cells, and it no longer rebuilds direct
-targets whose points are already present in the projected target family.
+it widens into shifted projected escape cells, and same-point report/direct
+escape witnesses are now still allowed to merge additional retained plane
+definitions into an existing projected target instead of being dropped early on
+point equality alone.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same

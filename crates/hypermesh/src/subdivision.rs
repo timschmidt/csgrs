@@ -2060,25 +2060,13 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
     mut build_escape_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
-    let existing_direct_points = projected_targets
-        .iter()
-        .map(|target| target.point.clone())
-        .collect::<Vec<_>>();
     let report_witness = report.and_then(|report| report.witness.clone());
     *saw_unknown |= extend_reference_target_families_collect_unknown(
         &mut targets,
         [
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
-                |witness| {
-                    if existing_direct_points
-                        .iter()
-                        .any(|candidate| candidate == witness)
-                    {
-                        return Ok(false);
-                    }
-                    point_strictly_inside_halfspaces_or_unknown(witness, halfspaces)
-                },
+                |witness| point_strictly_inside_halfspaces_or_unknown(witness, halfspaces),
                 |witness| {
                     reference_target_from_halfspace_witness(
                         witness,
@@ -2090,7 +2078,6 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
             deferred_projected_escape_direct_targets(
                 &strict_shift_seeds,
                 report_witness.as_ref(),
-                &existing_direct_points,
                 halfspaces,
             ),
             collect_reference_target_family(strict_shift_seeds, |seed| build_escape_targets(&seed)),
@@ -2792,13 +2779,11 @@ fn deferred_direct_reference_targets_from_strict_seeds_with(
 fn deferred_projected_escape_direct_targets(
     strict_seeds: &[Point3],
     report_witness: Option<&Point3>,
-    existing_points: &[Point3],
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     deferred_projected_escape_direct_targets_with_contains(
         strict_seeds,
         report_witness,
-        existing_points,
         halfspaces,
         |seed, halfspaces| point_strictly_inside_halfspaces_or_unknown(seed, halfspaces),
     )
@@ -2807,11 +2792,10 @@ fn deferred_projected_escape_direct_targets(
 fn deferred_projected_escape_direct_targets_with_contains(
     strict_seeds: &[Point3],
     report_witness: Option<&Point3>,
-    existing_points: &[Point3],
     halfspaces: &[LimitPlane3],
     mut contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    let mut seen = existing_points.to_vec();
+    let mut seen = Vec::new();
     let strict_seeds = take_new_point_family(strict_seeds.to_vec(), &mut seen);
     collect_reference_target_family(strict_seeds, |seed| {
         if report_witness.is_some_and(|witness| witness == &seed) {
@@ -7794,7 +7778,6 @@ mod tests {
         let targets = deferred_projected_escape_direct_targets_with_contains(
             &strict_seeds,
             None,
-            &[],
             &halfspaces,
             |seed, _halfspaces| {
                 if seed == &p(1, 2, 3) {
@@ -7815,13 +7798,9 @@ mod tests {
     fn deferred_projected_escape_direct_targets_mark_later_target_uncertain_after_boundary_seed() {
         let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
 
-        let targets = deferred_projected_escape_direct_targets(
-            &[p(0, 2, 2), p(1, 2, 2)],
-            None,
-            &[],
-            &halfspaces,
-        )
-        .unwrap();
+        let targets =
+            deferred_projected_escape_direct_targets(&[p(0, 2, 2), p(1, 2, 2)], None, &halfspaces)
+                .unwrap();
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 2));
@@ -7832,8 +7811,8 @@ mod tests {
     fn deferred_projected_escape_direct_targets_report_unknown_for_boundary_seed() {
         let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
 
-        let err = deferred_projected_escape_direct_targets(&[p(0, 2, 2)], None, &[], &halfspaces)
-            .unwrap_err();
+        let err =
+            deferred_projected_escape_direct_targets(&[p(0, 2, 2)], None, &halfspaces).unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
@@ -7853,7 +7832,6 @@ mod tests {
         let err = deferred_projected_escape_direct_targets_with_contains(
             &strict_seeds,
             None,
-            &[],
             &halfspaces,
             |_seed, _halfspaces| Err(crate::error::HypermeshError::UnknownClassification),
         )
@@ -11395,24 +11373,82 @@ mod tests {
     }
 
     #[test]
-    fn deferred_projected_escape_direct_targets_skip_existing_projected_points() {
-        let seed = p(1, 1, 1);
-        let contains_calls = std::cell::Cell::new(0);
+    fn projected_escape_target_family_keeps_same_point_report_witness_definitions() {
+        let point = p(1, 2, 3);
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+            LimitPlane3::new(p(1, 1, 1), r(-6)),
+            LimitPlane3::new(p(-1, -1, -1), r(6)),
+        ];
+        let mut saw_unknown = false;
 
-        let targets = deferred_projected_escape_direct_targets_with_contains(
-            std::slice::from_ref(&seed),
-            None,
-            std::slice::from_ref(&seed),
-            &[],
-            |_candidate, _halfspaces| {
-                contains_calls.set(contains_calls.get() + 1);
-                Ok(true)
-            },
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &halfspaces,
+            &[ReferenceTarget::axis_defined(point.clone())],
+            Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
+                point.clone(),
+                [None, None, None],
+            )),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            &mut saw_unknown,
+            |_seed| Ok(Vec::new()),
         )
         .unwrap();
 
-        assert!(targets.is_empty());
-        assert_eq!(contains_calls.get(), 0);
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert!(targets[0].uncertified_definition_fallback);
+        assert!(
+            targets[0]
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
+    }
+
+    #[test]
+    fn projected_escape_target_family_keeps_same_point_direct_seed_definitions() {
+        let point = p(1, 2, 3);
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(1)),
+            axis_halfspace(0, false, r(1)),
+            axis_halfspace(1, true, r(2)),
+            axis_halfspace(1, false, r(2)),
+            axis_halfspace(2, true, r(3)),
+            axis_halfspace(2, false, r(3)),
+            LimitPlane3::new(p(1, 1, 1), r(-6)),
+            LimitPlane3::new(p(-1, -1, -1), r(6)),
+        ];
+        let mut saw_unknown = false;
+
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &halfspaces,
+            &[ReferenceTarget::axis_defined(point.clone())],
+            None,
+            vec![point],
+            Vec::new(),
+            Vec::new(),
+            &mut saw_unknown,
+            |_seed| Ok(Vec::new()),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert!(targets[0].uncertified_definition_fallback);
+        assert!(
+            targets[0]
+                .definitions
+                .iter()
+                .any(definition_uses_non_axis_plane)
+        );
     }
 
     #[test]
