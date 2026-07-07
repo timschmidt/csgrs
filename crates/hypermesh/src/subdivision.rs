@@ -2844,6 +2844,7 @@ struct HalfspaceFeasibilityCacheEntry {
     feasible: HypermeshResult<bool>,
 }
 
+#[cfg(test)]
 fn cached_halfspace_feasibility_with(
     cache: &mut Vec<HalfspaceFeasibilityCacheEntry>,
     halfspaces: &[LimitPlane3],
@@ -5062,6 +5063,7 @@ fn strict_support_cell_seeds_from_optional_report(
         .map(|(strict_seeds, _shifted_vertices, _shifted_geometry_seeds)| strict_seeds)
 }
 
+#[cfg(test)]
 fn support_cell_geometry_seed_candidates(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<Point3>> {
