@@ -1073,19 +1073,7 @@ fn interior_box_detour_targets(
         }
     }
 
-    let mut detours =
-        Vec::with_capacity(intervals[0].len() * intervals[1].len() * intervals[2].len());
-    for x in &intervals[0] {
-        for y in &intervals[1] {
-            for z in &intervals[2] {
-                let bounds = aabb_from_axis_intervals([x, y, z])?;
-                for target in strict_aabb_targets(&bounds)? {
-                    push_unique_detour_target(&mut detours, target);
-                }
-            }
-        }
-    }
-    Ok(detours)
+    collect_detour_targets_from_axis_intervals(&intervals, |bounds| strict_aabb_targets(bounds))
 }
 
 fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aabb> {
@@ -1228,6 +1216,54 @@ fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
         }
         Ok(())
     }
+}
+
+fn extend_detour_target_families_backtracking_unknown(
+    targets: &mut Vec<DetourTarget>,
+    families: impl IntoIterator<Item = HypermeshResult<Vec<DetourTarget>>>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for family in families {
+        match family {
+            Ok(found) => {
+                for target in found {
+                    push_unique_detour_target(targets, target);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if targets.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if saw_unknown {
+            mark_all_detour_targets_uncertified(targets);
+        }
+        Ok(())
+    }
+}
+
+fn collect_detour_targets_from_axis_intervals(
+    intervals: &[Vec<(Real, Real)>],
+    mut build: impl FnMut(&Aabb) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<Vec<DetourTarget>> {
+    let mut detours =
+        Vec::with_capacity(intervals[0].len() * intervals[1].len() * intervals[2].len());
+    let mut families =
+        Vec::with_capacity(intervals[0].len() * intervals[1].len() * intervals[2].len());
+    for x in &intervals[0] {
+        for y in &intervals[1] {
+            for z in &intervals[2] {
+                let bounds = aabb_from_axis_intervals([x, y, z])?;
+                families.push(build(&bounds));
+            }
+        }
+    }
+    extend_detour_target_families_backtracking_unknown(&mut detours, families)?;
+    Ok(detours)
 }
 
 fn add_axis_box_surface_cuts(
@@ -5062,6 +5098,72 @@ mod tests {
 
         assert_eq!(err, HypermeshError::UnknownClassification);
         assert!(targets.is_empty());
+    }
+
+    #[test]
+    fn detour_target_family_collection_backtracks_after_uncertified_family() {
+        let mut targets = Vec::new();
+
+        extend_detour_target_families_backtracking_unknown(
+            &mut targets,
+            [
+                Err(HypermeshError::UnknownClassification),
+                Ok(vec![DetourTarget {
+                    point: p(1, 2, 4),
+                    definitions: vec![axis_plane_definition(&p(1, 2, 4))],
+                    uncertified_definition_fallback: false,
+                }]),
+            ],
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 2, 4));
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn detour_target_family_collection_reports_unknown_if_all_families_are_uncertified() {
+        let mut targets = Vec::new();
+
+        let err = extend_detour_target_families_backtracking_unknown(
+            &mut targets,
+            [
+                Err(HypermeshError::UnknownClassification),
+                Err(HypermeshError::UnknownClassification),
+            ],
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert!(targets.is_empty());
+    }
+
+    #[test]
+    fn interior_box_detour_target_collection_backtracks_after_uncertified_box_family() {
+        let intervals = vec![
+            vec![(r(0), r(1)), (r(1), r(2))],
+            vec![(r(0), r(1))],
+            vec![(r(0), r(1))],
+        ];
+
+        let targets = collect_detour_targets_from_axis_intervals(&intervals, |bounds| {
+            if bounds.min == p(0, 0, 0) && bounds.max == p(1, 1, 1) {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                let point = Point3::new(r(1), q(1, 2), q(1, 2));
+                Ok(vec![DetourTarget {
+                    point: point.clone(),
+                    definitions: vec![axis_plane_definition(&point)],
+                    uncertified_definition_fallback: false,
+                }])
+            }
+        })
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, Point3::new(r(1), q(1, 2), q(1, 2)));
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]

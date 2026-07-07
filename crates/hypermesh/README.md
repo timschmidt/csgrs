@@ -125,7 +125,9 @@ aborting the whole local witness family, and strict halfspace-cell seed
 collection now does the same for uncertified strictness checks on candidate
 direct witnesses. Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
-later certified direct or shifted detour targets run.
+later certified direct or shifted detour targets run, and the surrounding
+endpoint-box detour family now also backtracks past uncertified local boxes
+instead of aborting before later certified detour boxes run.
 If one of those local witness or seed families is entirely uncertified and no
 certified candidate survives, it now returns `UnknownClassification` instead of
 quietly collapsing that local family to an empty witness set.
