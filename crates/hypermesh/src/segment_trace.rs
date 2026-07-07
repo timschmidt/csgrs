@@ -5685,7 +5685,7 @@ fn build_probe_point(
     }
     let side = classify_point(witness, support)?;
     if side == Classification::On {
-        return Ok(None);
+        return Err(HypermeshError::UnknownClassification);
     }
 
     let shifted_support = Plane::new(
@@ -5724,7 +5724,7 @@ fn build_probe_point_from_shifted_witness(
 ) -> HypermeshResult<Option<ProbePoint>> {
     let side = classify_point(&witness.point, support)?;
     if side == Classification::On {
-        return Ok(None);
+        return Err(HypermeshError::UnknownClassification);
     }
 
     let shifted_support = Plane::new(
@@ -5794,7 +5794,7 @@ fn build_axis_probe_point(
     }
     let side = classify_point(witness, support)?;
     if side == Classification::On {
-        return Ok(None);
+        return Err(HypermeshError::UnknownClassification);
     }
 
     let (planes, uncertified_definition_fallback) = probe_definitions_or_axis(
@@ -5827,7 +5827,7 @@ fn build_axis_probe_point_from_shifted_witness(
 ) -> HypermeshResult<Option<ProbePoint>> {
     let side = classify_point(&witness.point, support)?;
     if side == Classification::On {
-        return Ok(None);
+        return Err(HypermeshError::UnknownClassification);
     }
 
     let mut planes = Vec::new();
@@ -11071,6 +11071,25 @@ mod tests {
     }
 
     #[test]
+    fn strict_probe_witness_reports_unknown_for_support_boundary_contact() {
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = p(1, 1, 0);
+        let halfspaces = vec![axis_halfspace(0, false, r(1))];
+
+        assert_eq!(
+            build_probe_point(
+                &witness,
+                &support,
+                &halfspaces,
+                [None, None, None],
+                &[],
+                false
+            ),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
     fn strict_probe_witness_from_shifted_witness_merges_definition_families() {
         let support = Plane::axis_aligned(2, r(0));
         let witness = ShiftedHalfspaceWitness {
@@ -11102,6 +11121,24 @@ mod tests {
                 .iter()
                 .any(|plane| plane.normal == p(0, 1, 0) && plane.offset == r(-1))
         }));
+    }
+
+    #[test]
+    fn strict_probe_witness_from_shifted_witness_reports_unknown_for_support_boundary_contact() {
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 0),
+            families: vec![ShiftedHalfspaceWitnessFamily {
+                halfspaces: vec![axis_halfspace(0, false, r(1))],
+                active_planes: [Some(0), None, None],
+            }],
+            uncertified_definition_fallback: false,
+        };
+
+        assert_eq!(
+            build_probe_point_from_shifted_witness(&witness, &support, &[]),
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]
@@ -11189,6 +11226,56 @@ mod tests {
         .expect("strict axis probe witness should still be retained");
 
         assert!(probe.uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn strict_axis_probe_witness_reports_unknown_for_support_boundary_contact() {
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![axis_plane_definition(&p(1, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let witness = p(2, 1, 0);
+        let halfspaces = vec![axis_halfspace(0, false, r(2))];
+
+        assert_eq!(
+            build_axis_probe_point(
+                &witness,
+                &interior,
+                &support,
+                0,
+                None,
+                &halfspaces,
+                [None, None, None],
+                false,
+            ),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn strict_axis_probe_witness_from_shifted_witness_reports_unknown_for_support_boundary_contact()
+    {
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![axis_plane_definition(&p(1, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let witness = ShiftedHalfspaceWitness {
+            point: p(2, 1, 0),
+            families: vec![ShiftedHalfspaceWitnessFamily {
+                halfspaces: vec![axis_halfspace(0, false, r(2))],
+                active_planes: [Some(0), None, None],
+            }],
+            uncertified_definition_fallback: false,
+        };
+
+        assert_eq!(
+            build_axis_probe_point_from_shifted_witness(&witness, &interior, &support, 0, None),
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]

@@ -316,7 +316,10 @@ backtrack past uncertified local candidate searches instead of aborting the
 whole local probe-family search on the first `UnknownClassification`. The
 probe witness build steps inside those families now likewise skip
 `UnknownClassification` candidate points instead of aborting the whole local
-probe witness set when later certified witnesses still exist, and the
+probe witness set when later certified witnesses still exist, and exact
+support-plane contact in the strict probe and strict axis-probe builders now
+also counts as `UnknownClassification` instead of silently disappearing as
+ordinary absence. The
 top-level bounded probe search from one interior witness now also backtracks
 past uncertified normal or axis probe families instead of aborting before
 later certified probe directions are tried. Leaf classification now also
