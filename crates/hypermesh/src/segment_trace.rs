@@ -1071,6 +1071,9 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
         for plane_index in ordering {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
+            if next_planes == current_planes {
+                continue;
+            }
             let next_point =
                 match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
@@ -1082,35 +1085,33 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
                     }
                     Err(err) => return Err(err),
                 };
-            if next_point != current_point {
-                let next_winding = match cached_plane_replacement_step_with(
-                    &mut step_cache,
-                    &current_point,
-                    &next_point,
-                    &current_planes,
-                    &next_planes,
-                    &attempt,
-                    || {
-                        trace_step(
-                            &current_point,
-                            &next_point,
-                            &current_planes,
-                            &next_planes,
-                            &attempt,
-                            polygons,
-                        )
-                    },
-                ) {
-                    Ok(Some(next_winding)) => next_winding,
-                    Ok(None) | Err(HypermeshError::UnknownClassification) => {
-                        valid = false;
-                        break;
-                    }
-                    Err(err) => return Err(err),
-                };
-                attempt = next_winding;
-                current_point = next_point;
-            }
+            let next_winding = match cached_plane_replacement_step_with(
+                &mut step_cache,
+                &current_point,
+                &next_point,
+                &current_planes,
+                &next_planes,
+                &attempt,
+                || {
+                    trace_step(
+                        &current_point,
+                        &next_point,
+                        &current_planes,
+                        &next_planes,
+                        &attempt,
+                        polygons,
+                    )
+                },
+            ) {
+                Ok(Some(next_winding)) => next_winding,
+                Ok(None) | Err(HypermeshError::UnknownClassification) => {
+                    valid = false;
+                    break;
+                }
+                Err(err) => return Err(err),
+            };
+            attempt = next_winding;
+            current_point = next_point;
             current_planes = next_planes;
         }
 
@@ -1423,6 +1424,16 @@ fn trace_axis_ordered_paths_with_queries(
         &[ConvexPolygon],
     ) -> HypermeshResult<TraceAxisSegmentResult>,
 ) -> HypermeshResult<WindingNumberVector> {
+    if start == end {
+        match point_lies_on_surface(start) {
+            Ok(false) => return Ok(winding.to_vec()),
+            Ok(true) | Err(HypermeshError::UnknownClassification) => {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
     let mut segment_cache = Vec::new();
 
     for ordering in AXIS_ORDERINGS {
@@ -3655,6 +3666,9 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         for plane_index in ordering {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
+            if next_planes == current_planes {
+                continue;
+            }
             let next_point =
                 match cached_affine_from_planes_with(&mut *affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
@@ -3667,34 +3681,32 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                     }
                     Err(err) => return Err(err),
                 };
-            if next_point != current_point {
-                let reachable = match cached_plane_replacement_reachability_step_with(
-                    &mut *step_cache,
-                    &current_point,
-                    &next_point,
-                    &current_planes,
-                    &next_planes,
-                    || {
-                        trace_step(
-                            &current_point,
-                            &next_point,
-                            std::slice::from_ref(&current_planes),
-                            std::slice::from_ref(&next_planes),
-                        )
-                    },
-                ) {
-                    Ok(reachable) => reachable,
-                    Err(HypermeshError::UnknownClassification) => {
-                        saw_unknown = true;
-                        valid = false;
-                        break;
-                    }
-                    Err(err) => return Err(err),
-                };
-                if !reachable {
+            let reachable = match cached_plane_replacement_reachability_step_with(
+                &mut *step_cache,
+                &current_point,
+                &next_point,
+                &current_planes,
+                &next_planes,
+                || {
+                    trace_step(
+                        &current_point,
+                        &next_point,
+                        std::slice::from_ref(&current_planes),
+                        std::slice::from_ref(&next_planes),
+                    )
+                },
+            ) {
+                Ok(reachable) => reachable,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
                     valid = false;
                     break;
                 }
+                Err(err) => return Err(err),
+            };
+            if !reachable {
+                valid = false;
+                break;
             }
             current_point = next_point;
             current_planes = next_planes;
@@ -9090,6 +9102,25 @@ mod tests {
     }
 
     #[test]
+    fn trace_axis_ordered_paths_reports_unknown_for_zero_length_surface_contact() {
+        let start = p(0, 0, 0);
+
+        let err = trace_axis_ordered_paths_with_queries(
+            &start,
+            &start,
+            &[7],
+            &[],
+            |_point| Ok(true),
+            |_current, _next, _axis, _attempt, _polygons| {
+                panic!("zero-length trace should not issue a segment step")
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn trace_axis_ordered_paths_try_later_ordering_after_endpoint_surface_contact() {
         let start = p(0, 0, 0);
         let end = p(1, 1, 0);
@@ -14070,6 +14101,39 @@ mod tests {
     }
 
     #[test]
+    fn plane_replacement_reachability_reports_unknown_for_same_point_uncertified_step() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(2, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(0), r(0)),
+        ];
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
+
+        let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            &start_definition,
+            &end_definition,
+            &mut affine_cache,
+            &mut step_cache,
+            |from, to, start_definitions, end_definitions| {
+                if *from == p(0, 0, 0)
+                    && *to == p(0, 0, 0)
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(true)
+                }
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn definition_pair_reachability_backtracks_after_uncertified_pair() {
         let start_unknown = axis_plane_definition(&p(0, 0, 0));
         let start_ok = axis_plane_definition(&p(1, 0, 0));
@@ -14238,6 +14302,41 @@ mod tests {
         assert_eq!(first, vec![7]);
         assert_eq!(second, vec![7]);
         assert_eq!(step_calls, 1);
+    }
+
+    #[test]
+    fn plane_replacement_tracer_reports_unknown_for_same_point_uncertified_step() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(2, r(0)),
+            Plane::from_coefficients(r(1), r(1), r(0), r(0)),
+        ];
+        let mut affine_cache = Vec::new();
+        let mut step_cache = Vec::new();
+
+        let err = trace_plane_replacement_path_with_tracer_and_caches(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            &mut affine_cache,
+            &mut step_cache,
+            |current, next, current_planes, next_planes, _attempt, _polygons| {
+                if *current == p(0, 0, 0)
+                    && *next == p(0, 0, 0)
+                    && current_planes == &start_definition
+                    && next_planes == &end_definition
+                {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(vec![7]))
+                }
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

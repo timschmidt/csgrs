@@ -291,7 +291,9 @@ as `UnknownClassification` instead of being silently skipped by the direct
 crossing collector. Zero-length direct traces and zero-length axis-segment
 legs now also reject exact traced-surface contact as
 `UnknownClassification` instead of silently passing it through as a valid
-empty trace. The traced-surface rejection layer used by axis-ordered
+empty trace. Axis-ordered trace search now applies the same rule before any
+legs run, so a zero-length retained path cannot bypass traced-surface
+uncertainty either. The traced-surface rejection layer used by axis-ordered
 direct search and detour fallback now also treats exact boundary contact on a
 traced polygon as `UnknownClassification` instead of ordinary surface
 membership, so later exact orderings or detours still run.
@@ -300,7 +302,10 @@ contacts: boundary hits surface as `UnknownClassification`, while strict
 interior blocker crossings remain ordinary blocked paths. Zero-length probe
 reachability checks now also reject exact blocker-surface contact as
 `UnknownClassification` instead of silently collapsing to an ordinary
-unreachable result.
+unreachable result. Retained-definition plane-replacement trace and
+reachability steps now also consult their step tracers even when two distinct
+definition triples land on the same affine point, so same-point definition
+updates cannot silently bypass uncertified local contact.
 The reachability-side plane-replacement walk now does the same for its
 intermediate adjacency checks: one uncertified replacement leg only invalidates
 that ordering, rather than cutting off later exact plane-replacement orderings.
