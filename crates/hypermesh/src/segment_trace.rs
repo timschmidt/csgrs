@@ -5712,6 +5712,12 @@ fn push_unique_halfspace_seed(seeds: &mut Vec<Point3>, seed: Point3) {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct HalfspaceSeedFamilyState {
+    seeds: Vec<Point3>,
+    saw_unknown: bool,
+}
+
 fn extend_strict_halfspace_seeds_backtracking_unknown(
     seeds: &mut Vec<Point3>,
     candidates: impl IntoIterator<Item = Point3>,
@@ -5738,26 +5744,13 @@ fn extend_strict_halfspace_seeds_backtracking_unknown(
 fn collect_strict_halfspace_seed_family(
     candidates: HypermeshResult<Vec<Point3>>,
     mut is_strict_seed: impl FnMut(&Point3) -> HypermeshResult<bool>,
-) -> HypermeshResult<Vec<Point3>> {
+) -> HypermeshResult<HalfspaceSeedFamilyState> {
     let mut seeds = Vec::new();
-    extend_strict_halfspace_seeds_backtracking_unknown(&mut seeds, candidates?, |candidate| {
-        is_strict_seed(candidate)
-    })?;
-    Ok(seeds)
-}
-
-fn extend_strict_halfspace_seed_families_backtracking_unknown(
-    seeds: &mut Vec<Point3>,
-    families: impl IntoIterator<Item = HypermeshResult<Vec<Point3>>>,
-) -> HypermeshResult<()> {
     let mut saw_unknown = false;
-    for family in families {
-        match family {
-            Ok(found) => {
-                for seed in found {
-                    push_unique_halfspace_seed(seeds, seed);
-                }
-            }
+    for candidate in candidates? {
+        match is_strict_seed(&candidate) {
+            Ok(true) => push_unique_halfspace_seed(&mut seeds, candidate),
+            Ok(false) => {}
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -5767,8 +5760,42 @@ fn extend_strict_halfspace_seed_families_backtracking_unknown(
     if seeds.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
+        Ok(HalfspaceSeedFamilyState { seeds, saw_unknown })
+    }
+}
+
+fn extend_strict_halfspace_seed_families_backtracking_unknown(
+    seeds: &mut Vec<Point3>,
+    families: impl IntoIterator<Item = HypermeshResult<HalfspaceSeedFamilyState>>,
+) -> HypermeshResult<()> {
+    let saw_unknown = extend_strict_halfspace_seed_families_collect_unknown(seeds, families)?;
+    if seeds.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
         Ok(())
     }
+}
+
+fn extend_strict_halfspace_seed_families_collect_unknown(
+    seeds: &mut Vec<Point3>,
+    families: impl IntoIterator<Item = HypermeshResult<HalfspaceSeedFamilyState>>,
+) -> HypermeshResult<bool> {
+    let mut saw_unknown = false;
+    for family in families {
+        match family {
+            Ok(found) => {
+                saw_unknown |= found.saw_unknown;
+                for seed in found.seeds {
+                    push_unique_halfspace_seed(seeds, seed);
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    Ok(saw_unknown)
 }
 
 fn halfspace_seed_family_or_empty(
@@ -5915,7 +5942,7 @@ fn halfspace_cell_seed_families_from_optional_report(
     )?;
     let mut strict_seeds = Vec::new();
 
-    extend_strict_halfspace_seed_families_backtracking_unknown(
+    *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
         &mut strict_seeds,
         [
             if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
@@ -5925,7 +5952,10 @@ fn halfspace_cell_seed_families_from_optional_report(
                     point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces)
                 })
             } else {
-                Ok(Vec::new())
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: Vec::new(),
+                    saw_unknown: false,
+                })
             },
             collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
                 point_strictly_inside_halfspace_cell(candidate, bounds, halfspaces)
@@ -7154,12 +7184,38 @@ mod tests {
             &mut seeds,
             [
                 Err(HypermeshError::UnknownClassification),
-                Ok(vec![p(2, 2, 2)]),
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: vec![p(2, 2, 2)],
+                    saw_unknown: false,
+                }),
             ],
         )
         .unwrap();
 
         assert_eq!(seeds, vec![p(2, 2, 2)]);
+    }
+
+    #[test]
+    fn strict_halfspace_cell_seed_family_search_tracks_unknown_after_uncertain_family_result() {
+        let mut seeds = Vec::new();
+
+        let saw_unknown = extend_strict_halfspace_seed_families_collect_unknown(
+            &mut seeds,
+            [
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: vec![p(1, 1, 1)],
+                    saw_unknown: true,
+                }),
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: vec![p(2, 2, 2)],
+                    saw_unknown: false,
+                }),
+            ],
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(seeds, vec![p(1, 1, 1), p(2, 2, 2)]);
     }
 
     #[test]
@@ -7176,6 +7232,22 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn collect_strict_halfspace_seed_family_tracks_unknown_after_later_strict_seed() {
+        let family =
+            collect_strict_halfspace_seed_family(Ok(vec![p(1, 1, 1), p(2, 2, 2)]), |candidate| {
+                if *candidate == p(1, 1, 1) {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(true)
+                }
+            })
+            .unwrap();
+
+        assert_eq!(family.seeds, vec![p(2, 2, 2)]);
+        assert!(family.saw_unknown);
     }
 
     #[test]

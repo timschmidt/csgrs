@@ -154,7 +154,10 @@ definitions across those witness families. Shifted leaf, probe, and detour
 witness expansions now also backtrack past uncertified shifted seeds instead of
 aborting the whole local witness family, and strict halfspace-cell seed
 collection now does the same for uncertified strictness checks on candidate
-direct witnesses. Direct detour-target construction from those strict witnesses
+direct witnesses. When one strict halfspace-cell seed family already returns
+surviving strict witnesses after a partially uncertified candidate-local
+search, that uncertainty now stays attached across later sibling seed families
+instead of being flattened back into an ordinary certified seed family. Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
 later certified direct or shifted detour targets run, and the surrounding
 endpoint-box detour family now also backtracks past uncertified local boxes
