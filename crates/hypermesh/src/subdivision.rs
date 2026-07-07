@@ -118,7 +118,7 @@ struct SubdivisionChildPartition {
 
 #[derive(Clone, Debug, PartialEq)]
 struct ChildReferenceCacheEntry {
-    polygons: Vec<ConvexPolygon>,
+    source_polygons: Vec<ConvexPolygon>,
     bounds: Aabb,
     old_ref: Point3,
     old_ref_definitions: Vec<[Plane; 3]>,
@@ -472,7 +472,7 @@ fn subdivide_into_inner_with(
                     &task.ref_point,
                     &task.ref_definitions,
                     &task.ref_wnv,
-                    &left_polys,
+                    &task.polygons,
                     &left_bounds,
                     || {
                         compute_new_reference(
@@ -515,7 +515,7 @@ fn subdivide_into_inner_with(
                     &task.ref_point,
                     &task.ref_definitions,
                     &task.ref_wnv,
-                    &right_polys,
+                    &task.polygons,
                     &right_bounds,
                     || {
                         compute_new_reference(
@@ -612,7 +612,7 @@ fn cached_child_reference_with(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
-    polygons: &[ConvexPolygon],
+    source_polygons: &[ConvexPolygon],
     bounds: &Aabb,
     query: impl FnOnce() -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
@@ -620,7 +620,7 @@ fn cached_child_reference_with(
         existing.old_ref == *old_ref
             && existing.old_ref_definitions == old_ref_definitions
             && existing.old_wnv == old_wnv
-            && existing.polygons == polygons
+            && existing.source_polygons == source_polygons
             && existing.bounds == *bounds
     }) {
         return existing.result.clone();
@@ -631,7 +631,7 @@ fn cached_child_reference_with(
         old_ref: old_ref.clone(),
         old_ref_definitions: old_ref_definitions.to_vec(),
         old_wnv: old_wnv.to_vec(),
-        polygons: polygons.to_vec(),
+        source_polygons: source_polygons.to_vec(),
         bounds: bounds.clone(),
         result: result.clone(),
     });
@@ -7075,6 +7075,47 @@ mod tests {
             &old_ref_definitions_b,
             &old_wnv_b,
             std::slice::from_ref(&polygon),
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![8]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls.get(), 2);
+    }
+
+    #[test]
+    fn cached_child_reference_keeps_distinct_source_polygon_families_separate() {
+        let source_polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let source_polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+        let old_ref = p(0, 0, 0);
+        let old_ref_definitions = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+
+        cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            std::slice::from_ref(&source_polygon_a),
+            &bounds,
+            || {
+                calls.set(calls.get() + 1);
+                Ok((p(1, 2, 3), axis_defs(&p(1, 2, 3)), vec![7]))
+            },
+        )
+        .unwrap();
+        cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            std::slice::from_ref(&source_polygon_b),
             &bounds,
             || {
                 calls.set(calls.get() + 1);
