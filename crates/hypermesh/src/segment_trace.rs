@@ -4795,6 +4795,9 @@ fn bounded_probes_from_interior(
         )?;
     }
 
+    saw_unknown |= probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -4815,9 +4818,6 @@ fn extend_probe_families_backtracking_unknown(
             for probe in found {
                 push_unique_probe_point(probes, probe);
             }
-            *saw_unknown |= probes
-                .iter()
-                .any(|probe| probe.uncertified_definition_fallback);
             Ok(())
         }
         Err(HypermeshError::UnknownClassification) => {
@@ -5042,6 +5042,9 @@ fn adjacent_normal_probes_with_queries(
         )?;
     }
 
+    saw_unknown |= probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -5567,6 +5570,9 @@ fn adjacent_axis_probes_with_queries(
         )?;
     }
 
+    saw_unknown |= probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -8932,8 +8938,49 @@ mod tests {
         )
         .unwrap();
 
-        assert!(saw_unknown);
+        let merged_unknown = saw_unknown
+            || probes
+                .iter()
+                .any(|probe| probe.uncertified_definition_fallback);
+        assert!(merged_unknown);
         assert_eq!(probes.len(), 2);
+    }
+
+    #[test]
+    fn bounded_probe_family_collection_keeps_certified_duplicate_state_certified() {
+        let point = p(1, 1, 1);
+        let mut probes = Vec::new();
+        let mut saw_unknown = false;
+
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Ok(vec![ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: vec![axis_plane_definition(&point)],
+                uncertified_definition_fallback: true,
+            }]),
+            &mut saw_unknown,
+        )
+        .unwrap();
+        extend_probe_families_backtracking_unknown(
+            &mut probes,
+            Ok(vec![ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: vec![axis_plane_definition(&point)],
+                uncertified_definition_fallback: false,
+            }]),
+            &mut saw_unknown,
+        )
+        .unwrap();
+
+        let merged_unknown = saw_unknown
+            || probes
+                .iter()
+                .any(|probe| probe.uncertified_definition_fallback);
+        assert!(!merged_unknown);
+        assert_eq!(probes.len(), 1);
     }
 
     #[test]
