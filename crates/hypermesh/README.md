@@ -347,7 +347,11 @@ longer aborts the cell before later certified targets are tried. The outer
 projected direct/escape search also no longer retraces the exact same
 projected target just because it appears in both the direct and escape
 families; it skips that duplicate direct trace and proceeds straight to the
-escape-specific searches for that target. For one projected target, the later
+escape-specific searches for that target. Within one live root projected
+reference update, projected direct-target tracing now also reuses point-level
+reference-validity checks for repeated target points and full retained-target
+traces for repeated exact projected targets instead of repaying those exact
+queries before the later escape layers run. For one projected target, the later
 axis-corridor and tight escape-box searches now also reuse the same exact
 axis stop families instead of recomputing those surface-crossing families
 independently before each escape layer, and identical escape `Aabb` support
