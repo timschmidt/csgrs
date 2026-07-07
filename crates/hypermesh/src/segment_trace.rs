@@ -1081,7 +1081,10 @@ fn cached_affine_from_planes_with(
     planes: &[Plane; 3],
     compute: impl FnOnce() -> HypermeshResult<Point3>,
 ) -> HypermeshResult<Point3> {
-    if let Some(existing) = cache.iter().find(|existing| existing.planes == *planes) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| definition_planes_match_as_sets(&existing.planes, planes))
+    {
         return existing.point.clone();
     }
 
@@ -1105,8 +1108,8 @@ fn cached_plane_replacement_step_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.current_point == *current_point
             && existing.next_point == *next_point
-            && existing.current_planes == *current_planes
-            && existing.next_planes == *next_planes
+            && definition_planes_match_as_sets(&existing.current_planes, current_planes)
+            && definition_planes_match_as_sets(&existing.next_planes, next_planes)
             && existing.attempt == attempt
     }) {
         return existing.result.clone();
@@ -3484,8 +3487,8 @@ fn cached_plane_replacement_reachability_step_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.current_point == *current_point
             && existing.next_point == *next_point
-            && existing.current_planes == *current_planes
-            && existing.next_planes == *next_planes
+            && definition_planes_match_as_sets(&existing.current_planes, current_planes)
+            && definition_planes_match_as_sets(&existing.next_planes, next_planes)
     }) {
         return existing.result.clone();
     }
@@ -11033,6 +11036,53 @@ mod tests {
     }
 
     #[test]
+    fn plane_replacement_reachability_step_reuses_permuted_plane_sets() {
+        let current_planes = axis_plane_definition(&p(0, 0, 0));
+        let next_planes = axis_plane_definition(&p(1, 0, 0));
+        let permuted_current = [
+            current_planes[1].clone(),
+            current_planes[2].clone(),
+            current_planes[0].clone(),
+        ];
+        let permuted_next = [
+            next_planes[1].clone(),
+            next_planes[2].clone(),
+            next_planes[0].clone(),
+        ];
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &current_planes,
+            &next_planes,
+            || {
+                calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &permuted_current,
+            &permuted_next,
+            || {
+                calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert!(first);
+        assert!(second);
+    }
+
+    #[test]
     fn plane_replacement_reachability_shared_caches_reuse_equivalent_path_across_calls() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
@@ -11329,6 +11379,55 @@ mod tests {
     }
 
     #[test]
+    fn plane_replacement_step_tracer_reuses_permuted_plane_sets() {
+        let current_planes = axis_plane_definition(&p(0, 0, 0));
+        let next_planes = axis_plane_definition(&p(1, 0, 0));
+        let permuted_current = [
+            current_planes[1].clone(),
+            current_planes[2].clone(),
+            current_planes[0].clone(),
+        ];
+        let permuted_next = [
+            next_planes[1].clone(),
+            next_planes[2].clone(),
+            next_planes[0].clone(),
+        ];
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_plane_replacement_step_with(
+            &mut cache,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &current_planes,
+            &next_planes,
+            &[7],
+            || {
+                calls += 1;
+                Ok(Some(vec![7]))
+            },
+        )
+        .unwrap();
+        let second = cached_plane_replacement_step_with(
+            &mut cache,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &permuted_current,
+            &permuted_next,
+            &[7],
+            || {
+                calls += 1;
+                Ok(Some(vec![9]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, Some(vec![7]));
+        assert_eq!(second, Some(vec![7]));
+    }
+
+    #[test]
     fn cached_affine_from_planes_reuses_identical_plane_set() {
         let planes = axis_plane_definition(&p(1, 2, 3));
         let mut cache = Vec::new();
@@ -11342,6 +11441,29 @@ mod tests {
         let second = cached_affine_from_planes_with(&mut cache, &planes, || {
             calls += 1;
             affine_from_planes(&planes)
+        })
+        .unwrap();
+
+        assert_eq!(first, p(1, 2, 3));
+        assert_eq!(second, first);
+        assert_eq!(calls, 1);
+    }
+
+    #[test]
+    fn cached_affine_from_planes_reuses_permuted_plane_set() {
+        let planes = axis_plane_definition(&p(1, 2, 3));
+        let permuted = [planes[1].clone(), planes[2].clone(), planes[0].clone()];
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_affine_from_planes_with(&mut cache, &planes, || {
+            calls += 1;
+            affine_from_planes(&planes)
+        })
+        .unwrap();
+        let second = cached_affine_from_planes_with(&mut cache, &permuted, || {
+            calls += 1;
+            affine_from_planes(&permuted)
         })
         .unwrap();
 
