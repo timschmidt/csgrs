@@ -119,7 +119,10 @@ them for each pair. The retained-definition segment entry now also keeps its
 definition-aware no-detour trace cache and endpoint-box detour-family cache
 alive from the first direct retained query into the later step-detoured
 replacement search, instead of rebuilding those top-level caches for every
-later retained subquery. The same local
+later retained subquery. The reachability-side retained plane-replacement
+fallback now keeps that same no-detour reachability cache and detour-family
+cache alive across sibling retained replacement steps too, instead of
+rebuilding them for each later subquery. The same local
 plane-replacement walk now also reuses exact
 `affine_from_planes(...)` results across sibling orderings, so equivalent
 intermediate plane triples do not repay the same exact point reconstruction
