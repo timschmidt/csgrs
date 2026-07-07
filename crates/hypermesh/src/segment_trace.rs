@@ -1669,6 +1669,20 @@ fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aa
 }
 
 fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
+    strict_aabb_targets_with_seed_families(bounds, |bounds, halfspaces, report, saw_unknown| {
+        halfspace_cell_seed_families_from_optional_report(bounds, halfspaces, report, saw_unknown)
+    })
+}
+
+fn strict_aabb_targets_with_seed_families(
+    bounds: &Aabb,
+    mut seed_families_for: impl FnMut(
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+        &mut bool,
+    ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+) -> HypermeshResult<Vec<DetourTarget>> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
     let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
     if report
@@ -1679,12 +1693,7 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     }
     let mut targets = Vec::new();
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        halfspace_cell_seed_families_from_optional_report(
-            bounds,
-            &halfspaces,
-            report.as_ref(),
-            &mut saw_unknown,
-        )?;
+        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
@@ -7457,6 +7466,20 @@ mod tests {
             assert!(compare_real(&target.point.y, &r(6)).unwrap().is_lt());
             assert!(!target.definitions.is_empty());
         }
+    }
+
+    #[test]
+    fn strict_aabb_targets_try_shifted_search_from_report_witness_seed() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let targets = strict_aabb_targets_with_seed_families(
+            &bounds,
+            |_bounds, _halfspaces, _report, _saw_unknown| Ok((Vec::new(), Vec::new(), Vec::new())),
+        )
+        .unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(targets.iter().all(|target| !target.definitions.is_empty()));
     }
 
     #[test]
