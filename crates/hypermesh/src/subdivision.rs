@@ -2548,7 +2548,7 @@ fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: Refe
             if !existing
                 .definitions
                 .iter()
-                .any(|candidate| candidate == &definition)
+                .any(|candidate| reference_definition_planes_match_as_sets(candidate, &definition))
             {
                 existing.definitions.push(definition);
             }
@@ -2557,6 +2557,49 @@ fn push_unique_reference_target(targets: &mut Vec<ReferenceTarget>, target: Refe
     } else {
         targets.push(target);
     }
+}
+
+fn reference_definition_planes_match_as_sets(left: &[Plane; 3], right: &[Plane; 3]) -> bool {
+    let mut matched = [false; 3];
+    for left_plane in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_plane)| !matched[*index] && *right_plane == left_plane)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+    true
+}
+
+fn reference_definition_families_match_as_sets(left: &[[Plane; 3]], right: &[[Plane; 3]]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_definition in left {
+        let Some((index, _)) = right.iter().enumerate().find(|(index, right_definition)| {
+            !matched[*index]
+                && reference_definition_planes_match_as_sets(left_definition, right_definition)
+        }) else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
+}
+
+fn reference_targets_match_for_trace_cache(
+    left: &ReferenceTarget,
+    right: &ReferenceTarget,
+) -> bool {
+    left.point == right.point
+        && left.uncertified_definition_fallback == right.uncertified_definition_fallback
+        && reference_definition_families_match_as_sets(&left.definitions, &right.definitions)
 }
 
 fn extend_reference_targets_backtracking_unknown<T>(
@@ -2833,7 +2876,10 @@ fn cached_reference_target_trace_with(
     target: &ReferenceTarget,
     trace: impl FnOnce(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    if let Some(existing) = cache.iter().find(|existing| existing.target == *target) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| reference_targets_match_for_trace_cache(&existing.target, target))
+    {
         return existing.winding.clone();
     }
 
@@ -7916,6 +7962,67 @@ mod tests {
         assert_eq!(first_result, Some(vec![1]));
         assert_eq!(second_result, Some(vec![2]));
         assert_eq!(third_result, Some(vec![1]));
+    }
+
+    #[test]
+    fn cached_reference_target_trace_reuses_permuted_definition_families() {
+        use std::cell::Cell;
+
+        let point = p(1, 2, 3);
+        let definition = axis_defs(&point)[0].clone();
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let first = ReferenceTarget::with_definitions(point.clone(), vec![definition.clone()]);
+        let second = ReferenceTarget::with_definitions(point, vec![permuted]);
+        let mut trace_cache = Vec::new();
+        let calls = Cell::new(0);
+
+        let first_result =
+            cached_reference_target_trace_with(&mut trace_cache, &first, |_target| {
+                calls.set(calls.get() + 1);
+                Ok(Some(vec![7]))
+            })
+            .unwrap();
+        let second_result =
+            cached_reference_target_trace_with(&mut trace_cache, &second, |_target| {
+                calls.set(calls.get() + 1);
+                Ok(Some(vec![9]))
+            })
+            .unwrap();
+
+        assert_eq!(first_result, Some(vec![7]));
+        assert_eq!(second_result, Some(vec![7]));
+        assert_eq!(calls.get(), 1);
+    }
+
+    #[test]
+    fn push_unique_reference_target_merges_permuted_definitions() {
+        let point = p(1, 2, 3);
+        let definition = axis_defs(&point)[0].clone();
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let mut targets = vec![ReferenceTarget::with_definitions(
+            point.clone(),
+            vec![definition.clone()],
+        )];
+
+        push_unique_reference_target(
+            &mut targets,
+            ReferenceTarget::with_definitions(point, vec![permuted.clone()]),
+        );
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].definitions.len(), 1);
+        assert!(reference_definition_planes_match_as_sets(
+            &targets[0].definitions[0],
+            &permuted
+        ));
     }
 
     #[test]
