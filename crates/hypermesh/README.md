@@ -230,10 +230,10 @@ reuse one exact feasible-vertex / geometry-seed family per local cell before
 widening into shifted witness-cell search. The leaf-witness builders now reuse
 that same raw local family instead of recomputing feasible vertices and
 geometry seeds after deriving strict leaf seeds, and shifted leaf/probe/detour
-witness builders now also dedupe later shifted seed families against the
-report witness itself so they do not rebuild that same direct witness through
-later strict-seed,
-exact-vertex, or geometry-seed families,
+witness builders now also promote the report witness into the shifted seed
+root when it is not already a strict direct seed, while still deduping later
+strict-seed, exact-vertex, and geometry-seed families against that promoted
+root so they do not rebuild the same direct witness again,
 and equivalent certified probes inside one leaf classification now reuse the
 same retained-definition winding trace instead of retracing the same exact
 probe point/definition family repeatedly across probe sides or repeated probe
