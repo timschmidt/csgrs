@@ -2775,6 +2775,10 @@ struct SupportReferenceQueryCaches {
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     trace_cache: Vec<ReferenceTargetTraceCacheEntry>,
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
+    target_cache: std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
+    accept_cache: std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
+    search_cache:
+        std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
 }
 
 fn cached_reference_target_trace_with(
@@ -2830,6 +2834,7 @@ fn cached_support_surface_query_with(
 
 #[derive(Clone)]
 struct SupportTargetFamilyCacheEntry {
+    bounds: Aabb,
     halfspaces: Vec<LimitPlane3>,
     report: Option<hyperlimit::HalfspaceFeasibilityReport>,
     targets: HypermeshResult<Vec<ReferenceTarget>>,
@@ -2837,6 +2842,7 @@ struct SupportTargetFamilyCacheEntry {
 
 fn cached_support_target_family_with(
     cache: &mut Vec<SupportTargetFamilyCacheEntry>,
+    bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     build: impl FnOnce(
@@ -2844,15 +2850,17 @@ fn cached_support_target_family_with(
         Option<&hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    if let Some(existing) = cache
-        .iter()
-        .find(|existing| existing.halfspaces == halfspaces && existing.report.as_ref() == report)
-    {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && existing.halfspaces == halfspaces
+            && existing.report.as_ref() == report
+    }) {
         return existing.targets.clone();
     }
 
     let targets = build(halfspaces, report);
     cache.push(SupportTargetFamilyCacheEntry {
+        bounds: bounds.clone(),
         halfspaces: halfspaces.to_vec(),
         report: report.cloned(),
         targets: targets.clone(),
@@ -2862,6 +2870,7 @@ fn cached_support_target_family_with(
 
 #[derive(Clone)]
 struct SupportReferenceAcceptCacheEntry {
+    bounds: Aabb,
     halfspaces: Vec<LimitPlane3>,
     report: Option<hyperlimit::HalfspaceFeasibilityReport>,
     accepted: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
@@ -2869,6 +2878,7 @@ struct SupportReferenceAcceptCacheEntry {
 
 fn cached_support_reference_accept_with(
     cache: &mut Vec<SupportReferenceAcceptCacheEntry>,
+    bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     accept: impl FnOnce(
@@ -2876,15 +2886,17 @@ fn cached_support_reference_accept_with(
         Option<&hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    if let Some(existing) = cache
-        .iter()
-        .find(|existing| existing.halfspaces == halfspaces && existing.report.as_ref() == report)
-    {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && existing.halfspaces == halfspaces
+            && existing.report.as_ref() == report
+    }) {
         return existing.accepted.clone();
     }
 
     let accepted = accept(halfspaces, report);
     cache.push(SupportReferenceAcceptCacheEntry {
+        bounds: bounds.clone(),
         halfspaces: halfspaces.to_vec(),
         report: report.cloned(),
         accepted: accepted.clone(),
@@ -2894,6 +2906,7 @@ fn cached_support_reference_accept_with(
 
 #[derive(Clone)]
 struct SupportPlaneCellSearchCacheEntry<T: Clone> {
+    bounds: Aabb,
     polygon_index: usize,
     halfspaces: Vec<LimitPlane3>,
     result: HypermeshResult<Option<T>>,
@@ -2901,18 +2914,22 @@ struct SupportPlaneCellSearchCacheEntry<T: Clone> {
 
 fn cached_support_plane_cell_search_with<T: Clone>(
     cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<T>>>,
+    bounds: &Aabb,
     polygon_index: usize,
     halfspaces: Vec<LimitPlane3>,
     search: impl FnOnce() -> HypermeshResult<Option<T>>,
 ) -> HypermeshResult<Option<T>> {
     if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.polygon_index == polygon_index && existing.halfspaces == halfspaces
+        existing.bounds == *bounds
+            && existing.polygon_index == polygon_index
+            && existing.halfspaces == halfspaces
     }) {
         return existing.result.clone();
     }
 
     let result = search();
     cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
+        bounds: bounds.clone(),
         polygon_index,
         halfspaces,
         result: result.clone(),
@@ -3329,6 +3346,13 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     mut halfspaces: Vec<LimitPlane3>,
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let report_cache = &mut query_caches.report_cache;
+    let feasible_cache = &mut query_caches.feasible_cache;
+    let trace_cache = &mut query_caches.trace_cache;
+    let support_surface_cache = &mut query_caches.support_surface_cache;
+    let target_cache = &query_caches.target_cache;
+    let accept_cache = &query_caches.accept_cache;
+    let search_cache = &query_caches.search_cache;
     support_plane_cell_reference_with_queries_and_trace_surface_caches(
         old_ref,
         old_ref_definitions,
@@ -3337,19 +3361,20 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
         polygons,
         &mut halfspaces,
         &mut |halfspaces| {
-            cached_halfspace_report_with(&mut query_caches.report_cache, halfspaces, |halfspaces| {
+            cached_halfspace_report_with(report_cache, halfspaces, |halfspaces| {
                 halfspace_system_report(halfspaces)
             })
         },
         &mut |halfspaces| {
-            cached_halfspace_feasibility_with(
-                &mut query_caches.feasible_cache,
-                halfspaces,
-                |halfspaces| halfspace_system_is_feasible(halfspaces),
-            )
+            cached_halfspace_feasibility_with(feasible_cache, halfspaces, |halfspaces| {
+                halfspace_system_is_feasible(halfspaces)
+            })
         },
-        &mut query_caches.trace_cache,
-        &mut query_caches.support_surface_cache,
+        trace_cache,
+        support_surface_cache,
+        target_cache,
+        accept_cache,
+        search_cache,
     )
 }
 
@@ -3367,6 +3392,7 @@ fn support_plane_cell_reference_with_queries(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut trace_cache = Vec::new();
     let mut support_surface_cache = Vec::new();
+    let query_caches = SupportReferenceQueryCaches::default();
     support_plane_cell_reference_with_queries_and_trace_surface_caches(
         old_ref,
         old_ref_definitions,
@@ -3378,6 +3404,9 @@ fn support_plane_cell_reference_with_queries(
         feasible_for,
         &mut trace_cache,
         &mut support_surface_cache,
+        &query_caches.target_cache,
+        &query_caches.accept_cache,
+        &query_caches.search_cache,
     )
 }
 
@@ -3394,14 +3423,17 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     feasible_for: &mut impl FnMut(&[LimitPlane3]) -> HypermeshResult<bool>,
     trace_cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
     support_surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
+    target_cache: &std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
+    accept_cache: &std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
+    search_cache: &std::cell::RefCell<
+        Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>,
+    >,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if halfspaces.is_empty() {
         return Ok(None);
     }
 
     let reference_validity_cache = std::cell::RefCell::new(Vec::new());
-    let target_cache = std::cell::RefCell::new(Vec::new());
-    let accept_cache = std::cell::RefCell::new(Vec::new());
 
     let initial_feasible_unknown = match feasible_for(halfspaces) {
         Ok(true) => false,
@@ -3415,6 +3447,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
         cached_support_reference_accept_with(
             &mut accept_cache.borrow_mut(),
+            bounds,
             halfspaces,
             report.as_ref(),
             |halfspaces, report| {
@@ -3422,6 +3455,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                 trace_reference_targets_backtracking_unknown_with_query_caches(
                     cached_support_target_family_with(
                         &mut target_cache.borrow_mut(),
+                        bounds,
                         halfspaces,
                         report,
                         |halfspaces, report| {
@@ -3450,7 +3484,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
         )
     };
 
-    match support_plane_cell_search_with_queries(
+    match support_plane_cell_search_with_queries_cached(
         Some(old_ref),
         bounds,
         polygons,
@@ -3459,6 +3493,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
         report_for,
         feasible_for,
         &mut accept,
+        search_cache,
     ) {
         Ok(Some(found)) => Ok(Some(found)),
         Ok(None) if initial_feasible_unknown => {
@@ -3670,7 +3705,7 @@ fn support_plane_cell_search_with_queries_cached<T>(
 where
     T: Clone,
 {
-    cached_support_plane_cell_search_with(cache, polygon_index, halfspaces.to_vec(), || {
+    cached_support_plane_cell_search_with(cache, bounds, polygon_index, halfspaces.to_vec(), || {
         if halfspaces_force_support_plane_contact(halfspaces, polygons) {
             return Ok(None);
         }
@@ -7660,6 +7695,7 @@ mod tests {
 
         let first = cached_support_target_family_with(
             &mut cache,
+            &bounds,
             &halfspaces,
             Some(&report),
             |_halfspaces, _report| {
@@ -7670,6 +7706,7 @@ mod tests {
         .unwrap();
         let second = cached_support_target_family_with(
             &mut cache,
+            &bounds,
             &halfspaces,
             Some(&report),
             |_halfspaces, _report| {
@@ -7694,6 +7731,7 @@ mod tests {
 
         let first = cached_support_reference_accept_with(
             &mut cache,
+            &bounds,
             &halfspaces,
             Some(&report),
             |_halfspaces, _report| {
@@ -7707,6 +7745,7 @@ mod tests {
         .unwrap();
         let second = cached_support_reference_accept_with(
             &mut cache,
+            &bounds,
             &halfspaces,
             Some(&report),
             |_halfspaces, _report| {
@@ -7722,16 +7761,18 @@ mod tests {
 
     #[test]
     fn cached_support_plane_cell_search_reuses_identical_state_and_index() {
-        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
         let cache = std::cell::RefCell::new(Vec::new());
         let mut calls = 0;
 
-        let first = cached_support_plane_cell_search_with(&cache, 3, halfspaces.clone(), || {
-            calls += 1;
-            Ok(Some(17))
-        })
-        .unwrap();
-        let second = cached_support_plane_cell_search_with(&cache, 3, halfspaces, || {
+        let first =
+            cached_support_plane_cell_search_with(&cache, &bounds, 3, halfspaces.clone(), || {
+                calls += 1;
+                Ok(Some(17))
+            })
+            .unwrap();
+        let second = cached_support_plane_cell_search_with(&cache, &bounds, 3, halfspaces, || {
             calls += 1;
             Ok(Some(99))
         })
