@@ -2837,20 +2837,6 @@ fn extend_reference_target_families_collect_unknown(
     Ok(saw_unknown)
 }
 
-fn point3_family_or_empty(
-    result: HypermeshResult<Vec<Point3>>,
-    saw_unknown: &mut bool,
-) -> HypermeshResult<Vec<Point3>> {
-    match result {
-        Ok(points) => Ok(points),
-        Err(crate::error::HypermeshError::UnknownClassification) => {
-            *saw_unknown = true;
-            Ok(Vec::new())
-        }
-        Err(err) => Err(err),
-    }
-}
-
 #[derive(Clone)]
 struct HalfspaceReportCacheEntry {
     halfspaces: Vec<LimitPlane3>,
@@ -5671,9 +5657,9 @@ fn shifted_support_cell_targets_from_families(
 fn support_cell_seed_geometry_state(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<SupportCellSeedGeometryState> {
-    let mut saw_unknown = false;
-    let shifted_vertices =
-        point3_family_or_empty(feasible_support_cell_vertices(halfspaces), &mut saw_unknown)?;
+    let shifted_vertex_family = feasible_support_cell_vertex_family(halfspaces)?;
+    let saw_unknown = shifted_vertex_family.saw_unknown;
+    let shifted_vertices = shifted_vertex_family.points;
     let shifted_geometry_seeds =
         support_cell_geometry_seed_candidates_from_vertices(&shifted_vertices)?;
     Ok(SupportCellSeedGeometryState {
@@ -5684,15 +5670,21 @@ fn support_cell_seed_geometry_state(
 }
 
 fn feasible_support_cell_vertices(halfspaces: &[LimitPlane3]) -> HypermeshResult<Vec<Point3>> {
-    feasible_support_cell_vertices_with_contains(halfspaces, |point, halfspaces| {
+    Ok(feasible_support_cell_vertex_family(halfspaces)?.points)
+}
+
+fn feasible_support_cell_vertex_family(
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<Point3FamilyState> {
+    feasible_support_cell_vertex_family_with_contains(halfspaces, |point, halfspaces| {
         point_satisfies_halfspaces(point, halfspaces)
     })
 }
 
-fn feasible_support_cell_vertices_with_contains(
+fn feasible_support_cell_vertex_family_with_contains(
     halfspaces: &[LimitPlane3],
     mut contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
-) -> HypermeshResult<Vec<Point3>> {
+) -> HypermeshResult<Point3FamilyState> {
     let mut vertices = Vec::new();
     let mut saw_unknown = false;
     for first in 0..halfspaces.len() {
@@ -5724,8 +5716,18 @@ fn feasible_support_cell_vertices_with_contains(
     if vertices.is_empty() && saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
-        Ok(vertices)
+        Ok(Point3FamilyState {
+            points: vertices,
+            saw_unknown,
+        })
     }
+}
+
+fn feasible_support_cell_vertices_with_contains(
+    halfspaces: &[LimitPlane3],
+    contains: impl FnMut(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<Vec<Point3>> {
+    Ok(feasible_support_cell_vertex_family_with_contains(halfspaces, contains)?.points)
 }
 
 fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
@@ -11385,6 +11387,32 @@ mod tests {
         .unwrap();
 
         assert_eq!(vertices, vec![second]);
+    }
+
+    #[test]
+    fn feasible_support_cell_vertex_family_tracks_unknown_after_later_vertex() {
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(0)),
+            axis_halfspace(0, false, r(0)),
+            axis_halfspace(1, true, r(0)),
+            axis_halfspace(1, false, r(0)),
+            axis_halfspace(2, true, r(0)),
+            axis_halfspace(2, false, r(1)),
+        ];
+        let first = p(0, 0, 0);
+        let second = p(0, 0, 1);
+
+        let family = feasible_support_cell_vertex_family_with_contains(&halfspaces, |point, _| {
+            if point == &first {
+                Err(crate::error::HypermeshError::UnknownClassification)
+            } else {
+                Ok(point == &second)
+            }
+        })
+        .unwrap();
+
+        assert_eq!(family.points, vec![second]);
+        assert!(family.saw_unknown);
     }
 
     #[test]

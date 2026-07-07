@@ -606,7 +606,11 @@ The same per-update projected/support support-search cache set now also reuses
 the feasible support-cell vertex family and derived geometry-seed family for
 identical halfspace states, so projected root-family construction and later
 projected/support target construction do not rebuild that exact seed geometry
-from scratch on each revisit. The support side now also caches shifted
+from scratch on each revisit. Partially uncertified feasible support-cell
+vertex families now also keep that uncertainty attached when later exact
+vertices survive, so the cached seed-geometry state does not flatten that
+branch back into an apparently fully certified seed family. The support side
+now also caches shifted
 support-cell halfspace/report/seed families by exact `(bounds, halfspaces,
 seed)` state, so repeated shifted support-target construction does not rebuild
 the same shifted local search stack after earlier support attempts already
