@@ -653,6 +653,10 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
                 }
                 Err(err) => return Err(err),
             };
+        if detour.uncertified_definition_fallback {
+            saw_unknown = true;
+            continue;
+        }
         return Ok(Some(second_leg));
     }
 
@@ -811,6 +815,10 @@ fn trace_segment_via_detours_with_definitions_budget(
             }
             Err(err) => return Err(err),
         };
+        if detour.uncertified_definition_fallback {
+            saw_unknown = true;
+            continue;
+        }
         return Ok(Some(second_leg));
     }
 
@@ -3047,7 +3055,13 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
             trace_without_detours,
             detours_for,
         ) {
-            Ok(true) => return Ok(true),
+            Ok(true) => {
+                if detour.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                return Ok(true);
+            }
             Ok(false) => {
                 if detour.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -3167,7 +3181,13 @@ fn probe_reaches_adjacent_cell_via_detours_with_budget(
             trace_without_detours,
             detours_for,
         ) {
-            Ok(true) => return Ok(true),
+            Ok(true) => {
+                if detour.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                return Ok(true);
+            }
             Ok(false) => {
                 if detour.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -3520,7 +3540,13 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             trace_without_detours,
             detours_for,
         ) {
-            Ok(true) => return Ok(true),
+            Ok(true) => {
+                if detour.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                return Ok(true);
+            }
             Ok(false) => {
                 if detour.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -8752,7 +8778,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(winding, Some(vec![2]));
+        assert_eq!(winding, Some(vec![4]));
     }
 
     #[test]
@@ -12539,6 +12565,82 @@ mod tests {
     }
 
     #[test]
+    fn detour_trace_cycle_guard_skips_fallback_detour_even_when_legs_succeed() {
+        let start = p(0, 0, 0);
+        let fallback_detour = p(1, 0, 0);
+        let certified_detour = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let mut surface_cache = Vec::new();
+
+        let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[
+                DetourTarget {
+                    point: fallback_detour.clone(),
+                    definitions: vec![axis_plane_definition(&fallback_detour)],
+                    uncertified_definition_fallback: true,
+                },
+                DetourTarget {
+                    point: certified_detour.clone(),
+                    definitions: vec![axis_plane_definition(&certified_detour)],
+                    uncertified_definition_fallback: false,
+                },
+            ],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut surface_cache,
+            &mut |_point| Ok(false),
+            &mut |_from, to, winding, _start_definitions, _end_definitions| {
+                Ok(Some(vec![if *to == fallback_detour {
+                    winding[0] + 1
+                } else {
+                    winding[0] + 2
+                }]))
+            },
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![4]));
+    }
+
+    #[test]
+    fn detour_trace_cycle_guard_reports_unknown_when_only_fallback_detour_succeeds() {
+        let start = p(0, 0, 0);
+        let fallback_detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let mut surface_cache = Vec::new();
+
+        let err = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+            &start,
+            &end,
+            &[0],
+            &[],
+            &[DetourTarget {
+                point: fallback_detour.clone(),
+                definitions: vec![axis_plane_definition(&fallback_detour)],
+                uncertified_definition_fallback: true,
+            }],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut surface_cache,
+            &mut |_point| Ok(false),
+            &mut |_from, _to, winding, _start_definitions, _end_definitions| {
+                Ok(Some(winding.to_vec()))
+            },
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
         let start = p(0, 0, 0);
         let first_detour = p(1, 0, 0);
@@ -13226,6 +13328,93 @@ mod tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn probe_step_detour_cycle_guard_skips_fallback_detour_even_when_path_succeeds() {
+        let start = p(0, 0, 0);
+        let fallback_detour = p(1, 0, 0);
+        let certified_detour = p(2, 0, 0);
+        let end = p(3, 0, 0);
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut |from, to, _start_definitions, _end_definitions| {
+                    if *from == start && *to == end {
+                        Ok(false)
+                    } else {
+                        Ok(true)
+                    }
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![
+                            DetourTarget {
+                                point: fallback_detour.clone(),
+                                definitions: vec![axis_plane_definition(&fallback_detour)],
+                                uncertified_definition_fallback: true,
+                            },
+                            DetourTarget {
+                                point: certified_detour.clone(),
+                                definitions: vec![axis_plane_definition(&certified_detour)],
+                                uncertified_definition_fallback: false,
+                            },
+                        ])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_step_detour_cycle_guard_reports_unknown_when_only_fallback_detour_succeeds() {
+        let start = p(0, 0, 0);
+        let fallback_detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+
+        let err =
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut |from, to, _start_definitions, _end_definitions| {
+                    if *from == start && *to == end {
+                        Ok(false)
+                    } else {
+                        Ok(true)
+                    }
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: fallback_detour.clone(),
+                            definitions: vec![axis_plane_definition(&fallback_detour)],
+                            uncertified_definition_fallback: true,
+                        }])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

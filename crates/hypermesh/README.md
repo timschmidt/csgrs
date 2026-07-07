@@ -329,7 +329,11 @@ step detours no longer collapse back to plain `false` when they are skipped or
 their later legs cannot certify a path. The cycle-guarded runtime detour paths
 now also preserve that uncertainty when a fallback-built detour is skipped
 because it revisits the current start/end or an already-visited detour point,
-instead of flattening that skip back into ordinary absence. The same
+instead of flattening that skip back into ordinary absence. And if a
+fallback-built detour does certify both legs, that still no longer counts as
+final success by itself: the cycle-guarded detour search keeps looking for a
+certified detour, and returns `UnknownClassification` if only fallback-built
+detours succeed. The same
 cycle-guarded reachability layer now also keeps searching detours after an
 uncertified direct no-detour adjacency check, instead of aborting detour
 fallback before any later certified detour path runs.
