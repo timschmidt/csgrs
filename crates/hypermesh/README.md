@@ -165,6 +165,10 @@ apparently fully certified shifted vertex family. The same now holds one layer
 deeper for centroid-based geometry-seed subset families on both the leaf and
 reference sides: one uncertified subset centroid no longer aborts the whole
 local geometry-seed family before later exact subset centroids run.
+The reference-side direct strict projected/support seed filters now also treat
+exact child-boundary candidates as `UnknownClassification` instead of ordinary
+non-strict seeds, so later certified strict seed families still run with that
+uncertainty preserved.
 Likewise, shifted halfspace witness collectors now treat surviving fallback-marked
 shifted witnesses as uncertainty that carries forward across later sibling
 seeds and sibling seed families, instead of only noticing hard

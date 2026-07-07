@@ -5116,7 +5116,7 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
-                    point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+                    point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
                 })
             } else {
                 Ok(Point3FamilyState {
@@ -5125,10 +5125,10 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                 })
             },
             collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
-                point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+                point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
             }),
             collect_point3_family(Ok(shifted_geometry_seeds.clone()), |candidate| {
-                point_strictly_inside_projected_cell(candidate, bounds, halfspaces)
+                point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
             }),
         ],
     )?;
@@ -5659,7 +5659,7 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
                 collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
-                    point_strictly_inside_support_cell(candidate, bounds, halfspaces)
+                    point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
                 })
             } else {
                 Ok(Point3FamilyState {
@@ -5668,10 +5668,10 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                 })
             },
             collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
-                point_strictly_inside_support_cell(candidate, bounds, halfspaces)
+                point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
             }),
             collect_point3_family(Ok(shifted_geometry_seeds.clone()), |candidate| {
-                point_strictly_inside_support_cell(candidate, bounds, halfspaces)
+                point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
             }),
         ],
     )?;
@@ -5903,12 +5903,28 @@ fn point_strictly_inside_projected_cell(
     point_strictly_inside_reference_halfspace_cell(point, bounds, halfspaces)
 }
 
+fn point_strictly_inside_projected_cell_or_unknown(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
+}
+
 fn point_strictly_inside_support_cell(
     point: &Point3,
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<bool> {
     point_strictly_inside_reference_halfspace_cell(point, bounds, halfspaces)
+}
+
+fn point_strictly_inside_support_cell_or_unknown(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    point_strictly_inside_reference_halfspace_cell_or_unknown(point, bounds, halfspaces)
 }
 
 fn point_strictly_inside_reference_halfspace_cell(
@@ -5931,6 +5947,42 @@ fn point_strictly_inside_reference_halfspace_cell(
             }
         } else if compare_real(&value, &Real::zero())?.is_eq() {
             return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn point_strictly_inside_reference_halfspace_cell_or_unknown(
+    point: &Point3,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    if !point_strictly_inside_bounds(point, bounds)? {
+        for axis in 0..3 {
+            let min = axis_ref(&bounds.min, axis);
+            let max = axis_ref(&bounds.max, axis);
+            if compare_real(min, max)?.is_eq() {
+                continue;
+            }
+            let point_value = axis_ref(point, axis);
+            if compare_real(point_value, min)?.is_eq() || compare_real(point_value, max)?.is_eq() {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+        }
+        return Ok(false);
+    }
+    for halfspace in halfspaces {
+        if halfspace_is_degenerate_bound(halfspace, bounds)? {
+            continue;
+        }
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        let value = plane.expression_at_point(point);
+        if halfspace_has_opposite_pair(halfspace, halfspaces) {
+            if compare_real(&value, &Real::zero())?.is_ne() {
+                return Ok(false);
+            }
+        } else if compare_real(&value, &Real::zero())?.is_eq() {
+            return Err(crate::error::HypermeshError::UnknownClassification);
         }
     }
     Ok(true)
@@ -7768,6 +7820,24 @@ mod tests {
         .unwrap();
 
         assert_eq!(family.points, vec![p(2, 3, 4)]);
+        assert!(family.saw_unknown);
+    }
+
+    #[test]
+    fn collect_point3_family_tracks_unknown_after_reference_boundary_candidate() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let family = collect_point3_family(Ok(vec![p(0, 2, 2), p(1, 1, 1)]), |candidate| {
+            point_strictly_inside_reference_halfspace_cell_or_unknown(
+                candidate,
+                &bounds,
+                &halfspaces,
+            )
+        })
+        .unwrap();
+
+        assert_eq!(family.points, vec![p(1, 1, 1)]);
         assert!(family.saw_unknown);
     }
 
@@ -11884,6 +11954,27 @@ mod tests {
     }
 
     #[test]
+    fn projected_cell_seed_families_track_unknown_after_boundary_vertex_candidate() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut saw_unknown = false;
+
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+            projected_cell_seed_families_from_optional_report(
+                &bounds,
+                &halfspaces,
+                None,
+                &mut saw_unknown,
+            )
+            .unwrap();
+
+        assert!(saw_unknown);
+        assert!(!strict_seeds.is_empty());
+        assert!(!shifted_vertices.is_empty());
+        assert!(!shifted_geometry_seeds.is_empty());
+    }
+
+    #[test]
     fn strict_projected_cell_seeds_include_strict_geometry_seeds_without_report() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -12161,6 +12252,27 @@ mod tests {
         assert!(point_strictly_inside_support_cell(&tetra_center, &bounds, &halfspaces).unwrap());
         assert!(seeds.iter().any(|seed| seed == &triangle_center));
         assert!(seeds.iter().any(|seed| seed == &tetra_center));
+    }
+
+    #[test]
+    fn support_cell_seed_families_track_unknown_after_boundary_vertex_candidate() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut saw_unknown = false;
+
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+            support_cell_seed_families_from_optional_report(
+                &bounds,
+                &halfspaces,
+                None,
+                &mut saw_unknown,
+            )
+            .unwrap();
+
+        assert!(saw_unknown);
+        assert!(!strict_seeds.is_empty());
+        assert!(!shifted_vertices.is_empty());
+        assert!(!shifted_geometry_seeds.is_empty());
     }
 
     #[test]
