@@ -954,9 +954,13 @@ and reuses that exact segment set across all three axis-specific intersection
 candidate scans, instead of rebuilding the same BVH and polygon-pair segment
 intersections once per axis. The same top-level subdivision runtime now also
 keeps one exact pairwise polygon-intersection family per repeated local polygon
-sequence and reuses it across split child-intersection load and later direct
-leaf/BSP processing, instead of rebuilding the same pairwise polygon relation
-again when recursive branches revisit that exact local family. Recursive branches that
+family up to permutation and reuses it across split child-intersection load
+and later direct leaf/BSP processing, instead of rebuilding the same pairwise
+polygon relation again when recursive branches revisit that exact local family
+in a different polygon order. Cached split child partitions now also reuse the
+same clipped child polygon families across those permuted parent orders instead
+of fragmenting on order-only differences before later recursion and child-state
+reuse. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf

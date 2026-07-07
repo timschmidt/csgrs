@@ -746,7 +746,7 @@ fn cached_split_child_partition_with(
 ) -> HypermeshResult<SplitChildPartition> {
     for existing in cache.borrow().iter() {
         if existing.axis == axis
-            && existing.polygons == polygons
+            && polygon_families_match_as_multisets(&existing.polygons, polygons)
             && compare_real(&existing.value, value)?.is_eq()
         {
             return existing.result.clone();
@@ -1332,12 +1332,16 @@ fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
-    if let Some(existing) = cache
-        .borrow()
-        .iter()
-        .find(|existing| existing.polygons == polygons)
-    {
-        return existing.result.clone();
+    for existing in cache.borrow().iter() {
+        if existing.polygons == polygons {
+            return existing.result.clone();
+        }
+        if let Some(query_to_cached) = polygon_family_order_mapping(polygons, &existing.polygons) {
+            return remap_pairwise_intersections_for_polygon_order(
+                existing.result.clone(),
+                &query_to_cached,
+            );
+        }
     }
 
     let result = pairwise_intersections_by_polygon(polygons);
@@ -1346,6 +1350,73 @@ fn cached_pairwise_intersections_by_polygon_with(
         result: result.clone(),
     });
     result
+}
+
+fn polygon_family_order_mapping(
+    query_polygons: &[ConvexPolygon],
+    cached_polygons: &[ConvexPolygon],
+) -> Option<Vec<usize>> {
+    if query_polygons.len() != cached_polygons.len() {
+        return None;
+    }
+
+    let mut cached_used = vec![false; cached_polygons.len()];
+    let mut query_to_cached = Vec::with_capacity(query_polygons.len());
+    for query_polygon in query_polygons {
+        let (cached_index, _) =
+            cached_polygons
+                .iter()
+                .enumerate()
+                .find(|(cached_index, cached_polygon)| {
+                    !cached_used[*cached_index] && *cached_polygon == query_polygon
+                })?;
+        cached_used[cached_index] = true;
+        query_to_cached.push(cached_index);
+    }
+
+    Some(query_to_cached)
+}
+
+fn remap_pairwise_intersections_for_polygon_order(
+    intersections: HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    query_to_cached: &[usize],
+) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
+    let intersections = intersections?;
+    if intersections.len() != query_to_cached.len() {
+        return Err(crate::error::HypermeshError::UnknownClassification);
+    }
+
+    let mut cached_to_query = vec![usize::MAX; query_to_cached.len()];
+    for (query_index, &cached_index) in query_to_cached.iter().enumerate() {
+        if cached_index >= cached_to_query.len() || cached_to_query[cached_index] != usize::MAX {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        cached_to_query[cached_index] = query_index;
+    }
+
+    let mut remapped = Vec::with_capacity(query_to_cached.len());
+    for &cached_index in query_to_cached {
+        let mut query_intersections = Vec::with_capacity(intersections[cached_index].len());
+        for intersection in &intersections[cached_index] {
+            let mut remapped_intersection = intersection.clone();
+            if let Some(segment) = &mut remapped_intersection.segment {
+                if segment.other_polygon_idx >= cached_to_query.len() {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+                segment.other_polygon_idx = cached_to_query[segment.other_polygon_idx];
+            }
+            if let Some(overlap) = &mut remapped_intersection.overlap {
+                if overlap.other_polygon_idx >= cached_to_query.len() {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+                overlap.other_polygon_idx = cached_to_query[overlap.other_polygon_idx];
+            }
+            query_intersections.push(remapped_intersection);
+        }
+        remapped.push(query_intersections);
+    }
+
+    Ok(remapped)
 }
 
 fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
@@ -7628,6 +7699,34 @@ mod tests {
     }
 
     #[test]
+    fn cached_split_child_partition_reuses_permuted_polygon_families() {
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let cache = RefCell::new(Vec::new());
+        let pairwise_cache = RefCell::new(Vec::new());
+
+        let first = cached_split_child_partition_with(
+            &cache,
+            &pairwise_cache,
+            &[polygon_a.clone(), polygon_b.clone()],
+            0,
+            &r(3),
+        )
+        .unwrap();
+        let second = cached_split_child_partition_with(
+            &cache,
+            &pairwise_cache,
+            &[polygon_b, polygon_a],
+            0,
+            &r(3),
+        )
+        .unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
+    }
+
+    #[test]
     fn ordered_subdivision_split_search_backtracks_after_unknown_candidate() {
         let candidates = vec![(0, r(1)), (1, r(2))];
         let mut visited = Vec::new();
@@ -9765,6 +9864,24 @@ mod tests {
         let second = cached_pairwise_intersections_by_polygon_with(&cache, &polygons).unwrap();
 
         assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
+    }
+
+    #[test]
+    fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
+        let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+        let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+        let first_polygons = vec![horizontal.clone(), vertical.clone()];
+        let second_polygons = vec![vertical, horizontal];
+        let cache = RefCell::new(Vec::new());
+
+        let first = cached_pairwise_intersections_by_polygon_with(&cache, &first_polygons).unwrap();
+        let second =
+            cached_pairwise_intersections_by_polygon_with(&cache, &second_polygons).unwrap();
+        let direct = pairwise_intersections_by_polygon(&second_polygons).unwrap();
+
+        assert_eq!(first.len(), 2);
+        assert_eq!(second, direct);
         assert_eq!(cache.borrow().len(), 1);
     }
 
