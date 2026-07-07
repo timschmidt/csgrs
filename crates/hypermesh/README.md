@@ -256,6 +256,10 @@ replay reconstruction fails. Definition-preserving normal-probe search now
 also ignores stale active-plane indices and still salvages coincident local
 halfspace definitions before collapsing all the way to axis-only replay, and
 the same recovery now applies to reference-target definition reconstruction.
+The direct axis-ordered segment path now also keeps trying later orderings
+when one intermediate surface-membership check or one axis-aligned leg trace
+is uncertified, instead of aborting the whole ordered-path search before those
+later exact orderings run.
 Strict leaf-witness replay now does the same for stale active-plane indices
 instead of collapsing immediately to support-plus-axis interior replay when
 coincident leaf-cell planes are still available.

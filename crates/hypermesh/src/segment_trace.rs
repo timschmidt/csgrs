@@ -1379,18 +1379,35 @@ fn trace_axis_ordered_paths_with_queries(
             if compare_real(axis_ref(&current, axis), axis_ref(end, axis))?.is_ne() {
                 let mut next = current.clone();
                 *axis_mut(&mut next, axis) = axis_ref(end, axis).clone();
-                if next != *end && point_lies_on_surface(&next)? {
-                    valid = false;
-                    break;
+                if next != *end {
+                    match point_lies_on_surface(&next) {
+                        Ok(true) => {
+                            valid = false;
+                            break;
+                        }
+                        Ok(false) => {}
+                        Err(HypermeshError::UnknownClassification) => {
+                            valid = false;
+                            break;
+                        }
+                        Err(err) => return Err(err),
+                    }
                 }
-                let traced = cached_axis_ordered_segment_trace_with(
+                let traced = match cached_axis_ordered_segment_trace_with(
                     &mut segment_cache,
                     &current,
                     &next,
                     axis,
                     &attempt,
                     || trace_segment_step(&current, &next, axis, &attempt, polygons),
-                )?;
+                ) {
+                    Ok(traced) => traced,
+                    Err(HypermeshError::UnknownClassification) => {
+                        valid = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
+                };
                 attempt = traced.winding;
                 valid = traced.valid;
                 current = next;
@@ -8262,6 +8279,62 @@ mod tests {
 
         assert_eq!(err, HypermeshError::UnknownClassification);
         assert_eq!(trace_calls, 2);
+    }
+
+    #[test]
+    fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_surface_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 0);
+
+        let winding = trace_axis_ordered_paths_with_queries(
+            &start,
+            &end,
+            &[7],
+            &[],
+            |point| {
+                if *point == p(1, 0, 0) {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            },
+            |_current, _next, _axis, attempt, _polygons| {
+                Ok(TraceAxisSegmentResult {
+                    winding: attempt.to_vec(),
+                    valid: true,
+                })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
+    fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_segment_step() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 0);
+
+        let winding = trace_axis_ordered_paths_with_queries(
+            &start,
+            &end,
+            &[7],
+            &[],
+            |_point| Ok(false),
+            |current, next, _axis, attempt, _polygons| {
+                if *current == start && *next == p(1, 0, 0) {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(TraceAxisSegmentResult {
+                        winding: attempt.to_vec(),
+                        valid: true,
+                    })
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
     }
 
     #[test]
