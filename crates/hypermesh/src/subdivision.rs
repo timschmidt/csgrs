@@ -5482,6 +5482,74 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
 }
 
 #[cfg(test)]
+fn strict_support_cell_targets_from_seed_families_with_tracking_unknown(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    saw_unknown: &mut bool,
+    mut build_shifted_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut targets = Vec::new();
+    let report_witness = report.and_then(|report| report.witness.clone());
+    let mut strict_direct_seed_search_order = Vec::new();
+    let strict_direct_seeds =
+        take_new_point_family(strict_seeds.clone(), &mut strict_direct_seed_search_order);
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        shifted_target_seed_families_with_report_seed(
+            report_witness.as_ref(),
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+    let deferred_direct_targets = deferred_direct_reference_targets_from_strict_seeds(
+        &strict_direct_seeds,
+        report_witness.as_ref(),
+        halfspaces,
+        saw_unknown,
+    )?;
+    *saw_unknown |= extend_reference_target_families_collect_hard_unknown(
+        &mut targets,
+        [
+            reference_target_family_from_witness(
+                report.and_then(|report| report.witness.as_ref()),
+                |witness| {
+                    point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
+                },
+                |witness| {
+                    reference_target_from_halfspace_witness(
+                        witness,
+                        halfspaces,
+                        active_planes_from_optional_halfspace_report(report, witness),
+                    )
+                },
+            ),
+            collect_reference_target_family(strict_shift_seeds, |seed| {
+                build_shifted_targets(&seed)
+            }),
+            collect_reference_target_family(shifted_vertices, |vertex| {
+                build_shifted_targets(&vertex)
+            }),
+            collect_reference_target_family(shifted_geometry_seeds, |seed| {
+                build_shifted_targets(&seed)
+            }),
+        ],
+    )?;
+    for target in deferred_direct_targets {
+        push_unique_reference_target(&mut targets, target);
+    }
+    *saw_unknown |= targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    if *saw_unknown {
+        mark_all_reference_targets_uncertified(&mut targets);
+    }
+    Ok(targets)
+}
+
+#[cfg(test)]
 fn strict_support_cell_seeds_from_report(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -8465,6 +8533,36 @@ mod tests {
         let mut saw_unknown = false;
 
         let targets = strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
+            &bounds,
+            &halfspaces,
+            Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
+                witness.clone(),
+                [None, None, None],
+            )),
+            Vec::new(),
+            vec![witness.clone()],
+            Vec::new(),
+            &mut saw_unknown,
+            |seed| {
+                visited.borrow_mut().push(seed.clone());
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![witness]);
+        assert!(targets.iter().any(|target| target.point == p(9, 9, 9)));
+    }
+
+    #[test]
+    fn strict_support_target_family_tries_shifted_search_from_report_witness_seed() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 2, 3);
+        let visited = std::cell::RefCell::new(Vec::new());
+        let mut saw_unknown = false;
+
+        let targets = strict_support_cell_targets_from_seed_families_with_tracking_unknown(
             &bounds,
             &halfspaces,
             Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
