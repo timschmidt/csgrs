@@ -1038,7 +1038,74 @@ fn interior_box_detour_targets(
     end: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<DetourTarget>> {
+    interior_box_detour_targets_with_queries(
+        start,
+        end,
+        polygons,
+        |edge_start, edge_end, polygon, axis| {
+            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
+                if let Some(crossing) = crossing {
+                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
+                        return Ok(None);
+                    }
+                    Ok(Some(crossing))
+                } else {
+                    Ok(None)
+                }
+            })
+        },
+        |crossing, polygon| point_lies_on_polygon(crossing, polygon),
+        |bounds| strict_aabb_targets(bounds),
+    )
+}
+
+fn interior_box_detour_targets_with_queries(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    mut crossing_for: impl FnMut(
+        &Point3,
+        &Point3,
+        &ConvexPolygon,
+        usize,
+    ) -> HypermeshResult<Option<Point3>>,
+    mut point_on_polygon: impl FnMut(&Point3, &ConvexPolygon) -> HypermeshResult<bool>,
+    mut build: impl FnMut(&Aabb) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<Vec<DetourTarget>> {
+    let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        start,
+        end,
+        polygons,
+        &mut crossing_for,
+        &mut point_on_polygon,
+    )?;
+
+    let mut targets =
+        collect_detour_targets_from_axis_intervals(&intervals, |bounds| build(bounds))?;
+    if targets.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if saw_unknown {
+            mark_all_detour_targets_uncertified(&mut targets);
+        }
+        Ok(targets)
+    }
+}
+
+fn interior_box_axis_intervals_with_surface_queries(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    crossing_for: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &ConvexPolygon,
+        usize,
+    ) -> HypermeshResult<Option<Point3>>,
+    point_on_polygon: &mut impl FnMut(&Point3, &ConvexPolygon) -> HypermeshResult<bool>,
+) -> HypermeshResult<(Vec<Vec<(Real, Real)>>, bool)> {
     let mut intervals = vec![Vec::new(), Vec::new(), Vec::new()];
+    let mut saw_unknown = false;
     for (axis, axis_intervals) in intervals.iter_mut().enumerate() {
         let start_value = axis_ref(start, axis);
         let end_value = axis_ref(end, axis);
@@ -1057,7 +1124,7 @@ fn interior_box_detour_targets(
                     push_unique_ordered_real(&mut cuts, value.clone())?;
                 }
             }
-            add_axis_box_surface_cuts(
+            saw_unknown |= add_axis_box_surface_cuts_with_queries(
                 &mut cuts,
                 start,
                 end,
@@ -1065,6 +1132,8 @@ fn interior_box_detour_targets(
                 axis,
                 start_value,
                 end_value,
+                crossing_for,
+                point_on_polygon,
             )?;
         }
 
@@ -1073,7 +1142,7 @@ fn interior_box_detour_targets(
         }
     }
 
-    collect_detour_targets_from_axis_intervals(&intervals, |bounds| strict_aabb_targets(bounds))
+    Ok((intervals, saw_unknown))
 }
 
 fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aabb> {
@@ -1266,7 +1335,7 @@ fn collect_detour_targets_from_axis_intervals(
     Ok(detours)
 }
 
-fn add_axis_box_surface_cuts(
+fn add_axis_box_surface_cuts_with_queries(
     cuts: &mut Vec<Real>,
     start: &Point3,
     end: &Point3,
@@ -1274,8 +1343,16 @@ fn add_axis_box_surface_cuts(
     axis: usize,
     start_value: &Real,
     end_value: &Real,
-) -> HypermeshResult<()> {
+    crossing_for: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &ConvexPolygon,
+        usize,
+    ) -> HypermeshResult<Option<Point3>>,
+    point_on_polygon: &mut impl FnMut(&Point3, &ConvexPolygon) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
     let other_axes = other_axes(axis);
+    let mut saw_unknown = false;
     for first in [axis_ref(start, other_axes[0]), axis_ref(end, other_axes[0])] {
         for second in [axis_ref(start, other_axes[1]), axis_ref(end, other_axes[1])] {
             let mut edge_start = Point3::origin();
@@ -1287,11 +1364,25 @@ fn add_axis_box_surface_cuts(
             *axis_mut(&mut edge_start, other_axes[1]) = second.clone();
             *axis_mut(&mut edge_end, other_axes[1]) = second.clone();
 
-            let Some(crossing) = segment_plane_crossing(&edge_start, &edge_end, &polygon.support)?
-            else {
+            let Some(crossing) = (match crossing_for(&edge_start, &edge_end, polygon, axis) {
+                Ok(crossing) => crossing,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }) else {
                 continue;
             };
-            if point_lies_on_polygon(&crossing, polygon)? {
+            let on_polygon = match point_on_polygon(&crossing, polygon) {
+                Ok(on_polygon) => on_polygon,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+            if on_polygon {
                 let value = axis_ref(&crossing, axis);
                 if value_strictly_between(value, start_value, end_value)? {
                     push_unique_ordered_real(cuts, value.clone())?;
@@ -1299,7 +1390,7 @@ fn add_axis_box_surface_cuts(
             }
         }
     }
-    Ok(())
+    Ok(saw_unknown)
 }
 
 fn other_axes(axis: usize) -> [usize; 2] {
@@ -5164,6 +5255,99 @@ mod tests {
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, Point3::new(r(1), q(1, 2), q(1, 2)));
         assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn axis_box_surface_cut_collection_backtracks_after_uncertified_crossing() {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+            &start,
+            &end,
+            &[first, second],
+            &mut |_edge_start, _edge_end, polygon, _axis| {
+                if polygon.vertices().unwrap()[0].x == r(1) {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(p(1, 0, 0)))
+                }
+            },
+            &mut |_crossing, _polygon| Ok(true),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(intervals[0], vec![(r(0), r(1)), (r(1), r(2))]);
+    }
+
+    #[test]
+    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_uncertified_surface_cut()
+     {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let targets = interior_box_detour_targets_with_queries(
+            &start,
+            &end,
+            &[first, second],
+            |_edge_start, _edge_end, polygon, _axis| {
+                if polygon.vertices().unwrap()[0].x == r(1) {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(p(1, 0, 0)))
+                }
+            },
+            |_crossing, _polygon| Ok(true),
+            |bounds| {
+                if *bounds == Aabb::new(p(1, 0, 0), p(2, 0, 0)) {
+                    let point = p(1, 0, 0);
+                    Ok(vec![DetourTarget {
+                        point: point.clone(),
+                        definitions: vec![axis_plane_definition(&point)],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 0, 0));
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn interior_box_detour_target_collection_reports_unknown_when_surface_cut_family_is_partially_uncertified_and_boxes_fail()
+     {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+
+        let err = interior_box_detour_targets_with_queries(
+            &start,
+            &end,
+            &[first, second],
+            |_edge_start, _edge_end, polygon, _axis| {
+                if polygon.vertices().unwrap()[0].x == r(1) {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(p(1, 0, 0)))
+                }
+            },
+            |_crossing, _polygon| Ok(true),
+            |_bounds| Ok(Vec::new()),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

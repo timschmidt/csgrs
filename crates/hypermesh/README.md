@@ -127,7 +127,10 @@ direct witnesses. Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
 later certified direct or shifted detour targets run, and the surrounding
 endpoint-box detour family now also backtracks past uncertified local boxes
-instead of aborting before later certified detour boxes run.
+instead of aborting before later certified detour boxes run. The earlier
+axis-interval surface-cut construction feeding those endpoint boxes now also
+skips past partially uncertified local surface crossings instead of aborting
+the whole detour-box family before later exact boxes are even formed.
 If one of those local witness or seed families is entirely uncertified and no
 certified candidate survives, it now returns `UnknownClassification` instead of
 quietly collapsing that local family to an empty witness set.
