@@ -735,6 +735,10 @@ exact halfspace-cell vertex family now does the same. The
 projected-escape direct-seed family now also backtracks past uncertified
 membership checks instead of letting one uncertified deferred direct seed cut
 off later certified direct escape targets. The
+projected-escape report-witness and shifted-family include checks now apply
+the same strict halfspace rule, so a witness on a non-equality halfspace
+boundary is treated as `UnknownClassification` locally instead of ordinary
+containment. The
 focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. Full
 EMBER plane-replacement

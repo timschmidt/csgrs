@@ -2077,7 +2077,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
                     {
                         return Ok(false);
                     }
-                    point_satisfies_halfspaces(witness, halfspaces)
+                    point_strictly_inside_halfspaces_or_unknown(witness, halfspaces)
                 },
                 |witness| {
                     reference_target_from_halfspace_witness(
@@ -2799,7 +2799,7 @@ fn deferred_projected_escape_direct_targets(
         report_witness,
         existing_points,
         halfspaces,
-        |seed, halfspaces| point_satisfies_halfspaces(seed, halfspaces),
+        |seed, halfspaces| point_strictly_inside_halfspaces_or_unknown(seed, halfspaces),
     )
 }
 
@@ -5060,7 +5060,7 @@ fn projected_escape_targets_from_families(
         families.strict_seeds.clone(),
         families.shifted_vertices.clone(),
         families.shifted_geometry_seeds.clone(),
-        |witness| point_satisfies_halfspaces(witness, halfspaces),
+        |witness| point_strictly_inside_halfspaces_or_unknown(witness, halfspaces),
         |witness| {
             reference_target_from_halfspace_witness(
                 witness,
@@ -5898,6 +5898,25 @@ fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> Hyp
         let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
         if crate::geometry::classify_point(point, &plane)? == Classification::Positive {
             return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn point_strictly_inside_halfspaces_or_unknown(
+    point: &Point3,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    for halfspace in halfspaces {
+        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
+        match crate::geometry::classify_point(point, &plane)? {
+            Classification::Positive => return Ok(false),
+            Classification::On => {
+                if !halfspace_has_opposite_pair(halfspace, halfspaces) {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+            }
+            Classification::Negative => {}
         }
     }
     Ok(true)
@@ -7565,6 +7584,33 @@ mod tests {
     }
 
     #[test]
+    fn projected_escape_target_family_tracking_marks_surviving_targets_uncertain_after_boundary_report_witness()
+     {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(0, 2, 2), [None, None, None]);
+        let mut saw_unknown = false;
+
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &halfspaces,
+            &[],
+            Some(&report),
+            vec![p(1, 1, 1)],
+            Vec::new(),
+            Vec::new(),
+            &mut saw_unknown,
+            |seed| Ok(vec![ReferenceTarget::axis_defined(seed.clone())]),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 1, 1));
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn strict_projected_target_family_tracking_marks_surviving_targets_uncertain_after_unknown() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -7708,6 +7754,31 @@ mod tests {
     }
 
     #[test]
+    fn projected_escape_family_marks_surviving_targets_uncertain_after_boundary_report_witness() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let families = ShiftedProjectedCellFamilies {
+            shifted: halfspaces.clone(),
+            report: Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                p(0, 2, 2),
+                [None, None, None],
+            )),
+            saw_unknown: false,
+            strict_seeds: vec![p(1, 1, 1)],
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets = projected_escape_targets_from_families(&halfspaces, &families).unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
     fn deferred_projected_escape_direct_targets_backtrack_after_uncertified_seed() {
         let strict_seeds = vec![p(1, 2, 3), p(1, 2, 4)];
         let halfspaces = vec![
@@ -7737,6 +7808,33 @@ mod tests {
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 4));
         assert!(!targets[0].definitions.is_empty());
+    }
+
+    #[test]
+    fn deferred_projected_escape_direct_targets_mark_later_target_uncertain_after_boundary_seed() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+
+        let targets = deferred_projected_escape_direct_targets(
+            &[p(0, 2, 2), p(1, 2, 2)],
+            None,
+            &[],
+            &halfspaces,
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, p(1, 2, 2));
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn deferred_projected_escape_direct_targets_report_unknown_for_boundary_seed() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+
+        let err = deferred_projected_escape_direct_targets(&[p(0, 2, 2)], None, &[], &halfspaces)
+            .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]
