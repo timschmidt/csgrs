@@ -658,7 +658,10 @@ branch search after converging to that exact state again.
 The
 support/reference target trace search now also skips support-surface targets
 before retained-definition tracing runs, instead of paying for a trace only to
-reject that target afterward. The
+reject that target afterward. Uncertified support-surface rejection or
+reference-validity checks now also invalidate only the current target and let
+later exact targets run, instead of aborting the whole target search before
+those siblings get traced. The
 exact support/projected vertex family now also skips candidate-local
 `UnknownClassification` membership checks instead of aborting the whole
 vertex family on the first uncertified candidate, and the leaf/probe-side

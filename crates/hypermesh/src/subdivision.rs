@@ -4068,17 +4068,37 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
     let mut saw_unknown = false;
 
     for target in targets {
-        if cached_support_surface_query_with(surface_cache, &target.point, |point| {
-            surface_query(point)
-        })? {
+        let on_support_surface =
+            match cached_support_surface_query_with(surface_cache, &target.point, |point| {
+                surface_query(point)
+            }) {
+                Ok(on_support_surface) => on_support_surface,
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+        if on_support_surface {
             if target.uncertified_definition_fallback {
                 saw_unknown = true;
             }
             continue;
         }
-        if !cached_reference_bounds_validity_with(validity_cache, bounds, &target.point, |point| {
-            validity_query(point)
-        })? {
+        let valid_for_bounds = match cached_reference_bounds_validity_with(
+            validity_cache,
+            bounds,
+            &target.point,
+            |point| validity_query(point),
+        ) {
+            Ok(valid_for_bounds) => valid_for_bounds,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !valid_for_bounds {
             if target.uncertified_definition_fallback {
                 saw_unknown = true;
             }
@@ -11264,6 +11284,95 @@ mod tests {
         assert_eq!(first, None);
         assert_eq!(second, None);
         assert_eq!(surface_calls.get(), 1);
+    }
+
+    #[test]
+    fn reference_target_trace_search_tries_later_target_after_uncertified_surface_query() {
+        let first = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let second = ReferenceTarget::axis_defined(p(2, 2, 2));
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        let found = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![first.clone(), second.clone()],
+            &mut surface_cache,
+            &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            &mut |point| {
+                if *point == first.point {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            },
+            &mut |_point| Ok(true),
+            |target| {
+                assert_eq!(target, &second);
+                Ok(Some(vec![23]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((second, vec![23])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_reports_unknown_when_surface_query_is_uncertified_and_later_targets_fail()
+     {
+        let first = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let second = ReferenceTarget::axis_defined(p(2, 2, 2));
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        let err = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![first.clone(), second],
+            &mut surface_cache,
+            &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            &mut |point| {
+                if *point == first.point {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            },
+            &mut |_point| Ok(true),
+            |_target| Ok(None),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn reference_target_trace_search_tries_later_target_after_uncertified_reference_validity_query()
+    {
+        let first = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let second = ReferenceTarget::axis_defined(p(2, 2, 2));
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        let found = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![first.clone(), second.clone()],
+            &mut surface_cache,
+            &mut validity_cache,
+            &Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            &mut |_point| Ok(false),
+            &mut |point| {
+                if *point == first.point {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(true)
+                }
+            },
+            |target| {
+                assert_eq!(target, &second);
+                Ok(Some(vec![29]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((second, vec![29])));
     }
 
     #[test]
