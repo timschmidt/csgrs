@@ -547,7 +547,11 @@ target are now reused at that same boundary instead of retracing identical
 reference targets when support states converge. Repeated support-surface
 rejection of the same target point is now also cached across that live
 support-reference search boundary, so converged support-target families do not
-repay the same local support-plane test on each revisit. Identical support
+repay the same local support-plane test on each revisit. Within one
+`compute_new_reference(...)` update, projected support, axis-escape support,
+tight-escape support, and final support fallback now also share those same
+safe support-reference query caches instead of rebuilding the same top-level
+halfspace/report/trace state for each later support-side attempt. Identical support
 states also
 reuse the exact support target-family construction itself before those traces
 run, instead of rebuilding the same retained target family on each revisit, and
