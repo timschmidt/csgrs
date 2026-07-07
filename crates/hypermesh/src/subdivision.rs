@@ -1769,6 +1769,9 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
             }),
         ],
     )?;
+    if *saw_unknown {
+        mark_all_reference_targets_uncertified(&mut targets);
+    }
     Ok(targets)
 }
 
@@ -3475,6 +3478,9 @@ fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
     for target in deferred_direct_targets {
         push_unique_reference_target(&mut targets, target);
     }
+    if *saw_unknown {
+        mark_all_reference_targets_uncertified(&mut targets);
+    }
 
     Ok(targets)
 }
@@ -3595,6 +3601,9 @@ fn shifted_projected_cell_targets_from_families(
     if targets.is_empty() && families.saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        if families.saw_unknown {
+            mark_all_reference_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -3686,6 +3695,9 @@ fn projected_escape_targets_from_families(
     if targets.is_empty() && families.saw_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
+        if families.saw_unknown {
+            mark_all_reference_targets_uncertified(&mut targets);
+        }
         Ok(targets)
     }
 }
@@ -5665,7 +5677,45 @@ mod tests {
         .unwrap();
 
         assert!(saw_unknown);
-        assert_eq!(targets, projected_targets);
+        assert_eq!(targets.len(), projected_targets.len());
+        assert_eq!(targets[0].point, projected_targets[0].point);
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn strict_projected_target_family_tracking_marks_surviving_targets_uncertain_after_unknown() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let first = p(1, 1, 1);
+        let second = p(2, 2, 2);
+        let mut saw_unknown = false;
+
+        let targets = strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
+            &bounds,
+            &halfspaces,
+            None,
+            vec![first.clone(), second.clone()],
+            Vec::new(),
+            Vec::new(),
+            &mut saw_unknown,
+            |seed| {
+                if *seed == second {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert!(!targets.is_empty());
+        assert!(targets.iter().any(|target| target.point == first));
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
     }
 
     #[test]
@@ -5694,6 +5744,52 @@ mod tests {
 
         assert!(!targets.is_empty());
         assert!(targets.iter().any(|target| target.point == first));
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn shifted_projected_target_family_marks_surviving_targets_uncertain_after_unknown() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let families = ShiftedProjectedCellFamilies {
+            shifted: halfspaces.clone(),
+            report: None,
+            saw_unknown: true,
+            strict_seeds: vec![p(1, 1, 1)],
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets =
+            shifted_projected_cell_targets_from_families(&bounds, &halfspaces, &families).unwrap();
+
+        assert!(!targets.is_empty());
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn projected_escape_family_marks_surviving_targets_uncertain_after_unknown() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let families = ShiftedProjectedCellFamilies {
+            shifted: halfspaces.clone(),
+            report: None,
+            saw_unknown: true,
+            strict_seeds: vec![p(1, 1, 1)],
+            shifted_vertices: Vec::new(),
+            shifted_geometry_seeds: Vec::new(),
+        };
+
+        let targets = projected_escape_targets_from_families(&halfspaces, &families).unwrap();
+
+        assert!(!targets.is_empty());
         assert!(
             targets
                 .iter()

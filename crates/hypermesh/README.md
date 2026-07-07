@@ -313,7 +313,10 @@ still finds no witness, the final result is now
 `ReferencePropagationFailed`. In particular, the root projected direct/escape
 target-family builders now keep that uncertified state even when they return
 an empty family and let support fallback continue, instead of surfacing
-`UnknownClassification` before the support-side search runs at all.
+`UnknownClassification` before the support-side search runs at all, and when
+those root or shifted projected families do return surviving targets after a
+later uncertified local family, those survivors now keep that uncertainty
+attached so a later failed trace does not flatten back into ordinary absence.
 At the target level, a projected/support reference point that is strictly
 inside the child cell but whose retained-definition trace is uncertified now
 surfaces `UnknownClassification` instead of being treated like a simple absent
