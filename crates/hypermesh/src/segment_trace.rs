@@ -1917,13 +1917,21 @@ fn point_lies_on_traced_surface(
         }
 
         let mut inside_polygon = true;
+        let mut on_edge = false;
         for edge in &polygon.edges {
-            if classify_point(point, edge)? == Classification::Positive {
-                inside_polygon = false;
-                break;
+            match classify_point(point, edge)? {
+                Classification::Positive => {
+                    inside_polygon = false;
+                    break;
+                }
+                Classification::On => on_edge = true,
+                Classification::Negative => {}
             }
         }
         if inside_polygon {
+            if on_edge {
+                return Err(HypermeshError::UnknownClassification);
+            }
             return Ok(true);
         }
     }
@@ -8562,6 +8570,24 @@ mod tests {
     }
 
     #[test]
+    fn trace_axis_ordered_paths_try_later_ordering_after_boundary_surface_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 0);
+        let polygon = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+
+        let winding = trace_axis_ordered_paths_with_surface_query(
+            &start,
+            &end,
+            &[7],
+            std::slice::from_ref(&polygon),
+            |point| point_lies_on_traced_surface(point, std::slice::from_ref(&polygon)),
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
     fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_segment_step() {
         let start = p(0, 0, 0);
         let end = p(1, 1, 0);
@@ -11275,6 +11301,58 @@ mod tests {
         .unwrap();
 
         assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
+    fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
+        let start = p(0, 0, 0);
+        let first_detour = p(1, 0, 0);
+        let second_detour = p(2, 0, 1);
+        let end = p(3, 0, 0);
+        let polygon = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+        let mut surface_cache = Vec::new();
+
+        let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+            &start,
+            &end,
+            &[0],
+            std::slice::from_ref(&polygon),
+            &[
+                DetourTarget {
+                    point: first_detour.clone(),
+                    definitions: vec![axis_plane_definition(&first_detour)],
+                    uncertified_definition_fallback: false,
+                },
+                DetourTarget {
+                    point: second_detour.clone(),
+                    definitions: vec![axis_plane_definition(&second_detour)],
+                    uncertified_definition_fallback: false,
+                },
+            ],
+            &[axis_plane_definition(&start)],
+            &[axis_plane_definition(&end)],
+            &[start.clone(), end.clone()],
+            &mut surface_cache,
+            &mut |point| point_lies_on_traced_surface(point, std::slice::from_ref(&polygon)),
+            &mut |_from, _to, winding, _start_definitions, _end_definitions| {
+                Ok(Some(winding.to_vec()))
+            },
+            &mut |_from, _to| Ok(Vec::new()),
+        )
+        .unwrap();
+
+        assert_eq!(winding, Some(vec![0]));
+    }
+
+    #[test]
+    fn point_lies_on_traced_surface_reports_unknown_for_boundary_contact() {
+        let polygon = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+
+        assert_eq!(
+            point_lies_on_traced_surface(&p(1, 0, 0), std::slice::from_ref(&polygon)),
+            Err(HypermeshError::UnknownClassification)
+        );
+        assert!(!point_lies_on_traced_surface(&p(3, 3, 0), &[polygon]).unwrap());
     }
 
     #[test]
