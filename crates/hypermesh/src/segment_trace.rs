@@ -1916,10 +1916,10 @@ fn cached_probe_winding_with(
     probe: &ProbePoint,
     trace: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Some(existing) = cache
-        .iter()
-        .find(|existing| existing.point == probe.point && existing.planes == probe.planes)
-    {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.point == probe.point
+            && definition_families_match_as_sets(&existing.planes, &probe.planes)
+    }) {
         return existing.winding.clone();
     }
 
@@ -1957,9 +1957,9 @@ fn cached_probe_reachability_with(
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
         existing.interior_point == interior.point
-            && existing.interior_planes == interior.planes
+            && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
             && existing.probe_point == probe.point
-            && existing.probe_planes == probe.planes
+            && definition_families_match_as_sets(&existing.probe_planes, &probe.planes)
     }) {
         return existing.reachable.clone();
     }
@@ -7302,6 +7302,45 @@ mod tests {
     }
 
     #[test]
+    fn cached_probe_winding_reuses_permuted_definition_families() {
+        let definition = axis_plane_definition(&p(1, 2, 3));
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let first = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Positive,
+            planes: vec![definition],
+            uncertified_definition_fallback: false,
+        };
+        let second = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Positive,
+            planes: vec![permuted],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first_result = cached_probe_winding_with(&mut cache, &first, || {
+            calls += 1;
+            Ok(vec![5])
+        })
+        .unwrap();
+        let second_result = cached_probe_winding_with(&mut cache, &second, || {
+            calls += 1;
+            Ok(vec![9])
+        })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first_result, vec![5]);
+        assert_eq!(second_result, vec![5]);
+    }
+
+    #[test]
     fn cached_surface_and_probe_reachability_reuse_equivalent_queries() {
         let definition = axis_plane_definition(&p(1, 2, 3));
         let interior = InteriorLeafPoint {
@@ -7349,6 +7388,63 @@ mod tests {
         assert_eq!(reachability_calls, 1);
         assert!(first_reachability);
         assert!(second_reachability);
+    }
+
+    #[test]
+    fn cached_probe_reachability_reuses_permuted_definition_families() {
+        let interior_definition = axis_plane_definition(&p(0, 0, 0));
+        let interior_permuted = [
+            interior_definition[1].clone(),
+            interior_definition[2].clone(),
+            interior_definition[0].clone(),
+        ];
+        let probe_definition = axis_plane_definition(&p(1, 2, 3));
+        let probe_permuted = [
+            probe_definition[1].clone(),
+            probe_definition[2].clone(),
+            probe_definition[0].clone(),
+        ];
+        let first_interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![interior_definition],
+            uncertified_definition_fallback: false,
+        };
+        let second_interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![interior_permuted],
+            uncertified_definition_fallback: false,
+        };
+        let first_probe = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Positive,
+            planes: vec![probe_definition],
+            uncertified_definition_fallback: false,
+        };
+        let second_probe = ProbePoint {
+            point: p(1, 2, 3),
+            side: Classification::Positive,
+            planes: vec![probe_permuted],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first_result =
+            cached_probe_reachability_with(&mut cache, &first_interior, &first_probe, || {
+                calls += 1;
+                Ok(true)
+            })
+            .unwrap();
+        let second_result =
+            cached_probe_reachability_with(&mut cache, &second_interior, &second_probe, || {
+                calls += 1;
+                Ok(false)
+            })
+            .unwrap();
+
+        assert_eq!(calls, 1);
+        assert!(first_result);
+        assert!(second_result);
     }
 
     #[test]
