@@ -201,6 +201,32 @@ pub fn trace_axis_segment(
             continue;
         }
 
+        let start_value = polygon.support.expression_at_point(start);
+        let end_value = polygon.support.expression_at_point(end);
+        let start_class = classify_real(&start_value)?;
+        let end_class = classify_real(&end_value)?;
+        if start_class == Classification::On {
+            match classify_point_in_polygon(start, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+            }
+            continue;
+        }
+        if end_class == Classification::On {
+            match classify_point_in_polygon(end, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+            }
+            continue;
+        }
+        if start_class == end_class {
+            continue;
+        }
+
         let Some(crossing) = segment_plane_crossing(start, end, &polygon.support)? else {
             continue;
         };
@@ -1212,7 +1238,22 @@ fn trace_direct_segment(
         let end_value = polygon.support.expression_at_point(end);
         let start_class = classify_real(&start_value)?;
         let end_class = classify_real(&end_value)?;
-        if start_class == Classification::On || end_class == Classification::On {
+        if start_class == Classification::On {
+            match classify_point_in_polygon(start, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+            }
+            continue;
+        }
+        if end_class == Classification::On {
+            match classify_point_in_polygon(end, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+            }
             continue;
         }
         if start_class == end_class {
@@ -6753,11 +6794,31 @@ mod tests {
     }
 
     #[test]
+    fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
+        let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+
+        assert_eq!(
+            trace_axis_segment(&p(1, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
     fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
         let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
         assert_eq!(
             trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn trace_direct_segment_reports_unknown_for_endpoint_surface_contact() {
+        let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+
+        assert_eq!(
+            trace_direct_segment(&p(1, 0, 0), &p(2, 0, 0), &[0], &[wall]),
             Err(HypermeshError::UnknownClassification)
         );
     }
@@ -8607,6 +8668,27 @@ mod tests {
                         valid: true,
                     })
                 }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
+    fn trace_axis_ordered_paths_try_later_ordering_after_endpoint_surface_contact() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 0);
+        let polygon = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+
+        let winding = trace_axis_ordered_paths_with_queries(
+            &start,
+            &end,
+            &[7],
+            std::slice::from_ref(&polygon),
+            |_point| Ok(false),
+            |current, next, axis, attempt, polygons| {
+                trace_axis_segment(current, next, axis, attempt, polygons)
             },
         )
         .unwrap();
