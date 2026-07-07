@@ -621,7 +621,10 @@ that certified target. The same contract now also applies to the indirect
 projected-support, axis-escape, and tight-escape branches: if one of those
 helpers produces a fallback-marked success tuple, projected reference search
 keeps looking for a certified later result and otherwise returns
-`UnknownClassification`.
+`UnknownClassification`. The lower axis-escape and tight-box helper searches now
+also enforce that rule locally, so a fallback-marked corridor or escape-box
+result can no longer look like certified helper success before the broader
+projected-reference search sees it.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same

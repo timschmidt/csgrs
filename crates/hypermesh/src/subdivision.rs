@@ -2290,7 +2290,13 @@ fn projection_escape_reference_with_search_and_axis_options_and_bounds_family(
             continue;
         }
         match search(&escape_bounds) {
-            Ok(Some(found)) => return Ok(Some(found)),
+            Ok(Some(found)) => {
+                if found.0.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(Some(found));
+                }
+            }
             Ok(None) => {}
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
@@ -3685,7 +3691,13 @@ fn projection_axis_escape_reference_with_search_and_axis_options_tracking_unknow
             for stop_value in stop_values {
                 let corridor = axis_escape_bounds(projected, axis, stop_value.clone())?;
                 match search(&corridor) {
-                    Ok(Some(found)) => return Ok(Some(found)),
+                    Ok(Some(found)) => {
+                        if found.0.uncertified_definition_fallback {
+                            saw_unknown = true;
+                        } else {
+                            return Ok(Some(found));
+                        }
+                    }
                     Ok(None) => {}
                     Err(crate::error::HypermeshError::UnknownClassification) => {
                         saw_unknown = true;
@@ -9516,14 +9528,15 @@ mod tests {
     }
 
     #[test]
-    fn projection_axis_escape_reference_finds_corridor_witness() {
+    fn projection_axis_escape_reference_reports_unknown_when_only_fallback_corridor_witness_exists()
+    {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
         let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
         right.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-        let (target, winding) = projection_axis_escape_reference(
+        let err = projection_axis_escape_reference(
             &p(-1, 3, 3),
             &axis_defs(&p(-1, 3, 3)),
             &[0],
@@ -9531,16 +9544,9 @@ mod tests {
             &bounds,
             &[left, right],
         )
-        .unwrap()
-        .expect("axis escape corridor should contain a certified witness");
+        .unwrap_err();
 
-        assert_eq!(winding.len(), 1);
-        assert_ne!(winding[0], 0);
-        assert_eq!(target.point.y, r(3));
-        assert_eq!(target.point.z, r(3));
-        assert!(compare_real(&target.point.x, &r(1)).unwrap().is_gt());
-        assert!(compare_real(&target.point.x, &r(4)).unwrap().is_lt());
-        assert!(!target.definitions.is_empty());
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]
@@ -10970,6 +10976,69 @@ mod tests {
     }
 
     #[test]
+    fn projection_axis_escape_reference_skips_fallback_corridor_success() {
+        let projected = p(1, 3, 3);
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1), r(2)]),
+            (vec![r(0)], vec![r(6)]),
+            (vec![r(0)], vec![r(6)]),
+        ];
+
+        let found = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+            &projected,
+            &axis_options,
+            false,
+            |corridor| {
+                if corridor.max.x == r(1) {
+                    Ok(Some((
+                        ReferenceTarget::axis_defined_fallback(p(1, 3, 3)),
+                        vec![11],
+                    )))
+                } else if corridor.max.x == r(2) {
+                    Ok(Some((ReferenceTarget::axis_defined(p(2, 3, 3)), vec![13])))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(2, 3, 3)), vec![13]))
+        );
+    }
+
+    #[test]
+    fn projection_axis_escape_reference_reports_unknown_when_only_fallback_corridor_succeeds() {
+        let projected = p(1, 3, 3);
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(6)]),
+            (vec![r(0)], vec![r(6)]),
+        ];
+
+        let err = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+            &projected,
+            &axis_options,
+            false,
+            |corridor| {
+                if corridor.max.x == r(1) {
+                    Ok(Some((
+                        ReferenceTarget::axis_defined_fallback(p(1, 3, 3)),
+                        vec![11],
+                    )))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
     fn projection_axis_escape_reference_reports_unknown_if_all_corridors_are_uncertified() {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
@@ -11096,6 +11165,83 @@ mod tests {
             found,
             Some((ReferenceTarget::axis_defined(p(2, 0, 0)), vec![3]))
         );
+    }
+
+    #[test]
+    fn projection_escape_reference_skips_fallback_box_success() {
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1), r(2)]),
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(1)]),
+        ];
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+
+        let found = projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+            &axis_options,
+            &bounds,
+            false,
+            |escape_bounds| {
+                if *escape_bounds == Aabb::new(p(0, 0, 0), p(1, 1, 1)) {
+                    Ok(Some((
+                        ReferenceTarget::axis_defined_fallback(p(1, 1, 1)),
+                        vec![7],
+                    )))
+                } else if *escape_bounds == Aabb::new(p(0, 0, 0), p(2, 1, 1)) {
+                    Ok(Some((ReferenceTarget::axis_defined(p(2, 0, 0)), vec![9])))
+                } else {
+                    Ok(None)
+                }
+            },
+            |axis_options, saw_unknown| {
+                let (family, family_unknown) =
+                    projection_escape_bounds_family_from_axis_options_with_extents(
+                        axis_options,
+                        |_escape_bounds| Ok(true),
+                    )?;
+                *saw_unknown |= family_unknown;
+                Ok(family)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(2, 0, 0)), vec![9]))
+        );
+    }
+
+    #[test]
+    fn projection_escape_reference_reports_unknown_when_only_fallback_box_succeeds() {
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(1)]),
+        ];
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+
+        let err = projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+            &axis_options,
+            &bounds,
+            false,
+            |_escape_bounds| {
+                Ok(Some((
+                    ReferenceTarget::axis_defined_fallback(p(1, 1, 1)),
+                    vec![7],
+                )))
+            },
+            |axis_options, saw_unknown| {
+                let (family, family_unknown) =
+                    projection_escape_bounds_family_from_axis_options_with_extents(
+                        axis_options,
+                        |_escape_bounds| Ok(true),
+                    )?;
+                *saw_unknown |= family_unknown;
+                Ok(family)
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
     }
 
     #[test]
