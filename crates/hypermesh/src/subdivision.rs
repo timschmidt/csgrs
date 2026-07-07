@@ -1588,7 +1588,7 @@ fn compute_new_reference(
                     trace_cache,
                     bounds,
                     projected_target,
-                    |point| is_valid_reference_for_bounds(point, bounds, polygons),
+                    |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
                     |target| {
                         trace_reference_target_from_validated_bounds(
                             old_ref,
@@ -3715,7 +3715,7 @@ fn trace_reference_target(
     polygons: &[ConvexPolygon],
     target: &ReferenceTarget,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    if !is_valid_reference_for_bounds(&target.point, bounds, polygons)? {
+    if !is_certified_valid_reference_for_bounds(&target.point, bounds, polygons)? {
         return Ok(None);
     }
 
@@ -3773,6 +3773,26 @@ fn is_valid_reference_for_bounds(
 ) -> HypermeshResult<bool> {
     Ok(point_strictly_inside_bounds(point, bounds)?
         && !point_lies_on_local_surface(point, polygons)?)
+}
+
+fn is_certified_valid_reference_for_bounds(
+    point: &Point3,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    if !point_strictly_inside_bounds(point, bounds)? {
+        return Ok(false);
+    }
+    for polygon in polygons {
+        match classify_point_in_local_polygon(point, polygon)? {
+            LocalPolygonPointLocation::Outside => {}
+            LocalPolygonPointLocation::Interior => return Ok(false),
+            LocalPolygonPointLocation::Boundary => {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+        }
+    }
+    Ok(true)
 }
 
 #[cfg(test)]
@@ -3988,7 +4008,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                     validity_cache,
                     bounds,
                     &mut |point| point_lies_on_any_support_plane(point, polygons),
-                    &mut |point| is_valid_reference_for_bounds(point, bounds, polygons),
+                    &mut |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
                     |target| {
                         cached_reference_target_trace_with(trace_cache, target, |target| {
                             trace_reference_target_from_validated_bounds(
@@ -8372,6 +8392,18 @@ mod tests {
     }
 
     #[test]
+    fn certified_reference_validity_reports_unknown_for_local_surface_boundary_point() {
+        let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        assert_eq!(
+            is_certified_valid_reference_for_bounds(&p(2, 1, 2), &bounds, &[wall]),
+            Err(crate::error::HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
     fn trace_reference_target_rejects_invalid_targets() {
         let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
         wall.delta_w = vec![1];
@@ -11500,6 +11532,34 @@ mod tests {
         .unwrap();
 
         assert_eq!(found, Some((second, vec![29])));
+    }
+
+    #[test]
+    fn reference_target_trace_search_tries_later_target_after_boundary_local_surface_validity_query()
+     {
+        let first = ReferenceTarget::axis_defined(p(2, 1, 2));
+        let second = ReferenceTarget::axis_defined(p(1, 1, 1));
+        let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+
+        let found = trace_reference_targets_backtracking_unknown_with_query_caches(
+            vec![first, second.clone()],
+            &mut surface_cache,
+            &mut validity_cache,
+            &bounds,
+            &mut |_point| Ok(false),
+            &mut |point| is_certified_valid_reference_for_bounds(point, &bounds, &[wall.clone()]),
+            |target| {
+                assert_eq!(target, &second);
+                Ok(Some(vec![31]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((second, vec![31])));
     }
 
     #[test]

@@ -685,7 +685,9 @@ before retained-definition tracing runs, instead of paying for a trace only to
 reject that target afterward. Uncertified support-surface rejection or
 reference-validity checks now also invalidate only the current target and let
 later exact targets run, instead of aborting the whole target search before
-those siblings get traced. The
+those siblings get traced. Exact boundary contact on a local polygon now also
+counts as an uncertified reference-validity check in that layer instead of
+ordinary invalid target rejection. The
 cycle-guarded detour layers now treat uncertified traced-surface checks the
 same way: one uncertified detour-point surface query no longer aborts the
 whole detour family before later certified detours run. The
