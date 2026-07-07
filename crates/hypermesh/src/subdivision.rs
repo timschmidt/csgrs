@@ -2861,6 +2861,46 @@ fn cached_halfspace_feasibility_with(
     feasible
 }
 
+fn cached_halfspace_feasibility_with_report_cache(
+    report_cache: &mut Vec<HalfspaceReportCacheEntry>,
+    feasible_cache: &mut Vec<HalfspaceFeasibilityCacheEntry>,
+    halfspaces: &[LimitPlane3],
+    report_query: impl FnOnce(
+        &[LimitPlane3],
+    ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>>,
+    feasible_query: impl FnOnce(&[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = feasible_cache
+        .iter()
+        .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
+    {
+        return existing.feasible.clone();
+    }
+
+    let feasible = if let Some(existing) = report_cache
+        .iter()
+        .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
+    {
+        match &existing.report {
+            Ok(Some(report)) => Ok(report.status == HalfspaceFeasibility::Feasible),
+            Ok(None) => feasible_query(halfspaces),
+            Err(err) => Err(err.clone()),
+        }
+    } else {
+        match cached_halfspace_report_with(report_cache, halfspaces, report_query) {
+            Ok(Some(report)) => Ok(report.status == HalfspaceFeasibility::Feasible),
+            Ok(None) => feasible_query(halfspaces),
+            Err(err) => Err(err),
+        }
+    };
+
+    feasible_cache.push(HalfspaceFeasibilityCacheEntry {
+        halfspaces: halfspaces.to_vec(),
+        feasible: feasible.clone(),
+    });
+    feasible
+}
+
 #[derive(Clone)]
 struct ReferenceTargetTraceCacheEntry {
     target: ReferenceTarget,
@@ -3648,6 +3688,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     let target_cache = &query_caches.target_cache;
     let accept_cache = &query_caches.accept_cache;
     let search_cache = &query_caches.search_cache;
+    let shared_halfspace_caches = std::cell::RefCell::new((report_cache, feasible_cache));
     support_plane_cell_reference_with_queries_and_trace_surface_caches(
         old_ref,
         old_ref_definitions,
@@ -3656,14 +3697,21 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
         polygons,
         &mut halfspaces,
         &mut |halfspaces| {
-            cached_halfspace_report_with(report_cache, halfspaces, |halfspaces| {
+            let mut caches = shared_halfspace_caches.borrow_mut();
+            cached_halfspace_report_with(caches.0, halfspaces, |halfspaces| {
                 halfspace_system_report(halfspaces)
             })
         },
         &mut |halfspaces| {
-            cached_halfspace_feasibility_with(feasible_cache, halfspaces, |halfspaces| {
-                halfspace_system_is_feasible(halfspaces)
-            })
+            let mut caches = shared_halfspace_caches.borrow_mut();
+            let (report_cache, feasible_cache) = &mut *caches;
+            cached_halfspace_feasibility_with_report_cache(
+                report_cache,
+                feasible_cache,
+                halfspaces,
+                |halfspaces| halfspace_system_report(halfspaces),
+                |halfspaces| halfspace_system_is_feasible(halfspaces),
+            )
         },
         trace_cache,
         validity_cache,
@@ -8078,6 +8126,88 @@ mod tests {
         assert_eq!(feasible_calls, 1);
         assert_eq!(first_report, second_report);
         assert_eq!(first_feasible, second_feasible);
+    }
+
+    #[test]
+    fn support_reference_query_caches_reuse_report_for_feasibility() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        let mut report_calls = 0;
+        let mut feasible_calls = 0;
+
+        let report = cached_halfspace_report_with(
+            &mut query_caches.report_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                    p(1, 1, 1),
+                    [None, None, None],
+                )))
+            },
+        )
+        .unwrap();
+        let feasible = cached_halfspace_feasibility_with_report_cache(
+            &mut query_caches.report_cache,
+            &mut query_caches.feasible_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            |_halfspaces| {
+                feasible_calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(report.is_some());
+        assert!(feasible);
+        assert_eq!(report_calls, 1);
+        assert_eq!(feasible_calls, 0);
+    }
+
+    #[test]
+    fn support_reference_query_caches_prime_report_from_feasibility() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        let mut report_calls = 0;
+        let mut feasible_calls = 0;
+
+        let feasible = cached_halfspace_feasibility_with_report_cache(
+            &mut query_caches.report_cache,
+            &mut query_caches.feasible_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                    p(1, 1, 1),
+                    [None, None, None],
+                )))
+            },
+            |_halfspaces| {
+                feasible_calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+        let report = cached_halfspace_report_with(
+            &mut query_caches.report_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert!(feasible);
+        assert!(report.is_some());
+        assert_eq!(report_calls, 1);
+        assert_eq!(feasible_calls, 0);
     }
 
     #[test]

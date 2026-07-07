@@ -547,7 +547,11 @@ later unchanged recursion through repeated fixed support-plane states is
 skipped entirely. Identical support halfspace states now also reuse cached
 feasibility/report queries at the live support-reference boundary instead of
 reissuing the same exact halfspace query family each time that state is
-revisited, and repeated retained-definition trace attempts on the same support
+revisited. Feasibility-first support states now also prime and reuse that same
+report cache before the later accept/trace layer asks for the full witness, so
+one exact support state no longer pays both a feasibility predicate and then a
+separate full report query. Repeated retained-definition trace attempts on the
+same support
 target are now reused at that same boundary instead of retracing identical
 reference targets when support states converge. Repeated support-surface
 rejection of the same target point is now also cached across that live
