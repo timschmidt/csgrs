@@ -90,6 +90,15 @@ struct PlaneReplacementAffineCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct PlaneReplacementReachabilityStepCacheEntry {
+    current_point: Point3,
+    next_point: Point3,
+    current_planes: [Plane; 3],
+    next_planes: [Plane; 3],
+    result: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -2844,6 +2853,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     let mut affine_cache = Vec::new();
+    let mut step_cache = Vec::new();
     let mut saw_unknown = false;
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
@@ -2875,16 +2885,26 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                     }
                     Err(err) => return Err(err),
                 };
-            if next_point != current_point
-                && !trace_step(
+            if next_point != current_point {
+                let reachable = cached_plane_replacement_reachability_step_with(
+                    &mut step_cache,
                     &current_point,
                     &next_point,
-                    std::slice::from_ref(&current_planes),
-                    std::slice::from_ref(&next_planes),
-                )?
-            {
-                valid = false;
-                break;
+                    &current_planes,
+                    &next_planes,
+                    || {
+                        trace_step(
+                            &current_point,
+                            &next_point,
+                            std::slice::from_ref(&current_planes),
+                            std::slice::from_ref(&next_planes),
+                        )
+                    },
+                )?;
+                if !reachable {
+                    valid = false;
+                    break;
+                }
             }
             current_point = next_point;
             current_planes = next_planes;
@@ -2900,6 +2920,34 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     } else {
         Ok(false)
     }
+}
+
+fn cached_plane_replacement_reachability_step_with(
+    cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    current_point: &Point3,
+    next_point: &Point3,
+    current_planes: &[Plane; 3],
+    next_planes: &[Plane; 3],
+    trace: impl FnOnce() -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.current_point == *current_point
+            && existing.next_point == *next_point
+            && existing.current_planes == *current_planes
+            && existing.next_planes == *next_planes
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = trace();
+    cache.push(PlaneReplacementReachabilityStepCacheEntry {
+        current_point: current_point.clone(),
+        next_point: next_point.clone(),
+        current_planes: current_planes.clone(),
+        next_planes: next_planes.clone(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
@@ -9809,6 +9857,27 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_step_reuses_equivalent_steps_across_orderings() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 0, 0));
+        let mut step_calls = 0;
+
+        assert!(
+            !plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+                &start_definition,
+                &end_definition,
+                |_from, _to, _start_definitions, _end_definitions| {
+                    step_calls += 1;
+                    Ok(false)
+                },
+            )
+            .unwrap()
+        );
+
+        assert_eq!(step_calls, 1);
     }
 
     #[test]

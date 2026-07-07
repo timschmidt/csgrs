@@ -112,7 +112,10 @@ do not retrace the same local segment family over and over before that broader
 search moves on. The same local plane-replacement walk now also reuses exact
 `affine_from_planes(...)` results across sibling orderings, so equivalent
 intermediate plane triples do not repay the same exact point reconstruction
-before trace or reachability continues. The retained-definition entry path
+before trace or reachability continues, and the reachability-side plane
+replacement walk now also caches exact repeated intermediate step checks across
+those sibling orderings instead of rerunning the same local adjacency test
+family. The retained-definition entry path
 above the step-detoured
 plane-replacement fallback now also surfaces an uncertified direct trace family
 explicitly and lets that broader replacement search decide the fallback,
