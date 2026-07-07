@@ -4957,11 +4957,27 @@ fn adjacent_normal_probe_stop_values_with_queries(
                 }
                 Err(err) => return Err(err),
             };
+        let crossing = offset_point(interior, direction, &crossing_t);
         if !positive_real_strictly_before(&crossing_t, &bound_stop)? {
+            if compare_real(&crossing_t, &bound_stop)?.is_eq() {
+                let point_location = match classify_point_on_polygon(&crossing, polygon) {
+                    Ok(point_location) => point_location,
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
+                if matches!(
+                    point_location,
+                    PolygonPointLocation::Boundary | PolygonPointLocation::Interior
+                ) {
+                    saw_unknown = true;
+                }
+            }
             continue;
         }
 
-        let crossing = offset_point(interior, direction, &crossing_t);
         let point_location = match classify_point_on_polygon(&crossing, polygon) {
             Ok(point_location) => point_location,
             Err(HypermeshError::UnknownClassification) => {
@@ -9219,6 +9235,47 @@ mod tests {
     }
 
     #[test]
+    fn adjacent_normal_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_and_keep_later_corridor()
+     {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = p(1, 1, 1);
+        let direction = support.normal.clone();
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let first = make_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+        let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+
+        let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+            &interior,
+            &direction,
+            &support,
+            &bounds,
+            &[first, second],
+            &mut |_interior, direction, polygon| {
+                Ok(dot_direction(&polygon.support.normal, direction))
+            },
+            &mut |point, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(4) {
+                    Ok(if *point == p(4, 1, 1) {
+                        PolygonPointLocation::Boundary
+                    } else {
+                        PolygonPointLocation::Outside
+                    })
+                } else {
+                    Ok(if *point == p(3, 1, 1) {
+                        PolygonPointLocation::Interior
+                    } else {
+                        PolygonPointLocation::Outside
+                    })
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(stop_values, vec![r(2), r(3)]);
+    }
+
+    #[test]
     fn adjacent_normal_probe_accepts_later_corridor_after_boundary_start_contact() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
@@ -9242,6 +9299,60 @@ mod tests {
                     Ok(PolygonPointLocation::Boundary)
                 } else {
                     Ok(PolygonPointLocation::Interior)
+                }
+            },
+            |corridor, stop_point| {
+                if corridor.max.x == r(3) && *stop_point == p(3, 1, 1) {
+                    Ok(vec![ProbePoint {
+                        point: p(2, 1, 1),
+                        side: Classification::Positive,
+                        planes: vec![axis_plane_definition(&p(2, 1, 1))],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert_eq!(probes[0].point, p(2, 1, 1));
+        assert!(probes[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn adjacent_normal_probe_accepts_later_corridor_after_endpoint_boundary_contact() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let first = make_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+        let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+
+        let probes = adjacent_normal_probes_with_queries(
+            &interior,
+            &support,
+            &bounds,
+            &[first, second],
+            true,
+            |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
+            |point, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(4) {
+                    Ok(if *point == p(4, 1, 1) {
+                        PolygonPointLocation::Boundary
+                    } else {
+                        PolygonPointLocation::Outside
+                    })
+                } else {
+                    Ok(if *point == p(3, 1, 1) {
+                        PolygonPointLocation::Interior
+                    } else {
+                        PolygonPointLocation::Outside
+                    })
                 }
             },
             |corridor, stop_point| {
