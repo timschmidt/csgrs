@@ -1518,8 +1518,6 @@ fn compute_new_reference(
         projected_root_reference_families(bounds, &projected_halfspaces)?;
     let projection_escape_axis_options_cache = std::cell::RefCell::new(Vec::new());
     let projection_escape_search_cache = std::cell::RefCell::new(Vec::new());
-    let projected_trace_cache = std::cell::RefCell::new(Vec::new());
-    let projected_validity_cache = std::cell::RefCell::new(Vec::new());
     let support_query_caches = std::cell::RefCell::new(SupportReferenceQueryCaches::default());
 
     let projected = projected_reference_search_or_none_tracking_unknown(
@@ -1538,9 +1536,15 @@ fn compute_new_reference(
                 )
             },
             |projected_target| {
+                let mut query_caches = support_query_caches.borrow_mut();
+                let SupportReferenceQueryCaches {
+                    validity_cache,
+                    trace_cache,
+                    ..
+                } = &mut *query_caches;
                 trace_projected_reference_target_with_queries(
-                    &mut projected_validity_cache.borrow_mut(),
-                    &mut projected_trace_cache.borrow_mut(),
+                    validity_cache,
+                    trace_cache,
                     bounds,
                     projected_target,
                     |point| is_valid_reference_for_bounds(point, bounds, polygons),
@@ -7912,6 +7916,75 @@ mod tests {
         assert_eq!(first_result, Some(vec![1]));
         assert_eq!(second_result, Some(vec![2]));
         assert_eq!(third_result, Some(vec![1]));
+    }
+
+    #[test]
+    fn projected_and_support_reference_traces_share_validity_and_trace_caches() {
+        use std::cell::Cell;
+
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let validity_calls = Cell::new(0);
+        let trace_calls = Cell::new(0);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        let mut surface_cache = Vec::new();
+
+        let projected = {
+            let SupportReferenceQueryCaches {
+                validity_cache,
+                trace_cache,
+                ..
+            } = &mut query_caches;
+            trace_projected_reference_target_with_queries(
+                validity_cache,
+                trace_cache,
+                &bounds,
+                &target,
+                |_point| {
+                    validity_calls.set(validity_calls.get() + 1);
+                    Ok(true)
+                },
+                |_target| {
+                    trace_calls.set(trace_calls.get() + 1);
+                    Ok(Some(vec![7]))
+                },
+            )
+            .unwrap()
+        };
+
+        let support = {
+            let SupportReferenceQueryCaches {
+                validity_cache,
+                trace_cache,
+                ..
+            } = &mut query_caches;
+            trace_reference_targets_backtracking_unknown_with_query_caches(
+                vec![target],
+                &mut surface_cache,
+                validity_cache,
+                &bounds,
+                &mut |_point| Ok(false),
+                &mut |_point| {
+                    validity_calls.set(validity_calls.get() + 1);
+                    Ok(true)
+                },
+                |target| {
+                    cached_reference_target_trace_with(trace_cache, target, |_target| {
+                        trace_calls.set(trace_calls.get() + 1);
+                        Ok(Some(vec![99]))
+                    })
+                },
+            )
+            .unwrap()
+        };
+
+        assert_eq!(projected, Some(vec![7]));
+        assert_eq!(
+            support,
+            Some((ReferenceTarget::axis_defined(p(1, 2, 3)), vec![7]))
+        );
+        assert_eq!(validity_calls.get(), 1);
+        assert_eq!(trace_calls.get(), 1);
     }
 
     #[test]
