@@ -1549,10 +1549,16 @@ fn compute_new_reference(
     let support_query_caches = std::cell::RefCell::new(SupportReferenceQueryCaches::default());
     let projected_root = {
         let mut query_caches = support_query_caches.borrow_mut();
-        projected_root_reference_families(
+        let SupportReferenceQueryCaches {
+            seed_geometry_cache,
+            reference_witness_cache,
+            ..
+        } = &mut *query_caches;
+        projected_root_reference_families_with_witness_cache(
             bounds,
             &projected_halfspaces,
-            &mut query_caches.seed_geometry_cache,
+            seed_geometry_cache,
+            reference_witness_cache,
         )?
     };
     {
@@ -1695,6 +1701,7 @@ struct ProjectedRootReferenceFamilies {
     saw_unknown: bool,
 }
 
+#[cfg(test)]
 fn projected_root_reference_families(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
