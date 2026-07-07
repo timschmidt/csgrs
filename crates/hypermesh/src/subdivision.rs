@@ -4717,7 +4717,10 @@ fn push_verified_definition(
 ) -> HypermeshResult<()> {
     match affine_from_planes(&definition) {
         Ok(point) if point == *witness => {
-            if !definitions.iter().any(|existing| existing == &definition) {
+            if !definitions
+                .iter()
+                .any(|existing| reference_definition_planes_match_as_sets(existing, &definition))
+            {
                 definitions.push(definition);
             }
         }
@@ -8077,6 +8080,26 @@ mod tests {
         assert_eq!(targets[0].definitions.len(), 1);
         assert!(reference_definition_planes_match_as_sets(
             &targets[0].definitions[0],
+            &permuted
+        ));
+    }
+
+    #[test]
+    fn push_verified_definition_merges_permuted_definitions() {
+        let witness = p(1, 2, 3);
+        let definition = axis_defs(&witness)[0].clone();
+        let permuted = [
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ];
+        let mut definitions = vec![definition.clone()];
+
+        push_verified_definition(&mut definitions, permuted.clone(), &witness).unwrap();
+
+        assert_eq!(definitions.len(), 1);
+        assert!(reference_definition_planes_match_as_sets(
+            &definitions[0],
             &permuted
         ));
     }
