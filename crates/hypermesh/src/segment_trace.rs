@@ -2482,15 +2482,21 @@ fn probe_reaches_adjacent_cell(
             if planes_are_coplanar(&polygon.support, host_support)? {
                 continue;
             }
-            if point_lies_on_polygon(start, polygon)? {
-                return Ok(false);
+            match classify_point_in_polygon(start, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
             }
             continue;
         }
 
         if probe_class == Classification::On {
-            if point_lies_on_polygon(probe, polygon)? {
-                return Ok(false);
+            match classify_point_in_polygon(probe, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary | PolygonPointLocation::Interior => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
             }
             continue;
         }
@@ -2502,10 +2508,16 @@ fn probe_reaches_adjacent_cell(
         let Some(crossing) = segment_plane_crossing(start, probe, &polygon.support)? else {
             continue;
         };
-        if point_strictly_between_axis(&crossing, start, probe, sort_axis)?
-            && point_lies_on_polygon(&crossing, polygon)?
-        {
-            return Ok(false);
+        if point_strictly_between_axis(&crossing, start, probe, sort_axis)? {
+            match classify_point_in_polygon(&crossing, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+                PolygonPointLocation::Interior => {
+                    return Ok(false);
+                }
+            }
         }
     }
 
@@ -3638,6 +3650,35 @@ fn point_lies_on_polygon(point: &Point3, polygon: &ConvexPolygon) -> HypermeshRe
         }
     }
     Ok(true)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PolygonPointLocation {
+    Outside,
+    Boundary,
+    Interior,
+}
+
+fn classify_point_in_polygon(
+    point: &Point3,
+    polygon: &ConvexPolygon,
+) -> HypermeshResult<PolygonPointLocation> {
+    if classify_point(point, &polygon.support)? != Classification::On {
+        return Ok(PolygonPointLocation::Outside);
+    }
+    let mut on_edge = false;
+    for edge in &polygon.edges {
+        match classify_point(point, edge)? {
+            Classification::Positive => return Ok(PolygonPointLocation::Outside),
+            Classification::On => on_edge = true,
+            Classification::Negative => {}
+        }
+    }
+    if on_edge {
+        Ok(PolygonPointLocation::Boundary)
+    } else {
+        Ok(PolygonPointLocation::Interior)
+    }
 }
 
 fn segment_plane_crossing(
@@ -11051,14 +11092,14 @@ mod tests {
             uncertified_definition_fallback: false,
         };
 
-        assert!(
-            !probe_reaches_adjacent_cell(
+        assert_eq!(
+            probe_reaches_adjacent_cell(
                 &interior.point,
                 &probe.point,
                 &host_support,
                 std::slice::from_ref(&blocker),
-            )
-            .unwrap()
+            ),
+            Err(HypermeshError::UnknownClassification)
         );
         assert!(probe_reaches_adjacent_cell_from_interior(
             &interior,
@@ -11067,6 +11108,17 @@ mod tests {
             &[blocker],
         )
         .unwrap());
+    }
+
+    #[test]
+    fn probe_reaches_adjacent_cell_reports_unknown_for_boundary_crossing() {
+        let host_support = Plane::axis_aligned(2, r(0));
+        let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+
+        assert_eq!(
+            probe_reaches_adjacent_cell(&p(0, 0, 0), &p(2, 0, 0), &host_support, &[blocker]),
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]
@@ -11081,6 +11133,26 @@ mod tests {
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 || Err(HypermeshError::UnknownClassification),
+                |_start_definition, _end_definition| Ok(true),
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_definition_search_continues_after_boundary_direct_check() {
+        let host_support = Plane::axis_aligned(2, r(0));
+        let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+
+        assert!(
+            probe_reaches_adjacent_cell_with_definition_search(
+                &start,
+                &end,
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                || probe_reaches_adjacent_cell(&start, &end, &host_support, &[blocker.clone()]),
                 |_start_definition, _end_definition| Ok(true),
             )
             .unwrap()

@@ -263,6 +263,9 @@ later exact orderings run.
 Direct segment tracing now also treats unmatched on-edge crossings as
 `UnknownClassification` instead of flattening them into an ordinary invalid
 path result.
+Direct adjacent-cell reachability now does the same for exact blocker-surface
+contacts: boundary hits surface as `UnknownClassification`, while strict
+interior blocker crossings remain ordinary blocked paths.
 The reachability-side plane-replacement walk now does the same for its
 intermediate adjacency checks: one uncertified replacement leg only invalidates
 that ordering, rather than cutting off later exact plane-replacement orderings.
