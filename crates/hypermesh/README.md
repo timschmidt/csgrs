@@ -503,12 +503,13 @@ degenerating that family to empty. When those shifted target builders receive
 overlapping strict-seed, exact-vertex, and geometry-seed families, they now
 dedupe those seeds in first-occurrence order before rerunning the same shifted
 cell construction from multiple equivalent points, and the projected-side seed
-builders now reuse one exact feasible-vertex / geometry-seed family per cell
-instead of recomputing those raw families separately for strict and shifted
-search. Projected escape-target construction now reuses that same per-cell
-projected seed family instead of rebuilding it before widening into escape
-targets, and support-side seed builders now do the same before widening into
-shifted support-cell target search.
+builders now reuse one exact feasible-vertex family per cell when deriving raw
+geometry seeds instead of recomputing the same feasible vertex enumeration for
+both shifted-vertex and geometry-seed paths. Projected escape-target
+construction now reuses that same per-cell projected seed family instead of
+rebuilding it before widening into escape targets, and support-side seed
+builders now do the same before widening into shifted support-cell target
+search.
 Support-cell retained definitions now include every exact witness-active
 halfspace we can verify, not just the feasibility basis planes returned by
 `hyperlimit`. When direct tracing cannot certify a reference step, hypermesh

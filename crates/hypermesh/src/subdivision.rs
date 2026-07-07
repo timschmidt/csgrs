@@ -4842,10 +4842,8 @@ fn projected_cell_seed_families_from_optional_report(
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(halfspaces), saw_unknown)?;
-    let shifted_geometry_seeds = point3_family_or_empty(
-        support_cell_geometry_seed_candidates(halfspaces),
-        saw_unknown,
-    )?;
+    let shifted_geometry_seeds =
+        support_cell_geometry_seed_candidates_from_vertices(&shifted_vertices)?;
     let mut strict_seeds = Vec::new();
 
     extend_point3_families_backtracking_unknown(
@@ -5065,9 +5063,15 @@ fn support_cell_geometry_seed_candidates(
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Vec<Point3>> {
     let vertices = feasible_support_cell_vertices(halfspaces)?;
+    support_cell_geometry_seed_candidates_from_vertices(&vertices)
+}
+
+fn support_cell_geometry_seed_candidates_from_vertices(
+    vertices: &[Point3],
+) -> HypermeshResult<Vec<Point3>> {
     let mut candidates = Vec::new();
     let mut subset = Vec::new();
-    collect_point3_centroid_subset_candidates(&mut candidates, &vertices, 0, &mut subset)?;
+    collect_point3_centroid_subset_candidates(&mut candidates, vertices, 0, &mut subset)?;
     Ok(candidates)
 }
 
@@ -5293,10 +5297,8 @@ fn support_cell_seed_families_from_optional_report(
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let shifted_vertices =
         point3_family_or_empty(feasible_support_cell_vertices(halfspaces), saw_unknown)?;
-    let shifted_geometry_seeds = point3_family_or_empty(
-        support_cell_geometry_seed_candidates(halfspaces),
-        saw_unknown,
-    )?;
+    let shifted_geometry_seeds =
+        support_cell_geometry_seed_candidates_from_vertices(&shifted_vertices)?;
     let mut strict_seeds = Vec::new();
 
     extend_point3_families_backtracking_unknown(
@@ -10694,6 +10696,17 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn support_cell_geometry_seed_candidates_from_vertices_matches_direct_query() {
+        let halfspaces = aabb_core_halfspaces(&Aabb::new(p(0, 0, 0), p(4, 4, 4))).unwrap();
+        let vertices = feasible_support_cell_vertices(&halfspaces).unwrap();
+
+        let from_vertices = support_cell_geometry_seed_candidates_from_vertices(&vertices).unwrap();
+        let direct = support_cell_geometry_seed_candidates(&halfspaces).unwrap();
+
+        assert_eq!(from_vertices, direct);
     }
 
     #[test]
