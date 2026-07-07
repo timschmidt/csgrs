@@ -5975,6 +5975,86 @@ fn strict_axis_probe_targets(
     }
 }
 
+#[cfg(test)]
+fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
+    interior: &InteriorLeafPoint,
+    support: &Plane,
+    corridor: &Aabb,
+    axis: usize,
+    positive_side: bool,
+    definition: Option<&[Plane; 3]>,
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    mut build_shifted_witnesses: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
+) -> HypermeshResult<Vec<ProbePoint>> {
+    let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    if let Some(definition) = definition {
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
+    }
+    halfspaces.push(support_side_halfspace(support, positive_side));
+
+    let mut probes = Vec::new();
+    let mut saw_unknown = false;
+    let report_witness = report.and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+
+    extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
+        build_axis_probe_point(
+            witness,
+            interior,
+            corridor,
+            support,
+            axis,
+            definition,
+            &halfspaces,
+            active_planes_from_optional_report(report, witness),
+            false,
+        )
+    })?;
+
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        shifted_halfspace_seed_families_with_report_seed(
+            report_witness,
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_seed_families_backtracking_unknown(
+                &mut shifted_witnesses,
+                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
+                |seed| build_shifted_witnesses(seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
+    )?;
+    extend_probe_point_builds_backtracking_unknown(
+        &mut probes,
+        shifted_witnesses.iter(),
+        |shifted| {
+            build_axis_probe_point_from_shifted_witness(
+                shifted, interior, corridor, support, axis, definition,
+            )
+        },
+    )?;
+    if probes.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if saw_unknown {
+            mark_all_probe_points_uncertified(&mut probes);
+        }
+        Ok(probes)
+    }
+}
+
 fn build_probe_point(
     witness: &Point3,
     corridor: &Aabb,
@@ -11299,6 +11379,50 @@ mod tests {
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
         assert!(probes[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn strict_axis_probe_targets_try_shifted_search_from_report_witness_seed() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: false,
+        };
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
+        let witness = p(1, 2, 2);
+        let visited = std::cell::RefCell::new(Vec::new());
+
+        let probes = strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
+            &interior,
+            &support,
+            &corridor,
+            0,
+            true,
+            None,
+            Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
+                witness.clone(),
+                [None, None, None],
+            )),
+            Vec::new(),
+            vec![witness.clone()],
+            Vec::new(),
+            |seed| {
+                visited.borrow_mut().push(seed.clone());
+                Ok(vec![ShiftedHalfspaceWitness {
+                    point: p(2, 1, 1),
+                    families: vec![ShiftedHalfspaceWitnessFamily {
+                        halfspaces: vec![axis_halfspace(0, false, r(3))],
+                        active_planes: [Some(0), None, None],
+                    }],
+                    uncertified_definition_fallback: false,
+                }])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![witness]);
+        assert!(probes.iter().any(|probe| probe.point == p(2, 1, 1)));
     }
 
     #[test]
