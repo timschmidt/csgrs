@@ -775,6 +775,10 @@ Support-side witness replay now also caches
 geometric halfspace/active-plane state, so repeated strict and shifted support
 target construction does not rebuild the same retained-definition target at one
 support witness over and over.
+Projected root-family and projected-escape witness replay now do the same
+inside one projected reference update, so repeated report/direct/shifted
+projected witness families reuse the same retained-definition target
+construction before support fallback even starts.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when
