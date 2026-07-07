@@ -498,8 +498,10 @@ underlying exact stop family now also skips past partially uncertified local
 surface crossings instead of aborting corridor construction before later exact
 stops run, and exact boundary contacts on those local axis-surface crossings
 now count as `UnknownClassification` for that stop candidate instead of
-ordinary stop membership. That uncertainty is preserved through both the later
-axis-corridor search and the tighter escape-box search. If those
+ordinary stop membership. Exact endpoint-on-plane contacts at the child AABB
+boundary now count the same way instead of disappearing as ordinary no-crossing
+before later exact corridors run. That uncertainty is preserved through both
+the later axis-corridor search and the tighter escape-box search. If those
 direct one-axis corridors still cannot be traced, it next searches the ordered
 exact escape-box family bounded by certified axis stop values and child AABB
 faces around that projected target, asking `hyperlimit` for a replayable
