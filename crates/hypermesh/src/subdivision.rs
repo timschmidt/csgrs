@@ -3499,21 +3499,31 @@ struct ShiftedProjectedCellFamilies {
 
 #[derive(Clone)]
 struct ShiftedProjectedCellFamilyCacheEntry {
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
     seed: Point3,
     families: HypermeshResult<Option<ShiftedProjectedCellFamilies>>,
 }
 
 fn cached_shifted_projected_cell_families_with(
     cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
     seed: &Point3,
     build: impl FnOnce() -> HypermeshResult<Option<ShiftedProjectedCellFamilies>>,
 ) -> HypermeshResult<Option<ShiftedProjectedCellFamilies>> {
-    if let Some(existing) = cache.iter().find(|existing| existing.seed == *seed) {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            && existing.seed == *seed
+    }) {
         return existing.families.clone();
     }
 
     let families = build();
     cache.push(ShiftedProjectedCellFamilyCacheEntry {
+        bounds: bounds.clone(),
+        halfspaces: halfspaces.to_vec(),
         seed: seed.clone(),
         families: families.clone(),
     });
@@ -5009,7 +5019,7 @@ fn shifted_projected_cell_targets_from_seed_with_cache(
     seed: &Point3,
     cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    match cached_shifted_projected_cell_families_with(cache, seed, || {
+    match cached_shifted_projected_cell_families_with(cache, bounds, halfspaces, seed, || {
         shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)
     })? {
         Some(families) => {
@@ -5145,7 +5155,7 @@ fn projected_escape_targets_from_seed_with_cache(
     seed: &Point3,
     cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
-    match cached_shifted_projected_cell_families_with(cache, seed, || {
+    match cached_shifted_projected_cell_families_with(cache, bounds, halfspaces, seed, || {
         shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)
     })? {
         Some(families) => projected_escape_targets_from_families(halfspaces, &families),
@@ -10970,30 +10980,136 @@ mod tests {
 
     #[test]
     fn cached_shifted_projected_cell_families_reuse_identical_seed() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
         let seed = p(1, 2, 3);
         let mut cache = Vec::new();
         let mut calls = 0;
 
-        let first = cached_shifted_projected_cell_families_with(&mut cache, &seed, || {
-            calls += 1;
-            Ok(None)
-        })
+        let first = cached_shifted_projected_cell_families_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            &seed,
+            || {
+                calls += 1;
+                Ok(None)
+            },
+        )
         .unwrap();
-        let second = cached_shifted_projected_cell_families_with(&mut cache, &seed, || {
-            calls += 1;
-            Ok(Some(ShiftedProjectedCellFamilies {
-                shifted: Vec::new(),
-                report: None,
-                saw_unknown: false,
-                strict_seeds: vec![p(9, 9, 9)],
-                shifted_vertices: Vec::new(),
-                shifted_geometry_seeds: Vec::new(),
-            }))
-        })
+        let second = cached_shifted_projected_cell_families_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            &seed,
+            || {
+                calls += 1;
+                Ok(Some(ShiftedProjectedCellFamilies {
+                    shifted: Vec::new(),
+                    report: None,
+                    saw_unknown: false,
+                    strict_seeds: vec![p(9, 9, 9)],
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                }))
+            },
+        )
         .unwrap();
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_shifted_projected_cell_families_reuse_permuted_halfspace_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let seed = p(1, 2, 3);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_shifted_projected_cell_families_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            &seed,
+            || {
+                calls += 1;
+                Ok(None)
+            },
+        )
+        .unwrap();
+        let second = cached_shifted_projected_cell_families_with(
+            &mut cache,
+            &bounds,
+            &permuted,
+            &seed,
+            || {
+                calls += 1;
+                Ok(Some(ShiftedProjectedCellFamilies {
+                    shifted: Vec::new(),
+                    report: None,
+                    saw_unknown: false,
+                    strict_seeds: vec![p(9, 9, 9)],
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                }))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_shifted_projected_cell_families_distinguish_halfspace_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let alternate_halfspaces = {
+            let mut alternate = halfspaces.clone();
+            alternate.push(support_side_halfspace(&Plane::axis_aligned(0, r(2)), false));
+            alternate
+        };
+        let seed = p(1, 2, 3);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_shifted_projected_cell_families_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            &seed,
+            || {
+                calls += 1;
+                Ok(None)
+            },
+        )
+        .unwrap();
+        let second = cached_shifted_projected_cell_families_with(
+            &mut cache,
+            &bounds,
+            &alternate_halfspaces,
+            &seed,
+            || {
+                calls += 1;
+                Ok(Some(ShiftedProjectedCellFamilies {
+                    shifted: Vec::new(),
+                    report: None,
+                    saw_unknown: false,
+                    strict_seeds: vec![p(9, 9, 9)],
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                }))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 2);
+        assert_eq!(first, None);
+        assert!(second.is_some());
     }
 
     #[test]
