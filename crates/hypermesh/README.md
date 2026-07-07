@@ -594,6 +594,11 @@ The same point-level rule now also applies to the direct projected/support
 target family itself: a strict direct seed that lands on the report witness no
 longer gets skipped before it can merge extra retained plane definitions into
 that same-point `ReferenceTarget`.
+And when the report witness is not itself a strict direct seed, it is now still
+used as a shifted-search root in the projected/support target family instead of
+being treated only as a direct witness. That keeps later shifted target
+construction from silently missing alternate reference paths rooted at the same
+exact witness point.
 Projected axis-stop corridor search now also treats exact zero-room bound-start
 contact as local `UnknownClassification` instead of ordinary empty stop family,
 matching the later start- and endpoint-boundary handling in that same
