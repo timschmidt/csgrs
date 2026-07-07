@@ -239,11 +239,17 @@ witness search in the closed axis corridor and desired support-side cell,
 rather than by midpoint sampling, and that axis probe path now also walks the
 ordered exact stop family out to the child boundary instead of stopping at the
 first certified crossing. Partially uncertified local axis crossings no longer
-abort the whole corridor family before later exact corridors run. Full
+abort the whole corridor family before later exact corridors run, and exact
+boundary contacts on those local axis corridors now count as
+`UnknownClassification` for that corridor candidate instead of ordinary stop
+membership. Full
 Normal-direction probes now do the same: they walk the ordered exact stop
 family out to the child boundary instead of stopping at one certified normal
 corridor, and partially uncertified local normal crossings no longer abort the
-whole corridor family before later exact corridors run. Full
+whole corridor family before later exact corridors run, while exact boundary
+contacts at the start point or along a local normal crossing now count as
+`UnknownClassification` for that corridor candidate instead of ordinary stop
+membership. Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished, though probe and reference fallback now both retry from the
 reference point's exact axis-plane definition even when other retained start
