@@ -676,8 +676,10 @@ recursion rerun that identical branch state, and identical child states now
 also reuse cached reference propagation instead of recomputing the same child
 reference witness each time that state reappears. That child reference cache
 and the matching child subdivision cache are now shared across the whole
-top-level subdivision call, not only one parent split search, so recursive
-branches that converge back to the same exact child task can also reuse the
+top-level subdivision call, not only one parent split search, but the child
+reference memo is keyed by the full parent reference state as well as the
+child geometry so recursive reuse stays exact. Recursive branches that
+converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
