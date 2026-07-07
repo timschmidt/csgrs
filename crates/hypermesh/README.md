@@ -295,7 +295,10 @@ state explicitly at the `compute_new_reference(...)` boundary: if projected
 direct/escape target-family construction was uncertified and support fallback
 still finds no witness, the final result is now
 `UnknownClassification` instead of a plain
-`ReferencePropagationFailed`.
+`ReferencePropagationFailed`. In particular, the root projected direct/escape
+target-family builders now keep that uncertified state even when they return
+an empty family and let support fallback continue, instead of surfacing
+`UnknownClassification` before the support-side search runs at all.
 At the target level, a projected/support reference point that is strictly
 inside the child cell but whose retained-definition trace is uncertified now
 surfaces `UnknownClassification` instead of being treated like a simple absent

@@ -1396,13 +1396,14 @@ fn projected_root_reference_families(
             &mut saw_unknown,
         )?;
     let shifted_projected_cell_cache = std::cell::RefCell::new(Vec::new());
-    let projected_targets = strict_projected_cell_targets_from_seed_families_with(
+    let projected_targets = strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
         bounds,
         halfspaces,
         report.as_ref(),
         strict_seeds.clone(),
         shifted_vertices.clone(),
         shifted_geometry_seeds.clone(),
+        &mut saw_unknown,
         |seed| {
             shifted_projected_cell_targets_from_seed_with_cache(
                 bounds,
@@ -1412,32 +1413,26 @@ fn projected_root_reference_families(
             )
         },
     )?;
-    let projected_escape_targets = projected_reference_escape_targets_from_seed_families_with(
-        bounds,
-        halfspaces,
-        &projected_targets,
-        report.as_ref(),
-        strict_seeds,
-        shifted_vertices,
-        shifted_geometry_seeds,
-        |seed| {
-            projected_escape_targets_from_seed_with_cache(
-                bounds,
-                halfspaces,
-                seed,
-                &mut shifted_projected_cell_cache.borrow_mut(),
-            )
-        },
-    )?;
-    let projected_unknown = saw_unknown
-        && (projected_targets.is_empty()
-            || projected_escape_targets.len() == projected_targets.len());
+    let projected_escape_targets =
+        projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            halfspaces,
+            &projected_targets,
+            report.as_ref(),
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+            &mut saw_unknown,
+            |seed| {
+                projected_escape_targets_from_seed_with_cache(
+                    bounds,
+                    halfspaces,
+                    seed,
+                    &mut shifted_projected_cell_cache.borrow_mut(),
+                )
+            },
+        )?;
 
-    Ok((
-        projected_targets,
-        projected_escape_targets,
-        projected_unknown,
-    ))
+    Ok((projected_targets, projected_escape_targets, saw_unknown))
 }
 
 #[cfg(test)]
@@ -1697,6 +1692,34 @@ fn projected_reference_escape_targets_from_seed_families_with(
     strict_shift_seeds: Vec<Point3>,
     shifted_vertices: Vec<Point3>,
     shifted_geometry_seeds: Vec<Point3>,
+    build_escape_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut saw_unknown = false;
+    let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+        halfspaces,
+        projected_targets,
+        report,
+        strict_shift_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+        &mut saw_unknown,
+        build_escape_targets,
+    )?;
+    if targets.len() == projected_targets.len() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
+}
+
+fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+    halfspaces: &[LimitPlane3],
+    projected_targets: &[ReferenceTarget],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    strict_shift_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    saw_unknown: &mut bool,
     mut build_escape_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
@@ -1705,7 +1728,7 @@ fn projected_reference_escape_targets_from_seed_families_with(
         .map(|target| target.point.clone())
         .collect::<Vec<_>>();
     let report_witness = report.and_then(|report| report.witness.clone());
-    extend_reference_target_families_backtracking_unknown(
+    *saw_unknown |= extend_reference_target_families_collect_unknown(
         &mut targets,
         [
             reference_target_family_from_witness(
@@ -2130,6 +2153,18 @@ fn extend_reference_target_families_backtracking_unknown(
     targets: &mut Vec<ReferenceTarget>,
     families: impl IntoIterator<Item = HypermeshResult<Vec<ReferenceTarget>>>,
 ) -> HypermeshResult<()> {
+    let saw_unknown = extend_reference_target_families_collect_unknown(targets, families)?;
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(())
+    }
+}
+
+fn extend_reference_target_families_collect_unknown(
+    targets: &mut Vec<ReferenceTarget>,
+    families: impl IntoIterator<Item = HypermeshResult<Vec<ReferenceTarget>>>,
+) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     for family in families {
         match family {
@@ -2144,11 +2179,7 @@ fn extend_reference_target_families_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    if targets.is_empty() && saw_unknown {
-        Err(crate::error::HypermeshError::UnknownClassification)
-    } else {
-        Ok(())
-    }
+    Ok(saw_unknown)
 }
 
 fn point3_family_or_empty(
@@ -3346,6 +3377,34 @@ fn strict_projected_cell_targets_from_seed_families_with(
     strict_seeds: Vec<Point3>,
     shifted_vertices: Vec<Point3>,
     shifted_geometry_seeds: Vec<Point3>,
+    build_shifted_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    let mut saw_unknown = false;
+    let targets = strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
+        bounds,
+        halfspaces,
+        report,
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+        &mut saw_unknown,
+        build_shifted_targets,
+    )?;
+    if targets.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(targets)
+    }
+}
+
+fn strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    saw_unknown: &mut bool,
     mut build_shifted_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
@@ -3368,7 +3427,7 @@ fn strict_projected_cell_targets_from_seed_families_with(
             push_unique_reference_target(&mut deferred_direct_targets, target);
         }
     }
-    extend_reference_target_families_backtracking_unknown(
+    *saw_unknown |= extend_reference_target_families_collect_unknown(
         &mut targets,
         [
             reference_target_family_from_witness(
@@ -5480,6 +5539,23 @@ mod tests {
     }
 
     #[test]
+    fn reference_target_family_search_tracks_unknown_after_later_certified_family() {
+        let mut targets = Vec::new();
+
+        let saw_unknown = extend_reference_target_families_collect_unknown(
+            &mut targets,
+            [
+                Err(crate::error::HypermeshError::UnknownClassification),
+                Ok(vec![ReferenceTarget::axis_defined(p(1, 2, 3))]),
+            ],
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
     fn reference_target_family_search_reports_unknown_if_all_families_are_uncertified() {
         let mut targets = Vec::new();
 
@@ -5517,6 +5593,49 @@ mod tests {
         .unwrap();
 
         assert_eq!(targets, vec![ReferenceTarget::axis_defined(p(1, 2, 3))]);
+    }
+
+    #[test]
+    fn strict_projected_target_family_tracking_preserves_empty_unknown_result() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut saw_unknown = false;
+
+        let targets = strict_projected_cell_targets_from_seed_families_with_tracking_unknown(
+            &bounds,
+            &halfspaces,
+            None,
+            Vec::new(),
+            vec![p(1, 1, 1)],
+            Vec::new(),
+            &mut saw_unknown,
+            |_seed| Err(crate::error::HypermeshError::UnknownClassification),
+        )
+        .unwrap();
+
+        assert!(targets.is_empty());
+        assert!(saw_unknown);
+    }
+
+    #[test]
+    fn projected_escape_target_family_tracking_preserves_unknown_with_existing_targets() {
+        let projected_targets = vec![ReferenceTarget::axis_defined(p(0, 0, 0))];
+        let mut saw_unknown = false;
+
+        let targets = projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
+            &[],
+            &projected_targets,
+            None,
+            Vec::new(),
+            vec![p(1, 1, 1)],
+            Vec::new(),
+            &mut saw_unknown,
+            |_seed| Err(crate::error::HypermeshError::UnknownClassification),
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(targets, projected_targets);
     }
 
     #[test]
