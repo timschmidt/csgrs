@@ -2187,6 +2187,7 @@ fn projected_root_reference_families_with_witness_cache(
             seed_geometry_cache,
         )?;
     let shifted_projected_cell_cache = std::cell::RefCell::new(Vec::new());
+    let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     let projected_targets =
         strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
             bounds,
@@ -2219,6 +2220,7 @@ fn projected_root_reference_families_with_witness_cache(
             shifted_geometry_seeds,
             &mut saw_unknown,
             reference_witness_cache,
+            &pure_halfspace_contains_cache,
             |seed| {
                 projected_escape_targets_from_seed_with_cache(
                     bounds,
@@ -2226,6 +2228,7 @@ fn projected_root_reference_families_with_witness_cache(
                     seed,
                     &mut shifted_projected_cell_cache.borrow_mut(),
                     reference_witness_cache,
+                    &pure_halfspace_contains_cache,
                 )
             },
         )?;
@@ -2570,6 +2573,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
     build_escape_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     projected_reference_escape_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
         halfspaces,
         projected_targets,
@@ -2579,6 +2583,7 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown(
         shifted_geometry_seeds,
         saw_unknown,
         &reference_witness_cache,
+        &pure_halfspace_contains_cache,
         build_escape_targets,
     )
 }
@@ -2592,6 +2597,9 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
     shifted_geometry_seeds: Vec<Point3>,
     saw_unknown: &mut bool,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    pure_halfspace_contains_cache: &std::cell::RefCell<
+        Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    >,
     mut build_escape_targets: impl FnMut(&Point3) -> HypermeshResult<Vec<ReferenceTarget>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = projected_targets.to_vec();
@@ -2608,7 +2616,13 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
         [
             reference_target_family_from_witness(
                 report.and_then(|report| report.witness.as_ref()),
-                |witness| point_strictly_inside_halfspaces_or_unknown(witness, halfspaces),
+                |witness| {
+                    cached_point_strictly_inside_halfspaces_or_unknown_with(
+                        &mut pure_halfspace_contains_cache.borrow_mut(),
+                        witness,
+                        halfspaces,
+                    )
+                },
                 |witness| {
                     cached_reference_target_from_halfspace_witness_with(
                         &mut reference_witness_cache.borrow_mut(),
@@ -2629,7 +2643,13 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
                 &strict_shift_seeds,
                 report_witness.as_ref(),
                 halfspaces,
-                |seed, halfspaces| point_strictly_inside_halfspaces_or_unknown(seed, halfspaces),
+                |seed, halfspaces| {
+                    cached_point_strictly_inside_halfspaces_or_unknown_with(
+                        &mut pure_halfspace_contains_cache.borrow_mut(),
+                        seed,
+                        halfspaces,
+                    )
+                },
                 |seed| {
                     cached_reference_target_from_halfspace_witness_with(
                         &mut reference_witness_cache.borrow_mut(),
@@ -3596,6 +3616,13 @@ struct ReferenceHalfspaceContainmentCacheEntry {
 }
 
 #[derive(Clone)]
+struct ReferencePureHalfspaceContainmentCacheEntry {
+    point: Point3,
+    halfspaces: Vec<LimitPlane3>,
+    contains: HypermeshResult<bool>,
+}
+
+#[derive(Clone)]
 struct SupportSurfaceCacheEntry {
     point: Point3,
     on_support_surface: HypermeshResult<bool>,
@@ -3762,6 +3789,28 @@ fn cached_reference_halfspace_containment_with(
     let contains = query(point, bounds, halfspaces);
     cache.push(ReferenceHalfspaceContainmentCacheEntry {
         bounds: bounds.clone(),
+        point: point.clone(),
+        halfspaces: halfspaces.to_vec(),
+        contains: contains.clone(),
+    });
+    contains
+}
+
+fn cached_pure_halfspace_containment_with(
+    cache: &mut Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    point: &Point3,
+    halfspaces: &[LimitPlane3],
+    query: impl FnOnce(&Point3, &[LimitPlane3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.point == *point
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+    }) {
+        return existing.contains.clone();
+    }
+
+    let contains = query(point, halfspaces);
+    cache.push(ReferencePureHalfspaceContainmentCacheEntry {
         point: point.clone(),
         halfspaces: halfspaces.to_vec(),
         contains: contains.clone(),
@@ -5903,6 +5952,9 @@ fn projected_escape_targets_from_seed_with_cache(
     seed: &Point3,
     cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    pure_halfspace_contains_cache: &std::cell::RefCell<
+        Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    >,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match cached_shifted_projected_cell_families_with(cache, bounds, halfspaces, seed, || {
         shifted_projected_cell_families_from_seed(bounds, halfspaces, seed)
@@ -5911,6 +5963,7 @@ fn projected_escape_targets_from_seed_with_cache(
             halfspaces,
             &families,
             reference_witness_cache,
+            pure_halfspace_contains_cache,
         ),
         None => Ok(Vec::new()),
     }
@@ -5922,10 +5975,12 @@ fn projected_escape_targets_from_families(
     families: &ShiftedProjectedCellFamilies,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+    let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     projected_escape_targets_from_families_with_witness_cache(
         halfspaces,
         families,
         &reference_witness_cache,
+        &pure_halfspace_contains_cache,
     )
 }
 
@@ -5933,6 +5988,9 @@ fn projected_escape_targets_from_families_with_witness_cache(
     halfspaces: &[LimitPlane3],
     families: &ShiftedProjectedCellFamilies,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    pure_halfspace_contains_cache: &std::cell::RefCell<
+        Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    >,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = &families.shifted;
     let report = families.report.as_ref();
@@ -5944,7 +6002,13 @@ fn projected_escape_targets_from_families_with_witness_cache(
         families.strict_seeds.clone(),
         families.shifted_vertices.clone(),
         families.shifted_geometry_seeds.clone(),
-        |witness| point_strictly_inside_halfspaces_or_unknown(witness, halfspaces),
+        |witness| {
+            cached_point_strictly_inside_halfspaces_or_unknown_with(
+                &mut pure_halfspace_contains_cache.borrow_mut(),
+                witness,
+                halfspaces,
+            )
+        },
         |witness| {
             cached_reference_target_from_halfspace_witness_with(
                 &mut reference_witness_cache.borrow_mut(),
@@ -7093,6 +7157,16 @@ fn cached_point_strictly_inside_support_cell_or_unknown_with(
             point_strictly_inside_support_cell_or_unknown(point, bounds, halfspaces)
         },
     )
+}
+
+fn cached_point_strictly_inside_halfspaces_or_unknown_with(
+    cache: &mut Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    point: &Point3,
+    halfspaces: &[LimitPlane3],
+) -> HypermeshResult<bool> {
+    cached_pure_halfspace_containment_with(cache, point, halfspaces, |point, halfspaces| {
+        point_strictly_inside_halfspaces_or_unknown(point, halfspaces)
+    })
 }
 
 #[cfg(test)]
@@ -10066,6 +10140,46 @@ mod tests {
             &point,
             &right,
             |_point, _bounds, _halfspaces| {
+                calls.set(calls.get() + 1);
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(calls.get(), 1);
+    }
+
+    #[test]
+    fn cached_pure_halfspace_containment_reuses_permuted_halfspaces() {
+        let point = p(2, 2, 2);
+        let left = vec![
+            axis_halfspace(0, false, r(0)),
+            axis_halfspace(1, false, r(0)),
+        ];
+        let right = vec![
+            axis_halfspace(1, false, r(0)),
+            axis_halfspace(0, false, r(0)),
+        ];
+        let cache = RefCell::new(Vec::<ReferencePureHalfspaceContainmentCacheEntry>::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_pure_halfspace_containment_with(
+            &mut cache.borrow_mut(),
+            &point,
+            &left,
+            |_point, _halfspaces| {
+                calls.set(calls.get() + 1);
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_pure_halfspace_containment_with(
+            &mut cache.borrow_mut(),
+            &point,
+            &right,
+            |_point, _halfspaces| {
                 calls.set(calls.get() + 1);
                 Ok(false)
             },

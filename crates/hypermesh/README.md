@@ -835,7 +835,11 @@ off later certified direct escape targets. The
 projected-escape report-witness and shifted-family include checks now apply
 the same strict halfspace rule, so a witness on a non-equality halfspace
 boundary is treated as `UnknownClassification` locally instead of ordinary
-containment. The
+containment. That same projected-escape layer now also memoizes exact pure
+halfspace containment checks by `(point, halfspaces)` across its report,
+direct-seed, and shifted-family builders, so one projected reference update
+does not repay the same strict escape-membership predicate on each sibling
+revisit. The
 focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. Full
 EMBER plane-replacement
