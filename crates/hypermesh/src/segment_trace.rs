@@ -5244,7 +5244,7 @@ fn collect_normal_probe_targets(
     mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     let definitions = unique_definition_family(definitions);
     for definition in &definitions {
         match search(Some(definition)) {
@@ -5254,7 +5254,7 @@ fn collect_normal_probe_targets(
                 }
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
@@ -5266,10 +5266,14 @@ fn collect_normal_probe_targets(
             }
         }
         Err(HypermeshError::UnknownClassification) => {
-            saw_unknown = true;
+            saw_hard_unknown = true;
         }
         Err(err) => return Err(err),
     }
+    let saw_unknown = saw_hard_unknown
+        || probes
+            .iter()
+            .any(|probe| probe.uncertified_definition_fallback);
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -5698,7 +5702,7 @@ fn collect_axis_probe_targets(
     mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
 ) -> HypermeshResult<Vec<ProbePoint>> {
     let mut probes = Vec::new();
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     let definitions = unique_definition_family(definitions);
     for definition in &definitions {
         match search(Some(definition)) {
@@ -5708,7 +5712,7 @@ fn collect_axis_probe_targets(
                 }
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
@@ -5720,10 +5724,14 @@ fn collect_axis_probe_targets(
             }
         }
         Err(HypermeshError::UnknownClassification) => {
-            saw_unknown = true;
+            saw_hard_unknown = true;
         }
         Err(err) => return Err(err),
     }
+    let saw_unknown = saw_hard_unknown
+        || probes
+            .iter()
+            .any(|probe| probe.uncertified_definition_fallback);
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -10422,6 +10430,68 @@ mod tests {
     }
 
     #[test]
+    fn collect_normal_probe_targets_marks_later_probes_uncertain_after_uncertain_family_result() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+
+        let probes = collect_normal_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Ok(vec![ProbePoint {
+                point: p(2, 2, 2),
+                side: Classification::Positive,
+                planes: vec![axis_plane_definition(&p(2, 2, 2))],
+                uncertified_definition_fallback: true,
+            }]),
+            None => Ok(vec![ProbePoint {
+                point: p(3, 3, 3),
+                side: Classification::Positive,
+                planes: vec![axis_plane_definition(&p(3, 3, 3))],
+                uncertified_definition_fallback: false,
+            }]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 2);
+        assert!(
+            probes
+                .iter()
+                .all(|probe| probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn collect_normal_probe_targets_keeps_certified_duplicate_state_certified() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let point = p(2, 2, 2);
+        let planes = vec![axis_plane_definition(&point)];
+
+        let probes = collect_normal_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Ok(vec![ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: planes.clone(),
+                uncertified_definition_fallback: true,
+            }]),
+            None => Ok(vec![ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: planes.clone(),
+                uncertified_definition_fallback: false,
+            }]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert!(!probes[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn probe_point_build_collection_backtracks_after_uncertified_candidate() {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
@@ -11027,6 +11097,68 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn collect_axis_probe_targets_marks_later_probes_uncertain_after_uncertain_family_result() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+
+        let probes = collect_axis_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Ok(vec![ProbePoint {
+                point: p(2, 2, 2),
+                side: Classification::Positive,
+                planes: vec![axis_plane_definition(&p(2, 2, 2))],
+                uncertified_definition_fallback: true,
+            }]),
+            None => Ok(vec![ProbePoint {
+                point: p(3, 3, 3),
+                side: Classification::Positive,
+                planes: vec![axis_plane_definition(&p(3, 3, 3))],
+                uncertified_definition_fallback: false,
+            }]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 2);
+        assert!(
+            probes
+                .iter()
+                .all(|probe| probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn collect_axis_probe_targets_keeps_certified_duplicate_state_certified() {
+        let definition = [
+            Plane::axis_aligned(2, r(0)),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let point = p(2, 2, 2);
+        let planes = vec![axis_plane_definition(&point)];
+
+        let probes = collect_axis_probe_targets(&[definition], |candidate| match candidate {
+            Some(_) => Ok(vec![ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: planes.clone(),
+                uncertified_definition_fallback: true,
+            }]),
+            None => Ok(vec![ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: planes.clone(),
+                uncertified_definition_fallback: false,
+            }]),
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert!(!probes[0].uncertified_definition_fallback);
     }
 
     #[test]
