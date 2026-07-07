@@ -324,6 +324,10 @@ leaf/probe/detour witness families is itself uncertified after earlier
 certified candidates already exist, the surviving candidates now keep that
 uncertainty attached so later failure still surfaces
 `UnknownClassification` instead of being flattened back into ordinary absence.
+The leaf-witness layer now does the same one level higher too: if the direct
+strict leaf seed family is empty and partially uncertified, later shifted
+vertex or shifted-geometry seed sources still run instead of being cut off
+before shifted witness construction starts.
 The same uncertainty now also stays attached across shifted witness-cell
 construction itself, so later leaf/probe/detour targets built from a surviving
 shifted witness still surface `UnknownClassification` if that local shifted

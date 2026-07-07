@@ -3959,7 +3959,12 @@ fn leaf_witness_seed_families(
         )],
     )?;
 
-    if seeds.is_empty() && saw_unknown {
+    if seed_family_search_failed_without_any_seed(
+        &seeds,
+        &shifted_vertices,
+        &shifted_geometry_seeds,
+        saw_unknown,
+    ) {
         Err(HypermeshError::UnknownClassification)
     } else {
         Ok(LeafWitnessSeedFamilies {
@@ -9948,6 +9953,22 @@ mod tests {
                 .iter()
                 .all(|point| point.uncertified_definition_fallback)
         );
+    }
+
+    #[test]
+    fn leaf_witness_seed_family_gate_allows_shifted_seed_sources_after_unknown_direct_family() {
+        assert!(!seed_family_search_failed_without_any_seed(
+            &[],
+            &[p(1, 1, 1)],
+            &[],
+            true,
+        ));
+        assert!(!seed_family_search_failed_without_any_seed(
+            &[],
+            &[],
+            &[p(1, 1, 1)],
+            true,
+        ));
     }
 
     #[test]
