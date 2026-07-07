@@ -355,7 +355,11 @@ escape corridors across the ordered exact stop family from the next surface hit
 out to the child AABB boundary, using `hyperlimit` witness search instead of
 midpoint sampling and backtracking past uncertified or empty earlier corridor
 searches; if every corridor in that local family is uncertified, that family
-now surfaces `UnknownClassification` instead of collapsing to `None`. If those
+now surfaces `UnknownClassification` instead of collapsing to `None`. The
+underlying exact stop family now also skips past partially uncertified local
+surface crossings instead of aborting corridor construction before later exact
+stops run, and that uncertainty is preserved through both the later
+axis-corridor search and the tighter escape-box search. If those
 direct one-axis corridors still cannot be traced, it next searches the ordered
 exact escape-box family bounded by certified axis stop values and child AABB
 faces around that projected target, asking `hyperlimit` for a replayable
