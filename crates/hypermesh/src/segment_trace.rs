@@ -4065,7 +4065,7 @@ fn leaf_witness_seed_families(
         &mut seeds,
         [collect_strict_halfspace_seed_family(
             Ok(shifted_geometry_seeds.clone()),
-            |candidate| point_strictly_inside_leaf(candidate, leaf),
+            |candidate| point_strictly_inside_leaf_or_unknown(candidate, leaf),
         )],
     )?;
 
@@ -4202,7 +4202,7 @@ fn shifted_edge_interior_points(
             .to_affine_point()
             .map_err(|_| HypermeshError::UnknownClassification)?;
 
-        if point_strictly_inside_leaf(&candidate, leaf)? {
+        if point_strictly_inside_leaf_or_unknown(&candidate, leaf)? {
             push_unique_interior_point(
                 &mut points,
                 InteriorLeafPoint {
@@ -4601,6 +4601,17 @@ fn point_strictly_inside_leaf(point: &Point3, leaf: &ConvexPolygon) -> Hypermesh
         Real::one(),
     );
     leaf.contains_point_strictly(&homogeneous)
+}
+
+fn point_strictly_inside_leaf_or_unknown(
+    point: &Point3,
+    leaf: &ConvexPolygon,
+) -> HypermeshResult<bool> {
+    match classify_point_in_polygon(point, leaf)? {
+        PolygonPointLocation::Outside => Ok(false),
+        PolygonPointLocation::Boundary => Err(HypermeshError::UnknownClassification),
+        PolygonPointLocation::Interior => Ok(true),
+    }
 }
 
 fn bounded_probes_from_interior(
@@ -8061,6 +8072,20 @@ mod tests {
     }
 
     #[test]
+    fn collect_strict_halfspace_seed_family_tracks_unknown_after_leaf_boundary_candidate() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+
+        let family =
+            collect_strict_halfspace_seed_family(Ok(vec![p(3, 0, 0), p(1, 1, 1)]), |candidate| {
+                point_strictly_inside_leaf_or_unknown(candidate, &leaf)
+            })
+            .unwrap();
+
+        assert_eq!(family.seeds, vec![p(1, 1, 1)]);
+        assert!(family.saw_unknown);
+    }
+
+    #[test]
     fn seed_family_search_failure_allows_later_shifted_seeds_after_unknown_strict_family() {
         assert!(!seed_family_search_failed_without_any_seed(
             &[],
@@ -10903,6 +10928,37 @@ mod tests {
                     shifted_vertices: Vec::new(),
                     shifted_geometry_seeds: Vec::new(),
                     saw_unknown: true,
+                })
+            },
+        )
+        .unwrap();
+
+        assert!(points.iter().any(|point| point.point == p(1, 1, 1)));
+        assert!(
+            points
+                .iter()
+                .all(|point| point.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_boundary_seed_candidate() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+
+        let points = strict_leaf_witness_points_with_seed_families(
+            &leaf,
+            &vertices,
+            |leaf, _vertices, _bounds, _halfspaces, _report| {
+                let boundary_family = collect_strict_halfspace_seed_family(
+                    Ok(vec![p(3, 0, 0), p(1, 1, 1)]),
+                    |candidate| point_strictly_inside_leaf_or_unknown(candidate, leaf),
+                )?;
+                Ok(LeafWitnessSeedFamilies {
+                    seeds: boundary_family.seeds,
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                    saw_unknown: boundary_family.saw_unknown,
                 })
             },
         )

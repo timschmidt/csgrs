@@ -342,7 +342,9 @@ first `UnknownClassification`, and the underlying strict leaf-witness build
 steps now do the same candidate-locally for direct, shifted, shifted-vertex,
 and shifted-geometry witness points. Exact leaf-boundary contact in the strict
 leaf witness builders now also counts as `UnknownClassification` instead of
-silently disappearing as ordinary absence. Shifted witness cells now also backtrack
+silently disappearing as ordinary absence, and the direct strict leaf seed
+filter and shifted-edge replay layer now do the same for exact leaf-boundary
+candidates before later certified witness families run. Shifted witness cells now also backtrack
 past uncertified strictness checks on their raw shifted-vertex and raw
 shifted-geometry seed sources instead of aborting that whole shifted witness
 family before later certified candidates run. When that direct strict leaf
