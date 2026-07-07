@@ -106,6 +106,10 @@ plane-replacement layer, and that retained-definition segment search now also
 backtracks across uncertified direct definition pairs and continues into
 certified detour families instead of collapsing an all-uncertified direct
 family to `None`. The retained-definition entry path above the step-detoured
+plane-replacement tracer also now caches exact repeated intermediate steps
+across axis orderings inside one retained path, so equivalent one-plane updates
+do not retrace the same local segment family over and over before that broader
+search moves on. The retained-definition entry path above the step-detoured
 plane-replacement fallback now also surfaces an uncertified direct trace family
 explicitly and lets that broader replacement search decide the fallback,
 instead of flattening the uncertified direct trace to absence first. The plain

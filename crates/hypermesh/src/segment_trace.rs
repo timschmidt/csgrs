@@ -74,6 +74,16 @@ struct ProbeReachabilityCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct PlaneReplacementStepCacheEntry {
+    current_point: Point3,
+    next_point: Point3,
+    current_planes: [Plane; 3],
+    next_planes: [Plane; 3],
+    attempt: WindingNumberVector,
+    result: HypermeshResult<Option<WindingNumberVector>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -798,6 +808,8 @@ fn trace_plane_replacement_path_with_tracer(
         &[ConvexPolygon],
     ) -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut step_cache = Vec::new();
+
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
         let mut current_point = match affine_from_planes(&current_planes) {
@@ -820,13 +832,23 @@ fn trace_plane_replacement_path_with_tracer(
                 Err(err) => return Err(err),
             };
             if next_point != current_point {
-                let next_winding = match trace_step(
+                let next_winding = match cached_plane_replacement_step_with(
+                    &mut step_cache,
                     &current_point,
                     &next_point,
                     &current_planes,
                     &next_planes,
                     &attempt,
-                    polygons,
+                    || {
+                        trace_step(
+                            &current_point,
+                            &next_point,
+                            &current_planes,
+                            &next_planes,
+                            &attempt,
+                            polygons,
+                        )
+                    },
                 ) {
                     Ok(Some(next_winding)) => next_winding,
                     Ok(None) | Err(HypermeshError::UnknownClassification) => {
@@ -847,6 +869,37 @@ fn trace_plane_replacement_path_with_tracer(
     }
 
     Err(HypermeshError::UnknownClassification)
+}
+
+fn cached_plane_replacement_step_with(
+    cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    current_point: &Point3,
+    next_point: &Point3,
+    current_planes: &[Plane; 3],
+    next_planes: &[Plane; 3],
+    attempt: &[i32],
+    trace: impl FnOnce() -> HypermeshResult<Option<WindingNumberVector>>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.current_point == *current_point
+            && existing.next_point == *next_point
+            && existing.current_planes == *current_planes
+            && existing.next_planes == *next_planes
+            && existing.attempt == attempt
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = trace();
+    cache.push(PlaneReplacementStepCacheEntry {
+        current_point: current_point.clone(),
+        next_point: next_point.clone(),
+        current_planes: current_planes.clone(),
+        next_planes: next_planes.clone(),
+        attempt: attempt.to_vec(),
+        result: result.clone(),
+    });
+    result
 }
 
 pub(crate) fn affine_from_planes(planes: &[Plane; 3]) -> HypermeshResult<Point3> {
@@ -9875,6 +9928,28 @@ mod tests {
         .unwrap();
 
         assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
+    fn plane_replacement_step_tracer_reuses_equivalent_steps_across_orderings() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 0, 0));
+        let mut step_calls = 0;
+
+        let err = trace_plane_replacement_path_with_tracer(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            |_current, _next, _current_planes, _next_planes, _attempt, _polygons| {
+                step_calls += 1;
+                Ok(None)
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(step_calls, 1);
     }
 
     #[test]
