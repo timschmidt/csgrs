@@ -1539,16 +1539,25 @@ fn compute_new_reference(
     }
 
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
-    let (projected_targets, projected_escape_targets, mut projected_unknown) =
-        projected_root_reference_families(bounds, &projected_halfspaces)?;
+    let projected_root = projected_root_reference_families(bounds, &projected_halfspaces)?;
     let projection_escape_axis_options_cache = std::cell::RefCell::new(Vec::new());
     let projection_escape_search_cache = std::cell::RefCell::new(Vec::new());
     let support_query_caches = std::cell::RefCell::new(SupportReferenceQueryCaches::default());
+    {
+        let mut query_caches = support_query_caches.borrow_mut();
+        prime_support_reference_query_caches_with_known_halfspace_report(
+            &mut query_caches,
+            &projected_halfspaces,
+            projected_root.report.as_ref(),
+            projected_root.saw_unknown,
+        );
+    }
+    let mut projected_unknown = projected_root.saw_unknown;
 
     let projected = projected_reference_search_or_none_tracking_unknown(
         search_projected_reference_families(
-            &projected_targets,
-            &projected_escape_targets,
+            &projected_root.projected_targets,
+            &projected_root.projected_escape_targets,
             || {
                 projected_support_plane_cell_reference_with_query_caches(
                     old_ref,
@@ -1667,16 +1676,28 @@ fn compute_new_reference(
     reference_result_or_error(projected, support, projected_unknown)
 }
 
+struct ProjectedRootReferenceFamilies {
+    report: Option<hyperlimit::HalfspaceFeasibilityReport>,
+    projected_targets: Vec<ReferenceTarget>,
+    projected_escape_targets: Vec<ReferenceTarget>,
+    saw_unknown: bool,
+}
+
 fn projected_root_reference_families(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
-) -> HypermeshResult<(Vec<ReferenceTarget>, Vec<ReferenceTarget>, bool)> {
+) -> HypermeshResult<ProjectedRootReferenceFamilies> {
     let (report, saw_report_unknown) = optional_halfspace_system_report(halfspaces)?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
     {
-        return Ok((Vec::new(), Vec::new(), saw_report_unknown));
+        return Ok(ProjectedRootReferenceFamilies {
+            report,
+            projected_targets: Vec::new(),
+            projected_escape_targets: Vec::new(),
+            saw_unknown: saw_report_unknown,
+        });
     }
 
     let mut saw_unknown = saw_report_unknown;
@@ -1724,7 +1745,12 @@ fn projected_root_reference_families(
             },
         )?;
 
-    Ok((projected_targets, projected_escape_targets, saw_unknown))
+    Ok(ProjectedRootReferenceFamilies {
+        report,
+        projected_targets,
+        projected_escape_targets,
+        saw_unknown,
+    })
 }
 
 #[cfg(test)]
@@ -2935,6 +2961,49 @@ struct SupportReferenceQueryCaches {
     accept_cache: std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
     search_cache:
         std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
+}
+
+fn prime_support_reference_query_caches_with_known_halfspace_report(
+    query_caches: &mut SupportReferenceQueryCaches,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    saw_unknown: bool,
+) {
+    let cached_report = if saw_unknown && report.is_none() {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(report.cloned())
+    };
+    if !query_caches
+        .report_cache
+        .iter()
+        .any(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
+    {
+        query_caches.report_cache.push(HalfspaceReportCacheEntry {
+            halfspaces: halfspaces.to_vec(),
+            report: cached_report.clone(),
+        });
+    }
+
+    let cached_feasible = match &cached_report {
+        Ok(Some(report)) => Some(Ok(report.status == HalfspaceFeasibility::Feasible)),
+        Ok(None) => None,
+        Err(err) => Some(Err(err.clone())),
+    };
+    if let Some(cached_feasible) = cached_feasible {
+        if !query_caches
+            .feasible_cache
+            .iter()
+            .any(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
+        {
+            query_caches
+                .feasible_cache
+                .push(HalfspaceFeasibilityCacheEntry {
+                    halfspaces: halfspaces.to_vec(),
+                    feasible: cached_feasible,
+                });
+        }
+    }
 }
 
 fn cached_reference_target_trace_with(
@@ -8213,6 +8282,104 @@ mod tests {
         assert!(feasible);
         assert!(report.is_some());
         assert_eq!(report_calls, 1);
+        assert_eq!(feasible_calls, 0);
+    }
+
+    #[test]
+    fn support_reference_query_caches_prime_projected_root_report_for_later_support_queries() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let old_ref = p(-1, 2, 2);
+        let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let projected_root = projected_root_reference_families(&bounds, &halfspaces).unwrap();
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        let mut report_calls = 0;
+        let mut feasible_calls = 0;
+
+        prime_support_reference_query_caches_with_known_halfspace_report(
+            &mut query_caches,
+            &halfspaces,
+            projected_root.report.as_ref(),
+            projected_root.saw_unknown,
+        );
+
+        let report = cached_halfspace_report_with(
+            &mut query_caches.report_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+        )
+        .unwrap();
+        let feasible = cached_halfspace_feasibility_with_report_cache(
+            &mut query_caches.report_cache,
+            &mut query_caches.feasible_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            |_halfspaces| {
+                feasible_calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(report, projected_root.report);
+        assert!(feasible);
+        assert_eq!(report_calls, 0);
+        assert_eq!(feasible_calls, 0);
+    }
+
+    #[test]
+    fn support_reference_query_caches_prime_unknown_report_for_later_support_queries() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        let mut report_calls = 0;
+        let mut feasible_calls = 0;
+
+        prime_support_reference_query_caches_with_known_halfspace_report(
+            &mut query_caches,
+            &halfspaces,
+            None,
+            true,
+        );
+
+        let report_err = cached_halfspace_report_with(
+            &mut query_caches.report_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+        )
+        .unwrap_err();
+        let feasible_err = cached_halfspace_feasibility_with_report_cache(
+            &mut query_caches.report_cache,
+            &mut query_caches.feasible_cache,
+            &halfspaces,
+            |_halfspaces| {
+                report_calls += 1;
+                Ok(None)
+            },
+            |_halfspaces| {
+                feasible_calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            report_err,
+            crate::error::HypermeshError::UnknownClassification
+        );
+        assert_eq!(
+            feasible_err,
+            crate::error::HypermeshError::UnknownClassification
+        );
+        assert_eq!(report_calls, 0);
         assert_eq!(feasible_calls, 0);
     }
 
