@@ -3,7 +3,7 @@
 //! This crate keeps primitive coordinates at API boundaries only. Core
 //! geometric state uses [`Real`] as its scalar and exposes borrowed slice APIs.
 //!
-//! The supported input model is finite, closed, piecewise-winding-number
+//! The intended input model is finite, closed, piecewise-winding-number
 //! triangle meshes represented with exact [`Real`] coordinates through
 //! `hyperlattice::Point3`. Disconnected closed components and nested closed
 //! components are part of that model. Empty meshes, degenerate source
@@ -11,17 +11,24 @@
 //! non-PWN surface collections are outside the supported model and are
 //! rejected before the general boolean path runs.
 //!
-//! Within that intended model, the current runtime claim is narrower:
-//! certified results are exact, while uncertified branches remain explicit
-//! failures. If the current EMBER search cannot certify a required sign,
-//! incidence, reachability, reference-propagation step, or output-closure
-//! fact, the operation returns an explicit [`HypermeshError`] such as
-//! [`HypermeshError::UnknownClassification`],
-//! [`HypermeshError::ReferencePropagationFailed`], or
-//! [`HypermeshError::SubdivisionDepthLimit`] instead of guessing through the
-//! unresolved branch. Completion is therefore not yet claimed for the whole
-//! intended closed-PWN model, even though the supported geometry model itself
-//! is broader than the currently certified success set.
+//! The current runtime contract inside that intended model is stricter than a
+//! blanket completeness claim:
+//!
+//! - If a boolean operation returns [`BooleanResult`], the classified
+//!   arrangement and its winding data were certified by the general EMBER
+//!   subdivision/BSP/classification path; the public API does not rely on
+//!   special-case boolean shortcuts or output repair to turn an uncertified
+//!   branch into success.
+//! - If the current search cannot certify a required sign, incidence,
+//!   reachability, reference-propagation step, leaf classification, or output
+//!   closure fact, the operation returns an explicit [`HypermeshError`] such as
+//!   [`HypermeshError::UnknownClassification`],
+//!   [`HypermeshError::ReferencePropagationFailed`], or
+//!   [`HypermeshError::SubdivisionDepthLimit`] instead of guessing through the
+//!   unresolved branch.
+//! - Completion is therefore not yet claimed for the whole intended closed-PWN
+//!   model, even though that geometry model is broader than the currently
+//!   certified success set.
 //!
 //! Predicate decisions are routed through the strict `hyperlimit` /
 //! `hyperlattice` exact-predicate stack. Unsupported or uncertifiable

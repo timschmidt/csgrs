@@ -34,6 +34,9 @@ pub const DEFAULT_MAX_DEPTH: usize = 40;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SubdivisionConfig {
     /// Maximum recursive depth.
+    ///
+    /// Reaching this bound is an explicit failure mode unless the current task
+    /// has already certified as a complete leaf.
     pub max_depth: usize,
 }
 
@@ -6231,7 +6234,6 @@ mod tests {
         let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
         let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
         let refs = [x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()];
-
         for op in [
             BooleanOp::Union,
             BooleanOp::Intersection,

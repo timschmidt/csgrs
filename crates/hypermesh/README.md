@@ -25,16 +25,19 @@ triangle soups, invalid triangle indices, and arbitrary non-PWN surface
 collections are outside the supported model and are rejected before the boolean
 subdivision path.
 
-Within that model, the current implementation makes a narrower runtime claim:
+Within that model, the current runtime claim is deliberately narrower than a
+blanket completeness claim:
 
-- Certified results are exact with respect to the strict `hyperlimit` /
-  `hyperlattice` predicate stack; the algorithm must not guess through an
-  uncertified sign, incidence, reachability, reference-propagation, or output
-  closure decision.
-- When the current EMBER search is incomplete for a branch, hypermesh reports
-  an explicit error such as `UnknownClassification`,
-  `ReferencePropagationFailed`, `SubdivisionDepthLimit`, `OpenOutput`, or
-  `OutputResolutionLimit` instead of silently widening the support claim.
+- If hypermesh returns `BooleanResult`, the result came from the general EMBER
+  subdivision/BSP/classification path with certified winding data and certified
+  arrangement closure; public success must not depend on special-case boolean
+  shortcuts or output repair.
+- If the current EMBER search cannot certify a required sign, incidence,
+  reachability, reference-propagation step, leaf classification, or output
+  closure fact, hypermesh reports an explicit error such as
+  `UnknownClassification`, `ReferencePropagationFailed`,
+  `SubdivisionDepthLimit`, `OpenOutput`, or `OutputResolutionLimit` instead of
+  silently widening the support claim.
 - Completion is not yet claimed for the whole intended closed-PWN model. The
   remaining finite-family search structure and depth-budgeted termination mean
   that some intended-model inputs can still fail with those explicit errors

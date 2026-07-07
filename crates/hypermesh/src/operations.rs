@@ -13,6 +13,10 @@ use crate::winding::{BooleanOp, make_indicator};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct EmberConfig {
     /// Maximum recursive subdivision depth.
+    ///
+    /// Reaching this bound is not treated as implicit success. If the current
+    /// task has not already certified as a complete leaf, the operation fails
+    /// with `HypermeshError::SubdivisionDepthLimit`.
     pub max_depth: usize,
 }
 
