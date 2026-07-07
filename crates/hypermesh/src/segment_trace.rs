@@ -1128,13 +1128,10 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         shifted_geometry_seeds,
     );
 
-    for seed in &seeds {
+    extend_detour_target_builds_backtracking_unknown(&mut targets, seeds.iter(), |seed| {
         let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
-        push_unique_detour_target(
-            &mut targets,
-            build_detour_target(seed, &halfspaces, active_planes, false)?,
-        );
-    }
+        build_detour_target(seed, &halfspaces, active_planes, false)
+    })?;
 
     let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
         {
@@ -1148,17 +1145,18 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
         },
         &mut saw_unknown,
     )?;
-    for witness in shifted_witnesses {
-        push_unique_detour_target(
-            &mut targets,
+    extend_detour_target_builds_backtracking_unknown(
+        &mut targets,
+        shifted_witnesses.iter(),
+        |witness| {
             build_detour_target(
                 &witness.point,
                 &witness.halfspaces,
                 witness.active_planes,
                 witness.uncertified_definition_fallback,
-            )?,
-        );
-    }
+            )
+        },
+    )?;
     if targets.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -1204,6 +1202,31 @@ fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarg
         }
     } else {
         targets.push(target);
+    }
+}
+
+fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
+    targets: &mut Vec<DetourTarget>,
+    candidates: impl IntoIterator<Item = &'a T>,
+    mut build: impl FnMut(&'a T) -> HypermeshResult<DetourTarget>,
+) -> HypermeshResult<()> {
+    let mut saw_unknown = false;
+    for candidate in candidates {
+        match build(candidate) {
+            Ok(target) => push_unique_detour_target(targets, target),
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    if targets.is_empty() && saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if saw_unknown {
+            mark_all_detour_targets_uncertified(targets);
+        }
+        Ok(())
     }
 }
 
@@ -4994,6 +5017,51 @@ mod tests {
         mark_all_detour_targets_uncertified(&mut targets);
 
         assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn detour_target_build_collection_backtracks_after_uncertified_candidate() {
+        let first = p(1, 2, 3);
+        let second = p(1, 2, 4);
+        let mut targets = Vec::new();
+
+        extend_detour_target_builds_backtracking_unknown(
+            &mut targets,
+            [&first, &second],
+            |point| {
+                if *point == first {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(DetourTarget {
+                        point: point.clone(),
+                        definitions: vec![axis_plane_definition(point)],
+                        uncertified_definition_fallback: false,
+                    })
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].point, second);
+        assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn detour_target_build_collection_reports_unknown_if_all_candidates_are_uncertified() {
+        let first = p(1, 2, 3);
+        let second = p(1, 2, 4);
+        let mut targets = Vec::new();
+
+        let err = extend_detour_target_builds_backtracking_unknown(
+            &mut targets,
+            [&first, &second],
+            |_point| Err(HypermeshError::UnknownClassification),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert!(targets.is_empty());
     }
 
     #[test]
