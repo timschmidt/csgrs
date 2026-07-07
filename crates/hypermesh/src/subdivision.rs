@@ -3157,7 +3157,7 @@ struct SupportReferenceQueryCaches {
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     seed_geometry_cache: Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: Vec<ShiftedSupportCellFamilyCacheEntry>,
-    reference_witness_cache: Vec<ReferenceWitnessTargetCacheEntry>,
+    reference_witness_cache: std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     trace_cache: Vec<ReferenceTargetTraceCacheEntry>,
     validity_cache: Vec<ReferenceBoundsValidityCacheEntry>,
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
@@ -4186,7 +4186,7 @@ fn support_plane_cell_reference_with_queries(
         &mut support_surface_cache,
         &mut query_caches.seed_geometry_cache,
         &mut query_caches.shifted_support_family_cache,
-        &mut query_caches.reference_witness_cache,
+        &query_caches.reference_witness_cache,
         &query_caches.target_cache,
         &query_caches.accept_cache,
         &query_caches.search_cache,
@@ -4209,7 +4209,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     support_surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
-    reference_witness_cache: &mut Vec<ReferenceWitnessTargetCacheEntry>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     target_cache: &std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
     accept_cache: &std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
     search_cache: &std::cell::RefCell<
@@ -5661,14 +5661,14 @@ fn strict_support_cell_targets_from_optional_report(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut seed_geometry_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
-    let mut reference_witness_cache = Vec::new();
+    let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
         bounds,
         halfspaces,
         report,
         &mut seed_geometry_cache,
         &mut shifted_support_family_cache,
-        &mut reference_witness_cache,
+        &reference_witness_cache,
     )
 }
 
@@ -5678,7 +5678,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
-    reference_witness_cache: &mut Vec<ReferenceWitnessTargetCacheEntry>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut targets = Vec::new();
     let mut saw_unknown = false;
@@ -5708,7 +5708,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
         &mut saw_unknown,
         |seed| {
             cached_reference_target_from_halfspace_witness_with(
-                reference_witness_cache,
+                &mut reference_witness_cache.borrow_mut(),
                 seed,
                 halfspaces,
                 [None, None, None],
@@ -5725,10 +5725,18 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     point_strictly_inside_support_cell_or_unknown(witness, bounds, halfspaces)
                 },
                 |witness| {
-                    reference_target_from_halfspace_witness(
+                    cached_reference_target_from_halfspace_witness_with(
+                        &mut reference_witness_cache.borrow_mut(),
                         witness,
                         halfspaces,
                         active_planes_from_optional_halfspace_report(report, witness),
+                        || {
+                            reference_target_from_halfspace_witness(
+                                witness,
+                                halfspaces,
+                                active_planes_from_optional_halfspace_report(report, witness),
+                            )
+                        },
                     )
                 },
             ),
@@ -6091,14 +6099,14 @@ fn shifted_support_cell_targets_from_seed(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut seed_geometry_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
-    let mut reference_witness_cache = Vec::new();
+    let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     shifted_support_cell_targets_from_seed_with_caches(
         bounds,
         halfspaces,
         seed,
         &mut seed_geometry_cache,
         &mut shifted_support_family_cache,
-        &mut reference_witness_cache,
+        &reference_witness_cache,
     )
 }
 
@@ -6108,7 +6116,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
     seed: &Point3,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
-    reference_witness_cache: &mut Vec<ReferenceWitnessTargetCacheEntry>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     match cached_shifted_support_cell_families_with(
         shifted_support_family_cache,
@@ -6246,7 +6254,7 @@ fn shifted_support_cell_targets_from_families(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     families: &ShiftedSupportCellFamilies,
-    reference_witness_cache: &mut Vec<ReferenceWitnessTargetCacheEntry>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let shifted = &families.shifted;
     let report = families.report.as_ref();
@@ -6269,7 +6277,7 @@ fn shifted_support_cell_targets_from_families(
                 },
                 |witness| {
                     cached_reference_target_from_halfspace_witness_with(
-                        reference_witness_cache,
+                        &mut reference_witness_cache.borrow_mut(),
                         witness,
                         shifted,
                         active_planes_from_optional_halfspace_report(report, witness),
@@ -6288,7 +6296,7 @@ fn shifted_support_cell_targets_from_families(
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
-                    reference_witness_cache,
+                    &mut reference_witness_cache.borrow_mut(),
                     &witness,
                     shifted,
                     [None, None, None],
@@ -6308,7 +6316,7 @@ fn shifted_support_cell_targets_from_families(
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
-                    reference_witness_cache,
+                    &mut reference_witness_cache.borrow_mut(),
                     &witness,
                     shifted,
                     [None, None, None],
@@ -6328,7 +6336,7 @@ fn shifted_support_cell_targets_from_families(
                     return Ok(Vec::new());
                 }
                 Ok(cached_reference_target_from_halfspace_witness_with(
-                    reference_witness_cache,
+                    &mut reference_witness_cache.borrow_mut(),
                     &witness,
                     shifted,
                     [None, None, None],
@@ -9627,9 +9635,9 @@ mod tests {
             shifted_geometry_seeds: Vec::new(),
         };
 
-        let mut cache = Vec::new();
+        let cache = std::cell::RefCell::new(Vec::new());
         let targets =
-            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &mut cache)
+            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &cache)
                 .unwrap();
 
         assert!(!targets.is_empty());
@@ -9657,9 +9665,9 @@ mod tests {
             shifted_geometry_seeds: Vec::new(),
         };
 
-        let mut cache = Vec::new();
+        let cache = std::cell::RefCell::new(Vec::new());
         let targets =
-            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &mut cache)
+            shifted_support_cell_targets_from_families(&bounds, &halfspaces, &families, &cache)
                 .unwrap();
 
         assert_eq!(targets.len(), 1);
