@@ -2671,6 +2671,9 @@ fn extend_reference_targets_backtracking_unknown<T>(
     for candidate in candidates {
         match build(candidate) {
             Ok(found) => {
+                saw_unknown |= found
+                    .iter()
+                    .any(|target| target.uncertified_definition_fallback);
                 for target in found {
                     push_unique_reference_target(targets, target);
                 }
@@ -7040,6 +7043,32 @@ mod tests {
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 3));
         assert!(targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn reference_target_collection_marks_later_targets_uncertain_after_uncertain_candidate_result()
+    {
+        let mut targets = Vec::new();
+
+        extend_reference_targets_backtracking_unknown(&mut targets, [0, 1], |candidate| {
+            if candidate == 0 {
+                Ok(vec![ReferenceTarget {
+                    point: p(1, 2, 3),
+                    definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                    uncertified_definition_fallback: true,
+                }])
+            } else {
+                Ok(vec![ReferenceTarget::axis_defined(p(2, 3, 4))])
+            }
+        })
+        .unwrap();
+
+        assert_eq!(targets.len(), 2);
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
     }
 
     #[test]

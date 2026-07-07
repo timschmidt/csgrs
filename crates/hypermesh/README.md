@@ -363,6 +363,11 @@ That now also applies when one sibling projected/support family already
 returns surviving fallback-marked targets: later sibling families inherit that
 same uncertainty instead of being misread as fully certified just because the
 partially uncertified family produced output.
+The candidate-local projected/support target collectors now do the same before
+those sibling families are even formed: if one candidate build already returns
+a fallback-marked target, later candidate targets inherit that uncertainty
+instead of being treated as fully certified siblings of a partially uncertified
+candidate.
 The top-level projected direct/escape search now does the same: if every
 projected direct trace, projected-support search, and projected escape search
 is uncertified, that local projected-family search returns
