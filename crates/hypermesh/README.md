@@ -362,7 +362,10 @@ faces around that projected target, asking `hyperlimit` for a replayable
 halfspace-feasibility witness inside each box while backtracking over certified
 slack sides of local support planes; if every escape box in that local family
 is uncertified, it now also surfaces `UnknownClassification` instead of
-silently collapsing. If that tighter escape-cell family is uncertified or still
+silently collapsing. That tighter escape-box family now also skips past
+partially uncertified local boxes instead of aborting before later exact boxes
+run, and if only those later boxes remain but none certifies a witness, that
+local family still preserves `UnknownClassification`. If that tighter escape-cell family is uncertified or still
 cannot be traced, it falls
 back to the full child-cell support search.
 Segment tracing uses

@@ -1839,9 +1839,31 @@ fn projection_escape_reference_with_search_and_axis_options(
     bounds: &Aabb,
     mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+        axis_options,
+        bounds,
+        &mut search,
+        |axis_options, saw_unknown| {
+            projection_escape_bounds_family_from_axis_options_tracking_unknown(
+                axis_options,
+                saw_unknown,
+            )
+        },
+    )
+}
+
+fn projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+    axis_options: &ProjectionEscapeAxisOptions,
+    bounds: &Aabb,
+    mut search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+    mut escape_bounds_family: impl FnMut(
+        &ProjectionEscapeAxisOptions,
+        &mut bool,
+    ) -> HypermeshResult<Vec<Aabb>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     let mut saw_unknown = false;
 
-    for escape_bounds in projection_escape_bounds_family_from_axis_options(axis_options)? {
+    for escape_bounds in escape_bounds_family(axis_options, &mut saw_unknown)? {
         if escape_bounds == *bounds {
             continue;
         }
@@ -1888,10 +1910,39 @@ fn projection_escape_bounds_family(
 fn projection_escape_bounds_family_from_axis_options(
     axis_options: &ProjectionEscapeAxisOptions,
 ) -> HypermeshResult<Vec<Aabb>> {
+    let mut saw_unknown = false;
+    let family = projection_escape_bounds_family_from_axis_options_tracking_unknown(
+        axis_options,
+        &mut saw_unknown,
+    )?;
+    if family.is_empty() && saw_unknown {
+        Err(crate::error::HypermeshError::UnknownClassification)
+    } else {
+        Ok(family)
+    }
+}
+
+fn projection_escape_bounds_family_from_axis_options_tracking_unknown(
+    axis_options: &ProjectionEscapeAxisOptions,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Vec<Aabb>> {
+    let (family, family_unknown) =
+        projection_escape_bounds_family_from_axis_options_with_extents(axis_options, |bounds| {
+            aabb_has_positive_or_zero_extents(bounds)
+        })?;
+    *saw_unknown |= family_unknown;
+    Ok(family)
+}
+
+fn projection_escape_bounds_family_from_axis_options_with_extents(
+    axis_options: &ProjectionEscapeAxisOptions,
+    mut extents_ok: impl FnMut(&Aabb) -> HypermeshResult<bool>,
+) -> HypermeshResult<(Vec<Aabb>, bool)> {
     if axis_options.len() != 3 {
-        return Ok(Vec::new());
+        return Ok((Vec::new(), false));
     }
     let mut keyed_boxes = Vec::new();
+    let mut saw_unknown = false;
     for lower_x in 0..axis_options[0].0.len() {
         for upper_x in 0..axis_options[0].1.len() {
             for lower_y in 0..axis_options[1].0.len() {
@@ -1909,8 +1960,14 @@ fn projection_escape_bounds_family_from_axis_options(
                                 axis_options[2].1[upper_z].clone(),
                             );
                             let escape_bounds = Aabb::new(min, max);
-                            if !aabb_has_positive_or_zero_extents(&escape_bounds)? {
-                                continue;
+                            match extents_ok(&escape_bounds) {
+                                Ok(true) => {}
+                                Ok(false) => continue,
+                                Err(crate::error::HypermeshError::UnknownClassification) => {
+                                    saw_unknown = true;
+                                    continue;
+                                }
+                                Err(err) => return Err(err),
                             }
                             keyed_boxes.push((
                                 (
@@ -1940,7 +1997,7 @@ fn projection_escape_bounds_family_from_axis_options(
         }
     }
 
-    Ok(family)
+    Ok((family, saw_unknown))
 }
 
 fn projection_escape_axis_options_family(
@@ -6458,6 +6515,30 @@ mod tests {
     }
 
     #[test]
+    fn projection_escape_bounds_family_backtracks_after_uncertified_candidate_box() {
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1), r(2)]),
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(1)]),
+        ];
+
+        let (family, saw_unknown) = projection_escape_bounds_family_from_axis_options_with_extents(
+            &axis_options,
+            |bounds| {
+                if *bounds == Aabb::new(p(0, 0, 0), p(1, 1, 1)) {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(true)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(family, vec![Aabb::new(p(0, 0, 0), p(2, 1, 1))]);
+    }
+
+    #[test]
     fn projection_axis_escape_reference_finds_corridor_witness() {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
@@ -6848,6 +6929,84 @@ mod tests {
         assert_eq!(
             found,
             Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![5]))
+        );
+    }
+
+    #[test]
+    fn projection_escape_reference_reports_unknown_when_box_family_is_partially_uncertified_and_search_fails()
+     {
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1), r(2)]),
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(1)]),
+        ];
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+
+        let err = projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+            &axis_options,
+            &bounds,
+            |_escape_bounds| Ok(None),
+            |axis_options, saw_unknown| {
+                let (family, family_unknown) =
+                    projection_escape_bounds_family_from_axis_options_with_extents(
+                        axis_options,
+                        |escape_bounds| {
+                            if *escape_bounds == Aabb::new(p(0, 0, 0), p(1, 1, 1)) {
+                                Err(crate::error::HypermeshError::UnknownClassification)
+                            } else {
+                                Ok(true)
+                            }
+                        },
+                    )?;
+                *saw_unknown |= family_unknown;
+                Ok(family)
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn projection_escape_reference_accepts_later_box_after_uncertified_family_candidate() {
+        let axis_options = vec![
+            (vec![r(0)], vec![r(1), r(2)]),
+            (vec![r(0)], vec![r(1)]),
+            (vec![r(0)], vec![r(1)]),
+        ];
+        let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+
+        let found = projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+            &axis_options,
+            &bounds,
+            |escape_bounds| {
+                if *escape_bounds == Aabb::new(p(0, 0, 0), p(2, 1, 1)) {
+                    Ok(Some((ReferenceTarget::axis_defined(p(2, 0, 0)), vec![3])))
+                } else {
+                    Ok(None)
+                }
+            },
+            |axis_options, saw_unknown| {
+                let (family, family_unknown) =
+                    projection_escape_bounds_family_from_axis_options_with_extents(
+                        axis_options,
+                        |escape_bounds| {
+                            if *escape_bounds == Aabb::new(p(0, 0, 0), p(1, 1, 1)) {
+                                Err(crate::error::HypermeshError::UnknownClassification)
+                            } else {
+                                Ok(true)
+                            }
+                        },
+                    )?;
+                *saw_unknown |= family_unknown;
+                Ok(family)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            found,
+            Some((ReferenceTarget::axis_defined(p(2, 0, 0)), vec![3]))
         );
     }
 
