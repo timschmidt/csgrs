@@ -279,7 +279,10 @@ step detours no longer collapse back to plain `false` when they are skipped or
 their later legs cannot certify a path. The cycle-guarded runtime detour paths
 now also preserve that uncertainty when a fallback-built detour is skipped
 because it revisits the current start/end or an already-visited detour point,
-instead of flattening that skip back into ordinary absence.
+instead of flattening that skip back into ordinary absence. The same
+cycle-guarded reachability layer now also keeps searching detours after an
+uncertified direct no-detour adjacency check, instead of aborting detour
+fallback before any later certified detour path runs.
 Definition-preserving normal-probe search also now
 also augments, rather than suppresses, the broader certified normal-corridor
 witness family when both are available, and axis-direction probe search now

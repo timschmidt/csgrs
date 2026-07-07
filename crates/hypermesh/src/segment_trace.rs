@@ -3286,11 +3286,16 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     ) -> HypermeshResult<bool>,
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
-    if trace_without_detours(start, end, start_definitions, end_definitions)? {
-        return Ok(true);
+    let mut saw_unknown = false;
+    match trace_without_detours(start, end, start_definitions, end_definitions) {
+        Ok(true) => return Ok(true),
+        Ok(false) => {}
+        Err(HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
     }
 
-    let mut saw_unknown = false;
     for detour in detours_for(start, end)? {
         let already_visited = point_family_contains(visited_points, &detour.point);
         if already_visited
@@ -11745,6 +11750,84 @@ mod tests {
             &mut detours_for,
         )
         .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_reachability_cycle_guard_tries_detours_after_uncertified_direct_check() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let detour_target = DetourTarget {
+            point: detour.clone(),
+            definitions: vec![axis_plane_definition(&detour)],
+            uncertified_definition_fallback: false,
+        };
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                if *from == start && *to == end {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(true)
+                }
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            if *from == start && *to == end {
+                Ok(vec![detour_target.clone()])
+            } else {
+                Ok(Vec::new())
+            }
+        };
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_cycle_guard_reports_unknown_when_direct_check_is_uncertified_and_no_detour_succeeds()
+     {
+        let start = p(0, 0, 0);
+        let end = p(2, 0, 0);
+        let mut trace_without_detours =
+            |_from: &Point3,
+             _to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                Err(HypermeshError::UnknownClassification)
+            };
+        let mut detours_for = |_from: &Point3, _to: &Point3| Ok(Vec::new());
+
+        let err =
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &[start.clone(), end.clone()],
+                &[axis_plane_definition(&start)],
+                &[axis_plane_definition(&end)],
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
     }
