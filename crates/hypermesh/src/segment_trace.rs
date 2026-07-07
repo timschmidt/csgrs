@@ -127,6 +127,13 @@ struct DefinitionNoDetourReachabilityCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct DetourTargetFamilyCacheEntry {
+    start: Point3,
+    end: Point3,
+    targets: HypermeshResult<Vec<DetourTarget>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -288,6 +295,7 @@ pub(crate) fn trace_segment_from_definitions(
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_cache = Vec::new();
+    let mut detour_target_cache = Vec::new();
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
@@ -313,8 +321,11 @@ pub(crate) fn trace_segment_from_definitions(
                 },
             )
         };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    let mut detours_for = |start: &Point3, end: &Point3| {
+        cached_detour_target_family_with(&mut detour_target_cache, start, end, || {
+            interior_box_detour_targets(start, end, polygons)
+        })
+    };
     trace_segment_from_definitions_with_cycle_guard_impl(
         start,
         end,
@@ -613,6 +624,28 @@ fn cached_definition_no_detour_trace_with(
         result: result.clone(),
     });
     result
+}
+
+fn cached_detour_target_family_with(
+    cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    start: &Point3,
+    end: &Point3,
+    build: impl FnOnce() -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<Vec<DetourTarget>> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| existing.start == *start && existing.end == *end)
+    {
+        return existing.targets.clone();
+    }
+
+    let targets = build();
+    cache.push(DetourTargetFamilyCacheEntry {
+        start: start.clone(),
+        end: end.clone(),
+        targets: targets.clone(),
+    });
+    targets
 }
 
 fn trace_segment_without_detours(
@@ -2235,6 +2268,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
     let mut no_detour_cache = Vec::new();
+    let mut detour_target_cache = Vec::new();
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
@@ -2258,8 +2292,11 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
                 },
             )
         };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
+    let mut detours_for = |start: &Point3, end: &Point3| {
+        cached_detour_target_family_with(&mut detour_target_cache, start, end, || {
+            interior_box_detour_targets(start, end, polygons)
+        })
+    };
     probe_reaches_adjacent_cell_with_cycle_guard_impl(
         start,
         end,
@@ -7067,6 +7104,34 @@ mod tests {
         assert!(first);
         assert!(second);
         assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
+    fn cached_detour_target_family_reuses_identical_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let target = DetourTarget {
+            point: p(0, 1, 0),
+            definitions: vec![axis_plane_definition(&p(0, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut build_calls = 0;
+
+        let first = cached_detour_target_family_with(&mut cache, &start, &end, || {
+            build_calls += 1;
+            Ok(vec![target.clone()])
+        })
+        .unwrap();
+        let second = cached_detour_target_family_with(&mut cache, &start, &end, || {
+            build_calls += 1;
+            Ok(vec![target.clone()])
+        })
+        .unwrap();
+
+        assert_eq!(first, vec![target.clone()]);
+        assert_eq!(second, vec![target]);
+        assert_eq!(build_calls, 1);
     }
 
     #[test]
