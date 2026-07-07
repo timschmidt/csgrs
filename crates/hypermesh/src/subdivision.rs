@@ -656,7 +656,7 @@ fn cached_child_subdivision_with(
     if let Some(existing) = cache
         .borrow()
         .iter()
-        .find(|existing| existing.task == *task)
+        .find(|existing| subdivision_tasks_match_for_cache(&existing.task, task))
     {
         return existing.result.clone();
     }
@@ -667,6 +667,18 @@ fn cached_child_subdivision_with(
         result: result.clone(),
     });
     result
+}
+
+fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &SubdivisionTask) -> bool {
+    left.polygons == right.polygons
+        && left.bounds == right.bounds
+        && left.ref_point == right.ref_point
+        && reference_definition_families_match_as_sets(
+            &left.ref_definitions,
+            &right.ref_definitions,
+        )
+        && left.ref_wnv == right.ref_wnv
+        && left.depth == right.depth
 }
 
 fn process_leaf_task_into(
@@ -7365,6 +7377,46 @@ mod tests {
         .unwrap();
 
         assert_eq!(calls.get(), 2);
+    }
+
+    #[test]
+    fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
+        let mut task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            p(1, 2, 3),
+            vec![0],
+        );
+        let definition = axis_defs(&task.ref_point)[0].clone();
+        task.ref_definitions = vec![definition.clone()];
+        let mut permuted_task = task.clone();
+        permuted_task.ref_definitions = vec![[
+            definition[1].clone(),
+            definition[2].clone(),
+            definition[0].clone(),
+        ]];
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_child_subdivision_with(&cache, &task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+                1,
+            )])
+        })
+        .unwrap();
+        let second = cached_child_subdivision_with(&cache, &permuted_task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+                1,
+            )])
+        })
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
     }
 
     #[test]

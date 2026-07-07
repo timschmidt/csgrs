@@ -688,7 +688,10 @@ reference memo is keyed by the full parent reference state, the parent/source
 polygon family that actually drives `compute_new_reference(...)`, and the
 child bounds so recursive reuse stays exact. Equivalent parent retained
 definition families now also hit that child-reference memo even when the same
-three planes arrive in a different local order. Recursive branches that
+three planes arrive in a different local order, and the matching child
+subdivision memo now treats equivalent retained parent definition families the
+same way instead of missing recursive branch reuse on plane-order-only
+differences. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
 Unsplittable tasks now also run the exact leaf
