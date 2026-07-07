@@ -291,8 +291,9 @@ The same uncertainty now also stays attached across shifted witness-cell
 construction itself, so later leaf/probe/detour targets built from a surviving
 shifted witness still surface `UnknownClassification` if that local shifted
 family was only partially certified. When duplicate shifted witness cells
-rediscover the same strict point, hypermesh now also keeps the richer active
-plane and halfspace state instead of blindly preserving first arrival.
+rediscover the same strict point, hypermesh now also keeps every distinct
+active-plane/halfspace family for that point instead of collapsing the witness
+back to one first-arrival family.
 
 Subdivision reference propagation currently accepts certified projected-child
 reference targets, not just a single midpoint-filled representative point.
