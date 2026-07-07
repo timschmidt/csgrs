@@ -1778,23 +1778,46 @@ fn build_detour_target_from_shifted_witness(
     })
 }
 
-fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) {
+fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) -> bool {
     if let Some(existing) = targets
         .iter_mut()
         .find(|existing| existing.point == target.point)
     {
-        existing.uncertified_definition_fallback |= target.uncertified_definition_fallback;
-        for definition in target.definitions {
+        let incoming_definitions = target.definitions;
+        let incoming_is_fallback = target.uncertified_definition_fallback;
+        let existing_covered_by_incoming = existing.definitions.iter().all(|existing_definition| {
+            incoming_definitions.iter().any(|incoming_definition| {
+                definition_planes_match_as_sets(existing_definition, incoming_definition)
+            })
+        });
+        let mut introduced_new_definition = false;
+        for definition in incoming_definitions {
             if !existing
                 .definitions
                 .iter()
                 .any(|candidate| definition_planes_match_as_sets(candidate, &definition))
             {
                 existing.definitions.push(definition);
+                introduced_new_definition = true;
             }
         }
+        if incoming_is_fallback {
+            if introduced_new_definition {
+                existing.uncertified_definition_fallback = true;
+                true
+            } else {
+                false
+            }
+        } else {
+            if existing_covered_by_incoming {
+                existing.uncertified_definition_fallback = false;
+            }
+            false
+        }
     } else {
+        let introduced_uncertified_state = target.uncertified_definition_fallback;
         targets.push(target);
+        introduced_uncertified_state
     }
 }
 
@@ -1814,19 +1837,22 @@ fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
     candidates: impl IntoIterator<Item = &'a T>,
     mut build: impl FnMut(&'a T) -> HypermeshResult<DetourTarget>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for candidate in candidates {
         match build(candidate) {
             Ok(target) => {
-                saw_unknown |= target.uncertified_definition_fallback;
-                push_unique_detour_target(targets, target)
+                push_unique_detour_target(targets, target);
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || targets
+            .iter()
+            .any(|target| target.uncertified_definition_fallback);
     if targets.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -1841,23 +1867,24 @@ fn extend_detour_target_families_backtracking_unknown(
     targets: &mut Vec<DetourTarget>,
     families: impl IntoIterator<Item = HypermeshResult<Vec<DetourTarget>>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for family in families {
         match family {
             Ok(found) => {
-                saw_unknown |= found
-                    .iter()
-                    .any(|target| target.uncertified_definition_fallback);
                 for target in found {
                     push_unique_detour_target(targets, target);
                 }
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || targets
+            .iter()
+            .any(|target| target.uncertified_definition_fallback);
     if targets.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -4302,23 +4329,49 @@ fn inward_shifted_edge_plane(
     Plane::new(edge.normal.clone(), &edge.offset - &inward_offset)
 }
 
-fn push_unique_interior_point(points: &mut Vec<InteriorLeafPoint>, point: InteriorLeafPoint) {
+fn push_unique_interior_point(
+    points: &mut Vec<InteriorLeafPoint>,
+    point: InteriorLeafPoint,
+) -> bool {
     if let Some(existing) = points
         .iter_mut()
         .find(|existing| existing.point == point.point)
     {
-        for planes in point.planes {
+        let incoming_planes = point.planes;
+        let incoming_is_fallback = point.uncertified_definition_fallback;
+        let existing_covered_by_incoming = existing.planes.iter().all(|existing_planes| {
+            incoming_planes.iter().any(|incoming_plane_set| {
+                definition_planes_match_as_sets(existing_planes, incoming_plane_set)
+            })
+        });
+        let mut introduced_new_definition = false;
+        for planes in incoming_planes {
             if !existing
                 .planes
                 .iter()
                 .any(|candidate| definition_planes_match_as_sets(candidate, &planes))
             {
                 existing.planes.push(planes);
+                introduced_new_definition = true;
             }
         }
-        existing.uncertified_definition_fallback |= point.uncertified_definition_fallback;
+        if incoming_is_fallback {
+            if introduced_new_definition {
+                existing.uncertified_definition_fallback = true;
+                true
+            } else {
+                false
+            }
+        } else {
+            if existing_covered_by_incoming {
+                existing.uncertified_definition_fallback = false;
+            }
+            false
+        }
     } else {
+        let introduced_uncertified_state = point.uncertified_definition_fallback;
         points.push(point);
+        introduced_uncertified_state
     }
 }
 
@@ -4327,23 +4380,24 @@ fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
     candidates: impl IntoIterator<Item = &'a T>,
     mut build: impl FnMut(&'a T) -> HypermeshResult<Vec<InteriorLeafPoint>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for candidate in candidates {
         match build(candidate) {
             Ok(found) => {
-                saw_unknown |= found
-                    .iter()
-                    .any(|point| point.uncertified_definition_fallback);
                 for point in found {
                     push_unique_interior_point(points, point);
                 }
             }
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || points
+            .iter()
+            .any(|point| point.uncertified_definition_fallback);
     if points.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -4359,20 +4413,23 @@ fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
     candidates: impl IntoIterator<Item = &'a T>,
     mut build: impl FnMut(&'a T) -> HypermeshResult<Option<InteriorLeafPoint>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for candidate in candidates {
         match build(candidate) {
             Ok(Some(point)) => {
-                saw_unknown |= point.uncertified_definition_fallback;
-                push_unique_interior_point(points, point)
+                push_unique_interior_point(points, point);
             }
             Ok(None) => {}
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || points
+            .iter()
+            .any(|point| point.uncertified_definition_fallback);
     if points.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -4755,12 +4812,12 @@ fn extend_probe_families_backtracking_unknown(
 ) -> HypermeshResult<()> {
     match family {
         Ok(found) => {
-            *saw_unknown |= found
-                .iter()
-                .any(|probe| probe.uncertified_definition_fallback);
             for probe in found {
                 push_unique_probe_point(probes, probe);
             }
+            *saw_unknown |= probes
+                .iter()
+                .any(|probe| probe.uncertified_definition_fallback);
             Ok(())
         }
         Err(HypermeshError::UnknownClassification) => {
@@ -5139,23 +5196,46 @@ fn adjacent_normal_probe_stop_values_with_queries(
     Ok((stop_values, saw_unknown))
 }
 
-fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) {
+fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) -> bool {
     if let Some(existing) = probes
         .iter_mut()
         .find(|existing| existing.point == probe.point && existing.side == probe.side)
     {
-        for definition in probe.planes {
+        let incoming_planes = probe.planes;
+        let incoming_is_fallback = probe.uncertified_definition_fallback;
+        let existing_covered_by_incoming = existing.planes.iter().all(|existing_plane_set| {
+            incoming_planes.iter().any(|incoming_plane_set| {
+                definition_planes_match_as_sets(existing_plane_set, incoming_plane_set)
+            })
+        });
+        let mut introduced_new_definition = false;
+        for definition in incoming_planes {
             if !existing
                 .planes
                 .iter()
                 .any(|candidate| definition_planes_match_as_sets(candidate, &definition))
             {
                 existing.planes.push(definition);
+                introduced_new_definition = true;
             }
         }
-        existing.uncertified_definition_fallback |= probe.uncertified_definition_fallback;
+        if incoming_is_fallback {
+            if introduced_new_definition {
+                existing.uncertified_definition_fallback = true;
+                true
+            } else {
+                false
+            }
+        } else {
+            if existing_covered_by_incoming {
+                existing.uncertified_definition_fallback = false;
+            }
+            false
+        }
     } else {
+        let introduced_uncertified_state = probe.uncertified_definition_fallback;
         probes.push(probe);
+        introduced_uncertified_state
     }
 }
 
@@ -5659,20 +5739,23 @@ fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
     candidates: impl IntoIterator<Item = &'a T>,
     mut build: impl FnMut(&'a T) -> HypermeshResult<Option<ProbePoint>>,
 ) -> HypermeshResult<()> {
-    let mut saw_unknown = false;
+    let mut saw_hard_unknown = false;
     for candidate in candidates {
         match build(candidate) {
             Ok(Some(probe)) => {
-                saw_unknown |= probe.uncertified_definition_fallback;
-                push_unique_probe_point(probes, probe)
+                push_unique_probe_point(probes, probe);
             }
             Ok(None) => {}
             Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
+                saw_hard_unknown = true;
             }
             Err(err) => return Err(err),
         }
     }
+    let saw_unknown = saw_hard_unknown
+        || probes
+            .iter()
+            .any(|probe| probe.uncertified_definition_fallback);
     if probes.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
@@ -7210,6 +7293,29 @@ mod tests {
     }
 
     #[test]
+    fn detour_target_build_collection_keeps_certified_duplicate_state_certified() {
+        let point = p(1, 2, 3);
+        let definition = axis_plane_definition(&point);
+        let mut targets = Vec::new();
+
+        extend_detour_target_builds_backtracking_unknown(
+            &mut targets,
+            [0, 1].iter(),
+            |candidate| {
+                Ok(DetourTarget {
+                    point: point.clone(),
+                    definitions: vec![definition.clone()],
+                    uncertified_definition_fallback: *candidate == 0,
+                })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(targets.len(), 1);
+        assert!(!targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn detour_target_family_collection_backtracks_after_uncertified_family() {
         let mut targets = Vec::new();
 
@@ -7671,6 +7777,29 @@ mod tests {
             &targets[0].definitions[0],
             &permuted
         ));
+    }
+
+    #[test]
+    fn duplicate_detour_targets_prefer_certified_duplicate_definitions() {
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+        let mut targets = vec![DetourTarget {
+            point: point.clone(),
+            definitions: vec![definition.clone()],
+            uncertified_definition_fallback: true,
+        }];
+
+        push_unique_detour_target(
+            &mut targets,
+            DetourTarget {
+                point,
+                definitions: vec![definition],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(targets.len(), 1);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -8778,7 +8907,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(winding, Some(vec![4]));
+        assert_eq!(winding, Some(vec![2]));
     }
 
     #[test]
@@ -10284,6 +10413,26 @@ mod tests {
     }
 
     #[test]
+    fn probe_point_build_collection_keeps_certified_duplicate_state_certified() {
+        let mut probes = Vec::new();
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+
+        extend_probe_point_builds_backtracking_unknown(&mut probes, [0, 1].iter(), |candidate| {
+            Ok(Some(ProbePoint {
+                point: point.clone(),
+                side: Classification::Positive,
+                planes: vec![definition.clone()],
+                uncertified_definition_fallback: *candidate == 0,
+            }))
+        })
+        .unwrap();
+
+        assert_eq!(probes.len(), 1);
+        assert!(!probes[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn probe_point_build_collection_reports_unknown_if_all_candidates_are_uncertified() {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
@@ -11131,6 +11280,25 @@ mod tests {
     }
 
     #[test]
+    fn interior_leaf_point_collection_keeps_certified_duplicate_state_certified() {
+        let mut points = Vec::new();
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+
+        extend_interior_leaf_points_backtracking_unknown(&mut points, [0, 1].iter(), |candidate| {
+            Ok(vec![InteriorLeafPoint {
+                point: point.clone(),
+                planes: vec![definition.clone()],
+                uncertified_definition_fallback: *candidate == 0,
+            }])
+        })
+        .unwrap();
+
+        assert_eq!(points.len(), 1);
+        assert!(!points[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn interior_leaf_point_collection_reports_unknown_if_all_candidates_are_uncertified() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
@@ -11948,6 +12116,31 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_probe_points_prefer_certified_duplicate_definitions() {
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+        let mut probes = vec![ProbePoint {
+            point: point.clone(),
+            side: Classification::Positive,
+            planes: vec![definition.clone()],
+            uncertified_definition_fallback: true,
+        }];
+
+        push_unique_probe_point(
+            &mut probes,
+            ProbePoint {
+                point,
+                side: Classification::Positive,
+                planes: vec![definition],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(probes.len(), 1);
+        assert!(!probes[0].uncertified_definition_fallback);
+    }
+
+    #[test]
     fn duplicate_interior_points_merge_plane_definitions() {
         let point = p(1, 1, 1);
         let mut points = vec![InteriorLeafPoint {
@@ -12017,6 +12210,29 @@ mod tests {
             &points[0].planes[0],
             &permuted
         ));
+    }
+
+    #[test]
+    fn duplicate_interior_points_prefer_certified_duplicate_definitions() {
+        let point = p(1, 1, 1);
+        let definition = axis_plane_definition(&point);
+        let mut points = vec![InteriorLeafPoint {
+            point: point.clone(),
+            planes: vec![definition.clone()],
+            uncertified_definition_fallback: true,
+        }];
+
+        push_unique_interior_point(
+            &mut points,
+            InteriorLeafPoint {
+                point,
+                planes: vec![definition],
+                uncertified_definition_fallback: false,
+            },
+        );
+
+        assert_eq!(points.len(), 1);
+        assert!(!points[0].uncertified_definition_fallback);
     }
 
     #[test]

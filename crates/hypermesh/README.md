@@ -320,6 +320,10 @@ And if a fallback-marked interior/probe pair does produce a winding, that no
 longer counts as final success by itself: the leaf search keeps looking for a
 certified path, and returns `UnknownClassification` if only fallback-marked
 probe paths succeed.
+Redundant same-point fallback duplicates in the live leaf/probe/detour
+collectors also no longer poison an exact certified duplicate with the same
+retained definitions; fallback at one point now survives only when it still
+contributes unresolved local state there.
 The same now applies to fallback-built detour targets: if an uncertified
 axis-defined detour is later skipped or cannot certify either leg, that local
 detour family also surfaces `UnknownClassification` instead of reading as an
