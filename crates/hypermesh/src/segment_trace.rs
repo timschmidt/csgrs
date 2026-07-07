@@ -11538,6 +11538,33 @@ mod tests {
     }
 
     #[test]
+    fn strict_leaf_witness_points_try_shifted_search_from_report_witness_seed() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+
+        let interiors = strict_leaf_witness_points_with_seed_families(
+            &leaf,
+            &vertices,
+            |_leaf, _vertices, _bounds, _halfspaces, _report| {
+                Ok(LeafWitnessSeedFamilies {
+                    seeds: Vec::new(),
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                    saw_unknown: false,
+                })
+            },
+        )
+        .unwrap();
+
+        assert!(!interiors.is_empty());
+        assert!(
+            interiors
+                .iter()
+                .any(|point| point.point == Point3::new(q(1, 2), q(1, 2), r(2)))
+        );
+    }
+
+    #[test]
     fn interior_leaf_point_collection_backtracks_after_uncertified_candidate() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
