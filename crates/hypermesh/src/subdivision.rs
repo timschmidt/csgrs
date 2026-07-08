@@ -5274,6 +5274,17 @@ fn support_reference_cache_context_matches(
     }
 }
 
+fn support_reference_cache_context_matches_exact_state(
+    existing: Option<&SupportReferenceCacheContextKey>,
+    context: Option<&SupportReferenceCacheContextKey>,
+) -> bool {
+    match (existing, context) {
+        (None, None) => true,
+        (Some(existing), Some(context)) => existing == context,
+        _ => false,
+    }
+}
+
 fn support_reference_polygon_context_matches(
     existing: Option<&SupportReferenceCacheContextKey>,
     context: Option<&SupportReferenceCacheContextKey>,
@@ -5299,17 +5310,35 @@ fn cached_support_reference_accept_with(
         Option<&hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        support_reference_cache_context_matches(existing.context.as_ref(), context)
-            && existing.bounds == *bounds
-            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            && support_optional_halfspace_reports_match_for_cache(
-                &existing.halfspaces,
-                existing.report.as_ref(),
-                halfspaces,
-                report,
-            )
-    }) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| {
+            support_reference_cache_context_matches(existing.context.as_ref(), context)
+                && existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_optional_halfspace_reports_match_for_cache(
+                    &existing.halfspaces,
+                    existing.report.as_ref(),
+                    halfspaces,
+                    report,
+                )
+        })
+        .cloned()
+    {
+        if !cache.iter().any(|current| {
+            support_reference_cache_context_matches_exact_state(current.context.as_ref(), context)
+                && current.bounds == *bounds
+                && current.halfspaces == halfspaces
+                && current.report.as_ref() == report
+        }) {
+            cache.push(SupportReferenceAcceptCacheEntry {
+                context: context.cloned(),
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                report: report.cloned(),
+                accepted: existing.accepted.clone(),
+            });
+        }
         return existing.accepted.clone();
     }
 
@@ -5488,11 +5517,27 @@ fn cached_support_reference_result_with(
     halfspaces: &[LimitPlane3],
     build: impl FnOnce() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        existing.bounds == *bounds
-            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            && support_reference_cache_context_matches(Some(&existing.context), Some(context))
-    }) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| {
+            existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_reference_cache_context_matches(Some(&existing.context), Some(context))
+        })
+        .cloned()
+    {
+        if !cache.iter().any(|current| {
+            current.context == *context
+                && current.bounds == *bounds
+                && current.halfspaces == halfspaces
+        }) {
+            cache.push(SupportReferenceResultCacheEntry {
+                context: context.clone(),
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                result: existing.result.clone(),
+            });
+        }
         return existing.result.clone();
     }
 
@@ -5662,12 +5707,33 @@ fn cached_support_plane_cell_search_with<T: Clone>(
     halfspaces: Vec<LimitPlane3>,
     search: impl FnOnce() -> HypermeshResult<Option<T>>,
 ) -> HypermeshResult<Option<T>> {
-    if let Some(existing) = cache.borrow().iter().find(|existing| {
-        support_reference_cache_context_matches(existing.context.as_ref(), context)
-            && existing.bounds == *bounds
-            && existing.polygon_index == polygon_index
-            && limit_plane_families_match_as_sets(&existing.halfspaces, &halfspaces)
-    }) {
+    let existing = {
+        let cache_ref = cache.borrow();
+        cache_ref
+            .iter()
+            .find(|existing| {
+                support_reference_cache_context_matches(existing.context.as_ref(), context)
+                    && existing.bounds == *bounds
+                    && existing.polygon_index == polygon_index
+                    && limit_plane_families_match_as_sets(&existing.halfspaces, &halfspaces)
+            })
+            .cloned()
+    };
+    if let Some(existing) = existing {
+        if !cache.borrow().iter().any(|current| {
+            support_reference_cache_context_matches_exact_state(current.context.as_ref(), context)
+                && current.bounds == *bounds
+                && current.polygon_index == polygon_index
+                && current.halfspaces == halfspaces
+        }) {
+            cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
+                context: context.cloned(),
+                bounds: bounds.clone(),
+                polygon_index,
+                halfspaces: halfspaces.clone(),
+                result: existing.result.clone(),
+            });
+        }
         return existing.result.clone();
     }
 
@@ -6190,10 +6256,24 @@ fn cached_reference_escape_search_with(
     bounds: &Aabb,
     search: impl FnOnce(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        existing.bounds == *bounds
-            && support_reference_cache_context_matches(Some(&existing.context), Some(context))
-    }) {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| {
+            existing.bounds == *bounds
+                && support_reference_cache_context_matches(Some(&existing.context), Some(context))
+        })
+        .cloned()
+    {
+        if !cache
+            .iter()
+            .any(|current| current.context == *context && current.bounds == *bounds)
+        {
+            cache.push(ProjectionEscapeSearchCacheEntry {
+                context: context.clone(),
+                bounds: bounds.clone(),
+                result: existing.result.clone(),
+            });
+        }
         return existing.result.clone();
     }
 
@@ -6220,7 +6300,8 @@ fn cached_reference_escape_search_in_query_caches(
         .borrow()
         .iter()
         .filter(|existing| {
-            support_reference_polygon_context_matches(Some(&existing.context), Some(context))
+            !support_reference_cache_context_matches(Some(&existing.context), Some(context))
+                && support_reference_polygon_context_matches(Some(&existing.context), Some(context))
         })
         .filter_map(|existing| match &existing.result {
             Ok(Some((target, _))) => Some((existing.bounds.clone(), target.clone())),
@@ -6344,8 +6425,24 @@ fn cached_reference_escape_search_in_query_caches(
             existing.bounds == *bounds
                 && support_reference_cache_context_matches(Some(&existing.context), Some(context))
         })
+        .cloned()
     {
-        return existing.result.clone();
+        if !query_caches
+            .projection_escape_search_cache
+            .borrow()
+            .iter()
+            .any(|current| current.context == *context && current.bounds == *bounds)
+        {
+            query_caches
+                .projection_escape_search_cache
+                .borrow_mut()
+                .push(ProjectionEscapeSearchCacheEntry {
+                    context: context.clone(),
+                    bounds: bounds.clone(),
+                    result: existing.result.clone(),
+                });
+        }
+        return existing.result;
     }
 
     let result = search(bounds, query_caches);
@@ -16699,6 +16796,49 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_reference_accept_memoizes_current_equivalent_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let mut cache = Vec::new();
+
+        cached_support_reference_accept_with(
+            &mut cache,
+            None,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            |_halfspaces, _report| {
+                Ok(Some((
+                    ReferenceTarget::axis_defined(bounds.min.clone()),
+                    vec![23],
+                )))
+            },
+        )
+        .unwrap();
+        cached_support_reference_accept_with(
+            &mut cache,
+            None,
+            &bounds,
+            &permuted,
+            Some(&report),
+            |_halfspaces, _report| Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99]))),
+        )
+        .unwrap();
+
+        assert_eq!(cache.len(), 2);
+        assert!(cache.iter().any(|entry| {
+            entry.context.is_none()
+                && entry.bounds == bounds
+                && entry.halfspaces == permuted
+                && entry.report.as_ref() == Some(&report)
+        }));
+    }
+
+    #[test]
     fn cached_support_reference_accept_reuses_permuted_state_and_permuted_report_indices() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -17150,6 +17290,40 @@ mod tests {
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_reference_result_memoizes_current_equivalent_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(0, 0, 0);
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = Vec::new();
+
+        cached_support_reference_result_with(&mut cache, &context, &bounds, &halfspaces, || {
+            Ok(Some((
+                ReferenceTarget::axis_defined(bounds.min.clone()),
+                vec![23],
+            )))
+        })
+        .unwrap();
+        cached_support_reference_result_with(&mut cache, &context, &bounds, &permuted, || {
+            Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
+        })
+        .unwrap();
+
+        assert_eq!(cache.len(), 2);
+        assert!(cache.iter().any(|entry| entry.context == context
+            && entry.bounds == bounds
+            && entry.halfspaces == permuted));
     }
 
     #[test]
@@ -17622,6 +17796,45 @@ mod tests {
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_plane_cell_search_memoizes_current_equivalent_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let cache = std::cell::RefCell::new(Vec::<SupportPlaneCellSearchCacheEntry<i32>>::new());
+
+        cached_support_plane_cell_search_with(
+            &cache,
+            None,
+            [false, true],
+            &bounds,
+            3,
+            halfspaces,
+            || Ok(Some(17)),
+        )
+        .unwrap();
+        cached_support_plane_cell_search_with(
+            &cache,
+            None,
+            [false, true],
+            &bounds,
+            3,
+            permuted.clone(),
+            || Ok(Some(99)),
+        )
+        .unwrap();
+
+        let cache = cache.borrow();
+        assert_eq!(cache.len(), 2);
+        assert!(cache.iter().any(|entry| {
+            entry.context.is_none()
+                && entry.bounds == bounds
+                && entry.polygon_index == 3
+                && entry.halfspaces == permuted
+        }));
     }
 
     #[test]
@@ -18167,6 +18380,50 @@ mod tests {
     }
 
     #[test]
+    fn cached_reference_escape_search_memoizes_current_equivalent_state() {
+        let bounds = Aabb::new(p(1, 2, 3), p(4, 5, 6));
+        let old_ref = p(0, 0, 0);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let definition_a = axis_plane_definition(&old_ref);
+        let definition_b = axis_plane_definition(&p(1, 0, 0));
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[definition_a.clone(), definition_b.clone()],
+            &[0],
+            &polygons,
+        );
+        let permuted_context = support_reference_cache_context_key(
+            &old_ref,
+            &[definition_b, definition_a],
+            &[0],
+            &polygons,
+        );
+        let mut cache = Vec::new();
+
+        cached_reference_escape_search_with(&mut cache, &context, &bounds, |escape_bounds| {
+            Ok(Some((
+                ReferenceTarget::axis_defined(escape_bounds.min.clone()),
+                vec![11],
+            )))
+        })
+        .unwrap();
+        cached_reference_escape_search_with(
+            &mut cache,
+            &permuted_context,
+            &bounds,
+            |_escape_bounds| Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99]))),
+        )
+        .unwrap();
+
+        assert_eq!(cache.len(), 2);
+        assert!(
+            cache
+                .iter()
+                .any(|entry| entry.context == permuted_context && entry.bounds == bounds)
+        );
+    }
+
+    #[test]
     fn cached_reference_escape_search_in_query_caches_reuses_cached_target_across_tighter_bounds() {
         let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
@@ -18213,7 +18470,8 @@ mod tests {
 
     #[test]
     fn cached_reference_escape_search_in_query_caches_skips_invalid_cached_target() {
-        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
         let old_ref = p(0, 0, 0);
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
         let context = support_reference_cache_context_key(
@@ -18228,7 +18486,7 @@ mod tests {
             .borrow_mut()
             .push(ProjectionEscapeSearchCacheEntry {
                 context: context.clone(),
-                bounds: bounds.clone(),
+                bounds: cached_bounds,
                 result: Ok(Some((ReferenceTarget::axis_defined(p(2, 1, 1)), vec![11]))),
             });
         let mut calls = 0;
@@ -18236,7 +18494,7 @@ mod tests {
         let reused = cached_reference_escape_search_in_query_caches(
             &mut query_caches,
             &context,
-            &bounds,
+            &query_bounds,
             |_escape_bounds, _query_caches| {
                 calls += 1;
                 Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![99])))
