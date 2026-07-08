@@ -4175,6 +4175,7 @@ struct SupportReferenceQueryCaches {
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     seed_geometry_cache: Vec<SupportCellSeedGeometryCacheEntry>,
     support_seed_family_cache: Vec<SupportCellSeedFamiliesCacheEntry>,
+    support_direct_target_cache: Vec<SupportDirectReferenceTargetsCacheEntry>,
     projected_root_cache: Vec<ProjectedRootReferenceFamilyCacheEntry>,
     projection_escape_axis_options_cache:
         std::cell::RefCell<Vec<ProjectionEscapeAxisOptionsCacheEntry>>,
@@ -4227,6 +4228,14 @@ struct SupportCellSeedFamiliesCacheEntry {
     families: HypermeshResult<SupportCellSeedFamiliesState>,
 }
 
+#[derive(Clone)]
+struct SupportDirectReferenceTargetsCacheEntry {
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
+    report: Option<hyperlimit::HalfspaceFeasibilityReport>,
+    targets: HypermeshResult<(Vec<ReferenceTarget>, bool)>,
+}
+
 fn cached_support_cell_seed_geometry_with(
     cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     halfspaces: &[LimitPlane3],
@@ -4275,6 +4284,36 @@ fn cached_support_cell_seed_families_with(
         families: families.clone(),
     });
     families
+}
+
+fn cached_support_direct_reference_targets_with(
+    cache: &mut Vec<SupportDirectReferenceTargetsCacheEntry>,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    build: impl FnOnce() -> HypermeshResult<(Vec<ReferenceTarget>, bool)>,
+) -> HypermeshResult<(Vec<ReferenceTarget>, bool)> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            && optional_halfspace_reports_match_for_cache(
+                &existing.halfspaces,
+                existing.report.as_ref(),
+                halfspaces,
+                report,
+            )
+    }) {
+        return existing.targets.clone();
+    }
+
+    let targets = build();
+    cache.push(SupportDirectReferenceTargetsCacheEntry {
+        bounds: bounds.clone(),
+        halfspaces: halfspaces.to_vec(),
+        report: report.cloned(),
+        targets: targets.clone(),
+    });
+    targets
 }
 
 fn prime_support_reference_query_caches_with_known_halfspace_report(
@@ -5370,6 +5409,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     let feasible_cache = &mut query_caches.feasible_cache;
     let seed_geometry_cache = &mut query_caches.seed_geometry_cache;
     let support_seed_family_cache = &mut query_caches.support_seed_family_cache;
+    let support_direct_target_cache = &mut query_caches.support_direct_target_cache;
     let shifted_support_family_cache = &mut query_caches.shifted_support_family_cache;
     let reference_witness_cache = &mut query_caches.reference_witness_cache;
     let strict_contains_cache = &query_caches.strict_contains_cache;
@@ -5409,6 +5449,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
         support_surface_cache,
         seed_geometry_cache,
         support_seed_family_cache,
+        support_direct_target_cache,
         shifted_support_family_cache,
         reference_witness_cache,
         strict_contains_cache,
@@ -5449,6 +5490,7 @@ fn support_plane_cell_reference_with_queries(
         &mut support_surface_cache,
         &mut query_caches.seed_geometry_cache,
         &mut query_caches.support_seed_family_cache,
+        &mut query_caches.support_direct_target_cache,
         &mut query_caches.shifted_support_family_cache,
         &query_caches.reference_witness_cache,
         &query_caches.strict_contains_cache,
@@ -5474,6 +5516,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     support_surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     support_seed_family_cache: &mut Vec<SupportCellSeedFamiliesCacheEntry>,
+    support_direct_target_cache: &mut Vec<SupportDirectReferenceTargetsCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
@@ -5506,58 +5549,57 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
             halfspaces,
             report.as_ref(),
             |halfspaces, report| {
-                let direct_targets = {
-                    match cached_support_cell_seed_families_with(
-                        support_seed_family_cache,
-                        bounds,
-                        halfspaces,
-                        report,
-                        || {
-                            support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
-                                bounds,
-                                halfspaces,
-                                report,
-                                seed_geometry_cache,
-                            )
-                        },
-                    ) {
-                        Ok(families) => {
-                            let report_witness = report.and_then(|report| report.witness.clone());
-                            let mut strict_direct_seed_search_order = Vec::new();
-                            let strict_direct_seeds = take_new_point_family(
-                                families.strict_seeds,
-                                &mut strict_direct_seed_search_order,
-                            );
-                            let mut direct_unknown = families.saw_unknown;
-                            let direct_targets =
-                                deferred_direct_reference_targets_from_strict_seeds_with(
-                                    &strict_direct_seeds,
-                                    report_witness.as_ref(),
-                                    &mut direct_unknown,
-                                    |seed| {
-                                        cached_reference_target_from_halfspace_witness_with(
-                                            &mut reference_witness_cache.borrow_mut(),
-                                            seed,
-                                            halfspaces,
-                                            [None, None, None],
-                                            || {
-                                                reference_target_from_halfspace_witness(
-                                                    seed,
-                                                    halfspaces,
-                                                    [None, None, None],
-                                                )
-                                            },
-                                        )
-                                    },
-                                )?;
-                            Ok((direct_targets, direct_unknown))
-                        }
-                        Err(crate::error::HypermeshError::UnknownClassification) => {
-                            Err(crate::error::HypermeshError::UnknownClassification)
-                        }
-                        Err(err) => Err(err),
-                    }
-                };
+                let direct_targets = cached_support_direct_reference_targets_with(
+                    support_direct_target_cache,
+                    bounds,
+                    halfspaces,
+                    report,
+                    || {
+                        let families = cached_support_cell_seed_families_with(
+                            support_seed_family_cache,
+                            bounds,
+                            halfspaces,
+                            report,
+                            || {
+                                support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
+                                    bounds,
+                                    halfspaces,
+                                    report,
+                                    seed_geometry_cache,
+                                )
+                            },
+                        )?;
+                        let report_witness = report.and_then(|report| report.witness.clone());
+                        let mut strict_direct_seed_search_order = Vec::new();
+                        let strict_direct_seeds = take_new_point_family(
+                            families.strict_seeds,
+                            &mut strict_direct_seed_search_order,
+                        );
+                        let mut direct_unknown = families.saw_unknown;
+                        let direct_targets =
+                            deferred_direct_reference_targets_from_strict_seeds_with(
+                                &strict_direct_seeds,
+                                report_witness.as_ref(),
+                                &mut direct_unknown,
+                                |seed| {
+                                    cached_reference_target_from_halfspace_witness_with(
+                                        &mut reference_witness_cache.borrow_mut(),
+                                        seed,
+                                        halfspaces,
+                                        [None, None, None],
+                                        || {
+                                            reference_target_from_halfspace_witness(
+                                                seed,
+                                                halfspaces,
+                                                [None, None, None],
+                                            )
+                                        },
+                                    )
+                                },
+                            )?;
+                        Ok((direct_targets, direct_unknown))
+                    },
+                );
                 trace_support_reference_targets_with_report_shortcut(
                     bounds,
                     halfspaces,
@@ -5583,6 +5625,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                                     report,
                                     seed_geometry_cache,
                                     support_seed_family_cache,
+                                    support_direct_target_cache,
                                     shifted_support_family_cache,
                                     reference_witness_cache,
                                     strict_contains_cache,
@@ -7190,6 +7233,7 @@ fn strict_support_cell_targets_from_optional_report(
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut seed_geometry_cache = Vec::new();
     let mut support_seed_family_cache = Vec::new();
+    let mut support_direct_target_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
@@ -7199,6 +7243,7 @@ fn strict_support_cell_targets_from_optional_report(
         report,
         &mut seed_geometry_cache,
         &mut support_seed_family_cache,
+        &mut support_direct_target_cache,
         &mut shifted_support_family_cache,
         &reference_witness_cache,
         &strict_contains_cache,
@@ -7211,6 +7256,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
     support_seed_family_cache: &mut Vec<SupportCellSeedFamiliesCacheEntry>,
+    support_direct_target_cache: &mut Vec<SupportDirectReferenceTargetsCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
@@ -7230,7 +7276,8 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             )
         },
     )?;
-    let mut saw_unknown = families.saw_unknown;
+    let family_saw_unknown = families.saw_unknown;
+    let mut saw_unknown = family_saw_unknown;
     let strict_seeds = families.strict_seeds;
     let shifted_vertices = families.shifted_vertices;
     let shifted_geometry_seeds = families.shifted_geometry_seeds;
@@ -7245,20 +7292,37 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             shifted_vertices,
             shifted_geometry_seeds,
         );
-    let deferred_direct_targets = deferred_direct_reference_targets_from_strict_seeds_with(
-        &strict_direct_seeds,
-        report_witness.as_ref(),
-        &mut saw_unknown,
-        |seed| {
-            cached_reference_target_from_halfspace_witness_with(
-                &mut reference_witness_cache.borrow_mut(),
-                seed,
-                halfspaces,
-                [None, None, None],
-                || reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
-            )
+    let (deferred_direct_targets, direct_unknown) = cached_support_direct_reference_targets_with(
+        support_direct_target_cache,
+        bounds,
+        halfspaces,
+        report,
+        || {
+            let mut direct_unknown = family_saw_unknown;
+            let direct_targets = deferred_direct_reference_targets_from_strict_seeds_with(
+                &strict_direct_seeds,
+                report_witness.as_ref(),
+                &mut direct_unknown,
+                |seed| {
+                    cached_reference_target_from_halfspace_witness_with(
+                        &mut reference_witness_cache.borrow_mut(),
+                        seed,
+                        halfspaces,
+                        [None, None, None],
+                        || {
+                            reference_target_from_halfspace_witness(
+                                seed,
+                                halfspaces,
+                                [None, None, None],
+                            )
+                        },
+                    )
+                },
+            )?;
+            Ok((direct_targets, direct_unknown))
         },
     )?;
+    saw_unknown |= direct_unknown;
     saw_unknown |= extend_reference_target_families_collect_hard_unknown(
         &mut targets,
         [
@@ -13881,6 +13945,44 @@ mod tests {
                     shifted_geometry_seeds: Vec::new(),
                     saw_unknown: true,
                 })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, expected);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_direct_reference_targets_reuse_identical_state_and_report() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+        let expected = (vec![ReferenceTarget::axis_defined(p(1, 2, 3))], false);
+
+        let first = cached_support_direct_reference_targets_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            || {
+                calls += 1;
+                Ok(expected.clone())
+            },
+        )
+        .unwrap();
+        let second = cached_support_direct_reference_targets_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            || {
+                calls += 1;
+                Ok((vec![ReferenceTarget::axis_defined(p(9, 9, 9))], true))
             },
         )
         .unwrap();
