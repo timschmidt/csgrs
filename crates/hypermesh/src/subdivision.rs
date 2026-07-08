@@ -4630,7 +4630,7 @@ fn cached_reference_bounds_validity_with_context(
     query: impl FnOnce(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        support_reference_cache_context_matches(existing.context.as_ref(), context)
+        support_reference_polygon_context_matches(existing.context.as_ref(), context)
             && existing.bounds == *bounds
             && existing.point == *point
     }) {
@@ -4701,7 +4701,7 @@ fn cached_support_surface_query_with_context(
     query: impl FnOnce(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        support_reference_cache_context_matches(existing.context.as_ref(), context)
+        support_reference_polygon_context_matches(existing.context.as_ref(), context)
             && existing.point == *point
     }) {
         return existing.on_support_surface.clone();
@@ -4834,6 +4834,20 @@ fn support_reference_cache_context_matches(
                 )
                 && existing.old_wnv == context.old_wnv
                 && existing.polygon_profile == context.polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, &context.polygons)
+        }
+        _ => false,
+    }
+}
+
+fn support_reference_polygon_context_matches(
+    existing: Option<&SupportReferenceCacheContextKey>,
+    context: Option<&SupportReferenceCacheContextKey>,
+) -> bool {
+    match (existing, context) {
+        (None, None) => true,
+        (Some(existing), Some(context)) => {
+            existing.polygon_profile == context.polygon_profile
                 && polygon_families_match_as_multisets(&existing.polygons, &context.polygons)
         }
         _ => false,
@@ -14007,7 +14021,7 @@ mod tests {
     }
 
     #[test]
-    fn cached_reference_bounds_validity_distinguishes_reference_context() {
+    fn cached_reference_bounds_validity_reuses_same_polygon_context() {
         let point = p(1, 2, 3);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
@@ -14051,13 +14065,13 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(calls, 2);
+        assert_eq!(calls, 1);
         assert!(first);
-        assert!(!second);
+        assert!(second);
     }
 
     #[test]
-    fn cached_support_surface_query_distinguishes_reference_context() {
+    fn cached_support_surface_query_reuses_same_polygon_context() {
         let point = p(2, 1, 1);
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
         let left_old_ref = p(0, 0, 0);
@@ -14098,9 +14112,9 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(calls, 2);
+        assert_eq!(calls, 1);
         assert!(first);
-        assert!(!second);
+        assert!(second);
     }
 
     #[test]
