@@ -6215,6 +6215,60 @@ fn cached_reference_escape_search_in_query_caches(
         &mut SupportReferenceQueryCaches,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let candidates = query_caches
+        .projection_escape_search_cache
+        .borrow()
+        .iter()
+        .filter(|existing| {
+            support_reference_cache_context_matches(Some(&existing.context), Some(context))
+        })
+        .filter_map(|existing| match &existing.result {
+            Ok(Some((target, winding))) => {
+                Some((existing.bounds.clone(), target.clone(), winding.clone()))
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    for (existing_bounds, target, winding) in candidates {
+        if !bounds_contains_bounds(&existing_bounds, bounds)? {
+            continue;
+        }
+        let valid_for_bounds = cached_reference_bounds_validity_with_context(
+            &mut query_caches.validity_cache,
+            Some(context),
+            bounds,
+            &target.point,
+            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+        )?;
+        if !valid_for_bounds {
+            continue;
+        }
+        let reused = Some((target, winding));
+        if !query_caches
+            .projection_escape_search_cache
+            .borrow()
+            .iter()
+            .any(|existing| {
+                existing.bounds == *bounds
+                    && support_reference_cache_context_matches(
+                        Some(&existing.context),
+                        Some(context),
+                    )
+            })
+        {
+            query_caches
+                .projection_escape_search_cache
+                .borrow_mut()
+                .push(ProjectionEscapeSearchCacheEntry {
+                    context: context.clone(),
+                    bounds: bounds.clone(),
+                    result: Ok(reused.clone()),
+                });
+        }
+        return Ok(reused);
+    }
+
     if let Some(existing) = query_caches
         .projection_escape_search_cache
         .borrow()
@@ -18043,6 +18097,88 @@ mod tests {
 
         assert_eq!(calls, 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_reference_escape_search_in_query_caches_reuses_cached_target_across_tighter_bounds() {
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let old_ref = p(0, 0, 0);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        query_caches
+            .projection_escape_search_cache
+            .borrow_mut()
+            .push(ProjectionEscapeSearchCacheEntry {
+                context: context.clone(),
+                bounds: cached_bounds,
+                result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![11]))),
+            });
+        let mut calls = 0;
+
+        let reused = cached_reference_escape_search_in_query_caches(
+            &mut query_caches,
+            &context,
+            &query_bounds,
+            |_escape_bounds, _query_caches| {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![11]))
+        );
+        assert_eq!(calls, 0);
+        assert_eq!(query_caches.projection_escape_search_cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_reference_escape_search_in_query_caches_skips_invalid_cached_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let old_ref = p(0, 0, 0);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        query_caches
+            .projection_escape_search_cache
+            .borrow_mut()
+            .push(ProjectionEscapeSearchCacheEntry {
+                context: context.clone(),
+                bounds: bounds.clone(),
+                result: Ok(Some((ReferenceTarget::axis_defined(p(2, 1, 1)), vec![11]))),
+            });
+        let mut calls = 0;
+
+        let reused = cached_reference_escape_search_in_query_caches(
+            &mut query_caches,
+            &context,
+            &bounds,
+            |_escape_bounds, _query_caches| {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![99])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![99]))
+        );
+        assert_eq!(calls, 1);
     }
 
     #[test]
