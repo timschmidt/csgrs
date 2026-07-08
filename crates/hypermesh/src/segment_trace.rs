@@ -6148,14 +6148,16 @@ fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || probes
-            .iter()
-            .any(|probe| probe.uncertified_definition_fallback);
-    if probes.is_empty() && saw_unknown {
+    let unresolved_fallback = probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
+    let has_certified_probe = probes
+        .iter()
+        .any(|probe| !probe.uncertified_definition_fallback);
+    if probes.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_probe && (saw_hard_unknown || unresolved_fallback) {
             mark_all_probe_points_uncertified(probes);
         }
         Ok(())
@@ -6248,10 +6250,16 @@ fn strict_axis_probe_targets(
             )
         },
     )?;
-    if probes.is_empty() && saw_unknown {
+    let unresolved_fallback = probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
+    let has_certified_probe = probes
+        .iter()
+        .any(|probe| !probe.uncertified_definition_fallback);
+    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
             mark_all_probe_points_uncertified(&mut probes);
         }
         Ok(probes)
@@ -6328,10 +6336,16 @@ fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
             )
         },
     )?;
-    if probes.is_empty() && saw_unknown {
+    let unresolved_fallback = probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
+    let has_certified_probe = probes
+        .iter()
+        .any(|probe| !probe.uncertified_definition_fallback);
+    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
             mark_all_probe_points_uncertified(&mut probes);
         }
         Ok(probes)
@@ -11478,7 +11492,7 @@ mod tests {
     }
 
     #[test]
-    fn probe_point_build_collection_marks_existing_probes_uncertain_after_later_unknown() {
+    fn probe_point_build_collection_keeps_existing_probes_certified_after_later_unknown() {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -11502,11 +11516,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(probes.len(), 1);
-        assert!(probes[0].uncertified_definition_fallback);
+        assert!(!probes[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn probe_point_build_collection_marks_later_probes_uncertain_after_uncertain_candidate_result()
+    fn probe_point_build_collection_keeps_later_probes_certified_after_uncertain_candidate_result()
     {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
@@ -11530,7 +11544,7 @@ mod tests {
         assert!(
             probes
                 .iter()
-                .all(|probe| probe.uncertified_definition_fallback)
+                .any(|probe| !probe.uncertified_definition_fallback)
         );
     }
 
