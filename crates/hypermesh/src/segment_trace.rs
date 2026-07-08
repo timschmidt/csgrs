@@ -80,6 +80,7 @@ struct ProbeReachabilityCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+#[cfg(test)]
 struct ProbePointFamilyCacheEntry {
     interior_point: Point3,
     interior_planes: Vec<[Plane; 3]>,
@@ -91,6 +92,8 @@ struct ProbePointFamilyCacheEntry {
 
 #[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
+    #[cfg(test)]
+    #[cfg_attr(test, allow(dead_code))]
     probe_families: Vec<ProbePointFamilyCacheEntry>,
     probe_winding: Vec<ProbeWindingCacheEntry>,
     probe_surface: Vec<SurfaceCacheEntry>,
@@ -2250,34 +2253,114 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
     host_delta_w: &[i32],
     probe_query_caches: &mut LeafProbeQueryCaches,
 ) -> HypermeshResult<WindingNumberVector> {
-    search_leaf_probe_families(
-        interior_points,
-        |point, positive_side| {
-            cached_bounded_probes_from_interior_with(
-                &mut probe_query_caches.probe_families,
+    let mut saw_unknown = false;
+
+    for point in interior_points {
+        for positive_side in [true, false] {
+            if let Some(winding) = try_leaf_probe_family_with_queries(
                 point,
-                support,
-                bounds,
                 positive_side,
-                || bounded_probes_from_interior(point, support, bounds, positive_side, polygons),
-            )
-        },
-        |point, _positive_side, probe| {
-            if cached_surface_query_with(
-                &mut probe_query_caches.probe_surface,
-                &probe.point,
-                || point_lies_on_traced_surface(&probe.point, polygons),
+                adjacent_normal_probes(point, support, bounds, polygons, positive_side),
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                &mut saw_unknown,
             )? {
-                return Ok(None);
+                return Ok(winding);
             }
-            if !cached_probe_reachability_with(
-                &mut probe_query_caches.probe_reachability,
-                point,
-                &probe,
-                || probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons),
-            )? {
-                return Ok(None);
+
+            for axis in probe_axes(support)? {
+                let normal_sign = crate::geometry::classify_real(axis_ref(&support.normal, axis))?;
+                if normal_sign == Classification::On {
+                    continue;
+                }
+
+                let direction_positive = (normal_sign == Classification::Positive) == positive_side;
+                let axis_value = axis_ref(&point.point, axis);
+                let room = if direction_positive {
+                    axis_ref(&bounds.max, axis) - axis_value
+                } else {
+                    axis_value - axis_ref(&bounds.min, axis)
+                };
+                if !compare_real(&room, &Real::zero())?.is_gt() {
+                    continue;
+                }
+
+                if let Some(winding) = try_leaf_probe_family_with_queries(
+                    point,
+                    positive_side,
+                    adjacent_axis_probes(
+                        point,
+                        support,
+                        bounds,
+                        polygons,
+                        axis,
+                        direction_positive,
+                    ),
+                    support,
+                    ref_point,
+                    ref_definitions,
+                    ref_wnv,
+                    polygons,
+                    host_delta_w,
+                    probe_query_caches,
+                    &mut saw_unknown,
+                )? {
+                    return Ok(winding);
+                }
             }
+        }
+    }
+
+    let _ = saw_unknown;
+    Err(HypermeshError::UnknownClassification)
+}
+
+fn try_leaf_probe_family_with_queries(
+    point: &InteriorLeafPoint,
+    positive_side: bool,
+    probes: HypermeshResult<Vec<ProbePoint>>,
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let probes = match probes {
+        Ok(probes) => probes,
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            return Ok(None);
+        }
+        Err(err) => return Err(err),
+    };
+    if probes.is_empty() && point.uncertified_definition_fallback {
+        *saw_unknown = true;
+    }
+
+    for probe in probes {
+        let probe_fallback = probe.uncertified_definition_fallback;
+        let winding = if cached_surface_query_with(
+            &mut probe_query_caches.probe_surface,
+            &probe.point,
+            || point_lies_on_traced_surface(&probe.point, polygons),
+        )? {
+            None
+        } else if !cached_probe_reachability_with(
+            &mut probe_query_caches.probe_reachability,
+            point,
+            &probe,
+            || probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons),
+        )? {
+            None
+        } else {
             let mut winding =
                 cached_probe_winding_with(&mut probe_query_caches.probe_winding, &probe, || {
                     trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)
@@ -2285,12 +2368,30 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
             if probe.side == Classification::Negative {
                 apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
             }
-            Ok(Some(winding))
-        },
-    )?
-    .ok_or(HypermeshError::UnknownClassification)
+            Some(winding)
+        };
+
+        match winding {
+            Some(winding) => {
+                if point.uncertified_definition_fallback || probe_fallback {
+                    *saw_unknown = true;
+                    continue;
+                }
+                let _ = positive_side;
+                return Ok(Some(winding));
+            }
+            None => {
+                if point.uncertified_definition_fallback || probe_fallback {
+                    *saw_unknown = true;
+                }
+            }
+        }
+    }
+
+    Ok(None)
 }
 
+#[cfg(test)]
 fn cached_bounded_probes_from_interior_with(
     cache: &mut Vec<ProbePointFamilyCacheEntry>,
     interior: &InteriorLeafPoint,
@@ -2385,6 +2486,7 @@ fn cached_probe_reachability_with(
     reachable
 }
 
+#[cfg(test)]
 fn search_leaf_probe_families<'a>(
     interior_points: &'a [InteriorLeafPoint],
     mut probes_for: impl FnMut(&'a InteriorLeafPoint, bool) -> HypermeshResult<Vec<ProbePoint>>,
@@ -5222,6 +5324,7 @@ fn point_strictly_inside_leaf_or_unknown(
     }
 }
 
+#[cfg(test)]
 fn bounded_probes_from_interior(
     interior: &InteriorLeafPoint,
     support: &Plane,
@@ -17895,6 +17998,134 @@ mod tests {
         assert_eq!(calls, 1);
         assert!(first);
         assert!(second);
+    }
+
+    #[test]
+    fn probe_hot_leaf_probe_family_breakdown() {
+        use crate::mesh::prepare_input;
+        use crate::polygon::ConvexPolygon;
+        use std::time::Instant;
+
+        fn tetra_from_face_and_apex(
+            a: Point3,
+            b: Point3,
+            c: Point3,
+            apex: Point3,
+        ) -> crate::InputMesh {
+            crate::InputMesh::new(
+                vec![a, b, c, apex],
+                vec![
+                    crate::Triangle::new(0, 2, 1),
+                    crate::Triangle::new(0, 1, 3),
+                    crate::Triangle::new(0, 3, 2),
+                    crate::Triangle::new(1, 2, 3),
+                ],
+            )
+        }
+
+        fn face_at(
+            polygons: &[ConvexPolygon],
+            mesh_index: isize,
+            polygon_index: isize,
+        ) -> ConvexPolygon {
+            polygons
+                .iter()
+                .find(|polygon| {
+                    polygon.mesh_index == mesh_index && polygon.polygon_index == polygon_index
+                })
+                .unwrap()
+                .clone()
+        }
+
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let polygons = vec![
+            face_at(&soup.polygons, 1, 4),
+            face_at(&soup.polygons, 1, 5),
+            face_at(&soup.polygons, 1, 7),
+            face_at(&soup.polygons, 2, 8),
+            face_at(&soup.polygons, 2, 11),
+        ];
+        let bounds = Aabb::new(p(1, 1, 1), p(9, 9, 9));
+        let ref_point = p(0, 5, 5);
+        let ref_definitions = vec![axis_plane_definition(&ref_point)];
+        let ref_wnv = vec![0; soup.num_meshes];
+
+        let host = &polygons[0];
+        let intersections = polygons
+            .iter()
+            .enumerate()
+            .filter_map(|(index, polygon)| {
+                if index == 0 {
+                    return None;
+                }
+                let intersection =
+                    crate::intersection::intersect_polygons(host, polygon, index).ok()?;
+                Some(intersection)
+            })
+            .collect::<Vec<_>>();
+        let bsp_leaves =
+            crate::subdivision::build_host_bsp_leaves(host, &polygons, &intersections).unwrap();
+        let leaf = bsp_leaves
+            .iter()
+            .find(|leaf| leaf.edges.len() == 5)
+            .unwrap();
+        let (interior_points, effective_delta_w) =
+            crate::subdivision::certify_bsp_leaf_and_delta_w(host, &leaf.edges, &polygons).unwrap();
+        let interior = interior_points[0].clone();
+
+        let normal_start = Instant::now();
+        let normal_probes =
+            adjacent_normal_probes(&interior, &host.support, &bounds, &polygons, true).unwrap();
+        let normal_elapsed = normal_start.elapsed();
+
+        let mut axis_probe_counts = Vec::new();
+        let axis_start = Instant::now();
+        for axis in probe_axes(&host.support).unwrap() {
+            let normal_sign =
+                crate::geometry::classify_real(axis_ref(&host.support.normal, axis)).unwrap();
+            if normal_sign == Classification::On {
+                continue;
+            }
+            let direction_positive = normal_sign == Classification::Positive;
+            let probes = adjacent_axis_probes(
+                &interior,
+                &host.support,
+                &bounds,
+                &polygons,
+                axis,
+                direction_positive,
+            )
+            .unwrap();
+            axis_probe_counts.push((axis, probes.len()));
+        }
+        let axis_elapsed = axis_start.elapsed();
+
+        let classify_start = Instant::now();
+        let winding = classify_leaf_polygon_from_interior_points(
+            &interior_points,
+            &host.support,
+            &ref_point,
+            &ref_definitions,
+            &ref_wnv,
+            &polygons,
+            &bounds,
+            &effective_delta_w,
+        )
+        .unwrap();
+        let classify_elapsed = classify_start.elapsed();
+
+        eprintln!(
+            "hot leaf probe breakdown: normal={:?} ({} probes), axis={:?} {:?}, classify={:?}, winding={:?}",
+            normal_elapsed,
+            normal_probes.len(),
+            axis_elapsed,
+            axis_probe_counts,
+            classify_elapsed,
+            winding
+        );
     }
 
     #[test]

@@ -2022,7 +2022,7 @@ fn cached_leaf_classification_with(
     winding
 }
 
-fn build_host_bsp_leaves(
+pub(crate) fn build_host_bsp_leaves(
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
@@ -2134,7 +2134,7 @@ fn edge_cycles_match_up_to_rotation(left: &[Plane], right: &[Plane]) -> bool {
     false
 }
 
-fn certify_bsp_leaf_and_delta_w(
+pub(crate) fn certify_bsp_leaf_and_delta_w(
     polygon: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
