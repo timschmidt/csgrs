@@ -150,6 +150,14 @@ struct ChildSubdivisionCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct WindingReachabilityCacheEntry {
+    op: BooleanOp,
+    ref_wnv: Vec<i32>,
+    transitions: Vec<Vec<i32>>,
+    result: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct PolygonFamilyBoundsCacheEntry {
     polygons: Vec<ConvexPolygon>,
     bounds: HypermeshResult<Aabb>,
@@ -217,6 +225,7 @@ struct SubdivisionRuntimeCaches {
     support_reference_query: RefCell<SupportReferenceQueryCaches>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
+    winding_reachability: RefCell<Vec<WindingReachabilityCacheEntry>>,
 }
 
 impl Default for SubdivisionRuntimeCaches {
@@ -233,6 +242,7 @@ impl Default for SubdivisionRuntimeCaches {
             support_reference_query: RefCell::new(SupportReferenceQueryCaches::default()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
+            winding_reachability: RefCell::new(Vec::new()),
         }
     }
 }
@@ -451,6 +461,7 @@ pub fn subdivide(
         &mut output,
         &mut process_leaf,
         &caches,
+        &caches.winding_reachability,
     )?;
     Ok(output)
 }
@@ -488,6 +499,7 @@ pub(crate) fn subdivide_for_operation(
         &mut output,
         &mut process_leaf,
         &caches,
+        &caches.winding_reachability,
     )?;
     Ok(output)
 }
@@ -530,6 +542,7 @@ pub fn subdivide_into(
         &mut certified_output,
         &mut process_leaf,
         &caches,
+        &caches.winding_reachability,
     )?;
     merge_unique_classified_polygons(output, certified_output);
     Ok(())
@@ -547,13 +560,20 @@ fn subdivide_into_inner_with(
         &mut Vec<ClassifiedPolygon>,
     ) -> HypermeshResult<LeafProcessingStats>,
     caches: &SubdivisionRuntimeCaches,
+    winding_reachability_cache: &RefCell<Vec<WindingReachabilityCacheEntry>>,
 ) -> HypermeshResult<()> {
     if task.polygons.is_empty() {
         return Ok(());
     }
 
     if let Some(op) = reachability_op {
-        if can_discard_by_winding_reachability(op, &task.ref_wnv, &task.polygons)? {
+        if cached_winding_reachability_with(
+            winding_reachability_cache,
+            op,
+            &task.ref_wnv,
+            &task.polygons,
+            || can_discard_by_winding_reachability(op, &task.ref_wnv, &task.polygons),
+        )? {
             return Ok(());
         }
     }
@@ -683,6 +703,7 @@ fn subdivide_into_inner_with(
                             &mut child_output,
                             process_leaf,
                             caches,
+                            winding_reachability_cache,
                         )?;
                         Ok(child_output)
                     })?;
@@ -727,6 +748,7 @@ fn subdivide_into_inner_with(
                             &mut child_output,
                             process_leaf,
                             caches,
+                            winding_reachability_cache,
                         )?;
                         Ok(child_output)
                     })?;
@@ -965,6 +987,35 @@ fn cached_child_subdivision_with(
     result
 }
 
+fn cached_winding_reachability_with(
+    cache: &RefCell<Vec<WindingReachabilityCacheEntry>>,
+    op: BooleanOp,
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    query: impl FnOnce() -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    let transitions = polygons
+        .iter()
+        .map(|polygon| polygon.delta_w.clone())
+        .collect::<Vec<_>>();
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.op == op
+            && existing.ref_wnv == ref_wnv
+            && i32_vector_families_match_as_multisets(&existing.transitions, &transitions)
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = query();
+    cache.borrow_mut().push(WindingReachabilityCacheEntry {
+        op,
+        ref_wnv: ref_wnv.to_vec(),
+        transitions,
+        result: result.clone(),
+    });
+    result
+}
+
 fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &SubdivisionTask) -> bool {
     polygon_families_match_as_multisets(&left.polygons, &right.polygons)
         && left.bounds == right.bounds
@@ -975,6 +1026,26 @@ fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &Subdivision
         )
         && left.ref_wnv == right.ref_wnv
         && left.depth == right.depth
+}
+
+fn i32_vector_families_match_as_multisets(left: &[Vec<i32>], right: &[Vec<i32>]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_vector in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_vector)| !matched[*index] && *right_vector == left_vector)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
 }
 
 fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPolygon]) -> bool {
@@ -10681,6 +10752,7 @@ mod tests {
                 Err(crate::error::HypermeshError::UnknownClassification)
             },
             &caches,
+            &caches.winding_reachability,
         )
         .unwrap_err();
 
@@ -15449,6 +15521,98 @@ mod tests {
     }
 
     #[test]
+    fn cached_winding_reachability_reuses_transition_multiset_across_polygon_geometry() {
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let mut first = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        first.delta_w = vec![1, 1];
+        let mut second = make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 1, 0);
+        second.delta_w = vec![0, -1];
+        let first_polygons = vec![first.clone(), second.clone()];
+
+        let mut third = make_triangle(&p(3, 0, 0), &p(4, 0, 0), &p(3, 1, 0), 2, 0);
+        third.delta_w = vec![0, -1];
+        let mut fourth = make_triangle(&p(3, 0, 2), &p(4, 0, 2), &p(3, 1, 2), 3, 0);
+        fourth.delta_w = vec![1, 1];
+        let second_polygons = vec![third, fourth];
+
+        let first_result = cached_winding_reachability_with(
+            &cache,
+            BooleanOp::Difference,
+            &[1, 1],
+            &first_polygons,
+            || {
+                calls.set(calls.get() + 1);
+                can_discard_by_winding_reachability(BooleanOp::Difference, &[1, 1], &first_polygons)
+            },
+        )
+        .unwrap();
+        let second_result = cached_winding_reachability_with(
+            &cache,
+            BooleanOp::Difference,
+            &[1, 1],
+            &second_polygons,
+            || {
+                calls.set(calls.get() + 1);
+                can_discard_by_winding_reachability(
+                    BooleanOp::Difference,
+                    &[1, 1],
+                    &second_polygons,
+                )
+            },
+        )
+        .unwrap();
+
+        assert_eq!(first_result, second_result);
+        assert_eq!(calls.get(), 1);
+    }
+
+    #[test]
+    fn cached_winding_reachability_distinguishes_reference_winding_context() {
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let mut first_polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        first_polygon.delta_w = vec![0, 1];
+        let mut second_polygon = first_polygon.clone();
+        second_polygon.mesh_index = 1;
+
+        cached_winding_reachability_with(
+            &cache,
+            BooleanOp::Difference,
+            &[1, 3],
+            &[first_polygon.clone()],
+            || {
+                calls.set(calls.get() + 1);
+                can_discard_by_winding_reachability(
+                    BooleanOp::Difference,
+                    &[1, 3],
+                    &[first_polygon.clone()],
+                )
+            },
+        )
+        .unwrap();
+        cached_winding_reachability_with(
+            &cache,
+            BooleanOp::Difference,
+            &[1, 1],
+            &[second_polygon.clone()],
+            || {
+                calls.set(calls.get() + 1);
+                can_discard_by_winding_reachability(
+                    BooleanOp::Difference,
+                    &[1, 1],
+                    &[second_polygon.clone()],
+                )
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls.get(), 2);
+    }
+
+    #[test]
     fn support_plane_cell_target_finds_strict_point_in_closed_feasible_cell() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
         let polygons = vec![
@@ -16726,6 +16890,7 @@ mod tests {
                 })
             },
             &caches,
+            &caches.winding_reachability,
         )
         .unwrap_err();
 
@@ -16758,6 +16923,7 @@ mod tests {
                 })
             },
             &caches,
+            &caches.winding_reachability,
         )
         .unwrap();
 

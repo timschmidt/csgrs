@@ -95,7 +95,8 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
     }
 
     let mut states = HashSet::from([ref_wnv.to_vec()]);
-    for transition in transitions {
+    let remaining_abs_spans = remaining_transition_abs_spans(transitions)?;
+    for (index, transition) in transitions.iter().enumerate() {
         if transition.len() != ref_wnv.len() {
             return Err(HypermeshError::UnknownClassification);
         }
@@ -111,7 +112,17 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
             return Ok(true);
         }
 
-        states = next;
+        let remaining = &remaining_abs_spans[index + 1];
+        let mut pruned = HashSet::with_capacity(next.len());
+        for state in next {
+            if state_can_still_satisfy_boolean_op(op, &state, remaining)? {
+                pruned.insert(state);
+            }
+        }
+        states = pruned;
+        if states.is_empty() {
+            return Ok(false);
+        }
     }
 
     Ok(false)
@@ -149,6 +160,64 @@ fn apply_transition(w: &[i32], sign: i32, delta_w: &[i32]) -> HypermeshResult<Wi
         *value += sign * *delta;
     }
     Ok(result)
+}
+
+fn remaining_transition_abs_spans(
+    transitions: &[WindingNumberTransitionVector],
+) -> HypermeshResult<Vec<Vec<i32>>> {
+    if transitions.is_empty() {
+        return Ok(vec![Vec::new()]);
+    }
+
+    let dims = transitions[0].len();
+    if transitions
+        .iter()
+        .any(|transition| transition.len() != dims)
+    {
+        return Err(HypermeshError::UnknownClassification);
+    }
+
+    let mut remaining = vec![vec![0i32; dims]; transitions.len() + 1];
+    for index in (0..transitions.len()).rev() {
+        remaining[index] = remaining[index + 1].clone();
+        for (component, delta) in transitions[index].iter().enumerate() {
+            remaining[index][component] = remaining[index][component]
+                .checked_add(
+                    delta
+                        .checked_abs()
+                        .ok_or(HypermeshError::UnknownClassification)?,
+                )
+                .ok_or(HypermeshError::UnknownClassification)?;
+        }
+    }
+
+    Ok(remaining)
+}
+
+fn state_can_still_satisfy_boolean_op(
+    op: BooleanOp,
+    state: &[i32],
+    remaining_abs: &[i32],
+) -> HypermeshResult<bool> {
+    if state.len() != remaining_abs.len() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+
+    let mut lower = Vec::with_capacity(state.len());
+    let mut upper = Vec::with_capacity(state.len());
+    for (&value, &span) in state.iter().zip(remaining_abs) {
+        lower.push(
+            value
+                .checked_sub(span)
+                .ok_or(HypermeshError::UnknownClassification)?,
+        );
+        upper.push(
+            value
+                .checked_add(span)
+                .ok_or(HypermeshError::UnknownClassification)?,
+        );
+    }
+    can_boolean_op_be_inside_with_component_ranges(op, &lower, &upper)
 }
 
 #[cfg(test)]
@@ -297,6 +366,19 @@ mod tests {
                 BooleanOp::Intersection,
                 &[0, 0, 0],
                 &[vec![1, 0, 0], vec![0, 1, 0], vec![0, 0, 1]],
+            )
+            .unwrap(),
+            true
+        );
+    }
+
+    #[test]
+    fn exact_transition_reachability_keeps_states_recoverable_by_remaining_transitions() {
+        assert_eq!(
+            can_boolean_op_be_inside_with_transition_reachability(
+                BooleanOp::Difference,
+                &[1, 2],
+                &[vec![0, -3], vec![0, 1]],
             )
             .unwrap(),
             true
