@@ -162,7 +162,7 @@ struct ChildSubdivisionCacheEntry {
 struct WindingReachabilityCacheEntry {
     op: BooleanOp,
     ref_wnv: Vec<i32>,
-    transitions: Vec<Vec<i32>>,
+    transition_profile: Vec<Vec<i32>>,
     result: HypermeshResult<bool>,
 }
 
@@ -1091,14 +1091,11 @@ fn cached_winding_reachability_with(
     polygons: &[ConvexPolygon],
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    let transitions = polygons
-        .iter()
-        .map(|polygon| polygon.delta_w.clone())
-        .collect::<Vec<_>>();
+    let transition_profile = transition_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.op == op
             && existing.ref_wnv == ref_wnv
-            && i32_vector_families_match_as_multisets(&existing.transitions, &transitions)
+            && existing.transition_profile == transition_profile
     }) {
         return existing.result.clone();
     }
@@ -1107,7 +1104,7 @@ fn cached_winding_reachability_with(
     cache.borrow_mut().push(WindingReachabilityCacheEntry {
         op,
         ref_wnv: ref_wnv.to_vec(),
-        transitions,
+        transition_profile,
         result: result.clone(),
     });
     result
@@ -1125,26 +1122,6 @@ fn subdivision_task_state_matches_for_cache(
             &right.ref_definitions,
         )
         && left.ref_wnv == right.ref_wnv
-}
-
-fn i32_vector_families_match_as_multisets(left: &[Vec<i32>], right: &[Vec<i32>]) -> bool {
-    if left.len() != right.len() {
-        return false;
-    }
-
-    let mut matched = vec![false; right.len()];
-    for left_vector in left {
-        let Some((index, _)) = right
-            .iter()
-            .enumerate()
-            .find(|(index, right_vector)| !matched[*index] && *right_vector == left_vector)
-        else {
-            return false;
-        };
-        matched[index] = true;
-    }
-
-    true
 }
 
 fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPolygon]) -> bool {
@@ -1165,6 +1142,15 @@ fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPo
     }
 
     true
+}
+
+fn transition_family_profile(polygons: &[ConvexPolygon]) -> Vec<Vec<i32>> {
+    let mut profile = polygons
+        .iter()
+        .map(|polygon| polygon.delta_w.clone())
+        .collect::<Vec<_>>();
+    profile.sort_unstable();
+    profile
 }
 
 fn polygon_family_profile(polygons: &[ConvexPolygon]) -> PolygonFamilyProfile {
