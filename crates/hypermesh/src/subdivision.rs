@@ -1553,7 +1553,8 @@ fn ordered_subdivision_splits_with_partition_cache(
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<Vec<(usize, Real)>> {
     let mut candidates = Vec::new();
-    let intersection_segments = split_intersection_segments(polygons)?;
+    let intersection_segments =
+        split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
 
     for axis in 0..3 {
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
@@ -1617,6 +1618,7 @@ fn ordered_subdivision_splits_with_partition_cache(
         .collect())
 }
 
+#[cfg(test)]
 fn split_intersection_segments(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<IntersectionSegment>> {
@@ -1638,6 +1640,28 @@ fn split_intersection_segments(
             continue;
         };
         segments.push(segment);
+    }
+    Ok(segments)
+}
+
+fn split_intersection_segments_with_pairwise_cache(
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<IntersectionSegment>> {
+    let by_polygon = cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)?;
+    let mut segments = Vec::new();
+    for (polygon_idx, intersections) in by_polygon.iter().enumerate() {
+        for intersection in intersections {
+            if intersection.kind != PairwiseIntersectionType::Segment {
+                continue;
+            }
+            let Some(segment) = &intersection.segment else {
+                continue;
+            };
+            if polygon_idx < segment.other_polygon_idx {
+                segments.push(segment.clone());
+            }
+        }
     }
     Ok(segments)
 }
@@ -7871,6 +7895,19 @@ mod tests {
         let direct = intersection_split_candidates(&bounds, &polygons, 0).unwrap();
         let segments = split_intersection_segments(&polygons).unwrap();
         let cached = intersection_split_candidates_from_segments(&bounds, &segments, 0).unwrap();
+
+        assert_eq!(direct, cached);
+    }
+
+    #[test]
+    fn split_intersection_segments_with_pairwise_cache_matches_direct_query() {
+        let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+        let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+        let polygons = vec![horizontal, vertical];
+        let cache = RefCell::new(Vec::<PairwiseIntersectionsCacheEntry>::new());
+
+        let direct = split_intersection_segments(&polygons).unwrap();
+        let cached = split_intersection_segments_with_pairwise_cache(&cache, &polygons).unwrap();
 
         assert_eq!(direct, cached);
     }

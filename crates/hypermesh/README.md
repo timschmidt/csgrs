@@ -972,7 +972,10 @@ keeps one exact pairwise polygon-intersection family per repeated local polygon
 family up to permutation and reuses it across split child-intersection load
 and later direct leaf/BSP processing, instead of rebuilding the same pairwise
 polygon relation again when recursive branches revisit that exact local family
-in a different polygon order. Cached split child partitions now also reuse the
+in a different polygon order. Split ranking now also derives its intersection
+segment endpoints from that cached pairwise polygon relation instead of paying
+another full BVH/polygon-pair intersection pass just to recover the same split
+candidates. Cached split child partitions now also reuse the
 same clipped child polygon families across those permuted parent orders instead
 of fragmenting on order-only differences before later recursion and child-state
 reuse. Recursive branches that
