@@ -1621,10 +1621,16 @@ fn interior_box_detour_targets_with_queries(
 
     let mut targets =
         collect_detour_targets_from_axis_intervals(&intervals, |bounds| build(bounds))?;
-    if targets.is_empty() && saw_unknown {
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_target && (saw_unknown || unresolved_fallback) {
             mark_all_detour_targets_uncertified(&mut targets);
         }
         Ok(targets)
@@ -1762,10 +1768,16 @@ fn strict_aabb_targets_with_seed_families(
         shifted_witnesses.iter(),
         build_detour_target_from_shifted_witness,
     )?;
-    if targets.is_empty() && saw_unknown {
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_target && (saw_unknown || unresolved_fallback) {
             mark_all_detour_targets_uncertified(&mut targets);
         }
         Ok(targets)
@@ -1896,14 +1908,16 @@ fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || targets
-            .iter()
-            .any(|target| target.uncertified_definition_fallback);
-    if targets.is_empty() && saw_unknown {
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_target && (saw_hard_unknown || unresolved_fallback) {
             mark_all_detour_targets_uncertified(targets);
         }
         Ok(())
@@ -1928,14 +1942,16 @@ fn extend_detour_target_families_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || targets
-            .iter()
-            .any(|target| target.uncertified_definition_fallback);
-    if targets.is_empty() && saw_unknown {
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_target && (saw_hard_unknown || unresolved_fallback) {
             mark_all_detour_targets_uncertified(targets);
         }
         Ok(())
@@ -7784,7 +7800,7 @@ mod tests {
 
         mark_all_detour_targets_uncertified(&mut targets);
 
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -7812,7 +7828,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, second);
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -7833,7 +7849,7 @@ mod tests {
     }
 
     #[test]
-    fn detour_target_build_collection_marks_later_targets_uncertain_after_uncertain_candidate_result()
+    fn detour_target_build_collection_keeps_later_targets_certified_after_uncertain_candidate_result()
      {
         let first = p(1, 2, 3);
         let second = p(1, 2, 4);
@@ -7856,7 +7872,7 @@ mod tests {
         assert!(
             targets
                 .iter()
-                .all(|target| target.uncertified_definition_fallback)
+                .any(|target| !target.uncertified_definition_fallback)
         );
     }
 
@@ -7884,7 +7900,7 @@ mod tests {
     }
 
     #[test]
-    fn detour_target_family_collection_backtracks_after_uncertified_family() {
+    fn detour_target_family_collection_keeps_later_targets_certified_after_uncertified_family() {
         let mut targets = Vec::new();
 
         extend_detour_target_families_backtracking_unknown(
@@ -7902,11 +7918,12 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 4));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn detour_target_family_collection_tracks_unknown_after_uncertain_family_result() {
+    fn detour_target_family_collection_keeps_later_targets_certified_after_uncertain_family_result()
+    {
         let mut targets = Vec::new();
 
         extend_detour_target_families_backtracking_unknown(
@@ -7930,7 +7947,7 @@ mod tests {
         assert!(
             targets
                 .iter()
-                .all(|target| target.uncertified_definition_fallback)
+                .any(|target| !target.uncertified_definition_fallback)
         );
     }
 
@@ -7975,7 +7992,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, Point3::new(r(1), q(1, 2), q(1, 2)));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -8005,7 +8022,7 @@ mod tests {
     }
 
     #[test]
-    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_uncertified_surface_cut()
+    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_uncertified_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(2, 0, 0);
@@ -8041,7 +8058,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 0, 0));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -8169,7 +8186,7 @@ mod tests {
     }
 
     #[test]
-    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_boundary_surface_cut()
+    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_boundary_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(3, 0, 0);
@@ -8208,11 +8225,11 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(2, 0, 0));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_endpoint_boundary_surface_cut()
+    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_endpoint_boundary_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(3, 0, 0);
@@ -8255,11 +8272,11 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(2, 0, 0));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_start_boundary_surface_cut()
+    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_start_boundary_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(3, 0, 0);
@@ -8302,7 +8319,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(2, 0, 0));
-        assert!(targets[0].uncertified_definition_fallback);
+        assert!(!targets[0].uncertified_definition_fallback);
     }
 
     #[test]
