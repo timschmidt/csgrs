@@ -1198,7 +1198,6 @@ fn reusable_child_reference_from_cached_trace_if_certified(
         .filter(|existing| {
             existing.source_polygon_profile == source_polygon_profile
                 && existing.bounds == *bounds
-                && existing.old_wnv == old_wnv
                 && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
         })
         .filter_map(|existing| match &existing.result {
@@ -12515,6 +12514,45 @@ mod tests {
         assert_eq!(
             reused,
             Some((cached_point.clone(), axis_defs(&cached_point), vec![0]))
+        );
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn reusable_child_reference_from_cached_trace_reuses_cached_target_across_parent_winding() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let cached_point = p(2, 1, 1);
+        let query_wnv = vec![7];
+        let cache = RefCell::new(vec![ChildReferenceCacheEntry {
+            source_polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            source_polygons: vec![polygon.clone()],
+            bounds: bounds.clone(),
+            old_ref: p(1, 1, 1),
+            old_ref_definitions: axis_defs(&p(1, 1, 1)),
+            old_wnv: vec![0],
+            result: Ok((cached_point.clone(), axis_defs(&cached_point), vec![0])),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_from_cached_trace_if_certified(
+            &cache,
+            &cached_point,
+            &axis_defs(&cached_point),
+            &query_wnv,
+            std::slice::from_ref(&polygon),
+            &bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((
+                cached_point.clone(),
+                axis_defs(&cached_point),
+                query_wnv.clone()
+            ))
         );
         assert_eq!(cache.borrow().len(), 2);
     }
