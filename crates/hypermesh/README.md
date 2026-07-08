@@ -1040,6 +1040,10 @@ coplanar duplicate surfaces are reduced before closure checking and
 triangulation cleanup run. The same exact-geometry duplicate suppression now
 also runs earlier at subdivision emission time, so duplicate classified
 polygons are merged before they ever reach the final classified arrangement.
+That final `BooleanResult` materialization now also buckets classified polygons
+by `(classification, support plane, edge count)` before exact edge-cycle
+comparison, so large classified outputs do not rescan the entire emitted
+polygon list for every later duplicate candidate.
 The exact closure check now also caches split subedges per undirected polygon
 edge, so repeated coincident segments do not rescan and re-sort the same merged
 vertex chain before counting boundary usage. Its exact duplicate-vertex merge

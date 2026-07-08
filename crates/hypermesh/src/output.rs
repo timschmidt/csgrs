@@ -73,6 +73,14 @@ pub(crate) fn push_unique_classified_polygon(
     classified.push(candidate);
 }
 
+#[derive(Clone)]
+struct ClassifiedOutputBucket {
+    classification: i8,
+    support: crate::geometry::Plane,
+    edge_count: usize,
+    indices: Vec<usize>,
+}
+
 /// Result of a boolean operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BooleanResult {
@@ -106,6 +114,7 @@ impl BooleanResult {
         output.polygons.clear();
         let mut classifications = Vec::with_capacity(classified.len());
         let mut winding_pairs: Vec<Option<WindingPair>> = Vec::with_capacity(classified.len());
+        let mut buckets: Vec<ClassifiedOutputBucket> = Vec::new();
 
         for classified_polygon in classified {
             let classification = classified_polygon.classification;
@@ -115,20 +124,37 @@ impl BooleanResult {
             } else {
                 classified_polygon.polygon
             };
-            if let Some(existing_index) = output.polygons.iter().zip(&classifications).position(
-                |(existing, existing_classification)| {
-                    *existing_classification == classification
-                        && polygons_match_output_geometry(existing, &polygon)
-                },
+            if let Some(existing_index) = find_matching_output_polygon_index(
+                &buckets,
+                &output.polygons,
+                classification,
+                &polygon,
             ) {
                 if winding_pairs[existing_index].is_none() {
                     winding_pairs[existing_index] = winding;
                 }
                 continue;
             }
+            let edge_count = polygon.edges.len();
+            let support = polygon.support.clone();
             output.polygons.push(polygon);
             classifications.push(classification);
             winding_pairs.push(winding);
+            let new_index = output.polygons.len() - 1;
+            if let Some(bucket) = buckets.iter_mut().find(|bucket| {
+                bucket.classification == classification
+                    && bucket.edge_count == edge_count
+                    && bucket.support == support
+            }) {
+                bucket.indices.push(new_index);
+            } else {
+                buckets.push(ClassifiedOutputBucket {
+                    classification,
+                    support,
+                    edge_count,
+                    indices: vec![new_index],
+                });
+            }
         }
 
         Self {
@@ -156,6 +182,24 @@ impl BooleanResult {
 
 fn polygons_match_output_geometry(left: &ConvexPolygon, right: &ConvexPolygon) -> bool {
     left.support == right.support && edge_cycles_match_up_to_rotation(&left.edges, &right.edges)
+}
+
+fn find_matching_output_polygon_index(
+    buckets: &[ClassifiedOutputBucket],
+    polygons: &[ConvexPolygon],
+    classification: i8,
+    candidate: &ConvexPolygon,
+) -> Option<usize> {
+    let bucket = buckets.iter().find(|bucket| {
+        bucket.classification == classification
+            && bucket.edge_count == candidate.edges.len()
+            && bucket.support == candidate.support
+    })?;
+    bucket
+        .indices
+        .iter()
+        .copied()
+        .find(|index| polygons_match_output_geometry(&polygons[*index], candidate))
 }
 
 fn edge_cycles_match_up_to_rotation(
@@ -1348,6 +1392,30 @@ mod tests {
                 w_back: vec![1],
             })]
         );
+    }
+
+    #[test]
+    fn boolean_result_keeps_distinct_same_support_polygons() {
+        let first = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+            1,
+        );
+        let second = ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+            1,
+        );
+
+        let result = BooleanResult::from_classified(
+            PolygonSoup {
+                polygons: Vec::new(),
+                bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+                num_meshes: 1,
+            },
+            vec![first, second],
+        );
+
+        assert_eq!(result.output().polygons.len(), 2);
+        assert_eq!(result.classifications(), &[1, 1]);
     }
 
     #[test]
