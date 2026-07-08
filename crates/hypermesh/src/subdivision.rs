@@ -966,11 +966,17 @@ fn take_new_subdivision_child_partition(
     right_bounds: Option<&Aabb>,
 ) -> bool {
     for existing in seen.iter() {
-        if polygon_families_match_as_multisets(&existing.left_polygons, left_polygons)
-            && existing.left_bounds.as_ref() == left_bounds
-            && polygon_families_match_as_multisets(&existing.right_polygons, right_polygons)
-            && existing.right_bounds.as_ref() == right_bounds
-        {
+        let direct_match =
+            polygon_families_match_as_multisets(&existing.left_polygons, left_polygons)
+                && existing.left_bounds.as_ref() == left_bounds
+                && polygon_families_match_as_multisets(&existing.right_polygons, right_polygons)
+                && existing.right_bounds.as_ref() == right_bounds;
+        let swapped_match =
+            polygon_families_match_as_multisets(&existing.left_polygons, right_polygons)
+                && existing.left_bounds.as_ref() == right_bounds
+                && polygon_families_match_as_multisets(&existing.right_polygons, left_polygons)
+                && existing.right_bounds.as_ref() == left_bounds;
+        if direct_match || swapped_match {
             return false;
         }
     }
@@ -11241,6 +11247,30 @@ mod tests {
             Some(&left_bounds),
             &[],
             None,
+        ));
+    }
+
+    #[test]
+    fn subdivision_child_partition_dedupe_skips_swapped_equivalent_children() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let left_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let right_bounds = Aabb::new(p(0, 0, 1), p(1, 1, 1));
+        let mut seen = Vec::new();
+
+        assert!(take_new_subdivision_child_partition(
+            &mut seen,
+            std::slice::from_ref(&polygon_a),
+            Some(&left_bounds),
+            std::slice::from_ref(&polygon_b),
+            Some(&right_bounds),
+        ));
+        assert!(!take_new_subdivision_child_partition(
+            &mut seen,
+            std::slice::from_ref(&polygon_b),
+            Some(&right_bounds),
+            std::slice::from_ref(&polygon_a),
+            Some(&left_bounds),
         ));
     }
 
