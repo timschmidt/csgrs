@@ -6823,16 +6823,42 @@ fn strict_normal_probe_targets(
     }
     let mut probes = Vec::new();
     let extra_planes = normal_probe_extra_planes(interior, definition);
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        halfspace_cell_seed_families_from_optional_report(
-            corridor,
-            &halfspaces,
-            report.as_ref(),
-            &mut saw_unknown,
-        )?;
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(&halfspaces)?;
+    saw_unknown |= shifted_vertex_family.saw_unknown;
+    let shifted_vertices = shifted_vertex_family.seeds;
+    let mut shifted_geometry_seeds = Vec::new();
+    let mut seeds = Vec::new();
+
+    saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
+        &mut seeds,
+        [
+            if report
+                .as_ref()
+                .is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = report_witness
+            {
+                collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_halfspace_cell_or_unknown(
+                        candidate,
+                        corridor,
+                        &halfspaces,
+                    )
+                })
+            } else {
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: Vec::new(),
+                    saw_unknown: false,
+                })
+            },
+            collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
+                point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &halfspaces)
+            }),
+        ],
+    )?;
+
+    let mut seen_direct_seeds = Vec::new();
+    let mut seeds = take_new_halfspace_seed_family(seeds, &mut seen_direct_seeds);
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
@@ -6846,11 +6872,68 @@ fn strict_normal_probe_targets(
         )
     })?;
 
-    let certified_probe_points = probes
+    let mut certified_probe_points = probes
         .iter()
         .filter(|probe| !probe.uncertified_definition_fallback)
         .map(|probe| probe.point.clone())
         .collect::<Vec<_>>();
+
+    if definition.is_some() || certified_probe_points.is_empty() {
+        let shifted_geometry_seed_family =
+            halfspace_centroid_subset_seed_family_from_vertices(&shifted_vertices)?;
+        saw_unknown |= shifted_geometry_seed_family.saw_unknown;
+        shifted_geometry_seeds = shifted_geometry_seed_family.seeds;
+
+        let mut geometry_strict_seeds = Vec::new();
+        saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
+            &mut geometry_strict_seeds,
+            [collect_strict_halfspace_seed_family(
+                Ok(shifted_geometry_seeds.clone()),
+                |candidate| {
+                    point_strictly_inside_halfspace_cell_or_unknown(
+                        candidate,
+                        corridor,
+                        &halfspaces,
+                    )
+                },
+            )],
+        )?;
+        let mut seen_all_direct_seeds = seeds.clone();
+        let geometry_strict_seeds =
+            take_new_halfspace_seed_family(geometry_strict_seeds, &mut seen_all_direct_seeds);
+        extend_probe_point_builds_backtracking_unknown(
+            &mut probes,
+            geometry_strict_seeds.iter(),
+            |witness| {
+                build_probe_point(
+                    witness,
+                    corridor,
+                    support,
+                    &halfspaces,
+                    active_planes_from_optional_report(report.as_ref(), witness),
+                    &extra_planes,
+                    false,
+                )
+            },
+        )?;
+        seeds.extend(geometry_strict_seeds);
+        certified_probe_points = probes
+            .iter()
+            .filter(|probe| !probe.uncertified_definition_fallback)
+            .map(|probe| probe.point.clone())
+            .collect::<Vec<_>>();
+    }
+
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+    if seed_family_search_failed_without_any_seed(
+        &seeds,
+        &shifted_vertices,
+        &shifted_geometry_seeds,
+        saw_unknown,
+    ) {
+        return Err(HypermeshError::UnknownClassification);
+    }
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         normal_probe_shifted_seed_families(
             definition,
