@@ -906,11 +906,19 @@ fn cached_polygon_family_bounds_with(
     query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Aabb>,
 ) -> HypermeshResult<Aabb> {
     let polygon_profile = polygon_family_profile(polygons);
-    if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.polygon_profile == polygon_profile
-            && polygon_families_match_as_multisets(&existing.polygons, polygons)
-    }) {
-        return existing.bounds.clone();
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache_polygon_family_bounds_result(cache, polygons, &existing.bounds);
+        }
+        return existing.bounds;
     }
 
     let bounds = query(polygons);
@@ -920,6 +928,26 @@ fn cached_polygon_family_bounds_with(
         bounds: bounds.clone(),
     });
     bounds
+}
+
+fn cache_polygon_family_bounds_result(
+    cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    bounds: &HypermeshResult<Aabb>,
+) {
+    if cache
+        .borrow()
+        .iter()
+        .any(|existing| existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().push(PolygonFamilyBoundsCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+    });
 }
 
 fn cached_recursive_child_bounds_with(
@@ -951,11 +979,19 @@ fn cached_polygon_axis_values_with(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<[Vec<Real>; 3]> {
     let polygon_profile = polygon_family_profile(polygons);
-    if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.polygon_profile == polygon_profile
-            && polygon_families_match_as_multisets(&existing.polygons, polygons)
-    }) {
-        return existing.result.clone();
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache_polygon_axis_values_result(cache, polygons, &existing.result);
+        }
+        return existing.result;
     }
 
     let result = polygon_axis_values(polygons);
@@ -965,6 +1001,26 @@ fn cached_polygon_axis_values_with(
         result: result.clone(),
     });
     result
+}
+
+fn cache_polygon_axis_values_result(
+    cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    result: &HypermeshResult<[Vec<Real>; 3]>,
+) {
+    if cache
+        .borrow()
+        .iter()
+        .any(|existing| existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().push(PolygonAxisValuesCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
 }
 
 fn cached_ordered_subdivision_splits_with(
@@ -2196,18 +2252,26 @@ fn cached_pairwise_intersections_by_polygon_with(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
     let polygon_profile = polygon_family_profile(polygons);
-    for existing in cache.borrow().iter() {
-        if existing.polygon_profile != polygon_profile {
-            continue;
-        }
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.polygon_profile == polygon_profile
+                && (existing.polygons == polygons
+                    || polygon_family_order_mapping(polygons, &existing.polygons).is_some())
+        })
+        .cloned();
+    if let Some(existing) = existing {
         if existing.polygons == polygons {
-            return existing.result.clone();
+            return existing.result;
         }
         if let Some(query_to_cached) = polygon_family_order_mapping(polygons, &existing.polygons) {
-            return remap_pairwise_intersections_for_polygon_order(
-                existing.result.clone(),
-                &query_to_cached,
-            );
+            let remapped =
+                remap_pairwise_intersections_for_polygon_order(existing.result, &query_to_cached);
+            if remapped.is_ok() {
+                cache_pairwise_intersections_result(cache, polygons, &remapped);
+            }
+            return remapped;
         }
     }
 
@@ -2218,6 +2282,26 @@ fn cached_pairwise_intersections_by_polygon_with(
         result: result.clone(),
     });
     result
+}
+
+fn cache_pairwise_intersections_result(
+    cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    result: &HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+) {
+    if cache
+        .borrow()
+        .iter()
+        .any(|existing| existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().push(PairwiseIntersectionsCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
 }
 
 fn polygon_family_order_mapping(
@@ -9705,7 +9789,19 @@ mod tests {
         let second = cached_polygon_axis_values_with(&cache, &[polygon_b, polygon_a]).unwrap();
 
         assert_eq!(first, second);
-        assert_eq!(cache.borrow().len(), 1);
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_polygon_axis_values_memoize_current_equivalent_state() {
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let cache = RefCell::new(Vec::new());
+
+        cached_polygon_axis_values_with(&cache, &[polygon_a.clone(), polygon_b.clone()]).unwrap();
+        cached_polygon_axis_values_with(&cache, &[polygon_b, polygon_a]).unwrap();
+
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]
@@ -12241,6 +12337,25 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_polygon_family_bounds_memoizes_current_equivalent_state() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let cache = RefCell::new(Vec::new());
+
+        cached_polygon_family_bounds_with(&cache, &[polygon_a.clone(), polygon_b.clone()], |_p| {
+            Ok(Aabb::new(p(0, 0, 0), p(1, 1, 1)))
+        })
+        .unwrap();
+        cached_polygon_family_bounds_with(&cache, &[polygon_b, polygon_a], |_p| {
+            Ok(Aabb::new(p(0, 0, 0), p(9, 9, 9)))
+        })
+        .unwrap();
+
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]
@@ -12272,7 +12387,21 @@ mod tests {
 
         assert_eq!(first.len(), 2);
         assert_eq!(second, direct);
-        assert_eq!(cache.borrow().len(), 1);
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_pairwise_intersections_memoize_current_equivalent_state() {
+        let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+        let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+        let first_polygons = vec![horizontal.clone(), vertical.clone()];
+        let second_polygons = vec![vertical, horizontal];
+        let cache = RefCell::new(Vec::new());
+
+        cached_pairwise_intersections_by_polygon_with(&cache, &first_polygons).unwrap();
+        cached_pairwise_intersections_by_polygon_with(&cache, &second_polygons).unwrap();
+
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]
