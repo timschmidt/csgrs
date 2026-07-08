@@ -6282,6 +6282,12 @@ fn strict_axis_probe_targets(
         )
     })?;
 
+    let certified_probe_points = probes
+        .iter()
+        .filter(|probe| !probe.uncertified_definition_fallback)
+        .map(|probe| probe.point.clone())
+        .collect::<Vec<_>>();
+
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -6302,15 +6308,27 @@ fn strict_axis_probe_targets(
         },
         &mut saw_unknown,
     )?;
-    extend_probe_point_builds_backtracking_unknown(
-        &mut probes,
-        shifted_witnesses.iter(),
-        |shifted| {
-            build_axis_probe_point_from_shifted_witness(
-                shifted, interior, corridor, support, axis, definition,
-            )
-        },
-    )?;
+    for shifted in &shifted_witnesses {
+        let duplicate_certified_direct_probe = certified_probe_points
+            .iter()
+            .any(|point| *point == shifted.point);
+        match build_axis_probe_point_from_shifted_witness(
+            shifted, interior, corridor, support, axis, definition,
+        ) {
+            Ok(Some(probe)) => {
+                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                push_unique_probe_point(&mut probes, probe);
+            }
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
     let unresolved_fallback = probes
         .iter()
         .any(|probe| probe.uncertified_definition_fallback);
@@ -6368,6 +6386,12 @@ fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
         )
     })?;
 
+    let certified_probe_points = probes
+        .iter()
+        .filter(|probe| !probe.uncertified_definition_fallback)
+        .map(|probe| probe.point.clone())
+        .collect::<Vec<_>>();
+
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -6388,15 +6412,27 @@ fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
         },
         &mut saw_unknown,
     )?;
-    extend_probe_point_builds_backtracking_unknown(
-        &mut probes,
-        shifted_witnesses.iter(),
-        |shifted| {
-            build_axis_probe_point_from_shifted_witness(
-                shifted, interior, corridor, support, axis, definition,
-            )
-        },
-    )?;
+    for shifted in &shifted_witnesses {
+        let duplicate_certified_direct_probe = certified_probe_points
+            .iter()
+            .any(|point| *point == shifted.point);
+        match build_axis_probe_point_from_shifted_witness(
+            shifted, interior, corridor, support, axis, definition,
+        ) {
+            Ok(Some(probe)) => {
+                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                push_unique_probe_point(&mut probes, probe);
+            }
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
     let unresolved_fallback = probes
         .iter()
         .any(|probe| probe.uncertified_definition_fallback);
@@ -12194,6 +12230,63 @@ mod tests {
 
         assert_eq!(visited.into_inner(), vec![witness]);
         assert!(probes.iter().any(|probe| probe.point == p(2, 1, 1)));
+    }
+
+    #[test]
+    fn strict_axis_probe_targets_merge_same_point_certified_shifted_replay_definitions() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 1),
+            planes: vec![[
+                support.clone(),
+                Plane::axis_aligned(2, r(1)),
+                Plane::axis_aligned(2, r(1)),
+            ]],
+            uncertified_definition_fallback: false,
+        };
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
+        let witness = p(2, 1, 1);
+        let visited = std::cell::RefCell::new(Vec::new());
+
+        let probes = strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
+            &interior,
+            &support,
+            &corridor,
+            0,
+            true,
+            None,
+            Some(&hyperlimit::HalfspaceFeasibilityReport::feasible(
+                witness.clone(),
+                [None, None, None],
+            )),
+            vec![witness.clone()],
+            Vec::new(),
+            Vec::new(),
+            |seed| {
+                visited.borrow_mut().push(seed.clone());
+                Ok(vec![ShiftedHalfspaceWitness {
+                    point: seed.clone(),
+                    families: vec![ShiftedHalfspaceWitnessFamily {
+                        halfspaces: vec![axis_halfspace(1, false, r(2))],
+                        active_planes: [Some(0), None, None],
+                    }],
+                    uncertified_definition_fallback: false,
+                }])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![witness.clone()]);
+        let probe = probes
+            .iter()
+            .find(|probe| probe.point == witness && probe.side == Classification::Positive)
+            .expect("same-point shifted replay should keep the direct axis probe and enrich it");
+        assert!(!probe.uncertified_definition_fallback);
+        assert!(probe.planes.iter().any(|definition| {
+            definition
+                .iter()
+                .any(|plane| plane.normal == p(0, 1, 0) && plane.offset == r(-1))
+        }));
     }
 
     #[test]
