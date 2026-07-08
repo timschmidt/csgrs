@@ -759,8 +759,22 @@ fn contract_task_to_polygon_family_bounds_if_tighter(
         return Ok(None);
     }
 
-    let (ref_point, ref_definitions, ref_wnv) =
-        propagate_child_reference(task, &task.polygons, &contracted_bounds, caches)?;
+    let (ref_point, ref_definitions, ref_wnv) = {
+        let mut query_caches = caches.support_reference_query.borrow_mut();
+        if let Some(reused) =
+            reusable_contracted_task_reference_from_cached_subdivision_if_certified(
+                &caches.child_subdivision,
+                task,
+                &contracted_bounds,
+                &mut query_caches,
+            )?
+        {
+            reused
+        } else {
+            drop(query_caches);
+            propagate_child_reference(task, &task.polygons, &contracted_bounds, caches)?
+        }
+    };
     let contracted_task = SubdivisionTask {
         polygons: task.polygons.clone(),
         bounds: contracted_bounds,
@@ -1681,6 +1695,49 @@ fn reusable_child_subdivision_if_certified(
         return Ok(Some(reused));
     }
     Ok(None)
+}
+
+fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
+    cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
+    task: &SubdivisionTask,
+    contracted_bounds: &Aabb,
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
+    let polygon_profile = polygon_family_profile(&task.polygons);
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.polygon_profile != polygon_profile
+                || existing.task.ref_wnv != task.ref_wnv
+                || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
+                || !matches!(existing.result, Ok(_))
+            {
+                continue;
+            }
+
+            if !bounds_contains_bounds(&existing.task.bounds, contracted_bounds)? {
+                continue;
+            }
+
+            if reference_is_certified_valid_for_task_bounds(
+                &existing.task.ref_point,
+                &existing.task.ref_definitions,
+                &existing.task.ref_wnv,
+                contracted_bounds,
+                &task.polygons,
+                query_caches,
+            )? {
+                reused = Some((
+                    existing.task.ref_point.clone(),
+                    existing.task.ref_definitions.clone(),
+                    existing.task.ref_wnv.clone(),
+                ));
+                break;
+            }
+        }
+    }
+    Ok(reused)
 }
 
 fn bounds_contains_bounds(outer: &Aabb, inner: &Aabb) -> HypermeshResult<bool> {
@@ -13648,6 +13705,50 @@ mod tests {
             contract_task_to_polygon_family_bounds_if_tighter(&task, &caches).unwrap(),
             None
         );
+    }
+
+    #[test]
+    fn contract_task_to_polygon_family_bounds_if_tighter_reuses_cached_subdivision_reference() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let polygons = vec![
+            axis_face_polygon(&soup.polygons, 0, 5),
+            axis_face_polygon(&soup.polygons, 1, 5),
+            axis_face_polygon(&soup.polygons, 2, 5),
+        ];
+        let contracted_bounds = Aabb::new(p(1, 1, 1), p(9, 9, 9));
+        let cached_ref = Point3::new(q(13, 5), q(21, 5), q(21, 5));
+        let task = SubdivisionTask::new(
+            polygons.clone(),
+            Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+            p(0, 5, 5),
+            vec![0; soup.num_meshes],
+        );
+        let caches = SubdivisionRuntimeCaches::default();
+        caches
+            .child_subdivision
+            .borrow_mut()
+            .push(ChildSubdivisionCacheEntry {
+                polygon_profile: polygon_family_profile(&polygons),
+                task: SubdivisionTask::new(
+                    polygons.clone(),
+                    contracted_bounds.clone(),
+                    cached_ref.clone(),
+                    vec![0; soup.num_meshes],
+                ),
+                result: Ok(vec![]),
+            });
+
+        let contracted = contract_task_to_polygon_family_bounds_if_tighter(&task, &caches)
+            .unwrap()
+            .expect("expected tighter polygon-family bounds");
+
+        assert_eq!(contracted.bounds, contracted_bounds);
+        assert_eq!(contracted.ref_point, cached_ref);
+        assert_eq!(contracted.ref_wnv, task.ref_wnv);
+        assert!(caches.child_reference.borrow().is_empty());
     }
 
     #[test]
