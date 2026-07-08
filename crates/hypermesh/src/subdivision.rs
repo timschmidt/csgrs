@@ -5455,30 +5455,36 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
             halfspaces,
             report.as_ref(),
             |halfspaces, report| {
-                trace_reference_targets_backtracking_unknown_with_query_caches(
-                    cached_support_target_family_with(
-                        &mut target_cache.borrow_mut(),
-                        bounds,
-                        halfspaces,
-                        report,
-                        |halfspaces, report| {
-                            strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
-                                bounds,
-                                halfspaces,
-                                report,
-                                seed_geometry_cache,
-                                shifted_support_family_cache,
-                                reference_witness_cache,
-                                strict_contains_cache,
-                            )
-                        },
-                    )?,
+                trace_support_reference_targets_with_report_shortcut(
+                    bounds,
+                    halfspaces,
+                    report,
+                    reference_witness_cache,
+                    strict_contains_cache,
                     support_surface_cache,
                     validity_cache,
                     Some(&cache_context),
-                    bounds,
                     &mut |point| point_lies_on_any_support_plane(point, polygons),
                     &mut |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+                    || {
+                        cached_support_target_family_with(
+                            &mut target_cache.borrow_mut(),
+                            bounds,
+                            halfspaces,
+                            report,
+                            |halfspaces, report| {
+                                strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
+                                    bounds,
+                                    halfspaces,
+                                    report,
+                                    seed_geometry_cache,
+                                    shifted_support_family_cache,
+                                    reference_witness_cache,
+                                    strict_contains_cache,
+                                )
+                            },
+                        )
+                    },
                     |target| {
                         cached_reference_target_trace_with_context(
                             trace_cache,
@@ -5637,6 +5643,111 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
         Err(crate::error::HypermeshError::UnknownClassification)
     } else {
         Ok(None)
+    }
+}
+
+fn trace_support_report_witness_target_with_query_caches(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
+    surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+    context: Option<&SupportReferenceCacheContextKey>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    validity_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let Some(witness) = report.and_then(|report| report.witness.as_ref()) else {
+        return Ok(None);
+    };
+    if !cached_point_strictly_inside_support_cell_or_unknown_with(
+        &mut strict_contains_cache.borrow_mut(),
+        witness,
+        bounds,
+        halfspaces,
+    )? {
+        return Ok(None);
+    }
+    let Some(target) = cached_reference_target_from_halfspace_witness_with(
+        &mut reference_witness_cache.borrow_mut(),
+        witness,
+        halfspaces,
+        active_planes_from_optional_halfspace_report(report, witness),
+        || {
+            reference_target_from_halfspace_witness(
+                witness,
+                halfspaces,
+                active_planes_from_optional_halfspace_report(report, witness),
+            )
+        },
+    )?
+    else {
+        return Ok(None);
+    };
+
+    trace_reference_targets_backtracking_unknown_with_query_caches(
+        vec![target],
+        surface_cache,
+        validity_cache,
+        context,
+        bounds,
+        surface_query,
+        validity_query,
+        trace,
+    )
+}
+
+fn trace_support_reference_targets_with_report_shortcut(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
+    surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+    context: Option<&SupportReferenceCacheContextKey>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    validity_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    build_targets: impl FnOnce() -> HypermeshResult<Vec<ReferenceTarget>>,
+    mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let mut saw_unknown = false;
+    match trace_support_report_witness_target_with_query_caches(
+        bounds,
+        halfspaces,
+        report,
+        reference_witness_cache,
+        strict_contains_cache,
+        surface_cache,
+        validity_cache,
+        context,
+        surface_query,
+        validity_query,
+        |target| trace(target),
+    ) {
+        Ok(Some(found)) => return Ok(Some(found)),
+        Ok(None) => {}
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
+    }
+
+    match trace_reference_targets_backtracking_unknown_with_query_caches(
+        build_targets()?,
+        surface_cache,
+        validity_cache,
+        context,
+        bounds,
+        surface_query,
+        validity_query,
+        trace,
+    ) {
+        Ok(Some(found)) => Ok(Some(found)),
+        Ok(None) if saw_unknown => Err(crate::error::HypermeshError::UnknownClassification),
+        other => other,
     }
 }
 
@@ -13392,6 +13503,93 @@ mod tests {
         );
         assert_eq!(validity_calls.get(), 1);
         assert_eq!(trace_calls.get(), 1);
+    }
+
+    #[test]
+    fn support_reference_target_trace_shortcut_skips_full_target_build_after_certified_report_witness()
+     {
+        use std::cell::Cell;
+
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 1, 1);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(witness.clone(), [None, None, None]);
+        let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+        let strict_contains_cache = std::cell::RefCell::new(Vec::new());
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+        let build_calls = Cell::new(0);
+
+        let found = trace_support_reference_targets_with_report_shortcut(
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            &reference_witness_cache,
+            &strict_contains_cache,
+            &mut surface_cache,
+            &mut validity_cache,
+            None,
+            &mut |_point| Ok(false),
+            &mut |_point| Ok(true),
+            || {
+                build_calls.set(build_calls.get() + 1);
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+            |_target| Ok(Some(vec![7])),
+        )
+        .unwrap()
+        .expect("certified report witness should short-circuit support target search");
+
+        assert_eq!(build_calls.get(), 0);
+        assert_eq!(found.0.point, witness);
+        assert_eq!(found.1, vec![7]);
+    }
+
+    #[test]
+    fn support_reference_target_trace_shortcut_falls_through_after_uncertified_report_witness() {
+        use std::cell::Cell;
+
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 1, 1);
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(witness.clone(), [None, None, None]);
+        let later_target = ReferenceTarget::axis_defined(p(2, 2, 2));
+        let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+        let strict_contains_cache = std::cell::RefCell::new(Vec::new());
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+        let build_calls = Cell::new(0);
+
+        let found = trace_support_reference_targets_with_report_shortcut(
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            &reference_witness_cache,
+            &strict_contains_cache,
+            &mut surface_cache,
+            &mut validity_cache,
+            None,
+            &mut |_point| Ok(false),
+            &mut |_point| Ok(true),
+            || {
+                build_calls.set(build_calls.get() + 1);
+                Ok(vec![later_target.clone()])
+            },
+            |target| {
+                if target.point == witness {
+                    Err(crate::error::HypermeshError::UnknownClassification)
+                } else {
+                    Ok(Some(vec![5]))
+                }
+            },
+        )
+        .unwrap()
+        .expect("later certified support target should survive uncertified report witness");
+
+        assert_eq!(build_calls.get(), 1);
+        assert_eq!(found, (later_target, vec![5]));
     }
 
     #[test]
