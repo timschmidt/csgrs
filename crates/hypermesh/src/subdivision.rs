@@ -5455,6 +5455,52 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
             halfspaces,
             report.as_ref(),
             |halfspaces, report| {
+                let direct_targets = {
+                    let mut seed_family_unknown = false;
+                    match support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
+                        bounds,
+                        halfspaces,
+                        report,
+                        &mut seed_family_unknown,
+                        seed_geometry_cache,
+                    ) {
+                        Ok((strict_seeds, _, _)) => {
+                            let report_witness = report.and_then(|report| report.witness.clone());
+                            let mut strict_direct_seed_search_order = Vec::new();
+                            let strict_direct_seeds = take_new_point_family(
+                                strict_seeds,
+                                &mut strict_direct_seed_search_order,
+                            );
+                            let mut direct_unknown = seed_family_unknown;
+                            let direct_targets =
+                                deferred_direct_reference_targets_from_strict_seeds_with(
+                                    &strict_direct_seeds,
+                                    report_witness.as_ref(),
+                                    &mut direct_unknown,
+                                    |seed| {
+                                        cached_reference_target_from_halfspace_witness_with(
+                                            &mut reference_witness_cache.borrow_mut(),
+                                            seed,
+                                            halfspaces,
+                                            [None, None, None],
+                                            || {
+                                                reference_target_from_halfspace_witness(
+                                                    seed,
+                                                    halfspaces,
+                                                    [None, None, None],
+                                                )
+                                            },
+                                        )
+                                    },
+                                )?;
+                            Ok((direct_targets, direct_unknown))
+                        }
+                        Err(crate::error::HypermeshError::UnknownClassification) => {
+                            Err(crate::error::HypermeshError::UnknownClassification)
+                        }
+                        Err(err) => Err(err),
+                    }
+                };
                 trace_support_reference_targets_with_report_shortcut(
                     bounds,
                     halfspaces,
@@ -5466,6 +5512,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                     Some(&cache_context),
                     &mut |point| point_lies_on_any_support_plane(point, polygons),
                     &mut |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+                    || direct_targets.clone(),
                     || {
                         cached_support_target_family_with(
                             &mut target_cache.borrow_mut(),
@@ -5710,6 +5757,7 @@ fn trace_support_reference_targets_with_report_shortcut(
     context: Option<&SupportReferenceCacheContextKey>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     validity_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    direct_targets: impl FnOnce() -> HypermeshResult<(Vec<ReferenceTarget>, bool)>,
     build_targets: impl FnOnce() -> HypermeshResult<Vec<ReferenceTarget>>,
     mut trace: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
@@ -5729,6 +5777,37 @@ fn trace_support_reference_targets_with_report_shortcut(
     ) {
         Ok(Some(found)) => return Ok(Some(found)),
         Ok(None) => {}
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
+    }
+
+    match direct_targets() {
+        Ok((targets, direct_unknown)) => {
+            if !targets.is_empty() {
+                match trace_reference_targets_backtracking_unknown_with_query_caches(
+                    targets,
+                    surface_cache,
+                    validity_cache,
+                    context,
+                    bounds,
+                    surface_query,
+                    validity_query,
+                    |target| trace(target),
+                ) {
+                    Ok(Some(found)) => return Ok(Some(found)),
+                    Ok(None) => {}
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
+                }
+            }
+            if direct_unknown {
+                saw_unknown = true;
+            }
+        }
         Err(crate::error::HypermeshError::UnknownClassification) => {
             saw_unknown = true;
         }
@@ -13532,6 +13611,7 @@ mod tests {
             None,
             &mut |_point| Ok(false),
             &mut |_point| Ok(true),
+            || Ok((Vec::new(), false)),
             || {
                 build_calls.set(build_calls.get() + 1);
                 Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
@@ -13573,6 +13653,7 @@ mod tests {
             None,
             &mut |_point| Ok(false),
             &mut |_point| Ok(true),
+            || Ok((Vec::new(), false)),
             || {
                 build_calls.set(build_calls.get() + 1);
                 Ok(vec![later_target.clone()])
@@ -13590,6 +13671,45 @@ mod tests {
 
         assert_eq!(build_calls.get(), 1);
         assert_eq!(found, (later_target, vec![5]));
+    }
+
+    #[test]
+    fn support_reference_target_trace_shortcut_skips_full_target_build_after_certified_direct_target()
+     {
+        use std::cell::Cell;
+
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let direct_target = ReferenceTarget::axis_defined(p(2, 2, 2));
+        let reference_witness_cache = std::cell::RefCell::new(Vec::new());
+        let strict_contains_cache = std::cell::RefCell::new(Vec::new());
+        let mut surface_cache = Vec::new();
+        let mut validity_cache = Vec::new();
+        let build_calls = Cell::new(0);
+
+        let found = trace_support_reference_targets_with_report_shortcut(
+            &bounds,
+            &halfspaces,
+            None,
+            &reference_witness_cache,
+            &strict_contains_cache,
+            &mut surface_cache,
+            &mut validity_cache,
+            None,
+            &mut |_point| Ok(false),
+            &mut |_point| Ok(true),
+            || Ok((vec![direct_target.clone()], false)),
+            || {
+                build_calls.set(build_calls.get() + 1);
+                Ok(vec![ReferenceTarget::axis_defined(p(9, 9, 9))])
+            },
+            |_target| Ok(Some(vec![11])),
+        )
+        .unwrap()
+        .expect("certified direct support target should short-circuit full target build");
+
+        assert_eq!(build_calls.get(), 0);
+        assert_eq!(found, (direct_target, vec![11]));
     }
 
     #[test]
