@@ -5683,6 +5683,21 @@ fn collect_normal_probe_targets(
     }
 }
 
+fn normal_probe_extra_planes(
+    _interior: &InteriorLeafPoint,
+    definition: Option<&[Plane; 3]>,
+) -> Vec<Plane> {
+    let mut extra_planes = Vec::new();
+    if let Some(definition) = definition {
+        for plane in &definition[1..] {
+            if !extra_planes.iter().any(|existing| existing == plane) {
+                extra_planes.push(plane.clone());
+            }
+        }
+    }
+    extra_planes
+}
+
 fn normal_probe_definition_preserves_support_direction(
     definition: &[Plane; 3],
     support: &Plane,
@@ -5742,7 +5757,7 @@ fn strict_normal_probe_targets(
         return Ok(Vec::new());
     }
     let mut probes = Vec::new();
-    let mut extra_planes = Vec::new();
+    let extra_planes = normal_probe_extra_planes(interior, definition);
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         halfspace_cell_seed_families_from_optional_report(
             corridor,
@@ -5753,13 +5768,6 @@ fn strict_normal_probe_targets(
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
-    for definition in &interior.planes {
-        for plane in &definition[1..] {
-            if !extra_planes.iter().any(|existing| existing == plane) {
-                extra_planes.push(plane.clone());
-            }
-        }
-    }
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
@@ -5857,17 +5865,10 @@ fn strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
 
     let mut probes = Vec::new();
     let mut saw_unknown = false;
-    let mut extra_planes = Vec::new();
+    let extra_planes = normal_probe_extra_planes(interior, definition);
     let report_witness = report.and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
-    for definition in &interior.planes {
-        for plane in &definition[1..] {
-            if !extra_planes.iter().any(|existing| existing == plane) {
-                extra_planes.push(plane.clone());
-            }
-        }
-    }
 
     extend_probe_point_builds_backtracking_unknown(&mut probes, seeds.iter(), |witness| {
         build_probe_point(
@@ -13225,6 +13226,53 @@ mod tests {
                 definition_planes_match_as_sets(definition, &extra_definition)
             })
         );
+    }
+
+    #[test]
+    fn normal_probe_extra_planes_only_keep_selected_definition_planes() {
+        let support = Plane::axis_aligned(2, r(0));
+        let first = [
+            support.clone(),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let second = [
+            support.clone(),
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(1, r(2)),
+        ];
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![first.clone(), second.clone()],
+            uncertified_definition_fallback: false,
+        };
+
+        let extra_planes = normal_probe_extra_planes(&interior, Some(&first));
+
+        assert_eq!(extra_planes.len(), 2);
+        assert!(extra_planes.iter().any(|plane| plane == &first[1]));
+        assert!(extra_planes.iter().any(|plane| plane == &first[2]));
+        assert!(
+            extra_planes
+                .iter()
+                .all(|plane| plane != &second[1] && plane != &second[2])
+        );
+    }
+
+    #[test]
+    fn normal_probe_extra_planes_leave_unrestricted_family_empty() {
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![[
+                support,
+                Plane::axis_aligned(0, r(1)),
+                Plane::axis_aligned(1, r(1)),
+            ]],
+            uncertified_definition_fallback: false,
+        };
+
+        assert!(normal_probe_extra_planes(&interior, None).is_empty());
     }
 
     #[test]
