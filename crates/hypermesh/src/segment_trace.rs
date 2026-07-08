@@ -105,6 +105,26 @@ struct HalfspaceReportCacheEntry {
     report: Option<hyperlimit::HalfspaceFeasibilityReport>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct NormalProbeStopCacheEntry {
+    interior_point: Point3,
+    direction: Point3,
+    support: Plane,
+    bounds: Aabb,
+    saw_unknown: bool,
+    stop_values: HypermeshResult<Vec<Real>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct AxisProbeStopCacheEntry {
+    interior_point: Point3,
+    bounds: Aabb,
+    axis: usize,
+    direction_positive: bool,
+    saw_unknown: bool,
+    stop_values: HypermeshResult<Vec<Real>>,
+}
+
 #[cfg(test)]
 #[derive(Clone, Debug, PartialEq)]
 struct NormalProbeFamilyCacheEntry {
@@ -139,6 +159,8 @@ pub(crate) struct LeafProbeQueryCaches {
     #[cfg(test)]
     #[cfg_attr(test, allow(dead_code))]
     probe_families: Vec<ProbePointFamilyCacheEntry>,
+    normal_probe_stop_values: Vec<NormalProbeStopCacheEntry>,
+    axis_probe_stop_values: Vec<AxisProbeStopCacheEntry>,
     halfspace_reports: Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: Vec<HalfspaceSeedFamilyCacheEntry>,
     probe_winding: Vec<ProbeWindingCacheEntry>,
@@ -2550,14 +2572,25 @@ fn search_adjacent_normal_probe_winding_with_queries(
             -support.normal.z.clone(),
         )
     };
-    let (stop_values, local_unknown) = adjacent_normal_probe_stop_values_with_queries(
+    let (stop_values, local_unknown) = cached_adjacent_normal_probe_stop_values_with(
+        &mut probe_query_caches.normal_probe_stop_values,
         &point.point,
         &direction,
         support,
         bounds,
-        polygons,
-        &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        &mut |candidate, polygon| classify_point_in_polygon(candidate, polygon),
+        || {
+            adjacent_normal_probe_stop_values_with_queries(
+                &point.point,
+                &direction,
+                support,
+                bounds,
+                polygons,
+                &mut |_interior, direction, polygon| {
+                    Ok(dot_direction(&polygon.support.normal, direction))
+                },
+                &mut |candidate, polygon| classify_point_in_polygon(candidate, polygon),
+            )
+        },
     )?;
     *saw_unknown |= local_unknown;
 
@@ -3237,24 +3270,33 @@ fn search_adjacent_axis_probe_winding_with_queries(
     bounds: &Aabb,
     host_delta_w: &[i32],
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    let (stop_values, local_unknown) = adjacent_axis_probe_stop_values_with_queries(
+    let (stop_values, local_unknown) = cached_adjacent_axis_probe_stop_values_with(
+        &mut probe_query_caches.axis_probe_stop_values,
         &point.point,
         bounds,
-        polygons,
         axis,
         direction_positive,
-        &mut |interior, endpoint, polygon, _axis| {
-            let start_class = classify_point(interior, &polygon.support)?;
-            let endpoint_class = classify_point(endpoint, &polygon.support)?;
-            if start_class == Classification::On {
-                return Ok(Some(interior.clone()));
-            }
-            if endpoint_class == Classification::On {
-                return Ok(Some(endpoint.clone()));
-            }
-            segment_plane_crossing(interior, endpoint, &polygon.support)
+        || {
+            adjacent_axis_probe_stop_values_with_queries(
+                &point.point,
+                bounds,
+                polygons,
+                axis,
+                direction_positive,
+                &mut |interior, endpoint, polygon, _axis| {
+                    let start_class = classify_point(interior, &polygon.support)?;
+                    let endpoint_class = classify_point(endpoint, &polygon.support)?;
+                    if start_class == Classification::On {
+                        return Ok(Some(interior.clone()));
+                    }
+                    if endpoint_class == Classification::On {
+                        return Ok(Some(endpoint.clone()));
+                    }
+                    segment_plane_crossing(interior, endpoint, &polygon.support)
+                },
+                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+            )
         },
-        &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
     )?;
     *saw_unknown |= local_unknown;
 
@@ -3664,6 +3706,64 @@ fn cached_adjacent_axis_probes_with(
         probes: probes.clone(),
     });
     probes
+}
+
+fn cached_adjacent_normal_probe_stop_values_with(
+    cache: &mut Vec<NormalProbeStopCacheEntry>,
+    interior: &Point3,
+    direction: &Point3,
+    support: &Plane,
+    bounds: &Aabb,
+    query: impl FnOnce() -> HypermeshResult<(Vec<Real>, bool)>,
+) -> HypermeshResult<(Vec<Real>, bool)> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.interior_point == *interior
+            && existing.direction == *direction
+            && existing.support == *support
+            && existing.bounds == *bounds
+    }) {
+        return Ok((existing.stop_values.clone()?, existing.saw_unknown));
+    }
+
+    let (stop_values, saw_unknown) = query()?;
+    cache.push(NormalProbeStopCacheEntry {
+        interior_point: interior.clone(),
+        direction: direction.clone(),
+        support: support.clone(),
+        bounds: bounds.clone(),
+        saw_unknown,
+        stop_values: Ok(stop_values.clone()),
+    });
+    Ok((stop_values, saw_unknown))
+}
+
+fn cached_adjacent_axis_probe_stop_values_with(
+    cache: &mut Vec<AxisProbeStopCacheEntry>,
+    interior: &Point3,
+    bounds: &Aabb,
+    axis: usize,
+    direction_positive: bool,
+    query: impl FnOnce() -> HypermeshResult<(Vec<Real>, bool)>,
+) -> HypermeshResult<(Vec<Real>, bool)> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.interior_point == *interior
+            && existing.bounds == *bounds
+            && existing.axis == axis
+            && existing.direction_positive == direction_positive
+    }) {
+        return Ok((existing.stop_values.clone()?, existing.saw_unknown));
+    }
+
+    let (stop_values, saw_unknown) = query()?;
+    cache.push(AxisProbeStopCacheEntry {
+        interior_point: interior.clone(),
+        bounds: bounds.clone(),
+        axis,
+        direction_positive,
+        saw_unknown,
+        stop_values: Ok(stop_values.clone()),
+    });
+    Ok((stop_values, saw_unknown))
 }
 
 fn cached_optional_halfspace_feasibility_report_with(
@@ -12626,6 +12726,84 @@ mod tests {
         assert_eq!(first, second);
         assert_eq!(cache.len(), 1);
         assert_eq!(first_unknown, second_unknown);
+    }
+
+    #[test]
+    fn cached_adjacent_normal_probe_stop_values_reuse_equivalent_query() {
+        let mut cache = Vec::new();
+        let interior = p(0, 0, 0);
+        let direction = p(0, 0, 1);
+        let support = Plane::new(p(0, 0, 1), Real::from(0));
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let mut calls = 0;
+
+        let first = cached_adjacent_normal_probe_stop_values_with(
+            &mut cache,
+            &interior,
+            &direction,
+            &support,
+            &bounds,
+            || {
+                calls += 1;
+                Ok((vec![r(1), r(2)], true))
+            },
+        )
+        .unwrap();
+        let second = cached_adjacent_normal_probe_stop_values_with(
+            &mut cache,
+            &interior,
+            &direction,
+            &support,
+            &bounds,
+            || {
+                calls += 1;
+                Ok((vec![r(3)], false))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, (vec![r(1), r(2)], true));
+        assert_eq!(second, first);
+        assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn cached_adjacent_axis_probe_stop_values_reuse_equivalent_query() {
+        let mut cache = Vec::new();
+        let interior = p(0, 0, 0);
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let mut calls = 0;
+
+        let first = cached_adjacent_axis_probe_stop_values_with(
+            &mut cache,
+            &interior,
+            &bounds,
+            2,
+            true,
+            || {
+                calls += 1;
+                Ok((vec![r(1), r(2)], true))
+            },
+        )
+        .unwrap();
+        let second = cached_adjacent_axis_probe_stop_values_with(
+            &mut cache,
+            &interior,
+            &bounds,
+            2,
+            true,
+            || {
+                calls += 1;
+                Ok((vec![r(3)], false))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, (vec![r(1), r(2)], true));
+        assert_eq!(second, first);
+        assert_eq!(cache.len(), 1);
     }
 
     #[test]
