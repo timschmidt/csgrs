@@ -4710,7 +4710,7 @@ fn build_strict_leaf_point(
             halfspaces,
             active_planes,
         ) {
-            Ok(found) => (found.definitions, found.saw_unknown),
+            Ok(found) => (found.definitions, false),
             Err(HypermeshError::UnknownClassification) => {
                 (vec![axis_plane_definition(witness)], true)
             }
@@ -13425,7 +13425,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
+    fn strict_leaf_witness_keeps_certified_replay_after_invalid_active_index() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let witness = p(1, 1, 1);
         let halfspaces = vec![
@@ -13439,7 +13439,7 @@ mod tests {
                 .expect("strict witness should still be retained");
 
         assert_eq!(point.point, witness);
-        assert!(point.uncertified_definition_fallback);
+        assert!(!point.uncertified_definition_fallback);
         assert!(point.planes.iter().any(|definition| {
             definition[1..]
                 .iter()
