@@ -2583,7 +2583,7 @@ fn select_subdivision_split(
         .ok_or(crate::error::HypermeshError::UnknownClassification)
 }
 
-type SplitCounts = (usize, usize, usize, usize, usize);
+type SplitCounts = (usize, usize, usize, usize, usize, usize);
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum SplitSource {
@@ -2971,14 +2971,7 @@ fn consider_split_candidates(
 
 #[cfg(test)]
 fn split_counts_strictly_better(candidate: SplitCounts, baseline: SplitCounts) -> bool {
-    candidate.0 < baseline.0
-        || (candidate.0 == baseline.0
-            && (candidate.1 < baseline.1
-                || (candidate.1 == baseline.1
-                    && (candidate.2 < baseline.2
-                        || (candidate.2 == baseline.2
-                            && (candidate.3 < baseline.3
-                                || (candidate.3 == baseline.3 && candidate.4 < baseline.4)))))))
+    candidate < baseline
 }
 
 #[cfg(test)]
@@ -3121,6 +3114,7 @@ fn split_counts_from_partition(
     (
         left_count.max(right_count),
         usize::from(left_count == 0 || right_count == 0),
+        left_count + right_count,
         unchanged_children,
         partition.both_count,
         left_count.abs_diff(right_count),
@@ -10945,7 +10939,7 @@ mod tests {
     fn intersection_split_candidates_can_beat_arrangement_improvement() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (6, 0, 1, 3, 2);
+        let mut best_counts = (6, 0, 9, 1, 3, 2);
 
         consider_split_candidates(
             &mut best_axis,
@@ -10953,13 +10947,13 @@ mod tests {
             &mut best_counts,
             0,
             [r(4)],
-            |_value| Ok((5, 0, 1, 2, 1)),
+            |_value| Ok((5, 0, 8, 1, 2, 1)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 0);
         assert_eq!(best_value, r(4));
-        assert_eq!(best_counts, (5, 0, 1, 2, 1));
+        assert_eq!(best_counts, (5, 0, 8, 1, 2, 1));
 
         consider_split_candidates(
             &mut best_axis,
@@ -10967,13 +10961,13 @@ mod tests {
             &mut best_counts,
             1,
             [r(2)],
-            |_value| Ok((4, 0, 0, 0, 0)),
+            |_value| Ok((4, 0, 4, 0, 0, 0)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
-        assert_eq!(best_counts, (4, 0, 0, 0, 0));
+        assert_eq!(best_counts, (4, 0, 4, 0, 0, 0));
     }
 
     #[test]
@@ -10982,19 +10976,19 @@ mod tests {
             SplitCandidate {
                 axis: 0,
                 value: r(5),
-                counts: (4, 0, 0, 1, 0),
+                counts: (4, 0, 4, 0, 1, 0),
                 source: SplitSource::Midpoint,
             },
             SplitCandidate {
                 axis: 1,
                 value: r(2),
-                counts: (4, 0, 0, 1, 0),
+                counts: (4, 0, 4, 0, 1, 0),
                 source: SplitSource::Arrangement,
             },
             SplitCandidate {
                 axis: 2,
                 value: r(1),
-                counts: (4, 0, 0, 1, 0),
+                counts: (4, 0, 4, 0, 1, 0),
                 source: SplitSource::Intersection,
             },
         ];
@@ -11024,7 +11018,7 @@ mod tests {
         let mut candidates = vec![SplitCandidate {
             axis: 0,
             value: r(5),
-            counts: (1, 0, 0, 0, 0),
+            counts: (1, 0, 2, 0, 0, 0),
             source: SplitSource::Midpoint,
         }];
 
@@ -11055,7 +11049,7 @@ mod tests {
     fn split_ranking_penalizes_empty_child_splits() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (4, 0, 0, 2, 0);
+        let mut best_counts = (4, 0, 6, 0, 2, 0);
 
         consider_split_candidates(
             &mut best_axis,
@@ -11063,20 +11057,41 @@ mod tests {
             &mut best_counts,
             1,
             [r(1)],
-            |_value| Ok((4, 1, 0, 0, 4)),
+            |_value| Ok((4, 1, 4, 0, 0, 4)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 0);
         assert_eq!(best_value, r(5));
-        assert_eq!(best_counts, (4, 0, 0, 2, 0));
+        assert_eq!(best_counts, (4, 0, 6, 0, 2, 0));
+    }
+
+    #[test]
+    fn split_ranking_prefers_lower_total_child_count_on_max_count_tie() {
+        let mut best_axis = 0;
+        let mut best_value = r(5);
+        let mut best_counts = (4, 0, 8, 0, 2, 1);
+
+        consider_split_candidates(
+            &mut best_axis,
+            &mut best_value,
+            &mut best_counts,
+            1,
+            [r(2)],
+            |_value| Ok((4, 0, 6, 0, 2, 1)),
+        )
+        .unwrap();
+
+        assert_eq!(best_axis, 1);
+        assert_eq!(best_value, r(2));
+        assert_eq!(best_counts, (4, 0, 6, 0, 2, 1));
     }
 
     #[test]
     fn split_ranking_prefers_lower_child_imbalance_on_count_tie() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (4, 0, 0, 2, 5);
+        let mut best_counts = (4, 0, 6, 0, 2, 5);
 
         consider_split_candidates(
             &mut best_axis,
@@ -11084,20 +11099,20 @@ mod tests {
             &mut best_counts,
             1,
             [r(2)],
-            |_value| Ok((4, 0, 0, 2, 1)),
+            |_value| Ok((4, 0, 6, 0, 2, 1)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
-        assert_eq!(best_counts, (4, 0, 0, 2, 1));
+        assert_eq!(best_counts, (4, 0, 6, 0, 2, 1));
     }
 
     #[test]
     fn split_ranking_prefers_candidates_without_unchanged_parent_children() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (4, 0, 1, 2, 1);
+        let mut best_counts = (4, 0, 6, 1, 2, 1);
 
         consider_split_candidates(
             &mut best_axis,
@@ -11105,13 +11120,13 @@ mod tests {
             &mut best_counts,
             1,
             [r(2)],
-            |_value| Ok((4, 0, 0, 2, 1)),
+            |_value| Ok((4, 0, 6, 0, 2, 1)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
-        assert_eq!(best_counts, (4, 0, 0, 2, 1));
+        assert_eq!(best_counts, (4, 0, 6, 0, 2, 1));
     }
 
     #[test]
