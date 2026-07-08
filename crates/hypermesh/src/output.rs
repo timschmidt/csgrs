@@ -304,7 +304,8 @@ fn output_polygon_closure_report(
     polygons: &[OutputPolygon],
 ) -> HypermeshResult<TriangleSoupClosureReport> {
     let (vertices, indexed_polygons) = merge_duplicate_polygon_vertices(polygons);
-    let edge_counts = polygon_edge_counts(&vertices, &indexed_polygons)?;
+    let axis_order = sorted_vertex_indices_by_axis(&vertices)?;
+    let edge_counts = polygon_edge_counts(&vertices, &indexed_polygons, &axis_order)?;
     let mut report = TriangleSoupClosureReport::default();
     for count in edge_counts.values() {
         if *count == 1 {
@@ -360,6 +361,7 @@ fn output_vertex_key(vertex: &OutputVertex) -> [String; 3] {
 fn polygon_edge_counts(
     vertices: &[OutputVertex],
     polygons: &[Vec<usize>],
+    axis_order: &[Vec<usize>; 3],
 ) -> HypermeshResult<BTreeMap<[usize; 2], usize>> {
     let mut counts = BTreeMap::new();
     let mut split_edge_cache: BTreeMap<[usize; 2], Vec<[usize; 2]>> = BTreeMap::new();
@@ -378,6 +380,7 @@ fn polygon_edge_counts(
             for subedge in split_segment_subedges_exact(
                 &mut split_edge_cache,
                 vertices,
+                axis_order,
                 sorted_edge([start, end]),
             )? {
                 *counts.entry(subedge).or_insert(0) += 1;
@@ -391,6 +394,7 @@ fn polygon_edge_counts(
 fn split_segment_subedges_exact(
     cache: &mut BTreeMap<[usize; 2], Vec<[usize; 2]>>,
     vertices: &[OutputVertex],
+    axis_order: &[Vec<usize>; 3],
     edge: [usize; 2],
 ) -> HypermeshResult<Vec<[usize; 2]>> {
     let edge = sorted_edge(edge);
@@ -398,8 +402,9 @@ fn split_segment_subedges_exact(
         return Ok(subedges.clone());
     }
 
+    let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
     let mut on_edge = Vec::new();
-    for vertex_index in 0..vertices.len() {
+    for vertex_index in candidate_vertex_indices_for_edge(axis_order, vertices, edge, axis)? {
         if vertex_index == edge[0] || vertex_index == edge[1] {
             continue;
         }
@@ -423,6 +428,82 @@ fn split_segment_subedges_exact(
         .collect();
     cache.insert(edge, subedges.clone());
     Ok(subedges)
+}
+
+fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[Vec<usize>; 3]> {
+    let mut order = [
+        (0..vertices.len()).collect::<Vec<_>>(),
+        (0..vertices.len()).collect::<Vec<_>>(),
+        (0..vertices.len()).collect::<Vec<_>>(),
+    ];
+    for axis in 0..3 {
+        order[axis].sort_by(|left, right| {
+            compare_real(
+                vertex_axis(&vertices[*left], axis),
+                vertex_axis(&vertices[*right], axis),
+            )
+            .expect("exact vertex ordering should compare")
+        });
+    }
+    Ok(order)
+}
+
+fn candidate_vertex_indices_for_edge(
+    axis_order: &[Vec<usize>; 3],
+    vertices: &[OutputVertex],
+    edge: [usize; 2],
+    axis: usize,
+) -> HypermeshResult<Vec<usize>> {
+    let start_value = vertex_axis(&vertices[edge[0]], axis);
+    let end_value = vertex_axis(&vertices[edge[1]], axis);
+    let (min_value, max_value) = if compare_real(start_value, end_value)?.is_le() {
+        (start_value, end_value)
+    } else {
+        (end_value, start_value)
+    };
+
+    let ordered = &axis_order[axis];
+    let start = lower_bound_vertex_axis(ordered, vertices, axis, min_value)?;
+    let end = upper_bound_vertex_axis(ordered, vertices, axis, max_value)?;
+    Ok(ordered[start..end].to_vec())
+}
+
+fn lower_bound_vertex_axis(
+    ordered: &[usize],
+    vertices: &[OutputVertex],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<usize> {
+    let mut low = 0;
+    let mut high = ordered.len();
+    while low < high {
+        let mid = (low + high) / 2;
+        if compare_real(vertex_axis(&vertices[ordered[mid]], axis), value)?.is_lt() {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    Ok(low)
+}
+
+fn upper_bound_vertex_axis(
+    ordered: &[usize],
+    vertices: &[OutputVertex],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<usize> {
+    let mut low = 0;
+    let mut high = ordered.len();
+    while low < high {
+        let mid = (low + high) / 2;
+        if compare_real(vertex_axis(&vertices[ordered[mid]], axis), value)?.is_gt() {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    Ok(low)
 }
 
 fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleSoup> {
@@ -1065,7 +1146,8 @@ mod tests {
             op(vec![ov(1, 0, 0), ov(2, 0, 0), ov(2, -1, 0)]),
         ];
         let (vertices, indexed) = merge_duplicate_polygon_vertices(&polygons);
-        let counts = polygon_edge_counts(&vertices, &indexed).unwrap();
+        let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
+        let counts = polygon_edge_counts(&vertices, &indexed, &axis_order).unwrap();
 
         assert_eq!(counts.get(&[0, 3]), Some(&2));
         assert_eq!(counts.get(&[1, 3]), Some(&2));
@@ -1079,14 +1161,64 @@ mod tests {
             op(vec![ov(2, 0, 0), ov(0, 0, 0), ov(2, -1, 0)]),
         ];
         let (vertices, _indexed) = merge_duplicate_polygon_vertices(&polygons);
+        let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
         let mut cache = BTreeMap::new();
 
-        let forward = split_segment_subedges_exact(&mut cache, &vertices, [0, 1]).unwrap();
-        let reversed = split_segment_subedges_exact(&mut cache, &vertices, [1, 0]).unwrap();
+        let forward =
+            split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [0, 1]).unwrap();
+        let reversed =
+            split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [1, 0]).unwrap();
 
         assert_eq!(forward, vec![[0, 3], [1, 3]]);
         assert_eq!(reversed, forward);
         assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn candidate_vertex_indices_for_edge_matches_full_vertex_scan() {
+        let polygons = vec![
+            op(vec![ov(0, 0, 0), ov(3, 0, 0), ov(0, 2, 0)]),
+            op(vec![ov(1, 0, 0), ov(2, 0, 0), ov(1, -1, 0)]),
+            op(vec![ov(3, 0, 0), ov(0, 0, 0), ov(3, -1, 0)]),
+            op(vec![ov(0, 1, 0), ov(0, 3, 0), ov(-1, 1, 0)]),
+        ];
+        let (vertices, _indexed) = merge_duplicate_polygon_vertices(&polygons);
+        let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
+        let edge = [0, 1];
+        let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]]).unwrap();
+
+        let filtered =
+            candidate_vertex_indices_for_edge(&axis_order, &vertices, edge, axis).unwrap();
+        let full_scan = (0..vertices.len()).collect::<Vec<_>>();
+
+        let filtered_on_edge = filtered
+            .into_iter()
+            .filter(|index| {
+                *index != edge[0]
+                    && *index != edge[1]
+                    && point_on_segment_exact(
+                        &vertices[*index],
+                        &vertices[edge[0]],
+                        &vertices[edge[1]],
+                    )
+                    .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let full_on_edge = full_scan
+            .into_iter()
+            .filter(|index| {
+                *index != edge[0]
+                    && *index != edge[1]
+                    && point_on_segment_exact(
+                        &vertices[*index],
+                        &vertices[edge[0]],
+                        &vertices[edge[1]],
+                    )
+                    .unwrap()
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(filtered_on_edge, full_on_edge);
     }
 
     #[test]
