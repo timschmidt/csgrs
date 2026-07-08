@@ -1,6 +1,6 @@
 //! Boolean result extraction and triangulation helpers.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real};
@@ -501,7 +501,8 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
 pub fn certify_output_polygon_closure(
     result: &BooleanResult,
 ) -> HypermeshResult<TriangleSoupClosureReport> {
-    let polygon_closure = output_polygon_closure_report(&extract_output(result)?)?;
+    let polygon_closure =
+        output_polygon_closure_report_from_convex_polygons(&result.output.polygons)?;
     if !polygon_closure.has_no_boundary() {
         return Err(HypermeshError::OpenOutput {
             boundary_edges: polygon_closure.boundary_edges,
@@ -511,12 +512,27 @@ pub fn certify_output_polygon_closure(
     Ok(polygon_closure)
 }
 
+#[cfg(test)]
 fn output_polygon_closure_report(
     polygons: &[OutputPolygon],
 ) -> HypermeshResult<TriangleSoupClosureReport> {
     let (vertices, indexed_polygons) = merge_duplicate_polygon_vertices(polygons);
+    output_polygon_closure_report_from_indexed_vertices(&vertices, &indexed_polygons)
+}
+
+fn output_polygon_closure_report_from_convex_polygons(
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<TriangleSoupClosureReport> {
+    let (vertices, indexed_polygons) = merge_duplicate_convex_polygon_vertices(polygons)?;
+    output_polygon_closure_report_from_indexed_vertices(&vertices, &indexed_polygons)
+}
+
+fn output_polygon_closure_report_from_indexed_vertices(
+    vertices: &[OutputVertex],
+    indexed_polygons: &[Vec<usize>],
+) -> HypermeshResult<TriangleSoupClosureReport> {
     let axis_order = sorted_vertex_indices_by_axis(&vertices)?;
-    let edge_counts = polygon_edge_counts(&vertices, &indexed_polygons, &axis_order)?;
+    let edge_counts = polygon_edge_counts(vertices, indexed_polygons, &axis_order)?;
     let mut report = TriangleSoupClosureReport::default();
     for count in edge_counts.values() {
         if *count == 1 {
@@ -528,6 +544,7 @@ fn output_polygon_closure_report(
     Ok(report)
 }
 
+#[cfg(test)]
 fn merge_duplicate_polygon_vertices(
     polygons: &[OutputPolygon],
 ) -> (Vec<OutputVertex>, Vec<Vec<usize>>) {
@@ -582,6 +599,60 @@ fn merge_duplicate_polygon_vertices(
     (vertices, indexed_polygons)
 }
 
+fn merge_duplicate_convex_polygon_vertices(
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<(Vec<OutputVertex>, Vec<Vec<usize>>)> {
+    let mut positions = Vec::new();
+    let mut indexed_polygons = Vec::with_capacity(polygons.len());
+    let mut flat_index = 0usize;
+
+    for (polygon_index, polygon) in polygons.iter().enumerate() {
+        let points = polygon.vertices()?;
+        indexed_polygons.push(vec![0; points.len()]);
+        for (vertex_index, point) in points.into_iter().enumerate() {
+            positions.push((
+                polygon_index,
+                vertex_index,
+                flat_index,
+                OutputVertex {
+                    x: point.x,
+                    y: point.y,
+                    z: point.z,
+                },
+            ));
+            flat_index += 1;
+        }
+    }
+
+    positions.sort_by(|(_, _, _, left), (_, _, _, right)| {
+        compare_output_vertices_lexicographic(left, right)
+            .expect("exact output vertex ordering should compare")
+    });
+
+    let mut groups: Vec<(usize, OutputVertex, Vec<(usize, usize)>)> = Vec::new();
+    for (polygon_index, vertex_index, flat_index, vertex) in positions {
+        match groups.last_mut() {
+            Some((first_flat_index, existing, members)) if *existing == vertex => {
+                *first_flat_index = (*first_flat_index).min(flat_index);
+                members.push((polygon_index, vertex_index));
+            }
+            _ => groups.push((flat_index, vertex, vec![(polygon_index, vertex_index)])),
+        }
+    }
+    groups.sort_by_key(|(first_flat_index, _, _)| *first_flat_index);
+
+    let mut vertices = Vec::with_capacity(groups.len());
+    for (_, vertex, members) in groups {
+        let merged_index = vertices.len();
+        vertices.push(vertex);
+        for (polygon_index, vertex_index) in members {
+            indexed_polygons[polygon_index][vertex_index] = merged_index;
+        }
+    }
+
+    Ok((vertices, indexed_polygons))
+}
+
 fn compare_output_vertices_lexicographic(
     left: &OutputVertex,
     right: &OutputVertex,
@@ -601,9 +672,9 @@ fn polygon_edge_counts(
     vertices: &[OutputVertex],
     polygons: &[Vec<usize>],
     axis_order: &[Vec<usize>; 3],
-) -> HypermeshResult<BTreeMap<[usize; 2], usize>> {
-    let mut counts = BTreeMap::new();
-    let mut split_edge_cache: BTreeMap<[usize; 2], Vec<[usize; 2]>> = BTreeMap::new();
+) -> HypermeshResult<HashMap<[usize; 2], usize>> {
+    let mut counts = HashMap::new();
+    let mut split_edge_cache: HashMap<[usize; 2], Vec<[usize; 2]>> = HashMap::new();
 
     for polygon in polygons {
         if polygon.len() < 2 {
@@ -631,7 +702,7 @@ fn polygon_edge_counts(
 }
 
 fn split_segment_subedges_exact(
-    cache: &mut BTreeMap<[usize; 2], Vec<[usize; 2]>>,
+    cache: &mut HashMap<[usize; 2], Vec<[usize; 2]>>,
     vertices: &[OutputVertex],
     axis_order: &[Vec<usize>; 3],
     edge: [usize; 2],
@@ -643,7 +714,8 @@ fn split_segment_subedges_exact(
 
     let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
     let mut on_edge = Vec::new();
-    for vertex_index in candidate_vertex_indices_for_edge(axis_order, vertices, edge, axis)? {
+    let (start, end) = candidate_vertex_index_range_for_edge(axis_order, vertices, edge, axis)?;
+    for &vertex_index in &axis_order[axis][start..end] {
         if vertex_index == edge[0] || vertex_index == edge[1] {
             continue;
         }
@@ -687,12 +759,12 @@ fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[
     Ok(order)
 }
 
-fn candidate_vertex_indices_for_edge(
+fn candidate_vertex_index_range_for_edge(
     axis_order: &[Vec<usize>; 3],
     vertices: &[OutputVertex],
     edge: [usize; 2],
     axis: usize,
-) -> HypermeshResult<Vec<usize>> {
+) -> HypermeshResult<(usize, usize)> {
     let start_value = vertex_axis(&vertices[edge[0]], axis);
     let end_value = vertex_axis(&vertices[edge[1]], axis);
     let (min_value, max_value) = if compare_real(start_value, end_value)?.is_le() {
@@ -704,7 +776,7 @@ fn candidate_vertex_indices_for_edge(
     let ordered = &axis_order[axis];
     let start = lower_bound_vertex_axis(ordered, vertices, axis, min_value)?;
     let end = upper_bound_vertex_axis(ordered, vertices, axis, max_value)?;
-    Ok(ordered[start..end].to_vec())
+    Ok((start, end))
 }
 
 fn lower_bound_vertex_axis(
@@ -1401,7 +1473,7 @@ mod tests {
         ];
         let (vertices, _indexed) = merge_duplicate_polygon_vertices(&polygons);
         let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
-        let mut cache = BTreeMap::new();
+        let mut cache = HashMap::new();
 
         let forward =
             split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [0, 1]).unwrap();
@@ -1414,7 +1486,7 @@ mod tests {
     }
 
     #[test]
-    fn candidate_vertex_indices_for_edge_matches_full_vertex_scan() {
+    fn candidate_vertex_index_range_for_edge_matches_full_vertex_scan() {
         let polygons = vec![
             op(vec![ov(0, 0, 0), ov(3, 0, 0), ov(0, 2, 0)]),
             op(vec![ov(1, 0, 0), ov(2, 0, 0), ov(1, -1, 0)]),
@@ -1426,8 +1498,9 @@ mod tests {
         let edge = [0, 1];
         let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]]).unwrap();
 
-        let filtered =
-            candidate_vertex_indices_for_edge(&axis_order, &vertices, edge, axis).unwrap();
+        let (start, end) =
+            candidate_vertex_index_range_for_edge(&axis_order, &vertices, edge, axis).unwrap();
+        let filtered = axis_order[axis][start..end].to_vec();
         let full_scan = (0..vertices.len()).collect::<Vec<_>>();
 
         let filtered_on_edge = filtered
