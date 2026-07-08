@@ -90,6 +90,14 @@ struct ProbePointFamilyCacheEntry {
     probes: HypermeshResult<Vec<ProbePoint>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct HalfspaceSeedFamilyCacheEntry {
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
+    saw_unknown: bool,
+    result: HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+}
+
 #[cfg(test)]
 #[derive(Clone, Debug, PartialEq)]
 struct NormalProbeFamilyCacheEntry {
@@ -124,6 +132,7 @@ pub(crate) struct LeafProbeQueryCaches {
     #[cfg(test)]
     #[cfg_attr(test, allow(dead_code))]
     probe_families: Vec<ProbePointFamilyCacheEntry>,
+    halfspace_seed_families: Vec<HalfspaceSeedFamilyCacheEntry>,
     probe_winding: Vec<ProbeWindingCacheEntry>,
     probe_surface: Vec<SurfaceCacheEntry>,
     probe_reachability: Vec<ProbeReachabilityCacheEntry>,
@@ -3397,7 +3406,8 @@ fn try_strict_axis_seed_winding_with_queries(
     }
 
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        halfspace_cell_seed_families_from_optional_report(
+        cached_halfspace_cell_seed_families_from_optional_report_with(
+            &mut probe_query_caches.halfspace_seed_families,
             corridor,
             &halfspaces,
             report.as_ref(),
@@ -3677,6 +3687,38 @@ fn cached_adjacent_axis_probes_with(
         probes: probes.clone(),
     });
     probes
+}
+
+fn cached_halfspace_cell_seed_families_from_optional_report_with(
+    cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+    }) {
+        *saw_unknown |= existing.saw_unknown;
+        return existing.result.clone();
+    }
+
+    let mut local_unknown = false;
+    let result = halfspace_cell_seed_families_from_optional_report(
+        bounds,
+        halfspaces,
+        report,
+        &mut local_unknown,
+    );
+    cache.push(HalfspaceSeedFamilyCacheEntry {
+        bounds: bounds.clone(),
+        halfspaces: halfspaces.to_vec(),
+        saw_unknown: local_unknown,
+        result: result.clone(),
+    });
+    *saw_unknown |= local_unknown;
+    result
 }
 
 #[cfg(test)]
@@ -12520,6 +12562,41 @@ mod tests {
         assert_eq!(calls, 1);
         assert_eq!(first, vec![probe.clone()]);
         assert_eq!(second, vec![probe]);
+    }
+
+    #[test]
+    fn cached_halfspace_cell_seed_families_reuse_permuted_halfspaces() {
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let (report, mut first_unknown) =
+            optional_halfspace_feasibility_report(&halfspaces).unwrap();
+        let mut cache = Vec::new();
+
+        let first = cached_halfspace_cell_seed_families_from_optional_report_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            report.as_ref(),
+            &mut first_unknown,
+        )
+        .unwrap();
+
+        let mut permuted_halfspaces = halfspaces.clone();
+        permuted_halfspaces.rotate_left(2);
+        let (permuted_report, mut second_unknown) =
+            optional_halfspace_feasibility_report(&permuted_halfspaces).unwrap();
+        let second = cached_halfspace_cell_seed_families_from_optional_report_with(
+            &mut cache,
+            &bounds,
+            &permuted_halfspaces,
+            permuted_report.as_ref(),
+            &mut second_unknown,
+        )
+        .unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.len(), 1);
+        assert_eq!(first_unknown, second_unknown);
     }
 
     #[test]
