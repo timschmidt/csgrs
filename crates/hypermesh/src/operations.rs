@@ -132,9 +132,24 @@ fn expanded_bounds(bounds: &Aabb) -> Aabb {
 
 fn outside_reference_point(bounds: &Aabb) -> Point3 {
     let one = Real::one();
-    let mut point = bounds.min.clone();
-    for axis in 0..3 {
-        *axis_mut(&mut point, axis) = axis_ref(&point, axis) - &one;
-    }
+    let mut point = Point3::new(bounds.midpoint(0), bounds.midpoint(1), bounds.midpoint(2));
+    *axis_mut(&mut point, 0) = axis_ref(&bounds.min, 0) - &one;
     point
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn outside_reference_point_uses_exterior_face_center() {
+        let bounds = Aabb::new(p(0, 2, 4), p(10, 8, 14));
+        let point = outside_reference_point(&bounds);
+
+        assert_eq!(point, p(-1, 5, 9));
+    }
 }
