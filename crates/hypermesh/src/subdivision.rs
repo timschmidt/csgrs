@@ -5225,7 +5225,6 @@ fn reusable_support_reference_result_if_certified(
 #[derive(Clone)]
 struct SupportPlaneCellSearchCacheEntry<T: Clone> {
     context: Option<SupportReferenceCacheContextKey>,
-    preferred_order: [bool; 2],
     bounds: Aabb,
     polygon_index: usize,
     halfspaces: Vec<LimitPlane3>,
@@ -5235,7 +5234,7 @@ struct SupportPlaneCellSearchCacheEntry<T: Clone> {
 fn cached_support_plane_cell_search_with<T: Clone>(
     cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<T>>>,
     context: Option<&SupportReferenceCacheContextKey>,
-    preferred_order: [bool; 2],
+    _preferred_order: [bool; 2],
     bounds: &Aabb,
     polygon_index: usize,
     halfspaces: Vec<LimitPlane3>,
@@ -5243,7 +5242,6 @@ fn cached_support_plane_cell_search_with<T: Clone>(
 ) -> HypermeshResult<Option<T>> {
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         support_reference_cache_context_matches(existing.context.as_ref(), context)
-            && existing.preferred_order == preferred_order
             && existing.bounds == *bounds
             && existing.polygon_index == polygon_index
             && limit_plane_families_match_as_sets(&existing.halfspaces, &halfspaces)
@@ -5254,7 +5252,6 @@ fn cached_support_plane_cell_search_with<T: Clone>(
     let result = search();
     cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
         context: context.cloned(),
-        preferred_order,
         bounds: bounds.clone(),
         polygon_index,
         halfspaces,
@@ -14298,7 +14295,6 @@ mod tests {
             .get_mut()
             .push(SupportPlaneCellSearchCacheEntry {
                 context: Some(context),
-                preferred_order: [false, true],
                 bounds: bounds.clone(),
                 polygon_index: 0,
                 halfspaces: halfspaces.clone(),
@@ -16128,7 +16124,7 @@ mod tests {
     }
 
     #[test]
-    fn cached_support_plane_cell_search_distinguishes_preferred_order() {
+    fn cached_support_plane_cell_search_reuses_opposite_preferred_order() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
         let cache = std::cell::RefCell::new(Vec::new());
@@ -16161,9 +16157,9 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(calls, 2);
+        assert_eq!(calls, 1);
         assert_eq!(first, Some(17));
-        assert_eq!(second, Some(99));
+        assert_eq!(second, Some(17));
     }
 
     #[test]
