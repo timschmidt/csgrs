@@ -428,9 +428,10 @@ fn process_leaf_into_inner_with_pairwise_cache(
             continue;
         }
 
-        let mut seen_bsp_leaf_edges = Vec::new();
         let bsp_leaves = bsp_leaves_query(polygon, polygons, &intersections[index])?;
-        for leaf in &bsp_leaves {
+        let mut seen_bsp_leaf_edges = Vec::new();
+        for leaf_index in ordered_bsp_leaf_indices_by_complexity(&bsp_leaves) {
+            let leaf = &bsp_leaves[leaf_index];
             if leaf.edges.len() < 3 {
                 continue;
             }
@@ -494,6 +495,12 @@ fn ordered_leaf_polygon_indices_by_intersections(
             index,
         )
     });
+    indices
+}
+
+fn ordered_bsp_leaf_indices_by_complexity(leaves: &[BspLeaf]) -> Vec<usize> {
+    let mut indices = (0..leaves.len()).collect::<Vec<_>>();
+    indices.sort_by_key(|&index| (std::cmp::Reverse(leaves[index].edges.len()), index));
     indices
 }
 
@@ -13847,6 +13854,41 @@ mod tests {
         let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
 
         assert_eq!(indices, vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn ordered_bsp_leaf_indices_prefers_larger_edge_cycles_first() {
+        let leaves = vec![
+            BspLeaf {
+                edges: vec![
+                    Plane::axis_aligned(0, r(0)),
+                    Plane::axis_aligned(1, r(0)),
+                    Plane::axis_aligned(2, r(0)),
+                ],
+                enabled: true,
+            },
+            BspLeaf {
+                edges: vec![
+                    Plane::axis_aligned(0, r(0)),
+                    Plane::axis_aligned(1, r(0)),
+                    Plane::axis_aligned(2, r(0)),
+                    Plane::axis_aligned(0, r(1)),
+                ],
+                enabled: true,
+            },
+            BspLeaf {
+                edges: vec![
+                    Plane::axis_aligned(0, r(0)),
+                    Plane::axis_aligned(1, r(0)),
+                    Plane::axis_aligned(2, r(0)),
+                ],
+                enabled: true,
+            },
+        ];
+
+        let indices = ordered_bsp_leaf_indices_by_complexity(&leaves);
+
+        assert_eq!(indices, vec![1, 0, 2]);
     }
 
     #[test]
