@@ -4235,20 +4235,52 @@ fn strict_leaf_witness_points_with_seed_families(
         shifted_witnesses.iter(),
         |shifted| build_strict_leaf_point_from_shifted_witness(leaf, shifted),
     )?;
+    let certified_direct_witness_points = points
+        .iter()
+        .filter(|point| !point.uncertified_definition_fallback)
+        .map(|point| point.point.clone())
+        .collect::<Vec<_>>();
     let direct_witnesses = points
         .iter()
         .map(|point| point.point.clone())
         .collect::<Vec<_>>();
-    extend_interior_leaf_points_backtracking_unknown(
-        &mut points,
+    let mut stricter_points = Vec::new();
+    match extend_interior_leaf_points_backtracking_unknown(
+        &mut stricter_points,
         direct_witnesses.iter(),
-        |witness| strict_leaf_cell_points(leaf, witness),
-    )?;
+        |witness| {
+            strict_leaf_cell_points(leaf, witness).map(|found| {
+                found
+                    .into_iter()
+                    .filter(|point| {
+                        !certified_direct_witness_points
+                            .iter()
+                            .any(|existing| *existing == point.point)
+                    })
+                    .collect()
+            })
+        },
+    ) {
+        Ok(()) => {}
+        Err(HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
+    }
+    for point in stricter_points {
+        push_unique_interior_point(&mut points, point);
+    }
 
-    if points.is_empty() && saw_unknown {
+    let unresolved_fallback = points
+        .iter()
+        .any(|point| point.uncertified_definition_fallback);
+    let has_certified_point = points
+        .iter()
+        .any(|point| !point.uncertified_definition_fallback);
+    if points.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_point && (saw_unknown || unresolved_fallback) {
             mark_all_interior_points_uncertified(&mut points);
         }
         Ok(points)
@@ -4502,14 +4534,16 @@ fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || points
-            .iter()
-            .any(|point| point.uncertified_definition_fallback);
-    if points.is_empty() && saw_unknown {
+    let unresolved_fallback = points
+        .iter()
+        .any(|point| point.uncertified_definition_fallback);
+    let has_certified_point = points
+        .iter()
+        .any(|point| !point.uncertified_definition_fallback);
+    if points.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_point && (saw_hard_unknown || unresolved_fallback) {
             mark_all_interior_points_uncertified(points);
         }
         Ok(())
@@ -4534,14 +4568,16 @@ fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || points
-            .iter()
-            .any(|point| point.uncertified_definition_fallback);
-    if points.is_empty() && saw_unknown {
+    let unresolved_fallback = points
+        .iter()
+        .any(|point| point.uncertified_definition_fallback);
+    let has_certified_point = points
+        .iter()
+        .any(|point| !point.uncertified_definition_fallback);
+    if points.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_point && (saw_hard_unknown || unresolved_fallback) {
             mark_all_interior_points_uncertified(points);
         }
         Ok(())
@@ -4618,10 +4654,16 @@ fn strict_leaf_cell_points(
         shifted_witnesses.iter(),
         |shifted| build_strict_leaf_point_from_shifted_witness(leaf, shifted),
     )?;
-    if points.is_empty() && saw_unknown {
+    let unresolved_fallback = points
+        .iter()
+        .any(|point| point.uncertified_definition_fallback);
+    let has_certified_point = points
+        .iter()
+        .any(|point| !point.uncertified_definition_fallback);
+    if points.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_point && (saw_unknown || unresolved_fallback) {
             mark_all_interior_points_uncertified(&mut points);
         }
         Ok(points)
@@ -12860,7 +12902,7 @@ mod tests {
     }
 
     #[test]
-    fn interior_leaf_point_collection_marks_existing_points_uncertain_after_later_unknown() {
+    fn interior_leaf_point_collection_keeps_existing_points_certified_after_later_unknown() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -12883,11 +12925,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(points.len(), 1);
-        assert!(points[0].uncertified_definition_fallback);
+        assert!(!points[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_leaf_point_collection_marks_later_points_uncertain_after_uncertain_candidate_result()
+    fn interior_leaf_point_collection_keeps_later_points_certified_after_uncertain_candidate_result()
      {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
@@ -12910,7 +12952,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .all(|point| point.uncertified_definition_fallback)
+                .any(|point| !point.uncertified_definition_fallback)
         );
     }
 
@@ -12977,7 +13019,7 @@ mod tests {
     }
 
     #[test]
-    fn leaf_point_build_collection_marks_existing_points_uncertain_after_later_unknown() {
+    fn leaf_point_build_collection_keeps_existing_points_certified_after_later_unknown() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -13000,11 +13042,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(points.len(), 1);
-        assert!(points[0].uncertified_definition_fallback);
+        assert!(!points[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn leaf_point_build_collection_marks_later_points_uncertain_after_uncertain_candidate_result() {
+    fn leaf_point_build_collection_keeps_later_points_certified_after_uncertain_candidate_result() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -13026,7 +13068,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .all(|point| point.uncertified_definition_fallback)
+                .any(|point| !point.uncertified_definition_fallback)
         );
     }
 
@@ -13160,7 +13202,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
+    fn strict_leaf_witness_points_keep_surviving_points_certified_after_seed_family_unknown() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
 
@@ -13182,12 +13224,12 @@ mod tests {
         assert!(
             points
                 .iter()
-                .all(|point| point.uncertified_definition_fallback)
+                .any(|point| !point.uncertified_definition_fallback)
         );
     }
 
     #[test]
-    fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_boundary_seed_candidate() {
+    fn strict_leaf_witness_points_keep_surviving_points_certified_after_boundary_seed_candidate() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
 
@@ -13213,7 +13255,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .all(|point| point.uncertified_definition_fallback)
+                .any(|point| !point.uncertified_definition_fallback)
         );
     }
 
