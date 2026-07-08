@@ -79,8 +79,19 @@ struct ProbeReachabilityCacheEntry {
     reachable: HypermeshResult<bool>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct ProbePointFamilyCacheEntry {
+    interior_point: Point3,
+    interior_planes: Vec<[Plane; 3]>,
+    support: Plane,
+    bounds: Aabb,
+    positive_side: bool,
+    probes: HypermeshResult<Vec<ProbePoint>>,
+}
+
 #[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
+    probe_families: Vec<ProbePointFamilyCacheEntry>,
     probe_winding: Vec<ProbeWindingCacheEntry>,
     probe_surface: Vec<SurfaceCacheEntry>,
     probe_reachability: Vec<ProbeReachabilityCacheEntry>,
@@ -2242,7 +2253,14 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
     search_leaf_probe_families(
         interior_points,
         |point, positive_side| {
-            bounded_probes_from_interior(point, support, bounds, positive_side, polygons)
+            cached_bounded_probes_from_interior_with(
+                &mut probe_query_caches.probe_families,
+                point,
+                support,
+                bounds,
+                positive_side,
+                || bounded_probes_from_interior(point, support, bounds, positive_side, polygons),
+            )
         },
         |point, _positive_side, probe| {
             if cached_surface_query_with(
@@ -2271,6 +2289,36 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
         },
     )?
     .ok_or(HypermeshError::UnknownClassification)
+}
+
+fn cached_bounded_probes_from_interior_with(
+    cache: &mut Vec<ProbePointFamilyCacheEntry>,
+    interior: &InteriorLeafPoint,
+    support: &Plane,
+    bounds: &Aabb,
+    positive_side: bool,
+    query: impl FnOnce() -> HypermeshResult<Vec<ProbePoint>>,
+) -> HypermeshResult<Vec<ProbePoint>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.interior_point == interior.point
+            && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
+            && existing.support == *support
+            && existing.bounds == *bounds
+            && existing.positive_side == positive_side
+    }) {
+        return existing.probes.clone();
+    }
+
+    let probes = query();
+    cache.push(ProbePointFamilyCacheEntry {
+        interior_point: interior.point.clone(),
+        interior_planes: interior.planes.clone(),
+        support: support.clone(),
+        bounds: bounds.clone(),
+        positive_side,
+        probes: probes.clone(),
+    });
+    probes
 }
 
 fn cached_probe_winding_with(
@@ -10527,6 +10575,54 @@ mod tests {
         assert_eq!(reachability_calls, 1);
         assert!(first_reachability);
         assert!(second_reachability);
+    }
+
+    #[test]
+    fn cached_bounded_probes_from_interior_reuse_equivalent_queries() {
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![axis_plane_definition(&p(0, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let support = Plane::axis_aligned(0, r(0));
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let probe = ProbePoint {
+            point: p(1, 0, 0),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(1, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_bounded_probes_from_interior_with(
+            &mut cache,
+            &interior,
+            &support,
+            &bounds,
+            true,
+            || {
+                calls += 1;
+                Ok(vec![probe.clone()])
+            },
+        )
+        .unwrap();
+        let second = cached_bounded_probes_from_interior_with(
+            &mut cache,
+            &interior,
+            &support,
+            &bounds,
+            true,
+            || {
+                calls += 1;
+                Ok(Vec::new())
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, vec![probe.clone()]);
+        assert_eq!(second, vec![probe]);
     }
 
     #[test]
