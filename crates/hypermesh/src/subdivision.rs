@@ -3223,133 +3223,173 @@ fn compute_new_reference_with_query_caches(
         support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
 
     let projected = projected_reference_search_or_none_tracking_unknown(
-        search_projected_reference_families(
-            &projected_root.projected_targets,
-            &projected_root.projected_escape_targets,
-            || {
-                projected_support_plane_cell_reference_with_query_caches(
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
-                    bounds,
-                    polygons,
-                    projected_halfspaces.clone(),
-                    &mut query_caches.borrow_mut(),
-                )
-            },
-            |projected_target| {
+        if let Some(reused) = {
+            let mut query_caches = query_caches.borrow_mut();
+            let SupportReferenceQueryCaches {
+                projected_reference_result_cache,
+                validity_cache,
+                trace_cache,
+                ..
+            } = &mut *query_caches;
+            reusable_projected_reference_result_from_cached_trace_if_certified(
+                projected_reference_result_cache,
+                old_ref,
+                old_ref_definitions,
+                old_wnv,
+                bounds,
+                polygons,
+                &projected_halfspaces,
+                validity_cache,
+                trace_cache,
+            )?
+        } {
+            Ok(Some(reused))
+        } else {
+            let mut projected_reference_result_cache = {
                 let mut query_caches = query_caches.borrow_mut();
-                let query_caches = &mut **query_caches;
-                let SupportReferenceQueryCaches {
-                    validity_cache,
-                    trace_cache,
-                    ..
-                } = query_caches;
-                trace_projected_reference_target_with_queries(
-                    validity_cache,
-                    trace_cache,
-                    Some(&cache_context),
-                    bounds,
-                    projected_target,
-                    |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
-                    |target| {
-                        trace_reference_target_from_validated_bounds(
-                            old_ref,
-                            old_ref_definitions,
-                            old_wnv,
-                            polygons,
-                            target,
-                        )
-                    },
-                )
-            },
-            |projected_target| {
-                let axis_options = {
-                    let query_caches = query_caches.borrow_mut();
-                    cached_projection_escape_axis_options_state_with(
-                        &mut query_caches
-                            .projection_escape_axis_options_cache
-                            .borrow_mut(),
-                        &projected_target.point,
-                        bounds,
-                        polygons,
+                std::mem::take(&mut query_caches.projected_reference_result_cache)
+            };
+            let result = cached_projected_reference_result_with(
+                &mut projected_reference_result_cache,
+                &cache_context,
+                bounds,
+                &projected_halfspaces,
+                || {
+                    search_projected_reference_families(
+                        &projected_root.projected_targets,
+                        &projected_root.projected_escape_targets,
                         || {
-                            projection_escape_axis_options_family_tracking_unknown(
-                                &projected_target.point,
+                            projected_support_plane_cell_reference_with_query_caches(
+                                old_ref,
+                                old_ref_definitions,
+                                old_wnv,
                                 bounds,
                                 polygons,
+                                projected_halfspaces.clone(),
+                                &mut query_caches.borrow_mut(),
                             )
                         },
-                    )?
-                };
-                projection_axis_escape_reference_with_axis_options_tracking_unknown(
-                    &projected_target.point,
-                    &axis_options.axis_options,
-                    axis_options.saw_unknown,
-                    |corridor| {
-                        let mut query_caches = query_caches.borrow_mut();
-                        cached_reference_escape_search_in_query_caches(
-                            &mut query_caches,
-                            &cache_context,
-                            corridor,
-                            |corridor, query_caches| {
-                                support_plane_cell_reference_with_query_caches(
-                                    old_ref,
-                                    old_ref_definitions,
-                                    old_wnv,
-                                    corridor,
-                                    polygons,
-                                    query_caches,
-                                )
-                            },
-                        )
-                    },
-                )
-            },
-            |projected_target| {
-                let axis_options = {
-                    let query_caches = query_caches.borrow_mut();
-                    cached_projection_escape_axis_options_state_with(
-                        &mut query_caches
-                            .projection_escape_axis_options_cache
-                            .borrow_mut(),
-                        &projected_target.point,
-                        bounds,
-                        polygons,
-                        || {
-                            projection_escape_axis_options_family_tracking_unknown(
-                                &projected_target.point,
+                        |projected_target| {
+                            let mut query_caches = query_caches.borrow_mut();
+                            let query_caches = &mut **query_caches;
+                            let SupportReferenceQueryCaches {
+                                validity_cache,
+                                trace_cache,
+                                ..
+                            } = query_caches;
+                            trace_projected_reference_target_with_queries(
+                                validity_cache,
+                                trace_cache,
+                                Some(&cache_context),
                                 bounds,
-                                polygons,
+                                projected_target,
+                                |point| {
+                                    is_certified_valid_reference_for_bounds(point, bounds, polygons)
+                                },
+                                |target| {
+                                    trace_reference_target_from_validated_bounds(
+                                        old_ref,
+                                        old_ref_definitions,
+                                        old_wnv,
+                                        polygons,
+                                        target,
+                                    )
+                                },
                             )
                         },
-                    )?
-                };
-                projection_escape_reference_with_axis_options_tracking_unknown(
-                    &axis_options.axis_options,
-                    bounds,
-                    axis_options.saw_unknown,
-                    |escape_bounds| {
-                        let mut query_caches = query_caches.borrow_mut();
-                        cached_reference_escape_search_in_query_caches(
-                            &mut query_caches,
-                            &cache_context,
-                            escape_bounds,
-                            |escape_bounds, query_caches| {
-                                support_plane_cell_reference_with_query_caches(
-                                    old_ref,
-                                    old_ref_definitions,
-                                    old_wnv,
-                                    escape_bounds,
+                        |projected_target| {
+                            let axis_options = {
+                                let query_caches = query_caches.borrow_mut();
+                                cached_projection_escape_axis_options_state_with(
+                                    &mut query_caches
+                                        .projection_escape_axis_options_cache
+                                        .borrow_mut(),
+                                    &projected_target.point,
+                                    bounds,
                                     polygons,
-                                    query_caches,
-                                )
-                            },
-                        )
-                    },
-                )
-            },
-        ),
+                                    || {
+                                        projection_escape_axis_options_family_tracking_unknown(
+                                            &projected_target.point,
+                                            bounds,
+                                            polygons,
+                                        )
+                                    },
+                                )?
+                            };
+                            projection_axis_escape_reference_with_axis_options_tracking_unknown(
+                                &projected_target.point,
+                                &axis_options.axis_options,
+                                axis_options.saw_unknown,
+                                |corridor| {
+                                    let mut query_caches = query_caches.borrow_mut();
+                                    cached_reference_escape_search_in_query_caches(
+                                        &mut query_caches,
+                                        &cache_context,
+                                        corridor,
+                                        |corridor, query_caches| {
+                                            support_plane_cell_reference_with_query_caches(
+                                                old_ref,
+                                                old_ref_definitions,
+                                                old_wnv,
+                                                corridor,
+                                                polygons,
+                                                query_caches,
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                        |projected_target| {
+                            let axis_options = {
+                                let query_caches = query_caches.borrow_mut();
+                                cached_projection_escape_axis_options_state_with(
+                                    &mut query_caches
+                                        .projection_escape_axis_options_cache
+                                        .borrow_mut(),
+                                    &projected_target.point,
+                                    bounds,
+                                    polygons,
+                                    || {
+                                        projection_escape_axis_options_family_tracking_unknown(
+                                            &projected_target.point,
+                                            bounds,
+                                            polygons,
+                                        )
+                                    },
+                                )?
+                            };
+                            projection_escape_reference_with_axis_options_tracking_unknown(
+                                &axis_options.axis_options,
+                                bounds,
+                                axis_options.saw_unknown,
+                                |escape_bounds| {
+                                    let mut query_caches = query_caches.borrow_mut();
+                                    cached_reference_escape_search_in_query_caches(
+                                        &mut query_caches,
+                                        &cache_context,
+                                        escape_bounds,
+                                        |escape_bounds, query_caches| {
+                                            support_plane_cell_reference_with_query_caches(
+                                                old_ref,
+                                                old_ref_definitions,
+                                                old_wnv,
+                                                escape_bounds,
+                                                polygons,
+                                                query_caches,
+                                            )
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                    )
+                },
+            );
+            query_caches.borrow_mut().projected_reference_result_cache =
+                projected_reference_result_cache;
+            result
+        },
         &mut projected_unknown,
     )?;
     reference_result_with_support_fallback(projected, projected_unknown, || {
@@ -4973,6 +5013,7 @@ struct SupportReferenceQueryCaches {
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
     target_cache: std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
     accept_cache: std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
+    projected_reference_result_cache: Vec<ProjectedReferenceResultCacheEntry>,
     support_reference_result_cache: Vec<SupportReferenceResultCacheEntry>,
     search_cache:
         std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
@@ -5385,6 +5426,14 @@ struct SupportReferenceAcceptCacheEntry {
 
 #[derive(Clone)]
 struct SupportReferenceResultCacheEntry {
+    context: SupportReferenceCacheContextKey,
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
+    result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+}
+
+#[derive(Clone)]
+struct ProjectedReferenceResultCacheEntry {
     context: SupportReferenceCacheContextKey,
     bounds: Aabb,
     halfspaces: Vec<LimitPlane3>,
@@ -5851,6 +5900,134 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
                 && support_reference_cache_context_matches(Some(&existing.context), Some(&context))
         }) {
             cache.push(SupportReferenceResultCacheEntry {
+                context,
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                result: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
+    Ok(None)
+}
+
+fn cached_projected_reference_result_with(
+    cache: &mut Vec<ProjectedReferenceResultCacheEntry>,
+    context: &SupportReferenceCacheContextKey,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    build: impl FnOnce() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    if let Some(existing) = cache
+        .iter()
+        .rev()
+        .find(|existing| {
+            existing.context == *context
+                && existing.bounds == *bounds
+                && existing.halfspaces == halfspaces
+        })
+        .cloned()
+    {
+        return existing.result;
+    }
+
+    if let Some(existing) = cache
+        .iter()
+        .rev()
+        .find(|existing| {
+            existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_reference_cache_context_matches(Some(&existing.context), Some(context))
+        })
+        .cloned()
+    {
+        if !cache.iter().any(|current| {
+            current.context == *context
+                && current.bounds == *bounds
+                && current.halfspaces == halfspaces
+        }) {
+            cache.push(ProjectedReferenceResultCacheEntry {
+                context: context.clone(),
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                result: existing.result.clone(),
+            });
+        }
+        return existing.result.clone();
+    }
+
+    let result = build();
+    cache.push(ProjectedReferenceResultCacheEntry {
+        context: context.clone(),
+        bounds: bounds.clone(),
+        halfspaces: halfspaces.to_vec(),
+        result: result.clone(),
+    });
+    result
+}
+
+fn reusable_projected_reference_result_from_cached_trace_if_certified(
+    cache: &mut Vec<ProjectedReferenceResultCacheEntry>,
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    halfspaces: &[LimitPlane3],
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+    trace_cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let context =
+        support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
+    let polygon_context = Some(&context);
+    let mut reused = None;
+    for existing in cache.iter().rev() {
+        if existing.bounds != *bounds
+            || !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
+        {
+            continue;
+        }
+        let Ok(Some((target, _))) = &existing.result else {
+            continue;
+        };
+        let valid_for_bounds = cached_reference_bounds_validity_with_context(
+            validity_cache,
+            Some(&context),
+            bounds,
+            &target.point,
+            |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+        )?;
+        if !valid_for_bounds {
+            continue;
+        }
+
+        if let Some(winding) = cached_reference_target_trace_with_context(
+            trace_cache,
+            Some(&context),
+            target,
+            |target| {
+                trace_reference_target_from_validated_bounds(
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    polygons,
+                    target,
+                )
+            },
+        )? {
+            reused = Some((target.clone(), winding));
+            break;
+        }
+    }
+    if let Some((target, winding)) = reused {
+        let reused = Some((target, winding));
+        if !cache.iter().any(|existing| {
+            existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_reference_cache_context_matches(Some(&existing.context), Some(&context))
+        }) {
+            cache.push(ProjectedReferenceResultCacheEntry {
                 context,
                 bounds: bounds.clone(),
                 halfspaces: halfspaces.to_vec(),
@@ -17870,6 +18047,123 @@ mod tests {
 
         assert_eq!(calls, 2);
         assert_ne!(first, second);
+    }
+
+    #[test]
+    fn cached_projected_reference_result_reuses_identical_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let old_ref = p(0, 2, 5);
+        let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let polygons = Vec::new();
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_projected_reference_result_with(
+            &mut cache,
+            &context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23])))
+            },
+        )
+        .unwrap();
+        let second = cached_projected_reference_result_with(
+            &mut cache,
+            &context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(3, 3, 3)), vec![24])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cached_target_across_parent_winding()
+     {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let old_ref = p(0, 2, 5);
+        let query_definitions = vec![axis_plane_definition(&old_ref)];
+        let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let polygons = Vec::new();
+        let cached_context =
+            support_reference_cache_context_key(&old_ref, &query_definitions, &[0], &polygons);
+        let mut cache = vec![ProjectedReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+        let mut trace_cache = Vec::new();
+
+        let reused = reusable_projected_reference_result_from_cached_trace_if_certified(
+            &mut cache,
+            &old_ref,
+            &query_definitions,
+            &[7],
+            &bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+            &mut trace_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![7]))
+        );
+        assert_eq!(cache.len(), 2);
+    }
+
+    #[test]
+    fn reusable_projected_reference_result_from_cached_trace_if_certified_skips_invalid_cached_target()
+     {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let old_ref = p(0, 2, 5);
+        let query_definitions = vec![axis_plane_definition(&old_ref)];
+        let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let cached_context =
+            support_reference_cache_context_key(&old_ref, &query_definitions, &[0], &polygons);
+        let mut cache = vec![ProjectedReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(2, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+        let mut trace_cache = Vec::new();
+
+        let reused = reusable_projected_reference_result_from_cached_trace_if_certified(
+            &mut cache,
+            &old_ref,
+            &query_definitions,
+            &[7],
+            &bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+            &mut trace_cache,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert_eq!(cache.len(), 1);
     }
 
     #[test]
