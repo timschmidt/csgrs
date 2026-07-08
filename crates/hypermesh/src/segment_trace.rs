@@ -201,11 +201,18 @@ struct PlaneReplacementAffineCacheEntry {
 
 #[derive(Clone, Debug, PartialEq)]
 struct PlaneReplacementReachabilityStepCacheEntry {
+    mode: PlaneReplacementReachabilityStepMode,
     current_point: Point3,
     next_point: Point3,
     current_planes: [Plane; 3],
     next_planes: [Plane; 3],
     result: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum PlaneReplacementReachabilityStepMode {
+    WithoutNestedPlaneReplacement,
+    WithoutStepDetours,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -2703,7 +2710,6 @@ fn search_adjacent_normal_probe_winding_with_queries(
 
     Ok(None)
 }
-
 fn try_strict_normal_probe_report_witness_winding_with_queries(
     point: &InteriorLeafPoint,
     positive_side: bool,
@@ -3338,7 +3344,6 @@ fn try_leaf_probe_family_with_queries(
 
     let mut prioritized_probes = Vec::new();
     let mut deferred_probes = Vec::new();
-
     for probe in probes {
         let probe_fallback = probe.uncertified_definition_fallback;
         if cached_surface_query_with(probe_surface, &probe.point, || {
@@ -5413,6 +5418,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         start_planes,
         end_planes,
+        PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
         affine_cache,
         step_cache,
         |current, next, current_definitions, next_definitions| {
@@ -5474,6 +5480,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
     plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         start_planes,
         end_planes,
+        PlaneReplacementReachabilityStepMode::WithoutStepDetours,
         affine_cache,
         step_cache,
         |current, next, _current_definitions, _next_definitions| {
@@ -5485,6 +5492,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
 fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
+    mode: PlaneReplacementReachabilityStepMode,
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
@@ -5525,6 +5533,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 };
             let reachable = match cached_plane_replacement_reachability_step_with(
                 &mut *step_cache,
+                mode,
                 &current_point,
                 &next_point,
                 &current_planes,
@@ -5568,6 +5577,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
 
 fn cached_plane_replacement_reachability_step_with(
     cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    mode: PlaneReplacementReachabilityStepMode,
     current_point: &Point3,
     next_point: &Point3,
     current_planes: &[Plane; 3],
@@ -5575,7 +5585,8 @@ fn cached_plane_replacement_reachability_step_with(
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        existing.current_point == *current_point
+        existing.mode == mode
+            && existing.current_point == *current_point
             && existing.next_point == *next_point
             && definition_planes_match_as_sets(&existing.current_planes, current_planes)
             && definition_planes_match_as_sets(&existing.next_planes, next_planes)
@@ -5585,6 +5596,7 @@ fn cached_plane_replacement_reachability_step_with(
 
     let result = trace();
     cache.push(PlaneReplacementReachabilityStepCacheEntry {
+        mode,
         current_point: current_point.clone(),
         next_point: next_point.clone(),
         current_planes: current_planes.clone(),
@@ -19763,6 +19775,7 @@ mod tests {
             plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 &start_definition,
                 &end_definition,
+                PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
                 &mut affine_cache,
                 &mut step_cache,
                 |from, to, start_definitions, end_definitions| {
@@ -19796,6 +19809,7 @@ mod tests {
         let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             &start_definition,
             &end_definition,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
             &mut affine_cache,
             &mut step_cache,
             |_from, _to, _start_definitions, _end_definitions| Ok(false),
@@ -19817,6 +19831,7 @@ mod tests {
             !plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 &start_definition,
                 &end_definition,
+                PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
                 &mut affine_cache,
                 &mut step_cache,
                 |_from, _to, _start_definitions, _end_definitions| {
@@ -19841,6 +19856,7 @@ mod tests {
             plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
                 &start_definition,
                 &end_definition,
+                PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
                 &mut affine_cache,
                 &mut step_cache,
                 |from, to, _start_definitions, _end_definitions| {
@@ -19874,6 +19890,7 @@ mod tests {
 
         let first = cached_plane_replacement_reachability_step_with(
             &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutStepDetours,
             &p(0, 0, 0),
             &p(1, 0, 0),
             &current_planes,
@@ -19886,6 +19903,7 @@ mod tests {
         .unwrap();
         let second = cached_plane_replacement_reachability_step_with(
             &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutStepDetours,
             &p(0, 0, 0),
             &p(1, 0, 0),
             &permuted_current,
@@ -19900,6 +19918,45 @@ mod tests {
         assert_eq!(calls, 1);
         assert!(first);
         assert!(second);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_step_cache_distinguishes_modes() {
+        let current_planes = axis_plane_definition(&p(0, 0, 0));
+        let next_planes = axis_plane_definition(&p(1, 0, 0));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &current_planes,
+            &next_planes,
+            || {
+                calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &current_planes,
+            &next_planes,
+            || {
+                calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(!second);
+        assert_eq!(calls, 2);
     }
 
     #[test]
@@ -20047,6 +20104,7 @@ mod tests {
         let first = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             &start_definition,
             &end_definition,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
             &mut affine_cache,
             &mut step_cache,
             |_from, _to, _start_definitions, _end_definitions| {
@@ -20058,6 +20116,7 @@ mod tests {
         let second = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             &start_definition,
             &end_definition,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
             &mut affine_cache,
             &mut step_cache,
             |_from, _to, _start_definitions, _end_definitions| {
@@ -20086,6 +20145,7 @@ mod tests {
         let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             &start_definition,
             &end_definition,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
             &mut affine_cache,
             &mut step_cache,
             |from, to, start_definitions, end_definitions| {
