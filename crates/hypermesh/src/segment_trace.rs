@@ -12357,6 +12357,43 @@ mod tests {
     }
 
     #[test]
+    fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_replay() {
+        let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        leaf.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let ref_point = p(0, 0, 0);
+        let ref_definitions = [axis_plane_definition(&ref_point)];
+        let interior = build_strict_leaf_point(
+            &leaf,
+            &p(1, 1, 1),
+            &[
+                limit_plane_from_plane(&leaf.support),
+                axis_halfspace(0, false, r(1)),
+            ],
+            [Some(9), None, None],
+            false,
+        )
+        .unwrap()
+        .expect("direct leaf witness should still certify");
+
+        assert!(!interior.uncertified_definition_fallback);
+
+        let winding = classify_leaf_polygon_from_interior_points(
+            std::slice::from_ref(&interior),
+            &leaf.support,
+            &ref_point,
+            &ref_definitions,
+            &[0],
+            &[leaf.clone()],
+            &bounds,
+            &leaf.delta_w,
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
     fn positive_probe_traces_for_slanted_leaf_case() {
         let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         leaf.delta_w = vec![1];
