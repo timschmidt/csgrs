@@ -699,24 +699,36 @@ fn subdivide_into_inner_with(
         let mut candidate_buckets = ClassifiedPolygonBucketState::new();
         let attempt = (|| -> HypermeshResult<()> {
             if let Some(left_bounds) = left_bounds {
-                let (left_ref, left_ref_definitions, left_wnv) = cached_child_reference_with(
-                    &caches.child_reference,
-                    &task.ref_point,
-                    &task.ref_definitions,
-                    &task.ref_wnv,
-                    &task.polygons,
-                    &left_bounds,
-                    || {
-                        compute_new_reference_with_query_caches(
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &left_bounds,
-                            &task.polygons,
-                            &mut caches.support_reference_query.borrow_mut(),
-                        )
-                    },
-                )?;
+                let (left_ref, left_ref_definitions, left_wnv) = if let Some(reused) = {
+                    let mut query_caches = caches.support_reference_query.borrow_mut();
+                    reusable_child_reference_if_unchanged_and_certified(
+                        &task,
+                        &left_polys,
+                        &left_bounds,
+                        &mut query_caches,
+                    )?
+                } {
+                    reused
+                } else {
+                    cached_child_reference_with(
+                        &caches.child_reference,
+                        &task.ref_point,
+                        &task.ref_definitions,
+                        &task.ref_wnv,
+                        &task.polygons,
+                        &left_bounds,
+                        || {
+                            compute_new_reference_with_query_caches(
+                                &task.ref_point,
+                                &task.ref_definitions,
+                                &task.ref_wnv,
+                                &left_bounds,
+                                &task.polygons,
+                                &mut caches.support_reference_query.borrow_mut(),
+                            )
+                        },
+                    )?
+                };
                 let left_task = SubdivisionTask {
                     polygons: left_polys,
                     bounds: left_bounds,
@@ -748,24 +760,36 @@ fn subdivide_into_inner_with(
             }
 
             if let Some(right_bounds) = right_bounds {
-                let (right_ref, right_ref_definitions, right_wnv) = cached_child_reference_with(
-                    &caches.child_reference,
-                    &task.ref_point,
-                    &task.ref_definitions,
-                    &task.ref_wnv,
-                    &task.polygons,
-                    &right_bounds,
-                    || {
-                        compute_new_reference_with_query_caches(
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &right_bounds,
-                            &task.polygons,
-                            &mut caches.support_reference_query.borrow_mut(),
-                        )
-                    },
-                )?;
+                let (right_ref, right_ref_definitions, right_wnv) = if let Some(reused) = {
+                    let mut query_caches = caches.support_reference_query.borrow_mut();
+                    reusable_child_reference_if_unchanged_and_certified(
+                        &task,
+                        &right_polys,
+                        &right_bounds,
+                        &mut query_caches,
+                    )?
+                } {
+                    reused
+                } else {
+                    cached_child_reference_with(
+                        &caches.child_reference,
+                        &task.ref_point,
+                        &task.ref_definitions,
+                        &task.ref_wnv,
+                        &task.polygons,
+                        &right_bounds,
+                        || {
+                            compute_new_reference_with_query_caches(
+                                &task.ref_point,
+                                &task.ref_definitions,
+                                &task.ref_wnv,
+                                &right_bounds,
+                                &task.polygons,
+                                &mut caches.support_reference_query.borrow_mut(),
+                            )
+                        },
+                    )?
+                };
                 let right_task = SubdivisionTask {
                     polygons: right_polys,
                     bounds: right_bounds,
@@ -1031,6 +1055,39 @@ fn cached_child_reference_with(
         result: result.clone(),
     });
     result
+}
+
+fn reusable_child_reference_if_unchanged_and_certified(
+    task: &SubdivisionTask,
+    child_polygons: &[ConvexPolygon],
+    child_bounds: &Aabb,
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
+    if !polygon_families_match_as_multisets(child_polygons, &task.polygons) {
+        return Ok(None);
+    }
+
+    let context = support_reference_cache_context_key(
+        &task.ref_point,
+        &task.ref_definitions,
+        &task.ref_wnv,
+        &task.polygons,
+    );
+    match cached_reference_bounds_validity_with_context(
+        &mut query_caches.validity_cache,
+        Some(&context),
+        child_bounds,
+        &task.ref_point,
+        |point| is_certified_valid_reference_for_bounds(point, child_bounds, &task.polygons),
+    ) {
+        Ok(true) => Ok(Some((
+            task.ref_point.clone(),
+            task.ref_definitions.clone(),
+            task.ref_wnv.clone(),
+        ))),
+        Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
+        Err(err) => Err(err),
+    }
 }
 
 fn cached_child_subdivision_with(
@@ -11706,6 +11763,62 @@ mod tests {
         .unwrap();
 
         assert_eq!(calls.get(), 2);
+    }
+
+    #[test]
+    fn reusable_child_reference_if_unchanged_and_certified_reuses_parent_reference() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let task = SubdivisionTask::new(
+            vec![polygon.clone()],
+            Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            p(1, 1, 1),
+            vec![0],
+        );
+        let child_bounds = Aabb::new(p(0, 0, 0), p(2, 2, 2));
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_if_unchanged_and_certified(
+            &task,
+            std::slice::from_ref(&polygon),
+            &child_bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((
+                task.ref_point.clone(),
+                task.ref_definitions.clone(),
+                task.ref_wnv.clone(),
+            ))
+        );
+        assert_eq!(query_caches.validity_cache.len(), 1);
+    }
+
+    #[test]
+    fn reusable_child_reference_if_unchanged_and_certified_skips_changed_child_family() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let other = make_triangle(&p(0, 0, 1), &p(2, 0, 1), &p(0, 2, 1), 1, 0);
+        let task = SubdivisionTask::new(
+            vec![polygon],
+            Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            p(1, 1, 1),
+            vec![0],
+        );
+        let child_bounds = Aabb::new(p(0, 0, 0), p(2, 2, 2));
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_if_unchanged_and_certified(
+            &task,
+            std::slice::from_ref(&other),
+            &child_bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert!(query_caches.validity_cache.is_empty());
     }
 
     #[test]
