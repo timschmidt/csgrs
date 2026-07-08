@@ -4954,7 +4954,7 @@ struct ReferenceTargetTraceCacheEntry {
 
 #[derive(Clone)]
 struct ReferenceBoundsValidityCacheEntry {
-    context: Option<SupportReferenceCacheContextKey>,
+    context: Option<SupportReferencePolygonContextKey>,
     bounds: Aabb,
     point: Point3,
     is_valid: HypermeshResult<bool>,
@@ -4977,7 +4977,7 @@ struct ReferencePureHalfspaceContainmentCacheEntry {
 
 #[derive(Clone)]
 struct SupportSurfaceCacheEntry {
-    context: Option<SupportReferenceCacheContextKey>,
+    context: Option<SupportReferencePolygonContextKey>,
     point: Point3,
     on_support_surface: HypermeshResult<bool>,
 }
@@ -5258,7 +5258,7 @@ fn cached_reference_bounds_validity_with_context(
     query: impl FnOnce(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        support_reference_polygon_context_matches(existing.context.as_ref(), context)
+        support_reference_polygon_only_context_matches(existing.context.as_ref(), context)
             && existing.bounds == *bounds
             && existing.point == *point
     }) {
@@ -5267,7 +5267,7 @@ fn cached_reference_bounds_validity_with_context(
 
     let is_valid = query(point);
     cache.push(ReferenceBoundsValidityCacheEntry {
-        context: context.cloned(),
+        context: context.map(support_reference_polygon_context_key_from_support_context),
         bounds: bounds.clone(),
         point: point.clone(),
         is_valid: is_valid.clone(),
@@ -5329,7 +5329,7 @@ fn cached_support_surface_query_with_context(
     query: impl FnOnce(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        support_reference_polygon_context_matches(existing.context.as_ref(), context)
+        support_reference_polygon_only_context_matches(existing.context.as_ref(), context)
             && existing.point == *point
     }) {
         return existing.on_support_surface.clone();
@@ -5337,7 +5337,7 @@ fn cached_support_surface_query_with_context(
 
     let on_support_surface = query(point);
     cache.push(SupportSurfaceCacheEntry {
-        context: context.cloned(),
+        context: context.map(support_reference_polygon_context_key_from_support_context),
         point: point.clone(),
         on_support_surface: on_support_surface.clone(),
     });
@@ -5449,6 +5449,12 @@ struct SupportReferenceCacheContextKey {
     polygons: Vec<ConvexPolygon>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct SupportReferencePolygonContextKey {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+}
+
 fn support_reference_cache_context_key(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -5461,6 +5467,15 @@ fn support_reference_cache_context_key(
         old_wnv: old_wnv.to_vec(),
         polygon_profile: polygon_family_profile(polygons),
         polygons: polygons.to_vec(),
+    }
+}
+
+fn support_reference_polygon_context_key_from_support_context(
+    context: &SupportReferenceCacheContextKey,
+) -> SupportReferencePolygonContextKey {
+    SupportReferencePolygonContextKey {
+        polygon_profile: context.polygon_profile.clone(),
+        polygons: context.polygons.clone(),
     }
 }
 
@@ -5497,6 +5512,20 @@ fn support_reference_cache_context_matches_exact_state(
 
 fn support_reference_polygon_context_matches(
     existing: Option<&SupportReferenceCacheContextKey>,
+    context: Option<&SupportReferenceCacheContextKey>,
+) -> bool {
+    match (existing, context) {
+        (None, None) => true,
+        (Some(existing), Some(context)) => {
+            existing.polygon_profile == context.polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, &context.polygons)
+        }
+        _ => false,
+    }
+}
+
+fn support_reference_polygon_only_context_matches(
+    existing: Option<&SupportReferencePolygonContextKey>,
     context: Option<&SupportReferenceCacheContextKey>,
 ) -> bool {
     match (existing, context) {
@@ -16124,7 +16153,9 @@ mod tests {
         query_caches
             .validity_cache
             .push(ReferenceBoundsValidityCacheEntry {
-                context: Some(context.clone()),
+                context: Some(support_reference_polygon_context_key_from_support_context(
+                    &context,
+                )),
                 bounds: bounds.clone(),
                 point: point.clone(),
                 is_valid: Ok(true),
@@ -16132,7 +16163,9 @@ mod tests {
         query_caches
             .support_surface_cache
             .push(SupportSurfaceCacheEntry {
-                context: Some(context.clone()),
+                context: Some(support_reference_polygon_context_key_from_support_context(
+                    &context,
+                )),
                 point: point.clone(),
                 on_support_surface: Ok(false),
             });
