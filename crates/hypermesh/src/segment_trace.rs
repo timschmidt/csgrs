@@ -3287,6 +3287,23 @@ fn search_adjacent_axis_probe_winding_with_queries(
             if !axis_probe_definition_preserves_axis_direction(definition, axis)? {
                 continue;
             }
+            if let Some(winding) = try_strict_axis_seed_winding_with_queries(
+                point,
+                positive_side,
+                axis,
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                saw_unknown,
+                &corridor,
+                Some(definition),
+            )? {
+                return Ok(Some(winding));
+            }
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 point,
                 positive_side,
@@ -3311,6 +3328,23 @@ fn search_adjacent_axis_probe_winding_with_queries(
             }
         }
 
+        if let Some(winding) = try_strict_axis_seed_winding_with_queries(
+            point,
+            positive_side,
+            axis,
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+            &corridor,
+            None,
+        )? {
+            return Ok(Some(winding));
+        }
         if let Some(winding) = try_leaf_probe_family_with_queries(
             point,
             positive_side,
@@ -3325,6 +3359,155 @@ fn search_adjacent_axis_probe_winding_with_queries(
             saw_unknown,
         )? {
             return Ok(Some(winding));
+        }
+    }
+
+    Ok(None)
+}
+
+fn try_strict_axis_seed_winding_with_queries(
+    point: &InteriorLeafPoint,
+    positive_side: bool,
+    axis: usize,
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+    saw_unknown: &mut bool,
+    corridor: &Aabb,
+    definition: Option<&[Plane; 3]>,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    if let Some(definition) = definition {
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
+    }
+    halfspaces.push(support_side_halfspace(support, positive_side));
+
+    let (report, report_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    *saw_unknown |= report_unknown;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(None);
+    }
+
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        halfspace_cell_seed_families_from_optional_report(
+            corridor,
+            &halfspaces,
+            report.as_ref(),
+            saw_unknown,
+        )?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+
+    let mut certified_probe_points = Vec::new();
+    for witness in &seeds {
+        let probe = match build_axis_probe_point(
+            witness,
+            point,
+            corridor,
+            support,
+            axis,
+            definition,
+            &halfspaces,
+            active_planes_from_optional_report(report.as_ref(), witness),
+            false,
+        ) {
+            Ok(Some(probe)) => probe,
+            Ok(None) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !probe.uncertified_definition_fallback
+            && !certified_probe_points
+                .iter()
+                .any(|existing| *existing == probe.point)
+        {
+            certified_probe_points.push(probe.point.clone());
+        }
+        if let Some(winding) = try_leaf_probe_family_with_queries(
+            point,
+            positive_side,
+            Ok(vec![probe]),
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+        )? {
+            return Ok(Some(winding));
+        }
+    }
+
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        shifted_halfspace_seed_families_with_report_seed(
+            report_witness,
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+
+    let mut seen_shifted_roots = Vec::new();
+    for family in [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds] {
+        let fresh = take_new_halfspace_seed_family(family, &mut seen_shifted_roots);
+        for seed in fresh {
+            let shifted_witnesses =
+                match shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, &seed) {
+                    Ok(witnesses) => witnesses,
+                    Err(HypermeshError::UnknownClassification) => {
+                        *saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
+            for shifted in &shifted_witnesses {
+                let duplicate_certified_direct_probe = certified_probe_points
+                    .iter()
+                    .any(|point| *point == shifted.point);
+                let probe = match build_axis_probe_point_from_shifted_witness(
+                    shifted, point, corridor, support, axis, definition,
+                ) {
+                    Ok(Some(probe)) => probe,
+                    Ok(None) => continue,
+                    Err(HypermeshError::UnknownClassification) => {
+                        *saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
+                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
+                    *saw_unknown = true;
+                    continue;
+                }
+                if let Some(winding) = try_leaf_probe_family_with_queries(
+                    point,
+                    positive_side,
+                    Ok(vec![probe]),
+                    support,
+                    ref_point,
+                    ref_definitions,
+                    ref_wnv,
+                    polygons,
+                    host_delta_w,
+                    probe_query_caches,
+                    saw_unknown,
+                )? {
+                    return Ok(Some(winding));
+                }
+            }
         }
     }
 
