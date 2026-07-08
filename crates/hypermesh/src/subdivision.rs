@@ -109,7 +109,7 @@ pub struct LeafProcessingStats {
     pub certified_complete: bool,
 }
 
-type PolygonFamilyProfile = Vec<(isize, isize, usize, usize)>;
+type PolygonFamilyProfile = Vec<(isize, isize, usize, Vec<i32>)>;
 
 #[derive(Clone, Debug, PartialEq)]
 struct LeafClassificationCacheEntry {
@@ -132,8 +132,10 @@ struct LeafClassificationCacheContextKey {
 
 #[derive(Clone, Debug, PartialEq)]
 struct SubdivisionChildPartition {
+    left_polygon_profile: PolygonFamilyProfile,
     left_polygons: Vec<ConvexPolygon>,
     left_bounds: Option<Aabb>,
+    right_polygon_profile: PolygonFamilyProfile,
     right_polygons: Vec<ConvexPolygon>,
     right_bounds: Option<Aabb>,
 }
@@ -966,25 +968,31 @@ fn take_new_subdivision_child_partition(
     right_polygons: &[ConvexPolygon],
     right_bounds: Option<&Aabb>,
 ) -> bool {
+    let left_polygon_profile = polygon_family_profile(left_polygons);
+    let right_polygon_profile = polygon_family_profile(right_polygons);
     for existing in seen.iter() {
-        let direct_match =
-            polygon_families_match_as_multisets(&existing.left_polygons, left_polygons)
-                && existing.left_bounds.as_ref() == left_bounds
-                && polygon_families_match_as_multisets(&existing.right_polygons, right_polygons)
-                && existing.right_bounds.as_ref() == right_bounds;
-        let swapped_match =
-            polygon_families_match_as_multisets(&existing.left_polygons, right_polygons)
-                && existing.left_bounds.as_ref() == right_bounds
-                && polygon_families_match_as_multisets(&existing.right_polygons, left_polygons)
-                && existing.right_bounds.as_ref() == left_bounds;
+        let direct_match = existing.left_polygon_profile == left_polygon_profile
+            && existing.left_bounds.as_ref() == left_bounds
+            && existing.right_polygon_profile == right_polygon_profile
+            && existing.right_bounds.as_ref() == right_bounds
+            && polygon_families_match_as_multisets(&existing.left_polygons, left_polygons)
+            && polygon_families_match_as_multisets(&existing.right_polygons, right_polygons);
+        let swapped_match = existing.left_polygon_profile == right_polygon_profile
+            && existing.left_bounds.as_ref() == right_bounds
+            && existing.right_polygon_profile == left_polygon_profile
+            && existing.right_bounds.as_ref() == left_bounds
+            && polygon_families_match_as_multisets(&existing.left_polygons, right_polygons)
+            && polygon_families_match_as_multisets(&existing.right_polygons, left_polygons);
         if direct_match || swapped_match {
             return false;
         }
     }
 
     seen.push(SubdivisionChildPartition {
+        left_polygon_profile,
         left_polygons: left_polygons.to_vec(),
         left_bounds: left_bounds.cloned(),
+        right_polygon_profile,
         right_polygons: right_polygons.to_vec(),
         right_bounds: right_bounds.cloned(),
     });
@@ -1143,7 +1151,7 @@ fn polygon_family_profile(polygons: &[ConvexPolygon]) -> PolygonFamilyProfile {
                 polygon.mesh_index,
                 polygon.polygon_index,
                 polygon.edges.len(),
-                polygon.delta_w.len(),
+                polygon.delta_w.clone(),
             )
         })
         .collect::<Vec<_>>();
