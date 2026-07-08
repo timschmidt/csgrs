@@ -2218,23 +2218,10 @@ fn compute_new_reference_with_query_caches(
     let projection_escape_search_cache = std::cell::RefCell::new(Vec::new());
     let projected_root = {
         let mut query_caches = query_caches.borrow_mut();
-        let query_caches = &mut **query_caches;
-        let SupportReferenceQueryCaches {
-            seed_geometry_cache,
-            shifted_projected_family_cache,
-            reference_witness_cache,
-            strict_contains_cache,
-            pure_halfspace_contains_cache,
-            ..
-        } = query_caches;
-        projected_root_reference_families_with_witness_cache(
+        cached_projected_root_reference_families_with(
             bounds,
             &projected_halfspaces,
-            seed_geometry_cache,
-            shifted_projected_family_cache,
-            reference_witness_cache,
-            strict_contains_cache,
-            pure_halfspace_contains_cache,
+            &mut query_caches,
         )?
     };
     {
@@ -2371,11 +2358,19 @@ fn compute_new_reference_with_query_caches(
     reference_result_or_error(projected, support, projected_unknown)
 }
 
+#[derive(Clone)]
 struct ProjectedRootReferenceFamilies {
     report: Option<hyperlimit::HalfspaceFeasibilityReport>,
     projected_targets: Vec<ReferenceTarget>,
     projected_escape_targets: Vec<ReferenceTarget>,
     saw_unknown: bool,
+}
+
+#[derive(Clone)]
+struct ProjectedRootReferenceFamilyCacheEntry {
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
+    result: HypermeshResult<ProjectedRootReferenceFamilies>,
 }
 
 #[cfg(test)]
@@ -2483,6 +2478,54 @@ fn projected_root_reference_families_with_witness_cache(
         projected_escape_targets,
         saw_unknown,
     })
+}
+
+fn cached_projected_root_reference_families_with(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<ProjectedRootReferenceFamilies> {
+    if let Some(existing) = query_caches.projected_root_cache.iter().find(|existing| {
+        existing.bounds == *bounds && same_limit_halfspace_state(&existing.halfspaces, halfspaces)
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = projected_root_reference_families_with_witness_cache(
+        bounds,
+        halfspaces,
+        &mut query_caches.seed_geometry_cache,
+        &mut query_caches.shifted_projected_family_cache,
+        &query_caches.reference_witness_cache,
+        &query_caches.strict_contains_cache,
+        &query_caches.pure_halfspace_contains_cache,
+    );
+    query_caches
+        .projected_root_cache
+        .push(ProjectedRootReferenceFamilyCacheEntry {
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.to_vec(),
+            result: result.clone(),
+        });
+    result
+}
+
+fn same_limit_halfspace_state(left: &[LimitPlane3], right: &[LimitPlane3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut right_used = vec![false; right.len()];
+    for left_halfspace in left {
+        let Some((matched_index, _)) = right.iter().enumerate().find(|(index, right_halfspace)| {
+            !right_used[*index] && *right_halfspace == left_halfspace
+        }) else {
+            return false;
+        };
+        right_used[matched_index] = true;
+    }
+
+    true
 }
 
 #[cfg(test)]
@@ -3885,6 +3928,7 @@ struct SupportReferenceQueryCaches {
     report_cache: Vec<HalfspaceReportCacheEntry>,
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     seed_geometry_cache: Vec<SupportCellSeedGeometryCacheEntry>,
+    projected_root_cache: Vec<ProjectedRootReferenceFamilyCacheEntry>,
     shifted_projected_family_cache: Vec<ShiftedProjectedCellFamilyCacheEntry>,
     shifted_support_family_cache: Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
@@ -11934,6 +11978,31 @@ mod tests {
         assert!(feasible);
         assert_eq!(report_calls, 0);
         assert_eq!(feasible_calls, 0);
+    }
+
+    #[test]
+    fn cached_projected_root_reference_families_reuse_permuted_halfspace_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let old_ref = p(-1, 2, 2);
+        let halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(2);
+        let mut caches = SupportReferenceQueryCaches::default();
+
+        let first =
+            cached_projected_root_reference_families_with(&bounds, &halfspaces, &mut caches)
+                .unwrap();
+        let second =
+            cached_projected_root_reference_families_with(&bounds, &permuted, &mut caches).unwrap();
+
+        assert_eq!(first.report, second.report);
+        assert_eq!(first.projected_targets, second.projected_targets);
+        assert_eq!(
+            first.projected_escape_targets,
+            second.projected_escape_targets
+        );
+        assert_eq!(first.saw_unknown, second.saw_unknown);
+        assert_eq!(caches.projected_root_cache.len(), 1);
     }
 
     #[test]

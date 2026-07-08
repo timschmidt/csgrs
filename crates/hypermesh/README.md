@@ -783,6 +783,11 @@ now shares that same witness-target memo across the later support fallback
 phase too, so one `compute_new_reference(...)` update does not rebuild the same
 retained-definition target separately in projected root search and then again
 when support fallback revisits the same witness state.
+The same projected/reference cache set now also memoizes the full projected
+root family assembly by `(bounds, projected halfspace state)`, so repeated
+child reference calls do not rebuild the same projected feasibility report,
+strict target family, and projected escape family before trace-time search
+starts.
 The same per-update projected/support query cache now also memoizes exact
 strict point-vs-reference-halfspace-cell containment checks by
 `(bounds, point, halfspaces)`, so repeated projected/support target families do
