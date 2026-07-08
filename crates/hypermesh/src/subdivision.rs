@@ -109,10 +109,20 @@ pub struct LeafProcessingStats {
 
 #[derive(Clone, Debug, PartialEq)]
 struct LeafClassificationCacheEntry {
+    context: Option<LeafClassificationCacheContextKey>,
     support: Plane,
     edges: Vec<Plane>,
     delta_w: Vec<i32>,
     winding: HypermeshResult<WindingNumberVector>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct LeafClassificationCacheContextKey {
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    ref_point: Point3,
+    ref_definitions: Vec<[Plane; 3]>,
+    ref_wnv: Vec<i32>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -203,6 +213,7 @@ struct SubdivisionRuntimeCaches {
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     host_bsp_leaves: RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_certification: RefCell<Vec<BspLeafCertificationCacheEntry>>,
+    leaf_classification: RefCell<Vec<LeafClassificationCacheEntry>>,
     support_reference_query: RefCell<SupportReferenceQueryCaches>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
@@ -218,6 +229,7 @@ impl Default for SubdivisionRuntimeCaches {
             pairwise_intersections: RefCell::new(Vec::new()),
             host_bsp_leaves: RefCell::new(Vec::new()),
             bsp_leaf_certification: RefCell::new(Vec::new()),
+            leaf_classification: RefCell::new(Vec::new()),
             support_reference_query: RefCell::new(SupportReferenceQueryCaches::default()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
@@ -280,6 +292,7 @@ fn process_leaf_into_inner(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<LeafProcessingStats> {
+    let leaf_classification_cache = RefCell::new(Vec::new());
     process_leaf_into_inner_with_pairwise_cache(
         polygons,
         bounds,
@@ -288,6 +301,7 @@ fn process_leaf_into_inner(
         ref_wnv,
         indicator,
         output,
+        &leaf_classification_cache,
         pairwise_intersections_by_polygon,
         build_host_bsp_leaves,
         certify_bsp_leaf_and_delta_w,
@@ -302,6 +316,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
     ref_wnv: &[i32],
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
+    leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
     bsp_leaves_query: impl Fn(
         &ConvexPolygon,
@@ -321,11 +336,17 @@ fn process_leaf_into_inner_with_pairwise_cache(
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
     };
-    let mut leaf_winding_cache = Vec::new();
     if polygons.is_empty() {
         stats.certified_complete = true;
         return Ok(stats);
     }
+    let leaf_cache_context = LeafClassificationCacheContextKey {
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        ref_point: ref_point.clone(),
+        ref_definitions: ref_definitions.to_vec(),
+        ref_wnv: ref_wnv.to_vec(),
+    };
 
     let intersections = pairwise_query(polygons)?;
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
@@ -340,7 +361,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 ref_wnv,
                 polygons,
                 indicator,
-                &mut leaf_winding_cache,
+                leaf_classification_cache,
+                Some(&leaf_cache_context),
                 output,
             )?;
             stats.direct_polygon_count += usize::from(emitted);
@@ -359,7 +381,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 certify_bsp_leaf(polygon, &leaf.edges, polygons)?;
             stats.bsp_leaf_count += 1;
             let w_front = cached_leaf_classification_with(
-                &mut leaf_winding_cache,
+                &mut leaf_classification_cache.borrow_mut(),
+                Some(&leaf_cache_context),
                 &polygon.support,
                 &leaf.edges,
                 &effective_delta_w,
@@ -406,6 +429,7 @@ pub fn subdivide(
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
+    let leaf_classification_cache = &caches.leaf_classification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
@@ -416,6 +440,7 @@ pub fn subdivide(
             pairwise_cache,
             host_bsp_cache,
             bsp_leaf_cache,
+            leaf_classification_cache,
         )
     };
     subdivide_into_inner_with(
@@ -441,6 +466,7 @@ pub(crate) fn subdivide_for_operation(
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
+    let leaf_classification_cache = &caches.leaf_classification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
@@ -451,6 +477,7 @@ pub(crate) fn subdivide_for_operation(
             pairwise_cache,
             host_bsp_cache,
             bsp_leaf_cache,
+            leaf_classification_cache,
         )
     };
     subdivide_into_inner_with(
@@ -481,6 +508,7 @@ pub fn subdivide_into(
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
+    let leaf_classification_cache = &caches.leaf_classification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
@@ -491,6 +519,7 @@ pub fn subdivide_into(
             pairwise_cache,
             host_bsp_cache,
             bsp_leaf_cache,
+            leaf_classification_cache,
         )
     };
     subdivide_into_inner_with(
@@ -968,6 +997,26 @@ fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPo
     true
 }
 
+fn leaf_classification_cache_context_matches(
+    left: Option<&LeafClassificationCacheContextKey>,
+    right: Option<&LeafClassificationCacheContextKey>,
+) -> bool {
+    match (left, right) {
+        (None, None) => true,
+        (Some(left), Some(right)) => {
+            polygon_families_match_as_multisets(&left.polygons, &right.polygons)
+                && left.bounds == right.bounds
+                && left.ref_point == right.ref_point
+                && reference_definition_families_match_as_sets(
+                    &left.ref_definitions,
+                    &right.ref_definitions,
+                )
+                && left.ref_wnv == right.ref_wnv
+        }
+        _ => false,
+    }
+}
+
 fn process_leaf_task_into_with_caches(
     task: &SubdivisionTask,
     indicator: &Indicator,
@@ -975,6 +1024,7 @@ fn process_leaf_task_into_with_caches(
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     host_bsp_cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
+    leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let pairwise_query = |polygons: &[ConvexPolygon]| {
         cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)
@@ -997,6 +1047,7 @@ fn process_leaf_task_into_with_caches(
         &task.ref_wnv,
         indicator,
         output,
+        leaf_classification_cache,
         pairwise_query,
         bsp_leaves_query,
         bsp_leaf_query,
@@ -1072,11 +1123,13 @@ fn emit_one_direct(
     ref_wnv: &[i32],
     class_polygons: &[ConvexPolygon],
     indicator: &Indicator,
-    cache: &mut Vec<LeafClassificationCacheEntry>,
+    cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
+    context: Option<&LeafClassificationCacheContextKey>,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<bool> {
     let w_front = cached_leaf_classification_with(
-        cache,
+        &mut cache.borrow_mut(),
+        context,
         &polygon.support,
         &polygon.edges,
         &polygon.delta_w,
@@ -1106,13 +1159,15 @@ fn emit_one_direct(
 
 fn cached_leaf_classification_with(
     cache: &mut Vec<LeafClassificationCacheEntry>,
+    context: Option<&LeafClassificationCacheContextKey>,
     support: &Plane,
     edges: &[Plane],
     delta_w: &[i32],
     classify: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
 ) -> HypermeshResult<WindingNumberVector> {
     if let Some(existing) = cache.iter().find(|existing| {
-        existing.support == *support
+        leaf_classification_cache_context_matches(existing.context.as_ref(), context)
+            && existing.support == *support
             && existing.delta_w == delta_w
             && edge_cycles_match_up_to_rotation(&existing.edges, edges)
     }) {
@@ -1121,6 +1176,7 @@ fn cached_leaf_classification_with(
 
     let winding = classify();
     cache.push(LeafClassificationCacheEntry {
+        context: context.cloned(),
         support: support.clone(),
         edges: edges.to_vec(),
         delta_w: delta_w.to_vec(),
@@ -7972,6 +8028,7 @@ mod tests {
 
         let first = cached_leaf_classification_with(
             &mut cache,
+            None,
             &polygon.support,
             &polygon.edges,
             &polygon.delta_w,
@@ -7983,6 +8040,7 @@ mod tests {
         .unwrap();
         let second = cached_leaf_classification_with(
             &mut cache,
+            None,
             &polygon.support,
             &rotated_edges,
             &polygon.delta_w,
@@ -7996,6 +8054,56 @@ mod tests {
         assert_eq!(calls, 1);
         assert_eq!(first, vec![7]);
         assert_eq!(second, vec![7]);
+    }
+
+    #[test]
+    fn cached_leaf_classification_distinguishes_leaf_context() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let left_context = LeafClassificationCacheContextKey {
+            polygons: vec![polygon.clone()],
+            bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+            ref_point: p(0, 0, -1),
+            ref_definitions: vec![axis_plane_definition(&p(0, 0, -1))],
+            ref_wnv: vec![0],
+        };
+        let right_context = LeafClassificationCacheContextKey {
+            polygons: vec![polygon.clone()],
+            bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+            ref_point: p(0, 0, 1),
+            ref_definitions: vec![axis_plane_definition(&p(0, 0, 1))],
+            ref_wnv: vec![0],
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_leaf_classification_with(
+            &mut cache,
+            Some(&left_context),
+            &polygon.support,
+            &polygon.edges,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(vec![7])
+            },
+        )
+        .unwrap();
+        let second = cached_leaf_classification_with(
+            &mut cache,
+            Some(&right_context),
+            &polygon.support,
+            &polygon.edges,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(vec![9])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 2);
+        assert_eq!(first, vec![7]);
+        assert_eq!(second, vec![9]);
     }
 
     #[test]
