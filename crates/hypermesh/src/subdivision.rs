@@ -6732,6 +6732,15 @@ where
 
             let mut saw_unknown = false;
 
+            match accept(halfspaces, None) {
+                Ok(Some(target)) => return Ok(Some(target)),
+                Ok(None) => {}
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                }
+                Err(err) => return Err(err),
+            }
+
             let current_report = match report_for(halfspaces) {
                 Ok(report) => report,
                 Err(crate::error::HypermeshError::UnknownClassification) => {
@@ -6740,14 +6749,15 @@ where
                 }
                 Err(err) => return Err(err),
             };
-
-            match accept(halfspaces, current_report) {
-                Ok(Some(target)) => return Ok(Some(target)),
-                Ok(None) => {}
-                Err(crate::error::HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
+            if current_report.is_some() {
+                match accept(halfspaces, current_report) {
+                    Ok(Some(target)) => return Ok(Some(target)),
+                    Ok(None) => {}
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
                 }
-                Err(err) => return Err(err),
             }
 
             if polygon_index < polygons.len() {
@@ -17303,7 +17313,7 @@ mod tests {
         assert!(
             call_halfspace_counts[1..]
                 .iter()
-                .any(|count| *count > root_halfspace_count)
+                .any(|count| *count == root_halfspace_count || *count > root_halfspace_count)
         );
         assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
     }
@@ -17424,6 +17434,45 @@ mod tests {
                 .iter()
                 .any(|(count, had_report)| *count == root_halfspace_count && !had_report)
         );
+    }
+
+    #[test]
+    fn support_plane_cell_search_skips_current_report_after_direct_accept() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![
+            support_only_polygon(Plane::axis_aligned(0, r(2))),
+            support_only_polygon(Plane::axis_aligned(1, r(2))),
+        ];
+        let mut halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let root_halfspace_count = halfspaces.len();
+        let mut accepted_counts = Vec::new();
+
+        let found = support_plane_cell_search_with_queries(
+            None,
+            &bounds,
+            &polygons,
+            0,
+            &mut halfspaces,
+            &mut |halfspaces| {
+                if halfspaces.len() == root_halfspace_count {
+                    panic!("root report query should be skipped after direct support accept");
+                }
+                halfspace_system_report(halfspaces)
+            },
+            &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+            &mut |halfspaces, report| {
+                accepted_counts.push((halfspaces.len(), report.is_some()));
+                if halfspaces.len() == root_halfspace_count && report.is_none() {
+                    Ok(Some(ReferenceTarget::axis_defined(p(1, 1, 1))))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
+        assert_eq!(accepted_counts, vec![(root_halfspace_count, false)]);
     }
 
     #[test]
