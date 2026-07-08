@@ -788,6 +788,12 @@ strict point-vs-reference-halfspace-cell containment checks by
 `(bounds, point, halfspaces)`, so repeated projected/support target families do
 not repay the same boundary-aware strict-cell membership predicate each time
 they revisit the same local witness or seed state.
+Those geometry-only support/reference caches now also stay alive across
+recursive child `compute_new_reference(...)` calls in subdivision, while the
+old-ref/polygon-specific trace, validity, accept, and recursive support-search
+layers are reset per call, so sibling child-reference propagation reuses the
+same exact report/seed/witness/containment work instead of rebuilding it from
+scratch on each new child bound.
 Projected direct target tracing now
 shares those same bounds-aware validity and trace caches too, so one reference
 update does not repay the same exact validity or retained-definition check when

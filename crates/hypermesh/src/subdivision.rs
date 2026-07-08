@@ -177,6 +177,7 @@ struct SubdivisionRuntimeCaches {
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    support_reference_query: RefCell<SupportReferenceQueryCaches>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
 }
@@ -188,6 +189,7 @@ impl Default for SubdivisionRuntimeCaches {
             split_candidates: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
             pairwise_intersections: RefCell::new(Vec::new()),
+            support_reference_query: RefCell::new(SupportReferenceQueryCaches::default()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
         }
@@ -569,12 +571,13 @@ fn subdivide_into_inner_with(
                     &task.polygons,
                     &left_bounds,
                     || {
-                        compute_new_reference(
+                        compute_new_reference_with_query_caches(
                             &task.ref_point,
                             &task.ref_definitions,
                             &task.ref_wnv,
                             &left_bounds,
                             &task.polygons,
+                            &mut caches.support_reference_query.borrow_mut(),
                         )
                     },
                 )?;
@@ -612,12 +615,13 @@ fn subdivide_into_inner_with(
                     &task.polygons,
                     &right_bounds,
                     || {
-                        compute_new_reference(
+                        compute_new_reference_with_query_caches(
                             &task.ref_point,
                             &task.ref_definitions,
                             &task.ref_wnv,
                             &right_bounds,
                             &task.polygons,
+                            &mut caches.support_reference_query.borrow_mut(),
                         )
                     },
                 )?;
@@ -1960,6 +1964,7 @@ fn split_child_intersection_load(
     Ok(left + right)
 }
 
+#[cfg(test)]
 fn compute_new_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -1967,6 +1972,28 @@ fn compute_new_reference(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    let mut query_caches = SupportReferenceQueryCaches::default();
+    compute_new_reference_with_query_caches(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        bounds,
+        polygons,
+        &mut query_caches,
+    )
+}
+
+fn compute_new_reference_with_query_caches(
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    query_caches.reset_per_reference_call_caches();
+    let query_caches = std::cell::RefCell::new(query_caches);
+
     let old_ref_unknown = match is_certified_valid_reference_for_bounds(old_ref, bounds, polygons) {
         Ok(true) => {
             return Ok((
@@ -1983,25 +2010,29 @@ fn compute_new_reference(
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
     let projection_escape_axis_options_cache = std::cell::RefCell::new(Vec::new());
     let projection_escape_search_cache = std::cell::RefCell::new(Vec::new());
-    let support_query_caches = std::cell::RefCell::new(SupportReferenceQueryCaches::default());
     let projected_root = {
-        let mut query_caches = support_query_caches.borrow_mut();
+        let mut query_caches = query_caches.borrow_mut();
+        let query_caches = &mut **query_caches;
         let SupportReferenceQueryCaches {
             seed_geometry_cache,
+            shifted_projected_family_cache,
             reference_witness_cache,
             strict_contains_cache,
+            pure_halfspace_contains_cache,
             ..
-        } = &mut *query_caches;
+        } = query_caches;
         projected_root_reference_families_with_witness_cache(
             bounds,
             &projected_halfspaces,
             seed_geometry_cache,
+            shifted_projected_family_cache,
             reference_witness_cache,
             strict_contains_cache,
+            pure_halfspace_contains_cache,
         )?
     };
     {
-        let mut query_caches = support_query_caches.borrow_mut();
+        let mut query_caches = query_caches.borrow_mut();
         prime_support_reference_query_caches_with_known_halfspace_report(
             &mut query_caches,
             &projected_halfspaces,
@@ -2023,16 +2054,17 @@ fn compute_new_reference(
                     bounds,
                     polygons,
                     projected_halfspaces.clone(),
-                    &mut support_query_caches.borrow_mut(),
+                    &mut query_caches.borrow_mut(),
                 )
             },
             |projected_target| {
-                let mut query_caches = support_query_caches.borrow_mut();
+                let mut query_caches = query_caches.borrow_mut();
+                let query_caches = &mut **query_caches;
                 let SupportReferenceQueryCaches {
                     validity_cache,
                     trace_cache,
                     ..
-                } = &mut *query_caches;
+                } = query_caches;
                 trace_projected_reference_target_with_queries(
                     validity_cache,
                     trace_cache,
@@ -2077,7 +2109,7 @@ fn compute_new_reference(
                                     old_wnv,
                                     corridor,
                                     polygons,
-                                    &mut support_query_caches.borrow_mut(),
+                                    &mut query_caches.borrow_mut(),
                                 )
                             },
                         )
@@ -2111,7 +2143,7 @@ fn compute_new_reference(
                                     old_wnv,
                                     escape_bounds,
                                     polygons,
-                                    &mut support_query_caches.borrow_mut(),
+                                    &mut query_caches.borrow_mut(),
                                 )
                             },
                         )
@@ -2127,7 +2159,7 @@ fn compute_new_reference(
         old_wnv,
         bounds,
         polygons,
-        &mut support_query_caches.borrow_mut(),
+        &mut query_caches.borrow_mut(),
     )?;
 
     reference_result_or_error(projected, support, projected_unknown)
@@ -2148,12 +2180,16 @@ fn projected_root_reference_families(
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
+    let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
+    let mut shifted_projected_family_cache = Vec::new();
     projected_root_reference_families_with_witness_cache(
         bounds,
         halfspaces,
         seed_geometry_cache,
+        &mut shifted_projected_family_cache,
         &reference_witness_cache,
         &strict_contains_cache,
+        &pure_halfspace_contains_cache,
     )
 }
 
@@ -2161,8 +2197,12 @@ fn projected_root_reference_families_with_witness_cache(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    shifted_projected_family_cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
+    pure_halfspace_contains_cache: &std::cell::RefCell<
+        Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    >,
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
     let (report, saw_report_unknown) = optional_halfspace_system_report(halfspaces)?;
     if report
@@ -2186,8 +2226,6 @@ fn projected_root_reference_families_with_witness_cache(
             &mut saw_unknown,
             seed_geometry_cache,
         )?;
-    let shifted_projected_cell_cache = std::cell::RefCell::new(Vec::new());
-    let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
     let projected_targets =
         strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
             bounds,
@@ -2204,7 +2242,7 @@ fn projected_root_reference_families_with_witness_cache(
                     bounds,
                     halfspaces,
                     seed,
-                    &mut shifted_projected_cell_cache.borrow_mut(),
+                    shifted_projected_family_cache,
                     reference_witness_cache,
                     strict_contains_cache,
                 )
@@ -2226,9 +2264,9 @@ fn projected_root_reference_families_with_witness_cache(
                     bounds,
                     halfspaces,
                     seed,
-                    &mut shifted_projected_cell_cache.borrow_mut(),
+                    shifted_projected_family_cache,
                     reference_witness_cache,
-                    &pure_halfspace_contains_cache,
+                    pure_halfspace_contains_cache,
                 )
             },
         )?;
@@ -3641,9 +3679,12 @@ struct SupportReferenceQueryCaches {
     report_cache: Vec<HalfspaceReportCacheEntry>,
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     seed_geometry_cache: Vec<SupportCellSeedGeometryCacheEntry>,
+    shifted_projected_family_cache: Vec<ShiftedProjectedCellFamilyCacheEntry>,
     shifted_support_family_cache: Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
+    pure_halfspace_contains_cache:
+        std::cell::RefCell<Vec<ReferencePureHalfspaceContainmentCacheEntry>>,
     trace_cache: Vec<ReferenceTargetTraceCacheEntry>,
     validity_cache: Vec<ReferenceBoundsValidityCacheEntry>,
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
@@ -3651,6 +3692,16 @@ struct SupportReferenceQueryCaches {
     accept_cache: std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
     search_cache:
         std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
+}
+
+impl SupportReferenceQueryCaches {
+    fn reset_per_reference_call_caches(&mut self) {
+        self.trace_cache.clear();
+        self.validity_cache.clear();
+        self.support_surface_cache.clear();
+        self.accept_cache.get_mut().clear();
+        self.search_cache.get_mut().clear();
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -11684,6 +11735,90 @@ mod tests {
         );
         assert_eq!(report_calls, 0);
         assert_eq!(feasible_calls, 0);
+    }
+
+    #[test]
+    fn support_reference_query_caches_reset_preserves_geometry_caches() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let point = p(1, 1, 1);
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        query_caches.report_cache.push(HalfspaceReportCacheEntry {
+            halfspaces: halfspaces.clone(),
+            report: Ok(Some(hyperlimit::HalfspaceFeasibilityReport::feasible(
+                point.clone(),
+                [None, None, None],
+            ))),
+        });
+        query_caches
+            .seed_geometry_cache
+            .push(SupportCellSeedGeometryCacheEntry {
+                halfspaces: halfspaces.clone(),
+                geometry: Ok(SupportCellSeedGeometryState {
+                    shifted_vertices: vec![point.clone()],
+                    shifted_geometry_seeds: Vec::new(),
+                    saw_unknown: false,
+                }),
+            });
+        query_caches
+            .reference_witness_cache
+            .get_mut()
+            .push(ReferenceWitnessTargetCacheEntry {
+                point: point.clone(),
+                halfspaces: halfspaces.clone(),
+                active_planes: [None, None, None],
+                target: Ok(Some(ReferenceTarget::axis_defined(point.clone()))),
+            });
+        query_caches
+            .trace_cache
+            .push(ReferenceTargetTraceCacheEntry {
+                target: ReferenceTarget::axis_defined(point.clone()),
+                winding: Ok(Some(vec![0])),
+            });
+        query_caches
+            .validity_cache
+            .push(ReferenceBoundsValidityCacheEntry {
+                bounds: bounds.clone(),
+                point: point.clone(),
+                is_valid: Ok(true),
+            });
+        query_caches
+            .support_surface_cache
+            .push(SupportSurfaceCacheEntry {
+                point: point.clone(),
+                on_support_surface: Ok(false),
+            });
+        query_caches
+            .accept_cache
+            .get_mut()
+            .push(SupportReferenceAcceptCacheEntry {
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.clone(),
+                report: None,
+                accepted: Ok(None),
+            });
+        query_caches
+            .search_cache
+            .get_mut()
+            .push(SupportPlaneCellSearchCacheEntry {
+                preferred_order: [false, true],
+                bounds: bounds.clone(),
+                polygon_index: 0,
+                halfspaces: halfspaces.clone(),
+                result: Ok(None::<(ReferenceTarget, Vec<i32>)>),
+            });
+
+        query_caches.reset_per_reference_call_caches();
+
+        assert_eq!(query_caches.report_cache.len(), 1);
+        assert_eq!(query_caches.seed_geometry_cache.len(), 1);
+        assert_eq!(query_caches.reference_witness_cache.get_mut().len(), 1);
+        assert!(query_caches.trace_cache.is_empty());
+        assert!(query_caches.validity_cache.is_empty());
+        assert!(query_caches.support_surface_cache.is_empty());
+        assert!(query_caches.accept_cache.get_mut().is_empty());
+        assert!(query_caches.search_cache.get_mut().is_empty());
     }
 
     #[test]
