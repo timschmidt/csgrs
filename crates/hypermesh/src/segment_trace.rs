@@ -2569,6 +2569,23 @@ fn search_adjacent_normal_probe_winding_with_queries(
             )? {
                 return Ok(Some(winding));
             }
+            if let Some(winding) = try_strict_normal_seed_winding_with_queries(
+                point,
+                positive_side,
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                saw_unknown,
+                &corridor,
+                Some(definition),
+                &stop_point,
+            )? {
+                return Ok(Some(winding));
+            }
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 point,
                 positive_side,
@@ -2639,6 +2656,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
             probe_query_caches,
             saw_unknown,
             &corridor,
+            None,
             &stop_point,
         )? {
             return Ok(Some(winding));
@@ -2745,9 +2763,14 @@ fn try_strict_normal_seed_winding_with_queries(
     probe_query_caches: &mut LeafProbeQueryCaches,
     saw_unknown: &mut bool,
     corridor: &Aabb,
+    definition: Option<&[Plane; 3]>,
     stop_point: &Point3,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    if let Some(definition) = definition {
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
+    }
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
@@ -2765,6 +2788,7 @@ fn try_strict_normal_seed_winding_with_queries(
     let shifted_vertices = shifted_vertex_family.seeds;
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let mut shifted_geometry_seeds = Vec::new();
+    let extra_planes = normal_probe_extra_planes(point, definition);
 
     let mut strict_seeds = Vec::new();
     *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
@@ -2804,7 +2828,7 @@ fn try_strict_normal_seed_winding_with_queries(
             support,
             &halfspaces,
             active_planes_from_optional_report(report.as_ref(), witness),
-            &[],
+            &extra_planes,
             false,
         ) {
             Ok(Some(probe)) => probe,
@@ -2839,7 +2863,7 @@ fn try_strict_normal_seed_winding_with_queries(
         }
     }
 
-    if certified_probe_points.is_empty() {
+    if definition.is_some() || certified_probe_points.is_empty() {
         let shifted_geometry_seed_family =
             halfspace_centroid_subset_seed_family_from_vertices(&shifted_vertices)?;
         *saw_unknown |= shifted_geometry_seed_family.saw_unknown;
@@ -2869,7 +2893,7 @@ fn try_strict_normal_seed_winding_with_queries(
                 support,
                 &halfspaces,
                 active_planes_from_optional_report(report.as_ref(), witness),
-                &[],
+                &extra_planes,
                 false,
             ) {
                 Ok(Some(probe)) => probe,
@@ -2922,7 +2946,7 @@ fn try_strict_normal_seed_winding_with_queries(
     }
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         normal_probe_shifted_seed_families(
-            None,
+            definition,
             report_witness,
             &certified_probe_points,
             strict_seeds,
@@ -2946,16 +2970,20 @@ fn try_strict_normal_seed_winding_with_queries(
                 let duplicate_certified_direct_probe = certified_probe_points
                     .iter()
                     .any(|point| *point == shifted.point);
-                let probe =
-                    match build_probe_point_from_shifted_witness(shifted, corridor, support, &[]) {
-                        Ok(Some(probe)) => probe,
-                        Ok(None) => continue,
-                        Err(HypermeshError::UnknownClassification) => {
-                            *saw_unknown = true;
-                            continue;
-                        }
-                        Err(err) => return Err(err),
-                    };
+                let probe = match build_probe_point_from_shifted_witness(
+                    shifted,
+                    corridor,
+                    support,
+                    &extra_planes,
+                ) {
+                    Ok(Some(probe)) => probe,
+                    Ok(None) => continue,
+                    Err(HypermeshError::UnknownClassification) => {
+                        *saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
                 if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
                     *saw_unknown = true;
                     continue;
@@ -3012,39 +3040,203 @@ fn try_strict_normal_shifted_report_witness_winding_with_queries(
     if report.status != HalfspaceFeasibility::Feasible {
         return Ok(None);
     }
-    let Some(witness) = report.witness.as_ref() else {
+    let Some(seed) = report.witness.as_ref() else {
         return Ok(None);
     };
     let extra_planes = normal_probe_extra_planes(point, definition);
-    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
-        shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, witness),
-        saw_unknown,
+    let shifted = shifted_halfspace_cell(corridor, &halfspaces, seed)?;
+    let (shifted_report, shifted_report_unknown) = optional_halfspace_feasibility_report(&shifted)?;
+    *saw_unknown |= shifted_report_unknown;
+    if shifted_report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(None);
+    }
+
+    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(&shifted)?;
+    *saw_unknown |= shifted_vertex_family.saw_unknown;
+    let shifted_vertices = shifted_vertex_family.seeds;
+    let shifted_report_witness = shifted_report
+        .as_ref()
+        .and_then(|report| report.witness.as_ref());
+
+    let mut strict_seeds = Vec::new();
+    *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
+        &mut strict_seeds,
+        [
+            if shifted_report
+                .as_ref()
+                .is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = shifted_report_witness
+            {
+                collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &shifted)
+                })
+            } else {
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: Vec::new(),
+                    saw_unknown: false,
+                })
+            },
+            collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
+                point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &shifted)
+            }),
+        ],
     )?;
-    let mut probes = Vec::new();
-    for shifted in &shifted_witnesses {
-        match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
-            Ok(Some(probe)) => probes.push(probe),
-            Ok(None) => {}
+    let mut seen_strict_seeds = Vec::new();
+    let strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut seen_strict_seeds);
+
+    for witness in &strict_seeds {
+        let shifted_witness = ShiftedHalfspaceWitness::with_family(
+            witness.clone(),
+            shifted.clone(),
+            active_planes_from_optional_report(shifted_report.as_ref(), witness),
+            false,
+        );
+        let probe = match build_probe_point_from_shifted_witness(
+            &shifted_witness,
+            corridor,
+            support,
+            &extra_planes,
+        ) {
+            Ok(Some(probe)) => probe,
+            Ok(None) => continue,
             Err(HypermeshError::UnknownClassification) => {
                 *saw_unknown = true;
+                continue;
             }
             Err(err) => return Err(err),
+        };
+        if let Some(winding) = try_leaf_probe_family_with_queries(
+            point,
+            positive_side,
+            Ok(vec![probe]),
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+        )? {
+            return Ok(Some(winding));
         }
     }
 
-    try_leaf_probe_family_with_queries(
-        point,
-        positive_side,
-        Ok(probes),
-        support,
-        ref_point,
-        ref_definitions,
-        ref_wnv,
-        polygons,
-        host_delta_w,
-        probe_query_caches,
-        saw_unknown,
-    )
+    let (strict_shift_seeds, shifted_vertices, _shifted_geometry_seeds) =
+        shifted_halfspace_seed_families_with_report_seed(
+            shifted_report_witness,
+            Vec::new(),
+            shifted_vertices.clone(),
+            Vec::new(),
+        );
+    let mut seen_shifted_roots = Vec::new();
+    for family in [strict_shift_seeds, shifted_vertices.clone()] {
+        let fresh = take_new_halfspace_seed_family(family, &mut seen_shifted_roots);
+        for witness in fresh {
+            match point_strictly_inside_halfspace_cell_or_unknown(&witness, corridor, &halfspaces) {
+                Ok(true) => {}
+                Ok(false) => continue,
+                Err(HypermeshError::UnknownClassification) => {
+                    *saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }
+            let shifted_witness = ShiftedHalfspaceWitness::with_family(
+                witness.clone(),
+                shifted.clone(),
+                [None, None, None],
+                false,
+            );
+            let probe = match build_probe_point_from_shifted_witness(
+                &shifted_witness,
+                corridor,
+                support,
+                &extra_planes,
+            ) {
+                Ok(Some(probe)) => probe,
+                Ok(None) => continue,
+                Err(HypermeshError::UnknownClassification) => {
+                    *saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+            if let Some(winding) = try_leaf_probe_family_with_queries(
+                point,
+                positive_side,
+                Ok(vec![probe]),
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                saw_unknown,
+            )? {
+                return Ok(Some(winding));
+            }
+        }
+    }
+
+    let shifted_geometry_seed_family =
+        halfspace_centroid_subset_seed_family_from_vertices(&shifted_vertices)?;
+    *saw_unknown |= shifted_geometry_seed_family.saw_unknown;
+    let shifted_geometry_seeds = shifted_geometry_seed_family.seeds;
+    let shifted_geometry_seeds =
+        take_new_halfspace_seed_family(shifted_geometry_seeds, &mut seen_shifted_roots);
+    for witness in shifted_geometry_seeds {
+        match point_strictly_inside_halfspace_cell_or_unknown(&witness, corridor, &halfspaces) {
+            Ok(true) => {}
+            Ok(false) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        }
+        let shifted_witness = ShiftedHalfspaceWitness::with_family(
+            witness.clone(),
+            shifted.clone(),
+            [None, None, None],
+            false,
+        );
+        let probe = match build_probe_point_from_shifted_witness(
+            &shifted_witness,
+            corridor,
+            support,
+            &extra_planes,
+        ) {
+            Ok(Some(probe)) => probe,
+            Ok(None) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if let Some(winding) = try_leaf_probe_family_with_queries(
+            point,
+            positive_side,
+            Ok(vec![probe]),
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+        )? {
+            return Ok(Some(winding));
+        }
+    }
+
+    Ok(None)
 }
 
 fn search_adjacent_axis_probe_winding_with_queries(
