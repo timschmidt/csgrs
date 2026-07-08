@@ -320,42 +320,70 @@ fn output_polygon_closure_report(
 fn merge_duplicate_polygon_vertices(
     polygons: &[OutputPolygon],
 ) -> (Vec<OutputVertex>, Vec<Vec<usize>>) {
-    let mut vertices = Vec::new();
-    let mut vertex_indices: BTreeMap<[String; 3], Vec<usize>> = BTreeMap::new();
-    let mut indexed_polygons = Vec::with_capacity(polygons.len());
+    let mut positions = Vec::new();
+    let mut indexed_polygons: Vec<Vec<usize>> = polygons
+        .iter()
+        .map(|polygon| vec![0; polygon.vertices.len()])
+        .collect();
 
-    for polygon in polygons {
-        let mut indexed = Vec::with_capacity(polygon.vertices.len());
-        for vertex in &polygon.vertices {
-            let key = output_vertex_key(vertex);
-            if let Some(candidates) = vertex_indices.get(&key) {
-                if let Some(index) = candidates
-                    .iter()
-                    .copied()
-                    .find(|index| vertices[*index] == *vertex)
-                {
-                    indexed.push(index);
-                    continue;
-                }
-            }
-
-            let index = vertices.len();
-            vertices.push(vertex.clone());
-            vertex_indices.entry(key).or_default().push(index);
-            indexed.push(index);
+    for (polygon_index, polygon) in polygons.iter().enumerate() {
+        for vertex_index in 0..polygon.vertices.len() {
+            positions.push((polygon_index, vertex_index, positions.len()));
         }
-        indexed_polygons.push(indexed);
+    }
+
+    positions.sort_by(
+        |(left_polygon, left_vertex, _), (right_polygon, right_vertex, _)| {
+            compare_output_vertices_lexicographic(
+                &polygons[*left_polygon].vertices[*left_vertex],
+                &polygons[*right_polygon].vertices[*right_vertex],
+            )
+            .expect("exact output vertex ordering should compare")
+        },
+    );
+
+    let mut groups: Vec<(usize, OutputVertex, Vec<(usize, usize)>)> = Vec::new();
+    for (polygon_index, vertex_index, flat_index) in positions {
+        let vertex = &polygons[polygon_index].vertices[vertex_index];
+        match groups.last_mut() {
+            Some((first_flat_index, existing, members)) if *existing == *vertex => {
+                *first_flat_index = (*first_flat_index).min(flat_index);
+                members.push((polygon_index, vertex_index));
+            }
+            _ => groups.push((
+                flat_index,
+                vertex.clone(),
+                vec![(polygon_index, vertex_index)],
+            )),
+        }
+    }
+    groups.sort_by_key(|(first_flat_index, _, _)| *first_flat_index);
+
+    let mut vertices = Vec::with_capacity(groups.len());
+    for (_, vertex, members) in groups {
+        let merged_index = vertices.len();
+        vertices.push(vertex);
+        for (polygon_index, vertex_index) in members {
+            indexed_polygons[polygon_index][vertex_index] = merged_index;
+        }
     }
 
     (vertices, indexed_polygons)
 }
 
-fn output_vertex_key(vertex: &OutputVertex) -> [String; 3] {
-    [
-        vertex.x.to_string(),
-        vertex.y.to_string(),
-        vertex.z.to_string(),
-    ]
+fn compare_output_vertices_lexicographic(
+    left: &OutputVertex,
+    right: &OutputVertex,
+) -> HypermeshResult<std::cmp::Ordering> {
+    let x = compare_real(&left.x, &right.x)?;
+    if !x.is_eq() {
+        return Ok(x);
+    }
+    let y = compare_real(&left.y, &right.y)?;
+    if !y.is_eq() {
+        return Ok(y);
+    }
+    compare_real(&left.z, &right.z)
 }
 
 fn polygon_edge_counts(

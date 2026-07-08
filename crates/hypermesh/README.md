@@ -1035,8 +1035,10 @@ polygons are merged before they ever reach the final classified arrangement.
 The exact closure check now also caches split subedges per undirected polygon
 edge, so repeated coincident segments do not rescan and re-sort the same merged
 vertex chain before counting boundary usage. Its exact duplicate-vertex merge
-step now also reuses keyed vertex buckets instead of linearly rescanning every
-merged vertex for each new polygon vertex. The same closure pass now also keeps
+step now also groups vertices by exact lexicographic ordering and still assigns
+merged vertex ids by first appearance, instead of string-keying every
+coordinate triple or linearly rescanning every merged vertex for each new
+polygon vertex. The same closure pass now also keeps
 one exact per-axis ordering of merged output vertices, so each undirected edge
 only checks vertices whose dominant-axis coordinate lies inside that edge span
 instead of rescanning the entire merged vertex set before exact on-segment
