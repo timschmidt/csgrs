@@ -905,6 +905,16 @@ fn cached_polygon_family_bounds_with(
     polygons: &[ConvexPolygon],
     query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Aabb>,
 ) -> HypermeshResult<Aabb> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.bounds;
+    }
+
     let polygon_profile = polygon_family_profile(polygons);
     let existing = cache
         .borrow()
@@ -979,6 +989,16 @@ fn cached_polygon_axis_values_with(
     cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<[Vec<Real>; 3]> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.result;
+    }
+
     let polygon_profile = polygon_family_profile(polygons);
     let existing = cache
         .borrow()
@@ -1033,6 +1053,16 @@ fn cached_ordered_subdivision_splits_with(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.bounds == *bounds && existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.candidates;
+    }
+
     let polygon_profile = polygon_family_profile(polygons);
     let existing = cache
         .borrow()
@@ -1096,6 +1126,18 @@ fn cached_split_child_partition_with(
     axis: usize,
     value: &Real,
 ) -> HypermeshResult<SplitChildPartition> {
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.polygons == polygons
+                && existing.axis == axis
+                && compare_real(&existing.value, value)?.is_eq()
+            {
+                return existing.result.clone();
+            }
+        }
+    }
+
     let polygon_profile = polygon_family_profile(polygons);
     let existing = {
         let cache_ref = cache.borrow();
@@ -1217,6 +1259,25 @@ fn cached_child_reference_with(
     bounds: &Aabb,
     query: impl FnOnce() -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| {
+            child_reference_cache_entry_matches_exact_state(
+                existing,
+                old_ref,
+                old_ref_definitions,
+                old_wnv,
+                source_polygons,
+                bounds,
+            )
+        })
+        .cloned()
+    {
+        return existing.result;
+    }
+
     let source_polygon_profile = polygon_family_profile(source_polygons);
     let existing = cache
         .borrow()
@@ -1599,6 +1660,16 @@ fn cached_child_subdivision_with(
     task: &SubdivisionTask,
     query: impl FnOnce() -> HypermeshResult<Vec<ClassifiedPolygon>>,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.task == *task)
+        .cloned()
+    {
+        return existing.result;
+    }
+
     let polygon_profile = polygon_family_profile(&task.polygons);
     let existing = cache
         .borrow()
@@ -2288,6 +2359,16 @@ fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.result;
+    }
+
     let polygon_profile = polygon_family_profile(polygons);
     let existing = cache
         .borrow()
@@ -5319,6 +5400,20 @@ fn cached_support_reference_accept_with(
         .iter()
         .rev()
         .find(|existing| {
+            support_reference_cache_context_matches_exact_state(existing.context.as_ref(), context)
+                && existing.bounds == *bounds
+                && existing.halfspaces == halfspaces
+                && existing.report.as_ref() == report
+        })
+        .cloned()
+    {
+        return existing.accepted;
+    }
+
+    if let Some(existing) = cache
+        .iter()
+        .rev()
+        .find(|existing| {
             support_reference_cache_context_matches(existing.context.as_ref(), context)
                 && existing.bounds == *bounds
                 && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
@@ -5527,6 +5622,19 @@ fn cached_support_reference_result_with(
         .iter()
         .rev()
         .find(|existing| {
+            existing.context == *context
+                && existing.bounds == *bounds
+                && existing.halfspaces == halfspaces
+        })
+        .cloned()
+    {
+        return existing.result;
+    }
+
+    if let Some(existing) = cache
+        .iter()
+        .rev()
+        .find(|existing| {
             existing.bounds == *bounds
                 && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
                 && support_reference_cache_context_matches(Some(&existing.context), Some(context))
@@ -5714,6 +5822,25 @@ fn cached_support_plane_cell_search_with<T: Clone>(
     halfspaces: Vec<LimitPlane3>,
     search: impl FnOnce() -> HypermeshResult<Option<T>>,
 ) -> HypermeshResult<Option<T>> {
+    let exact_existing = {
+        let cache_ref = cache.borrow();
+        cache_ref
+            .iter()
+            .rev()
+            .find(|existing| {
+                support_reference_cache_context_matches_exact_state(
+                    existing.context.as_ref(),
+                    context,
+                ) && existing.bounds == *bounds
+                    && existing.polygon_index == polygon_index
+                    && existing.halfspaces == halfspaces
+            })
+            .cloned()
+    };
+    if let Some(existing) = exact_existing {
+        return existing.result;
+    }
+
     let existing = {
         let cache_ref = cache.borrow();
         cache_ref
@@ -6267,6 +6394,15 @@ fn cached_reference_escape_search_with(
     if let Some(existing) = cache
         .iter()
         .rev()
+        .find(|existing| existing.context == *context && existing.bounds == *bounds)
+        .cloned()
+    {
+        return existing.result;
+    }
+
+    if let Some(existing) = cache
+        .iter()
+        .rev()
         .find(|existing| {
             existing.bounds == *bounds
                 && support_reference_cache_context_matches(Some(&existing.context), Some(context))
@@ -6304,6 +6440,17 @@ fn cached_reference_escape_search_in_query_caches(
         &mut SupportReferenceQueryCaches,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    if let Some(existing) = query_caches
+        .projection_escape_search_cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.context == *context && existing.bounds == *bounds)
+        .cloned()
+    {
+        return existing.result;
+    }
+
     let retrace_candidates = query_caches
         .projection_escape_search_cache
         .borrow()
