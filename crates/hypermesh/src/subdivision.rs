@@ -109,6 +109,8 @@ pub struct LeafProcessingStats {
     pub certified_complete: bool,
 }
 
+type PolygonFamilyProfile = Vec<(isize, isize, usize, usize)>;
+
 #[derive(Clone, Debug, PartialEq)]
 struct LeafClassificationCacheEntry {
     context: Option<LeafClassificationCacheContextKey>,
@@ -120,6 +122,7 @@ struct LeafClassificationCacheEntry {
 
 #[derive(Clone, Debug, PartialEq)]
 struct LeafClassificationCacheContextKey {
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     bounds: Aabb,
     ref_point: Point3,
@@ -137,6 +140,7 @@ struct SubdivisionChildPartition {
 
 #[derive(Clone, Debug, PartialEq)]
 struct ChildReferenceCacheEntry {
+    source_polygon_profile: PolygonFamilyProfile,
     source_polygons: Vec<ConvexPolygon>,
     bounds: Aabb,
     old_ref: Point3,
@@ -147,6 +151,7 @@ struct ChildReferenceCacheEntry {
 
 #[derive(Clone, Debug, PartialEq)]
 struct ChildSubdivisionCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
     task: SubdivisionTask,
     result: HypermeshResult<Vec<ClassifiedPolygon>>,
 }
@@ -161,12 +166,14 @@ struct WindingReachabilityCacheEntry {
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonFamilyBoundsCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     bounds: HypermeshResult<Aabb>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 struct SplitCandidatesCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     bounds: Aabb,
     candidates: HypermeshResult<Vec<(usize, Real)>>,
@@ -182,6 +189,7 @@ struct SplitChildPartition {
 
 #[derive(Clone, Debug, PartialEq)]
 struct SplitChildPartitionCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     axis: usize,
     value: Real,
@@ -190,6 +198,7 @@ struct SplitChildPartitionCacheEntry {
 
 #[derive(Clone, Debug, PartialEq)]
 struct PairwiseIntersectionsCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     result: HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
 }
@@ -197,6 +206,7 @@ struct PairwiseIntersectionsCacheEntry {
 #[derive(Clone, Debug, PartialEq)]
 struct HostBspLeavesCacheEntry {
     host: ConvexPolygon,
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     leaves: HypermeshResult<Vec<BspLeaf>>,
 }
@@ -205,12 +215,14 @@ struct HostBspLeavesCacheEntry {
 struct BspLeafCertificationCacheEntry {
     host: ConvexPolygon,
     leaf_edges: Vec<Plane>,
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     result: HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 struct PolygonAxisValuesCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     result: HypermeshResult<[Vec<Real>; 3]>,
 }
@@ -354,6 +366,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
         return Ok(stats);
     }
     let leaf_cache_context = LeafClassificationCacheContextKey {
+        polygon_profile: polygon_family_profile(polygons),
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
         ref_point: ref_point.clone(),
@@ -821,16 +834,17 @@ fn cached_polygon_family_bounds_with(
     polygons: &[ConvexPolygon],
     query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Aabb>,
 ) -> HypermeshResult<Aabb> {
-    if let Some(existing) = cache
-        .borrow()
-        .iter()
-        .find(|existing| polygon_families_match_as_multisets(&existing.polygons, polygons))
-    {
+    let polygon_profile = polygon_family_profile(polygons);
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.polygon_profile == polygon_profile
+            && polygon_families_match_as_multisets(&existing.polygons, polygons)
+    }) {
         return existing.bounds.clone();
     }
 
     let bounds = query(polygons);
     cache.borrow_mut().push(PolygonFamilyBoundsCacheEntry {
+        polygon_profile,
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
     });
@@ -865,16 +879,17 @@ fn cached_polygon_axis_values_with(
     cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<[Vec<Real>; 3]> {
-    if let Some(existing) = cache
-        .borrow()
-        .iter()
-        .find(|existing| polygon_families_match_as_multisets(&existing.polygons, polygons))
-    {
+    let polygon_profile = polygon_family_profile(polygons);
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.polygon_profile == polygon_profile
+            && polygon_families_match_as_multisets(&existing.polygons, polygons)
+    }) {
         return existing.result.clone();
     }
 
     let result = polygon_axis_values(polygons);
     cache.borrow_mut().push(PolygonAxisValuesCacheEntry {
+        polygon_profile,
         polygons: polygons.to_vec(),
         result: result.clone(),
     });
@@ -889,8 +904,10 @@ fn cached_ordered_subdivision_splits_with(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<(usize, Real)>> {
+    let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.bounds == *bounds
+            && existing.polygon_profile == polygon_profile
             && polygon_families_match_as_multisets(&existing.polygons, polygons)
     }) {
         return existing.candidates.clone();
@@ -904,6 +921,7 @@ fn cached_ordered_subdivision_splits_with(
         pairwise_cache,
     );
     cache.borrow_mut().push(SplitCandidatesCacheEntry {
+        polygon_profile,
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
         candidates: candidates.clone(),
@@ -918,8 +936,10 @@ fn cached_split_child_partition_with(
     axis: usize,
     value: &Real,
 ) -> HypermeshResult<SplitChildPartition> {
+    let polygon_profile = polygon_family_profile(polygons);
     for existing in cache.borrow().iter() {
         if existing.axis == axis
+            && existing.polygon_profile == polygon_profile
             && polygon_families_match_as_multisets(&existing.polygons, polygons)
             && compare_real(&existing.value, value)?.is_eq()
         {
@@ -929,6 +949,7 @@ fn cached_split_child_partition_with(
 
     let result = split_child_partition(polygons, axis, value, pairwise_cache);
     cache.borrow_mut().push(SplitChildPartitionCacheEntry {
+        polygon_profile,
         polygons: polygons.to_vec(),
         axis,
         value: value.clone(),
@@ -972,6 +993,7 @@ fn cached_child_reference_with(
     bounds: &Aabb,
     query: impl FnOnce() -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    let source_polygon_profile = polygon_family_profile(source_polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.old_ref == *old_ref
             && reference_definition_families_match_as_sets(
@@ -979,6 +1001,7 @@ fn cached_child_reference_with(
                 old_ref_definitions,
             )
             && existing.old_wnv == old_wnv
+            && existing.source_polygon_profile == source_polygon_profile
             && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
             && existing.bounds == *bounds
     }) {
@@ -987,6 +1010,7 @@ fn cached_child_reference_with(
 
     let result = query();
     cache.borrow_mut().push(ChildReferenceCacheEntry {
+        source_polygon_profile,
         old_ref: old_ref.clone(),
         old_ref_definitions: old_ref_definitions.to_vec(),
         old_wnv: old_wnv.to_vec(),
@@ -1002,16 +1026,17 @@ fn cached_child_subdivision_with(
     task: &SubdivisionTask,
     query: impl FnOnce() -> HypermeshResult<Vec<ClassifiedPolygon>>,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    if let Some(existing) = cache
-        .borrow()
-        .iter()
-        .find(|existing| subdivision_tasks_match_for_cache(&existing.task, task))
-    {
+    let polygon_profile = polygon_family_profile(&task.polygons);
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.polygon_profile == polygon_profile
+            && subdivision_tasks_match_for_cache(&existing.task, task)
+    }) {
         return existing.result.clone();
     }
 
     let result = query();
     cache.borrow_mut().push(ChildSubdivisionCacheEntry {
+        polygon_profile,
         task: task.clone(),
         result: result.clone(),
     });
@@ -1099,6 +1124,22 @@ fn polygon_families_match_as_multisets(left: &[ConvexPolygon], right: &[ConvexPo
     true
 }
 
+fn polygon_family_profile(polygons: &[ConvexPolygon]) -> PolygonFamilyProfile {
+    let mut profile = polygons
+        .iter()
+        .map(|polygon| {
+            (
+                polygon.mesh_index,
+                polygon.polygon_index,
+                polygon.edges.len(),
+                polygon.delta_w.len(),
+            )
+        })
+        .collect::<Vec<_>>();
+    profile.sort_unstable();
+    profile
+}
+
 fn leaf_classification_cache_context_matches(
     left: Option<&LeafClassificationCacheContextKey>,
     right: Option<&LeafClassificationCacheContextKey>,
@@ -1106,7 +1147,8 @@ fn leaf_classification_cache_context_matches(
     match (left, right) {
         (None, None) => true,
         (Some(left), Some(right)) => {
-            polygon_families_match_as_multisets(&left.polygons, &right.polygons)
+            left.polygon_profile == right.polygon_profile
+                && polygon_families_match_as_multisets(&left.polygons, &right.polygons)
                 && left.bounds == right.bounds
                 && left.ref_point == right.ref_point
                 && reference_definition_families_match_as_sets(
@@ -1319,8 +1361,10 @@ fn cached_host_bsp_leaves_with(
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
 ) -> HypermeshResult<Vec<BspLeaf>> {
+    let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *polygon
+            && existing.polygon_profile == polygon_profile
             && polygon_families_match_as_multisets(&existing.polygons, polygons)
     }) {
         return existing.leaves.clone();
@@ -1329,6 +1373,7 @@ fn cached_host_bsp_leaves_with(
     let leaves = build_host_bsp_leaves(polygon, polygons, intersections);
     cache.borrow_mut().push(HostBspLeavesCacheEntry {
         host: polygon.clone(),
+        polygon_profile,
         polygons: polygons.to_vec(),
         leaves: leaves.clone(),
     });
@@ -1341,9 +1386,11 @@ fn cached_bsp_leaf_certification_with(
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
+    let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *host
             && edge_cycles_match_up_to_rotation(&existing.leaf_edges, leaf_edges)
+            && existing.polygon_profile == polygon_profile
             && polygon_families_match_as_multisets(&existing.polygons, polygons)
     }) {
         return existing.result.clone();
@@ -1353,6 +1400,7 @@ fn cached_bsp_leaf_certification_with(
     cache.borrow_mut().push(BspLeafCertificationCacheEntry {
         host: host.clone(),
         leaf_edges: leaf_edges.to_vec(),
+        polygon_profile,
         polygons: polygons.to_vec(),
         result: result.clone(),
     });
@@ -1668,7 +1716,11 @@ fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
+    let polygon_profile = polygon_family_profile(polygons);
     for existing in cache.borrow().iter() {
+        if existing.polygon_profile != polygon_profile {
+            continue;
+        }
         if existing.polygons == polygons {
             return existing.result.clone();
         }
@@ -1682,6 +1734,7 @@ fn cached_pairwise_intersections_by_polygon_with(
 
     let result = pairwise_intersections_by_polygon(polygons);
     cache.borrow_mut().push(PairwiseIntersectionsCacheEntry {
+        polygon_profile,
         polygons: polygons.to_vec(),
         result: result.clone(),
     });
@@ -8163,6 +8216,7 @@ mod tests {
     fn cached_leaf_classification_distinguishes_leaf_context() {
         let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         let left_context = LeafClassificationCacheContextKey {
+            polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
             polygons: vec![polygon.clone()],
             bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
             ref_point: p(0, 0, -1),
@@ -8170,6 +8224,7 @@ mod tests {
             ref_wnv: vec![0],
         };
         let right_context = LeafClassificationCacheContextKey {
+            polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
             polygons: vec![polygon.clone()],
             bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
             ref_point: p(0, 0, 1),
