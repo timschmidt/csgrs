@@ -966,60 +966,56 @@ fn propagate_child_reference(
     caches: &SubdivisionRuntimeCaches,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     let source_polygons = ordered_reference_search_polygons(&task.polygons, child_bounds);
+    caches
+        .support_reference_query
+        .borrow_mut()
+        .reset_per_reference_call_caches();
     let reused_reference = {
         let mut query_caches = caches.support_reference_query.borrow_mut();
-        if let Some(reused) = reusable_child_reference_if_certified(
+        reusable_child_reference_if_certified(
             &caches.child_reference,
             task,
             child_polygons,
             child_bounds,
             &mut query_caches,
-        )? {
-            Some(reused)
-        } else if let Some(reused) = reusable_child_reference_from_cached_result_if_certified(
-            &caches.child_reference,
-            &task.ref_point,
-            &task.ref_definitions,
-            &task.ref_wnv,
-            &source_polygons,
-            child_bounds,
-            &mut query_caches,
-        )? {
-            Some(reused)
-        } else {
-            reusable_child_reference_from_cached_trace_if_certified(
+        )?
+    };
+    if let Some(reused) = reused_reference {
+        return Ok(reused);
+    }
+
+    let direct_result = compute_new_reference_with_query_caches(
+        &task.ref_point,
+        &task.ref_definitions,
+        &task.ref_wnv,
+        child_bounds,
+        &source_polygons,
+        &mut caches.support_reference_query.borrow_mut(),
+    );
+    match direct_result {
+        Ok(result) => {
+            cache_child_reference_result(
                 &caches.child_reference,
                 &task.ref_point,
                 &task.ref_definitions,
                 &task.ref_wnv,
                 &source_polygons,
                 child_bounds,
-                &mut query_caches,
-            )?
+                &result,
+            );
+            Ok(result)
         }
-    };
-    if let Some(reused) = reused_reference {
-        return Ok(reused);
+        Err(crate::error::HypermeshError::UnknownClassification) => cached_child_reference_with(
+            &caches.child_reference,
+            &task.ref_point,
+            &task.ref_definitions,
+            &task.ref_wnv,
+            &source_polygons,
+            child_bounds,
+            || Err(crate::error::HypermeshError::UnknownClassification),
+        ),
+        Err(err) => Err(err),
     }
-
-    cached_child_reference_with(
-        &caches.child_reference,
-        &task.ref_point,
-        &task.ref_definitions,
-        &task.ref_wnv,
-        &source_polygons,
-        child_bounds,
-        || {
-            compute_new_reference_with_query_caches(
-                &task.ref_point,
-                &task.ref_definitions,
-                &task.ref_wnv,
-                child_bounds,
-                &source_polygons,
-                &mut caches.support_reference_query.borrow_mut(),
-            )
-        },
-    )
 }
 
 fn ordered_reference_search_polygons(
@@ -1041,9 +1037,9 @@ fn ordered_reference_search_polygons(
     indexed.sort_by_key(|(index, overlaps_bounds, polygon)| {
         (
             !*overlaps_bounds,
-            *index,
             polygon.mesh_index,
             polygon.polygon_index,
+            *index,
         )
     });
     indexed.into_iter().map(|(_, _, polygon)| polygon).collect()
@@ -1577,6 +1573,7 @@ fn reusable_child_reference_if_certified(
     }
 }
 
+#[cfg(test)]
 fn reusable_child_reference_from_cached_trace_if_certified(
     cache: &RefCell<Vec<ChildReferenceCacheEntry>>,
     old_ref: &Point3,
@@ -1646,6 +1643,7 @@ fn reusable_child_reference_from_cached_trace_if_certified(
     Ok(None)
 }
 
+#[cfg(test)]
 fn reusable_child_reference_from_cached_result_if_certified(
     cache: &RefCell<Vec<ChildReferenceCacheEntry>>,
     old_ref: &Point3,
@@ -5535,7 +5533,25 @@ struct SupportReferenceQueryCaches {
 }
 
 impl SupportReferenceQueryCaches {
-    fn reset_per_reference_call_caches(&mut self) {}
+    fn reset_per_reference_call_caches(&mut self) {
+        self.support_seed_family_cache.clear();
+        self.support_direct_target_cache.clear();
+        self.projected_root_cache.clear();
+        self.projection_escape_axis_options_cache.get_mut().clear();
+        self.projection_escape_search_cache.get_mut().clear();
+        self.shifted_projected_family_cache.clear();
+        self.shifted_support_family_cache.clear();
+        self.strict_contains_cache.get_mut().clear();
+        self.pure_halfspace_contains_cache.get_mut().clear();
+        self.trace_cache.clear();
+        self.validity_cache.clear();
+        self.support_surface_cache.clear();
+        self.target_cache.get_mut().clear();
+        self.accept_cache.get_mut().clear();
+        self.projected_reference_result_cache.clear();
+        self.support_reference_result_cache.clear();
+        self.search_cache.get_mut().clear();
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15011,6 +15027,156 @@ mod tests {
     }
 
     #[test]
+    fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reuse() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+            &SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            ),
+            &SubdivisionRuntimeCaches::default(),
+        )
+        .unwrap()
+        .unwrap();
+        let caches = SubdivisionRuntimeCaches::default();
+        let root_attempt = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &root_task.bounds,
+            &root_task.polygons,
+        )
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
+        let child = ordered_split_attempt_children(
+            &root_task.polygons,
+            root_attempt.left_polys,
+            root_attempt.left_bounds,
+            root_attempt.right_polys,
+            root_attempt.right_bounds,
+        )
+        .into_iter()
+        .nth(1)
+        .unwrap();
+        let source_polygons = ordered_reference_search_polygons(&root_task.polygons, &child.bounds);
+        let direct = compute_new_reference_with_query_caches(
+            &root_task.ref_point,
+            &root_task.ref_definitions,
+            &root_task.ref_wnv,
+            &child.bounds,
+            &source_polygons,
+            &mut SupportReferenceQueryCaches::default(),
+        )
+        .unwrap();
+        let mut permuted_source_polygons = source_polygons.clone();
+        permuted_source_polygons.reverse();
+        caches
+            .child_reference
+            .borrow_mut()
+            .push(ChildReferenceCacheEntry {
+                source_polygon_profile: polygon_family_profile(&permuted_source_polygons),
+                source_polygons: permuted_source_polygons,
+                bounds: child.bounds.clone(),
+                old_ref: root_task.ref_point.clone(),
+                old_ref_definitions: root_task.ref_definitions.clone(),
+                old_wnv: root_task.ref_wnv.clone(),
+                result: Ok((
+                    direct.0.clone(),
+                    direct.1.clone(),
+                    vec![9; direct.2.len().max(1)],
+                )),
+            });
+
+        let propagated =
+            propagate_child_reference(&root_task, &child.polygons, &child.bounds, &caches).unwrap();
+
+        assert_eq!(propagated, direct);
+    }
+
+    #[test]
+    fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+            &SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            ),
+            &SubdivisionRuntimeCaches::default(),
+        )
+        .unwrap()
+        .unwrap();
+        let caches = SubdivisionRuntimeCaches::default();
+        let root_attempt = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &root_task.bounds,
+            &root_task.polygons,
+        )
+        .unwrap()
+        .into_iter()
+        .next()
+        .unwrap();
+        let child = ordered_split_attempt_children(
+            &root_task.polygons,
+            root_attempt.left_polys,
+            root_attempt.left_bounds,
+            root_attempt.right_polys,
+            root_attempt.right_bounds,
+        )
+        .into_iter()
+        .nth(1)
+        .unwrap();
+        let source_polygons = ordered_reference_search_polygons(&root_task.polygons, &child.bounds);
+        let direct = compute_new_reference_with_query_caches(
+            &root_task.ref_point,
+            &root_task.ref_definitions,
+            &root_task.ref_wnv,
+            &child.bounds,
+            &source_polygons,
+            &mut SupportReferenceQueryCaches::default(),
+        )
+        .unwrap();
+        caches
+            .child_reference
+            .borrow_mut()
+            .push(ChildReferenceCacheEntry {
+                source_polygon_profile: polygon_family_profile(&source_polygons),
+                source_polygons: source_polygons.clone(),
+                bounds: child.bounds.clone(),
+                old_ref: root_task.ref_point.clone(),
+                old_ref_definitions: root_task.ref_definitions.clone(),
+                old_wnv: root_task.ref_wnv.clone(),
+                result: Ok((
+                    direct.0.clone(),
+                    direct.1.clone(),
+                    vec![9; direct.2.len().max(1)],
+                )),
+            });
+
+        let propagated =
+            propagate_child_reference(&root_task, &child.polygons, &child.bounds, &caches).unwrap();
+
+        assert_eq!(propagated, direct);
+    }
+
+    #[test]
     fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target() {
         let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -17203,11 +17369,27 @@ mod tests {
             .search_cache
             .get_mut()
             .push(SupportPlaneCellSearchCacheEntry {
-                context: Some(context),
+                context: Some(context.clone()),
                 bounds: bounds.clone(),
                 polygon_index: 0,
                 halfspaces: halfspaces.clone(),
                 result: Ok(None::<(ReferenceTarget, Vec<i32>)>),
+            });
+        query_caches
+            .support_reference_result_cache
+            .push(SupportReferenceResultCacheEntry {
+                context: context.clone(),
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.clone(),
+                result: Ok(None),
+            });
+        query_caches
+            .projected_reference_result_cache
+            .push(ProjectedReferenceResultCacheEntry {
+                context,
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.clone(),
+                result: Ok(None),
             });
 
         query_caches.reset_per_reference_call_caches();
@@ -17216,11 +17398,38 @@ mod tests {
         assert_eq!(query_caches.seed_geometry_cache.len(), 1);
         assert_eq!(query_caches.centroid_subset_seed_cache.len(), 1);
         assert_eq!(query_caches.reference_witness_cache.get_mut().len(), 1);
-        assert_eq!(query_caches.trace_cache.len(), 1);
-        assert_eq!(query_caches.validity_cache.len(), 1);
-        assert_eq!(query_caches.support_surface_cache.len(), 1);
-        assert_eq!(query_caches.accept_cache.get_mut().len(), 1);
-        assert_eq!(query_caches.search_cache.get_mut().len(), 1);
+        assert!(query_caches.support_seed_family_cache.is_empty());
+        assert!(query_caches.support_direct_target_cache.is_empty());
+        assert!(query_caches.projected_root_cache.is_empty());
+        assert!(
+            query_caches
+                .projection_escape_axis_options_cache
+                .get_mut()
+                .is_empty()
+        );
+        assert!(
+            query_caches
+                .projection_escape_search_cache
+                .get_mut()
+                .is_empty()
+        );
+        assert!(query_caches.shifted_projected_family_cache.is_empty());
+        assert!(query_caches.shifted_support_family_cache.is_empty());
+        assert!(query_caches.strict_contains_cache.get_mut().is_empty());
+        assert!(
+            query_caches
+                .pure_halfspace_contains_cache
+                .get_mut()
+                .is_empty()
+        );
+        assert!(query_caches.trace_cache.is_empty());
+        assert!(query_caches.validity_cache.is_empty());
+        assert!(query_caches.support_surface_cache.is_empty());
+        assert!(query_caches.target_cache.get_mut().is_empty());
+        assert!(query_caches.accept_cache.get_mut().is_empty());
+        assert!(query_caches.projected_reference_result_cache.is_empty());
+        assert!(query_caches.support_reference_result_cache.is_empty());
+        assert!(query_caches.search_cache.get_mut().is_empty());
     }
 
     #[test]
