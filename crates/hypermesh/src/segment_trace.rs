@@ -3363,7 +3363,35 @@ fn try_leaf_probe_family_with_queries(
             plane_replacement_affine,
             plane_replacement_reachability_steps,
         ) {
-            Ok(true) => prioritized_probes.push(probe),
+            Ok(true) => {
+                for deferred in deferred_probes.drain(..) {
+                    if let Some(winding) = evaluate_leaf_probe_with_query_caches(
+                        point,
+                        positive_side,
+                        deferred,
+                        support,
+                        ref_point,
+                        ref_definitions,
+                        ref_wnv,
+                        polygons,
+                        host_delta_w,
+                        probe_surface,
+                        probe_reachability,
+                        probe_winding,
+                        axis_ordered_segment_traces,
+                        plane_replacement_affine,
+                        plane_replacement_trace_steps,
+                        plane_replacement_reachability_steps,
+                        definition_no_detour_trace,
+                        definition_no_detour_reachability,
+                        detour_target_families,
+                        saw_unknown,
+                    )? {
+                        return Ok(Some(winding));
+                    }
+                }
+                prioritized_probes.push(probe);
+            }
             Ok(false) => deferred_probes.push(probe),
             Err(HypermeshError::UnknownClassification) => {
                 *saw_unknown = true;
@@ -3374,65 +3402,115 @@ fn try_leaf_probe_family_with_queries(
     }
 
     for probe in prioritized_probes.into_iter().chain(deferred_probes) {
-        let probe_fallback = probe.uncertified_definition_fallback;
-        let winding = if cached_surface_query_with(probe_surface, &probe.point, || {
-            point_lies_on_traced_surface(&probe.point, polygons)
-        })? {
-            None
-        } else if !cached_probe_reachability_with(probe_reachability, point, &probe, || {
-            probe_reaches_adjacent_cell_from_interior_with_caches(
-                point,
-                &probe,
-                support,
-                polygons,
-                probe_surface,
-                plane_replacement_affine,
-                plane_replacement_reachability_steps,
-                definition_no_detour_reachability,
-                detour_target_families,
-            )
-        })? {
-            None
-        } else {
-            let mut winding = cached_probe_winding_with(probe_winding, &probe, || {
-                trace_probe_winding_with_caches(
-                    ref_point,
-                    ref_definitions,
-                    &probe,
-                    ref_wnv,
-                    polygons,
-                    probe_surface,
-                    axis_ordered_segment_traces,
-                    plane_replacement_affine,
-                    plane_replacement_trace_steps,
-                    definition_no_detour_trace,
-                    detour_target_families,
-                )
-            })?;
-            if probe.side == Classification::Negative {
-                apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
-            }
-            Some(winding)
-        };
-
-        match winding {
-            Some(winding) => {
-                if point.uncertified_definition_fallback || probe_fallback {
-                    *saw_unknown = true;
-                    continue;
-                }
-                let _ = positive_side;
-                return Ok(Some(winding));
-            }
-            None => {
-                if point.uncertified_definition_fallback || probe_fallback {
-                    *saw_unknown = true;
-                }
-            }
+        if let Some(winding) = evaluate_leaf_probe_with_query_caches(
+            point,
+            positive_side,
+            probe,
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_surface,
+            probe_reachability,
+            probe_winding,
+            axis_ordered_segment_traces,
+            plane_replacement_affine,
+            plane_replacement_trace_steps,
+            plane_replacement_reachability_steps,
+            definition_no_detour_trace,
+            definition_no_detour_reachability,
+            detour_target_families,
+            saw_unknown,
+        )? {
+            return Ok(Some(winding));
         }
     }
 
     Ok(None)
+}
+
+fn evaluate_leaf_probe_with_query_caches(
+    point: &InteriorLeafPoint,
+    positive_side: bool,
+    probe: ProbePoint,
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    host_delta_w: &[i32],
+    probe_surface: &mut Vec<SurfaceCacheEntry>,
+    probe_reachability: &mut Vec<ProbeReachabilityCacheEntry>,
+    probe_winding: &mut Vec<ProbeWindingCacheEntry>,
+    axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
+    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
+    plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
+    definition_no_detour_reachability: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
+    detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let probe_fallback = probe.uncertified_definition_fallback;
+    let winding = if cached_surface_query_with(probe_surface, &probe.point, || {
+        point_lies_on_traced_surface(&probe.point, polygons)
+    })? {
+        None
+    } else if !cached_probe_reachability_with(probe_reachability, point, &probe, || {
+        probe_reaches_adjacent_cell_from_interior_with_caches(
+            point,
+            &probe,
+            support,
+            polygons,
+            probe_surface,
+            plane_replacement_affine,
+            plane_replacement_reachability_steps,
+            definition_no_detour_reachability,
+            detour_target_families,
+        )
+    })? {
+        None
+    } else {
+        let mut winding = cached_probe_winding_with(probe_winding, &probe, || {
+            trace_probe_winding_with_caches(
+                ref_point,
+                ref_definitions,
+                &probe,
+                ref_wnv,
+                polygons,
+                probe_surface,
+                axis_ordered_segment_traces,
+                plane_replacement_affine,
+                plane_replacement_trace_steps,
+                definition_no_detour_trace,
+                detour_target_families,
+            )
+        })?;
+        if probe.side == Classification::Negative {
+            apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
+        }
+        Some(winding)
+    };
+
+    match winding {
+        Some(winding) => {
+            if point.uncertified_definition_fallback || probe_fallback {
+                *saw_unknown = true;
+                Ok(None)
+            } else {
+                let _ = positive_side;
+                Ok(Some(winding))
+            }
+        }
+        None => {
+            if point.uncertified_definition_fallback || probe_fallback {
+                *saw_unknown = true;
+            }
+            Ok(None)
+        }
+    }
 }
 
 fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
