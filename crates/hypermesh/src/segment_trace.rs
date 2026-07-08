@@ -5698,6 +5698,29 @@ fn normal_probe_extra_planes(
     extra_planes
 }
 
+fn normal_probe_shifted_seed_families(
+    definition: Option<&[Plane; 3]>,
+    report_witness: Option<&Point3>,
+    seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+) -> (Vec<Point3>, Vec<Point3>, Vec<Point3>) {
+    if definition.is_none() && !seeds.is_empty() {
+        return shifted_halfspace_seed_families_with_report_seed(
+            report_witness,
+            seeds,
+            Vec::new(),
+            Vec::new(),
+        );
+    }
+    shifted_halfspace_seed_families_with_report_seed(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )
+}
+
 fn normal_probe_definition_preserves_support_direction(
     definition: &[Plane; 3],
     support: &Plane,
@@ -5787,7 +5810,8 @@ fn strict_normal_probe_targets(
         .map(|probe| probe.point.clone())
         .collect::<Vec<_>>();
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        shifted_halfspace_seed_families_with_report_seed(
+        normal_probe_shifted_seed_families(
+            definition,
             report_witness,
             seeds,
             shifted_vertices,
@@ -5888,7 +5912,8 @@ fn strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
         .map(|probe| probe.point.clone())
         .collect::<Vec<_>>();
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        shifted_halfspace_seed_families_with_report_seed(
+        normal_probe_shifted_seed_families(
+            definition,
             report_witness,
             seeds,
             shifted_vertices,
@@ -13273,6 +13298,46 @@ mod tests {
         };
 
         assert!(normal_probe_extra_planes(&interior, None).is_empty());
+    }
+
+    #[test]
+    fn normal_probe_shifted_seed_families_skip_non_strict_roots_after_direct_seed_phase() {
+        let report_witness = p(9, 9, 9);
+        let direct_seed = p(1, 1, 1);
+        let shifted_vertex = p(2, 2, 2);
+        let shifted_geometry = p(3, 3, 3);
+
+        let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+            normal_probe_shifted_seed_families(
+                None,
+                Some(&report_witness),
+                vec![direct_seed.clone()],
+                vec![shifted_vertex],
+                vec![shifted_geometry],
+            );
+
+        assert_eq!(strict_shift_seeds, vec![direct_seed, report_witness]);
+        assert!(shifted_vertices.is_empty());
+        assert!(shifted_geometry_seeds.is_empty());
+    }
+
+    #[test]
+    fn normal_probe_shifted_seed_families_keep_raw_roots_without_direct_seeds() {
+        let shifted_vertex = p(2, 2, 2);
+        let shifted_geometry = p(3, 3, 3);
+
+        let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+            normal_probe_shifted_seed_families(
+                None,
+                None,
+                Vec::new(),
+                vec![shifted_vertex.clone()],
+                vec![shifted_geometry.clone()],
+            );
+
+        assert!(strict_shift_seeds.is_empty());
+        assert_eq!(shifted_vertices, vec![shifted_vertex]);
+        assert_eq!(shifted_geometry_seeds, vec![shifted_geometry]);
     }
 
     #[test]
