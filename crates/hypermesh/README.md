@@ -264,7 +264,11 @@ corridor, and partially uncertified local normal crossings no longer abort the
 whole corridor family before later exact corridors run, while exact boundary
 contacts at the start point or along a local normal crossing now count as
 `UnknownClassification` for that corridor candidate instead of ordinary stop
-membership. Full
+membership. The live leaf-classification path now also searches those normal
+corridors progressively, trying each strict retained-definition family before
+building later corridor families, so successful BSP-fragment leaf
+classifications no longer materialize the full normal-probe family up front.
+Full
 plane-replacement coverage for every reference/probe construction remains
 unfinished, though probe and reference fallback now both retry from the
 reference point's exact axis-plane definition even when other retained start

@@ -90,6 +90,7 @@ struct ProbePointFamilyCacheEntry {
     probes: HypermeshResult<Vec<ProbePoint>>,
 }
 
+#[cfg(test)]
 #[derive(Clone, Debug, PartialEq)]
 struct NormalProbeFamilyCacheEntry {
     interior_point: Point3,
@@ -113,6 +114,8 @@ struct AxisProbeFamilyCacheEntry {
 
 #[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
+    #[cfg(test)]
+    #[cfg_attr(test, allow(dead_code))]
     normal_probe_families: Vec<NormalProbeFamilyCacheEntry>,
     axis_probe_families: Vec<AxisProbeFamilyCacheEntry>,
     #[cfg(test)]
@@ -2446,22 +2449,15 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
 
     for point in interior_points {
         for positive_side in [true, false] {
-            if let Some(winding) = try_leaf_probe_family_with_queries(
+            if let Some(winding) = search_adjacent_normal_probe_winding_with_queries(
                 point,
                 positive_side,
-                cached_adjacent_normal_probes_with(
-                    &mut probe_query_caches.normal_probe_families,
-                    point,
-                    support,
-                    bounds,
-                    positive_side,
-                    || adjacent_normal_probes(point, support, bounds, polygons, positive_side),
-                ),
                 support,
                 ref_point,
                 ref_definitions,
                 ref_wnv,
                 polygons,
+                bounds,
                 host_delta_w,
                 probe_query_caches,
                 &mut saw_unknown,
@@ -2524,6 +2520,99 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
 
     let _ = saw_unknown;
     Err(HypermeshError::UnknownClassification)
+}
+
+fn search_adjacent_normal_probe_winding_with_queries(
+    point: &InteriorLeafPoint,
+    positive_side: bool,
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let retained_definitions = unique_normal_probe_search_definitions(&point.planes, support)?;
+    let direction = if positive_side {
+        support.normal.clone()
+    } else {
+        Point3::new(
+            -support.normal.x.clone(),
+            -support.normal.y.clone(),
+            -support.normal.z.clone(),
+        )
+    };
+    let (stop_values, local_unknown) = adjacent_normal_probe_stop_values_with_queries(
+        &point.point,
+        &direction,
+        support,
+        bounds,
+        polygons,
+        &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
+        &mut |candidate, polygon| classify_point_in_polygon(candidate, polygon),
+    )?;
+    *saw_unknown |= local_unknown;
+
+    for stop_t in stop_values {
+        if !compare_real(&stop_t, &Real::zero())?.is_gt() {
+            continue;
+        }
+        let stop_point = offset_point(&point.point, &direction, &stop_t);
+        let corridor = bounds_between_points(&point.point, &stop_point)?;
+
+        for definition in &retained_definitions {
+            if let Some(winding) = try_leaf_probe_family_with_queries(
+                point,
+                positive_side,
+                strict_normal_probe_targets(
+                    point,
+                    support,
+                    &corridor,
+                    Some(definition),
+                    &stop_point,
+                    positive_side,
+                ),
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                saw_unknown,
+            )? {
+                return Ok(Some(winding));
+            }
+        }
+
+        if let Some(winding) = try_leaf_probe_family_with_queries(
+            point,
+            positive_side,
+            strict_normal_probe_targets(
+                point,
+                support,
+                &corridor,
+                None,
+                &stop_point,
+                positive_side,
+            ),
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+        )? {
+            return Ok(Some(winding));
+        }
+    }
+
+    Ok(None)
 }
 
 fn try_leaf_probe_family_with_queries(
@@ -2626,6 +2715,7 @@ fn try_leaf_probe_family_with_queries(
     Ok(None)
 }
 
+#[cfg(test)]
 fn cached_adjacent_normal_probes_with(
     cache: &mut Vec<NormalProbeFamilyCacheEntry>,
     interior: &InteriorLeafPoint,
@@ -6031,6 +6121,7 @@ fn definition_has_coplanar_pair(definition: &[Plane; 3]) -> HypermeshResult<bool
     Ok(false)
 }
 
+#[cfg(test)]
 fn adjacent_normal_probes(
     interior: &InteriorLeafPoint,
     support: &Plane,
@@ -6062,6 +6153,7 @@ fn adjacent_normal_probes(
     )
 }
 
+#[cfg(test)]
 fn adjacent_normal_probes_with_queries(
     interior: &InteriorLeafPoint,
     support: &Plane,
@@ -6312,6 +6404,7 @@ fn push_unique_probe_point(probes: &mut Vec<ProbePoint>, probe: ProbePoint) -> b
     }
 }
 
+#[cfg(test)]
 fn collect_normal_probe_targets(
     definitions: &[[Plane; 3]],
     mut search: impl FnMut(Option<&[Plane; 3]>) -> HypermeshResult<Vec<ProbePoint>>,
