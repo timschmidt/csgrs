@@ -5040,7 +5040,7 @@ fn probe_definitions_or_axis(
     result: HypermeshResult<DefinitionFamilyState>,
 ) -> HypermeshResult<(Vec<[Plane; 3]>, bool)> {
     match result {
-        Ok(found) => Ok((found.definitions, found.saw_unknown)),
+        Ok(found) => Ok((found.definitions, false)),
         Err(HypermeshError::UnknownClassification) => {
             Ok((vec![axis_plane_definition(witness)], true))
         }
@@ -5054,7 +5054,22 @@ fn push_verified_probe_definition(
     witness: &Point3,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<()> {
-    match affine_from_planes(&definition) {
+    if definition_has_coplanar_pair(&definition)? {
+        return Ok(());
+    }
+    let homogeneous = intersect_three_planes(&definition[0], &definition[1], &definition[2]);
+    let w_class = match classify_real(&homogeneous.w) {
+        Ok(classification) => classification,
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            return Ok(());
+        }
+        Err(err) => return Err(err),
+    };
+    if w_class == Classification::On {
+        return Ok(());
+    }
+    match homogeneous.to_affine_point() {
         Ok(point) if point == *witness => {
             if !definitions
                 .iter()
@@ -5064,12 +5079,22 @@ fn push_verified_probe_definition(
             }
         }
         Ok(_) => {}
-        Err(HypermeshError::UnknownClassification) => {
+        Err(_) => {
             *saw_unknown = true;
         }
-        Err(err) => return Err(err),
     }
     Ok(())
+}
+
+fn definition_has_coplanar_pair(definition: &[Plane; 3]) -> HypermeshResult<bool> {
+    for first in 0..3 {
+        for second in (first + 1)..3 {
+            if planes_are_coplanar(&definition[first], &definition[second])? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn adjacent_normal_probes(
@@ -5486,15 +5511,40 @@ fn strict_normal_probe_targets(
         },
         &mut saw_unknown,
     )?;
-    extend_probe_point_builds_backtracking_unknown(
-        &mut probes,
-        shifted_witnesses.iter(),
+    let certified_probe_points = probes
+        .iter()
+        .filter(|probe| !probe.uncertified_definition_fallback)
+        .map(|probe| probe.point.clone())
+        .collect::<Vec<_>>();
+    let mut shifted_probes = Vec::new();
+    match extend_probe_point_builds_backtracking_unknown(
+        &mut shifted_probes,
+        shifted_witnesses.iter().filter(|shifted| {
+            !certified_probe_points
+                .iter()
+                .any(|point| *point == shifted.point)
+        }),
         |shifted| build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes),
-    )?;
-    if probes.is_empty() && saw_unknown {
+    ) {
+        Ok(()) => {}
+        Err(HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
+    }
+    for probe in shifted_probes {
+        push_unique_probe_point(&mut probes, probe);
+    }
+    let unresolved_fallback = probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
+    let has_certified_probe = probes
+        .iter()
+        .any(|probe| !probe.uncertified_definition_fallback);
+    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
             mark_all_probe_points_uncertified(&mut probes);
         }
         Ok(probes)
@@ -5569,15 +5619,40 @@ fn strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
         },
         &mut saw_unknown,
     )?;
-    extend_probe_point_builds_backtracking_unknown(
-        &mut probes,
-        shifted_witnesses.iter(),
+    let certified_probe_points = probes
+        .iter()
+        .filter(|probe| !probe.uncertified_definition_fallback)
+        .map(|probe| probe.point.clone())
+        .collect::<Vec<_>>();
+    let mut shifted_probes = Vec::new();
+    match extend_probe_point_builds_backtracking_unknown(
+        &mut shifted_probes,
+        shifted_witnesses.iter().filter(|shifted| {
+            !certified_probe_points
+                .iter()
+                .any(|point| *point == shifted.point)
+        }),
         |shifted| build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes),
-    )?;
-    if probes.is_empty() && saw_unknown {
+    ) {
+        Ok(()) => {}
+        Err(HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+        }
+        Err(err) => return Err(err),
+    }
+    for probe in shifted_probes {
+        push_unique_probe_point(&mut probes, probe);
+    }
+    let unresolved_fallback = probes
+        .iter()
+        .any(|probe| probe.uncertified_definition_fallback);
+    let has_certified_probe = probes
+        .iter()
+        .any(|probe| !probe.uncertified_definition_fallback);
+    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
             mark_all_probe_points_uncertified(&mut probes);
         }
         Ok(probes)
@@ -9202,6 +9277,274 @@ mod tests {
     }
 
     #[test]
+    fn bounded_probes_find_positive_probe_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let interior_points = certified_leaf_interior_points(&wall.support, &wall.edges).unwrap();
+
+        assert!(!interior_points.is_empty());
+        assert!(interior_points.iter().any(|point| !point.planes.is_empty()));
+
+        let probes = bounded_probes_from_interior(
+            &interior_points[0],
+            &wall.support,
+            &bounds,
+            true,
+            &[wall.clone()],
+        )
+        .unwrap();
+
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.side == Classification::Positive)
+        );
+    }
+
+    #[test]
+    fn bounded_probes_keep_positive_probe_before_intervening_surface() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let mut blocker = make_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+        blocker.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, -2, -2), p(5, 2, 2));
+        let interior_points = certified_leaf_interior_points(&wall.support, &wall.edges).unwrap();
+
+        let probes = bounded_probes_from_interior(
+            &interior_points[0],
+            &wall.support,
+            &bounds,
+            true,
+            &[wall.clone(), blocker],
+        )
+        .unwrap();
+
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.side == Classification::Positive)
+        );
+    }
+
+    #[test]
+    fn positive_probe_traces_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let ref_point = p(0, 0, 0);
+        let ref_definitions = vec![axis_plane_definition(&ref_point)];
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        assert!(!interior.uncertified_definition_fallback);
+        let probe =
+            bounded_probes_from_interior(&interior, &wall.support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        assert!(!probe.uncertified_definition_fallback);
+
+        assert!(!point_lies_on_traced_surface(&probe.point, &[wall.clone()]).unwrap());
+        assert!(
+            probe_reaches_adjacent_cell_from_interior(
+                &interior,
+                &probe,
+                &wall.support,
+                &[wall.clone()],
+            )
+            .unwrap()
+        );
+
+        let winding =
+            trace_probe_winding(&ref_point, &ref_definitions, &probe, &[0], &[wall.clone()])
+                .unwrap();
+
+        assert_eq!(winding.len(), 1);
+    }
+
+    #[test]
+    fn adjacent_normal_probes_stay_certified_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+
+        let probes = adjacent_normal_probes(&interior, &support, &bounds, &[wall], true).unwrap();
+
+        assert!(
+            probes
+                .iter()
+                .any(|probe| !probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn strict_normal_probe_targets_stay_certified_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        let existing_probe =
+            bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        let corridor = bounds_between_points(&interior.point, &existing_probe.point).unwrap();
+
+        let probes = strict_normal_probe_targets(
+            &interior,
+            &support,
+            &corridor,
+            Some(&interior.planes[0]),
+            &existing_probe.point,
+            true,
+        )
+        .unwrap();
+
+        assert!(
+            probes
+                .iter()
+                .any(|probe| !probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn strict_normal_probe_direct_seed_phase_stays_certified_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        let existing_probe =
+            bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        let corridor = bounds_between_points(&interior.point, &existing_probe.point).unwrap();
+
+        let mut halfspaces = aabb_core_halfspaces(&corridor).unwrap();
+        halfspaces.push(support_side_halfspace(&support, true));
+        halfspaces.push(normal_stop_halfspace(&support, &existing_probe.point, true));
+        let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+        assert!(!saw_unknown);
+        let (seeds, shifted_vertices, shifted_geometry_seeds) =
+            halfspace_cell_seed_families_from_optional_report(
+                &corridor,
+                &halfspaces,
+                report.as_ref(),
+                &mut saw_unknown,
+            )
+            .unwrap();
+
+        let probes = strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
+            &interior,
+            &support,
+            &corridor,
+            Some(&interior.planes[0]),
+            &existing_probe.point,
+            true,
+            report.as_ref(),
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+            |_seed| Ok(Vec::new()),
+        )
+        .unwrap();
+
+        assert!(
+            probes
+                .iter()
+                .any(|probe| !probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn direct_normal_probe_seed_build_stays_certified_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        let existing_probe =
+            bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        let corridor = bounds_between_points(&interior.point, &existing_probe.point).unwrap();
+
+        let mut halfspaces = aabb_core_halfspaces(&corridor).unwrap();
+        halfspaces.push(support_side_halfspace(&support, true));
+        halfspaces.push(normal_stop_halfspace(&support, &existing_probe.point, true));
+        let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces).unwrap();
+        assert!(!saw_unknown);
+        let (seeds, _shifted_vertices, _shifted_geometry_seeds) =
+            halfspace_cell_seed_families_from_optional_report(
+                &corridor,
+                &halfspaces,
+                report.as_ref(),
+                &mut saw_unknown,
+            )
+            .unwrap();
+
+        let mut extra_planes = Vec::new();
+        for definition in &interior.planes {
+            for plane in &definition[1..] {
+                if !extra_planes.iter().any(|existing| existing == plane) {
+                    extra_planes.push(plane.clone());
+                }
+            }
+        }
+
+        let built = seeds
+            .iter()
+            .filter_map(|seed| {
+                build_probe_point(
+                    seed,
+                    &corridor,
+                    &support,
+                    &halfspaces,
+                    active_planes_from_optional_report(report.as_ref(), seed),
+                    &extra_planes,
+                    false,
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+
+        assert!(!built.is_empty());
+        assert!(
+            built
+                .iter()
+                .any(|probe| !probe.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
     fn bounded_probe_family_collection_backtracks_after_uncertified_family() {
         let constrained_probe = ProbePoint {
             point: p(1, 1, 1),
@@ -12439,7 +12782,7 @@ mod tests {
         )
         .unwrap();
 
-        assert!(definitions.saw_unknown);
+        assert!(!definitions.saw_unknown);
         assert!(
             definitions
                 .definitions
@@ -12464,7 +12807,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_probe_witness_retains_axis_definition_when_active_replay_fails() {
+    fn strict_probe_witness_stays_certified_when_active_replay_is_singular() {
         let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let witness = p(1, 1, 1);
@@ -12483,7 +12826,7 @@ mod tests {
         .expect("strict probe witness should still be retained");
 
         assert_eq!(probe.point, witness);
-        assert!(probe.uncertified_definition_fallback);
+        assert!(!probe.uncertified_definition_fallback);
         assert!(probe.planes.iter().any(|definition| {
             definition_planes_match_as_sets(definition, &axis_plane_definition(&probe.point))
         }));
@@ -12608,7 +12951,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_axis_probe_witness_retains_axis_definition_when_active_replay_fails() {
+    fn strict_axis_probe_witness_stays_certified_when_active_replay_is_singular() {
         let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
         let interior = InteriorLeafPoint {
@@ -12634,7 +12977,7 @@ mod tests {
         .expect("strict axis probe witness should still be retained");
 
         assert_eq!(probe.point, witness);
-        assert!(probe.uncertified_definition_fallback);
+        assert!(!probe.uncertified_definition_fallback);
         assert!(probe.planes.iter().any(|definition| {
             definition_planes_match_as_sets(definition, &axis_plane_definition(&probe.point))
         }));
