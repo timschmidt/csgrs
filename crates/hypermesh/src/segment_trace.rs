@@ -596,9 +596,11 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
             && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+        let zero_length_definition_transition =
+            start_definition_transition || end_definition_transition;
         let already_visited =
             visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
-        let on_surface = if already_visited {
+        let on_surface = if already_visited || zero_length_definition_transition {
             false
         } else {
             match cached_surface_query_with(surface_cache, &detour.point, || {
@@ -3127,9 +3129,11 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
             && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+        let zero_length_definition_transition =
+            start_definition_transition || end_definition_transition;
         let already_visited =
             visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
-        let on_surface = if already_visited {
+        let on_surface = if already_visited || zero_length_definition_transition {
             false
         } else {
             match cached_surface_query_with(surface_cache, &detour.point, || {
@@ -3633,9 +3637,11 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
             && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+        let zero_length_definition_transition =
+            start_definition_transition || end_definition_transition;
         let already_visited =
             visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
-        let on_surface = if already_visited {
+        let on_surface = if already_visited || zero_length_definition_transition {
             false
         } else {
             match cached_surface_query_with(surface_cache, &detour.point, || {
@@ -14793,6 +14799,73 @@ mod tests {
     }
 
     #[test]
+    fn detour_trace_cycle_guard_allows_same_point_definition_transition_on_surface() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_start_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
+        ];
+
+        let winding = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+            &start,
+            &end,
+            &[5],
+            &[],
+            std::slice::from_ref(&start_definition),
+            std::slice::from_ref(&end_definition),
+            &initial_visited_definition_points(
+                &start,
+                std::slice::from_ref(&start_definition),
+                &end,
+                std::slice::from_ref(&end_definition),
+            ),
+            &mut Vec::new(),
+            &mut |point| Ok(*point == start),
+            &mut |from, to, winding, start_definitions, end_definitions| {
+                if *from == start
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(None)
+                } else if *from == start
+                    && *to == start
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&lifted_start_definition)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else if *from == start
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&lifted_start_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(Some(vec![7]))
+                } else {
+                    Ok(None)
+                }
+            },
+            &mut |from, to| {
+                if *from == start && *to == end {
+                    Ok(vec![DetourTarget {
+                        point: start.clone(),
+                        definitions: vec![lifted_start_definition.clone()],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
     fn detour_trace_cycle_guard_allows_revisiting_point_with_new_definitions() {
         let start = p(0, 0, 0);
         let shared = p(1, 0, 0);
@@ -15772,6 +15845,62 @@ mod tests {
     }
 
     #[test]
+    fn probe_step_detour_cycle_guard_allows_same_point_definition_transition_on_surface() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_start_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
+        ];
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &initial_visited_definition_points(
+                    &start,
+                    std::slice::from_ref(&start_definition),
+                    &end,
+                    std::slice::from_ref(&end_definition),
+                ),
+                std::slice::from_ref(&start_definition),
+                std::slice::from_ref(&end_definition),
+                &mut Vec::new(),
+                &mut |point| Ok(*point == start),
+                &mut |from, to, start_definitions, end_definitions| {
+                    Ok(
+                        (*from == start
+                            && *to == start
+                            && start_definitions == std::slice::from_ref(&start_definition)
+                            && end_definitions == std::slice::from_ref(&lifted_start_definition))
+                            || (*from == start
+                                && *to == end
+                                && start_definitions
+                                    == std::slice::from_ref(&lifted_start_definition)
+                                && end_definitions == std::slice::from_ref(&end_definition)),
+                    )
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: start.clone(),
+                            definitions: vec![lifted_start_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
     fn probe_step_detour_cycle_guard_allows_revisiting_point_with_new_definitions() {
         let start = p(0, 0, 0);
         let shared = p(1, 0, 0);
@@ -16588,6 +16717,59 @@ mod tests {
                 ),
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &mut |from, to, start_definitions, end_definitions| {
+                    Ok((*from == start
+                        && *to == start
+                        && start_definitions == std::slice::from_ref(&start_definition)
+                        && end_definitions == std::slice::from_ref(&lifted_start_definition))
+                        || (*from == start
+                            && *to == end
+                            && start_definitions == std::slice::from_ref(&lifted_start_definition)
+                            && end_definitions == std::slice::from_ref(&end_definition)))
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: start.clone(),
+                            definitions: vec![lifted_start_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_cycle_guard_allows_same_point_definition_transition_on_surface() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_start_definition = [
+            Plane::axis_aligned(0, r(0)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(0)),
+        ];
+
+        assert!(
+            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                std::slice::from_ref(&start_definition),
+                std::slice::from_ref(&end_definition),
+                &initial_visited_definition_points(
+                    &start,
+                    std::slice::from_ref(&start_definition),
+                    &end,
+                    std::slice::from_ref(&end_definition),
+                ),
+                &mut Vec::new(),
+                &mut |point| Ok(*point == start),
                 &mut |from, to, start_definitions, end_definitions| {
                     Ok((*from == start
                         && *to == start
