@@ -6989,10 +6989,16 @@ fn shifted_halfspace_cell_witnesses_from_seed(
         },
     )?;
 
-    if witnesses.is_empty() && saw_unknown {
+    let unresolved_fallback = witnesses
+        .iter()
+        .any(|witness| witness.uncertified_definition_fallback);
+    let has_certified_witness = witnesses
+        .iter()
+        .any(|witness| !witness.uncertified_definition_fallback);
+    if witnesses.is_empty() && (saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_witness && (saw_unknown || unresolved_fallback) {
             mark_all_shifted_halfspace_witnesses_uncertified(&mut witnesses);
         }
         Ok(witnesses)
@@ -9347,7 +9353,7 @@ mod tests {
     }
 
     #[test]
-    fn shifted_halfspace_witnesses_mark_survivors_uncertain_after_boundary_seed_candidate() {
+    fn shifted_halfspace_witnesses_keep_certified_survivors_after_boundary_seed_candidate() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
@@ -9358,7 +9364,7 @@ mod tests {
         assert!(
             witnesses
                 .iter()
-                .all(|witness| witness.uncertified_definition_fallback)
+                .any(|witness| !witness.uncertified_definition_fallback)
         );
     }
 
