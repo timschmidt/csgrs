@@ -401,7 +401,6 @@ fn process_leaf_into_inner_with_pairwise_cache(
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
     };
-    let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
     let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
     if polygons.is_empty() {
         stats.certified_complete = true;
@@ -422,6 +421,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
     for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
         let polygon = &polygons[index];
         if intersections[index].is_empty() {
+            let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
             let emitted = emit_one_direct(
                 polygon,
                 bounds,
@@ -453,6 +453,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
             let (interior_points, effective_delta_w) =
                 certify_bsp_leaf(polygon, &leaf.edges, polygons, &intersections[index])?;
             stats.bsp_leaf_count += 1;
+            let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
             let w_front = cached_leaf_classification_with(
                 &mut leaf_classification_cache.borrow_mut(),
                 Some(&leaf_cache_context),
