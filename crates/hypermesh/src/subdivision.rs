@@ -2949,6 +2949,49 @@ fn ordered_subdivision_splits_with_partition_cache(
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
+    let unique = unique_subdivision_split_attempts_with_partition_cache(
+        bounds,
+        polygons,
+        axis_values_cache,
+        partition_cache,
+        polygon_bounds_cache,
+        pairwise_cache,
+    )?;
+    let mut ranked_attempts = Vec::with_capacity(unique.len());
+    for attempt in unique {
+        let fanout_key = split_attempt_child_fanout_key(
+            &attempt,
+            axis_values_cache,
+            partition_cache,
+            polygon_bounds_cache,
+            pairwise_cache,
+        )?;
+        ranked_attempts.push((attempt, fanout_key));
+    }
+    ranked_attempts.sort_by(|left, right| {
+        left.1
+            .cmp(&right.1)
+            .then_with(|| {
+                split_attempt_recursive_room_key(&left.0)
+                    .cmp(&split_attempt_recursive_room_key(&right.0))
+            })
+            .then_with(|| left.0.counts.cmp(&right.0.counts))
+            .then_with(|| left.0.source.cmp(&right.0.source))
+    });
+    Ok(ranked_attempts
+        .into_iter()
+        .map(|(attempt, _)| attempt)
+        .collect())
+}
+
+fn unique_subdivision_split_attempts_with_partition_cache(
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+) -> HypermeshResult<Vec<RankedSplitAttempt>> {
     let mut candidates = Vec::new();
     let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
     let intersection_segments =
@@ -3076,12 +3119,6 @@ fn ordered_subdivision_splits_with_partition_cache(
             });
         }
     }
-    unique.sort_by(|left, right| {
-        split_attempt_recursive_room_key(left)
-            .cmp(&split_attempt_recursive_room_key(right))
-            .then_with(|| left.counts.cmp(&right.counts))
-            .then_with(|| left.source.cmp(&right.source))
-    });
     Ok(unique)
 }
 
@@ -3099,6 +3136,46 @@ fn split_attempt_recursive_room_key(attempt: &RankedSplitAttempt) -> (usize, usi
         left_axes + right_axes,
         left_axes.abs_diff(right_axes),
     )
+}
+
+fn split_attempt_child_fanout_key(
+    attempt: &RankedSplitAttempt,
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+) -> HypermeshResult<(usize, usize, usize)> {
+    let left_count = if let Some(bounds) = attempt.left_bounds.as_ref() {
+        unique_subdivision_split_attempts_with_partition_cache(
+            bounds,
+            &attempt.left_polys,
+            axis_values_cache,
+            partition_cache,
+            polygon_bounds_cache,
+            pairwise_cache,
+        )
+        .map(|attempts| attempts.len())?
+    } else {
+        0
+    };
+    let right_count = if let Some(bounds) = attempt.right_bounds.as_ref() {
+        unique_subdivision_split_attempts_with_partition_cache(
+            bounds,
+            &attempt.right_polys,
+            axis_values_cache,
+            partition_cache,
+            polygon_bounds_cache,
+            pairwise_cache,
+        )
+        .map(|attempts| attempts.len())?
+    } else {
+        0
+    };
+    Ok((
+        left_count.max(right_count),
+        left_count + right_count,
+        left_count.abs_diff(right_count),
+    ))
 }
 
 fn positive_extent_axis_count(bounds: &Aabb) -> usize {
@@ -12004,6 +12081,89 @@ mod tests {
 
             assert_same_shape(&alternate_soup, &general_soup);
         }
+    }
+
+    #[test]
+    fn ordered_subdivision_splits_prefers_lower_downstream_fanout_for_full_soup_hot_child() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let caches = SubdivisionRuntimeCaches::default();
+        let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+            &SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            ),
+            &caches,
+        )
+        .unwrap()
+        .unwrap_or_else(|| {
+            SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            )
+        });
+
+        let root_attempts = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &root_task.bounds,
+            &root_task.polygons,
+        )
+        .unwrap();
+        let hot_root_attempt = root_attempts
+            .into_iter()
+            .find(|attempt| {
+                let mut sizes = [attempt.left_polys.len(), attempt.right_polys.len()];
+                sizes.sort_unstable();
+                sizes == [6, 10]
+            })
+            .unwrap();
+        let hot_child = ordered_split_attempt_children(
+            &root_task.polygons,
+            hot_root_attempt.left_polys,
+            hot_root_attempt.left_bounds,
+            hot_root_attempt.right_polys,
+            hot_root_attempt.right_bounds,
+        )
+        .into_iter()
+        .find(|child| child.polygons.len() == 10)
+        .unwrap();
+        let (hot_ref, hot_defs, hot_wnv) =
+            propagate_child_reference(&root_task, &hot_child.polygons, &hot_child.bounds, &caches)
+                .unwrap();
+        let hot_task = SubdivisionTask {
+            polygons: hot_child.polygons,
+            bounds: hot_child.bounds,
+            ref_point: hot_ref,
+            ref_definitions: hot_defs,
+            ref_wnv: hot_wnv,
+            depth: root_task.depth + 1,
+        };
+
+        let hot_attempts = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &hot_task.bounds,
+            &hot_task.polygons,
+        )
+        .unwrap();
+        let first = hot_attempts.first().unwrap();
+        let mut first_sizes = [first.left_polys.len(), first.right_polys.len()];
+        first_sizes.sort_unstable();
+
+        assert_eq!(first_sizes, [5, 9]);
     }
 
     #[test]
