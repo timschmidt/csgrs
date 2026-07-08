@@ -1366,19 +1366,43 @@ fn reusable_child_subdivision_if_certified(
     Ok(None)
 }
 
+fn cache_child_subdivision_result(
+    cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
+    task: &SubdivisionTask,
+    result: &HypermeshResult<Vec<ClassifiedPolygon>>,
+) {
+    if cache.borrow().iter().any(|existing| existing.task == *task) {
+        return;
+    }
+
+    cache.borrow_mut().push(ChildSubdivisionCacheEntry {
+        polygon_profile: polygon_family_profile(&task.polygons),
+        task: task.clone(),
+        result: result.clone(),
+    });
+}
+
 fn cached_child_subdivision_with(
     cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
     task: &SubdivisionTask,
     query: impl FnOnce() -> HypermeshResult<Vec<ClassifiedPolygon>>,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let polygon_profile = polygon_family_profile(&task.polygons);
-    if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.polygon_profile == polygon_profile
-            && subdivision_task_state_matches_for_cache(&existing.task, task)
-            && (existing.task.depth == task.depth
-                || (existing.task.depth > task.depth && existing.result.is_ok()))
-    }) {
-        return existing.result.clone();
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.polygon_profile == polygon_profile
+                && subdivision_task_state_matches_for_cache(&existing.task, task)
+                && (existing.task.depth == task.depth
+                    || (existing.task.depth > task.depth && existing.result.is_ok()))
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.task != *task {
+            cache_child_subdivision_result(cache, task, &existing.result);
+        }
+        return existing.result;
     }
 
     let result = query();
@@ -13014,6 +13038,43 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let task = SubdivisionTask::new(
+            vec![polygon_a.clone(), polygon_b.clone()],
+            Aabb::new(p(0, 0, 0), p(1, 1, 1)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let mut permuted_task = task.clone();
+        permuted_task.polygons = vec![polygon_b, polygon_a];
+        let cache = RefCell::new(Vec::new());
+
+        cached_child_subdivision_with(&cache, &task, || {
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+                1,
+            )])
+        })
+        .unwrap();
+        cached_child_subdivision_with(&cache, &permuted_task, || {
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+                1,
+            )])
+        })
+        .unwrap();
+
+        assert!(
+            cache
+                .borrow()
+                .iter()
+                .any(|existing| existing.task == permuted_task)
+        );
     }
 
     #[test]
