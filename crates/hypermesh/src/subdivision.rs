@@ -939,14 +939,11 @@ fn propagate_child_reference(
 
 #[cfg(test)]
 fn recursive_child_bounds(
-    parent_polygons: &[ConvexPolygon],
+    _parent_polygons: &[ConvexPolygon],
     child_polygons: &[ConvexPolygon],
-    child_bounds: &Aabb,
+    _child_bounds: &Aabb,
 ) -> HypermeshResult<Aabb> {
-    if polygon_families_match_as_multisets(child_polygons, parent_polygons) {
-        return polygon_family_bounds(child_polygons);
-    }
-    Ok(child_bounds.clone())
+    polygon_family_bounds(child_polygons)
 }
 
 fn cached_polygon_family_bounds_with(
@@ -1012,14 +1009,11 @@ fn cache_polygon_family_bounds_result(
 
 fn cached_recursive_child_bounds_with(
     cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
-    parent_polygons: &[ConvexPolygon],
+    _parent_polygons: &[ConvexPolygon],
     child_polygons: &[ConvexPolygon],
-    child_bounds: &Aabb,
+    _child_bounds: &Aabb,
 ) -> HypermeshResult<Aabb> {
-    if polygon_families_match_as_multisets(child_polygons, parent_polygons) {
-        return cached_polygon_family_bounds_with(cache, child_polygons, polygon_family_bounds);
-    }
-    Ok(child_bounds.clone())
+    cached_polygon_family_bounds_with(cache, child_polygons, polygon_family_bounds)
 }
 
 fn polygon_axis_values(polygons: &[ConvexPolygon]) -> HypermeshResult<[Vec<Real>; 3]> {
@@ -13463,6 +13457,20 @@ mod tests {
         .unwrap();
 
         assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 1)));
+    }
+
+    #[test]
+    fn recursive_child_bounds_contract_changed_polygon_family() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let clipped = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1), 0, 0);
+        let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let child_bounds = parent_bounds.left_half(0, r(5));
+
+        let tightened =
+            recursive_child_bounds(&[polygon_a, polygon_b], &[clipped], &child_bounds).unwrap();
+
+        assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 0, 1)));
     }
 
     #[test]
