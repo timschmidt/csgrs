@@ -349,7 +349,14 @@ fn process_leaf_into_inner(
         &leaf_classification_cache,
         pairwise_intersections_by_polygon,
         build_host_bsp_leaves,
-        certify_bsp_leaf_and_delta_w,
+        |polygon, leaf_edges, polygons, intersections| {
+            certify_bsp_leaf_and_delta_w_with_host_intersections(
+                polygon,
+                leaf_edges,
+                polygons,
+                Some(intersections),
+            )
+        },
     )
 }
 
@@ -372,6 +379,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
         &ConvexPolygon,
         &[crate::geometry::Plane],
         &[ConvexPolygon],
+        &[PairwiseIntersection],
     ) -> HypermeshResult<(
         Vec<crate::segment_trace::InteriorLeafPoint>,
         Vec<i32>,
@@ -429,7 +437,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 continue;
             }
             let (interior_points, effective_delta_w) =
-                certify_bsp_leaf(polygon, &leaf.edges, polygons)?;
+                certify_bsp_leaf(polygon, &leaf.edges, polygons, &intersections[index])?;
             stats.bsp_leaf_count += 1;
             let w_front = cached_leaf_classification_with(
                 &mut leaf_classification_cache.borrow_mut(),
@@ -1870,8 +1878,15 @@ fn process_leaf_task_into_with_caches(
     };
     let bsp_leaf_query = |polygon: &ConvexPolygon,
                           leaf_edges: &[crate::geometry::Plane],
-                          polygons: &[ConvexPolygon]| {
-        cached_bsp_leaf_certification_with(bsp_leaf_cache, polygon, leaf_edges, polygons)
+                          polygons: &[ConvexPolygon],
+                          intersections: &[PairwiseIntersection]| {
+        cached_bsp_leaf_certification_with(
+            bsp_leaf_cache,
+            polygon,
+            leaf_edges,
+            polygons,
+            intersections,
+        )
     };
     process_leaf_into_inner_with_pairwise_cache(
         &task.polygons,
@@ -2077,6 +2092,7 @@ fn cached_bsp_leaf_certification_with(
     host: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
+    intersections: &[PairwiseIntersection],
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
@@ -2088,7 +2104,12 @@ fn cached_bsp_leaf_certification_with(
         return existing.result.clone();
     }
 
-    let result = certify_bsp_leaf_and_delta_w(host, leaf_edges, polygons);
+    let result = certify_bsp_leaf_and_delta_w_with_host_intersections(
+        host,
+        leaf_edges,
+        polygons,
+        Some(intersections),
+    );
     cache.borrow_mut().push(BspLeafCertificationCacheEntry {
         host: host.clone(),
         leaf_edges: leaf_edges.to_vec(),
@@ -2134,10 +2155,20 @@ fn edge_cycles_match_up_to_rotation(left: &[Plane], right: &[Plane]) -> bool {
     false
 }
 
+#[cfg(test)]
 pub(crate) fn certify_bsp_leaf_and_delta_w(
     polygon: &ConvexPolygon,
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
+) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
+    certify_bsp_leaf_and_delta_w_with_host_intersections(polygon, leaf_edges, polygons, None)
+}
+
+fn certify_bsp_leaf_and_delta_w_with_host_intersections(
+    polygon: &ConvexPolygon,
+    leaf_edges: &[crate::geometry::Plane],
+    polygons: &[ConvexPolygon],
+    host_intersections: Option<&[PairwiseIntersection]>,
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
     let leaf_polygon = ConvexPolygon {
         support: polygon.support.clone(),
@@ -2165,10 +2196,10 @@ pub(crate) fn certify_bsp_leaf_and_delta_w(
         .collect::<Vec<_>>();
     let mut delta_w = polygon.delta_w.clone();
 
-    for other in polygons {
-        if other.polygon_index == polygon.polygon_index && other.mesh_index == polygon.mesh_index {
-            continue;
-        }
+    for other_index in
+        bsp_leaf_certification_candidate_indices(polygon, polygons, host_intersections)?
+    {
+        let other = &polygons[other_index];
         if delta_w.len() != other.delta_w.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
@@ -2215,6 +2246,59 @@ pub(crate) fn certify_bsp_leaf_and_delta_w(
     }
 
     Ok((interior_points, delta_w))
+}
+
+fn bsp_leaf_certification_candidate_indices(
+    polygon: &ConvexPolygon,
+    polygons: &[ConvexPolygon],
+    host_intersections: Option<&[PairwiseIntersection]>,
+) -> HypermeshResult<Vec<usize>> {
+    if let Some(host_intersections) = host_intersections {
+        let mut indices = Vec::new();
+        for intersection in host_intersections {
+            let other_index = pairwise_intersection_other_polygon_idx(intersection)?;
+            if polygons.get(other_index).is_some_and(|other| {
+                other.mesh_index == polygon.mesh_index
+                    && other.polygon_index == polygon.polygon_index
+            }) {
+                continue;
+            }
+            if !indices.contains(&other_index) {
+                indices.push(other_index);
+            }
+        }
+        return Ok(indices);
+    }
+
+    Ok(polygons
+        .iter()
+        .enumerate()
+        .filter_map(|(index, other)| {
+            ((other.mesh_index != polygon.mesh_index)
+                || (other.polygon_index != polygon.polygon_index))
+                .then_some(index)
+        })
+        .collect())
+}
+
+fn pairwise_intersection_other_polygon_idx(
+    intersection: &PairwiseIntersection,
+) -> HypermeshResult<usize> {
+    match intersection.kind {
+        PairwiseIntersectionType::Segment => intersection
+            .segment
+            .as_ref()
+            .map(|segment| segment.other_polygon_idx)
+            .ok_or(crate::error::HypermeshError::UnknownClassification),
+        PairwiseIntersectionType::Overlap => intersection
+            .overlap
+            .as_ref()
+            .map(|overlap| overlap.other_polygon_idx)
+            .ok_or(crate::error::HypermeshError::UnknownClassification),
+        PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {
+            Err(crate::error::HypermeshError::UnknownClassification)
+        }
+    }
 }
 
 fn classify_leaf_test_relation(
@@ -10742,19 +10826,51 @@ mod tests {
         cutter.delta_w = vec![0, 1];
         let cache = RefCell::new(Vec::new());
 
+        let first_polygons = vec![host.clone(), cutter.clone()];
+        let first_intersections = pairwise_intersections_by_polygon(&first_polygons).unwrap();
         let first = cached_bsp_leaf_certification_with(
             &cache,
             &host,
             &host.edges,
-            &[host.clone(), cutter.clone()],
+            &first_polygons,
+            &first_intersections[0],
         )
         .unwrap();
-        let second =
-            cached_bsp_leaf_certification_with(&cache, &host, &host.edges, &[cutter, host.clone()])
-                .unwrap();
+
+        let second_polygons = vec![cutter, host.clone()];
+        let second_intersections = pairwise_intersections_by_polygon(&second_polygons).unwrap();
+        let second = cached_bsp_leaf_certification_with(
+            &cache,
+            &host,
+            &host.edges,
+            &second_polygons,
+            &second_intersections[1],
+        )
+        .unwrap();
 
         assert_eq!(first, second);
         assert_eq!(cache.borrow().len(), 1);
+    }
+
+    #[test]
+    fn bsp_leaf_certification_candidate_indices_use_host_segment_and_overlap_only() {
+        let host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let segment_other = make_triangle(&p(1, 0, -1), &p(1, 1, 1), &p(1, 2, -1), 1, 0);
+        let overlap_other = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 2, 0);
+        let skipped_other = make_triangle(&p(0, 0, 1), &p(2, 0, 1), &p(0, 2, 1), 3, 0);
+        let polygons = vec![
+            host.clone(),
+            segment_other.clone(),
+            overlap_other.clone(),
+            skipped_other,
+        ];
+        let intersections = pairwise_intersections_by_polygon(&polygons).unwrap();
+
+        let indices =
+            bsp_leaf_certification_candidate_indices(&host, &polygons, Some(&intersections[0]))
+                .unwrap();
+
+        assert_eq!(indices, vec![1, 2]);
     }
 
     #[test]

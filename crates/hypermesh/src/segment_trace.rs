@@ -18269,12 +18269,17 @@ mod tests {
             .collect::<Vec<_>>();
         let bsp_leaves =
             crate::subdivision::build_host_bsp_leaves(host, &polygons, &intersections).unwrap();
-        let leaf = bsp_leaves
+        let (leaf, interior_points, effective_delta_w) = bsp_leaves
             .iter()
-            .find(|leaf| leaf.edges.len() == 5)
+            .filter_map(|leaf| {
+                crate::subdivision::certify_bsp_leaf_and_delta_w(host, &leaf.edges, &polygons)
+                    .ok()
+                    .map(|(interior_points, effective_delta_w)| {
+                        (leaf, interior_points, effective_delta_w)
+                    })
+            })
+            .max_by_key(|(leaf, _, _)| leaf.edges.len())
             .unwrap();
-        let (interior_points, effective_delta_w) =
-            crate::subdivision::certify_bsp_leaf_and_delta_w(host, &leaf.edges, &polygons).unwrap();
         let interior = interior_points[0].clone();
 
         let normal_start = Instant::now();
@@ -18319,7 +18324,8 @@ mod tests {
         let classify_elapsed = classify_start.elapsed();
 
         eprintln!(
-            "hot leaf probe breakdown: normal={:?} ({} probes), axis={:?} {:?}, classify={:?}, winding={:?}",
+            "hot leaf probe breakdown: edges={} normal={:?} ({} probes), axis={:?} {:?}, classify={:?}, winding={:?}",
+            leaf.edges.len(),
             normal_elapsed,
             normal_probes.len(),
             axis_elapsed,
