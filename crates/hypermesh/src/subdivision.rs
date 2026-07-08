@@ -7192,6 +7192,42 @@ fn shifted_target_seed_families_with_report_seed(
     )
 }
 
+fn support_shifted_target_seed_families(
+    report_witness: Option<&Point3>,
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    direct_targets: &[ReferenceTarget],
+) -> (Vec<Point3>, Vec<Point3>, Vec<Point3>) {
+    if direct_targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback)
+    {
+        let mut strict_shift_seeds = Vec::new();
+        if let Some(report_witness) = report_witness {
+            strict_shift_seeds.push(report_witness.clone());
+        } else if let Some(first_certified_target) = direct_targets
+            .iter()
+            .find(|target| !target.uncertified_definition_fallback)
+        {
+            strict_shift_seeds.push(first_certified_target.point.clone());
+        }
+        return dedupe_shifted_target_seed_families(
+            report_witness,
+            strict_shift_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+    }
+
+    shifted_target_seed_families_with_report_seed(
+        report_witness,
+        strict_seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )
+}
+
 fn push_verified_definition(
     definitions: &mut Vec<[Plane; 3]>,
     definition: [Plane; 3],
@@ -7285,13 +7321,6 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     let mut strict_direct_seed_search_order = Vec::new();
     let strict_direct_seeds =
         take_new_point_family(strict_seeds.clone(), &mut strict_direct_seed_search_order);
-    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        shifted_target_seed_families_with_report_seed(
-            report_witness.as_ref(),
-            strict_seeds,
-            shifted_vertices,
-            shifted_geometry_seeds,
-        );
     let (deferred_direct_targets, direct_unknown) = cached_support_direct_reference_targets_with(
         support_direct_target_cache,
         bounds,
@@ -7322,6 +7351,14 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
             Ok((direct_targets, direct_unknown))
         },
     )?;
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        support_shifted_target_seed_families(
+            report_witness.as_ref(),
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+            &deferred_direct_targets,
+        );
     saw_unknown |= direct_unknown;
     saw_unknown |= extend_reference_target_families_collect_hard_unknown(
         &mut targets,
@@ -16017,6 +16054,58 @@ mod tests {
         assert_eq!(strict_seeds, vec![witness]);
         assert_eq!(shifted_vertices, vec![p(2, 1, 1)]);
         assert_eq!(shifted_geometry_seeds, vec![p(3, 1, 1)]);
+    }
+
+    #[test]
+    fn support_shifted_target_seed_families_keep_one_strict_root_after_certified_direct_target() {
+        let witness = p(1, 1, 1);
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+            support_shifted_target_seed_families(
+                Some(&witness),
+                vec![witness.clone(), p(2, 1, 1)],
+                vec![p(3, 1, 1)],
+                vec![p(4, 1, 1)],
+                &[ReferenceTarget::axis_defined(p(2, 1, 1))],
+            );
+
+        assert_eq!(strict_seeds, vec![witness]);
+        assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
+        assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
+    }
+
+    #[test]
+    fn support_shifted_target_seed_families_fall_back_to_first_certified_direct_target() {
+        let direct_target_point = p(2, 1, 1);
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+            support_shifted_target_seed_families(
+                None,
+                vec![direct_target_point.clone(), p(5, 1, 1)],
+                vec![p(3, 1, 1)],
+                vec![p(4, 1, 1)],
+                &[ReferenceTarget::axis_defined(direct_target_point.clone())],
+            );
+
+        assert_eq!(strict_seeds, vec![direct_target_point]);
+        assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
+        assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
+    }
+
+    #[test]
+    fn support_shifted_target_seed_families_keep_full_strict_family_without_certified_direct_target()
+     {
+        let strict_seed = p(2, 1, 1);
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+            support_shifted_target_seed_families(
+                None,
+                vec![strict_seed.clone()],
+                vec![p(3, 1, 1)],
+                vec![p(4, 1, 1)],
+                &[ReferenceTarget::axis_defined_fallback(p(7, 7, 7))],
+            );
+
+        assert_eq!(strict_seeds, vec![strict_seed]);
+        assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
+        assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
     }
 
     #[test]
