@@ -909,6 +909,7 @@ fn cached_polygon_family_bounds_with(
     let existing = cache
         .borrow()
         .iter()
+        .rev()
         .find(|existing| {
             existing.polygon_profile == polygon_profile
                 && polygon_families_match_as_multisets(&existing.polygons, polygons)
@@ -1036,6 +1037,7 @@ fn cached_ordered_subdivision_splits_with(
     let existing = cache
         .borrow()
         .iter()
+        .rev()
         .find(|existing| {
             existing.bounds == *bounds
                 && existing.polygon_profile == polygon_profile
@@ -1098,7 +1100,7 @@ fn cached_split_child_partition_with(
     let existing = {
         let cache_ref = cache.borrow();
         let mut found = None;
-        for existing in cache_ref.iter() {
+        for existing in cache_ref.iter().rev() {
             if existing.axis == axis
                 && existing.polygon_profile == polygon_profile
                 && polygon_families_match_as_multisets(&existing.polygons, polygons)
@@ -1219,6 +1221,7 @@ fn cached_child_reference_with(
     let existing = cache
         .borrow()
         .iter()
+        .rev()
         .find(|existing| {
             existing.old_ref == *old_ref
                 && reference_definition_families_match_as_sets(
@@ -1600,6 +1603,7 @@ fn cached_child_subdivision_with(
     let existing = cache
         .borrow()
         .iter()
+        .rev()
         .find(|existing| {
             existing.polygon_profile == polygon_profile
                 && subdivision_task_state_matches_for_cache(&existing.task, task)
@@ -2288,6 +2292,7 @@ fn cached_pairwise_intersections_by_polygon_with(
     let existing = cache
         .borrow()
         .iter()
+        .rev()
         .find(|existing| {
             existing.polygon_profile == polygon_profile
                 && (existing.polygons == polygons
@@ -5312,6 +5317,7 @@ fn cached_support_reference_accept_with(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if let Some(existing) = cache
         .iter()
+        .rev()
         .find(|existing| {
             support_reference_cache_context_matches(existing.context.as_ref(), context)
                 && existing.bounds == *bounds
@@ -5519,6 +5525,7 @@ fn cached_support_reference_result_with(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if let Some(existing) = cache
         .iter()
+        .rev()
         .find(|existing| {
             existing.bounds == *bounds
                 && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
@@ -5711,6 +5718,7 @@ fn cached_support_plane_cell_search_with<T: Clone>(
         let cache_ref = cache.borrow();
         cache_ref
             .iter()
+            .rev()
             .find(|existing| {
                 support_reference_cache_context_matches(existing.context.as_ref(), context)
                     && existing.bounds == *bounds
@@ -6258,6 +6266,7 @@ fn cached_reference_escape_search_with(
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
     if let Some(existing) = cache
         .iter()
+        .rev()
         .find(|existing| {
             existing.bounds == *bounds
                 && support_reference_cache_context_matches(Some(&existing.context), Some(context))
@@ -6421,6 +6430,7 @@ fn cached_reference_escape_search_in_query_caches(
         .projection_escape_search_cache
         .borrow()
         .iter()
+        .rev()
         .find(|existing| {
             existing.bounds == *bounds
                 && support_reference_cache_context_matches(Some(&existing.context), Some(context))
@@ -13271,6 +13281,55 @@ mod tests {
     }
 
     #[test]
+    fn cached_child_reference_prefers_newest_exact_alias_state() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let old_ref = p(0, 0, 0);
+        let old_ref_definitions = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+        let cache = RefCell::new(vec![
+            ChildReferenceCacheEntry {
+                source_polygon_profile: polygon_family_profile(&[
+                    polygon_a.clone(),
+                    polygon_b.clone(),
+                ]),
+                source_polygons: vec![polygon_a.clone(), polygon_b.clone()],
+                bounds: bounds.clone(),
+                old_ref: old_ref.clone(),
+                old_ref_definitions: old_ref_definitions.clone(),
+                old_wnv: old_wnv.clone(),
+                result: Ok((p(1, 2, 3), axis_defs(&p(1, 2, 3)), vec![7])),
+            },
+            ChildReferenceCacheEntry {
+                source_polygon_profile: polygon_family_profile(&[
+                    polygon_b.clone(),
+                    polygon_a.clone(),
+                ]),
+                source_polygons: vec![polygon_b.clone(), polygon_a.clone()],
+                bounds: bounds.clone(),
+                old_ref: old_ref.clone(),
+                old_ref_definitions: old_ref_definitions.clone(),
+                old_wnv: old_wnv.clone(),
+                result: Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![9])),
+            },
+        ]);
+
+        let result = cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            &[polygon_b, polygon_a],
+            &bounds,
+            || unreachable!(),
+        )
+        .unwrap();
+
+        assert_eq!(result, (p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![9]));
+    }
+
+    #[test]
     fn cached_child_reference_keeps_distinct_child_bounds_separate() {
         let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let bounds_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
@@ -14089,6 +14148,48 @@ mod tests {
                 .iter()
                 .any(|existing| existing.task == permuted_task)
         );
+    }
+
+    #[test]
+    fn cached_child_subdivision_prefers_newest_exact_alias_state() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let task = SubdivisionTask::new(
+            vec![polygon_b.clone(), polygon_a.clone()],
+            Aabb::new(p(0, 0, 0), p(1, 1, 1)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let older_task = SubdivisionTask::new(
+            vec![polygon_a, polygon_b],
+            task.bounds.clone(),
+            task.ref_point.clone(),
+            task.ref_wnv.clone(),
+        );
+        let older_result = vec![ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            1,
+        )];
+        let newer_result = vec![ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            1,
+        )];
+        let cache = RefCell::new(vec![
+            ChildSubdivisionCacheEntry {
+                polygon_profile: polygon_family_profile(&older_task.polygons),
+                task: older_task,
+                result: Ok(older_result),
+            },
+            ChildSubdivisionCacheEntry {
+                polygon_profile: polygon_family_profile(&task.polygons),
+                task: task.clone(),
+                result: Ok(newer_result.clone()),
+            },
+        ]);
+
+        let result = cached_child_subdivision_with(&cache, &task, || unreachable!()).unwrap();
+
+        assert_eq!(result, newer_result);
     }
 
     #[test]
@@ -17838,6 +17939,43 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_plane_cell_search_prefers_newest_exact_alias_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let cache = std::cell::RefCell::new(vec![
+            SupportPlaneCellSearchCacheEntry {
+                context: None,
+                bounds: bounds.clone(),
+                polygon_index: 3,
+                halfspaces: permuted,
+                result: Ok(Some(17)),
+            },
+            SupportPlaneCellSearchCacheEntry {
+                context: None,
+                bounds: bounds.clone(),
+                polygon_index: 3,
+                halfspaces: halfspaces.clone(),
+                result: Ok(Some(29)),
+            },
+        ]);
+
+        let result = cached_support_plane_cell_search_with(
+            &cache,
+            None,
+            [false, true],
+            &bounds,
+            3,
+            halfspaces,
+            || unreachable!(),
+        )
+        .unwrap();
+
+        assert_eq!(result, Some(29));
+    }
+
+    #[test]
     fn support_plane_cell_search_cache_reuses_same_normalized_polygon_index() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let polygon = support_only_polygon(Plane::axis_aligned(0, r(2)));
@@ -18420,6 +18558,52 @@ mod tests {
             cache
                 .iter()
                 .any(|entry| entry.context == permuted_context && entry.bounds == bounds)
+        );
+    }
+
+    #[test]
+    fn cached_reference_escape_search_prefers_newest_exact_alias_state() {
+        let bounds = Aabb::new(p(1, 2, 3), p(4, 5, 6));
+        let old_ref = p(0, 0, 0);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let definition_a = axis_plane_definition(&old_ref);
+        let definition_b = axis_plane_definition(&p(1, 0, 0));
+        let exact_context = support_reference_cache_context_key(
+            &old_ref,
+            &[definition_a.clone(), definition_b.clone()],
+            &[0],
+            &polygons,
+        );
+        let equivalent_context = support_reference_cache_context_key(
+            &old_ref,
+            &[definition_b, definition_a],
+            &[0],
+            &polygons,
+        );
+        let mut cache = vec![
+            ProjectionEscapeSearchCacheEntry {
+                context: equivalent_context,
+                bounds: bounds.clone(),
+                result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![11]))),
+            },
+            ProjectionEscapeSearchCacheEntry {
+                context: exact_context.clone(),
+                bounds: bounds.clone(),
+                result: Ok(Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![13]))),
+            },
+        ];
+
+        let result = cached_reference_escape_search_with(
+            &mut cache,
+            &exact_context,
+            &bounds,
+            |_| unreachable!(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            result,
+            Some((ReferenceTarget::axis_defined(p(2, 2, 2)), vec![13]))
         );
     }
 
