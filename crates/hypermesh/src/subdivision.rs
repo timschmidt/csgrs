@@ -5682,6 +5682,67 @@ fn cached_support_plane_cell_search_with<T: Clone>(
     result
 }
 
+fn reusable_support_plane_cell_search_result_if_certified(
+    cache: &std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
+    context: &SupportReferenceCacheContextKey,
+    bounds: &Aabb,
+    polygon_index: usize,
+    halfspaces: &[LimitPlane3],
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let candidates = cache
+        .borrow()
+        .iter()
+        .filter(|existing| {
+            support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
+                && existing.polygon_index == polygon_index
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+        })
+        .filter_map(|existing| match &existing.result {
+            Ok(Some((target, winding))) => {
+                Some((existing.bounds.clone(), target.clone(), winding.clone()))
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    for (existing_bounds, target, winding) in candidates {
+        if !bounds_contains_bounds(&existing_bounds, bounds)? {
+            continue;
+        }
+
+        let valid_for_bounds = cached_reference_bounds_validity_with_context(
+            validity_cache,
+            Some(context),
+            bounds,
+            &target.point,
+            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+        )?;
+        if !valid_for_bounds {
+            continue;
+        }
+
+        let reused = Some((target, winding));
+        if !cache.borrow().iter().any(|existing| {
+            support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
+                && existing.bounds == *bounds
+                && existing.polygon_index == polygon_index
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+        }) {
+            cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
+                context: Some(context.clone()),
+                bounds: bounds.clone(),
+                polygon_index,
+                halfspaces: halfspaces.to_vec(),
+                result: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
+
+    Ok(None)
+}
+
 fn limit_plane_families_match_as_sets(left: &[LimitPlane3], right: &[LimitPlane3]) -> bool {
     if left.len() != right.len() {
         return false;
@@ -6619,6 +6680,18 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     };
     let cache_context =
         support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
+    let normalized_polygon_index =
+        advance_fixed_support_search_index(polygons, 0, halfspaces.as_slice());
+    if let Some(reused) = reusable_support_plane_cell_search_result_if_certified(
+        search_cache,
+        &cache_context,
+        bounds,
+        normalized_polygon_index,
+        halfspaces,
+        validity_cache,
+    )? {
+        return Ok(Some(reused));
+    }
 
     let mut accept = |halfspaces: &[LimitPlane3],
                       report: Option<hyperlimit::HalfspaceFeasibilityReport>|
@@ -17449,6 +17522,81 @@ mod tests {
 
         assert_eq!(calls, 2);
         assert_ne!(first, second);
+    }
+
+    #[test]
+    fn reusable_support_plane_cell_search_result_if_certified_reuses_cached_target_across_tighter_bounds()
+     {
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let halfspaces = aabb_core_halfspaces(&cached_bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(0, 0, 0);
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let cache = std::cell::RefCell::new(vec![SupportPlaneCellSearchCacheEntry {
+            context: Some(context.clone()),
+            bounds: cached_bounds,
+            polygon_index: 0,
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }]);
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_support_plane_cell_search_result_if_certified(
+            &cache,
+            &context,
+            &query_bounds,
+            0,
+            &halfspaces,
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))
+        );
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn reusable_support_plane_cell_search_result_if_certified_skips_invalid_cached_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(0, 0, 0);
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let cache = std::cell::RefCell::new(vec![SupportPlaneCellSearchCacheEntry {
+            context: Some(context.clone()),
+            bounds: bounds.clone(),
+            polygon_index: 0,
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(2, 1, 1)), vec![23]))),
+        }]);
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_support_plane_cell_search_result_if_certified(
+            &cache,
+            &context,
+            &bounds,
+            0,
+            &halfspaces,
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert_eq!(cache.borrow().len(), 1);
     }
 
     #[test]
