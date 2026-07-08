@@ -7234,14 +7234,16 @@ fn extend_shifted_halfspace_seed_families_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || witnesses
-            .iter()
-            .any(|witness| witness.uncertified_definition_fallback);
-    if witnesses.is_empty() && saw_unknown {
+    let unresolved_fallback = witnesses
+        .iter()
+        .any(|witness| witness.uncertified_definition_fallback);
+    let has_certified_witness = witnesses
+        .iter()
+        .any(|witness| !witness.uncertified_definition_fallback);
+    if witnesses.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_witness && (saw_hard_unknown || unresolved_fallback) {
             mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
         }
         Ok(())
@@ -7267,14 +7269,16 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let saw_unknown = saw_hard_unknown
-        || witnesses
-            .iter()
-            .any(|witness| witness.uncertified_definition_fallback);
-    if witnesses.is_empty() && saw_unknown {
+    let unresolved_fallback = witnesses
+        .iter()
+        .any(|witness| witness.uncertified_definition_fallback);
+    let has_certified_witness = witnesses
+        .iter()
+        .any(|witness| !witness.uncertified_definition_fallback);
+    if witnesses.is_empty() && (saw_hard_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if saw_unknown {
+        if !has_certified_witness && (saw_hard_unknown || unresolved_fallback) {
             mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
         }
         Ok(())
@@ -8574,7 +8578,7 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, second);
-        assert!(witnesses[0].uncertified_definition_fallback);
+        assert!(!witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -8618,11 +8622,11 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, kept.point);
-        assert!(witnesses[0].uncertified_definition_fallback);
+        assert!(!witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn shifted_halfspace_witness_collection_marks_later_witnesses_uncertain_after_uncertain_candidate_result()
+    fn shifted_halfspace_witness_collection_keeps_later_witnesses_certified_after_uncertain_candidate_result()
      {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -8655,7 +8659,7 @@ mod tests {
         assert!(
             witnesses
                 .iter()
-                .all(|witness| witness.uncertified_definition_fallback)
+                .any(|witness| !witness.uncertified_definition_fallback)
         );
     }
 
@@ -9120,7 +9124,7 @@ mod tests {
     }
 
     #[test]
-    fn shifted_halfspace_witness_seed_family_search_marks_existing_witnesses_uncertain_after_later_unknown()
+    fn shifted_halfspace_witness_seed_family_search_keeps_existing_witnesses_certified_after_later_unknown()
      {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -9146,11 +9150,11 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, first);
-        assert!(witnesses[0].uncertified_definition_fallback);
+        assert!(!witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn shifted_halfspace_witness_seed_family_search_marks_later_witnesses_uncertain_after_uncertain_family_result()
+    fn shifted_halfspace_witness_seed_family_search_keeps_later_witnesses_certified_after_uncertain_family_result()
      {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -9183,7 +9187,7 @@ mod tests {
         assert!(
             witnesses
                 .iter()
-                .all(|witness| witness.uncertified_definition_fallback)
+                .any(|witness| !witness.uncertified_definition_fallback)
         );
     }
 
