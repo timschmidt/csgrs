@@ -895,11 +895,19 @@ fn process_split_attempt_child(
     }
     let child_output = if let Some(reused) = {
         let mut query_caches = caches.support_reference_query.borrow_mut();
-        reusable_child_subdivision_if_certified(
+        if let Some(reused) = reusable_child_subdivision_if_certified(
             &caches.child_subdivision,
             &child_task,
             &mut query_caches,
-        )?
+        )? {
+            Some(reused)
+        } else {
+            reusable_child_subdivision_from_cached_trace_if_certified(
+                &caches.child_subdivision,
+                &child_task,
+                &mut query_caches,
+            )?
+        }
     } {
         reused
     } else {
@@ -1711,6 +1719,87 @@ fn reusable_child_subdivision_if_certified(
                     reused = Some(result.clone());
                     break;
                 }
+            }
+        }
+    }
+    if let Some(reused) = reused {
+        cache_child_subdivision_result(cache, task, &Ok(reused.clone()));
+        return Ok(Some(reused));
+    }
+    Ok(None)
+}
+
+fn reusable_child_subdivision_from_cached_trace_if_certified(
+    cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
+    task: &SubdivisionTask,
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
+    if !child_task_reference_is_certified_valid(task, query_caches)? {
+        return Ok(None);
+    }
+
+    let polygon_profile = polygon_family_profile(&task.polygons);
+    let context = support_reference_cache_context_key(
+        &task.ref_point,
+        &task.ref_definitions,
+        &task.ref_wnv,
+        &task.polygons,
+    );
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.polygon_profile != polygon_profile
+                || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
+                || !matches!(existing.result, Ok(_))
+                || (existing.task.depth != task.depth && existing.task.depth <= task.depth)
+            {
+                continue;
+            }
+
+            if !bounds_contains_bounds(&existing.task.bounds, &task.bounds)? {
+                continue;
+            }
+
+            if !reference_is_certified_valid_for_task_bounds(
+                &existing.task.ref_point,
+                &existing.task.ref_definitions,
+                &existing.task.ref_wnv,
+                &task.bounds,
+                &task.polygons,
+                query_caches,
+            )? {
+                continue;
+            }
+
+            let target = ReferenceTarget::with_definitions(
+                existing.task.ref_point.clone(),
+                existing.task.ref_definitions.clone(),
+            );
+            let Some(winding) = cached_reference_target_trace_with_context(
+                &mut query_caches.trace_cache,
+                Some(&context),
+                &target,
+                |target| {
+                    trace_reference_target_from_validated_bounds(
+                        &task.ref_point,
+                        &task.ref_definitions,
+                        &task.ref_wnv,
+                        &task.polygons,
+                        target,
+                    )
+                },
+            )?
+            else {
+                continue;
+            };
+            if winding != existing.task.ref_wnv {
+                continue;
+            }
+
+            if let Ok(result) = &existing.result {
+                reused = Some(result.clone());
+                break;
             }
         }
     }
@@ -15527,6 +15616,88 @@ mod tests {
                 .unwrap();
 
         assert_eq!(reused, None);
+    }
+
+    #[test]
+    fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_result_across_parent_winding()
+     {
+        let mut polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        polygon.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, -2), p(4, 4, 2));
+        let query_task =
+            SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
+        let existing_point = p(1, 1, -1);
+        let existing_definitions = vec![axis_plane_definition(&existing_point)];
+        let existing_wnv = trace_reference_target_from_validated_bounds(
+            &query_task.ref_point,
+            &query_task.ref_definitions,
+            &query_task.ref_wnv,
+            &query_task.polygons,
+            &ReferenceTarget::with_definitions(
+                existing_point.clone(),
+                existing_definitions.clone(),
+            ),
+        )
+        .unwrap()
+        .unwrap();
+        let existing_task = SubdivisionTask {
+            polygons: query_task.polygons.clone(),
+            bounds: query_task.bounds.clone(),
+            ref_point: existing_point,
+            ref_definitions: existing_definitions,
+            ref_wnv: existing_wnv,
+            depth: query_task.depth,
+        };
+        let cache = RefCell::new(vec![ChildSubdivisionCacheEntry {
+            polygon_profile: polygon_family_profile(&existing_task.polygons),
+            task: existing_task,
+            result: Ok(vec![]),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_subdivision_from_cached_trace_if_certified(
+            &cache,
+            &query_task,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(reused, Some(vec![]));
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn reusable_child_subdivision_from_cached_trace_if_certified_skips_mismatched_cached_winding() {
+        let mut polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        polygon.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, -2), p(4, 4, 2));
+        let query_task =
+            SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
+        let existing_point = p(1, 1, -1);
+        let existing_task = SubdivisionTask {
+            polygons: query_task.polygons.clone(),
+            bounds: query_task.bounds.clone(),
+            ref_point: existing_point.clone(),
+            ref_definitions: vec![axis_plane_definition(&existing_point)],
+            ref_wnv: vec![9],
+            depth: query_task.depth,
+        };
+        let cache = RefCell::new(vec![ChildSubdivisionCacheEntry {
+            polygon_profile: polygon_family_profile(&existing_task.polygons),
+            task: existing_task,
+            result: Ok(vec![]),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_subdivision_from_cached_trace_if_certified(
+            &cache,
+            &query_task,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert_eq!(cache.borrow().len(), 1);
     }
 
     #[test]
