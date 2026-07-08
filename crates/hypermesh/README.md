@@ -765,6 +765,10 @@ from scratch on each revisit. The centroid-subset geometry-seed family is now
 also memoized by the exact feasible support-vertex family itself, so distinct
 projected/support halfspace states that collapse to the same support vertices
 reuse the same subset-centroid seed construction instead of recomputing it.
+Support-side seed/direct/target/accept caches now also collapse all halfspace
+reports that do not carry a usable feasible witness into one shared cache
+state, so infeasible certificate variation does not fragment later support
+fallback reuse when the builders would ignore that report payload anyway.
 Partially uncertified feasible support-cell
 vertex families now also keep that uncertainty attached when later exact
 vertices survive, so the cached seed-geometry state does not flatten that
