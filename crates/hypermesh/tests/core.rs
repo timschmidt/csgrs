@@ -633,6 +633,57 @@ fn process_leaf_classifies_direct_polygon_slice() {
 }
 
 #[test]
+fn process_leaf_reports_unknown_when_no_valid_probe_path_exists() {
+    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    wall.delta_w = vec![1];
+    let bounds = hypermesh::Aabb::new(p(1, -1, -1), p(1, 1, 1));
+    let union = make_indicator(BooleanOp::Union, 1);
+
+    let mut output = Vec::new();
+    let err = process_leaf_into(
+        &[wall],
+        &bounds,
+        &p(0, 0, 0),
+        &axis_defs(&p(0, 0, 0)),
+        &[0],
+        &union,
+        &mut output,
+    )
+    .unwrap_err();
+
+    assert_eq!(err, HypermeshError::UnknownClassification);
+    assert!(output.is_empty());
+}
+
+#[test]
+fn process_leaf_uses_alternate_probe_when_first_probe_path_is_blocked() {
+    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    wall.delta_w = vec![1];
+    let mut blocker = make_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    blocker.delta_w = vec![1];
+    let bounds = hypermesh::Aabb::new(p(1, -2, -2), p(5, 2, 2));
+    let union = make_indicator(BooleanOp::Union, 2);
+
+    let mut output = Vec::new();
+    let stats = process_leaf_into(
+        &[wall.clone(), blocker],
+        &bounds,
+        &p(0, 0, 0),
+        &axis_defs(&p(0, 0, 0)),
+        &[0],
+        &union,
+        &mut output,
+    )
+    .unwrap();
+
+    assert!(stats.certified_complete);
+    assert_eq!(output.len(), 1);
+    assert!(!output[0].is_bsp_fragment());
+    let winding = output[0].winding().expect("expected certified winding");
+    assert_eq!(winding.w_front, vec![-1]);
+}
+
+#[test]
 fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
     let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
