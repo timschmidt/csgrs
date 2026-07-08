@@ -977,12 +977,20 @@ fn cached_ordered_subdivision_splits_with(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
     let polygon_profile = polygon_family_profile(polygons);
-    if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.bounds == *bounds
-            && existing.polygon_profile == polygon_profile
-            && polygon_families_match_as_multisets(&existing.polygons, polygons)
-    }) {
-        return existing.candidates.clone();
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.bounds == *bounds
+                && existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache_split_candidates_result(cache, polygons, bounds, &existing.candidates);
+        }
+        return existing.candidates;
     }
 
     let candidates = ordered_subdivision_splits_with_partition_cache(
@@ -1002,6 +1010,28 @@ fn cached_ordered_subdivision_splits_with(
     candidates
 }
 
+fn cache_split_candidates_result(
+    cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    candidates: &HypermeshResult<Vec<RankedSplitAttempt>>,
+) {
+    if cache
+        .borrow()
+        .iter()
+        .any(|existing| existing.bounds == *bounds && existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().push(SplitCandidatesCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        candidates: candidates.clone(),
+    });
+}
+
 fn cached_split_child_partition_with(
     cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygons: &[ConvexPolygon],
@@ -1009,14 +1039,27 @@ fn cached_split_child_partition_with(
     value: &Real,
 ) -> HypermeshResult<SplitChildPartition> {
     let polygon_profile = polygon_family_profile(polygons);
-    for existing in cache.borrow().iter() {
-        if existing.axis == axis
-            && existing.polygon_profile == polygon_profile
-            && polygon_families_match_as_multisets(&existing.polygons, polygons)
-            && compare_real(&existing.value, value)?.is_eq()
-        {
-            return existing.result.clone();
+    let existing = {
+        let cache_ref = cache.borrow();
+        let mut found = None;
+        for existing in cache_ref.iter() {
+            if existing.axis == axis
+                && existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+                && compare_real(&existing.value, value)?.is_eq()
+            {
+                found = Some(existing.clone());
+                break;
+            }
         }
+        found
+    };
+    if let Some(existing) = existing {
+        if !split_child_partition_cache_entry_matches_exact_state(&existing, polygons, axis, value)?
+        {
+            cache_split_child_partition_result(cache, polygons, axis, value, &existing.result)?;
+        }
+        return existing.result;
     }
 
     let result = split_child_partition(polygons, axis, value);
@@ -1028,6 +1071,45 @@ fn cached_split_child_partition_with(
         result: result.clone(),
     });
     result
+}
+
+fn cache_split_child_partition_result(
+    cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+    result: &HypermeshResult<SplitChildPartition>,
+) -> HypermeshResult<()> {
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter() {
+            if split_child_partition_cache_entry_matches_exact_state(
+                existing, polygons, axis, value,
+            )? {
+                return Ok(());
+            }
+        }
+    }
+
+    cache.borrow_mut().push(SplitChildPartitionCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        axis,
+        value: value.clone(),
+        result: result.clone(),
+    });
+    Ok(())
+}
+
+fn split_child_partition_cache_entry_matches_exact_state(
+    existing: &SplitChildPartitionCacheEntry,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<bool> {
+    Ok(existing.axis == axis
+        && existing.polygons == polygons
+        && compare_real(&existing.value, value)?.is_eq())
 }
 
 fn take_new_subdivision_child_partition(
@@ -9874,7 +9956,42 @@ mod tests {
                 .map(|candidate| (candidate.axis, candidate.value.clone()))
                 .collect::<Vec<_>>()
         );
-        assert_eq!(cache.borrow().len(), 1);
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let axis_value_cache = RefCell::new(Vec::new());
+        let cache = RefCell::new(Vec::new());
+        let partition_cache = RefCell::new(Vec::new());
+        let pairwise_cache = RefCell::new(Vec::new());
+        let polygon_bounds_cache = RefCell::new(Vec::new());
+
+        cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
+            &cache,
+            &partition_cache,
+            &polygon_bounds_cache,
+            &pairwise_cache,
+            &bounds,
+            &[polygon_a.clone(), polygon_b.clone()],
+        )
+        .unwrap();
+        cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
+            &cache,
+            &partition_cache,
+            &polygon_bounds_cache,
+            &pairwise_cache,
+            &bounds,
+            &[polygon_b, polygon_a],
+        )
+        .unwrap();
+
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]
@@ -10000,7 +10117,25 @@ mod tests {
             cached_split_child_partition_with(&cache, &[polygon_b, polygon_a], 0, &r(3)).unwrap();
 
         assert_eq!(first, second);
-        assert_eq!(cache.borrow().len(), 1);
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_split_child_partition_memoizes_current_equivalent_state() {
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let cache = RefCell::new(Vec::new());
+
+        cached_split_child_partition_with(
+            &cache,
+            &[polygon_a.clone(), polygon_b.clone()],
+            0,
+            &r(3),
+        )
+        .unwrap();
+        cached_split_child_partition_with(&cache, &[polygon_b, polygon_a], 0, &r(3)).unwrap();
+
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]
