@@ -397,7 +397,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
         }
 
         let mut seen_bsp_leaf_edges = Vec::new();
-        for leaf in &bsp_leaves_query(polygon, polygons, &intersections[index])? {
+        let bsp_leaves = bsp_leaves_query(polygon, polygons, &intersections[index])?;
+        for leaf in &bsp_leaves {
             if leaf.edges.len() < 3 {
                 continue;
             }

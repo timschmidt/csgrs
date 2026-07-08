@@ -4119,6 +4119,32 @@ fn interior_leaf_points(leaf: &ConvexPolygon) -> HypermeshResult<Vec<InteriorLea
         return Ok(Vec::new());
     }
 
+    if let Some(center) = centroid(&vertices)? {
+        match point_strictly_inside_leaf_or_unknown(&center, leaf) {
+            Ok(true) => {
+                let mut points = vec![InteriorLeafPoint {
+                    point: center.clone(),
+                    planes: Vec::new(),
+                    uncertified_definition_fallback: false,
+                }];
+                extend_interior_leaf_points_backtracking_unknown(
+                    &mut points,
+                    std::iter::once(&center),
+                    |witness| shifted_edge_interior_points(leaf, witness),
+                )?;
+                if points.iter().any(|point| !point.planes.is_empty()) {
+                    points.retain(|point| !point.planes.is_empty());
+                }
+                if !points.is_empty() {
+                    return Ok(points);
+                }
+            }
+            Ok(false) => {}
+            Err(HypermeshError::UnknownClassification) => {}
+            Err(err) => return Err(err),
+        }
+    }
+
     let mut points = strict_leaf_witness_points(leaf, &vertices)?;
     let witness_points = points
         .iter()
