@@ -2678,6 +2678,7 @@ fn compute_new_reference_with_query_caches(
                 trace_projected_reference_target_with_queries(
                     validity_cache,
                     trace_cache,
+                    Some(&cache_context),
                     bounds,
                     projected_target,
                     |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
@@ -4584,6 +4585,7 @@ fn prime_support_reference_query_caches_with_known_halfspace_report(
     }
 }
 
+#[cfg(test)]
 fn cached_reference_target_trace_with(
     cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
     target: &ReferenceTarget,
@@ -4614,6 +4616,7 @@ fn cached_reference_target_trace_with_context(
     winding
 }
 
+#[cfg(test)]
 fn cached_reference_bounds_validity_with(
     cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
     bounds: &Aabb,
@@ -5588,16 +5591,23 @@ fn trace_reference_target(
 fn trace_projected_reference_target_with_queries(
     validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
     trace_cache: &mut Vec<ReferenceTargetTraceCacheEntry>,
+    context: Option<&SupportReferenceCacheContextKey>,
     bounds: &Aabb,
     target: &ReferenceTarget,
     valid_for: impl FnOnce(&Point3) -> HypermeshResult<bool>,
     trace: impl FnOnce(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    if !cached_reference_bounds_validity_with(validity_cache, bounds, &target.point, valid_for)? {
+    if !cached_reference_bounds_validity_with_context(
+        validity_cache,
+        context,
+        bounds,
+        &target.point,
+        valid_for,
+    )? {
         return Ok(None);
     }
 
-    cached_reference_target_trace_with(trace_cache, target, trace)
+    cached_reference_target_trace_with_context(trace_cache, context, target, trace)
 }
 
 fn trace_reference_target_from_validated_bounds(
@@ -14177,6 +14187,7 @@ mod tests {
         let first_result = trace_projected_reference_target_with_queries(
             &mut validity_cache,
             &mut trace_cache,
+            None,
             &bounds,
             &first,
             |_point| {
@@ -14196,6 +14207,7 @@ mod tests {
         let second_result = trace_projected_reference_target_with_queries(
             &mut validity_cache,
             &mut trace_cache,
+            None,
             &bounds,
             &second,
             |_point| {
@@ -14215,6 +14227,7 @@ mod tests {
         let third_result = trace_projected_reference_target_with_queries(
             &mut validity_cache,
             &mut trace_cache,
+            None,
             &bounds,
             &first,
             |_point| {
@@ -14233,6 +14246,71 @@ mod tests {
         assert_eq!(first_result, Some(vec![1]));
         assert_eq!(second_result, Some(vec![1]));
         assert_eq!(third_result, Some(vec![1]));
+    }
+
+    #[test]
+    fn projected_reference_trace_helper_distinguishes_reference_context() {
+        use std::cell::Cell;
+
+        let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut validity_cache = Vec::new();
+        let mut trace_cache = Vec::new();
+        let validity_calls = Cell::new(0);
+        let trace_calls = Cell::new(0);
+
+        let first_result = trace_projected_reference_target_with_queries(
+            &mut validity_cache,
+            &mut trace_cache,
+            Some(&left_context),
+            &bounds,
+            &target,
+            |_point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(true)
+            },
+            |_target| {
+                trace_calls.set(trace_calls.get() + 1);
+                Ok(Some(vec![7]))
+            },
+        )
+        .unwrap();
+        let second_result = trace_projected_reference_target_with_queries(
+            &mut validity_cache,
+            &mut trace_cache,
+            Some(&right_context),
+            &bounds,
+            &target,
+            |_point| {
+                validity_calls.set(validity_calls.get() + 1);
+                Ok(true)
+            },
+            |_target| {
+                trace_calls.set(trace_calls.get() + 1);
+                Ok(Some(vec![9]))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(validity_calls.get(), 1);
+        assert_eq!(trace_calls.get(), 2);
+        assert_eq!(first_result, Some(vec![7]));
+        assert_eq!(second_result, Some(vec![9]));
     }
 
     #[test]
@@ -14389,6 +14467,7 @@ mod tests {
             trace_projected_reference_target_with_queries(
                 validity_cache,
                 trace_cache,
+                None,
                 &bounds,
                 &target,
                 |_point| {
