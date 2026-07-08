@@ -10,7 +10,9 @@ use crate::intersection::{
     IntersectionSegment, PairwiseIntersection, PairwiseIntersectionType, intersect_polygons,
 };
 use crate::local_bsp::{BspLeaf, LocalBsp};
-use crate::output::{ClassifiedPolygon, push_unique_classified_polygon};
+use crate::output::{
+    ClassifiedPolygon, merge_unique_classified_polygons, push_unique_classified_polygon,
+};
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     affine_from_planes, axis_plane_definition, certified_leaf_interior_points,
@@ -265,7 +267,7 @@ pub fn process_leaf_into(
         indicator,
         &mut certified_output,
     )?;
-    output.extend(certified_output);
+    merge_unique_classified_polygons(output, certified_output);
     Ok(stats)
 }
 
@@ -500,7 +502,7 @@ pub fn subdivide_into(
         &mut process_leaf,
         &caches,
     )?;
-    output.extend(certified_output);
+    merge_unique_classified_polygons(output, certified_output);
     Ok(())
 }
 
@@ -535,7 +537,7 @@ fn subdivide_into_inner_with(
                 process_leaf(task, indicator, output)
             })?
         {
-            output.extend(certified_output);
+            merge_unique_classified_polygons(output, certified_output);
             return Ok(());
         }
         return Err(crate::error::HypermeshError::UnknownClassification);
@@ -546,7 +548,7 @@ fn subdivide_into_inner_with(
             process_leaf(task, indicator, output)
         })?
     {
-        output.extend(certified_output);
+        merge_unique_classified_polygons(output, certified_output);
         return Ok(());
     }
 
@@ -655,7 +657,7 @@ fn subdivide_into_inner_with(
                         )?;
                         Ok(child_output)
                     })?;
-                candidate_output.extend(child_output);
+                merge_unique_classified_polygons(&mut candidate_output, child_output);
             }
 
             if let Some(right_bounds) = right_bounds {
@@ -699,7 +701,7 @@ fn subdivide_into_inner_with(
                         )?;
                         Ok(child_output)
                     })?;
-                candidate_output.extend(child_output);
+                merge_unique_classified_polygons(&mut candidate_output, child_output);
             }
 
             Ok(())
@@ -707,7 +709,7 @@ fn subdivide_into_inner_with(
 
         match attempt {
             Ok(()) => {
-                output.extend(candidate_output);
+                merge_unique_classified_polygons(output, candidate_output);
                 return Ok(());
             }
             Err(err) if is_backtrackable_split_error(&err) => {

@@ -74,11 +74,29 @@ pub(crate) fn push_unique_classified_polygon(
 }
 
 #[derive(Clone)]
+struct ClassifiedPolygonBucket {
+    classification: i8,
+    support: crate::geometry::Plane,
+    edge_count: usize,
+    indices: Vec<usize>,
+}
+
+#[derive(Clone)]
 struct ClassifiedOutputBucket {
     classification: i8,
     support: crate::geometry::Plane,
     edge_count: usize,
     indices: Vec<usize>,
+}
+
+pub(crate) fn merge_unique_classified_polygons(
+    classified: &mut Vec<ClassifiedPolygon>,
+    incoming: Vec<ClassifiedPolygon>,
+) {
+    let mut buckets = build_classified_polygon_buckets(classified);
+    for candidate in incoming {
+        push_unique_classified_polygon_with_buckets(classified, &mut buckets, candidate);
+    }
 }
 
 /// Result of a boolean operation.
@@ -182,6 +200,84 @@ impl BooleanResult {
 
 fn polygons_match_output_geometry(left: &ConvexPolygon, right: &ConvexPolygon) -> bool {
     left.support == right.support && edge_cycles_match_up_to_rotation(&left.edges, &right.edges)
+}
+
+fn build_classified_polygon_buckets(
+    classified: &[ClassifiedPolygon],
+) -> Vec<ClassifiedPolygonBucket> {
+    let mut buckets: Vec<ClassifiedPolygonBucket> = Vec::new();
+    for (index, polygon) in classified.iter().enumerate() {
+        let classification = polygon.classification;
+        let edge_count = polygon.polygon.edges.len();
+        let support = polygon.polygon.support.clone();
+        if let Some(bucket) = buckets.iter_mut().find(|bucket| {
+            bucket.classification == classification
+                && bucket.edge_count == edge_count
+                && bucket.support == support
+        }) {
+            bucket.indices.push(index);
+        } else {
+            buckets.push(ClassifiedPolygonBucket {
+                classification,
+                support,
+                edge_count,
+                indices: vec![index],
+            });
+        }
+    }
+    buckets
+}
+
+fn push_unique_classified_polygon_with_buckets(
+    classified: &mut Vec<ClassifiedPolygon>,
+    buckets: &mut Vec<ClassifiedPolygonBucket>,
+    candidate: ClassifiedPolygon,
+) {
+    if let Some(existing_index) =
+        find_matching_classified_polygon_index(buckets, classified, &candidate)
+    {
+        let existing = &mut classified[existing_index];
+        if existing.winding.is_none() {
+            existing.winding = candidate.winding;
+        }
+        existing.is_bsp_fragment |= candidate.is_bsp_fragment;
+        return;
+    }
+
+    let classification = candidate.classification;
+    let edge_count = candidate.polygon.edges.len();
+    let support = candidate.polygon.support.clone();
+    classified.push(candidate);
+    let new_index = classified.len() - 1;
+    if let Some(bucket) = buckets.iter_mut().find(|bucket| {
+        bucket.classification == classification
+            && bucket.edge_count == edge_count
+            && bucket.support == support
+    }) {
+        bucket.indices.push(new_index);
+    } else {
+        buckets.push(ClassifiedPolygonBucket {
+            classification,
+            support,
+            edge_count,
+            indices: vec![new_index],
+        });
+    }
+}
+
+fn find_matching_classified_polygon_index(
+    buckets: &[ClassifiedPolygonBucket],
+    classified: &[ClassifiedPolygon],
+    candidate: &ClassifiedPolygon,
+) -> Option<usize> {
+    let bucket = buckets.iter().find(|bucket| {
+        bucket.classification == candidate.classification
+            && bucket.edge_count == candidate.polygon.edges.len()
+            && bucket.support == candidate.polygon.support
+    })?;
+    bucket.indices.iter().copied().find(|index| {
+        polygons_match_output_geometry(&classified[*index].polygon, &candidate.polygon)
+    })
 }
 
 fn find_matching_output_polygon_index(
@@ -1447,6 +1543,51 @@ mod tests {
             })
         );
         assert!(output[0].is_bsp_fragment);
+    }
+
+    #[test]
+    fn merge_unique_classified_polygons_dedupes_exact_duplicate_output() {
+        let mut output = vec![ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            1,
+        )];
+        let mut duplicate = ClassifiedPolygon::new(
+            make_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 4),
+            1,
+        );
+        duplicate.winding = Some(WindingPair {
+            w_front: vec![5],
+            w_back: vec![6],
+        });
+        duplicate.is_bsp_fragment = true;
+
+        merge_unique_classified_polygons(&mut output, vec![duplicate]);
+
+        assert_eq!(output.len(), 1);
+        assert_eq!(
+            output[0].winding,
+            Some(WindingPair {
+                w_front: vec![5],
+                w_back: vec![6],
+            })
+        );
+        assert!(output[0].is_bsp_fragment);
+    }
+
+    #[test]
+    fn merge_unique_classified_polygons_keeps_distinct_same_support_polygons() {
+        let mut output = vec![ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+            1,
+        )];
+        let incoming = vec![ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+            1,
+        )];
+
+        merge_unique_classified_polygons(&mut output, incoming);
+
+        assert_eq!(output.len(), 2);
     }
 
     #[test]
