@@ -1078,18 +1078,43 @@ fn cached_child_reference_with(
     query: impl FnOnce() -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)>,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     let source_polygon_profile = polygon_family_profile(source_polygons);
-    if let Some(existing) = cache.borrow().iter().find(|existing| {
-        existing.old_ref == *old_ref
-            && reference_definition_families_match_as_sets(
-                &existing.old_ref_definitions,
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.old_ref == *old_ref
+                && reference_definition_families_match_as_sets(
+                    &existing.old_ref_definitions,
+                    old_ref_definitions,
+                )
+                && existing.old_wnv == old_wnv
+                && existing.source_polygon_profile == source_polygon_profile
+                && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
+                && existing.bounds == *bounds
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if let Ok(result) = &existing.result {
+            if !child_reference_cache_entry_matches_exact_state(
+                &existing,
+                old_ref,
                 old_ref_definitions,
-            )
-            && existing.old_wnv == old_wnv
-            && existing.source_polygon_profile == source_polygon_profile
-            && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
-            && existing.bounds == *bounds
-    }) {
-        return existing.result.clone();
+                old_wnv,
+                source_polygons,
+                bounds,
+            ) {
+                cache_child_reference_result(
+                    cache,
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    source_polygons,
+                    bounds,
+                    result,
+                );
+            }
+        }
+        return existing.result;
     }
 
     let result = query();
@@ -1114,23 +1139,21 @@ fn cache_child_reference_result(
     bounds: &Aabb,
     result: &(Point3, Vec<[Plane; 3]>, Vec<i32>),
 ) {
-    let source_polygon_profile = polygon_family_profile(source_polygons);
     if cache.borrow().iter().any(|existing| {
-        existing.old_ref == *old_ref
-            && reference_definition_families_match_as_sets(
-                &existing.old_ref_definitions,
-                old_ref_definitions,
-            )
-            && existing.old_wnv == old_wnv
-            && existing.source_polygon_profile == source_polygon_profile
-            && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
-            && existing.bounds == *bounds
+        child_reference_cache_entry_matches_exact_state(
+            existing,
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            source_polygons,
+            bounds,
+        )
     }) {
         return;
     }
 
     cache.borrow_mut().push(ChildReferenceCacheEntry {
-        source_polygon_profile,
+        source_polygon_profile: polygon_family_profile(source_polygons),
         source_polygons: source_polygons.to_vec(),
         bounds: bounds.clone(),
         old_ref: old_ref.clone(),
@@ -1138,6 +1161,21 @@ fn cache_child_reference_result(
         old_wnv: old_wnv.to_vec(),
         result: Ok(result.clone()),
     });
+}
+
+fn child_reference_cache_entry_matches_exact_state(
+    existing: &ChildReferenceCacheEntry,
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    source_polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+) -> bool {
+    existing.old_ref == *old_ref
+        && existing.old_ref_definitions == old_ref_definitions
+        && existing.old_wnv == old_wnv
+        && existing.source_polygons == source_polygons
+        && existing.bounds == *bounds
 }
 
 fn reusable_child_reference_if_certified(
@@ -12327,6 +12365,40 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_reference_memoizes_current_equivalent_state() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let cache = RefCell::new(Vec::new());
+        let old_ref = p(0, 0, 0);
+        let old_ref_definitions = axis_defs(&old_ref);
+        let old_wnv = vec![0];
+
+        cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            &[polygon_a.clone(), polygon_b.clone()],
+            &bounds,
+            || Ok((p(1, 2, 3), axis_defs(&p(1, 2, 3)), vec![7])),
+        )
+        .unwrap();
+        cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &old_ref_definitions,
+            &old_wnv,
+            &[polygon_b, polygon_a],
+            &bounds,
+            || Ok((p(4, 5, 6), axis_defs(&p(4, 5, 6)), vec![8])),
+        )
+        .unwrap();
+
+        assert_eq!(cache.borrow().len(), 2);
     }
 
     #[test]
