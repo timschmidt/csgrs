@@ -172,8 +172,15 @@ struct PairwiseIntersectionsCacheEntry {
     result: HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct PolygonAxisValuesCacheEntry {
+    polygons: Vec<ConvexPolygon>,
+    result: HypermeshResult<[Vec<Real>; 3]>,
+}
+
 struct SubdivisionRuntimeCaches {
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    polygon_axis_values: RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
@@ -186,6 +193,7 @@ impl Default for SubdivisionRuntimeCaches {
     fn default() -> Self {
         Self {
             polygon_family_bounds: RefCell::new(Vec::new()),
+            polygon_axis_values: RefCell::new(Vec::new()),
             split_candidates: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
             pairwise_intersections: RefCell::new(Vec::new()),
@@ -507,6 +515,7 @@ fn subdivide_into_inner_with(
     }
 
     let split_candidates = cached_ordered_subdivision_splits_with(
+        &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_partitions,
         &caches.pairwise_intersections,
@@ -713,7 +722,40 @@ fn cached_recursive_child_bounds_with(
     Ok(child_bounds.clone())
 }
 
+fn polygon_axis_values(polygons: &[ConvexPolygon]) -> HypermeshResult<[Vec<Real>; 3]> {
+    let mut values = [Vec::new(), Vec::new(), Vec::new()];
+    for polygon in polygons {
+        for vertex in polygon.vertices()? {
+            for axis in 0..3 {
+                push_unique_ordered_axis_value(&mut values[axis], axis_ref(&vertex, axis).clone())?;
+            }
+        }
+    }
+    Ok(values)
+}
+
+fn cached_polygon_axis_values_with(
+    cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<[Vec<Real>; 3]> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .find(|existing| polygon_families_match_as_multisets(&existing.polygons, polygons))
+    {
+        return existing.result.clone();
+    }
+
+    let result = polygon_axis_values(polygons);
+    cache.borrow_mut().push(PolygonAxisValuesCacheEntry {
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
+    result
+}
+
 fn cached_ordered_subdivision_splits_with(
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
@@ -730,6 +772,7 @@ fn cached_ordered_subdivision_splits_with(
     let candidates = ordered_subdivision_splits_with_partition_cache(
         bounds,
         polygons,
+        axis_values_cache,
         partition_cache,
         pairwise_cache,
     );
@@ -1549,10 +1592,12 @@ fn ordered_subdivision_splits(
 fn ordered_subdivision_splits_with_partition_cache(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<Vec<(usize, Real)>> {
     let mut candidates = Vec::new();
+    let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
     let intersection_segments =
         split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
 
@@ -1575,7 +1620,9 @@ fn ordered_subdivision_splits_with_partition_cache(
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
             continue;
         }
-        for (_gap, value) in arrangement_split_candidates(bounds, polygons, axis)? {
+        for (_gap, value) in
+            arrangement_split_candidates_from_axis_values(bounds, &axis_values[axis], axis)?
+        {
             push_split_candidate_with_partition_cache(
                 &mut candidates,
                 polygons,
@@ -1812,9 +1859,19 @@ fn split_counts_strictly_better(candidate: SplitCounts, baseline: SplitCounts) -
                                 || (candidate.3 == baseline.3 && candidate.4 < baseline.4)))))))
 }
 
+#[cfg(test)]
 fn arrangement_split_candidates(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
+    axis: usize,
+) -> HypermeshResult<Vec<(Real, Real)>> {
+    let axis_values = polygon_axis_values(polygons)?;
+    arrangement_split_candidates_from_axis_values(bounds, &axis_values[axis], axis)
+}
+
+fn arrangement_split_candidates_from_axis_values(
+    bounds: &Aabb,
+    axis_values: &[Real],
     axis: usize,
 ) -> HypermeshResult<Vec<(Real, Real)>> {
     let min = axis_ref(&bounds.min, axis);
@@ -1824,12 +1881,9 @@ fn arrangement_split_candidates(
     }
 
     let mut values = Vec::new();
-    for polygon in polygons {
-        for vertex in polygon.vertices()? {
-            let value = axis_ref(&vertex, axis);
-            if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
-                push_unique_ordered_axis_value(&mut values, value.clone())?;
-            }
+    for value in axis_values {
+        if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
+            values.push(value.clone());
         }
     }
     if values.is_empty() {
@@ -7706,6 +7760,36 @@ mod tests {
     }
 
     #[test]
+    fn arrangement_split_candidates_from_axis_values_matches_direct_query() {
+        let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+        let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![horizontal, vertical];
+
+        let direct = arrangement_split_candidates(&bounds, &polygons, 0).unwrap();
+        let axis_values = polygon_axis_values(&polygons).unwrap();
+        let cached =
+            arrangement_split_candidates_from_axis_values(&bounds, &axis_values[0], 0).unwrap();
+
+        assert_eq!(direct, cached);
+    }
+
+    #[test]
+    fn cached_polygon_axis_values_reuse_permuted_polygon_families() {
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let cache = RefCell::new(Vec::new());
+
+        let first =
+            cached_polygon_axis_values_with(&cache, &[polygon_a.clone(), polygon_b.clone()])
+                .unwrap();
+        let second = cached_polygon_axis_values_with(&cache, &[polygon_b, polygon_a]).unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
+    }
+
+    #[test]
     fn select_subdivision_split_uses_best_midpoint_across_axes() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let polygons = vec![
@@ -7917,11 +8001,13 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let axis_value_cache = RefCell::new(Vec::new());
         let cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
 
         let first = cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
             &cache,
             &partition_cache,
             &pairwise_cache,
@@ -7930,6 +8016,7 @@ mod tests {
         )
         .unwrap();
         let second = cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
             &cache,
             &partition_cache,
             &pairwise_cache,
@@ -7945,6 +8032,7 @@ mod tests {
     #[test]
     fn cached_ordered_subdivision_splits_distinguish_bounds() {
         let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let axis_value_cache = RefCell::new(Vec::new());
         let cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
@@ -7952,6 +8040,7 @@ mod tests {
         let second_bounds = Aabb::new(p(0, 0, 0), p(8, 4, 4));
 
         let first = cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
             &cache,
             &partition_cache,
             &pairwise_cache,
@@ -7960,6 +8049,7 @@ mod tests {
         )
         .unwrap();
         let second = cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
             &cache,
             &partition_cache,
             &pairwise_cache,
@@ -7979,11 +8069,13 @@ mod tests {
             make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
             make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
         ];
+        let axis_value_cache = RefCell::new(Vec::new());
         let split_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
 
         let ordered = cached_ordered_subdivision_splits_with(
+            &axis_value_cache,
             &split_cache,
             &partition_cache,
             &pairwise_cache,

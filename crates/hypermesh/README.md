@@ -975,7 +975,11 @@ polygon relation again when recursive branches revisit that exact local family
 in a different polygon order. Split ranking now also derives its intersection
 segment endpoints from that cached pairwise polygon relation instead of paying
 another full BVH/polygon-pair intersection pass just to recover the same split
-candidates. Cached split child partitions now also reuse the
+candidates. It also caches the exact sorted per-axis vertex coordinates for
+each repeated polygon family, so arrangement split search under different child
+bounds no longer recomputes the same affine polygon vertices and axis ordering
+before filtering those values back down to the active bounds. Cached split
+child partitions now also reuse the
 same clipped child polygon families across those permuted parent orders instead
 of fragmenting on order-only differences before later recursion and child-state
 reuse. Recursive branches that
