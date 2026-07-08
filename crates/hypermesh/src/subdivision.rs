@@ -2446,12 +2446,8 @@ fn compute_new_reference_with_query_caches(
         );
     }
     let mut projected_unknown = projected_root.saw_unknown || old_ref_unknown;
-    let cache_context = SupportReferenceCacheContextKey {
-        old_ref: old_ref.clone(),
-        old_ref_definitions: old_ref_definitions.to_vec(),
-        old_wnv: old_wnv.to_vec(),
-        polygons: polygons.to_vec(),
-    };
+    let cache_context =
+        support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
 
     let projected = projected_reference_search_or_none_tracking_unknown(
         search_projected_reference_families(
@@ -4484,7 +4480,23 @@ struct SupportReferenceCacheContextKey {
     old_ref: Point3,
     old_ref_definitions: Vec<[Plane; 3]>,
     old_wnv: Vec<i32>,
+    polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
+}
+
+fn support_reference_cache_context_key(
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+) -> SupportReferenceCacheContextKey {
+    SupportReferenceCacheContextKey {
+        old_ref: old_ref.clone(),
+        old_ref_definitions: old_ref_definitions.to_vec(),
+        old_wnv: old_wnv.to_vec(),
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+    }
 }
 
 fn support_reference_cache_context_matches(
@@ -4500,6 +4512,7 @@ fn support_reference_cache_context_matches(
                     &context.old_ref_definitions,
                 )
                 && existing.old_wnv == context.old_wnv
+                && existing.polygon_profile == context.polygon_profile
                 && polygon_families_match_as_multisets(&existing.polygons, &context.polygons)
         }
         _ => false,
@@ -5418,12 +5431,8 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
         Err(crate::error::HypermeshError::UnknownClassification) => true,
         Err(err) => return Err(err),
     };
-    let cache_context = SupportReferenceCacheContextKey {
-        old_ref: old_ref.clone(),
-        old_ref_definitions: old_ref_definitions.to_vec(),
-        old_wnv: old_wnv.to_vec(),
-        polygons: polygons.to_vec(),
-    };
+    let cache_context =
+        support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
 
     let mut accept = |halfspaces: &[LimitPlane3],
                       report: Option<hyperlimit::HalfspaceFeasibilityReport>|
@@ -12562,12 +12571,12 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let point = p(1, 1, 1);
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
-        let context = SupportReferenceCacheContextKey {
-            old_ref: point.clone(),
-            old_ref_definitions: vec![axis_plane_definition(&point)],
-            old_wnv: vec![0],
-            polygons: vec![support_only_polygon(Plane::axis_aligned(0, r(2)))],
-        };
+        let context = support_reference_cache_context_key(
+            &point,
+            &[axis_plane_definition(&point)],
+            &[0],
+            &[support_only_polygon(Plane::axis_aligned(0, r(2)))],
+        );
         let mut query_caches = SupportReferenceQueryCaches::default();
 
         query_caches.report_cache.push(HalfspaceReportCacheEntry {
@@ -12819,18 +12828,20 @@ mod tests {
         let point = p(1, 2, 3);
         let target = ReferenceTarget::axis_defined(point.clone());
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
-        let left_context = SupportReferenceCacheContextKey {
-            old_ref: p(0, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(0, 0, 0))],
-            old_wnv: vec![0],
-            polygons: polygons.clone(),
-        };
-        let right_context = SupportReferenceCacheContextKey {
-            old_ref: p(1, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(1, 0, 0))],
-            old_wnv: vec![0],
-            polygons,
-        };
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
         let mut cache = Vec::new();
         let mut calls = 0;
 
@@ -12909,18 +12920,20 @@ mod tests {
         let point = p(1, 2, 3);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
-        let left_context = SupportReferenceCacheContextKey {
-            old_ref: p(0, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(0, 0, 0))],
-            old_wnv: vec![0],
-            polygons: polygons.clone(),
-        };
-        let right_context = SupportReferenceCacheContextKey {
-            old_ref: p(1, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(1, 0, 0))],
-            old_wnv: vec![0],
-            polygons,
-        };
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
         let mut cache = Vec::new();
         let mut calls = 0;
 
@@ -12956,18 +12969,20 @@ mod tests {
     fn cached_support_surface_query_distinguishes_reference_context() {
         let point = p(2, 1, 1);
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
-        let left_context = SupportReferenceCacheContextKey {
-            old_ref: p(0, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(0, 0, 0))],
-            old_wnv: vec![0],
-            polygons: polygons.clone(),
-        };
-        let right_context = SupportReferenceCacheContextKey {
-            old_ref: p(1, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(1, 0, 0))],
-            old_wnv: vec![0],
-            polygons,
-        };
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
         let mut cache = Vec::new();
         let mut calls = 0;
 
@@ -13542,18 +13557,20 @@ mod tests {
         let report =
             hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
-        let left_context = SupportReferenceCacheContextKey {
-            old_ref: p(0, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(0, 0, 0))],
-            old_wnv: vec![0],
-            polygons: polygons.clone(),
-        };
-        let right_context = SupportReferenceCacheContextKey {
-            old_ref: p(1, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(1, 0, 0))],
-            old_wnv: vec![0],
-            polygons,
-        };
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
         let mut cache = Vec::new();
         let mut calls = 0;
 
@@ -13847,18 +13864,20 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
         let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
-        let left_context = SupportReferenceCacheContextKey {
-            old_ref: p(0, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(0, 0, 0))],
-            old_wnv: vec![0],
-            polygons: polygons.clone(),
-        };
-        let right_context = SupportReferenceCacheContextKey {
-            old_ref: p(1, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(1, 0, 0))],
-            old_wnv: vec![0],
-            polygons: polygons.clone(),
-        };
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
         let cache = std::cell::RefCell::new(
             Vec::<SupportPlaneCellSearchCacheEntry<ReferenceTarget>>::new(),
         );
@@ -14118,12 +14137,13 @@ mod tests {
     #[test]
     fn cached_reference_escape_search_reuses_identical_escape_bounds() {
         let bounds = Aabb::new(p(1, 2, 3), p(4, 5, 6));
-        let context = SupportReferenceCacheContextKey {
-            old_ref: p(0, 0, 0),
-            old_ref_definitions: vec![axis_plane_definition(&p(0, 0, 0))],
-            old_wnv: vec![0],
-            polygons: vec![support_only_polygon(Plane::axis_aligned(0, r(2)))],
-        };
+        let old_ref = p(0, 0, 0);
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &[support_only_polygon(Plane::axis_aligned(0, r(2)))],
+        );
         let mut cache = Vec::new();
         let mut calls = 0;
 
