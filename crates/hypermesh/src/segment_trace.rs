@@ -1826,14 +1826,16 @@ fn build_detour_target_from_shifted_witness(
         }
     }
 
-    if definitions.is_empty() && saw_unknown {
+    let used_axis_fallback = definitions.is_empty() && saw_unknown;
+    if used_axis_fallback {
         definitions.push(axis_plane_definition(&witness.point));
     }
 
     Ok(DetourTarget {
         point: witness.point.clone(),
         definitions,
-        uncertified_definition_fallback: witness.uncertified_definition_fallback || saw_unknown,
+        uncertified_definition_fallback: witness.uncertified_definition_fallback
+            || used_axis_fallback,
     })
 }
 
@@ -4754,8 +4756,9 @@ fn build_strict_leaf_point_from_shifted_witness(
         }
     }
 
+    let used_axis_fallback = planes.is_empty() && saw_unknown;
     if planes.is_empty() {
-        if saw_unknown {
+        if used_axis_fallback {
             planes.push(axis_plane_definition(&witness.point));
         } else {
             return Ok(None);
@@ -4765,7 +4768,8 @@ fn build_strict_leaf_point_from_shifted_witness(
     Ok(Some(InteriorLeafPoint {
         point: witness.point.clone(),
         planes,
-        uncertified_definition_fallback: witness.uncertified_definition_fallback || saw_unknown,
+        uncertified_definition_fallback: witness.uncertified_definition_fallback
+            || used_axis_fallback,
     }))
 }
 
@@ -6464,8 +6468,9 @@ fn build_probe_point_from_shifted_witness(
         }
     }
 
+    let used_axis_fallback = planes.is_empty() && saw_unknown;
     if planes.is_empty() {
-        if saw_unknown {
+        if used_axis_fallback {
             planes.push(axis_plane_definition(&witness.point));
         } else {
             return Ok(None);
@@ -6476,7 +6481,8 @@ fn build_probe_point_from_shifted_witness(
         point: witness.point.clone(),
         side,
         planes,
-        uncertified_definition_fallback: witness.uncertified_definition_fallback || saw_unknown,
+        uncertified_definition_fallback: witness.uncertified_definition_fallback
+            || used_axis_fallback,
     }))
 }
 
@@ -6564,8 +6570,9 @@ fn build_axis_probe_point_from_shifted_witness(
         }
     }
 
+    let used_axis_fallback = planes.is_empty() && saw_unknown;
     if planes.is_empty() {
-        if saw_unknown {
+        if used_axis_fallback {
             planes.push(axis_plane_definition(&witness.point));
         } else {
             return Ok(None);
@@ -6576,7 +6583,8 @@ fn build_axis_probe_point_from_shifted_witness(
         point: witness.point.clone(),
         side,
         planes,
-        uncertified_definition_fallback: witness.uncertified_definition_fallback || saw_unknown,
+        uncertified_definition_fallback: witness.uncertified_definition_fallback
+            || used_axis_fallback,
     }))
 }
 
@@ -7800,7 +7808,7 @@ mod tests {
 
         mark_all_detour_targets_uncertified(&mut targets);
 
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -7897,6 +7905,30 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert!(!targets[0].uncertified_definition_fallback);
+    }
+
+    #[test]
+    fn detour_target_from_shifted_witness_stays_certified_when_one_family_is_singular() {
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 1),
+            families: vec![
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(2, false, r(2))],
+                    active_planes: [Some(9), None, None],
+                },
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(0, false, r(2))],
+                    active_planes: [Some(0), None, None],
+                },
+            ],
+            uncertified_definition_fallback: false,
+        };
+
+        let target = build_detour_target_from_shifted_witness(&witness).unwrap();
+
+        assert_eq!(target.point, witness.point);
+        assert!(!target.uncertified_definition_fallback);
+        assert!(!target.definitions.is_empty());
     }
 
     #[test]
@@ -13363,6 +13395,36 @@ mod tests {
     }
 
     #[test]
+    fn strict_leaf_witness_from_shifted_witness_stays_certified_when_one_family_is_singular() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 1),
+            families: vec![
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![
+                        limit_plane_from_plane(&leaf.support),
+                        axis_halfspace(0, false, r(1)),
+                    ],
+                    active_planes: [Some(9), None, None],
+                },
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(1, false, r(1))],
+                    active_planes: [Some(0), None, None],
+                },
+            ],
+            uncertified_definition_fallback: false,
+        };
+
+        let point = build_strict_leaf_point_from_shifted_witness(&leaf, &witness)
+            .unwrap()
+            .expect("shifted witness should still certify a strict leaf point");
+
+        assert_eq!(point.point, witness.point);
+        assert!(!point.uncertified_definition_fallback);
+        assert!(!point.planes.is_empty());
+    }
+
+    #[test]
     fn strict_leaf_witness_salvages_coincident_halfspaces_after_invalid_active_index() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let witness = p(1, 1, 1);
@@ -13566,6 +13628,34 @@ mod tests {
     }
 
     #[test]
+    fn strict_probe_witness_from_shifted_witness_stays_certified_when_one_family_is_singular() {
+        let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let support = Plane::axis_aligned(2, r(0));
+        let witness = ShiftedHalfspaceWitness {
+            point: p(1, 1, 1),
+            families: vec![
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(2, false, r(2))],
+                    active_planes: [Some(9), None, None],
+                },
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(0, false, r(2))],
+                    active_planes: [Some(0), None, None],
+                },
+            ],
+            uncertified_definition_fallback: false,
+        };
+
+        let probe = build_probe_point_from_shifted_witness(&witness, &corridor, &support, &[])
+            .unwrap()
+            .expect("shifted witness should still certify a strict probe");
+
+        assert_eq!(probe.point, witness.point);
+        assert!(!probe.uncertified_definition_fallback);
+        assert!(!probe.planes.is_empty());
+    }
+
+    #[test]
     fn strict_probe_witness_reports_unknown_for_halfspace_boundary_contact() {
         let corridor = Aabb::new(p(0, 0, 0), p(3, 3, 3));
         let support = Plane::axis_aligned(2, r(0));
@@ -13701,6 +13791,42 @@ mod tests {
             ),
             Err(HypermeshError::UnknownClassification)
         );
+    }
+
+    #[test]
+    fn strict_axis_probe_witness_from_shifted_witness_stays_certified_when_one_family_is_singular()
+    {
+        let corridor = Aabb::new(p(1, 0, 0), p(4, 3, 3));
+        let support = Plane::axis_aligned(2, r(0));
+        let interior = InteriorLeafPoint {
+            point: p(1, 1, 0),
+            planes: vec![axis_plane_definition(&p(1, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let witness = ShiftedHalfspaceWitness {
+            point: p(2, 1, 1),
+            families: vec![
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(0, false, r(3))],
+                    active_planes: [Some(9), None, None],
+                },
+                ShiftedHalfspaceWitnessFamily {
+                    halfspaces: vec![axis_halfspace(1, false, r(2))],
+                    active_planes: [Some(0), None, None],
+                },
+            ],
+            uncertified_definition_fallback: false,
+        };
+
+        let probe = build_axis_probe_point_from_shifted_witness(
+            &witness, &interior, &corridor, &support, 0, None,
+        )
+        .unwrap()
+        .expect("shifted witness should still certify a strict axis probe");
+
+        assert_eq!(probe.point, witness.point);
+        assert!(!probe.uncertified_definition_fallback);
+        assert!(!probe.planes.is_empty());
     }
 
     #[test]
