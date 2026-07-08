@@ -2997,9 +2997,14 @@ fn ordered_subdivision_splits_with_partition_cache(
         polygon_bounds_cache,
         pairwise_cache,
     )?;
-    let mut ranked_attempts = Vec::with_capacity(unique.len());
+    let mut ranked_attempts = unique;
+    ranked_attempts.sort_by(|left, right| {
+        split_attempt_cheap_order_key(left).cmp(&split_attempt_cheap_order_key(right))
+    });
+    let fanout_refinement_len = ranked_attempts.len().min(4);
     let mut fanout_cache = fanout_count_cache.borrow_mut();
-    for attempt in unique {
+    let mut fanout_ranked_attempts = Vec::with_capacity(fanout_refinement_len);
+    for attempt in ranked_attempts.drain(..fanout_refinement_len) {
         let fanout_key = split_attempt_child_fanout_key(
             &attempt,
             axis_values_cache,
@@ -3008,22 +3013,19 @@ fn ordered_subdivision_splits_with_partition_cache(
             pairwise_cache,
             &mut fanout_cache,
         )?;
-        ranked_attempts.push((attempt, fanout_key));
+        fanout_ranked_attempts.push((attempt, fanout_key));
     }
-    ranked_attempts.sort_by(|left, right| {
-        left.1
-            .cmp(&right.1)
-            .then_with(|| {
-                split_attempt_recursive_room_key(&left.0)
-                    .cmp(&split_attempt_recursive_room_key(&right.0))
-            })
-            .then_with(|| left.0.counts.cmp(&right.0.counts))
-            .then_with(|| left.0.source.cmp(&right.0.source))
+    fanout_ranked_attempts.sort_by(|left, right| {
+        left.1.cmp(&right.1).then_with(|| {
+            split_attempt_cheap_order_key(&left.0).cmp(&split_attempt_cheap_order_key(&right.0))
+        })
     });
-    Ok(ranked_attempts
+    let mut ordered = fanout_ranked_attempts
         .into_iter()
         .map(|(attempt, _)| attempt)
-        .collect())
+        .collect::<Vec<_>>();
+    ordered.extend(ranked_attempts);
+    Ok(ordered)
 }
 
 fn unique_subdivision_split_attempts_with_partition_cache(
@@ -3177,6 +3179,16 @@ fn split_attempt_recursive_room_key(attempt: &RankedSplitAttempt) -> (usize, usi
         left_axes.max(right_axes),
         left_axes + right_axes,
         left_axes.abs_diff(right_axes),
+    )
+}
+
+fn split_attempt_cheap_order_key(
+    attempt: &RankedSplitAttempt,
+) -> ((usize, usize, usize), SplitCounts, SplitSource) {
+    (
+        split_attempt_recursive_room_key(attempt),
+        attempt.counts,
+        attempt.source,
     )
 }
 
