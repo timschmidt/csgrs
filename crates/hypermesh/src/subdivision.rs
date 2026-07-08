@@ -407,7 +407,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
     let intersections = pairwise_query(polygons)?;
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
 
-    for (index, polygon) in polygons.iter().enumerate() {
+    for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
+        let polygon = &polygons[index];
         if intersections[index].is_empty() {
             let emitted = emit_one_direct(
                 polygon,
@@ -480,6 +481,20 @@ fn process_leaf_into_inner_with_pairwise_cache(
 
     stats.certified_complete = true;
     Ok(stats)
+}
+
+fn ordered_leaf_polygon_indices_by_intersections(
+    intersections: &[Vec<PairwiseIntersection>],
+) -> Vec<usize> {
+    let mut indices = (0..intersections.len()).collect::<Vec<_>>();
+    indices.sort_by_key(|&index| {
+        (
+            intersections[index].is_empty(),
+            std::cmp::Reverse(intersections[index].len()),
+            index,
+        )
+    });
+    indices
 }
 
 /// Recursively subdivides a task and returns classified output polygons.
@@ -10710,6 +10725,19 @@ mod tests {
         Point3::new(r(x), r(y), r(z))
     }
 
+    fn sample_segment_intersection(other_polygon_idx: usize) -> PairwiseIntersection {
+        PairwiseIntersection {
+            kind: PairwiseIntersectionType::Segment,
+            segment: Some(IntersectionSegment {
+                v0: p(0, 0, 0),
+                v1: p(1, 0, 0),
+                split_plane: Plane::axis_aligned(0, r(0)),
+                other_polygon_idx,
+            }),
+            overlap: None,
+        }
+    }
+
     fn quadrilateral_reference_cell_fixture() -> (Aabb, Vec<LimitPlane3>, Point3) {
         let bounds = Aabb::new(p(0, 0, 0), p(5, 4, 0));
         let support = Plane::axis_aligned(2, r(0));
@@ -13790,6 +13818,35 @@ mod tests {
         assert_eq!(children[1].polygons, vec![polygon_a, polygon_b]);
         assert!(!children[0].unchanged_from_parent);
         assert!(!children[1].unchanged_from_parent);
+    }
+
+    #[test]
+    fn ordered_leaf_polygon_indices_prefers_intersecting_hosts_before_direct_hosts() {
+        let intersections = vec![
+            vec![sample_segment_intersection(1)],
+            vec![],
+            vec![
+                sample_segment_intersection(2),
+                sample_segment_intersection(3),
+            ],
+        ];
+
+        let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
+
+        assert_eq!(indices, vec![2, 0, 1]);
+    }
+
+    #[test]
+    fn ordered_leaf_polygon_indices_keeps_original_order_for_equal_intersection_counts() {
+        let intersections = vec![
+            vec![sample_segment_intersection(1)],
+            vec![sample_segment_intersection(2)],
+            vec![],
+        ];
+
+        let indices = ordered_leaf_polygon_indices_by_intersections(&intersections);
+
+        assert_eq!(indices, vec![0, 1, 2]);
     }
 
     #[test]
