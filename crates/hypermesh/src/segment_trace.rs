@@ -98,6 +98,13 @@ struct HalfspaceSeedFamilyCacheEntry {
     result: HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct HalfspaceReportCacheEntry {
+    halfspaces: Vec<LimitPlane3>,
+    saw_unknown: bool,
+    report: Option<hyperlimit::HalfspaceFeasibilityReport>,
+}
+
 #[cfg(test)]
 #[derive(Clone, Debug, PartialEq)]
 struct NormalProbeFamilyCacheEntry {
@@ -132,6 +139,7 @@ pub(crate) struct LeafProbeQueryCaches {
     #[cfg(test)]
     #[cfg_attr(test, allow(dead_code))]
     probe_families: Vec<ProbePointFamilyCacheEntry>,
+    halfspace_reports: Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: Vec<HalfspaceSeedFamilyCacheEntry>,
     probe_winding: Vec<ProbeWindingCacheEntry>,
     probe_surface: Vec<SurfaceCacheEntry>,
@@ -2720,7 +2728,11 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
-    let (report, _) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let report = cached_optional_halfspace_feasibility_report_with(
+        &mut probe_query_caches.halfspace_reports,
+        &halfspaces,
+        saw_unknown,
+    )?;
     let Some(report) = report.as_ref() else {
         return Ok(None);
     };
@@ -2783,8 +2795,11 @@ fn try_strict_normal_seed_winding_with_queries(
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
-    let (report, report_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
-    *saw_unknown |= report_unknown;
+    let report = cached_optional_halfspace_feasibility_report_with(
+        &mut probe_query_caches.halfspace_reports,
+        &halfspaces,
+        saw_unknown,
+    )?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -3013,7 +3028,11 @@ fn try_strict_normal_shifted_report_witness_winding_with_queries(
     halfspaces.push(support_side_halfspace(support, positive_side));
     halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
 
-    let (report, _) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let report = cached_optional_halfspace_feasibility_report_with(
+        &mut probe_query_caches.halfspace_reports,
+        &halfspaces,
+        saw_unknown,
+    )?;
     let Some(report) = report.as_ref() else {
         return Ok(None);
     };
@@ -3025,8 +3044,11 @@ fn try_strict_normal_shifted_report_witness_winding_with_queries(
     };
     let extra_planes = normal_probe_extra_planes(point, definition);
     let shifted = shifted_halfspace_cell(corridor, &halfspaces, seed)?;
-    let (shifted_report, shifted_report_unknown) = optional_halfspace_feasibility_report(&shifted)?;
-    *saw_unknown |= shifted_report_unknown;
+    let shifted_report = cached_optional_halfspace_feasibility_report_with(
+        &mut probe_query_caches.halfspace_reports,
+        &shifted,
+        saw_unknown,
+    )?;
     if shifted_report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -3348,8 +3370,11 @@ fn try_strict_axis_seed_winding_with_queries(
     }
     halfspaces.push(support_side_halfspace(support, positive_side));
 
-    let (report, report_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
-    *saw_unknown |= report_unknown;
+    let report = cached_optional_halfspace_feasibility_report_with(
+        &mut probe_query_caches.halfspace_reports,
+        &halfspaces,
+        saw_unknown,
+    )?;
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
@@ -3639,6 +3664,29 @@ fn cached_adjacent_axis_probes_with(
         probes: probes.clone(),
     });
     probes
+}
+
+fn cached_optional_halfspace_feasibility_report_with(
+    cache: &mut Vec<HalfspaceReportCacheEntry>,
+    halfspaces: &[LimitPlane3],
+    saw_unknown: &mut bool,
+) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
+    {
+        *saw_unknown |= existing.saw_unknown;
+        return Ok(existing.report.clone());
+    }
+
+    let (report, local_unknown) = optional_halfspace_feasibility_report(halfspaces)?;
+    cache.push(HalfspaceReportCacheEntry {
+        halfspaces: halfspaces.to_vec(),
+        saw_unknown: local_unknown,
+        report: report.clone(),
+    });
+    *saw_unknown |= local_unknown;
+    Ok(report)
 }
 
 fn cached_halfspace_cell_seed_families_from_optional_report_with(
@@ -12542,6 +12590,35 @@ mod tests {
             &bounds,
             &permuted_halfspaces,
             permuted_report.as_ref(),
+            &mut second_unknown,
+        )
+        .unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.len(), 1);
+        assert_eq!(first_unknown, second_unknown);
+    }
+
+    #[test]
+    fn cached_optional_halfspace_feasibility_report_reuses_permuted_halfspaces() {
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut cache = Vec::new();
+        let mut first_unknown = false;
+
+        let first = cached_optional_halfspace_feasibility_report_with(
+            &mut cache,
+            &halfspaces,
+            &mut first_unknown,
+        )
+        .unwrap();
+
+        let mut permuted_halfspaces = halfspaces.clone();
+        permuted_halfspaces.rotate_left(2);
+        let mut second_unknown = false;
+        let second = cached_optional_halfspace_feasibility_report_with(
+            &mut cache,
+            &permuted_halfspaces,
             &mut second_unknown,
         )
         .unwrap();
