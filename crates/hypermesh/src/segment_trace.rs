@@ -37,6 +37,12 @@ struct PlaneDefinedPoint {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct VisitedDefinitionPoint {
+    point: Point3,
+    definitions: Vec<[Plane; 3]>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct InteriorLeafPoint {
     pub(crate) point: Point3,
     planes: Vec<[Plane; 3]>,
@@ -391,7 +397,7 @@ fn trace_segment_from_definitions_with_caches(
         polygons,
         start_definitions,
         end_definitions,
-        &[start.clone(), end.clone()],
+        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
         &mut trace_without_detours,
         &mut detours_for,
     )
@@ -404,7 +410,7 @@ fn trace_segment_from_definitions_with_cycle_guard_impl(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -437,7 +443,7 @@ fn trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -572,7 +578,7 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
     detours: &[DetourTarget],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -590,9 +596,8 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
             && !definition_families_match_as_sets(&detour.definitions, end_definitions);
-        let already_visited = point_family_contains(visited_points, &detour.point)
-            && !start_definition_transition
-            && !end_definition_transition;
+        let already_visited =
+            visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
         let on_surface = if already_visited {
             false
         } else {
@@ -615,8 +620,15 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
         }
 
         let mut next_visited_points = visited_points.to_vec();
-        if !point_family_contains(&next_visited_points, &detour.point) {
-            next_visited_points.push(detour.point.clone());
+        if !visited_definition_family_contains(
+            &next_visited_points,
+            &detour.point,
+            &detour.definitions,
+        ) {
+            next_visited_points.push(VisitedDefinitionPoint {
+                point: detour.point.clone(),
+                definitions: detour.definitions.clone(),
+            });
         }
 
         let first_leg = match if start_definition_transition {
@@ -2657,8 +2669,34 @@ fn definition_families_match_as_sets(left: &[[Plane; 3]], right: &[[Plane; 3]]) 
     true
 }
 
-fn point_family_contains(points: &[Point3], candidate: &Point3) -> bool {
-    points.iter().any(|point| point == candidate)
+fn initial_visited_definition_points(
+    start: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end: &Point3,
+    end_definitions: &[[Plane; 3]],
+) -> Vec<VisitedDefinitionPoint> {
+    let mut visited = vec![VisitedDefinitionPoint {
+        point: start.clone(),
+        definitions: start_definitions.to_vec(),
+    }];
+    if !visited_definition_family_contains(&visited, end, end_definitions) {
+        visited.push(VisitedDefinitionPoint {
+            point: end.clone(),
+            definitions: end_definitions.to_vec(),
+        });
+    }
+    visited
+}
+
+fn visited_definition_family_contains(
+    points: &[VisitedDefinitionPoint],
+    candidate: &Point3,
+    definitions: &[[Plane; 3]],
+) -> bool {
+    points.iter().any(|point| {
+        point.point == *candidate
+            && definition_families_match_as_sets(&point.definitions, definitions)
+    })
 }
 
 #[cfg(test)]
@@ -2832,7 +2870,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
         polygons,
         start_definitions,
         end_definitions,
-        &[start.clone(), end.clone()],
+        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
         &mut trace_without_detours,
         &mut detours_for,
     )
@@ -2911,7 +2949,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -2941,7 +2979,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -3042,7 +3080,7 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -3072,7 +3110,7 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -3089,9 +3127,8 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
             && !definition_families_match_as_sets(&detour.definitions, end_definitions);
-        let already_visited = point_family_contains(visited_points, &detour.point)
-            && !start_definition_transition
-            && !end_definition_transition;
+        let already_visited =
+            visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
         let on_surface = if already_visited {
             false
         } else {
@@ -3114,8 +3151,15 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
         }
 
         let mut next_visited_points = visited_points.to_vec();
-        if !point_family_contains(&next_visited_points, &detour.point) {
-            next_visited_points.push(detour.point.clone());
+        if !visited_definition_family_contains(
+            &next_visited_points,
+            &detour.point,
+            &detour.definitions,
+        ) {
+            next_visited_points.push(VisitedDefinitionPoint {
+                point: detour.point.clone(),
+                definitions: detour.definitions.clone(),
+            });
         }
 
         let first_leg = match if start_definition_transition {
@@ -3220,7 +3264,7 @@ fn probe_reaches_adjacent_cell_via_detours(
         polygons,
         start_definitions,
         end_definitions,
-        &[start.clone(), end.clone()],
+        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
         &mut trace_without_detours,
         &mut detours_for,
     )
@@ -3519,7 +3563,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         start,
         end,
         polygons,
-        &[start.clone(), end.clone()],
+        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
         start_definitions,
         end_definitions,
         &mut trace_without_detours,
@@ -3531,7 +3575,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     trace_without_detours: &mut impl FnMut(
@@ -3561,7 +3605,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     start: &Point3,
     end: &Point3,
     polygons: &[ConvexPolygon],
-    visited_points: &[Point3],
+    visited_points: &[VisitedDefinitionPoint],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
@@ -3589,9 +3633,8 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
             && !definition_families_match_as_sets(&detour.definitions, end_definitions);
-        let already_visited = point_family_contains(visited_points, &detour.point)
-            && !start_definition_transition
-            && !end_definition_transition;
+        let already_visited =
+            visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
         let on_surface = if already_visited {
             false
         } else {
@@ -3614,8 +3657,15 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         }
 
         let mut next_visited_points = visited_points.to_vec();
-        if !point_family_contains(&next_visited_points, &detour.point) {
-            next_visited_points.push(detour.point.clone());
+        if !visited_definition_family_contains(
+            &next_visited_points,
+            &detour.point,
+            &detour.definitions,
+        ) {
+            next_visited_points.push(VisitedDefinitionPoint {
+                point: detour.point.clone(),
+                definitions: detour.definitions.clone(),
+            });
         }
 
         let first_leg = match if start_definition_transition {
@@ -10745,7 +10795,12 @@ mod tests {
             &[],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut surface_cache,
             &mut |_point| {
                 query_calls += 1;
@@ -14606,7 +14661,12 @@ mod tests {
             &[],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut |_from, _to, _winding, _start_definitions, _end_definitions| Ok(None),
             &mut |_from, _to| Ok(vec![fallback_detour.clone()]),
         )
@@ -14642,7 +14702,12 @@ mod tests {
             ],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut surface_cache,
             &mut |point| {
                 if *point == first_detour {
@@ -14679,7 +14744,12 @@ mod tests {
             &[],
             std::slice::from_ref(&start_definition),
             std::slice::from_ref(&end_definition),
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                std::slice::from_ref(&start_definition),
+                &end,
+                std::slice::from_ref(&end_definition),
+            ),
             &mut Vec::new(),
             &mut |_point| Ok(false),
             &mut |from, to, winding, start_definitions, end_definitions| {
@@ -14723,6 +14793,113 @@ mod tests {
     }
 
     #[test]
+    fn detour_trace_cycle_guard_allows_revisiting_point_with_new_definitions() {
+        let start = p(0, 0, 0);
+        let shared = p(1, 0, 0);
+        let mid = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let shared_definition = axis_plane_definition(&shared);
+        let mid_definition = axis_plane_definition(&mid);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_shared_definition = [
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(-1)),
+        ];
+
+        let winding = trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
+            &start,
+            &end,
+            &[5],
+            &[],
+            std::slice::from_ref(&start_definition),
+            std::slice::from_ref(&end_definition),
+            &initial_visited_definition_points(
+                &start,
+                std::slice::from_ref(&start_definition),
+                &end,
+                std::slice::from_ref(&end_definition),
+            ),
+            &mut Vec::new(),
+            &mut |_point| Ok(false),
+            &mut |from, to, winding, start_definitions, end_definitions| {
+                if *from == start
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(None)
+                } else if *from == start
+                    && *to == shared
+                    && start_definitions == std::slice::from_ref(&start_definition)
+                    && end_definitions == std::slice::from_ref(&shared_definition)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else if *from == shared
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&shared_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(None)
+                } else if *from == shared
+                    && *to == mid
+                    && start_definitions == std::slice::from_ref(&shared_definition)
+                    && end_definitions == std::slice::from_ref(&mid_definition)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else if *from == mid
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&mid_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(None)
+                } else if *from == mid
+                    && *to == shared
+                    && start_definitions == std::slice::from_ref(&mid_definition)
+                    && end_definitions == std::slice::from_ref(&lifted_shared_definition)
+                {
+                    Ok(Some(winding.to_vec()))
+                } else if *from == shared
+                    && *to == end
+                    && start_definitions == std::slice::from_ref(&lifted_shared_definition)
+                    && end_definitions == std::slice::from_ref(&end_definition)
+                {
+                    Ok(Some(vec![7]))
+                } else {
+                    Ok(None)
+                }
+            },
+            &mut |from, to| {
+                if *from == start && *to == end {
+                    Ok(vec![DetourTarget {
+                        point: shared.clone(),
+                        definitions: vec![shared_definition.clone()],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else if *from == shared && *to == end {
+                    Ok(vec![DetourTarget {
+                        point: mid.clone(),
+                        definitions: vec![mid_definition.clone()],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else if *from == mid && *to == end {
+                    Ok(vec![DetourTarget {
+                        point: shared.clone(),
+                        definitions: vec![lifted_shared_definition.clone()],
+                        uncertified_definition_fallback: false,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
     fn detour_trace_cycle_guard_skips_fallback_detour_even_when_legs_succeed() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
@@ -14749,7 +14926,12 @@ mod tests {
             ],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut surface_cache,
             &mut |_point| Ok(false),
             &mut |_from, to, winding, _start_definitions, _end_definitions| {
@@ -14785,7 +14967,12 @@ mod tests {
             }],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut surface_cache,
             &mut |_point| Ok(false),
             &mut |_from, _to, winding, _start_definitions, _end_definitions| {
@@ -14826,7 +15013,12 @@ mod tests {
             ],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut surface_cache,
             &mut |point| point_lies_on_traced_surface(point, std::slice::from_ref(&polygon)),
             &mut |_from, _to, winding, _start_definitions, _end_definitions| {
@@ -14878,7 +15070,12 @@ mod tests {
             ],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut surface_cache,
             &mut |point| {
                 if *point == first_detour {
@@ -15151,7 +15348,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &start_definitions,
+                    &end,
+                    &end_definitions,
+                ),
                 &start_definitions,
                 &end_definitions,
                 &mut trace_without_detours,
@@ -15308,7 +15510,12 @@ mod tests {
                 &[],
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
@@ -15344,7 +15551,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut trace_without_detours,
@@ -15391,7 +15603,12 @@ mod tests {
                 &start,
                 &end,
                 &polygons,
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut trace_without_detours,
@@ -15429,7 +15646,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut trace_without_detours,
@@ -15453,7 +15675,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut surface_cache,
@@ -15505,7 +15732,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    std::slice::from_ref(&start_definition),
+                    &end,
+                    std::slice::from_ref(&end_definition),
+                ),
                 std::slice::from_ref(&start_definition),
                 std::slice::from_ref(&end_definition),
                 &mut Vec::new(),
@@ -15540,6 +15772,88 @@ mod tests {
     }
 
     #[test]
+    fn probe_step_detour_cycle_guard_allows_revisiting_point_with_new_definitions() {
+        let start = p(0, 0, 0);
+        let shared = p(1, 0, 0);
+        let mid = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let shared_definition = axis_plane_definition(&shared);
+        let mid_definition = axis_plane_definition(&mid);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_shared_definition = [
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(-1)),
+        ];
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                &initial_visited_definition_points(
+                    &start,
+                    std::slice::from_ref(&start_definition),
+                    &end,
+                    std::slice::from_ref(&end_definition),
+                ),
+                std::slice::from_ref(&start_definition),
+                std::slice::from_ref(&end_definition),
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut |from, to, start_definitions, end_definitions| {
+                    Ok(
+                        (*from == start
+                            && *to == shared
+                            && start_definitions == std::slice::from_ref(&start_definition)
+                            && end_definitions == std::slice::from_ref(&shared_definition))
+                            || (*from == shared
+                                && *to == mid
+                                && start_definitions
+                                    == std::slice::from_ref(&shared_definition)
+                                && end_definitions == std::slice::from_ref(&mid_definition))
+                            || (*from == mid
+                                && *to == shared
+                                && start_definitions == std::slice::from_ref(&mid_definition)
+                                && end_definitions
+                                    == std::slice::from_ref(&lifted_shared_definition))
+                            || (*from == shared
+                                && *to == end
+                                && start_definitions
+                                    == std::slice::from_ref(&lifted_shared_definition)
+                                && end_definitions == std::slice::from_ref(&end_definition)),
+                    )
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: shared.clone(),
+                            definitions: vec![shared_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else if *from == shared && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: mid.clone(),
+                            definitions: vec![mid_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else if *from == mid && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: shared.clone(),
+                            definitions: vec![lifted_shared_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
     fn probe_step_detour_cycle_guard_skips_fallback_detour_even_when_path_succeeds() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
@@ -15551,7 +15865,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
@@ -15597,7 +15916,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
@@ -15658,7 +15982,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut surface_cache,
@@ -16077,7 +16406,12 @@ mod tests {
             &[],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut trace_without_detours,
             &mut detours_for,
         )
@@ -16120,7 +16454,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
@@ -16151,7 +16490,12 @@ mod tests {
                 &start,
                 &end,
                 &[],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
@@ -16179,7 +16523,12 @@ mod tests {
                 &[],
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &mut surface_cache,
                 &mut |point| {
                     if *point == first_detour {
@@ -16231,7 +16580,12 @@ mod tests {
                 &[],
                 std::slice::from_ref(&start_definition),
                 std::slice::from_ref(&end_definition),
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    std::slice::from_ref(&start_definition),
+                    &end,
+                    std::slice::from_ref(&end_definition),
+                ),
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
                 &mut |from, to, start_definitions, end_definitions| {
@@ -16249,6 +16603,84 @@ mod tests {
                         Ok(vec![DetourTarget {
                             point: start.clone(),
                             definitions: vec![lifted_start_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else {
+                        Ok(Vec::new())
+                    }
+                },
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn probe_reachability_cycle_guard_allows_revisiting_point_with_new_definitions() {
+        let start = p(0, 0, 0);
+        let shared = p(1, 0, 0);
+        let mid = p(2, 0, 0);
+        let end = p(3, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let shared_definition = axis_plane_definition(&shared);
+        let mid_definition = axis_plane_definition(&mid);
+        let end_definition = axis_plane_definition(&end);
+        let lifted_shared_definition = [
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(0)),
+            Plane::new(Point3::new(r(1), r(1), r(1)), r(-1)),
+        ];
+
+        assert!(
+            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+                &start,
+                &end,
+                &[],
+                std::slice::from_ref(&start_definition),
+                std::slice::from_ref(&end_definition),
+                &initial_visited_definition_points(
+                    &start,
+                    std::slice::from_ref(&start_definition),
+                    &end,
+                    std::slice::from_ref(&end_definition),
+                ),
+                &mut Vec::new(),
+                &mut |_point| Ok(false),
+                &mut |from, to, start_definitions, end_definitions| {
+                    Ok((*from == start
+                        && *to == shared
+                        && start_definitions == std::slice::from_ref(&start_definition)
+                        && end_definitions == std::slice::from_ref(&shared_definition))
+                        || (*from == shared
+                            && *to == mid
+                            && start_definitions == std::slice::from_ref(&shared_definition)
+                            && end_definitions == std::slice::from_ref(&mid_definition))
+                        || (*from == mid
+                            && *to == shared
+                            && start_definitions == std::slice::from_ref(&mid_definition)
+                            && end_definitions == std::slice::from_ref(&lifted_shared_definition))
+                        || (*from == shared
+                            && *to == end
+                            && start_definitions
+                                == std::slice::from_ref(&lifted_shared_definition)
+                            && end_definitions == std::slice::from_ref(&end_definition)))
+                },
+                &mut |from, to| {
+                    if *from == start && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: shared.clone(),
+                            definitions: vec![shared_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else if *from == shared && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: mid.clone(),
+                            definitions: vec![mid_definition.clone()],
+                            uncertified_definition_fallback: false,
+                        }])
+                    } else if *from == mid && *to == end {
+                        Ok(vec![DetourTarget {
+                            point: shared.clone(),
+                            definitions: vec![lifted_shared_definition.clone()],
                             uncertified_definition_fallback: false,
                         }])
                     } else {
@@ -16294,7 +16726,12 @@ mod tests {
                 &[],
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
-                &[start.clone(), end.clone()],
+                &initial_visited_definition_points(
+                    &start,
+                    &[axis_plane_definition(&start)],
+                    &end,
+                    &[axis_plane_definition(&end)],
+                ),
                 &mut surface_cache,
                 &mut |_point| {
                     query_calls += 1;
@@ -17231,7 +17668,12 @@ mod tests {
             &[],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut trace_without_detours,
             &mut detours_for,
         )
@@ -17282,7 +17724,12 @@ mod tests {
             &[],
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            &[start.clone(), end.clone()],
+            &initial_visited_definition_points(
+                &start,
+                &[axis_plane_definition(&start)],
+                &end,
+                &[axis_plane_definition(&end)],
+            ),
             &mut trace_without_detours,
             &mut detours_for,
         )
