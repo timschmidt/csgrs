@@ -3255,9 +3255,8 @@ fn compute_new_reference_with_query_caches(
                 bounds,
                 &projected_halfspaces,
                 || {
-                    search_projected_reference_families(
+                    search_projected_reference_families_lazy_escape(
                         &projected_root.projected_targets,
-                        &projected_root.projected_escape_targets,
                         || {
                             projected_support_plane_cell_reference_with_query_caches(
                                 old_ref,
@@ -3295,6 +3294,27 @@ fn compute_new_reference_with_query_caches(
                                         target,
                                     )
                                 },
+                            )
+                        },
+                        || {
+                            let mut query_caches = query_caches.borrow_mut();
+                            let query_caches = &mut **query_caches;
+                            let SupportReferenceQueryCaches {
+                                shifted_projected_family_cache,
+                                reference_witness_cache,
+                                pure_halfspace_contains_cache,
+                                ..
+                            } = query_caches;
+                            projected_reference_escape_targets_from_seed_family_state_with_tracking_unknown_and_witness_cache(
+                                bounds,
+                                &projected_halfspaces,
+                                &projected_root.projected_targets,
+                                projected_root.report.as_ref(),
+                                &projected_root.projected_escape_seed_families,
+                                &mut projected_unknown,
+                                shifted_projected_family_cache,
+                                reference_witness_cache,
+                                pure_halfspace_contains_cache,
                             )
                         },
                         |projected_target| {
@@ -3408,8 +3428,15 @@ fn compute_new_reference_with_query_caches(
 struct ProjectedRootReferenceFamilies {
     report: Option<hyperlimit::HalfspaceFeasibilityReport>,
     projected_targets: Vec<ReferenceTarget>,
-    projected_escape_targets: Vec<ReferenceTarget>,
+    projected_escape_seed_families: ProjectedEscapeSeedFamilies,
     saw_unknown: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ProjectedEscapeSeedFamilies {
+    strict_seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
 }
 
 #[derive(Clone)]
@@ -3450,7 +3477,7 @@ fn projected_root_reference_families_with_witness_cache(
     shifted_projected_family_cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
-    pure_halfspace_contains_cache: &std::cell::RefCell<
+    _pure_halfspace_contains_cache: &std::cell::RefCell<
         Vec<ReferencePureHalfspaceContainmentCacheEntry>,
     >,
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
@@ -3462,7 +3489,11 @@ fn projected_root_reference_families_with_witness_cache(
         return Ok(ProjectedRootReferenceFamilies {
             report,
             projected_targets: Vec::new(),
-            projected_escape_targets: Vec::new(),
+            projected_escape_seed_families: ProjectedEscapeSeedFamilies {
+                strict_seeds: Vec::new(),
+                shifted_vertices: Vec::new(),
+                shifted_geometry_seeds: Vec::new(),
+            },
             saw_unknown: saw_report_unknown,
         });
     }
@@ -3499,33 +3530,14 @@ fn projected_root_reference_families_with_witness_cache(
                 )
             },
         )?;
-    let projected_escape_targets =
-        projected_reference_escape_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
-            halfspaces,
-            &projected_targets,
-            report.as_ref(),
-            strict_seeds,
-            shifted_vertices,
-            shifted_geometry_seeds,
-            &mut saw_unknown,
-            reference_witness_cache,
-            &pure_halfspace_contains_cache,
-            |seed| {
-                projected_escape_targets_from_seed_with_cache(
-                    bounds,
-                    halfspaces,
-                    seed,
-                    shifted_projected_family_cache,
-                    reference_witness_cache,
-                    pure_halfspace_contains_cache,
-                )
-            },
-        )?;
-
     Ok(ProjectedRootReferenceFamilies {
         report,
         projected_targets,
-        projected_escape_targets,
+        projected_escape_seed_families: ProjectedEscapeSeedFamilies {
+            strict_seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        },
         saw_unknown,
     })
 }
@@ -3661,11 +3673,11 @@ fn reference_result_with_support_fallback(
     reference_result_or_error(None, support, projected_unknown)
 }
 
-fn search_projected_reference_families(
+fn search_projected_reference_families_lazy_escape(
     projected_targets: &[ReferenceTarget],
-    projected_escape_targets: &[ReferenceTarget],
     mut projected_support_search: impl FnMut() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
     mut trace_projected_target: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+    load_projected_escape_targets: impl FnOnce() -> HypermeshResult<Vec<ReferenceTarget>>,
     mut axis_escape_search: impl FnMut(
         &ReferenceTarget,
     ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
@@ -3713,7 +3725,16 @@ fn search_projected_reference_families(
         Err(err) => return Err(err),
     }
 
-    for projected_target in projected_escape_targets {
+    let projected_escape_targets = match load_projected_escape_targets() {
+        Ok(targets) => targets,
+        Err(crate::error::HypermeshError::UnknownClassification) => {
+            saw_unknown = true;
+            Vec::new()
+        }
+        Err(err) => return Err(err),
+    };
+
+    for projected_target in &projected_escape_targets {
         if !traced_direct_targets
             .iter()
             .any(|candidate| reference_targets_match_for_trace_cache(candidate, projected_target))
@@ -3782,6 +3803,29 @@ fn search_projected_reference_families(
     } else {
         Ok(None)
     }
+}
+
+#[cfg(test)]
+fn search_projected_reference_families(
+    projected_targets: &[ReferenceTarget],
+    projected_escape_targets: &[ReferenceTarget],
+    projected_support_search: impl FnMut() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+    trace_projected_target: impl FnMut(&ReferenceTarget) -> HypermeshResult<Option<Vec<i32>>>,
+    axis_escape_search: impl FnMut(
+        &ReferenceTarget,
+    ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+    tight_escape_search: impl FnMut(
+        &ReferenceTarget,
+    ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    search_projected_reference_families_lazy_escape(
+        projected_targets,
+        projected_support_search,
+        trace_projected_target,
+        || Ok(projected_escape_targets.to_vec()),
+        axis_escape_search,
+        tight_escape_search,
+    )
 }
 
 #[cfg(test)]
@@ -4033,6 +4077,42 @@ fn projected_reference_escape_targets_from_seed_families_with_tracking_unknown_a
         mark_all_reference_targets_uncertified(&mut targets);
     }
     Ok(targets)
+}
+
+fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unknown_and_witness_cache(
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    projected_targets: &[ReferenceTarget],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    seed_families: &ProjectedEscapeSeedFamilies,
+    saw_unknown: &mut bool,
+    shifted_projected_family_cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
+    reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
+    pure_halfspace_contains_cache: &std::cell::RefCell<
+        Vec<ReferencePureHalfspaceContainmentCacheEntry>,
+    >,
+) -> HypermeshResult<Vec<ReferenceTarget>> {
+    projected_reference_escape_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
+        halfspaces,
+        projected_targets,
+        report,
+        seed_families.strict_seeds.clone(),
+        seed_families.shifted_vertices.clone(),
+        seed_families.shifted_geometry_seeds.clone(),
+        saw_unknown,
+        reference_witness_cache,
+        pure_halfspace_contains_cache,
+        |seed| {
+            projected_escape_targets_from_seed_with_cache(
+                bounds,
+                halfspaces,
+                seed,
+                shifted_projected_family_cache,
+                reference_witness_cache,
+                pure_halfspace_contains_cache,
+            )
+        },
+    )
 }
 
 #[cfg(test)]
@@ -11409,9 +11489,8 @@ mod tests {
         )
         .unwrap();
 
-        let projected = projected_reference_search_or_none(search_projected_reference_families(
+        let projected = projected_reference_search_or_none(search_projected_reference_families_lazy_escape(
             &projected_root.projected_targets,
-            &projected_root.projected_escape_targets,
             || {
                 projected_support_plane_cell_reference(
                     &old_ref,
@@ -11430,6 +11509,20 @@ mod tests {
                     &bounds,
                     &polygons,
                     projected_target,
+                )
+            },
+            || {
+                let mut saw_unknown = false;
+                projected_reference_escape_targets_from_seed_family_state_with_tracking_unknown_and_witness_cache(
+                    &bounds,
+                    &projected_halfspaces,
+                    &projected_root.projected_targets,
+                    projected_root.report.as_ref(),
+                    &projected_root.projected_escape_seed_families,
+                    &mut saw_unknown,
+                    &mut projected_query_caches.shifted_projected_family_cache,
+                    &projected_query_caches.reference_witness_cache,
+                    &projected_query_caches.pure_halfspace_contains_cache,
                 )
             },
             |projected_target| {
@@ -11589,6 +11682,53 @@ mod tests {
 
         assert_eq!(found, Some((support_target, vec![7])));
         assert_eq!(*calls.borrow(), vec!["direct", "projected_support"]);
+    }
+
+    #[test]
+    fn projected_reference_search_lazy_escape_skips_escape_build_after_projected_support_hit() {
+        let support_target = ReferenceTarget::axis_defined(p(2, 2, 3));
+        let mut escape_builds = 0;
+
+        let found = search_projected_reference_families_lazy_escape(
+            &[],
+            || Ok(Some((support_target.clone(), vec![7]))),
+            |_target| unreachable!("no direct projected targets"),
+            || {
+                escape_builds += 1;
+                Ok(vec![ReferenceTarget::axis_defined(p(3, 2, 3))])
+            },
+            |_target| unreachable!("escape search should not run"),
+            |_target| unreachable!("escape search should not run"),
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((support_target, vec![7])));
+        assert_eq!(escape_builds, 0);
+    }
+
+    #[test]
+    fn projected_reference_search_lazy_escape_builds_escape_targets_after_support_miss() {
+        let escape_target = ReferenceTarget::axis_defined(p(3, 2, 3));
+        let mut escape_builds = 0;
+
+        let found = search_projected_reference_families_lazy_escape(
+            &[],
+            || Ok(None),
+            |target| {
+                assert_eq!(target, &escape_target);
+                Ok(Some(vec![9]))
+            },
+            || {
+                escape_builds += 1;
+                Ok(vec![escape_target.clone()])
+            },
+            |_target| unreachable!("direct escape trace should already succeed"),
+            |_target| unreachable!("direct escape trace should already succeed"),
+        )
+        .unwrap();
+
+        assert_eq!(found, Some((escape_target, vec![9])));
+        assert_eq!(escape_builds, 1);
     }
 
     #[test]
@@ -15948,8 +16088,8 @@ mod tests {
         assert_eq!(first.report, second.report);
         assert_eq!(first.projected_targets, second.projected_targets);
         assert_eq!(
-            first.projected_escape_targets,
-            second.projected_escape_targets
+            first.projected_escape_seed_families,
+            second.projected_escape_seed_families
         );
         assert_eq!(first.saw_unknown, second.saw_unknown);
         assert_eq!(caches.projected_root_cache.len(), 1);
