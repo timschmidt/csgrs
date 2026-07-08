@@ -184,6 +184,14 @@ struct SplitCandidatesCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct SplitAttemptChildFanoutCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    count: HypermeshResult<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct SplitChildPartition {
     left_polys: Vec<ConvexPolygon>,
     right_polys: Vec<ConvexPolygon>,
@@ -2984,6 +2992,7 @@ fn ordered_subdivision_splits_with_partition_cache(
         pairwise_cache,
     )?;
     let mut ranked_attempts = Vec::with_capacity(unique.len());
+    let mut fanout_cache = Vec::new();
     for attempt in unique {
         let fanout_key = split_attempt_child_fanout_key(
             &attempt,
@@ -2991,6 +3000,7 @@ fn ordered_subdivision_splits_with_partition_cache(
             partition_cache,
             polygon_bounds_cache,
             pairwise_cache,
+            &mut fanout_cache,
         )?;
         ranked_attempts.push((attempt, fanout_key));
     }
@@ -3170,30 +3180,31 @@ fn split_attempt_child_fanout_key(
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    cache: &mut Vec<SplitAttemptChildFanoutCacheEntry>,
 ) -> HypermeshResult<(usize, usize, usize)> {
     let left_count = if let Some(bounds) = attempt.left_bounds.as_ref() {
-        unique_subdivision_split_attempts_with_partition_cache(
+        cached_unique_subdivision_split_attempt_count_with(
+            cache,
             bounds,
             &attempt.left_polys,
             axis_values_cache,
             partition_cache,
             polygon_bounds_cache,
             pairwise_cache,
-        )
-        .map(|attempts| attempts.len())?
+        )?
     } else {
         0
     };
     let right_count = if let Some(bounds) = attempt.right_bounds.as_ref() {
-        unique_subdivision_split_attempts_with_partition_cache(
+        cached_unique_subdivision_split_attempt_count_with(
+            cache,
             bounds,
             &attempt.right_polys,
             axis_values_cache,
             partition_cache,
             polygon_bounds_cache,
             pairwise_cache,
-        )
-        .map(|attempts| attempts.len())?
+        )?
     } else {
         0
     };
@@ -3202,6 +3213,75 @@ fn split_attempt_child_fanout_key(
         left_count + right_count,
         left_count.abs_diff(right_count),
     ))
+}
+
+fn cached_unique_subdivision_split_attempt_count_with(
+    cache: &mut Vec<SplitAttemptChildFanoutCacheEntry>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+) -> HypermeshResult<usize> {
+    cached_unique_subdivision_split_attempt_count_with_query(cache, bounds, polygons, || {
+        unique_subdivision_split_attempts_with_partition_cache(
+            bounds,
+            polygons,
+            axis_values_cache,
+            partition_cache,
+            polygon_bounds_cache,
+            pairwise_cache,
+        )
+        .map(|attempts| attempts.len())
+    })
+}
+
+fn cached_unique_subdivision_split_attempt_count_with_query(
+    cache: &mut Vec<SplitAttemptChildFanoutCacheEntry>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    query: impl FnOnce() -> HypermeshResult<usize>,
+) -> HypermeshResult<usize> {
+    if let Some(existing) = cache
+        .iter()
+        .rev()
+        .find(|existing| existing.bounds == *bounds && existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.count;
+    }
+
+    let polygon_profile = polygon_family_profile(polygons);
+    let existing = cache
+        .iter()
+        .rev()
+        .find(|existing| {
+            existing.bounds == *bounds
+                && existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache.push(SplitAttemptChildFanoutCacheEntry {
+                polygon_profile,
+                polygons: polygons.to_vec(),
+                bounds: bounds.clone(),
+                count: existing.count.clone(),
+            });
+        }
+        return existing.count;
+    }
+
+    let count = query();
+    cache.push(SplitAttemptChildFanoutCacheEntry {
+        polygon_profile,
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        count: count.clone(),
+    });
+    count
 }
 
 fn positive_extent_axis_count(bounds: &Aabb) -> usize {
@@ -11758,6 +11838,41 @@ mod tests {
                 .collect::<Vec<_>>()
         );
         assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn cached_unique_subdivision_split_attempt_count_reuses_equivalent_child_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+        let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+        let mut cache = Vec::new();
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_unique_subdivision_split_attempt_count_with_query(
+            &mut cache,
+            &bounds,
+            &[polygon_a.clone(), polygon_b.clone()],
+            || {
+                calls.set(calls.get() + 1);
+                Ok(3)
+            },
+        )
+        .unwrap();
+        let second = cached_unique_subdivision_split_attempt_count_with_query(
+            &mut cache,
+            &bounds,
+            &[polygon_b, polygon_a],
+            || {
+                calls.set(calls.get() + 1);
+                Ok(9)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(first, 3);
+        assert_eq!(second, 3);
+        assert_eq!(calls.get(), 1);
+        assert_eq!(cache.len(), 2);
     }
 
     #[test]
