@@ -4389,6 +4389,7 @@ struct SupportReferenceQueryCaches {
     support_surface_cache: Vec<SupportSurfaceCacheEntry>,
     target_cache: std::cell::RefCell<Vec<SupportTargetFamilyCacheEntry>>,
     accept_cache: std::cell::RefCell<Vec<SupportReferenceAcceptCacheEntry>>,
+    support_reference_result_cache: Vec<SupportReferenceResultCacheEntry>,
     search_cache:
         std::cell::RefCell<Vec<SupportPlaneCellSearchCacheEntry<(ReferenceTarget, Vec<i32>)>>>,
 }
@@ -4796,6 +4797,14 @@ struct SupportReferenceAcceptCacheEntry {
     accepted: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 }
 
+#[derive(Clone)]
+struct SupportReferenceResultCacheEntry {
+    context: SupportReferenceCacheContextKey,
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
+    result: HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct SupportReferenceCacheContextKey {
     old_ref: Point3,
@@ -4888,6 +4897,31 @@ fn cached_support_reference_accept_with(
         accepted: accepted.clone(),
     });
     accepted
+}
+
+fn cached_support_reference_result_with(
+    cache: &mut Vec<SupportReferenceResultCacheEntry>,
+    context: &SupportReferenceCacheContextKey,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    build: impl FnOnce() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.bounds == *bounds
+            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            && support_reference_cache_context_matches(Some(&existing.context), Some(context))
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = build();
+    cache.push(SupportReferenceResultCacheEntry {
+        context: context.clone(),
+        bounds: bounds.clone(),
+        halfspaces: halfspaces.to_vec(),
+        result: result.clone(),
+    });
+    result
 }
 
 #[derive(Clone)]
@@ -5687,59 +5721,70 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     mut halfspaces: Vec<LimitPlane3>,
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let report_cache = &mut query_caches.report_cache;
-    let feasible_cache = &mut query_caches.feasible_cache;
-    let seed_geometry_cache = &mut query_caches.seed_geometry_cache;
-    let centroid_subset_seed_cache = &mut query_caches.centroid_subset_seed_cache;
-    let support_seed_family_cache = &mut query_caches.support_seed_family_cache;
-    let support_direct_target_cache = &mut query_caches.support_direct_target_cache;
-    let shifted_support_family_cache = &mut query_caches.shifted_support_family_cache;
-    let reference_witness_cache = &mut query_caches.reference_witness_cache;
-    let strict_contains_cache = &query_caches.strict_contains_cache;
-    let trace_cache = &mut query_caches.trace_cache;
-    let validity_cache = &mut query_caches.validity_cache;
-    let support_surface_cache = &mut query_caches.support_surface_cache;
-    let target_cache = &query_caches.target_cache;
-    let accept_cache = &query_caches.accept_cache;
-    let search_cache = &query_caches.search_cache;
-    let shared_halfspace_caches = std::cell::RefCell::new((report_cache, feasible_cache));
-    support_plane_cell_reference_with_queries_and_trace_surface_caches(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
+    let cache_context =
+        support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
+    let cache_halfspaces = halfspaces.clone();
+    cached_support_reference_result_with(
+        &mut query_caches.support_reference_result_cache,
+        &cache_context,
         bounds,
-        polygons,
-        &mut halfspaces,
-        &mut |halfspaces| {
-            let mut caches = shared_halfspace_caches.borrow_mut();
-            cached_halfspace_report_with(caches.0, halfspaces, |halfspaces| {
-                halfspace_system_report(halfspaces)
-            })
-        },
-        &mut |halfspaces| {
-            let mut caches = shared_halfspace_caches.borrow_mut();
-            let (report_cache, feasible_cache) = &mut *caches;
-            cached_halfspace_feasibility_with_report_cache(
-                report_cache,
-                feasible_cache,
-                halfspaces,
-                |halfspaces| halfspace_system_report(halfspaces),
-                |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &cache_halfspaces,
+        || {
+            let report_cache = &mut query_caches.report_cache;
+            let feasible_cache = &mut query_caches.feasible_cache;
+            let seed_geometry_cache = &mut query_caches.seed_geometry_cache;
+            let centroid_subset_seed_cache = &mut query_caches.centroid_subset_seed_cache;
+            let support_seed_family_cache = &mut query_caches.support_seed_family_cache;
+            let support_direct_target_cache = &mut query_caches.support_direct_target_cache;
+            let shifted_support_family_cache = &mut query_caches.shifted_support_family_cache;
+            let reference_witness_cache = &mut query_caches.reference_witness_cache;
+            let strict_contains_cache = &query_caches.strict_contains_cache;
+            let trace_cache = &mut query_caches.trace_cache;
+            let validity_cache = &mut query_caches.validity_cache;
+            let support_surface_cache = &mut query_caches.support_surface_cache;
+            let target_cache = &query_caches.target_cache;
+            let accept_cache = &query_caches.accept_cache;
+            let search_cache = &query_caches.search_cache;
+            let shared_halfspace_caches = std::cell::RefCell::new((report_cache, feasible_cache));
+            support_plane_cell_reference_with_queries_and_trace_surface_caches(
+                old_ref,
+                old_ref_definitions,
+                old_wnv,
+                bounds,
+                polygons,
+                &mut halfspaces,
+                &mut |halfspaces| {
+                    let mut caches = shared_halfspace_caches.borrow_mut();
+                    cached_halfspace_report_with(caches.0, halfspaces, |halfspaces| {
+                        halfspace_system_report(halfspaces)
+                    })
+                },
+                &mut |halfspaces| {
+                    let mut caches = shared_halfspace_caches.borrow_mut();
+                    let (report_cache, feasible_cache) = &mut *caches;
+                    cached_halfspace_feasibility_with_report_cache(
+                        report_cache,
+                        feasible_cache,
+                        halfspaces,
+                        |halfspaces| halfspace_system_report(halfspaces),
+                        |halfspaces| halfspace_system_is_feasible(halfspaces),
+                    )
+                },
+                trace_cache,
+                validity_cache,
+                support_surface_cache,
+                seed_geometry_cache,
+                centroid_subset_seed_cache,
+                support_seed_family_cache,
+                support_direct_target_cache,
+                shifted_support_family_cache,
+                reference_witness_cache,
+                strict_contains_cache,
+                target_cache,
+                accept_cache,
+                search_cache,
             )
         },
-        trace_cache,
-        validity_cache,
-        support_surface_cache,
-        seed_geometry_cache,
-        centroid_subset_seed_cache,
-        support_seed_family_cache,
-        support_direct_target_cache,
-        shifted_support_family_cache,
-        reference_witness_cache,
-        strict_contains_cache,
-        target_cache,
-        accept_cache,
-        search_cache,
     )
 }
 
@@ -15095,6 +15140,136 @@ mod tests {
             |_halfspaces, _report| {
                 calls += 1;
                 Ok(Some((ReferenceTarget::axis_defined(p(1, 0, 0)), vec![24])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 2);
+        assert_ne!(first, second);
+    }
+
+    #[test]
+    fn cached_support_reference_result_reuses_identical_state() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(0, 0, 0);
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_reference_result_with(
+            &mut cache,
+            &context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23])))
+            },
+        )
+        .unwrap();
+        let second = cached_support_reference_result_with(
+            &mut cache,
+            &context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(3, 3, 3)), vec![24])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_reference_result_reuses_permuted_halfspaces() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let mut permuted = halfspaces.clone();
+        permuted.rotate_left(1);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let old_ref = p(0, 0, 0);
+        let context = support_reference_cache_context_key(
+            &old_ref,
+            &[axis_plane_definition(&old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_reference_result_with(
+            &mut cache,
+            &context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23])))
+            },
+        )
+        .unwrap();
+        let second =
+            cached_support_reference_result_with(&mut cache, &context, &bounds, &permuted, || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(3, 3, 3)), vec![24])))
+            })
+            .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_reference_result_distinguishes_reference_context() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let left_old_ref = p(0, 0, 0);
+        let left_context = support_reference_cache_context_key(
+            &left_old_ref,
+            &[axis_plane_definition(&left_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let right_old_ref = p(1, 0, 0);
+        let right_context = support_reference_cache_context_key(
+            &right_old_ref,
+            &[axis_plane_definition(&right_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_support_reference_result_with(
+            &mut cache,
+            &left_context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23])))
+            },
+        )
+        .unwrap();
+        let second = cached_support_reference_result_with(
+            &mut cache,
+            &right_context,
+            &bounds,
+            &halfspaces,
+            || {
+                calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(3, 3, 3)), vec![24])))
             },
         )
         .unwrap();
