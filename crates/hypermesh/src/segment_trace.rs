@@ -4722,6 +4722,12 @@ fn strict_leaf_cell_points(
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
     })?;
 
+    let certified_direct_points = points
+        .iter()
+        .filter(|point| !point.uncertified_definition_fallback)
+        .map(|point| point.point.clone())
+        .collect::<Vec<_>>();
+
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -4742,11 +4748,123 @@ fn strict_leaf_cell_points(
         },
         &mut saw_unknown,
     )?;
-    extend_leaf_point_builds_backtracking_unknown(
-        &mut points,
-        shifted_witnesses.iter(),
-        |shifted| build_strict_leaf_point_from_shifted_witness(leaf, shifted),
+    for shifted in &shifted_witnesses {
+        let duplicate_certified_direct_point = certified_direct_points
+            .iter()
+            .any(|point| *point == shifted.point);
+        match build_strict_leaf_point_from_shifted_witness(leaf, shifted) {
+            Ok(Some(point)) => {
+                if duplicate_certified_direct_point && point.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                push_unique_interior_point(&mut points, point);
+            }
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    let unresolved_fallback = points
+        .iter()
+        .any(|point| point.uncertified_definition_fallback);
+    let has_certified_point = points
+        .iter()
+        .any(|point| !point.uncertified_definition_fallback);
+    if points.is_empty() && (saw_unknown || unresolved_fallback) {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if !has_certified_point && (saw_unknown || unresolved_fallback) {
+            mark_all_interior_points_uncertified(&mut points);
+        }
+        Ok(points)
+    }
+}
+
+#[cfg(test)]
+fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
+    leaf: &ConvexPolygon,
+    strict_interior: &Point3,
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    mut build_shifted_witnesses: impl FnMut(&Point3) -> HypermeshResult<Vec<ShiftedHalfspaceWitness>>,
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
+    let vertices = leaf.vertices()?;
+    let _bounds = leaf_bounds(&vertices)?;
+    let half = (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+    let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
+    halfspaces.push(limit_plane_from_plane(&leaf.support));
+    halfspaces.push(limit_plane_from_plane(&leaf.support.inverted()));
+
+    for edge in &leaf.edges {
+        let margin = edge.expression_at_point(strict_interior);
+        if classify_real(&margin)? != Classification::Negative {
+            return Ok(Vec::new());
+        }
+        halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
+            edge, &margin, &half,
+        )));
+    }
+
+    let mut points = Vec::new();
+    let mut saw_unknown = false;
+    let report_witness = report.and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+    extend_leaf_point_builds_backtracking_unknown(&mut points, seeds.iter(), |witness| {
+        let active_planes = active_planes_from_optional_report(report, witness);
+        build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
+    })?;
+
+    let certified_direct_points = points
+        .iter()
+        .filter(|point| !point.uncertified_definition_fallback)
+        .map(|point| point.point.clone())
+        .collect::<Vec<_>>();
+
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        shifted_halfspace_seed_families_with_report_seed(
+            report_witness,
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_seed_families_backtracking_unknown(
+                &mut shifted_witnesses,
+                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
+                |seed| build_shifted_witnesses(seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
     )?;
+    for shifted in &shifted_witnesses {
+        let duplicate_certified_direct_point = certified_direct_points
+            .iter()
+            .any(|point| *point == shifted.point);
+        match build_strict_leaf_point_from_shifted_witness(leaf, shifted) {
+            Ok(Some(point)) => {
+                if duplicate_certified_direct_point && point.uncertified_definition_fallback {
+                    saw_unknown = true;
+                    continue;
+                }
+                push_unique_interior_point(&mut points, point);
+            }
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
     let unresolved_fallback = points
         .iter()
         .any(|point| point.uncertified_definition_fallback);
@@ -13043,6 +13161,70 @@ mod tests {
             .expect("shifted strict leaf witness family should extend direct seed points");
 
         assert!(!shifted.planes.is_empty());
+    }
+
+    #[test]
+    fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let center = p(1, 1, 1);
+        let vertices = leaf.vertices().unwrap();
+        let bounds = leaf_bounds(&vertices).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let mut halfspaces = vec![
+            limit_plane_from_plane(&leaf.support),
+            limit_plane_from_plane(&leaf.support.inverted()),
+        ];
+        for edge in &leaf.edges {
+            let margin = edge.expression_at_point(&center);
+            halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
+                edge, &margin, &half,
+            )));
+        }
+
+        let report = halfspace_feasibility_report(&halfspaces).unwrap();
+        let seeds = strict_halfspace_cell_seeds_from_report(&bounds, &halfspaces, &report).unwrap();
+        let witness = seeds[0].clone();
+        let extra_definition = [
+            leaf.support.clone(),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+        let visited = std::cell::RefCell::new(Vec::new());
+
+        let interiors = strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
+            &leaf,
+            &center,
+            Some(&report),
+            vec![witness.clone()],
+            Vec::new(),
+            Vec::new(),
+            |seed| {
+                visited.borrow_mut().push(seed.clone());
+                Ok(vec![ShiftedHalfspaceWitness {
+                    point: seed.clone(),
+                    families: vec![ShiftedHalfspaceWitnessFamily {
+                        halfspaces: vec![axis_halfspace(1, false, r(1))],
+                        active_planes: [Some(0), None, None],
+                    }],
+                    uncertified_definition_fallback: false,
+                }])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(visited.into_inner(), vec![witness.clone()]);
+        let interior = interiors
+            .iter()
+            .find(|point| point.point == witness)
+            .expect(
+                "same-point shifted replay should keep the direct strict leaf point and enrich it",
+            );
+        assert!(!interior.uncertified_definition_fallback);
+        assert!(
+            interior.planes.iter().any(|definition| {
+                definition_planes_match_as_sets(definition, &extra_definition)
+            })
+        );
     }
 
     #[test]
