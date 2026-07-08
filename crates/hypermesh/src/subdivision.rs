@@ -646,16 +646,41 @@ fn subdivide_into_inner_with(
 
     if let Some(contracted_task) = contract_task_to_polygon_family_bounds_if_tighter(&task, caches)?
     {
-        return subdivide_into_inner_with(
-            contracted_task,
-            indicator,
-            config,
-            reachability_op,
-            output,
-            process_leaf,
-            caches,
-            winding_reachability_cache,
-        );
+        let contracted_output = if let Some(reused) = {
+            let mut query_caches = caches.support_reference_query.borrow_mut();
+            if let Some(reused) = reusable_child_subdivision_if_certified(
+                &caches.child_subdivision,
+                &contracted_task,
+                &mut query_caches,
+            )? {
+                Some(reused)
+            } else {
+                reusable_child_subdivision_from_cached_trace_if_certified(
+                    &caches.child_subdivision,
+                    &contracted_task,
+                    &mut query_caches,
+                )?
+            }
+        } {
+            reused
+        } else {
+            cached_child_subdivision_with(&caches.child_subdivision, &contracted_task, || {
+                let mut contracted_output = Vec::new();
+                subdivide_into_inner_with(
+                    contracted_task.clone(),
+                    indicator,
+                    config,
+                    reachability_op,
+                    &mut contracted_output,
+                    process_leaf,
+                    caches,
+                    winding_reachability_cache,
+                )?;
+                Ok(contracted_output)
+            })?
+        };
+        merge_unique_classified_polygons(output, contracted_output);
+        return Ok(());
     }
 
     let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
@@ -13975,6 +14000,65 @@ mod tests {
         assert_eq!(contracted.ref_point, cached_ref);
         assert_eq!(contracted.ref_wnv, task.ref_wnv);
         assert!(caches.child_reference.borrow().is_empty());
+    }
+
+    #[test]
+    fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let polygons = vec![
+            axis_face_polygon(&soup.polygons, 0, 5),
+            axis_face_polygon(&soup.polygons, 1, 5),
+            axis_face_polygon(&soup.polygons, 2, 5),
+        ];
+        let task = SubdivisionTask::new(
+            polygons.clone(),
+            Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+            p(0, 5, 5),
+            vec![0; soup.num_meshes],
+        );
+        let contracted_task = SubdivisionTask::new(
+            polygons,
+            Aabb::new(p(1, 1, 1), p(9, 9, 9)),
+            Point3::new(q(13, 5), q(21, 5), q(21, 5)),
+            vec![0; soup.num_meshes],
+        );
+        let cached_output = vec![ClassifiedPolygon::new(
+            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+            1,
+        )];
+        let indicator = crate::winding::make_indicator(BooleanOp::Union, 1);
+        let caches = SubdivisionRuntimeCaches::default();
+        caches
+            .child_subdivision
+            .borrow_mut()
+            .push(ChildSubdivisionCacheEntry {
+                polygon_profile: polygon_family_profile(&contracted_task.polygons),
+                task: contracted_task,
+                result: Ok(cached_output.clone()),
+            });
+        let mut process_leaf_calls = 0;
+        let mut output = Vec::new();
+
+        subdivide_into_inner_with(
+            task,
+            &indicator,
+            SubdivisionConfig { max_depth: 0 },
+            None,
+            &mut output,
+            &mut |_task, _indicator, _output| {
+                process_leaf_calls += 1;
+                Err(crate::error::HypermeshError::UnknownClassification)
+            },
+            &caches,
+            &caches.winding_reachability,
+        )
+        .unwrap();
+
+        assert_eq!(process_leaf_calls, 0);
+        assert_eq!(output, cached_output);
     }
 
     #[test]
