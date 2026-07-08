@@ -233,7 +233,7 @@ use std::convert::TryFrom;
 let a = Rational::fraction(7, 8).unwrap();
 let b = Rational::fraction(9, 10).unwrap();
 
-assert_eq!(a + b, Rational::fraction(79, 40).unwrap());
+assert_eq!(a + b, Rational::fraction(71, 40).unwrap());
 
 let half = Rational::try_from(0.5_f64).unwrap();
 assert_eq!(half, Rational::fraction(1, 2).unwrap());
@@ -259,7 +259,7 @@ let approx = z.to_f64_lossy().unwrap();
 assert!(approx > 2.44 && approx < 2.45);
 
 let half = Real::new(Rational::fraction(1, 2).unwrap());
-let cosine = (half * Real::pi()).cos().unwrap();
+let cosine = (half * Real::pi()).cos();
 let facts = cosine.structural_facts();
 
 assert_eq!(facts.zero, ZeroKnowledge::Zero);
