@@ -208,6 +208,14 @@ struct RankedSplitAttempt {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct SplitAttemptChild {
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    unchanged_from_parent: bool,
+    original_order: usize,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct PairwiseIntersectionsCacheEntry {
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
@@ -663,207 +671,30 @@ fn subdivide_into_inner_with(
     let mut best_failure = None;
 
     for split_attempt in split_candidates {
-        let left_polys = split_attempt.left_polys;
-        let left_bounds = split_attempt.left_bounds;
-        let right_polys = split_attempt.right_polys;
-        let right_bounds = split_attempt.right_bounds;
+        let split_children = ordered_split_attempt_children(
+            &task.polygons,
+            split_attempt.left_polys,
+            split_attempt.left_bounds,
+            split_attempt.right_polys,
+            split_attempt.right_bounds,
+        );
         let mut candidate_output = Vec::new();
         let mut candidate_buckets = ClassifiedPolygonBucketState::new();
         let attempt = (|| -> HypermeshResult<()> {
-            if let Some(left_bounds) = left_bounds {
-                let reused_left_reference = {
-                    let mut query_caches = caches.support_reference_query.borrow_mut();
-                    if let Some(reused) = reusable_child_reference_if_certified(
-                        &caches.child_reference,
-                        &task,
-                        &left_polys,
-                        &left_bounds,
-                        &mut query_caches,
-                    )? {
-                        Some(reused)
-                    } else if let Some(reused) =
-                        reusable_child_reference_from_cached_result_if_certified(
-                            &caches.child_reference,
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &task.polygons,
-                            &left_bounds,
-                            &mut query_caches,
-                        )?
-                    {
-                        Some(reused)
-                    } else {
-                        reusable_child_reference_from_cached_trace_if_certified(
-                            &caches.child_reference,
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &task.polygons,
-                            &left_bounds,
-                            &mut query_caches,
-                        )?
-                    }
-                };
-                let (left_ref, left_ref_definitions, left_wnv) =
-                    if let Some(reused) = reused_left_reference {
-                        reused
-                    } else {
-                        cached_child_reference_with(
-                            &caches.child_reference,
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &task.polygons,
-                            &left_bounds,
-                            || {
-                                compute_new_reference_with_query_caches(
-                                    &task.ref_point,
-                                    &task.ref_definitions,
-                                    &task.ref_wnv,
-                                    &left_bounds,
-                                    &task.polygons,
-                                    &mut caches.support_reference_query.borrow_mut(),
-                                )
-                            },
-                        )?
-                    };
-                let left_task = SubdivisionTask {
-                    polygons: left_polys,
-                    bounds: left_bounds,
-                    ref_point: left_ref,
-                    ref_definitions: left_ref_definitions,
-                    ref_wnv: left_wnv,
-                    depth: task.depth + 1,
-                };
-                let child_output = if let Some(reused) = {
-                    let mut query_caches = caches.support_reference_query.borrow_mut();
-                    reusable_child_subdivision_if_certified(
-                        &caches.child_subdivision,
-                        &left_task,
-                        &mut query_caches,
-                    )?
-                } {
-                    reused
-                } else {
-                    cached_child_subdivision_with(&caches.child_subdivision, &left_task, || {
-                        let mut child_output = Vec::new();
-                        subdivide_into_inner_with(
-                            left_task.clone(),
-                            indicator,
-                            config,
-                            reachability_op,
-                            &mut child_output,
-                            process_leaf,
-                            caches,
-                            winding_reachability_cache,
-                        )?;
-                        Ok(child_output)
-                    })?
-                };
-                merge_unique_classified_polygons_with_bucket_state(
+            for split_child in split_children {
+                process_split_attempt_child(
+                    &task,
+                    split_child.polygons,
+                    split_child.bounds,
+                    indicator,
+                    config,
+                    reachability_op,
                     &mut candidate_output,
                     &mut candidate_buckets,
-                    child_output,
-                );
-            }
-
-            if let Some(right_bounds) = right_bounds {
-                let reused_right_reference = {
-                    let mut query_caches = caches.support_reference_query.borrow_mut();
-                    if let Some(reused) = reusable_child_reference_if_certified(
-                        &caches.child_reference,
-                        &task,
-                        &right_polys,
-                        &right_bounds,
-                        &mut query_caches,
-                    )? {
-                        Some(reused)
-                    } else if let Some(reused) =
-                        reusable_child_reference_from_cached_result_if_certified(
-                            &caches.child_reference,
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &task.polygons,
-                            &right_bounds,
-                            &mut query_caches,
-                        )?
-                    {
-                        Some(reused)
-                    } else {
-                        reusable_child_reference_from_cached_trace_if_certified(
-                            &caches.child_reference,
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &task.polygons,
-                            &right_bounds,
-                            &mut query_caches,
-                        )?
-                    }
-                };
-                let (right_ref, right_ref_definitions, right_wnv) =
-                    if let Some(reused) = reused_right_reference {
-                        reused
-                    } else {
-                        cached_child_reference_with(
-                            &caches.child_reference,
-                            &task.ref_point,
-                            &task.ref_definitions,
-                            &task.ref_wnv,
-                            &task.polygons,
-                            &right_bounds,
-                            || {
-                                compute_new_reference_with_query_caches(
-                                    &task.ref_point,
-                                    &task.ref_definitions,
-                                    &task.ref_wnv,
-                                    &right_bounds,
-                                    &task.polygons,
-                                    &mut caches.support_reference_query.borrow_mut(),
-                                )
-                            },
-                        )?
-                    };
-                let right_task = SubdivisionTask {
-                    polygons: right_polys,
-                    bounds: right_bounds,
-                    ref_point: right_ref,
-                    ref_definitions: right_ref_definitions,
-                    ref_wnv: right_wnv,
-                    depth: task.depth + 1,
-                };
-                let child_output = if let Some(reused) = {
-                    let mut query_caches = caches.support_reference_query.borrow_mut();
-                    reusable_child_subdivision_if_certified(
-                        &caches.child_subdivision,
-                        &right_task,
-                        &mut query_caches,
-                    )?
-                } {
-                    reused
-                } else {
-                    cached_child_subdivision_with(&caches.child_subdivision, &right_task, || {
-                        let mut child_output = Vec::new();
-                        subdivide_into_inner_with(
-                            right_task.clone(),
-                            indicator,
-                            config,
-                            reachability_op,
-                            &mut child_output,
-                            process_leaf,
-                            caches,
-                            winding_reachability_cache,
-                        )?;
-                        Ok(child_output)
-                    })?
-                };
-                merge_unique_classified_polygons_with_bucket_state(
-                    &mut candidate_output,
-                    &mut candidate_buckets,
-                    child_output,
-                );
+                    process_leaf,
+                    caches,
+                    winding_reachability_cache,
+                )?;
             }
 
             Ok(())
@@ -886,6 +717,158 @@ fn subdivide_into_inner_with(
     }
 
     Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
+}
+
+fn ordered_split_attempt_children(
+    parent_polygons: &[ConvexPolygon],
+    left_polygons: Vec<ConvexPolygon>,
+    left_bounds: Option<Aabb>,
+    right_polygons: Vec<ConvexPolygon>,
+    right_bounds: Option<Aabb>,
+) -> Vec<SplitAttemptChild> {
+    let mut children = Vec::with_capacity(2);
+    if let Some(bounds) = left_bounds {
+        children.push(SplitAttemptChild {
+            unchanged_from_parent: polygon_families_match_as_multisets(
+                &left_polygons,
+                parent_polygons,
+            ),
+            polygons: left_polygons,
+            bounds,
+            original_order: 0,
+        });
+    }
+    if let Some(bounds) = right_bounds {
+        children.push(SplitAttemptChild {
+            unchanged_from_parent: polygon_families_match_as_multisets(
+                &right_polygons,
+                parent_polygons,
+            ),
+            polygons: right_polygons,
+            bounds,
+            original_order: 1,
+        });
+    }
+    children.sort_by_key(|child| {
+        (
+            child.unchanged_from_parent,
+            child.polygons.len(),
+            child.original_order,
+        )
+    });
+    children
+}
+
+fn process_split_attempt_child(
+    task: &SubdivisionTask,
+    child_polygons: Vec<ConvexPolygon>,
+    child_bounds: Aabb,
+    indicator: &Indicator,
+    config: SubdivisionConfig,
+    reachability_op: Option<BooleanOp>,
+    candidate_output: &mut Vec<ClassifiedPolygon>,
+    candidate_buckets: &mut ClassifiedPolygonBucketState,
+    process_leaf: &mut impl FnMut(
+        &SubdivisionTask,
+        &Indicator,
+        &mut Vec<ClassifiedPolygon>,
+    ) -> HypermeshResult<LeafProcessingStats>,
+    caches: &SubdivisionRuntimeCaches,
+    winding_reachability_cache: &RefCell<Vec<WindingReachabilityCacheEntry>>,
+) -> HypermeshResult<()> {
+    let reused_reference = {
+        let mut query_caches = caches.support_reference_query.borrow_mut();
+        if let Some(reused) = reusable_child_reference_if_certified(
+            &caches.child_reference,
+            task,
+            &child_polygons,
+            &child_bounds,
+            &mut query_caches,
+        )? {
+            Some(reused)
+        } else if let Some(reused) = reusable_child_reference_from_cached_result_if_certified(
+            &caches.child_reference,
+            &task.ref_point,
+            &task.ref_definitions,
+            &task.ref_wnv,
+            &task.polygons,
+            &child_bounds,
+            &mut query_caches,
+        )? {
+            Some(reused)
+        } else {
+            reusable_child_reference_from_cached_trace_if_certified(
+                &caches.child_reference,
+                &task.ref_point,
+                &task.ref_definitions,
+                &task.ref_wnv,
+                &task.polygons,
+                &child_bounds,
+                &mut query_caches,
+            )?
+        }
+    };
+    let (child_ref, child_ref_definitions, child_wnv) = if let Some(reused) = reused_reference {
+        reused
+    } else {
+        cached_child_reference_with(
+            &caches.child_reference,
+            &task.ref_point,
+            &task.ref_definitions,
+            &task.ref_wnv,
+            &task.polygons,
+            &child_bounds,
+            || {
+                compute_new_reference_with_query_caches(
+                    &task.ref_point,
+                    &task.ref_definitions,
+                    &task.ref_wnv,
+                    &child_bounds,
+                    &task.polygons,
+                    &mut caches.support_reference_query.borrow_mut(),
+                )
+            },
+        )?
+    };
+    let child_task = SubdivisionTask {
+        polygons: child_polygons,
+        bounds: child_bounds,
+        ref_point: child_ref,
+        ref_definitions: child_ref_definitions,
+        ref_wnv: child_wnv,
+        depth: task.depth + 1,
+    };
+    let child_output = if let Some(reused) = {
+        let mut query_caches = caches.support_reference_query.borrow_mut();
+        reusable_child_subdivision_if_certified(
+            &caches.child_subdivision,
+            &child_task,
+            &mut query_caches,
+        )?
+    } {
+        reused
+    } else {
+        cached_child_subdivision_with(&caches.child_subdivision, &child_task, || {
+            let mut child_output = Vec::new();
+            subdivide_into_inner_with(
+                child_task.clone(),
+                indicator,
+                config,
+                reachability_op,
+                &mut child_output,
+                process_leaf,
+                caches,
+                winding_reachability_cache,
+            )?;
+            Ok(child_output)
+        })?
+    };
+    merge_unique_classified_polygons_with_bucket_state(
+        candidate_output,
+        candidate_buckets,
+        child_output,
+    );
+    Ok(())
 }
 
 #[cfg(test)]
@@ -13060,6 +13043,47 @@ mod tests {
         .unwrap();
 
         assert_eq!(tightened, Aabb::new(p(0, 0, 0), p(1, 1, 1)));
+    }
+
+    #[test]
+    fn ordered_split_attempt_children_prefers_changed_family_before_unchanged_parent_copy() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let parent = vec![polygon_a.clone(), polygon_b.clone()];
+        let children = ordered_split_attempt_children(
+            &parent,
+            parent.clone(),
+            Some(Aabb::new(p(0, 0, 0), p(1, 1, 1))),
+            vec![polygon_a.clone()],
+            Some(Aabb::new(p(0, 0, 0), p(1, 1, 0))),
+        );
+
+        assert_eq!(children.len(), 2);
+        assert_eq!(children[0].polygons, vec![polygon_a]);
+        assert!(!children[0].unchanged_from_parent);
+        assert_eq!(children[1].polygons, parent);
+        assert!(children[1].unchanged_from_parent);
+    }
+
+    #[test]
+    fn ordered_split_attempt_children_prefers_smaller_changed_child_family() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let polygon_c = make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 2, 0);
+        let parent = vec![polygon_a.clone(), polygon_b.clone(), polygon_c.clone()];
+        let children = ordered_split_attempt_children(
+            &parent,
+            vec![polygon_a.clone(), polygon_b.clone()],
+            Some(Aabb::new(p(0, 0, 0), p(1, 1, 1))),
+            vec![polygon_c.clone()],
+            Some(Aabb::new(p(0, 0, 2), p(1, 1, 2))),
+        );
+
+        assert_eq!(children.len(), 2);
+        assert_eq!(children[0].polygons, vec![polygon_c]);
+        assert_eq!(children[1].polygons, vec![polygon_a, polygon_b]);
+        assert!(!children[0].unchanged_from_parent);
+        assert!(!children[1].unchanged_from_parent);
     }
 
     #[test]
