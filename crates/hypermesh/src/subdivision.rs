@@ -9,7 +9,7 @@ use crate::geometry::{
 use crate::intersection::{
     IntersectionSegment, PairwiseIntersection, PairwiseIntersectionType, intersect_polygons,
 };
-use crate::local_bsp::LocalBsp;
+use crate::local_bsp::{BspLeaf, LocalBsp};
 use crate::output::{ClassifiedPolygon, push_unique_classified_polygon};
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
@@ -173,6 +173,13 @@ struct PairwiseIntersectionsCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct HostBspLeavesCacheEntry {
+    host: ConvexPolygon,
+    polygons: Vec<ConvexPolygon>,
+    leaves: HypermeshResult<Vec<BspLeaf>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct BspLeafCertificationCacheEntry {
     host: ConvexPolygon,
     leaf_edges: Vec<Plane>,
@@ -192,6 +199,7 @@ struct SubdivisionRuntimeCaches {
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    host_bsp_leaves: RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_certification: RefCell<Vec<BspLeafCertificationCacheEntry>>,
     support_reference_query: RefCell<SupportReferenceQueryCaches>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
@@ -206,6 +214,7 @@ impl Default for SubdivisionRuntimeCaches {
             split_candidates: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
             pairwise_intersections: RefCell::new(Vec::new()),
+            host_bsp_leaves: RefCell::new(Vec::new()),
             bsp_leaf_certification: RefCell::new(Vec::new()),
             support_reference_query: RefCell::new(SupportReferenceQueryCaches::default()),
             child_reference: RefCell::new(Vec::new()),
@@ -278,6 +287,7 @@ fn process_leaf_into_inner(
         indicator,
         output,
         pairwise_intersections_by_polygon,
+        build_host_bsp_leaves,
         certify_bsp_leaf_and_delta_w,
     )
 }
@@ -291,6 +301,11 @@ fn process_leaf_into_inner_with_pairwise_cache(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
     pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    bsp_leaves_query: impl Fn(
+        &ConvexPolygon,
+        &[ConvexPolygon],
+        &[PairwiseIntersection],
+    ) -> HypermeshResult<Vec<BspLeaf>>,
     certify_bsp_leaf: impl Fn(
         &ConvexPolygon,
         &[crate::geometry::Plane],
@@ -330,26 +345,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
             continue;
         }
 
-        let mut bsp = LocalBsp::new(polygon);
-        bsp.add_overlap_edges(&unique_overlap_edge_planes(&intersections[index]))?;
-        for intersection in &intersections[index] {
-            match intersection.kind {
-                PairwiseIntersectionType::Segment => {
-                    if let Some(segment) = &intersection.segment {
-                        bsp.add_segment(segment)?;
-                    }
-                }
-                PairwiseIntersectionType::Overlap => {
-                    if let Some(overlap) = &intersection.overlap {
-                        bsp.mark_overlap(&polygons[overlap.other_polygon_idx])?;
-                    }
-                }
-                PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
-            }
-        }
-
         let mut seen_bsp_leaf_edges = Vec::new();
-        for leaf in bsp.collect_leaves() {
+        for leaf in &bsp_leaves_query(polygon, polygons, &intersections[index])? {
             if leaf.edges.len() < 3 {
                 continue;
             }
@@ -405,11 +402,19 @@ pub fn subdivide(
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
+    let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache, bsp_leaf_cache)
+        process_leaf_task_into_with_caches(
+            task,
+            indicator,
+            output,
+            pairwise_cache,
+            host_bsp_cache,
+            bsp_leaf_cache,
+        )
     };
     subdivide_into_inner_with(
         task,
@@ -432,11 +437,19 @@ pub(crate) fn subdivide_for_operation(
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
+    let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache, bsp_leaf_cache)
+        process_leaf_task_into_with_caches(
+            task,
+            indicator,
+            output,
+            pairwise_cache,
+            host_bsp_cache,
+            bsp_leaf_cache,
+        )
     };
     subdivide_into_inner_with(
         task,
@@ -464,11 +477,19 @@ pub fn subdivide_into(
     let mut certified_output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
+    let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache, bsp_leaf_cache)
+        process_leaf_task_into_with_caches(
+            task,
+            indicator,
+            output,
+            pairwise_cache,
+            host_bsp_cache,
+            bsp_leaf_cache,
+        )
     };
     subdivide_into_inner_with(
         task,
@@ -950,10 +971,16 @@ fn process_leaf_task_into_with_caches(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    host_bsp_cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let pairwise_query = |polygons: &[ConvexPolygon]| {
         cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)
+    };
+    let bsp_leaves_query = |polygon: &ConvexPolygon,
+                            polygons: &[ConvexPolygon],
+                            intersections: &[PairwiseIntersection]| {
+        cached_host_bsp_leaves_with(host_bsp_cache, polygon, polygons, intersections)
     };
     let bsp_leaf_query = |polygon: &ConvexPolygon,
                           leaf_edges: &[crate::geometry::Plane],
@@ -969,6 +996,7 @@ fn process_leaf_task_into_with_caches(
         indicator,
         output,
         pairwise_query,
+        bsp_leaves_query,
         bsp_leaf_query,
     )
 }
@@ -1097,6 +1125,53 @@ fn cached_leaf_classification_with(
         winding: winding.clone(),
     });
     winding
+}
+
+fn build_host_bsp_leaves(
+    polygon: &ConvexPolygon,
+    polygons: &[ConvexPolygon],
+    intersections: &[PairwiseIntersection],
+) -> HypermeshResult<Vec<BspLeaf>> {
+    let mut bsp = LocalBsp::new(polygon);
+    bsp.add_overlap_edges(&unique_overlap_edge_planes(intersections))?;
+    for intersection in intersections {
+        match intersection.kind {
+            PairwiseIntersectionType::Segment => {
+                if let Some(segment) = &intersection.segment {
+                    bsp.add_segment(segment)?;
+                }
+            }
+            PairwiseIntersectionType::Overlap => {
+                if let Some(overlap) = &intersection.overlap {
+                    bsp.mark_overlap(&polygons[overlap.other_polygon_idx])?;
+                }
+            }
+            PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
+        }
+    }
+    Ok(bsp.collect_leaves().into_iter().cloned().collect())
+}
+
+fn cached_host_bsp_leaves_with(
+    cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
+    polygon: &ConvexPolygon,
+    polygons: &[ConvexPolygon],
+    intersections: &[PairwiseIntersection],
+) -> HypermeshResult<Vec<BspLeaf>> {
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.host == *polygon
+            && polygon_families_match_as_multisets(&existing.polygons, polygons)
+    }) {
+        return existing.leaves.clone();
+    }
+
+    let leaves = build_host_bsp_leaves(polygon, polygons, intersections);
+    cache.borrow_mut().push(HostBspLeavesCacheEntry {
+        host: polygon.clone(),
+        polygons: polygons.to_vec(),
+        leaves: leaves.clone(),
+    });
+    leaves
 }
 
 fn cached_bsp_leaf_certification_with(
@@ -7730,6 +7805,30 @@ mod tests {
         .unwrap();
         let second =
             cached_bsp_leaf_certification_with(&cache, &host, &host.edges, &[cutter, host.clone()])
+                .unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
+    }
+
+    #[test]
+    fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
+        let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        host.delta_w = vec![1, 0];
+        let mut cutter = make_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
+        cutter.delta_w = vec![0, 1];
+        let cache = RefCell::new(Vec::new());
+
+        let first_polygons = vec![host.clone(), cutter.clone()];
+        let first_intersections = pairwise_intersections_by_polygon(&first_polygons).unwrap();
+        let first =
+            cached_host_bsp_leaves_with(&cache, &host, &first_polygons, &first_intersections[0])
+                .unwrap();
+
+        let second_polygons = vec![cutter, host.clone()];
+        let second_intersections = pairwise_intersections_by_polygon(&second_polygons).unwrap();
+        let second =
+            cached_host_bsp_leaves_with(&cache, &host, &second_polygons, &second_intersections[1])
                 .unwrap();
 
         assert_eq!(first, second);

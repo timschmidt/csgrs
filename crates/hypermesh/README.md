@@ -989,7 +989,10 @@ Repeated BSP leaf certification on the same host polygon, rotated-equivalent
 leaf edge cycle, and repeated local polygon family up to permutation now also
 reuses one exact certified leaf-analysis result across recursive branches
 instead of rebuilding the same BSP leaf witness family and effective-`delta_w`
-state again.
+state again. The same recursive leaf path now also reuses the exact enabled
+face-local BSP leaf family for the same host polygon and repeated local polygon
+family up to permutation, instead of rebuilding the same local BSP split tree
+from cached pairwise intersections every time those branches reappear.
 Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
 through the certified leaf-output helper, but they only succeed if that leaf
