@@ -5064,6 +5064,78 @@ fn cached_support_reference_accept_with(
     accepted
 }
 
+fn reusable_support_reference_accept_if_certified(
+    cache: &mut Vec<SupportReferenceAcceptCacheEntry>,
+    context: &SupportReferenceCacheContextKey,
+    bounds: &Aabb,
+    halfspaces: &[LimitPlane3],
+    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let candidates = cache
+        .iter()
+        .filter(|existing| {
+            existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_reference_polygon_context_matches(
+                    existing.context.as_ref(),
+                    Some(context),
+                )
+                && existing
+                    .context
+                    .as_ref()
+                    .is_some_and(|existing| existing.old_wnv == context.old_wnv)
+                && support_optional_halfspace_reports_match_for_cache(
+                    &existing.halfspaces,
+                    existing.report.as_ref(),
+                    halfspaces,
+                    report,
+                )
+        })
+        .filter_map(|existing| match &existing.accepted {
+            Ok(Some((target, winding))) => Some((target.clone(), winding.clone())),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    for (target, winding) in candidates {
+        let valid_for_bounds = cached_reference_bounds_validity_with_context(
+            validity_cache,
+            Some(context),
+            bounds,
+            &target.point,
+            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+        )?;
+        if !valid_for_bounds {
+            continue;
+        }
+
+        let reused = Some((target, winding));
+        if !cache.iter().any(|existing| {
+            support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
+                && existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_optional_halfspace_reports_match_for_cache(
+                    &existing.halfspaces,
+                    existing.report.as_ref(),
+                    halfspaces,
+                    report,
+                )
+        }) {
+            cache.push(SupportReferenceAcceptCacheEntry {
+                context: Some(context.clone()),
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                report: report.cloned(),
+                accepted: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
+
+    Ok(None)
+}
+
 fn cached_support_reference_result_with(
     cache: &mut Vec<SupportReferenceResultCacheEntry>,
     context: &SupportReferenceCacheContextKey,
@@ -6119,6 +6191,16 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     let mut accept = |halfspaces: &[LimitPlane3],
                       report: Option<hyperlimit::HalfspaceFeasibilityReport>|
      -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+        if let Some(reused) = reusable_support_reference_accept_if_certified(
+            &mut accept_cache.borrow_mut(),
+            &cache_context,
+            bounds,
+            halfspaces,
+            report.as_ref(),
+            validity_cache,
+        )? {
+            return Ok(Some(reused));
+        }
         cached_support_reference_accept_with(
             &mut accept_cache.borrow_mut(),
             Some(&cache_context),
@@ -15640,6 +15722,109 @@ mod tests {
 
         assert_eq!(calls, 2);
         assert_ne!(first, second);
+    }
+
+    #[test]
+    fn reusable_support_reference_accept_if_certified_reuses_cached_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let cached_old_ref = p(0, 0, 0);
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(1, 0, 0);
+        let query_context = support_reference_cache_context_key(
+            &query_old_ref,
+            &[axis_plane_definition(&query_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = vec![SupportReferenceAcceptCacheEntry {
+            context: Some(cached_context),
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.clone(),
+            report: Some(report.clone()),
+            accepted: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_support_reference_accept_if_certified(
+            &mut cache,
+            &query_context,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))
+        );
+        assert_eq!(cache.len(), 2);
+        assert!(cache.iter().any(|entry| {
+            entry
+                .context
+                .as_ref()
+                .is_some_and(|context| context.old_ref == query_old_ref)
+                && matches!(
+                    &entry.accepted,
+                    Ok(Some((target, winding)))
+                        if *target == ReferenceTarget::axis_defined(p(1, 1, 1))
+                            && *winding == vec![23]
+                )
+        }));
+    }
+
+    #[test]
+    fn reusable_support_reference_accept_if_certified_skips_invalid_cached_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let cached_old_ref = p(0, 0, 0);
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(1, 0, 0);
+        let query_context = support_reference_cache_context_key(
+            &query_old_ref,
+            &[axis_plane_definition(&query_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = vec![SupportReferenceAcceptCacheEntry {
+            context: Some(cached_context),
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.clone(),
+            report: Some(report.clone()),
+            accepted: Ok(Some((ReferenceTarget::axis_defined(p(2, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_support_reference_accept_if_certified(
+            &mut cache,
+            &query_context,
+            &bounds,
+            &halfspaces,
+            Some(&report),
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert_eq!(cache.len(), 1);
     }
 
     #[test]
