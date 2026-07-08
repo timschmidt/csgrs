@@ -5300,8 +5300,7 @@ fn reusable_support_reference_accept_if_certified(
     let candidates = cache
         .iter()
         .filter(|existing| {
-            existing.bounds == *bounds
-                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
                 && support_reference_polygon_context_matches(
                     existing.context.as_ref(),
                     Some(context),
@@ -5402,8 +5401,7 @@ fn reusable_support_reference_result_if_certified(
     let candidates = cache
         .iter()
         .filter(|existing| {
-            existing.bounds == *bounds
-                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
                 && existing.context.old_wnv == old_wnv
                 && support_reference_polygon_context_matches(
                     Some(&existing.context),
@@ -16296,6 +16294,54 @@ mod tests {
     }
 
     #[test]
+    fn reusable_support_reference_accept_if_certified_reuses_cached_target_across_tighter_bounds() {
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let halfspaces = aabb_core_halfspaces(&cached_bounds).unwrap();
+        let report =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(p(1, 1, 1), [None, None, None]);
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let cached_old_ref = p(0, 0, 0);
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(1, 0, 0);
+        let query_context = support_reference_cache_context_key(
+            &query_old_ref,
+            &[axis_plane_definition(&query_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let mut cache = vec![SupportReferenceAcceptCacheEntry {
+            context: Some(cached_context),
+            bounds: cached_bounds,
+            halfspaces: halfspaces.clone(),
+            report: Some(report.clone()),
+            accepted: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_support_reference_accept_if_certified(
+            &mut cache,
+            &query_context,
+            &query_bounds,
+            &halfspaces,
+            Some(&report),
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))
+        );
+        assert_eq!(cache.len(), 2);
+    }
+
+    #[test]
     fn reusable_support_reference_accept_if_certified_skips_invalid_cached_target() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -16517,6 +16563,48 @@ mod tests {
                             && *winding == vec![23]
                 )
         }));
+    }
+
+    #[test]
+    fn reusable_support_reference_result_if_certified_reuses_cached_target_across_tighter_bounds() {
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let halfspaces = aabb_core_halfspaces(&cached_bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let cached_old_ref = p(0, 0, 0);
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(1, 0, 0);
+        let query_definitions = vec![axis_plane_definition(&query_old_ref)];
+        let mut cache = vec![SupportReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: cached_bounds,
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_support_reference_result_if_certified(
+            &mut cache,
+            &query_old_ref,
+            &query_definitions,
+            &[0],
+            &query_bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))
+        );
+        assert_eq!(cache.len(), 2);
     }
 
     #[test]
