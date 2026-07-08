@@ -681,6 +681,18 @@ fn subdivide_into_inner_with(
                         &mut query_caches,
                     )? {
                         Some(reused)
+                    } else if let Some(reused) =
+                        reusable_child_reference_from_cached_result_if_certified(
+                            &caches.child_reference,
+                            &task.ref_point,
+                            &task.ref_definitions,
+                            &task.ref_wnv,
+                            &task.polygons,
+                            &left_bounds,
+                            &mut query_caches,
+                        )?
+                    {
+                        Some(reused)
                     } else {
                         reusable_child_reference_from_cached_trace_if_certified(
                             &caches.child_reference,
@@ -766,6 +778,18 @@ fn subdivide_into_inner_with(
                         &right_bounds,
                         &mut query_caches,
                     )? {
+                        Some(reused)
+                    } else if let Some(reused) =
+                        reusable_child_reference_from_cached_result_if_certified(
+                            &caches.child_reference,
+                            &task.ref_point,
+                            &task.ref_definitions,
+                            &task.ref_wnv,
+                            &task.polygons,
+                            &right_bounds,
+                            &mut query_caches,
+                        )?
+                    {
                         Some(reused)
                     } else {
                         reusable_child_reference_from_cached_trace_if_certified(
@@ -1223,6 +1247,62 @@ fn reusable_child_reference_from_cached_trace_if_certified(
             );
             return Ok(Some(reused));
         }
+    }
+
+    Ok(None)
+}
+
+fn reusable_child_reference_from_cached_result_if_certified(
+    cache: &RefCell<Vec<ChildReferenceCacheEntry>>,
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    source_polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
+    let source_polygon_profile = polygon_family_profile(source_polygons);
+    let candidates = cache
+        .borrow()
+        .iter()
+        .filter(|existing| {
+            existing.source_polygon_profile == source_polygon_profile
+                && existing.bounds == *bounds
+                && existing.old_wnv == old_wnv
+                && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
+        })
+        .filter_map(|existing| match &existing.result {
+            Ok((point, definitions, winding)) => {
+                Some((point.clone(), definitions.clone(), winding.clone()))
+            }
+            Err(_) => None,
+        })
+        .collect::<Vec<_>>();
+    let context =
+        support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, source_polygons);
+
+    for (point, definitions, winding) in candidates {
+        let valid_for_bounds = cached_reference_bounds_validity_with_context(
+            &mut query_caches.validity_cache,
+            Some(&context),
+            bounds,
+            &point,
+            |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
+        )?;
+        if !valid_for_bounds {
+            continue;
+        }
+        let reused = (point, definitions, winding);
+        cache_child_reference_result(
+            cache,
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            source_polygons,
+            bounds,
+            &reused,
+        );
+        return Ok(Some(reused));
     }
 
     Ok(None)
@@ -12274,6 +12354,74 @@ mod tests {
             Some((cached_point.clone(), axis_defs(&cached_point), vec![0]))
         );
         assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let cached_point = p(2, 1, 1);
+        let cache = RefCell::new(vec![ChildReferenceCacheEntry {
+            source_polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            source_polygons: vec![polygon.clone()],
+            bounds: bounds.clone(),
+            old_ref: p(1, 1, 1),
+            old_ref_definitions: axis_defs(&p(1, 1, 1)),
+            old_wnv: vec![0],
+            result: Ok((cached_point.clone(), axis_defs(&cached_point), vec![0])),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_from_cached_result_if_certified(
+            &cache,
+            &cached_point,
+            &axis_defs(&cached_point),
+            &[0],
+            std::slice::from_ref(&polygon),
+            &bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((cached_point.clone(), axis_defs(&cached_point), vec![0]))
+        );
+        assert!(query_caches.trace_cache.is_empty());
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn reusable_child_reference_from_cached_result_if_certified_skips_invalid_cached_target() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let cached_point = p(0, 0, 0);
+        let query_point = p(1, 1, 1);
+        let cache = RefCell::new(vec![ChildReferenceCacheEntry {
+            source_polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            source_polygons: vec![polygon.clone()],
+            bounds: bounds.clone(),
+            old_ref: p(2, 1, 1),
+            old_ref_definitions: axis_defs(&p(2, 1, 1)),
+            old_wnv: vec![0],
+            result: Ok((cached_point.clone(), axis_defs(&cached_point), vec![0])),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_from_cached_result_if_certified(
+            &cache,
+            &query_point,
+            &axis_defs(&query_point),
+            &[0],
+            std::slice::from_ref(&polygon),
+            &bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert!(query_caches.trace_cache.is_empty());
+        assert_eq!(cache.borrow().len(), 1);
     }
 
     #[test]
