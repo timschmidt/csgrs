@@ -2610,6 +2610,23 @@ fn search_adjacent_normal_probe_winding_with_queries(
         )? {
             return Ok(Some(winding));
         }
+        if let Some(winding) = try_strict_normal_shifted_report_witness_winding_with_queries(
+            point,
+            positive_side,
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+            &corridor,
+            None,
+            &stop_point,
+        )? {
+            return Ok(Some(winding));
+        }
         if let Some(winding) = try_leaf_probe_family_with_queries(
             point,
             positive_side,
@@ -2684,10 +2701,76 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
         Ok(None) => Ok(Vec::new()),
         Err(err) => Err(err),
     };
-    try_leaf_probe_family_with_queries(
+    let winding = try_leaf_probe_family_with_queries(
         point,
         positive_side,
         probe_result,
+        support,
+        ref_point,
+        ref_definitions,
+        ref_wnv,
+        polygons,
+        host_delta_w,
+        probe_query_caches,
+        saw_unknown,
+    );
+    winding
+}
+
+fn try_strict_normal_shifted_report_witness_winding_with_queries(
+    point: &InteriorLeafPoint,
+    positive_side: bool,
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+    saw_unknown: &mut bool,
+    corridor: &Aabb,
+    definition: Option<&[Plane; 3]>,
+    stop_point: &Point3,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    if let Some(definition) = definition {
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[1]);
+        push_plane_equality_halfspaces(&mut halfspaces, &definition[2]);
+    }
+    halfspaces.push(support_side_halfspace(support, positive_side));
+    halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
+
+    let (report, _) = optional_halfspace_feasibility_report(&halfspaces)?;
+    let Some(report) = report.as_ref() else {
+        return Ok(None);
+    };
+    if report.status != HalfspaceFeasibility::Feasible {
+        return Ok(None);
+    }
+    let Some(witness) = report.witness.as_ref() else {
+        return Ok(None);
+    };
+    let extra_planes = normal_probe_extra_planes(point, definition);
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        shifted_halfspace_cell_witnesses_from_seed(corridor, &halfspaces, witness),
+        saw_unknown,
+    )?;
+    let mut probes = Vec::new();
+    for shifted in &shifted_witnesses {
+        match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
+            Ok(Some(probe)) => probes.push(probe),
+            Ok(None) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    try_leaf_probe_family_with_queries(
+        point,
+        positive_side,
+        Ok(probes),
         support,
         ref_point,
         ref_definitions,
