@@ -3439,7 +3439,7 @@ fn compute_new_reference_with_query_caches(
                 trace_cache,
                 ..
             } = &mut *query_caches;
-            reusable_projected_reference_result_from_cached_trace_if_certified(
+            if let Some(reused) = reusable_projected_reference_result_if_certified(
                 projected_reference_result_cache,
                 old_ref,
                 old_ref_definitions,
@@ -3448,8 +3448,21 @@ fn compute_new_reference_with_query_caches(
                 polygons,
                 &projected_halfspaces,
                 validity_cache,
-                trace_cache,
-            )?
+            )? {
+                Some(reused)
+            } else {
+                reusable_projected_reference_result_from_cached_trace_if_certified(
+                    projected_reference_result_cache,
+                    old_ref,
+                    old_ref_definitions,
+                    old_wnv,
+                    bounds,
+                    polygons,
+                    &projected_halfspaces,
+                    validity_cache,
+                    trace_cache,
+                )?
+            }
         } {
             Ok(Some(reused))
         } else {
@@ -6278,6 +6291,62 @@ fn cached_projected_reference_result_with(
     result
 }
 
+fn reusable_projected_reference_result_if_certified(
+    cache: &mut Vec<ProjectedReferenceResultCacheEntry>,
+    old_ref: &Point3,
+    old_ref_definitions: &[[Plane; 3]],
+    old_wnv: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    halfspaces: &[LimitPlane3],
+    validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
+) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
+    let context =
+        support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
+    let polygon_context = Some(&context);
+    let mut reused = None;
+    for existing in cache.iter().rev() {
+        if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            || existing.context.old_wnv != old_wnv
+            || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
+        {
+            continue;
+        }
+        let Ok(Some((target, winding))) = &existing.result else {
+            continue;
+        };
+        let valid_for_bounds = cached_reference_bounds_validity_with_context(
+            validity_cache,
+            Some(&context),
+            bounds,
+            &target.point,
+            |point| is_certified_valid_reference_for_bounds(point, bounds, polygons),
+        )?;
+        if !valid_for_bounds {
+            continue;
+        }
+        reused = Some((target.clone(), winding.clone()));
+        break;
+    }
+    if let Some((target, winding)) = reused {
+        let reused = Some((target, winding));
+        if !cache.iter().any(|existing| {
+            existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_reference_cache_context_matches(Some(&existing.context), Some(&context))
+        }) {
+            cache.push(ProjectedReferenceResultCacheEntry {
+                context,
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                result: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
+    Ok(None)
+}
+
 fn reusable_projected_reference_result_from_cached_trace_if_certified(
     cache: &mut Vec<ProjectedReferenceResultCacheEntry>,
     old_ref: &Point3,
@@ -6294,8 +6363,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified(
     let polygon_context = Some(&context);
     let mut reused = None;
     for existing in cache.iter().rev() {
-        if existing.bounds != *bounds
-            || !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+        if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
             || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
         {
             continue;
@@ -18622,6 +18690,128 @@ mod tests {
     }
 
     #[test]
+    fn reusable_projected_reference_result_if_certified_reuses_cached_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let cached_old_ref = p(0, 2, 5);
+        let halfspaces = projected_reference_halfspaces(&cached_old_ref, &bounds).unwrap();
+        let polygons = Vec::new();
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(0, 1, 5);
+        let query_definitions = vec![axis_plane_definition(&query_old_ref)];
+        let mut cache = vec![ProjectedReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_projected_reference_result_if_certified(
+            &mut cache,
+            &query_old_ref,
+            &query_definitions,
+            &[0],
+            &bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))
+        );
+        assert_eq!(cache.len(), 2);
+    }
+
+    #[test]
+    fn reusable_projected_reference_result_if_certified_reuses_cached_target_across_tighter_bounds()
+    {
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let cached_old_ref = p(0, 2, 5);
+        let halfspaces = projected_reference_halfspaces(&cached_old_ref, &cached_bounds).unwrap();
+        let polygons = Vec::new();
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(0, 1, 5);
+        let query_definitions = vec![axis_plane_definition(&query_old_ref)];
+        let mut cache = vec![ProjectedReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: cached_bounds,
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_projected_reference_result_if_certified(
+            &mut cache,
+            &query_old_ref,
+            &query_definitions,
+            &[0],
+            &query_bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))
+        );
+        assert_eq!(cache.len(), 2);
+    }
+
+    #[test]
+    fn reusable_projected_reference_result_if_certified_skips_invalid_cached_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let cached_old_ref = p(0, 2, 5);
+        let halfspaces = projected_reference_halfspaces(&cached_old_ref, &bounds).unwrap();
+        let polygons = vec![support_only_polygon(Plane::axis_aligned(0, r(2)))];
+        let cached_context = support_reference_cache_context_key(
+            &cached_old_ref,
+            &[axis_plane_definition(&cached_old_ref)],
+            &[0],
+            &polygons,
+        );
+        let query_old_ref = p(0, 1, 5);
+        let query_definitions = vec![axis_plane_definition(&query_old_ref)];
+        let mut cache = vec![ProjectedReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: bounds.clone(),
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(2, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+
+        let reused = reusable_projected_reference_result_if_certified(
+            &mut cache,
+            &query_old_ref,
+            &query_definitions,
+            &[0],
+            &bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+        )
+        .unwrap();
+
+        assert_eq!(reused, None);
+        assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
     fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cached_target_across_parent_winding()
      {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -18646,6 +18836,46 @@ mod tests {
             &query_definitions,
             &[7],
             &bounds,
+            &polygons,
+            &halfspaces,
+            &mut validity_cache,
+            &mut trace_cache,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![7]))
+        );
+        assert_eq!(cache.len(), 2);
+    }
+
+    #[test]
+    fn reusable_projected_reference_result_from_cached_trace_if_certified_reuses_cached_target_across_tighter_bounds()
+     {
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let old_ref = p(0, 2, 5);
+        let query_definitions = vec![axis_plane_definition(&old_ref)];
+        let halfspaces = projected_reference_halfspaces(&old_ref, &cached_bounds).unwrap();
+        let polygons = Vec::new();
+        let cached_context =
+            support_reference_cache_context_key(&old_ref, &query_definitions, &[0], &polygons);
+        let mut cache = vec![ProjectedReferenceResultCacheEntry {
+            context: cached_context,
+            bounds: cached_bounds,
+            halfspaces: halfspaces.clone(),
+            result: Ok(Some((ReferenceTarget::axis_defined(p(1, 1, 1)), vec![23]))),
+        }];
+        let mut validity_cache = Vec::new();
+        let mut trace_cache = Vec::new();
+
+        let reused = reusable_projected_reference_result_from_cached_trace_if_certified(
+            &mut cache,
+            &old_ref,
+            &query_definitions,
+            &[7],
+            &query_bounds,
             &polygons,
             &halfspaces,
             &mut validity_cache,
