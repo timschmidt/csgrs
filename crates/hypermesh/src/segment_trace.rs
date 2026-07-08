@@ -2627,6 +2627,22 @@ fn search_adjacent_normal_probe_winding_with_queries(
         )? {
             return Ok(Some(winding));
         }
+        if let Some(winding) = try_strict_normal_direct_seed_winding_with_queries(
+            point,
+            positive_side,
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+            &corridor,
+            &stop_point,
+        )? {
+            return Ok(Some(winding));
+        }
         if let Some(winding) = try_leaf_probe_family_with_queries(
             point,
             positive_side,
@@ -2715,6 +2731,106 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
         saw_unknown,
     );
     winding
+}
+
+fn try_strict_normal_direct_seed_winding_with_queries(
+    point: &InteriorLeafPoint,
+    positive_side: bool,
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+    saw_unknown: &mut bool,
+    corridor: &Aabb,
+    stop_point: &Point3,
+) -> HypermeshResult<Option<WindingNumberVector>> {
+    let mut halfspaces = aabb_core_halfspaces(corridor)?;
+    halfspaces.push(support_side_halfspace(support, positive_side));
+    halfspaces.push(normal_stop_halfspace(support, stop_point, positive_side));
+
+    let (report, report_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    *saw_unknown |= report_unknown;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(None);
+    }
+
+    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(&halfspaces)?;
+    *saw_unknown |= shifted_vertex_family.saw_unknown;
+    let shifted_vertices = shifted_vertex_family.seeds;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+
+    let mut strict_seeds = Vec::new();
+    *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
+        &mut strict_seeds,
+        [
+            if report
+                .as_ref()
+                .is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
+                && let Some(witness) = report_witness
+            {
+                collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
+                    point_strictly_inside_halfspace_cell_or_unknown(
+                        candidate,
+                        corridor,
+                        &halfspaces,
+                    )
+                })
+            } else {
+                Ok(HalfspaceSeedFamilyState {
+                    seeds: Vec::new(),
+                    saw_unknown: false,
+                })
+            },
+            collect_strict_halfspace_seed_family(Ok(shifted_vertices), |candidate| {
+                point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &halfspaces)
+            }),
+        ],
+    )?;
+    let mut seen = Vec::new();
+    let strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut seen);
+
+    for witness in &strict_seeds {
+        let probe = match build_probe_point(
+            witness,
+            corridor,
+            support,
+            &halfspaces,
+            active_planes_from_optional_report(report.as_ref(), witness),
+            &[],
+            false,
+        ) {
+            Ok(Some(probe)) => probe,
+            Ok(None) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if let Some(winding) = try_leaf_probe_family_with_queries(
+            point,
+            positive_side,
+            Ok(vec![probe]),
+            support,
+            ref_point,
+            ref_definitions,
+            ref_wnv,
+            polygons,
+            host_delta_w,
+            probe_query_caches,
+            saw_unknown,
+        )? {
+            return Ok(Some(winding));
+        }
+    }
+
+    Ok(None)
 }
 
 fn try_strict_normal_shifted_report_witness_winding_with_queries(
