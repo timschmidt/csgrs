@@ -3200,6 +3200,22 @@ fn compute_new_reference_with_query_caches(
         Err(err) => return Err(err),
     };
 
+    let support_unknown = match support_plane_cell_reference_with_query_caches(
+        old_ref,
+        old_ref_definitions,
+        old_wnv,
+        bounds,
+        polygons,
+        &mut query_caches.borrow_mut(),
+    ) {
+        Ok(Some((target, winding))) => {
+            return Ok((target.point, target.definitions, winding));
+        }
+        Ok(None) => false,
+        Err(crate::error::HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
+
     let projected_halfspaces = projected_reference_halfspaces(old_ref, bounds)?;
     let projected_root = {
         let mut query_caches = query_caches.borrow_mut();
@@ -3412,16 +3428,7 @@ fn compute_new_reference_with_query_caches(
         },
         &mut projected_unknown,
     )?;
-    reference_result_with_support_fallback(projected, projected_unknown, || {
-        support_plane_cell_reference_with_query_caches(
-            old_ref,
-            old_ref_definitions,
-            old_wnv,
-            bounds,
-            polygons,
-            &mut query_caches.borrow_mut(),
-        )
-    })
+    reference_result_or_error(projected, None, projected_unknown || support_unknown)
 }
 
 #[derive(Clone)]
@@ -3660,6 +3667,7 @@ fn reference_result_or_error(
     }
 }
 
+#[cfg(test)]
 fn reference_result_with_support_fallback(
     projected: Option<(ReferenceTarget, Vec<i32>)>,
     projected_unknown: bool,
@@ -4116,6 +4124,7 @@ fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unkno
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 fn projected_support_plane_cell_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -4155,6 +4164,7 @@ fn projected_support_plane_cell_reference_with_query_caches(
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 fn projection_escape_reference(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -4176,6 +4186,7 @@ fn projection_escape_reference(
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 fn projection_escape_reference_with_axis_options(
     axis_options: &ProjectionEscapeAxisOptions,
     bounds: &Aabb,
@@ -11464,7 +11475,7 @@ mod tests {
     }
 
     #[test]
-    fn compute_new_reference_skips_final_support_search_after_projected_support_hit() {
+    fn compute_new_reference_skips_projected_search_after_support_hit() {
         let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
         let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
         let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
@@ -11480,73 +11491,16 @@ mod tests {
         let old_defs = axis_defs(&old_ref);
         let old_wnv = vec![0; soup.num_meshes];
 
-        let projected_halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
-        let mut projected_query_caches = SupportReferenceQueryCaches::default();
-        let projected_root = cached_projected_root_reference_families_with(
+        let support = support_plane_cell_reference_with_query_caches(
+            &old_ref,
+            &old_defs,
+            &old_wnv,
             &bounds,
-            &projected_halfspaces,
-            &mut projected_query_caches,
+            &polygons,
+            &mut SupportReferenceQueryCaches::default(),
         )
-        .unwrap();
-
-        let projected = projected_reference_search_or_none(search_projected_reference_families_lazy_escape(
-            &projected_root.projected_targets,
-            || {
-                projected_support_plane_cell_reference(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &bounds,
-                    &polygons,
-                    projected_halfspaces.clone(),
-                )
-            },
-            |projected_target| {
-                trace_reference_target(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &bounds,
-                    &polygons,
-                    projected_target,
-                )
-            },
-            || {
-                let mut saw_unknown = false;
-                projected_reference_escape_targets_from_seed_family_state_with_tracking_unknown_and_witness_cache(
-                    &bounds,
-                    &projected_halfspaces,
-                    &projected_root.projected_targets,
-                    projected_root.report.as_ref(),
-                    &projected_root.projected_escape_seed_families,
-                    &mut saw_unknown,
-                    &mut projected_query_caches.shifted_projected_family_cache,
-                    &projected_query_caches.reference_witness_cache,
-                    &projected_query_caches.pure_halfspace_contains_cache,
-                )
-            },
-            |projected_target| {
-                projection_axis_escape_reference(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &projected_target.point,
-                    &bounds,
-                    &polygons,
-                )
-            },
-            |projected_target| {
-                projection_escape_reference(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &projected_target.point,
-                    &bounds,
-                    &polygons,
-                )
-            },
-        ))
-        .unwrap();
+        .unwrap()
+        .expect("support search should find a witness");
 
         let mut query_caches = SupportReferenceQueryCaches::default();
         let (point, definitions, winding) = compute_new_reference_with_query_caches(
@@ -11559,20 +11513,11 @@ mod tests {
         )
         .unwrap();
 
-        let projected = projected.expect("projected support search should find a witness");
-        let core_halfspaces = aabb_core_halfspaces(&bounds).unwrap();
-        assert_eq!(point, projected.0.point);
-        assert_eq!(definitions, projected.0.definitions);
-        assert_eq!(winding, projected.1);
-        assert!(
-            !query_caches
-                .support_reference_result_cache
-                .iter()
-                .any(|entry| {
-                    entry.bounds == bounds
-                        && limit_plane_families_match_as_sets(&entry.halfspaces, &core_halfspaces)
-                })
-        );
+        assert_eq!(point, support.0.point);
+        assert_eq!(definitions, support.0.definitions);
+        assert_eq!(winding, support.1);
+        assert!(query_caches.projected_reference_result_cache.is_empty());
+        assert!(query_caches.projected_root_cache.is_empty());
     }
 
     #[test]
