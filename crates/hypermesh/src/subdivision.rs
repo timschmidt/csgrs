@@ -965,6 +965,7 @@ fn propagate_child_reference(
     child_bounds: &Aabb,
     caches: &SubdivisionRuntimeCaches,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    let source_polygons = ordered_reference_search_polygons(&task.polygons, child_bounds);
     let reused_reference = {
         let mut query_caches = caches.support_reference_query.borrow_mut();
         if let Some(reused) = reusable_child_reference_if_certified(
@@ -980,7 +981,7 @@ fn propagate_child_reference(
             &task.ref_point,
             &task.ref_definitions,
             &task.ref_wnv,
-            &task.polygons,
+            &source_polygons,
             child_bounds,
             &mut query_caches,
         )? {
@@ -991,7 +992,7 @@ fn propagate_child_reference(
                 &task.ref_point,
                 &task.ref_definitions,
                 &task.ref_wnv,
-                &task.polygons,
+                &source_polygons,
                 child_bounds,
                 &mut query_caches,
             )?
@@ -1006,7 +1007,7 @@ fn propagate_child_reference(
         &task.ref_point,
         &task.ref_definitions,
         &task.ref_wnv,
-        &task.polygons,
+        &source_polygons,
         child_bounds,
         || {
             compute_new_reference_with_query_caches(
@@ -1014,11 +1015,38 @@ fn propagate_child_reference(
                 &task.ref_definitions,
                 &task.ref_wnv,
                 child_bounds,
-                &task.polygons,
+                &source_polygons,
                 &mut caches.support_reference_query.borrow_mut(),
             )
         },
     )
+}
+
+fn ordered_reference_search_polygons(
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+) -> Vec<ConvexPolygon> {
+    let bounds_approx = crate::polygon::ApproxBounds::new(bounds.min.clone(), bounds.max.clone());
+    let mut indexed = polygons
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(index, polygon)| {
+            let overlaps_bounds = polygon.approx_bounds.as_ref().is_none_or(|polygon_bounds| {
+                crate::bvh::bounds_overlap(polygon_bounds, &bounds_approx).unwrap_or(true)
+            });
+            (index, overlaps_bounds, polygon)
+        })
+        .collect::<Vec<_>>();
+    indexed.sort_by_key(|(index, overlaps_bounds, polygon)| {
+        (
+            !*overlaps_bounds,
+            *index,
+            polygon.mesh_index,
+            polygon.polygon_index,
+        )
+    });
+    indexed.into_iter().map(|(_, _, polygon)| polygon).collect()
 }
 
 #[cfg(test)]
@@ -12164,6 +12192,18 @@ mod tests {
         first_sizes.sort_unstable();
 
         assert_eq!(first_sizes, [5, 9]);
+    }
+
+    #[test]
+    fn ordered_reference_search_polygons_prefers_bounds_overlaps() {
+        let overlapping = make_triangle(&p(1, 1, 1), &p(3, 1, 1), &p(1, 3, 1), 10, 0);
+        let disjoint = make_triangle(&p(8, 8, 8), &p(9, 8, 8), &p(8, 9, 8), 20, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let ordered = ordered_reference_search_polygons(&[disjoint, overlapping.clone()], &bounds);
+
+        assert_eq!(ordered[0].mesh_index, overlapping.mesh_index);
+        assert_eq!(ordered[0].polygon_index, overlapping.polygon_index);
     }
 
     #[test]
