@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Classification, compare_real};
+use crate::geometry::{Classification, Plane, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
 use crate::polygon::ConvexPolygon;
 use crate::winding::WindingPair;
@@ -91,7 +91,12 @@ struct ClassifiedOutputBucket {
     classification: i8,
     support: crate::geometry::Plane,
     edge_count: usize,
+    edge_profile: Vec<usize>,
     indices: Vec<usize>,
+}
+
+struct PlaneProfileInterner {
+    planes: Vec<Plane>,
 }
 
 pub(crate) fn merge_unique_classified_polygons(
@@ -136,6 +141,7 @@ impl BooleanResult {
         let mut classifications = Vec::with_capacity(classified.len());
         let mut winding_pairs: Vec<Option<WindingPair>> = Vec::with_capacity(classified.len());
         let mut buckets: Vec<ClassifiedOutputBucket> = Vec::new();
+        let mut plane_interner = PlaneProfileInterner::new();
 
         for classified_polygon in classified {
             let classification = classified_polygon.classification;
@@ -145,10 +151,12 @@ impl BooleanResult {
             } else {
                 classified_polygon.polygon
             };
+            let edge_profile = plane_interner.edge_profile(&polygon.edges);
             if let Some(existing_index) = find_matching_output_polygon_index(
                 &buckets,
                 &output.polygons,
                 classification,
+                &edge_profile,
                 &polygon,
             ) {
                 if winding_pairs[existing_index].is_none() {
@@ -166,6 +174,7 @@ impl BooleanResult {
                 bucket.classification == classification
                     && bucket.edge_count == edge_count
                     && bucket.support == support
+                    && bucket.edge_profile == edge_profile
             }) {
                 bucket.indices.push(new_index);
             } else {
@@ -173,6 +182,7 @@ impl BooleanResult {
                     classification,
                     support,
                     edge_count,
+                    edge_profile,
                     indices: vec![new_index],
                 });
             }
@@ -319,18 +329,44 @@ fn find_matching_output_polygon_index(
     buckets: &[ClassifiedOutputBucket],
     polygons: &[ConvexPolygon],
     classification: i8,
+    edge_profile: &[usize],
     candidate: &ConvexPolygon,
 ) -> Option<usize> {
     let bucket = buckets.iter().find(|bucket| {
         bucket.classification == classification
             && bucket.edge_count == candidate.edges.len()
             && bucket.support == candidate.support
+            && bucket.edge_profile == edge_profile
     })?;
     bucket
         .indices
         .iter()
         .copied()
         .find(|index| polygons_match_output_geometry(&polygons[*index], candidate))
+}
+
+impl PlaneProfileInterner {
+    fn new() -> Self {
+        Self { planes: Vec::new() }
+    }
+
+    fn edge_profile(&mut self, edges: &[Plane]) -> Vec<usize> {
+        let mut profile = edges
+            .iter()
+            .map(|edge| self.plane_id(edge))
+            .collect::<Vec<_>>();
+        profile.sort_unstable();
+        profile
+    }
+
+    fn plane_id(&mut self, plane: &Plane) -> usize {
+        if let Some(index) = self.planes.iter().position(|existing| existing == plane) {
+            return index;
+        }
+        let index = self.planes.len();
+        self.planes.push(plane.clone());
+        index
+    }
 }
 
 fn edge_cycles_match_up_to_rotation(
