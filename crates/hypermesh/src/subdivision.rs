@@ -1432,61 +1432,62 @@ fn reusable_child_reference_from_cached_trace_if_certified(
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
     let source_polygon_profile = polygon_family_profile(source_polygons);
-    let candidates = cache
-        .borrow()
-        .iter()
-        .filter(|existing| {
-            existing.source_polygon_profile == source_polygon_profile
-                && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok((point, definitions, _)) => Some((point.clone(), definitions.clone())),
-            Err(_) => None,
-        })
-        .collect::<Vec<_>>();
     let context =
         support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, source_polygons);
-
-    for (point, definitions) in candidates {
-        let valid_for_bounds = cached_reference_bounds_validity_with_context(
-            &mut query_caches.validity_cache,
-            Some(&context),
-            bounds,
-            &point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
-        )?;
-        if !valid_for_bounds {
-            continue;
-        }
-        let target = ReferenceTarget::with_definitions(point.clone(), definitions.clone());
-        if let Some(winding) = cached_reference_target_trace_with_context(
-            &mut query_caches.trace_cache,
-            Some(&context),
-            &target,
-            |target| {
-                trace_reference_target_from_validated_bounds(
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
-                    source_polygons,
-                    target,
-                )
-            },
-        )? {
-            let reused = (point, definitions, winding);
-            cache_child_reference_result(
-                cache,
-                old_ref,
-                old_ref_definitions,
-                old_wnv,
-                source_polygons,
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.source_polygon_profile != source_polygon_profile
+                || !polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
+            {
+                continue;
+            }
+            let Ok((point, definitions, _)) = &existing.result else {
+                continue;
+            };
+            let valid_for_bounds = cached_reference_bounds_validity_with_context(
+                &mut query_caches.validity_cache,
+                Some(&context),
                 bounds,
-                &reused,
-            );
-            return Ok(Some(reused));
+                point,
+                |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
+            )?;
+            if !valid_for_bounds {
+                continue;
+            }
+            let target = ReferenceTarget::with_definitions(point.clone(), definitions.clone());
+            if let Some(winding) = cached_reference_target_trace_with_context(
+                &mut query_caches.trace_cache,
+                Some(&context),
+                &target,
+                |target| {
+                    trace_reference_target_from_validated_bounds(
+                        old_ref,
+                        old_ref_definitions,
+                        old_wnv,
+                        source_polygons,
+                        target,
+                    )
+                },
+            )? {
+                reused = Some((point.clone(), definitions.clone(), winding));
+                break;
+            }
         }
     }
-
+    if let Some(reused) = reused {
+        cache_child_reference_result(
+            cache,
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            source_polygons,
+            bounds,
+            &reused,
+        );
+        return Ok(Some(reused));
+    }
     Ok(None)
 }
 
@@ -1500,36 +1501,36 @@ fn reusable_child_reference_from_cached_result_if_certified(
     query_caches: &mut SupportReferenceQueryCaches,
 ) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
     let source_polygon_profile = polygon_family_profile(source_polygons);
-    let candidates = cache
-        .borrow()
-        .iter()
-        .filter(|existing| {
-            existing.source_polygon_profile == source_polygon_profile
-                && existing.old_wnv == old_wnv
-                && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok((point, definitions, winding)) => {
-                Some((point.clone(), definitions.clone(), winding.clone()))
-            }
-            Err(_) => None,
-        })
-        .collect::<Vec<_>>();
     let context =
         support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, source_polygons);
-
-    for (point, definitions, winding) in candidates {
-        let valid_for_bounds = cached_reference_bounds_validity_with_context(
-            &mut query_caches.validity_cache,
-            Some(&context),
-            bounds,
-            &point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
-        )?;
-        if !valid_for_bounds {
-            continue;
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.source_polygon_profile != source_polygon_profile
+                || existing.old_wnv != old_wnv
+                || !polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
+            {
+                continue;
+            }
+            let Ok((point, definitions, winding)) = &existing.result else {
+                continue;
+            };
+            let valid_for_bounds = cached_reference_bounds_validity_with_context(
+                &mut query_caches.validity_cache,
+                Some(&context),
+                bounds,
+                point,
+                |point| is_certified_valid_reference_for_bounds(point, bounds, source_polygons),
+            )?;
+            if !valid_for_bounds {
+                continue;
+            }
+            reused = Some((point.clone(), definitions.clone(), winding.clone()));
+            break;
         }
-        let reused = (point, definitions, winding);
+    }
+    if let Some(reused) = reused {
         cache_child_reference_result(
             cache,
             old_ref,
@@ -1541,7 +1542,6 @@ fn reusable_child_reference_from_cached_result_if_certified(
         );
         return Ok(Some(reused));
     }
-
     Ok(None)
 }
 
@@ -1588,43 +1588,42 @@ fn reusable_child_subdivision_if_certified(
     }
 
     let polygon_profile = polygon_family_profile(&task.polygons);
-    let candidates = cache.borrow().clone();
-    for existing in &candidates {
-        if existing.polygon_profile != polygon_profile
-            || existing.task.ref_wnv != task.ref_wnv
-            || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
-            || !matches!(existing.result, Ok(_))
-            || (existing.task.depth != task.depth && existing.task.depth <= task.depth)
-        {
-            continue;
-        }
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.polygon_profile != polygon_profile
+                || existing.task.ref_wnv != task.ref_wnv
+                || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
+                || !matches!(existing.result, Ok(_))
+                || (existing.task.depth != task.depth && existing.task.depth <= task.depth)
+            {
+                continue;
+            }
 
-        if !bounds_contains_bounds(&existing.task.bounds, &task.bounds)? {
-            continue;
-        }
+            if !bounds_contains_bounds(&existing.task.bounds, &task.bounds)? {
+                continue;
+            }
 
-        if reference_is_certified_valid_for_task_bounds(
-            &existing.task.ref_point,
-            &existing.task.ref_definitions,
-            &existing.task.ref_wnv,
-            &task.bounds,
-            &task.polygons,
-            query_caches,
-        )? {
-            if let Ok(result) = &existing.result {
-                let reused = result.clone();
-                if !cache.borrow().iter().any(|current| current.task == *task) {
-                    cache.borrow_mut().push(ChildSubdivisionCacheEntry {
-                        polygon_profile: polygon_profile.clone(),
-                        task: task.clone(),
-                        result: Ok(reused.clone()),
-                    });
+            if reference_is_certified_valid_for_task_bounds(
+                &existing.task.ref_point,
+                &existing.task.ref_definitions,
+                &existing.task.ref_wnv,
+                &task.bounds,
+                &task.polygons,
+                query_caches,
+            )? {
+                if let Ok(result) = &existing.result {
+                    reused = Some(result.clone());
+                    break;
                 }
-                return Ok(Some(reused));
             }
         }
     }
-
+    if let Some(reused) = reused {
+        cache_child_subdivision_result(cache, task, &Ok(reused.clone()));
+        return Ok(Some(reused));
+    }
     Ok(None)
 }
 
@@ -5462,32 +5461,26 @@ fn reusable_support_reference_accept_if_certified(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let candidates = cache
-        .iter()
-        .filter(|existing| {
-            limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-                && support_reference_polygon_context_matches(
-                    existing.context.as_ref(),
-                    Some(context),
-                )
-                && existing
-                    .context
-                    .as_ref()
-                    .is_some_and(|existing| existing.old_wnv == context.old_wnv)
-                && support_optional_halfspace_reports_match_for_cache(
-                    &existing.halfspaces,
-                    existing.report.as_ref(),
-                    halfspaces,
-                    report,
-                )
-        })
-        .filter_map(|existing| match &existing.accepted {
-            Ok(Some((target, winding))) => Some((target.clone(), winding.clone())),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for (target, winding) in candidates {
+    let mut reused = None;
+    for existing in cache.iter().rev() {
+        if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            || !support_reference_polygon_context_matches(existing.context.as_ref(), Some(context))
+            || !existing
+                .context
+                .as_ref()
+                .is_some_and(|existing| existing.old_wnv == context.old_wnv)
+            || !support_optional_halfspace_reports_match_for_cache(
+                &existing.halfspaces,
+                existing.report.as_ref(),
+                halfspaces,
+                report,
+            )
+        {
+            continue;
+        }
+        let Ok(Some((target, winding))) = &existing.accepted else {
+            continue;
+        };
         let valid_for_bounds = cached_reference_bounds_validity_with_context(
             validity_cache,
             Some(context),
@@ -5498,7 +5491,10 @@ fn reusable_support_reference_accept_if_certified(
         if !valid_for_bounds {
             continue;
         }
-
+        reused = Some((target.clone(), winding.clone()));
+        break;
+    }
+    if let Some((target, winding)) = reused {
         let reused = Some((target, winding));
         if !cache.iter().any(|existing| {
             support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
@@ -5521,7 +5517,6 @@ fn reusable_support_reference_accept_if_certified(
         }
         return Ok(reused);
     }
-
     Ok(None)
 }
 
@@ -5537,28 +5532,22 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified(
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let candidates = cache
-        .iter()
-        .filter(|existing| {
-            limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-                && support_reference_polygon_context_matches(
-                    existing.context.as_ref(),
-                    Some(context),
-                )
-                && support_optional_halfspace_reports_match_for_cache(
-                    &existing.halfspaces,
-                    existing.report.as_ref(),
-                    halfspaces,
-                    report,
-                )
-        })
-        .filter_map(|existing| match &existing.accepted {
-            Ok(Some((target, _))) => Some(target.clone()),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for target in candidates {
+    let mut reused = None;
+    for existing in cache.iter().rev() {
+        if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            || !support_reference_polygon_context_matches(existing.context.as_ref(), Some(context))
+            || !support_optional_halfspace_reports_match_for_cache(
+                &existing.halfspaces,
+                existing.report.as_ref(),
+                halfspaces,
+                report,
+            )
+        {
+            continue;
+        }
+        let Ok(Some((target, _))) = &existing.accepted else {
+            continue;
+        };
         let valid_for_bounds = cached_reference_bounds_validity_with_context(
             validity_cache,
             Some(context),
@@ -5573,7 +5562,7 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified(
         if let Some(winding) = cached_reference_target_trace_with_context(
             trace_cache,
             Some(context),
-            &target,
+            target,
             |target| {
                 trace_reference_target_from_validated_bounds(
                     old_ref,
@@ -5584,30 +5573,33 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified(
                 )
             },
         )? {
-            let reused = Some((target, winding));
-            if !cache.iter().any(|existing| {
-                support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
-                    && existing.bounds == *bounds
-                    && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-                    && support_optional_halfspace_reports_match_for_cache(
-                        &existing.halfspaces,
-                        existing.report.as_ref(),
-                        halfspaces,
-                        report,
-                    )
-            }) {
-                cache.push(SupportReferenceAcceptCacheEntry {
-                    context: Some(context.clone()),
-                    bounds: bounds.clone(),
-                    halfspaces: halfspaces.to_vec(),
-                    report: report.cloned(),
-                    accepted: Ok(reused.clone()),
-                });
-            }
-            return Ok(reused);
+            reused = Some((target.clone(), winding));
+            break;
         }
     }
-
+    if let Some((target, winding)) = reused {
+        let reused = Some((target, winding));
+        if !cache.iter().any(|existing| {
+            support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
+                && existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_optional_halfspace_reports_match_for_cache(
+                    &existing.halfspaces,
+                    existing.report.as_ref(),
+                    halfspaces,
+                    report,
+                )
+        }) {
+            cache.push(SupportReferenceAcceptCacheEntry {
+                context: Some(context.clone()),
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                report: report.cloned(),
+                accepted: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
     Ok(None)
 }
 
@@ -5679,23 +5671,17 @@ fn reusable_support_reference_result_if_certified(
     let context =
         support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
     let polygon_context = Some(&context);
-    let candidates = cache
-        .iter()
-        .filter(|existing| {
-            limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-                && existing.context.old_wnv == old_wnv
-                && support_reference_polygon_context_matches(
-                    Some(&existing.context),
-                    polygon_context,
-                )
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok(Some((target, winding))) => Some((target.clone(), winding.clone())),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for (target, winding) in candidates {
+    let mut reused = None;
+    for existing in cache.iter().rev() {
+        if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            || existing.context.old_wnv != old_wnv
+            || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
+        {
+            continue;
+        }
+        let Ok(Some((target, winding))) = &existing.result else {
+            continue;
+        };
         let valid_for_bounds = cached_reference_bounds_validity_with_context(
             validity_cache,
             Some(&context),
@@ -5706,7 +5692,10 @@ fn reusable_support_reference_result_if_certified(
         if !valid_for_bounds {
             continue;
         }
-
+        reused = Some((target.clone(), winding.clone()));
+        break;
+    }
+    if let Some((target, winding)) = reused {
         let reused = Some((target, winding));
         if !cache.iter().any(|existing| {
             existing.bounds == *bounds
@@ -5722,7 +5711,6 @@ fn reusable_support_reference_result_if_certified(
         }
         return Ok(reused);
     }
-
     Ok(None)
 }
 
@@ -5740,22 +5728,16 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
     let context =
         support_reference_cache_context_key(old_ref, old_ref_definitions, old_wnv, polygons);
     let polygon_context = Some(&context);
-    let candidates = cache
-        .iter()
-        .filter(|existing| {
-            limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-                && support_reference_polygon_context_matches(
-                    Some(&existing.context),
-                    polygon_context,
-                )
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok(Some((target, _))) => Some(target.clone()),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for target in candidates {
+    let mut reused = None;
+    for existing in cache.iter().rev() {
+        if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
+        {
+            continue;
+        }
+        let Ok(Some((target, _))) = &existing.result else {
+            continue;
+        };
         let valid_for_bounds = cached_reference_bounds_validity_with_context(
             validity_cache,
             Some(&context),
@@ -5770,7 +5752,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
         if let Some(winding) = cached_reference_target_trace_with_context(
             trace_cache,
             Some(&context),
-            &target,
+            target,
             |target| {
                 trace_reference_target_from_validated_bounds(
                     old_ref,
@@ -5781,26 +5763,26 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
                 )
             },
         )? {
-            let reused = Some((target, winding));
-            if !cache.iter().any(|existing| {
-                existing.bounds == *bounds
-                    && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-                    && support_reference_cache_context_matches(
-                        Some(&existing.context),
-                        Some(&context),
-                    )
-            }) {
-                cache.push(SupportReferenceResultCacheEntry {
-                    context,
-                    bounds: bounds.clone(),
-                    halfspaces: halfspaces.to_vec(),
-                    result: Ok(reused.clone()),
-                });
-            }
-            return Ok(reused);
+            reused = Some((target.clone(), winding));
+            break;
         }
     }
-
+    if let Some((target, winding)) = reused {
+        let reused = Some((target, winding));
+        if !cache.iter().any(|existing| {
+            existing.bounds == *bounds
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+                && support_reference_cache_context_matches(Some(&existing.context), Some(&context))
+        }) {
+            cache.push(SupportReferenceResultCacheEntry {
+                context,
+                bounds: bounds.clone(),
+                halfspaces: halfspaces.to_vec(),
+                result: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
     Ok(None)
 }
 
@@ -5891,38 +5873,39 @@ fn reusable_support_plane_cell_search_result_if_certified(
     halfspaces: &[LimitPlane3],
     validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let candidates = cache
-        .borrow()
-        .iter()
-        .filter(|existing| {
-            support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
-                && existing.polygon_index == polygon_index
-                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok(Some((target, winding))) => {
-                Some((existing.bounds.clone(), target.clone(), winding.clone()))
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if !support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
+                || existing.polygon_index != polygon_index
+                || !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            {
+                continue;
             }
-            _ => None,
-        })
-        .collect::<Vec<_>>();
+            let Ok(Some((target, winding))) = &existing.result else {
+                continue;
+            };
+            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+                continue;
+            }
 
-    for (existing_bounds, target, winding) in candidates {
-        if !bounds_contains_bounds(&existing_bounds, bounds)? {
-            continue;
+            let valid_for_bounds = cached_reference_bounds_validity_with_context(
+                validity_cache,
+                Some(context),
+                bounds,
+                &target.point,
+                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+            )?;
+            if !valid_for_bounds {
+                continue;
+            }
+
+            reused = Some((target.clone(), winding.clone()));
+            break;
         }
-
-        let valid_for_bounds = cached_reference_bounds_validity_with_context(
-            validity_cache,
-            Some(context),
-            bounds,
-            &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
-        )?;
-        if !valid_for_bounds {
-            continue;
-        }
-
+    }
+    if let Some((target, winding)) = reused {
         let reused = Some((target, winding));
         if !cache.borrow().iter().any(|existing| {
             support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
@@ -5940,7 +5923,6 @@ fn reusable_support_plane_cell_search_result_if_certified(
         }
         return Ok(reused);
     }
-
     Ok(None)
 }
 
@@ -5956,69 +5938,71 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
 ) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let candidates = cache
-        .borrow()
-        .iter()
-        .filter(|existing| {
-            support_reference_polygon_context_matches(existing.context.as_ref(), Some(context))
-                && existing.polygon_index == polygon_index
-                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok(Some((target, _))) => Some((existing.bounds.clone(), target.clone())),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for (existing_bounds, target) in candidates {
-        if !bounds_contains_bounds(&existing_bounds, bounds)? {
-            continue;
-        }
-
-        let valid_for_bounds = cached_reference_bounds_validity_with_context(
-            validity_cache,
-            Some(context),
-            bounds,
-            &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
-        )?;
-        if !valid_for_bounds {
-            continue;
-        }
-
-        if let Some(winding) = cached_reference_target_trace_with_context(
-            trace_cache,
-            Some(context),
-            &target,
-            |target| {
-                trace_reference_target_from_validated_bounds(
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
-                    &context.polygons,
-                    target,
-                )
-            },
-        )? {
-            let reused = Some((target, winding));
-            if !cache.borrow().iter().any(|existing| {
-                support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
-                    && existing.bounds == *bounds
-                    && existing.polygon_index == polygon_index
-                    && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            }) {
-                cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
-                    context: Some(context.clone()),
-                    bounds: bounds.clone(),
-                    polygon_index,
-                    halfspaces: halfspaces.to_vec(),
-                    result: Ok(reused.clone()),
-                });
+    let mut reused = None;
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if !support_reference_polygon_context_matches(existing.context.as_ref(), Some(context))
+                || existing.polygon_index != polygon_index
+                || !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+            {
+                continue;
             }
-            return Ok(reused);
+            let Ok(Some((target, _))) = &existing.result else {
+                continue;
+            };
+            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+                continue;
+            }
+
+            let valid_for_bounds = cached_reference_bounds_validity_with_context(
+                validity_cache,
+                Some(context),
+                bounds,
+                &target.point,
+                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+            )?;
+            if !valid_for_bounds {
+                continue;
+            }
+
+            if let Some(winding) = cached_reference_target_trace_with_context(
+                trace_cache,
+                Some(context),
+                target,
+                |target| {
+                    trace_reference_target_from_validated_bounds(
+                        old_ref,
+                        old_ref_definitions,
+                        old_wnv,
+                        &context.polygons,
+                        target,
+                    )
+                },
+            )? {
+                reused = Some((target.clone(), winding));
+                break;
+            }
         }
     }
-
+    if let Some((target, winding)) = reused {
+        let reused = Some((target, winding));
+        if !cache.borrow().iter().any(|existing| {
+            support_reference_cache_context_matches(existing.context.as_ref(), Some(context))
+                && existing.bounds == *bounds
+                && existing.polygon_index == polygon_index
+                && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
+        }) {
+            cache.borrow_mut().push(SupportPlaneCellSearchCacheEntry {
+                context: Some(context.clone()),
+                bounds: bounds.clone(),
+                polygon_index,
+                halfspaces: halfspaces.to_vec(),
+                result: Ok(reused.clone()),
+            });
+        }
+        return Ok(reused);
+    }
     Ok(None)
 }
 
@@ -6451,103 +6435,107 @@ fn cached_reference_escape_search_in_query_caches(
         return existing.result;
     }
 
-    let retrace_candidates = query_caches
-        .projection_escape_search_cache
-        .borrow()
-        .iter()
-        .filter(|existing| {
-            !support_reference_cache_context_matches(Some(&existing.context), Some(context))
-                && support_reference_polygon_context_matches(Some(&existing.context), Some(context))
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok(Some((target, _))) => Some((existing.bounds.clone(), target.clone())),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for (existing_bounds, target) in retrace_candidates {
-        if !bounds_contains_bounds(&existing_bounds, bounds)? {
-            continue;
-        }
-        let valid_for_bounds = cached_reference_bounds_validity_with_context(
-            &mut query_caches.validity_cache,
-            Some(context),
-            bounds,
-            &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
-        )?;
-        if !valid_for_bounds {
-            continue;
-        }
-        if let Some(winding) = cached_reference_target_trace_with_context(
-            &mut query_caches.trace_cache,
-            Some(context),
-            &target,
-            |target| {
-                trace_reference_target_from_validated_bounds(
-                    &context.old_ref,
-                    &context.old_ref_definitions,
-                    &context.old_wnv,
-                    &context.polygons,
-                    target,
+    let mut retraced = None;
+    {
+        let cache_ref = query_caches.projection_escape_search_cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if support_reference_cache_context_matches(Some(&existing.context), Some(context))
+                || !support_reference_polygon_context_matches(
+                    Some(&existing.context),
+                    Some(context),
                 )
-            },
-        )? {
-            let reused = Some((target, winding));
-            if !query_caches
-                .projection_escape_search_cache
-                .borrow()
-                .iter()
-                .any(|existing| {
-                    existing.bounds == *bounds
-                        && support_reference_cache_context_matches(
-                            Some(&existing.context),
-                            Some(context),
-                        )
-                })
             {
-                query_caches
-                    .projection_escape_search_cache
-                    .borrow_mut()
-                    .push(ProjectionEscapeSearchCacheEntry {
-                        context: context.clone(),
-                        bounds: bounds.clone(),
-                        result: Ok(reused.clone()),
-                    });
+                continue;
             }
-            return Ok(reused);
+            let Ok(Some((target, _))) = &existing.result else {
+                continue;
+            };
+            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+                continue;
+            }
+            let valid_for_bounds = cached_reference_bounds_validity_with_context(
+                &mut query_caches.validity_cache,
+                Some(context),
+                bounds,
+                &target.point,
+                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+            )?;
+            if !valid_for_bounds {
+                continue;
+            }
+            if let Some(winding) = cached_reference_target_trace_with_context(
+                &mut query_caches.trace_cache,
+                Some(context),
+                target,
+                |target| {
+                    trace_reference_target_from_validated_bounds(
+                        &context.old_ref,
+                        &context.old_ref_definitions,
+                        &context.old_wnv,
+                        &context.polygons,
+                        target,
+                    )
+                },
+            )? {
+                retraced = Some((target.clone(), winding));
+                break;
+            }
         }
     }
+    if let Some((target, winding)) = retraced {
+        let reused = Some((target, winding));
+        if !query_caches
+            .projection_escape_search_cache
+            .borrow()
+            .iter()
+            .any(|existing| {
+                existing.bounds == *bounds
+                    && support_reference_cache_context_matches(
+                        Some(&existing.context),
+                        Some(context),
+                    )
+            })
+        {
+            query_caches
+                .projection_escape_search_cache
+                .borrow_mut()
+                .push(ProjectionEscapeSearchCacheEntry {
+                    context: context.clone(),
+                    bounds: bounds.clone(),
+                    result: Ok(reused.clone()),
+                });
+        }
+        return Ok(reused);
+    }
 
-    let candidates = query_caches
-        .projection_escape_search_cache
-        .borrow()
-        .iter()
-        .filter(|existing| {
-            support_reference_cache_context_matches(Some(&existing.context), Some(context))
-        })
-        .filter_map(|existing| match &existing.result {
-            Ok(Some((target, winding))) => {
-                Some((existing.bounds.clone(), target.clone(), winding.clone()))
+    let mut reused = None;
+    {
+        let cache_ref = query_caches.projection_escape_search_cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if !support_reference_cache_context_matches(Some(&existing.context), Some(context)) {
+                continue;
             }
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    for (existing_bounds, target, winding) in candidates {
-        if !bounds_contains_bounds(&existing_bounds, bounds)? {
-            continue;
+            let Ok(Some((target, winding))) = &existing.result else {
+                continue;
+            };
+            if !bounds_contains_bounds(&existing.bounds, bounds)? {
+                continue;
+            }
+            let valid_for_bounds = cached_reference_bounds_validity_with_context(
+                &mut query_caches.validity_cache,
+                Some(context),
+                bounds,
+                &target.point,
+                |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
+            )?;
+            if !valid_for_bounds {
+                continue;
+            }
+            reused = Some((target.clone(), winding.clone()));
+            break;
         }
-        let valid_for_bounds = cached_reference_bounds_validity_with_context(
-            &mut query_caches.validity_cache,
-            Some(context),
-            bounds,
-            &target.point,
-            |point| is_certified_valid_reference_for_bounds(point, bounds, &context.polygons),
-        )?;
-        if !valid_for_bounds {
-            continue;
-        }
+    }
+    if let Some((target, winding)) = reused {
         let reused = Some((target, winding));
         if !query_caches
             .projection_escape_search_cache
