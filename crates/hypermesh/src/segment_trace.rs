@@ -90,8 +90,31 @@ struct ProbePointFamilyCacheEntry {
     probes: HypermeshResult<Vec<ProbePoint>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct NormalProbeFamilyCacheEntry {
+    interior_point: Point3,
+    interior_planes: Vec<[Plane; 3]>,
+    support: Plane,
+    bounds: Aabb,
+    positive_side: bool,
+    probes: HypermeshResult<Vec<ProbePoint>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct AxisProbeFamilyCacheEntry {
+    interior_point: Point3,
+    interior_planes: Vec<[Plane; 3]>,
+    support: Plane,
+    bounds: Aabb,
+    axis: usize,
+    direction_positive: bool,
+    probes: HypermeshResult<Vec<ProbePoint>>,
+}
+
 #[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
+    normal_probe_families: Vec<NormalProbeFamilyCacheEntry>,
+    axis_probe_families: Vec<AxisProbeFamilyCacheEntry>,
     #[cfg(test)]
     #[cfg_attr(test, allow(dead_code))]
     probe_families: Vec<ProbePointFamilyCacheEntry>,
@@ -2260,7 +2283,14 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
             if let Some(winding) = try_leaf_probe_family_with_queries(
                 point,
                 positive_side,
-                adjacent_normal_probes(point, support, bounds, polygons, positive_side),
+                cached_adjacent_normal_probes_with(
+                    &mut probe_query_caches.normal_probe_families,
+                    point,
+                    support,
+                    bounds,
+                    positive_side,
+                    || adjacent_normal_probes(point, support, bounds, polygons, positive_side),
+                ),
                 support,
                 ref_point,
                 ref_definitions,
@@ -2293,13 +2323,23 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
                 if let Some(winding) = try_leaf_probe_family_with_queries(
                     point,
                     positive_side,
-                    adjacent_axis_probes(
+                    cached_adjacent_axis_probes_with(
+                        &mut probe_query_caches.axis_probe_families,
                         point,
                         support,
                         bounds,
-                        polygons,
                         axis,
                         direction_positive,
+                        || {
+                            adjacent_axis_probes(
+                                point,
+                                support,
+                                bounds,
+                                polygons,
+                                axis,
+                                direction_positive,
+                            )
+                        },
                     ),
                     support,
                     ref_point,
@@ -2389,6 +2429,69 @@ fn try_leaf_probe_family_with_queries(
     }
 
     Ok(None)
+}
+
+fn cached_adjacent_normal_probes_with(
+    cache: &mut Vec<NormalProbeFamilyCacheEntry>,
+    interior: &InteriorLeafPoint,
+    support: &Plane,
+    bounds: &Aabb,
+    positive_side: bool,
+    query: impl FnOnce() -> HypermeshResult<Vec<ProbePoint>>,
+) -> HypermeshResult<Vec<ProbePoint>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.interior_point == interior.point
+            && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
+            && existing.support == *support
+            && existing.bounds == *bounds
+            && existing.positive_side == positive_side
+    }) {
+        return existing.probes.clone();
+    }
+
+    let probes = query();
+    cache.push(NormalProbeFamilyCacheEntry {
+        interior_point: interior.point.clone(),
+        interior_planes: interior.planes.clone(),
+        support: support.clone(),
+        bounds: bounds.clone(),
+        positive_side,
+        probes: probes.clone(),
+    });
+    probes
+}
+
+fn cached_adjacent_axis_probes_with(
+    cache: &mut Vec<AxisProbeFamilyCacheEntry>,
+    interior: &InteriorLeafPoint,
+    support: &Plane,
+    bounds: &Aabb,
+    axis: usize,
+    direction_positive: bool,
+    query: impl FnOnce() -> HypermeshResult<Vec<ProbePoint>>,
+) -> HypermeshResult<Vec<ProbePoint>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.interior_point == interior.point
+            && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
+            && existing.support == *support
+            && existing.bounds == *bounds
+            && existing.axis == axis
+            && existing.direction_positive == direction_positive
+    }) {
+        return existing.probes.clone();
+    }
+
+    let probes = query();
+    cache.push(AxisProbeFamilyCacheEntry {
+        interior_point: interior.point.clone(),
+        interior_planes: interior.planes.clone(),
+        support: support.clone(),
+        bounds: bounds.clone(),
+        axis,
+        direction_positive,
+        probes: probes.clone(),
+    });
+    probes
 }
 
 #[cfg(test)]
@@ -10715,6 +10818,104 @@ mod tests {
             &interior,
             &support,
             &bounds,
+            true,
+            || {
+                calls += 1;
+                Ok(Vec::new())
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, vec![probe.clone()]);
+        assert_eq!(second, vec![probe]);
+    }
+
+    #[test]
+    fn cached_adjacent_normal_probes_reuse_equivalent_queries() {
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![axis_plane_definition(&p(0, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let support = Plane::axis_aligned(0, r(0));
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let probe = ProbePoint {
+            point: p(1, 0, 0),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(1, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_adjacent_normal_probes_with(
+            &mut cache,
+            &interior,
+            &support,
+            &bounds,
+            true,
+            || {
+                calls += 1;
+                Ok(vec![probe.clone()])
+            },
+        )
+        .unwrap();
+        let second = cached_adjacent_normal_probes_with(
+            &mut cache,
+            &interior,
+            &support,
+            &bounds,
+            true,
+            || {
+                calls += 1;
+                Ok(Vec::new())
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, vec![probe.clone()]);
+        assert_eq!(second, vec![probe]);
+    }
+
+    #[test]
+    fn cached_adjacent_axis_probes_reuse_equivalent_queries() {
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![axis_plane_definition(&p(0, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let support = Plane::axis_aligned(0, r(0));
+        let bounds = Aabb::new(p(-1, -1, -1), p(1, 1, 1));
+        let probe = ProbePoint {
+            point: p(0, 1, 0),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(0, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_adjacent_axis_probes_with(
+            &mut cache,
+            &interior,
+            &support,
+            &bounds,
+            1,
+            true,
+            || {
+                calls += 1;
+                Ok(vec![probe.clone()])
+            },
+        )
+        .unwrap();
+        let second = cached_adjacent_axis_probes_with(
+            &mut cache,
+            &interior,
+            &support,
+            &bounds,
+            1,
             true,
             || {
                 calls += 1;
