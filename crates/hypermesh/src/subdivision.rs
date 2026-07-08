@@ -262,6 +262,7 @@ struct SubdivisionRuntimeCaches {
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     polygon_axis_values: RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
+    split_child_fanout_counts: RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     host_bsp_leaves: RefCell<Vec<HostBspLeavesCacheEntry>>,
@@ -279,6 +280,7 @@ impl Default for SubdivisionRuntimeCaches {
             polygon_family_bounds: RefCell::new(Vec::new()),
             polygon_axis_values: RefCell::new(Vec::new()),
             split_candidates: RefCell::new(Vec::new()),
+            split_child_fanout_counts: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
             pairwise_intersections: RefCell::new(Vec::new()),
             host_bsp_leaves: RefCell::new(Vec::new()),
@@ -746,6 +748,7 @@ fn subdivide_into_inner_with(
     let split_candidates = cached_ordered_subdivision_splits_with(
         &caches.polygon_axis_values,
         &caches.split_candidates,
+        &caches.split_child_fanout_counts,
         &caches.split_child_partitions,
         &caches.polygon_family_bounds,
         &caches.pairwise_intersections,
@@ -1206,6 +1209,7 @@ fn cache_polygon_axis_values_result(
 fn cached_ordered_subdivision_splits_with(
     axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
+    fanout_count_cache: &RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
@@ -1244,6 +1248,7 @@ fn cached_ordered_subdivision_splits_with(
         bounds,
         polygons,
         axis_values_cache,
+        fanout_count_cache,
         partition_cache,
         polygon_bounds_cache,
         pairwise_cache,
@@ -2979,6 +2984,7 @@ fn ordered_subdivision_splits_with_partition_cache(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
     axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    fanout_count_cache: &RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
@@ -2992,7 +2998,7 @@ fn ordered_subdivision_splits_with_partition_cache(
         pairwise_cache,
     )?;
     let mut ranked_attempts = Vec::with_capacity(unique.len());
-    let mut fanout_cache = Vec::new();
+    let mut fanout_cache = fanout_count_cache.borrow_mut();
     for attempt in unique {
         let fanout_key = split_attempt_child_fanout_key(
             &attempt,
@@ -11803,12 +11809,14 @@ mod tests {
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let axis_value_cache = RefCell::new(Vec::new());
         let cache = RefCell::new(Vec::new());
+        let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
 
         let first = cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &cache,
+            &fanout_cache,
             &partition_cache,
             &RefCell::new(Vec::new()),
             &pairwise_cache,
@@ -11819,6 +11827,7 @@ mod tests {
         let second = cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &cache,
+            &fanout_cache,
             &partition_cache,
             &RefCell::new(Vec::new()),
             &pairwise_cache,
@@ -11882,6 +11891,7 @@ mod tests {
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let axis_value_cache = RefCell::new(Vec::new());
         let cache = RefCell::new(Vec::new());
+        let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
         let polygon_bounds_cache = RefCell::new(Vec::new());
@@ -11889,6 +11899,7 @@ mod tests {
         cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &cache,
+            &fanout_cache,
             &partition_cache,
             &polygon_bounds_cache,
             &pairwise_cache,
@@ -11899,6 +11910,7 @@ mod tests {
         cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &cache,
+            &fanout_cache,
             &partition_cache,
             &polygon_bounds_cache,
             &pairwise_cache,
@@ -11915,6 +11927,7 @@ mod tests {
         let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let axis_value_cache = RefCell::new(Vec::new());
         let cache = RefCell::new(Vec::new());
+        let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
         let first_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
@@ -11923,6 +11936,7 @@ mod tests {
         let first = cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &cache,
+            &fanout_cache,
             &partition_cache,
             &RefCell::new(Vec::new()),
             &pairwise_cache,
@@ -11933,6 +11947,7 @@ mod tests {
         let second = cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &cache,
+            &fanout_cache,
             &partition_cache,
             &RefCell::new(Vec::new()),
             &pairwise_cache,
@@ -11963,6 +11978,7 @@ mod tests {
         ];
         let axis_value_cache = RefCell::new(Vec::new());
         let split_cache = RefCell::new(Vec::new());
+        let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let polygon_bounds_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
@@ -11970,6 +11986,7 @@ mod tests {
         let ordered = cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &split_cache,
+            &fanout_cache,
             &partition_cache,
             &polygon_bounds_cache,
             &pairwise_cache,
@@ -11997,6 +12014,7 @@ mod tests {
         let polygons = vec![polygon];
         let axis_value_cache = RefCell::new(Vec::new());
         let split_cache = RefCell::new(Vec::new());
+        let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let polygon_bounds_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
@@ -12005,6 +12023,7 @@ mod tests {
         let deduped = cached_ordered_subdivision_splits_with(
             &axis_value_cache,
             &split_cache,
+            &fanout_cache,
             &partition_cache,
             &polygon_bounds_cache,
             &pairwise_cache,
@@ -12271,6 +12290,7 @@ mod tests {
         let root_attempts = cached_ordered_subdivision_splits_with(
             &caches.polygon_axis_values,
             &caches.split_candidates,
+            &caches.split_child_fanout_counts,
             &caches.split_child_partitions,
             &caches.polygon_family_bounds,
             &caches.pairwise_intersections,
@@ -12311,6 +12331,7 @@ mod tests {
         let hot_attempts = cached_ordered_subdivision_splits_with(
             &caches.polygon_axis_values,
             &caches.split_candidates,
+            &caches.split_child_fanout_counts,
             &caches.split_child_partitions,
             &caches.polygon_family_bounds,
             &caches.pairwise_intersections,
@@ -15162,6 +15183,7 @@ mod tests {
         let root_attempt = cached_ordered_subdivision_splits_with(
             &caches.polygon_axis_values,
             &caches.split_candidates,
+            &caches.split_child_fanout_counts,
             &caches.split_child_partitions,
             &caches.polygon_family_bounds,
             &caches.pairwise_intersections,
@@ -15238,6 +15260,7 @@ mod tests {
         let root_attempt = cached_ordered_subdivision_splits_with(
             &caches.polygon_axis_values,
             &caches.split_candidates,
+            &caches.split_child_fanout_counts,
             &caches.split_child_partitions,
             &caches.polygon_family_bounds,
             &caches.pairwise_intersections,
