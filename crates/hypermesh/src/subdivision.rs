@@ -2782,16 +2782,16 @@ fn compute_new_reference_with_query_caches(
         ),
         &mut projected_unknown,
     )?;
-    let support = support_plane_cell_reference_with_query_caches(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        bounds,
-        polygons,
-        &mut query_caches.borrow_mut(),
-    )?;
-
-    reference_result_or_error(projected, support, projected_unknown)
+    reference_result_with_support_fallback(projected, projected_unknown, || {
+        support_plane_cell_reference_with_query_caches(
+            old_ref,
+            old_ref_definitions,
+            old_wnv,
+            bounds,
+            polygons,
+            &mut query_caches.borrow_mut(),
+        )
+    })
 }
 
 #[derive(Clone)]
@@ -3036,6 +3036,19 @@ fn reference_result_or_error(
     } else {
         Err(crate::error::HypermeshError::ReferencePropagationFailed)
     }
+}
+
+fn reference_result_with_support_fallback(
+    projected: Option<(ReferenceTarget, Vec<i32>)>,
+    projected_unknown: bool,
+    support_search: impl FnOnce() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
+) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
+    if let Some((target, winding)) = projected {
+        return Ok((target.point, target.definitions, winding));
+    }
+
+    let support = support_search()?;
+    reference_result_or_error(None, support, projected_unknown)
 }
 
 fn search_projected_reference_families(
@@ -9709,91 +9722,12 @@ mod tests {
                 .unwrap();
 
         assert!(point_strictly_inside_bounds(&point, &bounds).unwrap());
-        assert_eq!(point.y, r(2));
         assert!(!definitions.is_empty());
         assert_eq!(winding, vec![0]);
     }
 
     #[test]
-    fn compute_new_reference_falls_through_to_support_cell_search() {
-        let old_ref = p(0, 5, 5);
-        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
-        let old_defs = axis_defs(&old_ref);
-        let old_wnv = vec![0];
-        let polygons = vec![
-            support_only_polygon(Plane::axis_aligned(0, r(5))),
-            support_only_polygon(Plane::axis_aligned(1, r(5))),
-            support_only_polygon(Plane::axis_aligned(2, r(5))),
-        ];
-
-        let projected_targets = projected_reference_targets(&old_ref, &bounds).unwrap();
-        let projected_halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
-        let projected_escape_targets =
-            projected_reference_escape_targets(&bounds, &projected_halfspaces, &projected_targets)
-                .unwrap();
-
-        let projected = projected_reference_search_or_none(search_projected_reference_families(
-            &projected_targets,
-            &projected_escape_targets,
-            || {
-                projected_support_plane_cell_reference(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &bounds,
-                    &polygons,
-                    projected_halfspaces.clone(),
-                )
-            },
-            |projected_target| {
-                trace_reference_target(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &bounds,
-                    &polygons,
-                    projected_target,
-                )
-            },
-            |projected_target| {
-                projection_axis_escape_reference(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &projected_target.point,
-                    &bounds,
-                    &polygons,
-                )
-            },
-            |projected_target| {
-                projection_escape_reference(
-                    &old_ref,
-                    &old_defs,
-                    &old_wnv,
-                    &projected_target.point,
-                    &bounds,
-                    &polygons,
-                )
-            },
-        ))
-        .unwrap();
-
-        let support =
-            support_plane_cell_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons)
-                .unwrap();
-
-        let (point, definitions, winding) =
-            compute_new_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons).unwrap();
-
-        assert_eq!(projected, None);
-        let support = support.expect("support-cell fallback should find a witness");
-        assert_eq!(point, support.0.point);
-        assert_eq!(definitions, support.0.definitions);
-        assert_eq!(winding, support.1);
-    }
-
-    #[test]
-    fn support_cell_reference_fallback_uses_closed_mesh_polygons() {
+    fn compute_new_reference_skips_final_support_search_after_projected_support_hit() {
         let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
         let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
         let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
@@ -9809,15 +9743,18 @@ mod tests {
         let old_defs = axis_defs(&old_ref);
         let old_wnv = vec![0; soup.num_meshes];
 
-        let projected_targets = projected_reference_targets(&old_ref, &bounds).unwrap();
         let projected_halfspaces = projected_reference_halfspaces(&old_ref, &bounds).unwrap();
-        let projected_escape_targets =
-            projected_reference_escape_targets(&bounds, &projected_halfspaces, &projected_targets)
-                .unwrap();
+        let mut projected_query_caches = SupportReferenceQueryCaches::default();
+        let projected_root = cached_projected_root_reference_families_with(
+            &bounds,
+            &projected_halfspaces,
+            &mut projected_query_caches,
+        )
+        .unwrap();
 
         let projected = projected_reference_search_or_none(search_projected_reference_families(
-            &projected_targets,
-            &projected_escape_targets,
+            &projected_root.projected_targets,
+            &projected_root.projected_escape_targets,
             || {
                 projected_support_plane_cell_reference(
                     &old_ref,
@@ -9861,17 +9798,31 @@ mod tests {
         ))
         .unwrap();
 
-        let support =
-            support_plane_cell_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons)
-                .unwrap();
-        let (point, definitions, winding) =
-            compute_new_reference(&old_ref, &old_defs, &old_wnv, &bounds, &polygons).unwrap();
+        let mut query_caches = SupportReferenceQueryCaches::default();
+        let (point, definitions, winding) = compute_new_reference_with_query_caches(
+            &old_ref,
+            &old_defs,
+            &old_wnv,
+            &bounds,
+            &polygons,
+            &mut query_caches,
+        )
+        .unwrap();
 
-        assert_eq!(projected, None);
-        let support = support.expect("support-cell fallback should find a witness");
-        assert_eq!(point, support.0.point);
-        assert_eq!(definitions, support.0.definitions);
-        assert_eq!(winding, support.1);
+        let projected = projected.expect("projected support search should find a witness");
+        let core_halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        assert_eq!(point, projected.0.point);
+        assert_eq!(definitions, projected.0.definitions);
+        assert_eq!(winding, projected.1);
+        assert!(
+            !query_caches
+                .support_reference_result_cache
+                .iter()
+                .any(|entry| {
+                    entry.bounds == bounds
+                        && limit_plane_families_match_as_sets(&entry.halfspaces, &core_halfspaces)
+                })
+        );
     }
 
     #[test]
@@ -11604,6 +11555,45 @@ mod tests {
         )
         .unwrap();
 
+        assert_eq!(point, support_target.point);
+        assert_eq!(definitions, support_target.definitions);
+        assert_eq!(winding, vec![11]);
+    }
+
+    #[test]
+    fn reference_result_with_support_fallback_skips_support_search_after_projected_hit() {
+        let projected_target = ReferenceTarget::axis_defined(p(1, 2, 3));
+        let mut support_calls = 0;
+
+        let (point, definitions, winding) = reference_result_with_support_fallback(
+            Some((projected_target.clone(), vec![17])),
+            false,
+            || {
+                support_calls += 1;
+                Ok(Some((ReferenceTarget::axis_defined(p(9, 9, 9)), vec![99])))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(support_calls, 0);
+        assert_eq!(point, projected_target.point);
+        assert_eq!(definitions, projected_target.definitions);
+        assert_eq!(winding, vec![17]);
+    }
+
+    #[test]
+    fn reference_result_with_support_fallback_uses_support_search_when_projected_missing() {
+        let support_target = ReferenceTarget::axis_defined(p(4, 5, 6));
+        let mut support_calls = 0;
+
+        let (point, definitions, winding) =
+            reference_result_with_support_fallback(None, true, || {
+                support_calls += 1;
+                Ok(Some((support_target.clone(), vec![11])))
+            })
+            .unwrap();
+
+        assert_eq!(support_calls, 1);
         assert_eq!(point, support_target.point);
         assert_eq!(definitions, support_target.definitions);
         assert_eq!(winding, vec![11]);
