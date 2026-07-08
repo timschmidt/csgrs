@@ -709,7 +709,16 @@ fn subdivide_into_inner_with(
                     ref_wnv: left_wnv,
                     depth: task.depth + 1,
                 };
-                let child_output =
+                let child_output = if let Some(reused) = {
+                    let mut query_caches = caches.support_reference_query.borrow_mut();
+                    reusable_child_subdivision_if_certified(
+                        &caches.child_subdivision,
+                        &left_task,
+                        &mut query_caches,
+                    )?
+                } {
+                    reused
+                } else {
                     cached_child_subdivision_with(&caches.child_subdivision, &left_task, || {
                         let mut child_output = Vec::new();
                         subdivide_into_inner_with(
@@ -723,7 +732,8 @@ fn subdivide_into_inner_with(
                             winding_reachability_cache,
                         )?;
                         Ok(child_output)
-                    })?;
+                    })?
+                };
                 merge_unique_classified_polygons_with_bucket_state(
                     &mut candidate_output,
                     &mut candidate_buckets,
@@ -770,7 +780,16 @@ fn subdivide_into_inner_with(
                     ref_wnv: right_wnv,
                     depth: task.depth + 1,
                 };
-                let child_output =
+                let child_output = if let Some(reused) = {
+                    let mut query_caches = caches.support_reference_query.borrow_mut();
+                    reusable_child_subdivision_if_certified(
+                        &caches.child_subdivision,
+                        &right_task,
+                        &mut query_caches,
+                    )?
+                } {
+                    reused
+                } else {
                     cached_child_subdivision_with(&caches.child_subdivision, &right_task, || {
                         let mut child_output = Vec::new();
                         subdivide_into_inner_with(
@@ -784,7 +803,8 @@ fn subdivide_into_inner_with(
                             winding_reachability_cache,
                         )?;
                         Ok(child_output)
-                    })?;
+                    })?
+                };
                 merge_unique_classified_polygons_with_bucket_state(
                     &mut candidate_output,
                     &mut candidate_buckets,
@@ -1058,6 +1078,56 @@ fn reusable_child_reference_if_certified(
         Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => Ok(None),
         Err(err) => Err(err),
     }
+}
+
+fn child_task_reference_is_certified_valid(
+    task: &SubdivisionTask,
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<bool> {
+    let context = support_reference_cache_context_key(
+        &task.ref_point,
+        &task.ref_definitions,
+        &task.ref_wnv,
+        &task.polygons,
+    );
+    cached_reference_bounds_validity_with_context(
+        &mut query_caches.validity_cache,
+        Some(&context),
+        &task.bounds,
+        &task.ref_point,
+        |point| is_certified_valid_reference_for_bounds(point, &task.bounds, &task.polygons),
+    )
+}
+
+fn reusable_child_subdivision_if_certified(
+    cache: &RefCell<Vec<ChildSubdivisionCacheEntry>>,
+    task: &SubdivisionTask,
+    query_caches: &mut SupportReferenceQueryCaches,
+) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
+    if !child_task_reference_is_certified_valid(task, query_caches)? {
+        return Ok(None);
+    }
+
+    let polygon_profile = polygon_family_profile(&task.polygons);
+    for existing in cache.borrow().iter() {
+        if existing.polygon_profile != polygon_profile
+            || existing.task.bounds != task.bounds
+            || existing.task.ref_wnv != task.ref_wnv
+            || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
+            || !matches!(existing.result, Ok(_))
+            || (existing.task.depth != task.depth && existing.task.depth <= task.depth)
+        {
+            continue;
+        }
+
+        if child_task_reference_is_certified_valid(&existing.task, query_caches)? {
+            if let Ok(result) = &existing.result {
+                return Ok(Some(result.clone()));
+            }
+        }
+    }
+
+    Ok(None)
 }
 
 fn cached_child_subdivision_with(
@@ -12250,6 +12320,48 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn reusable_child_subdivision_if_certified_reuses_changed_reference_state() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let existing_task =
+            SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
+        let query_task = SubdivisionTask::new(vec![polygon], bounds, p(2, 1, 1), vec![0]);
+        let cache = RefCell::new(vec![ChildSubdivisionCacheEntry {
+            polygon_profile: polygon_family_profile(&existing_task.polygons),
+            task: existing_task,
+            result: Ok(vec![]),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused =
+            reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches)
+                .unwrap();
+
+        assert_eq!(reused, Some(vec![]));
+    }
+
+    #[test]
+    fn reusable_child_subdivision_if_certified_skips_invalid_reference_state() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let existing_task =
+            SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
+        let query_task = SubdivisionTask::new(vec![polygon], bounds, p(0, 0, 0), vec![0]);
+        let cache = RefCell::new(vec![ChildSubdivisionCacheEntry {
+            polygon_profile: polygon_family_profile(&existing_task.polygons),
+            task: existing_task,
+            result: Ok(vec![]),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused =
+            reusable_child_subdivision_if_certified(&cache, &query_task, &mut query_caches)
+                .unwrap();
+
+        assert_eq!(reused, None);
     }
 
     #[test]
