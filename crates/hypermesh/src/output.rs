@@ -56,6 +56,7 @@ impl ClassifiedPolygon {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn push_unique_classified_polygon(
     classified: &mut Vec<ClassifiedPolygon>,
     candidate: ClassifiedPolygon,
@@ -81,6 +82,10 @@ struct ClassifiedPolygonBucket {
     indices: Vec<usize>,
 }
 
+pub(crate) struct ClassifiedPolygonBucketState {
+    buckets: Vec<ClassifiedPolygonBucket>,
+}
+
 #[derive(Clone)]
 struct ClassifiedOutputBucket {
     classification: i8,
@@ -93,10 +98,8 @@ pub(crate) fn merge_unique_classified_polygons(
     classified: &mut Vec<ClassifiedPolygon>,
     incoming: Vec<ClassifiedPolygon>,
 ) {
-    let mut buckets = build_classified_polygon_buckets(classified);
-    for candidate in incoming {
-        push_unique_classified_polygon_with_buckets(classified, &mut buckets, candidate);
-    }
+    let mut buckets = ClassifiedPolygonBucketState::from_classified(classified);
+    merge_unique_classified_polygons_with_bucket_state(classified, &mut buckets, incoming);
 }
 
 /// Result of a boolean operation.
@@ -226,6 +229,38 @@ fn build_classified_polygon_buckets(
         }
     }
     buckets
+}
+
+impl ClassifiedPolygonBucketState {
+    pub(crate) fn new() -> Self {
+        Self {
+            buckets: Vec::new(),
+        }
+    }
+
+    pub(crate) fn from_classified(classified: &[ClassifiedPolygon]) -> Self {
+        Self {
+            buckets: build_classified_polygon_buckets(classified),
+        }
+    }
+}
+
+pub(crate) fn merge_unique_classified_polygons_with_bucket_state(
+    classified: &mut Vec<ClassifiedPolygon>,
+    buckets: &mut ClassifiedPolygonBucketState,
+    incoming: Vec<ClassifiedPolygon>,
+) {
+    for candidate in incoming {
+        push_unique_classified_polygon_with_bucket_state(classified, buckets, candidate);
+    }
+}
+
+pub(crate) fn push_unique_classified_polygon_with_bucket_state(
+    classified: &mut Vec<ClassifiedPolygon>,
+    buckets: &mut ClassifiedPolygonBucketState,
+    candidate: ClassifiedPolygon,
+) {
+    push_unique_classified_polygon_with_buckets(classified, &mut buckets.buckets, candidate);
 }
 
 fn push_unique_classified_polygon_with_buckets(

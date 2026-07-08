@@ -11,7 +11,9 @@ use crate::intersection::{
 };
 use crate::local_bsp::{BspLeaf, LocalBsp};
 use crate::output::{
-    ClassifiedPolygon, merge_unique_classified_polygons, push_unique_classified_polygon,
+    ClassifiedPolygon, ClassifiedPolygonBucketState, merge_unique_classified_polygons,
+    merge_unique_classified_polygons_with_bucket_state,
+    push_unique_classified_polygon_with_bucket_state,
 };
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
@@ -346,6 +348,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
     };
+    let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
     if polygons.is_empty() {
         stats.certified_complete = true;
         return Ok(stats);
@@ -374,6 +377,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 leaf_classification_cache,
                 Some(&leaf_cache_context),
                 output,
+                &mut output_buckets,
             )?;
             stats.direct_polygon_count += usize::from(emitted);
             continue;
@@ -418,7 +422,11 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });
                 classified.is_bsp_fragment = true;
-                push_unique_classified_polygon(output, classified);
+                push_unique_classified_polygon_with_bucket_state(
+                    output,
+                    &mut output_buckets,
+                    classified,
+                );
                 stats.bsp_fragment_count += 1;
             }
         }
@@ -566,6 +574,8 @@ fn subdivide_into_inner_with(
         return Ok(());
     }
 
+    let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
+
     if let Some(op) = reachability_op {
         if cached_winding_reachability_with(
             winding_reachability_cache,
@@ -586,7 +596,11 @@ fn subdivide_into_inner_with(
                 process_leaf(task, indicator, output)
             })?
         {
-            merge_unique_classified_polygons(output, certified_output);
+            merge_unique_classified_polygons_with_bucket_state(
+                output,
+                &mut output_buckets,
+                certified_output,
+            );
             return Ok(());
         }
         return Err(crate::error::HypermeshError::UnknownClassification);
@@ -597,7 +611,11 @@ fn subdivide_into_inner_with(
             process_leaf(task, indicator, output)
         })?
     {
-        merge_unique_classified_polygons(output, certified_output);
+        merge_unique_classified_polygons_with_bucket_state(
+            output,
+            &mut output_buckets,
+            certified_output,
+        );
         return Ok(());
     }
 
@@ -664,6 +682,7 @@ fn subdivide_into_inner_with(
         }
 
         let mut candidate_output = Vec::new();
+        let mut candidate_buckets = ClassifiedPolygonBucketState::new();
         let attempt = (|| -> HypermeshResult<()> {
             if let Some(left_bounds) = left_bounds {
                 let (left_ref, left_ref_definitions, left_wnv) = cached_child_reference_with(
@@ -707,7 +726,11 @@ fn subdivide_into_inner_with(
                         )?;
                         Ok(child_output)
                     })?;
-                merge_unique_classified_polygons(&mut candidate_output, child_output);
+                merge_unique_classified_polygons_with_bucket_state(
+                    &mut candidate_output,
+                    &mut candidate_buckets,
+                    child_output,
+                );
             }
 
             if let Some(right_bounds) = right_bounds {
@@ -752,7 +775,11 @@ fn subdivide_into_inner_with(
                         )?;
                         Ok(child_output)
                     })?;
-                merge_unique_classified_polygons(&mut candidate_output, child_output);
+                merge_unique_classified_polygons_with_bucket_state(
+                    &mut candidate_output,
+                    &mut candidate_buckets,
+                    child_output,
+                );
             }
 
             Ok(())
@@ -760,7 +787,11 @@ fn subdivide_into_inner_with(
 
         match attempt {
             Ok(()) => {
-                merge_unique_classified_polygons(output, candidate_output);
+                merge_unique_classified_polygons_with_bucket_state(
+                    output,
+                    &mut output_buckets,
+                    candidate_output,
+                );
                 return Ok(());
             }
             Err(err) if is_backtrackable_split_error(&err) => {
@@ -1197,6 +1228,7 @@ fn emit_one_direct(
     cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     context: Option<&LeafClassificationCacheContextKey>,
     output: &mut Vec<ClassifiedPolygon>,
+    output_buckets: &mut ClassifiedPolygonBucketState,
 ) -> HypermeshResult<bool> {
     let w_front = cached_leaf_classification_with(
         &mut cache.borrow_mut(),
@@ -1222,7 +1254,7 @@ fn emit_one_direct(
     if classification != 0 {
         let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);
         classified.winding = Some(WindingPair { w_front, w_back });
-        push_unique_classified_polygon(output, classified);
+        push_unique_classified_polygon_with_bucket_state(output, output_buckets, classified);
         return Ok(true);
     }
     Ok(false)
