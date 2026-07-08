@@ -1373,7 +1373,6 @@ fn reusable_child_reference_from_cached_trace_if_certified(
         .iter()
         .filter(|existing| {
             existing.source_polygon_profile == source_polygon_profile
-                && existing.bounds == *bounds
                 && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
         })
         .filter_map(|existing| match &existing.result {
@@ -1442,7 +1441,6 @@ fn reusable_child_reference_from_cached_result_if_certified(
         .iter()
         .filter(|existing| {
             existing.source_polygon_profile == source_polygon_profile
-                && existing.bounds == *bounds
                 && existing.old_wnv == old_wnv
                 && polygon_families_match_as_multisets(&existing.source_polygons, source_polygons)
         })
@@ -12879,6 +12877,42 @@ mod tests {
     }
 
     #[test]
+    fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target_across_tighter_bounds()
+     {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let cached_point = p(2, 1, 1);
+        let cache = RefCell::new(vec![ChildReferenceCacheEntry {
+            source_polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            source_polygons: vec![polygon.clone()],
+            bounds: cached_bounds,
+            old_ref: p(1, 1, 1),
+            old_ref_definitions: axis_defs(&p(1, 1, 1)),
+            old_wnv: vec![0],
+            result: Ok((cached_point.clone(), axis_defs(&cached_point), vec![0])),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_from_cached_trace_if_certified(
+            &cache,
+            &cached_point,
+            &axis_defs(&cached_point),
+            &[0],
+            std::slice::from_ref(&polygon),
+            &query_bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((cached_point.clone(), axis_defs(&cached_point), vec![0]))
+        );
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
     fn reusable_child_reference_from_cached_trace_reuses_cached_target_across_parent_winding() {
         let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -12940,6 +12974,43 @@ mod tests {
             &[0],
             std::slice::from_ref(&polygon),
             &bounds,
+            &mut query_caches,
+        )
+        .unwrap();
+
+        assert_eq!(
+            reused,
+            Some((cached_point.clone(), axis_defs(&cached_point), vec![0]))
+        );
+        assert!(query_caches.trace_cache.is_empty());
+        assert_eq!(cache.borrow().len(), 2);
+    }
+
+    #[test]
+    fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target_across_tighter_bounds()
+     {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
+        let cached_point = p(2, 1, 1);
+        let cache = RefCell::new(vec![ChildReferenceCacheEntry {
+            source_polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            source_polygons: vec![polygon.clone()],
+            bounds: cached_bounds,
+            old_ref: p(1, 1, 1),
+            old_ref_definitions: axis_defs(&p(1, 1, 1)),
+            old_wnv: vec![0],
+            result: Ok((cached_point.clone(), axis_defs(&cached_point), vec![0])),
+        }]);
+        let mut query_caches = SupportReferenceQueryCaches::default();
+
+        let reused = reusable_child_reference_from_cached_result_if_certified(
+            &cache,
+            &cached_point,
+            &axis_defs(&cached_point),
+            &[0],
+            std::slice::from_ref(&polygon),
+            &query_bounds,
             &mut query_caches,
         )
         .unwrap();
