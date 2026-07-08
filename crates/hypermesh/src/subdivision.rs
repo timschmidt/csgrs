@@ -759,6 +759,16 @@ fn ordered_split_attempt_children(
     children
 }
 
+fn split_child_matches_parent_geometry(
+    parent_polygons: &[ConvexPolygon],
+    parent_bounds: &Aabb,
+    child_polygons: &[ConvexPolygon],
+    child_bounds: &Aabb,
+) -> bool {
+    child_bounds == parent_bounds
+        && polygon_families_match_as_multisets(child_polygons, parent_polygons)
+}
+
 fn process_split_attempt_child(
     task: &SubdivisionTask,
     child_polygons: Vec<ConvexPolygon>,
@@ -838,6 +848,9 @@ fn process_split_attempt_child(
         ref_wnv: child_wnv,
         depth: task.depth + 1,
     };
+    if subdivision_task_state_matches_for_cache(&child_task, task) {
+        return Err(crate::error::HypermeshError::ReferencePropagationFailed);
+    }
     let child_output = if let Some(reused) = {
         let mut query_caches = caches.support_reference_query.borrow_mut();
         reusable_child_subdivision_if_certified(
@@ -2694,6 +2707,23 @@ fn ordered_subdivision_splits_with_partition_cache(
                 &unclipped_right_bounds,
             )?)
         };
+        if left_bounds.as_ref().is_some_and(|child_bounds| {
+            split_child_matches_parent_geometry(
+                polygons,
+                bounds,
+                &split_partition.left_polys,
+                child_bounds,
+            )
+        }) || right_bounds.as_ref().is_some_and(|child_bounds| {
+            split_child_matches_parent_geometry(
+                polygons,
+                bounds,
+                &split_partition.right_polys,
+                child_bounds,
+            )
+        }) {
+            continue;
+        }
         if take_new_subdivision_child_partition(
             &mut seen_partitions,
             &split_partition.left_polys,
@@ -13118,6 +13148,37 @@ mod tests {
     }
 
     #[test]
+    fn split_child_matches_parent_geometry_requires_same_bounds_and_family() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let parent = vec![polygon_a.clone(), polygon_b.clone()];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        assert!(split_child_matches_parent_geometry(
+            &parent,
+            &bounds,
+            &[polygon_b, polygon_a],
+            &bounds,
+        ));
+    }
+
+    #[test]
+    fn split_child_matches_parent_geometry_rejects_tighter_bounds() {
+        let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+        let parent = vec![polygon_a.clone(), polygon_b.clone()];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let tighter_bounds = Aabb::new(p(0, 0, 0), p(2, 4, 4));
+
+        assert!(!split_child_matches_parent_geometry(
+            &parent,
+            &bounds,
+            &[polygon_b, polygon_a],
+            &tighter_bounds,
+        ));
+    }
+
+    #[test]
     fn cached_polygon_family_bounds_reuses_permuted_polygon_families() {
         let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
@@ -13989,6 +14050,44 @@ mod tests {
 
         assert_eq!(calls.get(), 0);
         assert_eq!(cached, reused);
+    }
+
+    #[test]
+    fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
+        let polygon = make_triangle(&p(1, 1, 0), &p(3, 1, 0), &p(1, 3, 0), 0, 0);
+        let task = SubdivisionTask::new(
+            vec![polygon.clone()],
+            Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+            p(2, 2, 2),
+            vec![0],
+        );
+        let indicator = make_indicator(BooleanOp::Union, 1);
+        let caches = SubdivisionRuntimeCaches::default();
+        let mut candidate_output = Vec::new();
+        let mut candidate_buckets = ClassifiedPolygonBucketState::new();
+
+        let err = process_split_attempt_child(
+            &task,
+            vec![polygon],
+            task.bounds.clone(),
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+            Some(BooleanOp::Union),
+            &mut candidate_output,
+            &mut candidate_buckets,
+            &mut |_task, _indicator, _output| {
+                panic!("identical recursive child state should backtrack before leaf processing")
+            },
+            &caches,
+            &caches.winding_reachability,
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::ReferencePropagationFailed
+        );
+        assert!(candidate_output.is_empty());
     }
 
     #[test]
