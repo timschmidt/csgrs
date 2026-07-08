@@ -203,6 +203,8 @@ struct SplitChildPartitionCacheEntry {
 struct RankedSplitAttempt {
     axis: usize,
     value: Real,
+    counts: SplitCounts,
+    source: SplitSource,
     left_polys: Vec<ConvexPolygon>,
     left_bounds: Option<Aabb>,
     right_polys: Vec<ConvexPolygon>,
@@ -2951,6 +2953,8 @@ fn ordered_subdivision_splits_with_partition_cache(
             unique.push(RankedSplitAttempt {
                 axis: candidate.axis,
                 value: candidate.value,
+                counts: candidate.counts,
+                source: candidate.source,
                 left_polys: split_partition.left_polys,
                 left_bounds,
                 right_polys: split_partition.right_polys,
@@ -2958,7 +2962,37 @@ fn ordered_subdivision_splits_with_partition_cache(
             });
         }
     }
+    unique.sort_by(|left, right| {
+        split_attempt_recursive_room_key(left)
+            .cmp(&split_attempt_recursive_room_key(right))
+            .then_with(|| left.counts.cmp(&right.counts))
+            .then_with(|| left.source.cmp(&right.source))
+    });
     Ok(unique)
+}
+
+fn split_attempt_recursive_room_key(attempt: &RankedSplitAttempt) -> (usize, usize, usize) {
+    let left_axes = attempt
+        .left_bounds
+        .as_ref()
+        .map_or(0, positive_extent_axis_count);
+    let right_axes = attempt
+        .right_bounds
+        .as_ref()
+        .map_or(0, positive_extent_axis_count);
+    (
+        left_axes.max(right_axes),
+        left_axes + right_axes,
+        left_axes.abs_diff(right_axes),
+    )
+}
+
+fn positive_extent_axis_count(bounds: &Aabb) -> usize {
+    (0..3)
+        .filter(|&axis| {
+            compare_real(&bounds.extent(axis), &Real::zero()).is_ok_and(|order| order.is_gt())
+        })
+        .count()
 }
 
 #[cfg(test)]
@@ -13889,6 +13923,38 @@ mod tests {
         let indices = ordered_bsp_leaf_indices_by_complexity(&leaves);
 
         assert_eq!(indices, vec![1, 0, 2]);
+    }
+
+    #[test]
+    fn split_attempt_recursive_room_key_prefers_lower_dimensional_children() {
+        let line_bounds = Aabb::new(p(0, 0, 0), p(1, 0, 0));
+        let slab_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let volume_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+
+        let flatter = RankedSplitAttempt {
+            axis: 0,
+            value: r(1),
+            counts: (4, 0, 6, 0, 1, 0),
+            source: SplitSource::Arrangement,
+            left_polys: Vec::new(),
+            left_bounds: Some(line_bounds),
+            right_polys: Vec::new(),
+            right_bounds: Some(slab_bounds.clone()),
+        };
+        let deeper = RankedSplitAttempt {
+            axis: 1,
+            value: r(2),
+            counts: (4, 0, 6, 0, 1, 0),
+            source: SplitSource::Arrangement,
+            left_polys: Vec::new(),
+            left_bounds: Some(slab_bounds),
+            right_polys: Vec::new(),
+            right_bounds: Some(volume_bounds),
+        };
+
+        assert!(
+            split_attempt_recursive_room_key(&flatter) < split_attempt_recursive_room_key(&deeper)
+        );
     }
 
     #[test]
