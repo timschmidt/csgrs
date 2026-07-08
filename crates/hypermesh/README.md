@@ -761,7 +761,11 @@ The same per-update projected/support support-search cache set now also reuses
 the feasible support-cell vertex family and derived geometry-seed family for
 identical halfspace states, so projected root-family construction and later
 projected/support target construction do not rebuild that exact seed geometry
-from scratch on each revisit. Partially uncertified feasible support-cell
+from scratch on each revisit. The centroid-subset geometry-seed family is now
+also memoized by the exact feasible support-vertex family itself, so distinct
+projected/support halfspace states that collapse to the same support vertices
+reuse the same subset-centroid seed construction instead of recomputing it.
+Partially uncertified feasible support-cell
 vertex families now also keep that uncertainty attached when later exact
 vertices survive, so the cached seed-geometry state does not flatten that
 branch back into an apparently fully certified seed family. The support side

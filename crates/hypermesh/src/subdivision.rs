@@ -2622,6 +2622,7 @@ fn projected_root_reference_families(
     halfspaces: &[LimitPlane3],
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
 ) -> HypermeshResult<ProjectedRootReferenceFamilies> {
+    let mut centroid_subset_seed_cache = Vec::new();
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
     let pure_halfspace_contains_cache = std::cell::RefCell::new(Vec::new());
@@ -2630,6 +2631,7 @@ fn projected_root_reference_families(
         bounds,
         halfspaces,
         seed_geometry_cache,
+        &mut centroid_subset_seed_cache,
         &mut shifted_projected_family_cache,
         &reference_witness_cache,
         &strict_contains_cache,
@@ -2641,6 +2643,7 @@ fn projected_root_reference_families_with_witness_cache(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
     shifted_projected_family_cache: &mut Vec<ShiftedProjectedCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
@@ -2669,6 +2672,7 @@ fn projected_root_reference_families_with_witness_cache(
             report.as_ref(),
             &mut saw_unknown,
             seed_geometry_cache,
+            centroid_subset_seed_cache,
         )?;
     let projected_targets =
         strict_projected_cell_targets_from_seed_families_with_tracking_unknown_and_witness_cache(
@@ -2738,6 +2742,7 @@ fn cached_projected_root_reference_families_with(
         bounds,
         halfspaces,
         &mut query_caches.seed_geometry_cache,
+        &mut query_caches.centroid_subset_seed_cache,
         &mut query_caches.shifted_projected_family_cache,
         &query_caches.reference_witness_cache,
         &query_caches.strict_contains_cache,
@@ -4174,6 +4179,7 @@ struct SupportReferenceQueryCaches {
     report_cache: Vec<HalfspaceReportCacheEntry>,
     feasible_cache: Vec<HalfspaceFeasibilityCacheEntry>,
     seed_geometry_cache: Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: Vec<Point3CentroidSubsetFamilyCacheEntry>,
     support_seed_family_cache: Vec<SupportCellSeedFamiliesCacheEntry>,
     support_direct_target_cache: Vec<SupportDirectReferenceTargetsCacheEntry>,
     projected_root_cache: Vec<ProjectedRootReferenceFamilyCacheEntry>,
@@ -4221,6 +4227,12 @@ struct SupportCellSeedGeometryCacheEntry {
 }
 
 #[derive(Clone)]
+struct Point3CentroidSubsetFamilyCacheEntry {
+    vertices: Vec<Point3>,
+    family: HypermeshResult<Point3FamilyState>,
+}
+
+#[derive(Clone)]
 struct SupportCellSeedFamiliesCacheEntry {
     bounds: Aabb,
     halfspaces: Vec<LimitPlane3>,
@@ -4254,6 +4266,26 @@ fn cached_support_cell_seed_geometry_with(
         geometry: geometry.clone(),
     });
     geometry
+}
+
+fn cached_point3_centroid_subset_family_from_vertices_with(
+    cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
+    vertices: &[Point3],
+    build: impl FnOnce() -> HypermeshResult<Point3FamilyState>,
+) -> HypermeshResult<Point3FamilyState> {
+    if let Some(existing) = cache
+        .iter()
+        .find(|existing| point_families_match_as_sets(&existing.vertices, vertices))
+    {
+        return existing.family.clone();
+    }
+
+    let family = build();
+    cache.push(Point3CentroidSubsetFamilyCacheEntry {
+        vertices: vertices.to_vec(),
+        family: family.clone(),
+    });
+    family
 }
 
 fn cached_support_cell_seed_families_with(
@@ -5408,6 +5440,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
     let report_cache = &mut query_caches.report_cache;
     let feasible_cache = &mut query_caches.feasible_cache;
     let seed_geometry_cache = &mut query_caches.seed_geometry_cache;
+    let centroid_subset_seed_cache = &mut query_caches.centroid_subset_seed_cache;
     let support_seed_family_cache = &mut query_caches.support_seed_family_cache;
     let support_direct_target_cache = &mut query_caches.support_direct_target_cache;
     let shifted_support_family_cache = &mut query_caches.shifted_support_family_cache;
@@ -5448,6 +5481,7 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
         validity_cache,
         support_surface_cache,
         seed_geometry_cache,
+        centroid_subset_seed_cache,
         support_seed_family_cache,
         support_direct_target_cache,
         shifted_support_family_cache,
@@ -5489,6 +5523,7 @@ fn support_plane_cell_reference_with_queries(
         &mut validity_cache,
         &mut support_surface_cache,
         &mut query_caches.seed_geometry_cache,
+        &mut query_caches.centroid_subset_seed_cache,
         &mut query_caches.support_seed_family_cache,
         &mut query_caches.support_direct_target_cache,
         &mut query_caches.shifted_support_family_cache,
@@ -5515,6 +5550,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
     validity_cache: &mut Vec<ReferenceBoundsValidityCacheEntry>,
     support_surface_cache: &mut Vec<SupportSurfaceCacheEntry>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
     support_seed_family_cache: &mut Vec<SupportCellSeedFamiliesCacheEntry>,
     support_direct_target_cache: &mut Vec<SupportDirectReferenceTargetsCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
@@ -5566,6 +5602,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                                     halfspaces,
                                     report,
                                     seed_geometry_cache,
+                                    centroid_subset_seed_cache,
                                 )
                             },
                         )?;
@@ -5624,6 +5661,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                                     halfspaces,
                                     report,
                                     seed_geometry_cache,
+                                    centroid_subset_seed_cache,
                                     support_seed_family_cache,
                                     support_direct_target_cache,
                                     shifted_support_family_cache,
@@ -7042,12 +7080,14 @@ fn projected_cell_seed_families_from_optional_report(
     saw_unknown: &mut bool,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let mut seed_geometry_cache = Vec::new();
+    let mut centroid_subset_seed_cache = Vec::new();
     projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
         bounds,
         halfspaces,
         report,
         saw_unknown,
         &mut seed_geometry_cache,
+        &mut centroid_subset_seed_cache,
     )
 }
 
@@ -7057,10 +7097,11 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     saw_unknown: &mut bool,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let seed_geometry =
         cached_support_cell_seed_geometry_with(seed_geometry_cache, halfspaces, || {
-            support_cell_seed_geometry_state(halfspaces)
+            support_cell_seed_geometry_state(halfspaces, centroid_subset_seed_cache)
         })?;
     *saw_unknown |= seed_geometry.saw_unknown;
     let shifted_vertices = seed_geometry.shifted_vertices;
@@ -7268,6 +7309,7 @@ fn strict_support_cell_targets_from_optional_report(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut seed_geometry_cache = Vec::new();
+    let mut centroid_subset_seed_cache = Vec::new();
     let mut support_seed_family_cache = Vec::new();
     let mut support_direct_target_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
@@ -7278,6 +7320,7 @@ fn strict_support_cell_targets_from_optional_report(
         halfspaces,
         report,
         &mut seed_geometry_cache,
+        &mut centroid_subset_seed_cache,
         &mut support_seed_family_cache,
         &mut support_direct_target_cache,
         &mut shifted_support_family_cache,
@@ -7291,6 +7334,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
     support_seed_family_cache: &mut Vec<SupportCellSeedFamiliesCacheEntry>,
     support_direct_target_cache: &mut Vec<SupportDirectReferenceTargetsCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
@@ -7309,6 +7353,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                 halfspaces,
                 report,
                 seed_geometry_cache,
+                centroid_subset_seed_cache,
             )
         },
     )?;
@@ -7395,6 +7440,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     halfspaces,
                     &seed,
                     seed_geometry_cache,
+                    centroid_subset_seed_cache,
                     shifted_support_family_cache,
                     reference_witness_cache,
                     strict_contains_cache,
@@ -7406,6 +7452,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     halfspaces,
                     &vertex,
                     seed_geometry_cache,
+                    centroid_subset_seed_cache,
                     shifted_support_family_cache,
                     reference_witness_cache,
                     strict_contains_cache,
@@ -7417,6 +7464,7 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
                     halfspaces,
                     &seed,
                     seed_geometry_cache,
+                    centroid_subset_seed_cache,
                     shifted_support_family_cache,
                     reference_witness_cache,
                     strict_contains_cache,
@@ -7638,6 +7686,26 @@ fn take_new_point_family(points: Vec<Point3>, seen: &mut Vec<Point3>) -> Vec<Poi
     fresh
 }
 
+fn point_families_match_as_sets(left: &[Point3], right: &[Point3]) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    let mut matched = vec![false; right.len()];
+    for left_point in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, right_point)| !matched[*index] && *right_point == left_point)
+        else {
+            return false;
+        };
+        matched[index] = true;
+    }
+
+    true
+}
+
 fn point3_centroid(points: &[Point3]) -> HypermeshResult<Option<Point3>> {
     if points.is_empty() {
         return Ok(None);
@@ -7750,6 +7818,7 @@ fn shifted_support_cell_targets_from_seed(
     seed: &Point3,
 ) -> HypermeshResult<Vec<ReferenceTarget>> {
     let mut seed_geometry_cache = Vec::new();
+    let mut centroid_subset_seed_cache = Vec::new();
     let mut shifted_support_family_cache = Vec::new();
     let reference_witness_cache = std::cell::RefCell::new(Vec::new());
     let strict_contains_cache = std::cell::RefCell::new(Vec::new());
@@ -7758,6 +7827,7 @@ fn shifted_support_cell_targets_from_seed(
         halfspaces,
         seed,
         &mut seed_geometry_cache,
+        &mut centroid_subset_seed_cache,
         &mut shifted_support_family_cache,
         &reference_witness_cache,
         &strict_contains_cache,
@@ -7769,6 +7839,7 @@ fn shifted_support_cell_targets_from_seed_with_caches(
     halfspaces: &[LimitPlane3],
     seed: &Point3,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
     shifted_support_family_cache: &mut Vec<ShiftedSupportCellFamilyCacheEntry>,
     reference_witness_cache: &std::cell::RefCell<Vec<ReferenceWitnessTargetCacheEntry>>,
     strict_contains_cache: &std::cell::RefCell<Vec<ReferenceHalfspaceContainmentCacheEntry>>,
@@ -7778,7 +7849,15 @@ fn shifted_support_cell_targets_from_seed_with_caches(
         bounds,
         halfspaces,
         seed,
-        || shifted_support_cell_families_from_seed(bounds, halfspaces, seed, seed_geometry_cache),
+        || {
+            shifted_support_cell_families_from_seed(
+                bounds,
+                halfspaces,
+                seed,
+                seed_geometry_cache,
+                centroid_subset_seed_cache,
+            )
+        },
     )? {
         Some(families) => shifted_support_cell_targets_from_families(
             bounds,
@@ -7799,12 +7878,14 @@ fn support_cell_seed_families_from_optional_report(
     saw_unknown: &mut bool,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let mut seed_geometry_cache = Vec::new();
+    let mut centroid_subset_seed_cache = Vec::new();
     support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
         bounds,
         halfspaces,
         report,
         saw_unknown,
         &mut seed_geometry_cache,
+        &mut centroid_subset_seed_cache,
     )
 }
 
@@ -7814,12 +7895,14 @@ fn support_cell_seed_families_from_optional_report_with_seed_geometry_cache(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     saw_unknown: &mut bool,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
     let state = support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
         bounds,
         halfspaces,
         report,
         seed_geometry_cache,
+        centroid_subset_seed_cache,
     )?;
     *saw_unknown |= state.saw_unknown;
     Ok((
@@ -7834,10 +7917,11 @@ fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<SupportCellSeedFamiliesState> {
     let seed_geometry =
         cached_support_cell_seed_geometry_with(seed_geometry_cache, halfspaces, || {
-            support_cell_seed_geometry_state(halfspaces)
+            support_cell_seed_geometry_state(halfspaces, centroid_subset_seed_cache)
         })?;
     let mut saw_unknown = seed_geometry.saw_unknown;
     let shifted_vertices = seed_geometry.shifted_vertices;
@@ -7902,6 +7986,7 @@ fn shifted_support_cell_families_from_seed(
     halfspaces: &[LimitPlane3],
     seed: &Point3,
     seed_geometry_cache: &mut Vec<SupportCellSeedGeometryCacheEntry>,
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<Option<ShiftedSupportCellFamilies>> {
     let shifted = shifted_support_cell_halfspaces(bounds, halfspaces, seed)?;
     let (report, saw_report_unknown) = optional_halfspace_system_report(&shifted)?;
@@ -7920,6 +8005,7 @@ fn shifted_support_cell_families_from_seed(
             report.as_ref(),
             &mut saw_unknown,
             seed_geometry_cache,
+            centroid_subset_seed_cache,
         )?;
     Ok(Some(ShiftedSupportCellFamilies {
         shifted,
@@ -8068,12 +8154,16 @@ fn shifted_support_cell_targets_from_families(
 
 fn support_cell_seed_geometry_state(
     halfspaces: &[LimitPlane3],
+    centroid_subset_seed_cache: &mut Vec<Point3CentroidSubsetFamilyCacheEntry>,
 ) -> HypermeshResult<SupportCellSeedGeometryState> {
     let shifted_vertex_family = feasible_support_cell_vertex_family(halfspaces)?;
     let mut saw_unknown = shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.points;
-    let shifted_geometry_seed_family =
-        point3_centroid_subset_family_from_vertices(&shifted_vertices)?;
+    let shifted_geometry_seed_family = cached_point3_centroid_subset_family_from_vertices_with(
+        centroid_subset_seed_cache,
+        &shifted_vertices,
+        || point3_centroid_subset_family_from_vertices(&shifted_vertices),
+    )?;
     saw_unknown |= shifted_geometry_seed_family.saw_unknown;
     let shifted_geometry_seeds = shifted_geometry_seed_family.points;
     Ok(SupportCellSeedGeometryState {
@@ -12956,11 +13046,12 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = projected_reference_halfspaces(&p(-1, 2, 2), &bounds).unwrap();
         let mut cache = Vec::new();
+        let mut centroid_subset_seed_cache = Vec::new();
         let mut calls = 0;
 
         let first = cached_support_cell_seed_geometry_with(&mut cache, &halfspaces, || {
             calls += 1;
-            support_cell_seed_geometry_state(&halfspaces)
+            support_cell_seed_geometry_state(&halfspaces, &mut centroid_subset_seed_cache)
         })
         .unwrap();
         let second = cached_support_cell_seed_geometry_with(&mut cache, &halfspaces, || {
@@ -12984,11 +13075,12 @@ mod tests {
         let mut permuted = halfspaces.clone();
         permuted.rotate_left(1);
         let mut cache = Vec::new();
+        let mut centroid_subset_seed_cache = Vec::new();
         let mut calls = 0;
 
         let first = cached_support_cell_seed_geometry_with(&mut cache, &halfspaces, || {
             calls += 1;
-            support_cell_seed_geometry_state(&halfspaces)
+            support_cell_seed_geometry_state(&halfspaces, &mut centroid_subset_seed_cache)
         })
         .unwrap();
         let second = cached_support_cell_seed_geometry_with(&mut cache, &permuted, || {
@@ -12999,6 +13091,39 @@ mod tests {
                 saw_unknown: false,
             })
         })
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_point3_centroid_subset_family_reuses_permuted_vertices() {
+        let first_vertices = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0)];
+        let second_vertices = vec![p(0, 2, 0), p(0, 0, 0), p(2, 0, 0)];
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_point3_centroid_subset_family_from_vertices_with(
+            &mut cache,
+            &first_vertices,
+            || {
+                calls += 1;
+                point3_centroid_subset_family_from_vertices(&first_vertices)
+            },
+        )
+        .unwrap();
+        let second = cached_point3_centroid_subset_family_from_vertices_with(
+            &mut cache,
+            &second_vertices,
+            || {
+                calls += 1;
+                Ok(Point3FamilyState {
+                    points: vec![p(9, 9, 9)],
+                    saw_unknown: true,
+                })
+            },
+        )
         .unwrap();
 
         assert_eq!(calls, 1);
@@ -13087,6 +13212,15 @@ mod tests {
                 }),
             });
         query_caches
+            .centroid_subset_seed_cache
+            .push(Point3CentroidSubsetFamilyCacheEntry {
+                vertices: vec![point.clone()],
+                family: Ok(Point3FamilyState {
+                    points: Vec::new(),
+                    saw_unknown: false,
+                }),
+            });
+        query_caches
             .reference_witness_cache
             .get_mut()
             .push(ReferenceWitnessTargetCacheEntry {
@@ -13143,6 +13277,7 @@ mod tests {
 
         assert_eq!(query_caches.report_cache.len(), 1);
         assert_eq!(query_caches.seed_geometry_cache.len(), 1);
+        assert_eq!(query_caches.centroid_subset_seed_cache.len(), 1);
         assert_eq!(query_caches.reference_witness_cache.get_mut().len(), 1);
         assert_eq!(query_caches.trace_cache.len(), 1);
         assert_eq!(query_caches.validity_cache.len(), 1);
