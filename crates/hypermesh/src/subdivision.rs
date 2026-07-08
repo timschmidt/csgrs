@@ -4298,7 +4298,7 @@ fn cached_support_cell_seed_families_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
             && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            && support_optional_halfspace_reports_match_for_cache(
+            && support_seed_optional_halfspace_reports_match_for_cache(
                 &existing.halfspaces,
                 existing.report.as_ref(),
                 halfspaces,
@@ -4328,7 +4328,7 @@ fn cached_support_direct_reference_targets_with(
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
             && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            && support_optional_halfspace_reports_match_for_cache(
+            && support_seed_optional_halfspace_reports_match_for_cache(
                 &existing.halfspaces,
                 existing.report.as_ref(),
                 halfspaces,
@@ -4786,6 +4786,27 @@ fn support_optional_halfspace_reports_match_for_cache(
     }
 
     optional_halfspace_reports_match_for_cache(left_halfspaces, left, right_halfspaces, right)
+}
+
+fn support_seed_optional_halfspace_reports_match_for_cache(
+    left_halfspaces: &[LimitPlane3],
+    left: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    right_halfspaces: &[LimitPlane3],
+    right: Option<&hyperlimit::HalfspaceFeasibilityReport>,
+) -> bool {
+    match (
+        support_report_witness_for_cache(left),
+        support_report_witness_for_cache(right),
+    ) {
+        (None, None) => true,
+        (Some(left_witness), Some(right_witness)) => left_witness == right_witness,
+        _ => optional_halfspace_reports_match_for_cache(
+            left_halfspaces,
+            left,
+            right_halfspaces,
+            right,
+        ),
+    }
 }
 
 fn support_report_witness_for_cache(
@@ -14236,6 +14257,59 @@ mod tests {
     }
 
     #[test]
+    fn cached_support_cell_seed_families_reuse_same_witness_different_active_planes() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 1, 1);
+        let left = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            witness.clone(),
+            [Some(0), None, None],
+        );
+        let right =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(witness, [Some(1), None, None]);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+        let expected = SupportCellSeedFamiliesState {
+            strict_seeds: vec![p(1, 1, 1)],
+            shifted_vertices: vec![p(2, 2, 2)],
+            shifted_geometry_seeds: vec![p(3, 3, 3)],
+            saw_unknown: false,
+        };
+
+        let first = cached_support_cell_seed_families_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&left),
+            || {
+                calls += 1;
+                Ok(expected.clone())
+            },
+        )
+        .unwrap();
+        let second = cached_support_cell_seed_families_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&right),
+            || {
+                calls += 1;
+                Ok(SupportCellSeedFamiliesState {
+                    strict_seeds: vec![p(9, 9, 9)],
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                    saw_unknown: true,
+                })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, expected);
+        assert_eq!(first, second);
+    }
+
+    #[test]
     fn cached_support_direct_reference_targets_reuse_none_and_infeasible_reports() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
@@ -14260,6 +14334,49 @@ mod tests {
             &bounds,
             &halfspaces,
             Some(&infeasible),
+            || {
+                calls += 1;
+                Ok((vec![ReferenceTarget::axis_defined(p(9, 9, 9))], true))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, expected);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_support_direct_reference_targets_reuse_same_witness_different_active_planes() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let witness = p(1, 1, 1);
+        let left = hyperlimit::HalfspaceFeasibilityReport::feasible(
+            witness.clone(),
+            [Some(0), None, None],
+        );
+        let right =
+            hyperlimit::HalfspaceFeasibilityReport::feasible(witness, [Some(1), None, None]);
+        let mut cache = Vec::new();
+        let mut calls = 0;
+        let expected = (vec![ReferenceTarget::axis_defined(p(1, 2, 3))], false);
+
+        let first = cached_support_direct_reference_targets_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&left),
+            || {
+                calls += 1;
+                Ok(expected.clone())
+            },
+        )
+        .unwrap();
+        let second = cached_support_direct_reference_targets_with(
+            &mut cache,
+            &bounds,
+            &halfspaces,
+            Some(&right),
             || {
                 calls += 1;
                 Ok((vec![ReferenceTarget::axis_defined(p(9, 9, 9))], true))

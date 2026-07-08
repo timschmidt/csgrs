@@ -768,7 +768,10 @@ reuse the same subset-centroid seed construction instead of recomputing it.
 Support-side seed/direct/target/accept caches now also collapse all halfspace
 reports that do not carry a usable feasible witness into one shared cache
 state, so infeasible certificate variation does not fragment later support
-fallback reuse when the builders would ignore that report payload anyway.
+fallback reuse when the builders would ignore that report payload anyway. The
+seed-family and direct-target layers now also treat two feasible reports with
+the same witness point as the same cache state even if their active-plane
+metadata differs, because those two builders only use the witness itself.
 Partially uncertified feasible support-cell
 vertex families now also keep that uncertainty attached when later exact
 vertices survive, so the cached seed-geometry state does not flatten that
