@@ -173,6 +173,14 @@ struct PairwiseIntersectionsCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct BspLeafCertificationCacheEntry {
+    host: ConvexPolygon,
+    leaf_edges: Vec<Plane>,
+    polygons: Vec<ConvexPolygon>,
+    result: HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct PolygonAxisValuesCacheEntry {
     polygons: Vec<ConvexPolygon>,
     result: HypermeshResult<[Vec<Real>; 3]>,
@@ -184,6 +192,7 @@ struct SubdivisionRuntimeCaches {
     split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    bsp_leaf_certification: RefCell<Vec<BspLeafCertificationCacheEntry>>,
     support_reference_query: RefCell<SupportReferenceQueryCaches>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
@@ -197,6 +206,7 @@ impl Default for SubdivisionRuntimeCaches {
             split_candidates: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
             pairwise_intersections: RefCell::new(Vec::new()),
+            bsp_leaf_certification: RefCell::new(Vec::new()),
             support_reference_query: RefCell::new(SupportReferenceQueryCaches::default()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
@@ -268,6 +278,7 @@ fn process_leaf_into_inner(
         indicator,
         output,
         pairwise_intersections_by_polygon,
+        certify_bsp_leaf_and_delta_w,
     )
 }
 
@@ -280,6 +291,14 @@ fn process_leaf_into_inner_with_pairwise_cache(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
     pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    certify_bsp_leaf: impl Fn(
+        &ConvexPolygon,
+        &[crate::geometry::Plane],
+        &[ConvexPolygon],
+    ) -> HypermeshResult<(
+        Vec<crate::segment_trace::InteriorLeafPoint>,
+        Vec<i32>,
+    )>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let mut stats = LeafProcessingStats {
         polygon_count: polygons.len(),
@@ -338,7 +357,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 continue;
             }
             let (interior_points, effective_delta_w) =
-                certify_bsp_leaf_and_delta_w(polygon, &leaf.edges, polygons)?;
+                certify_bsp_leaf(polygon, &leaf.edges, polygons)?;
             stats.bsp_leaf_count += 1;
             let w_front = cached_leaf_classification_with(
                 &mut leaf_winding_cache,
@@ -386,10 +405,11 @@ pub fn subdivide(
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
+    let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache)
+        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache, bsp_leaf_cache)
     };
     subdivide_into_inner_with(
         task,
@@ -412,10 +432,11 @@ pub(crate) fn subdivide_for_operation(
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
+    let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache)
+        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache, bsp_leaf_cache)
     };
     subdivide_into_inner_with(
         task,
@@ -443,10 +464,11 @@ pub fn subdivide_into(
     let mut certified_output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
     let pairwise_cache = &caches.pairwise_intersections;
+    let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache)
+        process_leaf_task_into_with_caches(task, indicator, output, pairwise_cache, bsp_leaf_cache)
     };
     subdivide_into_inner_with(
         task,
@@ -928,9 +950,15 @@ fn process_leaf_task_into_with_caches(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    bsp_leaf_cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let pairwise_query = |polygons: &[ConvexPolygon]| {
         cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)
+    };
+    let bsp_leaf_query = |polygon: &ConvexPolygon,
+                          leaf_edges: &[crate::geometry::Plane],
+                          polygons: &[ConvexPolygon]| {
+        cached_bsp_leaf_certification_with(bsp_leaf_cache, polygon, leaf_edges, polygons)
     };
     process_leaf_into_inner_with_pairwise_cache(
         &task.polygons,
@@ -941,6 +969,7 @@ fn process_leaf_task_into_with_caches(
         indicator,
         output,
         pairwise_query,
+        bsp_leaf_query,
     )
 }
 
@@ -1068,6 +1097,30 @@ fn cached_leaf_classification_with(
         winding: winding.clone(),
     });
     winding
+}
+
+fn cached_bsp_leaf_certification_with(
+    cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
+    host: &ConvexPolygon,
+    leaf_edges: &[crate::geometry::Plane],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
+    if let Some(existing) = cache.borrow().iter().find(|existing| {
+        existing.host == *host
+            && edge_cycles_match_up_to_rotation(&existing.leaf_edges, leaf_edges)
+            && polygon_families_match_as_multisets(&existing.polygons, polygons)
+    }) {
+        return existing.result.clone();
+    }
+
+    let result = certify_bsp_leaf_and_delta_w(host, leaf_edges, polygons);
+    cache.borrow_mut().push(BspLeafCertificationCacheEntry {
+        host: host.clone(),
+        leaf_edges: leaf_edges.to_vec(),
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
+    result
 }
 
 fn take_new_bsp_leaf_edge_cycle(seen: &mut Vec<Vec<Plane>>, candidate: &[Plane]) -> bool {
@@ -7658,6 +7711,29 @@ mod tests {
         assert_eq!(calls, 1);
         assert_eq!(first, vec![7]);
         assert_eq!(second, vec![7]);
+    }
+
+    #[test]
+    fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
+        let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        host.delta_w = vec![1, 0];
+        let mut cutter = make_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
+        cutter.delta_w = vec![0, 1];
+        let cache = RefCell::new(Vec::new());
+
+        let first = cached_bsp_leaf_certification_with(
+            &cache,
+            &host,
+            &host.edges,
+            &[host.clone(), cutter.clone()],
+        )
+        .unwrap();
+        let second =
+            cached_bsp_leaf_certification_with(&cache, &host, &host.edges, &[cutter, host.clone()])
+                .unwrap();
+
+        assert_eq!(first, second);
+        assert_eq!(cache.borrow().len(), 1);
     }
 
     #[test]

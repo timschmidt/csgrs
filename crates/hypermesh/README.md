@@ -985,6 +985,11 @@ of fragmenting on order-only differences before later recursion and child-state
 reuse. Recursive branches that
 converge back to the same exact child task can therefore reuse the
 already-certified child result instead of replaying that whole branch again.
+Repeated BSP leaf certification on the same host polygon, rotated-equivalent
+leaf edge cycle, and repeated local polygon family up to permutation now also
+reuses one exact certified leaf-analysis result across recursive branches
+instead of rebuilding the same BSP leaf witness family and effective-`delta_w`
+state again.
 Unsplittable tasks now also run the exact leaf
 processor directly once instead of first retrying the same uncertified path
 through the certified leaf-output helper, but they only succeed if that leaf
