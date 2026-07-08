@@ -4257,6 +4257,29 @@ fn strict_leaf_witness_points_with_seed_families(
         Option<&hyperlimit::HalfspaceFeasibilityReport>,
     ) -> HypermeshResult<LeafWitnessSeedFamilies>,
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
+    strict_leaf_witness_points_with_seed_families_and_stricter_replay(
+        leaf,
+        vertices,
+        &mut seed_families_for,
+        |leaf, witness| strict_leaf_cell_points(leaf, witness),
+    )
+}
+
+fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
+    leaf: &ConvexPolygon,
+    vertices: &[Point3],
+    seed_families_for: &mut impl FnMut(
+        &ConvexPolygon,
+        &[Point3],
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+    ) -> HypermeshResult<LeafWitnessSeedFamilies>,
+    mut stricter_points_for: impl FnMut(
+        &ConvexPolygon,
+        &Point3,
+    ) -> HypermeshResult<Vec<InteriorLeafPoint>>,
+) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let bounds = leaf_bounds(vertices)?;
     let halfspaces = leaf_halfspaces(leaf);
     let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
@@ -4322,18 +4345,7 @@ fn strict_leaf_witness_points_with_seed_families(
     match extend_interior_leaf_points_backtracking_unknown(
         &mut stricter_points,
         direct_witnesses.iter(),
-        |witness| {
-            strict_leaf_cell_points(leaf, witness).map(|found| {
-                found
-                    .into_iter()
-                    .filter(|point| {
-                        !certified_direct_witness_points
-                            .iter()
-                            .any(|existing| *existing == point.point)
-                    })
-                    .collect()
-            })
-        },
+        |witness| stricter_points_for(leaf, witness),
     ) {
         Ok(()) => {}
         Err(HypermeshError::UnknownClassification) => {
@@ -4342,6 +4354,13 @@ fn strict_leaf_witness_points_with_seed_families(
         Err(err) => return Err(err),
     }
     for point in stricter_points {
+        let duplicate_certified_direct_point = certified_direct_witness_points
+            .iter()
+            .any(|existing| *existing == point.point);
+        if duplicate_certified_direct_point && point.uncertified_definition_fallback {
+            saw_unknown = true;
+            continue;
+        }
         push_unique_interior_point(&mut points, point);
     }
 
@@ -13002,6 +13021,51 @@ mod tests {
                 .iter()
                 .any(|point| interiors.iter().any(|interior| &interior.point == point))
         );
+    }
+
+    #[test]
+    fn strict_leaf_witness_points_merge_same_point_certified_stricter_replay_definitions() {
+        let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        let vertices = leaf.vertices().unwrap();
+        let witness = p(1, 1, 1);
+        let extra_definition = [
+            leaf.support.clone(),
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(1, r(1)),
+        ];
+
+        let interiors = strict_leaf_witness_points_with_seed_families_and_stricter_replay(
+            &leaf,
+            &vertices,
+            &mut |_leaf, _vertices, _bounds, _halfspaces, _report| {
+                Ok(LeafWitnessSeedFamilies {
+                    seeds: vec![witness.clone()],
+                    shifted_vertices: Vec::new(),
+                    shifted_geometry_seeds: Vec::new(),
+                    saw_unknown: false,
+                })
+            },
+            |_leaf, point| {
+                Ok(vec![InteriorLeafPoint {
+                    point: point.clone(),
+                    planes: vec![axis_plane_definition(point), extra_definition.clone()],
+                    uncertified_definition_fallback: false,
+                }])
+            },
+        )
+        .unwrap();
+        let merged = interiors
+            .iter()
+            .find(|point| point.point == witness)
+            .expect("same-point stricter replay should survive witness aggregation");
+
+        assert!(
+            merged
+                .planes
+                .iter()
+                .any(|candidate| { definition_planes_match_as_sets(candidate, &extra_definition) })
+        );
+        assert!(!merged.uncertified_definition_fallback);
     }
 
     #[test]
