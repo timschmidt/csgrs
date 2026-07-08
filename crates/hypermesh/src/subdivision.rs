@@ -1029,7 +1029,9 @@ fn cached_child_subdivision_with(
     let polygon_profile = polygon_family_profile(&task.polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.polygon_profile == polygon_profile
-            && subdivision_tasks_match_for_cache(&existing.task, task)
+            && subdivision_task_state_matches_for_cache(&existing.task, task)
+            && (existing.task.depth == task.depth
+                || (existing.task.depth > task.depth && existing.result.is_ok()))
     }) {
         return existing.result.clone();
     }
@@ -1072,7 +1074,10 @@ fn cached_winding_reachability_with(
     result
 }
 
-fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &SubdivisionTask) -> bool {
+fn subdivision_task_state_matches_for_cache(
+    left: &SubdivisionTask,
+    right: &SubdivisionTask,
+) -> bool {
     polygon_families_match_as_multisets(&left.polygons, &right.polygons)
         && left.bounds == right.bounds
         && left.ref_point == right.ref_point
@@ -1081,7 +1086,6 @@ fn subdivision_tasks_match_for_cache(left: &SubdivisionTask, right: &Subdivision
             &right.ref_definitions,
         )
         && left.ref_wnv == right.ref_wnv
-        && left.depth == right.depth
 }
 
 fn i32_vector_families_match_as_multisets(left: &[Vec<i32>], right: &[Vec<i32>]) -> bool {
@@ -11503,6 +11507,76 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task() {
+        let mut deeper_task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        deeper_task.depth = 3;
+        let mut shallower_task = deeper_task.clone();
+        shallower_task.depth = 1;
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_child_subdivision_with(&cache, &deeper_task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+                1,
+            )])
+        })
+        .unwrap();
+        let second = cached_child_subdivision_with(&cache, &shallower_task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+                1,
+            )])
+        })
+        .unwrap();
+
+        assert_eq!(calls.get(), 1);
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
+        let mut shallower_task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(1, 1, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        shallower_task.depth = 1;
+        let mut deeper_task = shallower_task.clone();
+        deeper_task.depth = 3;
+        let cache = RefCell::new(Vec::new());
+        let calls = std::cell::Cell::new(0);
+
+        let first = cached_child_subdivision_with(&cache, &shallower_task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+                1,
+            )])
+        })
+        .unwrap();
+        let second = cached_child_subdivision_with(&cache, &deeper_task, || {
+            calls.set(calls.get() + 1);
+            Ok(vec![ClassifiedPolygon::new(
+                make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+                1,
+            )])
+        })
+        .unwrap();
+
+        assert_eq!(calls.get(), 2);
+        assert_ne!(first, second);
     }
 
     #[test]
