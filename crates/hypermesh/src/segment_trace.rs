@@ -79,6 +79,13 @@ struct ProbeReachabilityCacheEntry {
     reachable: HypermeshResult<bool>,
 }
 
+#[derive(Default)]
+pub(crate) struct LeafProbeQueryCaches {
+    probe_winding: Vec<ProbeWindingCacheEntry>,
+    probe_surface: Vec<SurfaceCacheEntry>,
+    probe_reachability: Vec<ProbeReachabilityCacheEntry>,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct LeafWitnessSeedFamilies {
     seeds: Vec<Point3>,
@@ -2157,8 +2164,33 @@ pub fn classify_leaf_polygon(
     bounds: &Aabb,
     host_delta_w: &[i32],
 ) -> HypermeshResult<WindingNumberVector> {
+    let mut probe_query_caches = LeafProbeQueryCaches::default();
+    classify_leaf_polygon_with_probe_query_caches(
+        support,
+        leaf_edges,
+        ref_point,
+        ref_definitions,
+        ref_wnv,
+        polygons,
+        bounds,
+        host_delta_w,
+        &mut probe_query_caches,
+    )
+}
+
+pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
+    support: &Plane,
+    leaf_edges: &[Plane],
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+) -> HypermeshResult<WindingNumberVector> {
     let interior_points = certified_leaf_interior_points(support, leaf_edges)?;
-    classify_leaf_polygon_from_interior_points(
+    classify_leaf_polygon_from_interior_points_with_probe_query_caches(
         &interior_points,
         support,
         ref_point,
@@ -2167,9 +2199,11 @@ pub fn classify_leaf_polygon(
         polygons,
         bounds,
         host_delta_w,
+        probe_query_caches,
     )
 }
 
+#[cfg(test)]
 pub(crate) fn classify_leaf_polygon_from_interior_points(
     interior_points: &[InteriorLeafPoint],
     support: &Plane,
@@ -2180,31 +2214,56 @@ pub(crate) fn classify_leaf_polygon_from_interior_points(
     bounds: &Aabb,
     host_delta_w: &[i32],
 ) -> HypermeshResult<WindingNumberVector> {
-    let mut probe_winding_cache = Vec::new();
-    let mut probe_surface_cache = Vec::new();
-    let mut probe_reachability_cache = Vec::new();
+    let mut probe_query_caches = LeafProbeQueryCaches::default();
+    classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+        interior_points,
+        support,
+        ref_point,
+        ref_definitions,
+        ref_wnv,
+        polygons,
+        bounds,
+        host_delta_w,
+        &mut probe_query_caches,
+    )
+}
+
+pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+    interior_points: &[InteriorLeafPoint],
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    host_delta_w: &[i32],
+    probe_query_caches: &mut LeafProbeQueryCaches,
+) -> HypermeshResult<WindingNumberVector> {
     search_leaf_probe_families(
         interior_points,
         |point, positive_side| {
             bounded_probes_from_interior(point, support, bounds, positive_side, polygons)
         },
         |point, _positive_side, probe| {
-            if cached_surface_query_with(&mut probe_surface_cache, &probe.point, || {
-                point_lies_on_traced_surface(&probe.point, polygons)
-            })? {
+            if cached_surface_query_with(
+                &mut probe_query_caches.probe_surface,
+                &probe.point,
+                || point_lies_on_traced_surface(&probe.point, polygons),
+            )? {
                 return Ok(None);
             }
             if !cached_probe_reachability_with(
-                &mut probe_reachability_cache,
+                &mut probe_query_caches.probe_reachability,
                 point,
                 &probe,
                 || probe_reaches_adjacent_cell_from_interior(point, &probe, support, polygons),
             )? {
                 return Ok(None);
             }
-            let mut winding = cached_probe_winding_with(&mut probe_winding_cache, &probe, || {
-                trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)
-            })?;
+            let mut winding =
+                cached_probe_winding_with(&mut probe_query_caches.probe_winding, &probe, || {
+                    trace_probe_winding(ref_point, ref_definitions, &probe, ref_wnv, polygons)
+                })?;
             if probe.side == Classification::Negative {
                 apply_winding_transition_in_place(&mut winding, -1, host_delta_w)?;
             }

@@ -17,8 +17,10 @@ use crate::output::{
 };
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
-    affine_from_planes, axis_plane_definition, certified_leaf_interior_points,
-    classify_leaf_polygon, classify_leaf_polygon_from_interior_points,
+    LeafProbeQueryCaches, affine_from_planes, axis_plane_definition,
+    certified_leaf_interior_points,
+    classify_leaf_polygon_from_interior_points_with_probe_query_caches,
+    classify_leaf_polygon_with_probe_query_caches,
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
@@ -379,6 +381,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
         polygon_count: polygons.len(),
         ..LeafProcessingStats::default()
     };
+    let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
     let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
     if polygons.is_empty() {
         stats.certified_complete = true;
@@ -408,6 +411,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 indicator,
                 leaf_classification_cache,
                 Some(&leaf_cache_context),
+                &mut leaf_probe_query_caches,
                 output,
                 &mut output_buckets,
             )?;
@@ -434,7 +438,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 &leaf.edges,
                 &effective_delta_w,
                 || {
-                    classify_leaf_polygon_from_interior_points(
+                    classify_leaf_polygon_from_interior_points_with_probe_query_caches(
                         &interior_points,
                         &polygon.support,
                         ref_point,
@@ -443,6 +447,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                         polygons,
                         bounds,
                         &effective_delta_w,
+                        &mut leaf_probe_query_caches,
                     )
                 },
             )?;
@@ -1954,6 +1959,7 @@ fn emit_one_direct(
     indicator: &Indicator,
     cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     context: Option<&LeafClassificationCacheContextKey>,
+    probe_query_caches: &mut LeafProbeQueryCaches,
     output: &mut Vec<ClassifiedPolygon>,
     output_buckets: &mut ClassifiedPolygonBucketState,
 ) -> HypermeshResult<bool> {
@@ -1964,7 +1970,7 @@ fn emit_one_direct(
         &polygon.edges,
         &polygon.delta_w,
         || {
-            classify_leaf_polygon(
+            classify_leaf_polygon_with_probe_query_caches(
                 &polygon.support,
                 &polygon.edges,
                 ref_point,
@@ -1973,6 +1979,7 @@ fn emit_one_direct(
                 class_polygons,
                 bounds,
                 &polygon.delta_w,
+                probe_query_caches,
             )
         },
     )?;
