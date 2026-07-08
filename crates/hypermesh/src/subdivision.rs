@@ -186,7 +186,6 @@ struct SplitChildPartition {
     left_polys: Vec<ConvexPolygon>,
     right_polys: Vec<ConvexPolygon>,
     both_count: usize,
-    child_intersection_count: usize,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -658,7 +657,6 @@ fn subdivide_into_inner_with(
         let unclipped_right_bounds = task.bounds.right_half(split_axis, split_value.clone());
         let split_partition = cached_split_child_partition_with(
             &caches.split_child_partitions,
-            &caches.pairwise_intersections,
             &task.polygons,
             split_axis,
             &split_value,
@@ -934,7 +932,6 @@ fn cached_ordered_subdivision_splits_with(
 
 fn cached_split_child_partition_with(
     cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
     axis: usize,
     value: &Real,
@@ -950,7 +947,7 @@ fn cached_split_child_partition_with(
         }
     }
 
-    let result = split_child_partition(polygons, axis, value, pairwise_cache);
+    let result = split_child_partition(polygons, axis, value);
     cache.borrow_mut().push(SplitChildPartitionCacheEntry {
         polygon_profile,
         polygons: polygons.to_vec(),
@@ -1872,7 +1869,7 @@ fn select_subdivision_split(
         .ok_or(crate::error::HypermeshError::UnknownClassification)
 }
 
-type SplitCounts = (usize, usize, usize, usize, usize);
+type SplitCounts = (usize, usize, usize, usize);
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum SplitSource {
@@ -1973,7 +1970,6 @@ fn ordered_subdivision_splits_with_partition_cache(
             bounds.midpoint(axis),
             SplitSource::Midpoint,
             partition_cache,
-            pairwise_cache,
         )?;
     }
 
@@ -1991,7 +1987,6 @@ fn ordered_subdivision_splits_with_partition_cache(
                 value,
                 SplitSource::Arrangement,
                 partition_cache,
-                pairwise_cache,
             )?;
         }
     }
@@ -2010,7 +2005,6 @@ fn ordered_subdivision_splits_with_partition_cache(
                 value,
                 SplitSource::Intersection,
                 partition_cache,
-                pairwise_cache,
             )?;
         }
     }
@@ -2107,7 +2101,6 @@ fn push_split_candidate_with_partition_cache(
     value: Real,
     source: SplitSource,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<()> {
     for existing in candidates.iter_mut() {
         if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
@@ -2118,8 +2111,7 @@ fn push_split_candidate_with_partition_cache(
         }
     }
 
-    let partition =
-        cached_split_child_partition_with(partition_cache, pairwise_cache, polygons, axis, &value)?;
+    let partition = cached_split_child_partition_with(partition_cache, polygons, axis, &value)?;
     let left_count = partition.left_polys.len();
     let right_count = partition.right_polys.len();
     candidates.push(SplitCandidate {
@@ -2128,7 +2120,6 @@ fn push_split_candidate_with_partition_cache(
             left_count.max(right_count),
             usize::from(left_count == 0 || right_count == 0),
             partition.both_count,
-            partition.child_intersection_count,
             left_count.abs_diff(right_count),
         ),
         source,
@@ -2215,9 +2206,7 @@ fn split_counts_strictly_better(candidate: SplitCounts, baseline: SplitCounts) -
             && (candidate.1 < baseline.1
                 || (candidate.1 == baseline.1
                     && (candidate.2 < baseline.2
-                        || (candidate.2 == baseline.2
-                            && (candidate.3 < baseline.3
-                                || (candidate.3 == baseline.3 && candidate.4 < baseline.4)))))))
+                        || (candidate.2 == baseline.2 && candidate.3 < baseline.3)))))
 }
 
 #[cfg(test)]
@@ -2339,7 +2328,7 @@ fn split_child_counts(
     axis: usize,
     value: &Real,
 ) -> HypermeshResult<SplitCounts> {
-    let partition = split_child_partition(polygons, axis, value, &RefCell::new(Vec::new()))?;
+    let partition = split_child_partition(polygons, axis, value)?;
     let left_count = partition.left_polys.len();
     let right_count = partition.right_polys.len();
 
@@ -2347,7 +2336,6 @@ fn split_child_counts(
         left_count.max(right_count),
         usize::from(left_count == 0 || right_count == 0),
         partition.both_count,
-        partition.child_intersection_count,
         left_count.abs_diff(right_count),
     ))
 }
@@ -2356,7 +2344,6 @@ fn split_child_partition(
     polygons: &[ConvexPolygon],
     axis: usize,
     value: &Real,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
 ) -> HypermeshResult<SplitChildPartition> {
     let split_plane = Plane::axis_aligned(axis, value.clone());
     let mut left_polys = Vec::with_capacity(polygons.len());
@@ -2376,31 +2363,11 @@ fn split_child_partition(
         }
     }
 
-    let child_intersection_count =
-        split_child_intersection_load(&left_polys, &right_polys, pairwise_cache)?;
-
     Ok(SplitChildPartition {
         left_polys,
         right_polys,
         both_count,
-        child_intersection_count,
     })
-}
-
-fn split_child_intersection_load(
-    left_polys: &[ConvexPolygon],
-    right_polys: &[ConvexPolygon],
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
-) -> HypermeshResult<usize> {
-    let left = cached_pairwise_intersections_by_polygon_with(pairwise_cache, left_polys)?
-        .iter()
-        .map(Vec::len)
-        .sum::<usize>();
-    let right = cached_pairwise_intersections_by_polygon_with(pairwise_cache, right_polys)?
-        .iter()
-        .map(Vec::len)
-        .sum::<usize>();
-    Ok(left + right)
 }
 
 #[cfg(test)]
@@ -9005,7 +8972,7 @@ mod tests {
     fn intersection_split_candidates_can_beat_arrangement_improvement() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (6, 0, 3, 5, 2);
+        let mut best_counts = (6, 0, 3, 2);
 
         consider_split_candidates(
             &mut best_axis,
@@ -9013,13 +8980,13 @@ mod tests {
             &mut best_counts,
             0,
             [r(4)],
-            |_value| Ok((5, 0, 2, 3, 1)),
+            |_value| Ok((5, 0, 2, 1)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 0);
         assert_eq!(best_value, r(4));
-        assert_eq!(best_counts, (5, 0, 2, 3, 1));
+        assert_eq!(best_counts, (5, 0, 2, 1));
 
         consider_split_candidates(
             &mut best_axis,
@@ -9027,13 +8994,13 @@ mod tests {
             &mut best_counts,
             1,
             [r(2)],
-            |_value| Ok((4, 0, 0, 1, 0)),
+            |_value| Ok((4, 0, 0, 0)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
-        assert_eq!(best_counts, (4, 0, 0, 1, 0));
+        assert_eq!(best_counts, (4, 0, 0, 0));
     }
 
     #[test]
@@ -9042,19 +9009,19 @@ mod tests {
             SplitCandidate {
                 axis: 0,
                 value: r(5),
-                counts: (4, 0, 1, 2, 0),
+                counts: (4, 0, 1, 0),
                 source: SplitSource::Midpoint,
             },
             SplitCandidate {
                 axis: 1,
                 value: r(2),
-                counts: (4, 0, 1, 2, 0),
+                counts: (4, 0, 1, 0),
                 source: SplitSource::Arrangement,
             },
             SplitCandidate {
                 axis: 2,
                 value: r(1),
-                counts: (4, 0, 1, 2, 0),
+                counts: (4, 0, 1, 0),
                 source: SplitSource::Intersection,
             },
         ];
@@ -9084,7 +9051,7 @@ mod tests {
         let mut candidates = vec![SplitCandidate {
             axis: 0,
             value: r(5),
-            counts: (1, 0, 0, 0, 0),
+            counts: (1, 0, 0, 0),
             source: SplitSource::Midpoint,
         }];
 
@@ -9115,7 +9082,7 @@ mod tests {
     fn split_ranking_penalizes_empty_child_splits() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (4, 0, 2, 3, 0);
+        let mut best_counts = (4, 0, 2, 0);
 
         consider_split_candidates(
             &mut best_axis,
@@ -9123,20 +9090,20 @@ mod tests {
             &mut best_counts,
             1,
             [r(1)],
-            |_value| Ok((4, 1, 0, 1, 4)),
+            |_value| Ok((4, 1, 0, 4)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 0);
         assert_eq!(best_value, r(5));
-        assert_eq!(best_counts, (4, 0, 2, 3, 0));
+        assert_eq!(best_counts, (4, 0, 2, 0));
     }
 
     #[test]
-    fn split_ranking_prefers_lower_child_intersection_load_on_count_tie() {
+    fn split_ranking_prefers_lower_child_imbalance_on_count_tie() {
         let mut best_axis = 0;
         let mut best_value = r(5);
-        let mut best_counts = (4, 0, 2, 5, 0);
+        let mut best_counts = (4, 0, 2, 5);
 
         consider_split_candidates(
             &mut best_axis,
@@ -9144,13 +9111,13 @@ mod tests {
             &mut best_counts,
             1,
             [r(2)],
-            |_value| Ok((4, 0, 2, 1, 0)),
+            |_value| Ok((4, 0, 2, 1)),
         )
         .unwrap();
 
         assert_eq!(best_axis, 1);
         assert_eq!(best_value, r(2));
-        assert_eq!(best_counts, (4, 0, 2, 1, 0));
+        assert_eq!(best_counts, (4, 0, 2, 1));
     }
 
     #[test]
@@ -9287,14 +9254,8 @@ mod tests {
         assert!(cached_partition_count > 0);
 
         let (axis, value) = &ordered[0];
-        let _partition = cached_split_child_partition_with(
-            &partition_cache,
-            &pairwise_cache,
-            &polygons,
-            *axis,
-            value,
-        )
-        .unwrap();
+        let _partition =
+            cached_split_child_partition_with(&partition_cache, &polygons, *axis, value).unwrap();
 
         assert_eq!(partition_cache.borrow().len(), cached_partition_count);
     }
@@ -9304,24 +9265,16 @@ mod tests {
         let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let cache = RefCell::new(Vec::new());
-        let pairwise_cache = RefCell::new(Vec::new());
 
         let first = cached_split_child_partition_with(
             &cache,
-            &pairwise_cache,
             &[polygon_a.clone(), polygon_b.clone()],
             0,
             &r(3),
         )
         .unwrap();
-        let second = cached_split_child_partition_with(
-            &cache,
-            &pairwise_cache,
-            &[polygon_b, polygon_a],
-            0,
-            &r(3),
-        )
-        .unwrap();
+        let second =
+            cached_split_child_partition_with(&cache, &[polygon_b, polygon_a], 0, &r(3)).unwrap();
 
         assert_eq!(first, second);
         assert_eq!(cache.borrow().len(), 1);
