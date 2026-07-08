@@ -2792,40 +2792,16 @@ fn try_strict_normal_seed_winding_with_queries(
         return Ok(None);
     }
 
-    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(&halfspaces)?;
-    *saw_unknown |= shifted_vertex_family.saw_unknown;
-    let shifted_vertices = shifted_vertex_family.seeds;
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
-    let mut shifted_geometry_seeds = Vec::new();
     let extra_planes = normal_probe_extra_planes(point, definition);
-
-    let mut strict_seeds = Vec::new();
-    *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
-        &mut strict_seeds,
-        [
-            if report
-                .as_ref()
-                .is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
-                && let Some(witness) = report_witness
-            {
-                collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
-                    point_strictly_inside_halfspace_cell_or_unknown(
-                        candidate,
-                        corridor,
-                        &halfspaces,
-                    )
-                })
-            } else {
-                Ok(HalfspaceSeedFamilyState {
-                    seeds: Vec::new(),
-                    saw_unknown: false,
-                })
-            },
-            collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
-                point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &halfspaces)
-            }),
-        ],
-    )?;
+    let (strict_seeds, shifted_vertices, shifted_geometry_seeds) =
+        cached_halfspace_cell_seed_families_from_optional_report_with(
+            &mut probe_query_caches.halfspace_seed_families,
+            corridor,
+            &halfspaces,
+            report.as_ref(),
+            saw_unknown,
+        )?;
     let mut seen = Vec::new();
     let mut strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut seen);
     let mut certified_probe_points = Vec::new();
@@ -2873,11 +2849,6 @@ fn try_strict_normal_seed_winding_with_queries(
     }
 
     if definition.is_some() || certified_probe_points.is_empty() {
-        let shifted_geometry_seed_family =
-            halfspace_centroid_subset_seed_family_from_vertices(&shifted_vertices)?;
-        *saw_unknown |= shifted_geometry_seed_family.saw_unknown;
-        shifted_geometry_seeds = shifted_geometry_seed_family.seeds;
-
         let mut geometry_strict_seeds = Vec::new();
         *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
             &mut geometry_strict_seeds,
@@ -3063,36 +3034,17 @@ fn try_strict_normal_shifted_report_witness_winding_with_queries(
         return Ok(None);
     }
 
-    let shifted_vertex_family = feasible_halfspace_cell_vertex_family(&shifted)?;
-    *saw_unknown |= shifted_vertex_family.saw_unknown;
-    let shifted_vertices = shifted_vertex_family.seeds;
     let shifted_report_witness = shifted_report
         .as_ref()
         .and_then(|report| report.witness.as_ref());
-
-    let mut strict_seeds = Vec::new();
-    *saw_unknown |= extend_strict_halfspace_seed_families_collect_unknown(
-        &mut strict_seeds,
-        [
-            if shifted_report
-                .as_ref()
-                .is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
-                && let Some(witness) = shifted_report_witness
-            {
-                collect_strict_halfspace_seed_family(Ok(vec![witness.clone()]), |candidate| {
-                    point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &shifted)
-                })
-            } else {
-                Ok(HalfspaceSeedFamilyState {
-                    seeds: Vec::new(),
-                    saw_unknown: false,
-                })
-            },
-            collect_strict_halfspace_seed_family(Ok(shifted_vertices.clone()), |candidate| {
-                point_strictly_inside_halfspace_cell_or_unknown(candidate, corridor, &shifted)
-            }),
-        ],
-    )?;
+    let (strict_seeds, shifted_vertices, _shifted_geometry_seeds) =
+        cached_halfspace_cell_seed_families_from_optional_report_with(
+            &mut probe_query_caches.halfspace_seed_families,
+            corridor,
+            &shifted,
+            shifted_report.as_ref(),
+            saw_unknown,
+        )?;
     let mut seen_strict_seeds = Vec::new();
     let strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut seen_strict_seeds);
 
