@@ -7874,11 +7874,10 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
         start_planes,
         end_planes,
         || {
-            let mut ordering_affine_cache = Vec::new();
             let ordered = ordered_axis_orderings_by_no_step_precheck_with(
                 start_planes,
                 end_planes,
-                &mut ordering_affine_cache,
+                affine_cache,
                 |current, next, _current_definitions, _next_definitions| {
                     probe_reaches_adjacent_cell(current, next, host_support, polygons)
                 },
@@ -24433,6 +24432,37 @@ mod tests {
         assert!(first);
         assert!(second);
         assert_eq!(step_calls, 1);
+    }
+
+    #[test]
+    fn no_step_ordering_precheck_warms_shared_affine_cache_for_step_trace() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 2, 3));
+        let mut affine_cache = Vec::new();
+        let ordered = ordered_axis_orderings_by_no_step_precheck_with(
+            &start_definition,
+            &end_definition,
+            &mut affine_cache,
+            |_from, _to, _start_definitions, _end_definitions| Ok(true),
+        )
+        .unwrap();
+        let affine_len_after_precheck = affine_cache.len();
+        let mut step_cache = Vec::new();
+
+        let reaches =
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                &ordered,
+                &start_definition,
+                &end_definition,
+                PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+                &mut affine_cache,
+                &mut step_cache,
+                |_from, _to, _start_definitions, _end_definitions| Ok(true),
+            )
+            .unwrap();
+
+        assert!(reaches);
+        assert_eq!(affine_cache.len(), affine_len_after_precheck);
     }
 
     #[test]
