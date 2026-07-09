@@ -10892,6 +10892,27 @@ mod tests {
     }
 
     #[test]
+    fn search_strict_aabb_targets_progressively_stops_after_first_certified_direct_target() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let mut evaluated = 0usize;
+
+        let found = search_strict_aabb_targets_progressively_with_seed_families(
+            &bounds,
+            |_bounds, _halfspaces, _report, _saw_unknown| {
+                Ok((vec![p(1, 1, 1)], vec![p(2, 2, 2)], vec![p(3, 3, 3)]))
+            },
+            &mut |_target| {
+                evaluated += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(found);
+        assert_eq!(evaluated, 1);
+    }
+
+    #[test]
     fn detour_target_marking_marks_existing_targets_uncertain() {
         let mut targets = vec![DetourTarget {
             point: p(1, 2, 3),
