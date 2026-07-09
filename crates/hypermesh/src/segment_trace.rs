@@ -2734,7 +2734,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
 
-    for point in interior_points {
+    for point in ordered_interior_points_for_probe_search(interior_points) {
         for positive_side in [true, false] {
             if let Some(winding) = search_adjacent_normal_probe_winding_with_queries(
                 point,
@@ -2792,6 +2792,33 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
 
     let _ = saw_unknown;
     Err(HypermeshError::UnknownClassification)
+}
+
+fn ordered_interior_points_for_probe_search(
+    interior_points: &[InteriorLeafPoint],
+) -> Vec<&InteriorLeafPoint> {
+    let mut ordered = interior_points.iter().enumerate().collect::<Vec<_>>();
+    ordered.sort_by_key(|(index, point)| {
+        (
+            std::cmp::Reverse(max_axis_aligned_planes_in_definition_family(point)),
+            *index,
+        )
+    });
+    ordered.into_iter().map(|(_, point)| point).collect()
+}
+
+fn max_axis_aligned_planes_in_definition_family(point: &InteriorLeafPoint) -> usize {
+    point
+        .planes
+        .iter()
+        .map(|definition| {
+            definition
+                .iter()
+                .filter(|plane| plane.axis_split_value().is_some())
+                .count()
+        })
+        .max()
+        .unwrap_or(0)
 }
 
 fn search_adjacent_normal_probe_winding_with_queries(
@@ -20418,6 +20445,48 @@ mod tests {
         );
 
         assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn ordered_interior_points_for_probe_search_prefers_axis_aligned_definition_planes() {
+        let slanted = Plane {
+            normal: Point3::new(r(2), r(3), r(5)),
+            offset: r(7),
+        };
+        let more_slanted = Plane {
+            normal: Point3::new(r(7), r(11), r(13)),
+            offset: r(17),
+        };
+        let most_axis_aligned = InteriorLeafPoint {
+            point: p(3, 0, 0),
+            planes: vec![axis_plane_definition(&p(3, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let partly_axis_aligned = InteriorLeafPoint {
+            point: p(2, 0, 0),
+            planes: vec![[
+                Plane::axis_aligned(2, r(1)),
+                slanted.clone(),
+                more_slanted.clone(),
+            ]],
+            uncertified_definition_fallback: false,
+        };
+        let non_axis_aligned = InteriorLeafPoint {
+            point: p(1, 0, 0),
+            planes: vec![[slanted, more_slanted.clone(), more_slanted]],
+            uncertified_definition_fallback: false,
+        };
+
+        let points = [
+            non_axis_aligned.clone(),
+            partly_axis_aligned.clone(),
+            most_axis_aligned.clone(),
+        ];
+        let ordered = ordered_interior_points_for_probe_search(&points);
+
+        assert_eq!(ordered[0].point, most_axis_aligned.point);
+        assert_eq!(ordered[1].point, partly_axis_aligned.point);
+        assert_eq!(ordered[2].point, non_axis_aligned.point);
     }
 
     #[test]
