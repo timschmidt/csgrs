@@ -206,6 +206,19 @@ pub(crate) struct LeafProbeQueryCaches {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct StrictAabbTargetFamilies {
+    direct_targets: Vec<DetourTarget>,
+    shifted_targets: Vec<DetourTarget>,
+    saw_unknown: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct StrictAabbTargetFamilyCacheEntry {
+    bounds: Aabb,
+    families: HypermeshResult<StrictAabbTargetFamilies>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct LeafWitnessSeedFamilies {
     seeds: Vec<Point3>,
     shifted_vertices: Vec<Point3>,
@@ -2278,6 +2291,7 @@ fn search_strict_aabb_targets_progressively_with_seed_families(
     )
 }
 
+#[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking<K: Ord>(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -2289,42 +2303,20 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
     evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    let halfspaces = aabb_core_halfspaces(bounds)?;
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
-    if report
-        .as_ref()
-        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
-    {
-        return Ok(false);
-    }
+    let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for)?;
+    evaluate_strict_aabb_target_families_with_direct_ranking(families, rank_direct, evaluate)
+}
 
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
-    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
-
-    let mut certified_direct_target_points = Vec::new();
-    let mut direct_targets = Vec::new();
-    for seed in &seeds {
-        let target = match build_detour_target(
-            seed,
-            &halfspaces,
-            active_planes_from_optional_report(report.as_ref(), seed),
-            false,
-        ) {
-            Ok(target) => target,
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-                continue;
-            }
-            Err(err) => return Err(err),
-        };
-        if !target.uncertified_definition_fallback {
-            certified_direct_target_points.push(target.point.clone());
-        }
-        direct_targets.push(target);
-    }
+fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
+    families: StrictAabbTargetFamilies,
+    rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
+    evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    let StrictAabbTargetFamilies {
+        direct_targets,
+        shifted_targets,
+        mut saw_unknown,
+    } = families;
     let refinement_len = direct_targets
         .len()
         .min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT);
@@ -2389,36 +2381,8 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             Err(err) => return Err(err),
         }
     }
-    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        detour_shifted_seed_families(
-            report_witness,
-            &certified_direct_target_points,
-            seeds,
-            shifted_vertices,
-            shifted_geometry_seeds,
-        );
-    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
-        {
-            let mut shifted_witnesses = Vec::new();
-            extend_shifted_halfspace_seed_families_backtracking_unknown(
-                &mut shifted_witnesses,
-                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
-            )?;
-            Ok(shifted_witnesses)
-        },
-        &mut saw_unknown,
-    )?;
 
-    for witness in &shifted_witnesses {
-        let target = match build_detour_target_from_shifted_witness(witness) {
-            Ok(target) => target,
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-                continue;
-            }
-            Err(err) => return Err(err),
-        };
+    for target in shifted_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
@@ -2444,6 +2408,118 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     } else {
         Ok(false)
     }
+}
+
+fn strict_aabb_target_families_with_seed_families(
+    bounds: &Aabb,
+    mut seed_families_for: impl FnMut(
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+        &mut bool,
+    ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+) -> HypermeshResult<StrictAabbTargetFamilies> {
+    let halfspaces = aabb_core_halfspaces(bounds)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(StrictAabbTargetFamilies {
+            direct_targets: Vec::new(),
+            shifted_targets: Vec::new(),
+            saw_unknown,
+        });
+    }
+
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+
+    let mut certified_direct_target_points = Vec::new();
+    let mut direct_targets = Vec::new();
+    for seed in &seeds {
+        let target = match build_detour_target(
+            seed,
+            &halfspaces,
+            active_planes_from_optional_report(report.as_ref(), seed),
+            false,
+        ) {
+            Ok(target) => target,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !target.uncertified_definition_fallback {
+            certified_direct_target_points.push(target.point.clone());
+        }
+        direct_targets.push(target);
+    }
+
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        detour_shifted_seed_families(
+            report_witness,
+            &certified_direct_target_points,
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_seed_families_backtracking_unknown(
+                &mut shifted_witnesses,
+                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
+                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
+    )?;
+
+    let mut shifted_targets = Vec::new();
+    for witness in &shifted_witnesses {
+        match build_detour_target_from_shifted_witness(witness) {
+            Ok(target) => shifted_targets.push(target),
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    Ok(StrictAabbTargetFamilies {
+        direct_targets,
+        shifted_targets,
+        saw_unknown,
+    })
+}
+
+fn cached_strict_aabb_target_families_with_seed_families(
+    cache: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
+    bounds: &Aabb,
+    mut seed_families_for: impl FnMut(
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+        &mut bool,
+    ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+) -> HypermeshResult<StrictAabbTargetFamilies> {
+    for entry in cache.iter().rev() {
+        if entry.bounds == *bounds {
+            return entry.families.clone();
+        }
+    }
+    let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for);
+    cache.push(StrictAabbTargetFamilyCacheEntry {
+        bounds: bounds.clone(),
+        families: families.clone(),
+    });
+    families
 }
 
 fn detour_shifted_seed_families(
@@ -2475,67 +2551,19 @@ fn strict_aabb_targets_with_seed_families(
         &mut bool,
     ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    let halfspaces = aabb_core_halfspaces(bounds)?;
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
-    if report
-        .as_ref()
-        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
-    {
-        return Ok(Vec::new());
-    }
-    let mut targets = Vec::new();
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
-    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
-    let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
-
-    extend_detour_target_builds_backtracking_unknown(&mut targets, seeds.iter(), |seed| {
-        let active_planes = active_planes_from_optional_report(report.as_ref(), seed);
-        build_detour_target(seed, &halfspaces, active_planes, false)
-    })?;
-
-    let certified_direct_target_points = targets
-        .iter()
-        .filter(|target| !target.uncertified_definition_fallback)
-        .map(|target| target.point.clone())
-        .collect::<Vec<_>>();
-    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        detour_shifted_seed_families(
-            report_witness,
-            &certified_direct_target_points,
-            seeds,
-            shifted_vertices,
-            shifted_geometry_seeds,
-        );
-
-    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
-        {
-            let mut shifted_witnesses = Vec::new();
-            extend_shifted_halfspace_seed_families_backtracking_unknown(
-                &mut shifted_witnesses,
-                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
-                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
-            )?;
-            Ok(shifted_witnesses)
-        },
-        &mut saw_unknown,
-    )?;
-    extend_detour_target_builds_backtracking_unknown(
-        &mut targets,
-        shifted_witnesses.iter(),
-        build_detour_target_from_shifted_witness,
-    )?;
+    let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for)?;
+    let mut targets = families.direct_targets;
+    targets.extend(families.shifted_targets);
     let unresolved_fallback = targets
         .iter()
         .any(|target| target.uncertified_definition_fallback);
     let has_certified_target = targets
         .iter()
         .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (saw_unknown || unresolved_fallback) {
+    if targets.is_empty() && (families.saw_unknown || unresolved_fallback) {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if !has_certified_target && (saw_unknown || unresolved_fallback) {
+        if !has_certified_target && (families.saw_unknown || unresolved_fallback) {
             mark_all_detour_targets_uncertified(&mut targets);
         }
         Ok(targets)
@@ -2597,6 +2625,7 @@ fn build_detour_target_from_shifted_witness(
     })
 }
 
+#[cfg(test)]
 fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) -> bool {
     if let Some(existing) = targets
         .iter_mut()
@@ -2651,6 +2680,7 @@ fn extend_unique_definition_families(definitions: &mut Vec<[Plane; 3]>, fresh: V
     }
 }
 
+#[cfg(test)]
 fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
     targets: &mut Vec<DetourTarget>,
     candidates: impl IntoIterator<Item = &'a T>,
@@ -7010,7 +7040,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     let mut no_plane_replacement_cycle_guard_cache =
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
-    let mut detour_target_cache = Vec::new();
+    let mut no_step_detour_target_cache = Vec::new();
     let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
@@ -7031,7 +7061,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         &mut halfspace_seed_families,
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
-        &mut detour_target_cache,
+        &mut no_step_detour_target_cache,
         &mut full_no_detour_cache,
         &mut no_detour_cache,
         &mut direct_probe_reachability_cache,
@@ -7060,6 +7090,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
+    let mut strict_aabb_target_families = Vec::new();
     cached_definition_no_detour_reachability_with(
         full_no_detour_cache,
         start,
@@ -7123,6 +7154,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                             no_detour_cache,
                             no_plane_replacement_cycle_guard_cache,
                             no_plane_replacement_cache,
+                            &mut strict_aabb_target_families,
                             no_step_detour_target_cache,
                             direct_probe_reachability_cache,
                         );
@@ -7558,6 +7590,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     ) -> HypermeshResult<bool>,
     detours_for_query: impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
+    let mut strict_aabb_target_families = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
         start,
         end,
@@ -7569,6 +7602,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         no_plane_replacement_cache,
         halfspace_report_cache,
         halfspace_seed_family_cache,
+        &mut strict_aabb_target_families,
         detour_target_cache,
         interior_box_axis_intervals,
         false,
@@ -7588,6 +7622,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     reach_without_detours: impl FnMut(
@@ -7609,6 +7644,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
         no_plane_replacement_cache,
         halfspace_report_cache,
         halfspace_seed_family_cache,
+        strict_aabb_target_families,
         detour_target_cache,
         interior_box_axis_intervals,
         true,
@@ -7628,6 +7664,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     progressive_interior_box_detours: bool,
@@ -7684,6 +7721,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
             known_false_cache,
             halfspace_report_cache,
             halfspace_seed_family_cache,
+            strict_aabb_target_families,
             interior_box_axis_intervals,
             &mut trace_without_detours,
             detour_target_cache,
@@ -7715,6 +7753,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
+    let mut strict_aabb_target_families = Vec::new();
     let mut detour_target_cache = Vec::new();
     let mut interior_box_axis_intervals = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
@@ -7729,6 +7768,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         no_plane_replacement_cache,
         &mut halfspace_report_cache,
         &mut halfspace_seed_family_cache,
+        &mut strict_aabb_target_families,
         &mut interior_box_axis_intervals,
         trace_without_detours,
         &mut detour_target_cache,
@@ -7748,6 +7788,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     trace_without_detours: &mut impl FnMut(
         &Point3,
@@ -7771,6 +7812,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         no_plane_replacement_cache,
         halfspace_report_cache,
         halfspace_seed_family_cache,
+        strict_aabb_target_families,
         interior_box_axis_intervals,
         &mut surface_cache,
         &mut |point| point_lies_on_traced_surface(point, polygons),
@@ -7803,6 +7845,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
+    let mut strict_aabb_target_families = Vec::new();
     let mut detour_target_cache = Vec::new();
     let mut interior_box_axis_intervals = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
@@ -7817,6 +7860,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         no_plane_replacement_cache,
         &mut halfspace_report_cache,
         &mut halfspace_seed_family_cache,
+        &mut strict_aabb_target_families,
         &mut interior_box_axis_intervals,
         surface_cache,
         surface_query,
@@ -7838,6 +7882,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
@@ -7903,6 +7948,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                     no_plane_replacement_cache,
                     halfspace_report_cache,
                     halfspace_seed_family_cache,
+                    strict_aabb_target_families,
                     interior_box_axis_intervals,
                     surface_cache,
                     surface_query,
@@ -7943,6 +7989,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                         no_plane_replacement_cache,
                         halfspace_report_cache,
                         halfspace_seed_family_cache,
+                        strict_aabb_target_families,
                         interior_box_axis_intervals,
                         surface_cache,
                         surface_query,
@@ -7983,6 +8030,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
     no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
@@ -8077,6 +8125,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             no_plane_replacement_cache,
             halfspace_report_cache,
             halfspace_seed_family_cache,
+            strict_aabb_target_families,
             interior_box_axis_intervals,
             surface_cache,
             surface_query,
@@ -8168,6 +8217,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
@@ -8229,90 +8279,92 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                     std::cell::RefCell::new(&mut *halfspace_seed_family_cache);
                 let interior_box_axis_intervals_cell =
                     std::cell::RefCell::new(&mut *interior_box_axis_intervals);
-                let result =
-                    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
-                        &bounds,
-                        |bounds, halfspaces, report, local_unknown| {
-                            let report = match report {
-                                Some(report) => Some(report.clone()),
-                                None => cached_optional_halfspace_feasibility_report_with(
-                                    &mut **halfspace_report_cache_cell.borrow_mut(),
-                                    halfspaces,
-                                    local_unknown,
-                                )?,
-                            };
-                            let families =
-                                cached_halfspace_cell_seed_families_from_optional_report_with(
-                                    &mut **halfspace_seed_family_cache_cell.borrow_mut(),
-                                    bounds,
-                                    halfspaces,
-                                    report.as_ref(),
-                                    local_unknown,
-                                )?;
-                            Ok(families)
-                        },
-                        &mut |detour| {
-                            detour_target_no_plane_refined_rank_with_surface_queries(
-                                detour,
-                                start,
-                                end,
-                                polygons,
-                                &mut |edge_start, edge_end, polygon, axis| {
-                                    let start_class = classify_point(edge_start, &polygon.support)?;
-                                    let end_class = classify_point(edge_end, &polygon.support)?;
-                                    if start_class == Classification::On {
-                                        return Ok(Some(edge_start.clone()));
-                                    }
-                                    if end_class == Classification::On {
-                                        return Ok(Some(edge_end.clone()));
-                                    }
-                                    segment_plane_crossing(edge_start, edge_end, &polygon.support)
-                                        .and_then(|crossing| {
-                                            if let Some(crossing) = crossing {
-                                                if !point_strictly_between_axis(
-                                                    &crossing, edge_start, edge_end, axis,
-                                                )? {
-                                                    return Ok(None);
-                                                }
-                                                Ok(Some(crossing))
-                                            } else {
-                                                Ok(None)
+                let families = cached_strict_aabb_target_families_with_seed_families(
+                    strict_aabb_target_families,
+                    &bounds,
+                    |bounds, halfspaces, report, local_unknown| {
+                        let report = match report {
+                            Some(report) => Some(report.clone()),
+                            None => cached_optional_halfspace_feasibility_report_with(
+                                &mut **halfspace_report_cache_cell.borrow_mut(),
+                                halfspaces,
+                                local_unknown,
+                            )?,
+                        };
+                        let families =
+                            cached_halfspace_cell_seed_families_from_optional_report_with(
+                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                bounds,
+                                halfspaces,
+                                report.as_ref(),
+                                local_unknown,
+                            )?;
+                        Ok(families)
+                    },
+                )?;
+                let result = evaluate_strict_aabb_target_families_with_direct_ranking(
+                    families,
+                    &mut |detour| {
+                        detour_target_no_plane_refined_rank_with_surface_queries(
+                            detour,
+                            start,
+                            end,
+                            polygons,
+                            &mut |edge_start, edge_end, polygon, axis| {
+                                let start_class = classify_point(edge_start, &polygon.support)?;
+                                let end_class = classify_point(edge_end, &polygon.support)?;
+                                if start_class == Classification::On {
+                                    return Ok(Some(edge_start.clone()));
+                                }
+                                if end_class == Classification::On {
+                                    return Ok(Some(edge_end.clone()));
+                                }
+                                segment_plane_crossing(edge_start, edge_end, &polygon.support)
+                                    .and_then(|crossing| {
+                                        if let Some(crossing) = crossing {
+                                            if !point_strictly_between_axis(
+                                                &crossing, edge_start, edge_end, axis,
+                                            )? {
+                                                return Ok(None);
                                             }
-                                        })
-                                },
-                                &mut |crossing, polygon| {
-                                    classify_point_in_polygon(crossing, polygon)
-                                },
-                                start_definitions,
-                                end_definitions,
-                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
-                                &mut **trace_without_detours_cell.borrow_mut(),
-                            )
-                        },
-                        &mut |detour| {
-                            evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
-                                &detour,
-                                start,
+                                            Ok(Some(crossing))
+                                        } else {
+                                            Ok(None)
+                                        }
+                                    })
+                            },
+                            &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+                            start_definitions,
+                            end_definitions,
+                            &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                            &mut **trace_without_detours_cell.borrow_mut(),
+                        )
+                    },
+                    &mut |detour| {
+                        evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                            &detour,
+                            start,
                             end,
                             polygons,
                             visited_points,
                             start_definitions,
-                                end_definitions,
-                        progressive_interior_box_detours,
-                        no_plane_replacement_cycle_guard_cache,
-                        no_plane_replacement_cache,
-                        &mut **halfspace_report_cache_cell.borrow_mut(),
-                        &mut **halfspace_seed_family_cache_cell.borrow_mut(),
-                        &mut **interior_box_axis_intervals_cell.borrow_mut(),
-                        surface_cache,
-                        surface_query,
-                        &mut **trace_without_detours_cell.borrow_mut(),
-                        detour_target_cache,
-                        detours_for_query,
-                        &mut saw_unknown,
-                    )
-                        },
-                    );
+                            end_definitions,
+                            progressive_interior_box_detours,
+                            no_plane_replacement_cycle_guard_cache,
+                            no_plane_replacement_cache,
+                            &mut **halfspace_report_cache_cell.borrow_mut(),
+                            &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                            strict_aabb_target_families,
+                            &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                            surface_cache,
+                            surface_query,
+                            &mut **trace_without_detours_cell.borrow_mut(),
+                            detour_target_cache,
+                            detours_for_query,
+                            &mut saw_unknown,
+                        )
+                    },
+                );
                 match result {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
@@ -8422,6 +8474,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     let mut no_plane_replacement_cycle_guard_cache =
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
+    let mut strict_aabb_target_families = Vec::new();
     let mut no_step_detour_target_cache = Vec::new();
     let mut direct_probe_reachability_cache = Vec::new();
     let mut interior_box_axis_intervals = Vec::new();
@@ -8441,6 +8494,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         &mut no_detour_cache,
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
+        &mut strict_aabb_target_families,
         &mut no_step_detour_target_cache,
         &mut direct_probe_reachability_cache,
     )
@@ -8462,6 +8516,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
@@ -8523,6 +8578,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                         no_plane_replacement_cache,
                         halfspace_reports,
                         halfspace_seed_families,
+                        strict_aabb_target_families,
                         no_step_detour_target_cache,
                         interior_box_axis_intervals,
                         |start: &Point3,
@@ -13316,6 +13372,7 @@ mod tests {
             &mut Vec::new(),
             &mut Vec::new(),
             &mut Vec::new(),
+            &mut Vec::new(),
             &mut |_point| Ok(false),
             &mut |_from, _to, from_definitions, to_definitions| {
                 let call = if from_definitions == [start_definitions.clone()]
@@ -15581,6 +15638,81 @@ mod tests {
         )
         .unwrap();
         let after_second = interval_cache.len();
+
+        assert_eq!(first, second);
+        assert_eq!(after_first, 1);
+        assert_eq!(after_first, after_second);
+    }
+
+    #[test]
+    fn strict_aabb_target_family_cache_reuses_core_leaf_wall_case_query() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        let probe =
+            bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        let strict_bounds = bounds_between_points(&interior.point, &probe.point).unwrap();
+        let mut target_family_cache = Vec::new();
+        let mut halfspace_report_cache = Vec::new();
+        let mut halfspace_seed_family_cache = Vec::new();
+
+        let first = cached_strict_aabb_target_families_with_seed_families(
+            &mut target_family_cache,
+            &strict_bounds,
+            |bounds, halfspaces, report, local_unknown| {
+                let report = match report {
+                    Some(report) => Some(report.clone()),
+                    None => cached_optional_halfspace_feasibility_report_with(
+                        &mut halfspace_report_cache,
+                        halfspaces,
+                        local_unknown,
+                    )?,
+                };
+                cached_halfspace_cell_seed_families_from_optional_report_with(
+                    &mut halfspace_seed_family_cache,
+                    bounds,
+                    halfspaces,
+                    report.as_ref(),
+                    local_unknown,
+                )
+            },
+        )
+        .unwrap();
+        let after_first = target_family_cache.len();
+
+        let second = cached_strict_aabb_target_families_with_seed_families(
+            &mut target_family_cache,
+            &strict_bounds,
+            |bounds, halfspaces, report, local_unknown| {
+                let report = match report {
+                    Some(report) => Some(report.clone()),
+                    None => cached_optional_halfspace_feasibility_report_with(
+                        &mut halfspace_report_cache,
+                        halfspaces,
+                        local_unknown,
+                    )?,
+                };
+                cached_halfspace_cell_seed_families_from_optional_report_with(
+                    &mut halfspace_seed_family_cache,
+                    bounds,
+                    halfspaces,
+                    report.as_ref(),
+                    local_unknown,
+                )
+            },
+        )
+        .unwrap();
+        let after_second = target_family_cache.len();
 
         assert_eq!(first, second);
         assert_eq!(after_first, 1);
@@ -23335,6 +23467,7 @@ mod tests {
             ]);
         let mut halfspace_report_cache = Vec::new();
         let mut halfspace_seed_family_cache = Vec::new();
+        let mut strict_aabb_target_families = Vec::new();
         let mut interior_box_axis_intervals = Vec::new();
         let mut surface_cache = Vec::new();
         let mut detour_target_cache = Vec::new();
@@ -23358,6 +23491,7 @@ mod tests {
                 &mut no_plane_replacement_cache,
                 &mut halfspace_report_cache,
                 &mut halfspace_seed_family_cache,
+                &mut strict_aabb_target_families,
                 &mut interior_box_axis_intervals,
                 &mut surface_cache,
                 &mut |_point| Ok(false),
