@@ -181,6 +181,8 @@ pub(crate) struct LeafProbeQueryCaches {
     plane_replacement_trace_steps: Vec<PlaneReplacementStepCacheEntry>,
     plane_replacement_reachability_paths: Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    plane_replacement_no_nested_ordering_warmups:
+        Vec<PlaneReplacementNoNestedOrderingWarmupCacheEntry>,
     definition_cycle_guard_reachability: Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     definition_no_step_detour_reachability: Vec<DefinitionNoDetourReachabilityCacheEntry>,
     definition_no_plane_replacement_cycle_guard:
@@ -233,6 +235,16 @@ struct PlaneReplacementReachabilityPathCacheEntry {
     start_planes: [Plane; 3],
     end_planes: [Plane; 3],
     result: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct PlaneReplacementNoNestedOrderingWarmupCacheEntry {
+    start_planes: [Plane; 3],
+    end_planes: [Plane; 3],
+    ordered: HypermeshResult<Vec<[usize; 3]>>,
+    affine_cache: Vec<PlaneReplacementAffineCacheEntry>,
+    path_cache: Vec<PlaneReplacementReachabilityPathCacheEntry>,
+    step_cache: Vec<PlaneReplacementReachabilityStepCacheEntry>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -3189,6 +3201,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             plane_replacement_trace_steps,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            plane_replacement_no_nested_ordering_warmups,
             definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
@@ -3241,6 +3254,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         plane_replacement_trace_steps,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        plane_replacement_no_nested_ordering_warmups,
                         definition_cycle_guard_reachability,
                         definition_no_step_detour_reachability,
                         definition_no_plane_replacement_cycle_guard,
@@ -3274,6 +3288,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         plane_replacement_trace_steps,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        plane_replacement_no_nested_ordering_warmups,
                         definition_cycle_guard_reachability,
                         definition_no_step_detour_reachability,
                         definition_no_plane_replacement_cycle_guard,
@@ -4088,6 +4103,7 @@ fn try_leaf_probe_family_with_queries(
         plane_replacement_trace_steps,
         plane_replacement_reachability_paths,
         plane_replacement_reachability_steps,
+        plane_replacement_no_nested_ordering_warmups,
         definition_cycle_guard_reachability,
         definition_no_step_detour_reachability,
         definition_no_plane_replacement_cycle_guard,
@@ -4154,6 +4170,7 @@ fn try_leaf_probe_family_with_queries(
                         plane_replacement_trace_steps,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        plane_replacement_no_nested_ordering_warmups,
                         definition_cycle_guard_reachability,
                         definition_no_step_detour_reachability,
                         definition_no_plane_replacement_cycle_guard,
@@ -4198,6 +4215,7 @@ fn try_leaf_probe_family_with_queries(
             plane_replacement_trace_steps,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            plane_replacement_no_nested_ordering_warmups,
             definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
@@ -4234,6 +4252,9 @@ fn evaluate_leaf_probe_with_query_caches(
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    plane_replacement_no_nested_ordering_warmups: &mut Vec<
+        PlaneReplacementNoNestedOrderingWarmupCacheEntry,
+    >,
     definition_cycle_guard_reachability: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     definition_no_step_detour_reachability: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     definition_no_plane_replacement_cycle_guard: &mut Vec<
@@ -4265,6 +4286,7 @@ fn evaluate_leaf_probe_with_query_caches(
                 plane_replacement_affine,
                 plane_replacement_reachability_paths,
                 plane_replacement_reachability_steps,
+                plane_replacement_no_nested_ordering_warmups,
                 definition_cycle_guard_reachability,
                 definition_no_step_detour_reachability,
                 definition_no_plane_replacement_cycle_guard,
@@ -5565,6 +5587,7 @@ fn probe_reaches_adjacent_cell_from_interior(
     let mut plane_replacement_affine = Vec::new();
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
+    let mut plane_replacement_no_nested_ordering_warmups = Vec::new();
     let mut definition_cycle_guard_reachability = Vec::new();
     let mut definition_no_step_detour_reachability = Vec::new();
     let mut definition_no_plane_replacement_cycle_guard = Vec::new();
@@ -5582,6 +5605,7 @@ fn probe_reaches_adjacent_cell_from_interior(
         &mut plane_replacement_affine,
         &mut plane_replacement_reachability_paths,
         &mut plane_replacement_reachability_steps,
+        &mut plane_replacement_no_nested_ordering_warmups,
         &mut definition_cycle_guard_reachability,
         &mut definition_no_step_detour_reachability,
         &mut definition_no_plane_replacement_cycle_guard,
@@ -5602,6 +5626,9 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    plane_replacement_no_nested_ordering_warmups: &mut Vec<
+        PlaneReplacementNoNestedOrderingWarmupCacheEntry,
+    >,
     definition_cycle_guard_reachability: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     definition_no_step_detour_reachability: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     definition_no_plane_replacement_cycle_guard: &mut Vec<
@@ -5636,6 +5663,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         plane_replacement_affine,
         plane_replacement_reachability_paths,
         plane_replacement_reachability_steps,
+        plane_replacement_no_nested_ordering_warmups,
         definition_cycle_guard_reachability,
         definition_no_step_detour_reachability,
         definition_no_plane_replacement_cycle_guard,
@@ -5661,6 +5689,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     let mut plane_replacement_affine = Vec::new();
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
+    let mut plane_replacement_no_nested_ordering_warmups = Vec::new();
     let mut definition_cycle_guard_reachability = Vec::new();
     let mut no_step_cache = Vec::new();
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
@@ -5680,6 +5709,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
         &mut plane_replacement_affine,
         &mut plane_replacement_reachability_paths,
         &mut plane_replacement_reachability_steps,
+        &mut plane_replacement_no_nested_ordering_warmups,
         &mut definition_cycle_guard_reachability,
         &mut no_step_cache,
         &mut no_plane_replacement_cycle_guard_cache,
@@ -5702,6 +5732,9 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    plane_replacement_no_nested_ordering_warmups: &mut Vec<
+        PlaneReplacementNoNestedOrderingWarmupCacheEntry,
+    >,
     definition_cycle_guard_reachability: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_plane_replacement_cycle_guard_cache: &mut Vec<
@@ -5748,6 +5781,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                 plane_replacement_affine,
                 plane_replacement_reachability_paths,
                 plane_replacement_reachability_steps,
+                plane_replacement_no_nested_ordering_warmups,
                 no_step_cache,
                 no_plane_replacement_cycle_guard_cache,
                 no_plane_replacement_cache,
@@ -6479,6 +6513,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     let mut affine_cache = Vec::new();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
+    let mut no_nested_ordering_warmup_cache = Vec::new();
     let mut no_step_cache = Vec::new();
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
     let mut no_plane_replacement_cache = Vec::new();
@@ -6495,6 +6530,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         &mut affine_cache,
         &mut path_cache,
         &mut step_cache,
+        &mut no_nested_ordering_warmup_cache,
         &mut no_step_cache,
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
@@ -6514,6 +6550,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    no_nested_ordering_warmup_cache: &mut Vec<PlaneReplacementNoNestedOrderingWarmupCacheEntry>,
     no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_plane_replacement_cycle_guard_cache: &mut Vec<
         DefinitionNoPlaneReplacementCycleGuardCacheEntry,
@@ -6571,6 +6608,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                     affine_cache,
                     path_cache,
                     step_cache,
+                    no_nested_ordering_warmup_cache,
                     no_step_cache,
                     no_detour_cache,
                     no_plane_replacement_cycle_guard_cache,
@@ -7670,6 +7708,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     let mut affine_cache = Vec::new();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
+    let mut no_nested_ordering_warmup_cache = Vec::new();
     let mut no_step_cache = Vec::new();
     let mut no_detour_cache = Vec::new();
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
@@ -7684,6 +7723,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         &mut affine_cache,
         &mut path_cache,
         &mut step_cache,
+        &mut no_nested_ordering_warmup_cache,
         &mut no_step_cache,
         &mut no_detour_cache,
         &mut no_plane_replacement_cycle_guard_cache,
@@ -7701,6 +7741,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    no_nested_ordering_warmup_cache: &mut Vec<PlaneReplacementNoNestedOrderingWarmupCacheEntry>,
     no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_plane_replacement_cycle_guard_cache: &mut Vec<
@@ -7720,23 +7761,33 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
             let mut no_step_affine_cache = Vec::new();
             let mut no_step_path_cache = Vec::new();
             let mut no_step_step_cache = Vec::new();
-            let ordered = ordered_axis_orderings_by_no_step_precheck_with(
+            let ordered = cached_plane_replacement_no_nested_ordering_warmup_with(
+                no_nested_ordering_warmup_cache,
                 start_planes,
                 end_planes,
-                &mut ordering_affine_cache,
-                |current, next, current_definitions, next_definitions| {
-                    probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
-                        current,
-                        next,
-                        host_support,
-                        polygons,
-                        std::slice::from_ref(current_definitions),
-                        std::slice::from_ref(next_definitions),
-                        &mut no_step_affine_cache,
-                        &mut no_step_path_cache,
-                        &mut no_step_step_cache,
-                        no_step_cache,
-                        direct_probe_reachability_cache,
+                &mut no_step_affine_cache,
+                &mut no_step_path_cache,
+                &mut no_step_step_cache,
+                |mut no_step_affine_cache, mut no_step_path_cache, mut no_step_step_cache| {
+                    ordered_axis_orderings_by_no_step_precheck_with(
+                        start_planes,
+                        end_planes,
+                        &mut ordering_affine_cache,
+                        |current, next, current_definitions, next_definitions| {
+                            probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+                                current,
+                                next,
+                                host_support,
+                                polygons,
+                                std::slice::from_ref(current_definitions),
+                                std::slice::from_ref(next_definitions),
+                                &mut no_step_affine_cache,
+                                &mut no_step_path_cache,
+                                &mut no_step_step_cache,
+                                no_step_cache,
+                                direct_probe_reachability_cache,
+                            )
+                        },
                     )
                 },
             )?;
@@ -8098,6 +8149,41 @@ fn cached_plane_replacement_reachability_path_with(
     let result = trace();
     cache[cache_index].result = result.clone();
     result
+}
+
+fn cached_plane_replacement_no_nested_ordering_warmup_with(
+    cache: &mut Vec<PlaneReplacementNoNestedOrderingWarmupCacheEntry>,
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    warm: impl FnOnce(
+        &mut Vec<PlaneReplacementAffineCacheEntry>,
+        &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
+        &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    ) -> HypermeshResult<Vec<[usize; 3]>>,
+) -> HypermeshResult<Vec<[usize; 3]>> {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
+        definition_planes_match_as_sets(&existing.start_planes, start_planes)
+            && definition_planes_match_as_sets(&existing.end_planes, end_planes)
+    }) {
+        *affine_cache = existing.affine_cache.clone();
+        *path_cache = existing.path_cache.clone();
+        *step_cache = existing.step_cache.clone();
+        return existing.ordered.clone();
+    }
+
+    let ordered = warm(affine_cache, path_cache, step_cache);
+    cache.push(PlaneReplacementNoNestedOrderingWarmupCacheEntry {
+        start_planes: start_planes.clone(),
+        end_planes: end_planes.clone(),
+        ordered: ordered.clone(),
+        affine_cache: affine_cache.clone(),
+        path_cache: path_cache.clone(),
+        step_cache: step_cache.clone(),
+    });
+    ordered
 }
 
 fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
@@ -14395,6 +14481,7 @@ mod tests {
             plane_replacement_affine,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            plane_replacement_no_nested_ordering_warmups,
             definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
@@ -14415,6 +14502,7 @@ mod tests {
             plane_replacement_affine,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            plane_replacement_no_nested_ordering_warmups,
             definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
@@ -14430,6 +14518,7 @@ mod tests {
             plane_replacement_affine.len(),
             plane_replacement_reachability_paths.len(),
             plane_replacement_reachability_steps.len(),
+            plane_replacement_no_nested_ordering_warmups.len(),
             definition_no_step_detour_reachability.len(),
             definition_no_plane_replacement_reachability.len(),
             no_step_detour_target_families.len(),
@@ -14447,6 +14536,7 @@ mod tests {
             plane_replacement_affine,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            plane_replacement_no_nested_ordering_warmups,
             definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
@@ -14462,6 +14552,7 @@ mod tests {
             plane_replacement_affine.len(),
             plane_replacement_reachability_paths.len(),
             plane_replacement_reachability_steps.len(),
+            plane_replacement_no_nested_ordering_warmups.len(),
             definition_no_step_detour_reachability.len(),
             definition_no_plane_replacement_reachability.len(),
             no_step_detour_target_families.len(),
@@ -24114,6 +24205,75 @@ mod tests {
         assert_eq!(result, Err(HypermeshError::UnknownClassification));
         assert_eq!(cache.len(), 1);
         assert_eq!(cache[0].result, Err(HypermeshError::UnknownClassification));
+    }
+
+    #[test]
+    fn plane_replacement_no_nested_ordering_warmup_reuses_cached_local_warm_state() {
+        let start_planes = axis_plane_definition(&p(0, 0, 0));
+        let end_planes = axis_plane_definition(&p(1, 0, 0));
+        let affine_entry = PlaneReplacementAffineCacheEntry {
+            planes: start_planes.clone(),
+            point: Ok(p(0, 0, 0)),
+        };
+        let path_entry = PlaneReplacementReachabilityPathCacheEntry {
+            mode: PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+            start_planes: start_planes.clone(),
+            end_planes: end_planes.clone(),
+            result: Ok(true),
+        };
+        let step_entry = PlaneReplacementReachabilityStepCacheEntry {
+            mode: PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+            current_point: p(0, 0, 0),
+            next_point: p(1, 0, 0),
+            current_planes: start_planes.clone(),
+            next_planes: end_planes.clone(),
+            result: Ok(true),
+        };
+        let mut cache = Vec::new();
+        let mut first_affine = Vec::new();
+        let mut first_path = Vec::new();
+        let mut first_step = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_plane_replacement_no_nested_ordering_warmup_with(
+            &mut cache,
+            &start_planes,
+            &end_planes,
+            &mut first_affine,
+            &mut first_path,
+            &mut first_step,
+            |affine, path, step| {
+                calls += 1;
+                affine.push(affine_entry.clone());
+                path.push(path_entry.clone());
+                step.push(step_entry.clone());
+                Ok(vec![[0, 1, 2]])
+            },
+        )
+        .unwrap();
+
+        let mut second_affine = Vec::new();
+        let mut second_path = Vec::new();
+        let mut second_step = Vec::new();
+        let second = cached_plane_replacement_no_nested_ordering_warmup_with(
+            &mut cache,
+            &start_planes,
+            &end_planes,
+            &mut second_affine,
+            &mut second_path,
+            &mut second_step,
+            |_, _, _| {
+                calls += 1;
+                Ok(vec![[2, 1, 0]])
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(first, second);
+        assert_eq!(first_affine, second_affine);
+        assert_eq!(first_path, second_path);
+        assert_eq!(first_step, second_step);
     }
 
     #[test]
