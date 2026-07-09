@@ -1881,7 +1881,7 @@ fn cached_axis_ordered_segment_trace_with(
     attempt: &[i32],
     trace: impl FnOnce() -> HypermeshResult<TraceAxisSegmentResult>,
 ) -> HypermeshResult<TraceAxisSegmentResult> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.start == *start
             && existing.end == *end
             && existing.axis == axis
@@ -4412,7 +4412,7 @@ fn cached_adjacent_normal_probe_stop_values_with(
     bounds: &Aabb,
     query: impl FnOnce() -> HypermeshResult<(Vec<Real>, bool)>,
 ) -> HypermeshResult<(Vec<Real>, bool)> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.interior_point == *interior
             && existing.direction == *direction
             && existing.support == *support
@@ -4441,7 +4441,7 @@ fn cached_adjacent_axis_probe_stop_values_with(
     direction_positive: bool,
     query: impl FnOnce() -> HypermeshResult<(Vec<Real>, bool)>,
 ) -> HypermeshResult<(Vec<Real>, bool)> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.interior_point == *interior
             && existing.bounds == *bounds
             && existing.axis == axis
@@ -4469,6 +4469,7 @@ fn cached_optional_halfspace_feasibility_report_with(
 ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
     if let Some(existing) = cache
         .iter()
+        .rev()
         .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
     {
         *saw_unknown |= existing.saw_unknown;
@@ -4492,7 +4493,7 @@ fn cached_halfspace_cell_seed_families_from_optional_report_with(
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.bounds == *bounds
             && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
     }) {
@@ -4553,7 +4554,7 @@ fn cached_probe_winding_with(
     probe: &ProbePoint,
     trace: impl FnOnce() -> HypermeshResult<WindingNumberVector>,
 ) -> HypermeshResult<WindingNumberVector> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.point == probe.point
             && definition_families_match_as_sets(&existing.planes, &probe.planes)
     }) {
@@ -4574,7 +4575,7 @@ fn cached_surface_query_with(
     point: &Point3,
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| existing.point == *point) {
+    if let Some(existing) = cache.iter().rev().find(|existing| existing.point == *point) {
         return existing.on_surface.clone();
     }
 
@@ -4592,7 +4593,7 @@ fn cached_probe_reachability_with(
     probe: &ProbePoint,
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.interior_point == interior.point
             && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
             && existing.probe_point == probe.point
