@@ -12360,6 +12360,161 @@ mod tests {
     }
 
     #[test]
+    fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let caches = SubdivisionRuntimeCaches::default();
+        let root_task = contract_task_to_polygon_family_bounds_if_tighter(
+            &SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            ),
+            &caches,
+        )
+        .unwrap()
+        .unwrap_or_else(|| {
+            SubdivisionTask::new(
+                soup.polygons.clone(),
+                Aabb::new(p(0, 0, 0), p(10, 10, 10)),
+                p(0, 5, 5),
+                vec![0; soup.num_meshes],
+            )
+        });
+
+        let root_attempts = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_fanout_counts,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &root_task.bounds,
+            &root_task.polygons,
+        )
+        .unwrap();
+        let root_attempt = root_attempts
+            .into_iter()
+            .find(|attempt| {
+                let mut sizes = [attempt.left_polys.len(), attempt.right_polys.len()];
+                sizes.sort_unstable();
+                sizes == [6, 10]
+            })
+            .unwrap();
+        let root_children = ordered_split_attempt_children(
+            &root_task.polygons,
+            root_attempt.left_polys,
+            root_attempt.left_bounds,
+            root_attempt.right_polys,
+            root_attempt.right_bounds,
+        );
+        let hot_child = root_children
+            .into_iter()
+            .find(|child| child.polygons.len() == 10)
+            .unwrap();
+
+        let (hot_ref, hot_defs, hot_wnv) =
+            propagate_child_reference(&root_task, &hot_child.polygons, &hot_child.bounds, &caches)
+                .unwrap();
+        let hot_task = SubdivisionTask {
+            polygons: hot_child.polygons,
+            bounds: hot_child.bounds,
+            ref_point: hot_ref,
+            ref_definitions: hot_defs,
+            ref_wnv: hot_wnv,
+            depth: root_task.depth + 1,
+        };
+
+        let hot_attempts = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_fanout_counts,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &hot_task.bounds,
+            &hot_task.polygons,
+        )
+        .unwrap();
+        let hot_attempt = hot_attempts.first().unwrap();
+        let hot_split_children = ordered_split_attempt_children(
+            &hot_task.polygons,
+            hot_attempt.left_polys.clone(),
+            hot_attempt.left_bounds.clone(),
+            hot_attempt.right_polys.clone(),
+            hot_attempt.right_bounds.clone(),
+        );
+        for child in hot_split_children {
+            let (child_ref, child_defs, child_wnv) =
+                propagate_child_reference(&hot_task, &child.polygons, &child.bounds, &caches)
+                    .unwrap();
+            let child_task = SubdivisionTask {
+                polygons: child.polygons,
+                bounds: child.bounds,
+                ref_point: child_ref,
+                ref_definitions: child_defs,
+                ref_wnv: child_wnv,
+                depth: hot_task.depth + 1,
+            };
+            if child_task.polygons.len() == 5 {
+                let intersections =
+                    pairwise_intersections_by_polygon(&child_task.polygons).unwrap();
+                for index in ordered_leaf_polygon_indices_by_intersections(&intersections) {
+                    let polygon = &child_task.polygons[index];
+                    if polygon.mesh_index != 0
+                        || polygon.polygon_index != 3
+                        || intersections[index].is_empty()
+                    {
+                        continue;
+                    }
+                    let bsp_leaves =
+                        build_host_bsp_leaves(polygon, &child_task.polygons, &intersections[index])
+                            .unwrap();
+                    for leaf in bsp_leaves {
+                        if leaf.edges.len() != 4 {
+                            continue;
+                        }
+                        let Ok((interior_points, effective_delta_w)) =
+                            certify_bsp_leaf_and_delta_w_with_host_intersections(
+                                polygon,
+                                &leaf.edges,
+                                &child_task.polygons,
+                                Some(&intersections[index]),
+                            )
+                        else {
+                            continue;
+                        };
+                        if interior_points.len() != 4 || effective_delta_w != vec![1, 0, 0] {
+                            continue;
+                        }
+
+                        let winding =
+                            classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+                                std::slice::from_ref(&interior_points[0]),
+                                &polygon.support,
+                                &child_task.ref_point,
+                                &child_task.ref_definitions,
+                                &child_task.ref_wnv,
+                                &child_task.polygons,
+                                &child_task.bounds,
+                                &effective_delta_w,
+                                &mut LeafProbeQueryCaches::default(),
+                            )
+                            .unwrap();
+                        assert_eq!(winding, vec![0, 0, 1]);
+                        return;
+                    }
+                }
+            }
+        }
+
+        panic!("failed to find the full-soup hot fragment regression target");
+    }
+
+    #[test]
     fn ordered_reference_search_polygons_prefers_bounds_overlaps() {
         let overlapping = make_triangle(&p(1, 1, 1), &p(3, 1, 1), &p(1, 3, 1), 10, 0);
         let disjoint = make_triangle(&p(8, 8, 8), &p(9, 8, 8), &p(8, 9, 8), 20, 0);
