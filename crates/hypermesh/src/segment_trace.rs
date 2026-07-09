@@ -1896,7 +1896,6 @@ fn interior_box_detour_targets_with_queries(
         &mut crossing_for,
         &mut classify_point_on_polygon,
     )?;
-
     let mut targets =
         collect_detour_targets_from_axis_intervals(&intervals, |bounds| build(bounds))?;
     let unresolved_fallback = targets
@@ -1992,6 +1991,26 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     })
 }
 
+fn detour_shifted_seed_families(
+    report_witness: Option<&Point3>,
+    certified_direct_target_points: &[Point3],
+    seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+) -> (Vec<Point3>, Vec<Point3>, Vec<Point3>) {
+    if !certified_direct_target_points.is_empty() {
+        let _ = report_witness;
+        return (Vec::new(), Vec::new(), Vec::new());
+    }
+
+    shifted_halfspace_seed_families_with_report_seed(
+        report_witness,
+        seeds,
+        shifted_vertices,
+        shifted_geometry_seeds,
+    )
+}
+
 fn strict_aabb_targets_with_seed_families(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -2021,9 +2040,15 @@ fn strict_aabb_targets_with_seed_families(
         build_detour_target(seed, &halfspaces, active_planes, false)
     })?;
 
+    let certified_direct_target_points = targets
+        .iter()
+        .filter(|target| !target.uncertified_definition_fallback)
+        .map(|target| target.point.clone())
+        .collect::<Vec<_>>();
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
-        shifted_halfspace_seed_families_with_report_seed(
+        detour_shifted_seed_families(
             report_witness,
+            &certified_direct_target_points,
             seeds,
             shifted_vertices,
             shifted_geometry_seeds,
@@ -2204,6 +2229,7 @@ fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
     }
 }
 
+#[cfg(test)]
 fn extend_detour_target_families_backtracking_unknown(
     targets: &mut Vec<DetourTarget>,
     families: impl IntoIterator<Item = HypermeshResult<Vec<DetourTarget>>>,
@@ -2216,6 +2242,36 @@ fn extend_detour_target_families_backtracking_unknown(
                     push_unique_detour_target(targets, target);
                 }
             }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_hard_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (saw_hard_unknown || unresolved_fallback) {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if !has_certified_target && (saw_hard_unknown || unresolved_fallback) {
+            mark_all_detour_targets_uncertified(targets);
+        }
+        Ok(())
+    }
+}
+
+fn extend_disjoint_detour_target_families_backtracking_unknown(
+    targets: &mut Vec<DetourTarget>,
+    families: impl IntoIterator<Item = HypermeshResult<Vec<DetourTarget>>>,
+) -> HypermeshResult<()> {
+    let mut saw_hard_unknown = false;
+    for family in families {
+        match family {
+            Ok(found) => targets.extend(found),
             Err(HypermeshError::UnknownClassification) => {
                 saw_hard_unknown = true;
             }
@@ -2254,7 +2310,9 @@ fn collect_detour_targets_from_axis_intervals(
             }
         }
     }
-    extend_detour_target_families_backtracking_unknown(&mut detours, families)?;
+    // Each interval combination defines a distinct strict interior box, so target points
+    // produced by different boxes cannot coincide. Avoid cross-box dedupe here.
+    extend_disjoint_detour_target_families_backtracking_unknown(&mut detours, families)?;
     Ok(detours)
 }
 
@@ -3564,7 +3622,14 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
                 &probe.point,
                 &start_definitions,
                 &end_definitions,
-                || probe_reaches_adjacent_cell(&interior.point, &probe.point, host_support, polygons),
+                || {
+                    probe_reaches_adjacent_cell(
+                        &interior.point,
+                        &probe.point,
+                        host_support,
+                        polygons,
+                    )
+                },
                 |start_definition, end_definition| {
                     plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
                         start_definition,
@@ -4509,7 +4574,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
     end_definitions = unique_definition_family(&end_definitions);
 
-    probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
+    let result = probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         &interior.point,
         &probe.point,
         host_support,
@@ -4523,7 +4588,8 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         no_step_detour_target_families,
         definition_no_detour_reachability,
         detour_target_families,
-    )
+    );
+    result
 }
 
 #[cfg(test)]
@@ -5147,7 +5213,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
 ) -> HypermeshResult<bool> {
-    probe_reaches_adjacent_cell_with_definition_search(
+    let result = probe_reaches_adjacent_cell_with_definition_search(
         start,
         end,
         start_definitions,
@@ -5165,7 +5231,8 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                 no_step_detour_target_cache,
             )
         },
-    )
+    );
+    result
 }
 
 fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
@@ -5249,9 +5316,7 @@ fn definition_pair_reachability_backtracking_unknown(
             match reaches(start_definition, end_definition) {
                 Ok(true) => return Ok(true),
                 Ok(false) => {}
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                }
+                Err(HypermeshError::UnknownClassification) => saw_unknown = true,
                 Err(err) => return Err(err),
             }
         }
@@ -5404,7 +5469,8 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         Err(err) => return Err(err),
     }
 
-    for detour in detours_for(start, end)? {
+    let detours = detours_for(start, end)?;
+    for detour in detours {
         let start_definition_transition = detour.point == *start
             && !definition_families_match_as_sets(&detour.definitions, start_definitions);
         let end_definition_transition = detour.point == *end
@@ -5551,7 +5617,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
 ) -> HypermeshResult<bool> {
-    plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+    let result = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         start_planes,
         end_planes,
         PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -5582,7 +5648,8 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons),
             )
         },
-    )
+    );
+    result
 }
 
 #[cfg(test)]
