@@ -8181,31 +8181,42 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
-    let (intervals, mut saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+    let (intervals, mut saw_unknown) = cached_interior_box_axis_intervals_with_surface_queries(
+        interior_box_axis_intervals,
         start,
         end,
-        polygons,
-        &mut |edge_start, edge_end, polygon, axis| {
-            let start_class = classify_point(edge_start, &polygon.support)?;
-            let end_class = classify_point(edge_end, &polygon.support)?;
-            if start_class == Classification::On {
-                return Ok(Some(edge_start.clone()));
-            }
-            if end_class == Classification::On {
-                return Ok(Some(edge_end.clone()));
-            }
-            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
-                if let Some(crossing) = crossing {
-                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
-                        return Ok(None);
+        || {
+            interior_box_axis_intervals_with_surface_queries(
+                start,
+                end,
+                polygons,
+                &mut |edge_start, edge_end, polygon, axis| {
+                    let start_class = classify_point(edge_start, &polygon.support)?;
+                    let end_class = classify_point(edge_end, &polygon.support)?;
+                    if start_class == Classification::On {
+                        return Ok(Some(edge_start.clone()));
                     }
-                    Ok(Some(crossing))
-                } else {
-                    Ok(None)
-                }
-            })
+                    if end_class == Classification::On {
+                        return Ok(Some(edge_end.clone()));
+                    }
+                    segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
+                        |crossing| {
+                            if let Some(crossing) = crossing {
+                                if !point_strictly_between_axis(
+                                    &crossing, edge_start, edge_end, axis,
+                                )? {
+                                    return Ok(None);
+                                }
+                                Ok(Some(crossing))
+                            } else {
+                                Ok(None)
+                            }
+                        },
+                    )
+                },
+                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+            )
         },
-        &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
     )?;
     for x in &intervals[0] {
         for y in &intervals[1] {
