@@ -79,6 +79,8 @@ struct ProbeReachabilityCacheEntry {
     reachable: HypermeshResult<bool>,
 }
 
+const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 8;
+
 #[derive(Clone, Debug, PartialEq)]
 struct DirectProbeReachabilityCacheEntry {
     start: Point3,
@@ -2151,15 +2153,23 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
         }
         direct_targets.push(target);
     }
-
-    let mut ranked_direct_targets = Vec::with_capacity(direct_targets.len());
+    let refinement_len = direct_targets
+        .len()
+        .min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT);
+    let mut ranked_direct_targets = Vec::with_capacity(refinement_len);
+    let mut deferred_direct_targets =
+        Vec::with_capacity(direct_targets.len().saturating_sub(refinement_len));
     for (index, target) in direct_targets.into_iter().enumerate() {
-        let (rank_missing, rank) = match rank_direct(&target) {
-            Ok(rank) => (0u8, Some(rank)),
-            Err(HypermeshError::UnknownClassification) => (1u8, None),
-            Err(err) => return Err(err),
-        };
-        ranked_direct_targets.push((rank_missing, rank, index, target));
+        if index < refinement_len {
+            let (rank_missing, rank) = match rank_direct(&target) {
+                Ok(rank) => (0u8, Some(rank)),
+                Err(HypermeshError::UnknownClassification) => (1u8, None),
+                Err(err) => return Err(err),
+            };
+            ranked_direct_targets.push((rank_missing, rank, index, target));
+        } else {
+            deferred_direct_targets.push(target);
+        }
     }
     ranked_direct_targets.sort_by(|left, right| {
         left.0
@@ -2167,7 +2177,6 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             .then_with(|| left.1.cmp(&right.1))
             .then_with(|| left.2.cmp(&right.2))
     });
-
     for (_, _, _, target) in ranked_direct_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
@@ -2188,7 +2197,26 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             Err(err) => return Err(err),
         }
     }
-
+    for target in deferred_direct_targets {
+        match evaluate(target.clone()) {
+            Ok(true) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            Ok(false) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         detour_shifted_seed_families(
             report_witness,
@@ -7608,7 +7636,6 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         },
         &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
     )?;
-
     for x in &intervals[0] {
         for y in &intervals[1] {
             for z in &intervals[2] {
