@@ -2133,22 +2133,8 @@ fn interior_box_detour_targets_with_queries(
         &mut crossing_for,
         &mut classify_point_on_polygon,
     )?;
-    let mut targets =
-        collect_detour_targets_from_axis_intervals(&intervals, |bounds| build(bounds))?;
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_target && (saw_unknown || unresolved_fallback) {
-            mark_all_detour_targets_uncertified(&mut targets);
-        }
-        Ok(targets)
-    }
+    let targets = collect_detour_targets_from_axis_intervals(&intervals, |bounds| build(bounds))?;
+    detour_target_family_result_from_targets(targets, saw_unknown)
 }
 
 fn interior_box_axis_intervals_with_surface_queries(
@@ -2918,7 +2904,6 @@ fn build_detour_target_from_shifted_witness(
     })
 }
 
-#[cfg(test)]
 fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarget) -> bool {
     if let Some(existing) = targets
         .iter_mut()
@@ -2959,6 +2944,26 @@ fn push_unique_detour_target(targets: &mut Vec<DetourTarget>, target: DetourTarg
         let introduced_uncertified_state = target.uncertified_definition_fallback;
         targets.push(target);
         introduced_uncertified_state
+    }
+}
+
+fn detour_target_family_result_from_targets(
+    mut targets: Vec<DetourTarget>,
+    saw_unknown: bool,
+) -> HypermeshResult<Vec<DetourTarget>> {
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (saw_unknown || unresolved_fallback) {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if !has_certified_target && (saw_unknown || unresolved_fallback) {
+            mark_all_detour_targets_uncertified(&mut targets);
+        }
+        Ok(targets)
     }
 }
 
@@ -8229,7 +8234,8 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             if progressive_interior_box_detours
                 && cached_detour_target_family(&*detour_target_cache, start, end).is_none()
             {
-                match probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
+                let outcome =
+                    probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
                     start,
                     end,
                     polygons,
@@ -8248,7 +8254,15 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                     trace_without_detours,
                     detour_target_cache,
                     detours_for_query,
-                ) {
+                );
+                if let Some(targets) = outcome.exhausted_targets.clone() {
+                    detour_target_cache.push(DetourTargetFamilyCacheEntry {
+                        start: start.clone(),
+                        end: end.clone(),
+                        targets,
+                    });
+                }
+                match outcome.result {
                     Ok(true) => Ok(true),
                     Ok(false) => {
                         if saw_unknown {
@@ -8498,6 +8512,13 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
     }
 }
 
+struct ProgressiveNoPlaneDetourSearchOutcome {
+    result: HypermeshResult<bool>,
+    exhausted_targets: Option<HypermeshResult<Vec<DetourTarget>>>,
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
 fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -8523,7 +8544,55 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
-    let (intervals, mut saw_unknown) = cached_interior_box_axis_intervals_with_surface_queries(
+    probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
+        start,
+        end,
+        polygons,
+        visited_points,
+        start_definitions,
+        end_definitions,
+        progressive_interior_box_detours,
+        no_plane_replacement_cycle_guard_cache,
+        no_plane_replacement_cache,
+        halfspace_report_cache,
+        halfspace_seed_family_cache,
+        strict_aabb_target_families,
+        interior_box_axis_intervals,
+        surface_cache,
+        surface_query,
+        trace_without_detours,
+        detour_target_cache,
+        detours_for_query,
+    )
+    .result
+}
+
+fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    visited_points: &[VisitedDefinitionPoint],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    progressive_interior_box_detours: bool,
+    no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
+    halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
+    halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
+    strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
+    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> ProgressiveNoPlaneDetourSearchOutcome {
+    let (intervals, mut saw_unknown) = match cached_interior_box_axis_intervals_with_surface_queries(
         interior_box_axis_intervals,
         start,
         end,
@@ -8559,11 +8628,29 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                 &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
             )
         },
-    )?;
+    ) {
+        Ok(found) => found,
+        Err(err) => {
+            return ProgressiveNoPlaneDetourSearchOutcome {
+                result: Err(err),
+                exhausted_targets: None,
+            };
+        }
+    };
+    let mut target_family_saw_unknown = saw_unknown;
+    let mut exhausted_targets = Vec::new();
     for x in &intervals[0] {
         for y in &intervals[1] {
             for z in &intervals[2] {
-                let bounds = aabb_from_axis_intervals([x, y, z])?;
+                let bounds = match aabb_from_axis_intervals([x, y, z]) {
+                    Ok(bounds) => bounds,
+                    Err(err) => {
+                        return ProgressiveNoPlaneDetourSearchOutcome {
+                            result: Err(err),
+                            exhausted_targets: None,
+                        };
+                    }
+                };
                 let trace_without_detours_cell =
                     std::cell::RefCell::new(&mut *trace_without_detours);
                 let halfspace_report_cache_cell =
@@ -8575,8 +8662,25 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                 let result = if let Some(families) =
                     cached_strict_aabb_target_families(strict_aabb_target_families, &bounds)
                 {
+                    let families = match families {
+                        Ok(families) => families,
+                        Err(err) => {
+                            return ProgressiveNoPlaneDetourSearchOutcome {
+                                result: Err(err),
+                                exhausted_targets: None,
+                            };
+                        }
+                    };
+                    target_family_saw_unknown |= families.saw_unknown;
+                    for target in families
+                        .direct_targets
+                        .iter()
+                        .chain(families.shifted_targets.iter())
+                    {
+                        push_unique_detour_target(&mut exhausted_targets, target.clone());
+                    }
                     evaluate_strict_aabb_target_families_with_direct_ranking(
-                        families?,
+                        families,
                         &mut |detour| {
                             detour_target_no_plane_refined_rank_with_surface_queries(
                                 detour,
@@ -8725,6 +8829,14 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         },
                     );
                     if let Some(families) = outcome.exhausted_families.clone() {
+                        target_family_saw_unknown |= families.saw_unknown;
+                        for target in families
+                            .direct_targets
+                            .iter()
+                            .chain(families.shifted_targets.iter())
+                        {
+                            push_unique_detour_target(&mut exhausted_targets, target.clone());
+                        }
                         strict_aabb_target_families.push(StrictAabbTargetFamilyCacheEntry {
                             bounds: bounds.clone(),
                             families: Ok(families),
@@ -8733,22 +8845,38 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                     outcome.result
                 };
                 match result {
-                    Ok(true) => return Ok(true),
+                    Ok(true) => {
+                        return ProgressiveNoPlaneDetourSearchOutcome {
+                            result: Ok(true),
+                            exhausted_targets: None,
+                        };
+                    }
                     Ok(false) => {}
                     Err(HypermeshError::UnknownClassification) => {
                         saw_unknown = true;
                         continue;
                     }
-                    Err(err) => return Err(err),
+                    Err(err) => {
+                        return ProgressiveNoPlaneDetourSearchOutcome {
+                            result: Err(err),
+                            exhausted_targets: None,
+                        };
+                    }
                 }
             }
         }
     }
 
-    if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        Ok(false)
+    ProgressiveNoPlaneDetourSearchOutcome {
+        result: if saw_unknown {
+            Err(HypermeshError::UnknownClassification)
+        } else {
+            Ok(false)
+        },
+        exhausted_targets: Some(detour_target_family_result_from_targets(
+            exhausted_targets,
+            target_family_saw_unknown,
+        )),
     }
 }
 
