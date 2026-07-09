@@ -2361,7 +2361,7 @@ fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
             Err(err) => return Err(err),
         }
     }
-    for target in deferred_direct_targets {
+    for target in shifted_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
@@ -2382,7 +2382,7 @@ fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
         }
     }
 
-    for target in shifted_targets {
+    for target in deferred_direct_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
@@ -13297,14 +13297,25 @@ mod tests {
     }
 
     #[test]
-    fn search_strict_aabb_targets_progressively_ranks_direct_targets_before_evaluation() {
-        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+    fn search_strict_aabb_targets_progressively_ranks_front_direct_slice_before_evaluation() {
         let mut evaluated = Vec::new();
 
-        let found = search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
-            &bounds,
-            |_bounds, _halfspaces, _report, _saw_unknown| {
-                Ok((vec![p(1, 1, 1), p(2, 2, 2)], Vec::new(), Vec::new()))
+        let found = evaluate_strict_aabb_target_families_with_direct_ranking(
+            StrictAabbTargetFamilies {
+                direct_targets: vec![
+                    DetourTarget {
+                        point: p(1, 1, 1),
+                        definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+                        uncertified_definition_fallback: false,
+                    },
+                    DetourTarget {
+                        point: p(2, 2, 2),
+                        definitions: vec![axis_plane_definition(&p(2, 2, 2))],
+                        uncertified_definition_fallback: false,
+                    },
+                ],
+                shifted_targets: Vec::new(),
+                saw_unknown: false,
             },
             &mut |target| {
                 if target.point == p(2, 2, 2) {
@@ -13321,7 +13332,45 @@ mod tests {
         .unwrap();
 
         assert!(found);
-        assert_eq!(evaluated, vec![p(2, 2, 2)]);
+        assert_eq!(evaluated, vec![p(1, 1, 1)]);
+    }
+
+    #[test]
+    fn search_strict_aabb_targets_progressively_tries_shifted_targets_before_deferred_direct_targets()
+     {
+        let mut evaluated = Vec::new();
+
+        let found = evaluate_strict_aabb_target_families_with_direct_ranking(
+            StrictAabbTargetFamilies {
+                direct_targets: vec![
+                    DetourTarget {
+                        point: p(1, 1, 1),
+                        definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+                        uncertified_definition_fallback: false,
+                    },
+                    DetourTarget {
+                        point: p(2, 2, 2),
+                        definitions: vec![axis_plane_definition(&p(2, 2, 2))],
+                        uncertified_definition_fallback: false,
+                    },
+                ],
+                shifted_targets: vec![DetourTarget {
+                    point: p(4, 1, 1),
+                    definitions: vec![axis_plane_definition(&p(4, 1, 1))],
+                    uncertified_definition_fallback: false,
+                }],
+                saw_unknown: false,
+            },
+            &mut |_target| Ok([0u8, 0u8]),
+            &mut |target| {
+                evaluated.push(target.point.clone());
+                Ok(target.point == p(4, 1, 1))
+            },
+        )
+        .unwrap();
+
+        assert!(found);
+        assert_eq!(evaluated, vec![p(1, 1, 1), p(4, 1, 1)]);
     }
 
     #[test]
