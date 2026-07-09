@@ -5803,14 +5803,16 @@ fn cached_definition_no_detour_reachability_with(
         return existing.result.clone();
     }
 
-    let result = trace();
     cache.push(DefinitionNoDetourReachabilityCacheEntry {
         start: start.clone(),
         end: end.clone(),
         start_definitions: start_definitions.to_vec(),
         end_definitions: end_definitions.to_vec(),
-        result: result.clone(),
+        result: Err(HypermeshError::UnknownClassification),
     });
+    let cache_index = cache.len() - 1;
+    let result = trace();
+    cache[cache_index].result = result.clone();
     result
 }
 
@@ -5835,14 +5837,16 @@ fn cached_definition_no_plane_replacement_reachability_with(
         return existing.result.clone();
     }
 
-    let result = trace();
     cache.push(DefinitionNoPlaneReplacementReachabilityCacheEntry {
         start: start.clone(),
         end: end.clone(),
         start_definitions: start_definitions.to_vec(),
         end_definitions: end_definitions.to_vec(),
-        result: result.clone(),
+        result: Err(HypermeshError::UnknownClassification),
     });
+    let cache_index = cache.len() - 1;
+    let result = trace();
+    cache[cache_index].result = result.clone();
     result
 }
 
@@ -15608,6 +15612,34 @@ mod tests {
     }
 
     #[test]
+    fn cached_definition_no_detour_reachability_reuses_in_progress_exact_state() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut cache = vec![DefinitionNoDetourReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            result: Err(HypermeshError::UnknownClassification),
+        }];
+
+        let result = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            || Ok(true),
+        );
+
+        assert_eq!(result, Err(HypermeshError::UnknownClassification));
+        assert_eq!(cache.len(), 1);
+        assert_eq!(cache[0].result, Err(HypermeshError::UnknownClassification));
+    }
+
+    #[test]
     fn cached_definition_no_plane_replacement_reachability_reuses_identical_query() {
         let start = p(0, 0, 0);
         let end = p(1, 0, 0);
@@ -15724,6 +15756,34 @@ mod tests {
         assert!(first);
         assert!(second);
         assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
+    fn cached_definition_no_plane_replacement_reachability_reuses_in_progress_exact_state() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut cache = vec![DefinitionNoPlaneReplacementReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            result: Err(HypermeshError::UnknownClassification),
+        }];
+
+        let result = cached_definition_no_plane_replacement_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            || Ok(true),
+        );
+
+        assert_eq!(result, Err(HypermeshError::UnknownClassification));
+        assert_eq!(cache.len(), 1);
+        assert_eq!(cache[0].result, Err(HypermeshError::UnknownClassification));
     }
 
     #[test]
