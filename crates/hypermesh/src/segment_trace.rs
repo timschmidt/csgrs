@@ -6509,6 +6509,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                     no_plane_replacement_cycle_guard_cache,
                     no_plane_replacement_cache,
                     no_step_detour_target_cache,
+                    direct_probe_reachability_cache,
                 ) {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
@@ -6526,6 +6527,8 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     }
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     start: &Point3,
     end: &Point3,
@@ -7412,6 +7415,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
     let mut no_plane_replacement_cache = Vec::new();
     let mut no_step_detour_target_cache = Vec::new();
+    let mut direct_probe_reachability_cache = Vec::new();
     plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
         start_planes,
         end_planes,
@@ -7424,6 +7428,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
         &mut no_step_detour_target_cache,
+        &mut direct_probe_reachability_cache,
     )
 }
 
@@ -7441,6 +7446,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     >,
     no_plane_replacement_cache: &mut Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
     cached_plane_replacement_reachability_path_with(
         path_cache,
@@ -7448,18 +7454,26 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         start_planes,
         end_planes,
         || {
+            let mut ordering_affine_cache = Vec::new();
+            let mut no_step_affine_cache = Vec::new();
+            let mut no_step_path_cache = Vec::new();
+            let mut no_step_step_cache = Vec::new();
             let ordered = ordered_axis_orderings_by_no_step_precheck_with(
                 start_planes,
                 end_planes,
-                affine_cache,
+                &mut ordering_affine_cache,
                 |current, next, current_definitions, next_definitions| {
-                    probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+                    probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
                         current,
                         next,
                         host_support,
                         polygons,
                         std::slice::from_ref(current_definitions),
                         std::slice::from_ref(next_definitions),
+                        &mut no_step_affine_cache,
+                        &mut no_step_path_cache,
+                        &mut no_step_step_cache,
+                        direct_probe_reachability_cache,
                     )
                 },
             )?;
@@ -7485,13 +7499,17 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                          end: &Point3,
                          start_definitions: &[[Plane; 3]],
                          end_definitions: &[[Plane; 3]]| {
-                            probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+                            probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
                                 start,
                                 end,
                                 host_support,
                                 polygons,
                                 start_definitions,
                                 end_definitions,
+                                &mut no_step_affine_cache,
+                                &mut no_step_path_cache,
+                                &mut no_step_step_cache,
+                                direct_probe_reachability_cache,
                             )
                         },
                         |start: &Point3, end: &Point3| {
