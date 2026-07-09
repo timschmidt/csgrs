@@ -87,7 +87,7 @@ struct InteriorBoxAxisIntervalsCacheEntry {
     saw_unknown: bool,
 }
 
-const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 8;
+const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 1;
 
 #[derive(Clone, Debug, PartialEq)]
 struct DirectProbeReachabilityCacheEntry {
@@ -8419,31 +8419,15 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
         &detour.definitions,
         end_definitions,
     ))?;
-    let (unresolved_start, unresolved_end) = if second_key < first_key {
-        (start, &detour.point)
-    } else {
-        (&detour.point, end)
-    };
-    let (intervals, _) = cached_interior_box_axis_intervals_with_surface_queries(
+    let _ = (
+        polygons,
+        interval_crossing,
+        classify_crossing,
+        start_definitions,
+        end_definitions,
         interior_box_axis_intervals,
-        unresolved_start,
-        unresolved_end,
-        || {
-            interior_box_axis_intervals_with_surface_queries(
-                unresolved_start,
-                unresolved_end,
-                polygons,
-                interval_crossing,
-                classify_crossing,
-            )
-        },
-    )?;
-    let mut counts = [intervals[0].len(), intervals[1].len(), intervals[2].len()];
-    counts.sort_unstable();
-    let total = counts[0] + counts[1] + counts[2];
-    Ok((
-        first_key, second_key, counts[2], total, counts[1], counts[0],
-    ))
+    );
+    Ok((first_key, second_key, 0, 0, 0, 0))
 }
 
 fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
