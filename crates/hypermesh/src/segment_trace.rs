@@ -6575,33 +6575,123 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
-    probe_reaches_adjacent_cell_with_definition_search(
+    let direct_unknown = match cached_direct_probe_reachability_with(
+        direct_probe_reachability_cache,
         start,
         end,
-        start_definitions,
-        end_definitions,
-        || {
-            cached_direct_probe_reachability_with(
-                direct_probe_reachability_cache,
-                start,
-                end,
-                host_support,
-                polygons,
-                || probe_reaches_adjacent_cell(start, end, host_support, polygons),
-            )
-        },
-        |start_definition, end_definition| {
-            plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
-                start_definition,
-                end_definition,
-                host_support,
-                polygons,
-                affine_cache,
-                path_cache,
-                step_cache,
-            )
-        },
-    )
+        host_support,
+        polygons,
+        || probe_reaches_adjacent_cell(start, end, host_support, polygons),
+    ) {
+        Ok(true) => return Ok(true),
+        Ok(false) => false,
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
+
+    let mut start_definitions = start_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+    let start_definitions = unique_definition_family(&start_definitions);
+    let end_definitions = unique_definition_family(&end_definitions);
+    let ordered_pairs = ordered_definition_pairs_by_no_step_precheck_with(
+        &start_definitions,
+        &end_definitions,
+        host_support,
+        polygons,
+        affine_cache,
+        direct_probe_reachability_cache,
+    )?;
+
+    let mut saw_unknown = direct_unknown;
+    for (start_index, end_index) in ordered_pairs {
+        match plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+            &start_definitions[start_index],
+            &end_definitions[end_index],
+            host_support,
+            polygons,
+            affine_cache,
+            path_cache,
+            step_cache,
+        ) {
+            Ok(true) => return Ok(true),
+            Ok(false) => {}
+            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(err) => return Err(err),
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
+}
+
+fn ordered_definition_pairs_by_no_step_precheck_with(
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
+) -> HypermeshResult<Vec<(usize, usize)>> {
+    let mut scored = Vec::with_capacity(start_definitions.len() * end_definitions.len());
+    for (start_index, start_definition) in start_definitions.iter().enumerate() {
+        for (end_index, end_definition) in end_definitions.iter().enumerate() {
+            scored.push((
+                best_plane_replacement_no_step_precheck_key(
+                    start_definition,
+                    end_definition,
+                    host_support,
+                    polygons,
+                    affine_cache,
+                    direct_probe_reachability_cache,
+                )?,
+                start_index,
+                end_index,
+            ));
+        }
+    }
+    scored.sort_unstable();
+    Ok(scored
+        .into_iter()
+        .map(|(_, start_index, end_index)| (start_index, end_index))
+        .collect())
+}
+
+fn best_plane_replacement_no_step_precheck_key(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
+) -> HypermeshResult<[u8; 3]> {
+    let mut best = [u8::MAX; 3];
+    for ordering in AXIS_ORDERINGS {
+        let key = ordering_no_step_precheck_key(
+            &ordering,
+            start_planes,
+            end_planes,
+            affine_cache,
+            &mut |current, next, _current_definitions, _next_definitions| {
+                cached_direct_probe_reachability_with(
+                    direct_probe_reachability_cache,
+                    current,
+                    next,
+                    host_support,
+                    polygons,
+                    || probe_reaches_adjacent_cell(current, next, host_support, polygons),
+                )
+            },
+        )?;
+        if key < best {
+            best = key;
+        }
+    }
+    Ok(best)
 }
 
 fn probe_reaches_adjacent_cell_with_definition_search(
