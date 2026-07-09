@@ -2053,11 +2053,12 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     })
 }
 
-fn search_strict_aabb_targets_progressively(
+fn search_strict_aabb_targets_progressively_with_direct_ranking<K: Ord>(
     bounds: &Aabb,
-    mut evaluate: impl FnMut(DetourTarget) -> HypermeshResult<bool>,
+    rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
+    evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    search_strict_aabb_targets_progressively_with_seed_families(
+    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
         bounds,
         |bounds, halfspaces, report, saw_unknown| {
             halfspace_cell_seed_families_from_optional_report(
@@ -2067,10 +2068,12 @@ fn search_strict_aabb_targets_progressively(
                 saw_unknown,
             )
         },
-        &mut evaluate,
+        rank_direct,
+        evaluate,
     )
 }
 
+#[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -2079,6 +2082,25 @@ fn search_strict_aabb_targets_progressively_with_seed_families(
         Option<&hyperlimit::HalfspaceFeasibilityReport>,
         &mut bool,
     ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+    evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
+        bounds,
+        &mut seed_families_for,
+        &mut |_| Ok(()),
+        evaluate,
+    )
+}
+
+fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking<K: Ord>(
+    bounds: &Aabb,
+    mut seed_families_for: impl FnMut(
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+        &mut bool,
+    ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+    rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
     evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     let halfspaces = aabb_core_halfspaces(bounds)?;
@@ -2097,6 +2119,7 @@ fn search_strict_aabb_targets_progressively_with_seed_families(
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
 
     let mut certified_direct_target_points = Vec::new();
+    let mut direct_targets = Vec::new();
     for seed in &seeds {
         let target = match build_detour_target(
             seed,
@@ -2114,6 +2137,26 @@ fn search_strict_aabb_targets_progressively_with_seed_families(
         if !target.uncertified_definition_fallback {
             certified_direct_target_points.push(target.point.clone());
         }
+        direct_targets.push(target);
+    }
+
+    let mut ranked_direct_targets = Vec::with_capacity(direct_targets.len());
+    for (index, target) in direct_targets.into_iter().enumerate() {
+        let (rank_missing, rank) = match rank_direct(&target) {
+            Ok(rank) => (0u8, Some(rank)),
+            Err(HypermeshError::UnknownClassification) => (1u8, None),
+            Err(err) => return Err(err),
+        };
+        ranked_direct_targets.push((rank_missing, rank, index, target));
+    }
+    ranked_direct_targets.sort_by(|left, right| {
+        left.0
+            .cmp(&right.0)
+            .then_with(|| left.1.cmp(&right.1))
+            .then_with(|| left.2.cmp(&right.2))
+    });
+
+    for (_, _, _, target) in ranked_direct_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
@@ -7457,25 +7500,40 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         for y in &intervals[1] {
             for z in &intervals[2] {
                 let bounds = aabb_from_axis_intervals([x, y, z])?;
-                let result = search_strict_aabb_targets_progressively(&bounds, |detour| {
-                    evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
-                        &detour,
-                        start,
-                        end,
-                        polygons,
-                        visited_points,
-                        start_definitions,
-                        end_definitions,
-                        progressive_interior_box_detours,
-                        no_plane_replacement_cycle_guard_cache,
-                        surface_cache,
-                        surface_query,
-                        trace_without_detours,
-                        detour_target_cache,
-                        detours_for_query,
-                        &mut saw_unknown,
-                    )
-                });
+                let trace_without_detours_cell =
+                    std::cell::RefCell::new(&mut *trace_without_detours);
+                let result = search_strict_aabb_targets_progressively_with_direct_ranking(
+                    &bounds,
+                    &mut |detour| {
+                        detour_target_no_plane_direct_precheck_key(
+                            detour,
+                            start,
+                            end,
+                            start_definitions,
+                            end_definitions,
+                            &mut **trace_without_detours_cell.borrow_mut(),
+                        )
+                    },
+                    &mut |detour| {
+                        evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                            &detour,
+                            start,
+                            end,
+                            polygons,
+                            visited_points,
+                            start_definitions,
+                            end_definitions,
+                            progressive_interior_box_detours,
+                            no_plane_replacement_cycle_guard_cache,
+                            surface_cache,
+                            surface_query,
+                            &mut **trace_without_detours_cell.borrow_mut(),
+                            detour_target_cache,
+                            detours_for_query,
+                            &mut saw_unknown,
+                        )
+                    },
+                );
                 match result {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
@@ -7493,6 +7551,44 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         Err(HypermeshError::UnknownClassification)
     } else {
         Ok(false)
+    }
+}
+
+fn detour_target_no_plane_direct_precheck_key(
+    detour: &DetourTarget,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+) -> HypermeshResult<[u8; 2]> {
+    Ok([
+        direct_precheck_rank(trace_without_detours(
+            start,
+            &detour.point,
+            start_definitions,
+            &detour.definitions,
+        ))?,
+        direct_precheck_rank(trace_without_detours(
+            &detour.point,
+            end,
+            &detour.definitions,
+            end_definitions,
+        ))?,
+    ])
+}
+
+fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
+    match result {
+        Ok(true) => Ok(0),
+        Err(HypermeshError::UnknownClassification) => Ok(1),
+        Ok(false) => Ok(2),
+        Err(err) => Err(err),
     }
 }
 
@@ -12288,6 +12384,34 @@ mod tests {
 
         assert!(found);
         assert_eq!(evaluated, 1);
+    }
+
+    #[test]
+    fn search_strict_aabb_targets_progressively_ranks_direct_targets_before_evaluation() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let mut evaluated = Vec::new();
+
+        let found = search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
+            &bounds,
+            |_bounds, _halfspaces, _report, _saw_unknown| {
+                Ok((vec![p(1, 1, 1), p(2, 2, 2)], Vec::new(), Vec::new()))
+            },
+            &mut |target| {
+                if target.point == p(2, 2, 2) {
+                    Ok([0u8, 0u8])
+                } else {
+                    Ok([1u8, 1u8])
+                }
+            },
+            &mut |target| {
+                evaluated.push(target.point.clone());
+                Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(found);
+        assert_eq!(evaluated, vec![p(2, 2, 2)]);
     }
 
     #[test]
