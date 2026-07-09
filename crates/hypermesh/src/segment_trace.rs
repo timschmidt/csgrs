@@ -5285,6 +5285,22 @@ fn cached_definition_cycle_guard_result(
         end_definitions,
         visited_points,
     );
+    if let Some(existing) = cache.iter().rev().find(|existing| {
+        visited_definition_points_match_as_sets(
+            &existing.visited_points,
+            &normalized_visited_points,
+        ) && ((existing.start == *start
+            && existing.end == *end
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions))
+            || (existing.start == *end
+                && existing.end == *start
+                && definition_families_match_as_sets(&existing.start_definitions, end_definitions)
+                && definition_families_match_as_sets(&existing.end_definitions, start_definitions)))
+    }) {
+        return Some(existing.result.clone());
+    }
+
     cache.iter().rev().find_map(|existing| {
         let same_direction = existing.start == *start
             && existing.end == *end
@@ -5296,12 +5312,6 @@ fn cached_definition_cycle_guard_result(
             && definition_families_match_as_sets(&existing.end_definitions, start_definitions);
         if !same_direction && !reversed_direction {
             return None;
-        }
-        if visited_definition_points_match_as_sets(
-            &existing.visited_points,
-            &normalized_visited_points,
-        ) {
-            return Some(existing.result.clone());
         }
         match &existing.result {
             Ok(false)
@@ -5753,13 +5763,19 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
             interior_box_detour_targets(start, end, polygons)
         })
     };
-    let no_detour_unknown =
-        match trace_without_detours(start, end, start_definitions, end_definitions) {
-            Ok(true) => return Ok(true),
-            Ok(false) => false,
-            Err(HypermeshError::UnknownClassification) => true,
-            Err(err) => return Err(err),
-        };
+    let direct_result = trace_without_detours(start, end, start_definitions, end_definitions);
+    let no_detour_unknown = match direct_result {
+        Ok(true) => {
+            definition_cycle_guard_reachability[cache_index].result = Ok(true);
+            return Ok(true);
+        }
+        Ok(false) => false,
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => {
+            definition_cycle_guard_reachability[cache_index].result = Err(err.clone());
+            return Err(err);
+        }
+    };
 
     let detour_result = if has_top_level_detour_cache_hit {
         probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
