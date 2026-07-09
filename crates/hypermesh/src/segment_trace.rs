@@ -2744,7 +2744,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
 
-    for point in ordered_interior_points_for_probe_search(interior_points) {
+    for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
         if let Some(winding) = classify_leaf_polygon_interior_point_with_probe_query_caches(
             point,
             support,
@@ -2765,6 +2765,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
     Err(HypermeshError::UnknownClassification)
 }
 
+#[cfg(test)]
 pub(crate) fn ordered_interior_points_for_probe_search(
     interior_points: &[InteriorLeafPoint],
 ) -> Vec<&InteriorLeafPoint> {
@@ -2859,6 +2860,31 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
     }
 
     Ok(None)
+}
+
+pub(crate) fn ordered_interior_points_for_probe_search_with_support<'a>(
+    interior_points: &'a [InteriorLeafPoint],
+    support: &Plane,
+) -> HypermeshResult<Vec<&'a InteriorLeafPoint>> {
+    let mut scored = interior_points
+        .iter()
+        .enumerate()
+        .map(|(index, point)| {
+            Ok((
+                index,
+                point,
+                unique_normal_probe_search_definitions(&point.planes, support)?.len(),
+            ))
+        })
+        .collect::<HypermeshResult<Vec<_>>>()?;
+    scored.sort_by_key(|(index, point, retained_definition_count)| {
+        (
+            std::cmp::Reverse(*retained_definition_count),
+            std::cmp::Reverse(max_axis_aligned_planes_in_definition_family(point)),
+            *index,
+        )
+    });
+    Ok(scored.into_iter().map(|(_, point, _)| point).collect())
 }
 
 fn search_adjacent_normal_probe_winding_with_queries(
@@ -21199,6 +21225,107 @@ mod tests {
         assert_eq!(ordered[0].point, most_axis_aligned.point);
         assert_eq!(ordered[1].point, partly_axis_aligned.point);
         assert_eq!(ordered[2].point, non_axis_aligned.point);
+    }
+
+    #[test]
+    fn ordered_interior_points_for_probe_search_with_support_prefers_retained_definition_points_in_root_host_fixture()
+     {
+        use crate::mesh::prepare_input;
+        use crate::polygon::ConvexPolygon;
+
+        fn tetra_from_face_and_apex(
+            a: Point3,
+            b: Point3,
+            c: Point3,
+            apex: Point3,
+        ) -> crate::InputMesh {
+            crate::InputMesh::new(
+                vec![a, b, c, apex],
+                vec![
+                    crate::Triangle::new(0, 2, 1),
+                    crate::Triangle::new(0, 1, 3),
+                    crate::Triangle::new(0, 3, 2),
+                    crate::Triangle::new(1, 2, 3),
+                ],
+            )
+        }
+
+        fn face_at(
+            polygons: &[ConvexPolygon],
+            mesh_index: isize,
+            polygon_index: isize,
+        ) -> ConvexPolygon {
+            polygons
+                .iter()
+                .find(|polygon| {
+                    polygon.mesh_index == mesh_index && polygon.polygon_index == polygon_index
+                })
+                .unwrap()
+                .clone()
+        }
+
+        let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
+        let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
+        let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
+        let soup = prepare_input(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+        let polygons = soup.polygons.clone();
+        let host = face_at(&polygons, 0, 1);
+        let intersections = polygons
+            .iter()
+            .enumerate()
+            .filter_map(|(index, polygon)| {
+                if polygon.mesh_index == host.mesh_index
+                    && polygon.polygon_index == host.polygon_index
+                {
+                    return None;
+                }
+                let intersection =
+                    crate::intersection::intersect_polygons(&host, polygon, index).ok()?;
+                Some(intersection)
+            })
+            .collect::<Vec<_>>();
+        let bsp_leaves =
+            crate::subdivision::build_host_bsp_leaves(&host, &polygons, &intersections).unwrap();
+
+        let mut checked = 0;
+        for (leaf_index, leaf) in bsp_leaves.iter().enumerate() {
+            if leaf.edges.len() < 3 {
+                continue;
+            }
+            let Ok((interior_points, _)) =
+                crate::subdivision::certify_bsp_leaf_and_delta_w(&host, &leaf.edges, &polygons)
+            else {
+                continue;
+            };
+            let ordered = ordered_interior_points_for_probe_search_with_support(
+                &interior_points,
+                &host.support,
+            )
+            .unwrap();
+            let ordered_indices = ordered
+                .iter()
+                .map(|ordered_point| {
+                    interior_points
+                        .iter()
+                        .position(|point| point.point == ordered_point.point)
+                        .unwrap()
+                })
+                .collect::<Vec<_>>();
+
+            match leaf_index {
+                1 => {
+                    assert_eq!(ordered_indices[0], 2);
+                    checked += 1;
+                }
+                2 => {
+                    assert_eq!(ordered_indices[0], 0);
+                    checked += 1;
+                }
+                _ => {}
+            }
+        }
+
+        assert_eq!(checked, 2);
     }
 
     #[test]

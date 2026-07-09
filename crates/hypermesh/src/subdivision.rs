@@ -19,7 +19,8 @@ use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     LeafProbeQueryCaches, affine_from_planes, axis_plane_definition,
     certified_leaf_interior_points, classify_leaf_polygon_interior_point_with_probe_query_caches,
-    classify_leaf_polygon_with_probe_query_caches, ordered_interior_points_for_probe_search,
+    classify_leaf_polygon_with_probe_query_caches,
+    ordered_interior_points_for_probe_search_with_support,
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
@@ -2341,7 +2342,7 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
 
-    for point in ordered_interior_points_for_probe_search(interior_points) {
+    for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
         let state = cached_leaf_point_classification_with(
             point_cache,
             context,
