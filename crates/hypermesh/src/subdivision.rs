@@ -18,9 +18,8 @@ use crate::output::{
 use crate::polygon::ConvexPolygon;
 use crate::segment_trace::{
     LeafProbeQueryCaches, affine_from_planes, axis_plane_definition,
-    certified_leaf_interior_points,
-    classify_leaf_polygon_from_interior_points_with_probe_query_caches,
-    classify_leaf_polygon_with_probe_query_caches,
+    certified_leaf_interior_points, classify_leaf_polygon_interior_point_with_probe_query_caches,
+    classify_leaf_polygon_with_probe_query_caches, ordered_interior_points_for_probe_search,
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
 };
 use crate::winding::{
@@ -120,6 +119,21 @@ struct LeafClassificationCacheEntry {
     edges: Vec<Plane>,
     delta_w: Vec<i32>,
     winding: HypermeshResult<WindingNumberVector>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct LeafPointClassificationState {
+    winding: Option<WindingNumberVector>,
+    saw_unknown: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct LeafPointClassificationCacheEntry {
+    context: Option<LeafClassificationCacheContextKey>,
+    support: Plane,
+    point: crate::segment_trace::InteriorLeafPoint,
+    delta_w: Vec<i32>,
+    state: HypermeshResult<LeafPointClassificationState>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -268,6 +282,7 @@ struct SubdivisionRuntimeCaches {
     host_bsp_leaves: RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_certification: RefCell<Vec<BspLeafCertificationCacheEntry>>,
     leaf_classification: RefCell<Vec<LeafClassificationCacheEntry>>,
+    leaf_point_classification: RefCell<Vec<LeafPointClassificationCacheEntry>>,
     support_reference_query: RefCell<SupportReferenceQueryCaches>,
     child_reference: RefCell<Vec<ChildReferenceCacheEntry>>,
     child_subdivision: RefCell<Vec<ChildSubdivisionCacheEntry>>,
@@ -286,6 +301,7 @@ impl Default for SubdivisionRuntimeCaches {
             host_bsp_leaves: RefCell::new(Vec::new()),
             bsp_leaf_certification: RefCell::new(Vec::new()),
             leaf_classification: RefCell::new(Vec::new()),
+            leaf_point_classification: RefCell::new(Vec::new()),
             support_reference_query: RefCell::new(SupportReferenceQueryCaches::default()),
             child_reference: RefCell::new(Vec::new()),
             child_subdivision: RefCell::new(Vec::new()),
@@ -350,6 +366,7 @@ fn process_leaf_into_inner(
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let leaf_classification_cache = RefCell::new(Vec::new());
+    let leaf_point_classification_cache = RefCell::new(Vec::new());
     process_leaf_into_inner_with_pairwise_cache(
         polygons,
         bounds,
@@ -359,6 +376,7 @@ fn process_leaf_into_inner(
         indicator,
         output,
         &leaf_classification_cache,
+        &leaf_point_classification_cache,
         pairwise_intersections_by_polygon,
         build_host_bsp_leaves,
         |polygon, leaf_edges, polygons, intersections| {
@@ -381,6 +399,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
     indicator: &Indicator,
     output: &mut Vec<ClassifiedPolygon>,
     leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
+    leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
     pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
     bsp_leaves_query: impl Fn(
         &ConvexPolygon,
@@ -453,7 +472,6 @@ fn process_leaf_into_inner_with_pairwise_cache(
             let (interior_points, effective_delta_w) =
                 certify_bsp_leaf(polygon, &leaf.edges, polygons, &intersections[index])?;
             stats.bsp_leaf_count += 1;
-            let mut leaf_probe_query_caches = LeafProbeQueryCaches::default();
             let w_front = cached_leaf_classification_with(
                 &mut leaf_classification_cache.borrow_mut(),
                 Some(&leaf_cache_context),
@@ -461,7 +479,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 &leaf.edges,
                 &effective_delta_w,
                 || {
-                    classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+                    classify_leaf_polygon_from_interior_points_with_point_cache(
                         &interior_points,
                         &polygon.support,
                         ref_point,
@@ -470,7 +488,8 @@ fn process_leaf_into_inner_with_pairwise_cache(
                         polygons,
                         bounds,
                         &effective_delta_w,
-                        &mut leaf_probe_query_caches,
+                        &mut leaf_point_classification_cache.borrow_mut(),
+                        Some(&leaf_cache_context),
                     )
                 },
             )?;
@@ -529,6 +548,7 @@ pub fn subdivide(
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let leaf_classification_cache = &caches.leaf_classification;
+    let leaf_point_classification_cache = &caches.leaf_point_classification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
@@ -540,6 +560,7 @@ pub fn subdivide(
             host_bsp_cache,
             bsp_leaf_cache,
             leaf_classification_cache,
+            leaf_point_classification_cache,
         )
     };
     subdivide_into_inner_with(
@@ -567,6 +588,7 @@ pub(crate) fn subdivide_for_operation(
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let leaf_classification_cache = &caches.leaf_classification;
+    let leaf_point_classification_cache = &caches.leaf_point_classification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
@@ -578,6 +600,7 @@ pub(crate) fn subdivide_for_operation(
             host_bsp_cache,
             bsp_leaf_cache,
             leaf_classification_cache,
+            leaf_point_classification_cache,
         )
     };
     subdivide_into_inner_with(
@@ -610,6 +633,7 @@ pub fn subdivide_into(
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let leaf_classification_cache = &caches.leaf_classification;
+    let leaf_point_classification_cache = &caches.leaf_point_classification;
     let mut process_leaf = move |task: &SubdivisionTask,
                                  indicator: &Indicator,
                                  output: &mut Vec<ClassifiedPolygon>| {
@@ -621,6 +645,7 @@ pub fn subdivide_into(
             host_bsp_cache,
             bsp_leaf_cache,
             leaf_classification_cache,
+            leaf_point_classification_cache,
         )
     };
     subdivide_into_inner_with(
@@ -2102,6 +2127,7 @@ fn process_leaf_task_into_with_caches(
     host_bsp_cache: &RefCell<Vec<HostBspLeavesCacheEntry>>,
     bsp_leaf_cache: &RefCell<Vec<BspLeafCertificationCacheEntry>>,
     leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
+    leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let pairwise_query = |polygons: &[ConvexPolygon]| {
         cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)
@@ -2132,6 +2158,7 @@ fn process_leaf_task_into_with_caches(
         indicator,
         output,
         leaf_classification_cache,
+        leaf_point_classification_cache,
         pairwise_query,
         bsp_leaves_query,
         bsp_leaf_query,
@@ -2270,6 +2297,86 @@ fn cached_leaf_classification_with(
         winding: winding.clone(),
     });
     winding
+}
+
+fn cached_leaf_point_classification_with(
+    cache: &mut Vec<LeafPointClassificationCacheEntry>,
+    context: Option<&LeafClassificationCacheContextKey>,
+    support: &Plane,
+    point: &crate::segment_trace::InteriorLeafPoint,
+    delta_w: &[i32],
+    classify: impl FnOnce() -> HypermeshResult<LeafPointClassificationState>,
+) -> HypermeshResult<LeafPointClassificationState> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        leaf_classification_cache_context_matches(existing.context.as_ref(), context)
+            && existing.support == *support
+            && existing.point == *point
+            && existing.delta_w == delta_w
+    }) {
+        return existing.state.clone();
+    }
+
+    let state = classify();
+    cache.push(LeafPointClassificationCacheEntry {
+        context: context.cloned(),
+        support: support.clone(),
+        point: point.clone(),
+        delta_w: delta_w.to_vec(),
+        state: state.clone(),
+    });
+    state
+}
+
+fn classify_leaf_polygon_from_interior_points_with_point_cache(
+    interior_points: &[crate::segment_trace::InteriorLeafPoint],
+    support: &Plane,
+    ref_point: &Point3,
+    ref_definitions: &[[Plane; 3]],
+    ref_wnv: &[i32],
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    host_delta_w: &[i32],
+    point_cache: &mut Vec<LeafPointClassificationCacheEntry>,
+    context: Option<&LeafClassificationCacheContextKey>,
+) -> HypermeshResult<WindingNumberVector> {
+    let mut saw_unknown = false;
+
+    for point in ordered_interior_points_for_probe_search(interior_points) {
+        let state = cached_leaf_point_classification_with(
+            point_cache,
+            context,
+            support,
+            point,
+            host_delta_w,
+            || {
+                let mut probe_query_caches = LeafProbeQueryCaches::default();
+                let mut local_unknown = false;
+                let winding = classify_leaf_polygon_interior_point_with_probe_query_caches(
+                    point,
+                    support,
+                    ref_point,
+                    ref_definitions,
+                    ref_wnv,
+                    polygons,
+                    bounds,
+                    host_delta_w,
+                    &mut probe_query_caches,
+                    &mut local_unknown,
+                )?;
+                Ok(LeafPointClassificationState {
+                    winding,
+                    saw_unknown: local_unknown,
+                })
+            },
+        )?;
+        saw_unknown |= state.saw_unknown;
+        if let Some(winding) = state.winding {
+            return Ok(winding);
+        }
+    }
+
+    let _ = saw_unknown;
+    Err(crate::error::HypermeshError::UnknownClassification)
 }
 
 pub(crate) fn build_host_bsp_leaves(
@@ -11347,6 +11454,122 @@ mod tests {
     }
 
     #[test]
+    fn cached_leaf_point_classification_reuses_identical_state() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap();
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_leaf_point_classification_with(
+            &mut cache,
+            None,
+            &polygon.support,
+            &point,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(LeafPointClassificationState {
+                    winding: Some(vec![7]),
+                    saw_unknown: false,
+                })
+            },
+        )
+        .unwrap();
+        let second = cached_leaf_point_classification_with(
+            &mut cache,
+            None,
+            &polygon.support,
+            &point,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(LeafPointClassificationState {
+                    winding: Some(vec![9]),
+                    saw_unknown: true,
+                })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 1);
+        assert_eq!(
+            first,
+            LeafPointClassificationState {
+                winding: Some(vec![7]),
+                saw_unknown: false,
+            }
+        );
+        assert_eq!(second, first);
+    }
+
+    #[test]
+    fn cached_leaf_point_classification_distinguishes_context() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap();
+        let left_context = LeafClassificationCacheContextKey {
+            polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            polygons: vec![polygon.clone()],
+            bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+            ref_point: p(0, 0, -1),
+            ref_definitions: vec![axis_plane_definition(&p(0, 0, -1))],
+            ref_wnv: vec![0],
+        };
+        let right_context = LeafClassificationCacheContextKey {
+            polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
+            polygons: vec![polygon.clone()],
+            bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
+            ref_point: p(0, 0, 1),
+            ref_definitions: vec![axis_plane_definition(&p(0, 0, 1))],
+            ref_wnv: vec![0],
+        };
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_leaf_point_classification_with(
+            &mut cache,
+            Some(&left_context),
+            &polygon.support,
+            &point,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(LeafPointClassificationState {
+                    winding: Some(vec![7]),
+                    saw_unknown: false,
+                })
+            },
+        )
+        .unwrap();
+        let second = cached_leaf_point_classification_with(
+            &mut cache,
+            Some(&right_context),
+            &polygon.support,
+            &point,
+            &polygon.delta_w,
+            || {
+                calls += 1;
+                Ok(LeafPointClassificationState {
+                    winding: Some(vec![9]),
+                    saw_unknown: false,
+                })
+            },
+        )
+        .unwrap();
+
+        assert_eq!(calls, 2);
+        assert_eq!(first.winding, Some(vec![7]));
+        assert_eq!(second.winding, Some(vec![9]));
+    }
+
+    #[test]
     fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
         let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         host.delta_w = vec![1, 0];
@@ -12491,19 +12714,18 @@ mod tests {
                             continue;
                         }
 
-                        let winding =
-                            classify_leaf_polygon_from_interior_points_with_probe_query_caches(
-                                std::slice::from_ref(&interior_points[0]),
-                                &polygon.support,
-                                &child_task.ref_point,
-                                &child_task.ref_definitions,
-                                &child_task.ref_wnv,
-                                &child_task.polygons,
-                                &child_task.bounds,
-                                &effective_delta_w,
-                                &mut LeafProbeQueryCaches::default(),
-                            )
-                            .unwrap();
+                        let winding = crate::segment_trace::classify_leaf_polygon_from_interior_points_with_probe_query_caches(
+                            std::slice::from_ref(&interior_points[0]),
+                            &polygon.support,
+                            &child_task.ref_point,
+                            &child_task.ref_definitions,
+                            &child_task.ref_wnv,
+                            &child_task.polygons,
+                            &child_task.bounds,
+                            &effective_delta_w,
+                            &mut LeafProbeQueryCaches::default(),
+                        )
+                        .unwrap();
                         assert_eq!(winding, vec![0, 0, 1]);
                         return;
                     }
