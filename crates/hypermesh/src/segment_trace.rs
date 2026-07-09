@@ -7565,7 +7565,17 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
         start_planes,
         end_planes,
         || {
-            plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            let mut ordering_affine_cache = Vec::new();
+            let ordered = ordered_axis_orderings_by_no_step_precheck_with(
+                start_planes,
+                end_planes,
+                &mut ordering_affine_cache,
+                |current, next, _current_definitions, _next_definitions| {
+                    probe_reaches_adjacent_cell(current, next, host_support, polygons)
+                },
+            )?;
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                &ordered,
                 start_planes,
                 end_planes,
                 PlaneReplacementReachabilityStepMode::WithoutStepDetours,
@@ -7579,6 +7589,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
     )
 }
 
+#[cfg(test)]
 fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
