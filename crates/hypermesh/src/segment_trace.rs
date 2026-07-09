@@ -7458,32 +7458,36 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
                             leg_end: &Point3,
                             leg_start_definitions: &[[Plane; 3]],
                             leg_end_definitions: &[[Plane; 3]],
-                            definition_transition: bool|
+                            definition_transition: bool,
+                            direct_key: u8|
      -> HypermeshResult<Option<bool>> {
-        match if definition_transition {
-            trace_without_detours(
-                leg_start,
-                leg_end,
-                leg_start_definitions,
-                leg_end_definitions,
-            )
-        } else {
-            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
-                leg_start,
-                leg_end,
-                polygons,
-                &next_visited_points,
-                leg_start_definitions,
-                leg_end_definitions,
-                progressive_interior_box_detours,
-                no_plane_replacement_cycle_guard_cache,
-                surface_cache,
-                surface_query,
-                trace_without_detours,
-                detour_target_cache,
-                detours_for_query,
-            )
-        } {
+        if definition_transition || direct_key == 0 {
+            return match direct_key {
+                0 => Ok(Some(true)),
+                1 => {
+                    *saw_unknown = true;
+                    Ok(None)
+                }
+                2 => Ok(Some(false)),
+                _ => unreachable!("unexpected direct precheck rank"),
+            };
+        }
+
+        match probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+            leg_start,
+            leg_end,
+            polygons,
+            &next_visited_points,
+            leg_start_definitions,
+            leg_end_definitions,
+            progressive_interior_box_detours,
+            no_plane_replacement_cycle_guard_cache,
+            surface_cache,
+            surface_query,
+            trace_without_detours,
+            detour_target_cache,
+            detours_for_query,
+        ) {
             Ok(result) => Ok(Some(result)),
             Err(HypermeshError::UnknownClassification) => {
                 *saw_unknown = true;
@@ -7500,6 +7504,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             &detour.definitions,
             end_definitions,
             end_definition_transition,
+            second_leg_key,
         )?
     } else {
         evaluate_leg(
@@ -7508,6 +7513,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             start_definitions,
             &detour.definitions,
             start_definition_transition,
+            first_leg_key,
         )?
     };
     if first_result != Some(true) {
@@ -7524,6 +7530,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             start_definitions,
             &detour.definitions,
             start_definition_transition,
+            first_leg_key,
         )?
     } else {
         evaluate_leg(
@@ -7532,6 +7539,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             &detour.definitions,
             end_definitions,
             end_definition_transition,
+            second_leg_key,
         )?
     };
     match second_result {
@@ -12623,15 +12631,7 @@ mod tests {
 
         assert!(!result);
         assert!(!saw_unknown);
-        assert_eq!(
-            trace_calls,
-            vec![
-                "start_to_detour",
-                "detour_to_end",
-                "detour_to_end",
-                "start_to_detour",
-            ]
-        );
+        assert_eq!(trace_calls, vec!["start_to_detour", "detour_to_end"]);
     }
 
     #[test]
