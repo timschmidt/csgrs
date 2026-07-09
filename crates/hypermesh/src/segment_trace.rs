@@ -4587,29 +4587,49 @@ fn cached_surface_query_with(
     on_surface
 }
 
+fn probe_reachability_cache_entry_matches(
+    existing: &ProbeReachabilityCacheEntry,
+    interior: &InteriorLeafPoint,
+    probe: &ProbePoint,
+) -> bool {
+    existing.interior_point == interior.point
+        && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
+        && existing.probe_point == probe.point
+        && definition_families_match_as_sets(&existing.probe_planes, &probe.planes)
+}
+
+fn begin_probe_reachability_result(
+    cache: &mut Vec<ProbeReachabilityCacheEntry>,
+    interior: &InteriorLeafPoint,
+    probe: &ProbePoint,
+) -> usize {
+    cache.push(ProbeReachabilityCacheEntry {
+        interior_point: interior.point.clone(),
+        interior_planes: interior.planes.clone(),
+        probe_point: probe.point.clone(),
+        probe_planes: probe.planes.clone(),
+        reachable: Err(HypermeshError::UnknownClassification),
+    });
+    cache.len() - 1
+}
+
 fn cached_probe_reachability_with(
     cache: &mut Vec<ProbeReachabilityCacheEntry>,
     interior: &InteriorLeafPoint,
     probe: &ProbePoint,
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().rev().find(|existing| {
-        existing.interior_point == interior.point
-            && definition_families_match_as_sets(&existing.interior_planes, &interior.planes)
-            && existing.probe_point == probe.point
-            && definition_families_match_as_sets(&existing.probe_planes, &probe.planes)
-    }) {
+    if let Some(existing) = cache
+        .iter()
+        .rev()
+        .find(|existing| probe_reachability_cache_entry_matches(existing, interior, probe))
+    {
         return existing.reachable.clone();
     }
 
+    let cache_index = begin_probe_reachability_result(cache, interior, probe);
     let reachable = query();
-    cache.push(ProbeReachabilityCacheEntry {
-        interior_point: interior.point.clone(),
-        interior_planes: interior.planes.clone(),
-        probe_point: probe.point.clone(),
-        probe_planes: probe.planes.clone(),
-        reachable: reachable.clone(),
-    });
+    cache[cache_index].reachable = reachable.clone();
     reachable
 }
 
@@ -15124,6 +15144,37 @@ mod tests {
         assert_eq!(calls, 1);
         assert!(first_result);
         assert!(second_result);
+    }
+
+    #[test]
+    fn cached_probe_reachability_reuses_in_progress_exact_state() {
+        let interior = InteriorLeafPoint {
+            point: p(0, 0, 0),
+            planes: vec![axis_plane_definition(&p(0, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let probe = ProbePoint {
+            point: p(1, 0, 0),
+            side: Classification::Positive,
+            planes: vec![axis_plane_definition(&p(1, 0, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let mut cache = vec![ProbeReachabilityCacheEntry {
+            interior_point: interior.point.clone(),
+            interior_planes: interior.planes.clone(),
+            probe_point: probe.point.clone(),
+            probe_planes: probe.planes.clone(),
+            reachable: Err(HypermeshError::UnknownClassification),
+        }];
+
+        let result = cached_probe_reachability_with(&mut cache, &interior, &probe, || Ok(true));
+
+        assert_eq!(result, Err(HypermeshError::UnknownClassification));
+        assert_eq!(cache.len(), 1);
+        assert_eq!(
+            cache[0].reachable,
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]
