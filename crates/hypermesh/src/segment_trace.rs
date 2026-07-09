@@ -4601,10 +4601,10 @@ fn cached_direct_probe_reachability_with(
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        existing.start == *start
-            && existing.end == *end
-            && existing.host_support == *host_support
+        existing.host_support == *host_support
             && existing.polygons == polygons
+            && ((existing.start == *start && existing.end == *end)
+                || (existing.start == *end && existing.end == *start))
     }) {
         return existing.reachable.clone();
     }
@@ -5173,21 +5173,38 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
     visited_points: &[VisitedDefinitionPoint],
 ) -> Option<HypermeshResult<bool>> {
     if let Some(existing) = cache.iter().find(|existing| {
-        existing.start == *start
-            && existing.end == *end
-            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
-            && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
-            && visited_definition_points_match_as_sets(&existing.visited_points, visited_points)
+        visited_definition_points_match_as_sets(&existing.visited_points, visited_points)
+            && ((existing.start == *start
+                && existing.end == *end
+                && definition_families_match_as_sets(
+                    &existing.start_definitions,
+                    start_definitions,
+                )
+                && definition_families_match_as_sets(&existing.end_definitions, end_definitions))
+                || (existing.start == *end
+                    && existing.end == *start
+                    && definition_families_match_as_sets(
+                        &existing.start_definitions,
+                        end_definitions,
+                    )
+                    && definition_families_match_as_sets(
+                        &existing.end_definitions,
+                        start_definitions,
+                    )))
     }) {
         return Some(existing.result.clone());
     }
 
     cache.iter().find_map(|existing| {
-        if existing.start != *start
-            || existing.end != *end
-            || !definition_families_match_as_sets(&existing.start_definitions, start_definitions)
-            || !definition_families_match_as_sets(&existing.end_definitions, end_definitions)
-        {
+        let same_direction = existing.start == *start
+            && existing.end == *end
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions);
+        let reversed_direction = existing.start == *end
+            && existing.end == *start
+            && definition_families_match_as_sets(&existing.start_definitions, end_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, start_definitions);
+        if !same_direction && !reversed_direction {
             return None;
         }
 
@@ -5618,10 +5635,14 @@ fn cached_definition_no_detour_reachability_with(
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        existing.start == *start
+        (existing.start == *start
             && existing.end == *end
             && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
-            && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions))
+            || (existing.start == *end
+                && existing.end == *start
+                && definition_families_match_as_sets(&existing.start_definitions, end_definitions)
+                && definition_families_match_as_sets(&existing.end_definitions, start_definitions))
     }) {
         return existing.result.clone();
     }
@@ -5646,10 +5667,14 @@ fn cached_definition_no_plane_replacement_reachability_with(
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().find(|existing| {
-        existing.start == *start
+        (existing.start == *start
             && existing.end == *end
             && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
-            && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions))
+            || (existing.start == *end
+                && existing.end == *start
+                && definition_families_match_as_sets(&existing.start_definitions, end_definitions)
+                && definition_families_match_as_sets(&existing.end_definitions, start_definitions))
     }) {
         return existing.result.clone();
     }
@@ -14958,6 +14983,52 @@ mod tests {
     }
 
     #[test]
+    fn cached_direct_probe_reachability_reuses_reversed_query() {
+        let mut cache = Vec::new();
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let host_support = Plane::axis_aligned(2, r(0));
+        let polygons = vec![make_triangle(
+            &p(2, -1, -1),
+            &p(2, 1, -1),
+            &p(2, 0, 1),
+            0,
+            0,
+        )];
+        let mut calls = 0;
+
+        let first = cached_direct_probe_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &host_support,
+            &polygons,
+            || {
+                calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_direct_probe_reachability_with(
+            &mut cache,
+            &end,
+            &start,
+            &host_support,
+            &polygons,
+            || {
+                calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(calls, 1);
+        assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
     fn trace_axis_ordered_paths_reuse_equivalent_intermediate_surface_queries() {
         let start = p(0, 0, 0);
         let end = p(1, 1, 0);
@@ -15321,6 +15392,45 @@ mod tests {
     }
 
     #[test]
+    fn cached_definition_no_detour_reachability_reuses_reversed_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut cache = Vec::new();
+        let mut trace_calls = 0;
+
+        let first = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_definition_no_detour_reachability_with(
+            &mut cache,
+            &end,
+            &start,
+            &end_definitions,
+            &start_definitions,
+            || {
+                trace_calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
     fn cached_definition_no_plane_replacement_reachability_reuses_identical_query() {
         let start = p(0, 0, 0);
         let end = p(1, 0, 0);
@@ -15391,6 +15501,45 @@ mod tests {
             || {
                 trace_calls += 1;
                 Ok(true)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(trace_calls, 1);
+    }
+
+    #[test]
+    fn cached_definition_no_plane_replacement_reachability_reuses_reversed_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let mut cache = Vec::new();
+        let mut trace_calls = 0;
+
+        let first = cached_definition_no_plane_replacement_reachability_with(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            || {
+                trace_calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_definition_no_plane_replacement_reachability_with(
+            &mut cache,
+            &end,
+            &start,
+            &end_definitions,
+            &start_definitions,
+            || {
+                trace_calls += 1;
+                Ok(false)
             },
         )
         .unwrap();
@@ -21430,6 +21579,43 @@ mod tests {
             &start_definitions,
             &end_definitions,
             &current_visited,
+        );
+
+        assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn definition_no_plane_replacement_cycle_guard_cache_reuses_reversed_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let visited_points = vec![
+            VisitedDefinitionPoint {
+                point: start.clone(),
+                definitions: start_definitions.clone(),
+            },
+            VisitedDefinitionPoint {
+                point: end.clone(),
+                definitions: end_definitions.clone(),
+            },
+        ];
+        let cache = vec![DefinitionNoPlaneReplacementCycleGuardCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: visited_points.clone(),
+            result: Ok(true),
+        }];
+
+        let reused = cached_definition_no_plane_replacement_cycle_guard_result(
+            &cache,
+            &end,
+            &start,
+            &end_definitions,
+            &start_definitions,
+            &visited_points,
         );
 
         assert_eq!(reused, Some(Ok(true)));
