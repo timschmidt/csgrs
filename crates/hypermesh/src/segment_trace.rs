@@ -4624,7 +4624,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
     end_definitions = unique_definition_family(&end_definitions);
 
-    let result = probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
+    probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         &interior.point,
         &probe.point,
         host_support,
@@ -4640,8 +4640,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         no_step_detour_target_families,
         definition_no_detour_reachability,
         detour_target_families,
-    );
-    result
+    )
 }
 
 #[cfg(test)]
@@ -5127,7 +5126,6 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surfa
         },
         &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
     )?;
-
     for x in &intervals[0] {
         for y in &intervals[1] {
             for z in &intervals[2] {
@@ -5465,7 +5463,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     no_plane_replacement_cache: &mut Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
 ) -> HypermeshResult<bool> {
-    let result = probe_reaches_adjacent_cell_with_definition_search(
+    probe_reaches_adjacent_cell_with_definition_search(
         start,
         end,
         start_definitions,
@@ -5485,8 +5483,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                 no_step_detour_target_cache,
             )
         },
-    );
-    result
+    )
 }
 
 fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
@@ -5623,6 +5620,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     )
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
     start: &Point3,
     end: &Point3,
@@ -5632,6 +5630,71 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_plane_replacement_cache: &mut Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    reach_without_detours: impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for_query: impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        no_detour_cache,
+        no_plane_replacement_cache,
+        detour_target_cache,
+        false,
+        reach_without_detours,
+        detours_for_query,
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
+    no_plane_replacement_cache: &mut Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    reach_without_detours: impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for_query: impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        no_detour_cache,
+        no_plane_replacement_cache,
+        detour_target_cache,
+        true,
+        reach_without_detours,
+        detours_for_query,
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with_mode(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
+    no_plane_replacement_cache: &mut Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    progressive_interior_box_detours: bool,
     mut reach_without_detours: impl FnMut(
         &Point3,
         &Point3,
@@ -5654,11 +5717,6 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
                 || reach_without_detours(start, end, start_definitions, end_definitions),
             )
         };
-    let mut detours_for = |start: &Point3, end: &Point3| {
-        cached_detour_target_family_with(&mut *detour_target_cache, start, end, || {
-            detours_for_query(start, end)
-        })
-    };
     cached_definition_no_plane_replacement_reachability_with(
         no_plane_replacement_cache,
         start,
@@ -5666,20 +5724,23 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         start_definitions,
         end_definitions,
         || {
-            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
                 start,
                 end,
                 polygons,
                 &initial_visited_definition_points(start, start_definitions, end, end_definitions),
                 start_definitions,
                 end_definitions,
+                progressive_interior_box_detours,
                 &mut trace_without_detours,
-                &mut detours_for,
+                detour_target_cache,
+                &mut detours_for_query,
             )
         },
     )
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl(
     start: &Point3,
     end: &Point3,
@@ -5693,23 +5754,58 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
-    let mut surface_cache = Vec::new();
-    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+    let mut detour_target_cache = Vec::new();
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
         start,
         end,
         polygons,
         visited_points,
         start_definitions,
         end_definitions,
-        &mut surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        false,
         trace_without_detours,
-        detours_for,
+        &mut detour_target_cache,
+        detours_for_query,
     )
 }
 
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    visited_points: &[VisitedDefinitionPoint],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    progressive_interior_box_detours: bool,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let mut surface_cache = Vec::new();
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+        start,
+        end,
+        polygons,
+        visited_points,
+        start_definitions,
+        end_definitions,
+        progressive_interior_box_detours,
+        &mut surface_cache,
+        &mut |point| point_lies_on_traced_surface(point, polygons),
+        trace_without_detours,
+        detour_target_cache,
+        detours_for_query,
+    )
+}
+
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -5725,7 +5821,43 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let mut detour_target_cache = Vec::new();
+    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+        start,
+        end,
+        polygons,
+        visited_points,
+        start_definitions,
+        end_definitions,
+        false,
+        surface_cache,
+        surface_query,
+        trace_without_detours,
+        &mut detour_target_cache,
+        detours_for_query,
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    visited_points: &[VisitedDefinitionPoint],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    progressive_interior_box_detours: bool,
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     match trace_without_detours(start, end, start_definitions, end_definitions) {
@@ -5737,110 +5869,265 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         Err(err) => return Err(err),
     }
 
-    let detours = detours_for(start, end)?;
-    for detour in detours {
-        let start_definition_transition = detour.point == *start
-            && !definition_families_match_as_sets(&detour.definitions, start_definitions);
-        let end_definition_transition = detour.point == *end
-            && !definition_families_match_as_sets(&detour.definitions, end_definitions);
-        let zero_length_definition_transition =
-            start_definition_transition || end_definition_transition;
-        let already_visited =
-            visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
-        let on_surface = if already_visited || zero_length_definition_transition {
-            false
-        } else {
-            match cached_surface_query_with(surface_cache, &detour.point, || {
-                surface_query(&detour.point)
-            }) {
-                Ok(on_surface) => on_surface,
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    continue;
-                }
-                Err(err) => return Err(err),
-            }
-        };
-        if already_visited || on_surface {
-            if detour.uncertified_definition_fallback {
-                saw_unknown = true;
-            }
-            continue;
-        }
+    if progressive_interior_box_detours
+        && cached_detour_target_family(&*detour_target_cache, start, end).is_none()
+    {
+        return probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
+            start,
+            end,
+            polygons,
+            visited_points,
+            start_definitions,
+            end_definitions,
+            progressive_interior_box_detours,
+            surface_cache,
+            surface_query,
+            trace_without_detours,
+            detour_target_cache,
+            detours_for_query,
+        );
+    }
 
-        let mut next_visited_points = visited_points.to_vec();
-        if !visited_definition_family_contains(
-            &next_visited_points,
-            &detour.point,
-            &detour.definitions,
-        ) {
-            next_visited_points.push(VisitedDefinitionPoint {
-                point: detour.point.clone(),
-                definitions: detour.definitions.clone(),
-            });
+    for detour in cached_detour_target_family_with(detour_target_cache, start, end, || {
+        detours_for_query(start, end)
+    })? {
+        if evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+            &detour,
+            start,
+            end,
+            polygons,
+            visited_points,
+            start_definitions,
+            end_definitions,
+            progressive_interior_box_detours,
+            surface_cache,
+            surface_query,
+            trace_without_detours,
+            detour_target_cache,
+            detours_for_query,
+            &mut saw_unknown,
+        )? {
+            return Ok(true);
         }
+    }
 
-        let first_leg = match if start_definition_transition {
-            trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
-        } else {
-            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
+}
+
+fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+    detour: &DetourTarget,
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    visited_points: &[VisitedDefinitionPoint],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    progressive_interior_box_detours: bool,
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<bool> {
+    let start_definition_transition = detour.point == *start
+        && !definition_families_match_as_sets(&detour.definitions, start_definitions);
+    let end_definition_transition = detour.point == *end
+        && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+    let zero_length_definition_transition =
+        start_definition_transition || end_definition_transition;
+    let already_visited =
+        visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
+    let on_surface = if already_visited || zero_length_definition_transition {
+        false
+    } else {
+        match cached_surface_query_with(surface_cache, &detour.point, || {
+            surface_query(&detour.point)
+        }) {
+            Ok(on_surface) => on_surface,
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+                return Ok(false);
+            }
+            Err(err) => return Err(err),
+        }
+    };
+    if already_visited || on_surface {
+        if detour.uncertified_definition_fallback {
+            *saw_unknown = true;
+        }
+        return Ok(false);
+    }
+
+    let mut next_visited_points = visited_points.to_vec();
+    if !visited_definition_family_contains(&next_visited_points, &detour.point, &detour.definitions)
+    {
+        next_visited_points.push(VisitedDefinitionPoint {
+            point: detour.point.clone(),
+            definitions: detour.definitions.clone(),
+        });
+    }
+
+    let first_leg = match if start_definition_transition {
+        trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
+    } else {
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
             start,
             &detour.point,
             polygons,
             &next_visited_points,
             start_definitions,
             &detour.definitions,
+            progressive_interior_box_detours,
             surface_cache,
             surface_query,
             trace_without_detours,
-            detours_for,
+            detour_target_cache,
+            detours_for_query,
         )
-        } {
-            Ok(result) => result,
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-                continue;
-            }
-            Err(err) => return Err(err),
-        };
-        if !first_leg {
-            if detour.uncertified_definition_fallback {
-                saw_unknown = true;
-            }
-            continue;
+    } {
+        Ok(result) => result,
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            return Ok(false);
         }
-        match if end_definition_transition {
-            trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
-        } else {
-            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
+        Err(err) => return Err(err),
+    };
+    if !first_leg {
+        if detour.uncertified_definition_fallback {
+            *saw_unknown = true;
+        }
+        return Ok(false);
+    }
+
+    match if end_definition_transition {
+        trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
+    } else {
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
             &detour.point,
             end,
             polygons,
             &next_visited_points,
             &detour.definitions,
             end_definitions,
+            progressive_interior_box_detours,
             surface_cache,
             surface_query,
             trace_without_detours,
-            detours_for,
+            detour_target_cache,
+            detours_for_query,
         )
-        } {
-            Ok(true) => {
-                if detour.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
+    } {
+        Ok(true) => {
+            if detour.uncertified_definition_fallback {
+                *saw_unknown = true;
+                Ok(false)
+            } else {
+                Ok(true)
+            }
+        }
+        Ok(false) => {
+            if detour.uncertified_definition_fallback {
+                *saw_unknown = true;
+            }
+            Ok(false)
+        }
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(false)
+        }
+        Err(err) => Err(err),
+    }
+}
+
+fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    visited_points: &[VisitedDefinitionPoint],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    progressive_interior_box_detours: bool,
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let (intervals, mut saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        start,
+        end,
+        polygons,
+        &mut |edge_start, edge_end, polygon, axis| {
+            let start_class = classify_point(edge_start, &polygon.support)?;
+            let end_class = classify_point(edge_end, &polygon.support)?;
+            if start_class == Classification::On {
+                return Ok(Some(edge_start.clone()));
+            }
+            if end_class == Classification::On {
+                return Ok(Some(edge_end.clone()));
+            }
+            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
+                if let Some(crossing) = crossing {
+                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
+                        return Ok(None);
+                    }
+                    Ok(Some(crossing))
+                } else {
+                    Ok(None)
                 }
-                return Ok(true);
-            }
-            Ok(false) => {
-                if detour.uncertified_definition_fallback {
-                    saw_unknown = true;
+            })
+        },
+        &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+    )?;
+
+    for x in &intervals[0] {
+        for y in &intervals[1] {
+            for z in &intervals[2] {
+                let bounds = aabb_from_axis_intervals([x, y, z])?;
+                let detours = match strict_aabb_targets(&bounds) {
+                    Ok(detours) => detours,
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
+                for detour in detours {
+                    if evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                        &detour,
+                        start,
+                        end,
+                        polygons,
+                        visited_points,
+                        start_definitions,
+                        end_definitions,
+                        progressive_interior_box_detours,
+                        surface_cache,
+                        surface_query,
+                        trace_without_detours,
+                        detour_target_cache,
+                        detours_for_query,
+                        &mut saw_unknown,
+                    )? {
+                        return Ok(true);
+                    }
                 }
             }
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-            }
-            Err(err) => return Err(err),
         }
     }
 
@@ -5904,7 +6191,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 affine_cache,
                 step_cache,
                 |current, next, current_definitions, next_definitions| {
-                    probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
+                    probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
                         current,
                         next,
                         polygons,
