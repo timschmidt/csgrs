@@ -2250,7 +2250,6 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     })
 }
 
-#[cfg(test)]
 #[allow(dead_code)]
 fn search_strict_aabb_targets_progressively_with_direct_ranking<K: Ord>(
     bounds: &Aabb,
@@ -2291,7 +2290,6 @@ fn search_strict_aabb_targets_progressively_with_seed_families(
     )
 }
 
-#[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking<K: Ord>(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -2303,8 +2301,167 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
     evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for)?;
-    evaluate_strict_aabb_target_families_with_direct_ranking(families, rank_direct, evaluate)
+    let halfspaces = aabb_core_halfspaces(bounds)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return if saw_unknown {
+            Err(HypermeshError::UnknownClassification)
+        } else {
+            Ok(false)
+        };
+    }
+
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+
+    let refinement_len = seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT);
+    let mut certified_direct_target_points = Vec::new();
+    let mut ranked_direct_targets = Vec::with_capacity(refinement_len);
+    for (index, seed) in seeds.iter().take(refinement_len).enumerate() {
+        let target = match build_detour_target(
+            seed,
+            &halfspaces,
+            active_planes_from_optional_report(report.as_ref(), seed),
+            false,
+        ) {
+            Ok(target) => target,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !target.uncertified_definition_fallback {
+            certified_direct_target_points.push(target.point.clone());
+        }
+        let (rank_missing, rank) = match rank_direct(&target) {
+            Ok(rank) => (0u8, Some(rank)),
+            Err(HypermeshError::UnknownClassification) => (1u8, None),
+            Err(err) => return Err(err),
+        };
+        ranked_direct_targets.push((rank_missing, rank, index, target));
+    }
+    ranked_direct_targets.sort_by(|left, right| {
+        left.0
+            .cmp(&right.0)
+            .then_with(|| left.1.cmp(&right.1))
+            .then_with(|| left.2.cmp(&right.2))
+    });
+    for (_, _, _, target) in ranked_direct_targets {
+        match evaluate(target.clone()) {
+            Ok(true) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            Ok(false) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        detour_shifted_seed_families(
+            report_witness,
+            &certified_direct_target_points,
+            seeds.clone(),
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_seed_families_backtracking_unknown(
+                &mut shifted_witnesses,
+                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
+                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
+    )?;
+    for witness in &shifted_witnesses {
+        let target = match build_detour_target_from_shifted_witness(witness) {
+            Ok(target) => target,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        match evaluate(target.clone()) {
+            Ok(true) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            Ok(false) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    for seed in seeds.iter().skip(refinement_len) {
+        let target = match build_detour_target(
+            seed,
+            &halfspaces,
+            active_planes_from_optional_report(report.as_ref(), seed),
+            false,
+        ) {
+            Ok(target) => target,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        match evaluate(target.clone()) {
+            Ok(true) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            Ok(false) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
 }
 
 fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
@@ -2499,6 +2656,7 @@ fn strict_aabb_target_families_with_seed_families(
     })
 }
 
+#[cfg(test)]
 fn cached_strict_aabb_target_families_with_seed_families(
     cache: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
     bounds: &Aabb,
@@ -2509,10 +2667,8 @@ fn cached_strict_aabb_target_families_with_seed_families(
         &mut bool,
     ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
 ) -> HypermeshResult<StrictAabbTargetFamilies> {
-    for entry in cache.iter().rev() {
-        if entry.bounds == *bounds {
-            return entry.families.clone();
-        }
+    if let Some(families) = cached_strict_aabb_target_families(cache, bounds) {
+        return families;
     }
     let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for);
     cache.push(StrictAabbTargetFamilyCacheEntry {
@@ -2520,6 +2676,18 @@ fn cached_strict_aabb_target_families_with_seed_families(
         families: families.clone(),
     });
     families
+}
+
+fn cached_strict_aabb_target_families(
+    cache: &[StrictAabbTargetFamilyCacheEntry],
+    bounds: &Aabb,
+) -> Option<HypermeshResult<StrictAabbTargetFamilies>> {
+    for entry in cache.iter().rev() {
+        if entry.bounds == *bounds {
+            return Some(entry.families.clone());
+        }
+    }
+    None
 }
 
 fn detour_shifted_seed_families(
@@ -8276,92 +8444,158 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                     std::cell::RefCell::new(&mut *halfspace_seed_family_cache);
                 let interior_box_axis_intervals_cell =
                     std::cell::RefCell::new(&mut *interior_box_axis_intervals);
-                let families = cached_strict_aabb_target_families_with_seed_families(
-                    strict_aabb_target_families,
-                    &bounds,
-                    |bounds, halfspaces, report, local_unknown| {
-                        let report = match report {
-                            Some(report) => Some(report.clone()),
-                            None => cached_optional_halfspace_feasibility_report_with(
+                let result = if let Some(families) =
+                    cached_strict_aabb_target_families(strict_aabb_target_families, &bounds)
+                {
+                    evaluate_strict_aabb_target_families_with_direct_ranking(
+                        families?,
+                        &mut |detour| {
+                            detour_target_no_plane_refined_rank_with_surface_queries(
+                                detour,
+                                start,
+                                end,
+                                polygons,
+                                &mut |edge_start, edge_end, polygon, axis| {
+                                    let start_class = classify_point(edge_start, &polygon.support)?;
+                                    let end_class = classify_point(edge_end, &polygon.support)?;
+                                    if start_class == Classification::On {
+                                        return Ok(Some(edge_start.clone()));
+                                    }
+                                    if end_class == Classification::On {
+                                        return Ok(Some(edge_end.clone()));
+                                    }
+                                    segment_plane_crossing(edge_start, edge_end, &polygon.support)
+                                        .and_then(|crossing| {
+                                            if let Some(crossing) = crossing {
+                                                if !point_strictly_between_axis(
+                                                    &crossing, edge_start, edge_end, axis,
+                                                )? {
+                                                    return Ok(None);
+                                                }
+                                                Ok(Some(crossing))
+                                            } else {
+                                                Ok(None)
+                                            }
+                                        })
+                                },
+                                &mut |crossing, polygon| {
+                                    classify_point_in_polygon(crossing, polygon)
+                                },
+                                start_definitions,
+                                end_definitions,
+                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                &mut **trace_without_detours_cell.borrow_mut(),
+                            )
+                        },
+                        &mut |detour| {
+                            evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                                &detour,
+                                start,
+                                end,
+                                polygons,
+                                visited_points,
+                                start_definitions,
+                                end_definitions,
+                                progressive_interior_box_detours,
+                                no_plane_replacement_cycle_guard_cache,
+                                no_plane_replacement_cache,
                                 &mut **halfspace_report_cache_cell.borrow_mut(),
-                                halfspaces,
-                                local_unknown,
-                            )?,
-                        };
-                        let families =
+                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                strict_aabb_target_families,
+                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                surface_cache,
+                                surface_query,
+                                &mut **trace_without_detours_cell.borrow_mut(),
+                                detour_target_cache,
+                                detours_for_query,
+                                &mut saw_unknown,
+                            )
+                        },
+                    )
+                } else {
+                    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
+                        &bounds,
+                        |bounds, halfspaces, report, local_unknown| {
+                            let report = match report {
+                                Some(report) => Some(report.clone()),
+                                None => cached_optional_halfspace_feasibility_report_with(
+                                    &mut **halfspace_report_cache_cell.borrow_mut(),
+                                    halfspaces,
+                                    local_unknown,
+                                )?,
+                            };
                             cached_halfspace_cell_seed_families_from_optional_report_with(
                                 &mut **halfspace_seed_family_cache_cell.borrow_mut(),
                                 bounds,
                                 halfspaces,
                                 report.as_ref(),
                                 local_unknown,
-                            )?;
-                        Ok(families)
-                    },
-                )?;
-                let result = evaluate_strict_aabb_target_families_with_direct_ranking(
-                    families,
-                    &mut |detour| {
-                        detour_target_no_plane_refined_rank_with_surface_queries(
-                            detour,
-                            start,
-                            end,
-                            polygons,
-                            &mut |edge_start, edge_end, polygon, axis| {
-                                let start_class = classify_point(edge_start, &polygon.support)?;
-                                let end_class = classify_point(edge_end, &polygon.support)?;
-                                if start_class == Classification::On {
-                                    return Ok(Some(edge_start.clone()));
-                                }
-                                if end_class == Classification::On {
-                                    return Ok(Some(edge_end.clone()));
-                                }
-                                segment_plane_crossing(edge_start, edge_end, &polygon.support)
-                                    .and_then(|crossing| {
-                                        if let Some(crossing) = crossing {
-                                            if !point_strictly_between_axis(
-                                                &crossing, edge_start, edge_end, axis,
-                                            )? {
-                                                return Ok(None);
+                            )
+                        },
+                        &mut |detour| {
+                            detour_target_no_plane_refined_rank_with_surface_queries(
+                                detour,
+                                start,
+                                end,
+                                polygons,
+                                &mut |edge_start, edge_end, polygon, axis| {
+                                    let start_class = classify_point(edge_start, &polygon.support)?;
+                                    let end_class = classify_point(edge_end, &polygon.support)?;
+                                    if start_class == Classification::On {
+                                        return Ok(Some(edge_start.clone()));
+                                    }
+                                    if end_class == Classification::On {
+                                        return Ok(Some(edge_end.clone()));
+                                    }
+                                    segment_plane_crossing(edge_start, edge_end, &polygon.support)
+                                        .and_then(|crossing| {
+                                            if let Some(crossing) = crossing {
+                                                if !point_strictly_between_axis(
+                                                    &crossing, edge_start, edge_end, axis,
+                                                )? {
+                                                    return Ok(None);
+                                                }
+                                                Ok(Some(crossing))
+                                            } else {
+                                                Ok(None)
                                             }
-                                            Ok(Some(crossing))
-                                        } else {
-                                            Ok(None)
-                                        }
-                                    })
-                            },
-                            &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
-                            start_definitions,
-                            end_definitions,
-                            &mut **interior_box_axis_intervals_cell.borrow_mut(),
-                            &mut **trace_without_detours_cell.borrow_mut(),
-                        )
-                    },
-                    &mut |detour| {
-                        evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
-                            &detour,
-                            start,
-                            end,
-                            polygons,
-                            visited_points,
-                            start_definitions,
-                            end_definitions,
-                            progressive_interior_box_detours,
-                            no_plane_replacement_cycle_guard_cache,
-                            no_plane_replacement_cache,
-                            &mut **halfspace_report_cache_cell.borrow_mut(),
-                            &mut **halfspace_seed_family_cache_cell.borrow_mut(),
-                            strict_aabb_target_families,
-                            &mut **interior_box_axis_intervals_cell.borrow_mut(),
-                            surface_cache,
-                            surface_query,
-                            &mut **trace_without_detours_cell.borrow_mut(),
-                            detour_target_cache,
-                            detours_for_query,
-                            &mut saw_unknown,
-                        )
-                    },
-                );
+                                        })
+                                },
+                                &mut |crossing, polygon| {
+                                    classify_point_in_polygon(crossing, polygon)
+                                },
+                                start_definitions,
+                                end_definitions,
+                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                &mut **trace_without_detours_cell.borrow_mut(),
+                            )
+                        },
+                        &mut |detour| {
+                            evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                                &detour,
+                                start,
+                                end,
+                                polygons,
+                                visited_points,
+                                start_definitions,
+                                end_definitions,
+                                progressive_interior_box_detours,
+                                no_plane_replacement_cycle_guard_cache,
+                                no_plane_replacement_cache,
+                                &mut **halfspace_report_cache_cell.borrow_mut(),
+                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                strict_aabb_target_families,
+                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                surface_cache,
+                                surface_query,
+                                &mut **trace_without_detours_cell.borrow_mut(),
+                                detour_target_cache,
+                                detours_for_query,
+                                &mut saw_unknown,
+                            )
+                        },
+                    )
+                };
                 match result {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
