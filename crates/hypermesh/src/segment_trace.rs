@@ -2271,6 +2271,11 @@ fn search_strict_aabb_targets_progressively_with_direct_ranking<K: Ord>(
     )
 }
 
+struct ProgressiveStrictAabbSearchOutcome {
+    result: HypermeshResult<bool>,
+    exhausted_families: Option<StrictAabbTargetFamilies>,
+}
+
 #[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families(
     bounds: &Aabb,
@@ -2301,21 +2306,77 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
     evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    let halfspaces = aabb_core_halfspaces(bounds)?;
-    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+        bounds,
+        &mut seed_families_for,
+        rank_direct,
+        evaluate,
+    )
+    .result
+}
+
+fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome<
+    K: Ord,
+>(
+    bounds: &Aabb,
+    mut seed_families_for: impl FnMut(
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+        &mut bool,
+    ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+    rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
+    evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
+) -> ProgressiveStrictAabbSearchOutcome {
+    let halfspaces = match aabb_core_halfspaces(bounds) {
+        Ok(halfspaces) => halfspaces,
+        Err(err) => {
+            return ProgressiveStrictAabbSearchOutcome {
+                result: Err(err),
+                exhausted_families: None,
+            };
+        }
+    };
+    let (report, mut saw_unknown) = match optional_halfspace_feasibility_report(&halfspaces) {
+        Ok(report) => report,
+        Err(err) => {
+            return ProgressiveStrictAabbSearchOutcome {
+                result: Err(err),
+                exhausted_families: None,
+            };
+        }
+    };
     if report
         .as_ref()
         .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
     {
-        return if saw_unknown {
-            Err(HypermeshError::UnknownClassification)
-        } else {
-            Ok(false)
+        return ProgressiveStrictAabbSearchOutcome {
+            result: if saw_unknown {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                Ok(false)
+            },
+            exhausted_families: Some(StrictAabbTargetFamilies {
+                direct_targets: Vec::new(),
+                shifted_targets: Vec::new(),
+                saw_unknown,
+            }),
         };
     }
 
+    let mut exhausted_direct_targets = Vec::new();
+    let mut exhausted_shifted_targets = Vec::new();
+
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
-        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
+        match seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown) {
+            Ok(families) => families,
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
+        };
     let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
     let (seeds, shifted_vertices, shifted_geometry_seeds) =
         dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
@@ -2335,15 +2396,26 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
                 saw_unknown = true;
                 continue;
             }
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         };
         if !target.uncertified_definition_fallback {
             certified_direct_target_points.push(target.point.clone());
         }
+        exhausted_direct_targets.push(target.clone());
         let (rank_missing, rank) = match rank_direct(&target) {
             Ok(rank) => (0u8, Some(rank)),
             Err(HypermeshError::UnknownClassification) => (1u8, None),
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         };
         ranked_direct_targets.push((rank_missing, rank, index, target));
     }
@@ -2359,7 +2431,10 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
                 } else {
-                    return Ok(true);
+                    return ProgressiveStrictAabbSearchOutcome {
+                        result: Ok(true),
+                        exhausted_families: None,
+                    };
                 }
             }
             Ok(false) => {
@@ -2370,7 +2445,12 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         }
     }
 
@@ -2382,18 +2462,29 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             shifted_vertices,
             shifted_geometry_seeds,
         );
-    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+    let shifted_witnesses = match shifted_halfspace_witness_family_or_empty(
         {
             let mut shifted_witnesses = Vec::new();
-            extend_shifted_halfspace_seed_families_backtracking_unknown(
+            let shifted_result = extend_shifted_halfspace_seed_families_backtracking_unknown(
                 &mut shifted_witnesses,
                 [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
                 |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
-            )?;
-            Ok(shifted_witnesses)
+            );
+            match shifted_result {
+                Ok(()) => Ok(shifted_witnesses),
+                Err(err) => Err(err),
+            }
         },
         &mut saw_unknown,
-    )?;
+    ) {
+        Ok(witnesses) => witnesses,
+        Err(err) => {
+            return ProgressiveStrictAabbSearchOutcome {
+                result: Err(err),
+                exhausted_families: None,
+            };
+        }
+    };
     for witness in &shifted_witnesses {
         let target = match build_detour_target_from_shifted_witness(witness) {
             Ok(target) => target,
@@ -2401,14 +2492,23 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
                 saw_unknown = true;
                 continue;
             }
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         };
+        exhausted_shifted_targets.push(target.clone());
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
                 } else {
-                    return Ok(true);
+                    return ProgressiveStrictAabbSearchOutcome {
+                        result: Ok(true),
+                        exhausted_families: None,
+                    };
                 }
             }
             Ok(false) => {
@@ -2419,7 +2519,12 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         }
     }
 
@@ -2435,14 +2540,23 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
                 saw_unknown = true;
                 continue;
             }
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         };
+        exhausted_direct_targets.push(target.clone());
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
                 } else {
-                    return Ok(true);
+                    return ProgressiveStrictAabbSearchOutcome {
+                        result: Ok(true),
+                        exhausted_families: None,
+                    };
                 }
             }
             Ok(false) => {
@@ -2453,14 +2567,28 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
-            Err(err) => return Err(err),
+            Err(err) => {
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Err(err),
+                    exhausted_families: None,
+                };
+            }
         }
     }
 
-    if saw_unknown {
+    let result = if saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
         Ok(false)
+    };
+
+    ProgressiveStrictAabbSearchOutcome {
+        result,
+        exhausted_families: Some(StrictAabbTargetFamilies {
+            direct_targets: exhausted_direct_targets,
+            shifted_targets: exhausted_shifted_targets,
+            saw_unknown,
+        }),
     }
 }
 
@@ -8513,7 +8641,8 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         },
                     )
                 } else {
-                    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
+                    let outcome =
+                        search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
                         &bounds,
                         |bounds, halfspaces, report, local_unknown| {
                             let report = match report {
@@ -8594,7 +8723,14 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                 &mut saw_unknown,
                             )
                         },
-                    )
+                    );
+                    if let Some(families) = outcome.exhausted_families.clone() {
+                        strict_aabb_target_families.push(StrictAabbTargetFamilyCacheEntry {
+                            bounds: bounds.clone(),
+                            families: Ok(families),
+                        });
+                    }
+                    outcome.result
                 };
                 match result {
                     Ok(true) => return Ok(true),
@@ -13605,6 +13741,27 @@ mod tests {
 
         assert!(found);
         assert_eq!(evaluated, vec![p(1, 1, 1), p(4, 1, 1)]);
+    }
+
+    #[test]
+    fn search_strict_aabb_targets_progressively_records_exhausted_families_on_miss() {
+        let outcome =
+            search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+                &Aabb::new(p(0, 0, 0), p(3, 3, 3)),
+                |_bounds, _halfspaces, _report, _saw_unknown| {
+                    Ok((vec![p(1, 1, 1), p(2, 2, 2)], vec![p(4, 4, 4)], vec![]))
+                },
+                &mut |_target| Ok([0u8, 0u8]),
+                &mut |_target| Ok(false),
+            );
+
+        assert_eq!(outcome.result, Ok(false));
+        let families = outcome
+            .exhausted_families
+            .expect("progressive miss should retain the full family set");
+        assert_eq!(families.direct_targets.len(), 2);
+        assert!(!families.shifted_targets.is_empty());
+        assert!(!families.saw_unknown);
     }
 
     #[test]
