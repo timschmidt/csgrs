@@ -920,10 +920,7 @@ fn cached_detour_target_family_with(
     end: &Point3,
     build: impl FnOnce() -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    if let Some(existing) = cache.iter().find(|existing| {
-        (existing.start == *start && existing.end == *end)
-            || (existing.start == *end && existing.end == *start)
-    }) {
+    if let Some(existing) = cached_detour_target_family(cache, start, end) {
         return existing.targets.clone();
     }
 
@@ -934,6 +931,17 @@ fn cached_detour_target_family_with(
         targets: targets.clone(),
     });
     targets
+}
+
+fn cached_detour_target_family<'a>(
+    cache: &'a [DetourTargetFamilyCacheEntry],
+    start: &Point3,
+    end: &Point3,
+) -> Option<&'a DetourTargetFamilyCacheEntry> {
+    cache.iter().find(|existing| {
+        (existing.start == *start && existing.end == *end)
+            || (existing.start == *end && existing.end == *start)
+    })
 }
 
 #[cfg(test)]
@@ -3429,7 +3437,6 @@ fn try_leaf_probe_family_with_queries(
     if probes.is_empty() && point.uncertified_definition_fallback {
         *saw_unknown = true;
     }
-
     let mut prioritized_probes = Vec::new();
     let mut deferred_probes = Vec::new();
     for probe in probes {
@@ -4721,23 +4728,58 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                 },
             )
         };
+    let visited_points =
+        initial_visited_definition_points(start, start_definitions, end, end_definitions);
+    let has_top_level_detour_cache_hit =
+        cached_detour_target_family(&*detour_target_cache, start, end).is_some();
     let mut detours_for = |start: &Point3, end: &Point3| {
         cached_detour_target_family_with(detour_target_cache, start, end, || {
             interior_box_detour_targets(start, end, polygons)
         })
     };
-    probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
-        start,
-        end,
-        polygons,
-        start_definitions,
-        end_definitions,
-        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
-        surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
-        &mut trace_without_detours,
-        &mut detours_for,
-    )
+    let no_detour_unknown =
+        match trace_without_detours(start, end, start_definitions, end_definitions) {
+            Ok(true) => return Ok(true),
+            Ok(false) => false,
+            Err(HypermeshError::UnknownClassification) => true,
+            Err(err) => return Err(err),
+        };
+
+    let detour_result = if has_top_level_detour_cache_hit {
+        probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
+            start,
+            end,
+            polygons,
+            start_definitions,
+            end_definitions,
+            &visited_points,
+            surface_cache,
+            &mut |point| point_lies_on_traced_surface(point, polygons),
+            &mut trace_without_detours,
+            &mut detours_for,
+        )?
+    } else {
+        probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surface_query(
+            start,
+            end,
+            polygons,
+            start_definitions,
+            end_definitions,
+            &visited_points,
+            surface_cache,
+            &mut |point| point_lies_on_traced_surface(point, polygons),
+            &mut trace_without_detours,
+            &mut detours_for,
+        )?
+    };
+
+    if detour_result {
+        Ok(true)
+    } else if no_detour_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -5017,108 +5059,21 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     for detour in detours_for(start, end)? {
-        let start_definition_transition = detour.point == *start
-            && !definition_families_match_as_sets(&detour.definitions, start_definitions);
-        let end_definition_transition = detour.point == *end
-            && !definition_families_match_as_sets(&detour.definitions, end_definitions);
-        let zero_length_definition_transition =
-            start_definition_transition || end_definition_transition;
-        let already_visited =
-            visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
-        let on_surface = if already_visited || zero_length_definition_transition {
-            false
-        } else {
-            match cached_surface_query_with(surface_cache, &detour.point, || {
-                surface_query(&detour.point)
-            }) {
-                Ok(on_surface) => on_surface,
-                Err(HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    continue;
-                }
-                Err(err) => return Err(err),
-            }
-        };
-        if already_visited || on_surface {
-            if detour.uncertified_definition_fallback {
-                saw_unknown = true;
-            }
-            continue;
-        }
-
-        let mut next_visited_points = visited_points.to_vec();
-        if !visited_definition_family_contains(
-            &next_visited_points,
-            &detour.point,
-            &detour.definitions,
-        ) {
-            next_visited_points.push(VisitedDefinitionPoint {
-                point: detour.point.clone(),
-                definitions: detour.definitions.clone(),
-            });
-        }
-
-        let first_leg = match if start_definition_transition {
-            trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
-        } else {
-            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
-                start,
-                &detour.point,
-                polygons,
-                start_definitions,
-                &detour.definitions,
-                &next_visited_points,
-                surface_cache,
-                surface_query,
-                trace_without_detours,
-                detours_for,
-            )
-        } {
-            Ok(result) => result,
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-                continue;
-            }
-            Err(err) => return Err(err),
-        };
-        if !first_leg {
-            if detour.uncertified_definition_fallback {
-                saw_unknown = true;
-            }
-            continue;
-        }
-        match if end_definition_transition {
-            trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
-        } else {
-            probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
-                &detour.point,
-                end,
-                polygons,
-                &detour.definitions,
-                end_definitions,
-                &next_visited_points,
-                surface_cache,
-                surface_query,
-                trace_without_detours,
-                detours_for,
-            )
-        } {
-            Ok(true) => {
-                if detour.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
-                return Ok(true);
-            }
-            Ok(false) => {
-                if detour.uncertified_definition_fallback {
-                    saw_unknown = true;
-                }
-            }
-            Err(HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-            }
-            Err(err) => return Err(err),
+        if evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
+            &detour,
+            start,
+            end,
+            polygons,
+            start_definitions,
+            end_definitions,
+            visited_points,
+            surface_cache,
+            surface_query,
+            trace_without_detours,
+            detours_for,
+            &mut saw_unknown,
+        )? {
+            return Ok(true);
         }
     }
 
@@ -5126,6 +5081,216 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
         Err(HypermeshError::UnknownClassification)
     } else {
         Ok(false)
+    }
+}
+
+fn probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surface_query(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let (intervals, mut saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        start,
+        end,
+        polygons,
+        &mut |edge_start, edge_end, polygon, axis| {
+            let start_class = classify_point(edge_start, &polygon.support)?;
+            let end_class = classify_point(edge_end, &polygon.support)?;
+            if start_class == Classification::On {
+                return Ok(Some(edge_start.clone()));
+            }
+            if end_class == Classification::On {
+                return Ok(Some(edge_end.clone()));
+            }
+            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
+                if let Some(crossing) = crossing {
+                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
+                        return Ok(None);
+                    }
+                    Ok(Some(crossing))
+                } else {
+                    Ok(None)
+                }
+            })
+        },
+        &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+    )?;
+
+    for x in &intervals[0] {
+        for y in &intervals[1] {
+            for z in &intervals[2] {
+                let bounds = aabb_from_axis_intervals([x, y, z])?;
+                let detours = match strict_aabb_targets(&bounds) {
+                    Ok(detours) => detours,
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
+                for detour in detours {
+                    if evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
+                        &detour,
+                        start,
+                        end,
+                        polygons,
+                        start_definitions,
+                        end_definitions,
+                        visited_points,
+                        surface_cache,
+                        surface_query,
+                        trace_without_detours,
+                        detours_for,
+                        &mut saw_unknown,
+                    )? {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
+}
+
+fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
+    detour: &DetourTarget,
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+    saw_unknown: &mut bool,
+) -> HypermeshResult<bool> {
+    let start_definition_transition = detour.point == *start
+        && !definition_families_match_as_sets(&detour.definitions, start_definitions);
+    let end_definition_transition = detour.point == *end
+        && !definition_families_match_as_sets(&detour.definitions, end_definitions);
+    let zero_length_definition_transition =
+        start_definition_transition || end_definition_transition;
+    let already_visited =
+        visited_definition_family_contains(visited_points, &detour.point, &detour.definitions);
+    let on_surface = if already_visited || zero_length_definition_transition {
+        false
+    } else {
+        match cached_surface_query_with(surface_cache, &detour.point, || {
+            surface_query(&detour.point)
+        }) {
+            Ok(on_surface) => on_surface,
+            Err(HypermeshError::UnknownClassification) => {
+                *saw_unknown = true;
+                return Ok(false);
+            }
+            Err(err) => return Err(err),
+        }
+    };
+    if already_visited || on_surface {
+        if detour.uncertified_definition_fallback {
+            *saw_unknown = true;
+        }
+        return Ok(false);
+    }
+
+    let mut next_visited_points = visited_points.to_vec();
+    if !visited_definition_family_contains(&next_visited_points, &detour.point, &detour.definitions)
+    {
+        next_visited_points.push(VisitedDefinitionPoint {
+            point: detour.point.clone(),
+            definitions: detour.definitions.clone(),
+        });
+    }
+
+    let first_leg = match if start_definition_transition {
+        trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
+    } else {
+        probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+            start,
+            &detour.point,
+            polygons,
+            start_definitions,
+            &detour.definitions,
+            &next_visited_points,
+            surface_cache,
+            surface_query,
+            trace_without_detours,
+            detours_for,
+        )
+    } {
+        Ok(result) => result,
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            return Ok(false);
+        }
+        Err(err) => return Err(err),
+    };
+    if !first_leg {
+        if detour.uncertified_definition_fallback {
+            *saw_unknown = true;
+        }
+        return Ok(false);
+    }
+
+    match if end_definition_transition {
+        trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
+    } else {
+        probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
+            &detour.point,
+            end,
+            polygons,
+            &detour.definitions,
+            end_definitions,
+            &next_visited_points,
+            surface_cache,
+            surface_query,
+            trace_without_detours,
+            detours_for,
+        )
+    } {
+        Ok(true) => {
+            if detour.uncertified_definition_fallback {
+                *saw_unknown = true;
+                Ok(false)
+            } else {
+                Ok(true)
+            }
+        }
+        Ok(false) => {
+            if detour.uncertified_definition_fallback {
+                *saw_unknown = true;
+            }
+            Ok(false)
+        }
+        Err(HypermeshError::UnknownClassification) => {
+            *saw_unknown = true;
+            Ok(false)
+        }
+        Err(err) => Err(err),
     }
 }
 
