@@ -925,7 +925,7 @@ fn cached_definition_no_detour_trace_with(
     end_definitions: &[[Plane; 3]],
     trace: impl FnOnce() -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.start == *start
             && existing.end == *end
             && existing.winding == winding
@@ -971,7 +971,7 @@ fn cached_detour_target_family<'a>(
     start: &Point3,
     end: &Point3,
 ) -> Option<&'a DetourTargetFamilyCacheEntry> {
-    cache.iter().find(|existing| {
+    cache.iter().rev().find(|existing| {
         (existing.start == *start && existing.end == *end)
             || (existing.start == *end && existing.end == *start)
     })
@@ -1493,6 +1493,7 @@ fn cached_affine_from_planes_with(
 ) -> HypermeshResult<Point3> {
     if let Some(existing) = cache
         .iter()
+        .rev()
         .find(|existing| definition_planes_match_as_sets(&existing.planes, planes))
     {
         return existing.point.clone();
@@ -1515,7 +1516,7 @@ fn cached_plane_replacement_step_with(
     attempt: &[i32],
     trace: impl FnOnce() -> HypermeshResult<Option<WindingNumberVector>>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.current_point == *current_point
             && existing.next_point == *next_point
             && definition_planes_match_as_sets(&existing.current_planes, current_planes)
@@ -7768,7 +7769,7 @@ fn cached_plane_replacement_reachability_step_with(
     next_planes: &[Plane; 3],
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.mode == mode
             && existing.current_point == *current_point
             && existing.next_point == *next_point
@@ -7797,7 +7798,7 @@ fn cached_plane_replacement_reachability_path_with(
     end_planes: &[Plane; 3],
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.mode == mode
             && definition_planes_match_as_sets(&existing.start_planes, start_planes)
             && definition_planes_match_as_sets(&existing.end_planes, end_planes)
