@@ -5350,15 +5350,14 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
     })
 }
 
-fn cache_definition_no_plane_replacement_cycle_guard_result(
+fn begin_definition_no_plane_replacement_cycle_guard_result(
     cache: &mut Vec<DefinitionNoPlaneReplacementCycleGuardCacheEntry>,
     start: &Point3,
     end: &Point3,
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     visited_points: &[VisitedDefinitionPoint],
-    result: &HypermeshResult<bool>,
-) {
+) -> usize {
     let normalized_visited_points = normalized_cycle_guard_visited_points(
         start,
         end,
@@ -5372,8 +5371,9 @@ fn cache_definition_no_plane_replacement_cycle_guard_result(
         start_definitions: start_definitions.to_vec(),
         end_definitions: end_definitions.to_vec(),
         visited_points: normalized_visited_points,
-        result: result.clone(),
+        result: Err(HypermeshError::UnknownClassification),
     });
+    cache.len() - 1
 }
 
 #[cfg(test)]
@@ -7082,6 +7082,14 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     ) {
         return existing;
     }
+    let cache_index = begin_definition_no_plane_replacement_cycle_guard_result(
+        no_plane_replacement_cycle_guard_cache,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
     let mut saw_unknown = false;
     let direct_result = trace_without_detours(start, end, start_definitions, end_definitions);
     let result = match direct_result {
@@ -7161,15 +7169,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         }
         Err(err) => return Err(err),
     };
-    cache_definition_no_plane_replacement_cycle_guard_result(
-        no_plane_replacement_cycle_guard_cache,
-        start,
-        end,
-        start_definitions,
-        end_definitions,
-        visited_points,
-        &result,
-    );
+    no_plane_replacement_cycle_guard_cache[cache_index].result = result.clone();
     result
 }
 
@@ -21864,6 +21864,44 @@ mod tests {
         );
 
         assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn definition_no_plane_replacement_cycle_guard_cache_reuses_in_progress_exact_state() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let shared_definitions = vec![axis_plane_definition(&shared)];
+        let visited_points = vec![VisitedDefinitionPoint {
+            point: shared,
+            definitions: shared_definitions,
+        }];
+        let mut cache = Vec::new();
+        let index = begin_definition_no_plane_replacement_cycle_guard_result(
+            &mut cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &visited_points,
+        );
+
+        let reused = cached_definition_no_plane_replacement_cycle_guard_result(
+            &cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &visited_points,
+        );
+
+        assert_eq!(reused, Some(Err(HypermeshError::UnknownClassification)));
+        assert_eq!(
+            cache[index].result,
+            Err(HypermeshError::UnknownClassification)
+        );
     }
 
     #[test]
