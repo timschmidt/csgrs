@@ -4619,7 +4619,7 @@ fn cached_direct_probe_reachability_with(
     polygons: &[ConvexPolygon],
     query: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.host_support == *host_support
             && existing.polygons == polygons
             && ((existing.start == *start && existing.end == *end)
@@ -5217,7 +5217,7 @@ fn cached_definition_cycle_guard_result(
         end_definitions,
         visited_points,
     );
-    cache.iter().find_map(|existing| {
+    cache.iter().rev().find_map(|existing| {
         let same_direction = existing.start == *start
             && existing.end == *end
             && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
@@ -5298,7 +5298,7 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
         end_definitions,
         visited_points,
     );
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         visited_definition_points_match_as_sets(
             &existing.visited_points,
             &normalized_visited_points,
@@ -5314,7 +5314,7 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
         return Some(existing.result.clone());
     }
 
-    cache.iter().find_map(|existing| {
+    cache.iter().rev().find_map(|existing| {
         let same_direction = existing.start == *start
             && existing.end == *end
             && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
@@ -5807,7 +5807,7 @@ fn cached_definition_no_detour_reachability_with(
     end_definitions: &[[Plane; 3]],
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         (existing.start == *start
             && existing.end == *end
             && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
@@ -5839,7 +5839,7 @@ fn cached_definition_no_plane_replacement_reachability_with(
     end_definitions: &[[Plane; 3]],
     trace: impl FnOnce() -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().find(|existing| {
+    if let Some(existing) = cache.iter().rev().find(|existing| {
         (existing.start == *start
             && existing.end == *end
             && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
