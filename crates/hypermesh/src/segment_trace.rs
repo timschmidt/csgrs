@@ -2019,6 +2019,144 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
     })
 }
 
+fn search_strict_aabb_targets_progressively(
+    bounds: &Aabb,
+    mut evaluate: impl FnMut(DetourTarget) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    search_strict_aabb_targets_progressively_with_seed_families(
+        bounds,
+        |bounds, halfspaces, report, saw_unknown| {
+            halfspace_cell_seed_families_from_optional_report(
+                bounds,
+                halfspaces,
+                report,
+                saw_unknown,
+            )
+        },
+        &mut evaluate,
+    )
+}
+
+fn search_strict_aabb_targets_progressively_with_seed_families(
+    bounds: &Aabb,
+    mut seed_families_for: impl FnMut(
+        &Aabb,
+        &[LimitPlane3],
+        Option<&hyperlimit::HalfspaceFeasibilityReport>,
+        &mut bool,
+    ) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
+    evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    let halfspaces = aabb_core_halfspaces(bounds)?;
+    let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+    if report
+        .as_ref()
+        .is_some_and(|report| report.status != HalfspaceFeasibility::Feasible)
+    {
+        return Ok(false);
+    }
+
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        seed_families_for(bounds, &halfspaces, report.as_ref(), &mut saw_unknown)?;
+    let report_witness = report.as_ref().and_then(|report| report.witness.as_ref());
+    let (seeds, shifted_vertices, shifted_geometry_seeds) =
+        dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+
+    let mut certified_direct_target_points = Vec::new();
+    for seed in &seeds {
+        let target = match build_detour_target(
+            seed,
+            &halfspaces,
+            active_planes_from_optional_report(report.as_ref(), seed),
+            false,
+        ) {
+            Ok(target) => target,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        if !target.uncertified_definition_fallback {
+            certified_direct_target_points.push(target.point.clone());
+        }
+        match evaluate(target.clone()) {
+            Ok(true) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            Ok(false) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+        detour_shifted_seed_families(
+            report_witness,
+            &certified_direct_target_points,
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+        );
+    let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+        {
+            let mut shifted_witnesses = Vec::new();
+            extend_shifted_halfspace_seed_families_backtracking_unknown(
+                &mut shifted_witnesses,
+                [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
+                |seed| shifted_halfspace_cell_witnesses_from_seed(bounds, &halfspaces, seed),
+            )?;
+            Ok(shifted_witnesses)
+        },
+        &mut saw_unknown,
+    )?;
+
+    for witness in &shifted_witnesses {
+        let target = match build_detour_target_from_shifted_witness(witness) {
+            Ok(target) => target,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
+        match evaluate(target.clone()) {
+            Ok(true) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            Ok(false) => {
+                if target.uncertified_definition_fallback {
+                    saw_unknown = true;
+                }
+            }
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
+}
+
 fn detour_shifted_seed_families(
     report_witness: Option<&Point3>,
     certified_direct_target_points: &[Point3],
@@ -6099,16 +6237,8 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         for y in &intervals[1] {
             for z in &intervals[2] {
                 let bounds = aabb_from_axis_intervals([x, y, z])?;
-                let detours = match strict_aabb_targets(&bounds) {
-                    Ok(detours) => detours,
-                    Err(HypermeshError::UnknownClassification) => {
-                        saw_unknown = true;
-                        continue;
-                    }
-                    Err(err) => return Err(err),
-                };
-                for detour in detours {
-                    if evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                let result = search_strict_aabb_targets_progressively(&bounds, |detour| {
+                    evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
                         &detour,
                         start,
                         end,
@@ -6123,9 +6253,16 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         detour_target_cache,
                         detours_for_query,
                         &mut saw_unknown,
-                    )? {
-                        return Ok(true);
+                    )
+                });
+                match result {
+                    Ok(true) => return Ok(true),
+                    Ok(false) => {}
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
                     }
+                    Err(err) => return Err(err),
                 }
             }
         }
