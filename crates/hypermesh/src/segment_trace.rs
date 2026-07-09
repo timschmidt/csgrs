@@ -3055,7 +3055,7 @@ fn search_adjacent_normal_probe_winding_with_queries(
             }
         }
 
-        if let Some(winding) = try_strict_normal_probe_report_witness_winding_with_queries(
+        let unrestricted_report = try_strict_normal_probe_report_witness_winding_with_queries(
             point,
             positive_side,
             support,
@@ -3069,24 +3069,27 @@ fn search_adjacent_normal_probe_winding_with_queries(
             &corridor,
             None,
             &stop_point,
-        )? {
+        )?;
+        if let Some(winding) = unrestricted_report {
             return Ok(Some(winding));
         }
-        if let Some(winding) = try_strict_normal_probe_targets_progressively_with_query_caches(
-            point,
-            positive_side,
-            support,
-            ref_point,
-            ref_definitions,
-            ref_wnv,
-            polygons,
-            host_delta_w,
-            probe_query_caches,
-            saw_unknown,
-            &corridor,
-            None,
-            &stop_point,
-        )? {
+        let unrestricted_progressive =
+            try_strict_normal_probe_targets_progressively_with_query_caches(
+                point,
+                positive_side,
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                saw_unknown,
+                &corridor,
+                None,
+                &stop_point,
+            )?;
+        if let Some(winding) = unrestricted_progressive {
             return Ok(Some(winding));
         }
         let probes = strict_normal_probe_targets_with_query_caches(
@@ -3168,8 +3171,8 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
     let mut seen_direct_seeds = Vec::new();
     let mut seeds = take_new_halfspace_seed_family(seeds, &mut seen_direct_seeds);
     let mut certified_probe_points = Vec::new();
-    let mut prioritized_probes = Vec::new();
-    let mut deferred_probes = Vec::new();
+    let mut prioritized_probes: Vec<ProbePoint> = Vec::new();
+    let mut deferred_probes: Vec<ProbePoint> = Vec::new();
     let mut saw_any_probe = false;
 
     let mut queue_probe = |probe: ProbePoint,
@@ -4107,8 +4110,8 @@ fn try_leaf_probe_family_with_queries(
     if probes.is_empty() && point.uncertified_definition_fallback {
         *saw_unknown = true;
     }
-    let mut prioritized_probes = Vec::new();
-    let mut deferred_probes = Vec::new();
+    let mut prioritized_probes: Vec<ProbePoint> = Vec::new();
+    let mut deferred_probes: Vec<ProbePoint> = Vec::new();
     for probe in probes {
         let probe_fallback = probe.uncertified_definition_fallback;
         if cached_surface_query_with(probe_surface, &probe.point, || {
@@ -5725,30 +5728,22 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
          end: &Point3,
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
-            cached_definition_no_detour_reachability_with(
-                no_detour_cache,
+            probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                 start,
                 end,
+                host_support,
+                polygons,
                 start_definitions,
                 end_definitions,
-                || {
-                    probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
-                        start,
-                        end,
-                        host_support,
-                        polygons,
-                        start_definitions,
-                        end_definitions,
-                        plane_replacement_affine,
-                        plane_replacement_reachability_paths,
-                        plane_replacement_reachability_steps,
-                        no_step_cache,
-                        no_plane_replacement_cycle_guard_cache,
-                        no_plane_replacement_cache,
-                        no_step_detour_target_cache,
-                        direct_probe_reachability_cache,
-                    )
-                },
+                plane_replacement_affine,
+                plane_replacement_reachability_paths,
+                plane_replacement_reachability_steps,
+                no_step_cache,
+                no_plane_replacement_cycle_guard_cache,
+                no_plane_replacement_cache,
+                no_step_detour_target_cache,
+                no_detour_cache,
+                direct_probe_reachability_cache,
             )
         };
     let has_top_level_detour_cache_hit =
@@ -6472,6 +6467,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
     let mut no_plane_replacement_cache = Vec::new();
     let mut detour_target_cache = Vec::new();
+    let mut no_detour_cache = Vec::new();
     let mut direct_probe_reachability_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
         start,
@@ -6487,6 +6483,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
         &mut detour_target_cache,
+        &mut no_detour_cache,
         &mut direct_probe_reachability_cache,
     )
 }
@@ -6507,6 +6504,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     >,
     no_plane_replacement_cache: &mut Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
     let direct_unknown = match cached_direct_probe_reachability_with(
@@ -6540,6 +6538,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                 affine_cache,
                 path_cache,
                 step_cache,
+                no_step_cache,
                 direct_probe_reachability_cache,
             )
         },
@@ -6557,6 +6556,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                     path_cache,
                     step_cache,
                     no_step_cache,
+                    no_detour_cache,
                     no_plane_replacement_cycle_guard_cache,
                     no_plane_replacement_cache,
                     no_step_detour_target_cache,
@@ -6591,6 +6591,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     let mut affine_cache = Vec::new();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
+    let mut no_step_cache = Vec::new();
     let mut direct_probe_reachability_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
         start,
@@ -6602,6 +6603,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
         &mut affine_cache,
         &mut path_cache,
         &mut step_cache,
+        &mut no_step_cache,
         &mut direct_probe_reachability_cache,
     )
 }
@@ -6616,60 +6618,70 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
-    let direct_unknown = match cached_direct_probe_reachability_with(
-        direct_probe_reachability_cache,
-        start,
-        end,
-        host_support,
-        polygons,
-        || probe_reaches_adjacent_cell(start, end, host_support, polygons),
-    ) {
-        Ok(true) => return Ok(true),
-        Ok(false) => false,
-        Err(HypermeshError::UnknownClassification) => true,
-        Err(err) => return Err(err),
-    };
-
     let mut start_definitions = start_definitions.to_vec();
     append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
     let mut end_definitions = end_definitions.to_vec();
     append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
     let start_definitions = unique_definition_family(&start_definitions);
     let end_definitions = unique_definition_family(&end_definitions);
-    let ordered_pairs = ordered_definition_pairs_by_no_step_precheck_with(
+    cached_definition_no_detour_reachability_with(
+        no_step_cache,
+        start,
+        end,
         &start_definitions,
         &end_definitions,
-        host_support,
-        polygons,
-        affine_cache,
-        direct_probe_reachability_cache,
-    )?;
+        || {
+            let direct_unknown = match cached_direct_probe_reachability_with(
+                direct_probe_reachability_cache,
+                start,
+                end,
+                host_support,
+                polygons,
+                || probe_reaches_adjacent_cell(start, end, host_support, polygons),
+            ) {
+                Ok(true) => return Ok(true),
+                Ok(false) => false,
+                Err(HypermeshError::UnknownClassification) => true,
+                Err(err) => return Err(err),
+            };
 
-    let mut saw_unknown = direct_unknown;
-    for (start_index, end_index) in ordered_pairs {
-        match plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
-            &start_definitions[start_index],
-            &end_definitions[end_index],
-            host_support,
-            polygons,
-            affine_cache,
-            path_cache,
-            step_cache,
-        ) {
-            Ok(true) => return Ok(true),
-            Ok(false) => {}
-            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
-            Err(err) => return Err(err),
-        }
-    }
+            let ordered_pairs = ordered_definition_pairs_by_no_step_precheck_with(
+                &start_definitions,
+                &end_definitions,
+                host_support,
+                polygons,
+                affine_cache,
+                direct_probe_reachability_cache,
+            )?;
 
-    if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        Ok(false)
-    }
+            let mut saw_unknown = direct_unknown;
+            for (start_index, end_index) in ordered_pairs {
+                match plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
+                    &start_definitions[start_index],
+                    &end_definitions[end_index],
+                    host_support,
+                    polygons,
+                    affine_cache,
+                    path_cache,
+                    step_cache,
+                ) {
+                    Ok(true) => return Ok(true),
+                    Ok(false) => {}
+                    Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                    Err(err) => return Err(err),
+                }
+            }
+
+            if saw_unknown {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                Ok(false)
+            }
+        },
+    )
 }
 
 fn ordered_definition_pairs_by_no_step_precheck_with(
@@ -7642,6 +7654,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     let mut affine_cache = Vec::new();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
+    let mut no_step_cache = Vec::new();
     let mut no_detour_cache = Vec::new();
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
     let mut no_plane_replacement_cache = Vec::new();
@@ -7655,6 +7668,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         &mut affine_cache,
         &mut path_cache,
         &mut step_cache,
+        &mut no_step_cache,
         &mut no_detour_cache,
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
@@ -7671,6 +7685,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_plane_replacement_cycle_guard_cache: &mut Vec<
         DefinitionNoPlaneReplacementCycleGuardCacheEntry,
@@ -7704,6 +7719,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                         &mut no_step_affine_cache,
                         &mut no_step_path_cache,
                         &mut no_step_step_cache,
+                        no_step_cache,
                         direct_probe_reachability_cache,
                     )
                 },
@@ -7740,6 +7756,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                                 &mut no_step_affine_cache,
                                 &mut no_step_path_cache,
                                 &mut no_step_step_cache,
+                                no_step_cache,
                                 direct_probe_reachability_cache,
                             )
                         },
@@ -14438,6 +14455,78 @@ mod tests {
         );
 
         assert_eq!(first, second);
+        assert_eq!(after_first, after_second);
+    }
+
+    #[test]
+    fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        let probe =
+            bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        let mut affine_cache = Vec::new();
+        let mut path_cache = Vec::new();
+        let mut step_cache = Vec::new();
+        let mut no_step_cache = Vec::new();
+        let mut direct_probe_reachability_cache = Vec::new();
+
+        let first = probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+            &interior.point,
+            &probe.point,
+            &support,
+            &[wall.clone()],
+            &interior.planes,
+            &probe.planes,
+            &mut affine_cache,
+            &mut path_cache,
+            &mut step_cache,
+            &mut no_step_cache,
+            &mut direct_probe_reachability_cache,
+        )
+        .unwrap();
+        let after_first = (
+            affine_cache.len(),
+            path_cache.len(),
+            step_cache.len(),
+            no_step_cache.len(),
+            direct_probe_reachability_cache.len(),
+        );
+
+        let second = probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+            &interior.point,
+            &probe.point,
+            &support,
+            &[wall],
+            &interior.planes,
+            &probe.planes,
+            &mut affine_cache,
+            &mut path_cache,
+            &mut step_cache,
+            &mut no_step_cache,
+            &mut direct_probe_reachability_cache,
+        )
+        .unwrap();
+        let after_second = (
+            affine_cache.len(),
+            path_cache.len(),
+            step_cache.len(),
+            no_step_cache.len(),
+            direct_probe_reachability_cache.len(),
+        );
+
+        assert_eq!(first, second);
+        assert_eq!(no_step_cache.len(), 1);
         assert_eq!(after_first, after_second);
     }
 
