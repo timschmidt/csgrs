@@ -7220,7 +7220,6 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             definitions: detour.definitions.clone(),
         });
     }
-
     let first_leg = match if start_definition_transition {
         trace_without_detours(start, &detour.point, start_definitions, &detour.definitions)
     } else {
@@ -7253,7 +7252,6 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
         }
         return Ok(false);
     }
-
     match if end_definition_transition {
         trace_without_detours(&detour.point, end, &detour.definitions, end_definitions)
     } else {
@@ -7757,23 +7755,29 @@ fn cached_plane_replacement_reachability_step_with(
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.mode == mode
-            && existing.current_point == *current_point
-            && existing.next_point == *next_point
-            && definition_planes_match_as_sets(&existing.current_planes, current_planes)
-            && definition_planes_match_as_sets(&existing.next_planes, next_planes)
+            && ((existing.current_point == *current_point
+                && existing.next_point == *next_point
+                && definition_planes_match_as_sets(&existing.current_planes, current_planes)
+                && definition_planes_match_as_sets(&existing.next_planes, next_planes))
+                || (existing.current_point == *next_point
+                    && existing.next_point == *current_point
+                    && definition_planes_match_as_sets(&existing.current_planes, next_planes)
+                    && definition_planes_match_as_sets(&existing.next_planes, current_planes)))
     }) {
         return existing.result.clone();
     }
 
-    let result = trace();
     cache.push(PlaneReplacementReachabilityStepCacheEntry {
         mode,
         current_point: current_point.clone(),
         next_point: next_point.clone(),
         current_planes: current_planes.clone(),
         next_planes: next_planes.clone(),
-        result: result.clone(),
+        result: Err(HypermeshError::UnknownClassification),
     });
+    let cache_index = cache.len() - 1;
+    let result = trace();
+    cache[cache_index].result = result.clone();
     result
 }
 
@@ -7786,19 +7790,23 @@ fn cached_plane_replacement_reachability_path_with(
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.mode == mode
-            && definition_planes_match_as_sets(&existing.start_planes, start_planes)
-            && definition_planes_match_as_sets(&existing.end_planes, end_planes)
+            && ((definition_planes_match_as_sets(&existing.start_planes, start_planes)
+                && definition_planes_match_as_sets(&existing.end_planes, end_planes))
+                || (definition_planes_match_as_sets(&existing.start_planes, end_planes)
+                    && definition_planes_match_as_sets(&existing.end_planes, start_planes)))
     }) {
         return existing.result.clone();
     }
 
-    let result = trace();
     cache.push(PlaneReplacementReachabilityPathCacheEntry {
         mode,
         start_planes: start_planes.clone(),
         end_planes: end_planes.clone(),
-        result: result.clone(),
+        result: Err(HypermeshError::UnknownClassification),
     });
+    let cache_index = cache.len() - 1;
+    let result = trace();
+    cache[cache_index].result = result.clone();
     result
 }
 
@@ -23418,6 +23426,73 @@ mod tests {
     }
 
     #[test]
+    fn plane_replacement_reachability_step_reuses_reversed_query() {
+        let current_planes = axis_plane_definition(&p(0, 0, 0));
+        let next_planes = axis_plane_definition(&p(1, 0, 0));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &current_planes,
+            &next_planes,
+            || {
+                calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &p(1, 0, 0),
+            &p(0, 0, 0),
+            &next_planes,
+            &current_planes,
+            || {
+                calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(calls, 1);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_step_reuses_in_progress_exact_state() {
+        let current_planes = axis_plane_definition(&p(0, 0, 0));
+        let next_planes = axis_plane_definition(&p(1, 0, 0));
+        let mut cache = vec![PlaneReplacementReachabilityStepCacheEntry {
+            mode: PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            current_point: p(0, 0, 0),
+            next_point: p(1, 0, 0),
+            current_planes,
+            next_planes,
+            result: Err(HypermeshError::UnknownClassification),
+        }];
+
+        let result = cached_plane_replacement_reachability_step_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &axis_plane_definition(&p(0, 0, 0)),
+            &axis_plane_definition(&p(1, 0, 0)),
+            || Ok(true),
+        );
+
+        assert_eq!(result, Err(HypermeshError::UnknownClassification));
+        assert_eq!(cache.len(), 1);
+        assert_eq!(cache[0].result, Err(HypermeshError::UnknownClassification));
+    }
+
+    #[test]
     fn plane_replacement_reachability_path_reuses_permuted_plane_sets() {
         let start_planes = axis_plane_definition(&p(0, 0, 0));
         let end_planes = axis_plane_definition(&p(1, 0, 0));
@@ -23495,6 +23570,65 @@ mod tests {
         assert!(first);
         assert!(!second);
         assert_eq!(calls, 2);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_path_reuses_reversed_query() {
+        let start_planes = axis_plane_definition(&p(0, 0, 0));
+        let end_planes = axis_plane_definition(&p(1, 0, 0));
+        let mut cache = Vec::new();
+        let mut calls = 0;
+
+        let first = cached_plane_replacement_reachability_path_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &start_planes,
+            &end_planes,
+            || {
+                calls += 1;
+                Ok(true)
+            },
+        )
+        .unwrap();
+        let second = cached_plane_replacement_reachability_path_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &end_planes,
+            &start_planes,
+            || {
+                calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(first);
+        assert!(second);
+        assert_eq!(calls, 1);
+    }
+
+    #[test]
+    fn plane_replacement_reachability_path_reuses_in_progress_exact_state() {
+        let start_planes = axis_plane_definition(&p(0, 0, 0));
+        let end_planes = axis_plane_definition(&p(1, 0, 0));
+        let mut cache = vec![PlaneReplacementReachabilityPathCacheEntry {
+            mode: PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            start_planes,
+            end_planes,
+            result: Err(HypermeshError::UnknownClassification),
+        }];
+
+        let result = cached_plane_replacement_reachability_path_with(
+            &mut cache,
+            PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
+            &axis_plane_definition(&p(0, 0, 0)),
+            &axis_plane_definition(&p(1, 0, 0)),
+            || Ok(true),
+        );
+
+        assert_eq!(result, Err(HypermeshError::UnknownClassification));
+        assert_eq!(cache.len(), 1);
+        assert_eq!(cache[0].result, Err(HypermeshError::UnknownClassification));
     }
 
     #[test]
