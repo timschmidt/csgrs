@@ -2529,10 +2529,7 @@ fn detour_shifted_seed_families(
     shifted_vertices: Vec<Point3>,
     shifted_geometry_seeds: Vec<Point3>,
 ) -> (Vec<Point3>, Vec<Point3>, Vec<Point3>) {
-    if !certified_direct_target_points.is_empty() {
-        let _ = report_witness;
-        return (Vec::new(), Vec::new(), Vec::new());
-    }
+    let _ = certified_direct_target_points;
 
     shifted_halfspace_seed_families_with_report_seed(
         report_witness,
@@ -14704,6 +14701,22 @@ mod tests {
             );
 
         assert_eq!(strict_seeds, vec![witness, p(2, 1, 1)]);
+        assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
+        assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
+    }
+
+    #[test]
+    fn detour_shifted_seed_families_keep_shifted_sources_with_direct_targets() {
+        let witness = p(1, 1, 1);
+        let (strict_seeds, shifted_vertices, shifted_geometry_seeds) = detour_shifted_seed_families(
+            Some(&witness),
+            &[p(9, 9, 9)],
+            vec![p(2, 1, 1)],
+            vec![p(2, 1, 1), witness.clone(), p(3, 1, 1)],
+            vec![p(3, 1, 1), witness.clone(), p(4, 1, 1)],
+        );
+
+        assert_eq!(strict_seeds, vec![p(2, 1, 1), witness]);
         assert_eq!(shifted_vertices, vec![p(3, 1, 1)]);
         assert_eq!(shifted_geometry_seeds, vec![p(4, 1, 1)]);
     }
