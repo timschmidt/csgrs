@@ -181,6 +181,7 @@ pub(crate) struct LeafProbeQueryCaches {
     plane_replacement_trace_steps: Vec<PlaneReplacementStepCacheEntry>,
     plane_replacement_reachability_paths: Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    definition_cycle_guard_reachability: Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     definition_no_step_detour_reachability: Vec<DefinitionNoDetourReachabilityCacheEntry>,
     definition_no_plane_replacement_cycle_guard:
         Vec<DefinitionNoPlaneReplacementCycleGuardCacheEntry>,
@@ -265,6 +266,16 @@ struct DefinitionNoDetourReachabilityCacheEntry {
     end: Point3,
     start_definitions: Vec<[Plane; 3]>,
     end_definitions: Vec<[Plane; 3]>,
+    result: HypermeshResult<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct DefinitionCycleGuardReachabilityCacheEntry {
+    start: Point3,
+    end: Point3,
+    start_definitions: Vec<[Plane; 3]>,
+    end_definitions: Vec<[Plane; 3]>,
+    visited_points: Vec<VisitedDefinitionPoint>,
     result: HypermeshResult<bool>,
 }
 
@@ -3131,6 +3142,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             plane_replacement_trace_steps,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
             definition_no_plane_replacement_reachability,
@@ -3182,6 +3194,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         plane_replacement_trace_steps,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        definition_cycle_guard_reachability,
                         definition_no_step_detour_reachability,
                         definition_no_plane_replacement_cycle_guard,
                         definition_no_plane_replacement_reachability,
@@ -3214,6 +3227,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         plane_replacement_trace_steps,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        definition_cycle_guard_reachability,
                         definition_no_step_detour_reachability,
                         definition_no_plane_replacement_cycle_guard,
                         definition_no_plane_replacement_reachability,
@@ -4027,6 +4041,7 @@ fn try_leaf_probe_family_with_queries(
         plane_replacement_trace_steps,
         plane_replacement_reachability_paths,
         plane_replacement_reachability_steps,
+        definition_cycle_guard_reachability,
         definition_no_step_detour_reachability,
         definition_no_plane_replacement_cycle_guard,
         definition_no_plane_replacement_reachability,
@@ -4092,6 +4107,7 @@ fn try_leaf_probe_family_with_queries(
                         plane_replacement_trace_steps,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        definition_cycle_guard_reachability,
                         definition_no_step_detour_reachability,
                         definition_no_plane_replacement_cycle_guard,
                         definition_no_plane_replacement_reachability,
@@ -4135,6 +4151,7 @@ fn try_leaf_probe_family_with_queries(
             plane_replacement_trace_steps,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
             definition_no_plane_replacement_reachability,
@@ -4170,6 +4187,7 @@ fn evaluate_leaf_probe_with_query_caches(
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    definition_cycle_guard_reachability: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     definition_no_step_detour_reachability: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     definition_no_plane_replacement_cycle_guard: &mut Vec<
         DefinitionNoPlaneReplacementCycleGuardCacheEntry,
@@ -4200,6 +4218,7 @@ fn evaluate_leaf_probe_with_query_caches(
                 plane_replacement_affine,
                 plane_replacement_reachability_paths,
                 plane_replacement_reachability_steps,
+                definition_cycle_guard_reachability,
                 definition_no_step_detour_reachability,
                 definition_no_plane_replacement_cycle_guard,
                 definition_no_plane_replacement_reachability,
@@ -5183,6 +5202,70 @@ fn normalized_cycle_guard_visited_points(
         .collect()
 }
 
+fn cached_definition_cycle_guard_result(
+    cache: &[DefinitionCycleGuardReachabilityCacheEntry],
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> Option<HypermeshResult<bool>> {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
+    cache.iter().find_map(|existing| {
+        let same_direction = existing.start == *start
+            && existing.end == *end
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions);
+        let reversed_direction = existing.start == *end
+            && existing.end == *start
+            && definition_families_match_as_sets(&existing.start_definitions, end_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, start_definitions);
+        if !same_direction && !reversed_direction {
+            return None;
+        }
+        if visited_definition_points_match_as_sets(
+            &existing.visited_points,
+            &normalized_visited_points,
+        ) {
+            Some(existing.result.clone())
+        } else {
+            None
+        }
+    })
+}
+
+fn cache_definition_cycle_guard_result(
+    cache: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+    result: &HypermeshResult<bool>,
+) {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
+    cache.push(DefinitionCycleGuardReachabilityCacheEntry {
+        start: start.clone(),
+        end: end.clone(),
+        start_definitions: start_definitions.to_vec(),
+        end_definitions: end_definitions.to_vec(),
+        visited_points: normalized_visited_points,
+        result: result.clone(),
+    });
+}
+
 fn cached_definition_no_plane_replacement_cycle_guard_result(
     cache: &[DefinitionNoPlaneReplacementCycleGuardCacheEntry],
     start: &Point3,
@@ -5387,6 +5470,7 @@ fn probe_reaches_adjacent_cell_from_interior(
     let mut plane_replacement_affine = Vec::new();
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
+    let mut definition_cycle_guard_reachability = Vec::new();
     let mut definition_no_step_detour_reachability = Vec::new();
     let mut definition_no_plane_replacement_cycle_guard = Vec::new();
     let mut definition_no_plane_replacement_reachability = Vec::new();
@@ -5403,6 +5487,7 @@ fn probe_reaches_adjacent_cell_from_interior(
         &mut plane_replacement_affine,
         &mut plane_replacement_reachability_paths,
         &mut plane_replacement_reachability_steps,
+        &mut definition_cycle_guard_reachability,
         &mut definition_no_step_detour_reachability,
         &mut definition_no_plane_replacement_cycle_guard,
         &mut definition_no_plane_replacement_reachability,
@@ -5422,6 +5507,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    definition_cycle_guard_reachability: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     definition_no_step_detour_reachability: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     definition_no_plane_replacement_cycle_guard: &mut Vec<
         DefinitionNoPlaneReplacementCycleGuardCacheEntry,
@@ -5455,6 +5541,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         plane_replacement_affine,
         plane_replacement_reachability_paths,
         plane_replacement_reachability_steps,
+        definition_cycle_guard_reachability,
         definition_no_step_detour_reachability,
         definition_no_plane_replacement_cycle_guard,
         definition_no_plane_replacement_reachability,
@@ -5479,6 +5566,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     let mut plane_replacement_affine = Vec::new();
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
+    let mut definition_cycle_guard_reachability = Vec::new();
     let mut no_step_cache = Vec::new();
     let mut no_plane_replacement_cycle_guard_cache = Vec::new();
     let mut no_plane_replacement_cache = Vec::new();
@@ -5497,6 +5585,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
         &mut plane_replacement_affine,
         &mut plane_replacement_reachability_paths,
         &mut plane_replacement_reachability_steps,
+        &mut definition_cycle_guard_reachability,
         &mut no_step_cache,
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
@@ -5518,6 +5607,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    definition_cycle_guard_reachability: &mut Vec<DefinitionCycleGuardReachabilityCacheEntry>,
     no_step_cache: &mut Vec<DefinitionNoDetourReachabilityCacheEntry>,
     no_plane_replacement_cycle_guard_cache: &mut Vec<
         DefinitionNoPlaneReplacementCycleGuardCacheEntry,
@@ -5528,6 +5618,16 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
 ) -> HypermeshResult<bool> {
+    if let Some(existing) = cached_definition_cycle_guard_result(
+        definition_cycle_guard_reachability,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
+    ) {
+        return existing;
+    }
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
@@ -5605,11 +5705,41 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     };
 
     if detour_result {
-        Ok(true)
+        let result = Ok(true);
+        cache_definition_cycle_guard_result(
+            definition_cycle_guard_reachability,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+            &visited_points,
+            &result,
+        );
+        result
     } else if no_detour_unknown {
-        Err(HypermeshError::UnknownClassification)
+        let result = Err(HypermeshError::UnknownClassification);
+        cache_definition_cycle_guard_result(
+            definition_cycle_guard_reachability,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+            &visited_points,
+            &result,
+        );
+        result
     } else {
-        Ok(false)
+        let result = Ok(false);
+        cache_definition_cycle_guard_result(
+            definition_cycle_guard_reachability,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+            &visited_points,
+            &result,
+        );
+        result
     }
 }
 
@@ -13853,6 +13983,7 @@ mod tests {
             plane_replacement_affine,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
             definition_no_plane_replacement_reachability,
@@ -13872,6 +14003,7 @@ mod tests {
             plane_replacement_affine,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
             definition_no_plane_replacement_reachability,
@@ -13903,6 +14035,7 @@ mod tests {
             plane_replacement_affine,
             plane_replacement_reachability_paths,
             plane_replacement_reachability_steps,
+            definition_cycle_guard_reachability,
             definition_no_step_detour_reachability,
             definition_no_plane_replacement_cycle_guard,
             definition_no_plane_replacement_reachability,
@@ -21695,6 +21828,117 @@ mod tests {
         );
 
         assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn definition_cycle_guard_cache_reuses_identical_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let shared_definitions = vec![axis_plane_definition(&shared)];
+        let visited_points = vec![VisitedDefinitionPoint {
+            point: shared.clone(),
+            definitions: shared_definitions,
+        }];
+        let cache = vec![DefinitionCycleGuardReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: visited_points.clone(),
+            result: Ok(true),
+        }];
+
+        let reused = cached_definition_cycle_guard_result(
+            &cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &visited_points,
+        );
+
+        assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn definition_cycle_guard_cache_reuses_reversed_query() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let visited_points = vec![VisitedDefinitionPoint {
+            point: shared.clone(),
+            definitions: vec![axis_plane_definition(&shared)],
+        }];
+        let cache = vec![DefinitionCycleGuardReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: visited_points.clone(),
+            result: Ok(true),
+        }];
+
+        let reused = cached_definition_cycle_guard_result(
+            &cache,
+            &end,
+            &start,
+            &end_definitions,
+            &start_definitions,
+            &visited_points,
+        );
+
+        assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn definition_cycle_guard_cache_ignores_redundant_current_endpoints() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let shared_definitions = vec![axis_plane_definition(&shared)];
+        let cache = vec![DefinitionCycleGuardReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: vec![VisitedDefinitionPoint {
+                point: shared.clone(),
+                definitions: shared_definitions.clone(),
+            }],
+            result: Err(HypermeshError::UnknownClassification),
+        }];
+        let current_visited = vec![
+            VisitedDefinitionPoint {
+                point: start.clone(),
+                definitions: start_definitions.clone(),
+            },
+            VisitedDefinitionPoint {
+                point: end.clone(),
+                definitions: end_definitions.clone(),
+            },
+            VisitedDefinitionPoint {
+                point: shared,
+                definitions: shared_definitions,
+            },
+        ];
+
+        let reused = cached_definition_cycle_guard_result(
+            &cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &current_visited,
+        );
+
+        assert_eq!(reused, Some(Err(HypermeshError::UnknownClassification)));
     }
 
     #[test]
