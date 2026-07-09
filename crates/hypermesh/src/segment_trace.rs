@@ -6339,6 +6339,7 @@ fn cached_definition_no_detour_reachability_with(
     result
 }
 
+#[cfg(test)]
 fn cached_definition_no_plane_replacement_reachability_with(
     cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     start: &Point3,
@@ -7551,30 +7552,44 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
                 || reach_without_detours(start, end, start_definitions, end_definitions),
             )
         };
-    cached_definition_no_plane_replacement_reachability_with(
+    if let Some(existing) = cached_definition_no_plane_replacement_reachability_result(
         no_plane_replacement_cache,
         start,
         end,
         start_definitions,
         end_definitions,
-        || {
-            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
-                start,
-                end,
-                polygons,
-                &initial_visited_definition_points(start, start_definitions, end, end_definitions),
-                start_definitions,
-                end_definitions,
-                progressive_interior_box_detours,
-                no_plane_replacement_cycle_guard_cache,
-                halfspace_report_cache,
-                halfspace_seed_family_cache,
-                &mut trace_without_detours,
-                detour_target_cache,
-                &mut detours_for_query,
-            )
-        },
-    )
+    ) {
+        return existing;
+    }
+
+    let cache_index = begin_definition_no_plane_replacement_reachability_result(
+        no_plane_replacement_cache,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+    );
+    let result = {
+        let known_false_cache = &*no_plane_replacement_cache;
+        probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
+            start,
+            end,
+            polygons,
+            &initial_visited_definition_points(start, start_definitions, end, end_definitions),
+            start_definitions,
+            end_definitions,
+            progressive_interior_box_detours,
+            no_plane_replacement_cycle_guard_cache,
+            known_false_cache,
+            halfspace_report_cache,
+            halfspace_seed_family_cache,
+            &mut trace_without_detours,
+            detour_target_cache,
+            &mut detours_for_query,
+        )
+    };
+    no_plane_replacement_cache.entries[cache_index].result = result.clone();
+    result
 }
 
 #[cfg(test)]
@@ -7585,6 +7600,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     visited_points: &[VisitedDefinitionPoint],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -7607,6 +7623,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         end_definitions,
         false,
         &mut no_plane_replacement_cycle_guard_cache,
+        no_plane_replacement_cache,
         &mut halfspace_report_cache,
         &mut halfspace_seed_family_cache,
         trace_without_detours,
@@ -7624,6 +7641,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     end_definitions: &[[Plane; 3]],
     progressive_interior_box_detours: bool,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     trace_without_detours: &mut impl FnMut(
@@ -7645,6 +7663,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         end_definitions,
         progressive_interior_box_detours,
         no_plane_replacement_cycle_guard_cache,
+        no_plane_replacement_cache,
         halfspace_report_cache,
         halfspace_seed_family_cache,
         &mut surface_cache,
@@ -7665,6 +7684,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     end_definitions: &[[Plane; 3]],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -7687,6 +7707,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         end_definitions,
         false,
         &mut no_plane_replacement_cycle_guard_cache,
+        no_plane_replacement_cache,
         &mut halfspace_report_cache,
         &mut halfspace_seed_family_cache,
         surface_cache,
@@ -7706,6 +7727,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     end_definitions: &[[Plane; 3]],
     progressive_interior_box_detours: bool,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
@@ -7719,6 +7741,18 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
+    if matches!(
+        cached_definition_no_plane_replacement_reachability_result(
+            no_plane_replacement_cache,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+        ),
+        Some(Ok(false))
+    ) {
+        return Ok(false);
+    }
     if let Some(existing) = cached_definition_no_plane_replacement_cycle_guard_result(
         no_plane_replacement_cycle_guard_cache,
         start,
@@ -7757,6 +7791,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                     end_definitions,
                     progressive_interior_box_detours,
                     no_plane_replacement_cycle_guard_cache,
+                    no_plane_replacement_cache,
                     halfspace_report_cache,
                     halfspace_seed_family_cache,
                     surface_cache,
@@ -7795,6 +7830,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                         end_definitions,
                         progressive_interior_box_detours,
                         no_plane_replacement_cycle_guard_cache,
+                        no_plane_replacement_cache,
                         halfspace_report_cache,
                         halfspace_seed_family_cache,
                         surface_cache,
@@ -7833,6 +7869,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
     end_definitions: &[[Plane; 3]],
     progressive_interior_box_detours: bool,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
@@ -7926,6 +7963,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
             leg_end_definitions,
             progressive_interior_box_detours,
             no_plane_replacement_cycle_guard_cache,
+            no_plane_replacement_cache,
             halfspace_report_cache,
             halfspace_seed_family_cache,
             surface_cache,
@@ -8015,6 +8053,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     end_definitions: &[[Plane; 3]],
     progressive_interior_box_detours: bool,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
+    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
@@ -8131,12 +8170,13 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                             polygons,
                             visited_points,
                             start_definitions,
-                            end_definitions,
-                            progressive_interior_box_detours,
-                            no_plane_replacement_cycle_guard_cache,
-                            &mut **halfspace_report_cache_cell.borrow_mut(),
-                            &mut **halfspace_seed_family_cache_cell.borrow_mut(),
-                            surface_cache,
+                                end_definitions,
+                                progressive_interior_box_detours,
+                                no_plane_replacement_cycle_guard_cache,
+                                no_plane_replacement_cache,
+                                &mut **halfspace_report_cache_cell.borrow_mut(),
+                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                surface_cache,
                             surface_query,
                             &mut **trace_without_detours_cell.borrow_mut(),
                             detour_target_cache,
@@ -8478,7 +8518,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
             };
         let mut valid = true;
 
-        for plane_index in ordering.iter().copied() {
+        for (_step_index, plane_index) in ordering.iter().copied().enumerate() {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
             if next_planes == current_planes {
@@ -13131,6 +13171,7 @@ mod tests {
             &[end_definitions.clone()],
             true,
             &mut DefinitionNoPlaneReplacementCycleGuardCache::default(),
+            &mut DefinitionNoPlaneReplacementReachabilityCache::default(),
             &mut Vec::new(),
             &mut Vec::new(),
             &mut Vec::new(),
@@ -22036,6 +22077,7 @@ mod tests {
                 ),
                 &start_definitions,
                 &end_definitions,
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
@@ -22239,6 +22281,7 @@ mod tests {
                 ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
@@ -22291,6 +22334,7 @@ mod tests {
                 ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
@@ -22334,6 +22378,7 @@ mod tests {
                 ),
                 &[axis_plane_definition(&start)],
                 &[axis_plane_definition(&end)],
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
@@ -22371,6 +22416,7 @@ mod tests {
                         Ok(false)
                     }
                 },
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |_from, _to, _start_definitions, _end_definitions| Ok(true),
                 &mut |from, to| {
                     if *from == start && *to == end {
@@ -22422,6 +22468,7 @@ mod tests {
                 std::slice::from_ref(&end_definition),
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |from, to, start_definitions, end_definitions| {
                     Ok(
                         (*from == start
@@ -22478,6 +22525,7 @@ mod tests {
                 std::slice::from_ref(&end_definition),
                 &mut Vec::new(),
                 &mut |point| Ok(*point == start),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |from, to, start_definitions, end_definitions| {
                     Ok(
                         (*from == start
@@ -22538,6 +22586,7 @@ mod tests {
                 std::slice::from_ref(&end_definition),
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |from, to, start_definitions, end_definitions| {
                     Ok(
                         (*from == start
@@ -22611,6 +22660,7 @@ mod tests {
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |from, to, _start_definitions, _end_definitions| {
                     if *from == start && *to == end {
                         Ok(false)
@@ -22662,6 +22712,7 @@ mod tests {
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |from, to, _start_definitions, _end_definitions| {
                     if *from == start && *to == end {
                         Ok(false)
@@ -22731,6 +22782,7 @@ mod tests {
                     query_calls += 1;
                     Ok(false)
                 },
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut |_from, _to, _start_definitions, _end_definitions| Ok(false),
                 &mut |from, to| {
                     if *from == start && *to == end {
@@ -22881,6 +22933,67 @@ mod tests {
         );
         assert_eq!(no_plane_replacement_cache.len(), no_plane_replacement_len);
         assert_eq!(detour_target_cache.len(), detour_len);
+    }
+
+    #[test]
+    fn no_plane_cycle_guard_reuses_cached_whole_query_false_across_visited_points() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let mid = p(0, 1, 0);
+        let start_definitions = [axis_plane_definition(&start)];
+        let end_definitions = [axis_plane_definition(&end)];
+        let mut no_plane_replacement_cycle_guard_cache =
+            DefinitionNoPlaneReplacementCycleGuardCache::default();
+        let mut no_plane_replacement_cache =
+            DefinitionNoPlaneReplacementReachabilityCache::from(vec![
+                DefinitionNoPlaneReplacementReachabilityCacheEntry {
+                    start: start.clone(),
+                    end: end.clone(),
+                    start_definitions: start_definitions.to_vec(),
+                    end_definitions: end_definitions.to_vec(),
+                    result: Ok(false),
+                },
+            ]);
+        let mut halfspace_report_cache = Vec::new();
+        let mut halfspace_seed_family_cache = Vec::new();
+        let mut surface_cache = Vec::new();
+        let mut detour_target_cache = Vec::new();
+        let visited_points = vec![VisitedDefinitionPoint {
+            point: mid,
+            definitions: vec![axis_plane_definition(&p(0, 1, 1))],
+        }];
+        let mut trace_calls = 0;
+        let mut detour_calls = 0;
+
+        let result =
+            probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
+                &start,
+                &end,
+                &[],
+                &visited_points,
+                &start_definitions,
+                &end_definitions,
+                false,
+                &mut no_plane_replacement_cycle_guard_cache,
+                &mut no_plane_replacement_cache,
+                &mut halfspace_report_cache,
+                &mut halfspace_seed_family_cache,
+                &mut surface_cache,
+                &mut |_point| Ok(false),
+                &mut |_from, _to, _start_defs, _end_defs| {
+                    trace_calls += 1;
+                    Ok(true)
+                },
+                &mut detour_target_cache,
+                &mut |_from, _to| {
+                    detour_calls += 1;
+                    Ok(Vec::new())
+                },
+            );
+
+        assert_eq!(result, Ok(false));
+        assert_eq!(trace_calls, 0);
+        assert_eq!(detour_calls, 0);
     }
 
     #[test]
@@ -23831,6 +23944,7 @@ mod tests {
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
@@ -23867,6 +23981,7 @@ mod tests {
                 &[axis_plane_definition(&end)],
                 &mut Vec::new(),
                 &mut |_point| Ok(false),
+                &DefinitionNoPlaneReplacementReachabilityCache::default(),
                 &mut trace_without_detours,
                 &mut detours_for,
             )
