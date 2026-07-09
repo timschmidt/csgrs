@@ -6260,37 +6260,72 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
-    probe_reaches_adjacent_cell_with_definition_search(
+    let direct_unknown = match cached_direct_probe_reachability_with(
+        direct_probe_reachability_cache,
+        start,
+        end,
+        host_support,
+        polygons,
+        || probe_reaches_adjacent_cell(start, end, host_support, polygons),
+    ) {
+        Ok(true) => return Ok(true),
+        Ok(false) => false,
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
+
+    match definition_search_precheck_plan(
         start,
         end,
         start_definitions,
         end_definitions,
-        || {
-            cached_direct_probe_reachability_with(
-                direct_probe_reachability_cache,
+        direct_unknown,
+        |start_definition, end_definition| {
+            probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
                 start,
                 end,
                 host_support,
                 polygons,
-                || probe_reaches_adjacent_cell(start, end, host_support, polygons),
-            )
-        },
-        |start_definition, end_definition| {
-            plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
-                start_definition,
-                end_definition,
-                host_support,
-                polygons,
+                std::slice::from_ref(start_definition),
+                std::slice::from_ref(end_definition),
                 affine_cache,
                 path_cache,
                 step_cache,
-                no_step_cache,
-                no_plane_replacement_cycle_guard_cache,
-                no_plane_replacement_cache,
-                no_step_detour_target_cache,
+                direct_probe_reachability_cache,
             )
         },
-    )
+    )? {
+        DefinitionSearchPrecheckOutcome::Reaches => Ok(true),
+        DefinitionSearchPrecheckOutcome::Search(plan) => {
+            let mut saw_unknown = plan.unknown_if_no_match;
+            for (start_index, end_index) in plan.ordered_pairs {
+                match plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
+                    &plan.start_definitions[start_index],
+                    &plan.end_definitions[end_index],
+                    host_support,
+                    polygons,
+                    affine_cache,
+                    path_cache,
+                    step_cache,
+                    no_step_cache,
+                    no_plane_replacement_cycle_guard_cache,
+                    no_plane_replacement_cache,
+                    no_step_detour_target_cache,
+                ) {
+                    Ok(true) => return Ok(true),
+                    Ok(false) => {}
+                    Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                    Err(err) => return Err(err),
+                }
+            }
+
+            if saw_unknown {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                Ok(false)
+            }
+        }
+    }
 }
 
 fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
@@ -6395,6 +6430,114 @@ fn probe_reaches_adjacent_cell_with_definition_search(
         }
         Err(HypermeshError::UnknownClassification) => Err(HypermeshError::UnknownClassification),
         Err(err) => Err(err),
+    }
+}
+
+struct DefinitionSearchPrecheckPlan {
+    start_definitions: Vec<[Plane; 3]>,
+    end_definitions: Vec<[Plane; 3]>,
+    ordered_pairs: Vec<(usize, usize)>,
+    unknown_if_no_match: bool,
+}
+
+enum DefinitionSearchPrecheckOutcome {
+    Reaches,
+    Search(DefinitionSearchPrecheckPlan),
+}
+
+fn definition_search_precheck_plan(
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    direct_unknown: bool,
+    mut precheck_reaches: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<DefinitionSearchPrecheckOutcome> {
+    let mut start_definitions = start_definitions.to_vec();
+    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
+    let mut end_definitions = end_definitions.to_vec();
+    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+    let start_definitions = unique_definition_family(&start_definitions);
+    let end_definitions = unique_definition_family(&end_definitions);
+
+    let mut ordered_pairs = Vec::new();
+    let mut saw_unknown = direct_unknown;
+
+    for (start_index, start_definition) in start_definitions.iter().enumerate() {
+        for (end_index, end_definition) in end_definitions.iter().enumerate() {
+            match precheck_reaches(start_definition, end_definition) {
+                Ok(true) => return Ok(DefinitionSearchPrecheckOutcome::Reaches),
+                Ok(false) => ordered_pairs.push((1usize, start_index, end_index)),
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    ordered_pairs.push((0usize, start_index, end_index));
+                }
+                Err(err) => return Err(err),
+            }
+        }
+    }
+
+    ordered_pairs.sort_unstable();
+
+    Ok(DefinitionSearchPrecheckOutcome::Search(
+        DefinitionSearchPrecheckPlan {
+            start_definitions,
+            end_definitions,
+            ordered_pairs: ordered_pairs
+                .into_iter()
+                .map(|(_, start_index, end_index)| (start_index, end_index))
+                .collect(),
+            unknown_if_no_match: saw_unknown,
+        },
+    ))
+}
+
+#[cfg(test)]
+fn probe_reaches_adjacent_cell_with_definition_search_preferring_precheck(
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    mut direct_reaches: impl FnMut() -> HypermeshResult<bool>,
+    mut precheck_reaches: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
+    mut replacement_reaches: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    let direct_unknown = match direct_reaches() {
+        Ok(true) => return Ok(true),
+        Ok(false) => false,
+        Err(HypermeshError::UnknownClassification) => true,
+        Err(err) => return Err(err),
+    };
+
+    match definition_search_precheck_plan(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        direct_unknown,
+        |start_definition, end_definition| precheck_reaches(start_definition, end_definition),
+    )? {
+        DefinitionSearchPrecheckOutcome::Reaches => Ok(true),
+        DefinitionSearchPrecheckOutcome::Search(plan) => {
+            let mut saw_unknown = plan.unknown_if_no_match;
+            for (start_index, end_index) in plan.ordered_pairs {
+                match replacement_reaches(
+                    &plan.start_definitions[start_index],
+                    &plan.end_definitions[end_index],
+                ) {
+                    Ok(true) => return Ok(true),
+                    Ok(false) => {}
+                    Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                    Err(err) => return Err(err),
+                }
+            }
+
+            if saw_unknown {
+                Err(HypermeshError::UnknownClassification)
+            } else {
+                Ok(false)
+            }
+        }
     }
 }
 
@@ -20161,6 +20304,113 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn probe_reachability_definition_search_preferring_precheck_short_circuits_true_pair() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+        let start_defs = [
+            axis_plane_definition(&start),
+            [
+                Plane::axis_aligned(0, r(0)),
+                Plane::axis_aligned(1, r(0)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+            ],
+        ];
+        let end_defs = [
+            axis_plane_definition(&end),
+            [
+                Plane::axis_aligned(0, r(1)),
+                Plane::axis_aligned(1, r(1)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            ],
+        ];
+        let mut replacement_calls = 0;
+
+        let reaches = probe_reaches_adjacent_cell_with_definition_search_preferring_precheck(
+            &start,
+            &end,
+            &start_defs,
+            &end_defs,
+            || Ok(false),
+            |start_definition, end_definition| {
+                if definition_planes_match_as_sets(start_definition, &start_defs[1])
+                    && definition_planes_match_as_sets(end_definition, &end_defs[1])
+                {
+                    Ok(true)
+                } else {
+                    Ok(false)
+                }
+            },
+            |_start_definition, _end_definition| {
+                replacement_calls += 1;
+                Ok(false)
+            },
+        )
+        .unwrap();
+
+        assert!(reaches);
+        assert_eq!(replacement_calls, 0);
+    }
+
+    #[test]
+    fn probe_reachability_definition_search_preferring_precheck_prioritizes_unknown_pairs() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+        let start_defs = [
+            axis_plane_definition(&start),
+            [
+                Plane::axis_aligned(0, r(0)),
+                Plane::axis_aligned(1, r(0)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(0)),
+            ],
+        ];
+        let end_defs = [
+            axis_plane_definition(&end),
+            [
+                Plane::axis_aligned(0, r(1)),
+                Plane::axis_aligned(1, r(1)),
+                Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
+            ],
+        ];
+        let mut seen_pairs = Vec::new();
+
+        let reaches = probe_reaches_adjacent_cell_with_definition_search_preferring_precheck(
+            &start,
+            &end,
+            &start_defs,
+            &end_defs,
+            || Ok(false),
+            |start_definition, end_definition| {
+                if definition_planes_match_as_sets(start_definition, &start_defs[1])
+                    && definition_planes_match_as_sets(end_definition, &end_defs[0])
+                {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            },
+            |start_definition, end_definition| {
+                let start_index =
+                    if definition_planes_match_as_sets(start_definition, &start_defs[0]) {
+                        0
+                    } else {
+                        1
+                    };
+                let end_index = if definition_planes_match_as_sets(end_definition, &end_defs[0]) {
+                    0
+                } else {
+                    1
+                };
+                seen_pairs.push((start_index, end_index));
+                Ok(start_index == 1 && end_index == 0)
+            },
+        )
+        .unwrap();
+
+        assert!(reaches);
+        assert_eq!(seen_pairs.first().copied(), Some((1, 0)));
     }
 
     #[test]
