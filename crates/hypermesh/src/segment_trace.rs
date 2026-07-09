@@ -8046,7 +8046,6 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
         end_definitions,
     ))?;
     let prefer_second_leg = second_leg_key < first_leg_key;
-
     let mut evaluate_leg = |leg_start: &Point3,
                             leg_end: &Point3,
                             leg_start_definitions: &[[Plane; 3]],
@@ -8228,7 +8227,8 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                     std::cell::RefCell::new(&mut *halfspace_report_cache);
                 let halfspace_seed_family_cache_cell =
                     std::cell::RefCell::new(&mut *halfspace_seed_family_cache);
-                let mut rank_interior_box_axis_intervals = Vec::new();
+                let interior_box_axis_intervals_cell =
+                    std::cell::RefCell::new(&mut *interior_box_axis_intervals);
                 let result =
                     search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
                         &bounds,
@@ -8285,7 +8285,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                 },
                                 start_definitions,
                                 end_definitions,
-                                &mut rank_interior_box_axis_intervals,
+                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
                                 &mut **trace_without_detours_cell.borrow_mut(),
                             )
                         },
@@ -8303,7 +8303,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         no_plane_replacement_cache,
                         &mut **halfspace_report_cache_cell.borrow_mut(),
                         &mut **halfspace_seed_family_cache_cell.borrow_mut(),
-                        interior_box_axis_intervals,
+                        &mut **interior_box_axis_intervals_cell.borrow_mut(),
                         surface_cache,
                         surface_query,
                         &mut **trace_without_detours_cell.borrow_mut(),
