@@ -4646,6 +4646,70 @@ fn visited_definition_points_match_as_sets(
     true
 }
 
+fn visited_definition_points_subset_of(
+    subset: &[VisitedDefinitionPoint],
+    superset: &[VisitedDefinitionPoint],
+) -> bool {
+    subset.iter().all(|subset_point| {
+        superset.iter().any(|superset_point| {
+            superset_point.point == subset_point.point
+                && definition_families_match_as_sets(
+                    &superset_point.definitions,
+                    &subset_point.definitions,
+                )
+        })
+    })
+}
+
+fn cached_definition_no_plane_replacement_cycle_guard_result(
+    cache: &[DefinitionNoPlaneReplacementCycleGuardCacheEntry],
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> Option<HypermeshResult<bool>> {
+    if let Some(existing) = cache.iter().find(|existing| {
+        existing.start == *start
+            && existing.end == *end
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
+            && visited_definition_points_match_as_sets(&existing.visited_points, visited_points)
+    }) {
+        return Some(existing.result.clone());
+    }
+
+    cache.iter().find_map(|existing| {
+        if existing.start != *start
+            || existing.end != *end
+            || !definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            || !definition_families_match_as_sets(&existing.end_definitions, end_definitions)
+        {
+            return None;
+        }
+
+        match &existing.result {
+            Ok(false)
+                if visited_definition_points_subset_of(
+                    &existing.visited_points,
+                    visited_points,
+                ) =>
+            {
+                Some(Ok(false))
+            }
+            Ok(true)
+                if visited_definition_points_subset_of(
+                    visited_points,
+                    &existing.visited_points,
+                ) =>
+            {
+                Some(Ok(true))
+            }
+            _ => None,
+        }
+    })
+}
+
 #[cfg(test)]
 fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
     MIN_DETOUR_RECURSION_LIMIT.max(
@@ -6085,17 +6149,15 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
-    if let Some(existing) = no_plane_replacement_cycle_guard_cache
-        .iter()
-        .find(|existing| {
-            existing.start == *start
-                && existing.end == *end
-                && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
-                && definition_families_match_as_sets(&existing.end_definitions, end_definitions)
-                && visited_definition_points_match_as_sets(&existing.visited_points, visited_points)
-        })
-    {
-        return existing.result.clone();
+    if let Some(existing) = cached_definition_no_plane_replacement_cycle_guard_result(
+        no_plane_replacement_cycle_guard_cache,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    ) {
+        return existing;
     }
     let mut saw_unknown = false;
     match trace_without_detours(start, end, start_definitions, end_definitions) {
@@ -20275,6 +20337,87 @@ mod tests {
         );
         assert_eq!(no_plane_replacement_cache.len(), no_plane_replacement_len);
         assert_eq!(detour_target_cache.len(), detour_len);
+    }
+
+    #[test]
+    fn definition_no_plane_replacement_cycle_guard_cache_reuses_false_for_superset_visited_points()
+    {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let shared_definitions = vec![axis_plane_definition(&shared)];
+        let cached_visited = vec![VisitedDefinitionPoint {
+            point: start.clone(),
+            definitions: start_definitions.clone(),
+        }];
+        let current_visited = vec![
+            cached_visited[0].clone(),
+            VisitedDefinitionPoint {
+                point: shared.clone(),
+                definitions: shared_definitions,
+            },
+        ];
+        let cache = vec![DefinitionNoPlaneReplacementCycleGuardCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: cached_visited,
+            result: Ok(false),
+        }];
+
+        let reused = cached_definition_no_plane_replacement_cycle_guard_result(
+            &cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &current_visited,
+        );
+
+        assert_eq!(reused, Some(Ok(false)));
+    }
+
+    #[test]
+    fn definition_no_plane_replacement_cycle_guard_cache_reuses_true_for_subset_visited_points() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let shared_definitions = vec![axis_plane_definition(&shared)];
+        let current_visited = vec![VisitedDefinitionPoint {
+            point: start.clone(),
+            definitions: start_definitions.clone(),
+        }];
+        let cached_visited = vec![
+            current_visited[0].clone(),
+            VisitedDefinitionPoint {
+                point: shared.clone(),
+                definitions: shared_definitions,
+            },
+        ];
+        let cache = vec![DefinitionNoPlaneReplacementCycleGuardCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: cached_visited,
+            result: Ok(true),
+        }];
+
+        let reused = cached_definition_no_plane_replacement_cycle_guard_result(
+            &cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &current_visited,
+        );
+
+        assert_eq!(reused, Some(Ok(true)));
     }
 
     #[test]
