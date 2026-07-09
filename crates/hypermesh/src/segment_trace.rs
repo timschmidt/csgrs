@@ -190,6 +190,7 @@ pub(crate) struct LeafProbeQueryCaches {
     definition_no_plane_replacement_cycle_guard: DefinitionNoPlaneReplacementCycleGuardCache,
     definition_no_plane_replacement_reachability: DefinitionNoPlaneReplacementReachabilityCache,
     no_step_detour_target_families: Vec<DetourTargetFamilyCacheEntry>,
+    definition_full_no_detour_reachability: DefinitionNoDetourReachabilityCache,
     definition_no_detour_trace: Vec<DefinitionNoDetourTraceCacheEntry>,
     definition_no_detour_reachability: DefinitionNoDetourReachabilityCache,
     detour_target_families: Vec<DetourTargetFamilyCacheEntry>,
@@ -3376,6 +3377,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             halfspace_reports,
             halfspace_seed_families,
             no_step_detour_target_families,
+            definition_full_no_detour_reachability,
             definition_no_detour_trace,
             definition_no_detour_reachability,
             direct_probe_reachability,
@@ -3433,6 +3435,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         halfspace_reports,
                         halfspace_seed_families,
                         no_step_detour_target_families,
+                        definition_full_no_detour_reachability,
                         definition_no_detour_trace,
                         definition_no_detour_reachability,
                         direct_probe_reachability,
@@ -3469,6 +3472,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         halfspace_reports,
                         halfspace_seed_families,
                         no_step_detour_target_families,
+                        definition_full_no_detour_reachability,
                         definition_no_detour_trace,
                         definition_no_detour_reachability,
                         direct_probe_reachability,
@@ -4286,6 +4290,7 @@ fn try_leaf_probe_family_with_queries(
         halfspace_reports,
         halfspace_seed_families,
         no_step_detour_target_families,
+        definition_full_no_detour_reachability,
         definition_no_detour_trace,
         definition_no_detour_reachability,
         direct_probe_reachability,
@@ -4355,6 +4360,7 @@ fn try_leaf_probe_family_with_queries(
                         halfspace_reports,
                         halfspace_seed_families,
                         no_step_detour_target_families,
+                        definition_full_no_detour_reachability,
                         definition_no_detour_trace,
                         definition_no_detour_reachability,
                         direct_probe_reachability,
@@ -4402,6 +4408,7 @@ fn try_leaf_probe_family_with_queries(
             halfspace_reports,
             halfspace_seed_families,
             no_step_detour_target_families,
+            definition_full_no_detour_reachability,
             definition_no_detour_trace,
             definition_no_detour_reachability,
             direct_probe_reachability,
@@ -4444,6 +4451,7 @@ fn evaluate_leaf_probe_with_query_caches(
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     no_step_detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    definition_full_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     definition_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
@@ -4474,6 +4482,7 @@ fn evaluate_leaf_probe_with_query_caches(
                 halfspace_reports,
                 halfspace_seed_families,
                 no_step_detour_target_families,
+                definition_full_no_detour_reachability,
                 definition_no_detour_reachability,
                 direct_probe_reachability,
                 detour_target_families,
@@ -6001,6 +6010,7 @@ fn probe_reaches_adjacent_cell_from_interior(
     let mut halfspace_reports = Vec::new();
     let mut halfspace_seed_families = Vec::new();
     let mut no_step_detour_target_families = Vec::new();
+    let mut definition_full_no_detour_reachability = DefinitionNoDetourReachabilityCache::default();
     let mut definition_no_detour_reachability = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability = Vec::new();
     let mut detour_target_families = Vec::new();
@@ -6021,6 +6031,7 @@ fn probe_reaches_adjacent_cell_from_interior(
         &mut halfspace_reports,
         &mut halfspace_seed_families,
         &mut no_step_detour_target_families,
+        &mut definition_full_no_detour_reachability,
         &mut definition_no_detour_reachability,
         &mut direct_probe_reachability,
         &mut detour_target_families,
@@ -6047,6 +6058,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     no_step_detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    definition_full_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     definition_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
@@ -6080,6 +6092,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         halfspace_reports,
         halfspace_seed_families,
         no_step_detour_target_families,
+        definition_full_no_detour_reachability,
         definition_no_detour_reachability,
         direct_probe_reachability,
         detour_target_families,
@@ -6109,6 +6122,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     let mut halfspace_reports = Vec::new();
     let mut halfspace_seed_families = Vec::new();
     let mut no_step_detour_target_cache = Vec::new();
+    let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
     let mut detour_target_cache = Vec::new();
@@ -6131,6 +6145,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
         &mut halfspace_reports,
         &mut halfspace_seed_families,
         &mut no_step_detour_target_cache,
+        &mut full_no_detour_cache,
         &mut no_detour_cache,
         &mut direct_probe_reachability_cache,
         &mut detour_target_cache,
@@ -6158,6 +6173,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    full_no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
@@ -6204,6 +6220,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                 no_plane_replacement_cycle_guard_cache,
                 no_plane_replacement_cache,
                 no_step_detour_target_cache,
+                full_no_detour_cache,
                 no_detour_cache,
                 direct_probe_reachability_cache,
             )
@@ -6932,6 +6949,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
     let mut detour_target_cache = Vec::new();
+    let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
     probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
@@ -6951,6 +6969,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         &mut no_plane_replacement_cycle_guard_cache,
         &mut no_plane_replacement_cache,
         &mut detour_target_cache,
+        &mut full_no_detour_cache,
         &mut no_detour_cache,
         &mut direct_probe_reachability_cache,
     )
@@ -6973,82 +6992,92 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    full_no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
-    let direct_unknown = match cached_direct_probe_reachability_with(
-        direct_probe_reachability_cache,
-        start,
-        end,
-        host_support,
-        polygons,
-        || probe_reaches_adjacent_cell(start, end, host_support, polygons),
-    ) {
-        Ok(true) => return Ok(true),
-        Ok(false) => false,
-        Err(HypermeshError::UnknownClassification) => true,
-        Err(err) => return Err(err),
-    };
-
-    match definition_search_precheck_plan(
+    cached_definition_no_detour_reachability_with(
+        full_no_detour_cache,
         start,
         end,
         start_definitions,
         end_definitions,
-        direct_unknown,
-        |start_definition, end_definition| {
-            probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+        || {
+            let direct_unknown = match cached_direct_probe_reachability_with(
+                direct_probe_reachability_cache,
                 start,
                 end,
                 host_support,
                 polygons,
-                std::slice::from_ref(start_definition),
-                std::slice::from_ref(end_definition),
-                affine_cache,
-                path_cache,
-                step_cache,
-                no_step_cache,
-                direct_probe_reachability_cache,
-            )
-        },
-    )? {
-        DefinitionSearchPrecheckOutcome::Reaches => Ok(true),
-        DefinitionSearchPrecheckOutcome::Search(plan) => {
-            let mut saw_unknown = plan.unknown_if_no_match;
-            for (start_index, end_index) in plan.ordered_pairs {
-                let pair_result = plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
-                    &plan.start_definitions[start_index],
-                    &plan.end_definitions[end_index],
-                    host_support,
-                    polygons,
-                    affine_cache,
-                    path_cache,
-                    step_cache,
-                    no_nested_ordering_warmup_cache,
-                    no_step_cache,
-                    halfspace_reports,
-                    halfspace_seed_families,
-                    no_detour_cache,
-                    no_plane_replacement_cycle_guard_cache,
-                    no_plane_replacement_cache,
-                    no_step_detour_target_cache,
-                    direct_probe_reachability_cache,
-                );
-                match pair_result {
-                    Ok(true) => return Ok(true),
-                    Ok(false) => {}
-                    Err(HypermeshError::UnknownClassification) => saw_unknown = true,
-                    Err(err) => return Err(err),
+                || probe_reaches_adjacent_cell(start, end, host_support, polygons),
+            ) {
+                Ok(true) => return Ok(true),
+                Ok(false) => false,
+                Err(HypermeshError::UnknownClassification) => true,
+                Err(err) => return Err(err),
+            };
+
+            match definition_search_precheck_plan(
+                start,
+                end,
+                start_definitions,
+                end_definitions,
+                direct_unknown,
+                |start_definition, end_definition| {
+                    probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
+                        start,
+                        end,
+                        host_support,
+                        polygons,
+                        std::slice::from_ref(start_definition),
+                        std::slice::from_ref(end_definition),
+                        affine_cache,
+                        path_cache,
+                        step_cache,
+                        no_step_cache,
+                        direct_probe_reachability_cache,
+                    )
+                },
+            )? {
+                DefinitionSearchPrecheckOutcome::Reaches => Ok(true),
+                DefinitionSearchPrecheckOutcome::Search(plan) => {
+                    let mut saw_unknown = plan.unknown_if_no_match;
+                    for (start_index, end_index) in plan.ordered_pairs {
+                        let pair_result = plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
+                            &plan.start_definitions[start_index],
+                            &plan.end_definitions[end_index],
+                            host_support,
+                            polygons,
+                            affine_cache,
+                            path_cache,
+                            step_cache,
+                            no_nested_ordering_warmup_cache,
+                            no_step_cache,
+                            halfspace_reports,
+                            halfspace_seed_families,
+                            no_detour_cache,
+                            no_plane_replacement_cycle_guard_cache,
+                            no_plane_replacement_cache,
+                            no_step_detour_target_cache,
+                            direct_probe_reachability_cache,
+                        );
+                        match pair_result {
+                            Ok(true) => return Ok(true),
+                            Ok(false) => {}
+                            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+                            Err(err) => return Err(err),
+                        }
+                    }
+
+                    if saw_unknown {
+                        Err(HypermeshError::UnknownClassification)
+                    } else {
+                        Ok(false)
+                    }
                 }
             }
-
-            if saw_unknown {
-                Err(HypermeshError::UnknownClassification)
-            } else {
-                Ok(false)
-            }
-        }
-    }
+        },
+    )
 }
 
 #[cfg(test)]
@@ -15059,6 +15088,7 @@ mod tests {
             halfspace_reports,
             halfspace_seed_families,
             no_step_detour_target_families,
+            definition_full_no_detour_reachability,
             definition_no_detour_reachability,
             direct_probe_reachability,
             detour_target_families,
@@ -15082,6 +15112,7 @@ mod tests {
             halfspace_reports,
             halfspace_seed_families,
             no_step_detour_target_families,
+            definition_full_no_detour_reachability,
             definition_no_detour_reachability,
             direct_probe_reachability,
             detour_target_families,
@@ -15096,6 +15127,7 @@ mod tests {
             definition_no_step_detour_reachability.len(),
             definition_no_plane_replacement_reachability.len(),
             no_step_detour_target_families.len(),
+            definition_full_no_detour_reachability.len(),
             definition_no_detour_reachability.len(),
             direct_probe_reachability.len(),
             detour_target_families.len(),
@@ -15118,6 +15150,7 @@ mod tests {
             halfspace_reports,
             halfspace_seed_families,
             no_step_detour_target_families,
+            definition_full_no_detour_reachability,
             definition_no_detour_reachability,
             direct_probe_reachability,
             detour_target_families,
@@ -15132,6 +15165,7 @@ mod tests {
             definition_no_step_detour_reachability.len(),
             definition_no_plane_replacement_reachability.len(),
             no_step_detour_target_families.len(),
+            definition_full_no_detour_reachability.len(),
             definition_no_detour_reachability.len(),
             direct_probe_reachability.len(),
             detour_target_families.len(),
@@ -15210,6 +15244,120 @@ mod tests {
 
         assert_eq!(first, second);
         assert_eq!(no_step_cache.len(), 1);
+        assert_eq!(after_first, after_second);
+    }
+
+    #[test]
+    fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
+        let support = wall.support.clone();
+        let interior = certified_leaf_interior_points(&wall.support, &wall.edges)
+            .unwrap()
+            .into_iter()
+            .find(|point| !point.planes.is_empty())
+            .expect("leaf should have a replayable interior witness");
+        let probe =
+            bounded_probes_from_interior(&interior, &support, &bounds, true, &[wall.clone()])
+                .unwrap()
+                .into_iter()
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("leaf should have a positive-side probe");
+        let mut affine_cache = Vec::new();
+        let mut path_cache = Vec::new();
+        let mut step_cache = Vec::new();
+        let mut no_nested_ordering_warmup_cache = Vec::new();
+        let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
+        let mut halfspace_reports = Vec::new();
+        let mut halfspace_seed_families = Vec::new();
+        let mut no_plane_replacement_cycle_guard_cache =
+            DefinitionNoPlaneReplacementCycleGuardCache::default();
+        let mut no_plane_replacement_cache =
+            DefinitionNoPlaneReplacementReachabilityCache::default();
+        let mut no_step_detour_target_cache = Vec::new();
+        let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
+        let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
+        let mut direct_probe_reachability_cache = Vec::new();
+
+        let first = probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+            &interior.point,
+            &probe.point,
+            &support,
+            &[wall.clone()],
+            &interior.planes,
+            &probe.planes,
+            &mut affine_cache,
+            &mut path_cache,
+            &mut step_cache,
+            &mut no_nested_ordering_warmup_cache,
+            &mut no_step_cache,
+            &mut halfspace_reports,
+            &mut halfspace_seed_families,
+            &mut no_plane_replacement_cycle_guard_cache,
+            &mut no_plane_replacement_cache,
+            &mut no_step_detour_target_cache,
+            &mut full_no_detour_cache,
+            &mut no_detour_cache,
+            &mut direct_probe_reachability_cache,
+        )
+        .unwrap();
+        let after_first = [
+            affine_cache.len(),
+            path_cache.len(),
+            step_cache.len(),
+            no_nested_ordering_warmup_cache.len(),
+            no_step_cache.len(),
+            halfspace_reports.len(),
+            halfspace_seed_families.len(),
+            no_plane_replacement_cycle_guard_cache.len(),
+            no_plane_replacement_cache.len(),
+            no_step_detour_target_cache.len(),
+            full_no_detour_cache.len(),
+            no_detour_cache.len(),
+            direct_probe_reachability_cache.len(),
+        ];
+
+        let second = probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
+            &interior.point,
+            &probe.point,
+            &support,
+            &[wall],
+            &interior.planes,
+            &probe.planes,
+            &mut affine_cache,
+            &mut path_cache,
+            &mut step_cache,
+            &mut no_nested_ordering_warmup_cache,
+            &mut no_step_cache,
+            &mut halfspace_reports,
+            &mut halfspace_seed_families,
+            &mut no_plane_replacement_cycle_guard_cache,
+            &mut no_plane_replacement_cache,
+            &mut no_step_detour_target_cache,
+            &mut full_no_detour_cache,
+            &mut no_detour_cache,
+            &mut direct_probe_reachability_cache,
+        )
+        .unwrap();
+        let after_second = [
+            affine_cache.len(),
+            path_cache.len(),
+            step_cache.len(),
+            no_nested_ordering_warmup_cache.len(),
+            no_step_cache.len(),
+            halfspace_reports.len(),
+            halfspace_seed_families.len(),
+            no_plane_replacement_cycle_guard_cache.len(),
+            no_plane_replacement_cache.len(),
+            no_step_detour_target_cache.len(),
+            full_no_detour_cache.len(),
+            no_detour_cache.len(),
+            direct_probe_reachability_cache.len(),
+        ];
+
+        assert_eq!(first, second);
+        assert_eq!(full_no_detour_cache.len(), 1);
         assert_eq!(after_first, after_second);
     }
 
