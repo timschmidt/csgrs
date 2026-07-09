@@ -1410,7 +1410,7 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
         let mut attempt = winding.to_vec();
         let mut valid = true;
 
-        for plane_index in ordering {
+        for plane_index in ordering.iter().copied() {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
             if next_planes == current_planes {
@@ -5096,6 +5096,25 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
     })
 }
 
+fn cache_definition_no_plane_replacement_cycle_guard_result(
+    cache: &mut Vec<DefinitionNoPlaneReplacementCycleGuardCacheEntry>,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+    result: &HypermeshResult<bool>,
+) {
+    cache.push(DefinitionNoPlaneReplacementCycleGuardCacheEntry {
+        start: start.clone(),
+        end: end.clone(),
+        start_definitions: start_definitions.to_vec(),
+        end_definitions: end_definitions.to_vec(),
+        visited_points: visited_points.to_vec(),
+        result: result.clone(),
+    });
+}
+
 #[cfg(test)]
 fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
     MIN_DETOUR_RECURSION_LIMIT.max(
@@ -6546,72 +6565,93 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         return existing;
     }
     let mut saw_unknown = false;
-    match trace_without_detours(start, end, start_definitions, end_definitions) {
-        Ok(true) => return Ok(true),
-        Ok(false) => {}
-        Err(HypermeshError::UnknownClassification) => {
-            saw_unknown = true;
+    let direct_result = trace_without_detours(start, end, start_definitions, end_definitions);
+    let result = match direct_result {
+        Ok(true) => Ok(true),
+        Ok(false) | Err(HypermeshError::UnknownClassification) => {
+            if matches!(direct_result, Err(HypermeshError::UnknownClassification)) {
+                saw_unknown = true;
+            }
+
+            if progressive_interior_box_detours
+                && cached_detour_target_family(&*detour_target_cache, start, end).is_none()
+            {
+                match probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
+                    start,
+                    end,
+                    polygons,
+                    visited_points,
+                    start_definitions,
+                    end_definitions,
+                    progressive_interior_box_detours,
+                    no_plane_replacement_cycle_guard_cache,
+                    surface_cache,
+                    surface_query,
+                    trace_without_detours,
+                    detour_target_cache,
+                    detours_for_query,
+                ) {
+                    Ok(true) => Ok(true),
+                    Ok(false) => {
+                        if saw_unknown {
+                            Err(HypermeshError::UnknownClassification)
+                        } else {
+                            Ok(false)
+                        }
+                    }
+                    Err(HypermeshError::UnknownClassification) => {
+                        Err(HypermeshError::UnknownClassification)
+                    }
+                    Err(err) => return Err(err),
+                }
+            } else {
+                let mut found = false;
+                for detour in
+                    cached_detour_target_family_with(detour_target_cache, start, end, || {
+                        detours_for_query(start, end)
+                    })?
+                {
+                    if evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
+                        &detour,
+                        start,
+                        end,
+                        polygons,
+                        visited_points,
+                        start_definitions,
+                        end_definitions,
+                        progressive_interior_box_detours,
+                        no_plane_replacement_cycle_guard_cache,
+                        surface_cache,
+                        surface_query,
+                        trace_without_detours,
+                        detour_target_cache,
+                        detours_for_query,
+                        &mut saw_unknown,
+                    )? {
+                        found = true;
+                        break;
+                    }
+                }
+                if found {
+                    Ok(true)
+                } else if saw_unknown {
+                    Err(HypermeshError::UnknownClassification)
+                } else {
+                    Ok(false)
+                }
+            }
         }
         Err(err) => return Err(err),
-    }
-
-    if progressive_interior_box_detours
-        && cached_detour_target_family(&*detour_target_cache, start, end).is_none()
-    {
-        return probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
-            start,
-            end,
-            polygons,
-            visited_points,
-            start_definitions,
-            end_definitions,
-            progressive_interior_box_detours,
-            no_plane_replacement_cycle_guard_cache,
-            surface_cache,
-            surface_query,
-            trace_without_detours,
-            detour_target_cache,
-            detours_for_query,
-        );
-    }
-
-    for detour in cached_detour_target_family_with(detour_target_cache, start, end, || {
-        detours_for_query(start, end)
-    })? {
-        if evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
-            &detour,
-            start,
-            end,
-            polygons,
-            visited_points,
-            start_definitions,
-            end_definitions,
-            progressive_interior_box_detours,
-            no_plane_replacement_cycle_guard_cache,
-            surface_cache,
-            surface_query,
-            trace_without_detours,
-            detour_target_cache,
-            detours_for_query,
-            &mut saw_unknown,
-        )? {
-            return Ok(true);
-        }
-    }
-
-    let result = if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        Ok(false)
     };
-    no_plane_replacement_cycle_guard_cache.push(DefinitionNoPlaneReplacementCycleGuardCacheEntry {
-        start: start.clone(),
-        end: end.clone(),
-        start_definitions: start_definitions.to_vec(),
-        end_definitions: end_definitions.to_vec(),
-        visited_points: visited_points.to_vec(),
-        result: result.clone(),
-    });
+    cache_definition_no_plane_replacement_cycle_guard_result(
+        no_plane_replacement_cycle_guard_cache,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+        &result,
+    );
     result
 }
 
@@ -6894,7 +6934,23 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         start_planes,
         end_planes,
         || {
-            plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
+            let ordered = ordered_axis_orderings_by_no_step_precheck_with(
+                start_planes,
+                end_planes,
+                affine_cache,
+                |current, next, current_definitions, next_definitions| {
+                    probe_reaches_adjacent_cell_with_definitions_no_step_detours(
+                        current,
+                        next,
+                        host_support,
+                        polygons,
+                        std::slice::from_ref(current_definitions),
+                        std::slice::from_ref(next_definitions),
+                    )
+                },
+            )?;
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                &ordered,
                 start_planes,
                 end_planes,
                 PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
@@ -6991,10 +7047,30 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     mode: PlaneReplacementReachabilityStepMode,
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
+    trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
+) -> HypermeshResult<bool> {
+    plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+        &AXIS_ORDERINGS,
+        start_planes,
+        end_planes,
+        mode,
+        affine_cache,
+        step_cache,
+        trace_step,
+    )
+}
+
+fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+    orderings: &[[usize; 3]],
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    mode: PlaneReplacementReachabilityStepMode,
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
-    for ordering in AXIS_ORDERINGS {
+    for ordering in orderings {
         let mut current_planes = start_planes.clone();
         let mut current_point =
             match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
@@ -7009,7 +7085,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
             };
         let mut valid = true;
 
-        for plane_index in ordering {
+        for plane_index in ordering.iter().copied() {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
             if next_planes == current_planes {
@@ -7069,6 +7145,86 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     } else {
         Ok(false)
     }
+}
+
+fn ordered_axis_orderings_by_no_step_precheck_with(
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    mut precheck: impl FnMut(&Point3, &Point3, &[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<Vec<[usize; 3]>> {
+    let mut ordered = AXIS_ORDERINGS.to_vec();
+    let mut scored = Vec::with_capacity(ordered.len());
+    for (index, ordering) in ordered.iter().copied().enumerate() {
+        scored.push((
+            ordering_no_step_precheck_key(
+                &ordering,
+                start_planes,
+                end_planes,
+                affine_cache,
+                &mut precheck,
+            )?,
+            index,
+        ));
+    }
+    ordered.sort_by_key(|ordering| {
+        let index = AXIS_ORDERINGS
+            .iter()
+            .position(|candidate| candidate == ordering)
+            .unwrap_or(usize::MAX);
+        scored[index]
+    });
+    Ok(ordered)
+}
+
+fn ordering_no_step_precheck_key(
+    ordering: &[usize; 3],
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    precheck: &mut impl FnMut(&Point3, &Point3, &[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
+) -> HypermeshResult<[u8; 3]> {
+    let mut key = [0u8; 3];
+    let mut current_planes = start_planes.clone();
+    let mut current_point =
+        match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
+            affine_from_planes(&current_planes)
+        }) {
+            Ok(point) => point,
+            Err(HypermeshError::UnknownClassification) => return Ok([3, 3, 3]),
+            Err(err) => return Err(err),
+        };
+
+    for (step_index, plane_index) in ordering.iter().copied().enumerate() {
+        let mut next_planes = current_planes.clone();
+        next_planes[plane_index] = end_planes[plane_index].clone();
+        if next_planes == current_planes {
+            key[step_index] = 0;
+            continue;
+        }
+        let next_point =
+            match cached_affine_from_planes_with(&mut *affine_cache, &next_planes, || {
+                affine_from_planes(&next_planes)
+            }) {
+                Ok(point) => point,
+                Err(HypermeshError::UnknownClassification) => {
+                    key[step_index] = 3;
+                    break;
+                }
+                Err(err) => return Err(err),
+            };
+        key[step_index] = match precheck(&current_point, &next_point, &current_planes, &next_planes)
+        {
+            Ok(true) => 0,
+            Err(HypermeshError::UnknownClassification) => 1,
+            Ok(false) => 2,
+            Err(err) => return Err(err),
+        };
+        current_point = next_point;
+        current_planes = next_planes;
+    }
+
+    Ok(key)
 }
 
 fn cached_plane_replacement_reachability_step_with(
@@ -21825,6 +21981,34 @@ mod tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn ordered_axis_orderings_by_no_step_precheck_prefers_more_direct_prefixes() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(1, 1, 1));
+        let mut affine_cache = Vec::new();
+
+        let ordered = ordered_axis_orderings_by_no_step_precheck_with(
+            &start_definition,
+            &end_definition,
+            &mut affine_cache,
+            |_current, _next, current_planes, next_planes| {
+                let changed_axis = (0..3)
+                    .find(|axis| current_planes[*axis] != next_planes[*axis])
+                    .unwrap();
+                match changed_axis {
+                    2 => Ok(true),
+                    1 => Err(HypermeshError::UnknownClassification),
+                    0 => Ok(false),
+                    _ => unreachable!(),
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(ordered[0], [2, 1, 0]);
+        assert_eq!(ordered[1], [2, 0, 1]);
     }
 
     #[test]
