@@ -5164,6 +5164,25 @@ fn visited_definition_points_subset_of(
     })
 }
 
+fn normalized_cycle_guard_visited_points(
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> Vec<VisitedDefinitionPoint> {
+    visited_points
+        .iter()
+        .filter(|visited| {
+            !(visited.point == *start
+                && definition_families_match_as_sets(&visited.definitions, start_definitions))
+                && !(visited.point == *end
+                    && definition_families_match_as_sets(&visited.definitions, end_definitions))
+        })
+        .cloned()
+        .collect()
+}
+
 fn cached_definition_no_plane_replacement_cycle_guard_result(
     cache: &[DefinitionNoPlaneReplacementCycleGuardCacheEntry],
     start: &Point3,
@@ -5172,25 +5191,25 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
     end_definitions: &[[Plane; 3]],
     visited_points: &[VisitedDefinitionPoint],
 ) -> Option<HypermeshResult<bool>> {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
     if let Some(existing) = cache.iter().find(|existing| {
-        visited_definition_points_match_as_sets(&existing.visited_points, visited_points)
-            && ((existing.start == *start
-                && existing.end == *end
-                && definition_families_match_as_sets(
-                    &existing.start_definitions,
-                    start_definitions,
-                )
-                && definition_families_match_as_sets(&existing.end_definitions, end_definitions))
-                || (existing.start == *end
-                    && existing.end == *start
-                    && definition_families_match_as_sets(
-                        &existing.start_definitions,
-                        end_definitions,
-                    )
-                    && definition_families_match_as_sets(
-                        &existing.end_definitions,
-                        start_definitions,
-                    )))
+        visited_definition_points_match_as_sets(
+            &existing.visited_points,
+            &normalized_visited_points,
+        ) && ((existing.start == *start
+            && existing.end == *end
+            && definition_families_match_as_sets(&existing.start_definitions, start_definitions)
+            && definition_families_match_as_sets(&existing.end_definitions, end_definitions))
+            || (existing.start == *end
+                && existing.end == *start
+                && definition_families_match_as_sets(&existing.start_definitions, end_definitions)
+                && definition_families_match_as_sets(&existing.end_definitions, start_definitions)))
     }) {
         return Some(existing.result.clone());
     }
@@ -5212,14 +5231,14 @@ fn cached_definition_no_plane_replacement_cycle_guard_result(
             Ok(false)
                 if visited_definition_points_subset_of(
                     &existing.visited_points,
-                    visited_points,
+                    &normalized_visited_points,
                 ) =>
             {
                 Some(Ok(false))
             }
             Ok(true)
                 if visited_definition_points_subset_of(
-                    visited_points,
+                    &normalized_visited_points,
                     &existing.visited_points,
                 ) =>
             {
@@ -5239,12 +5258,19 @@ fn cache_definition_no_plane_replacement_cycle_guard_result(
     visited_points: &[VisitedDefinitionPoint],
     result: &HypermeshResult<bool>,
 ) {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
     cache.push(DefinitionNoPlaneReplacementCycleGuardCacheEntry {
         start: start.clone(),
         end: end.clone(),
         start_definitions: start_definitions.to_vec(),
         end_definitions: end_definitions.to_vec(),
-        visited_points: visited_points.to_vec(),
+        visited_points: normalized_visited_points,
         result: result.clone(),
     });
 }
@@ -21509,18 +21535,20 @@ mod tests {
         let start = p(0, 0, 0);
         let end = p(1, 0, 0);
         let shared = p(0, 1, 0);
+        let extra = p(0, 2, 0);
         let start_definitions = vec![axis_plane_definition(&start)];
         let end_definitions = vec![axis_plane_definition(&end)];
         let shared_definitions = vec![axis_plane_definition(&shared)];
+        let extra_definitions = vec![axis_plane_definition(&extra)];
         let cached_visited = vec![VisitedDefinitionPoint {
-            point: start.clone(),
-            definitions: start_definitions.clone(),
+            point: shared.clone(),
+            definitions: shared_definitions.clone(),
         }];
         let current_visited = vec![
             cached_visited[0].clone(),
             VisitedDefinitionPoint {
-                point: shared.clone(),
-                definitions: shared_definitions,
+                point: extra,
+                definitions: extra_definitions,
             },
         ];
         let cache = vec![DefinitionNoPlaneReplacementCycleGuardCacheEntry {
@@ -21549,18 +21577,20 @@ mod tests {
         let start = p(0, 0, 0);
         let end = p(1, 0, 0);
         let shared = p(0, 1, 0);
+        let extra = p(0, 2, 0);
         let start_definitions = vec![axis_plane_definition(&start)];
         let end_definitions = vec![axis_plane_definition(&end)];
         let shared_definitions = vec![axis_plane_definition(&shared)];
+        let extra_definitions = vec![axis_plane_definition(&extra)];
         let current_visited = vec![VisitedDefinitionPoint {
-            point: start.clone(),
-            definitions: start_definitions.clone(),
+            point: shared.clone(),
+            definitions: shared_definitions.clone(),
         }];
         let cached_visited = vec![
             current_visited[0].clone(),
             VisitedDefinitionPoint {
-                point: shared.clone(),
-                definitions: shared_definitions,
+                point: extra,
+                definitions: extra_definitions,
             },
         ];
         let cache = vec![DefinitionNoPlaneReplacementCycleGuardCacheEntry {
@@ -21616,6 +21646,52 @@ mod tests {
             &end_definitions,
             &start_definitions,
             &visited_points,
+        );
+
+        assert_eq!(reused, Some(Ok(true)));
+    }
+
+    #[test]
+    fn definition_no_plane_replacement_cycle_guard_cache_ignores_redundant_current_endpoints() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let shared = p(0, 1, 0);
+        let start_definitions = vec![axis_plane_definition(&start)];
+        let end_definitions = vec![axis_plane_definition(&end)];
+        let shared_definitions = vec![axis_plane_definition(&shared)];
+        let cache = vec![DefinitionNoPlaneReplacementCycleGuardCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.clone(),
+            end_definitions: end_definitions.clone(),
+            visited_points: vec![VisitedDefinitionPoint {
+                point: shared.clone(),
+                definitions: shared_definitions.clone(),
+            }],
+            result: Ok(true),
+        }];
+        let current_visited = vec![
+            VisitedDefinitionPoint {
+                point: start.clone(),
+                definitions: start_definitions.clone(),
+            },
+            VisitedDefinitionPoint {
+                point: end.clone(),
+                definitions: end_definitions.clone(),
+            },
+            VisitedDefinitionPoint {
+                point: shared,
+                definitions: shared_definitions,
+            },
+        ];
+
+        let reused = cached_definition_no_plane_replacement_cycle_guard_result(
+            &cache,
+            &start,
+            &end,
+            &start_definitions,
+            &end_definitions,
+            &current_visited,
         );
 
         assert_eq!(reused, Some(Ok(true)));
