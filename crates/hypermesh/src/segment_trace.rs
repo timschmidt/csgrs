@@ -3452,6 +3452,9 @@ fn try_strict_normal_seed_winding_with_queries(
         )?;
     let mut seen = Vec::new();
     let mut strict_seeds = take_new_halfspace_seed_family(strict_seeds, &mut seen);
+    if let Some(report_witness) = report_witness {
+        strict_seeds.retain(|seed| *seed != *report_witness);
+    }
     let mut certified_probe_points = Vec::new();
 
     for witness in &strict_seeds {
@@ -9327,7 +9330,6 @@ fn strict_normal_probe_targets_with_query_caches(
             report.as_ref(),
             &mut local_unknown,
         )?;
-
     let mut seen_direct_seeds = Vec::new();
     let mut seeds = take_new_halfspace_seed_family(seeds, &mut seen_direct_seeds);
 
