@@ -1,6 +1,6 @@
 #![no_main]
 
-use hypermesh::exact::{ExactMesh, ValidationPolicy};
+use hypermesh::{InputMesh, Point3, Real, Triangle};
 use hypervoxel::{
     HypermeshTriangleSolidAdapterBlocker, PreparedExactTriangleSolidMesh,
     adapt_hypermesh_exact_solid,
@@ -11,63 +11,39 @@ fuzz_target!(|data: (u8, bool, bool)| {
     let (scale_raw, exact_source, closed_policy) = data;
     let scale = i64::from((scale_raw % 5) + 1);
     let idx = [0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3];
-    let mesh = if exact_source {
-        ExactMesh::from_i64_triangles_with_policy(
-            &[
-                0, 0, 0, //
-                scale, 0, 0, //
-                0, scale, 0, //
-                0, 0, scale,
-            ],
-            &idx,
-            if closed_policy {
-                ValidationPolicy::CLOSED
-            } else {
-                ValidationPolicy::ALLOW_BOUNDARY
-            },
-        )
+    let coordinate = |value: i64| {
+        if exact_source {
+            Real::from(value)
+        } else {
+            Real::try_from(value as f64).unwrap()
+        }
+    };
+    let point = |x, y, z| Point3::new(coordinate(x), coordinate(y), coordinate(z));
+    let triangles = if closed_policy {
+        idx.chunks_exact(3)
+            .map(|triangle| Triangle::new(triangle[0], triangle[1], triangle[2]))
+            .collect()
     } else {
-        ExactMesh::from_f64_triangles_with_policy(
-            &[
-                0.0,
-                0.0,
-                0.0,
-                scale as f64,
-                0.0,
-                0.0,
-                0.0,
-                scale as f64,
-                0.0,
-                0.0,
-                0.0,
-                scale as f64,
-            ],
-            &idx,
-            if closed_policy {
-                ValidationPolicy::CLOSED
-            } else {
-                ValidationPolicy::ALLOW_BOUNDARY
-            },
-        )
-    }
-    .unwrap();
+        vec![Triangle::new(0, 2, 1)]
+    };
+    let mesh = InputMesh::new(
+        vec![
+            point(0, 0, 0),
+            point(scale, 0, 0),
+            point(0, scale, 0),
+            point(0, 0, scale),
+        ],
+        triangles,
+    );
 
-    let adapter = adapt_hypermesh_exact_solid(&mesh, None, None).unwrap();
-    if exact_source && closed_policy {
+    let adapter = adapt_hypermesh_exact_solid(&mesh, None).unwrap();
+    if closed_policy {
         assert!(adapter.report.exact_triangle_solid_ready);
         let prepared = PreparedExactTriangleSolidMesh::prepare(adapter.solid.unwrap()).unwrap();
         assert!(prepared.report().exact_prepared_solid_ready);
     } else {
         assert!(!adapter.report.exact_triangle_solid_ready);
         assert!(adapter.solid.is_none());
-        if !exact_source && closed_policy {
-            assert!(
-                adapter
-                    .report
-                    .blockers
-                    .contains(&HypermeshTriangleSolidAdapterBlocker::SourceNotExact)
-            );
-        }
         if !closed_policy {
             assert!(
                 adapter

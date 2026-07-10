@@ -2001,28 +2001,28 @@ fn bench_batches_field_facts_and_sweeps(c: &mut Criterion) {
 fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
     #[cfg(feature = "hypermesh-adapter")]
     {
-        use hypermesh::exact::ExactMesh;
+        use hypermesh::{InputMesh, Point3, Real, Triangle};
         use hypervoxel::adapt_hypermesh_exact_solid;
 
-        let mesh = ExactMesh::from_i64_triangles(
-            &[
-                0, 0, 0, //
-                2, 0, 0, //
-                0, 2, 0, //
-                0, 0, 2,
+        let point = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
+        let mesh = InputMesh::new(
+            vec![
+                point(0, 0, 0),
+                point(2, 0, 0),
+                point(0, 2, 0),
+                point(0, 0, 2),
             ],
-            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
-        )
-        .unwrap();
-        let handoff = mesh.solid_handoff().unwrap();
+            vec![
+                Triangle::new(0, 2, 1),
+                Triangle::new(0, 1, 3),
+                Triangle::new(1, 2, 3),
+                Triangle::new(2, 0, 3),
+            ],
+        );
         c.bench_function("hypermesh_exact_solid_adapter", |b| {
             b.iter(|| {
-                adapt_hypermesh_exact_solid(
-                    &mesh,
-                    Some(&handoff),
-                    Some(GridSource::new("bench:hypermesh", 1)),
-                )
-                .unwrap()
+                adapt_hypermesh_exact_solid(&mesh, Some(GridSource::new("bench:hypermesh", 1)))
+                    .unwrap()
             })
         });
     }

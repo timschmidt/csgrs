@@ -2,9 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-use hyperlimit::{
-    Aabb3Intersection, PredicateOutcome, classify_aabb3_intersection, geometry::Point3,
-};
+use hyperlimit::{Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection};
 
 use crate::{
     AggregateCertainty, ExactAabb3, FreshnessStatus, GridAabbHandoff, OccupancyState,

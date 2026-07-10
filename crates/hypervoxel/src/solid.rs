@@ -3,7 +3,7 @@
 //! This is a deliberately small solid voxelization path: a convex body is the
 //! intersection of exact linear half-spaces. It gives tests and downstream
 //! callers a proof-producing closed-solid fixture before the future
-//! `hypermesh::exact` triangle/solid voxelizer exists. The design follows Yap,
+//! `hypermesh` triangle/solid voxelizer exists. The design follows Yap,
 //! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
 //! 1997: classification is made from exact predicates over object structure,
 //! and any uncertified predicate becomes an explicit unknown instead of an

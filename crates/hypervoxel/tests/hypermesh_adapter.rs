@@ -1,30 +1,38 @@
 #![cfg(feature = "hypermesh-adapter")]
 
-use hypermesh::exact::{ExactMesh, ValidationPolicy};
+use hypermesh::{InputMesh, Point3, Real, Triangle};
 use hypervoxel::{
     GridFrame, GridSource, HypermeshTriangleSolidAdapterBlocker, MaterialRegionId,
     PreparedExactTriangleSolidMesh, VoxelizationPolicy, adapt_hypermesh_exact_solid,
     voxelize_prepared_exact_triangle_solid_mesh,
 };
 
-fn tetrahedron_i64() -> ExactMesh {
-    ExactMesh::from_i64_triangles(
-        &[
-            0, 0, 0, //
-            2, 0, 0, //
-            0, 2, 0, //
-            0, 0, 2,
+fn tetrahedron_i64() -> InputMesh {
+    InputMesh::new(
+        vec![
+            point(0, 0, 0),
+            point(2, 0, 0),
+            point(0, 2, 0),
+            point(0, 0, 2),
         ],
-        &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        vec![
+            Triangle::new(0, 2, 1),
+            Triangle::new(0, 1, 3),
+            Triangle::new(1, 2, 3),
+            Triangle::new(2, 0, 3),
+        ],
     )
-    .unwrap()
+}
+
+fn point(x: i64, y: i64, z: i64) -> Point3 {
+    Point3::new(Real::from(x), Real::from(y), Real::from(z))
 }
 
 #[test]
 fn hypermesh_exact_solid_adapts_to_prepared_triangle_voxelization() {
     let mesh = tetrahedron_i64();
     let source = GridSource::new("hypermesh:tetrahedron", 1);
-    let adapter = adapt_hypermesh_exact_solid(&mesh, None, Some(source)).unwrap();
+    let adapter = adapt_hypermesh_exact_solid(&mesh, Some(source)).unwrap();
 
     assert!(adapter.report.exact_triangle_solid_ready);
     assert!(adapter.report.blockers.is_empty());
@@ -55,47 +63,12 @@ fn hypermesh_exact_solid_adapts_to_prepared_triangle_voxelization() {
 }
 
 #[test]
-fn hypermesh_adapter_rejects_lossy_or_stale_solid_evidence() {
-    let (pos, idx) = (
-        vec![
-            0.0, 0.0, 0.0, //
-            1.0, 0.0, 0.0, //
-            0.0, 1.0, 0.0, //
-            0.0, 0.0, 1.0,
-        ],
-        vec![0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+fn hypermesh_adapter_rejects_open_solid_evidence() {
+    let open = InputMesh::new(
+        vec![point(0, 0, 0), point(1, 0, 0), point(0, 1, 0)],
+        vec![Triangle::new(0, 1, 2)],
     );
-    let lossy = ExactMesh::from_f64_triangles(&pos, &idx).unwrap();
-    let lossy_adapter = adapt_hypermesh_exact_solid(&lossy, None, None).unwrap();
-    assert!(!lossy_adapter.report.exact_triangle_solid_ready);
-    assert!(lossy_adapter.solid.is_none());
-    assert!(
-        lossy_adapter
-            .report
-            .blockers
-            .contains(&HypermeshTriangleSolidAdapterBlocker::SourceNotExact)
-    );
-
-    let exact = tetrahedron_i64();
-    let mut stale = exact.solid_handoff().unwrap();
-    stale.retained_face_planes += 1;
-    let stale_adapter = adapt_hypermesh_exact_solid(&exact, Some(&stale), None).unwrap();
-    assert!(!stale_adapter.report.exact_triangle_solid_ready);
-    assert!(stale_adapter.solid.is_none());
-    assert!(
-        stale_adapter
-            .report
-            .blockers
-            .contains(&HypermeshTriangleSolidAdapterBlocker::StaleSolidHandoff)
-    );
-
-    let open = ExactMesh::from_i64_triangles_with_policy(
-        &[0, 0, 0, 1, 0, 0, 0, 1, 0],
-        &[0, 1, 2],
-        ValidationPolicy::ALLOW_BOUNDARY,
-    )
-    .unwrap();
-    let open_adapter = adapt_hypermesh_exact_solid(&open, None, None).unwrap();
+    let open_adapter = adapt_hypermesh_exact_solid(&open, None).unwrap();
     assert!(
         open_adapter
             .report
