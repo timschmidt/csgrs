@@ -803,6 +803,19 @@ fn subdivide_into_inner_with(
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
+    if let Some(certified_output) =
+        certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+            process_leaf(task, indicator, output)
+        })?
+    {
+        merge_unique_classified_polygons_with_bucket_state(
+            output,
+            &mut output_buckets,
+            certified_output,
+        );
+        return Ok(());
+    }
+
     let split_candidates = cached_ordered_subdivision_splits_with(
         &caches.polygon_axis_values,
         &caches.split_candidates,
@@ -815,18 +828,6 @@ fn subdivide_into_inner_with(
     )?;
 
     if subdivision_depth_budget_reached(task.depth, config.max_depth) {
-        if let Some(certified_output) =
-            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-                process_leaf(task, indicator, output)
-            })?
-        {
-            merge_unique_classified_polygons_with_bucket_state(
-                output,
-                &mut output_buckets,
-                certified_output,
-            );
-            return Ok(());
-        }
         if split_candidates.is_empty() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
@@ -855,19 +856,6 @@ fn subdivide_into_inner_with(
             output,
             &mut output_buckets,
             candidate_output,
-        );
-        return Ok(());
-    }
-
-    if let Some(certified_output) =
-        certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-            process_leaf(task, indicator, output)
-        })?
-    {
-        merge_unique_classified_polygons_with_bucket_state(
-            output,
-            &mut output_buckets,
-            certified_output,
         );
         return Ok(());
     }
@@ -12630,6 +12618,47 @@ mod tests {
         assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
         assert_eq!(leaf_calls, 1);
         assert!(output.is_empty());
+    }
+
+    #[test]
+    fn certified_root_leaf_preempts_available_arrangement_splits() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+            make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        ];
+        let emitted = ClassifiedPolygon::new(polygons[0].clone(), 1);
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let caches = SubdivisionRuntimeCaches::default();
+        let mut output = Vec::new();
+        let mut leaf_calls = 0;
+
+        subdivide_into_inner_with(
+            SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
+            &indicator,
+            SubdivisionConfig::default(),
+            None,
+            &mut output,
+            &mut |task, _indicator, local_output| {
+                leaf_calls += 1;
+                assert_eq!(task.depth, 0);
+                local_output.push(emitted.clone());
+                Ok(LeafProcessingStats {
+                    polygon_count: 2,
+                    certified_complete: true,
+                    ..LeafProcessingStats::default()
+                })
+            },
+            &caches,
+            &caches.winding_reachability,
+        )
+        .unwrap();
+
+        assert_eq!(leaf_calls, 1);
+        assert_eq!(output, vec![emitted]);
+        assert!(caches.split_candidates.borrow().entries.is_empty());
+        assert!(caches.split_child_partitions.borrow().is_empty());
+        assert!(caches.child_reference.borrow().is_empty());
     }
 
     #[test]

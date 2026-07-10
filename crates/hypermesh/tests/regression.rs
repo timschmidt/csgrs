@@ -159,6 +159,27 @@ fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
     InputMesh::new(positions, triangles)
 }
 
+#[test]
+fn overlapping_closed_components_certify_as_root_leaf() -> HypermeshResult<()> {
+    let left = combine_meshes(&[
+        tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]),
+        tetrahedron([[2, 2, 0], [6, 2, 0], [2, 6, 0], [2, 2, 4]]),
+    ]);
+    let right = tetrahedron([[2, -1, 1], [6, -1, 1], [2, 3, 1], [2, -1, 5]]);
+
+    let result = boolean_operation(
+        &[left.as_ref(), right.as_ref()],
+        BooleanOp::Union,
+        EmberConfig::default(),
+    )?;
+    assert_output_polygons_closed(&result);
+    let soup = triangulate_and_resolve_certified(&result)?;
+    assert_no_boundary_edges(&soup);
+    assert_volume_numerator(&soup, r(190));
+
+    Ok(())
+}
+
 fn config() -> EmberConfig {
     EmberConfig { max_depth: 10 }
 }

@@ -1039,6 +1039,13 @@ every recursive split, which bounds branch depth by the finite root-basis size.
 This supplies the global subdivision-finiteness proof independently of
 `max_depth`; finite values remain a user-selected certification budget, while
 the default `usize::MAX` leaves the finite split basis as the termination bound.
+Every task now attempts its exact BSP leaf-completeness proof before constructing
+or traversing ordered split attempts. A certified leaf therefore terminates at
+its current arrangement cell without unnecessary split-child reference
+propagation; subdivision runs only after that proof remains uncertified. Public
+coverage includes a union whose first input contains overlapping closed
+tetrahedron components and whose root leaf certifies a closed exact-volume
+result directly.
 If no root-basis plane remains, hypermesh attempts the certified leaf once and
 returns `UnknownClassification` if it cannot prove BSP completeness; it does not
 repeatedly bisect event-free bounds toward `max_depth`. Split ranking penalizes
