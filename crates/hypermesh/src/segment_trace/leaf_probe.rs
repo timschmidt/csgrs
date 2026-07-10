@@ -1,29 +1,32 @@
 //! Leaf classification and certified adjacent-probe search.
 
+use super::probe_cache::{
+    DirectProbeReachabilityCacheEntry, HalfspaceReportCacheEntry, HalfspaceSeedFamilyCacheEntry,
+    SurfaceCacheEntry, cached_direct_probe_reachability_with,
+    cached_halfspace_cell_seed_families_from_optional_report_with,
+    cached_optional_halfspace_feasibility_report_with, cached_surface_query_with,
+};
 use super::{
     AxisOrderedSegmentTraceCacheEntry, AxisProbeStopCacheEntry,
     DefinitionCycleGuardReachabilityCache, DefinitionNoDetourReachabilityCache,
     DefinitionNoDetourTraceCacheEntry, DefinitionNoPlaneReplacementCycleGuardCache,
     DefinitionNoPlaneReplacementReachabilityCache, DetourTargetFamilyCache,
-    DirectProbeReachabilityCacheEntry, HalfspaceReportCacheEntry, HalfspaceSeedFamilyCacheEntry,
     InteriorBoxAxisIntervalsCache, InteriorLeafPoint, LeafProbeQueryCaches,
     NormalProbeStopCacheEntry, PlaneReplacementAffineCache,
     PlaneReplacementNoNestedOrderingWarmupCache, PlaneReplacementReachabilityPathCache,
     PlaneReplacementReachabilityStepCache, PlaneReplacementStepCacheEntry, ProbePoint,
-    ProbeReachabilityCacheEntry, ProbeWindingCacheEntry, SurfaceCacheEntry,
-    active_planes_from_optional_report, adjacent_axis_probe_stop_values_with_queries,
-    adjacent_normal_probe_stop_values_with_queries, apply_winding_transition_in_place,
-    axis_plane_defined_point, axis_plane_definition, axis_probe_bounds,
-    axis_probe_definition_preserves_axis_direction, axis_value_after_start, bounds_between_points,
-    build_axis_probe_point, build_axis_probe_point_from_shifted_witness, build_probe_point,
-    build_probe_point_from_shifted_witness, cached_definition_no_detour_reachability_with,
-    classify_point_in_polygon, collect_strict_halfspace_seed_family,
-    dedupe_shifted_halfspace_seed_families, definition_families_match_as_sets,
-    definition_planes_match_as_sets, dot_direction, endpoint_definition_family,
-    extend_strict_halfspace_seed_families_collect_unknown,
-    halfspace_cell_seed_families_from_optional_report, interior_leaf_points,
-    normal_probe_extra_planes, normal_probe_shifted_seed_families, normal_stop_halfspace,
-    offset_point, optional_halfspace_feasibility_report,
+    ProbeReachabilityCacheEntry, ProbeWindingCacheEntry, active_planes_from_optional_report,
+    adjacent_axis_probe_stop_values_with_queries, adjacent_normal_probe_stop_values_with_queries,
+    apply_winding_transition_in_place, axis_plane_defined_point, axis_plane_definition,
+    axis_probe_bounds, axis_probe_definition_preserves_axis_direction, axis_value_after_start,
+    bounds_between_points, build_axis_probe_point, build_axis_probe_point_from_shifted_witness,
+    build_probe_point, build_probe_point_from_shifted_witness,
+    cached_definition_no_detour_reachability_with, classify_point_in_polygon,
+    collect_strict_halfspace_seed_family, dedupe_shifted_halfspace_seed_families,
+    definition_families_match_as_sets, definition_planes_match_as_sets, dot_direction,
+    endpoint_definition_family, extend_strict_halfspace_seed_families_collect_unknown,
+    interior_leaf_points, normal_probe_extra_planes, normal_probe_shifted_seed_families,
+    normal_stop_halfspace, offset_point,
     plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches,
     point_lies_on_traced_surface, point_strictly_inside_halfspace_cell_or_unknown, probe_axes,
     probe_reaches_adjacent_cell, probe_reaches_adjacent_cell_from_interior_with_caches,
@@ -40,13 +43,11 @@ use super::{AxisProbeFamilyCacheEntry, NormalProbeFamilyCacheEntry, ProbePointFa
 use crate::clip::clip_polygon_to_aabb;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
-use crate::halfspace::{
-    aabb_core_halfspaces, limit_plane_families_match_as_sets, support_side_halfspace,
-};
+use crate::halfspace::{aabb_core_halfspaces, support_side_halfspace};
 use crate::polygon::ConvexPolygon;
 use crate::winding::{WindingNumberTransitionVector, WindingNumberVector};
 use hyperlattice::{Point3, Real};
-use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3};
+use hyperlimit::HalfspaceFeasibility;
 
 /// Classifies a leaf polygon by tracing from a reference point to an off-face
 /// probe and applying the host transition correction.
@@ -1920,62 +1921,6 @@ pub(super) fn cached_adjacent_axis_probe_stop_values_with(
     Ok((stop_values, saw_unknown))
 }
 
-pub(super) fn cached_optional_halfspace_feasibility_report_with(
-    cache: &mut Vec<HalfspaceReportCacheEntry>,
-    halfspaces: &[LimitPlane3],
-    saw_unknown: &mut bool,
-) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
-    if let Some(existing) = cache
-        .iter()
-        .rev()
-        .find(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
-    {
-        *saw_unknown |= existing.saw_unknown;
-        return Ok(existing.report.clone());
-    }
-
-    let (report, local_unknown) = optional_halfspace_feasibility_report(halfspaces)?;
-    cache.push(HalfspaceReportCacheEntry {
-        halfspaces: halfspaces.to_vec(),
-        saw_unknown: local_unknown,
-        report: report.clone(),
-    });
-    *saw_unknown |= local_unknown;
-    Ok(report)
-}
-
-pub(super) fn cached_halfspace_cell_seed_families_from_optional_report_with(
-    cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    bounds: &Aabb,
-    halfspaces: &[LimitPlane3],
-    report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
-    saw_unknown: &mut bool,
-) -> HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)> {
-    if let Some(existing) = cache.iter().rev().find(|existing| {
-        existing.bounds == *bounds
-            && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-    }) {
-        *saw_unknown |= existing.saw_unknown;
-        return existing.result.clone();
-    }
-
-    let mut local_unknown = false;
-    let result = halfspace_cell_seed_families_from_optional_report(
-        bounds,
-        halfspaces,
-        report,
-        &mut local_unknown,
-    );
-    cache.push(HalfspaceSeedFamilyCacheEntry {
-        bounds: bounds.clone(),
-        halfspaces: halfspaces.to_vec(),
-        saw_unknown: local_unknown,
-        result: result.clone(),
-    });
-    *saw_unknown |= local_unknown;
-    result
-}
-
 #[cfg(test)]
 pub(super) fn cached_bounded_probes_from_interior_with(
     cache: &mut Vec<ProbePointFamilyCacheEntry>,
@@ -2028,23 +1973,6 @@ pub(super) fn cached_probe_winding_with(
     winding
 }
 
-pub(super) fn cached_surface_query_with(
-    cache: &mut Vec<SurfaceCacheEntry>,
-    point: &Point3,
-    query: impl FnOnce() -> HypermeshResult<bool>,
-) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().rev().find(|existing| existing.point == *point) {
-        return existing.on_surface.clone();
-    }
-
-    let on_surface = query();
-    cache.push(SurfaceCacheEntry {
-        point: point.clone(),
-        on_surface: on_surface.clone(),
-    });
-    on_surface
-}
-
 fn probe_reachability_cache_entry_matches(
     existing: &ProbeReachabilityCacheEntry,
     interior: &InteriorLeafPoint,
@@ -2088,34 +2016,6 @@ pub(super) fn cached_probe_reachability_with(
     let cache_index = begin_probe_reachability_result(cache, interior, probe);
     let reachable = query();
     cache[cache_index].reachable = reachable.clone();
-    reachable
-}
-
-pub(super) fn cached_direct_probe_reachability_with(
-    cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
-    start: &Point3,
-    end: &Point3,
-    host_support: &Plane,
-    polygons: &[ConvexPolygon],
-    query: impl FnOnce() -> HypermeshResult<bool>,
-) -> HypermeshResult<bool> {
-    if let Some(existing) = cache.iter().rev().find(|existing| {
-        existing.host_support == *host_support
-            && existing.polygons == polygons
-            && ((existing.start == *start && existing.end == *end)
-                || (existing.start == *end && existing.end == *start))
-    }) {
-        return existing.reachable.clone();
-    }
-
-    let reachable = query();
-    cache.push(DirectProbeReachabilityCacheEntry {
-        start: start.clone(),
-        end: end.clone(),
-        host_support: host_support.clone(),
-        polygons: polygons.to_vec(),
-        reachable: reachable.clone(),
-    });
     reachable
 }
 

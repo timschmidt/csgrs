@@ -1,6 +1,7 @@
 //! Exact segment tracing for winding-number propagation.
 
 mod leaf_probe;
+mod probe_cache;
 
 pub use leaf_probe::classify_leaf_polygon;
 #[cfg(test)]
@@ -10,11 +11,6 @@ use leaf_probe::{
     cached_bounded_probes_from_interior_with, cached_probe_reachability_with,
     cached_probe_winding_with, search_leaf_probe_families, trace_probe_winding,
     trace_probe_winding_with_caches,
-};
-use leaf_probe::{
-    cached_direct_probe_reachability_with,
-    cached_halfspace_cell_seed_families_from_optional_report_with,
-    cached_optional_halfspace_feasibility_report_with, cached_surface_query_with,
 };
 #[cfg(test)]
 pub(crate) use leaf_probe::{
@@ -26,6 +22,12 @@ pub(crate) use leaf_probe::{
     classify_leaf_polygon_interior_point_with_probe_query_caches,
     classify_leaf_polygon_with_probe_query_caches,
     ordered_interior_points_for_probe_search_with_support,
+};
+use probe_cache::{
+    DirectProbeReachabilityCacheEntry, HalfspaceReportCacheEntry, HalfspaceSeedFamilyCacheEntry,
+    SurfaceCacheEntry, cached_direct_probe_reachability_with,
+    cached_halfspace_cell_seed_families_from_optional_report_with,
+    cached_optional_halfspace_feasibility_report_with, cached_surface_query_with,
 };
 
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
@@ -99,12 +101,6 @@ struct ProbeWindingCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct SurfaceCacheEntry {
-    point: Point3,
-    on_surface: HypermeshResult<bool>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
 struct ProbeReachabilityCacheEntry {
     interior_point: Point3,
     interior_planes: Vec<[Plane; 3]>,
@@ -144,15 +140,6 @@ impl InteriorBoxAxisIntervalsCache {
 const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 4;
 
 #[derive(Clone, Debug, PartialEq)]
-struct DirectProbeReachabilityCacheEntry {
-    start: Point3,
-    end: Point3,
-    host_support: Plane,
-    polygons: Vec<ConvexPolygon>,
-    reachable: HypermeshResult<bool>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
 #[cfg(test)]
 struct ProbePointFamilyCacheEntry {
     interior_point: Point3,
@@ -161,21 +148,6 @@ struct ProbePointFamilyCacheEntry {
     bounds: Aabb,
     positive_side: bool,
     probes: HypermeshResult<Vec<ProbePoint>>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct HalfspaceSeedFamilyCacheEntry {
-    bounds: Aabb,
-    halfspaces: Vec<LimitPlane3>,
-    saw_unknown: bool,
-    result: HypermeshResult<(Vec<Point3>, Vec<Point3>, Vec<Point3>)>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct HalfspaceReportCacheEntry {
-    halfspaces: Vec<LimitPlane3>,
-    saw_unknown: bool,
-    report: Option<hyperlimit::HalfspaceFeasibilityReport>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
