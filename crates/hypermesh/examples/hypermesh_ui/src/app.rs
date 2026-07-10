@@ -79,10 +79,7 @@ impl MainApp {
             DemoOperation::SymmetricDifference => BooleanOp::SymmetricDifference,
         };
 
-        let config = EmberConfig {
-            leaf_threshold: 1,
-            max_depth: 8,
-        };
+        let config = EmberConfig { max_depth: 8 };
 
         match run_boolean(&refs, op, config) {
             Ok(result) => {
@@ -678,10 +675,7 @@ mod tests {
     fn demo_boolean_operations_materialize() {
         let cube_a = cube_mesh(-1, 1);
         let cube_b = shifted_cube_mesh(4);
-        let config = EmberConfig {
-            leaf_threshold: 1,
-            max_depth: 8,
-        };
+        let config = EmberConfig { max_depth: 8 };
 
         for operation in DemoOperation::ALL {
             let refs = match operation {
