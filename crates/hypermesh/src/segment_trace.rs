@@ -2710,6 +2710,172 @@ impl StrictAabbTargetCursor {
     }
 }
 
+struct InteriorBoxDetourTargetCursor {
+    bounds: Vec<Aabb>,
+    next_bounds: usize,
+    current: Option<StrictAabbTargetCursor>,
+    emitted_targets: Vec<DetourTarget>,
+    saw_unknown: bool,
+}
+
+impl InteriorBoxDetourTargetCursor {
+    fn new(start: &Point3, end: &Point3, polygons: &[ConvexPolygon]) -> HypermeshResult<Self> {
+        let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+            start,
+            end,
+            polygons,
+            &mut |edge_start, edge_end, polygon, axis| {
+                let start_class = classify_point(edge_start, &polygon.support)?;
+                let end_class = classify_point(edge_end, &polygon.support)?;
+                if start_class == Classification::On {
+                    return Ok(Some(edge_start.clone()));
+                }
+                if end_class == Classification::On {
+                    return Ok(Some(edge_end.clone()));
+                }
+                segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
+                    |crossing| {
+                        if let Some(crossing) = crossing {
+                            if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)?
+                            {
+                                return Ok(None);
+                            }
+                            Ok(Some(crossing))
+                        } else {
+                            Ok(None)
+                        }
+                    },
+                )
+            },
+            &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+        )?;
+        let mut bounds = Vec::new();
+        for x in &intervals[0] {
+            for y in &intervals[1] {
+                for z in &intervals[2] {
+                    bounds.push(aabb_from_axis_intervals([x, y, z])?);
+                }
+            }
+        }
+        Ok(Self {
+            bounds,
+            next_bounds: 0,
+            current: None,
+            emitted_targets: Vec::new(),
+            saw_unknown,
+        })
+    }
+
+    fn next_batch(&mut self) -> HypermeshResult<Option<Vec<DetourTarget>>> {
+        loop {
+            if let Some(current) = self.current.as_mut() {
+                match current.next_batch() {
+                    Ok(Some(batch)) => {
+                        let mut unique = Vec::new();
+                        for target in batch {
+                            if let Some(existing) =
+                                self.emitted_targets.iter_mut().find(|existing| {
+                                    existing.point == target.point
+                                        && definition_families_match_as_sets(
+                                            &existing.definitions,
+                                            &target.definitions,
+                                        )
+                                })
+                            {
+                                if existing.uncertified_definition_fallback
+                                    && !target.uncertified_definition_fallback
+                                {
+                                    existing.uncertified_definition_fallback = false;
+                                    unique.push(target);
+                                }
+                                continue;
+                            }
+                            self.emitted_targets.push(target.clone());
+                            unique.push(target);
+                        }
+                        if !unique.is_empty() {
+                            return Ok(Some(unique));
+                        }
+                    }
+                    Ok(None) => {
+                        self.saw_unknown |= current.saw_unknown;
+                        self.current = None;
+                    }
+                    Err(HypermeshError::UnknownClassification) => {
+                        self.saw_unknown = true;
+                        self.current = None;
+                    }
+                    Err(err) => return Err(err),
+                }
+                continue;
+            }
+            let Some(bounds) = self.bounds.get(self.next_bounds) else {
+                return Ok(None);
+            };
+            self.next_bounds += 1;
+            match StrictAabbTargetCursor::new(bounds) {
+                Ok(cursor) => self.current = Some(cursor),
+                Err(HypermeshError::UnknownClassification) => self.saw_unknown = true,
+                Err(err) => return Err(err),
+            }
+        }
+    }
+}
+
+struct InteriorBoxDetourTargetBatchCacheEntry {
+    start: Point3,
+    end: Point3,
+    cursor: InteriorBoxDetourTargetCursor,
+    batches: Vec<Vec<DetourTarget>>,
+    exhausted: bool,
+}
+
+#[derive(Default)]
+struct InteriorBoxDetourTargetBatchCache {
+    entries: Vec<InteriorBoxDetourTargetBatchCacheEntry>,
+}
+
+impl InteriorBoxDetourTargetBatchCache {
+    fn batch_for(
+        &mut self,
+        start: &Point3,
+        end: &Point3,
+        batch_index: usize,
+        polygons: &[ConvexPolygon],
+    ) -> HypermeshResult<Option<Vec<DetourTarget>>> {
+        let entry_index = if let Some(index) = self
+            .entries
+            .iter()
+            .position(|entry| entry.start == *start && entry.end == *end)
+        {
+            index
+        } else {
+            self.entries.push(InteriorBoxDetourTargetBatchCacheEntry {
+                start: start.clone(),
+                end: end.clone(),
+                cursor: InteriorBoxDetourTargetCursor::new(start, end, polygons)?,
+                batches: Vec::new(),
+                exhausted: false,
+            });
+            self.entries.len() - 1
+        };
+        let entry = &mut self.entries[entry_index];
+        while entry.batches.len() <= batch_index && !entry.exhausted {
+            match entry.cursor.next_batch()? {
+                Some(batch) => entry.batches.push(batch),
+                None => entry.exhausted = true,
+            }
+        }
+        if let Some(batch) = entry.batches.get(batch_index) {
+            Ok(Some(batch.clone()))
+        } else if entry.cursor.emitted_targets.is_empty() && entry.cursor.saw_unknown {
+            Err(HypermeshError::UnknownClassification)
+        } else {
+            Ok(None)
+        }
+    }
+}
+
 #[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families(
     bounds: &Aabb,
@@ -8603,9 +8769,24 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         return existing;
     }
 
-    // The cycle-guard evaluator reads this cache. Do not expose the whole-query
-    // UnknownClassification placeholder as if it were a completed exact-state result.
-    let result = {
+    let result = if progressive_interior_box_detours {
+        let mut surface_cache = Vec::new();
+        let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
+        probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+            &mut surface_cache,
+            &mut |point| point_lies_on_traced_surface(point, polygons),
+            &mut trace_without_detours,
+            &mut |batch_start, batch_end, batch_index| {
+                detour_batches.batch_for(batch_start, batch_end, batch_index, polygons)
+            },
+        )
+    } else {
+        // The cycle-guard evaluator reads this cache. Do not expose the whole-query
+        // UnknownClassification placeholder as if it were a completed exact-state result.
         let known_false_cache = &*no_plane_replacement_cache;
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
             start,
@@ -9645,6 +9826,43 @@ fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
     ) -> HypermeshResult<bool>,
     detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
+    probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        surface_cache,
+        surface_query,
+        trace_without_detours,
+        &mut |batch_start, batch_end, batch_index| {
+            if batch_index == 0 {
+                detours_for(batch_start, batch_end).map(Some)
+            } else {
+                Ok(None)
+            }
+        },
+    )
+}
+
+fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detour_batch_for: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        usize,
+    ) -> HypermeshResult<Option<Vec<DetourTarget>>>,
+) -> HypermeshResult<bool> {
     let start_target = DetourTarget {
         point: start.clone(),
         definitions: start_definitions.to_vec(),
@@ -9656,11 +9874,11 @@ fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
         uncertified_definition_fallback: false,
     };
     let initial_path = vec![start_target, end_target];
-    let mut queue = std::collections::VecDeque::from([initial_path.clone()]);
+    let mut queue = std::collections::VecDeque::from([(initial_path.clone(), 0usize)]);
     let mut seen_paths = vec![initial_path];
     let mut saw_unknown = false;
 
-    while let Some(path) = queue.pop_front() {
+    while let Some((path, batch_index)) = queue.pop_front() {
         let mut unresolved_edge = None;
         for index in 0..path.len() - 1 {
             match trace_without_detours(
@@ -9695,7 +9913,15 @@ fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
         };
         let edge_start = &path[edge_index];
         let edge_end = &path[edge_index + 1];
-        let detours = detours_for(&edge_start.point, &edge_end.point)?;
+        let detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
+            Ok(Some(detours)) => detours,
+            Ok(None) => continue,
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                continue;
+            }
+            Err(err) => return Err(err),
+        };
         for detour in detours {
             let definition_transition = (detour.point == edge_start.point
                 && !definition_families_match_as_sets(
@@ -9764,8 +9990,9 @@ fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
                 }
             }
             seen_paths.push(next_path.clone());
-            queue.push_back(next_path);
+            queue.push_back((next_path, 0));
         }
+        queue.push_back((path, batch_index + 1));
     }
 
     if saw_unknown {
@@ -14900,6 +15127,54 @@ mod tests {
                         )
                 }))
         );
+    }
+
+    #[test]
+    fn interior_box_target_batches_exhaust_and_memoize_legacy_target_set() {
+        let start = p(0, 0, 0);
+        let end = p(4, 4, 0);
+        let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+        let polygons = [slanted];
+        let expected = interior_box_detour_targets(&start, &end, &polygons).unwrap();
+        let mut cache = InteriorBoxDetourTargetBatchCache::default();
+        let mut actual = Vec::new();
+        let mut batch_index = 0;
+        while let Some(batch) = cache
+            .batch_for(&start, &end, batch_index, &polygons)
+            .unwrap()
+        {
+            assert_eq!(
+                cache
+                    .batch_for(&start, &end, batch_index, &polygons)
+                    .unwrap(),
+                Some(batch.clone())
+            );
+            actual.extend(batch);
+            batch_index += 1;
+        }
+
+        assert!(batch_index >= 2);
+        assert_eq!(cache.entries.len(), 1);
+        let mut normalized_expected = Vec::new();
+        for target in expected {
+            push_unique_detour_target(&mut normalized_expected, target);
+        }
+        let mut normalized_actual = Vec::new();
+        for target in actual {
+            push_unique_detour_target(&mut normalized_actual, target);
+        }
+        assert_eq!(normalized_actual.len(), normalized_expected.len());
+        assert!(normalized_expected.iter().all(|target| {
+            normalized_actual.iter().any(|candidate| {
+                candidate.point == target.point
+                    && candidate.uncertified_definition_fallback
+                        == target.uncertified_definition_fallback
+                    && definition_families_match_as_sets(
+                        &candidate.definitions,
+                        &target.definitions,
+                    )
+            })
+        }));
     }
 
     #[test]
@@ -24476,6 +24751,67 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn breadth_first_probe_detours_resume_later_batch_before_deeper_path() {
+        let start = p(0, 0, 0);
+        let good = p(1, 0, 0);
+        let bad_deep = p(7, 0, 0);
+        let bad_inner = p(8, 0, 0);
+        let bad_outer = p(9, 0, 0);
+        let end = p(10, 0, 0);
+        let definitions = |point: &Point3| vec![axis_plane_definition(point)];
+        let target = |point: &Point3| DetourTarget {
+            point: point.clone(),
+            definitions: definitions(point),
+            uncertified_definition_fallback: false,
+        };
+        let mut expanded_bad_deep = false;
+        let mut surface_cache = Vec::new();
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+                &start,
+                &end,
+                &definitions(&start),
+                &definitions(&end),
+                &mut surface_cache,
+                &mut |_point| Ok(false),
+                &mut |from, to, _start_definitions, _end_definitions| {
+                    Ok((*from == start && *to == good)
+                        || (*from == good && *to == end)
+                        || (*from == bad_inner && *to == bad_outer)
+                        || (*from == bad_outer && *to == end))
+                },
+                &mut |from, to, batch_index| {
+                    if *from == start && *to == end {
+                        Ok(match batch_index {
+                            0 => Some(vec![target(&bad_outer)]),
+                            1 => Some(vec![target(&good)]),
+                            _ => None,
+                        })
+                    } else if *from == start && *to == bad_outer {
+                        Ok(match batch_index {
+                            0 => Some(vec![target(&bad_inner)]),
+                            _ => None,
+                        })
+                    } else if *from == start && *to == bad_inner {
+                        Ok(match batch_index {
+                            0 => Some(vec![target(&bad_deep)]),
+                            _ => None,
+                        })
+                    } else if *from == start && *to == bad_deep {
+                        expanded_bad_deep = true;
+                        Ok(None)
+                    } else {
+                        Ok(None)
+                    }
+                },
+            )
+            .unwrap()
+        );
+        assert!(!expanded_bad_deep);
     }
 
     #[test]
