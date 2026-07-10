@@ -2511,8 +2511,8 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
 
     let refinement_len = seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT);
     let mut certified_direct_target_points = Vec::new();
-    let mut ranked_direct_targets = Vec::with_capacity(refinement_len);
-    for (index, seed) in seeds.iter().take(refinement_len).enumerate() {
+    let mut front_direct_targets = Vec::with_capacity(refinement_len);
+    for (_index, seed) in seeds.iter().take(refinement_len).enumerate() {
         let target = match build_detour_target(
             seed,
             &halfspaces,
@@ -2532,9 +2532,18 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             }
         };
         if !target.uncertified_definition_fallback {
-            certified_direct_target_points.push(target.point.clone());
+            if !certified_direct_target_points
+                .iter()
+                .any(|existing| *existing == target.point)
+            {
+                certified_direct_target_points.push(target.point.clone());
+            }
         }
-        exhausted_direct_targets.push(target.clone());
+        push_unique_detour_target(&mut exhausted_direct_targets, target.clone());
+        push_unique_detour_target(&mut front_direct_targets, target);
+    }
+    let mut ranked_direct_targets = Vec::with_capacity(front_direct_targets.len());
+    for (index, target) in front_direct_targets.into_iter().enumerate() {
         let (rank_missing, rank) = match rank_direct(&target) {
             Ok(rank) => (0u8, Some(rank)),
             Err(HypermeshError::UnknownClassification) => (1u8, None),
@@ -2613,6 +2622,7 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
             };
         }
     };
+    let mut unique_shifted_targets = Vec::new();
     for witness in &shifted_witnesses {
         let target = match build_detour_target_from_shifted_witness(witness) {
             Ok(target) => target,
@@ -2627,7 +2637,10 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
                 };
             }
         };
-        exhausted_shifted_targets.push(target.clone());
+        push_unique_detour_target(&mut exhausted_shifted_targets, target.clone());
+        push_unique_detour_target(&mut unique_shifted_targets, target);
+    }
+    for target in unique_shifted_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
@@ -2656,6 +2669,7 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
         }
     }
 
+    let mut deferred_direct_targets = Vec::new();
     for seed in seeds.iter().skip(refinement_len) {
         let target = match build_detour_target(
             seed,
@@ -2675,7 +2689,10 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
                 };
             }
         };
-        exhausted_direct_targets.push(target.clone());
+        push_unique_detour_target(&mut exhausted_direct_targets, target.clone());
+        push_unique_detour_target(&mut deferred_direct_targets, target);
+    }
+    for target in deferred_direct_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
                 if target.uncertified_definition_fallback {
@@ -2868,9 +2885,14 @@ fn strict_aabb_target_families_with_seed_families(
             Err(err) => return Err(err),
         };
         if !target.uncertified_definition_fallback {
-            certified_direct_target_points.push(target.point.clone());
+            if !certified_direct_target_points
+                .iter()
+                .any(|existing| *existing == target.point)
+            {
+                certified_direct_target_points.push(target.point.clone());
+            }
         }
-        direct_targets.push(target);
+        push_unique_detour_target(&mut direct_targets, target);
     }
 
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
@@ -2897,7 +2919,9 @@ fn strict_aabb_target_families_with_seed_families(
     let mut shifted_targets = Vec::new();
     for witness in &shifted_witnesses {
         match build_detour_target_from_shifted_witness(witness) {
-            Ok(target) => shifted_targets.push(target),
+            Ok(target) => {
+                push_unique_detour_target(&mut shifted_targets, target);
+            }
             Err(HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
             }
@@ -14132,6 +14156,29 @@ mod tests {
         assert_eq!(families.direct_targets.len(), 2);
         assert!(!families.shifted_targets.is_empty());
         assert!(!families.saw_unknown);
+    }
+
+    #[test]
+    fn search_strict_aabb_targets_progressively_dedupes_duplicate_direct_targets() {
+        let mut evaluated = 0usize;
+
+        let found =
+            search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
+                &Aabb::new(p(0, 0, 0), p(3, 3, 3)),
+                |_bounds, _halfspaces, _report, _saw_unknown| {
+                    Ok((vec![p(1, 1, 1), p(1, 1, 1)], vec![], vec![]))
+                },
+                &mut |_target| Ok([0u8, 0u8, 0u8]),
+                &mut |_target| {
+                    evaluated += 1;
+                    Ok(true)
+                },
+            )
+            .result
+            .unwrap();
+
+        assert!(found);
+        assert_eq!(evaluated, 1);
     }
 
     #[test]
