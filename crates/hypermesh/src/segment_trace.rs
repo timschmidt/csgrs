@@ -87,6 +87,26 @@ struct InteriorBoxAxisIntervalsCacheEntry {
     saw_unknown: bool,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+struct InteriorBoxAxisIntervalsBucket {
+    start: Point3,
+    end: Point3,
+    indices: Vec<usize>,
+}
+
+#[derive(Default)]
+struct InteriorBoxAxisIntervalsCache {
+    entries: Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    buckets: Vec<InteriorBoxAxisIntervalsBucket>,
+}
+
+impl InteriorBoxAxisIntervalsCache {
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.entries.len()
+    }
+}
+
 const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 1;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -186,7 +206,7 @@ pub(crate) struct LeafProbeQueryCaches {
     probe_surface: Vec<SurfaceCacheEntry>,
     probe_reachability: Vec<ProbeReachabilityCacheEntry>,
     direct_probe_reachability: Vec<DirectProbeReachabilityCacheEntry>,
-    interior_box_axis_intervals: Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: InteriorBoxAxisIntervalsCache,
     axis_ordered_segment_traces: Vec<AxisOrderedSegmentTraceCacheEntry>,
     plane_replacement_affine: Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_trace_steps: Vec<PlaneReplacementStepCacheEntry>,
@@ -2271,25 +2291,69 @@ fn interior_box_axis_intervals_with_surface_queries(
     Ok((intervals, saw_unknown))
 }
 
+fn matching_interior_box_axis_intervals_bucket_indices<'a>(
+    buckets: &'a [InteriorBoxAxisIntervalsBucket],
+    start: &Point3,
+    end: &Point3,
+) -> Option<&'a [usize]> {
+    buckets
+        .iter()
+        .rev()
+        .find(|existing| {
+            (existing.start == *start && existing.end == *end)
+                || (existing.start == *end && existing.end == *start)
+        })
+        .map(|bucket| bucket.indices.as_slice())
+}
+
+fn push_interior_box_axis_intervals_bucket_entry(
+    buckets: &mut Vec<InteriorBoxAxisIntervalsBucket>,
+    start: &Point3,
+    end: &Point3,
+    index: usize,
+) {
+    if let Some(bucket) = buckets.iter_mut().find(|existing| {
+        (existing.start == *start && existing.end == *end)
+            || (existing.start == *end && existing.end == *start)
+    }) {
+        bucket.indices.push(index);
+        return;
+    }
+    buckets.push(InteriorBoxAxisIntervalsBucket {
+        start: start.clone(),
+        end: end.clone(),
+        indices: vec![index],
+    });
+}
+
 fn cached_interior_box_axis_intervals_with_surface_queries(
-    cache: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    cache: &mut InteriorBoxAxisIntervalsCache,
     start: &Point3,
     end: &Point3,
     query: impl FnOnce() -> HypermeshResult<(Vec<Vec<(Real, Real)>>, bool)>,
 ) -> HypermeshResult<(Vec<Vec<(Real, Real)>>, bool)> {
-    if let Some(entry) = cache.iter().rev().find(|entry| {
-        (entry.start == *start && entry.end == *end) || (entry.start == *end && entry.end == *start)
-    }) {
+    if let Some(entry) =
+        matching_interior_box_axis_intervals_bucket_indices(&cache.buckets, start, end).and_then(
+            |indices| {
+                indices
+                    .iter()
+                    .rev()
+                    .find_map(|index| cache.entries.get(*index))
+            },
+        )
+    {
         return Ok((entry.intervals.clone(), entry.saw_unknown));
     }
 
     let (intervals, saw_unknown) = query()?;
-    cache.push(InteriorBoxAxisIntervalsCacheEntry {
+    cache.entries.push(InteriorBoxAxisIntervalsCacheEntry {
         start: start.clone(),
         end: end.clone(),
         intervals: intervals.clone(),
         saw_unknown,
     });
+    let index = cache.entries.len() - 1;
+    push_interior_box_axis_intervals_bucket_entry(&mut cache.buckets, start, end, index);
     Ok((intervals, saw_unknown))
 }
 
@@ -2888,7 +2952,10 @@ fn push_strict_aabb_target_family_bucket_entry(
     bounds: &Aabb,
     index: usize,
 ) {
-    if let Some(bucket) = buckets.iter_mut().find(|existing| existing.bounds == *bounds) {
+    if let Some(bucket) = buckets
+        .iter_mut()
+        .find(|existing| existing.bounds == *bounds)
+    {
         bucket.indices.push(index);
         return;
     }
@@ -4915,7 +4982,7 @@ fn evaluate_leaf_probe_with_query_caches(
     plane_replacement_no_nested_ordering_warmups: &mut Vec<
         PlaneReplacementNoNestedOrderingWarmupCacheEntry,
     >,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     definition_cycle_guard_reachability: &mut DefinitionCycleGuardReachabilityCache,
     definition_no_step_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     definition_no_plane_replacement_cycle_guard: &mut DefinitionNoPlaneReplacementCycleGuardCache,
@@ -6475,7 +6542,7 @@ fn probe_reaches_adjacent_cell_from_interior(
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
     let mut plane_replacement_no_nested_ordering_warmups = Vec::new();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     let mut definition_cycle_guard_reachability = DefinitionCycleGuardReachabilityCache::default();
     let mut definition_no_step_detour_reachability = DefinitionNoDetourReachabilityCache::default();
     let mut definition_no_plane_replacement_cycle_guard =
@@ -6526,7 +6593,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     plane_replacement_no_nested_ordering_warmups: &mut Vec<
         PlaneReplacementNoNestedOrderingWarmupCacheEntry,
     >,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     definition_cycle_guard_reachability: &mut DefinitionCycleGuardReachabilityCache,
     definition_no_step_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     definition_no_plane_replacement_cycle_guard: &mut DefinitionNoPlaneReplacementCycleGuardCache,
@@ -6592,7 +6659,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
     let mut plane_replacement_no_nested_ordering_warmups = Vec::new();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     let mut definition_cycle_guard_reachability = DefinitionCycleGuardReachabilityCache::default();
     let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
     let mut no_plane_replacement_cycle_guard_cache =
@@ -6646,7 +6713,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     plane_replacement_no_nested_ordering_warmups: &mut Vec<
         PlaneReplacementNoNestedOrderingWarmupCacheEntry,
     >,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     definition_cycle_guard_reachability: &mut DefinitionCycleGuardReachabilityCache,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
@@ -6742,7 +6809,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
             &mut detours_for,
         )?
     } else {
-        let mut progressive_interior_box_axis_intervals = Vec::new();
+        let mut progressive_interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
         probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surface_query(
             start,
             end,
@@ -7085,7 +7152,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surfa
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     visited_points: &[VisitedDefinitionPoint],
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -7438,7 +7505,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
     let mut no_nested_ordering_warmup_cache = Vec::new();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
     let mut halfspace_reports = Vec::new();
     let mut halfspace_seed_families = Vec::new();
@@ -7484,7 +7551,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     no_nested_ordering_warmup_cache: &mut Vec<PlaneReplacementNoNestedOrderingWarmupCacheEntry>,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
@@ -7942,7 +8009,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
         start,
         end,
@@ -7986,7 +8053,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     reach_without_detours: impl FnMut(
         &Point3,
         &Point3,
@@ -8029,7 +8096,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
     detour_target_cache: &mut DetourTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     reach_without_detours: impl FnMut(
         &Point3,
         &Point3,
@@ -8071,7 +8138,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
     detour_target_cache: &mut DetourTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     progressive_interior_box_detours: bool,
     mut reach_without_detours: impl FnMut(
         &Point3,
@@ -8160,7 +8227,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     let mut halfspace_seed_family_cache = Vec::new();
     let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
         start,
         end,
@@ -8194,7 +8261,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -8252,7 +8319,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     let mut halfspace_seed_family_cache = Vec::new();
     let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
         start,
         end,
@@ -8288,7 +8355,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -8454,7 +8521,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -8648,7 +8715,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -8696,7 +8763,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -8953,12 +9020,12 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                         {
                             push_unique_detour_target(&mut exhausted_targets, target.clone());
                         }
-                        strict_aabb_target_families
-                            .entries
-                            .push(StrictAabbTargetFamilyCacheEntry {
+                        strict_aabb_target_families.entries.push(
+                            StrictAabbTargetFamilyCacheEntry {
                                 bounds: bounds.clone(),
                                 families: Ok(families),
-                            });
+                            },
+                        );
                         let index = strict_aabb_target_families.entries.len() - 1;
                         push_strict_aabb_target_family_bucket_entry(
                             &mut strict_aabb_target_families.buckets,
@@ -9018,7 +9085,7 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
     classify_crossing: &mut impl FnMut(&Point3, &ConvexPolygon) -> HypermeshResult<PolygonPointLocation>,
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     trace_without_detours: &mut impl FnMut(
         &Point3,
         &Point3,
@@ -9080,7 +9147,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
     let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
-    let mut interior_box_axis_intervals = Vec::new();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
     plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
         start_planes,
         end_planes,
@@ -9112,7 +9179,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     no_nested_ordering_warmup_cache: &mut Vec<PlaneReplacementNoNestedOrderingWarmupCacheEntry>,
-    interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
+    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
@@ -14044,7 +14111,7 @@ mod tests {
             &mut Vec::new(),
             &mut Vec::new(),
             &mut StrictAabbTargetFamilyCache::default(),
-            &mut Vec::new(),
+            &mut InteriorBoxAxisIntervalsCache::default(),
             &mut Vec::new(),
             &mut |_point| Ok(false),
             &mut |_from, _to, from_definitions, to_definitions| {
@@ -16131,7 +16198,7 @@ mod tests {
         let mut path_cache = Vec::new();
         let mut step_cache = Vec::new();
         let mut no_nested_ordering_warmup_cache = Vec::new();
-        let mut interior_box_axis_intervals = Vec::new();
+        let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
         let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
         let mut halfspace_reports = Vec::new();
         let mut halfspace_seed_families = Vec::new();
@@ -16246,7 +16313,7 @@ mod tests {
                 .into_iter()
                 .find(|probe| probe.side == Classification::Positive)
                 .expect("leaf should have a positive-side probe");
-        let mut interval_cache = Vec::new();
+        let mut interval_cache = InteriorBoxAxisIntervalsCache::default();
 
         let first = cached_interior_box_axis_intervals_with_surface_queries(
             &mut interval_cache,
@@ -24026,7 +24093,7 @@ mod tests {
         let mut halfspace_report_cache = Vec::new();
         let mut halfspace_seed_family_cache = Vec::new();
         let mut detour_target_cache = DetourTargetFamilyCache::default();
-        let mut interior_box_axis_intervals = Vec::new();
+        let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
         let mut shared_no_detour_calls = 0;
         let mut shared_detour_family_calls = 0;
 
@@ -24083,7 +24150,7 @@ mod tests {
         let mut halfspace_report_cache = Vec::new();
         let mut halfspace_seed_family_cache = Vec::new();
         let mut detour_target_cache = DetourTargetFamilyCache::default();
-        let mut interior_box_axis_intervals = Vec::new();
+        let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
 
         let first = probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
             &start,
@@ -24157,7 +24224,7 @@ mod tests {
         let mut halfspace_report_cache = Vec::new();
         let mut halfspace_seed_family_cache = Vec::new();
         let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
-        let mut interior_box_axis_intervals = Vec::new();
+        let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
         let mut surface_cache = Vec::new();
         let mut detour_target_cache = DetourTargetFamilyCache::default();
         let visited_points = vec![VisitedDefinitionPoint {
