@@ -9440,6 +9440,151 @@ fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
     }
 }
 
+fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    surface_cache: &mut Vec<SurfaceCacheEntry>,
+    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
+    trace_without_detours: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &[[Plane; 3]],
+        &[[Plane; 3]],
+    ) -> HypermeshResult<bool>,
+    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
+) -> HypermeshResult<bool> {
+    let start_target = DetourTarget {
+        point: start.clone(),
+        definitions: start_definitions.to_vec(),
+        uncertified_definition_fallback: false,
+    };
+    let end_target = DetourTarget {
+        point: end.clone(),
+        definitions: end_definitions.to_vec(),
+        uncertified_definition_fallback: false,
+    };
+    let initial_path = vec![start_target, end_target];
+    let mut queue = std::collections::VecDeque::from([initial_path.clone()]);
+    let mut seen_paths = vec![initial_path];
+    let mut saw_unknown = false;
+
+    while let Some(path) = queue.pop_front() {
+        let mut unresolved_edge = None;
+        for index in 0..path.len() - 1 {
+            match trace_without_detours(
+                &path[index].point,
+                &path[index + 1].point,
+                &path[index].definitions,
+                &path[index + 1].definitions,
+            ) {
+                Ok(true) => {}
+                Ok(false) => {
+                    unresolved_edge = Some(index);
+                    break;
+                }
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    unresolved_edge = Some(index);
+                    break;
+                }
+                Err(err) => return Err(err),
+            }
+        }
+
+        let Some(edge_index) = unresolved_edge else {
+            if path
+                .iter()
+                .any(|target| target.uncertified_definition_fallback)
+            {
+                saw_unknown = true;
+                continue;
+            }
+            return Ok(true);
+        };
+        let edge_start = &path[edge_index];
+        let edge_end = &path[edge_index + 1];
+        let detours = detours_for(&edge_start.point, &edge_end.point)?;
+        for detour in detours {
+            let definition_transition = (detour.point == edge_start.point
+                && !definition_families_match_as_sets(
+                    &detour.definitions,
+                    &edge_start.definitions,
+                ))
+                || (detour.point == edge_end.point
+                    && !definition_families_match_as_sets(
+                        &detour.definitions,
+                        &edge_end.definitions,
+                    ));
+            if path.iter().any(|visited| {
+                visited.point == detour.point
+                    && definition_families_match_as_sets(&visited.definitions, &detour.definitions)
+            }) {
+                continue;
+            }
+            if !definition_transition {
+                match cached_surface_query_with(surface_cache, &detour.point, || {
+                    surface_query(&detour.point)
+                }) {
+                    Ok(true) => continue,
+                    Ok(false) => {}
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                }
+            }
+
+            let mut next_path = path.clone();
+            next_path.insert(edge_index + 1, detour);
+            if seen_paths.iter().any(|seen| *seen == next_path) {
+                continue;
+            }
+            let mut complete = true;
+            for index in 0..next_path.len() - 1 {
+                match trace_without_detours(
+                    &next_path[index].point,
+                    &next_path[index + 1].point,
+                    &next_path[index].definitions,
+                    &next_path[index + 1].definitions,
+                ) {
+                    Ok(true) => {}
+                    Ok(false) => {
+                        complete = false;
+                        break;
+                    }
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        complete = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
+                }
+            }
+            if complete {
+                if next_path
+                    .iter()
+                    .any(|target| target.uncertified_definition_fallback)
+                {
+                    saw_unknown = true;
+                } else {
+                    return Ok(true);
+                }
+            }
+            seen_paths.push(next_path.clone());
+            queue.push_back(next_path);
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
+}
+
 #[cfg(test)]
 #[allow(dead_code)]
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
@@ -23979,6 +24124,120 @@ mod tests {
             )
             .unwrap()
         );
+
+        let mut surface_cache = Vec::new();
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+                &start,
+                &end,
+                &start_definitions,
+                &end_definitions,
+                &mut surface_cache,
+                &mut |_point| Ok(false),
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn breadth_first_probe_detours_try_shallow_sibling_before_deeper_branch() {
+        let start = p(0, 0, 0);
+        let good_inner = p(1, 0, 0);
+        let good_outer = p(2, 0, 0);
+        let bad_deep = p(7, 0, 0);
+        let bad_inner = p(8, 0, 0);
+        let bad_outer = p(9, 0, 0);
+        let end = p(10, 0, 0);
+        let definitions = |point: &Point3| vec![axis_plane_definition(point)];
+        let mut expanded_bad_deep = false;
+        let mut trace_without_detours =
+            |from: &Point3,
+             to: &Point3,
+             _start_definitions: &[[Plane; 3]],
+             _end_definitions: &[[Plane; 3]]| {
+                Ok((*from == start && *to == good_inner)
+                    || (*from == good_inner && *to == good_outer)
+                    || (*from == good_outer && *to == end)
+                    || (*from == bad_inner && *to == bad_outer)
+                    || (*from == bad_outer && *to == end))
+            };
+        let mut detours_for = |from: &Point3, to: &Point3| {
+            let points = if *from == start && *to == end {
+                vec![bad_outer.clone(), good_outer.clone()]
+            } else if *from == start && *to == bad_outer {
+                vec![bad_inner.clone()]
+            } else if *from == start && *to == bad_inner {
+                vec![bad_deep.clone()]
+            } else if *from == start && *to == bad_deep {
+                expanded_bad_deep = true;
+                Vec::new()
+            } else if *from == start && *to == good_outer {
+                vec![good_inner.clone()]
+            } else {
+                Vec::new()
+            };
+            Ok(points
+                .into_iter()
+                .map(|point| DetourTarget {
+                    definitions: definitions(&point),
+                    point,
+                    uncertified_definition_fallback: false,
+                })
+                .collect())
+        };
+        let mut surface_cache = Vec::new();
+
+        assert!(
+            probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+                &start,
+                &end,
+                &definitions(&start),
+                &definitions(&end),
+                &mut surface_cache,
+                &mut |_point| Ok(false),
+                &mut trace_without_detours,
+                &mut detours_for,
+            )
+            .unwrap()
+        );
+        assert!(!expanded_bad_deep);
+    }
+
+    #[test]
+    fn breadth_first_probe_detours_do_not_certify_fallback_only_path() {
+        let start = p(0, 0, 0);
+        let detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let definitions = |point: &Point3| vec![axis_plane_definition(point)];
+        let mut surface_cache = Vec::new();
+
+        let err = probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+            &start,
+            &end,
+            &definitions(&start),
+            &definitions(&end),
+            &mut surface_cache,
+            &mut |_point| Ok(false),
+            &mut |from, to, _start_definitions, _end_definitions| {
+                Ok((*from == start && *to == detour) || (*from == detour && *to == end))
+            },
+            &mut |from, to| {
+                if *from == start && *to == end {
+                    Ok(vec![DetourTarget {
+                        point: detour.clone(),
+                        definitions: definitions(&detour),
+                        uncertified_definition_fallback: true,
+                    }])
+                } else {
+                    Ok(Vec::new())
+                }
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
