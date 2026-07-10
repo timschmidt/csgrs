@@ -8308,13 +8308,8 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         return existing;
     }
 
-    let cache_index = begin_definition_no_plane_replacement_reachability_result(
-        no_plane_replacement_cache,
-        start,
-        end,
-        start_definitions,
-        end_definitions,
-    );
+    // The cycle-guard evaluator reads this cache. Do not expose the whole-query
+    // UnknownClassification placeholder as if it were a completed exact-state result.
     let result = {
         let known_false_cache = &*no_plane_replacement_cache;
         probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
@@ -8336,6 +8331,13 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
             &mut detours_for_query,
         )
     };
+    let cache_index = begin_definition_no_plane_replacement_reachability_result(
+        no_plane_replacement_cache,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+    );
     no_plane_replacement_cache.entries[cache_index].result = result.clone();
     result
 }
@@ -24554,6 +24556,7 @@ mod tests {
         let mut halfspace_seed_family_cache = Vec::new();
         let mut detour_target_cache = DetourTargetFamilyCache::default();
         let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
+        let mut trace_calls = 0;
 
         let first = probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
             &start,
@@ -24568,10 +24571,14 @@ mod tests {
             &mut halfspace_seed_family_cache,
             &mut detour_target_cache,
             &mut interior_box_axis_intervals,
-            |_from, _to, _start_definitions, _end_definitions| Ok(true),
+            |_from, _to, _start_definitions, _end_definitions| {
+                trace_calls += 1;
+                Ok(true)
+            },
             |_from, _to| Ok(Vec::new()),
         )
         .unwrap();
+        assert_eq!(trace_calls, 1);
         let no_detour_len = no_detour_cache.len();
         let no_plane_replacement_cycle_guard_len = no_plane_replacement_cycle_guard_cache.len();
         let no_plane_replacement_len = no_plane_replacement_cache.len();
@@ -24596,6 +24603,7 @@ mod tests {
 
         assert!(first);
         assert!(second);
+        assert_eq!(trace_calls, 1);
         assert_eq!(no_detour_cache.len(), no_detour_len);
         assert_eq!(
             no_plane_replacement_cycle_guard_cache.len(),
