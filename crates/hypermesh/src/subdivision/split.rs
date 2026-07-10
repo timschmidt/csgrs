@@ -2,17 +2,486 @@
 
 use super::{
     Aabb, ClipSide, ConvexPolygon, HypermeshResult, IntersectionSegment, PairwiseIntersectionType,
-    PairwiseIntersectionsCacheEntry, Plane, PolygonFamilyBoundsCacheEntry, RankedSplitAttempt,
-    Real, RootSplitPlane, SplitAttemptChildFanoutCacheEntry, SplitChildPartition,
-    SplitChildPartitionCacheEntry, SplitSource, axis_mut, axis_ref,
-    cached_pairwise_intersections_by_polygon_with, cached_recursive_child_bounds_with,
-    cached_split_child_partition_with, clip_polygon, compare_real,
+    PairwiseIntersectionsCacheEntry, Plane, PolygonFamilyProfile, Real, axis_mut, axis_ref,
+    cached_pairwise_intersections_by_polygon_with, clip_polygon, compare_real,
     polygon_families_match_as_multisets, polygon_family_profile,
-    split_child_matches_parent_geometry, take_new_subdivision_child_partition,
+    split_child_matches_parent_geometry,
 };
 #[cfg(test)]
-use super::{ExactBvh, intersect_polygons, polygon_axis_values};
+use super::{ExactBvh, intersect_polygons};
 use std::cell::RefCell;
+use std::rc::Rc;
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct SubdivisionChildPartition {
+    left_polygon_profile: PolygonFamilyProfile,
+    left_polygons: Vec<ConvexPolygon>,
+    left_bounds: Option<Aabb>,
+    right_polygon_profile: PolygonFamilyProfile,
+    right_polygons: Vec<ConvexPolygon>,
+    right_bounds: Option<Aabb>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct PolygonFamilyBoundsCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+    bounds: HypermeshResult<Aabb>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub(super) enum SplitSource {
+    Intersection,
+    Arrangement,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct RootSplitPlane {
+    pub(super) axis: usize,
+    pub(super) value: Real,
+    pub(super) source: SplitSource,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct SplitCandidatesCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    candidates: HypermeshResult<Vec<RankedSplitAttempt>>,
+}
+
+#[derive(Default)]
+pub(super) struct SplitCandidatesCache {
+    // Initialized from the top-level task before contraction or clipping.
+    pub(super) root_basis: Option<HypermeshResult<Rc<Vec<RootSplitPlane>>>>,
+    pub(super) entries: Vec<SplitCandidatesCacheEntry>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct PolygonAxisValuesCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+    result: HypermeshResult<[Vec<Real>; 3]>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct SplitAttemptChildFanoutCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+    bounds: Aabb,
+    count: HypermeshResult<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct SplitChildPartition {
+    pub(super) left_polys: Vec<ConvexPolygon>,
+    pub(super) right_polys: Vec<ConvexPolygon>,
+    pub(super) both_count: usize,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct SplitChildPartitionCacheEntry {
+    polygon_profile: PolygonFamilyProfile,
+    polygons: Vec<ConvexPolygon>,
+    axis: usize,
+    value: Real,
+    result: HypermeshResult<SplitChildPartition>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct RankedSplitAttempt {
+    pub(super) axis: usize,
+    pub(super) value: Real,
+    pub(super) counts: SplitCounts,
+    pub(super) source: SplitSource,
+    pub(super) left_polys: Vec<ConvexPolygon>,
+    pub(super) left_bounds: Option<Aabb>,
+    pub(super) right_polys: Vec<ConvexPolygon>,
+    pub(super) right_bounds: Option<Aabb>,
+}
+
+#[cfg(test)]
+pub(super) fn recursive_child_bounds(
+    _parent_polygons: &[ConvexPolygon],
+    child_polygons: &[ConvexPolygon],
+    _child_bounds: &Aabb,
+) -> HypermeshResult<Aabb> {
+    polygon_family_bounds(child_polygons)
+}
+
+pub(super) fn cached_polygon_family_bounds_with(
+    cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Aabb>,
+) -> HypermeshResult<Aabb> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.bounds;
+    }
+
+    let polygon_profile = polygon_family_profile(polygons);
+    let existing = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| {
+            existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache_polygon_family_bounds_result(cache, polygons, &existing.bounds);
+        }
+        return existing.bounds;
+    }
+
+    let bounds = query(polygons);
+    cache.borrow_mut().push(PolygonFamilyBoundsCacheEntry {
+        polygon_profile,
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+    });
+    bounds
+}
+
+fn cache_polygon_family_bounds_result(
+    cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    bounds: &HypermeshResult<Aabb>,
+) {
+    if cache
+        .borrow()
+        .iter()
+        .any(|existing| existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().push(PolygonFamilyBoundsCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+    });
+}
+
+fn cached_recursive_child_bounds_with(
+    cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    _parent_polygons: &[ConvexPolygon],
+    child_polygons: &[ConvexPolygon],
+    _child_bounds: &Aabb,
+) -> HypermeshResult<Aabb> {
+    cached_polygon_family_bounds_with(cache, child_polygons, polygon_family_bounds)
+}
+
+pub(super) fn polygon_axis_values(polygons: &[ConvexPolygon]) -> HypermeshResult<[Vec<Real>; 3]> {
+    let mut values = [Vec::new(), Vec::new(), Vec::new()];
+    for polygon in polygons {
+        for vertex in polygon.vertices()? {
+            for axis in 0..3 {
+                push_unique_ordered_axis_value(&mut values[axis], axis_ref(&vertex, axis).clone())?;
+            }
+        }
+    }
+    Ok(values)
+}
+
+pub(super) fn cached_polygon_axis_values_with(
+    cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<[Vec<Real>; 3]> {
+    if let Some(existing) = cache
+        .borrow()
+        .iter()
+        .rev()
+        .find(|existing| existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.result;
+    }
+
+    let polygon_profile = polygon_family_profile(polygons);
+    let existing = cache
+        .borrow()
+        .iter()
+        .find(|existing| {
+            existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache_polygon_axis_values_result(cache, polygons, &existing.result);
+        }
+        return existing.result;
+    }
+
+    let result = polygon_axis_values(polygons);
+    cache.borrow_mut().push(PolygonAxisValuesCacheEntry {
+        polygon_profile,
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
+    result
+}
+
+fn cache_polygon_axis_values_result(
+    cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    result: &HypermeshResult<[Vec<Real>; 3]>,
+) {
+    if cache
+        .borrow()
+        .iter()
+        .any(|existing| existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().push(PolygonAxisValuesCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        result: result.clone(),
+    });
+}
+
+pub(super) fn cached_root_split_basis_with(
+    cache: &RefCell<SplitCandidatesCache>,
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Rc<Vec<RootSplitPlane>>> {
+    if let Some(existing) = cache.borrow().root_basis.clone() {
+        return existing;
+    }
+
+    let result = (|| {
+        let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
+        let intersection_segments =
+            split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
+        root_split_basis_from_events(bounds, &axis_values, &intersection_segments).map(Rc::new)
+    })();
+    cache.borrow_mut().root_basis = Some(result.clone());
+    result
+}
+
+pub(super) fn cached_ordered_subdivision_splits_with(
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    cache: &RefCell<SplitCandidatesCache>,
+    fanout_count_cache: &RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<RankedSplitAttempt>> {
+    let root_basis =
+        cached_root_split_basis_with(cache, axis_values_cache, pairwise_cache, bounds, polygons)?;
+    if let Some(existing) = cache
+        .borrow()
+        .entries
+        .iter()
+        .rev()
+        .find(|existing| existing.bounds == *bounds && existing.polygons == polygons)
+        .cloned()
+    {
+        return existing.candidates;
+    }
+
+    let polygon_profile = polygon_family_profile(polygons);
+    let existing = cache
+        .borrow()
+        .entries
+        .iter()
+        .rev()
+        .find(|existing| {
+            existing.bounds == *bounds
+                && existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+        })
+        .cloned();
+    if let Some(existing) = existing {
+        if existing.polygons != polygons {
+            cache_split_candidates_result(cache, polygons, bounds, &existing.candidates);
+        }
+        return existing.candidates;
+    }
+
+    let candidates = ordered_subdivision_splits_with_partition_cache(
+        bounds,
+        polygons,
+        fanout_count_cache,
+        partition_cache,
+        polygon_bounds_cache,
+        root_basis.as_ref(),
+    );
+    cache.borrow_mut().entries.push(SplitCandidatesCacheEntry {
+        polygon_profile,
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        candidates: candidates.clone(),
+    });
+    candidates
+}
+
+fn cache_split_candidates_result(
+    cache: &RefCell<SplitCandidatesCache>,
+    polygons: &[ConvexPolygon],
+    bounds: &Aabb,
+    candidates: &HypermeshResult<Vec<RankedSplitAttempt>>,
+) {
+    if cache
+        .borrow()
+        .entries
+        .iter()
+        .any(|existing| existing.bounds == *bounds && existing.polygons == polygons)
+    {
+        return;
+    }
+
+    cache.borrow_mut().entries.push(SplitCandidatesCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        bounds: bounds.clone(),
+        candidates: candidates.clone(),
+    });
+}
+
+pub(super) fn cached_split_child_partition_with(
+    cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<SplitChildPartition> {
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter().rev() {
+            if existing.polygons == polygons
+                && existing.axis == axis
+                && compare_real(&existing.value, value)?.is_eq()
+            {
+                return existing.result.clone();
+            }
+        }
+    }
+
+    let polygon_profile = polygon_family_profile(polygons);
+    let existing = {
+        let cache_ref = cache.borrow();
+        let mut found = None;
+        for existing in cache_ref.iter().rev() {
+            if existing.axis == axis
+                && existing.polygon_profile == polygon_profile
+                && polygon_families_match_as_multisets(&existing.polygons, polygons)
+                && compare_real(&existing.value, value)?.is_eq()
+            {
+                found = Some(existing.clone());
+                break;
+            }
+        }
+        found
+    };
+    if let Some(existing) = existing {
+        if !split_child_partition_cache_entry_matches_exact_state(&existing, polygons, axis, value)?
+        {
+            cache_split_child_partition_result(cache, polygons, axis, value, &existing.result)?;
+        }
+        return existing.result;
+    }
+
+    let result = split_child_partition(polygons, axis, value);
+    cache.borrow_mut().push(SplitChildPartitionCacheEntry {
+        polygon_profile,
+        polygons: polygons.to_vec(),
+        axis,
+        value: value.clone(),
+        result: result.clone(),
+    });
+    result
+}
+
+fn cache_split_child_partition_result(
+    cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+    result: &HypermeshResult<SplitChildPartition>,
+) -> HypermeshResult<()> {
+    {
+        let cache_ref = cache.borrow();
+        for existing in cache_ref.iter() {
+            if split_child_partition_cache_entry_matches_exact_state(
+                existing, polygons, axis, value,
+            )? {
+                return Ok(());
+            }
+        }
+    }
+
+    cache.borrow_mut().push(SplitChildPartitionCacheEntry {
+        polygon_profile: polygon_family_profile(polygons),
+        polygons: polygons.to_vec(),
+        axis,
+        value: value.clone(),
+        result: result.clone(),
+    });
+    Ok(())
+}
+
+fn split_child_partition_cache_entry_matches_exact_state(
+    existing: &SplitChildPartitionCacheEntry,
+    polygons: &[ConvexPolygon],
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<bool> {
+    Ok(existing.axis == axis
+        && existing.polygons == polygons
+        && compare_real(&existing.value, value)?.is_eq())
+}
+
+pub(super) fn take_new_subdivision_child_partition(
+    seen: &mut Vec<SubdivisionChildPartition>,
+    left_polygons: &[ConvexPolygon],
+    left_bounds: Option<&Aabb>,
+    right_polygons: &[ConvexPolygon],
+    right_bounds: Option<&Aabb>,
+) -> bool {
+    let left_polygon_profile = polygon_family_profile(left_polygons);
+    let right_polygon_profile = polygon_family_profile(right_polygons);
+    for existing in seen.iter() {
+        let direct_match = existing.left_polygon_profile == left_polygon_profile
+            && existing.left_bounds.as_ref() == left_bounds
+            && existing.right_polygon_profile == right_polygon_profile
+            && existing.right_bounds.as_ref() == right_bounds
+            && polygon_families_match_as_multisets(&existing.left_polygons, left_polygons)
+            && polygon_families_match_as_multisets(&existing.right_polygons, right_polygons);
+        let swapped_match = existing.left_polygon_profile == right_polygon_profile
+            && existing.left_bounds.as_ref() == right_bounds
+            && existing.right_polygon_profile == left_polygon_profile
+            && existing.right_bounds.as_ref() == left_bounds
+            && polygon_families_match_as_multisets(&existing.left_polygons, right_polygons)
+            && polygon_families_match_as_multisets(&existing.right_polygons, left_polygons);
+        if direct_match || swapped_match {
+            return false;
+        }
+    }
+
+    seen.push(SubdivisionChildPartition {
+        left_polygon_profile,
+        left_polygons: left_polygons.to_vec(),
+        left_bounds: left_bounds.cloned(),
+        right_polygon_profile,
+        right_polygons: right_polygons.to_vec(),
+        right_bounds: right_bounds.cloned(),
+    });
+    true
+}
 
 pub(super) fn can_split_bounds(bounds: &Aabb) -> HypermeshResult<bool> {
     for axis in 0..3 {
