@@ -26,7 +26,7 @@
 //! geometry texts, and it keeps the predicate replayable without projecting to
 //! primitive floats.
 
-use hyperlattice::Vector3;
+use hyperlattice::{Point3, Vector3};
 use hyperlimit::{
     Aabb3Intersection, Aabb3PointLocation, PlaneSegmentRelation, PlaneSide, PredicateOutcome,
     Triangle3Location,
@@ -310,21 +310,23 @@ impl ClosedTriangleMesh3 {
     /// Physics keeps material and mass-property interpretation. Mesh
     /// validation and topology facts are delegated to hypermesh at this
     /// boundary.
-    pub fn to_hypermesh_exact(&self) -> Result<hypermesh::Mesh, hypermesh::kernel::MeshError> {
-        let mut positions = Vec::with_capacity(self.triangles.len() * 9);
-        let mut indices = Vec::with_capacity(self.triangles.len() * 3);
+    pub fn to_hypermesh_exact(&self) -> hypermesh::HypermeshResult<hypermesh::InputMesh> {
+        let mut positions = Vec::with_capacity(self.triangles.len() * 3);
+        let mut triangles = Vec::with_capacity(self.triangles.len());
         for triangle in &self.triangles {
-            let base = positions.len() / 3;
+            let base = positions.len();
             for vertex in triangle.vertices() {
-                positions.extend_from_slice(&[
+                positions.push(Point3::new(
                     vertex[0].clone(),
                     vertex[1].clone(),
                     vertex[2].clone(),
-                ]);
+                ));
             }
-            indices.extend_from_slice(&[base, base + 1, base + 2]);
+            triangles.push(hypermesh::Triangle::new(base, base + 1, base + 2));
         }
-        hypermesh::Mesh::from_real_triangles(&positions, &indices)
+        let mesh = hypermesh::InputMesh::new(positions, triangles);
+        hypermesh::prepare_input(&[mesh.as_ref()])?;
+        Ok(mesh)
     }
 }
 
