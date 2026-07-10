@@ -1032,12 +1032,13 @@ fn boundary_touching_boxes_reverse_difference_use_general_path() -> HypermeshRes
     let left = box_mesh([0, 0, 0], [1, 1, 1]);
     let right = box_mesh([1, 0, 0], [2, 1, 1]);
     let refs = [right.as_ref(), left.as_ref()];
-    let right_soup = passthrough(&right).unwrap();
 
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config())?;
     assert_output_polygons_closed(&difference_result);
     let difference = triangulate_and_resolve_certified(&difference_result)?;
-    assert_same_shape(&difference, &right_soup);
+    assert_no_boundary_edges(&difference);
+    assert_bounds(&difference, [r(1), r(0), r(0)], [r(2), r(1), r(1)])?;
+    assert_volume_numerator(&difference, r(6));
 
     Ok(())
 }

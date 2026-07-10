@@ -986,6 +986,7 @@ fn trace_segment_from_definitions_with_cycle_guard_impl(
     )
 }
 
+#[cfg(test)]
 fn trace_segment_from_definitions_with_cycle_guard_impl_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -1120,6 +1121,7 @@ fn trace_segment_from_definitions_with_budget_impl(
     Err(HypermeshError::UnknownClassification)
 }
 
+#[cfg(test)]
 fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -3553,6 +3555,7 @@ fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
     }
 }
 
+#[cfg(test)]
 fn strict_aabb_target_families_with_seed_families(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -3732,6 +3735,7 @@ fn detour_shifted_seed_families(
     )
 }
 
+#[cfg(test)]
 fn strict_aabb_targets_with_seed_families(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -10066,6 +10070,7 @@ fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
     }
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
     start: &Point3,
     end: &Point3,

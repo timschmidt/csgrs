@@ -3210,11 +3210,8 @@ fn ordered_subdivision_splits_with_partition_cache(
         )?;
         fanout_ranked_attempts.push((attempt, fanout_key));
     }
-    fanout_ranked_attempts.sort_by(|left, right| {
-        left.1.cmp(&right.1).then_with(|| {
-            split_attempt_cheap_order_key(&left.0).cmp(&split_attempt_cheap_order_key(&right.0))
-        })
-    });
+    fanout_ranked_attempts
+        .sort_by_key(|(attempt, fanout)| split_attempt_fanout_order_key(attempt, *fanout));
     let mut ordered = fanout_ranked_attempts
         .into_iter()
         .map(|(attempt, _)| attempt)
@@ -3383,6 +3380,23 @@ fn split_attempt_cheap_order_key(
     (
         split_attempt_recursive_room_key(attempt),
         attempt.counts,
+        attempt.source,
+    )
+}
+
+fn split_attempt_fanout_order_key(
+    attempt: &RankedSplitAttempt,
+    fanout: (usize, usize, usize),
+) -> (
+    (usize, usize, usize),
+    SplitCounts,
+    (usize, usize, usize),
+    SplitSource,
+) {
+    (
+        split_attempt_recursive_room_key(attempt),
+        attempt.counts,
+        fanout,
         attempt.source,
     )
 }
@@ -12561,7 +12575,7 @@ mod tests {
     }
 
     #[test]
-    fn ordered_subdivision_splits_prefers_lower_downstream_fanout_for_full_soup_hot_child() {
+    fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout() {
         let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
         let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
         let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
@@ -12642,7 +12656,7 @@ mod tests {
         let mut first_sizes = [first.left_polys.len(), first.right_polys.len()];
         first_sizes.sort_unstable();
 
-        assert_eq!(first_sizes, [5, 9]);
+        assert_eq!(first_sizes, [7, 8]);
     }
 
     #[test]
@@ -12725,7 +12739,14 @@ mod tests {
             &hot_task.polygons,
         )
         .unwrap();
-        let hot_attempt = hot_attempts.first().unwrap();
+        let hot_attempt = hot_attempts
+            .iter()
+            .find(|attempt| {
+                let mut sizes = [attempt.left_polys.len(), attempt.right_polys.len()];
+                sizes.sort_unstable();
+                sizes == [5, 9]
+            })
+            .unwrap();
         let hot_split_children = ordered_split_attempt_children(
             &hot_task.polygons,
             hot_attempt.left_polys.clone(),
@@ -12879,7 +12900,14 @@ mod tests {
             &hot_task.polygons,
         )
         .unwrap();
-        let hot_attempt = hot_attempts.first().unwrap();
+        let hot_attempt = hot_attempts
+            .iter()
+            .find(|attempt| {
+                let mut sizes = [attempt.left_polys.len(), attempt.right_polys.len()];
+                sizes.sort_unstable();
+                sizes == [5, 9]
+            })
+            .unwrap();
         let hot_split_children = ordered_split_attempt_children(
             &hot_task.polygons,
             hot_attempt.left_polys.clone(),
@@ -15162,6 +15190,41 @@ mod tests {
 
         assert!(
             split_attempt_recursive_room_key(&flatter) < split_attempt_recursive_room_key(&deeper)
+        );
+    }
+
+    #[test]
+    fn split_attempt_fanout_order_keeps_child_load_ahead_of_downstream_fanout() {
+        let lower_child_load = RankedSplitAttempt {
+            axis: 0,
+            value: r(2),
+            counts: (12, 0, 24, 0, 0, 0),
+            source: SplitSource::Arrangement,
+            left_polys: Vec::new(),
+            left_bounds: None,
+            right_polys: Vec::new(),
+            right_bounds: None,
+        };
+        let lower_fanout = RankedSplitAttempt {
+            axis: 1,
+            value: r(4),
+            counts: (14, 0, 24, 0, 0, 4),
+            ..lower_child_load.clone()
+        };
+
+        assert!(
+            split_attempt_fanout_order_key(&lower_child_load, (9, 18, 0))
+                < split_attempt_fanout_order_key(&lower_fanout, (1, 2, 0))
+        );
+
+        let same_child_load = RankedSplitAttempt {
+            axis: 2,
+            value: r(3),
+            ..lower_child_load.clone()
+        };
+        assert!(
+            split_attempt_fanout_order_key(&same_child_load, (1, 2, 0))
+                < split_attempt_fanout_order_key(&lower_child_load, (9, 18, 0))
         );
     }
 
