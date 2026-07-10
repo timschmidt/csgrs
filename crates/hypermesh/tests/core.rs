@@ -3,10 +3,10 @@ use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
     BooleanOp, Classification, EmberConfig, HypermeshError, MeshRef, Plane, SubdivisionConfig,
-    SubdivisionTask, Triangle, boolean_operation, classify_leaf_polygon, classify_point,
-    classify_polygon_output, intersect_polygons, make_indicator, make_quad, make_triangle,
-    prepare_input, process_leaf_into, subdivide, trace_axis_segment, trace_segment,
-    triangulate_and_resolve_certified,
+    SubdivisionTask, Triangle, boolean_operation, certify_output_polygon_closure,
+    classify_leaf_polygon, classify_point, classify_polygon_output, intersect_polygons,
+    make_indicator, make_quad, make_triangle, prepare_input, process_leaf_into, subdivide,
+    trace_axis_segment, trace_segment, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -34,6 +34,19 @@ fn classified_volume_numerator(output: &[hypermesh::output::ClassifiedPolygon]) 
                 + &v0.z * &((&v1.x * &v2.y) - (&v1.y * &v2.x));
             volume += Real::from(i32::from(classified.classification())) * determinant;
         }
+    }
+    volume.abs()
+}
+
+fn triangle_soup_volume_numerator(soup: &hypermesh::TriangleSoup) -> Real {
+    let mut volume = Real::zero();
+    for triangle in &soup.triangles {
+        let v0 = &soup.vertices[triangle[0]];
+        let v1 = &soup.vertices[triangle[1]];
+        let v2 = &soup.vertices[triangle[2]];
+        volume += &v0.x * &((&v1.y * &v2.z) - (&v1.z * &v2.y))
+            + &v0.y * &((&v1.z * &v2.x) - (&v1.x * &v2.z))
+            + &v0.z * &((&v1.x * &v2.y) - (&v1.y * &v2.x));
     }
     volume.abs()
 }
@@ -300,6 +313,43 @@ fn prepare_input_accepts_balanced_non_manifold_edge_multiplicity() {
 
     assert_eq!(soup.polygons.len(), 8);
     assert!(soup.polygons.iter().all(|polygon| polygon.delta_w == [1]));
+}
+
+#[test]
+fn balanced_non_manifold_pwn_union_uses_general_path() {
+    let mut mesh = tetra_mesh();
+    mesh.triangles.extend(mesh.triangles.clone());
+
+    let result = boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
+        .expect("balanced non-manifold PWN union should certify");
+    let closure = certify_output_polygon_closure(&result).unwrap();
+    assert_eq!(closure.boundary_edges, 0);
+    assert_eq!(closure.unbalanced_edges, 0);
+
+    let soup = triangulate_and_resolve_certified(&result).unwrap();
+    assert!(!soup.triangles.is_empty());
+    assert_eq!(triangle_soup_volume_numerator(&soup), r(1));
+}
+
+#[test]
+fn canceling_non_manifold_pwn_union_uses_general_path() {
+    let mut mesh = tetra_mesh();
+    let reversed = mesh
+        .triangles
+        .iter()
+        .map(|triangle| Triangle::new(triangle.v0, triangle.v2, triangle.v1))
+        .collect::<Vec<_>>();
+    mesh.triangles.extend(reversed);
+
+    let result = boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default())
+        .expect("canceling non-manifold PWN union should certify");
+    let closure = certify_output_polygon_closure(&result).unwrap();
+    assert_eq!(closure.boundary_edges, 0);
+    assert_eq!(closure.unbalanced_edges, 0);
+    assert!(result.output().polygons.is_empty());
+
+    let soup = triangulate_and_resolve_certified(&result).unwrap();
+    assert!(soup.triangles.is_empty());
 }
 
 #[test]

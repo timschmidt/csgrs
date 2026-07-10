@@ -29,7 +29,7 @@ struct CrossingEvent {
     normal_sign: i32,
     cross_sign: i32,
     delta_w: WindingNumberTransitionVector,
-    on_edge: bool,
+    boundary_edge_count: usize,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -879,14 +879,14 @@ pub fn trace_axis_segment(
         }
 
         let mut inside = true;
-        let mut on_edge = false;
+        let mut boundary_edge_count = 0;
         for edge in &polygon.edges {
             match classify_point(&crossing, edge)? {
                 Classification::Positive => {
                     inside = false;
                     break;
                 }
-                Classification::On => on_edge = true,
+                Classification::On => boundary_edge_count += 1,
                 Classification::Negative => {}
             }
         }
@@ -906,7 +906,7 @@ pub fn trace_axis_segment(
             normal_sign,
             cross_sign,
             delta_w: polygon.delta_w.clone(),
-            on_edge,
+            boundary_edge_count,
         });
     }
 
@@ -2440,14 +2440,14 @@ fn trace_direct_segment(
         };
 
         let mut inside = true;
-        let mut on_edge = false;
+        let mut boundary_edge_count = 0;
         for edge in &polygon.edges {
             match classify_point(&crossing, edge)? {
                 Classification::Positive => {
                     inside = false;
                     break;
                 }
-                Classification::On => on_edge = true,
+                Classification::On => boundary_edge_count += 1,
                 Classification::Negative => {}
             }
         }
@@ -2472,7 +2472,7 @@ fn trace_direct_segment(
             normal_sign,
             cross_sign,
             delta_w: polygon.delta_w.clone(),
-            on_edge,
+            boundary_edge_count,
         });
     }
 
@@ -2491,31 +2491,44 @@ fn trace_direct_segment(
 
 fn accepted_crossing_events(events: &[CrossingEvent]) -> HypermeshResult<Vec<CrossingEvent>> {
     let mut accepted = Vec::new();
-    for (index, event) in events.iter().enumerate() {
-        if event.on_edge
-            && !events.iter().enumerate().any(|(other_index, other)| {
-                other_index != index
-                    && other.point == event.point
-                    && other.support == event.support
-                    && other.normal_sign == event.normal_sign
-                    && other.delta_w == event.delta_w
-            })
-        {
-            return Err(HypermeshError::UnknownClassification);
-        }
-
-        if accepted.iter().any(|existing: &CrossingEvent| {
-            existing.point == event.point
-                && existing.support == event.support
-                && existing.normal_sign == event.normal_sign
-                && existing.delta_w == event.delta_w
-        }) {
+    let mut consumed = vec![false; events.len()];
+    for index in 0..events.len() {
+        if consumed[index] {
             continue;
         }
+        let event = &events[index];
+        // Strict events represent individual sheets. Shared-edge crossings are
+        // emitted by both adjacent polygons, while vertex incidence is ambiguous.
+        let mut strict = Vec::new();
+        let mut edge = Vec::new();
+        for (other_index, other) in events.iter().enumerate() {
+            if consumed[other_index] || !crossing_events_share_transition(event, other) {
+                continue;
+            }
+            consumed[other_index] = true;
+            match other.boundary_edge_count {
+                0 => strict.push(other),
+                1 => edge.push(other),
+                _ => return Err(HypermeshError::UnknownClassification),
+            }
+        }
 
-        accepted.push(event.clone());
+        if edge.len() % 2 != 0 {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        let paired_edge_crossings = edge.len() / 2;
+        accepted.extend(strict.into_iter().cloned());
+        accepted.extend(edge.into_iter().take(paired_edge_crossings).cloned());
     }
     Ok(accepted)
+}
+
+fn crossing_events_share_transition(left: &CrossingEvent, right: &CrossingEvent) -> bool {
+    left.point == right.point
+        && left.support == right.support
+        && left.normal_sign == right.normal_sign
+        && left.cross_sign == right.cross_sign
+        && left.delta_w == right.delta_w
 }
 
 fn first_changed_axis(start: &Point3, end: &Point3) -> HypermeshResult<Option<usize>> {
@@ -15136,6 +15149,62 @@ mod tests {
     }
 
     #[test]
+    fn trace_axis_segment_preserves_duplicate_strict_crossing_multiplicity() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+
+        let traced =
+            trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone(), wall]).unwrap();
+
+        assert_eq!(traced.winding, vec![-2]);
+    }
+
+    #[test]
+    fn trace_axis_segment_pairs_each_coplanar_shared_edge_incidence() {
+        let mut lower = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 0);
+        let mut upper = make_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 1);
+        lower.delta_w = vec![1];
+        upper.delta_w = vec![1];
+
+        let traced = trace_axis_segment(
+            &p(0, 0, 0),
+            &p(2, 0, 0),
+            0,
+            &[0],
+            &[lower.clone(), upper.clone(), lower, upper],
+        )
+        .unwrap();
+
+        assert_eq!(traced.winding, vec![-2]);
+    }
+
+    #[test]
+    fn trace_axis_segment_combines_strict_and_paired_edge_layers() {
+        let mut full = make_quad(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 0);
+        let mut lower = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 1);
+        let mut upper = make_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 2);
+        full.delta_w = vec![1];
+        lower.delta_w = vec![1];
+        upper.delta_w = vec![1];
+
+        let traced =
+            trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[full, lower, upper]).unwrap();
+
+        assert_eq!(traced.winding, vec![-2]);
+    }
+
+    #[test]
+    fn trace_axis_segment_rejects_duplicated_vertex_crossing() {
+        let mut wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+
+        assert_eq!(
+            trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall.clone(), wall],),
+            Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
     fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
         let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
@@ -15163,6 +15232,17 @@ mod tests {
             trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]),
             Err(HypermeshError::UnknownClassification)
         );
+    }
+
+    #[test]
+    fn trace_direct_segment_preserves_duplicate_strict_crossing_multiplicity() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+
+        let traced =
+            trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall.clone(), wall]).unwrap();
+
+        assert_eq!(traced.winding, vec![-2]);
     }
 
     #[test]

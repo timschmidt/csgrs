@@ -30,6 +30,14 @@ class must have equal forward and reverse triangle uses. Ordinary singleton
 boundary edges report `OpenInput`; closed-valence soups whose directed edge
 multiplicities do not cancel report `NonPwnInput`. Balanced non-manifold edge
 multiplicity remains supported by this boundary check.
+The public general path now also exercises that support boundary with doubled
+and opposite-oriented canceling closed tetrahedra: coincident strict segment
+crossings retain every PWN transition, while coplanar shared-edge events pair
+boundary incidences per sheet. Vertex and unmatched boundary crossings remain
+uncertified and force alternate-path search instead of collapsing coincident
+multiplicity. The classified arrangements are required to reduce the doubled
+surface to one closed Boolean boundary with the exact tetrahedron volume and
+the canceling surface to an empty boundary before cleanup.
 
 Within that model, the current runtime claim is deliberately narrower than a
 blanket completeness claim:
