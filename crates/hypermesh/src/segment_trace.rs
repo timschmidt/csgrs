@@ -1360,10 +1360,6 @@ fn trace_segment_via_detours_with_cycle_guard_with_surface_query(
             }
             Err(err) => return Err(err),
         };
-        if detour.uncertified_definition_fallback {
-            saw_unknown = true;
-            continue;
-        }
         return Ok(Some(second_leg));
     }
 
@@ -1432,12 +1428,6 @@ fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
         }
 
         let Some((edge_index, edge_winding)) = unresolved_edge else {
-            if path
-                .iter()
-                .any(|target| target.uncertified_definition_fallback)
-            {
-                continue;
-            }
             return Ok(attempt);
         };
         let edge_start = &path[edge_index];
@@ -1534,13 +1524,7 @@ fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
                 }
             }
             if complete {
-                if next_path
-                    .iter()
-                    .all(|target| !target.uncertified_definition_fallback)
-                {
-                    return Ok(next_attempt);
-                }
-                continue;
+                return Ok(next_attempt);
             }
             seen_paths.push(next_path.clone());
             if !definition_transition && let Some(cell) = detour_cell {
@@ -1789,10 +1773,6 @@ fn trace_segment_via_detours_with_definitions_budget(
             }
             Err(err) => return Err(err),
         };
-        if detour.uncertified_definition_fallback {
-            saw_unknown = true;
-            continue;
-        }
         return Ok(Some(second_leg));
     }
 
@@ -3494,14 +3474,10 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     for (_, _, _, target) in ranked_direct_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return ProgressiveStrictAabbSearchOutcome {
-                        result: Ok(true),
-                        exhausted_families: None,
-                    };
-                }
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Ok(true),
+                    exhausted_families: None,
+                };
             }
             Ok(false) => {
                 if target.uncertified_definition_fallback {
@@ -3572,14 +3548,10 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     for target in unique_shifted_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return ProgressiveStrictAabbSearchOutcome {
-                        result: Ok(true),
-                        exhausted_families: None,
-                    };
-                }
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Ok(true),
+                    exhausted_families: None,
+                };
             }
             Ok(false) => {
                 if target.uncertified_definition_fallback {
@@ -3624,14 +3596,10 @@ fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_rankin
     for target in deferred_direct_targets {
         match evaluate(target.clone()) {
             Ok(true) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return ProgressiveStrictAabbSearchOutcome {
-                        result: Ok(true),
-                        exhausted_families: None,
-                    };
-                }
+                return ProgressiveStrictAabbSearchOutcome {
+                    result: Ok(true),
+                    exhausted_families: None,
+                };
             }
             Ok(false) => {
                 if target.uncertified_definition_fallback {
@@ -3702,13 +3670,7 @@ fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
     });
     for (_, _, _, target) in ranked_direct_targets {
         match evaluate(target.clone()) {
-            Ok(true) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(true);
-                }
-            }
+            Ok(true) => return Ok(true),
             Ok(false) => {
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -3722,13 +3684,7 @@ fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
     }
     for target in shifted_targets {
         match evaluate(target.clone()) {
-            Ok(true) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(true);
-                }
-            }
+            Ok(true) => return Ok(true),
             Ok(false) => {
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -3743,13 +3699,7 @@ fn evaluate_strict_aabb_target_families_with_direct_ranking<K: Ord>(
 
     for target in deferred_direct_targets {
         match evaluate(target.clone()) {
-            Ok(true) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(true);
-                }
-            }
+            Ok(true) => return Ok(true),
             Ok(false) => {
                 if target.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -8467,14 +8417,7 @@ fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
             detours_for,
         )
     } {
-        Ok(true) => {
-            if detour.uncertified_definition_fallback {
-                *saw_unknown = true;
-                Ok(false)
-            } else {
-                Ok(true)
-            }
-        }
+        Ok(true) => Ok(true),
         Ok(false) => {
             if detour.uncertified_definition_fallback {
                 *saw_unknown = true;
@@ -8601,13 +8544,7 @@ fn probe_reaches_adjacent_cell_via_detours_with_budget(
             trace_without_detours,
             detours_for,
         ) {
-            Ok(true) => {
-                if detour.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
-                return Ok(true);
-            }
+            Ok(true) => return Ok(true),
             Ok(false) => {
                 if detour.uncertified_definition_fallback {
                     saw_unknown = true;
@@ -9856,14 +9793,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
         )?
     };
     match second_result {
-        Some(true) => {
-            if detour.uncertified_definition_fallback {
-                *saw_unknown = true;
-                Ok(false)
-            } else {
-                Ok(true)
-            }
-        }
+        Some(true) => Ok(true),
         Some(false) | None => {
             if detour.uncertified_definition_fallback {
                 *saw_unknown = true;
@@ -10450,13 +10380,6 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
         }
 
         let Some(edge_index) = unresolved_edge else {
-            if path
-                .iter()
-                .any(|target| target.uncertified_definition_fallback)
-            {
-                saw_unknown = true;
-                continue;
-            }
             return Ok(true);
         };
         let edge_start = &path[edge_index];
@@ -10569,14 +10492,7 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
                 }
             }
             if complete {
-                if next_path
-                    .iter()
-                    .any(|target| target.uncertified_definition_fallback)
-                {
-                    saw_unknown = true;
-                } else {
-                    return Ok(true);
-                }
+                return Ok(true);
             }
             seen_paths.push(next_path.clone());
             if !definition_transition && let Some(cell) = detour_cell {
@@ -15978,6 +15894,50 @@ mod tests {
 
         assert!(found);
         assert_eq!(evaluated, vec![p(1, 1, 1), p(2, 2, 2), p(4, 1, 1)]);
+    }
+
+    #[test]
+    fn strict_aabb_target_evaluation_accepts_proven_fallback_target() {
+        let target = DetourTarget {
+            point: p(1, 1, 1),
+            definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: true,
+        };
+
+        let found = evaluate_strict_aabb_target_families_with_direct_ranking(
+            StrictAabbTargetFamilies {
+                direct_targets: vec![target],
+                shifted_targets: Vec::new(),
+                saw_unknown: true,
+            },
+            &mut |_target| Ok(()),
+            &mut |_target| Ok(true),
+        )
+        .unwrap();
+
+        assert!(found);
+    }
+
+    #[test]
+    fn strict_aabb_target_evaluation_preserves_unproven_fallback_unknown() {
+        let target = DetourTarget {
+            point: p(1, 1, 1),
+            definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+            uncertified_definition_fallback: true,
+        };
+
+        let err = evaluate_strict_aabb_target_families_with_direct_ranking(
+            StrictAabbTargetFamilies {
+                direct_targets: vec![target],
+                shifted_targets: Vec::new(),
+                saw_unknown: false,
+            },
+            &mut |_target| Ok(()),
+            &mut |_target| Ok(false),
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]
@@ -24848,7 +24808,7 @@ mod tests {
     }
 
     #[test]
-    fn detour_trace_cycle_guard_skips_fallback_detour_even_when_legs_succeed() {
+    fn detour_trace_cycle_guard_accepts_fallback_detour_after_both_legs_succeed() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
         let certified_detour = p(2, 0, 0);
@@ -24893,17 +24853,17 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(winding, Some(vec![4]));
+        assert_eq!(winding, Some(vec![3]));
     }
 
     #[test]
-    fn detour_trace_cycle_guard_reports_unknown_when_only_fallback_detour_succeeds() {
+    fn detour_trace_cycle_guard_accepts_only_fallback_detour_after_both_legs_succeed() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
         let end = p(2, 0, 0);
         let mut surface_cache = Vec::new();
 
-        let err = trace_segment_via_detours_with_cycle_guard_with_surface_query(
+        let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
             &start,
             &end,
             &[0],
@@ -24928,9 +24888,9 @@ mod tests {
             },
             &mut |_from, _to| Ok(Vec::new()),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(winding, Some(vec![0]));
     }
 
     #[test]
@@ -25568,14 +25528,14 @@ mod tests {
     }
 
     #[test]
-    fn breadth_first_probe_detours_do_not_certify_fallback_only_path() {
+    fn breadth_first_probe_detours_accept_fallback_only_complete_path() {
         let start = p(0, 0, 0);
         let detour = p(1, 0, 0);
         let end = p(2, 0, 0);
         let definitions = |point: &Point3| vec![axis_plane_definition(point)];
         let mut surface_cache = Vec::new();
 
-        let err = probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+        let reaches = probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
             &start,
             &end,
             &definitions(&start),
@@ -25598,9 +25558,9 @@ mod tests {
                 }
             },
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert!(reaches);
     }
 
     #[test]
@@ -25922,14 +25882,14 @@ mod tests {
     }
 
     #[test]
-    fn breadth_first_trace_detours_do_not_certify_fallback_only_path() {
+    fn breadth_first_trace_detours_accept_fallback_only_complete_path() {
         let start = p(0, 0, 0);
         let detour = p(1, 0, 0);
         let end = p(2, 0, 0);
         let definitions = |point: &Point3| vec![axis_plane_definition(point)];
         let mut surface_cache = Vec::new();
 
-        let err = trace_segment_with_detour_batches_breadth_first_with_surface_query(
+        let winding = trace_segment_with_detour_batches_breadth_first_with_surface_query(
             &start,
             &end,
             &[0],
@@ -25957,9 +25917,9 @@ mod tests {
                 }
             },
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(winding, vec![0]);
     }
 
     #[test]
@@ -26516,7 +26476,7 @@ mod tests {
     }
 
     #[test]
-    fn probe_step_detour_cycle_guard_skips_fallback_detour_even_when_path_succeeds() {
+    fn probe_step_detour_cycle_guard_accepts_first_fallback_detour_after_path_succeeds() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
         let certified_detour = p(2, 0, 0);
@@ -26569,12 +26529,12 @@ mod tests {
     }
 
     #[test]
-    fn probe_step_detour_cycle_guard_reports_unknown_when_only_fallback_detour_succeeds() {
+    fn probe_step_detour_cycle_guard_accepts_only_fallback_detour_after_path_succeeds() {
         let start = p(0, 0, 0);
         let fallback_detour = p(1, 0, 0);
         let end = p(2, 0, 0);
 
-        let err =
+        let reaches =
             probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query(
                 &start,
                 &end,
@@ -26609,9 +26569,9 @@ mod tests {
                     }
                 },
             )
-            .unwrap_err();
+            .unwrap();
 
-        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert!(reaches);
     }
 
     #[test]
