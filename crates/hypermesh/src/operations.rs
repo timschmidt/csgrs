@@ -15,8 +15,9 @@ pub struct EmberConfig {
     /// Maximum recursive subdivision depth.
     ///
     /// Reaching this bound is not treated as implicit success. If the current
-    /// task has not certified as a complete leaf and an exact arrangement split
-    /// remains, the operation fails with `HypermeshError::SubdivisionDepthLimit`.
+    /// task has not certified as a complete leaf and an exact root-basis
+    /// arrangement split remains, the operation fails with
+    /// `HypermeshError::SubdivisionDepthLimit`.
     pub max_depth: usize,
 }
 

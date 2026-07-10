@@ -30,6 +30,7 @@ use crate::winding::{
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
@@ -44,8 +45,8 @@ pub struct SubdivisionConfig {
     /// Maximum recursive depth.
     ///
     /// Reaching this bound is an explicit failure mode when the current task
-    /// has not certified as a complete leaf and an exact arrangement split
-    /// remains available.
+    /// has not certified as a complete leaf and an exact root-basis arrangement
+    /// split remains available.
     pub max_depth: usize,
 }
 
@@ -200,12 +201,32 @@ struct PolygonFamilyBoundsCacheEntry {
     bounds: HypermeshResult<Aabb>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+enum SplitSource {
+    Intersection,
+    Arrangement,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct RootSplitPlane {
+    axis: usize,
+    value: Real,
+    source: SplitSource,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 struct SplitCandidatesCacheEntry {
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
     bounds: Aabb,
     candidates: HypermeshResult<Vec<RankedSplitAttempt>>,
+}
+
+#[derive(Default)]
+struct SplitCandidatesCache {
+    // Initialized from the top-level task before contraction or clipping.
+    root_basis: Option<HypermeshResult<Rc<Vec<RootSplitPlane>>>>,
+    entries: Vec<SplitCandidatesCacheEntry>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -286,7 +307,7 @@ struct PolygonAxisValuesCacheEntry {
 struct SubdivisionRuntimeCaches {
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     polygon_axis_values: RefCell<Vec<PolygonAxisValuesCacheEntry>>,
-    split_candidates: RefCell<Vec<SplitCandidatesCacheEntry>>,
+    split_candidates: RefCell<SplitCandidatesCache>,
     split_child_fanout_counts: RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
     split_child_partitions: RefCell<Vec<SplitChildPartitionCacheEntry>>,
     pairwise_intersections: RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
@@ -305,7 +326,7 @@ impl Default for SubdivisionRuntimeCaches {
         Self {
             polygon_family_bounds: RefCell::new(Vec::new()),
             polygon_axis_values: RefCell::new(Vec::new()),
-            split_candidates: RefCell::new(Vec::new()),
+            split_candidates: RefCell::new(SplitCandidatesCache::default()),
             split_child_fanout_counts: RefCell::new(Vec::new()),
             split_child_partitions: RefCell::new(Vec::new()),
             pairwise_intersections: RefCell::new(Vec::new()),
@@ -690,6 +711,14 @@ fn subdivide_into_inner_with(
     if task.polygons.is_empty() {
         return Ok(());
     }
+
+    cached_root_split_basis_with(
+        &caches.split_candidates,
+        &caches.polygon_axis_values,
+        &caches.pairwise_intersections,
+        &task.bounds,
+        &task.polygons,
+    )?;
 
     if let Some(contracted_task) = contract_task_to_polygon_family_bounds_if_tighter(&task, caches)?
     {
@@ -1333,9 +1362,30 @@ fn cache_polygon_axis_values_result(
     });
 }
 
+fn cached_root_split_basis_with(
+    cache: &RefCell<SplitCandidatesCache>,
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Rc<Vec<RootSplitPlane>>> {
+    if let Some(existing) = cache.borrow().root_basis.clone() {
+        return existing;
+    }
+
+    let result = (|| {
+        let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
+        let intersection_segments =
+            split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
+        root_split_basis_from_events(bounds, &axis_values, &intersection_segments).map(Rc::new)
+    })();
+    cache.borrow_mut().root_basis = Some(result.clone());
+    result
+}
+
 fn cached_ordered_subdivision_splits_with(
     axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
-    cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
+    cache: &RefCell<SplitCandidatesCache>,
     fanout_count_cache: &RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
@@ -1343,8 +1393,11 @@ fn cached_ordered_subdivision_splits_with(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
+    let root_basis =
+        cached_root_split_basis_with(cache, axis_values_cache, pairwise_cache, bounds, polygons)?;
     if let Some(existing) = cache
         .borrow()
+        .entries
         .iter()
         .rev()
         .find(|existing| existing.bounds == *bounds && existing.polygons == polygons)
@@ -1356,6 +1409,7 @@ fn cached_ordered_subdivision_splits_with(
     let polygon_profile = polygon_family_profile(polygons);
     let existing = cache
         .borrow()
+        .entries
         .iter()
         .rev()
         .find(|existing| {
@@ -1374,13 +1428,12 @@ fn cached_ordered_subdivision_splits_with(
     let candidates = ordered_subdivision_splits_with_partition_cache(
         bounds,
         polygons,
-        axis_values_cache,
         fanout_count_cache,
         partition_cache,
         polygon_bounds_cache,
-        pairwise_cache,
+        root_basis.as_ref(),
     );
-    cache.borrow_mut().push(SplitCandidatesCacheEntry {
+    cache.borrow_mut().entries.push(SplitCandidatesCacheEntry {
         polygon_profile,
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
@@ -1390,20 +1443,21 @@ fn cached_ordered_subdivision_splits_with(
 }
 
 fn cache_split_candidates_result(
-    cache: &RefCell<Vec<SplitCandidatesCacheEntry>>,
+    cache: &RefCell<SplitCandidatesCache>,
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
     candidates: &HypermeshResult<Vec<RankedSplitAttempt>>,
 ) {
     if cache
         .borrow()
+        .entries
         .iter()
         .any(|existing| existing.bounds == *bounds && existing.polygons == polygons)
     {
         return;
     }
 
-    cache.borrow_mut().push(SplitCandidatesCacheEntry {
+    cache.borrow_mut().entries.push(SplitCandidatesCacheEntry {
         polygon_profile: polygon_family_profile(polygons),
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
@@ -3113,12 +3167,6 @@ fn select_subdivision_split(
 
 type SplitCounts = (usize, usize, usize, usize, usize, usize);
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum SplitSource {
-    Intersection,
-    Arrangement,
-}
-
 #[derive(Clone, Debug, PartialEq)]
 struct SplitCandidate {
     axis: usize,
@@ -3178,19 +3226,17 @@ fn ordered_subdivision_splits(
 fn ordered_subdivision_splits_with_partition_cache(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     fanout_count_cache: &RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    root_basis: &[RootSplitPlane],
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
     let unique = unique_subdivision_split_attempts_with_partition_cache(
         bounds,
         polygons,
-        axis_values_cache,
         partition_cache,
         polygon_bounds_cache,
-        pairwise_cache,
+        root_basis,
     )?;
     let mut ranked_attempts = unique;
     ranked_attempts.sort_by(|left, right| {
@@ -3202,10 +3248,9 @@ fn ordered_subdivision_splits_with_partition_cache(
     for attempt in ranked_attempts.drain(..fanout_refinement_len) {
         let fanout_key = split_attempt_child_fanout_key(
             &attempt,
-            axis_values_cache,
             partition_cache,
             polygon_bounds_cache,
-            pairwise_cache,
+            root_basis,
             &mut fanout_cache,
         )?;
         fanout_ranked_attempts.push((attempt, fanout_key));
@@ -3223,50 +3268,23 @@ fn ordered_subdivision_splits_with_partition_cache(
 fn unique_subdivision_split_attempts_with_partition_cache(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    root_basis: &[RootSplitPlane],
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
     let mut candidates = Vec::new();
-    let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
-    let intersection_segments =
-        split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
-
-    for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
+    for split in root_basis {
+        if !split_value_is_strictly_inside_bounds(bounds, split.axis, &split.value)? {
             continue;
         }
-        for (_gap, value) in
-            arrangement_split_candidates_from_axis_values(bounds, &axis_values[axis], axis)?
-        {
-            push_split_candidate_with_partition_cache(
-                &mut candidates,
-                polygons,
-                axis,
-                value,
-                SplitSource::Arrangement,
-                partition_cache,
-            )?;
-        }
-    }
-
-    for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
-            continue;
-        }
-        for value in
-            intersection_split_candidates_from_segments(bounds, &intersection_segments, axis)?
-        {
-            push_split_candidate_with_partition_cache(
-                &mut candidates,
-                polygons,
-                axis,
-                value,
-                SplitSource::Intersection,
-                partition_cache,
-            )?;
-        }
+        push_split_candidate_with_partition_cache(
+            &mut candidates,
+            polygons,
+            split.axis,
+            split.value.clone(),
+            split.source,
+            partition_cache,
+        )?;
     }
 
     candidates.sort_by(|left, right| {
@@ -3389,10 +3407,9 @@ fn split_attempt_fanout_order_key(
 
 fn split_attempt_child_fanout_key(
     attempt: &RankedSplitAttempt,
-    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    root_basis: &[RootSplitPlane],
     cache: &mut Vec<SplitAttemptChildFanoutCacheEntry>,
 ) -> HypermeshResult<(usize, usize, usize)> {
     let left_count = if let Some(bounds) = attempt.left_bounds.as_ref() {
@@ -3400,10 +3417,9 @@ fn split_attempt_child_fanout_key(
             cache,
             bounds,
             &attempt.left_polys,
-            axis_values_cache,
             partition_cache,
             polygon_bounds_cache,
-            pairwise_cache,
+            root_basis,
         )?
     } else {
         0
@@ -3413,10 +3429,9 @@ fn split_attempt_child_fanout_key(
             cache,
             bounds,
             &attempt.right_polys,
-            axis_values_cache,
             partition_cache,
             polygon_bounds_cache,
-            pairwise_cache,
+            root_basis,
         )?
     } else {
         0
@@ -3432,19 +3447,17 @@ fn cached_unique_subdivision_split_attempt_count_with(
     cache: &mut Vec<SplitAttemptChildFanoutCacheEntry>,
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
-    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
     polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
-    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    root_basis: &[RootSplitPlane],
 ) -> HypermeshResult<usize> {
     cached_unique_subdivision_split_attempt_count_with_query(cache, bounds, polygons, || {
         unique_subdivision_split_attempts_with_partition_cache(
             bounds,
             polygons,
-            axis_values_cache,
             partition_cache,
             polygon_bounds_cache,
-            pairwise_cache,
+            root_basis,
         )
         .map(|attempts| attempts.len())
     })
@@ -3680,6 +3693,58 @@ fn consider_split_candidates(
 #[cfg(test)]
 fn split_counts_strictly_better(candidate: SplitCounts, baseline: SplitCounts) -> bool {
     candidate < baseline
+}
+
+fn root_split_basis_from_events(
+    bounds: &Aabb,
+    axis_values: &[Vec<Real>; 3],
+    intersection_segments: &[IntersectionSegment],
+) -> HypermeshResult<Vec<RootSplitPlane>> {
+    let mut basis = Vec::new();
+    for axis in 0..3 {
+        for (_gap, value) in
+            arrangement_split_candidates_from_axis_values(bounds, &axis_values[axis], axis)?
+        {
+            push_root_split_plane(&mut basis, axis, value, SplitSource::Arrangement)?;
+        }
+        for value in
+            intersection_split_candidates_from_segments(bounds, intersection_segments, axis)?
+        {
+            push_root_split_plane(&mut basis, axis, value, SplitSource::Intersection)?;
+        }
+    }
+    Ok(basis)
+}
+
+fn push_root_split_plane(
+    basis: &mut Vec<RootSplitPlane>,
+    axis: usize,
+    value: Real,
+    source: SplitSource,
+) -> HypermeshResult<()> {
+    for existing in basis.iter_mut() {
+        if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
+            if source < existing.source {
+                existing.source = source;
+            }
+            return Ok(());
+        }
+    }
+    basis.push(RootSplitPlane {
+        axis,
+        value,
+        source,
+    });
+    Ok(())
+}
+
+fn split_value_is_strictly_inside_bounds(
+    bounds: &Aabb,
+    axis: usize,
+    value: &Real,
+) -> HypermeshResult<bool> {
+    Ok(compare_real(value, axis_ref(&bounds.min, axis))?.is_gt()
+        && compare_real(value, axis_ref(&bounds.max, axis))?.is_lt())
 }
 
 #[cfg(test)]
@@ -12316,6 +12381,121 @@ mod tests {
     }
 
     #[test]
+    fn descendant_splits_only_use_the_cached_root_event_basis() {
+        let root_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let root_polygons = vec![
+            make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+            make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        ];
+        let caches = SubdivisionRuntimeCaches::default();
+        let root_basis = cached_root_split_basis_with(
+            &caches.split_candidates,
+            &caches.polygon_axis_values,
+            &caches.pairwise_intersections,
+            &root_bounds,
+            &root_polygons,
+        )
+        .unwrap();
+        let root_axis_value_cache_len = caches.polygon_axis_values.borrow().len();
+        let descendant_bounds = root_bounds.right_half(0, q(3, 2));
+        let descendant_polygons = vec![make_triangle(&p(3, 0, 0), &p(4, 2, 0), &p(3, 0, 2), 0, 0)];
+        let descendant_axis_values = polygon_axis_values(&descendant_polygons).unwrap();
+        let descendant_local_splits = arrangement_split_candidates_from_axis_values(
+            &descendant_bounds,
+            &descendant_axis_values[0],
+            0,
+        )
+        .unwrap();
+
+        assert!(
+            descendant_local_splits
+                .iter()
+                .any(|(_, value)| *value == q(7, 2))
+        );
+
+        let attempts = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_fanout_counts,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &descendant_bounds,
+            &descendant_polygons,
+        )
+        .unwrap();
+
+        assert!(!attempts.is_empty());
+        assert_eq!(
+            caches.polygon_axis_values.borrow().len(),
+            root_axis_value_cache_len
+        );
+        assert!(attempts.iter().all(|attempt| {
+            root_basis
+                .iter()
+                .any(|split| split.axis == attempt.axis && split.value == attempt.value)
+        }));
+        assert!(
+            !attempts
+                .iter()
+                .any(|attempt| attempt.axis == 0 && attempt.value == q(7, 2))
+        );
+        assert_eq!(
+            caches.split_candidates.borrow().root_basis,
+            Some(Ok(root_basis))
+        );
+    }
+
+    #[test]
+    fn each_root_split_plane_is_removed_from_both_child_branches() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
+        let root_basis = vec![
+            RootSplitPlane {
+                axis: 0,
+                value: r(2),
+                source: SplitSource::Arrangement,
+            },
+            RootSplitPlane {
+                axis: 0,
+                value: r(6),
+                source: SplitSource::Intersection,
+            },
+            RootSplitPlane {
+                axis: 1,
+                value: r(4),
+                source: SplitSource::Arrangement,
+            },
+            RootSplitPlane {
+                axis: 2,
+                value: r(8),
+                source: SplitSource::Intersection,
+            },
+        ];
+
+        for selected in &root_basis {
+            let child_bounds = [
+                bounds.left_half(selected.axis, selected.value.clone()),
+                bounds.right_half(selected.axis, selected.value.clone()),
+            ];
+            for child_bounds in child_bounds {
+                let remaining = root_basis
+                    .iter()
+                    .filter(|split| {
+                        split_value_is_strictly_inside_bounds(
+                            &child_bounds,
+                            split.axis,
+                            &split.value,
+                        )
+                        .unwrap()
+                    })
+                    .collect::<Vec<_>>();
+                assert!(remaining.len() < root_basis.len());
+                assert!(!remaining.contains(&selected));
+            }
+        }
+    }
+
+    #[test]
     fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let polygons = vec![
@@ -12570,7 +12750,7 @@ mod tests {
         let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let axis_value_cache = RefCell::new(Vec::new());
-        let cache = RefCell::new(Vec::new());
+        let cache = RefCell::new(SplitCandidatesCache::default());
         let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
@@ -12608,7 +12788,7 @@ mod tests {
                 .map(|candidate| (candidate.axis, candidate.value.clone()))
                 .collect::<Vec<_>>()
         );
-        assert_eq!(cache.borrow().len(), 2);
+        assert_eq!(cache.borrow().entries.len(), 2);
     }
 
     #[test]
@@ -12652,7 +12832,7 @@ mod tests {
         let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
         let axis_value_cache = RefCell::new(Vec::new());
-        let cache = RefCell::new(Vec::new());
+        let cache = RefCell::new(SplitCandidatesCache::default());
         let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
@@ -12681,14 +12861,14 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(cache.borrow().len(), 2);
+        assert_eq!(cache.borrow().entries.len(), 2);
     }
 
     #[test]
     fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_results_match() {
         let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
         let axis_value_cache = RefCell::new(Vec::new());
-        let cache = RefCell::new(Vec::new());
+        let cache = RefCell::new(SplitCandidatesCache::default());
         let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let pairwise_cache = RefCell::new(Vec::new());
@@ -12728,7 +12908,7 @@ mod tests {
                 .map(|candidate| (candidate.axis, candidate.value.clone()))
                 .collect::<Vec<_>>()
         );
-        assert_eq!(cache.borrow().len(), 2);
+        assert_eq!(cache.borrow().entries.len(), 2);
     }
 
     #[test]
@@ -12739,7 +12919,7 @@ mod tests {
             make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
         ];
         let axis_value_cache = RefCell::new(Vec::new());
-        let split_cache = RefCell::new(Vec::new());
+        let split_cache = RefCell::new(SplitCandidatesCache::default());
         let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let polygon_bounds_cache = RefCell::new(Vec::new());
@@ -12775,7 +12955,7 @@ mod tests {
         let polygon = make_triangle(&p(1, 1, 1), &p(2, 1, 1), &p(1, 2, 1), 0, 0);
         let polygons = vec![polygon];
         let axis_value_cache = RefCell::new(Vec::new());
-        let split_cache = RefCell::new(Vec::new());
+        let split_cache = RefCell::new(SplitCandidatesCache::default());
         let fanout_cache = RefCell::new(Vec::new());
         let partition_cache = RefCell::new(Vec::new());
         let polygon_bounds_cache = RefCell::new(Vec::new());

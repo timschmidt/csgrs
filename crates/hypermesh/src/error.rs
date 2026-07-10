@@ -49,8 +49,8 @@ pub enum HypermeshError {
     /// Subdivision could not construct a certified child-cell reference point
     /// by the enabled exact reference-propagation path family.
     ReferencePropagationFailed,
-    /// A task with a remaining exact arrangement split exhausted the configured
-    /// depth budget before a certified leaf could be produced.
+    /// A task with a remaining exact root-basis arrangement split exhausted the
+    /// configured depth budget before a certified leaf could be produced.
     SubdivisionDepthLimit {
         /// Depth at which subdivision stopped.
         depth: usize,

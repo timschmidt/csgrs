@@ -963,20 +963,29 @@ remains an implementation target.
 Subdivision depth is a certification budget, not a permission to guess. Bounds
 remain splittable whenever any axis has certified positive extent; there is no
 coordinate-scale cutoff. Raw AABB-midpoint splitting is no longer a subdivision
-fallback. Each task's finite split family now comes only from exact interior
-gaps between local polygon coordinates and exact local pairwise-intersection
-segment endpoints. If that family is empty, hypermesh attempts the certified
-leaf once and returns `UnknownClassification` if it cannot prove BSP
-completeness; it does not repeatedly bisect event-free bounds toward
-`max_depth`. Split ranking penalizes empty-child cuts explicitly, so a cut
+fallback. A top-level subdivision call constructs one finite split basis from
+exact interior gaps between root polygon coordinates and exact root
+pairwise-intersection segment endpoints. Every descendant task can use only
+basis planes strictly inside its current bounds; recursively clipped geometry
+cannot introduce a new split plane. After a plane is selected, it is a boundary
+of, or outside, each child and therefore cannot be selected again on either
+branch. The number of root-basis planes strictly inside the bounds decreases on
+every recursive split, which bounds branch depth by the finite root-basis size.
+This supplies the global subdivision-finiteness proof independently of
+`max_depth`; that setting remains a user-selected certification budget. If no
+root-basis plane remains, hypermesh attempts the certified leaf once and returns
+`UnknownClassification` if it cannot prove BSP completeness; it does not
+repeatedly bisect event-free bounds toward `max_depth`. Split ranking penalizes
+empty-child cuts explicitly, so a cut
 that leaves all polygons on one side is no longer preferred over a non-empty
 branching cut with the same maximum child load just because it duplicates fewer
 polygons. When those child-count metrics tie, split ranking now prefers the
 candidate with the lower exact post-split child intersection load before it
-falls back to source kind. The recursion now backtracks across that ordered exact local split
-family instead of committing to one chosen split candidate: if a higher-ranked
+falls back to source kind. The recursion now backtracks across the ordered
+currently available root-basis family instead of committing to one chosen split
+candidate: if a higher-ranked
 split hits `UnknownClassification`, `ReferencePropagationFailed`, or
-`SubdivisionDepthLimit`, later exact local split candidates are still tried
+`SubdivisionDepthLimit`, later root-basis split candidates are still tried
 before the task gives up. Exact intersection candidates win arrangement-gap
 ties, and duplicate arrangement-gap candidates are promoted when an exact
 intersection endpoint reaches the same split plane. If a task reaches
@@ -1079,8 +1088,6 @@ cycle, and `delta_w` inside one subdivision task now also reuse the same
 certified winding trace instead of retracing equivalent fragments before output
 dedupe removes them, and exact duplicate BSP leaf edge cycles are now skipped
 before leaf certification and coplanar `delta_w` analysis run at all.
-A global finiteness proof for the exact arrangement families generated across
-all recursively clipped tasks is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary
