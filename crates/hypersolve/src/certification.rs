@@ -346,7 +346,7 @@ pub fn certify_candidate_with_residual_balls(
                 sign: RealSign::Negative,
             },
             hyperlimit::PredicateOutcome::Unknown {
-                needed: hyperlimit::predicate::RefinementNeed::Unsupported,
+                needed: hyperlimit::RefinementNeed::Unsupported,
                 ..
             } => CertifiedCandidateStatus::InvalidBallRadius,
             hyperlimit::PredicateOutcome::Unknown { .. } => {
