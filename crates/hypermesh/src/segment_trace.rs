@@ -208,7 +208,7 @@ pub(crate) struct LeafProbeQueryCaches {
     direct_probe_reachability: Vec<DirectProbeReachabilityCacheEntry>,
     interior_box_axis_intervals: InteriorBoxAxisIntervalsCache,
     axis_ordered_segment_traces: Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: PlaneReplacementAffineCache,
     plane_replacement_trace_steps: Vec<PlaneReplacementStepCacheEntry>,
     plane_replacement_reachability_paths: Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: Vec<PlaneReplacementReachabilityStepCacheEntry>,
@@ -281,6 +281,25 @@ struct PlaneReplacementAffineCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct PlaneReplacementAffineBucket {
+    planes: [Plane; 3],
+    indices: Vec<usize>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+struct PlaneReplacementAffineCache {
+    entries: Vec<PlaneReplacementAffineCacheEntry>,
+    buckets: Vec<PlaneReplacementAffineBucket>,
+}
+
+impl PlaneReplacementAffineCache {
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.entries.len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct PlaneReplacementReachabilityStepCacheEntry {
     mode: PlaneReplacementReachabilityStepMode,
     current_point: Point3,
@@ -303,7 +322,7 @@ struct PlaneReplacementNoNestedOrderingWarmupCacheEntry {
     start_planes: [Plane; 3],
     end_planes: [Plane; 3],
     ordered: HypermeshResult<Vec<[usize; 3]>>,
-    affine_cache: Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: PlaneReplacementAffineCache,
     path_cache: Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: Vec<PlaneReplacementReachabilityStepCacheEntry>,
 }
@@ -773,7 +792,7 @@ fn trace_segment_from_definitions_with_caches(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
-    let mut plane_replacement_affine = Vec::new();
+    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_trace_steps = Vec::new();
     trace_segment_from_definitions_with_caches_and_surface_query(
         start,
@@ -800,7 +819,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
     end_definitions: &[[Plane; 3]],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
@@ -1417,7 +1436,7 @@ fn trace_segment_with_definitions_no_detours(
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
     trace_segment_with_definitions_no_detours_with_caches(
         start,
@@ -1442,7 +1461,7 @@ fn trace_segment_with_definitions_no_detours_with_caches(
     end_definitions: &[[Plane; 3]],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     match trace_segment_without_detours_with_caches(
@@ -1579,7 +1598,7 @@ pub(crate) fn trace_plane_replacement_path(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
     trace_plane_replacement_path_with_tracer(
         start_planes,
@@ -1602,7 +1621,7 @@ fn trace_plane_replacement_path_without_detours(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
     trace_plane_replacement_path_without_detours_with_caches(
         start_planes,
@@ -1620,7 +1639,7 @@ fn trace_plane_replacement_path_without_detours_with_caches(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
@@ -1644,7 +1663,7 @@ fn trace_plane_replacement_path_without_detours_with_shared_caches(
     polygons: &[ConvexPolygon],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_tracer(
@@ -1680,7 +1699,7 @@ fn trace_plane_replacement_path_with_tracer(
         &[i32],
         &[ConvexPolygon],
     ) -> HypermeshResult<Option<WindingNumberVector>>,
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_tracer_and_caches(
@@ -1699,7 +1718,7 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    mut affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    mut affine_cache: &mut PlaneReplacementAffineCache,
     mut step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     mut trace_step: impl FnMut(
         &Point3,
@@ -1779,24 +1798,58 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
 }
 
 fn cached_affine_from_planes_with(
-    cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    cache: &mut PlaneReplacementAffineCache,
     planes: &[Plane; 3],
     compute: impl FnOnce() -> HypermeshResult<Point3>,
 ) -> HypermeshResult<Point3> {
-    if let Some(existing) = cache
-        .iter()
-        .rev()
-        .find(|existing| definition_planes_match_as_sets(&existing.planes, planes))
+    if let Some(index) = matching_plane_replacement_affine_bucket_indices(&cache.buckets, planes)
+        .and_then(|indices| {
+            indices.iter().rev().copied().find(|index| {
+                definition_planes_match_as_sets(&cache.entries[*index].planes, planes)
+            })
+        })
     {
-        return existing.point.clone();
+        return cache.entries[index].point.clone();
     }
 
     let point = compute();
-    cache.push(PlaneReplacementAffineCacheEntry {
+    cache.entries.push(PlaneReplacementAffineCacheEntry {
         planes: planes.clone(),
         point: point.clone(),
     });
+    let index = cache.entries.len() - 1;
+    push_plane_replacement_affine_bucket_entry(&mut cache.buckets, planes, index);
     point
+}
+
+fn matching_plane_replacement_affine_bucket_indices<'a>(
+    buckets: &'a [PlaneReplacementAffineBucket],
+    planes: &[Plane; 3],
+) -> Option<&'a [usize]> {
+    buckets
+        .iter()
+        .rev()
+        .find(|bucket| definition_planes_match_as_sets(&bucket.planes, planes))
+        .map(|bucket| bucket.indices.as_slice())
+}
+
+fn push_plane_replacement_affine_bucket_entry(
+    buckets: &mut Vec<PlaneReplacementAffineBucket>,
+    planes: &[Plane; 3],
+    index: usize,
+) {
+    if let Some(existing) = buckets
+        .iter_mut()
+        .find(|bucket| definition_planes_match_as_sets(&bucket.planes, planes))
+    {
+        existing.indices.push(index);
+        return;
+    }
+
+    buckets.push(PlaneReplacementAffineBucket {
+        planes: planes.clone(),
+        indices: vec![index],
+    });
 }
 
 fn cached_plane_replacement_step_with(
@@ -5018,7 +5071,7 @@ fn evaluate_leaf_probe_with_query_caches(
     probe_reachability: &mut Vec<ProbeReachabilityCacheEntry>,
     probe_winding: &mut Vec<ProbeWindingCacheEntry>,
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
@@ -5119,7 +5172,7 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
     probe: &ProbePoint,
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
@@ -5569,7 +5622,7 @@ fn trace_probe_winding(
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
-    let mut plane_replacement_affine = Vec::new();
+    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_trace_steps = Vec::new();
     let mut definition_no_detour_trace = Vec::new();
     let mut detour_target_families = DetourTargetFamilyCache::default();
@@ -5596,7 +5649,7 @@ fn trace_probe_winding_with_caches(
     polygons: &[ConvexPolygon],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_families: &mut DetourTargetFamilyCache,
@@ -5639,7 +5692,7 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
-    let mut plane_replacement_affine = Vec::new();
+    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_trace_steps = Vec::new();
     trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches(
         start,
@@ -5666,7 +5719,7 @@ fn trace_segment_from_definitions_with_step_detoured_plane_replacement_with_cach
     end_definitions: &[[Plane; 3]],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
@@ -5766,7 +5819,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
     let mut end_definitions = end_definitions.to_vec();
     append_definition_if_missing(&mut end_definitions, axis_plane_defined_point(end).planes);
     end_definitions = unique_definition_family(&end_definitions);
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
 
     for start_definition in &start_definitions {
@@ -5799,7 +5852,7 @@ fn trace_plane_replacement_path_with_step_detours(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
     trace_plane_replacement_path_with_step_detours_with_caches(
         start_planes,
@@ -5817,7 +5870,7 @@ fn trace_plane_replacement_path_with_step_detours_with_caches(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_step_detours_impl(
@@ -5851,7 +5904,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
@@ -5889,7 +5942,7 @@ fn trace_plane_replacement_path_with_step_detours_impl(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     mut trace_step: impl FnMut(
         &Point3,
@@ -6579,7 +6632,7 @@ fn probe_reaches_adjacent_cell_from_interior(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
     let mut surface_cache = Vec::new();
-    let mut plane_replacement_affine = Vec::new();
+    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
     let mut plane_replacement_no_nested_ordering_warmups =
@@ -6629,7 +6682,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     host_support: &Plane,
     polygons: &[ConvexPolygon],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     plane_replacement_no_nested_ordering_warmups: &mut PlaneReplacementNoNestedOrderingWarmupCache,
@@ -6695,7 +6748,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
     let mut surface_cache = Vec::new();
-    let mut plane_replacement_affine = Vec::new();
+    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
     let mut plane_replacement_reachability_paths = Vec::new();
     let mut plane_replacement_reachability_steps = Vec::new();
     let mut plane_replacement_no_nested_ordering_warmups =
@@ -6748,7 +6801,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
-    plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    plane_replacement_affine: &mut PlaneReplacementAffineCache,
     plane_replacement_reachability_paths: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     plane_replacement_reachability_steps: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     plane_replacement_no_nested_ordering_warmups: &mut PlaneReplacementNoNestedOrderingWarmupCache,
@@ -7540,7 +7593,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
     let mut no_nested_ordering_warmup_cache =
@@ -7587,7 +7640,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     no_nested_ordering_warmup_cache: &mut PlaneReplacementNoNestedOrderingWarmupCache,
@@ -7699,7 +7752,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
     let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
@@ -7726,7 +7779,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
     polygons: &[ConvexPolygon],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
@@ -7800,7 +7853,7 @@ fn ordered_definition_pairs_by_no_step_precheck_with(
     end_definitions: &[[Plane; 3]],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<Vec<(usize, usize)>> {
     let mut scored = Vec::with_capacity(start_definitions.len() * end_definitions.len());
@@ -7832,7 +7885,7 @@ fn best_plane_replacement_no_step_precheck_key(
     end_planes: &[Plane; 3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<[u8; 3]> {
     let mut best = [u8::MAX; 3];
@@ -9245,7 +9298,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
     let mut no_nested_ordering_warmup_cache =
@@ -9288,7 +9341,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     end_planes: &[Plane; 3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     no_nested_ordering_warmup_cache: &mut PlaneReplacementNoNestedOrderingWarmupCache,
@@ -9309,7 +9362,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         start_planes,
         end_planes,
         || {
-            let mut no_step_affine_cache = Vec::new();
+            let mut no_step_affine_cache = PlaneReplacementAffineCache::default();
             let mut no_step_path_cache = Vec::new();
             let mut no_step_step_cache = Vec::new();
             let ordered = cached_plane_replacement_no_nested_ordering_warmup_with(
@@ -9400,7 +9453,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
     host_support: &Plane,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let mut affine_cache = Vec::new();
+    let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut path_cache = Vec::new();
     let mut step_cache = Vec::new();
     plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
@@ -9419,7 +9472,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
     end_planes: &[Plane; 3],
     host_support: &Plane,
     polygons: &[ConvexPolygon],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
 ) -> HypermeshResult<bool> {
@@ -9457,7 +9510,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     mode: PlaneReplacementReachabilityStepMode,
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
@@ -9477,7 +9530,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
     mode: PlaneReplacementReachabilityStepMode,
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
@@ -9562,7 +9615,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
 fn ordered_axis_orderings_by_no_step_precheck_with(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     mut precheck: impl FnMut(&Point3, &Point3, &[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<Vec<[usize; 3]>> {
     let mut ordered = AXIS_ORDERINGS.to_vec();
@@ -9593,7 +9646,7 @@ fn ordering_no_step_precheck_key(
     ordering: &[usize; 3],
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     precheck: &mut impl FnMut(&Point3, &Point3, &[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<[u8; 3]> {
     let mut key = [0u8; 3];
@@ -9709,11 +9762,11 @@ fn cached_plane_replacement_no_nested_ordering_warmup_with(
     cache: &mut PlaneReplacementNoNestedOrderingWarmupCache,
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
-    affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
     path_cache: &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     warm: impl FnOnce(
-        &mut Vec<PlaneReplacementAffineCacheEntry>,
+        &mut PlaneReplacementAffineCache,
         &mut Vec<PlaneReplacementReachabilityPathCacheEntry>,
         &mut Vec<PlaneReplacementReachabilityStepCacheEntry>,
     ) -> HypermeshResult<Vec<[usize; 3]>>,
@@ -16310,7 +16363,7 @@ mod tests {
                 .into_iter()
                 .find(|probe| probe.side == Classification::Positive)
                 .expect("leaf should have a positive-side probe");
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut path_cache = Vec::new();
         let mut step_cache = Vec::new();
         let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
@@ -16382,7 +16435,7 @@ mod tests {
                 .into_iter()
                 .find(|probe| probe.side == Classification::Positive)
                 .expect("leaf should have a positive-side probe");
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut path_cache = Vec::new();
         let mut step_cache = Vec::new();
         let mut no_nested_ordering_warmup_cache =
@@ -25996,7 +26049,7 @@ mod tests {
                 Ok(Vec::new())
             }
         };
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         assert!(
@@ -26031,7 +26084,7 @@ mod tests {
             Plane::axis_aligned(0, r(2)),
             Plane::axis_aligned(2, r(0)),
         ];
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
@@ -26051,7 +26104,7 @@ mod tests {
     fn plane_replacement_reachability_step_reuses_equivalent_steps_across_orderings() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
         let mut step_calls = 0;
 
@@ -26077,7 +26130,7 @@ mod tests {
     fn plane_replacement_reachability_tries_later_ordering_after_uncertified_step() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 1, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         assert!(
@@ -26103,7 +26156,7 @@ mod tests {
     fn ordered_axis_orderings_by_no_step_precheck_prefers_more_direct_prefixes() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 1, 1));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
 
         let ordered = ordered_axis_orderings_by_no_step_precheck_with(
             &start_definition,
@@ -26444,7 +26497,7 @@ mod tests {
             result: Ok(true),
         };
         let mut cache = PlaneReplacementNoNestedOrderingWarmupCache::default();
-        let mut first_affine = Vec::new();
+        let mut first_affine = PlaneReplacementAffineCache::default();
         let mut first_path = Vec::new();
         let mut first_step = Vec::new();
         let mut calls = 0;
@@ -26458,7 +26511,7 @@ mod tests {
             &mut first_step,
             |affine, path, step| {
                 calls += 1;
-                affine.push(affine_entry.clone());
+                affine.entries.push(affine_entry.clone());
                 path.push(path_entry.clone());
                 step.push(step_entry.clone());
                 Ok(vec![[0, 1, 2]])
@@ -26466,7 +26519,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut second_affine = Vec::new();
+        let mut second_affine = PlaneReplacementAffineCache::default();
         let mut second_path = Vec::new();
         let mut second_step = Vec::new();
         let second = cached_plane_replacement_no_nested_ordering_warmup_with(
@@ -26615,7 +26668,7 @@ mod tests {
     fn plane_replacement_reachability_shared_caches_reuse_equivalent_path_across_calls() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
         let mut step_calls = 0;
 
@@ -26653,7 +26706,7 @@ mod tests {
     fn no_step_ordering_precheck_warms_shared_affine_cache_for_step_trace() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 2, 3));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let ordered = ordered_axis_orderings_by_no_step_precheck_with(
             &start_definition,
             &end_definition,
@@ -26684,8 +26737,8 @@ mod tests {
     fn no_nested_ordering_precheck_warms_shared_affine_cache_for_step_trace() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 2, 3));
-        let mut affine_cache = Vec::new();
-        let mut no_step_affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
+        let mut no_step_affine_cache = PlaneReplacementAffineCache::default();
         let mut no_step_path_cache = Vec::new();
         let mut no_step_step_cache = Vec::new();
         let mut warmup_cache = PlaneReplacementNoNestedOrderingWarmupCache::default();
@@ -26733,7 +26786,7 @@ mod tests {
             Plane::axis_aligned(2, r(0)),
             Plane::from_coefficients(r(1), r(1), r(0), r(0)),
         ];
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         let err = plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
@@ -26863,7 +26916,7 @@ mod tests {
         let expected_end_definitions = vec![end_definition.clone()];
         let expected_start = p(0, 0, 0);
         let expected_end = p(1, 0, 0);
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         let winding = trace_plane_replacement_path_with_step_detours_impl(
@@ -26894,7 +26947,7 @@ mod tests {
     fn plane_replacement_tracer_shared_caches_reuse_equivalent_path_across_calls() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
         let mut step_calls = 0;
 
@@ -26938,7 +26991,7 @@ mod tests {
             Plane::axis_aligned(2, r(0)),
             Plane::from_coefficients(r(1), r(1), r(0), r(0)),
         ];
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         let err = trace_plane_replacement_path_with_tracer_and_caches(
@@ -26969,7 +27022,7 @@ mod tests {
     fn plane_replacement_no_detour_shared_caches_reuse_equivalent_path_across_calls() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
 
         let first = trace_plane_replacement_path_without_detours_with_caches(
@@ -27003,7 +27056,7 @@ mod tests {
     fn plane_replacement_step_tracer_backtracks_after_uncertified_step() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 1, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
         let mut first_call = true;
 
@@ -27032,7 +27085,7 @@ mod tests {
     fn plane_replacement_step_tracer_reuses_equivalent_steps_across_orderings() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
-        let mut affine_cache = Vec::new();
+        let mut affine_cache = PlaneReplacementAffineCache::default();
         let mut step_cache = Vec::new();
         let mut step_calls = 0;
 
@@ -27106,7 +27159,7 @@ mod tests {
     #[test]
     fn cached_affine_from_planes_reuses_identical_plane_set() {
         let planes = axis_plane_definition(&p(1, 2, 3));
-        let mut cache = Vec::new();
+        let mut cache = PlaneReplacementAffineCache::default();
         let mut calls = 0;
 
         let first = cached_affine_from_planes_with(&mut cache, &planes, || {
@@ -27129,7 +27182,7 @@ mod tests {
     fn cached_affine_from_planes_reuses_permuted_plane_set() {
         let planes = axis_plane_definition(&p(1, 2, 3));
         let permuted = [planes[1].clone(), planes[2].clone(), planes[0].clone()];
-        let mut cache = Vec::new();
+        let mut cache = PlaneReplacementAffineCache::default();
         let mut calls = 0;
 
         let first = cached_affine_from_planes_with(&mut cache, &planes, || {
