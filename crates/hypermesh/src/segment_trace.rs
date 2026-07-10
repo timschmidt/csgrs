@@ -599,6 +599,7 @@ impl From<Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>>
 struct DetourTargetFamilyCacheEntry {
     start: Point3,
     end: Point3,
+    trace_bounds: Option<Aabb>,
     targets: HypermeshResult<Vec<DetourTarget>>,
 }
 
@@ -908,6 +909,7 @@ pub(crate) fn trace_segment_from_definitions(
         end_definitions,
         &mut no_detour_cache,
         &mut detour_target_cache,
+        None,
     )
 }
 
@@ -920,6 +922,7 @@ fn trace_segment_from_definitions_with_caches(
     end_definitions: &[[Plane; 3]],
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
@@ -938,6 +941,7 @@ fn trace_segment_from_definitions_with_caches(
         &mut plane_replacement_trace_steps,
         no_detour_cache,
         detour_target_cache,
+        trace_bounds,
     )
 }
 
@@ -954,6 +958,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_surface_cache = Vec::new();
     let arrangement_planes = detour_arrangement_planes(polygons);
@@ -985,6 +990,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
                         axis_ordered_segment_traces,
                         plane_replacement_affine,
                         plane_replacement_trace_steps,
+                        trace_bounds,
                     )
                 },
             )
@@ -998,12 +1004,20 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
         end_definitions,
         &arrangement_planes,
         surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut |point| {
+            if !point_is_inside_optional_trace_bounds(point, trace_bounds)? {
+                return Ok(true);
+            }
+            point_lies_on_traced_surface(point, polygons)
+        },
         &mut trace_without_detours,
         &mut |batch_start, batch_end, batch_index| {
-            if let Some(cached) =
-                cached_detour_target_family(detour_target_cache, batch_start, batch_end)
-            {
+            if let Some(cached) = cached_detour_target_family(
+                detour_target_cache,
+                batch_start,
+                batch_end,
+                trace_bounds,
+            ) {
                 if batch_index == 0 {
                     cached.targets.clone().map(Some)
                 } else {
@@ -1016,10 +1030,18 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
                     batch_index,
                     polygons,
                     &arrangement_planes,
+                    trace_bounds,
                 )
             }
         },
     )
+}
+
+fn point_is_inside_optional_trace_bounds(
+    point: &Point3,
+    trace_bounds: Option<&Aabb>,
+) -> HypermeshResult<bool> {
+    trace_bounds.map_or(Ok(true), |bounds| bounds.contains_point(point))
 }
 
 fn points_share_open_arrangement_cell(
@@ -1610,9 +1632,10 @@ fn cached_detour_target_family_with(
     cache: &mut DetourTargetFamilyCache,
     start: &Point3,
     end: &Point3,
+    trace_bounds: Option<&Aabb>,
     build: impl FnOnce() -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    if let Some(existing) = cached_detour_target_family(cache, start, end) {
+    if let Some(existing) = cached_detour_target_family(cache, start, end, trace_bounds) {
         return existing.targets.clone();
     }
 
@@ -1620,6 +1643,7 @@ fn cached_detour_target_family_with(
     cache.entries.push(DetourTargetFamilyCacheEntry {
         start: start.clone(),
         end: end.clone(),
+        trace_bounds: trace_bounds.cloned(),
         targets: targets.clone(),
     });
     let index = cache.entries.len() - 1;
@@ -1631,12 +1655,14 @@ fn cached_detour_target_family<'a>(
     cache: &'a DetourTargetFamilyCache,
     start: &Point3,
     end: &Point3,
+    trace_bounds: Option<&Aabb>,
 ) -> Option<&'a DetourTargetFamilyCacheEntry> {
     matching_detour_target_family_bucket_indices(&cache.buckets, start, end).and_then(|indices| {
         indices
             .iter()
             .rev()
-            .find_map(|index| cache.entries.get(*index))
+            .filter_map(|index| cache.entries.get(*index))
+            .find(|entry| entry.trace_bounds.as_ref() == trace_bounds)
     })
 }
 
@@ -1801,6 +1827,7 @@ fn trace_segment_with_definitions_no_detours(
         &mut axis_ordered_segment_traces,
         &mut affine_cache,
         &mut step_cache,
+        None,
     )
 }
 
@@ -1815,7 +1842,14 @@ fn trace_segment_with_definitions_no_detours_with_caches(
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
     affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
+    if !point_is_inside_optional_trace_bounds(start, trace_bounds)?
+        || !point_is_inside_optional_trace_bounds(end, trace_bounds)?
+    {
+        return Err(HypermeshError::UnknownClassification);
+    }
+
     match trace_segment_without_detours_with_caches(
         start,
         end,
@@ -1848,6 +1882,7 @@ fn trace_segment_with_definitions_no_detours_with_caches(
                 axis_ordered_segment_traces,
                 affine_cache,
                 step_cache,
+                trace_bounds,
             )
         },
     )
@@ -2005,6 +2040,7 @@ fn trace_plane_replacement_path_without_detours_with_caches(
         &mut axis_ordered_segment_traces,
         affine_cache,
         step_cache,
+        None,
     )
 }
 
@@ -2017,12 +2053,16 @@ fn trace_plane_replacement_path_without_detours_with_shared_caches(
     axis_ordered_segment_traces: &mut Vec<AxisOrderedSegmentTraceCacheEntry>,
     affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
-    trace_plane_replacement_path_with_tracer(
+    trace_plane_replacement_path_with_tracer_and_caches(
         start_planes,
         end_planes,
         winding,
         polygons,
+        affine_cache,
+        step_cache,
+        trace_bounds,
         |current, next, _current_planes, _next_planes, attempt, polygons| {
             trace_segment_without_detours_with_caches(
                 current,
@@ -2033,11 +2073,10 @@ fn trace_plane_replacement_path_without_detours_with_shared_caches(
                 axis_ordered_segment_traces,
             )
         },
-        affine_cache,
-        step_cache,
     )
 }
 
+#[cfg(test)]
 fn trace_plane_replacement_path_with_tracer(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
@@ -2061,6 +2100,7 @@ fn trace_plane_replacement_path_with_tracer(
         polygons,
         affine_cache,
         step_cache,
+        None,
         trace_step,
     )
 }
@@ -2072,6 +2112,7 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
     polygons: &[ConvexPolygon],
     mut affine_cache: &mut PlaneReplacementAffineCache,
     mut step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    trace_bounds: Option<&Aabb>,
     mut trace_step: impl FnMut(
         &Point3,
         &Point3,
@@ -2087,7 +2128,8 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
             match cached_affine_from_planes_with(&mut affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
-                Ok(point) => point,
+                Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
+                Ok(_) => continue,
                 Err(HypermeshError::UnknownClassification) => continue,
                 Err(err) => return Err(err),
             };
@@ -2104,7 +2146,13 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
                 match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
                 }) {
-                    Ok(point) => point,
+                    Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => {
+                        point
+                    }
+                    Ok(_) => {
+                        valid = false;
+                        break;
+                    }
                     Err(HypermeshError::UnknownClassification) => {
                         valid = false;
                         break;
@@ -3061,36 +3109,8 @@ impl InteriorBoxDetourTargetCursor {
         end: &Point3,
         polygons: &[ConvexPolygon],
         arrangement_planes: &[Plane],
+        trace_bounds: Option<&Aabb>,
     ) -> HypermeshResult<Self> {
-        let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
-            start,
-            end,
-            polygons,
-            &mut |edge_start, edge_end, polygon, axis| {
-                let start_class = classify_point(edge_start, &polygon.support)?;
-                let end_class = classify_point(edge_end, &polygon.support)?;
-                if start_class == Classification::On {
-                    return Ok(Some(edge_start.clone()));
-                }
-                if end_class == Classification::On {
-                    return Ok(Some(edge_end.clone()));
-                }
-                segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
-                    |crossing| {
-                        if let Some(crossing) = crossing {
-                            if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)?
-                            {
-                                return Ok(None);
-                            }
-                            Ok(Some(crossing))
-                        } else {
-                            Ok(None)
-                        }
-                    },
-                )
-            },
-            &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
-        )?;
         let (start_cell, end_cell) = if arrangement_planes.is_empty() {
             (None, None)
         } else {
@@ -3099,17 +3119,32 @@ impl InteriorBoxDetourTargetCursor {
                 optional_detour_arrangement_cell(end, arrangement_planes)?,
             )
         };
-        let mut bounds = Vec::new();
-        for x in &intervals[0] {
-            for y in &intervals[1] {
-                for z in &intervals[2] {
-                    let candidate = aabb_from_axis_intervals([x, y, z])?;
-                    let single_cell = strict_aabb_arrangement_cell(&candidate, arrangement_planes)?;
-                    if single_cell.as_ref().is_some_and(|cell| {
-                        start_cell.as_ref() == Some(cell) || end_cell.as_ref() == Some(cell)
-                    }) {
-                        continue;
-                    }
+        let (mut bounds, mut saw_unknown) = interior_detour_candidate_bounds(
+            start,
+            end,
+            polygons,
+            arrangement_planes,
+            start_cell.as_deref(),
+            end_cell.as_deref(),
+        )?;
+        if let Some(trace_bounds) = trace_bounds {
+            if bounds.is_empty()
+                && strict_aabb_arrangement_cell(trace_bounds, arrangement_planes)?.is_none()
+                && !bounds.iter().any(|existing| existing == trace_bounds)
+            {
+                bounds.push(trace_bounds.clone());
+            }
+            let (trace_candidates, trace_unknown) = interior_detour_candidate_bounds(
+                &trace_bounds.min,
+                &trace_bounds.max,
+                polygons,
+                arrangement_planes,
+                start_cell.as_deref(),
+                end_cell.as_deref(),
+            )?;
+            saw_unknown |= trace_unknown;
+            for candidate in trace_candidates {
+                if !bounds.iter().any(|existing| *existing == candidate) {
                     bounds.push(candidate);
                 }
             }
@@ -3179,9 +3214,62 @@ impl InteriorBoxDetourTargetCursor {
     }
 }
 
+fn interior_detour_candidate_bounds(
+    domain_start: &Point3,
+    domain_end: &Point3,
+    polygons: &[ConvexPolygon],
+    arrangement_planes: &[Plane],
+    start_cell: Option<&[Classification]>,
+    end_cell: Option<&[Classification]>,
+) -> HypermeshResult<(Vec<Aabb>, bool)> {
+    let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
+        domain_start,
+        domain_end,
+        polygons,
+        &mut |edge_start, edge_end, polygon, axis| {
+            let start_class = classify_point(edge_start, &polygon.support)?;
+            let end_class = classify_point(edge_end, &polygon.support)?;
+            if start_class == Classification::On {
+                return Ok(Some(edge_start.clone()));
+            }
+            if end_class == Classification::On {
+                return Ok(Some(edge_end.clone()));
+            }
+            segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(|crossing| {
+                if let Some(crossing) = crossing {
+                    if !point_strictly_between_axis(&crossing, edge_start, edge_end, axis)? {
+                        return Ok(None);
+                    }
+                    Ok(Some(crossing))
+                } else {
+                    Ok(None)
+                }
+            })
+        },
+        &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+    )?;
+    let mut bounds = Vec::new();
+    for x in &intervals[0] {
+        for y in &intervals[1] {
+            for z in &intervals[2] {
+                let candidate = aabb_from_axis_intervals([x, y, z])?;
+                let single_cell = strict_aabb_arrangement_cell(&candidate, arrangement_planes)?;
+                if single_cell.as_ref().is_some_and(|cell| {
+                    start_cell == Some(cell.as_slice()) || end_cell == Some(cell.as_slice())
+                }) {
+                    continue;
+                }
+                bounds.push(candidate);
+            }
+        }
+    }
+    Ok((bounds, saw_unknown))
+}
+
 struct InteriorBoxDetourTargetBatchCacheEntry {
     start: Point3,
     end: Point3,
+    trace_bounds: Option<Aabb>,
     cursor: InteriorBoxDetourTargetCursor,
     batches: Vec<Vec<DetourTarget>>,
     exhausted: bool,
@@ -3200,22 +3288,25 @@ impl InteriorBoxDetourTargetBatchCache {
         batch_index: usize,
         polygons: &[ConvexPolygon],
         arrangement_planes: &[Plane],
+        trace_bounds: Option<&Aabb>,
     ) -> HypermeshResult<Option<Vec<DetourTarget>>> {
-        let entry_index = if let Some(index) = self
-            .entries
-            .iter()
-            .position(|entry| entry.start == *start && entry.end == *end)
-        {
+        let entry_index = if let Some(index) = self.entries.iter().position(|entry| {
+            entry.start == *start
+                && entry.end == *end
+                && entry.trace_bounds.as_ref() == trace_bounds
+        }) {
             index
         } else {
             self.entries.push(InteriorBoxDetourTargetBatchCacheEntry {
                 start: start.clone(),
                 end: end.clone(),
+                trace_bounds: trace_bounds.cloned(),
                 cursor: InteriorBoxDetourTargetCursor::new(
                     start,
                     end,
                     polygons,
                     arrangement_planes,
+                    trace_bounds,
                 )?,
                 batches: Vec::new(),
                 exhausted: false,
@@ -6469,6 +6560,7 @@ fn trace_probe_winding_with_caches(
         plane_replacement_trace_steps,
         definition_no_detour_trace,
         detour_target_families,
+        None,
     )
 }
 
@@ -6499,6 +6591,39 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
         &mut plane_replacement_trace_steps,
         &mut no_detour_cache,
         &mut detour_target_cache,
+        None,
+    )
+}
+
+pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
+    start: &Point3,
+    end: &Point3,
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    trace_bounds: &Aabb,
+) -> HypermeshResult<WindingNumberVector> {
+    let mut no_detour_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
+    let mut surface_cache = Vec::new();
+    let mut axis_ordered_segment_traces = Vec::new();
+    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
+    let mut plane_replacement_trace_steps = Vec::new();
+    trace_segment_from_definitions_with_step_detoured_plane_replacement_with_caches(
+        start,
+        end,
+        winding,
+        polygons,
+        start_definitions,
+        end_definitions,
+        &mut surface_cache,
+        &mut axis_ordered_segment_traces,
+        &mut plane_replacement_affine,
+        &mut plane_replacement_trace_steps,
+        &mut no_detour_cache,
+        &mut detour_target_cache,
+        Some(trace_bounds),
     )
 }
 
@@ -6515,7 +6640,14 @@ fn trace_segment_from_definitions_with_step_detoured_plane_replacement_with_cach
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
+    if !point_is_inside_optional_trace_bounds(start, trace_bounds)?
+        || !point_is_inside_optional_trace_bounds(end, trace_bounds)?
+    {
+        return Err(HypermeshError::UnknownClassification);
+    }
+
     match trace_segment_from_definitions_with_caches_and_surface_query(
         start,
         end,
@@ -6529,6 +6661,7 @@ fn trace_segment_from_definitions_with_step_detoured_plane_replacement_with_cach
         plane_replacement_trace_steps,
         no_detour_cache,
         detour_target_cache,
+        trace_bounds,
     ) {
         Ok(winding) => return Ok(winding),
         Err(HypermeshError::UnknownClassification) => {}
@@ -6544,6 +6677,7 @@ fn trace_segment_from_definitions_with_step_detoured_plane_replacement_with_cach
         polygons,
         no_detour_cache,
         detour_target_cache,
+        trace_bounds,
     )
 }
 
@@ -6567,6 +6701,7 @@ fn trace_probe_from_reference_definitions(
         polygons,
         &mut no_detour_cache,
         &mut detour_target_cache,
+        None,
     )
 }
 
@@ -6579,6 +6714,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
     polygons: &[ConvexPolygon],
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_caches(
         start,
@@ -6589,6 +6725,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
         polygons,
         no_detour_cache,
         detour_target_cache,
+        trace_bounds,
     )
 }
 
@@ -6601,6 +6738,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
     polygons: &[ConvexPolygon],
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut start_definitions = start_definitions.to_vec();
     append_definition_if_missing(
@@ -6625,6 +6763,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
                 &mut step_cache,
                 no_detour_cache,
                 detour_target_cache,
+                trace_bounds,
             ) {
                 Ok(winding) => return Ok(winding),
                 Err(HypermeshError::UnknownClassification) => continue,
@@ -6672,6 +6811,7 @@ fn trace_plane_replacement_path_with_step_detours_with_caches(
         polygons,
         affine_cache,
         step_cache,
+        None,
         |current, next, attempt, polygons, current_definitions, next_definitions| {
             match trace_segment_from_definitions(
                 current,
@@ -6700,6 +6840,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_step_detours_impl(
         start_planes,
@@ -6708,6 +6849,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
         polygons,
         affine_cache,
         step_cache,
+        trace_bounds,
         |current, next, attempt, polygons, current_definitions, next_definitions| {
             match trace_segment_from_definitions_with_caches(
                 current,
@@ -6718,6 +6860,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
                 next_definitions,
                 no_detour_cache,
                 detour_target_cache,
+                trace_bounds,
             ) {
                 Ok(winding) => Ok(Some(winding)),
                 Err(HypermeshError::UnknownClassification) => {
@@ -6736,6 +6879,7 @@ fn trace_plane_replacement_path_with_step_detours_impl(
     polygons: &[ConvexPolygon],
     affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    trace_bounds: Option<&Aabb>,
     mut trace_step: impl FnMut(
         &Point3,
         &Point3,
@@ -6752,6 +6896,7 @@ fn trace_plane_replacement_path_with_step_detours_impl(
         polygons,
         affine_cache,
         step_cache,
+        trace_bounds,
         |current, next, current_definition, next_definition, attempt, polygons| {
             trace_step(
                 current,
@@ -7776,7 +7921,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         &mut trace_without_detours,
         &mut |batch_start, batch_end, batch_index| {
             if let Some(cached) =
-                cached_detour_target_family(detour_target_cache, batch_start, batch_end)
+                cached_detour_target_family(detour_target_cache, batch_start, batch_end, None)
             {
                 if batch_index == 0 {
                     cached.targets.clone().map(Some)
@@ -7790,6 +7935,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                     batch_index,
                     polygons,
                     &arrangement_planes,
+                    None,
                 )
             }
         },
@@ -9169,6 +9315,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
                     batch_index,
                     polygons,
                     &arrangement_planes,
+                    None,
                 )
             },
         )
@@ -9429,7 +9576,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                 saw_unknown = true;
             }
             if progressive_interior_box_detours
-                && cached_detour_target_family(detour_target_cache, start, end).is_none()
+                && cached_detour_target_family(detour_target_cache, start, end, None).is_none()
             {
                 let outcome =
                     probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
@@ -9458,6 +9605,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                         .push(DetourTargetFamilyCacheEntry {
                             start: start.clone(),
                             end: end.clone(),
+                            trace_bounds: None,
                             targets,
                         });
                     let index = detour_target_cache.entries.len() - 1;
@@ -9485,7 +9633,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
             } else {
                 let mut found = false;
                 for detour in
-                    cached_detour_target_family_with(detour_target_cache, start, end, || {
+                    cached_detour_target_family_with(detour_target_cache, start, end, None, || {
                         detours_for_query(start, end)
                     })?
                 {
@@ -15475,7 +15623,8 @@ mod tests {
         let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
 
         let cursor =
-            InteriorBoxDetourTargetCursor::new(&p(0, 0, 0), &p(4, 4, 4), &[slanted], &[]).unwrap();
+            InteriorBoxDetourTargetCursor::new(&p(0, 0, 0), &p(4, 4, 4), &[slanted], &[], None)
+                .unwrap();
 
         assert!(
             cursor
@@ -15508,7 +15657,8 @@ mod tests {
         let end = p(2, 1, 1);
         let planes = [Plane::axis_aligned(0, r(1))];
 
-        let mut cursor = InteriorBoxDetourTargetCursor::new(&start, &end, &[], &planes).unwrap();
+        let mut cursor =
+            InteriorBoxDetourTargetCursor::new(&start, &end, &[], &planes, None).unwrap();
 
         assert!(cursor.bounds.is_empty());
         assert!(cursor.next_batch().unwrap().is_none());
@@ -15520,9 +15670,24 @@ mod tests {
         let end = p(1, 1, 1);
         let planes = [Plane::axis_aligned(0, r(0))];
 
-        let cursor = InteriorBoxDetourTargetCursor::new(&start, &end, &[], &planes).unwrap();
+        let cursor = InteriorBoxDetourTargetCursor::new(&start, &end, &[], &planes, None).unwrap();
 
         assert_eq!(cursor.bounds.len(), 1);
+    }
+
+    #[test]
+    fn bounded_cursor_keeps_unsplit_domain_crossing_surface_plane() {
+        let start = p(0, 0, 0);
+        let end = p(2, 1, 0);
+        let wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+        let planes = detour_arrangement_planes(std::slice::from_ref(&wall));
+        let trace_bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
+
+        let cursor =
+            InteriorBoxDetourTargetCursor::new(&start, &end, &[wall], &planes, Some(&trace_bounds))
+                .unwrap();
+
+        assert!(cursor.bounds.contains(&trace_bounds));
     }
 
     #[test]
@@ -15659,12 +15824,12 @@ mod tests {
         let mut actual = Vec::new();
         let mut batch_index = 0;
         while let Some(batch) = cache
-            .batch_for(&start, &end, batch_index, &polygons, &[])
+            .batch_for(&start, &end, batch_index, &polygons, &[], None)
             .unwrap()
         {
             assert_eq!(
                 cache
-                    .batch_for(&start, &end, batch_index, &polygons, &[])
+                    .batch_for(&start, &end, batch_index, &polygons, &[], None)
                     .unwrap(),
                 Some(batch.clone())
             );
@@ -19677,6 +19842,7 @@ mod tests {
             &end_definitions,
             &mut no_detour_cache,
             &mut detour_target_cache,
+            None,
         )
         .unwrap();
         let no_detour_len = no_detour_cache.len();
@@ -19690,6 +19856,7 @@ mod tests {
             &end_definitions,
             &mut no_detour_cache,
             &mut detour_target_cache,
+            None,
         )
         .unwrap();
 
@@ -20015,12 +20182,12 @@ mod tests {
         let mut cache = DetourTargetFamilyCache::default();
         let mut build_calls = 0;
 
-        let first = cached_detour_target_family_with(&mut cache, &start, &end, || {
+        let first = cached_detour_target_family_with(&mut cache, &start, &end, None, || {
             build_calls += 1;
             Ok(vec![target.clone()])
         })
         .unwrap();
-        let second = cached_detour_target_family_with(&mut cache, &start, &end, || {
+        let second = cached_detour_target_family_with(&mut cache, &start, &end, None, || {
             build_calls += 1;
             Ok(vec![target.clone()])
         })
@@ -20043,12 +20210,12 @@ mod tests {
         let mut cache = DetourTargetFamilyCache::default();
         let mut build_calls = 0;
 
-        let first = cached_detour_target_family_with(&mut cache, &start, &end, || {
+        let first = cached_detour_target_family_with(&mut cache, &start, &end, None, || {
             build_calls += 1;
             Ok(vec![target.clone()])
         })
         .unwrap();
-        let second = cached_detour_target_family_with(&mut cache, &end, &start, || {
+        let second = cached_detour_target_family_with(&mut cache, &end, &start, None, || {
             build_calls += 1;
             Ok(vec![target.clone()])
         })
@@ -20057,6 +20224,32 @@ mod tests {
         assert_eq!(first, vec![target.clone()]);
         assert_eq!(second, vec![target]);
         assert_eq!(build_calls, 1);
+    }
+
+    #[test]
+    fn cached_detour_target_family_distinguishes_trace_bounds() {
+        let start = p(0, 0, 0);
+        let end = p(1, 0, 0);
+        let target = DetourTarget {
+            point: p(0, 1, 0),
+            definitions: vec![axis_plane_definition(&p(0, 1, 0))],
+            uncertified_definition_fallback: false,
+        };
+        let first_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let second_bounds = Aabb::new(p(0, 0, 0), p(2, 2, 2));
+        let mut cache = DetourTargetFamilyCache::default();
+        let mut build_calls = 0;
+
+        for bounds in [&first_bounds, &second_bounds, &first_bounds] {
+            cached_detour_target_family_with(&mut cache, &start, &end, Some(bounds), || {
+                build_calls += 1;
+                Ok(vec![target.clone()])
+            })
+            .unwrap();
+        }
+
+        assert_eq!(build_calls, 2);
+        assert_eq!(cache.len(), 2);
     }
 
     #[test]
@@ -29063,6 +29256,7 @@ mod tests {
             &[],
             &mut affine_cache,
             &mut step_cache,
+            None,
             |current, next, attempt, _polygons, current_definitions, next_definitions| {
                 if *current == expected_start
                     && *next == expected_end
@@ -29081,6 +29275,42 @@ mod tests {
     }
 
     #[test]
+    fn bounded_plane_replacement_skips_outside_intermediate_orderings() {
+        let start = p(0, 0, 0);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = [
+            Plane::from_coefficients(r(1), r(1), r(0), r(-2)),
+            Plane::axis_aligned(1, r(1)),
+            Plane::axis_aligned(2, r(1)),
+        ];
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let mut affine_cache = PlaneReplacementAffineCache::default();
+        let mut step_cache = Vec::new();
+        let mut traced_steps = Vec::new();
+
+        let winding = trace_plane_replacement_path_with_tracer_and_caches(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            &mut affine_cache,
+            &mut step_cache,
+            Some(&bounds),
+            |current, next, _current_planes, _next_planes, attempt, _polygons| {
+                assert!(bounds.contains_point(current).unwrap());
+                assert!(bounds.contains_point(next).unwrap());
+                traced_steps.push((current.clone(), next.clone()));
+                Ok(Some(attempt.to_vec()))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+        assert_eq!(traced_steps[0], (start, p(0, 1, 0)));
+        assert!(!traced_steps.iter().any(|(_, next)| *next == p(2, 0, 0)));
+    }
+
+    #[test]
     fn plane_replacement_tracer_shared_caches_reuse_equivalent_path_across_calls() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 0, 0));
@@ -29095,6 +29325,7 @@ mod tests {
             &[],
             &mut affine_cache,
             &mut step_cache,
+            None,
             |_current, _next, _current_planes, _next_planes, attempt, _polygons| {
                 step_calls += 1;
                 Ok(Some(attempt.to_vec()))
@@ -29108,6 +29339,7 @@ mod tests {
             &[],
             &mut affine_cache,
             &mut step_cache,
+            None,
             |_current, _next, _current_planes, _next_planes, attempt, _polygons| {
                 step_calls += 1;
                 Ok(Some(attempt.to_vec()))
@@ -29138,6 +29370,7 @@ mod tests {
             &[],
             &mut affine_cache,
             &mut step_cache,
+            None,
             |current, next, current_planes, next_planes, _attempt, _polygons| {
                 if *current == p(0, 0, 0)
                     && *next == p(0, 0, 0)

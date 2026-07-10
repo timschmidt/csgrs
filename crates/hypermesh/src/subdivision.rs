@@ -22,6 +22,7 @@ use crate::segment_trace::{
     classify_leaf_polygon_with_probe_query_caches,
     ordered_interior_points_for_probe_search_with_support,
     trace_segment_from_definitions_with_step_detoured_plane_replacement,
+    trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds,
 };
 use crate::winding::{
     BooleanOp, Indicator, WindingNumberVector, WindingPair,
@@ -1812,6 +1813,7 @@ fn reusable_child_reference_from_cached_trace_if_certified(
                         old_ref,
                         old_ref_definitions,
                         old_wnv,
+                        bounds,
                         source_polygons,
                         target,
                     )
@@ -2030,6 +2032,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified(
                         &task.ref_point,
                         &task.ref_definitions,
                         &task.ref_wnv,
+                        &task.bounds,
                         &task.polygons,
                         target,
                     )
@@ -4510,6 +4513,7 @@ fn compute_new_reference_with_query_caches(
                                         old_ref,
                                         old_ref_definitions,
                                         old_wnv,
+                                        bounds,
                                         polygons,
                                         target,
                                     )
@@ -7041,6 +7045,7 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified(
                     old_ref,
                     old_ref_definitions,
                     old_wnv,
+                    bounds,
                     &context.polygons,
                     target,
                 )
@@ -7231,6 +7236,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified(
                     old_ref,
                     old_ref_definitions,
                     old_wnv,
+                    bounds,
                     polygons,
                     target,
                 )
@@ -7414,6 +7420,7 @@ fn reusable_projected_reference_result_from_cached_trace_if_certified(
                     old_ref,
                     old_ref_definitions,
                     old_wnv,
+                    bounds,
                     polygons,
                     target,
                 )
@@ -7631,6 +7638,7 @@ fn reusable_support_plane_cell_search_result_from_cached_trace_if_certified(
                         old_ref,
                         old_ref_definitions,
                         old_wnv,
+                        bounds,
                         &context.polygons,
                         target,
                     )
@@ -8128,6 +8136,7 @@ fn cached_reference_escape_search_in_query_caches(
                         &context.old_ref,
                         &context.old_ref_definitions,
                         &context.old_wnv,
+                        bounds,
                         &context.polygons,
                         target,
                     )
@@ -8455,6 +8464,7 @@ fn trace_reference_target(
         old_ref,
         old_ref_definitions,
         old_wnv,
+        bounds,
         polygons,
         target,
     )
@@ -8486,16 +8496,19 @@ fn trace_reference_target_from_validated_bounds(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
     old_wnv: &[i32],
+    bounds: &Aabb,
     polygons: &[ConvexPolygon],
     target: &ReferenceTarget,
 ) -> HypermeshResult<Option<Vec<i32>>> {
-    match trace_segment_from_definitions_with_step_detoured_plane_replacement(
+    let trace_bounds = reference_trace_bounds(old_ref, bounds)?;
+    match trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
         old_ref,
         &target.point,
         old_wnv,
         polygons,
         old_ref_definitions,
         &target.definitions,
+        &trace_bounds,
     ) {
         Ok(winding) => return Ok(Some(winding)),
         Err(crate::error::HypermeshError::UnknownClassification) => {
@@ -8503,6 +8516,21 @@ fn trace_reference_target_from_validated_bounds(
         }
         Err(err) => return Err(err),
     }
+}
+
+fn reference_trace_bounds(start: &Point3, bounds: &Aabb) -> HypermeshResult<Aabb> {
+    let mut min = bounds.min.clone();
+    let mut max = bounds.max.clone();
+    for axis in 0..3 {
+        let start_value = axis_ref(start, axis);
+        if compare_real(start_value, axis_ref(&min, axis))?.is_lt() {
+            *axis_mut(&mut min, axis) = start_value.clone();
+        }
+        if compare_real(start_value, axis_ref(&max, axis))?.is_gt() {
+            *axis_mut(&mut max, axis) = start_value.clone();
+        }
+    }
+    Ok(Aabb::new(min, max))
 }
 
 #[cfg(test)]
@@ -8934,6 +8962,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                                     old_ref,
                                     old_ref_definitions,
                                     old_wnv,
+                                    bounds,
                                     polygons,
                                     target,
                                 )
@@ -17575,6 +17604,7 @@ mod tests {
             &query_task.ref_point,
             &query_task.ref_definitions,
             &query_task.ref_wnv,
+            &query_task.bounds,
             &query_task.polygons,
             &ReferenceTarget::with_definitions(
                 existing_point.clone(),
@@ -18147,7 +18177,16 @@ mod tests {
     }
 
     #[test]
-    fn trace_reference_target_reports_unknown_for_uncertified_valid_target() {
+    fn reference_trace_bounds_expand_only_to_inherited_reference() {
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+
+        let expanded = reference_trace_bounds(&p(-2, 1, 3), &bounds).unwrap();
+
+        assert_eq!(expanded, Aabb::new(p(-2, 0, 0), p(1, 1, 3)));
+    }
+
+    #[test]
+    fn trace_reference_target_uses_bounded_detour_for_valid_target() {
         let ref_point = p(0, 0, 0);
         let target_point = p(2, 1, 0);
         let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
@@ -18164,7 +18203,7 @@ mod tests {
             Err(crate::error::HypermeshError::UnknownClassification)
         );
 
-        let err = trace_reference_target(
+        let winding = trace_reference_target(
             &ref_point,
             &axis_defs(&ref_point),
             &[0],
@@ -18172,9 +18211,9 @@ mod tests {
             &[wall],
             &ReferenceTarget::axis_defined(target_point),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(winding, Some(vec![0]));
     }
 
     #[test]
