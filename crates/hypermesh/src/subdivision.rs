@@ -66,10 +66,12 @@ pub struct SubdivisionTask {
     /// Reference point with known winding.
     ///
     /// References are normally off the polygon arrangement. If a root caller
-    /// supplies a point in the interior of one coplanar surface family, the
-    /// implementation may normalize it only when a trace from a certified
-    /// exterior point proves which adjacent open cell has `ref_wnv`. Edge,
-    /// vertex, and non-coplanar multi-surface references are uncertified.
+    /// supplies a point on a boundary-free closed polygon family contained in
+    /// the task bounds, the implementation may normalize it only when a trace
+    /// from a certified exterior point proves which adjacent open arrangement
+    /// cell has `ref_wnv`. This includes face, edge, vertex, and non-coplanar
+    /// multi-surface contacts; clipped-open and missing-mesh families remain
+    /// uncertified.
     pub ref_point: Point3,
     /// Plane triples that certify constructions of `ref_point`.
     pub ref_definitions: Vec<[crate::geometry::Plane; 3]>,
@@ -3891,88 +3893,117 @@ fn normalize_surface_reference(
     }
 
     let mut incident = Vec::new();
+    let mut supports_through_reference = Vec::new();
+    let mut has_boundary_contact = false;
     for polygon in polygons {
+        if crate::geometry::classify_point(old_ref, &polygon.support)? == Classification::On {
+            supports_through_reference.push(polygon);
+        }
         match classify_point_in_local_polygon(old_ref, polygon)? {
             LocalPolygonPointLocation::Outside => {}
             LocalPolygonPointLocation::Boundary => {
-                return Err(crate::error::HypermeshError::UnknownClassification);
+                has_boundary_contact = true;
+                incident.push(polygon);
             }
             LocalPolygonPointLocation::Interior => incident.push(polygon),
         }
     }
-    let Some(base) = incident.first() else {
+    if incident.is_empty() && !has_boundary_contact {
         return Ok(None);
-    };
-    for polygon in incident.iter().skip(1) {
-        if !supports_have_parallel_normals(&base.support, &polygon.support)? {
-            return Err(crate::error::HypermeshError::UnknownClassification);
-        }
     }
-    if !polygon_family_is_closed_within_bounds(polygons, bounds)? {
+    if !polygon_family_is_closed_within_bounds(polygons, bounds, old_wnv.len())? {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
-    let exterior = exterior_reference_point(bounds)?;
-    let exterior_definitions = vec![axis_plane_definition(&exterior)];
-    let exterior_winding = vec![0; old_wnv.len()];
-    let mut saw_unknown = false;
-
-    for positive_side in [true, false] {
-        let direction = if positive_side {
-            base.support.normal.clone()
-        } else {
-            Point3::new(
-                -base.support.normal.x.clone(),
-                -base.support.normal.y.clone(),
-                -base.support.normal.z.clone(),
-            )
-        };
-        let Some(point) = surface_reference_departure_point(old_ref, &direction, bounds, polygons)?
-        else {
-            continue;
-        };
-        match is_certified_valid_reference_for_bounds(&point, bounds, polygons) {
-            Ok(true) => {}
-            Ok(false) => continue,
-            Err(crate::error::HypermeshError::UnknownClassification) => continue,
-            Err(err) => return Err(err),
-        }
-
-        let definitions = vec![axis_plane_definition(&point)];
-        let winding = match trace_segment_from_definitions_with_step_detoured_plane_replacement(
-            &exterior,
-            &point,
-            &exterior_winding,
-            polygons,
-            &exterior_definitions,
-            &definitions,
-        ) {
-            Ok(winding) => winding,
-            Err(crate::error::HypermeshError::UnknownClassification) => {
-                saw_unknown = true;
-                continue;
+    if !has_boundary_contact {
+        let base = incident[0];
+        let mut parallel = true;
+        for polygon in incident.iter().skip(1) {
+            match supports_have_parallel_normals(&base.support, &polygon.support) {
+                Ok(true) => {}
+                Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => {
+                    parallel = false;
+                    break;
+                }
+                Err(err) => return Err(err),
             }
-            Err(err) => return Err(err),
-        };
-        if winding != old_wnv {
-            continue;
         }
-        return Ok(Some((point, definitions, winding)));
+
+        if parallel {
+            let exterior = exterior_reference_point(bounds)?;
+            let exterior_definitions = vec![axis_plane_definition(&exterior)];
+            let exterior_winding = vec![0; old_wnv.len()];
+            for positive_side in [true, false] {
+                let direction = if positive_side {
+                    base.support.normal.clone()
+                } else {
+                    Point3::new(
+                        -base.support.normal.x.clone(),
+                        -base.support.normal.y.clone(),
+                        -base.support.normal.z.clone(),
+                    )
+                };
+                let Some(point) =
+                    surface_reference_departure_point(old_ref, &direction, bounds, polygons)?
+                else {
+                    continue;
+                };
+                match is_certified_valid_reference_for_bounds(&point, bounds, polygons) {
+                    Ok(true) => {}
+                    Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => {
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                }
+
+                let definitions = vec![axis_plane_definition(&point)];
+                let winding =
+                    match trace_segment_from_definitions_with_step_detoured_plane_replacement(
+                        &exterior,
+                        &point,
+                        &exterior_winding,
+                        polygons,
+                        &exterior_definitions,
+                        &definitions,
+                    ) {
+                        Ok(winding) => winding,
+                        Err(crate::error::HypermeshError::UnknownClassification) => continue,
+                        Err(err) => return Err(err),
+                    };
+                if winding == old_wnv {
+                    return Ok(Some((point, definitions, winding)));
+                }
+            }
+        }
     }
 
-    if saw_unknown {
-        Err(crate::error::HypermeshError::UnknownClassification)
-    } else {
-        Err(crate::error::HypermeshError::ReferencePropagationFailed)
+    match closed_family_adjacent_reference_with_winding(
+        old_ref,
+        old_wnv,
+        bounds,
+        polygons,
+        &supports_through_reference,
+    )? {
+        Some(reference) => Ok(Some(reference)),
+        None => Err(crate::error::HypermeshError::ReferencePropagationFailed),
     }
 }
 
 fn polygon_family_is_closed_within_bounds(
     polygons: &[ConvexPolygon],
     bounds: &Aabb,
+    expected_mesh_count: usize,
 ) -> HypermeshResult<bool> {
     let mut edges = Vec::<(isize, Point3, Point3)>::new();
+    let mut represented_meshes = vec![false; expected_mesh_count];
     for polygon in polygons {
+        let Ok(mesh_index) = usize::try_from(polygon.mesh_index) else {
+            return Ok(false);
+        };
+        let Some(represented) = represented_meshes.get_mut(mesh_index) else {
+            return Ok(false);
+        };
+        *represented = true;
         let vertices = polygon.vertices()?;
         if vertices.len() < 3 {
             return Ok(false);
@@ -3993,6 +4024,9 @@ fn polygon_family_is_closed_within_bounds(
     if edges.is_empty() {
         return Ok(false);
     }
+    if represented_meshes.iter().any(|represented| !represented) {
+        return Ok(false);
+    }
 
     for (mesh_index, a, b) in &edges {
         let uses = edges
@@ -4006,6 +4040,154 @@ fn polygon_family_is_closed_within_bounds(
         }
     }
     Ok(true)
+}
+
+fn closed_family_adjacent_reference_with_winding(
+    surface_point: &Point3,
+    required_winding: &[i32],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+    supports_through_reference: &[&ConvexPolygon],
+) -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
+    let exterior = exterior_reference_point(bounds)?;
+    let exterior_definitions = vec![axis_plane_definition(&exterior)];
+    let exterior_winding = vec![0; required_winding.len()];
+    let direction_bounds = Aabb::new(
+        Point3::new(-Real::one(), -Real::one(), -Real::one()),
+        Point3::new(Real::one(), Real::one(), Real::one()),
+    );
+    let direction_supports = supports_through_reference
+        .iter()
+        .map(|polygon| {
+            let mut direction_support = (*polygon).clone();
+            direction_support.support = Plane::new(polygon.support.normal.clone(), Real::zero());
+            direction_support
+        })
+        .collect::<Vec<_>>();
+    let mut halfspaces = aabb_core_halfspaces(&direction_bounds)?;
+    let search_cache = std::cell::RefCell::new(Vec::new());
+
+    let mut accept = |cell_halfspaces: &[LimitPlane3],
+                      report: Option<hyperlimit::HalfspaceFeasibilityReport>|
+     -> HypermeshResult<Option<(Point3, Vec<[Plane; 3]>, Vec<i32>)>> {
+        if advance_fixed_support_search_index(&direction_supports, 0, cell_halfspaces)
+            < direction_supports.len()
+        {
+            return Ok(None);
+        }
+        let Some(report) = report else {
+            return Ok(None);
+        };
+        if report.status != HalfspaceFeasibility::Feasible {
+            return Ok(None);
+        }
+
+        let mut directions = Vec::new();
+        let mut saw_unknown = false;
+        if let Some(witness) = report.witness {
+            match point_strictly_inside_support_cell(&witness, &direction_bounds, cell_halfspaces) {
+                Ok(true) => push_unique_point3(&mut directions, witness),
+                Ok(false) => {}
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                }
+                Err(err) => return Err(err),
+            }
+        }
+        // The all-vertex centroid is strict for a full-dimensional bounded
+        // convex cell; replay below certifies that condition before use.
+        let vertex_family = match feasible_support_cell_vertex_family(cell_halfspaces) {
+            Ok(family) => family,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+                Point3FamilyState {
+                    points: Vec::new(),
+                    saw_unknown: true,
+                }
+            }
+            Err(err) => return Err(err),
+        };
+        saw_unknown |= vertex_family.saw_unknown;
+        match point3_centroid(&vertex_family.points) {
+            Ok(Some(center)) => {
+                match point_strictly_inside_support_cell(
+                    &center,
+                    &direction_bounds,
+                    cell_halfspaces,
+                ) {
+                    Ok(true) => push_unique_point3(&mut directions, center),
+                    Ok(false) => {}
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                    }
+                    Err(err) => return Err(err),
+                }
+            }
+            Ok(None) => {}
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+
+        let mut certified_cell = false;
+        for direction in directions {
+            let Some(point) =
+                surface_reference_departure_point(surface_point, &direction, bounds, polygons)?
+            else {
+                continue;
+            };
+            match is_certified_valid_reference_for_bounds(&point, bounds, polygons) {
+                Ok(true) => {}
+                Ok(false) => continue,
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            }
+            let definitions = vec![axis_plane_definition(&point)];
+            let winding = match trace_segment_from_definitions_with_step_detoured_plane_replacement(
+                &exterior,
+                &point,
+                &exterior_winding,
+                polygons,
+                &exterior_definitions,
+                &definitions,
+            ) {
+                Ok(winding) => winding,
+                Err(crate::error::HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+            certified_cell = true;
+            if winding == required_winding {
+                return Ok(Some((point, definitions, winding)));
+            }
+        }
+        if certified_cell {
+            Ok(None)
+        } else if saw_unknown {
+            Err(crate::error::HypermeshError::UnknownClassification)
+        } else {
+            Ok(None)
+        }
+    };
+
+    support_plane_cell_search_with_queries_cached(
+        None,
+        None,
+        &direction_bounds,
+        &direction_supports,
+        0,
+        &mut halfspaces,
+        &mut |halfspaces| halfspace_system_report(halfspaces),
+        &mut |halfspaces| halfspace_system_is_feasible(halfspaces),
+        &mut accept,
+        &search_cache,
+    )
 }
 
 fn exterior_reference_point(bounds: &Aabb) -> HypermeshResult<Point3> {
@@ -11312,7 +11494,6 @@ fn cached_point_strictly_inside_projected_cell_or_unknown_with(
     )
 }
 
-#[cfg(test)]
 fn point_strictly_inside_support_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -11356,7 +11537,6 @@ fn cached_point_strictly_inside_halfspaces_or_unknown_with(
     })
 }
 
-#[cfg(test)]
 fn point_strictly_inside_reference_halfspace_cell(
     point: &Point3,
     bounds: &Aabb,
@@ -17627,15 +17807,65 @@ mod tests {
     }
 
     #[test]
-    fn surface_reference_normalization_rejects_edge_reference() {
+    fn surface_reference_normalization_finds_matching_vertex_cell() {
+        let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
+        let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let (point, definitions, winding) =
+            normalize_surface_reference(&p(1, 1, 1), &[0], &bounds, &soup.polygons)
+                .unwrap()
+                .expect("closed vertex contact should find the matching arrangement cell");
+
+        assert_eq!(winding, vec![0]);
+        assert_eq!(affine_from_planes(&definitions[0]).unwrap(), point);
+        assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    }
+
+    #[test]
+    fn surface_reference_normalization_finds_matching_edge_cell() {
+        let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
+        let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let (point, _definitions, winding) =
+            normalize_surface_reference(&p(1, 2, 1), &[-1], &bounds, &soup.polygons)
+                .unwrap()
+                .expect("closed edge contact should find the matching arrangement cell");
+
+        assert_eq!(winding, vec![-1]);
+        assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    }
+
+    #[test]
+    fn surface_reference_normalization_finds_matching_noncoplanar_surface_cell() {
+        let left = tetra_from_face_and_apex(p(2, 0, 0), p(2, 6, 0), p(2, 3, 6), p(0, 3, 2));
+        let right = tetra_from_face_and_apex(p(0, 3, 0), p(6, 3, 0), p(3, 3, 6), p(3, 5, 2));
+        let soup = prepare_input(&[left.as_ref(), right.as_ref()]).unwrap();
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        let (point, _definitions, winding) =
+            normalize_surface_reference(&p(2, 3, 2), &[0, 0], &bounds, &soup.polygons)
+                .unwrap()
+                .expect("crossing surface contact should find the matching arrangement cell");
+
+        assert_eq!(winding, vec![0, 0]);
+        assert!(is_certified_valid_reference_for_bounds(&point, &bounds, &soup.polygons).unwrap());
+    }
+
+    #[test]
+    fn surface_reference_normalization_exhausts_adjacent_cells_for_impossible_winding() {
         let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
         let soup = prepare_input(&[mesh.as_ref()]).unwrap();
         let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
         let err =
-            normalize_surface_reference(&p(1, 1, 1), &[0], &bounds, &soup.polygons).unwrap_err();
+            normalize_surface_reference(&p(1, 1, 1), &[7], &bounds, &soup.polygons).unwrap_err();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(
+            err,
+            crate::error::HypermeshError::ReferencePropagationFailed
+        );
     }
 
     #[test]
@@ -17644,7 +17874,7 @@ mod tests {
         let polygons = vec![polygon.clone(), polygon.clone(), polygon];
         let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-        assert!(polygon_family_is_closed_within_bounds(&polygons, &bounds).unwrap());
+        assert!(polygon_family_is_closed_within_bounds(&polygons, &bounds, 1).unwrap());
     }
 
     #[test]
@@ -17652,7 +17882,16 @@ mod tests {
         let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-        assert!(!polygon_family_is_closed_within_bounds(&[polygon], &bounds).unwrap());
+        assert!(!polygon_family_is_closed_within_bounds(&[polygon], &bounds, 1).unwrap());
+    }
+
+    #[test]
+    fn surface_reference_closure_rejects_missing_winding_component_mesh() {
+        let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        let polygons = vec![polygon.clone(), polygon];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        assert!(!polygon_family_is_closed_within_bounds(&polygons, &bounds, 2).unwrap());
     }
 
     #[test]

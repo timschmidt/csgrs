@@ -921,6 +921,32 @@ fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
 }
 
 #[test]
+fn subdivision_normalizes_closed_edge_and_vertex_references() {
+    let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
+    let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
+    let soup = prepare_input(&[left.as_ref(), right.as_ref()]).unwrap();
+    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+    for ref_point in [p(1, 2, 1), p(1, 1, 1)] {
+        let output = subdivide(
+            SubdivisionTask::new(
+                soup.polygons.clone(),
+                bounds.clone(),
+                ref_point,
+                vec![0; soup.num_meshes],
+            ),
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+        )
+        .unwrap();
+
+        assert_eq!(classified_volume_numerator(&output), r(32));
+        assert!(output.iter().all(|polygon| polygon.winding().is_some()));
+    }
+}
+
+#[test]
 fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_closed_meshes() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));

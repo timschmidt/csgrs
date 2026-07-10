@@ -898,17 +898,22 @@ does not repay the same strict escape-membership predicate on each sibling
 revisit. The
 focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. An
-inherited reference in the strict interior of one coplanar surface family can
-now be normalized before projected/support search when the available source
-polygons certify exact per-mesh closure inside the task bounds. Hypermesh
-builds exact normal-side candidates strictly before the nearest polygon or
-bounds barrier, traces each candidate from an exact exterior point with zero
-winding, and accepts only the adjacent open cell whose independently certified
-winding matches the inherited `ref_wnv`; it does not infer the side from face
-orientation. Edge, vertex, non-coplanar crossing-surface, and clipped-open
-surface references remain explicit certification failures. Full EMBER
-plane-replacement coverage for every reference construction therefore remains
-unfinished beyond this closed-family interior-departure case.
+inherited reference on a source surface can now be normalized before
+projected/support search when the available source polygons certify exact
+boundary-free closure for every winding component inside the task bounds.
+Strict coplanar face interiors keep the direct two-normal-side path. Edge,
+vertex, and non-coplanar multi-surface contacts instead enumerate the finite
+arrangement of incident support planes in bounded direction space, construct a
+strict witness for each feasible direction cell, and advance it only to the
+first exact polygon or bounds barrier. Hypermesh traces each resulting adjacent
+point from an exact exterior point with zero winding and accepts only the open
+cell whose independently certified winding matches the inherited `ref_wnv`; it
+does not infer a side from face orientation. The exterior-zero proof now also
+requires every winding-vector mesh to be represented, so an omitted enclosing
+mesh cannot be silently treated as zero. Clipped-open and missing-mesh surface
+families remain explicit certification failures. Full EMBER plane-replacement
+coverage for every reference construction therefore remains unfinished beyond
+this closed-family surface-departure case.
 The subdivision-entry support-fallback slice is also now checked against the
 public boolean path on the prepared closed-face union fixture, so that
 alternate support-reference propagation is covered above the private helper
