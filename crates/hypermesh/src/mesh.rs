@@ -151,11 +151,17 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
             polygons.push(polygon);
             polygon_index += 1;
         }
-        let boundary_edges = count_boundary_edges(&mesh_edges);
-        if boundary_edges != 0 {
+        let edge_balance = classify_edge_balance(&mesh_edges);
+        if edge_balance.boundary_edges != 0 {
             return Err(HypermeshError::OpenInput {
                 mesh_index,
-                boundary_edges,
+                boundary_edges: edge_balance.boundary_edges,
+            });
+        }
+        if edge_balance.unbalanced_edges != 0 {
+            return Err(HypermeshError::NonPwnInput {
+                mesh_index,
+                unbalanced_edges: edge_balance.unbalanced_edges,
             });
         }
     }
@@ -179,21 +185,42 @@ fn validate_non_empty_mesh_views(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> 
     Ok(())
 }
 
-fn count_boundary_edges(edges: &[[Point3; 2]]) -> usize {
-    let mut boundary_edges = 0;
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub(crate) struct EdgeBalance {
+    pub(crate) boundary_edges: usize,
+    pub(crate) unbalanced_edges: usize,
+}
+
+pub(crate) fn classify_edge_balance(edges: &[[Point3; 2]]) -> EdgeBalance {
+    let mut balance = EdgeBalance::default();
+    let mut visited = vec![false; edges.len()];
     for (index, edge) in edges.iter().enumerate() {
-        let count = edges
-            .iter()
-            .enumerate()
-            .filter(|(other_index, other)| {
-                *other_index == index || undirected_edges_match(edge, other)
-            })
-            .count();
-        if count == 1 {
-            boundary_edges += 1;
+        if visited[index] {
+            continue;
+        }
+
+        let mut forward_uses = 0usize;
+        let mut reverse_uses = 0usize;
+        for (other_index, other) in edges.iter().enumerate() {
+            if !undirected_edges_match(edge, other) {
+                continue;
+            }
+            visited[other_index] = true;
+            if edge == other {
+                forward_uses += 1;
+            } else {
+                reverse_uses += 1;
+            }
+        }
+
+        if forward_uses + reverse_uses == 1 {
+            balance.boundary_edges += 1;
+        }
+        if forward_uses != reverse_uses {
+            balance.unbalanced_edges += 1;
         }
     }
-    boundary_edges
+    balance
 }
 
 fn undirected_edges_match(left: &[Point3; 2], right: &[Point3; 2]) -> bool {

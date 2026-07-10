@@ -25,6 +25,12 @@ triangle soups, invalid triangle indices, and arbitrary non-PWN surface
 collections are outside the supported model and are rejected before the boolean
 subdivision path.
 
+Closed-PWN validation is geometric and oriented: every exact undirected edge
+class must have equal forward and reverse triangle uses. Ordinary singleton
+boundary edges report `OpenInput`; closed-valence soups whose directed edge
+multiplicities do not cancel report `NonPwnInput`. Balanced non-manifold edge
+multiplicity remains supported by this boundary check.
+
 Within that model, the current runtime claim is deliberately narrower than a
 blanket completeness claim:
 

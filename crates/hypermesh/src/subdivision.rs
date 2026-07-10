@@ -10,6 +10,7 @@ use crate::intersection::{
     IntersectionSegment, PairwiseIntersection, PairwiseIntersectionType, intersect_polygons,
 };
 use crate::local_bsp::{BspLeaf, LocalBsp};
+use crate::mesh::classify_edge_balance;
 use crate::output::{
     ClassifiedPolygon, ClassifiedPolygonBucketState, merge_unique_classified_polygons,
     merge_unique_classified_polygons_with_bucket_state,
@@ -4039,16 +4040,14 @@ fn polygon_family_is_closed_within_bounds(
     bounds: &Aabb,
     expected_mesh_count: usize,
 ) -> HypermeshResult<bool> {
-    let mut edges = Vec::<(isize, Point3, Point3)>::new();
-    let mut represented_meshes = vec![false; expected_mesh_count];
+    let mut mesh_edges = vec![Vec::new(); expected_mesh_count];
     for polygon in polygons {
         let Ok(mesh_index) = usize::try_from(polygon.mesh_index) else {
             return Ok(false);
         };
-        let Some(represented) = represented_meshes.get_mut(mesh_index) else {
+        let Some(edges) = mesh_edges.get_mut(mesh_index) else {
             return Ok(false);
         };
-        *represented = true;
         let vertices = polygon.vertices()?;
         if vertices.len() < 3 {
             return Ok(false);
@@ -4059,28 +4058,19 @@ fn polygon_family_is_closed_within_bounds(
             }
         }
         for index in 0..vertices.len() {
-            edges.push((
-                polygon.mesh_index,
+            edges.push([
                 vertices[index].clone(),
                 vertices[(index + 1) % vertices.len()].clone(),
-            ));
+            ]);
         }
     }
-    if edges.is_empty() {
-        return Ok(false);
-    }
-    if represented_meshes.iter().any(|represented| !represented) {
+    if mesh_edges.iter().any(Vec::is_empty) {
         return Ok(false);
     }
 
-    for (mesh_index, a, b) in &edges {
-        let uses = edges
-            .iter()
-            .filter(|(other_mesh, c, d)| {
-                other_mesh == mesh_index && ((a == c && b == d) || (a == d && b == c))
-            })
-            .count();
-        if uses == 1 {
+    for edges in &mesh_edges {
+        let balance = classify_edge_balance(edges);
+        if balance.boundary_edges != 0 || balance.unbalanced_edges != 0 {
             return Ok(false);
         }
     }
@@ -18095,10 +18085,24 @@ mod tests {
     #[test]
     fn surface_reference_closure_allows_non_manifold_edge_valence() {
         let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
-        let polygons = vec![polygon.clone(), polygon.clone(), polygon];
+        let polygons = vec![
+            polygon.clone(),
+            polygon.clone(),
+            polygon.inverted(),
+            polygon.inverted(),
+        ];
         let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
         assert!(polygon_family_is_closed_within_bounds(&polygons, &bounds, 1).unwrap());
+    }
+
+    #[test]
+    fn surface_reference_closure_rejects_unbalanced_non_manifold_edge_valence() {
+        let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+        let polygons = vec![polygon.clone(), polygon.clone(), polygon];
+        let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
+
+        assert!(!polygon_family_is_closed_within_bounds(&polygons, &bounds, 1).unwrap());
     }
 
     #[test]

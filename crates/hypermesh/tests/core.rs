@@ -278,6 +278,31 @@ fn prepare_input_rejects_open_source_meshes() {
 }
 
 #[test]
+fn prepare_input_rejects_closed_valence_non_pwn_source_meshes() {
+    let mut mesh = tetra_mesh();
+    mesh.triangles[0] = Triangle::new(0, 1, 2);
+
+    assert_eq!(
+        prepare_input(&[mesh.as_ref()]),
+        Err(HypermeshError::NonPwnInput {
+            mesh_index: 0,
+            unbalanced_edges: 3,
+        })
+    );
+}
+
+#[test]
+fn prepare_input_accepts_balanced_non_manifold_edge_multiplicity() {
+    let mut mesh = tetra_mesh();
+    mesh.triangles.extend(mesh.triangles.clone());
+
+    let soup = prepare_input(&[mesh.as_ref()]).unwrap();
+
+    assert_eq!(soup.polygons.len(), 8);
+    assert!(soup.polygons.iter().all(|polygon| polygon.delta_w == [1]));
+}
+
+#[test]
 fn prepare_input_rejects_degenerate_source_triangles() {
     let repeated_positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
     let repeated = [Triangle::new(0, 0, 2)];
@@ -808,6 +833,23 @@ fn boolean_operation_rejects_open_input_before_general_path() {
         HypermeshError::OpenInput {
             mesh_index: 0,
             boundary_edges: 3
+        }
+    );
+}
+
+#[test]
+fn boolean_operation_rejects_non_pwn_input_before_general_path() {
+    let mut mesh = tetra_mesh();
+    mesh.triangles[0] = Triangle::new(0, 1, 2);
+
+    let err =
+        boolean_operation(&[mesh.as_ref()], BooleanOp::Union, EmberConfig::default()).unwrap_err();
+
+    assert_eq!(
+        err,
+        HypermeshError::NonPwnInput {
+            mesh_index: 0,
+            unbalanced_edges: 3,
         }
     );
 }

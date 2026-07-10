@@ -7,9 +7,9 @@
 //! triangle meshes represented with exact [`Real`] coordinates through
 //! `hyperlattice::Point3`. Disconnected closed components and nested closed
 //! components are part of that model. Empty meshes, degenerate source
-//! triangles, open triangle soups, invalid triangle indices, and arbitrary
-//! non-PWN surface collections are outside the supported model and are
-//! rejected before the general boolean path runs.
+//! triangles, open triangle soups, signed edge boundaries, invalid triangle
+//! indices, and arbitrary non-PWN surface collections are outside the
+//! supported model and are rejected before the general boolean path runs.
 //!
 //! The current runtime contract inside that intended model is stricter than a
 //! blanket completeness claim:

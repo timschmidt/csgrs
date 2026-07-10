@@ -37,6 +37,15 @@ pub enum HypermeshError {
         /// Number of undirected edges used by exactly one triangle.
         boundary_edges: usize,
     },
+    /// An input mesh has nonzero signed boundary and therefore does not define
+    /// a closed piecewise-winding-number surface.
+    NonPwnInput {
+        /// Index of the mesh with inconsistent directed edge multiplicities.
+        mesh_index: usize,
+        /// Number of geometric edge classes whose forward and reverse uses do
+        /// not cancel.
+        unbalanced_edges: usize,
+    },
     /// A predicate or certified construction could not be decided through the
     /// strict exact-predicate routes without choosing a precision budget or an
     /// approximate fallback.
@@ -100,6 +109,13 @@ impl fmt::Display for HypermeshError {
             } => write!(
                 f,
                 "input mesh {mesh_index} has {boundary_edges} boundary edges"
+            ),
+            Self::NonPwnInput {
+                mesh_index,
+                unbalanced_edges,
+            } => write!(
+                f,
+                "input mesh {mesh_index} has {unbalanced_edges} directed edge imbalances"
             ),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::ReferencePropagationFailed => {
