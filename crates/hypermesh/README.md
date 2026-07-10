@@ -134,7 +134,13 @@ declared endpoint. A decidable mismatch is discarded so winding propagation
 cannot silently start from a stale point; a singular or otherwise undecidable
 triple is excluded from execution while its uncertainty is preserved if no
 certified alternative succeeds, and the exact axis definition of the endpoint
-is always included. The reachability-side retained plane-replacement
+is always included. Successful subdivision reference states now enforce the
+corresponding storage invariant as well: inherited, projected, support, reused,
+and cached child references retain only plane triples whose affine
+reconstruction equals the stored point, collapse plane-set duplicates, and
+synthesize the exact axis triple when no retained certificate survives. Stale
+or singular triples can no longer persist as claimed construction metadata in
+later child tasks. The reachability-side retained plane-replacement
 fallback now keeps that same no-detour reachability cache and detour-family
 cache alive across sibling retained replacement steps too, instead of
 rebuilding them for each later subquery. The same local

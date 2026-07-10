@@ -78,6 +78,11 @@ pub struct SubdivisionTask {
     /// uncertified.
     pub ref_point: Point3,
     /// Plane triples that certify constructions of `ref_point`.
+    ///
+    /// Subdivision normalizes this family before use: triples whose affine
+    /// reconstruction is singular or differs from `ref_point` are removed,
+    /// plane-set duplicates are collapsed, and an exact axis triple is used
+    /// when no retained certificate survives.
     pub ref_definitions: Vec<[crate::geometry::Plane; 3]>,
     /// Winding number at `ref_point`, or the winding of one independently
     /// certified adjacent open cell under the on-surface rule above.
@@ -697,7 +702,7 @@ pub fn subdivide_into(
 }
 
 fn subdivide_into_inner_with(
-    task: SubdivisionTask,
+    mut task: SubdivisionTask,
     indicator: &Indicator,
     config: SubdivisionConfig,
     reachability_op: Option<BooleanOp>,
@@ -713,6 +718,7 @@ fn subdivide_into_inner_with(
     if task.polygons.is_empty() {
         return Ok(());
     }
+    task.ref_definitions = certified_reference_definitions(&task.ref_point, &task.ref_definitions);
 
     cached_root_split_basis_with(
         &caches.split_candidates,
@@ -1150,7 +1156,7 @@ fn propagate_child_reference(
         )?
     };
     if let Some(reused) = reused_reference {
-        return Ok(reused);
+        return Ok(certified_reference_result(reused));
     }
 
     let direct_result = compute_new_reference_with_query_caches(
@@ -1163,6 +1169,7 @@ fn propagate_child_reference(
     );
     match direct_result {
         Ok(result) => {
+            let result = certified_reference_result(result);
             cache_child_reference_result(
                 &caches.child_reference,
                 &task.ref_point,
@@ -1622,7 +1629,7 @@ fn cached_child_reference_with(
         })
         .cloned()
     {
-        return existing.result;
+        return existing.result.map(certified_reference_result);
     }
 
     let source_polygon_profile = polygon_family_profile(source_polygons);
@@ -1663,10 +1670,10 @@ fn cached_child_reference_with(
                 );
             }
         }
-        return existing.result;
+        return existing.result.map(certified_reference_result);
     }
 
-    let result = query();
+    let result = query().map(certified_reference_result);
     cache.borrow_mut().push(ChildReferenceCacheEntry {
         source_polygon_profile,
         old_ref: old_ref.clone(),
@@ -1708,7 +1715,7 @@ fn cache_child_reference_result(
         old_ref: old_ref.clone(),
         old_ref_definitions: old_ref_definitions.to_vec(),
         old_wnv: old_wnv.to_vec(),
-        result: Ok(result.clone()),
+        result: Ok(certified_reference_result(result.clone())),
     });
 }
 
@@ -1748,11 +1755,11 @@ fn reusable_child_reference_if_certified(
         |point| is_certified_valid_reference_for_bounds(point, child_bounds, child_polygons),
     ) {
         Ok(true) => {
-            let reused = (
+            let reused = certified_reference_result((
                 task.ref_point.clone(),
                 task.ref_definitions.clone(),
                 task.ref_wnv.clone(),
-            );
+            ));
             cache_child_reference_result(
                 cache,
                 &task.ref_point,
@@ -2090,11 +2097,11 @@ fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
                 &task.polygons,
                 query_caches,
             )? {
-                reused = Some((
+                reused = Some(certified_reference_result((
                     existing.task.ref_point.clone(),
                     existing.task.ref_definitions.clone(),
                     existing.task.ref_wnv.clone(),
-                ));
+                )));
                 break;
             }
         }
@@ -4365,11 +4372,11 @@ fn compute_new_reference_with_query_caches(
 
     let old_ref_unknown = match is_certified_valid_reference_for_bounds(old_ref, bounds, polygons) {
         Ok(true) => {
-            return Ok((
+            return Ok(certified_reference_result((
                 old_ref.clone(),
                 old_ref_definitions.to_vec(),
                 old_wnv.to_vec(),
-            ));
+            )));
         }
         Ok(false) => false,
         Err(crate::error::HypermeshError::UnknownClassification) => true,
@@ -4393,7 +4400,11 @@ fn compute_new_reference_with_query_caches(
         &mut query_caches.borrow_mut(),
     ) {
         Ok(Some((target, winding))) => {
-            return Ok((target.point, target.definitions, winding));
+            return Ok(certified_reference_result((
+                target.point,
+                target.definitions,
+                winding,
+            )));
         }
         Ok(None) => false,
         Err(crate::error::HypermeshError::UnknownClassification) => true,
@@ -4857,10 +4868,18 @@ fn reference_result_or_error(
     projected_unknown: bool,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     if let Some((target, winding)) = projected {
-        return Ok((target.point, target.definitions, winding));
+        return Ok(certified_reference_result((
+            target.point,
+            target.definitions,
+            winding,
+        )));
     }
     if let Some((target, winding)) = support {
-        return Ok((target.point, target.definitions, winding));
+        return Ok(certified_reference_result((
+            target.point,
+            target.definitions,
+            winding,
+        )));
     }
     if projected_unknown {
         Err(crate::error::HypermeshError::UnknownClassification)
@@ -4876,7 +4895,11 @@ fn reference_result_with_support_fallback(
     support_search: impl FnOnce() -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
 ) -> HypermeshResult<(Point3, Vec<[Plane; 3]>, Vec<i32>)> {
     if let Some((target, winding)) = projected {
-        return Ok((target.point, target.definitions, winding));
+        return Ok(certified_reference_result((
+            target.point,
+            target.definitions,
+            winding,
+        )));
     }
 
     let support = support_search()?;
@@ -10585,6 +10608,33 @@ fn push_verified_definition(
     Ok(())
 }
 
+fn certified_reference_definitions(point: &Point3, definitions: &[[Plane; 3]]) -> Vec<[Plane; 3]> {
+    let mut certified = Vec::new();
+    for definition in definitions {
+        let Ok(defined_point) = affine_from_planes(definition) else {
+            continue;
+        };
+        if defined_point == *point
+            && !certified
+                .iter()
+                .any(|existing| reference_definition_planes_match_as_sets(existing, definition))
+        {
+            certified.push(definition.clone());
+        }
+    }
+    if certified.is_empty() {
+        certified.push(axis_plane_definition(point));
+    }
+    certified
+}
+
+fn certified_reference_result(
+    (point, definitions, winding): (Point3, Vec<[Plane; 3]>, Vec<i32>),
+) -> (Point3, Vec<[Plane; 3]>, Vec<i32>) {
+    let definitions = certified_reference_definitions(&point, &definitions);
+    (point, definitions, winding)
+}
+
 fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     bounds: &Aabb,
     halfspaces: &[LimitPlane3],
@@ -13131,6 +13181,53 @@ mod tests {
     }
 
     #[test]
+    fn compute_new_reference_replaces_uncertified_inherited_definitions() {
+        let old_ref = p(2, 2, 2);
+        let mismatched = axis_plane_definition(&p(3, 2, 2));
+        let singular = [
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(0, r(3)),
+            Plane::axis_aligned(2, r(2)),
+        ];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+
+        let (point, definitions, winding) =
+            compute_new_reference(&old_ref, &[mismatched, singular], &[7], &bounds, &[]).unwrap();
+
+        assert_eq!(point, old_ref);
+        assert_eq!(definitions, axis_defs(&point));
+        assert_eq!(winding, vec![7]);
+    }
+
+    #[test]
+    fn certified_reference_definitions_keep_unique_matching_non_axis_triples() {
+        let point = p(2, 2, 2);
+        let matching = [
+            Plane::from_coefficients(r(1), r(1), r(0), r(-4)),
+            Plane::axis_aligned(1, r(2)),
+            Plane::axis_aligned(2, r(2)),
+        ];
+        let permuted = [
+            matching[2].clone(),
+            matching[0].clone(),
+            matching[1].clone(),
+        ];
+        let mismatched = axis_plane_definition(&p(3, 2, 2));
+        let singular = [
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(0, r(3)),
+            Plane::axis_aligned(2, r(2)),
+        ];
+
+        let definitions = certified_reference_definitions(
+            &point,
+            &[mismatched, matching.clone(), singular, permuted],
+        );
+
+        assert_eq!(definitions, vec![matching]);
+    }
+
+    #[test]
     fn compute_new_reference_skips_projected_search_after_support_hit() {
         let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
         let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
@@ -15370,6 +15467,19 @@ mod tests {
     }
 
     #[test]
+    fn reference_result_or_error_drops_mismatched_target_definitions() {
+        let point = p(4, 5, 6);
+        let target = ReferenceTarget::with_definitions(
+            point.clone(),
+            vec![axis_plane_definition(&p(7, 8, 9))],
+        );
+
+        let result = reference_result_or_error(Some((target, vec![11])), None, false).unwrap();
+
+        assert_eq!(result, (point.clone(), axis_defs(&point), vec![11]));
+    }
+
+    #[test]
     fn reference_result_with_support_fallback_skips_support_search_after_projected_hit() {
         let projected_target = ReferenceTarget::axis_defined(p(1, 2, 3));
         let mut support_calls = 0;
@@ -16226,6 +16336,35 @@ mod tests {
 
         assert_eq!(calls.get(), 1);
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn cached_child_reference_stores_only_certified_result_definitions() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
+        let cache = RefCell::new(Vec::new());
+        let old_ref = p(0, 0, 0);
+        let point = p(1, 2, 3);
+
+        let result = cached_child_reference_with(
+            &cache,
+            &old_ref,
+            &axis_defs(&old_ref),
+            &[0],
+            std::slice::from_ref(&polygon),
+            &bounds,
+            || {
+                Ok((
+                    point.clone(),
+                    vec![axis_plane_definition(&p(9, 9, 9))],
+                    vec![7],
+                ))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(result, (point.clone(), axis_defs(&point), vec![7]));
+        assert_eq!(cache.borrow()[0].result, Ok(result));
     }
 
     #[test]
@@ -25590,6 +25729,38 @@ mod tests {
         .unwrap();
 
         assert_eq!(output, vec![emitted]);
+    }
+
+    #[test]
+    fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
+        let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+        wall.delta_w = vec![1];
+        let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
+        let ref_point = p(0, 0, 0);
+        let mut task = SubdivisionTask::new(vec![wall], bounds, ref_point.clone(), vec![0]);
+        task.ref_definitions = vec![axis_plane_definition(&p(9, 9, 9))];
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let caches = SubdivisionRuntimeCaches::default();
+        let mut output = Vec::new();
+
+        subdivide_into_inner_with(
+            task,
+            &indicator,
+            SubdivisionConfig { max_depth: 4 },
+            None,
+            &mut output,
+            &mut |task, _indicator, _output| {
+                assert_eq!(task.ref_definitions, axis_defs(&ref_point));
+                Ok(LeafProcessingStats {
+                    polygon_count: 1,
+                    certified_complete: true,
+                    ..LeafProcessingStats::default()
+                })
+            },
+            &caches,
+            &caches.winding_reachability,
+        )
+        .unwrap();
     }
 
     #[test]
