@@ -12,7 +12,8 @@ use crate::winding::{BooleanOp, make_indicator};
 /// Configuration for boolean operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct EmberConfig {
-    /// Maximum recursive subdivision depth.
+    /// Maximum recursive subdivision depth, or `usize::MAX` for no
+    /// caller-selected limit.
     ///
     /// Reaching this bound is not treated as implicit success. If the current
     /// task has not certified as a complete leaf and an exact root-basis
@@ -152,5 +153,10 @@ mod tests {
         let point = outside_reference_point(&bounds);
 
         assert_eq!(point, p(-1, 5, 9));
+    }
+
+    #[test]
+    fn default_config_uses_finite_split_basis_without_a_depth_budget() {
+        assert_eq!(EmberConfig::default().max_depth, usize::MAX);
     }
 }

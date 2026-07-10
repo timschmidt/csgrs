@@ -46,9 +46,12 @@
 //! has exact forward/reverse edge cancellation before duplicate/T-junction
 //! triangulation cleanup runs. Open or directionally unbalanced arrangements
 //! are rejected rather than repaired. If subdivision
-//! reaches its configured depth budget before a task is certified complete, the
-//! operation fails with [`HypermeshError::SubdivisionDepthLimit`] instead of
-//! guessing through the unfinished branch.
+//! reaches an explicitly configured finite depth budget before a task is
+//! certified complete, the operation fails with
+//! [`HypermeshError::SubdivisionDepthLimit`] instead of guessing through the
+//! unfinished branch. Default configurations have no arbitrary depth cap;
+//! their subdivision branches terminate by exhausting the finite root split
+//! basis.
 //!
 //! Use [`triangulate_and_resolve_certified`] to triangulate a boolean result
 //! while preserving the invariant that open or zero-volume output is rejected

@@ -45,9 +45,9 @@ blanket completeness claim:
   `SubdivisionDepthLimit`, `OpenOutput`, or `OutputResolutionLimit` instead of
   silently widening the support claim.
 - Completion is not yet claimed for the whole intended closed-PWN model. The
-  remaining finite-family search structure and depth-budgeted termination mean
-  that some intended-model inputs can still fail with those explicit errors
-  even when a complete EMBER implementation would certify them.
+  remaining finite-family search structure means that some intended-model
+  inputs can still fail with those explicit errors even when a complete EMBER
+  implementation would certify them.
 
 Predicate decisions are routed through the strict exact-predicate stack
 (`hyperlimit` and `hyperlattice` as support crates). A scalar predicate, path
@@ -1003,9 +1003,10 @@ of, or outside, each child and therefore cannot be selected again on either
 branch. The number of root-basis planes strictly inside the bounds decreases on
 every recursive split, which bounds branch depth by the finite root-basis size.
 This supplies the global subdivision-finiteness proof independently of
-`max_depth`; that setting remains a user-selected certification budget. If no
-root-basis plane remains, hypermesh attempts the certified leaf once and returns
-`UnknownClassification` if it cannot prove BSP completeness; it does not
+`max_depth`; finite values remain a user-selected certification budget, while
+the default `usize::MAX` leaves the finite split basis as the termination bound.
+If no root-basis plane remains, hypermesh attempts the certified leaf once and
+returns `UnknownClassification` if it cannot prove BSP completeness; it does not
 repeatedly bisect event-free bounds toward `max_depth`. Split ranking penalizes
 empty-child cuts explicitly, so a cut
 that leaves all polygons on one side is no longer preferred over a non-empty

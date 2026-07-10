@@ -38,13 +38,17 @@ use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
 };
 
-/// Default maximum subdivision depth.
-pub const DEFAULT_MAX_DEPTH: usize = 40;
+/// Default subdivision depth budget.
+///
+/// `usize::MAX` disables the caller-selected depth budget. Subdivision still
+/// terminates because every branch can consume only the finite root split
+/// basis constructed for the top-level task.
+pub const DEFAULT_MAX_DEPTH: usize = usize::MAX;
 
 /// Configuration for recursive subdivision.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SubdivisionConfig {
-    /// Maximum recursive depth.
+    /// Maximum recursive depth, or `usize::MAX` for no caller-selected limit.
     ///
     /// Reaching this bound is an explicit failure mode when the current task
     /// has not certified as a complete leaf and an exact root-basis arrangement
@@ -810,7 +814,7 @@ fn subdivide_into_inner_with(
         &task.polygons,
     )?;
 
-    if task.depth >= config.max_depth {
+    if subdivision_depth_budget_reached(task.depth, config.max_depth) {
         if let Some(certified_output) =
             certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
                 process_leaf(task, indicator, output)
@@ -1088,7 +1092,10 @@ fn process_split_attempt_child(
         ref_point: child_ref,
         ref_definitions: child_ref_definitions,
         ref_wnv: child_wnv,
-        depth: task.depth + 1,
+        depth: task
+            .depth
+            .checked_add(1)
+            .ok_or(crate::error::HypermeshError::UnknownClassification)?,
     };
     if subdivision_task_state_matches_for_cache(&child_task, task) {
         return Err(crate::error::HypermeshError::ReferencePropagationFailed);
@@ -1132,6 +1139,10 @@ fn process_split_attempt_child(
         child_output,
     );
     Ok(())
+}
+
+fn subdivision_depth_budget_reached(depth: usize, max_depth: usize) -> bool {
+    max_depth != usize::MAX && depth >= max_depth
 }
 
 fn propagate_child_reference(
@@ -11892,6 +11903,14 @@ mod tests {
 
     fn q(numerator: i32, denominator: i32) -> Real {
         (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    #[test]
+    fn unlimited_depth_budget_never_preempts_the_finite_split_basis() {
+        assert!(!subdivision_depth_budget_reached(0, usize::MAX));
+        assert!(!subdivision_depth_budget_reached(usize::MAX, usize::MAX));
+        assert!(subdivision_depth_budget_reached(7, 7));
+        assert!(subdivision_depth_budget_reached(8, 7));
     }
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
