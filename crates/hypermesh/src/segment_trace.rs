@@ -198,11 +198,11 @@ pub(crate) struct LeafProbeQueryCaches {
     definition_no_step_detour_reachability: DefinitionNoDetourReachabilityCache,
     definition_no_plane_replacement_cycle_guard: DefinitionNoPlaneReplacementCycleGuardCache,
     definition_no_plane_replacement_reachability: DefinitionNoPlaneReplacementReachabilityCache,
-    no_step_detour_target_families: Vec<DetourTargetFamilyCacheEntry>,
+    no_step_detour_target_families: DetourTargetFamilyCache,
     definition_full_no_detour_reachability: DefinitionNoDetourReachabilityCache,
     definition_no_detour_trace: Vec<DefinitionNoDetourTraceCacheEntry>,
     definition_no_detour_reachability: DefinitionNoDetourReachabilityCache,
-    detour_target_families: Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_families: DetourTargetFamilyCache,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -481,6 +481,26 @@ struct DetourTargetFamilyCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+struct DetourTargetFamilyBucket {
+    start: Point3,
+    end: Point3,
+    indices: Vec<usize>,
+}
+
+#[derive(Default)]
+struct DetourTargetFamilyCache {
+    entries: Vec<DetourTargetFamilyCacheEntry>,
+    buckets: Vec<DetourTargetFamilyBucket>,
+}
+
+impl DetourTargetFamilyCache {
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.entries.len()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 struct DetourTarget {
     point: Point3,
     definitions: Vec<[Plane; 3]>,
@@ -670,7 +690,7 @@ pub(crate) fn trace_segment_from_definitions(
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_cache = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     trace_segment_from_definitions_with_caches(
         start,
         end,
@@ -691,7 +711,7 @@ fn trace_segment_from_definitions_with_caches(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
@@ -725,7 +745,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_surface_cache = Vec::new();
     let mut trace_without_detours =
@@ -1122,8 +1142,43 @@ fn cached_definition_no_detour_trace_with(
     result
 }
 
+fn matching_detour_target_family_bucket_indices<'a>(
+    buckets: &'a [DetourTargetFamilyBucket],
+    start: &Point3,
+    end: &Point3,
+) -> Option<&'a [usize]> {
+    buckets
+        .iter()
+        .rev()
+        .find(|existing| {
+            (existing.start == *start && existing.end == *end)
+                || (existing.start == *end && existing.end == *start)
+        })
+        .map(|bucket| bucket.indices.as_slice())
+}
+
+fn push_detour_target_family_bucket_entry(
+    buckets: &mut Vec<DetourTargetFamilyBucket>,
+    start: &Point3,
+    end: &Point3,
+    index: usize,
+) {
+    if let Some(bucket) = buckets.iter_mut().find(|existing| {
+        (existing.start == *start && existing.end == *end)
+            || (existing.start == *end && existing.end == *start)
+    }) {
+        bucket.indices.push(index);
+        return;
+    }
+    buckets.push(DetourTargetFamilyBucket {
+        start: start.clone(),
+        end: end.clone(),
+        indices: vec![index],
+    });
+}
+
 fn cached_detour_target_family_with(
-    cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    cache: &mut DetourTargetFamilyCache,
     start: &Point3,
     end: &Point3,
     build: impl FnOnce() -> HypermeshResult<Vec<DetourTarget>>,
@@ -1133,22 +1188,26 @@ fn cached_detour_target_family_with(
     }
 
     let targets = build();
-    cache.push(DetourTargetFamilyCacheEntry {
+    cache.entries.push(DetourTargetFamilyCacheEntry {
         start: start.clone(),
         end: end.clone(),
         targets: targets.clone(),
     });
+    let index = cache.entries.len() - 1;
+    push_detour_target_family_bucket_entry(&mut cache.buckets, start, end, index);
     targets
 }
 
 fn cached_detour_target_family<'a>(
-    cache: &'a [DetourTargetFamilyCacheEntry],
+    cache: &'a DetourTargetFamilyCache,
     start: &Point3,
     end: &Point3,
 ) -> Option<&'a DetourTargetFamilyCacheEntry> {
-    cache.iter().rev().find(|existing| {
-        (existing.start == *start && existing.end == *end)
-            || (existing.start == *end && existing.end == *start)
+    matching_detour_target_family_bucket_indices(&cache.buckets, start, end).and_then(|indices| {
+        indices
+            .iter()
+            .rev()
+            .find_map(|index| cache.entries.get(*index))
     })
 }
 
@@ -4816,12 +4875,12 @@ fn evaluate_leaf_probe_with_query_caches(
         &mut DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    no_step_detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    no_step_detour_target_families: &mut DetourTargetFamilyCache,
     definition_full_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     definition_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
-    detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_families: &mut DetourTargetFamilyCache,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let probe_fallback = probe.uncertified_definition_fallback;
@@ -5357,7 +5416,7 @@ fn trace_probe_winding(
     let mut plane_replacement_affine = Vec::new();
     let mut plane_replacement_trace_steps = Vec::new();
     let mut definition_no_detour_trace = Vec::new();
-    let mut detour_target_families = Vec::new();
+    let mut detour_target_families = DetourTargetFamilyCache::default();
     trace_probe_winding_with_caches(
         ref_point,
         ref_definitions,
@@ -5384,7 +5443,7 @@ fn trace_probe_winding_with_caches(
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_families: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut probe_definitions = probe.planes.clone();
     let axis_definition = axis_plane_defined_point(&probe.point).planes;
@@ -5421,7 +5480,7 @@ pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacemen
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_cache = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut surface_cache = Vec::new();
     let mut axis_ordered_segment_traces = Vec::new();
     let mut plane_replacement_affine = Vec::new();
@@ -5454,7 +5513,7 @@ fn trace_segment_from_definitions_with_step_detoured_plane_replacement_with_cach
     plane_replacement_affine: &mut Vec<PlaneReplacementAffineCacheEntry>,
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     match trace_segment_from_definitions_with_caches_and_surface_query(
         start,
@@ -5497,7 +5556,7 @@ fn trace_probe_from_reference_definitions(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_cache = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     trace_from_definition_sets_with_step_detoured_plane_replacement(
         ref_point,
         ref_definitions,
@@ -5518,7 +5577,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement(
     winding: &[i32],
     polygons: &[ConvexPolygon],
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_caches(
         start,
@@ -5540,7 +5599,7 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
     winding: &[i32],
     polygons: &[ConvexPolygon],
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut start_definitions = start_definitions.to_vec();
     append_definition_if_missing(
@@ -5639,7 +5698,7 @@ fn trace_plane_replacement_path_with_step_detours_with_query_caches(
     affine_cache: &mut Vec<PlaneReplacementAffineCacheEntry>,
     step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     no_detour_cache: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     trace_plane_replacement_path_with_step_detours_impl(
         start_planes,
@@ -6377,11 +6436,11 @@ fn probe_reaches_adjacent_cell_from_interior(
         DefinitionNoPlaneReplacementReachabilityCache::default();
     let mut halfspace_reports = Vec::new();
     let mut halfspace_seed_families = Vec::new();
-    let mut no_step_detour_target_families = Vec::new();
+    let mut no_step_detour_target_families = DetourTargetFamilyCache::default();
     let mut definition_full_no_detour_reachability = DefinitionNoDetourReachabilityCache::default();
     let mut definition_no_detour_reachability = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability = Vec::new();
-    let mut detour_target_families = Vec::new();
+    let mut detour_target_families = DetourTargetFamilyCache::default();
     probe_reaches_adjacent_cell_from_interior_with_caches(
         interior,
         probe,
@@ -6427,11 +6486,11 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         &mut DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    no_step_detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    no_step_detour_target_families: &mut DetourTargetFamilyCache,
     definition_full_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     definition_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
-    detour_target_families: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_families: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<bool> {
     let mut start_definitions = interior.planes.clone();
     append_definition_if_missing(
@@ -6493,11 +6552,11 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
     let mut halfspace_reports = Vec::new();
     let mut halfspace_seed_families = Vec::new();
-    let mut no_step_detour_target_cache = Vec::new();
+    let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
     let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         start,
         end,
@@ -6546,11 +6605,11 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_reports: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    no_step_detour_target_cache: &mut DetourTargetFamilyCache,
     full_no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<bool> {
     let visited_points =
         initial_visited_definition_points(start, start_definitions, end, end_definitions);
@@ -6601,7 +6660,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
             )
         };
     let has_top_level_detour_cache_hit =
-        cached_detour_target_family(&*detour_target_cache, start, end).is_some();
+        cached_detour_target_family(detour_target_cache, start, end).is_some();
     let mut detours_for = |start: &Point3, end: &Point3| {
         cached_detour_target_family_with(detour_target_cache, start, end, || {
             interior_box_detour_targets(start, end, polygons)
@@ -7338,7 +7397,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
     let mut no_plane_replacement_cycle_guard_cache =
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
-    let mut no_step_detour_target_cache = Vec::new();
+    let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
     let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
@@ -7383,7 +7442,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     halfspace_seed_families: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
-    no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    no_step_detour_target_cache: &mut DetourTargetFamilyCache,
     full_no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
@@ -7834,7 +7893,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
         start,
@@ -7878,7 +7937,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     reach_without_detours: impl FnMut(
         &Point3,
@@ -7921,7 +7980,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     reach_without_detours: impl FnMut(
         &Point3,
@@ -7963,7 +8022,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
     halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
     strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     interior_box_axis_intervals: &mut Vec<InteriorBoxAxisIntervalsCacheEntry>,
     progressive_interior_box_detours: bool,
     mut reach_without_detours: impl FnMut(
@@ -8052,7 +8111,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
     let mut strict_aabb_target_families = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_mode(
         start,
@@ -8094,7 +8153,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     let mut surface_cache = Vec::new();
@@ -8144,7 +8203,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
     let mut halfspace_report_cache = Vec::new();
     let mut halfspace_seed_family_cache = Vec::new();
     let mut strict_aabb_target_families = Vec::new();
-    let mut detour_target_cache = Vec::new();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
     let mut interior_box_axis_intervals = Vec::new();
     probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guard_impl_with_surface_query_mode(
         start,
@@ -8190,7 +8249,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     if matches!(
@@ -8232,7 +8291,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                 saw_unknown = true;
             }
             if progressive_interior_box_detours
-                && cached_detour_target_family(&*detour_target_cache, start, end).is_none()
+                && cached_detour_target_family(detour_target_cache, start, end).is_none()
             {
                 let outcome =
                     probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
@@ -8256,11 +8315,20 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_cycle_guar
                     detours_for_query,
                 );
                 if let Some(targets) = outcome.exhausted_targets.clone() {
-                    detour_target_cache.push(DetourTargetFamilyCacheEntry {
-                        start: start.clone(),
-                        end: end.clone(),
-                        targets,
-                    });
+                    detour_target_cache
+                        .entries
+                        .push(DetourTargetFamilyCacheEntry {
+                            start: start.clone(),
+                            end: end.clone(),
+                            targets,
+                        });
+                    let index = detour_target_cache.entries.len() - 1;
+                    push_detour_target_family_bucket_entry(
+                        &mut detour_target_cache.buckets,
+                        start,
+                        end,
+                        index,
+                    );
                 }
                 match outcome.result {
                     Ok(true) => Ok(true),
@@ -8347,7 +8415,7 @@ fn evaluate_probe_detour_target_without_plane_replacement_with_surface_query(
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<bool> {
@@ -8541,7 +8609,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> HypermeshResult<bool> {
     probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
@@ -8589,7 +8657,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-    detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    detour_target_cache: &mut DetourTargetFamilyCache,
     detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
 ) -> ProgressiveNoPlaneDetourSearchOutcome {
     let (intervals, mut saw_unknown) = match cached_interior_box_axis_intervals_with_surface_queries(
@@ -8954,7 +9022,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         DefinitionNoPlaneReplacementCycleGuardCache::default();
     let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
     let mut strict_aabb_target_families = Vec::new();
-    let mut no_step_detour_target_cache = Vec::new();
+    let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
     let mut direct_probe_reachability_cache = Vec::new();
     let mut interior_box_axis_intervals = Vec::new();
     plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
@@ -8996,7 +9064,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
     no_plane_replacement_cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
     strict_aabb_target_families: &mut Vec<StrictAabbTargetFamilyCacheEntry>,
-    no_step_detour_target_cache: &mut Vec<DetourTargetFamilyCacheEntry>,
+    no_step_detour_target_cache: &mut DetourTargetFamilyCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
     cached_plane_replacement_reachability_path_with(
@@ -13942,7 +14010,7 @@ mod tests {
                     Ok(true)
                 }
             },
-            &mut Vec::new(),
+            &mut DetourTargetFamilyCache::default(),
             &mut |_from, _to| Ok(Vec::new()),
             &mut saw_unknown,
         )
@@ -16015,7 +16083,7 @@ mod tests {
             DefinitionNoPlaneReplacementCycleGuardCache::default();
         let mut no_plane_replacement_cache =
             DefinitionNoPlaneReplacementReachabilityCache::default();
-        let mut no_step_detour_target_cache = Vec::new();
+        let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
         let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
         let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
         let mut direct_probe_reachability_cache = Vec::new();
@@ -17690,7 +17758,7 @@ mod tests {
         let start_definitions = vec![axis_plane_definition(&start)];
         let end_definitions = vec![axis_plane_definition(&end)];
         let mut no_detour_cache = Vec::new();
-        let mut detour_target_cache = Vec::new();
+        let mut detour_target_cache = DetourTargetFamilyCache::default();
 
         let first = trace_segment_from_definitions_with_caches(
             &start,
@@ -18036,7 +18104,7 @@ mod tests {
             definitions: vec![axis_plane_definition(&p(0, 1, 0))],
             uncertified_definition_fallback: false,
         };
-        let mut cache = Vec::new();
+        let mut cache = DetourTargetFamilyCache::default();
         let mut build_calls = 0;
 
         let first = cached_detour_target_family_with(&mut cache, &start, &end, || {
@@ -18064,7 +18132,7 @@ mod tests {
             definitions: vec![axis_plane_definition(&p(0, 1, 0))],
             uncertified_definition_fallback: false,
         };
-        let mut cache = Vec::new();
+        let mut cache = DetourTargetFamilyCache::default();
         let mut build_calls = 0;
 
         let first = cached_detour_target_family_with(&mut cache, &start, &end, || {
@@ -23901,7 +23969,7 @@ mod tests {
             DefinitionNoPlaneReplacementReachabilityCache::default();
         let mut halfspace_report_cache = Vec::new();
         let mut halfspace_seed_family_cache = Vec::new();
-        let mut detour_target_cache = Vec::new();
+        let mut detour_target_cache = DetourTargetFamilyCache::default();
         let mut interior_box_axis_intervals = Vec::new();
         let mut shared_no_detour_calls = 0;
         let mut shared_detour_family_calls = 0;
@@ -23958,7 +24026,7 @@ mod tests {
             DefinitionNoPlaneReplacementReachabilityCache::default();
         let mut halfspace_report_cache = Vec::new();
         let mut halfspace_seed_family_cache = Vec::new();
-        let mut detour_target_cache = Vec::new();
+        let mut detour_target_cache = DetourTargetFamilyCache::default();
         let mut interior_box_axis_intervals = Vec::new();
 
         let first = probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_definitions_with(
@@ -24035,7 +24103,7 @@ mod tests {
         let mut strict_aabb_target_families = Vec::new();
         let mut interior_box_axis_intervals = Vec::new();
         let mut surface_cache = Vec::new();
-        let mut detour_target_cache = Vec::new();
+        let mut detour_target_cache = DetourTargetFamilyCache::default();
         let visited_points = vec![VisitedDefinitionPoint {
             point: mid,
             definitions: vec![axis_plane_definition(&p(0, 1, 1))],
