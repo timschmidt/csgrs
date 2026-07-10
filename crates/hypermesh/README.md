@@ -370,6 +370,12 @@ later certified probe directions are tried. Leaf classification now also
 backtracks past uncertified interior/side probe families and uncertified
 probe reachability checks instead of aborting before later certified interior
 witnesses or probe paths are tried. Normal- and axis-probe corridor search now
+retains an exact interior boundary hit as a stop barrier while preserving its
+uncertain winding transition, so candidate probes can be placed strictly before
+a shared triangle edge instead of overshooting it. Normal corridors try the
+exact halfway point to each ordered stop before expanding the broader strict
+witness family; the ordinary surface, reachability, and winding checks still
+certify that candidate before it can classify a leaf. Those corridor searches
 also keep exact bound-stop support-plane contacts visible to the local polygon
 classifier instead of dropping them as missing crossings, and exact zero-room
 bound-start contacts now count as local `UnknownClassification` instead of
@@ -614,7 +620,9 @@ plane remain excluded and still require retained-definition propagation. Exact
 plane/AABB extrema also discard endpoint boxes whose strict
 interiors lie entirely in an endpoint cell before their witness families are
 generated. This makes negative searches finite without an arbitrary path-depth
-or work cap. The live step-detour
+or work cap. The top-level retained-definition probe-reachability entry now uses
+that same batched breadth-first arrangement-cell search instead of recursively
+exhausting one progressive endpoint-box family before its siblings. The live step-detour
 reachability entry now
 also reuses those same definition-aware no-step-detour checks and endpoint-box
 detour families across failed sibling branches instead of rebuilding them on

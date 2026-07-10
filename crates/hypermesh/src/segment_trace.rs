@@ -4568,6 +4568,33 @@ fn search_adjacent_normal_probe_winding_with_queries(
         }
         let stop_point = offset_point(&point.point, &direction, &stop_t);
         let corridor = bounds_between_points(&point.point, &stop_point)?;
+        let half =
+            (Real::one() / Real::from(2)).map_err(|_| HypermeshError::UnknownClassification)?;
+        let direct_point = offset_point(&point.point, &direction, &(stop_t.clone() * half));
+        let direct_side = classify_point(&direct_point, support)?;
+        if direct_side != Classification::On {
+            let direct_probe = ProbePoint {
+                planes: vec![axis_plane_definition(&direct_point)],
+                point: direct_point,
+                side: direct_side,
+                uncertified_definition_fallback: false,
+            };
+            if let Some(winding) = try_leaf_probe_family_with_queries(
+                point,
+                positive_side,
+                Ok(vec![direct_probe]),
+                support,
+                ref_point,
+                ref_definitions,
+                ref_wnv,
+                polygons,
+                host_delta_w,
+                probe_query_caches,
+                saw_unknown,
+            )? {
+                return Ok(Some(winding));
+            }
+        }
 
         for definition in &retained_definitions {
             if let Some(winding) = try_strict_normal_probe_report_witness_winding_with_queries(
@@ -7736,68 +7763,39 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                 direct_probe_reachability_cache,
             )
         };
-    let has_top_level_detour_cache_hit =
-        cached_detour_target_family(detour_target_cache, start, end).is_some();
-    let mut detours_for = |start: &Point3, end: &Point3| {
-        cached_detour_target_family_with(detour_target_cache, start, end, || {
-            interior_box_detour_targets(start, end, polygons)
-        })
-    };
-    let direct_result = trace_without_detours(start, end, start_definitions, end_definitions);
-    let no_detour_unknown = match direct_result {
-        Ok(true) => {
-            definition_cycle_guard_reachability.entries[cache_index].result = Ok(true);
-            return Ok(true);
-        }
-        Ok(false) => false,
-        Err(HypermeshError::UnknownClassification) => true,
-        Err(err) => {
-            definition_cycle_guard_reachability.entries[cache_index].result = Err(err.clone());
-            return Err(err);
-        }
-    };
-
-    let detour_result = if has_top_level_detour_cache_hit {
-        probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
-            start,
-            end,
-            polygons,
-            start_definitions,
-            end_definitions,
-            &visited_points,
-            surface_cache,
-            &mut |point| point_lies_on_traced_surface(point, polygons),
-            &mut trace_without_detours,
-            &mut detours_for,
-        )?
-    } else {
-        let mut progressive_interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
-        probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surface_query(
-            start,
-            end,
-            polygons,
-            start_definitions,
-            end_definitions,
-            &visited_points,
-            &mut progressive_interior_box_axis_intervals,
-            surface_cache,
-            &mut |point| point_lies_on_traced_surface(point, polygons),
-            &mut trace_without_detours,
-            &mut detours_for,
-        )?
-    };
-
-    if detour_result {
-        definition_cycle_guard_reachability.entries[cache_index].result = Ok(true);
-        Ok(true)
-    } else if no_detour_unknown {
-        definition_cycle_guard_reachability.entries[cache_index].result =
-            Err(HypermeshError::UnknownClassification);
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        definition_cycle_guard_reachability.entries[cache_index].result = Ok(false);
-        Ok(false)
-    }
+    let arrangement_planes = detour_arrangement_planes(polygons);
+    let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
+    let result = probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        &arrangement_planes,
+        surface_cache,
+        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut trace_without_detours,
+        &mut |batch_start, batch_end, batch_index| {
+            if let Some(cached) =
+                cached_detour_target_family(detour_target_cache, batch_start, batch_end)
+            {
+                if batch_index == 0 {
+                    cached.targets.clone().map(Some)
+                } else {
+                    Ok(None)
+                }
+            } else {
+                detour_batches.batch_for(
+                    batch_start,
+                    batch_end,
+                    batch_index,
+                    polygons,
+                    &arrangement_planes,
+                )
+            }
+        },
+    );
+    definition_cycle_guard_reachability.entries[cache_index].result = result.clone();
+    result
 }
 
 #[cfg(test)]
@@ -7932,6 +7930,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
     )
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_with_cycle_guard_impl_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -8063,6 +8062,7 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
     )
 }
 
+#[cfg(test)]
 fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -8107,6 +8107,8 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
     }
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 fn probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surface_query(
     start: &Point3,
     end: &Point3,
@@ -8203,6 +8205,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surfa
     }
 }
 
+#[cfg(test)]
 fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
     detour: &DetourTarget,
     start: &Point3,
@@ -12808,7 +12811,6 @@ fn adjacent_normal_probe_stop_values_with_queries(
             PolygonPointLocation::Outside => continue,
             PolygonPointLocation::Boundary => {
                 saw_unknown = true;
-                continue;
             }
             PolygonPointLocation::Interior => {}
         }
@@ -13757,7 +13759,6 @@ fn adjacent_axis_probe_stop_values_with_queries(
             PolygonPointLocation::Outside => continue,
             PolygonPointLocation::Boundary => {
                 saw_unknown = true;
-                continue;
             }
             PolygonPointLocation::Interior => {}
         }
@@ -20277,6 +20278,38 @@ mod tests {
     }
 
     #[test]
+    fn adjacent_normal_probe_stop_values_retain_boundary_crossing_as_stop() {
+        let support = Plane::axis_aligned(0, r(0));
+        let interior = p(1, 1, 1);
+        let direction = support.normal.clone();
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+        let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+
+        let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
+            &interior,
+            &direction,
+            &support,
+            &bounds,
+            &[first, second],
+            &mut |_interior, direction, polygon| {
+                Ok(dot_direction(&polygon.support.normal, direction))
+            },
+            &mut |_point, polygon| {
+                if polygon.vertices().unwrap()[0].x == r(2) {
+                    Ok(PolygonPointLocation::Boundary)
+                } else {
+                    Ok(PolygonPointLocation::Interior)
+                }
+            },
+        )
+        .unwrap();
+
+        assert!(saw_unknown);
+        assert_eq!(stop_values, vec![r(1), r(2), r(3)]);
+    }
+
+    #[test]
     fn adjacent_normal_probe_stop_values_treat_boundary_start_contact_as_unknown_and_keep_later_corridor()
      {
         let support = Plane::axis_aligned(0, r(0));
@@ -21149,8 +21182,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_axis_probe_stop_values_treat_boundary_crossing_as_unknown_and_keep_later_corridor()
-    {
+    fn adjacent_axis_probe_stop_values_retain_boundary_crossing_as_stop() {
         let interior = p(1, 1, 1);
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
@@ -21180,7 +21212,7 @@ mod tests {
         .unwrap();
 
         assert!(saw_unknown);
-        assert_eq!(stop_values, vec![r(3), r(4)]);
+        assert_eq!(stop_values, vec![r(2), r(3), r(4)]);
     }
 
     #[test]

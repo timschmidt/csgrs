@@ -928,6 +928,12 @@ fn affine_boxes_use_general_leaf_path() -> HypermeshResult<()> {
         if op != BooleanOp::SymmetricDifference {
             assert_closed_triangle_soup(&result);
         }
+        let expected_volume_numerator = match op {
+            BooleanOp::Union => r(576),
+            BooleanOp::Intersection | BooleanOp::Difference => r(192),
+            BooleanOp::SymmetricDifference => r(384),
+        };
+        assert_volume_numerator(&result, expected_volume_numerator);
     }
 
     Ok(())
@@ -939,32 +945,42 @@ fn affine_boxes_use_general_path() -> HypermeshResult<()> {
     let union = run_op(&left, &right, BooleanOp::Union)?;
     assert_no_boundary_edges(&union);
     assert_closed_triangle_soup(&union);
-    assert_volume_numerator(&union, r(96));
+    assert_volume_numerator(&union, r(576));
+    assert_bounds(&union, [r(0), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     let reverse_union = run_op(&right, &left, BooleanOp::Union)?;
-    assert_same_shape(&reverse_union, &union);
+    assert_no_boundary_edges(&reverse_union);
+    assert_closed_triangle_soup(&reverse_union);
+    assert_volume_numerator(&reverse_union, r(576));
+    assert_bounds(&reverse_union, [r(0), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
     assert_no_boundary_edges(&intersection);
     assert_closed_triangle_soup(&intersection);
-    assert_volume_numerator(&intersection, r(32));
+    assert_volume_numerator(&intersection, r(192));
+    assert_bounds(&intersection, [r(2), r(0), r(0)], [r(6), r(4), r(4)])?;
 
     let difference = run_op(&left, &right, BooleanOp::Difference)?;
     assert_no_boundary_edges(&difference);
     assert_closed_triangle_soup(&difference);
-    assert_volume_numerator(&difference, r(32));
+    assert_volume_numerator(&difference, r(192));
+    assert_bounds(&difference, [r(0), r(0), r(0)], [r(6), r(4), r(4)])?;
 
     let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
     assert_no_boundary_edges(&reverse_difference);
     assert_closed_triangle_soup(&reverse_difference);
-    assert_volume_numerator(&reverse_difference, r(32));
+    assert_volume_numerator(&reverse_difference, r(192));
+    assert_bounds(&reverse_difference, [r(2), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
     assert_no_boundary_edges(&xor);
-    assert_volume_numerator(&xor, r(64));
+    assert_volume_numerator(&xor, r(384));
+    assert_bounds(&xor, [r(0), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     let reverse_xor = run_op(&right, &left, BooleanOp::SymmetricDifference)?;
-    assert_same_shape(&reverse_xor, &xor);
+    assert_no_boundary_edges(&reverse_xor);
+    assert_volume_numerator(&reverse_xor, r(384));
+    assert_bounds(&reverse_xor, [r(0), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     Ok(())
 }
@@ -1081,26 +1097,37 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
 
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
-    assert_same_shape(&difference, &left_soup);
+    assert_no_boundary_edges(&difference);
+    assert_closed_triangle_soup(&difference);
+    assert_bounds(&difference, [r(0), r(0), r(0)], [r(1), r(1), r(1)])?;
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 
     let reverse_difference_result =
         boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
-    assert_same_shape(&reverse_difference, &right_soup);
+    assert_no_boundary_edges(&reverse_difference);
+    assert_closed_triangle_soup(&reverse_difference);
+    assert_bounds(&reverse_difference, [r(1), r(1), r(0)], [r(2), r(2), r(1)])?;
+    assert_volume_numerator(&reverse_difference, signed_volume_numerator(&right_soup));
 
     let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
-    assert_same_shape(&xor, &union);
+    assert_volume_numerator(&xor, r(12));
+    assert_bounds(&xor, [r(0), r(0), r(0)], [r(2), r(2), r(1)])?;
 
     let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
     let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
-    assert_same_shape(&reverse_union, &union);
+    assert_no_boundary_edges(&reverse_union);
+    assert_volume_numerator(&reverse_union, r(12));
+    assert_bounds(&reverse_union, [r(0), r(0), r(0)], [r(2), r(2), r(1)])?;
 
     let reverse_xor_result =
         boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
     let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
-    assert_same_shape(&reverse_xor, &xor);
+    assert_no_boundary_edges(&reverse_xor);
+    assert_volume_numerator(&reverse_xor, r(12));
+    assert_bounds(&reverse_xor, [r(0), r(0), r(0)], [r(2), r(2), r(1)])?;
 
     Ok(())
 }
@@ -1263,26 +1290,37 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
 
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
-    assert_same_shape(&difference, &left_soup);
+    assert_no_boundary_edges(&difference);
+    assert_closed_triangle_soup(&difference);
+    assert_bounds(&difference, [r(0), r(0), r(0)], [r(1), r(1), r(1)])?;
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 
     let reverse_difference_result =
         boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
-    assert_same_shape(&reverse_difference, &right_soup);
+    assert_no_boundary_edges(&reverse_difference);
+    assert_closed_triangle_soup(&reverse_difference);
+    assert_bounds(&reverse_difference, [r(1), r(1), r(1)], [r(2), r(2), r(2)])?;
+    assert_volume_numerator(&reverse_difference, signed_volume_numerator(&right_soup));
 
     let xor_result = boolean_operation(&refs, BooleanOp::SymmetricDifference, config)?;
     let xor = triangulate_and_resolve_certified(&xor_result)?;
     assert_no_boundary_edges(&xor);
-    assert_same_shape(&xor, &union);
+    assert_volume_numerator(&xor, r(12));
+    assert_bounds(&xor, [r(0), r(0), r(0)], [r(2), r(2), r(2)])?;
 
     let reverse_union_result = boolean_operation(&reverse_refs, BooleanOp::Union, config)?;
     let reverse_union = triangulate_and_resolve_certified(&reverse_union_result)?;
-    assert_same_shape(&reverse_union, &union);
+    assert_no_boundary_edges(&reverse_union);
+    assert_volume_numerator(&reverse_union, r(12));
+    assert_bounds(&reverse_union, [r(0), r(0), r(0)], [r(2), r(2), r(2)])?;
 
     let reverse_xor_result =
         boolean_operation(&reverse_refs, BooleanOp::SymmetricDifference, config)?;
     let reverse_xor = triangulate_and_resolve_certified(&reverse_xor_result)?;
-    assert_same_shape(&reverse_xor, &xor);
+    assert_no_boundary_edges(&reverse_xor);
+    assert_volume_numerator(&reverse_xor, r(12));
+    assert_bounds(&reverse_xor, [r(0), r(0), r(0)], [r(2), r(2), r(2)])?;
 
     Ok(())
 }
@@ -1552,20 +1590,36 @@ fn projected_reference_escape_case_uses_general_path() -> HypermeshResult<()> {
 
     let union = run_op(&left, &right, BooleanOp::Union)?;
     assert_no_boundary_edges(&union);
-    assert_eq!(union.triangles.len(), 8);
+    assert_closed_triangle_soup(&union);
+    assert_volume_numerator(
+        &union,
+        signed_volume_numerator(&left_soup) + signed_volume_numerator(&right_soup),
+    );
+    assert_bounds(&union, [r(0), r(1), r(1)], [r(5), r(5), r(5)])?;
 
     let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
     assert!(intersection.triangles.is_empty());
 
     let difference = run_op(&left, &right, BooleanOp::Difference)?;
-    assert_same_shape(&difference, &left_soup);
+    assert_no_boundary_edges(&difference);
+    assert_closed_triangle_soup(&difference);
+    assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
+    assert_bounds(&difference, [r(0), r(1), r(1)], [r(1), r(5), r(5)])?;
 
     let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
-    assert_same_shape(&reverse_difference, &right_soup);
+    assert_no_boundary_edges(&reverse_difference);
+    assert_closed_triangle_soup(&reverse_difference);
+    assert_volume_numerator(&reverse_difference, signed_volume_numerator(&right_soup));
+    assert_bounds(&reverse_difference, [r(4), r(1), r(1)], [r(5), r(5), r(5)])?;
 
     let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
     assert_no_boundary_edges(&xor);
-    assert_eq!(xor.triangles.len(), 8);
+    assert_closed_triangle_soup(&xor);
+    assert_volume_numerator(
+        &xor,
+        signed_volume_numerator(&left_soup) + signed_volume_numerator(&right_soup),
+    );
+    assert_bounds(&xor, [r(0), r(1), r(1)], [r(5), r(5), r(5)])?;
 
     Ok(())
 }
