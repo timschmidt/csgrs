@@ -740,6 +740,74 @@ fn mark_all_shifted_halfspace_witnesses_uncertified(witnesses: &mut Vec<ShiftedH
     }
 }
 
+fn finalize_interior_point_family(
+    points: &mut Vec<InteriorLeafPoint>,
+    saw_unknown: bool,
+) -> HypermeshResult<()> {
+    let saw_unknown = saw_unknown
+        || points
+            .iter()
+            .any(|point| point.uncertified_definition_fallback);
+    if points.is_empty() && saw_unknown {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if saw_unknown {
+        mark_all_interior_points_uncertified(points);
+    }
+    Ok(())
+}
+
+fn finalize_probe_point_family(
+    probes: &mut Vec<ProbePoint>,
+    saw_unknown: bool,
+) -> HypermeshResult<()> {
+    let saw_unknown = saw_unknown
+        || probes
+            .iter()
+            .any(|probe| probe.uncertified_definition_fallback);
+    if probes.is_empty() && saw_unknown {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if saw_unknown {
+        mark_all_probe_points_uncertified(probes);
+    }
+    Ok(())
+}
+
+fn finalize_detour_target_family(
+    targets: &mut Vec<DetourTarget>,
+    saw_unknown: bool,
+) -> HypermeshResult<()> {
+    let saw_unknown = saw_unknown
+        || targets
+            .iter()
+            .any(|target| target.uncertified_definition_fallback);
+    if targets.is_empty() && saw_unknown {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if saw_unknown {
+        mark_all_detour_targets_uncertified(targets);
+    }
+    Ok(())
+}
+
+fn finalize_shifted_halfspace_witness_family(
+    witnesses: &mut Vec<ShiftedHalfspaceWitness>,
+    saw_unknown: bool,
+) -> HypermeshResult<()> {
+    let saw_unknown = saw_unknown
+        || witnesses
+            .iter()
+            .any(|witness| witness.uncertified_definition_fallback);
+    if witnesses.is_empty() && saw_unknown {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if saw_unknown {
+        mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
+    }
+    Ok(())
+}
+
 /// Traces an axis-aligned segment, accumulating polygon winding transitions.
 pub fn trace_axis_segment(
     start: &Point3,
@@ -3899,20 +3967,8 @@ fn strict_aabb_targets_with_seed_families(
     let families = strict_aabb_target_families_with_seed_families(bounds, &mut seed_families_for)?;
     let mut targets = families.direct_targets;
     targets.extend(families.shifted_targets);
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (families.saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_target && (families.saw_unknown || unresolved_fallback) {
-            mark_all_detour_targets_uncertified(&mut targets);
-        }
-        Ok(targets)
-    }
+    finalize_detour_target_family(&mut targets, families.saw_unknown)?;
+    Ok(targets)
 }
 
 fn build_detour_target(
@@ -4017,18 +4073,8 @@ fn detour_target_family_result_from_targets(
     mut targets: Vec<DetourTarget>,
     saw_unknown: bool,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    let saw_unknown = saw_unknown
-        || targets
-            .iter()
-            .any(|target| target.uncertified_definition_fallback);
-    if targets.is_empty() && saw_unknown {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if saw_unknown {
-            mark_all_detour_targets_uncertified(&mut targets);
-        }
-        Ok(targets)
-    }
+    finalize_detour_target_family(&mut targets, saw_unknown)?;
+    Ok(targets)
 }
 
 fn extend_unique_definition_families(definitions: &mut Vec<[Plane; 3]>, fresh: Vec<[Plane; 3]>) {
@@ -4060,20 +4106,7 @@ fn extend_detour_target_builds_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_target && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_detour_targets_uncertified(targets);
-        }
-        Ok(())
-    }
+    finalize_detour_target_family(targets, saw_hard_unknown)
 }
 
 #[cfg(test)]
@@ -4095,20 +4128,7 @@ fn extend_detour_target_families_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_target && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_detour_targets_uncertified(targets);
-        }
-        Ok(())
-    }
+    finalize_detour_target_family(targets, saw_hard_unknown)
 }
 
 fn extend_disjoint_detour_target_families_backtracking_unknown(
@@ -4125,20 +4145,7 @@ fn extend_disjoint_detour_target_families_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_target && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_detour_targets_uncertified(targets);
-        }
-        Ok(())
-    }
+    finalize_detour_target_family(targets, saw_hard_unknown)
 }
 
 fn collect_detour_targets_from_axis_intervals(
@@ -5068,9 +5075,6 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                     Err(err) => return Err(err),
                 };
             for shifted in &shifted_witnesses {
-                let duplicate_certified_direct_probe = certified_probe_points
-                    .iter()
-                    .any(|point| *point == shifted.point);
                 let probe = match build_probe_point_from_shifted_witness(
                     shifted,
                     corridor,
@@ -5085,10 +5089,6 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                     }
                     Err(err) => return Err(err),
                 };
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    local_unknown = true;
-                    continue;
-                }
                 if let Some(winding) = queue_probe(probe, &mut local_unknown)? {
                     return Ok(Some(winding));
                 }
@@ -5382,9 +5382,6 @@ fn try_strict_normal_seed_winding_with_queries(
                     Err(err) => return Err(err),
                 };
             for shifted in &shifted_witnesses {
-                let duplicate_certified_direct_probe = certified_probe_points
-                    .iter()
-                    .any(|point| *point == shifted.point);
                 let probe = match build_probe_point_from_shifted_witness(
                     shifted,
                     corridor,
@@ -5399,10 +5396,6 @@ fn try_strict_normal_seed_winding_with_queries(
                     }
                     Err(err) => return Err(err),
                 };
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    *saw_unknown = true;
-                    continue;
-                }
                 if let Some(winding) = try_leaf_probe_family_with_queries(
                     point,
                     positive_side,
@@ -5673,9 +5666,6 @@ fn try_strict_axis_seed_winding_with_queries(
                     Err(err) => return Err(err),
                 };
             for shifted in &shifted_witnesses {
-                let duplicate_certified_direct_probe = certified_probe_points
-                    .iter()
-                    .any(|point| *point == shifted.point);
                 let probe = match build_axis_probe_point_from_shifted_witness(
                     shifted, point, corridor, support, axis, definition,
                 ) {
@@ -5687,10 +5677,6 @@ fn try_strict_axis_seed_winding_with_queries(
                     }
                     Err(err) => return Err(err),
                 };
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    *saw_unknown = true;
-                    continue;
-                }
                 if let Some(winding) = try_leaf_probe_family_with_queries(
                     point,
                     positive_side,
@@ -11628,11 +11614,6 @@ fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
         shifted_witnesses.iter(),
         |shifted| build_strict_leaf_point_from_shifted_witness(leaf, shifted),
     )?;
-    let certified_direct_witness_points = points
-        .iter()
-        .filter(|point| !point.uncertified_definition_fallback)
-        .map(|point| point.point.clone())
-        .collect::<Vec<_>>();
     let direct_witnesses = points
         .iter()
         .map(|point| point.point.clone())
@@ -11650,30 +11631,11 @@ fn strict_leaf_witness_points_with_seed_families_and_stricter_replay(
         Err(err) => return Err(err),
     }
     for point in stricter_points {
-        let duplicate_certified_direct_point = certified_direct_witness_points
-            .iter()
-            .any(|existing| *existing == point.point);
-        if duplicate_certified_direct_point && point.uncertified_definition_fallback {
-            saw_unknown = true;
-            continue;
-        }
         push_unique_interior_point(&mut points, point);
     }
 
-    let unresolved_fallback = points
-        .iter()
-        .any(|point| point.uncertified_definition_fallback);
-    let has_certified_point = points
-        .iter()
-        .any(|point| !point.uncertified_definition_fallback);
-    if points.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_point && (saw_unknown || unresolved_fallback) {
-            mark_all_interior_points_uncertified(&mut points);
-        }
-        Ok(points)
-    }
+    finalize_interior_point_family(&mut points, saw_unknown)?;
+    Ok(points)
 }
 
 fn leaf_witness_seed_families(
@@ -11923,20 +11885,7 @@ fn extend_interior_leaf_points_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = points
-        .iter()
-        .any(|point| point.uncertified_definition_fallback);
-    let has_certified_point = points
-        .iter()
-        .any(|point| !point.uncertified_definition_fallback);
-    if points.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_point && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_interior_points_uncertified(points);
-        }
-        Ok(())
-    }
+    finalize_interior_point_family(points, saw_hard_unknown)
 }
 
 fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
@@ -11957,20 +11906,7 @@ fn extend_leaf_point_builds_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = points
-        .iter()
-        .any(|point| point.uncertified_definition_fallback);
-    let has_certified_point = points
-        .iter()
-        .any(|point| !point.uncertified_definition_fallback);
-    if points.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_point && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_interior_points_uncertified(points);
-        }
-        Ok(())
-    }
+    finalize_interior_point_family(points, saw_hard_unknown)
 }
 
 fn strict_leaf_cell_points(
@@ -12018,12 +11954,6 @@ fn strict_leaf_cell_points(
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
     })?;
 
-    let certified_direct_points = points
-        .iter()
-        .filter(|point| !point.uncertified_definition_fallback)
-        .map(|point| point.point.clone())
-        .collect::<Vec<_>>();
-
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -12045,15 +11975,8 @@ fn strict_leaf_cell_points(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_point = certified_direct_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_strict_leaf_point_from_shifted_witness(leaf, shifted) {
             Ok(Some(point)) => {
-                if duplicate_certified_direct_point && point.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
                 push_unique_interior_point(&mut points, point);
             }
             Ok(None) => {}
@@ -12063,20 +11986,8 @@ fn strict_leaf_cell_points(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = points
-        .iter()
-        .any(|point| point.uncertified_definition_fallback);
-    let has_certified_point = points
-        .iter()
-        .any(|point| !point.uncertified_definition_fallback);
-    if points.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_point && (saw_unknown || unresolved_fallback) {
-            mark_all_interior_points_uncertified(&mut points);
-        }
-        Ok(points)
-    }
+    finalize_interior_point_family(&mut points, saw_unknown)?;
+    Ok(points)
 }
 
 #[cfg(test)]
@@ -12116,12 +12027,6 @@ fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
         build_strict_leaf_point(leaf, witness, &halfspaces, active_planes, false)
     })?;
 
-    let certified_direct_points = points
-        .iter()
-        .filter(|point| !point.uncertified_definition_fallback)
-        .map(|point| point.point.clone())
-        .collect::<Vec<_>>();
-
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -12143,15 +12048,8 @@ fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_point = certified_direct_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_strict_leaf_point_from_shifted_witness(leaf, shifted) {
             Ok(Some(point)) => {
-                if duplicate_certified_direct_point && point.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
                 push_unique_interior_point(&mut points, point);
             }
             Ok(None) => {}
@@ -12161,20 +12059,8 @@ fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = points
-        .iter()
-        .any(|point| point.uncertified_definition_fallback);
-    let has_certified_point = points
-        .iter()
-        .any(|point| !point.uncertified_definition_fallback);
-    if points.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_point && (saw_unknown || unresolved_fallback) {
-            mark_all_interior_points_uncertified(&mut points);
-        }
-        Ok(points)
-    }
+    finalize_interior_point_family(&mut points, saw_unknown)?;
+    Ok(points)
 }
 
 fn build_strict_leaf_point(
@@ -12459,20 +12345,8 @@ fn bounded_probes_from_interior(
         )?;
     }
 
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -12733,20 +12607,8 @@ fn adjacent_normal_probes_with_queries(
         )?;
     }
 
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn adjacent_normal_probe_stop_values_with_queries(
@@ -12967,20 +12829,8 @@ fn collect_normal_probe_targets(
         }
         Err(err) => return Err(err),
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn normal_probe_extra_planes(
@@ -13228,15 +13078,8 @@ fn strict_normal_probe_targets(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_probe = certified_probe_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
             Ok(Some(probe)) => {
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
@@ -13246,20 +13089,8 @@ fn strict_normal_probe_targets(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn strict_normal_probe_targets_with_query_caches(
@@ -13397,15 +13228,8 @@ fn strict_normal_probe_targets_with_query_caches(
         &mut local_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_probe = certified_probe_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
             Ok(Some(probe)) => {
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    local_unknown = true;
-                    continue;
-                }
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
@@ -13415,20 +13239,8 @@ fn strict_normal_probe_targets_with_query_caches(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (local_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (local_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, local_unknown)?;
+    Ok(probes)
 }
 
 #[cfg(test)]
@@ -13500,15 +13312,8 @@ fn strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_probe = certified_probe_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_probe_point_from_shifted_witness(shifted, corridor, support, &extra_planes) {
             Ok(Some(probe)) => {
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
@@ -13518,20 +13323,8 @@ fn strict_normal_probe_targets_from_seed_families_with_tracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn bounds_between_points(start: &Point3, end: &Point3) -> HypermeshResult<Aabb> {
@@ -13721,20 +13514,8 @@ fn adjacent_axis_probes_with_queries(
         )?;
     }
 
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn adjacent_axis_probe_stop_values_with_queries(
@@ -13888,20 +13669,8 @@ fn collect_axis_probe_targets(
         }
         Err(err) => return Err(err),
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
@@ -13922,20 +13691,7 @@ fn extend_probe_point_builds_backtracking_unknown<'a, T: 'a>(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(probes);
-        }
-        Ok(())
-    }
+    finalize_probe_point_family(probes, saw_hard_unknown)
 }
 
 fn axis_probe_definition_preserves_axis_direction(
@@ -13995,12 +13751,6 @@ fn strict_axis_probe_targets(
         )
     })?;
 
-    let certified_probe_points = probes
-        .iter()
-        .filter(|probe| !probe.uncertified_definition_fallback)
-        .map(|probe| probe.point.clone())
-        .collect::<Vec<_>>();
-
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -14022,17 +13772,10 @@ fn strict_axis_probe_targets(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_probe = certified_probe_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_axis_probe_point_from_shifted_witness(
             shifted, interior, corridor, support, axis, definition,
         ) {
             Ok(Some(probe)) => {
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
@@ -14042,20 +13785,8 @@ fn strict_axis_probe_targets(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 #[cfg(test)]
@@ -14099,12 +13830,6 @@ fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
         )
     })?;
 
-    let certified_probe_points = probes
-        .iter()
-        .filter(|probe| !probe.uncertified_definition_fallback)
-        .map(|probe| probe.point.clone())
-        .collect::<Vec<_>>();
-
     let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
         shifted_halfspace_seed_families_with_report_seed(
             report_witness,
@@ -14126,17 +13851,10 @@ fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
         &mut saw_unknown,
     )?;
     for shifted in &shifted_witnesses {
-        let duplicate_certified_direct_probe = certified_probe_points
-            .iter()
-            .any(|point| *point == shifted.point);
         match build_axis_probe_point_from_shifted_witness(
             shifted, interior, corridor, support, axis, definition,
         ) {
             Ok(Some(probe)) => {
-                if duplicate_certified_direct_probe && probe.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
                 push_unique_probe_point(&mut probes, probe);
             }
             Ok(None) => {}
@@ -14146,20 +13864,8 @@ fn strict_axis_probe_targets_from_seed_families_with_tracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = probes
-        .iter()
-        .any(|probe| probe.uncertified_definition_fallback);
-    let has_certified_probe = probes
-        .iter()
-        .any(|probe| !probe.uncertified_definition_fallback);
-    if probes.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_probe && (saw_unknown || unresolved_fallback) {
-            mark_all_probe_points_uncertified(&mut probes);
-        }
-        Ok(probes)
-    }
+    finalize_probe_point_family(&mut probes, saw_unknown)?;
+    Ok(probes)
 }
 
 fn build_probe_point(
@@ -14779,20 +14485,8 @@ fn shifted_halfspace_cell_witnesses_from_seed(
         },
     )?;
 
-    let unresolved_fallback = witnesses
-        .iter()
-        .any(|witness| witness.uncertified_definition_fallback);
-    let has_certified_witness = witnesses
-        .iter()
-        .any(|witness| !witness.uncertified_definition_fallback);
-    if witnesses.is_empty() && (saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_witness && (saw_unknown || unresolved_fallback) {
-            mark_all_shifted_halfspace_witnesses_uncertified(&mut witnesses);
-        }
-        Ok(witnesses)
-    }
+    finalize_shifted_halfspace_witness_family(&mut witnesses, saw_unknown)?;
+    Ok(witnesses)
 }
 
 fn halfspace_cell_seed_families_from_optional_report(
@@ -15068,20 +14762,7 @@ fn extend_shifted_halfspace_seed_families_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = witnesses
-        .iter()
-        .any(|witness| witness.uncertified_definition_fallback);
-    let has_certified_witness = witnesses
-        .iter()
-        .any(|witness| !witness.uncertified_definition_fallback);
-    if witnesses.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_witness && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
-        }
-        Ok(())
-    }
+    finalize_shifted_halfspace_witness_family(witnesses, saw_hard_unknown)
 }
 
 fn extend_shifted_halfspace_witnesses_backtracking_unknown(
@@ -15103,20 +14784,7 @@ fn extend_shifted_halfspace_witnesses_backtracking_unknown(
             Err(err) => return Err(err),
         }
     }
-    let unresolved_fallback = witnesses
-        .iter()
-        .any(|witness| witness.uncertified_definition_fallback);
-    let has_certified_witness = witnesses
-        .iter()
-        .any(|witness| !witness.uncertified_definition_fallback);
-    if witnesses.is_empty() && (saw_hard_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_witness && (saw_hard_unknown || unresolved_fallback) {
-            mark_all_shifted_halfspace_witnesses_uncertified(witnesses);
-        }
-        Ok(())
-    }
+    finalize_shifted_halfspace_witness_family(witnesses, saw_hard_unknown)
 }
 
 fn shifted_halfspace_witness_family_or_empty(
@@ -15689,6 +15357,7 @@ mod tests {
         }
 
         assert!(batches >= 2);
+        assert!(cursor.saw_unknown);
         let mut normalized_actual = Vec::new();
         for target in actual {
             push_unique_detour_target(&mut normalized_actual, target);
@@ -15697,10 +15366,13 @@ mod tests {
         assert!(
             normalized_expected
                 .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+        assert!(
+            normalized_expected
+                .iter()
                 .all(|target| normalized_actual.iter().any(|candidate| {
                     candidate.point == target.point
-                        && candidate.uncertified_definition_fallback
-                            == target.uncertified_definition_fallback
                         && definition_families_match_as_sets(
                             &candidate.definitions,
                             &target.definitions,
@@ -15978,7 +15650,7 @@ mod tests {
     }
 
     #[test]
-    fn search_strict_aabb_targets_progressively_records_exhausted_families_on_miss() {
+    fn search_strict_aabb_targets_progressively_preserves_unknown_in_exhausted_families() {
         let outcome =
             search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome(
                 &Aabb::new(p(0, 0, 0), p(3, 3, 3)),
@@ -15989,13 +15661,13 @@ mod tests {
                 &mut |_target| Ok(false),
             );
 
-        assert_eq!(outcome.result, Ok(false));
+        assert_eq!(outcome.result, Err(HypermeshError::UnknownClassification));
         let families = outcome
             .exhausted_families
             .expect("progressive miss should retain the full family set");
         assert_eq!(families.direct_targets.len(), 2);
         assert!(!families.shifted_targets.is_empty());
-        assert!(!families.saw_unknown);
+        assert!(families.saw_unknown);
     }
 
     #[test]
@@ -16120,7 +15792,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, second);
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -16141,7 +15813,7 @@ mod tests {
     }
 
     #[test]
-    fn detour_target_build_collection_keeps_later_targets_certified_after_uncertain_candidate_result()
+    fn detour_target_build_collection_marks_later_targets_uncertain_after_uncertain_candidate_result()
      {
         let first = p(1, 2, 3);
         let second = p(1, 2, 4);
@@ -16164,7 +15836,7 @@ mod tests {
         assert!(
             targets
                 .iter()
-                .any(|target| !target.uncertified_definition_fallback)
+                .all(|target| target.uncertified_definition_fallback)
         );
     }
 
@@ -16216,7 +15888,7 @@ mod tests {
     }
 
     #[test]
-    fn detour_target_family_collection_keeps_later_targets_certified_after_uncertified_family() {
+    fn detour_target_family_collection_marks_later_targets_uncertain_after_uncertified_family() {
         let mut targets = Vec::new();
 
         extend_detour_target_families_backtracking_unknown(
@@ -16234,11 +15906,11 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 2, 4));
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn detour_target_family_collection_keeps_later_targets_certified_after_uncertain_family_result()
+    fn detour_target_family_collection_marks_later_targets_uncertain_after_uncertain_family_result()
     {
         let mut targets = Vec::new();
 
@@ -16263,7 +15935,7 @@ mod tests {
         assert!(
             targets
                 .iter()
-                .any(|target| !target.uncertified_definition_fallback)
+                .all(|target| target.uncertified_definition_fallback)
         );
     }
 
@@ -16308,7 +15980,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, Point3::new(r(1), q(1, 2), q(1, 2)));
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -16930,7 +16602,7 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, second);
-        assert!(!witnesses[0].uncertified_definition_fallback);
+        assert!(witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -16974,11 +16646,11 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, kept.point);
-        assert!(!witnesses[0].uncertified_definition_fallback);
+        assert!(witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn shifted_halfspace_witness_collection_keeps_later_witnesses_certified_after_uncertain_candidate_result()
+    fn shifted_halfspace_witness_collection_marks_later_witnesses_uncertain_after_uncertain_candidate_result()
      {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -17011,7 +16683,7 @@ mod tests {
         assert!(
             witnesses
                 .iter()
-                .any(|witness| !witness.uncertified_definition_fallback)
+                .all(|witness| witness.uncertified_definition_fallback)
         );
     }
 
@@ -17492,7 +17164,7 @@ mod tests {
     }
 
     #[test]
-    fn shifted_halfspace_witness_seed_family_search_keeps_existing_witnesses_certified_after_later_unknown()
+    fn shifted_halfspace_witness_seed_family_search_marks_existing_witnesses_uncertain_after_later_unknown()
      {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -17518,11 +17190,11 @@ mod tests {
 
         assert_eq!(witnesses.len(), 1);
         assert_eq!(witnesses[0].point, first);
-        assert!(!witnesses[0].uncertified_definition_fallback);
+        assert!(witnesses[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn shifted_halfspace_witness_seed_family_search_keeps_later_witnesses_certified_after_uncertain_family_result()
+    fn shifted_halfspace_witness_seed_family_search_marks_later_witnesses_uncertain_after_uncertain_family_result()
      {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -17555,7 +17227,7 @@ mod tests {
         assert!(
             witnesses
                 .iter()
-                .any(|witness| !witness.uncertified_definition_fallback)
+                .all(|witness| witness.uncertified_definition_fallback)
         );
     }
 
@@ -17652,7 +17324,7 @@ mod tests {
     }
 
     #[test]
-    fn shifted_halfspace_witnesses_keep_certified_survivors_after_boundary_seed_candidate() {
+    fn shifted_halfspace_witnesses_mark_survivors_uncertain_after_boundary_seed_candidate() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
         let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
@@ -17663,7 +17335,7 @@ mod tests {
         assert!(
             witnesses
                 .iter()
-                .any(|witness| !witness.uncertified_definition_fallback)
+                .all(|witness| witness.uncertified_definition_fallback)
         );
     }
 
@@ -17826,7 +17498,7 @@ mod tests {
                 .into_iter()
                 .find(|probe| probe.side == Classification::Positive)
                 .expect("leaf should have a positive-side probe");
-        assert!(!probe.uncertified_definition_fallback);
+        assert!(probe.uncertified_definition_fallback);
 
         assert!(!point_lies_on_traced_surface(&probe.point, &[wall.clone()]).unwrap());
         assert!(
@@ -18420,7 +18092,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_normal_probes_stay_certified_for_core_leaf_wall_case() {
+    fn adjacent_normal_probes_preserve_family_uncertainty_for_core_leaf_wall_case() {
         let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
         wall.delta_w = vec![1];
         let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
@@ -18436,12 +18108,12 @@ mod tests {
         assert!(
             probes
                 .iter()
-                .any(|probe| !probe.uncertified_definition_fallback)
+                .all(|probe| probe.uncertified_definition_fallback)
         );
     }
 
     #[test]
-    fn strict_normal_probe_targets_stay_certified_for_core_leaf_wall_case() {
+    fn strict_normal_probe_targets_preserve_family_uncertainty_for_core_leaf_wall_case() {
         let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
         wall.delta_w = vec![1];
         let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
@@ -18472,7 +18144,7 @@ mod tests {
         assert!(
             probes
                 .iter()
-                .any(|probe| !probe.uncertified_definition_fallback)
+                .all(|probe| probe.uncertified_definition_fallback)
         );
     }
 
@@ -20387,7 +20059,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_normal_probe_keeps_later_corridor_certified_after_uncertified_crossing() {
+    fn adjacent_normal_probe_marks_later_corridor_uncertain_after_uncertified_crossing() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -20433,7 +20105,7 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -20630,7 +20302,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_normal_probe_keeps_later_corridor_certified_after_boundary_start_contact() {
+    fn adjacent_normal_probe_marks_later_corridor_uncertain_after_boundary_start_contact() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -20672,11 +20344,11 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn adjacent_normal_probe_keeps_later_corridor_certified_after_endpoint_boundary_contact() {
+    fn adjacent_normal_probe_marks_later_corridor_uncertain_after_endpoint_boundary_contact() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -20726,7 +20398,7 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -21039,7 +20711,7 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, unrestricted_probe.point);
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -21059,7 +20731,7 @@ mod tests {
     }
 
     #[test]
-    fn collect_normal_probe_targets_keep_later_probes_certified_after_uncertain_family_result() {
+    fn collect_normal_probe_targets_mark_later_probes_uncertain_after_uncertain_family_result() {
         let definition = [
             Plane::axis_aligned(2, r(0)),
             Plane::axis_aligned(0, r(1)),
@@ -21086,7 +20758,7 @@ mod tests {
         assert!(
             probes
                 .iter()
-                .any(|probe| !probe.uncertified_definition_fallback)
+                .all(|probe| probe.uncertified_definition_fallback)
         );
     }
 
@@ -21146,10 +20818,11 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, second);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn probe_point_build_collection_keeps_existing_probes_certified_after_later_unknown() {
+    fn probe_point_build_collection_marks_existing_probes_uncertain_after_later_unknown() {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -21173,11 +20846,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(probes.len(), 1);
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn probe_point_build_collection_keeps_later_probes_certified_after_uncertain_candidate_result()
+    fn probe_point_build_collection_marks_later_probes_uncertain_after_uncertain_candidate_result()
     {
         let mut probes = Vec::new();
         let first = p(1, 1, 1);
@@ -21201,7 +20874,7 @@ mod tests {
         assert!(
             probes
                 .iter()
-                .any(|probe| !probe.uncertified_definition_fallback)
+                .all(|probe| probe.uncertified_definition_fallback)
         );
     }
 
@@ -21297,7 +20970,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_axis_probe_keeps_later_corridor_certified_after_uncertified_crossing() {
+    fn adjacent_axis_probe_marks_later_corridor_uncertain_after_uncertified_crossing() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -21340,7 +21013,7 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -21529,7 +21202,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_axis_probe_keeps_later_corridor_certified_after_boundary_crossing() {
+    fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_crossing() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -21578,11 +21251,11 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn adjacent_axis_probe_keeps_later_corridor_certified_after_endpoint_boundary_contact() {
+    fn adjacent_axis_probe_marks_later_corridor_uncertain_after_endpoint_boundary_contact() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -21631,11 +21304,11 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn adjacent_axis_probe_keeps_later_corridor_certified_after_boundary_start_contact() {
+    fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_start_contact() {
         let support = Plane::axis_aligned(0, r(0));
         let interior = InteriorLeafPoint {
             point: p(1, 1, 1),
@@ -21684,7 +21357,7 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, p(2, 1, 1));
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -21810,7 +21483,7 @@ mod tests {
 
         assert_eq!(probes.len(), 1);
         assert_eq!(probes[0].point, unrestricted_probe.point);
-        assert!(!probes[0].uncertified_definition_fallback);
+        assert!(probes[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -21830,7 +21503,7 @@ mod tests {
     }
 
     #[test]
-    fn collect_axis_probe_targets_keep_later_probes_certified_after_uncertain_family_result() {
+    fn collect_axis_probe_targets_mark_later_probes_uncertain_after_uncertain_family_result() {
         let definition = [
             Plane::axis_aligned(2, r(0)),
             Plane::axis_aligned(0, r(1)),
@@ -21857,7 +21530,7 @@ mod tests {
         assert!(
             probes
                 .iter()
-                .any(|probe| !probe.uncertified_definition_fallback)
+                .all(|probe| probe.uncertified_definition_fallback)
         );
     }
 
@@ -22102,10 +21775,9 @@ mod tests {
             bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[leaf.clone()])
                 .unwrap()
                 .into_iter()
-                .find(|probe| {
-                    probe.side == Classification::Positive && !probe.uncertified_definition_fallback
-                })
-                .expect("slanted leaf should have a certified positive-side probe");
+                .find(|probe| probe.side == Classification::Positive)
+                .expect("slanted leaf should have a positive-side probe");
+        assert!(probe.uncertified_definition_fallback);
 
         assert!(
             probe_reaches_adjacent_cell_from_interior(
@@ -22157,7 +21829,7 @@ mod tests {
     }
 
     #[test]
-    fn bounded_probes_keep_certified_positive_probe_for_slanted_leaf_case() {
+    fn bounded_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
         let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         leaf.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -22171,9 +21843,16 @@ mod tests {
             bounded_probes_from_interior(&interior, &leaf.support, &bounds, true, &[leaf.clone()])
                 .unwrap();
 
-        assert!(probes.iter().any(|probe| {
-            probe.side == Classification::Positive && !probe.uncertified_definition_fallback
-        }));
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.side == Classification::Positive)
+        );
+        assert!(
+            probes
+                .iter()
+                .all(|probe| probe.uncertified_definition_fallback)
+        );
     }
 
     #[test]
@@ -22254,7 +21933,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_normal_probe_targets_keep_certified_probe_for_slanted_leaf_case() {
+    fn strict_normal_probe_targets_preserve_family_uncertainty_for_slanted_leaf_case() {
         let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         leaf.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -22291,9 +21970,16 @@ mod tests {
         )
         .unwrap();
 
-        assert!(probes.iter().any(|probe| {
-            probe.side == Classification::Positive && !probe.uncertified_definition_fallback
-        }));
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.side == Classification::Positive)
+        );
+        assert!(
+            probes
+                .iter()
+                .all(|probe| probe.uncertified_definition_fallback)
+        );
     }
 
     #[test]
@@ -22319,7 +22005,7 @@ mod tests {
     }
 
     #[test]
-    fn adjacent_normal_probes_keep_certified_positive_probe_for_slanted_leaf_case() {
+    fn adjacent_normal_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
         let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         leaf.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
@@ -22333,9 +22019,16 @@ mod tests {
             adjacent_normal_probes(&interior, &leaf.support, &bounds, &[leaf.clone()], true)
                 .unwrap();
 
-        assert!(probes.iter().any(|probe| {
-            probe.side == Classification::Positive && !probe.uncertified_definition_fallback
-        }));
+        assert!(
+            probes
+                .iter()
+                .any(|probe| probe.side == Classification::Positive)
+        );
+        assert!(
+            probes
+                .iter()
+                .all(|probe| probe.uncertified_definition_fallback)
+        );
     }
 
     #[test]
@@ -22819,7 +22512,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_points_merge_same_point_certified_stricter_replay_definitions() {
+    fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_uncertainty() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
         let witness = p(1, 1, 1);
@@ -22860,7 +22553,7 @@ mod tests {
                 .iter()
                 .any(|candidate| { definition_planes_match_as_sets(candidate, &extra_definition) })
         );
-        assert!(!merged.uncertified_definition_fallback);
+        assert!(merged.uncertified_definition_fallback);
     }
 
     #[test]
@@ -22915,10 +22608,11 @@ mod tests {
 
         assert_eq!(points.len(), 1);
         assert_eq!(points[0].point, second);
+        assert!(points[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_leaf_point_collection_keeps_existing_points_certified_after_later_unknown() {
+    fn interior_leaf_point_collection_marks_existing_points_uncertain_after_later_unknown() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -22941,11 +22635,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(points.len(), 1);
-        assert!(!points[0].uncertified_definition_fallback);
+        assert!(points[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_leaf_point_collection_keeps_later_points_certified_after_uncertain_candidate_result()
+    fn interior_leaf_point_collection_marks_later_points_uncertain_after_uncertain_candidate_result()
      {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
@@ -22968,7 +22662,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .any(|point| !point.uncertified_definition_fallback)
+                .all(|point| point.uncertified_definition_fallback)
         );
     }
 
@@ -23032,10 +22726,11 @@ mod tests {
 
         assert_eq!(points.len(), 1);
         assert_eq!(points[0].point, second);
+        assert!(points[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn leaf_point_build_collection_keeps_existing_points_certified_after_later_unknown() {
+    fn leaf_point_build_collection_marks_existing_points_uncertain_after_later_unknown() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -23058,11 +22753,11 @@ mod tests {
         .unwrap();
 
         assert_eq!(points.len(), 1);
-        assert!(!points[0].uncertified_definition_fallback);
+        assert!(points[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn leaf_point_build_collection_keeps_later_points_certified_after_uncertain_candidate_result() {
+    fn leaf_point_build_collection_marks_later_points_uncertain_after_uncertain_candidate_result() {
         let mut points = Vec::new();
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -23084,7 +22779,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .any(|point| !point.uncertified_definition_fallback)
+                .all(|point| point.uncertified_definition_fallback)
         );
     }
 
@@ -23218,7 +22913,7 @@ mod tests {
     }
 
     #[test]
-    fn strict_leaf_witness_points_keep_surviving_points_certified_after_seed_family_unknown() {
+    fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
 
@@ -23240,12 +22935,12 @@ mod tests {
         assert!(
             points
                 .iter()
-                .any(|point| !point.uncertified_definition_fallback)
+                .all(|point| point.uncertified_definition_fallback)
         );
     }
 
     #[test]
-    fn strict_leaf_witness_points_keep_surviving_points_certified_after_boundary_seed_candidate() {
+    fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_boundary_seed_candidate() {
         let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
         let vertices = leaf.vertices().unwrap();
 
@@ -23271,7 +22966,7 @@ mod tests {
         assert!(
             points
                 .iter()
-                .any(|point| !point.uncertified_definition_fallback)
+                .all(|point| point.uncertified_definition_fallback)
         );
     }
 

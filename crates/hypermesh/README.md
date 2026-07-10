@@ -204,6 +204,14 @@ earlier partially uncertified build returned some output. The detour-target
 collectors now do the same for fallback-marked surviving detour candidates and
 detour families, so valid-path fallback does not silently treat later sibling
 detours as fully certified after an earlier partially uncertified local build.
+That carry-forward rule now uses one terminal family invariant for shifted
+halfspace witnesses, leaf points, probes, and detours: a hard unknown or any
+nonredundant fallback marks every materialized survivor, even when another
+sibling was built exactly. A complete membership/reachability/winding path can
+still certify its chosen survivor, while an all-survivor failure returns
+`UnknownClassification`. Exact same-state fallback duplicates are merged into
+their certified construction instead of creating artificial family
+uncertainty.
 Direct detour-target construction from those strict witnesses
 now also backtracks past uncertified target builds instead of aborting before
 later certified direct or shifted detour targets run, and the surrounding
