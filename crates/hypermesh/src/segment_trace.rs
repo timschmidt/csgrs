@@ -107,7 +107,7 @@ impl InteriorBoxAxisIntervalsCache {
     }
 }
 
-const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 1;
+const DIRECT_TARGET_RANK_REFINEMENT_LIMIT: usize = 4;
 
 #[derive(Clone, Debug, PartialEq)]
 struct DirectProbeReachabilityCacheEntry {
@@ -9092,7 +9092,7 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
         &[[Plane; 3]],
         &[[Plane; 3]],
     ) -> HypermeshResult<bool>,
-) -> HypermeshResult<(u8, u8, usize, usize, usize, usize)> {
+) -> HypermeshResult<(u8, u8, usize, usize, usize, usize, usize, usize)> {
     let first_key = direct_precheck_rank(trace_without_detours(
         start,
         &detour.point,
@@ -9105,15 +9105,66 @@ fn detour_target_no_plane_refined_rank_with_surface_queries(
         &detour.definitions,
         end_definitions,
     ))?;
-    let _ = (
-        polygons,
-        interval_crossing,
-        classify_crossing,
-        start_definitions,
-        end_definitions,
-        interior_box_axis_intervals,
-    );
-    Ok((first_key, second_key, 0, 0, 0, 0))
+    let first_counts = if first_key == 0 {
+        (0, 0, 0)
+    } else {
+        interior_box_axis_interval_counts_with_surface_queries(
+            interior_box_axis_intervals,
+            start,
+            &detour.point,
+            polygons,
+            interval_crossing,
+            classify_crossing,
+        )?
+    };
+    let second_counts = if second_key == 0 {
+        (0, 0, 0)
+    } else {
+        interior_box_axis_interval_counts_with_surface_queries(
+            interior_box_axis_intervals,
+            &detour.point,
+            end,
+            polygons,
+            interval_crossing,
+            classify_crossing,
+        )?
+    };
+    Ok((
+        first_key,
+        second_key,
+        first_counts.0,
+        first_counts.1,
+        first_counts.2,
+        second_counts.0,
+        second_counts.1,
+        second_counts.2,
+    ))
+}
+
+fn interior_box_axis_interval_counts_with_surface_queries(
+    cache: &mut InteriorBoxAxisIntervalsCache,
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+    interval_crossing: &mut impl FnMut(
+        &Point3,
+        &Point3,
+        &ConvexPolygon,
+        usize,
+    ) -> HypermeshResult<Option<Point3>>,
+    classify_crossing: &mut impl FnMut(&Point3, &ConvexPolygon) -> HypermeshResult<PolygonPointLocation>,
+) -> HypermeshResult<(usize, usize, usize)> {
+    let (intervals, _) =
+        cached_interior_box_axis_intervals_with_surface_queries(cache, start, end, || {
+            interior_box_axis_intervals_with_surface_queries(
+                start,
+                end,
+                polygons,
+                interval_crossing,
+                classify_crossing,
+            )
+        })?;
+    Ok((intervals[0].len(), intervals[1].len(), intervals[2].len()))
 }
 
 fn direct_precheck_rank(result: HypermeshResult<bool>) -> HypermeshResult<u8> {
@@ -14021,7 +14072,7 @@ mod tests {
         .unwrap();
 
         assert!(found);
-        assert_eq!(evaluated, vec![p(1, 1, 1)]);
+        assert_eq!(evaluated, vec![p(2, 2, 2)]);
     }
 
     #[test]
@@ -14059,7 +14110,7 @@ mod tests {
         .unwrap();
 
         assert!(found);
-        assert_eq!(evaluated, vec![p(1, 1, 1), p(4, 1, 1)]);
+        assert_eq!(evaluated, vec![p(1, 1, 1), p(2, 2, 2), p(4, 1, 1)]);
     }
 
     #[test]
