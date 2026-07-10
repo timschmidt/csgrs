@@ -897,11 +897,18 @@ direct-seed, and shifted-family builders, so one projected reference update
 does not repay the same strict escape-membership predicate on each sibling
 revisit. The
 focused reference tests now also cover this support-cell fallback on prepared
-closed-mesh polygons, not only on synthetic support-plane fixtures. Full
-EMBER plane-replacement
-coverage for every reference construction remains unfinished, including
-departure from an inherited reference on a polygon surface when its adjacent
-winding-side state is not otherwise certified.
+closed-mesh polygons, not only on synthetic support-plane fixtures. An
+inherited reference in the strict interior of one coplanar surface family can
+now be normalized before projected/support search when the available source
+polygons certify exact per-mesh closure inside the task bounds. Hypermesh
+builds exact normal-side candidates strictly before the nearest polygon or
+bounds barrier, traces each candidate from an exact exterior point with zero
+winding, and accepts only the adjacent open cell whose independently certified
+winding matches the inherited `ref_wnv`; it does not infer the side from face
+orientation. Edge, vertex, non-coplanar crossing-surface, and clipped-open
+surface references remain explicit certification failures. Full EMBER
+plane-replacement coverage for every reference construction therefore remains
+unfinished beyond this closed-family interior-departure case.
 The subdivision-entry support-fallback slice is also now checked against the
 public boolean path on the prepared closed-face union fixture, so that
 alternate support-reference propagation is covered above the private helper

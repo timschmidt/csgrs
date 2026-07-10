@@ -21,6 +21,23 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+fn classified_volume_numerator(output: &[hypermesh::output::ClassifiedPolygon]) -> Real {
+    let mut volume = Real::zero();
+    for classified in output {
+        let vertices = classified.polygon().vertices().unwrap();
+        for index in 1..vertices.len() - 1 {
+            let v0 = &vertices[0];
+            let v1 = &vertices[index];
+            let v2 = &vertices[index + 1];
+            let determinant = &v0.x * &((&v1.y * &v2.z) - (&v1.z * &v2.y))
+                + &v0.y * &((&v1.z * &v2.x) - (&v1.x * &v2.z))
+                + &v0.z * &((&v1.x * &v2.y) - (&v1.y * &v2.x));
+            volume += Real::from(i32::from(classified.classification())) * determinant;
+        }
+    }
+    volume.abs()
+}
+
 fn axis_defs(point: &Point3) -> [[Plane; 3]; 1] {
     [[
         Plane::axis_aligned(0, point.x.clone()),
@@ -912,13 +929,13 @@ fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_
     let ref_point = p(1, 3, 3);
     let ref_wnv = vec![0; soup.num_meshes];
     let cases = [
-        (BooleanOp::Union, 8usize),
-        (BooleanOp::Intersection, 0usize),
-        (BooleanOp::Difference, 4usize),
-        (BooleanOp::SymmetricDifference, 8usize),
+        (BooleanOp::Union, r(32)),
+        (BooleanOp::Intersection, r(0)),
+        (BooleanOp::Difference, r(16)),
+        (BooleanOp::SymmetricDifference, r(32)),
     ];
 
-    for (op, expected_count) in cases {
+    for (op, expected_volume_numerator) in cases {
         let indicator = make_indicator(op, soup.num_meshes);
         let output = subdivide(
             SubdivisionTask::new(
@@ -932,7 +949,11 @@ fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_
         )
         .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}"));
 
-        assert_eq!(output.len(), expected_count, "{op:?}");
+        assert_eq!(
+            classified_volume_numerator(&output),
+            expected_volume_numerator,
+            "{op:?}"
+        );
         assert!(output.iter().all(|polygon| polygon.winding().is_some()));
     }
 }
