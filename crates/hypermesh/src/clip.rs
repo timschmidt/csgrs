@@ -111,16 +111,18 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
 
         let min_plane =
             Plane::axis_aligned(axis, crate::geometry::axis_ref(&aabb.min, axis).clone());
-        let min_clip = clip_polygon(&current, &min_plane)?;
-        current = match min_clip.side {
-            ClipSide::Left => {
-                let mut empty = current;
-                empty.edges.clear();
-                empty
-            }
-            ClipSide::Right => current,
-            ClipSide::Both => min_clip.right,
-        };
+        if !polygon_lies_on_plane(&current, &min_plane)? {
+            let min_clip = clip_polygon(&current, &min_plane)?;
+            current = match min_clip.side {
+                ClipSide::Left => {
+                    let mut empty = current;
+                    empty.edges.clear();
+                    empty
+                }
+                ClipSide::Right => current,
+                ClipSide::Both => min_clip.right,
+            };
+        }
 
         if current.edges.is_empty() {
             break;
@@ -128,17 +130,53 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
 
         let max_plane =
             Plane::axis_aligned(axis, crate::geometry::axis_ref(&aabb.max, axis).clone());
-        let max_clip = clip_polygon(&current, &max_plane)?;
-        current = match max_clip.side {
-            ClipSide::Right => {
-                let mut empty = current;
-                empty.edges.clear();
-                empty
-            }
-            ClipSide::Left => current,
-            ClipSide::Both => max_clip.left,
-        };
+        if !polygon_lies_on_plane(&current, &max_plane)? {
+            let max_clip = clip_polygon(&current, &max_plane)?;
+            current = match max_clip.side {
+                ClipSide::Right => {
+                    let mut empty = current;
+                    empty.edges.clear();
+                    empty
+                }
+                ClipSide::Left => current,
+                ClipSide::Both => max_clip.left,
+            };
+        }
     }
 
     Ok(current)
+}
+
+fn polygon_lies_on_plane(poly: &ConvexPolygon, plane: &Plane) -> HypermeshResult<bool> {
+    for index in 0..poly.vertex_count() {
+        if classify_projective_point(&poly.vertex(index), plane)? != Classification::On {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    use hyperlattice::{Point3, Real};
+
+    use super::clip_polygon_to_aabb;
+    use crate::geometry::Aabb;
+    use crate::polygon::make_triangle;
+
+    fn p(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn clip_polygon_to_aabb_preserves_closed_boundary_faces() {
+        let bounds = Aabb::new(p(0, -2, -2), p(2, 2, 2));
+        for x in [0, 2] {
+            let polygon = make_triangle(&p(x, -1, -1), &p(x, 1, -1), &p(x, 0, 1), 0, 0);
+
+            let clipped = clip_polygon_to_aabb(&polygon, &bounds).unwrap();
+
+            assert_eq!(clipped, polygon);
+        }
+    }
 }

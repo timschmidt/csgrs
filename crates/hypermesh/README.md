@@ -478,18 +478,23 @@ projected cell, using every feasible vertex subset centroid of size two or
 greater before tracing from the parent reference.
 
 Reference-target traces are confined to the exact child or local search AABB,
-expanded only as needed to include the inherited reference point. Retained
-plane-replacement orderings now adapt an outside intermediate point onto the
-exact AABB planes by clamping each out-of-range coordinate and retaining a
-replayable axis-plane definition for the adapted point. Every resulting leg is
-still traced and certified normally; endpoints are never moved, and an endpoint
+expanded only as needed to include the inherited reference point. Leaf-probe
+reachability now stays inside the task AABB throughout its retained-definition
+and detour search. Leaf interior witnesses are built from the exact polygon
+clipped to that closed AABB, including polygons coplanar with an AABB face. The
+final reference-to-probe winding trace uses the same AABB expanded only as
+needed to include its inherited reference. Retained
+plane-replacement orderings adapt an outside intermediate point onto the exact
+AABB planes by clamping each out-of-range coordinate and retaining a replayable
+axis-plane definition for the adapted point. Every resulting leg is still
+traced and certified normally; endpoints are never moved, and an endpoint
 outside the trace box remains uncertified. Detour targets outside the same box
 are likewise treated as blocked. The detour search exhausts the endpoint-derived
 boxes first, then adds exact candidates from the full trace box; when polygon
 clipping leaves no non-endpoint arrangement cell, it also searches the unsplit
 trace box for a certified route around finite polygons. Cached detour families
-include that trace AABB in their key, so a family built for one local domain
-cannot certify another.
+include that trace AABB in their key, and leaf-probe cache bundles are reset if
+reused for a different task AABB, so one local domain cannot certify another.
 
 If the first
 projected target family is exhausted, later certified projected escape

@@ -6,6 +6,7 @@ use hyperlimit::{
     classify_halfspace_feasibility3, classify_plane_aabb3_report,
 };
 
+use crate::clip::clip_polygon_to_aabb;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
@@ -190,6 +191,7 @@ struct AxisProbeFamilyCacheEntry {
 
 #[derive(Default)]
 pub(crate) struct LeafProbeQueryCaches {
+    trace_bounds: Option<Aabb>,
     #[cfg(test)]
     #[cfg_attr(test, allow(dead_code))]
     normal_probe_families: Vec<NormalProbeFamilyCacheEntry>,
@@ -223,6 +225,19 @@ pub(crate) struct LeafProbeQueryCaches {
     definition_no_detour_trace: Vec<DefinitionNoDetourTraceCacheEntry>,
     definition_no_detour_reachability: DefinitionNoDetourReachabilityCache,
     detour_target_families: DetourTargetFamilyCache,
+}
+
+impl LeafProbeQueryCaches {
+    fn prepare_for_trace_bounds(&mut self, bounds: &Aabb) {
+        if self
+            .trace_bounds
+            .as_ref()
+            .is_some_and(|existing| existing != bounds)
+        {
+            *self = Self::default();
+        }
+        self.trace_bounds = Some(bounds.clone());
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1110,6 +1125,20 @@ fn point_is_inside_optional_trace_bounds(
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     trace_bounds.map_or(Ok(true), |bounds| bounds.contains_point(point))
+}
+
+fn trace_bounds_including_point(bounds: &Aabb, point: &Point3) -> HypermeshResult<Aabb> {
+    let mut min = bounds.min.clone();
+    let mut max = bounds.max.clone();
+    for axis in 0..3 {
+        if compare_real(axis_ref(point, axis), axis_ref(&min, axis))?.is_lt() {
+            *axis_mut(&mut min, axis) = axis_ref(point, axis).clone();
+        }
+        if compare_real(axis_ref(point, axis), axis_ref(&max, axis))?.is_gt() {
+            *axis_mut(&mut max, axis) = axis_ref(point, axis).clone();
+        }
+    }
+    Ok(Aabb::new(min, max))
 }
 
 fn adapt_plane_replacement_vertex_to_trace_bounds(
@@ -4405,7 +4434,16 @@ pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
     host_delta_w: &[i32],
     probe_query_caches: &mut LeafProbeQueryCaches,
 ) -> HypermeshResult<WindingNumberVector> {
-    let interior_points = certified_leaf_interior_points(support, leaf_edges)?;
+    let leaf = ConvexPolygon {
+        support: support.clone(),
+        edges: leaf_edges.to_vec(),
+        mesh_index: -1,
+        polygon_index: -1,
+        delta_w: WindingNumberTransitionVector::new(),
+        approx_bounds: None,
+    };
+    let clipped_leaf = clip_polygon_to_aabb(&leaf, bounds)?;
+    let interior_points = interior_leaf_points(&clipped_leaf)?;
     classify_leaf_polygon_from_interior_points_with_probe_query_caches(
         &interior_points,
         support,
@@ -4455,6 +4493,7 @@ pub(crate) fn classify_leaf_polygon_from_interior_points_with_probe_query_caches
     host_delta_w: &[i32],
     probe_query_caches: &mut LeafProbeQueryCaches,
 ) -> HypermeshResult<WindingNumberVector> {
+    probe_query_caches.prepare_for_trace_bounds(bounds);
     let mut saw_unknown = false;
 
     for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
@@ -4518,6 +4557,7 @@ pub(crate) fn classify_leaf_polygon_interior_point_with_probe_query_caches(
     probe_query_caches: &mut LeafProbeQueryCaches,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
+    probe_query_caches.prepare_for_trace_bounds(bounds);
     for positive_side in [true, false] {
         if let Some(winding) = search_adjacent_normal_probe_winding_with_queries(
             point,
@@ -4865,6 +4905,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
         saw_any_probe = true;
         let probe_fallback = probe.uncertified_definition_fallback;
         let LeafProbeQueryCaches {
+            trace_bounds,
             probe_winding,
             probe_surface,
             probe_reachability,
@@ -4889,6 +4930,9 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             detour_target_families,
             ..
         } = probe_query_caches;
+        let trace_bounds = trace_bounds
+            .as_ref()
+            .ok_or(HypermeshError::UnknownClassification)?;
 
         if cached_surface_query_with(probe_surface, &probe.point, || {
             point_lies_on_traced_surface(&probe.point, polygons)
@@ -4910,6 +4954,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                 plane_replacement_reachability_steps,
                 definition_no_step_detour_reachability,
                 direct_probe_reachability,
+                trace_bounds,
             );
         match no_step_result {
             Ok(true) => {
@@ -4946,6 +4991,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         definition_no_detour_reachability,
                         direct_probe_reachability,
                         detour_target_families,
+                        trace_bounds,
                         saw_unknown,
                     )? {
                         return Ok(Some(winding));
@@ -4984,6 +5030,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                         definition_no_detour_reachability,
                         direct_probe_reachability,
                         detour_target_families,
+                        trace_bounds,
                         saw_unknown,
                     )? {
                         return Ok(Some(winding));
@@ -5760,6 +5807,7 @@ fn try_leaf_probe_family_with_queries(
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let LeafProbeQueryCaches {
+        trace_bounds,
         probe_winding,
         probe_surface,
         probe_reachability,
@@ -5784,6 +5832,9 @@ fn try_leaf_probe_family_with_queries(
         detour_target_families,
         ..
     } = probe_query_caches;
+    let trace_bounds = trace_bounds
+        .as_ref()
+        .ok_or(HypermeshError::UnknownClassification)?;
     let probes = match probes {
         Ok(probes) => probes,
         Err(HypermeshError::UnknownClassification) => {
@@ -5818,6 +5869,7 @@ fn try_leaf_probe_family_with_queries(
             plane_replacement_reachability_steps,
             definition_no_step_detour_reachability,
             direct_probe_reachability,
+            trace_bounds,
         ) {
             Ok(true) => {
                 for deferred in deferred_probes.drain(..) {
@@ -5853,6 +5905,7 @@ fn try_leaf_probe_family_with_queries(
                         definition_no_detour_reachability,
                         direct_probe_reachability,
                         detour_target_families,
+                        trace_bounds,
                         saw_unknown,
                     )? {
                         return Ok(Some(winding));
@@ -5902,6 +5955,7 @@ fn try_leaf_probe_family_with_queries(
             definition_no_detour_reachability,
             direct_probe_reachability,
             detour_target_families,
+            trace_bounds,
             saw_unknown,
         )? {
             return Ok(Some(winding));
@@ -5944,6 +5998,7 @@ fn evaluate_leaf_probe_with_query_caches(
     definition_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_families: &mut DetourTargetFamilyCache,
+    trace_bounds: &Aabb,
     saw_unknown: &mut bool,
 ) -> HypermeshResult<Option<WindingNumberVector>> {
     let probe_fallback = probe.uncertified_definition_fallback;
@@ -5975,11 +6030,13 @@ fn evaluate_leaf_probe_with_query_caches(
                 definition_no_detour_reachability,
                 direct_probe_reachability,
                 detour_target_families,
+                Some(trace_bounds),
             )
         })?;
         if !reaches {
             None
         } else {
+            let winding_trace_bounds = trace_bounds_including_point(trace_bounds, ref_point)?;
             let mut winding = cached_probe_winding_with(probe_winding, &probe, || {
                 trace_probe_winding_with_caches(
                     ref_point,
@@ -5993,6 +6050,7 @@ fn evaluate_leaf_probe_with_query_caches(
                     plane_replacement_trace_steps,
                     definition_no_detour_trace,
                     detour_target_families,
+                    Some(&winding_trace_bounds),
                 )
             })?;
             if probe.side == Classification::Negative {
@@ -6027,7 +6085,13 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
     plane_replacement_reachability_steps: &mut PlaneReplacementReachabilityStepCache,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
+    trace_bounds: &Aabb,
 ) -> HypermeshResult<bool> {
+    if !trace_bounds.contains_point(&interior.point)?
+        || !trace_bounds.contains_point(&probe.point)?
+    {
+        return Err(HypermeshError::UnknownClassification);
+    }
     let start_family = endpoint_definition_family(&interior.point, &interior.planes)?;
     let end_family = endpoint_definition_family(&probe.point, &probe.planes)?;
     let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
@@ -6070,6 +6134,7 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
                         plane_replacement_affine,
                         plane_replacement_reachability_paths,
                         plane_replacement_reachability_steps,
+                        Some(trace_bounds),
                     )
                 },
             )
@@ -6480,6 +6545,7 @@ fn trace_probe_winding(
         &mut plane_replacement_trace_steps,
         &mut definition_no_detour_trace,
         &mut detour_target_families,
+        None,
     )
 }
 
@@ -6495,6 +6561,7 @@ fn trace_probe_winding_with_caches(
     plane_replacement_trace_steps: &mut Vec<PlaneReplacementStepCacheEntry>,
     definition_no_detour_trace: &mut Vec<DefinitionNoDetourTraceCacheEntry>,
     detour_target_families: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut probe_definitions = probe.planes.clone();
     let axis_definition = axis_plane_defined_point(&probe.point).planes;
@@ -6519,7 +6586,7 @@ fn trace_probe_winding_with_caches(
         plane_replacement_trace_steps,
         definition_no_detour_trace,
         detour_target_families,
-        None,
+        trace_bounds,
     )
 }
 
@@ -7697,6 +7764,7 @@ fn probe_reaches_adjacent_cell_from_interior(
         &mut definition_no_detour_reachability,
         &mut direct_probe_reachability,
         &mut detour_target_families,
+        None,
     )
 }
 
@@ -7723,7 +7791,13 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     definition_no_detour_reachability: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_families: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
+    if !point_is_inside_optional_trace_bounds(&interior.point, trace_bounds)?
+        || !point_is_inside_optional_trace_bounds(&probe.point, trace_bounds)?
+    {
+        return Err(HypermeshError::UnknownClassification);
+    }
     let start_family = endpoint_definition_family(&interior.point, &interior.planes)?;
     let end_family = endpoint_definition_family(&probe.point, &probe.planes)?;
     let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
@@ -7752,6 +7826,7 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         definition_no_detour_reachability,
         direct_probe_reachability,
         detour_target_families,
+        trace_bounds,
     );
     match result {
         Ok(false) if saw_unknown => Err(HypermeshError::UnknownClassification),
@@ -7812,6 +7887,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard(
         &mut no_detour_cache,
         &mut direct_probe_reachability_cache,
         &mut detour_target_cache,
+        None,
     )
 }
 
@@ -7839,6 +7915,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_cache: &mut DetourTargetFamilyCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     let visited_points =
         initial_visited_definition_points(start, start_definitions, end, end_definitions);
@@ -7886,6 +7963,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                 full_no_detour_cache,
                 no_detour_cache,
                 direct_probe_reachability_cache,
+                trace_bounds,
             )
         };
     let arrangement_planes = detour_arrangement_planes(polygons);
@@ -7897,12 +7975,20 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         end_definitions,
         &arrangement_planes,
         surface_cache,
-        &mut |point| point_lies_on_traced_surface(point, polygons),
+        &mut |point| {
+            if !point_is_inside_optional_trace_bounds(point, trace_bounds)? {
+                return Ok(true);
+            }
+            point_lies_on_traced_surface(point, polygons)
+        },
         &mut trace_without_detours,
         &mut |batch_start, batch_end, batch_index| {
-            if let Some(cached) =
-                cached_detour_target_family(detour_target_cache, batch_start, batch_end, None)
-            {
+            if let Some(cached) = cached_detour_target_family(
+                detour_target_cache,
+                batch_start,
+                batch_end,
+                trace_bounds,
+            ) {
                 if batch_index == 0 {
                     cached.targets.clone().map(Some)
                 } else {
@@ -7915,7 +8001,7 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
                     batch_index,
                     polygons,
                     &arrangement_planes,
-                    None,
+                    trace_bounds,
                 )
             }
         },
@@ -8482,6 +8568,7 @@ fn probe_reaches_adjacent_cell_via_progressive_detours(
         &mut strict_aabb_target_families,
         &mut detour_target_cache,
         &mut interior_box_axis_intervals,
+        None,
         |start: &Point3,
          end: &Point3,
          start_definitions: &[[Plane; 3]],
@@ -8628,6 +8715,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours(
         &mut full_no_detour_cache,
         &mut no_detour_cache,
         &mut direct_probe_reachability_cache,
+        None,
     )
 }
 
@@ -8652,6 +8740,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
     full_no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     no_detour_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
     cached_definition_no_detour_reachability_with(
@@ -8694,6 +8783,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                         step_cache,
                         no_step_cache,
                         direct_probe_reachability_cache,
+                        trace_bounds,
                     )
                 },
             )? {
@@ -8720,6 +8810,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_caches(
                             &mut strict_aabb_target_families,
                             no_step_detour_target_cache,
                             direct_probe_reachability_cache,
+                            trace_bounds,
                         );
                         match pair_result {
                             Ok(true) => return Ok(true),
@@ -8767,6 +8858,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
         &mut step_cache,
         &mut no_step_cache,
         &mut direct_probe_reachability_cache,
+        None,
     )
 }
 
@@ -8782,6 +8874,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
     step_cache: &mut PlaneReplacementReachabilityStepCache,
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     let start_family = endpoint_definition_family(start, start_definitions)?;
     let end_family = endpoint_definition_family(end, end_definitions)?;
@@ -8825,6 +8918,7 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
                     affine_cache,
                     path_cache,
                     step_cache,
+                    trace_bounds,
                 ) {
                     Ok(true) => return Ok(true),
                     Ok(false) => {}
@@ -9163,6 +9257,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
         detour_target_cache,
         interior_box_axis_intervals,
         false,
+        None,
         reach_without_detours,
         detours_for_query,
     )
@@ -9182,6 +9277,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
     detour_target_cache: &mut DetourTargetFamilyCache,
     interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
+    trace_bounds: Option<&Aabb>,
     reach_without_detours: impl FnMut(
         &Point3,
         &Point3,
@@ -9205,6 +9301,7 @@ fn probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replaceme
         detour_target_cache,
         interior_box_axis_intervals,
         true,
+        trace_bounds,
         reach_without_detours,
         detours_for_query,
     )
@@ -9225,6 +9322,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
     detour_target_cache: &mut DetourTargetFamilyCache,
     interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
     progressive_interior_box_detours: bool,
+    trace_bounds: Option<&Aabb>,
     mut reach_without_detours: impl FnMut(
         &Point3,
         &Point3,
@@ -9268,7 +9366,12 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
             end_definitions,
             &arrangement_planes,
             &mut surface_cache,
-            &mut |point| point_lies_on_traced_surface(point, polygons),
+            &mut |point| {
+                if !point_is_inside_optional_trace_bounds(point, trace_bounds)? {
+                    return Ok(true);
+                }
+                point_lies_on_traced_surface(point, polygons)
+            },
             &mut trace_without_detours,
             &mut |batch_start, batch_end, batch_index| {
                 detour_batches.batch_for(
@@ -9277,7 +9380,7 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
                     batch_index,
                     polygons,
                     &arrangement_planes,
-                    None,
+                    trace_bounds,
                 )
             },
         )
@@ -10579,6 +10682,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
         &mut strict_aabb_target_families,
         &mut no_step_detour_target_cache,
         &mut direct_probe_reachability_cache,
+        None,
     )
 }
 
@@ -10601,6 +10705,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
     strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
     no_step_detour_target_cache: &mut DetourTargetFamilyCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     cached_plane_replacement_reachability_path_with(
         path_cache,
@@ -10636,6 +10741,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                                 &mut no_step_step_cache,
                                 no_step_cache,
                                 direct_probe_reachability_cache,
+                                trace_bounds,
                             )
                         },
                     )
@@ -10648,6 +10754,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
                 affine_cache,
                 step_cache,
+                trace_bounds,
                 |current, next, current_definitions, next_definitions| {
                     probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
                         current,
@@ -10663,6 +10770,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                         strict_aabb_target_families,
                         no_step_detour_target_cache,
                         interior_box_axis_intervals,
+                        trace_bounds,
                         |start: &Point3,
                          end: &Point3,
                          start_definitions: &[[Plane; 3]],
@@ -10679,6 +10787,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                                 &mut no_step_step_cache,
                                 no_step_cache,
                                 direct_probe_reachability_cache,
+                                trace_bounds,
                             )
                         },
                         |start: &Point3, end: &Point3| {
@@ -10710,6 +10819,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
         &mut affine_cache,
         &mut path_cache,
         &mut step_cache,
+        None,
     )
 }
 
@@ -10721,6 +10831,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
     affine_cache: &mut PlaneReplacementAffineCache,
     path_cache: &mut PlaneReplacementReachabilityPathCache,
     step_cache: &mut PlaneReplacementReachabilityStepCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     cached_plane_replacement_reachability_path_with(
         path_cache,
@@ -10744,6 +10855,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
                     PlaneReplacementReachabilityStepMode::WithoutStepDetours,
                     affine_cache,
                     step_cache,
+                    trace_bounds,
                     |current, next, _current_definitions, _next_definitions| {
                         probe_reaches_adjacent_cell(current, next, host_support, polygons)
                     },
@@ -10759,6 +10871,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
                         host_support,
                         polygons,
                         affine_cache,
+                        trace_bounds,
                     )
                 }
                 result => result,
@@ -10774,6 +10887,7 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
     host_support: &Plane,
     polygons: &[ConvexPolygon],
     affine_cache: &mut PlaneReplacementAffineCache,
+    trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
     for ordering in orderings {
@@ -10782,7 +10896,11 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
             match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
-                Ok(point) => point,
+                Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
+                Ok(_) => {
+                    saw_unknown = true;
+                    continue;
+                }
                 Err(HypermeshError::UnknownClassification) => {
                     saw_unknown = true;
                     continue;
@@ -10802,7 +10920,21 @@ fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
                 match cached_affine_from_planes_with(&mut *affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
                 }) {
-                    Ok(point) => point,
+                    Ok(point) => {
+                        if next_planes == *end_planes
+                            && !point_is_inside_optional_trace_bounds(&point, trace_bounds)?
+                        {
+                            saw_unknown = true;
+                            valid = false;
+                            break;
+                        }
+                        adapt_plane_replacement_vertex_to_trace_bounds(
+                            point,
+                            next_planes.clone(),
+                            trace_bounds,
+                        )?
+                        .0
+                    }
                     Err(HypermeshError::UnknownClassification) => {
                         saw_unknown = true;
                         valid = false;
@@ -10850,6 +10982,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_impl(
         mode,
         affine_cache,
         step_cache,
+        None,
         trace_step,
     )
 }
@@ -10861,6 +10994,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
     mode: PlaneReplacementReachabilityStepMode,
     affine_cache: &mut PlaneReplacementAffineCache,
     step_cache: &mut PlaneReplacementReachabilityStepCache,
+    trace_bounds: Option<&Aabb>,
     mut trace_step: impl FnMut(&Point3, &Point3, &[[Plane; 3]], &[[Plane; 3]]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<bool> {
     let mut saw_unknown = false;
@@ -10870,13 +11004,18 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
             match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
-                Ok(point) => point,
+                Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
+                Ok(_) => {
+                    saw_unknown = true;
+                    continue;
+                }
                 Err(HypermeshError::UnknownClassification) => {
                     saw_unknown = true;
                     continue;
                 }
                 Err(err) => return Err(err),
             };
+        let mut current_trace_planes = current_planes.clone();
         let mut valid = true;
 
         for (_step_index, plane_index) in ordering.iter().copied().enumerate() {
@@ -10885,11 +11024,24 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
             if next_planes == current_planes {
                 continue;
             }
-            let next_point =
+            let (next_point, next_trace_planes) =
                 match cached_affine_from_planes_with(&mut *affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
                 }) {
-                    Ok(point) => point,
+                    Ok(point) => {
+                        if next_planes == *end_planes
+                            && !point_is_inside_optional_trace_bounds(&point, trace_bounds)?
+                        {
+                            saw_unknown = true;
+                            valid = false;
+                            break;
+                        }
+                        adapt_plane_replacement_vertex_to_trace_bounds(
+                            point,
+                            next_planes.clone(),
+                            trace_bounds,
+                        )?
+                    }
                     Err(HypermeshError::UnknownClassification) => {
                         saw_unknown = true;
                         valid = false;
@@ -10902,14 +11054,14 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
                 mode,
                 &current_point,
                 &next_point,
-                &current_planes,
-                &next_planes,
+                &current_trace_planes,
+                &next_trace_planes,
                 || {
                     trace_step(
                         &current_point,
                         &next_point,
-                        std::slice::from_ref(&current_planes),
-                        std::slice::from_ref(&next_planes),
+                        std::slice::from_ref(&current_trace_planes),
+                        std::slice::from_ref(&next_trace_planes),
                     )
                 },
             ) {
@@ -10926,6 +11078,7 @@ fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_
                 break;
             }
             current_point = next_point;
+            current_trace_planes = next_trace_planes;
             current_planes = next_planes;
         }
 
@@ -17673,6 +17826,7 @@ mod tests {
             plane_replacement_trace_steps,
             definition_no_detour_trace,
             detour_target_families,
+            Some(&bounds),
         )
         .unwrap();
         let after_first = (
@@ -17696,6 +17850,7 @@ mod tests {
             plane_replacement_trace_steps,
             definition_no_detour_trace,
             detour_target_families,
+            Some(&bounds),
         )
         .unwrap();
         let after_second = (
@@ -17772,6 +17927,7 @@ mod tests {
             definition_no_detour_reachability,
             direct_probe_reachability,
             detour_target_families,
+            Some(&bounds),
         )
         .unwrap();
         let after_first = [
@@ -17812,6 +17968,7 @@ mod tests {
             definition_no_detour_reachability,
             direct_probe_reachability,
             detour_target_families,
+            Some(&bounds),
         )
         .unwrap();
         let after_second = [
@@ -17869,6 +18026,7 @@ mod tests {
             &mut step_cache,
             &mut no_step_cache,
             &mut direct_probe_reachability_cache,
+            None,
         )
         .unwrap();
         let after_first = (
@@ -17891,6 +18049,7 @@ mod tests {
             &mut step_cache,
             &mut no_step_cache,
             &mut direct_probe_reachability_cache,
+            None,
         )
         .unwrap();
         let after_second = (
@@ -17962,6 +18121,7 @@ mod tests {
             &mut full_no_detour_cache,
             &mut no_detour_cache,
             &mut direct_probe_reachability_cache,
+            None,
         )
         .unwrap();
         let after_first = [
@@ -18002,6 +18162,7 @@ mod tests {
             &mut full_no_detour_cache,
             &mut no_detour_cache,
             &mut direct_probe_reachability_cache,
+            None,
         )
         .unwrap();
         let after_second = [
@@ -28965,6 +29126,91 @@ mod tests {
     }
 
     #[test]
+    fn bounded_plane_replacement_reachability_adapts_when_every_raw_order_leaves_bounds() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = [
+            Plane::from_coefficients(r(1), r(2), r(0), r(-3)),
+            Plane::from_coefficients(r(0), r(1), r(2), r(-3)),
+            Plane::from_coefficients(r(2), r(0), r(1), r(-3)),
+        ];
+        assert_eq!(affine_from_planes(&end_definition).unwrap(), end);
+        let bounds = Aabb::new(start.clone(), end.clone());
+        for plane_index in 0..3 {
+            let mut first_step = start_definition.clone();
+            first_step[plane_index] = end_definition[plane_index].clone();
+            assert!(
+                !bounds
+                    .contains_point(&affine_from_planes(&first_step).unwrap())
+                    .unwrap()
+            );
+        }
+        let mut affine_cache = PlaneReplacementAffineCache::default();
+        let mut step_cache = PlaneReplacementReachabilityStepCache::default();
+        let mut traced_steps = Vec::new();
+
+        let reaches =
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                &AXIS_ORDERINGS,
+                &start_definition,
+                &end_definition,
+                PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+                &mut affine_cache,
+                &mut step_cache,
+                Some(&bounds),
+                |current, next, current_definitions, next_definitions| {
+                    assert!(bounds.contains_point(current).unwrap());
+                    assert!(bounds.contains_point(next).unwrap());
+                    assert_eq!(current_definitions.len(), 1);
+                    assert_eq!(next_definitions.len(), 1);
+                    assert_eq!(
+                        affine_from_planes(&current_definitions[0]).unwrap(),
+                        *current
+                    );
+                    assert_eq!(affine_from_planes(&next_definitions[0]).unwrap(), *next);
+                    traced_steps.push((current.clone(), next.clone()));
+                    Ok(true)
+                },
+            )
+            .unwrap();
+
+        assert!(reaches);
+        assert_eq!(traced_steps.first().unwrap().0, start);
+        assert_eq!(traced_steps.last().unwrap().1, end);
+        assert!(traced_steps.len() >= 2);
+    }
+
+    #[test]
+    fn bounded_plane_replacement_reachability_does_not_adapt_outside_endpoint() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(2, 0, 0));
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let mut affine_cache = PlaneReplacementAffineCache::default();
+        let mut step_cache = PlaneReplacementReachabilityStepCache::default();
+        let mut traced_steps = 0;
+
+        let err =
+            plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                &AXIS_ORDERINGS,
+                &start_definition,
+                &end_definition,
+                PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+                &mut affine_cache,
+                &mut step_cache,
+                Some(&bounds),
+                |_current, _next, _current_definitions, _next_definitions| {
+                    traced_steps += 1;
+                    Ok(true)
+                },
+            )
+            .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(traced_steps, 0);
+    }
+
+    #[test]
     fn no_step_ordering_precheck_warms_shared_affine_cache_for_step_trace() {
         let start_definition = axis_plane_definition(&p(0, 0, 0));
         let end_definition = axis_plane_definition(&p(1, 2, 3));
@@ -28987,6 +29233,7 @@ mod tests {
                 PlaneReplacementReachabilityStepMode::WithoutStepDetours,
                 &mut affine_cache,
                 &mut step_cache,
+                None,
                 |_from, _to, _start_definitions, _end_definitions| Ok(true),
             )
             .unwrap();
@@ -29032,6 +29279,7 @@ mod tests {
                 PlaneReplacementReachabilityStepMode::WithoutNestedPlaneReplacement,
                 &mut affine_cache,
                 &mut step_cache,
+                None,
                 |_from, _to, _start_definitions, _end_definitions| Ok(true),
             )
             .unwrap();
