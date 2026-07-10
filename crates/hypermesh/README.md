@@ -342,10 +342,13 @@ If leaf-interior or probe definition reconstruction is itself uncertified, the
 fallback axis-defined candidate is still explored, but if no later certified
 probe family or probe path succeeds that branch now surfaces
 `UnknownClassification` instead of being flattened into plain absence.
-And if a fallback-marked interior/probe pair does produce a winding, that no
-longer counts as final success by itself: the leaf search keeps looking for a
-certified path, and returns `UnknownClassification` if only fallback-marked
-probe paths succeed.
+Once a fallback-marked interior/probe pair passes strict leaf membership,
+off-surface probe validation, certified adjacent-cell reachability, and the
+complete reference-to-probe winding trace, the resulting winding now counts as
+certified. Uncertainty from an unused richer point-definition replay no longer
+rejects that complete proof. A fallback candidate that is skipped, unreachable,
+or fails to trace still contributes `UnknownClassification` if no later probe
+path succeeds.
 Redundant same-point fallback duplicates in the live leaf/probe/detour
 collectors also no longer poison an exact certified duplicate with the same
 retained definitions; fallback at one point now survives only when it still

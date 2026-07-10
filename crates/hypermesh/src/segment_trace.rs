@@ -5945,7 +5945,7 @@ fn try_leaf_probe_family_with_queries(
 
 fn evaluate_leaf_probe_with_query_caches(
     point: &InteriorLeafPoint,
-    positive_side: bool,
+    _positive_side: bool,
     probe: ProbePoint,
     support: &Plane,
     ref_point: &Point3,
@@ -6036,13 +6036,9 @@ fn evaluate_leaf_probe_with_query_caches(
 
     match winding {
         Some(winding) => {
-            if point.uncertified_definition_fallback || probe_fallback {
-                *saw_unknown = true;
-                Ok(None)
-            } else {
-                let _ = positive_side;
-                Ok(Some(winding))
-            }
+            // Strict leaf membership, adjacent-cell reachability, and the
+            // reference-to-probe winding trace have all certified this pair.
+            Ok(Some(winding))
         }
         None => {
             if point.uncertified_definition_fallback || probe_fallback {
@@ -6468,13 +6464,7 @@ fn search_leaf_probe_families<'a>(
             for probe in probes {
                 let probe_fallback = probe.uncertified_definition_fallback;
                 match handle_probe(point, positive_side, probe) {
-                    Ok(Some(winding)) => {
-                        if point.uncertified_definition_fallback || probe_fallback {
-                            saw_unknown = true;
-                            continue;
-                        }
-                        return Ok(Some(winding));
-                    }
+                    Ok(Some(winding)) => return Ok(Some(winding)),
                     Ok(None) => {
                         if point.uncertified_definition_fallback || probe_fallback {
                             saw_unknown = true;
@@ -18873,7 +18863,7 @@ mod tests {
     }
 
     #[test]
-    fn leaf_probe_family_search_skips_fallback_probe_even_when_winding_succeeds() {
+    fn leaf_probe_family_search_accepts_fallback_probe_after_complete_proof() {
         let point = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
@@ -18911,11 +18901,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(winding, Some(vec![13]));
+        assert_eq!(winding, Some(vec![11]));
     }
 
     #[test]
-    fn leaf_probe_family_search_reports_unknown_when_only_fallback_probe_succeeds() {
+    fn leaf_probe_family_search_accepts_only_fallback_probe_after_complete_proof() {
         let point = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
@@ -18928,18 +18918,18 @@ mod tests {
             uncertified_definition_fallback: true,
         };
 
-        let err = search_leaf_probe_families(
+        let winding = search_leaf_probe_families(
             &[point],
             |_point, _positive_side| Ok(vec![fallback_probe.clone()]),
             |_point, _positive_side, _probe| Ok(Some(vec![11])),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(winding, Some(vec![11]));
     }
 
     #[test]
-    fn leaf_probe_family_search_skips_fallback_interior_even_when_winding_succeeds() {
+    fn leaf_probe_family_search_accepts_fallback_interior_after_complete_proof() {
         let fallback_point = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
@@ -18970,11 +18960,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(winding, Some(vec![19]));
+        assert_eq!(winding, Some(vec![17]));
     }
 
     #[test]
-    fn leaf_probe_family_search_reports_unknown_when_only_fallback_interior_succeeds() {
+    fn leaf_probe_family_search_accepts_only_fallback_interior_after_complete_proof() {
         let fallback_point = InteriorLeafPoint {
             point: p(1, 1, 1),
             planes: vec![axis_plane_definition(&p(1, 1, 1))],
@@ -18987,14 +18977,14 @@ mod tests {
             uncertified_definition_fallback: false,
         };
 
-        let err = search_leaf_probe_families(
+        let winding = search_leaf_probe_families(
             &[fallback_point],
             |_point, _positive_side| Ok(vec![probe.clone()]),
             |_point, _positive_side, _probe| Ok(Some(vec![17])),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(winding, Some(vec![17]));
     }
 
     #[test]
@@ -22054,6 +22044,35 @@ mod tests {
         .expect("direct leaf witness should still certify");
 
         assert!(!interior.uncertified_definition_fallback);
+
+        let winding = classify_leaf_polygon_from_interior_points(
+            std::slice::from_ref(&interior),
+            &leaf.support,
+            &ref_point,
+            &ref_definitions,
+            &[0],
+            &[leaf.clone()],
+            &bounds,
+            &leaf.delta_w,
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![-1]);
+    }
+
+    #[test]
+    fn leaf_classification_certifies_fallback_marked_interior_after_complete_probe_proof() {
+        let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+        leaf.delta_w = vec![1];
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let ref_point = p(0, 0, 0);
+        let ref_definitions = [axis_plane_definition(&ref_point)];
+        let mut interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("slanted leaf should have an interior witness");
+        interior.uncertified_definition_fallback = true;
 
         let winding = classify_leaf_polygon_from_interior_points(
             std::slice::from_ref(&interior),
