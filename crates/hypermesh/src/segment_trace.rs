@@ -4,6 +4,7 @@ mod halfspace_witness;
 mod leaf_probe;
 mod path;
 mod probe_cache;
+mod probe_geometry;
 mod probe_reachability;
 mod witness;
 
@@ -80,6 +81,18 @@ use probe_cache::{
 #[cfg(test)]
 use probe_cache::{cached_direct_probe_reachability_with, cached_surface_query_with};
 #[cfg(test)]
+use probe_geometry::*;
+use probe_geometry::{
+    adjacent_axis_probe_stop_values_with_queries, adjacent_normal_probe_stop_values_with_queries,
+    axis_probe_bounds, axis_probe_definition_preserves_axis_direction, axis_value_after_start,
+    bounds_between_points, build_axis_probe_point, build_axis_probe_point_from_shifted_witness,
+    build_probe_point, build_probe_point_from_shifted_witness, dot_direction,
+    normal_probe_extra_planes, normal_probe_shifted_seed_families, normal_stop_halfspace,
+    offset_point, probe_axes, probe_definitions_from_active_halfspaces, probe_definitions_or_axis,
+    push_plane_equality_halfspaces, strict_axis_probe_targets,
+    strict_normal_probe_targets_with_query_caches, unique_normal_probe_search_definitions,
+};
+#[cfg(test)]
 use probe_reachability::*;
 use probe_reachability::{
     cached_definition_no_detour_reachability_with,
@@ -92,17 +105,8 @@ pub(crate) use witness::certified_leaf_test_point;
 #[cfg(test)]
 use witness::*;
 use witness::{
-    PolygonPointLocation, adjacent_axis_probe_stop_values_with_queries,
-    adjacent_normal_probe_stop_values_with_queries, axis_probe_bounds,
-    axis_probe_definition_preserves_axis_direction, axis_value_after_start, bounds_between_points,
-    build_axis_probe_point, build_axis_probe_point_from_shifted_witness, build_probe_point,
-    build_probe_point_from_shifted_witness, classify_point_in_polygon, dominant_normal_axis,
-    dot_direction, interior_leaf_points, normal_probe_extra_planes,
-    normal_probe_shifted_seed_families, normal_stop_halfspace, offset_point, planes_are_coplanar,
-    point_strictly_between_axis, probe_axes, probe_definitions_from_active_halfspaces,
-    probe_definitions_or_axis, push_plane_equality_halfspaces, segment_plane_crossing,
-    sort_crossing_events, strict_axis_probe_targets, strict_normal_probe_targets_with_query_caches,
-    unique_normal_probe_search_definitions,
+    PolygonPointLocation, classify_point_in_polygon, dominant_normal_axis, interior_leaf_points,
+    planes_are_coplanar, point_strictly_between_axis, segment_plane_crossing, sort_crossing_events,
 };
 pub(crate) use witness::{certified_leaf_interior_points, certified_leaf_test_points};
 
