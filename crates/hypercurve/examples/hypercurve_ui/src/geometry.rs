@@ -1018,13 +1018,17 @@ fn source_contour_fragments(contour: &HContour) -> Result<ContourFragmentSet, St
             .iter()
             .cloned()
             .enumerate()
-            .map(
-                |(source_segment_index, segment)| hypercurve::ContourFragment {
+            .map(|(source_segment_index, segment)| {
+                let source_segment_start_point = segment.start().clone();
+                let source_segment_end_point = segment.end().clone();
+                hypercurve::ContourFragment {
                     source_segment_index,
+                    source_segment_start_point,
+                    source_segment_end_point,
                     source_range: hypercurve::ParamRange::new(Real::zero(), Real::one()),
                     segment,
-                },
-            )
+                }
+            })
             .collect(),
     )
     .map_err(|error| error.to_string())
