@@ -593,7 +593,15 @@ and reachability queries across revisited branches instead of reissuing those
 same retained-definition base checks. The same entry layer now also reuses
 identical endpoint-box detour target families for repeated `(start, end)` or
 reversed `(end, start)` queries instead of rebuilding the same local detour
-boxes across revisited branches. The live step-detour reachability entry now
+boxes across revisited branches. Complete local detour construction is now
+resumable by endpoint-box cell, direct and deferred target phase, and individual
+shifted seed. Both winding-carrying segment traces and no-plane-replacement probe
+reachability consume those batches through breadth-first path queues, so later
+target phases and shallower sibling paths run before one blocked leg can
+recursively monopolize the search. Segment-path expansion propagates the exact
+winding vector across every already-certified leg and refuses to certify a
+completed path containing a fallback-built target. The live step-detour
+reachability entry now
 also reuses those same definition-aware no-step-detour checks and endpoint-box
 detour families across failed sibling branches instead of rebuilding them on
 each revisit. If none trace

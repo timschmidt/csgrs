@@ -17203,7 +17203,12 @@ mod tests {
         let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
         assert_eq!(
-            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &[wall.clone()]),
+            crate::segment_trace::trace_segment_without_detours(
+                &ref_point,
+                &target_point,
+                &[0],
+                &[wall.clone()],
+            ),
             Err(crate::error::HypermeshError::UnknownClassification)
         );
 
@@ -17239,7 +17244,12 @@ mod tests {
         let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
         assert_eq!(
-            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &[wall.clone()]),
+            crate::segment_trace::trace_segment_without_detours(
+                &ref_point,
+                &target_point,
+                &[0],
+                &[wall.clone()],
+            ),
             Err(crate::error::HypermeshError::UnknownClassification)
         );
 
@@ -17275,7 +17285,12 @@ mod tests {
         let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
         assert_eq!(
-            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &[wall.clone()]),
+            crate::segment_trace::trace_segment_without_detours(
+                &ref_point,
+                &target_point,
+                &[0],
+                &[wall.clone()],
+            ),
             Err(crate::error::HypermeshError::UnknownClassification)
         );
 
@@ -17323,7 +17338,12 @@ mod tests {
         let bounds = Aabb::new(p(0, -1, -1), p(5, 3, 5));
 
         assert_eq!(
-            crate::segment_trace::trace_segment(&ref_point, &target_point, &[0], &blockers),
+            crate::segment_trace::trace_segment_without_detours(
+                &ref_point,
+                &target_point,
+                &[0],
+                &blockers,
+            ),
             Err(crate::error::HypermeshError::UnknownClassification)
         );
 
