@@ -16,7 +16,14 @@ fn tolerance() -> Real {
 }
 
 fn clamp_real(value: Real, min: f64, max: f64) -> Real {
-    value.max(real(min)).min(real(max))
+    let min = real(min);
+    let max = real(max);
+    value.max(&min).min(&max).clone()
+}
+
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -56,11 +63,11 @@ fuzz_target!(|bytes: &[u8]| {
         idx += 1;
         match op {
             0 => {
-                let size = decode_real(bytes, &mut idx).abs().max(tolerance());
+                let size = at_least_tolerance(decode_real(bytes, &mut idx).abs());
                 stack.push(Mesh::cube(size, ()));
             },
             1 => {
-                let radius = decode_real(bytes, &mut idx).abs().max(tolerance());
+                let radius = at_least_tolerance(decode_real(bytes, &mut idx).abs());
                 let segments = (bytes[idx % bytes.len()] as usize % 16) + 3;
                 idx += 1;
                 stack.push(Mesh::sphere(radius, segments, segments, ()));
@@ -141,7 +148,10 @@ fuzz_target!(|bytes: &[u8]| {
                 let mu = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
                 let iterations = bytes[idx % bytes.len()] as usize % 3;
                 idx += 1;
-                stack.push(mesh.triangulate().taubin_smooth(lambda, mu, iterations, false));
+                stack.push(
+                    mesh.triangulate()
+                        .taubin_smooth(lambda, mu, iterations, false),
+                );
             },
         }
     }

@@ -23,6 +23,14 @@ fn invalid_obj_data(message: impl Into<String>) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::InvalidData, message.into())
 }
 
+fn invalid_obj_data_at_line(line: usize, message: impl Into<String>) -> std::io::Error {
+    invalid_obj_data(format!("line {line}: {}", message.into()))
+}
+
+fn obj_line_error(line: usize, error: std::io::Error) -> std::io::Error {
+    invalid_obj_data_at_line(line, error.to_string())
+}
+
 fn build_obj_buffers<T: IndexedTriangulated3D>(
     shape: &T,
 ) -> (Vec<Point3>, Vec<Vector3>, Vec<Vec<(usize, usize)>>) {
@@ -126,7 +134,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut normals = Vec::new();
         let mut polygons = Vec::new();
 
-        for line_result in reader.lines() {
+        for (line_index, line_result) in reader.lines().enumerate() {
+            let line_number = line_index + 1;
             let line = line_result?;
             let line = line.trim();
             if line.is_empty() || line.starts_with('#') {
@@ -138,70 +147,83 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
             match parts[0] {
                 "v" => {
-                    if parts.len() >= 4 {
-                        let x: Real = parts[1].parse().map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidData,
-                                format!("Invalid vertex x coordinate: {e}"),
-                            )
-                        })?;
-                        let y: Real = parts[2].parse().map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidData,
-                                format!("Invalid vertex y coordinate: {e}"),
-                            )
-                        })?;
-                        let z: Real = parts[3].parse().map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidData,
-                                format!("Invalid vertex z coordinate: {e}"),
-                            )
-                        })?;
-                        let point = Point3::new(x, y, z);
-                        vertices.push(point);
+                    if parts.len() < 4 {
+                        return Err(invalid_obj_data_at_line(
+                            line_number,
+                            "vertex line needs three coordinates",
+                        ));
                     }
+                    let x: Real = parts[1].parse().map_err(|e| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            format!("Invalid vertex x coordinate: {e}"),
+                        )
+                    })?;
+                    let y: Real = parts[2].parse().map_err(|e| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            format!("Invalid vertex y coordinate: {e}"),
+                        )
+                    })?;
+                    let z: Real = parts[3].parse().map_err(|e| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            format!("Invalid vertex z coordinate: {e}"),
+                        )
+                    })?;
+                    let point = Point3::new(x, y, z);
+                    vertices.push(point);
                 },
                 "vn" => {
-                    if parts.len() >= 4 {
-                        let x: Real = parts[1].parse().map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidData,
-                                format!("Invalid normal x coordinate: {e}"),
-                            )
-                        })?;
-                        let y: Real = parts[2].parse().map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidData,
-                                format!("Invalid normal y coordinate: {e}"),
-                            )
-                        })?;
-                        let z: Real = parts[3].parse().map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::InvalidData,
-                                format!("Invalid normal z coordinate: {e}"),
-                            )
-                        })?;
-                        let normal = Vector3::from_xyz(x, y, z).normalize_checked().map_err(|_| {
-                            invalid_obj_data(
-                                "Invalid normal coordinate: OBJ normals must be finite and non-zero",
-                            )
-                        })?;
-                        normals.push(normal);
+                    if parts.len() < 4 {
+                        return Err(invalid_obj_data_at_line(
+                            line_number,
+                            "normal line needs three coordinates",
+                        ));
                     }
+                    let x: Real = parts[1].parse().map_err(|e| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            format!("Invalid normal x coordinate: {e}"),
+                        )
+                    })?;
+                    let y: Real = parts[2].parse().map_err(|e| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            format!("Invalid normal y coordinate: {e}"),
+                        )
+                    })?;
+                    let z: Real = parts[3].parse().map_err(|e| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            format!("Invalid normal z coordinate: {e}"),
+                        )
+                    })?;
+                    let normal = Vector3::from_xyz(x, y, z).normalize_checked().map_err(|_| {
+                        invalid_obj_data_at_line(
+                            line_number,
+                            "Invalid normal coordinate: OBJ normals must be finite and non-zero",
+                        )
+                    })?;
+                    normals.push(normal);
                 },
                 "f" => {
-                    if parts.len() >= 4 {
-                        let face_vertices =
-                            Self::parse_obj_face(&parts[1..], &vertices, &normals)?;
-                        if face_vertices.len() >= 3 {
-                            for i in 1..face_vertices.len() - 1 {
-                                let triangle = vec![
-                                    face_vertices[0].clone(),
-                                    face_vertices[i].clone(),
-                                    face_vertices[i + 1].clone(),
-                                ];
-                                polygons.push(Polygon::new(triangle, metadata.clone()));
-                            }
+                    if parts.len() < 4 {
+                        return Err(invalid_obj_data_at_line(
+                            line_number,
+                            "face line needs at least three vertices",
+                        ));
+                    }
+                    let face_vertices =
+                        Self::parse_obj_face(&parts[1..], &vertices, &normals, line_number)?;
+                    if face_vertices.len() >= 3 {
+                        for i in 1..face_vertices.len() - 1 {
+                            let triangle = vec![
+                                face_vertices[0].clone(),
+                                face_vertices[i].clone(),
+                                face_vertices[i + 1].clone(),
+                            ];
+                            polygons.push(Polygon::new(triangle, metadata.clone()));
                         }
                     }
                 },
@@ -216,26 +238,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         face_parts: &[&str],
         vertices: &[Point3],
         normals: &[Vector3],
+        line_number: usize,
     ) -> std::io::Result<Vec<Vertex>> {
         let mut face_vertices = Vec::new();
         for part in face_parts {
             let indices: Vec<&str> = part.split('/').collect();
-            let vertex_idx = parse_obj_positive_index(indices[0], "vertex")?;
-            if vertex_idx >= vertices.len() {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("Vertex index {} out of range", vertex_idx + 1),
-                ));
-            }
+            let vertex_idx = parse_obj_index(indices[0], "vertex", vertices.len())
+                .map_err(|error| obj_line_error(line_number, error))?;
             let position = vertices[vertex_idx].clone();
             let normal = if indices.len() >= 3 && !indices[2].is_empty() {
-                let normal_idx = parse_obj_positive_index(indices[2], "normal")?;
-                if normal_idx >= normals.len() {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        format!("Normal index {} out of range", normal_idx + 1),
-                    ));
-                }
+                let normal_idx = parse_obj_index(indices[2], "normal", normals.len())
+                    .map_err(|error| obj_line_error(line_number, error))?;
                 normals[normal_idx].clone()
             } else {
                 Vector3::z()
@@ -246,20 +259,34 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
-fn parse_obj_positive_index(raw: &str, label: &str) -> std::io::Result<usize> {
-    let index = raw.parse::<usize>().map_err(|e| {
-        std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("Invalid {label} index: {e}"),
-        )
-    })?;
+fn parse_obj_index(raw: &str, label: &str, value_count: usize) -> std::io::Result<usize> {
+    if raw.is_empty() {
+        return Err(invalid_obj_data(format!(
+            "face token is missing a {label} index"
+        )));
+    }
 
-    index.checked_sub(1).ok_or_else(|| {
-        std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("Invalid {label} index: OBJ indices are 1-based"),
-        )
-    })
+    let index = raw
+        .parse::<isize>()
+        .map_err(|error| invalid_obj_data(format!("Invalid {label} index: {error}")))?;
+
+    let resolved = if index > 0 {
+        index as usize - 1
+    } else if index < 0 {
+        value_count.checked_sub(index.unsigned_abs()).ok_or_else(|| {
+            invalid_obj_data(format!("negative {label} index is out of range"))
+        })?
+    } else {
+        return Err(invalid_obj_data(format!(
+            "Invalid {label} index: OBJ indices are one-based"
+        )));
+    };
+
+    if resolved >= value_count {
+        return Err(invalid_obj_data(format!("{label} index is out of range")));
+    }
+
+    Ok(resolved)
 }
 
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
@@ -275,5 +302,69 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         object_name: &str,
     ) -> std::io::Result<()> {
         self::write_obj(self, writer, object_name)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn from_obj_accepts_relative_negative_face_indices() {
+        let obj = "\
+v 0 0 0
+v 1 0 0
+v 0 1 0
+f -3 -2 -1
+";
+
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+
+        assert_eq!(mesh.polygons.len(), 1);
+        assert_eq!(mesh.polygons[0].vertices.len(), 3);
+    }
+
+    #[test]
+    fn from_obj_reports_malformed_vertex_line() {
+        let error = Mesh::<()>::from_obj(Cursor::new("v 0 0\n"), ()).unwrap_err();
+
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("line 1"));
+        assert!(error
+            .to_string()
+            .contains("vertex line needs three coordinates"));
+    }
+
+    #[test]
+    fn from_obj_reports_malformed_face_line() {
+        let obj = "\
+v 0 0 0
+v 1 0 0
+f 1 2
+";
+        let error = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap_err();
+
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("line 3"));
+        assert!(error
+            .to_string()
+            .contains("face line needs at least three vertices"));
+    }
+
+    #[test]
+    fn to_obj_keeps_lossy_six_decimal_output() {
+        let obj = "\
+v 0 0 0
+v 1 0 0
+v 0 1 0
+f 1 2 3
+";
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+
+        let exported = mesh.to_obj("triangle");
+
+        assert!(exported.contains("v 1.000000 0.000000 0.000000"));
+        assert!(exported.contains("o triangle"));
     }
 }

@@ -15,6 +15,11 @@ fn tolerance() -> Real {
     real(1.0e-9)
 }
 
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
+}
+
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
     for slot in &mut raw {
@@ -41,8 +46,8 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let mut idx = 0usize;
-    let size_a = decode_real(bytes, &mut idx).abs().max(tolerance());
-    let size_b = decode_real(bytes, &mut idx).abs().max(tolerance());
+    let size_a = at_least_tolerance(decode_real(bytes, &mut idx).abs());
+    let size_b = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let b = Mesh::cube(size_b, ()).translate(
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),

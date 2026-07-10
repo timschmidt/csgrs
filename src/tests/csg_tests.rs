@@ -1,17 +1,6 @@
 //! Unit tests for core CSG operations.
 
 use super::support::*;
-use crate::mesh::hypermesh::HypermeshError;
-
-fn assert_hypermesh_import_blockers(error: HypermeshError) {
-    let HypermeshError::Mesh(error) = error else {
-        panic!("expected hypermesh import error, got {error}");
-    };
-    assert!(
-        !error.blockers().is_empty(),
-        "hypermesh import errors should report blockers"
-    );
-}
 
 #[test]
 fn test_csg_from_polygons_and_to_polygons() {
@@ -72,21 +61,51 @@ fn test_csg_difference() {
 fn test_csg_union2() {
     let c1: Mesh<()> = Mesh::cube(r(2.0), ()); // cube from (-1..+1) if that's how you set radius=1 by default
     let c2: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ()); // default sphere radius=1
-    assert_hypermesh_import_blockers(c1.try_union(&c2).unwrap_err());
+    let result = c1
+        .try_union(&c2)
+        .expect("cube/sphere union should run through hypermesh");
+    assert!(
+        !result.polygons.is_empty(),
+        "Union of cube and sphere should produce polygons"
+    );
+}
+
+#[test]
+fn mesh_union_uses_hypermesh_without_legacy_fallback() {
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
+    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
+
+    let result = cube.union(&sphere);
+    assert!(
+        !result.polygons.is_empty(),
+        "Union of cube and sphere should produce polygons"
+    );
 }
 
 #[test]
 fn test_csg_intersect() {
     let c1: Mesh<()> = Mesh::cube(r(2.0), ());
     let c2: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
-    assert_hypermesh_import_blockers(c1.try_intersection(&c2).unwrap_err());
+    let result = c1
+        .try_intersection(&c2)
+        .expect("cube/sphere intersection should run through hypermesh");
+    assert!(
+        !result.polygons.is_empty(),
+        "Intersection of cube and sphere should produce polygons"
+    );
 }
 
 #[test]
 fn test_csg_intersect2() {
     let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
-    assert_hypermesh_import_blockers(sphere.try_intersection(&cube).unwrap_err());
+    let result = sphere
+        .try_intersection(&cube)
+        .expect("sphere/cube intersection should run through hypermesh");
+    assert!(
+        !result.polygons.is_empty(),
+        "Intersection of sphere and cube should produce polygons"
+    );
 }
 
 #[test]

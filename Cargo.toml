@@ -138,7 +138,7 @@ mesh = [
   # hypermesh backed Mesh datatype
   "sketch",
 ]
-# Legacy BSP transition compatibility features removed after full hypermesh migration.
+# Legacy BSP transition features removed after full hypermesh migration.
 sketch = [
   # hypercurve backed Profile datatype
 ]

@@ -1,6 +1,7 @@
 //! Mesh connectivity helpers for exact vertex indexing and topology analysis.
 
 use crate::mesh::Mesh;
+use crate::mesh::hypermesh::hypermesh_edges;
 use hashbrown::HashMap;
 use hyperlattice::Point3;
 use std::fmt::Debug;
@@ -95,16 +96,17 @@ impl VertexIndexMap {
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundation: Robust Mesh Connectivity Analysis**
     ///
-    /// Build a proper vertex adjacency graph from accepted `hypermesh` topology:
+    /// Build a proper vertex adjacency graph from the exact `hypermesh` adapter:
     ///
     /// ## **Vertex Matching Algorithm**
     /// 1. **Exact Import**: `hypermesh` validates the current triangle stream
     ///    as a boundary-allowed surface adapter
-    /// 2. **Global Indexing**: Each exact hypermesh vertex keeps its global index
-    /// 3. **Edge Facts**: Borrowed `MeshView` edge references expose
-    ///    bidirectional connectivity without cloning retained facts
-    /// 4. **Manifold Validation**: Closed-manifold decisions are delegated to
-    ///    `hypermesh` rather than repeated here
+    /// 2. **Global Indexing**: Each exact hypermesh input vertex keeps its
+    ///    global index
+    /// 3. **Edge Facts**: Triangle indices expose bidirectional connectivity
+    ///    without primitive-coordinate matching
+    /// 4. **Manifold Validation**: Closed-manifold decisions use the same exact
+    ///    imported triangle stream
     ///
     /// Keeping adjacency on retained hypermesh edge facts avoids a second
     /// approximate topology model in `csgrs`. This follows Yap, "Towards Exact
@@ -122,18 +124,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Ok(mesh) = self.to_hypermesh_surface_exact() else {
             return (vertex_map, adjacency);
         };
-        let view = mesh.view();
-        if view.validate_retained_state().is_err() {
-            return (vertex_map, adjacency);
-        }
-        for (index, point) in view.vertices().iter().enumerate() {
-            let position = Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
-            vertex_map.position_to_index.push((position.clone(), index));
-            vertex_map.index_to_position.insert(index, position);
+        for (index, point) in mesh.positions.iter().enumerate() {
+            vertex_map.position_to_index.push((point.clone(), index));
+            vertex_map.index_to_position.insert(index, point.clone());
         }
 
-        for edge in view.edges() {
-            let [a, b] = edge.vertex_indices();
+        for [a, b] in hypermesh_edges(&mesh) {
             add_adjacency_edge(&mut adjacency, a, b);
         }
 

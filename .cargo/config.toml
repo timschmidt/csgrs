@@ -45,5 +45,5 @@ hyperlimit = { path = "../hyperlimit" }
 hypermesh = { path = "../hypermesh" }
 hyperphysics = { path = "../hyperphysics" }
 hyperreal = { path = "../hyperreal" }
-hypersdf = { path = "../hypersdf" }
+hypersolve = { path = "../hypersolve" }
 hypertri = { path = "../hypertri" }

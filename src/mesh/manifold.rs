@@ -1,16 +1,17 @@
 //! Exact manifoldness checks for transitional triangle meshes.
 
 use crate::mesh::Mesh;
+use crate::mesh::hypermesh::hypermesh_is_closed_manifold;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Return whether this mesh validates as a closed two-manifold in `hypermesh`.
     ///
-    /// This method is intentionally routed through [`hypermesh::Mesh`]
-    /// instead of the old `csgrs` tolerance hash. Edge incidence, duplicate
-    /// directed edges, vertex links, and triangle degeneracy are topology
-    /// facts owned by `hypermesh`; `csgrs` only supplies the current CAD mesh
-    /// stream through its audited adapter.
+    /// This method is intentionally routed through the exact `hypermesh`
+    /// adapter instead of a tolerance hash. Edge incidence, duplicate directed
+    /// edges, vertex links, and triangle degeneracy are topology facts over the
+    /// exact imported triangle stream; `csgrs` only supplies the current CAD
+    /// mesh stream through its audited adapter.
     ///
     /// The local vertex-star manifoldness criterion mirrors Boissonnat,
     /// Devillers, Pion, Teillaud, and Yvinec, "Triangulations in CGAL,"
@@ -28,7 +29,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Ok(mesh) = self.to_hypermesh_exact() else {
             return false;
         };
-        let view = mesh.view();
-        view.validate_retained_state().is_ok() && view.is_closed_manifold()
+        hypermesh_is_closed_manifold(&mesh)
     }
 }

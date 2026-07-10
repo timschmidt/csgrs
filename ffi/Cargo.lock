@@ -160,11 +160,11 @@ dependencies = [
 
 [[package]]
 name = "hypermesh"
-version = "0.3.0"
+version = "0.1.0"
 dependencies = [
+ "hyperlattice",
  "hyperlimit",
  "hyperreal",
- "hypertri",
 ]
 
 [[package]]
@@ -180,7 +180,7 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "num",
 ]
@@ -196,7 +196,7 @@ dependencies = [
 
 [[package]]
 name = "hypertri"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
@@ -420,7 +420,3 @@ checksum = "9a929b2c61f11ba3e9bc35b50c1f25cb38e0e892c0c231ae2b8cf78d5dad4437"
 dependencies = [
  "unicode-ident",
 ]
-
-[[patch.unused]]
-name = "hypersdf"
-version = "0.2.0"

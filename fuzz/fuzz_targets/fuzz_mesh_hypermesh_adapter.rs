@@ -2,6 +2,8 @@
 
 #![no_main]
 
+use std::collections::BTreeMap;
+
 use csgrs::mesh::Mesh;
 use hyperlattice::{Point3, Real, Vector3};
 use libfuzzer_sys::fuzz_target;
@@ -12,6 +14,11 @@ fn real(value: f64) -> Real {
 
 fn tolerance() -> Real {
     real(1.0e-9)
+}
+
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -34,15 +41,15 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
     *idx += 1;
 
     match tag {
-        0 => Mesh::cube(a.abs().max(tolerance()), ()),
+        0 => Mesh::cube(at_least_tolerance(a.abs()), ()),
         1 => Mesh::cuboid(
-            a.abs().max(tolerance()),
-            b.abs().max(tolerance()),
-            c.abs().max(tolerance()),
+            at_least_tolerance(a.abs()),
+            at_least_tolerance(b.abs()),
+            at_least_tolerance(c.abs()),
             (),
         ),
-        2 => Mesh::sphere(a.abs().max(tolerance()), segments, segments, ()),
-        3 => Mesh::cylinder(a.abs().max(tolerance()), b, segments, ()),
+        2 => Mesh::sphere(at_least_tolerance(a.abs()), segments, segments, ()),
+        3 => Mesh::cylinder(at_least_tolerance(a.abs()), b, segments, ()),
         4 => Mesh::frustum(a.abs(), b.abs(), c, segments, ()),
         5 => Mesh::frustum_ptp(
             Point3::origin(),
@@ -53,9 +60,9 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
             (),
         ),
         6 => Mesh::ellipsoid(
-            a.abs().max(tolerance()),
-            b.abs().max(tolerance()),
-            c.abs().max(tolerance()),
+            at_least_tolerance(a.abs()),
+            at_least_tolerance(b.abs()),
+            at_least_tolerance(c.abs()),
             segments,
             segments,
             (),
@@ -68,6 +75,23 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
             (),
         ),
     }
+}
+
+fn indexed_triangles_are_closed_manifold(
+    vertex_count: usize,
+    triangles: impl IntoIterator<Item = [usize; 3]>,
+) -> bool {
+    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
+    for [a, b, c] in triangles {
+        for [u, v] in [[a, b], [b, c], [c, a]] {
+            if u >= vertex_count || v >= vertex_count || u == v {
+                return false;
+            }
+            let key = if u < v { (u, v) } else { (v, u) };
+            *edge_counts.entry(key).or_insert(0) += 1;
+        }
+    }
+    !edge_counts.is_empty() && edge_counts.values().all(|count| *count == 2)
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -107,8 +131,15 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     if let Ok(exact) = mesh.to_hypermesh_exact() {
-        assert!(exact.validate_retained_state().is_ok());
-        assert_eq!(mesh.is_manifold(), exact.facts().mesh.closed_manifold);
+        assert!(!exact.positions.is_empty());
+        assert!(!exact.triangles.is_empty());
+        assert_eq!(
+            mesh.is_manifold(),
+            indexed_triangles_are_closed_manifold(
+                exact.positions.len(),
+                exact.triangles.iter().map(|triangle| triangle.indices()),
+            )
+        );
     } else {
         assert!(!mesh.is_manifold());
     }
