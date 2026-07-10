@@ -119,7 +119,7 @@ pub(crate) fn classify_oriented_line(
         // certified predicate path rather than comparing approximate floats,
         // matching Shewchuk's robust-predicate recommendation for topology
         // branches.
-        let predicate_outcome = hyperlimit::orient::orient2d_with_policy(
+        let predicate_outcome = hyperlimit::orient2d_with_policy(
             &predicate_point(from),
             &predicate_point(to),
             &predicate_point(point),
