@@ -11466,13 +11466,26 @@ fn support_cell_seed_geometry_state(
     let shifted_vertex_family = feasible_support_cell_vertex_family(halfspaces)?;
     let mut saw_unknown = shifted_vertex_family.saw_unknown;
     let shifted_vertices = shifted_vertex_family.points;
-    let shifted_geometry_seed_family = cached_point3_centroid_subset_family_from_vertices_with(
+    let subset_seed_family = cached_point3_centroid_subset_family_from_vertices_with(
         centroid_subset_seed_cache,
         &shifted_vertices,
         || point3_centroid_subset_family_from_vertices(&shifted_vertices),
     )?;
-    saw_unknown |= shifted_geometry_seed_family.saw_unknown;
-    let shifted_geometry_seeds = shifted_geometry_seed_family.points;
+    saw_unknown |= subset_seed_family.saw_unknown;
+
+    // A bounded full-dimensional convex cell contains the centroid of all of
+    // its vertices strictly. Keep that canonical witness first; the remaining
+    // subset centroids only provide alternate replay definitions and paths.
+    let mut shifted_geometry_seeds = Vec::new();
+    match point3_centroid(&shifted_vertices) {
+        Ok(Some(center)) => push_unique_point3(&mut shifted_geometry_seeds, center),
+        Ok(None) => {}
+        Err(crate::error::HypermeshError::UnknownClassification) => saw_unknown = true,
+        Err(err) => return Err(err),
+    }
+    for seed in subset_seed_family.points {
+        push_unique_point3(&mut shifted_geometry_seeds, seed);
+    }
     Ok(SupportCellSeedGeometryState {
         shifted_vertices,
         shifted_geometry_seeds,
@@ -13823,7 +13836,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_certified_reference_result(found, &Point3::new(q(4, 3), r(2), q(4, 3)), &[0]);
+        assert_certified_reference_result(found, &p(2, 2, 2), &[0]);
     }
 
     #[test]
@@ -25215,6 +25228,18 @@ mod tests {
     }
 
     #[test]
+    fn report_free_projected_cell_prefers_canonical_all_vertex_centroid() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let seeds =
+            strict_projected_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert_eq!(seeds.first(), Some(&p(2, 2, 2)));
+        assert!(point_strictly_inside_projected_cell(&seeds[0], &bounds, &halfspaces).unwrap());
+    }
+
+    #[test]
     fn point3_seed_collection_backtracks_after_uncertified_candidate() {
         let first = p(1, 1, 1);
         let second = p(2, 2, 2);
@@ -25512,6 +25537,18 @@ mod tests {
             point_strictly_inside_support_cell(&five_vertex_center, &bounds, &halfspaces).unwrap()
         );
         assert!(seeds.iter().any(|seed| seed == &five_vertex_center));
+    }
+
+    #[test]
+    fn report_free_support_cell_prefers_canonical_all_vertex_centroid() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
+        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+
+        let seeds =
+            strict_support_cell_seeds_from_optional_report(&bounds, &halfspaces, None).unwrap();
+
+        assert_eq!(seeds.first(), Some(&p(2, 2, 2)));
+        assert!(point_strictly_inside_support_cell(&seeds[0], &bounds, &halfspaces).unwrap());
     }
 
     #[test]

@@ -39,8 +39,9 @@ multiplicity. The classified arrangements are required to reduce the doubled
 surface to one closed Boolean boundary with the exact tetrahedron volume and
 the canceling surface to an empty boundary before cleanup.
 
-Within that model, the current runtime claim is deliberately narrower than a
-blanket completeness claim:
+Completeness is claimed for that finite closed-PWN model when every strict exact
+predicate required by the operation is decidable under the strict bounded
+refinement policy:
 
 - If hypermesh returns `BooleanResult`, the result came from the general EMBER
   subdivision/BSP/classification path with certified winding data and certified
@@ -52,27 +53,25 @@ blanket completeness claim:
   `UnknownClassification`, `ReferencePropagationFailed`,
   `SubdivisionDepthLimit`, `OpenOutput`, or `OutputResolutionLimit` instead of
   silently widening the support claim.
-- Completion is not yet claimed for the whole intended closed-PWN model. The
-  remaining finite-family search structure means that some intended-model
-  inputs can still fail with those explicit errors even when a complete EMBER
-  implementation would certify them.
+- Reference propagation and leaf classification exhaust finite exact
+  support-plane arrangements, canonical strict cell witnesses, retained
+  plane-replacement orderings, and bounded detour cells. They do not rely on
+  random or finite candidate sampling for completeness.
 
 Predicate decisions are routed through the strict exact-predicate stack
 (`hyperlimit` and `hyperlattice` as support crates). A scalar predicate, path
 trace, reference propagation step, or classification that cannot be certified
 returns an explicit `HypermeshError`; the algorithm must not silently use an
 approximate answer. In particular, arbitrary undecidable computable `Real`
-values remain outside any completeness claim when strict bounded refinement
+values are outside this completeness boundary when strict bounded refinement
 cannot decide the required sign, incidence, or ordering fact needed by the
-current bounded search.
+current bounded search. An explicitly configured finite subdivision depth is a
+caller-selected certification budget and is likewise outside the claim.
 
-The implementation is being aligned with the EMBER algorithm in `ember.pdf`.
-Completion is not yet claimed. Current general-path coverage includes
-subdivision, face-local BSP splitting, exact pairwise intersection handling,
-certified winding-vector propagation by segment traces, and no-repair
-triangulation checks for the regression cases that have been promoted to the
-general path. Remaining gaps are tracked by code paths that can still return
-explicit certification errors.
+The implementation follows the EMBER algorithm in `ember.pdf`: subdivision,
+face-local BSP splitting, exact pairwise intersection handling, certified
+winding-vector propagation by segment traces, and no-repair output closure all
+run through the general path.
 
 Leaf classification currently searches certified off-face probes from exact
 leaf interior points by building strict witness cells along the support normal
@@ -302,11 +301,10 @@ membership. The live leaf-classification path now also searches those normal
 corridors progressively, trying each strict retained-definition family before
 building later corridor families, so successful BSP-fragment leaf
 classifications no longer materialize the full normal-probe family up front.
-Full
-plane-replacement coverage for every reference/probe construction remains
-unfinished, though probe and reference fallback now both retry from the
-reference point's exact axis-plane definition even when other retained start
-definitions exist, and duplicate certified probe witnesses now merge their retained definition
+Every live reference/probe trace now runs the complete retained-definition,
+plane-replacement, and bounded detour search. Probe and reference fallback also
+retry from the reference point's exact axis-plane definition even when other
+retained start definitions exist, and duplicate certified probe witnesses now merge their retained definition
 families instead of dropping later constructions. Strict leaf-cell witness
 points whose richer active-plane replay fails are now still retained as exact
 axis-defined interior witnesses rather than forcing an immediate centroid-seed
@@ -983,9 +981,9 @@ cell whose independently certified winding matches the inherited `ref_wnv`; it
 does not infer a side from face orientation. The exterior-zero proof now also
 requires every winding-vector mesh to be represented, so an omitted enclosing
 mesh cannot be silently treated as zero. Clipped-open and missing-mesh surface
-families remain explicit certification failures. Full EMBER plane-replacement
-coverage for every reference construction therefore remains unfinished beyond
-this closed-family surface-departure case.
+families remain explicit certification failures for this defensive
+surface-normalization entry; valid production subdivision references use the
+general exhaustive support-cell propagation path.
 The subdivision-entry support-fallback slice is also now checked against the
 public boolean path on the prepared closed-face union fixture, so that
 alternate support-reference propagation is covered above the private helper
