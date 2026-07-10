@@ -8205,7 +8205,7 @@ fn evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
 }
 
 #[cfg(test)]
-fn probe_reaches_adjacent_cell_via_detours(
+fn probe_reaches_adjacent_cell_via_progressive_detours(
     start: &Point3,
     end: &Point3,
     host_support: &Plane,
@@ -8213,7 +8213,29 @@ fn probe_reaches_adjacent_cell_via_detours(
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
 ) -> HypermeshResult<bool> {
-    let mut trace_without_detours =
+    let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
+    let mut no_plane_replacement_cycle_guard_cache =
+        DefinitionNoPlaneReplacementCycleGuardCache::default();
+    let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
+    let mut halfspace_report_cache = Vec::new();
+    let mut halfspace_seed_family_cache = Vec::new();
+    let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
+    let mut detour_target_cache = DetourTargetFamilyCache::default();
+    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
+    probe_reaches_adjacent_cell_with_interior_box_detours_without_plane_replacement_from_definitions_with(
+        start,
+        end,
+        polygons,
+        start_definitions,
+        end_definitions,
+        &mut no_detour_cache,
+        &mut no_plane_replacement_cycle_guard_cache,
+        &mut no_plane_replacement_cache,
+        &mut halfspace_report_cache,
+        &mut halfspace_seed_family_cache,
+        &mut strict_aabb_target_families,
+        &mut detour_target_cache,
+        &mut interior_box_axis_intervals,
         |start: &Point3,
          end: &Point3,
          start_definitions: &[[Plane; 3]],
@@ -8226,18 +8248,8 @@ fn probe_reaches_adjacent_cell_via_detours(
                 start_definitions,
                 end_definitions,
             )
-        };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    probe_reaches_adjacent_cell_via_detours_with_cycle_guard(
-        start,
-        end,
-        polygons,
-        start_definitions,
-        end_definitions,
-        &initial_visited_definition_points(start, start_definitions, end, end_definitions),
-        &mut trace_without_detours,
-        &mut detours_for,
+        },
+        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons),
     )
 }
 
@@ -25311,7 +25323,7 @@ mod tests {
 
         assert!(!probe_reaches_adjacent_cell(&start, &end, &host_support, &blockers).unwrap());
         assert!(
-            probe_reaches_adjacent_cell_via_detours(
+            probe_reaches_adjacent_cell_via_progressive_detours(
                 &start,
                 &end,
                 &host_support,
