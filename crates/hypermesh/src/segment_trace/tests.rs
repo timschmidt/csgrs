@@ -1,6 +1,13 @@
+use super::probe_cache::{
+    cached_halfspace_cell_seed_families_from_optional_report_with,
+    cached_optional_halfspace_feasibility_report_with,
+};
 use super::*;
-use crate::halfspace::axis_halfspace;
-use crate::polygon::{make_quad, make_triangle};
+use crate::error::HypermeshError;
+use crate::geometry::{axis_ref, classify_point, classify_real, compare_real};
+use crate::halfspace::{aabb_core_halfspaces, axis_halfspace, support_side_halfspace};
+use crate::polygon::{ConvexPolygon, make_quad, make_triangle};
+use hyperlimit::Plane3 as LimitPlane3;
 
 fn r(value: i32) -> Real {
     value.into()
