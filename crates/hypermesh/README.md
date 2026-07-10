@@ -601,11 +601,14 @@ target phases and shallower sibling paths run before one blocked leg can
 recursively monopolize the search. Segment-path expansion propagates the exact
 winding vector across every already-certified leg and refuses to certify a
 completed path containing a fallback-built target. Detour paths now also use
-each local polygon support and edge plane as an exact arrangement-cell
-signature: non-transition paths do not revisit a cell, and one expansion keeps
-only the first certified-preferred target for each destination cell. This makes
-negative searches finite without an arbitrary path-depth or work cap while
-same-point definition transitions remain available. The live step-detour
+each unique local polygon support plane as an exact arrangement-cell signature.
+Those open cells are convex and disjoint from every local polygon surface, so
+the breadth-first search globally enqueues only the first certified-preferred
+geometric target for each cell while same-point definition transitions remain
+available. Exact plane/AABB extrema also discard endpoint boxes whose strict
+interiors lie entirely in an endpoint cell before their witness families are
+generated. This makes negative searches finite without an arbitrary path-depth
+or work cap. The live step-detour
 reachability entry now
 also reuses those same definition-aware no-step-detour checks and endpoint-box
 detour families across failed sibling branches instead of rebuilding them on
