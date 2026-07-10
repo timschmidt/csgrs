@@ -956,12 +956,16 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
     detour_target_cache: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut no_detour_surface_cache = Vec::new();
+    let arrangement_planes = detour_arrangement_planes(polygons);
     let mut trace_without_detours =
         |start: &Point3,
          end: &Point3,
          winding: &[i32],
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
+            if points_share_open_arrangement_cell(start, end, &arrangement_planes)? {
+                return Ok(Some(winding.to_vec()));
+            }
             cached_definition_no_detour_trace_with(
                 &mut *no_detour_cache,
                 start,
@@ -985,7 +989,6 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
                 },
             )
         };
-    let arrangement_planes = detour_arrangement_planes(polygons);
     let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
     trace_segment_with_detour_batches_breadth_first_with_surface_query(
         start,
@@ -1017,6 +1020,20 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
             }
         },
     )
+}
+
+fn points_share_open_arrangement_cell(
+    start: &Point3,
+    end: &Point3,
+    arrangement_planes: &[Plane],
+) -> HypermeshResult<bool> {
+    let Some(start_cell) = optional_detour_arrangement_cell(start, arrangement_planes)? else {
+        return Ok(false);
+    };
+    let Some(end_cell) = optional_detour_arrangement_cell(end, arrangement_planes)? else {
+        return Ok(false);
+    };
+    Ok(start_cell == end_cell && start_cell.iter().all(|side| *side != Classification::On))
 }
 
 #[cfg(test)]
@@ -2895,7 +2912,7 @@ impl StrictAabbTargetCursor {
         loop {
             let batch = match self.stage {
                 StrictAabbTargetCursorStage::FrontDirect => {
-                    self.stage = StrictAabbTargetCursorStage::Shifted;
+                    self.stage = StrictAabbTargetCursorStage::DeferredDirect;
                     self.build_direct_batch(
                         0,
                         self.seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT),
@@ -2904,12 +2921,12 @@ impl StrictAabbTargetCursor {
                 StrictAabbTargetCursorStage::Shifted => {
                     let (batch, exhausted) = self.build_shifted_batch()?;
                     if exhausted {
-                        self.stage = StrictAabbTargetCursorStage::DeferredDirect;
+                        self.stage = StrictAabbTargetCursorStage::Done;
                     }
                     batch
                 }
                 StrictAabbTargetCursorStage::DeferredDirect => {
-                    self.stage = StrictAabbTargetCursorStage::Done;
+                    self.stage = StrictAabbTargetCursorStage::Shifted;
                     self.build_direct_batch(
                         self.seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT),
                         self.seeds.len(),
@@ -15518,6 +15535,21 @@ mod tests {
     }
 
     #[test]
+    fn open_arrangement_cell_certifies_unchanged_winding_path() {
+        let planes = [Plane::axis_aligned(0, r(0)), Plane::axis_aligned(1, r(0))];
+
+        assert!(points_share_open_arrangement_cell(&p(1, 1, 0), &p(2, 3, 4), &planes).unwrap());
+        assert!(!points_share_open_arrangement_cell(&p(1, 1, 0), &p(-1, 1, 0), &planes).unwrap());
+    }
+
+    #[test]
+    fn arrangement_cell_shortcut_rejects_support_plane_boundary() {
+        let planes = [Plane::axis_aligned(0, r(0))];
+
+        assert!(!points_share_open_arrangement_cell(&p(0, 1, 0), &p(0, 2, 0), &planes).unwrap());
+    }
+
+    #[test]
     fn detour_arrangement_cell_state_prefers_later_certified_target() {
         let cell = vec![Classification::Negative, Classification::Positive];
         let mut seen = Vec::new();
@@ -15601,6 +15633,18 @@ mod tests {
                         )
                 }))
         );
+    }
+
+    #[test]
+    fn strict_aabb_target_cursor_exhausts_direct_targets_before_shifted_families() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 6, 8));
+        let mut cursor = StrictAabbTargetCursor::new(&bounds).unwrap();
+
+        assert_eq!(cursor.stage, StrictAabbTargetCursorStage::FrontDirect);
+        assert!(!cursor.next_batch().unwrap().unwrap().is_empty());
+        assert_eq!(cursor.stage, StrictAabbTargetCursorStage::DeferredDirect);
+        assert!(!cursor.next_batch().unwrap().unwrap().is_empty());
+        assert_eq!(cursor.stage, StrictAabbTargetCursorStage::Shifted);
     }
 
     #[test]

@@ -600,12 +600,18 @@ reachability consume those batches through breadth-first path queues, so later
 target phases and shallower sibling paths run before one blocked leg can
 recursively monopolize the search. Segment-path expansion propagates the exact
 winding vector across every already-certified leg and refuses to certify a
-completed path containing a fallback-built target. Detour paths now also use
-each unique local polygon support plane as an exact arrangement-cell signature.
+completed path containing a fallback-built target. The strict-AABB detour cursor
+now exhausts its already-built direct witnesses before expanding shifted seed
+families, while retaining every shifted family as a later fallback. Detour paths
+now also use each unique local polygon support plane as an exact arrangement-cell
+signature.
 Those open cells are convex and disjoint from every local polygon surface, so
 the breadth-first search globally enqueues only the first certified-preferred
 geometric target for each cell while same-point definition transitions remain
-available. Exact plane/AABB extrema also discard endpoint boxes whose strict
+available. A winding trace whose endpoints already have the same open-cell
+signature now certifies the unchanged winding directly; points on any support
+plane remain excluded and still require retained-definition propagation. Exact
+plane/AABB extrema also discard endpoint boxes whose strict
 interiors lie entirely in an endpoint cell before their witness families are
 generated. This makes negative searches finite without an arbitrary path-depth
 or work cap. The live step-detour
@@ -885,7 +891,9 @@ revisit. The
 focused reference tests now also cover this support-cell fallback on prepared
 closed-mesh polygons, not only on synthetic support-plane fixtures. Full
 EMBER plane-replacement
-coverage for every reference construction remains unfinished.
+coverage for every reference construction remains unfinished, including
+departure from an inherited reference on a polygon surface when its adjacent
+winding-side state is not otherwise certified.
 The subdivision-entry support-fallback slice is also now checked against the
 public boolean path on the prepared closed-face union fixture, so that
 alternate support-reference propagation is covered above the private helper
