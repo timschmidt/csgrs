@@ -68,7 +68,7 @@ pub fn compare_reals_report(left: &Real, right: &Real) -> PredicateReport<Orderi
 /// may be carried by Real objects, while geometric decisions ask a predicate
 /// layer to certify signs. See Yap, "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997).
-pub(crate) fn compare_reals_with_policy(
+pub fn compare_reals_with_policy(
     left: &Real,
     right: &Real,
     policy: PredicatePolicy,

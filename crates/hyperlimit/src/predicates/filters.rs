@@ -71,7 +71,7 @@ pub fn certified_ball_sign_report(center: &Real, radius: &Real) -> PredicateRepo
 }
 
 /// Try to certify a sign from an exact closed ball enclosure with policy.
-pub(crate) fn certified_ball_sign_report_with_policy(
+pub fn certified_ball_sign_report_with_policy(
     center: &Real,
     radius: &Real,
     policy: PredicatePolicy,

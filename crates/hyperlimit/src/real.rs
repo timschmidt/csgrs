@@ -87,25 +87,6 @@ pub fn sign_knowledge_from_real_facts(facts: RealFacts) -> SignKnowledge {
     }
 }
 
-/// Decide a Real sign from structural facts only.
-#[inline(always)]
-pub fn exact_sign_from_real_facts(facts: RealFacts) -> Option<Sign> {
-    match sign_knowledge_from_real_facts(facts) {
-        SignKnowledge::Known { sign, .. } => Some(sign),
-        SignKnowledge::NonZero | SignKnowledge::Unknown => None,
-    }
-}
-
-/// Return whether a Real is known to be exactly zero.
-#[inline(always)]
-pub fn real_is_zero(facts: RealFacts) -> Option<bool> {
-    match facts.zero {
-        ZeroKnowledge::Zero => Some(true),
-        ZeroKnowledge::NonZero => Some(false),
-        ZeroKnowledge::Unknown => None,
-    }
-}
-
 /// Add two borrowed Real values.
 #[inline(always)]
 pub(crate) fn add_ref(left: &Real, right: &Real) -> Real {

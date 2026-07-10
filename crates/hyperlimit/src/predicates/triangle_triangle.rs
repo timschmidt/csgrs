@@ -167,7 +167,7 @@ pub fn classify_triangle_triangle3(
 }
 
 /// Classify two closed 3D triangles using an explicit predicate policy.
-pub(crate) fn classify_triangle_triangle3_with_policy(
+pub fn classify_triangle_triangle3_with_policy(
     a0: &Point3,
     a1: &Point3,
     a2: &Point3,
@@ -180,7 +180,7 @@ pub(crate) fn classify_triangle_triangle3_with_policy(
 }
 
 /// Classify two closed 3D triangles supplied as borrowed point triples.
-pub(crate) fn classify_triangle_triangle3_points_with_policy(
+pub fn classify_triangle_triangle3_points_with_policy(
     left: [&Point3; 3],
     right: [&Point3; 3],
     policy: PredicatePolicy,

@@ -12,17 +12,9 @@ use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicateUse, RefinementNeed, Sign,
 };
 use crate::predicates::order::compare_reals_with_policy;
-use crate::predicates::{orient3d_report_with_policy, orient3d_with_policy};
+use crate::predicates::orient::{orient3d_report_with_policy, orient3d_with_policy};
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
-
-pub use crate::batch::{
-    Orient3dCase, PointPlaneCase, classify_point_oriented_plane_batch, classify_point_plane_batch,
-};
-#[cfg(feature = "parallel")]
-pub use crate::batch::{
-    classify_point_oriented_plane_batch_parallel, classify_point_plane_batch_parallel,
-};
 
 /// Plane represented by `normal . point + offset = 0`.
 #[derive(Clone, Debug, PartialEq)]

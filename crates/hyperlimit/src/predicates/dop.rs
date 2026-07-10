@@ -1380,15 +1380,6 @@ pub fn support_dop3_from_points(
     SupportDop3::from_points(axes, points)
 }
 
-/// Build an exact support k-DOP with an explicit predicate policy.
-pub(crate) fn support_dop3_from_points_with_policy(
-    axes: &[Point3],
-    points: &[Point3],
-    policy: PredicatePolicy,
-) -> PredicateOutcome<SupportDop3> {
-    SupportDop3::from_points_with_policy(axes, points, policy)
-}
-
 /// Build a witnessed exact support k-DOP from integer axis directions and
 /// source points.
 pub fn witnessed_support_dop3_from_points(

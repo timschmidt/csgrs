@@ -12,23 +12,13 @@ use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
-pub use crate::batch::{
-    Incircle2dCase, Insphere3dCase, Orient2dCase, Orient3dCase, classify_point_line_batch,
-    incircle2d_batch, insphere3d_batch, orient2d_batch, orient3d_batch,
-};
-#[cfg(feature = "parallel")]
-pub use crate::batch::{
-    classify_point_line_batch_parallel, incircle2d_batch_parallel, insphere3d_batch_parallel,
-    orient2d_batch_parallel, orient3d_batch_parallel,
-};
-
 /// Orientation of three 2D points.
 pub fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> PredicateOutcome<Sign> {
     orient2d_with_policy(a, b, c, PredicatePolicy::default())
 }
 
 /// Orientation of three 2D points with an explicit escalation policy.
-pub(crate) fn orient2d_with_policy(
+pub fn orient2d_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -538,7 +528,7 @@ impl<'a> PreparedLine2<'a> {
     }
 
     /// Classify a point using an explicit predicate policy.
-    pub(crate) fn classify_point_with_policy(
+    pub fn classify_point_with_policy(
         &self,
         point: &Point2,
         policy: PredicatePolicy,

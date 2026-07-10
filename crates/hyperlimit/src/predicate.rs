@@ -457,7 +457,7 @@ pub enum RefinementNeed {
     Unsupported,
 }
 
-/// Crate-local strict predicate escalation marker.
+/// Strict predicate escalation policy shared with exact downstream algorithms.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PredicatePolicy;
 

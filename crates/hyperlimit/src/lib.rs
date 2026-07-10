@@ -76,8 +76,8 @@ pub use orient::{
     Point2, Point3, PreparedCircle2Polynomial, PreparedIncircle2, PreparedInsphere3,
     PreparedLiftedPolynomialFacts, PreparedLine2, PreparedPredicateFacts,
     PreparedSphere3Polynomial, classify_point_line, incircle2d, incircle2d_report, insphere3d,
-    insphere3d_report, orient2d, orient2d_f64, orient2d_f64_report, orient2d_report, orient3d,
-    orient3d_report,
+    insphere3d_report, orient2d, orient2d_f64, orient2d_f64_report, orient2d_report,
+    orient2d_with_policy, orient3d, orient3d_report,
 };
 pub use plane::{
     Plane3, PlaneAabbReport, PlaneAabbReportValidationError, PreparedOrientedPlane3,
@@ -89,8 +89,8 @@ pub use plane::{
 };
 pub use predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,
-    PredicateCertificate, PredicateOutcome, PredicatePrecisionStage, PredicateReport, PredicateUse,
-    RefinementNeed, Sign, SignKnowledge,
+    PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicatePrecisionStage,
+    PredicateReport, PredicateUse, RefinementNeed, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
     PreparedAabb2, PreparedAabb3, aabb2s_intersect, aabb3s_intersect, classify_aabb2_intersection,
@@ -123,8 +123,8 @@ pub use predicates::dop::{
     support_dop3_from_points, witnessed_support_dop3_from_points,
 };
 pub use predicates::filters::{
-    certified_ball_sign, certified_ball_sign_report, certified_interval_sign,
-    certified_interval_sign_report,
+    certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,
+    certified_interval_sign, certified_interval_sign_report,
 };
 pub use predicates::halfspace::{
     HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, PreparedHalfspaceSystem3,
@@ -138,9 +138,9 @@ pub use predicates::nd::{affine_independent_d, insphere_d, orient_d};
 pub use predicates::order::{
     classify_real_sign, classify_real_sign_report, compare_point2_lexicographic,
     compare_point2_lexicographic_report, compare_point3_lexicographic,
-    compare_point3_lexicographic_report, compare_reals, compare_reals_report, point2_equal,
-    point2_equal_report, point3_equal, point3_equal_report, real_clamp, real_ge, real_le, real_max,
-    real_min,
+    compare_point3_lexicographic_report, compare_reals, compare_reals_report,
+    compare_reals_with_policy, point2_equal, point2_equal_report, point3_equal,
+    point3_equal_report, real_clamp, real_ge, real_le, real_max, real_min,
 };
 pub use predicates::ring::{
     Ring2Facts, RingEvenOddEdgeReport, RingEvenOddReport, RingEvenOddValidationError,
@@ -172,6 +172,7 @@ pub use predicates::triangle::{
 };
 pub use predicates::triangle_triangle::{
     TriangleTriangleClassification, TriangleTriangleValidationError, classify_triangle_triangle3,
+    classify_triangle_triangle3_points_with_policy, classify_triangle_triangle3_with_policy,
 };
 pub use provenance::{
     ApproximationPolicy, ConstructionProvenance, ConstructionProvenanceValidationError, MeshSource,
