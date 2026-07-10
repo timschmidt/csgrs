@@ -600,7 +600,12 @@ reachability consume those batches through breadth-first path queues, so later
 target phases and shallower sibling paths run before one blocked leg can
 recursively monopolize the search. Segment-path expansion propagates the exact
 winding vector across every already-certified leg and refuses to certify a
-completed path containing a fallback-built target. The live step-detour
+completed path containing a fallback-built target. Detour paths now also use
+each local polygon support and edge plane as an exact arrangement-cell
+signature: non-transition paths do not revisit a cell, and one expansion keeps
+only the first certified-preferred target for each destination cell. This makes
+negative searches finite without an arbitrary path-depth or work cap while
+same-point definition transitions remain available. The live step-detour
 reachability entry now
 also reuses those same definition-aware no-step-detour checks and endpoint-box
 detour families across failed sibling branches instead of rebuilding them on

@@ -628,6 +628,31 @@ struct DetourTarget {
     uncertified_definition_fallback: bool,
 }
 
+fn detour_arrangement_planes(polygons: &[ConvexPolygon]) -> Vec<Plane> {
+    let mut planes = Vec::new();
+    for polygon in polygons {
+        if !planes.iter().any(|existing| existing == &polygon.support) {
+            planes.push(polygon.support.clone());
+        }
+        for edge in &polygon.edges {
+            if !planes.iter().any(|existing| existing == edge) {
+                planes.push(edge.clone());
+            }
+        }
+    }
+    planes
+}
+
+fn detour_arrangement_cell(
+    point: &Point3,
+    arrangement_planes: &[Plane],
+) -> HypermeshResult<Vec<Classification>> {
+    arrangement_planes
+        .iter()
+        .map(|plane| classify_point(point, plane))
+        .collect()
+}
+
 fn mark_all_interior_points_uncertified(points: &mut Vec<InteriorLeafPoint>) {
     for point in points {
         point.uncertified_definition_fallback = true;
@@ -898,6 +923,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
                 },
             )
         };
+    let arrangement_planes = detour_arrangement_planes(polygons);
     let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
     trace_segment_with_detour_batches_breadth_first_with_surface_query(
         start,
@@ -905,6 +931,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
         winding,
         start_definitions,
         end_definitions,
+        &arrangement_planes,
         surface_cache,
         &mut |point| point_lies_on_traced_surface(point, polygons),
         &mut trace_without_detours,
@@ -1244,6 +1271,7 @@ fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
     winding: &[i32],
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
+    arrangement_planes: &[Plane],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -1304,12 +1332,14 @@ fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
         };
         let edge_start = &path[edge_index];
         let edge_end = &path[edge_index + 1];
-        let detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
+        let mut detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
             Ok(Some(detours)) => detours,
             Ok(None) | Err(HypermeshError::UnknownClassification) => continue,
             Err(err) => return Err(err),
         };
+        detours.sort_by_key(|detour| detour.uncertified_definition_fallback);
         let mut next_paths = Vec::new();
+        let mut next_cells = Vec::new();
         for detour in detours {
             let definition_transition = (detour.point == edge_start.point
                 && !definition_families_match_as_sets(
@@ -1321,11 +1351,39 @@ fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
                         &detour.definitions,
                         &edge_end.definitions,
                     ));
-            if path.iter().any(|visited| {
+            let exact_state_visited = path.iter().any(|visited| {
                 visited.point == detour.point
                     && definition_families_match_as_sets(&visited.definitions, &detour.definitions)
-            }) {
+            });
+            if exact_state_visited {
                 continue;
+            }
+            let detour_cell = if arrangement_planes.is_empty() {
+                None
+            } else {
+                match detour_arrangement_cell(&detour.point, arrangement_planes) {
+                    Ok(cell) => Some(cell),
+                    Err(HypermeshError::UnknownClassification) => continue,
+                    Err(err) => return Err(err),
+                }
+            };
+            if !definition_transition && let Some(detour_cell) = detour_cell.as_ref() {
+                let mut revisits_cell = next_cells.iter().any(|cell| cell == detour_cell);
+                if !revisits_cell {
+                    for visited in &path {
+                        match detour_arrangement_cell(&visited.point, arrangement_planes) {
+                            Ok(cell) if cell == *detour_cell => {
+                                revisits_cell = true;
+                                break;
+                            }
+                            Ok(_) | Err(HypermeshError::UnknownClassification) => {}
+                            Err(err) => return Err(err),
+                        }
+                    }
+                }
+                if revisits_cell {
+                    continue;
+                }
             }
             if !definition_transition {
                 match cached_surface_query_with(surface_cache, &detour.point, || {
@@ -1371,6 +1429,9 @@ fn trace_segment_with_detour_batches_breadth_first_with_surface_query(
                 continue;
             }
             seen_paths.push(next_path.clone());
+            if let Some(cell) = detour_cell {
+                next_cells.push(cell);
+            }
             next_paths.push(next_path);
         }
         if let Some(first) = next_paths.first().cloned() {
@@ -8951,12 +9012,14 @@ fn probe_reaches_adjacent_cell_with_detours_without_plane_replacement_from_defin
 
     let result = if progressive_interior_box_detours {
         let mut surface_cache = Vec::new();
+        let arrangement_planes = detour_arrangement_planes(polygons);
         let mut detour_batches = InteriorBoxDetourTargetBatchCache::default();
         probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
             start,
             end,
             start_definitions,
             end_definitions,
+            &arrangement_planes,
             &mut surface_cache,
             &mut |point| point_lies_on_traced_surface(point, polygons),
             &mut trace_without_detours,
@@ -9996,6 +10059,7 @@ fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
     end: &Point3,
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
+    arrangement_planes: &[Plane],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -10011,6 +10075,7 @@ fn probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
         end,
         start_definitions,
         end_definitions,
+        arrangement_planes,
         surface_cache,
         surface_query,
         trace_without_detours,
@@ -10029,6 +10094,7 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
     end: &Point3,
     start_definitions: &[[Plane; 3]],
     end_definitions: &[[Plane; 3]],
+    arrangement_planes: &[Plane],
     surface_cache: &mut Vec<SurfaceCacheEntry>,
     surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
     trace_without_detours: &mut impl FnMut(
@@ -10093,7 +10159,7 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
         };
         let edge_start = &path[edge_index];
         let edge_end = &path[edge_index + 1];
-        let detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
+        let mut detours = match detour_batch_for(&edge_start.point, &edge_end.point, batch_index) {
             Ok(Some(detours)) => detours,
             Ok(None) => continue,
             Err(HypermeshError::UnknownClassification) => {
@@ -10102,7 +10168,9 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
             }
             Err(err) => return Err(err),
         };
+        detours.sort_by_key(|detour| detour.uncertified_definition_fallback);
         let mut next_paths = Vec::new();
+        let mut next_cells = Vec::new();
         for detour in detours {
             let definition_transition = (detour.point == edge_start.point
                 && !definition_families_match_as_sets(
@@ -10114,11 +10182,45 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
                         &detour.definitions,
                         &edge_end.definitions,
                     ));
-            if path.iter().any(|visited| {
+            let exact_state_visited = path.iter().any(|visited| {
                 visited.point == detour.point
                     && definition_families_match_as_sets(&visited.definitions, &detour.definitions)
-            }) {
+            });
+            if exact_state_visited {
                 continue;
+            }
+            let detour_cell = if arrangement_planes.is_empty() {
+                None
+            } else {
+                match detour_arrangement_cell(&detour.point, arrangement_planes) {
+                    Ok(cell) => Some(cell),
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                }
+            };
+            if !definition_transition && let Some(detour_cell) = detour_cell.as_ref() {
+                let mut revisits_cell = next_cells.iter().any(|cell| cell == detour_cell);
+                if !revisits_cell {
+                    for visited in &path {
+                        match detour_arrangement_cell(&visited.point, arrangement_planes) {
+                            Ok(cell) if cell == *detour_cell => {
+                                revisits_cell = true;
+                                break;
+                            }
+                            Ok(_) => {}
+                            Err(HypermeshError::UnknownClassification) => {
+                                saw_unknown = true;
+                            }
+                            Err(err) => return Err(err),
+                        }
+                    }
+                }
+                if revisits_cell {
+                    continue;
+                }
             }
             if !definition_transition {
                 match cached_surface_query_with(surface_cache, &detour.point, || {
@@ -10171,6 +10273,9 @@ fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_qu
                 }
             }
             seen_paths.push(next_path.clone());
+            if let Some(cell) = detour_cell {
+                next_cells.push(cell);
+            }
             next_paths.push(next_path);
         }
         if let Some(first) = next_paths.first().cloned() {
@@ -24813,6 +24918,7 @@ mod tests {
                 &end,
                 &start_definitions,
                 &end_definitions,
+                &[],
                 &mut surface_cache,
                 &mut |_point| Ok(false),
                 &mut trace_without_detours,
@@ -24876,6 +24982,7 @@ mod tests {
                 &end,
                 &definitions(&start),
                 &definitions(&end),
+                &[],
                 &mut surface_cache,
                 &mut |_point| Ok(false),
                 &mut trace_without_detours,
@@ -24899,6 +25006,7 @@ mod tests {
             &end,
             &definitions(&start),
             &definitions(&end),
+            &[],
             &mut surface_cache,
             &mut |_point| Ok(false),
             &mut |from, to, _start_definitions, _end_definitions| {
@@ -24919,6 +25027,40 @@ mod tests {
         .unwrap_err();
 
         assert_eq!(err, HypermeshError::UnknownClassification);
+    }
+
+    #[test]
+    fn breadth_first_probe_detours_prune_repeated_arrangement_cell() {
+        let start = p(-2, -2, 0);
+        let repeated_cell = p(-1, -1, 0);
+        let end = p(2, 2, 0);
+        let definitions = |point: &Point3| vec![axis_plane_definition(point)];
+        let arrangement_planes = [Plane::axis_aligned(0, r(0)), Plane::axis_aligned(1, r(0))];
+        let mut detour_calls = 0;
+        let mut surface_cache = Vec::new();
+
+        let reaches = probe_reaches_adjacent_cell_with_detours_breadth_first_with_surface_query(
+            &start,
+            &end,
+            &definitions(&start),
+            &definitions(&end),
+            &arrangement_planes,
+            &mut surface_cache,
+            &mut |_point| panic!("repeated-cell target should be pruned before surface query"),
+            &mut |_from, _to, _start_definitions, _end_definitions| Ok(false),
+            &mut |_from, _to| {
+                detour_calls += 1;
+                Ok(vec![DetourTarget {
+                    point: repeated_cell.clone(),
+                    definitions: definitions(&repeated_cell),
+                    uncertified_definition_fallback: false,
+                }])
+            },
+        )
+        .unwrap();
+
+        assert!(!reaches);
+        assert_eq!(detour_calls, 1);
     }
 
     #[test]
@@ -24944,6 +25086,7 @@ mod tests {
                 &end,
                 &definitions(&start),
                 &definitions(&end),
+                &[],
                 &mut surface_cache,
                 &mut |_point| Ok(false),
                 &mut |from, to, _start_definitions, _end_definitions| {
@@ -25005,6 +25148,7 @@ mod tests {
             &[0],
             &definitions(&start),
             &definitions(&end),
+            &[],
             &mut surface_cache,
             &mut |_point| Ok(false),
             &mut |from, to, winding, _start_definitions, _end_definitions| {
@@ -25048,6 +25192,62 @@ mod tests {
     }
 
     #[test]
+    fn breadth_first_trace_detours_keep_later_distinct_arrangement_cell_path() {
+        let start = p(-2, -2, 0);
+        let first_bad = p(-2, 2, 0);
+        let duplicate_bad = p(-1, 1, 0);
+        let good = p(2, -2, 0);
+        let end = p(2, 2, 0);
+        let definitions = |point: &Point3| vec![axis_plane_definition(point)];
+        let target = |point: &Point3| DetourTarget {
+            point: point.clone(),
+            definitions: definitions(point),
+            uncertified_definition_fallback: false,
+        };
+        let arrangement_planes = [Plane::axis_aligned(0, r(0)), Plane::axis_aligned(1, r(0))];
+        let mut traced_duplicate = false;
+        let mut surface_cache = Vec::new();
+
+        let winding = trace_segment_with_detour_batches_breadth_first_with_surface_query(
+            &start,
+            &end,
+            &[0],
+            &definitions(&start),
+            &definitions(&end),
+            &arrangement_planes,
+            &mut surface_cache,
+            &mut |_point| Ok(false),
+            &mut |from, to, winding, _start_definitions, _end_definitions| {
+                if *from == duplicate_bad || *to == duplicate_bad {
+                    traced_duplicate = true;
+                }
+                if *from == start && *to == good && winding == [0] {
+                    Ok(Some(vec![1]))
+                } else if *from == good && *to == end && winding == [1] {
+                    Ok(Some(vec![2]))
+                } else {
+                    Ok(None)
+                }
+            },
+            &mut |from, to, batch_index| {
+                if *from == start && *to == end && batch_index == 0 {
+                    Ok(Some(vec![
+                        target(&first_bad),
+                        target(&duplicate_bad),
+                        target(&good),
+                    ]))
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![2]);
+        assert!(!traced_duplicate);
+    }
+
+    #[test]
     fn breadth_first_trace_detours_do_not_certify_fallback_only_path() {
         let start = p(0, 0, 0);
         let detour = p(1, 0, 0);
@@ -25061,6 +25261,7 @@ mod tests {
             &[0],
             &definitions(&start),
             &definitions(&end),
+            &[],
             &mut surface_cache,
             &mut |_point| Ok(false),
             &mut |from, to, winding, _start_definitions, _end_definitions| {
