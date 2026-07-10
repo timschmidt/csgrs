@@ -2489,9 +2489,27 @@ fn aabb_from_axis_intervals(intervals: [&(Real, Real); 3]) -> HypermeshResult<Aa
 }
 
 fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
-    strict_aabb_targets_with_seed_families(bounds, |bounds, halfspaces, report, saw_unknown| {
-        halfspace_cell_seed_families_from_optional_report(bounds, halfspaces, report, saw_unknown)
-    })
+    let mut cursor = StrictAabbTargetCursor::new(bounds)?;
+    let mut targets = Vec::new();
+    while let Some(batch) = cursor.next_batch()? {
+        for target in batch {
+            push_unique_detour_target(&mut targets, target);
+        }
+    }
+    let unresolved_fallback = targets
+        .iter()
+        .any(|target| target.uncertified_definition_fallback);
+    let has_certified_target = targets
+        .iter()
+        .any(|target| !target.uncertified_definition_fallback);
+    if targets.is_empty() && (cursor.saw_unknown || unresolved_fallback) {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        if !has_certified_target && (cursor.saw_unknown || unresolved_fallback) {
+            mark_all_detour_targets_uncertified(&mut targets);
+        }
+        Ok(targets)
+    }
 }
 
 #[allow(dead_code)]
@@ -2518,6 +2536,178 @@ fn search_strict_aabb_targets_progressively_with_direct_ranking<K: Ord>(
 struct ProgressiveStrictAabbSearchOutcome {
     result: HypermeshResult<bool>,
     exhausted_families: Option<StrictAabbTargetFamilies>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum StrictAabbTargetCursorStage {
+    FrontDirect,
+    Shifted,
+    DeferredDirect,
+    Done,
+}
+
+struct StrictAabbTargetCursor {
+    bounds: Aabb,
+    halfspaces: Vec<LimitPlane3>,
+    report: Option<hyperlimit::HalfspaceFeasibilityReport>,
+    seeds: Vec<Point3>,
+    shifted_vertices: Vec<Point3>,
+    shifted_geometry_seeds: Vec<Point3>,
+    certified_direct_target_points: Vec<Point3>,
+    emitted_targets: Vec<DetourTarget>,
+    saw_unknown: bool,
+    stage: StrictAabbTargetCursorStage,
+}
+
+impl StrictAabbTargetCursor {
+    fn new(bounds: &Aabb) -> HypermeshResult<Self> {
+        let halfspaces = aabb_core_halfspaces(bounds)?;
+        let (report, mut saw_unknown) = optional_halfspace_feasibility_report(&halfspaces)?;
+        let feasible = report
+            .as_ref()
+            .is_none_or(|report| report.status == HalfspaceFeasibility::Feasible);
+        let (seeds, shifted_vertices, shifted_geometry_seeds) = if feasible {
+            halfspace_cell_seed_families_from_optional_report(
+                bounds,
+                &halfspaces,
+                report.as_ref(),
+                &mut saw_unknown,
+            )?
+        } else {
+            (Vec::new(), Vec::new(), Vec::new())
+        };
+        let (seeds, shifted_vertices, shifted_geometry_seeds) =
+            dedupe_shifted_halfspace_seed_families(seeds, shifted_vertices, shifted_geometry_seeds);
+        Ok(Self {
+            bounds: bounds.clone(),
+            halfspaces,
+            report,
+            seeds,
+            shifted_vertices,
+            shifted_geometry_seeds,
+            certified_direct_target_points: Vec::new(),
+            emitted_targets: Vec::new(),
+            saw_unknown,
+            stage: if feasible {
+                StrictAabbTargetCursorStage::FrontDirect
+            } else {
+                StrictAabbTargetCursorStage::Done
+            },
+        })
+    }
+
+    fn next_batch(&mut self) -> HypermeshResult<Option<Vec<DetourTarget>>> {
+        loop {
+            let batch = match self.stage {
+                StrictAabbTargetCursorStage::FrontDirect => {
+                    self.stage = StrictAabbTargetCursorStage::Shifted;
+                    self.build_direct_batch(
+                        0,
+                        self.seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT),
+                    )?
+                }
+                StrictAabbTargetCursorStage::Shifted => {
+                    self.stage = StrictAabbTargetCursorStage::DeferredDirect;
+                    self.build_shifted_batch()?
+                }
+                StrictAabbTargetCursorStage::DeferredDirect => {
+                    self.stage = StrictAabbTargetCursorStage::Done;
+                    self.build_direct_batch(
+                        self.seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT),
+                        self.seeds.len(),
+                    )?
+                }
+                StrictAabbTargetCursorStage::Done => return Ok(None),
+            };
+            if !batch.is_empty() {
+                return Ok(Some(batch));
+            }
+        }
+    }
+
+    fn build_direct_batch(
+        &mut self,
+        start_index: usize,
+        end_index: usize,
+    ) -> HypermeshResult<Vec<DetourTarget>> {
+        let mut batch = Vec::new();
+        let seeds = self.seeds[start_index..end_index].to_vec();
+        for seed in &seeds {
+            let target = match build_detour_target(
+                seed,
+                &self.halfspaces,
+                active_planes_from_optional_report(self.report.as_ref(), seed),
+                false,
+            ) {
+                Ok(target) => target,
+                Err(HypermeshError::UnknownClassification) => {
+                    self.saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+            if !target.uncertified_definition_fallback
+                && !self
+                    .certified_direct_target_points
+                    .iter()
+                    .any(|existing| *existing == target.point)
+            {
+                self.certified_direct_target_points
+                    .push(target.point.clone());
+            }
+            self.push_target(&mut batch, target);
+        }
+        Ok(batch)
+    }
+
+    fn build_shifted_batch(&mut self) -> HypermeshResult<Vec<DetourTarget>> {
+        let report_witness = self
+            .report
+            .as_ref()
+            .and_then(|report| report.witness.as_ref());
+        let (strict_shift_seeds, shifted_vertices, shifted_geometry_seeds) =
+            detour_shifted_seed_families(
+                report_witness,
+                &self.certified_direct_target_points,
+                self.seeds.clone(),
+                std::mem::take(&mut self.shifted_vertices),
+                std::mem::take(&mut self.shifted_geometry_seeds),
+            );
+        let mut shifted_witnesses = Vec::new();
+        let shifted_result = extend_shifted_halfspace_seed_families_backtracking_unknown(
+            &mut shifted_witnesses,
+            [strict_shift_seeds, shifted_vertices, shifted_geometry_seeds],
+            |seed| shifted_halfspace_cell_witnesses_from_seed(&self.bounds, &self.halfspaces, seed),
+        );
+        let shifted_witnesses = shifted_halfspace_witness_family_or_empty(
+            shifted_result.map(|()| shifted_witnesses),
+            &mut self.saw_unknown,
+        )?;
+        let mut batch = Vec::new();
+        for witness in &shifted_witnesses {
+            let target = match build_detour_target_from_shifted_witness(witness) {
+                Ok(target) => target,
+                Err(HypermeshError::UnknownClassification) => {
+                    self.saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+            self.push_target(&mut batch, target);
+        }
+        Ok(batch)
+    }
+
+    fn push_target(&mut self, batch: &mut Vec<DetourTarget>, target: DetourTarget) {
+        if self.emitted_targets.iter().any(|existing| {
+            existing.point == target.point
+                && definition_families_match_as_sets(&existing.definitions, &target.definitions)
+        }) {
+            return;
+        }
+        self.emitted_targets.push(target.clone());
+        batch.push(target);
+    }
 }
 
 #[cfg(test)]
@@ -14662,6 +14852,54 @@ mod tests {
             assert!(compare_real(&target.point.y, &r(6)).unwrap().is_lt());
             assert!(!target.definitions.is_empty());
         }
+    }
+
+    #[test]
+    fn strict_aabb_target_cursor_exhausts_legacy_target_set() {
+        let bounds = Aabb::new(p(0, 0, 0), p(4, 6, 0));
+        let expected = strict_aabb_targets_with_seed_families(
+            &bounds,
+            |bounds, halfspaces, report, saw_unknown| {
+                halfspace_cell_seed_families_from_optional_report(
+                    bounds,
+                    halfspaces,
+                    report,
+                    saw_unknown,
+                )
+            },
+        )
+        .unwrap();
+        let mut normalized_expected = Vec::new();
+        for target in expected {
+            push_unique_detour_target(&mut normalized_expected, target);
+        }
+        let mut cursor = StrictAabbTargetCursor::new(&bounds).unwrap();
+        let mut actual = Vec::new();
+        let mut batches = 0;
+        while let Some(batch) = cursor.next_batch().unwrap() {
+            batches += 1;
+            actual.extend(batch);
+        }
+
+        assert!(batches >= 2);
+        let mut normalized_actual = Vec::new();
+        for target in actual {
+            push_unique_detour_target(&mut normalized_actual, target);
+        }
+        assert_eq!(normalized_actual.len(), normalized_expected.len());
+        assert!(
+            normalized_expected
+                .iter()
+                .all(|target| normalized_actual.iter().any(|candidate| {
+                    candidate.point == target.point
+                        && candidate.uncertified_definition_fallback
+                            == target.uncertified_definition_fallback
+                        && definition_families_match_as_sets(
+                            &candidate.definitions,
+                            &target.definitions,
+                        )
+                }))
+        );
     }
 
     #[test]
