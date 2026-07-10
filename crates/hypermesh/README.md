@@ -968,12 +968,14 @@ one centroid-style representative point, and repeated coplanar overlap splits
 now stop at an existing matching local BSP split plane instead of replaying the
 same exact branch split through both subtrees again. The leaf BSP builder also
 dedupes overlap boundary planes across the local pairwise overlap family before
-submitting them to the BSP at all. Splittable tasks now also try
-that same certified leaf path exactly once before subdivision, regardless of
-former leaf-threshold sizing, and if that exact leaf attempt still returns
-`UnknownClassification` while the bounds remain splittable, hypermesh keeps
-subdividing instead of treating heuristic leaf sizing as a hard completeness
-boundary. When a split would otherwise recurse on the exact same polygon family
+submitting them to the BSP at all. When the highest-ranked split strictly
+reduces the polygon family in every non-empty child, a splittable task tries
+that one family-reducing branch before materializing the dense leaf BSP.
+If the preferred branch fails certification, the task tries the certified leaf
+path exactly once and then backtracks through every remaining split; tasks with
+no strictly reducing split still try the leaf first. This changes only work
+ordering: no leaf or split certification path is dropped. When a split would
+otherwise recurse on the exact same polygon family
 with an empty opposite child, the surviving child now contracts to the exact
 local polygon-family bounds instead of repeatedly bisecting empty space around
 that unchanged arrangement. Different split planes that contract to the same

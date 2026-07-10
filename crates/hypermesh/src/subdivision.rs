@@ -752,20 +752,19 @@ fn subdivide_into_inner_with(
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
-    if let Some(certified_output) =
-        certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-            process_leaf(task, indicator, output)
-        })?
-    {
-        merge_unique_classified_polygons_with_bucket_state(
-            output,
-            &mut output_buckets,
-            certified_output,
-        );
-        return Ok(());
-    }
-
     if task.depth >= config.max_depth {
+        if let Some(certified_output) =
+            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+                process_leaf(task, indicator, output)
+            })?
+        {
+            merge_unique_classified_polygons_with_bucket_state(
+                output,
+                &mut output_buckets,
+                certified_output,
+            );
+            return Ok(());
+        }
         return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
             depth: task.depth,
             polygon_count: task.polygons.len(),
@@ -782,9 +781,101 @@ fn subdivide_into_inner_with(
         &task.bounds,
         &task.polygons,
     )?;
+    let (preferred_split, deferred_splits) =
+        partition_preferred_subdivision_split(split_candidates, task.polygons.len());
     let mut best_failure = None;
 
-    for split_attempt in split_candidates {
+    if let Some(candidate_output) = try_ranked_subdivision_attempts(
+        &task,
+        preferred_split,
+        indicator,
+        config,
+        reachability_op,
+        process_leaf,
+        caches,
+        winding_reachability_cache,
+        &mut best_failure,
+    )? {
+        merge_unique_classified_polygons_with_bucket_state(
+            output,
+            &mut output_buckets,
+            candidate_output,
+        );
+        return Ok(());
+    }
+
+    if let Some(certified_output) =
+        certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
+            process_leaf(task, indicator, output)
+        })?
+    {
+        merge_unique_classified_polygons_with_bucket_state(
+            output,
+            &mut output_buckets,
+            certified_output,
+        );
+        return Ok(());
+    }
+
+    if let Some(candidate_output) = try_ranked_subdivision_attempts(
+        &task,
+        deferred_splits,
+        indicator,
+        config,
+        reachability_op,
+        process_leaf,
+        caches,
+        winding_reachability_cache,
+        &mut best_failure,
+    )? {
+        merge_unique_classified_polygons_with_bucket_state(
+            output,
+            &mut output_buckets,
+            candidate_output,
+        );
+        return Ok(());
+    }
+
+    Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
+}
+
+fn split_attempt_strictly_reduces_polygon_family(
+    attempt: &RankedSplitAttempt,
+    parent_polygon_count: usize,
+) -> bool {
+    attempt.counts.0 < parent_polygon_count
+}
+
+fn partition_preferred_subdivision_split(
+    split_candidates: Vec<RankedSplitAttempt>,
+    parent_polygon_count: usize,
+) -> (Option<RankedSplitAttempt>, Vec<RankedSplitAttempt>) {
+    let mut deferred_splits = split_candidates;
+    let preferred_split = deferred_splits
+        .iter()
+        .position(|attempt| {
+            split_attempt_strictly_reduces_polygon_family(attempt, parent_polygon_count)
+        })
+        .map(|index| deferred_splits.remove(index));
+    (preferred_split, deferred_splits)
+}
+
+fn try_ranked_subdivision_attempts(
+    task: &SubdivisionTask,
+    split_attempts: impl IntoIterator<Item = RankedSplitAttempt>,
+    indicator: &Indicator,
+    config: SubdivisionConfig,
+    reachability_op: Option<BooleanOp>,
+    process_leaf: &mut impl FnMut(
+        &SubdivisionTask,
+        &Indicator,
+        &mut Vec<ClassifiedPolygon>,
+    ) -> HypermeshResult<LeafProcessingStats>,
+    caches: &SubdivisionRuntimeCaches,
+    winding_reachability_cache: &RefCell<Vec<WindingReachabilityCacheEntry>>,
+    best_failure: &mut Option<crate::error::HypermeshError>,
+) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
+    for split_attempt in split_attempts {
         let split_children = ordered_split_attempt_children(
             &task.polygons,
             split_attempt.left_polys,
@@ -797,7 +888,7 @@ fn subdivide_into_inner_with(
         let attempt = (|| -> HypermeshResult<()> {
             for split_child in split_children {
                 process_split_attempt_child(
-                    &task,
+                    task,
                     split_child.polygons,
                     split_child.bounds,
                     indicator,
@@ -810,27 +901,19 @@ fn subdivide_into_inner_with(
                     winding_reachability_cache,
                 )?;
             }
-
             Ok(())
         })();
 
         match attempt {
-            Ok(()) => {
-                merge_unique_classified_polygons_with_bucket_state(
-                    output,
-                    &mut output_buckets,
-                    candidate_output,
-                );
-                return Ok(());
-            }
+            Ok(()) => return Ok(Some(candidate_output)),
             Err(err) if is_backtrackable_split_error(&err) => {
-                record_split_failure(&mut best_failure, err);
+                record_split_failure(best_failure, err);
             }
             Err(err) => return Err(err),
         }
     }
 
-    Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
+    Ok(None)
 }
 
 fn contract_task_to_polygon_family_bounds_if_tighter(
@@ -843,6 +926,9 @@ fn contract_task_to_polygon_family_bounds_if_tighter(
         polygon_family_bounds,
     )?;
     if contracted_bounds == task.bounds {
+        return Ok(None);
+    }
+    if !bounds_contains_bounds(&task.bounds, &contracted_bounds)? {
         return Ok(None);
     }
 
@@ -14859,6 +14945,22 @@ mod tests {
     }
 
     #[test]
+    fn contract_task_to_polygon_family_bounds_if_tighter_never_expands_task() {
+        let task = SubdivisionTask::new(
+            vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+            Aabb::new(p(0, 0, 0), p(0, 0, 0)),
+            p(0, 0, 0),
+            vec![0],
+        );
+        let caches = SubdivisionRuntimeCaches::default();
+
+        assert_eq!(
+            contract_task_to_polygon_family_bounds_if_tighter(&task, &caches).unwrap(),
+            None
+        );
+    }
+
+    #[test]
     fn contract_task_to_polygon_family_bounds_if_tighter_reuses_cached_subdivision_reference() {
         let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
         let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
@@ -15096,6 +15198,54 @@ mod tests {
         assert!(
             split_attempt_recursive_room_key(&flatter) < split_attempt_recursive_room_key(&deeper)
         );
+    }
+
+    #[test]
+    fn split_attempt_strict_reduction_requires_every_child_family_to_shrink() {
+        let reducing = RankedSplitAttempt {
+            axis: 0,
+            value: r(1),
+            counts: (4, 0, 7, 0, 1, 1),
+            source: SplitSource::Arrangement,
+            left_polys: Vec::new(),
+            left_bounds: None,
+            right_polys: Vec::new(),
+            right_bounds: None,
+        };
+        let retaining = RankedSplitAttempt {
+            counts: (5, 0, 8, 0, 2, 2),
+            ..reducing.clone()
+        };
+
+        assert!(split_attempt_strictly_reduces_polygon_family(&reducing, 5));
+        assert!(!split_attempt_strictly_reduces_polygon_family(
+            &retaining, 5
+        ));
+    }
+
+    #[test]
+    fn preferred_split_partition_preserves_deferred_rank_order() {
+        let attempt = |axis, max_child_count| RankedSplitAttempt {
+            axis,
+            value: r(axis as i32 + 1),
+            counts: (max_child_count, 0, max_child_count + 2, 0, 1, 1),
+            source: SplitSource::Arrangement,
+            left_polys: Vec::new(),
+            left_bounds: None,
+            right_polys: Vec::new(),
+            right_bounds: None,
+        };
+        let first = attempt(0, 5);
+        let preferred = attempt(1, 4);
+        let last = attempt(2, 3);
+
+        let (selected, deferred) = partition_preferred_subdivision_split(
+            vec![first.clone(), preferred.clone(), last.clone()],
+            5,
+        );
+
+        assert_eq!(selected, Some(preferred));
+        assert_eq!(deferred, vec![first, last]);
     }
 
     #[test]
