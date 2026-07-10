@@ -14,6 +14,11 @@ fn tolerance() -> Real {
     real(1.0e-9)
 }
 
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
+}
+
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
     for slot in &mut raw {
@@ -51,8 +56,8 @@ fuzz_target!(|bytes: &[u8]| {
     let segments = (bytes[idx % bytes.len()] as usize % 32) + 1;
     idx += 1;
     let teeth = (bytes[idx % bytes.len()] as usize % 24) + 1;
-    let positive_a = a.abs().max(tolerance());
-    let positive_b = b.abs().max(tolerance());
+    let positive_a = at_least_tolerance(a.abs());
+    let positive_b = at_least_tolerance(b.abs());
 
     let sketch: Profile<Option<()>> = match tag {
         0 => Profile::rectangle(a, b, None),
@@ -73,15 +78,7 @@ fuzz_target!(|bytes: &[u8]| {
         15 => Profile::heart(a, b, segments, None),
         16 => Profile::crescent(positive_a, positive_b, c, segments, None),
         17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2), None),
-        18 => Profile::involute_gear(
-            a,
-            teeth,
-            b.clone(),
-            c,
-            real(0.01) * b,
-            segments,
-            None,
-        ),
+        18 => Profile::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments, None),
         19 => Profile::cycloidal_gear(a, teeth, teeth.saturating_add(1), b, segments, None),
         20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c, None),
         _ => Profile::cycloidal_rack(a, teeth, positive_b, c, segments, None),

@@ -15,6 +15,11 @@ fn tolerance() -> Real {
     real(1.0e-9)
 }
 
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
+}
+
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
     for slot in &mut raw {
@@ -44,12 +49,12 @@ fuzz_target!(|bytes: &[u8]| {
     }
     let mut idx = 0usize;
     let a: Profile<Option<()>> = Profile::rectangle(
-        decode_real(bytes, &mut idx).abs().max(tolerance()),
-        decode_real(bytes, &mut idx).abs().max(tolerance()),
+        at_least_tolerance(decode_real(bytes, &mut idx).abs()),
+        at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         None,
     );
     let b = Profile::circle(
-        decode_real(bytes, &mut idx).abs().max(tolerance()),
+        at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         (bytes[idx % bytes.len()] as usize % 32) + 3,
         None,
     )

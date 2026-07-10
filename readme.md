@@ -143,7 +143,7 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 - **`Profile<M>`** stores and manipulates 2D CAD geometry as hypercurve topology. It contains:
   - a [`hypercurve::Region2`](https://docs.rs/hypercurve/latest/hypercurve/struct.Region2.html) for filled material and hole contours
   - native [`hypercurve::CurveString2`](https://docs.rs/hypercurve/latest/hypercurve/struct.CurveString2.html) wires for open paths
-  - a finite compatibility cache used only at IO/API boundaries while legacy import/export paths migrate
+  - finite boundary projections used only at IO/API edges
   - an internal cached bounding box for finite boundary projections
   - caller-owned metadata of type `M`, accessed through `metadata`, `metadata_mut`, `set_metadata`, `with_metadata`, and `map_metadata`
 
@@ -151,7 +151,7 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 Prefer `Profile::from_region`, `Profile::from_wires`, `Profile::from_region_and_wires`,
 `as_region`, `wires`, `into_region_and_wires`, `region_profiles`, and
 `wire_polylines` so topology stays in hypercurve objects instead of a finite
-compatibility projection. The old `geo`-based Profile constructors and accessors
+boundary projection. The old `geo`-based Profile constructors and accessors
 are no longer public API, and the crate no longer depends on `geo`.
 `Profile` values are triangulated with hypertri when exported as STL or converted into a `Mesh<M>`.
 
@@ -555,8 +555,8 @@ The project is also intentionally experimental in several areas:
   than a csgrs-owned partition tree. Nontrivial `union`, `difference`,
   `intersection`, and `xor` calls import both operands as `hypermesh::Mesh` and
   materialize the hypermesh result directly. Use the `try_*` boolean methods
-  when callers need the typed hypermesh import or materialization error instead
-  of the legacy `CSG` trait's bare mesh return.
+  when callers need the typed hypermesh import, operation, or materialization
+  error; those errors are not hidden by a legacy mesh-boolean fallback.
 - **Triangulation**: hypertri is the single triangulation backend. It replaces
   the former Spade, Earcut, and `delaunay` dependency matrix.
 - **Numeric model**: hyperreals are the internal scalar model being carried
@@ -594,9 +594,9 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 - **Boolean robustness**: extend the direct `hypermesh` solid boolean path with
   more topology coverage and add indexed mesh conversion/merge utilities.
-- **Numeric backend**: continue removing tolerance-driven compatibility
-  branches by pushing more predicates into hyperreal-backed hyper geometry,
-  while keeping primitive `f32`/`f64` conversions at API and IO boundaries.
+- **Numeric backend**: continue pushing topology-sensitive predicates into
+  hyperreal-backed hyper geometry, while keeping primitive `f32`/`f64`
+  conversions at API and IO boundaries.
 - **Triangulation and polygon validity**: finish T-junction repair, coplanar
   polygon merging, validation hooks, and richer hypertri constrained
   triangulation integration.

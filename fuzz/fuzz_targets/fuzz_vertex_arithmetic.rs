@@ -11,7 +11,9 @@ fn real(value: f64) -> Real {
 }
 
 fn clamp_real(value: Real, min: f64, max: f64) -> Real {
-    value.max(real(min)).min(real(max))
+    let min = real(min);
+    let max = real(max);
+    value.max(&min).min(&max).clone()
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {

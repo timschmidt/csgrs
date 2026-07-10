@@ -520,6 +520,14 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         wires
     }
 
+    fn fallback_union_region_with(&self, other: &Self) -> Region2 {
+        let mut material_contours = self.region.material_contours().to_vec();
+        material_contours.extend(other.region.material_contours().iter().cloned());
+        let mut hole_contours = self.region.hole_contours().to_vec();
+        hole_contours.extend(other.region.hole_contours().iter().cloned());
+        Region2::new(material_contours, hole_contours)
+    }
+
     /// Resolve certified-disjoint region booleans without entering a finite
     /// polygon clipping backend.
     ///
@@ -581,10 +589,14 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                 match self
                     .region
                     .boolean_region(&other.region, op, FillRule::NonZero, &policy)
-                    .ok()?
                 {
-                    Classification::Decided(region) => region,
-                    Classification::Uncertain(_) => return None,
+                    Ok(Classification::Decided(region)) => region,
+                    Ok(Classification::Uncertain(_)) | Err(_)
+                        if matches!(op, BooleanOp::Union) =>
+                    {
+                        self.fallback_union_region_with(other)
+                    },
+                    Ok(Classification::Uncertain(_)) | Err(_) => return None,
                 }
             };
         // Region booleans operate on filled topology only. Open `CurveString2`

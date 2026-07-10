@@ -12,6 +12,11 @@ fn real(value: f64) -> Real {
     Real::try_from(value).expect("fuzz decoder clamps to finite values")
 }
 
+fn at_least(value: Real, minimum: f64) -> Real {
+    let minimum = real(minimum);
+    value.max(&minimum).clone()
+}
+
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
     for slot in &mut raw {
@@ -47,7 +52,7 @@ fuzz_target!(|bytes: &[u8]| {
     idx += 1;
     let res = (bytes[idx % bytes.len()] as usize % 10) + 1;
     idx += 1;
-    let period = decode_real(bytes, &mut idx).abs().max(real(0.001));
+    let period = at_least(decode_real(bytes, &mut idx).abs(), 0.001);
     let iso = decode_real(bytes, &mut idx);
     let base = Mesh::cube(real(2.0), ());
 
@@ -62,7 +67,8 @@ fuzz_target!(|bytes: &[u8]| {
         ),
         1 => {
             let center = hpoint3(Real::zero(), Real::zero(), Real::zero());
-            let radius_squared = period.min(real(10.0));
+            let max_radius_squared = real(10.0);
+            let radius_squared = period.min(&max_radius_squared).clone();
             Mesh::sdf_expr(
                 SdfExpr::sphere(center, radius_squared),
                 (res, res, res),

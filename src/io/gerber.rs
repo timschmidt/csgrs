@@ -1590,7 +1590,10 @@ mod tests {
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
         let area = native_region_area(&parsed);
-        assert!((area - (pi() * r(3.0))).abs() < r(0.05));
+        assert!(
+            (area.clone() - (pi() * r(3.0))).abs() < r(0.05),
+            "expected aperture hole area near 3*pi, got {area}"
+        );
     }
 
     #[test]

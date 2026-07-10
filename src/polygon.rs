@@ -113,11 +113,11 @@ impl<M: Clone + Send + Sync> Polygon<M> {
 
     /// Triangulate this polygon into `[v0, v1, v2]` triangles with hypertri.
     ///
-    /// The polygon is projected from its 3D support plane to 2D, each finite
-    /// projected coordinate is promoted to `Real`, and hypertri's
-    /// exact ear-clipping path decides topology. The projection is a boundary
-    /// conversion; all irreversible 2D orientation and containment predicates
-    /// are then made in hyperreal space. This follows Yap's exact geometric
+    /// The polygon is sampled at the finite compatibility boundary, projected
+    /// to its dominant coordinate plane, and promoted to exact dyadic `Real`
+    /// coordinates before hypertri's ear-clipping path decides topology. All
+    /// irreversible 2D orientation and containment predicates are therefore
+    /// made in hyperreal space. This follows Yap's exact geometric
     /// computation contract (Computational Geometry 7(1-2), 1997,
     /// <https://doi.org/10.1016/0925-7721(95)00040-2>) and the ear theorem
     /// foundation from Meisters, "Polygons Have Ears" (American Mathematical
@@ -139,22 +139,11 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             return vec![[a, b, c]];
         }
 
-        let Ok(normal_3d) = self.plane.normal().normalize_checked() else {
+        let Some(points_2d) = project_to_finite_2d(&self.vertices) else {
             return Vec::new();
         };
-        let Ok((u, v)) = normal_3d.orthonormal_basis_checked() else {
-            return Vec::new();
-        };
-        let origin_3d = self.vertices[0].position.clone();
-
         let n_verts = self.vertices.len();
-        let mut points_2d = Vec::with_capacity(n_verts);
-        for vert in &self.vertices {
-            let offset = &vert.position - &origin_3d;
-            let x = offset.dot(&u);
-            let y = offset.dot(&v);
-            points_2d.push(hypertri::Point2::new(x, y));
-        }
+        let reverse_output = projected_winding_is_negative(&points_2d);
 
         let indices = match hypertri::earcut(&points_2d, &[]) {
             Ok(indices) => indices,
@@ -173,11 +162,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
                 self.vertices[i1].clone(),
                 self.vertices[i2].clone(),
             ];
-            let Some(orientation) = hyper_triangle_orientation(&tri_vertices, &normal_3d)
-            else {
-                continue;
-            };
-            if orientation == TriangleOrientation::Reversed {
+            if reverse_output {
                 tri_vertices.swap(1, 2);
             }
             triangles.push(tri_vertices);
@@ -331,12 +316,6 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum TriangleOrientation {
-    Aligned,
-    Reversed,
-}
-
 fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
     let first = points.first()?;
     let mut min_x = first.x.clone();
@@ -361,59 +340,61 @@ fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
     ))
 }
 
-/// Classify a triangulated face against the polygon normal with hyperreal predicates.
-///
-/// The winding normal is evaluated as `(b-a) x (c-a)` in
-/// `hyperlattice::Vector3`; degenerate-area and orientation-sign decisions are
-/// then made in `Real`. This keeps the post-`hypertri` topology
-/// filter out of local f64 dot/cross comparisons, following Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The triangulation context
-/// follows Meisters' ear decomposition result, "Polygons Have Ears,"
-/// *American Mathematical Monthly* 82(6), 1975
-/// (<https://doi.org/10.2307/2319703>).
-fn hyper_triangle_orientation(
-    tri_vertices: &[Vertex; 3],
-    polygon_normal: &Vector3,
-) -> Option<TriangleOrientation> {
-    let area2 = (&tri_vertices[1].position - &tri_vertices[0].position)
-        .cross(&(&tri_vertices[2].position - &tri_vertices[0].position));
-    if !matches!(
-        area2.dot(&area2).refine_sign_until(128),
-        Some(RealSign::Positive | RealSign::Negative)
-    ) {
+fn project_to_finite_2d(vertices: &[Vertex]) -> Option<Vec<hypertri::Point2>> {
+    let points = vertices
+        .iter()
+        .map(|vertex| {
+            Some([
+                finite_coordinate(&vertex.position.x)?,
+                finite_coordinate(&vertex.position.y)?,
+                finite_coordinate(&vertex.position.z)?,
+            ])
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    let normal = points.iter().zip(points.iter().cycle().skip(1)).fold(
+        [0.0; 3],
+        |mut normal, (current, next)| {
+            normal[0] += (current[1] - next[1]) * (current[2] + next[2]);
+            normal[1] += (current[2] - next[2]) * (current[0] + next[0]);
+            normal[2] += (current[0] - next[0]) * (current[1] + next[1]);
+            normal
+        },
+    );
+    let drop_axis =
+        (0..3).max_by(|left, right| normal[*left].abs().total_cmp(&normal[*right].abs()))?;
+    if normal[drop_axis] == 0.0 || !normal[drop_axis].is_finite() {
         return None;
     }
 
-    let a = hyperlimit::Point3::new(
-        tri_vertices[0].position.x.clone(),
-        tri_vertices[0].position.y.clone(),
-        tri_vertices[0].position.z.clone(),
-    );
-    let b = hyperlimit::Point3::new(
-        tri_vertices[1].position.x.clone(),
-        tri_vertices[1].position.y.clone(),
-        tri_vertices[1].position.z.clone(),
-    );
-    let c = hyperlimit::Point3::new(
-        tri_vertices[2].position.x.clone(),
-        tri_vertices[2].position.y.clone(),
-        tri_vertices[2].position.z.clone(),
-    );
-    let normal = hyperlimit::Point3::new(
-        polygon_normal.0[0].clone(),
-        polygon_normal.0[1].clone(),
-        polygon_normal.0[2].clone(),
-    );
+    points
+        .into_iter()
+        .map(|point| {
+            let [x, y] = match drop_axis {
+                0 => [point[1], point[2]],
+                1 => [point[2], point[0]],
+                _ => [point[0], point[1]],
+            };
+            Some(hypertri::Point2::new(
+                Real::try_from(x).ok()?,
+                Real::try_from(y).ok()?,
+            ))
+        })
+        .collect()
+}
 
-    if matches!(
-        hyperlimit::triangle3_winding_normal_sign(&a, &b, &c, &normal).value(),
-        Some(hyperlimit::Sign::Negative)
-    ) {
-        Some(TriangleOrientation::Reversed)
-    } else {
-        Some(TriangleOrientation::Aligned)
-    }
+fn finite_coordinate(value: &Real) -> Option<f64> {
+    value.to_f64_lossy().filter(|value| value.is_finite())
+}
+
+fn projected_winding_is_negative(points: &[hypertri::Point2]) -> bool {
+    let area2 = points.iter().zip(points.iter().cycle().skip(1)).fold(
+        Real::zero(),
+        |area, (current, next)| {
+            area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone()
+        },
+    );
+    matches!(area2.refine_sign_until(128), Some(RealSign::Negative))
 }
 
 fn hyper_polygon_newell_normal(vertices: &[Vertex]) -> Option<Vector3> {
@@ -458,65 +439,4 @@ pub fn subdivide_triangle(tri: [Vertex; 3]) -> [[Vertex; 3]; 4] {
         [v20.clone(), v12.clone(), tri[2].clone()],
         [v01, v12, v20],
     ]
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::hyper_math::{Real, hreal_from_f64};
-
-    fn r(value: f64) -> Real {
-        hreal_from_f64(value).expect("test values must be finite")
-    }
-
-    fn p3(x: f64, y: f64, z: f64) -> Point3 {
-        Point3::new(r(x), r(y), r(z))
-    }
-
-    #[test]
-    fn hyper_triangle_orientation_classifies_aligned_and_reversed() {
-        let normal = Vector3::z();
-        let aligned = [
-            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
-            Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
-            Vertex::new(p3(0.0, 1.0, 0.0), normal.clone()),
-        ];
-        let reversed = [aligned[0].clone(), aligned[2].clone(), aligned[1].clone()];
-
-        assert_eq!(
-            hyper_triangle_orientation(&aligned, &normal),
-            Some(TriangleOrientation::Aligned)
-        );
-        assert_eq!(
-            hyper_triangle_orientation(&reversed, &normal),
-            Some(TriangleOrientation::Reversed)
-        );
-    }
-
-    #[test]
-    fn hyper_triangle_orientation_accepts_tiny_nonzero_triangle() {
-        let normal = Vector3::z();
-        let tiny = [
-            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
-            Vertex::new(p3(1.0e-15, 0.0, 0.0), normal.clone()),
-            Vertex::new(p3(0.0, 1.0e-15, 0.0), normal.clone()),
-        ];
-
-        assert_eq!(
-            hyper_triangle_orientation(&tiny, &normal),
-            Some(TriangleOrientation::Aligned)
-        );
-    }
-
-    #[test]
-    fn hyper_triangle_orientation_rejects_exact_zero_area_triangle() {
-        let normal = Vector3::z();
-        let degenerate = [
-            Vertex::new(p3(0.0, 0.0, 0.0), normal.clone()),
-            Vertex::new(p3(1.0, 0.0, 0.0), normal.clone()),
-            Vertex::new(p3(2.0, 0.0, 0.0), normal.clone()),
-        ];
-
-        assert_eq!(hyper_triangle_orientation(&degenerate, &normal), None);
-    }
 }

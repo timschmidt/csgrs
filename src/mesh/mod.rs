@@ -885,10 +885,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh union, or the reason
     /// hypermesh could not import, validate, or materialize the result.
     pub fn try_union(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() {
+        let self_buffers = self.to_hypermesh_buffers();
+        let other_buffers = other.to_hypermesh_buffers();
+        if self.polygons.is_empty() || self_buffers.indices.is_empty() {
             return Ok(other.clone().with_metadata(self.metadata.clone()));
         }
-        if other.polygons.is_empty() {
+        if other.polygons.is_empty() || other_buffers.indices.is_empty() {
+            return Ok(self.clone());
+        }
+        if self_buffers == other_buffers {
             return Ok(self.clone());
         }
         self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Union)
@@ -897,11 +902,16 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh difference, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_difference(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() {
+        let self_buffers = self.to_hypermesh_buffers();
+        let other_buffers = other.to_hypermesh_buffers();
+        if self.polygons.is_empty() || self_buffers.indices.is_empty() {
             return Ok(Mesh::empty(self.metadata.clone()));
         }
-        if other.polygons.is_empty() {
+        if other.polygons.is_empty() || other_buffers.indices.is_empty() {
             return Ok(self.clone());
+        }
+        if self_buffers == other_buffers {
+            return Ok(Mesh::empty(self.metadata.clone()));
         }
         self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Difference)
     }
@@ -909,8 +919,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh intersection, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_intersection(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() || other.polygons.is_empty() {
+        let self_buffers = self.to_hypermesh_buffers();
+        let other_buffers = other.to_hypermesh_buffers();
+        if self.polygons.is_empty()
+            || other.polygons.is_empty()
+            || self_buffers.indices.is_empty()
+            || other_buffers.indices.is_empty()
+        {
             return Ok(Mesh::empty(self.metadata.clone()));
+        }
+        if self_buffers == other_buffers {
+            return Ok(self.clone());
         }
         self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Intersection)
     }
@@ -918,11 +937,16 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh symmetric
     /// difference, or the typed reason hypermesh could not produce it.
     pub fn try_xor(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() {
+        let self_buffers = self.to_hypermesh_buffers();
+        let other_buffers = other.to_hypermesh_buffers();
+        if self.polygons.is_empty() || self_buffers.indices.is_empty() {
             return Ok(other.clone().with_metadata(self.metadata.clone()));
         }
-        if other.polygons.is_empty() {
+        if other.polygons.is_empty() || other_buffers.indices.is_empty() {
             return Ok(self.clone());
+        }
+        if self_buffers == other_buffers {
+            return Ok(Mesh::empty(self.metadata.clone()));
         }
         self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Xor)
     }

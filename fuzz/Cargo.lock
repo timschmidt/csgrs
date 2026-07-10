@@ -237,33 +237,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ciborium"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
-dependencies = [
- "ciborium-io",
- "ciborium-ll",
- "serde",
-]
-
-[[package]]
-name = "ciborium-io"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
-
-[[package]]
-name = "ciborium-ll"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
-dependencies = [
- "ciborium-io",
- "half",
-]
-
-[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -466,7 +439,7 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2aef9e8d9e33f51d8120a2e997a819f18239ad7c2735e353ade79208a9a1c442"
 dependencies = [
- "glam 0.29.3",
+ "glam",
  "ndshape",
 ]
 
@@ -611,12 +584,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8babf46d4c1c9d92deac9f7be466f76dfc4482b6452fc5024b5e8daf6ffeb3ee"
 
 [[package]]
-name = "glam"
-version = "0.30.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19fc433e8437a212d1b6f1e68c7824af3aed907da60afa994e7f542d18d12aa9"
-
-[[package]]
 name = "half"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -687,9 +654,8 @@ dependencies = [
 
 [[package]]
 name = "hypermesh"
-version = "0.3.0"
+version = "0.1.0"
 dependencies = [
- "glam 0.30.10",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
@@ -708,12 +674,9 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
- "ciborium",
  "num",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -737,7 +700,7 @@ dependencies = [
 
 [[package]]
 name = "hypertri"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
@@ -1063,7 +1026,6 @@ checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
 dependencies = [
  "num-integer",
  "num-traits 0.2.19",
- "serde",
 ]
 
 [[package]]
@@ -1073,7 +1035,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
 dependencies = [
  "num-traits 0.2.19",
- "serde",
 ]
 
 [[package]]
@@ -1116,7 +1077,6 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-integer",
  "num-traits 0.2.19",
- "serde",
 ]
 
 [[package]]
@@ -1416,7 +1376,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
- "serde_derive",
 ]
 
 [[package]]

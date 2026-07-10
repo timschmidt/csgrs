@@ -14,6 +14,11 @@ fn tolerance() -> Real {
     real(1.0e-9)
 }
 
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
+}
+
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     let mut raw = [0u8; 8];
     for slot in &mut raw {
@@ -52,8 +57,8 @@ fuzz_target!(|bytes: &[u8]| {
 
     let mesh = match tag {
         0 => Mesh::cuboid(a, b, c, ()),
-        1 => Mesh::cube(a.abs().max(tolerance()), ()),
-        2 => Mesh::sphere(a.abs().max(tolerance()), segments, segments, ()),
+        1 => Mesh::cube(at_least_tolerance(a.abs()), ()),
+        2 => Mesh::sphere(at_least_tolerance(a.abs()), segments, segments, ()),
         3 => Mesh::cylinder(a, b, segments, ()),
         4 => Mesh::frustum(a, b, c, segments, ()),
         5 => Mesh::frustum_ptp(

@@ -1,8 +1,8 @@
 //! A fast **Constructive Solid Geometry (CSG)** library built around Boolean
 //! operations (*union*, *difference*, *intersection*, *xor*) composed from the
-//! Hyper geometry crates. `Mesh` is migrating to `hypermesh` for topology and
-//! `Profile` is backed by `hypercurve`, keeping primitive floats at audited
-//! compatibility boundaries.
+//! Hyper geometry crates. `Mesh` routes topology and booleans through
+//! `hypermesh` and `Profile` is backed by `hypercurve`, keeping primitive
+//! floats at audited API and IO boundaries.
 //!
 //! ![Example CSG output][Example CSG output]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Example CSG output", "docs/csg.png"))]

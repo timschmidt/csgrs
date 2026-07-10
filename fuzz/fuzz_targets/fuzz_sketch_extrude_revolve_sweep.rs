@@ -17,7 +17,14 @@ fn tolerance() -> Real {
 }
 
 fn clamp_real(value: Real, min: f64, max: f64) -> Real {
-    value.max(real(min)).min(real(max))
+    let min = real(min);
+    let max = real(max);
+    value.max(&min).min(&max).clone()
+}
+
+fn at_least_tolerance(value: Real) -> Real {
+    let tolerance = tolerance();
+    value.max(&tolerance).clone()
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -46,8 +53,8 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let mut idx = 0usize;
-    let width = decode_real(bytes, &mut idx).abs().max(tolerance());
-    let height = decode_real(bytes, &mut idx).abs().max(tolerance());
+    let width = at_least_tolerance(decode_real(bytes, &mut idx).abs());
+    let height = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let sketch: Profile<Option<()>> = Profile::rectangle(width.clone(), height, None);
     let tag = bytes[idx % bytes.len()] % 4;
     idx += 1;
