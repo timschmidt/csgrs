@@ -16318,7 +16318,12 @@ mod tests {
     #[test]
     fn shifted_halfspace_cell_geometry_witnesses_return_strict_points() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-        let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
+        let halfspaces = vec![
+            axis_halfspace(0, true, r(0)),
+            axis_halfspace(1, true, r(0)),
+            axis_halfspace(2, true, r(0)),
+            LimitPlane3::new(p(1, 1, 1), r(-4)),
+        ];
 
         let witnesses = shifted_halfspace_cell_geometry_witnesses(&bounds, &halfspaces).unwrap();
 
@@ -19190,6 +19195,7 @@ mod tests {
     fn trace_axis_ordered_paths_reuse_equivalent_segment_traces() {
         let start = p(0, 0, 0);
         let end = p(1, 1, 0);
+        let mut segment_cache = Vec::new();
         let mut trace_calls = 0;
 
         let err = trace_axis_ordered_paths_with_queries(
@@ -19198,12 +19204,21 @@ mod tests {
             &[0],
             &[],
             |_point| Ok(false),
-            |_current, _next, _axis, attempt, _polygons| {
-                trace_calls += 1;
-                Ok(TraceAxisSegmentResult {
-                    winding: attempt.to_vec(),
-                    valid: false,
-                })
+            |current, next, axis, attempt, _polygons| {
+                cached_axis_ordered_segment_trace_with(
+                    &mut segment_cache,
+                    current,
+                    next,
+                    axis,
+                    attempt,
+                    || {
+                        trace_calls += 1;
+                        Ok(TraceAxisSegmentResult {
+                            winding: attempt.to_vec(),
+                            valid: false,
+                        })
+                    },
+                )
             },
         )
         .unwrap_err();
