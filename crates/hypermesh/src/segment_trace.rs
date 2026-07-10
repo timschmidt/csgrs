@@ -1112,6 +1112,32 @@ fn point_is_inside_optional_trace_bounds(
     trace_bounds.map_or(Ok(true), |bounds| bounds.contains_point(point))
 }
 
+fn adapt_plane_replacement_vertex_to_trace_bounds(
+    point: Point3,
+    planes: [Plane; 3],
+    trace_bounds: Option<&Aabb>,
+) -> HypermeshResult<(Point3, [Plane; 3])> {
+    let Some(bounds) = trace_bounds else {
+        return Ok((point, planes));
+    };
+    if bounds.contains_point(&point)? {
+        return Ok((point, planes));
+    }
+
+    // Keep the replacement walk local by moving an outside intermediate onto
+    // exact AABB planes. The resulting legs are still certified by the tracer.
+    let mut adapted = point;
+    for axis in 0..3 {
+        if compare_real(axis_ref(&adapted, axis), axis_ref(&bounds.min, axis))?.is_lt() {
+            *axis_mut(&mut adapted, axis) = axis_ref(&bounds.min, axis).clone();
+        } else if compare_real(axis_ref(&adapted, axis), axis_ref(&bounds.max, axis))?.is_gt() {
+            *axis_mut(&mut adapted, axis) = axis_ref(&bounds.max, axis).clone();
+        }
+    }
+    let definitions = axis_plane_definition(&adapted);
+    Ok((adapted, definitions))
+}
+
 fn points_share_open_arrangement_cell(
     start: &Point3,
     end: &Point3,
@@ -2184,6 +2210,7 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
                 Err(HypermeshError::UnknownClassification) => continue,
                 Err(err) => return Err(err),
             };
+        let mut current_trace_planes = current_planes.clone();
         let mut attempt = winding.to_vec();
         let mut valid = true;
 
@@ -2193,16 +2220,22 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
             if next_planes == current_planes {
                 continue;
             }
-            let next_point =
+            let (next_point, next_trace_planes) =
                 match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
                 }) {
-                    Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => {
-                        point
-                    }
-                    Ok(_) => {
-                        valid = false;
-                        break;
+                    Ok(point) => {
+                        if next_planes == *end_planes
+                            && !point_is_inside_optional_trace_bounds(&point, trace_bounds)?
+                        {
+                            valid = false;
+                            break;
+                        }
+                        adapt_plane_replacement_vertex_to_trace_bounds(
+                            point,
+                            next_planes.clone(),
+                            trace_bounds,
+                        )?
                     }
                     Err(HypermeshError::UnknownClassification) => {
                         valid = false;
@@ -2214,15 +2247,15 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
                 &mut step_cache,
                 &current_point,
                 &next_point,
-                &current_planes,
-                &next_planes,
+                &current_trace_planes,
+                &next_trace_planes,
                 &attempt,
                 || {
                     trace_step(
                         &current_point,
                         &next_point,
-                        &current_planes,
-                        &next_planes,
+                        &current_trace_planes,
+                        &next_trace_planes,
                         &attempt,
                         polygons,
                     )
@@ -2237,6 +2270,7 @@ fn trace_plane_replacement_path_with_tracer_and_caches(
             };
             attempt = next_winding;
             current_point = next_point;
+            current_trace_planes = next_trace_planes;
             current_planes = next_planes;
         }
 
@@ -29173,7 +29207,7 @@ mod tests {
     }
 
     #[test]
-    fn bounded_plane_replacement_skips_outside_intermediate_orderings() {
+    fn bounded_plane_replacement_adapts_outside_intermediate_orderings() {
         let start = p(0, 0, 0);
         let start_definition = axis_plane_definition(&start);
         let end_definition = [
@@ -29204,8 +29238,86 @@ mod tests {
         .unwrap();
 
         assert_eq!(winding, vec![7]);
-        assert_eq!(traced_steps[0], (start, p(0, 1, 0)));
+        assert_eq!(traced_steps[0], (start, p(1, 0, 0)));
         assert!(!traced_steps.iter().any(|(_, next)| *next == p(2, 0, 0)));
+    }
+
+    #[test]
+    fn bounded_plane_replacement_adapts_when_every_raw_order_leaves_bounds() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+        let start_definition = axis_plane_definition(&start);
+        let end_definition = [
+            Plane::from_coefficients(r(1), r(2), r(0), r(-3)),
+            Plane::from_coefficients(r(0), r(1), r(2), r(-3)),
+            Plane::from_coefficients(r(2), r(0), r(1), r(-3)),
+        ];
+        assert_eq!(affine_from_planes(&end_definition).unwrap(), end);
+        let bounds = Aabb::new(start.clone(), end.clone());
+        for plane_index in 0..3 {
+            let mut first_step = start_definition.clone();
+            first_step[plane_index] = end_definition[plane_index].clone();
+            assert!(
+                !bounds
+                    .contains_point(&affine_from_planes(&first_step).unwrap())
+                    .unwrap()
+            );
+        }
+        let mut affine_cache = PlaneReplacementAffineCache::default();
+        let mut step_cache = Vec::new();
+        let mut traced_steps = Vec::new();
+
+        let winding = trace_plane_replacement_path_with_tracer_and_caches(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            &mut affine_cache,
+            &mut step_cache,
+            Some(&bounds),
+            |current, next, current_planes, next_planes, attempt, _polygons| {
+                assert!(bounds.contains_point(current).unwrap());
+                assert!(bounds.contains_point(next).unwrap());
+                assert_eq!(affine_from_planes(current_planes).unwrap(), *current);
+                assert_eq!(affine_from_planes(next_planes).unwrap(), *next);
+                traced_steps.push((current.clone(), next.clone()));
+                Ok(Some(attempt.to_vec()))
+            },
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![7]);
+        assert_eq!(traced_steps.first().unwrap().0, start);
+        assert_eq!(traced_steps.last().unwrap().1, end);
+        assert!(traced_steps.len() >= 2);
+    }
+
+    #[test]
+    fn bounded_plane_replacement_does_not_adapt_outside_endpoint() {
+        let start_definition = axis_plane_definition(&p(0, 0, 0));
+        let end_definition = axis_plane_definition(&p(2, 0, 0));
+        let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
+        let mut affine_cache = PlaneReplacementAffineCache::default();
+        let mut step_cache = Vec::new();
+        let mut traced_steps = 0;
+
+        let err = trace_plane_replacement_path_with_tracer_and_caches(
+            &start_definition,
+            &end_definition,
+            &[7],
+            &[],
+            &mut affine_cache,
+            &mut step_cache,
+            Some(&bounds),
+            |_current, _next, _current_planes, _next_planes, attempt, _polygons| {
+                traced_steps += 1;
+                Ok(Some(attempt.to_vec()))
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
+        assert_eq!(traced_steps, 0);
     }
 
     #[test]

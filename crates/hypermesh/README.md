@@ -479,14 +479,17 @@ greater before tracing from the parent reference.
 
 Reference-target traces are confined to the exact child or local search AABB,
 expanded only as needed to include the inherited reference point. Retained
-plane-replacement orderings whose affine start or intermediate point leaves
-that trace box are skipped, and detour targets outside the same box are treated
-as blocked. The detour search exhausts the endpoint-derived boxes first, then
-adds exact candidates from the full trace box; when polygon clipping leaves no
-non-endpoint arrangement cell, it also searches the unsplit trace box for a
-certified route around finite polygons. Cached detour families include that
-trace AABB in their key, so a family built for one local domain cannot certify
-another.
+plane-replacement orderings now adapt an outside intermediate point onto the
+exact AABB planes by clamping each out-of-range coordinate and retaining a
+replayable axis-plane definition for the adapted point. Every resulting leg is
+still traced and certified normally; endpoints are never moved, and an endpoint
+outside the trace box remains uncertified. Detour targets outside the same box
+are likewise treated as blocked. The detour search exhausts the endpoint-derived
+boxes first, then adds exact candidates from the full trace box; when polygon
+clipping leaves no non-endpoint arrangement cell, it also searches the unsplit
+trace box for a certified route around finite polygons. Cached detour families
+include that trace AABB in their key, so a family built for one local domain
+cannot certify another.
 
 If the first
 projected target family is exhausted, later certified projected escape
