@@ -22,7 +22,6 @@ use crate::segment_trace::{
     certified_leaf_interior_points, classify_leaf_polygon_interior_point_with_probe_query_caches,
     classify_leaf_polygon_with_probe_query_caches,
     ordered_interior_points_for_probe_search_with_support,
-    trace_segment_from_definitions_with_step_detoured_plane_replacement,
     trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds,
 };
 use crate::winding::{
@@ -3985,6 +3984,7 @@ fn normalize_surface_reference(
             let exterior = exterior_reference_point(bounds)?;
             let exterior_definitions = vec![axis_plane_definition(&exterior)];
             let exterior_winding = vec![0; old_wnv.len()];
+            let trace_bounds = reference_trace_bounds(&exterior, bounds)?;
             for positive_side in [true, false] {
                 let direction = if positive_side {
                     base.support.normal.clone()
@@ -4009,14 +4009,14 @@ fn normalize_surface_reference(
                 }
 
                 let definitions = vec![axis_plane_definition(&point)];
-                let winding =
-                    match trace_segment_from_definitions_with_step_detoured_plane_replacement(
+                let winding = match trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
                         &exterior,
                         &point,
                         &exterior_winding,
                         polygons,
                         &exterior_definitions,
                         &definitions,
+                        &trace_bounds,
                     ) {
                         Ok(winding) => winding,
                         Err(crate::error::HypermeshError::UnknownClassification) => continue,
@@ -4093,6 +4093,7 @@ fn closed_family_adjacent_reference_with_winding(
     let exterior = exterior_reference_point(bounds)?;
     let exterior_definitions = vec![axis_plane_definition(&exterior)];
     let exterior_winding = vec![0; required_winding.len()];
+    let trace_bounds = reference_trace_bounds(&exterior, bounds)?;
     let direction_bounds = Aabb::new(
         Point3::new(-Real::one(), -Real::one(), -Real::one()),
         Point3::new(Real::one(), Real::one(), Real::one()),
@@ -4188,21 +4189,23 @@ fn closed_family_adjacent_reference_with_winding(
                 Err(err) => return Err(err),
             }
             let definitions = vec![axis_plane_definition(&point)];
-            let winding = match trace_segment_from_definitions_with_step_detoured_plane_replacement(
-                &exterior,
-                &point,
-                &exterior_winding,
-                polygons,
-                &exterior_definitions,
-                &definitions,
-            ) {
-                Ok(winding) => winding,
-                Err(crate::error::HypermeshError::UnknownClassification) => {
-                    saw_unknown = true;
-                    continue;
-                }
-                Err(err) => return Err(err),
-            };
+            let winding =
+                match trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds(
+                    &exterior,
+                    &point,
+                    &exterior_winding,
+                    polygons,
+                    &exterior_definitions,
+                    &definitions,
+                    &trace_bounds,
+                ) {
+                    Ok(winding) => winding,
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        continue;
+                    }
+                    Err(err) => return Err(err),
+                };
             certified_cell = true;
             if winding == required_winding {
                 return Ok(Some((point, definitions, winding)));
@@ -18380,8 +18383,11 @@ mod tests {
         let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
 
         let expanded = reference_trace_bounds(&p(-2, 1, 3), &bounds).unwrap();
+        let exterior = exterior_reference_point(&bounds).unwrap();
+        let exterior_expanded = reference_trace_bounds(&exterior, &bounds).unwrap();
 
         assert_eq!(expanded, Aabb::new(p(-2, 0, 0), p(1, 1, 3)));
+        assert_eq!(exterior_expanded, Aabb::new(p(0, 0, 0), p(2, 2, 2)));
     }
 
     #[test]

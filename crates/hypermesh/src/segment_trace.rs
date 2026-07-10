@@ -6590,6 +6590,7 @@ fn trace_probe_winding_with_caches(
     )
 }
 
+#[cfg(test)]
 pub(crate) fn trace_segment_from_definitions_with_step_detoured_plane_replacement(
     start: &Point3,
     end: &Point3,

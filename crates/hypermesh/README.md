@@ -970,6 +970,9 @@ closed-mesh polygons, not only on synthetic support-plane fixtures. An
 inherited reference on a source surface can now be normalized before
 projected/support search when the available source polygons certify exact
 boundary-free closure for every winding component inside the task bounds.
+Both the direct face-side and incident direction-cell departure paths now
+bound all detour and plane-replacement intermediates to the exact minimal AABB
+containing the task bounds and their exterior zero-winding proof point.
 Strict coplanar face interiors keep the direct two-normal-side path. Edge,
 vertex, and non-coplanar multi-surface contacts instead enumerate the finite
 arrangement of incident support planes in bounded direction space, construct a
