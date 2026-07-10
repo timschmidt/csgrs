@@ -421,21 +421,41 @@ pub struct TriangleSoup {
 pub struct TriangleSoupClosureReport {
     /// Number of undirected edges used by exactly one triangle.
     pub boundary_edges: usize,
+    /// Number of geometric edge classes whose forward and reverse uses do not
+    /// cancel.
+    pub unbalanced_edges: usize,
     /// Number of undirected edges used by more than two triangles.
     pub non_manifold_edges: usize,
 }
 
 impl TriangleSoupClosureReport {
-    /// Returns true when no undirected edge is used by exactly one triangle.
-    /// Non-manifold edge valence is allowed for closed PWN outputs.
+    /// Returns true when there are no singleton edges and every directed edge
+    /// use cancels. Balanced non-manifold edge valence is allowed for closed
+    /// PWN outputs.
     pub const fn has_no_boundary(self) -> bool {
-        self.boundary_edges == 0
+        self.boundary_edges == 0 && self.unbalanced_edges == 0
     }
 
-    /// Returns true when every undirected edge is used by exactly two
-    /// triangles.
+    /// Returns true when every undirected edge has exactly two oppositely
+    /// directed uses.
     pub const fn is_closed(self) -> bool {
-        self.boundary_edges == 0 && self.non_manifold_edges == 0
+        self.boundary_edges == 0 && self.unbalanced_edges == 0 && self.non_manifold_edges == 0
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+struct DirectedEdgeUses {
+    forward: usize,
+    reverse: usize,
+}
+
+impl DirectedEdgeUses {
+    const fn total(self) -> usize {
+        self.forward + self.reverse
+    }
+
+    const fn is_balanced(self) -> bool {
+        self.forward == self.reverse
     }
 }
 
@@ -485,6 +505,7 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
     if !closure.has_no_boundary() {
         return Err(HypermeshError::OpenOutput {
             boundary_edges: closure.boundary_edges,
+            unbalanced_edges: closure.unbalanced_edges,
             non_manifold_edges: closure.non_manifold_edges,
         });
     }
@@ -495,9 +516,9 @@ pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshRes
 /// Certifies that the classified polygon arrangement is already closed before
 /// triangulation cleanup runs.
 ///
-/// Non-manifold edge valence is allowed, but any boundary edge is reported as
-/// [`HypermeshError::OpenOutput`] instead of being left for triangle cleanup to
-/// repair.
+/// Balanced non-manifold edge valence is allowed, but any singleton edge or
+/// directed edge imbalance is reported as [`HypermeshError::OpenOutput`]
+/// instead of being left for triangle cleanup to repair.
 pub fn certify_output_polygon_closure(
     result: &BooleanResult,
 ) -> HypermeshResult<TriangleSoupClosureReport> {
@@ -506,6 +527,7 @@ pub fn certify_output_polygon_closure(
     if !polygon_closure.has_no_boundary() {
         return Err(HypermeshError::OpenOutput {
             boundary_edges: polygon_closure.boundary_edges,
+            unbalanced_edges: polygon_closure.unbalanced_edges,
             non_manifold_edges: polygon_closure.non_manifold_edges,
         });
     }
@@ -534,11 +556,14 @@ fn output_polygon_closure_report_from_indexed_vertices(
     let axis_order = sorted_vertex_indices_by_axis(&vertices)?;
     let edge_counts = polygon_edge_counts(vertices, indexed_polygons, &axis_order)?;
     let mut report = TriangleSoupClosureReport::default();
-    for count in edge_counts.values() {
-        if *count == 1 {
+    for uses in edge_counts.values().copied() {
+        if uses.total() == 1 {
             report.boundary_edges += 1;
-        } else if *count > 2 {
+        } else if uses.total() > 2 {
             report.non_manifold_edges += 1;
+        }
+        if !uses.is_balanced() {
+            report.unbalanced_edges += 1;
         }
     }
     Ok(report)
@@ -672,8 +697,8 @@ fn polygon_edge_counts(
     vertices: &[OutputVertex],
     polygons: &[Vec<usize>],
     axis_order: &[Vec<usize>; 3],
-) -> HypermeshResult<HashMap<[usize; 2], usize>> {
-    let mut counts = HashMap::new();
+) -> HypermeshResult<HashMap<[usize; 2], DirectedEdgeUses>> {
+    let mut counts: HashMap<[usize; 2], DirectedEdgeUses> = HashMap::new();
     let mut split_edge_cache: HashMap<[usize; 2], Vec<[usize; 2]>> = HashMap::new();
 
     for polygon in polygons {
@@ -687,13 +712,26 @@ fn polygon_edge_counts(
             if start == end {
                 continue;
             }
-            for subedge in split_segment_subedges_exact(
+            let canonical_edge = sorted_edge([start, end]);
+            let follows_canonical_edge = start == canonical_edge[0];
+            for canonical_subedge in split_segment_subedges_exact(
                 &mut split_edge_cache,
                 vertices,
                 axis_order,
-                sorted_edge([start, end]),
+                canonical_edge,
             )? {
-                *counts.entry(subedge).or_insert(0) += 1;
+                let subedge = if follows_canonical_edge {
+                    canonical_subedge
+                } else {
+                    [canonical_subedge[1], canonical_subedge[0]]
+                };
+                let key = sorted_edge(subedge);
+                let uses = counts.entry(key).or_default();
+                if subedge == key {
+                    uses.forward += 1;
+                } else {
+                    uses.reverse += 1;
+                }
             }
         }
     }
@@ -735,7 +773,7 @@ fn split_segment_subedges_exact(
 
     let subedges: Vec<[usize; 2]> = chain
         .windows(2)
-        .filter_map(|pair| (pair[0] != pair[1]).then_some(sorted_edge([pair[0], pair[1]])))
+        .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
         .collect();
     cache.insert(edge, subedges.clone());
     Ok(subedges)
@@ -911,30 +949,40 @@ fn remove_degenerate_and_duplicate_triangles(soup: &mut TriangleSoup) {
     });
 }
 
-fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], usize> {
-    let mut counts = BTreeMap::new();
+fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], DirectedEdgeUses> {
+    let mut counts: BTreeMap<[usize; 2], DirectedEdgeUses> = BTreeMap::new();
     for triangle in triangles {
         for edge in triangle_edges(*triangle) {
-            *counts.entry(sorted_edge(edge)).or_insert(0) += 1;
+            let key = sorted_edge(edge);
+            let uses = counts.entry(key).or_default();
+            if edge == key {
+                uses.forward += 1;
+            } else {
+                uses.reverse += 1;
+            }
         }
     }
     counts
 }
 
-/// Returns true when every undirected triangle edge is used by exactly two
-/// triangles.
+/// Returns true when every undirected triangle edge has exactly two
+/// oppositely directed uses.
 pub fn triangle_soup_is_closed(soup: &TriangleSoup) -> bool {
     triangle_soup_closure_report(soup).is_closed()
 }
 
-/// Counts exact boundary and non-manifold edges in a triangle soup.
+/// Counts exact singleton, directed-imbalance, and non-manifold edges in a
+/// triangle soup.
 pub fn triangle_soup_closure_report(soup: &TriangleSoup) -> TriangleSoupClosureReport {
     let mut report = TriangleSoupClosureReport::default();
-    for count in triangle_edge_counts(&soup.triangles).values() {
-        if *count == 1 {
+    for uses in triangle_edge_counts(&soup.triangles).values().copied() {
+        if uses.total() == 1 {
             report.boundary_edges += 1;
-        } else if *count > 2 {
+        } else if uses.total() > 2 {
             report.non_manifold_edges += 1;
+        }
+        if !uses.is_balanced() {
+            report.unbalanced_edges += 1;
         }
     }
     report
@@ -1430,9 +1478,68 @@ mod tests {
             report,
             TriangleSoupClosureReport {
                 boundary_edges: 0,
+                unbalanced_edges: 0,
                 non_manifold_edges: 0,
             }
         );
+    }
+
+    #[test]
+    fn output_polygon_closure_report_rejects_reversed_tetrahedron_face() {
+        let mut polygons = vec![
+            op(vec![ov(0, 0, 0), ov(0, 1, 0), ov(1, 0, 0)]),
+            op(vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 0, 1)]),
+            op(vec![ov(0, 0, 0), ov(0, 0, 1), ov(0, 1, 0)]),
+            op(vec![ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)]),
+        ];
+        polygons[0].vertices.swap(1, 2);
+
+        let report = output_polygon_closure_report(&polygons).unwrap();
+
+        assert_eq!(report.boundary_edges, 0);
+        assert_eq!(report.unbalanced_edges, 3);
+        assert_eq!(report.non_manifold_edges, 0);
+        assert!(!report.has_no_boundary());
+    }
+
+    #[test]
+    fn output_polygon_closure_report_accepts_balanced_non_manifold_multiplicity() {
+        let mut polygons = vec![
+            op(vec![ov(0, 0, 0), ov(0, 1, 0), ov(1, 0, 0)]),
+            op(vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 0, 1)]),
+            op(vec![ov(0, 0, 0), ov(0, 0, 1), ov(0, 1, 0)]),
+            op(vec![ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)]),
+        ];
+        polygons.extend(polygons.clone());
+
+        let report = output_polygon_closure_report(&polygons).unwrap();
+
+        assert_eq!(report.boundary_edges, 0);
+        assert_eq!(report.unbalanced_edges, 0);
+        assert_eq!(report.non_manifold_edges, 6);
+        assert!(report.has_no_boundary());
+        assert!(!report.is_closed());
+    }
+
+    #[test]
+    fn triangle_soup_closure_report_requires_directed_balance() {
+        let mut reversed_face = positive_tetra_soup();
+        reversed_face.triangles[0].swap(1, 2);
+        let reversed_report = triangle_soup_closure_report(&reversed_face);
+
+        assert_eq!(reversed_report.boundary_edges, 0);
+        assert_eq!(reversed_report.unbalanced_edges, 3);
+        assert_eq!(reversed_report.non_manifold_edges, 0);
+        assert!(!reversed_report.has_no_boundary());
+
+        let mut doubled = positive_tetra_soup();
+        doubled.triangles.extend(doubled.triangles.clone());
+        let doubled_report = triangle_soup_closure_report(&doubled);
+
+        assert_eq!(doubled_report.boundary_edges, 0);
+        assert_eq!(doubled_report.unbalanced_edges, 0);
+        assert_eq!(doubled_report.non_manifold_edges, 6);
+        assert!(doubled_report.has_no_boundary());
     }
 
     #[test]
@@ -1460,8 +1567,20 @@ mod tests {
         let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
         let counts = polygon_edge_counts(&vertices, &indexed, &axis_order).unwrap();
 
-        assert_eq!(counts.get(&[0, 3]), Some(&2));
-        assert_eq!(counts.get(&[1, 3]), Some(&2));
+        assert_eq!(
+            counts.get(&[0, 3]),
+            Some(&DirectedEdgeUses {
+                forward: 2,
+                reverse: 0,
+            })
+        );
+        assert_eq!(
+            counts.get(&[1, 3]),
+            Some(&DirectedEdgeUses {
+                forward: 0,
+                reverse: 2,
+            })
+        );
     }
 
     #[test]
@@ -1480,7 +1599,7 @@ mod tests {
         let reversed =
             split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [1, 0]).unwrap();
 
-        assert_eq!(forward, vec![[0, 3], [1, 3]]);
+        assert_eq!(forward, vec![[0, 3], [3, 1]]);
         assert_eq!(reversed, forward);
         assert_eq!(cache.len(), 1);
     }
@@ -1545,8 +1664,15 @@ mod tests {
             vec![1, 1],
         );
 
-        let err = triangulate_and_resolve_certified(&result).unwrap_err();
-        assert!(matches!(err, HypermeshError::OpenOutput { .. }));
+        let err = certify_output_polygon_closure(&result).unwrap_err();
+        assert_eq!(
+            err,
+            HypermeshError::OpenOutput {
+                boundary_edges: 0,
+                unbalanced_edges: 3,
+                non_manifold_edges: 0,
+            }
+        );
     }
 
     #[test]
@@ -1566,6 +1692,7 @@ mod tests {
             err,
             HypermeshError::OpenOutput {
                 boundary_edges: 3,
+                unbalanced_edges: 3,
                 non_manifold_edges: 0,
             }
         );

@@ -255,6 +255,10 @@ fn assert_no_boundary_edges(soup: &TriangleSoup) {
         closure.boundary_edges, 0,
         "expected no boundary edges; closure report: {closure:?}",
     );
+    assert_eq!(
+        closure.unbalanced_edges, 0,
+        "expected signed edge cancellation; closure report: {closure:?}",
+    );
 }
 
 fn assert_output_polygons_closed(result: &BooleanResult) {
@@ -262,6 +266,10 @@ fn assert_output_polygons_closed(result: &BooleanResult) {
     assert_eq!(
         closure.boundary_edges, 0,
         "expected classified polygon output to be closed before cleanup; closure report: {closure:?}",
+    );
+    assert_eq!(
+        closure.unbalanced_edges, 0,
+        "expected classified polygon output to have signed edge cancellation; closure report: {closure:?}",
     );
 }
 

@@ -1121,14 +1121,19 @@ dedupe removes them, and exact duplicate BSP leaf edge cycles are now skipped
 before leaf certification and coplanar `delta_w` analysis run at all.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
-duplicate faces, and T-junctions, but refuses non-empty outputs with boundary
-edges or zero signed volume instead of capping or peeling them. Non-manifold
-edge valence is allowed for closed PWN output. If exact T-junction/crossing
+duplicate faces, and T-junctions, but refuses non-empty outputs with singleton
+edges, directed edge imbalances, or zero signed volume instead of capping or
+peeling them. Balanced non-manifold edge valence is allowed for closed PWN
+output. If exact T-junction/crossing
 resolution does not converge within its certification budget, it reports
 `OutputResolutionLimit`. Hypermesh does not expose a repairing triangulation
 path; if the classified arrangement is not emitted closed by construction, the
 operation fails certification. The emitted polygon arrangement is now checked
-for exact boundary closure before any triangulation cleanup runs, so
+for exact signed boundary closure before any triangulation cleanup runs: after
+exact T-junction subdivision, every geometric subedge must have equal forward
+and reverse polygon uses. A reversed face or duplicate same-oriented open face
+therefore fails with an `OpenOutput` report containing `unbalanced_edges` even
+when every undirected edge has valence two. Thus,
 `resolve_tjunctions` only cleans triangle-soup representation artifacts and is
 not allowed to turn an open polygon arrangement into a certified result.
 Exact duplicate oriented output polygons are now also suppressed when the
@@ -1141,9 +1146,10 @@ That final `BooleanResult` materialization now also buckets classified polygons
 by `(classification, support plane, edge count)` before exact edge-cycle
 comparison, so large classified outputs do not rescan the entire emitted
 polygon list for every later duplicate candidate.
-The exact closure check now also caches split subedges per undirected polygon
-edge, so repeated coincident segments do not rescan and re-sort the same merged
-vertex chain before counting boundary usage. Its exact duplicate-vertex merge
+The exact closure check now also caches canonically directed split subedges per
+undirected polygon edge, so repeated coincident segments do not rescan and
+re-sort the same merged vertex chain before counting forward and reverse uses.
+Its exact duplicate-vertex merge
 step now also groups vertices by exact lexicographic ordering and still assigns
 merged vertex ids by first appearance, instead of string-keying every
 coordinate triple or linearly rescanning every merged vertex for each new

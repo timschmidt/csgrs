@@ -66,10 +66,14 @@ pub enum HypermeshError {
         /// Number of polygons remaining in the uncertified task.
         polygon_count: usize,
     },
-    /// Certified output extraction found boundary edges.
+    /// Certified output extraction found singleton or directionally
+    /// unbalanced edges.
     OpenOutput {
         /// Number of undirected edges used by exactly one triangle.
         boundary_edges: usize,
+        /// Number of geometric edge classes whose forward and reverse uses do
+        /// not cancel.
+        unbalanced_edges: usize,
         /// Number of undirected edges used by more than two triangles.
         non_manifold_edges: usize,
     },
@@ -130,10 +134,11 @@ impl fmt::Display for HypermeshError {
             ),
             Self::OpenOutput {
                 boundary_edges,
+                unbalanced_edges,
                 non_manifold_edges,
             } => write!(
                 f,
-                "output has boundary: {boundary_edges} boundary edges, {non_manifold_edges} non-manifold edges"
+                "output has boundary: {boundary_edges} singleton edges, {unbalanced_edges} directed edge imbalances, {non_manifold_edges} non-manifold edges"
             ),
             Self::OutputResolutionLimit { pass_limit } => {
                 write!(
