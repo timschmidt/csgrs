@@ -1,11 +1,24 @@
 //! Exact segment tracing for winding-number propagation.
 
+mod halfspace_witness;
 mod leaf_probe;
 mod path;
 mod probe_cache;
 mod probe_reachability;
 mod witness;
 
+#[cfg(test)]
+use halfspace_witness::*;
+use halfspace_witness::{
+    ShiftedHalfspaceWitness, active_planes_from_optional_report,
+    collect_strict_halfspace_seed_family, dedupe_shifted_halfspace_seed_families,
+    extend_shifted_halfspace_seed_families_backtracking_unknown,
+    extend_strict_halfspace_seed_families_collect_unknown,
+    halfspace_cell_seed_families_from_optional_report, optional_halfspace_feasibility_report,
+    point_strictly_inside_halfspace_cell_or_unknown, seed_family_search_failed_without_any_seed,
+    shifted_halfspace_cell_witnesses_from_seed, shifted_halfspace_seed_families_with_report_seed,
+    shifted_halfspace_witness_family_or_empty, take_new_halfspace_seed_family,
+};
 pub use leaf_probe::classify_leaf_polygon;
 #[cfg(test)]
 use leaf_probe::{
@@ -79,25 +92,17 @@ pub(crate) use witness::certified_leaf_test_point;
 #[cfg(test)]
 use witness::*;
 use witness::{
-    PolygonPointLocation, ShiftedHalfspaceWitness, active_planes_from_optional_report,
-    adjacent_axis_probe_stop_values_with_queries, adjacent_normal_probe_stop_values_with_queries,
-    axis_probe_bounds, axis_probe_definition_preserves_axis_direction, axis_value_after_start,
-    bounds_between_points, build_axis_probe_point, build_axis_probe_point_from_shifted_witness,
-    build_probe_point, build_probe_point_from_shifted_witness, classify_point_in_polygon,
-    collect_strict_halfspace_seed_family, dedupe_shifted_halfspace_seed_families,
-    dominant_normal_axis, dot_direction,
-    extend_shifted_halfspace_seed_families_backtracking_unknown,
-    extend_strict_halfspace_seed_families_collect_unknown,
-    halfspace_cell_seed_families_from_optional_report, interior_leaf_points,
-    normal_probe_extra_planes, normal_probe_shifted_seed_families, normal_stop_halfspace,
-    offset_point, optional_halfspace_feasibility_report, planes_are_coplanar,
-    point_strictly_between_axis, point_strictly_inside_halfspace_cell_or_unknown, probe_axes,
-    probe_definitions_from_active_halfspaces, probe_definitions_or_axis,
-    push_plane_equality_halfspaces, seed_family_search_failed_without_any_seed,
-    segment_plane_crossing, shifted_halfspace_cell_witnesses_from_seed,
-    shifted_halfspace_seed_families_with_report_seed, shifted_halfspace_witness_family_or_empty,
+    PolygonPointLocation, adjacent_axis_probe_stop_values_with_queries,
+    adjacent_normal_probe_stop_values_with_queries, axis_probe_bounds,
+    axis_probe_definition_preserves_axis_direction, axis_value_after_start, bounds_between_points,
+    build_axis_probe_point, build_axis_probe_point_from_shifted_witness, build_probe_point,
+    build_probe_point_from_shifted_witness, classify_point_in_polygon, dominant_normal_axis,
+    dot_direction, interior_leaf_points, normal_probe_extra_planes,
+    normal_probe_shifted_seed_families, normal_stop_halfspace, offset_point, planes_are_coplanar,
+    point_strictly_between_axis, probe_axes, probe_definitions_from_active_halfspaces,
+    probe_definitions_or_axis, push_plane_equality_halfspaces, segment_plane_crossing,
     sort_crossing_events, strict_axis_probe_targets, strict_normal_probe_targets_with_query_caches,
-    take_new_halfspace_seed_family, unique_normal_probe_search_definitions,
+    unique_normal_probe_search_definitions,
 };
 pub(crate) use witness::{certified_leaf_interior_points, certified_leaf_test_points};
 
