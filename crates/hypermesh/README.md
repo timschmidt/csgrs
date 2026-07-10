@@ -962,14 +962,13 @@ remains an implementation target.
 
 Subdivision depth is a certification budget, not a permission to guess. Bounds
 remain splittable whenever any axis has certified positive extent; there is no
-coordinate-scale cutoff. The fallback midpoint split is now chosen by actual
-child clip counts across every positive-extent axis rather than by longest-axis
-geometry alone. When local polygon vertices provide an exact interior
-arrangement gap, subdivision now prefers that gap over that midpoint baseline
-for the next split plane, and it now continues to consider exact local
-pairwise-intersection segment endpoints even after an arrangement-gap candidate
-has already improved that midpoint baseline, before keeping the best remaining
-split. Split ranking now also penalizes empty-child cuts explicitly, so a cut
+coordinate-scale cutoff. Raw AABB-midpoint splitting is no longer a subdivision
+fallback. Each task's finite split family now comes only from exact interior
+gaps between local polygon coordinates and exact local pairwise-intersection
+segment endpoints. If that family is empty, hypermesh attempts the certified
+leaf once and returns `UnknownClassification` if it cannot prove BSP
+completeness; it does not repeatedly bisect event-free bounds toward
+`max_depth`. Split ranking penalizes empty-child cuts explicitly, so a cut
 that leaves all polygons on one side is no longer preferred over a non-empty
 branching cut with the same maximum child load just because it duplicates fewer
 polygons. When those child-count metrics tie, split ranking now prefers the
@@ -978,11 +977,10 @@ falls back to source kind. The recursion now backtracks across that ordered exac
 family instead of committing to one chosen split candidate: if a higher-ranked
 split hits `UnknownClassification`, `ReferencePropagationFailed`, or
 `SubdivisionDepthLimit`, later exact local split candidates are still tried
-before the task gives up. When split counts tie, exact arrangement/intersection
-candidates now win over raw midpoint cuts instead of inheriting the old
-midpoint-first insertion order, and duplicate midpoint-valued candidates are
-now promoted when a later exact arrangement/intersection source reaches the
-same split plane. If a task reaches `max_depth` while the bounds remain
+before the task gives up. Exact intersection candidates win arrangement-gap
+ties, and duplicate arrangement-gap candidates are promoted when an exact
+intersection endpoint reaches the same split plane. If a task reaches
+`max_depth` while the bounds remain
 splittable, hypermesh attempts to certify the current task as a leaf using the
 same exact
 BSP/classification path. Enabled BSP leaves are rejected unless exact pairwise
@@ -1065,12 +1063,12 @@ through the certified leaf-output helper, but they only succeed if that leaf
 result is explicitly marked `certified_complete`; an unsplittable task whose
 leaf processor returns a non-certified `Ok(...)` now surfaces
 `UnknownClassification` instead of leaking partial output. That lets exact local arrangement
-isolation continue until the depth budget or a certified leaf result stops the
-branch. Hypermesh reports
-`SubdivisionDepthLimit` if the configured depth budget is reached before the
-current task can be certified as a leaf, and it reports
-`UnknownClassification` if leaf classification or this isolation check fails
-before appending output outside the depth-limit branch. Certified BSP leaf
+isolation continue until the exact split family, depth budget, or a certified
+leaf result stops the branch. Hypermesh reports `SubdivisionDepthLimit` only if
+the configured depth budget is reached while an exact arrangement split remains
+available. If the split family is exhausted and leaf classification or its
+isolation check still fails, it reports `UnknownClassification` without
+appending partial output. Certified BSP leaf
 validation and coplanar effective-`delta_w` accumulation now also share one
 exact leaf-analysis pass instead of rebuilding the same local leaf polygon,
 witness family, and per-polygon leaf-test relations twice per fragment, and the
@@ -1081,8 +1079,8 @@ cycle, and `delta_w` inside one subdivision task now also reuse the same
 certified winding trace instead of retracing equivalent fragments before output
 dedupe removes them, and exact duplicate BSP leaf edge cycles are now skipped
 before leaf certification and coplanar `delta_w` analysis run at all.
-Full
-arrangement-isolation termination is still an implementation target.
+A global finiteness proof for the exact arrangement families generated across
+all recursively clipped tasks is still an implementation target.
 
 `triangulate_and_resolve_certified` resolves exact duplicate vertices,
 duplicate faces, and T-junctions, but refuses non-empty outputs with boundary

@@ -43,8 +43,9 @@ pub const DEFAULT_MAX_DEPTH: usize = 40;
 pub struct SubdivisionConfig {
     /// Maximum recursive depth.
     ///
-    /// Reaching this bound is an explicit failure mode unless the current task
-    /// has already certified as a complete leaf.
+    /// Reaching this bound is an explicit failure mode when the current task
+    /// has not certified as a complete leaf and an exact arrangement split
+    /// remains available.
     pub max_depth: usize,
 }
 
@@ -761,6 +762,17 @@ fn subdivide_into_inner_with(
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
+    let split_candidates = cached_ordered_subdivision_splits_with(
+        &caches.polygon_axis_values,
+        &caches.split_candidates,
+        &caches.split_child_fanout_counts,
+        &caches.split_child_partitions,
+        &caches.polygon_family_bounds,
+        &caches.pairwise_intersections,
+        &task.bounds,
+        &task.polygons,
+    )?;
+
     if task.depth >= config.max_depth {
         if let Some(certified_output) =
             certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
@@ -774,22 +786,15 @@ fn subdivide_into_inner_with(
             );
             return Ok(());
         }
+        if split_candidates.is_empty() {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
         return Err(crate::error::HypermeshError::SubdivisionDepthLimit {
             depth: task.depth,
             polygon_count: task.polygons.len(),
         });
     }
 
-    let split_candidates = cached_ordered_subdivision_splits_with(
-        &caches.polygon_axis_values,
-        &caches.split_candidates,
-        &caches.split_child_fanout_counts,
-        &caches.split_child_partitions,
-        &caches.polygon_family_bounds,
-        &caches.pairwise_intersections,
-        &task.bounds,
-        &task.polygons,
-    )?;
     let (preferred_split, deferred_splits) =
         partition_preferred_subdivision_split(split_candidates, task.polygons.len());
     let mut best_failure = None;
@@ -3112,7 +3117,6 @@ type SplitCounts = (usize, usize, usize, usize, usize, usize);
 enum SplitSource {
     Intersection,
     Arrangement,
-    Midpoint,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -3129,19 +3133,6 @@ fn ordered_subdivision_splits(
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<(usize, Real)>> {
     let mut candidates = Vec::new();
-
-    for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
-            continue;
-        }
-        push_split_candidate(
-            &mut candidates,
-            polygons,
-            axis,
-            bounds.midpoint(axis),
-            SplitSource::Midpoint,
-        )?;
-    }
 
     for axis in 0..3 {
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
@@ -3241,20 +3232,6 @@ fn unique_subdivision_split_attempts_with_partition_cache(
     let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
     let intersection_segments =
         split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
-
-    for axis in 0..3 {
-        if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
-            continue;
-        }
-        push_split_candidate_with_partition_cache(
-            &mut candidates,
-            polygons,
-            axis,
-            bounds.midpoint(axis),
-            SplitSource::Midpoint,
-            partition_cache,
-        )?;
-    }
 
     for axis in 0..3 {
         if compare_real(&bounds.extent(axis), &Real::zero())?.is_le() {
@@ -12232,7 +12209,7 @@ mod tests {
     }
 
     #[test]
-    fn select_subdivision_split_avoids_empty_child_midpoint_when_nonempty_midpoint_exists() {
+    fn select_subdivision_split_prefers_nonempty_arrangement_gap() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let polygons = vec![make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 0, 0)];
 
@@ -12302,17 +12279,72 @@ mod tests {
     }
 
     #[test]
-    fn select_subdivision_split_uses_best_midpoint_across_axes() {
+    fn subdivision_has_no_split_without_interior_arrangement_events() {
         let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
         let polygons = vec![
             make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
             make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
         ];
 
-        let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
+        let splits = ordered_subdivision_splits(&bounds, &polygons).unwrap();
 
-        assert_eq!(axis, 1);
-        assert_eq!(value, r(2));
+        assert!(splits.is_empty());
+    }
+
+    #[test]
+    fn cached_subdivision_has_no_split_without_interior_arrangement_events() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+            make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        ];
+        let caches = SubdivisionRuntimeCaches::default();
+
+        let splits = cached_ordered_subdivision_splits_with(
+            &caches.polygon_axis_values,
+            &caches.split_candidates,
+            &caches.split_child_fanout_counts,
+            &caches.split_child_partitions,
+            &caches.polygon_family_bounds,
+            &caches.pairwise_intersections,
+            &bounds,
+            &polygons,
+        )
+        .unwrap();
+
+        assert!(splits.is_empty());
+    }
+
+    #[test]
+    fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
+        let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
+        let polygons = vec![
+            make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+            make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        ];
+        let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+        let caches = SubdivisionRuntimeCaches::default();
+        let mut output = Vec::new();
+        let mut leaf_calls = 0;
+
+        let err = subdivide_into_inner_with(
+            SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
+            &indicator,
+            SubdivisionConfig { max_depth: 0 },
+            None,
+            &mut output,
+            &mut |_task, _indicator, _output| {
+                leaf_calls += 1;
+                Err(crate::error::HypermeshError::UnknownClassification)
+            },
+            &caches,
+            &caches.winding_reachability,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_eq!(leaf_calls, 1);
+        assert!(output.is_empty());
     }
 
     #[test]
@@ -12351,14 +12383,8 @@ mod tests {
     }
 
     #[test]
-    fn exact_split_sources_win_midpoint_ties() {
+    fn intersection_split_sources_win_arrangement_ties() {
         let mut candidates = vec![
-            SplitCandidate {
-                axis: 0,
-                value: r(5),
-                counts: (4, 0, 4, 0, 1, 0),
-                source: SplitSource::Midpoint,
-            },
             SplitCandidate {
                 axis: 1,
                 value: r(2),
@@ -12387,31 +12413,19 @@ mod tests {
             vec![
                 (2, r(1), SplitSource::Intersection),
                 (1, r(2), SplitSource::Arrangement),
-                (0, r(5), SplitSource::Midpoint),
             ]
         );
     }
 
     #[test]
-    fn duplicate_split_candidate_promotes_to_exact_source() {
+    fn duplicate_arrangement_split_candidate_promotes_to_intersection_source() {
         let polygons = vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)];
         let mut candidates = vec![SplitCandidate {
             axis: 0,
             value: r(5),
             counts: (1, 0, 2, 0, 0, 0),
-            source: SplitSource::Midpoint,
+            source: SplitSource::Arrangement,
         }];
-
-        push_split_candidate(
-            &mut candidates,
-            &polygons,
-            0,
-            r(5),
-            SplitSource::Arrangement,
-        )
-        .unwrap();
-        assert_eq!(candidates.len(), 1);
-        assert_eq!(candidates[0].source, SplitSource::Arrangement);
 
         push_split_candidate(
             &mut candidates,
