@@ -9,8 +9,12 @@ use super::probe_cache::{
 #[cfg(test)]
 use super::strict_aabb_targets;
 use super::{
-    AXIS_ORDERINGS, DefinitionCycleGuardReachabilityCache, DefinitionNoDetourReachabilityCache,
-    DefinitionNoPlaneReplacementCycleGuardCache, DefinitionNoPlaneReplacementReachabilityCache,
+    AXIS_ORDERINGS, DefinitionCycleGuardReachabilityCache,
+    DefinitionCycleGuardReachabilityCacheEntry, DefinitionNoDetourReachabilityCache,
+    DefinitionNoDetourReachabilityCacheEntry, DefinitionNoPlaneReplacementCycleGuardCache,
+    DefinitionNoPlaneReplacementCycleGuardCacheEntry,
+    DefinitionNoPlaneReplacementReachabilityCache,
+    DefinitionNoPlaneReplacementReachabilityCacheEntry, DefinitionReachabilityBucket,
     DetourArrangementCellState, DetourTarget, DetourTargetFamilyCache,
     DetourTargetFamilyCacheEntry, InteriorBoxAxisIntervalsCache, InteriorBoxDetourTargetBatchCache,
     InteriorLeafPoint, PlaneReplacementAffineCache, PlaneReplacementNoNestedOrderingWarmupBucket,
@@ -21,16 +25,10 @@ use super::{
     PlaneReplacementReachabilityStepMode, PolygonPointLocation, ProbePoint,
     StrictAabbTargetFamilyCache, StrictAabbTargetFamilyCacheEntry, VisitedDefinitionPoint,
     aabb_from_axis_intervals, adapt_plane_replacement_vertex_to_trace_bounds, affine_from_planes,
-    begin_definition_cycle_guard_result, begin_definition_no_detour_reachability_result,
-    begin_definition_no_plane_replacement_cycle_guard_result,
-    begin_definition_no_plane_replacement_reachability_result, cached_affine_from_planes_with,
-    cached_definition_cycle_guard_result, cached_definition_no_detour_reachability_result,
-    cached_definition_no_plane_replacement_cycle_guard_result,
-    cached_definition_no_plane_replacement_reachability_result, cached_detour_target_family,
-    cached_detour_target_family_with, cached_interior_box_axis_intervals_with_surface_queries,
-    cached_strict_aabb_target_families, classify_point_in_polygon,
-    definition_families_match_as_sets, definition_planes_match_as_sets, detour_arrangement_cell,
-    detour_arrangement_cell_state_is_dominated, detour_arrangement_planes,
+    cached_affine_from_planes_with, cached_detour_target_family, cached_detour_target_family_with,
+    cached_interior_box_axis_intervals_with_surface_queries, cached_strict_aabb_target_families,
+    classify_point_in_polygon, definition_families_match_as_sets, definition_planes_match_as_sets,
+    detour_arrangement_cell, detour_arrangement_cell_state_is_dominated, detour_arrangement_planes,
     detour_target_family_result_from_targets, endpoint_definition_family,
     evaluate_strict_aabb_target_families_with_direct_ranking, first_changed_axis,
     initial_visited_definition_points, interior_box_axis_intervals_with_surface_queries,
@@ -41,12 +39,417 @@ use super::{
     record_detour_arrangement_cell_state,
     search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome,
     segment_plane_crossing, unique_definition_family, visited_definition_family_contains,
-    visited_definition_points_match_as_sets,
+    visited_definition_points_match_as_sets, visited_definition_points_subset_of,
 };
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, Classification, Plane, classify_point};
 use crate::polygon::ConvexPolygon;
 use hyperlattice::Point3;
+
+fn definition_reachability_bucket_matches(
+    bucket: &DefinitionReachabilityBucket,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> bool {
+    bucket.start == *start
+        && bucket.end == *end
+        && definition_families_match_as_sets(&bucket.start_definitions, start_definitions)
+        && definition_families_match_as_sets(&bucket.end_definitions, end_definitions)
+}
+
+fn matching_definition_reachability_bucket_entry_indices<'a>(
+    buckets: &'a [DefinitionReachabilityBucket],
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> (Option<&'a [usize]>, Option<&'a [usize]>) {
+    let same_direction = buckets
+        .iter()
+        .rev()
+        .find(|bucket| {
+            definition_reachability_bucket_matches(
+                bucket,
+                start,
+                end,
+                start_definitions,
+                end_definitions,
+            )
+        })
+        .map(|bucket| bucket.entry_indices.as_slice());
+    let reversed_direction =
+        if start == end && definition_families_match_as_sets(start_definitions, end_definitions) {
+            None
+        } else {
+            buckets
+                .iter()
+                .rev()
+                .find(|bucket| {
+                    definition_reachability_bucket_matches(
+                        bucket,
+                        end,
+                        start,
+                        end_definitions,
+                        start_definitions,
+                    )
+                })
+                .map(|bucket| bucket.entry_indices.as_slice())
+        };
+    (same_direction, reversed_direction)
+}
+
+fn newest_matching_bucket_entry_index(
+    same_direction: Option<&[usize]>,
+    reversed_direction: Option<&[usize]>,
+    mut predicate: impl FnMut(usize) -> bool,
+) -> Option<usize> {
+    let mut same_index = same_direction.and_then(|indices| indices.len().checked_sub(1));
+    let mut reversed_index = reversed_direction.and_then(|indices| indices.len().checked_sub(1));
+
+    loop {
+        let next_same = same_index.and_then(|index| same_direction.map(|indices| indices[index]));
+        let next_reversed =
+            reversed_index.and_then(|index| reversed_direction.map(|indices| indices[index]));
+        let next = match (next_same, next_reversed) {
+            (Some(same_entry), Some(reversed_entry)) => {
+                if same_entry >= reversed_entry {
+                    same_index = same_index.and_then(|index| index.checked_sub(1));
+                    same_entry
+                } else {
+                    reversed_index = reversed_index.and_then(|index| index.checked_sub(1));
+                    reversed_entry
+                }
+            }
+            (Some(same_entry), None) => {
+                same_index = same_index.and_then(|index| index.checked_sub(1));
+                same_entry
+            }
+            (None, Some(reversed_entry)) => {
+                reversed_index = reversed_index.and_then(|index| index.checked_sub(1));
+                reversed_entry
+            }
+            (None, None) => return None,
+        };
+        if predicate(next) {
+            return Some(next);
+        }
+    }
+}
+
+pub(super) fn push_definition_reachability_bucket_entry(
+    buckets: &mut Vec<DefinitionReachabilityBucket>,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    entry_index: usize,
+) {
+    if let Some(bucket) = buckets.iter_mut().find(|bucket| {
+        definition_reachability_bucket_matches(
+            bucket,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+        )
+    }) {
+        bucket.entry_indices.push(entry_index);
+    } else {
+        buckets.push(DefinitionReachabilityBucket {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.to_vec(),
+            end_definitions: end_definitions.to_vec(),
+            entry_indices: vec![entry_index],
+        });
+    }
+}
+
+pub(super) fn cached_definition_cycle_guard_result(
+    cache: &DefinitionCycleGuardReachabilityCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> Option<HypermeshResult<bool>> {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
+    let (same_direction, reversed_direction) =
+        matching_definition_reachability_bucket_entry_indices(
+            &cache.buckets,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+        );
+    if let Some(index) =
+        newest_matching_bucket_entry_index(same_direction, reversed_direction, |index| {
+            visited_definition_points_match_as_sets(
+                &cache.entries[index].visited_points,
+                &normalized_visited_points,
+            )
+        })
+    {
+        return Some(cache.entries[index].result.clone());
+    }
+
+    newest_matching_bucket_entry_index(same_direction, reversed_direction, |index| {
+        match &cache.entries[index].result {
+            Ok(false)
+                if visited_definition_points_subset_of(
+                    &cache.entries[index].visited_points,
+                    &normalized_visited_points,
+                ) =>
+            {
+                true
+            }
+            Ok(true)
+                if visited_definition_points_subset_of(
+                    &normalized_visited_points,
+                    &cache.entries[index].visited_points,
+                ) =>
+            {
+                true
+            }
+            _ => false,
+        }
+    })
+    .map(|index| cache.entries[index].result.clone())
+}
+
+pub(super) fn begin_definition_cycle_guard_result(
+    cache: &mut DefinitionCycleGuardReachabilityCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> usize {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
+    cache
+        .entries
+        .push(DefinitionCycleGuardReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.to_vec(),
+            end_definitions: end_definitions.to_vec(),
+            visited_points: normalized_visited_points,
+            result: Err(HypermeshError::UnknownClassification),
+        });
+    let index = cache.entries.len() - 1;
+    push_definition_reachability_bucket_entry(
+        &mut cache.buckets,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        index,
+    );
+    index
+}
+
+pub(super) fn cached_definition_no_plane_replacement_cycle_guard_result(
+    cache: &DefinitionNoPlaneReplacementCycleGuardCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> Option<HypermeshResult<bool>> {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
+    let (same_direction, reversed_direction) =
+        matching_definition_reachability_bucket_entry_indices(
+            &cache.buckets,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+        );
+    if let Some(index) =
+        newest_matching_bucket_entry_index(same_direction, reversed_direction, |index| {
+            visited_definition_points_match_as_sets(
+                &cache.entries[index].visited_points,
+                &normalized_visited_points,
+            )
+        })
+    {
+        return Some(cache.entries[index].result.clone());
+    }
+
+    newest_matching_bucket_entry_index(same_direction, reversed_direction, |index| {
+        match &cache.entries[index].result {
+            Ok(false)
+                if visited_definition_points_subset_of(
+                    &cache.entries[index].visited_points,
+                    &normalized_visited_points,
+                ) =>
+            {
+                true
+            }
+            Ok(true)
+                if visited_definition_points_subset_of(
+                    &normalized_visited_points,
+                    &cache.entries[index].visited_points,
+                ) =>
+            {
+                true
+            }
+            _ => false,
+        }
+    })
+    .map(|index| cache.entries[index].result.clone())
+}
+
+pub(super) fn begin_definition_no_plane_replacement_cycle_guard_result(
+    cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+    visited_points: &[VisitedDefinitionPoint],
+) -> usize {
+    let normalized_visited_points = normalized_cycle_guard_visited_points(
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        visited_points,
+    );
+    cache
+        .entries
+        .push(DefinitionNoPlaneReplacementCycleGuardCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.to_vec(),
+            end_definitions: end_definitions.to_vec(),
+            visited_points: normalized_visited_points,
+            result: Err(HypermeshError::UnknownClassification),
+        });
+    let index = cache.entries.len() - 1;
+    push_definition_reachability_bucket_entry(
+        &mut cache.buckets,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        index,
+    );
+    index
+}
+
+fn cached_definition_no_detour_reachability_result(
+    cache: &DefinitionNoDetourReachabilityCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> Option<HypermeshResult<bool>> {
+    let (same_direction, reversed_direction) =
+        matching_definition_reachability_bucket_entry_indices(
+            &cache.buckets,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+        );
+    newest_matching_bucket_entry_index(same_direction, reversed_direction, |_| true)
+        .map(|index| cache.entries[index].result.clone())
+}
+
+fn begin_definition_no_detour_reachability_result(
+    cache: &mut DefinitionNoDetourReachabilityCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> usize {
+    cache
+        .entries
+        .push(DefinitionNoDetourReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.to_vec(),
+            end_definitions: end_definitions.to_vec(),
+            result: Err(HypermeshError::UnknownClassification),
+        });
+    let index = cache.entries.len() - 1;
+    push_definition_reachability_bucket_entry(
+        &mut cache.buckets,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        index,
+    );
+    index
+}
+
+fn cached_definition_no_plane_replacement_reachability_result(
+    cache: &DefinitionNoPlaneReplacementReachabilityCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> Option<HypermeshResult<bool>> {
+    let (same_direction, reversed_direction) =
+        matching_definition_reachability_bucket_entry_indices(
+            &cache.buckets,
+            start,
+            end,
+            start_definitions,
+            end_definitions,
+        );
+    newest_matching_bucket_entry_index(same_direction, reversed_direction, |_| true)
+        .map(|index| cache.entries[index].result.clone())
+}
+
+fn begin_definition_no_plane_replacement_reachability_result(
+    cache: &mut DefinitionNoPlaneReplacementReachabilityCache,
+    start: &Point3,
+    end: &Point3,
+    start_definitions: &[[Plane; 3]],
+    end_definitions: &[[Plane; 3]],
+) -> usize {
+    cache
+        .entries
+        .push(DefinitionNoPlaneReplacementReachabilityCacheEntry {
+            start: start.clone(),
+            end: end.clone(),
+            start_definitions: start_definitions.to_vec(),
+            end_definitions: end_definitions.to_vec(),
+            result: Err(HypermeshError::UnknownClassification),
+        });
+    let index = cache.entries.len() - 1;
+    push_definition_reachability_bucket_entry(
+        &mut cache.buckets,
+        start,
+        end,
+        start_definitions,
+        end_definitions,
+        index,
+    );
+    index
+}
 
 pub(super) fn probe_reaches_adjacent_cell(
     start: &Point3,
