@@ -1864,14 +1864,13 @@ fn trace_segment_with_definitions_no_detours_with_caches(
         Err(err) => return Err(err),
     }
 
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+    let start_family = endpoint_definition_family(start, start_definitions)?;
+    let end_family = endpoint_definition_family(end, end_definitions)?;
+    let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
 
-    definition_pair_trace_backtracking_unknown(
-        &start_definitions,
-        &end_definitions,
+    let result = definition_pair_trace_backtracking_unknown(
+        &start_family.definitions,
+        &end_family.definitions,
         |start_definition, end_definition| {
             trace_plane_replacement_path_without_detours_with_shared_caches(
                 start_definition,
@@ -1885,7 +1884,11 @@ fn trace_segment_with_definitions_no_detours_with_caches(
                 trace_bounds,
             )
         },
-    )
+    );
+    match result {
+        Ok(None) if saw_unknown => Err(HypermeshError::UnknownClassification),
+        result => result,
+    }
 }
 
 fn definition_pair_trace_backtracking_unknown(
@@ -6061,28 +6064,22 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
-    let mut start_definitions = interior.planes.clone();
-    append_definition_if_missing(
-        &mut start_definitions,
-        axis_plane_definition(&interior.point),
-    );
-    start_definitions = unique_definition_family(&start_definitions);
-    let mut end_definitions = probe.planes.clone();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
-    end_definitions = unique_definition_family(&end_definitions);
+    let start_family = endpoint_definition_family(&interior.point, &interior.planes)?;
+    let end_family = endpoint_definition_family(&probe.point, &probe.planes)?;
+    let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
 
-    cached_definition_no_detour_reachability_with(
+    let result = cached_definition_no_detour_reachability_with(
         no_step_cache,
         &interior.point,
         &probe.point,
-        &start_definitions,
-        &end_definitions,
+        &start_family.definitions,
+        &end_family.definitions,
         || {
             probe_reaches_adjacent_cell_with_definition_search(
                 &interior.point,
                 &probe.point,
-                &start_definitions,
-                &end_definitions,
+                &start_family.definitions,
+                &end_family.definitions,
                 || {
                     cached_direct_probe_reachability_with(
                         direct_probe_reachability,
@@ -6113,7 +6110,11 @@ fn probe_reaches_adjacent_cell_from_interior_without_step_detours_with_caches(
                 },
             )
         },
-    )
+    );
+    match result {
+        Ok(false) if saw_unknown => Err(HypermeshError::UnknownClassification),
+        result => result,
+    }
 }
 
 #[cfg(test)]
@@ -6740,15 +6741,8 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
     detour_target_cache: &mut DetourTargetFamilyCache,
     trace_bounds: Option<&Aabb>,
 ) -> HypermeshResult<WindingNumberVector> {
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(
-        &mut start_definitions,
-        axis_plane_defined_point(start).planes,
-    );
-    start_definitions = unique_definition_family(&start_definitions);
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_defined_point(end).planes);
-    end_definitions = unique_definition_family(&end_definitions);
+    let start_definitions = endpoint_definition_family(start, start_definitions)?.definitions;
+    let end_definitions = endpoint_definition_family(end, end_definitions)?.definitions;
     let mut affine_cache = PlaneReplacementAffineCache::default();
     let mut step_cache = Vec::new();
 
@@ -6917,6 +6911,36 @@ fn append_definition_if_missing(definitions: &mut Vec<[Plane; 3]>, candidate: [P
     {
         definitions.push(candidate);
     }
+}
+
+struct EndpointDefinitionFamilyState {
+    definitions: Vec<[Plane; 3]>,
+    saw_unknown: bool,
+}
+
+fn endpoint_definition_family(
+    point: &Point3,
+    definitions: &[[Plane; 3]],
+) -> HypermeshResult<EndpointDefinitionFamilyState> {
+    let mut matching = Vec::new();
+    let mut saw_unknown = false;
+    for definition in definitions {
+        match affine_from_planes(definition) {
+            Ok(defined_point) if defined_point == *point => {
+                append_definition_if_missing(&mut matching, definition.clone());
+            }
+            Ok(_) => {}
+            Err(HypermeshError::UnknownClassification) => {
+                saw_unknown = true;
+            }
+            Err(err) => return Err(err),
+        }
+    }
+    append_definition_if_missing(&mut matching, axis_plane_definition(point));
+    Ok(EndpointDefinitionFamilyState {
+        definitions: matching,
+        saw_unknown,
+    })
 }
 
 fn definition_planes_match_as_sets(left: &[Plane; 3], right: &[Plane; 3]) -> bool {
@@ -7742,23 +7766,17 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
     direct_probe_reachability: &mut Vec<DirectProbeReachabilityCacheEntry>,
     detour_target_families: &mut DetourTargetFamilyCache,
 ) -> HypermeshResult<bool> {
-    let mut start_definitions = interior.planes.clone();
-    append_definition_if_missing(
-        &mut start_definitions,
-        axis_plane_definition(&interior.point),
-    );
-    start_definitions = unique_definition_family(&start_definitions);
-    let mut end_definitions = probe.planes.clone();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(&probe.point));
-    end_definitions = unique_definition_family(&end_definitions);
+    let start_family = endpoint_definition_family(&interior.point, &interior.planes)?;
+    let end_family = endpoint_definition_family(&probe.point, &probe.planes)?;
+    let saw_unknown = start_family.saw_unknown || end_family.saw_unknown;
 
-    probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
+    let result = probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
         &interior.point,
         &probe.point,
         host_support,
         polygons,
-        &start_definitions,
-        &end_definitions,
+        &start_family.definitions,
+        &end_family.definitions,
         surface_cache,
         plane_replacement_affine,
         plane_replacement_reachability_paths,
@@ -7776,7 +7794,11 @@ fn probe_reaches_adjacent_cell_from_interior_with_caches(
         definition_no_detour_reachability,
         direct_probe_reachability,
         detour_target_families,
-    )
+    );
+    match result {
+        Ok(false) if saw_unknown => Err(HypermeshError::UnknownClassification),
+        result => result,
+    }
 }
 
 #[cfg(test)]
@@ -8816,18 +8838,15 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
     no_step_cache: &mut DefinitionNoDetourReachabilityCache,
     direct_probe_reachability_cache: &mut Vec<DirectProbeReachabilityCacheEntry>,
 ) -> HypermeshResult<bool> {
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
-    let start_definitions = unique_definition_family(&start_definitions);
-    let end_definitions = unique_definition_family(&end_definitions);
-    cached_definition_no_detour_reachability_with(
+    let start_family = endpoint_definition_family(start, start_definitions)?;
+    let end_family = endpoint_definition_family(end, end_definitions)?;
+    let saw_definition_unknown = start_family.saw_unknown || end_family.saw_unknown;
+    let result = cached_definition_no_detour_reachability_with(
         no_step_cache,
         start,
         end,
-        &start_definitions,
-        &end_definitions,
+        &start_family.definitions,
+        &end_family.definitions,
         || {
             let direct_unknown = match cached_direct_probe_reachability_with(
                 direct_probe_reachability_cache,
@@ -8844,8 +8863,8 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
             };
 
             let ordered_pairs = ordered_definition_pairs_by_no_step_precheck_with(
-                &start_definitions,
-                &end_definitions,
+                &start_family.definitions,
+                &end_family.definitions,
                 host_support,
                 polygons,
                 affine_cache,
@@ -8854,8 +8873,8 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
             let mut saw_unknown = direct_unknown;
             for (start_index, end_index) in ordered_pairs {
                 match plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches(
-                    &start_definitions[start_index],
-                    &end_definitions[end_index],
+                    &start_family.definitions[start_index],
+                    &end_family.definitions[end_index],
                     host_support,
                     polygons,
                     affine_cache,
@@ -8875,7 +8894,11 @@ fn probe_reaches_adjacent_cell_with_definitions_no_step_detours_with_caches(
                 Ok(false)
             }
         },
-    )
+    );
+    match result {
+        Ok(false) if saw_definition_unknown => Err(HypermeshError::UnknownClassification),
+        result => result,
+    }
 }
 
 fn ordered_definition_pairs_by_no_step_precheck_with(
@@ -8958,19 +8981,17 @@ fn probe_reaches_adjacent_cell_with_definition_search(
         Err(err) => return Err(err),
     };
 
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
+    let start_family = endpoint_definition_family(start, start_definitions)?;
+    let end_family = endpoint_definition_family(end, end_definitions)?;
 
     match definition_pair_reachability_backtracking_unknown(
-        &start_definitions,
-        &end_definitions,
+        &start_family.definitions,
+        &end_family.definitions,
         |start_definition, end_definition| replacement_reaches(start_definition, end_definition),
     ) {
         Ok(true) => Ok(true),
         Ok(false) => {
-            if direct_unknown {
+            if direct_unknown || start_family.saw_unknown || end_family.saw_unknown {
                 Err(HypermeshError::UnknownClassification)
             } else {
                 Ok(false)
@@ -9001,18 +9022,14 @@ fn definition_search_precheck_plan(
     direct_unknown: bool,
     mut precheck_reaches: impl FnMut(&[Plane; 3], &[Plane; 3]) -> HypermeshResult<bool>,
 ) -> HypermeshResult<DefinitionSearchPrecheckOutcome> {
-    let mut start_definitions = start_definitions.to_vec();
-    append_definition_if_missing(&mut start_definitions, axis_plane_definition(start));
-    let mut end_definitions = end_definitions.to_vec();
-    append_definition_if_missing(&mut end_definitions, axis_plane_definition(end));
-    let start_definitions = unique_definition_family(&start_definitions);
-    let end_definitions = unique_definition_family(&end_definitions);
+    let start_family = endpoint_definition_family(start, start_definitions)?;
+    let end_family = endpoint_definition_family(end, end_definitions)?;
 
     let mut ordered_pairs = Vec::new();
-    let mut saw_unknown = direct_unknown;
+    let mut saw_unknown = direct_unknown || start_family.saw_unknown || end_family.saw_unknown;
 
-    for (start_index, start_definition) in start_definitions.iter().enumerate() {
-        for (end_index, end_definition) in end_definitions.iter().enumerate() {
+    for (start_index, start_definition) in start_family.definitions.iter().enumerate() {
+        for (end_index, end_definition) in end_family.definitions.iter().enumerate() {
             match precheck_reaches(start_definition, end_definition) {
                 Ok(true) => return Ok(DefinitionSearchPrecheckOutcome::Reaches),
                 Ok(false) => ordered_pairs.push((1usize, start_index, end_index)),
@@ -9029,8 +9046,8 @@ fn definition_search_precheck_plan(
 
     Ok(DefinitionSearchPrecheckOutcome::Search(
         DefinitionSearchPrecheckPlan {
-            start_definitions,
-            end_definitions,
+            start_definitions: start_family.definitions,
+            end_definitions: end_family.definitions,
             ordered_pairs: ordered_pairs
                 .into_iter()
                 .map(|(_, start_index, end_index)| (start_index, end_index))
@@ -24099,6 +24116,33 @@ mod tests {
     }
 
     #[test]
+    fn retained_plane_replacement_skips_mismatched_start_definition() {
+        let start = p(0, 0, 0);
+        let end = p(0, 1, 0);
+        let mismatched_start = axis_plane_definition(&p(2, 0, 0));
+        let end_definition = axis_plane_definition(&end);
+        let mut wall = make_triangle(&p(1, -2, -2), &p(1, 2, -2), &p(1, 0, 2), 0, 0);
+        wall.delta_w = vec![1];
+        let mut no_detour_cache = Vec::new();
+        let mut detour_target_cache = DetourTargetFamilyCache::default();
+
+        let winding = trace_from_definition_sets_with_step_detoured_plane_replacement(
+            &start,
+            &[mismatched_start],
+            &end,
+            &[end_definition],
+            &[0],
+            &[wall],
+            &mut no_detour_cache,
+            &mut detour_target_cache,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(winding, vec![0]);
+    }
+
+    #[test]
     fn definition_pair_trace_backtracks_after_uncertified_pair() {
         let start_unknown = axis_plane_definition(&p(0, 0, 0));
         let start_ok = axis_plane_definition(&p(1, 0, 0));
@@ -25133,6 +25177,32 @@ mod tests {
             )
             .unwrap()
         );
+    }
+
+    #[test]
+    fn probe_reachability_definition_search_skips_mismatched_endpoint_definitions() {
+        let start = p(0, 0, 0);
+        let end = p(1, 1, 1);
+        let mismatched_start = axis_plane_definition(&p(2, 0, 0));
+        let mut replacement_calls = 0;
+
+        assert!(
+            probe_reaches_adjacent_cell_with_definition_search(
+                &start,
+                &end,
+                &[mismatched_start],
+                &[axis_plane_definition(&end)],
+                || Ok(false),
+                |start_definition, end_definition| {
+                    replacement_calls += 1;
+                    assert_eq!(affine_from_planes(start_definition).unwrap(), start);
+                    assert_eq!(affine_from_planes(end_definition).unwrap(), end);
+                    Ok(true)
+                },
+            )
+            .unwrap()
+        );
+        assert_eq!(replacement_calls, 1);
     }
 
     #[test]
@@ -29569,6 +29639,29 @@ mod tests {
         assert_eq!(first, p(1, 2, 3));
         assert_eq!(second, first);
         assert_eq!(calls, 1);
+    }
+
+    #[test]
+    fn endpoint_definition_family_drops_only_known_mismatches() {
+        let point = p(1, 2, 3);
+        let matching = axis_plane_definition(&point);
+        let mismatched = axis_plane_definition(&p(4, 5, 6));
+        let singular = [
+            Plane::axis_aligned(0, r(1)),
+            Plane::axis_aligned(0, r(2)),
+            Plane::axis_aligned(2, r(3)),
+        ];
+
+        let family = endpoint_definition_family(
+            &point,
+            &[mismatched.clone(), singular.clone(), matching.clone()],
+        )
+        .unwrap();
+
+        assert_eq!(family.definitions, vec![matching]);
+        assert!(family.saw_unknown);
+        assert!(!family.definitions.contains(&mismatched));
+        assert!(!family.definitions.contains(&singular));
     }
 
     #[test]

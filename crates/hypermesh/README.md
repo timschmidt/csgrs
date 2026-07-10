@@ -122,7 +122,13 @@ them for each pair. The retained-definition segment entry now also keeps its
 definition-aware no-detour trace cache and endpoint-box detour-family cache
 alive from the first direct retained query into the later step-detoured
 replacement search, instead of rebuilding those top-level caches for every
-later retained subquery. The reachability-side retained plane-replacement
+later retained subquery. Before any retained plane triple enters those trace
+or reachability searches, its affine reconstruction is checked against the
+declared endpoint. A decidable mismatch is discarded so winding propagation
+cannot silently start from a stale point; a singular or otherwise undecidable
+triple is excluded from execution while its uncertainty is preserved if no
+certified alternative succeeds, and the exact axis definition of the endpoint
+is always included. The reachability-side retained plane-replacement
 fallback now keeps that same no-detour reachability cache and detour-family
 cache alive across sibling retained replacement steps too, instead of
 rebuilding them for each later subquery. The same local
