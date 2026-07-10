@@ -6668,6 +6668,111 @@ fn probe_reaches_adjacent_cell(
     Ok(true)
 }
 
+fn probe_polyline_reaches_adjacent_cell(
+    points: &[Point3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    if points.is_empty() {
+        return Err(HypermeshError::UnknownClassification);
+    }
+
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+
+        let classifications = points
+            .iter()
+            .map(|point| classify_point(point, &polygon.support))
+            .collect::<HypermeshResult<Vec<_>>>()?;
+
+        if classifications[0] == Classification::On {
+            if planes_are_coplanar(&polygon.support, host_support)? {
+                continue;
+            }
+            if classify_point_in_polygon(&points[0], polygon)? != PolygonPointLocation::Outside {
+                return Err(HypermeshError::UnknownClassification);
+            }
+        }
+
+        let last = points.len() - 1;
+        if last > 0
+            && classifications[last] == Classification::On
+            && classify_point_in_polygon(&points[last], polygon)? != PolygonPointLocation::Outside
+        {
+            return Err(HypermeshError::UnknownClassification);
+        }
+
+        for index in 0..last {
+            let start_class = classifications[index];
+            let end_class = classifications[index + 1];
+            if start_class == Classification::On
+                || end_class == Classification::On
+                || start_class == end_class
+            {
+                continue;
+            }
+
+            let Some(sort_axis) = first_changed_axis(&points[index], &points[index + 1])? else {
+                continue;
+            };
+            let Some(crossing) =
+                segment_plane_crossing(&points[index], &points[index + 1], &polygon.support)?
+            else {
+                continue;
+            };
+            if !point_strictly_between_axis(
+                &crossing,
+                &points[index],
+                &points[index + 1],
+                sort_axis,
+            )? {
+                continue;
+            }
+            match classify_point_in_polygon(&crossing, polygon)? {
+                PolygonPointLocation::Outside => {}
+                PolygonPointLocation::Boundary => {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+                PolygonPointLocation::Interior => return Ok(false),
+            }
+        }
+
+        let mut index = 1;
+        while index < last {
+            if classifications[index] != Classification::On {
+                index += 1;
+                continue;
+            }
+            let run_start = index;
+            while index + 1 < last && classifications[index + 1] == Classification::On {
+                index += 1;
+            }
+            let run_end = index;
+            let mut touches_interior = false;
+            for point in &points[run_start..=run_end] {
+                match classify_point_in_polygon(point, polygon)? {
+                    PolygonPointLocation::Outside => {}
+                    PolygonPointLocation::Boundary => {
+                        return Err(HypermeshError::UnknownClassification);
+                    }
+                    PolygonPointLocation::Interior => touches_interior = true,
+                }
+            }
+            if touches_interior && classifications[run_start - 1] != classifications[run_end + 1] {
+                return Ok(false);
+            }
+            if run_start != run_end {
+                return Err(HypermeshError::UnknownClassification);
+            }
+            index += 1;
+        }
+    }
+
+    Ok(true)
+}
+
 #[cfg(test)]
 fn probe_reaches_adjacent_cell_from_interior(
     interior: &InteriorLeafPoint,
@@ -9535,19 +9640,102 @@ fn plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches
                     probe_reaches_adjacent_cell(current, next, host_support, polygons)
                 },
             )?;
-            plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
-                &ordered,
-                start_planes,
-                end_planes,
-                PlaneReplacementReachabilityStepMode::WithoutStepDetours,
-                affine_cache,
-                step_cache,
-                |current, next, _current_definitions, _next_definitions| {
-                    probe_reaches_adjacent_cell(current, next, host_support, polygons)
-                },
-            )
+            let result =
+                plane_replacement_path_reaches_adjacent_cell_with_step_detours_for_orderings_impl(
+                    &ordered,
+                    start_planes,
+                    end_planes,
+                    PlaneReplacementReachabilityStepMode::WithoutStepDetours,
+                    affine_cache,
+                    step_cache,
+                    |current, next, _current_definitions, _next_definitions| {
+                        probe_reaches_adjacent_cell(current, next, host_support, polygons)
+                    },
+                );
+            match result {
+                Err(HypermeshError::UnknownClassification) => {
+                    // A shared polyline vertex supplies the incident sides that
+                    // independent step checks lack at an endpoint contact.
+                    plane_replacement_orderings_reach_adjacent_cell_as_polylines(
+                        &ordered,
+                        start_planes,
+                        end_planes,
+                        host_support,
+                        polygons,
+                        affine_cache,
+                    )
+                }
+                result => result,
+            }
         },
     )
+}
+
+fn plane_replacement_orderings_reach_adjacent_cell_as_polylines(
+    orderings: &[[usize; 3]],
+    start_planes: &[Plane; 3],
+    end_planes: &[Plane; 3],
+    host_support: &Plane,
+    polygons: &[ConvexPolygon],
+    affine_cache: &mut PlaneReplacementAffineCache,
+) -> HypermeshResult<bool> {
+    let mut saw_unknown = false;
+    for ordering in orderings {
+        let mut current_planes = start_planes.clone();
+        let current_point =
+            match cached_affine_from_planes_with(&mut *affine_cache, &current_planes, || {
+                affine_from_planes(&current_planes)
+            }) {
+                Ok(point) => point,
+                Err(HypermeshError::UnknownClassification) => {
+                    saw_unknown = true;
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+        let mut points = vec![current_point];
+        let mut valid = true;
+
+        for plane_index in ordering.iter().copied() {
+            let mut next_planes = current_planes.clone();
+            next_planes[plane_index] = end_planes[plane_index].clone();
+            if next_planes == current_planes {
+                continue;
+            }
+            let next_point =
+                match cached_affine_from_planes_with(&mut *affine_cache, &next_planes, || {
+                    affine_from_planes(&next_planes)
+                }) {
+                    Ok(point) => point,
+                    Err(HypermeshError::UnknownClassification) => {
+                        saw_unknown = true;
+                        valid = false;
+                        break;
+                    }
+                    Err(err) => return Err(err),
+                };
+            if points.last() != Some(&next_point) {
+                points.push(next_point);
+            }
+            current_planes = next_planes;
+        }
+        if !valid {
+            continue;
+        }
+
+        match probe_polyline_reaches_adjacent_cell(&points, host_support, polygons) {
+            Ok(true) => return Ok(true),
+            Ok(false) => {}
+            Err(HypermeshError::UnknownClassification) => saw_unknown = true,
+            Err(err) => return Err(err),
+        }
+    }
+
+    if saw_unknown {
+        Err(HypermeshError::UnknownClassification)
+    } else {
+        Ok(false)
+    }
 }
 
 #[cfg(test)]
@@ -23451,6 +23639,47 @@ mod tests {
         assert_eq!(
             probe_reaches_adjacent_cell(&p(0, 0, 0), &p(2, 0, 0), &host_support, &[blocker]),
             Err(HypermeshError::UnknownClassification)
+        );
+    }
+
+    #[test]
+    fn probe_polyline_classifies_internal_surface_vertex_from_incident_sides() {
+        let host_support = Plane::axis_aligned(2, r(-10));
+        let wall = make_triangle(&p(-4, 4, -4), &p(4, -4, -4), &p(0, 0, 4), 0, 0);
+
+        assert!(
+            !probe_polyline_reaches_adjacent_cell(
+                &[p(-1, 0, 0), p(0, 0, 0), p(0, 1, 0)],
+                &host_support,
+                std::slice::from_ref(&wall),
+            )
+            .unwrap()
+        );
+        assert!(
+            probe_polyline_reaches_adjacent_cell(
+                &[p(-1, 0, 0), p(0, 0, 0), p(-1, 0, 1)],
+                &host_support,
+                &[wall],
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn no_step_plane_replacement_classifies_axis_path_vertex_crossings_as_blocked() {
+        let host_support = Plane::axis_aligned(2, r(5));
+        let wall = make_triangle(&p(5, 1, 1), &p(5, 5, 9), &p(4, 5, 4), 0, 1);
+        let start = Point3::new(q(5983, 1350), q(1787, 450), q(2431, 675));
+        let end = Point3::new(q(6523, 1500), q(21217, 5400), q(271, 75));
+
+        assert!(
+            !plane_replacement_path_reaches_adjacent_cell_without_step_detours(
+                &axis_plane_definition(&start),
+                &axis_plane_definition(&end),
+                &host_support,
+                &[wall],
+            )
+            .unwrap()
         );
     }
 
