@@ -2835,20 +2835,7 @@ fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTarget>> {
             push_unique_detour_target(&mut targets, target);
         }
     }
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (cursor.saw_unknown || unresolved_fallback) {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        if !has_certified_target && (cursor.saw_unknown || unresolved_fallback) {
-            mark_all_detour_targets_uncertified(&mut targets);
-        }
-        Ok(targets)
-    }
+    detour_target_family_result_from_targets(targets, cursor.saw_unknown)
 }
 
 #[allow(dead_code)]
@@ -3305,7 +3292,7 @@ impl InteriorBoxDetourTargetBatchCache {
         }
         if let Some(batch) = entry.batches.get(batch_index) {
             Ok(Some(batch.clone()))
-        } else if entry.cursor.emitted_targets.is_empty() && entry.cursor.saw_unknown {
+        } else if entry.cursor.saw_unknown {
             Err(HypermeshError::UnknownClassification)
         } else {
             Ok(None)
@@ -4030,16 +4017,14 @@ fn detour_target_family_result_from_targets(
     mut targets: Vec<DetourTarget>,
     saw_unknown: bool,
 ) -> HypermeshResult<Vec<DetourTarget>> {
-    let unresolved_fallback = targets
-        .iter()
-        .any(|target| target.uncertified_definition_fallback);
-    let has_certified_target = targets
-        .iter()
-        .any(|target| !target.uncertified_definition_fallback);
-    if targets.is_empty() && (saw_unknown || unresolved_fallback) {
+    let saw_unknown = saw_unknown
+        || targets
+            .iter()
+            .any(|target| target.uncertified_definition_fallback);
+    if targets.is_empty() && saw_unknown {
         Err(HypermeshError::UnknownClassification)
     } else {
-        if !has_certified_target && (saw_unknown || unresolved_fallback) {
+        if saw_unknown {
             mark_all_detour_targets_uncertified(&mut targets);
         }
         Ok(targets)
@@ -15737,7 +15722,7 @@ mod tests {
     }
 
     #[test]
-    fn interior_box_target_batches_exhaust_and_memoize_legacy_target_set() {
+    fn interior_box_target_batches_preserve_legacy_target_set_and_cursor_unknown() {
         let start = p(0, 0, 0);
         let end = p(4, 4, 0);
         let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
@@ -15746,18 +15731,21 @@ mod tests {
         let mut cache = InteriorBoxDetourTargetBatchCache::default();
         let mut actual = Vec::new();
         let mut batch_index = 0;
-        while let Some(batch) = cache
-            .batch_for(&start, &end, batch_index, &polygons, &[], None)
-            .unwrap()
-        {
-            assert_eq!(
-                cache
-                    .batch_for(&start, &end, batch_index, &polygons, &[], None)
-                    .unwrap(),
-                Some(batch.clone())
-            );
-            actual.extend(batch);
-            batch_index += 1;
+        loop {
+            match cache.batch_for(&start, &end, batch_index, &polygons, &[], None) {
+                Ok(Some(batch)) => {
+                    assert_eq!(
+                        cache
+                            .batch_for(&start, &end, batch_index, &polygons, &[], None)
+                            .unwrap(),
+                        Some(batch.clone())
+                    );
+                    actual.extend(batch);
+                    batch_index += 1;
+                }
+                Err(HypermeshError::UnknownClassification) => break,
+                other => panic!("expected uncertainty at cursor exhaustion, got {other:?}"),
+            }
         }
 
         assert!(batch_index >= 2);
@@ -15774,14 +15762,63 @@ mod tests {
         assert!(normalized_expected.iter().all(|target| {
             normalized_actual.iter().any(|candidate| {
                 candidate.point == target.point
-                    && candidate.uncertified_definition_fallback
-                        == target.uncertified_definition_fallback
                     && definition_families_match_as_sets(
                         &candidate.definitions,
                         &target.definitions,
                     )
             })
         }));
+    }
+
+    #[test]
+    fn detour_target_family_marks_surviving_targets_uncertain_after_unknown() {
+        let targets = detour_target_family_result_from_targets(
+            vec![
+                DetourTarget {
+                    point: p(1, 1, 1),
+                    definitions: vec![axis_plane_definition(&p(1, 1, 1))],
+                    uncertified_definition_fallback: false,
+                },
+                DetourTarget {
+                    point: p(2, 2, 2),
+                    definitions: vec![axis_plane_definition(&p(2, 2, 2))],
+                    uncertified_definition_fallback: false,
+                },
+            ],
+            true,
+        )
+        .unwrap();
+
+        assert!(
+            targets
+                .iter()
+                .all(|target| target.uncertified_definition_fallback)
+        );
+    }
+
+    #[test]
+    fn interior_box_target_batches_preserve_unknown_after_emitting_targets() {
+        let start = p(0, 0, 0);
+        let end = p(4, 4, 0);
+        let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+        let polygons = [slanted];
+        let mut cache = InteriorBoxDetourTargetBatchCache::default();
+
+        let first = cache
+            .batch_for(&start, &end, 0, &polygons, &[], None)
+            .unwrap()
+            .expect("detour cursor should emit an initial target batch");
+        assert!(!first.is_empty());
+        cache.entries[0].cursor.saw_unknown = true;
+
+        let mut batch_index = 1;
+        loop {
+            match cache.batch_for(&start, &end, batch_index, &polygons, &[], None) {
+                Ok(Some(_)) => batch_index += 1,
+                Err(HypermeshError::UnknownClassification) => break,
+                other => panic!("expected uncertainty at cursor exhaustion, got {other:?}"),
+            }
+        }
     }
 
     #[test]
@@ -16301,7 +16338,7 @@ mod tests {
     }
 
     #[test]
-    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_uncertified_surface_cut()
+    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_uncertified_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(2, 0, 0);
@@ -16337,7 +16374,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(1, 0, 0));
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -16465,7 +16502,7 @@ mod tests {
     }
 
     #[test]
-    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_boundary_surface_cut()
+    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_boundary_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(3, 0, 0);
@@ -16504,11 +16541,11 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(2, 0, 0));
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_endpoint_boundary_surface_cut()
+    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_endpoint_boundary_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(3, 0, 0);
@@ -16551,11 +16588,11 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(2, 0, 0));
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
-    fn interior_box_detour_target_collection_keeps_surviving_targets_certified_after_start_boundary_surface_cut()
+    fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after_start_boundary_surface_cut()
      {
         let start = p(0, 0, 0);
         let end = p(3, 0, 0);
@@ -16598,7 +16635,7 @@ mod tests {
 
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].point, p(2, 0, 0));
-        assert!(!targets[0].uncertified_definition_fallback);
+        assert!(targets[0].uncertified_definition_fallback);
     }
 
     #[test]
@@ -25561,6 +25598,43 @@ mod tests {
         .unwrap();
 
         assert!(reaches);
+    }
+
+    #[test]
+    fn breadth_first_probe_detours_preserve_unknown_after_failed_earlier_batch() {
+        let start = p(0, 0, 0);
+        let failed_detour = p(1, 0, 0);
+        let end = p(2, 0, 0);
+        let definitions = |point: &Point3| vec![axis_plane_definition(point)];
+        let mut surface_cache = Vec::new();
+
+        let err = probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with_surface_query(
+            &start,
+            &end,
+            &definitions(&start),
+            &definitions(&end),
+            &[],
+            &mut surface_cache,
+            &mut |_point| Ok(false),
+            &mut |_from, _to, _start_definitions, _end_definitions| Ok(false),
+            &mut |from, to, batch_index| {
+                if *from == start && *to == end {
+                    match batch_index {
+                        0 => Ok(Some(vec![DetourTarget {
+                            point: failed_detour.clone(),
+                            definitions: definitions(&failed_detour),
+                            uncertified_definition_fallback: false,
+                        }])),
+                        _ => Err(HypermeshError::UnknownClassification),
+                    }
+                } else {
+                    Ok(None)
+                }
+            },
+        )
+        .unwrap_err();
+
+        assert_eq!(err, HypermeshError::UnknownClassification);
     }
 
     #[test]

@@ -644,12 +644,18 @@ shifted seed. Both winding-carrying segment traces and no-plane-replacement prob
 reachability consume those batches through breadth-first path queues, so later
 target phases and shallower sibling paths run before one blocked leg can
 recursively monopolize the search. Segment-path expansion propagates the exact
-winding vector across every already-certified leg and refuses to certify a
-completed path containing a fallback-built target. The strict-AABB detour cursor
-now exhausts its already-built direct witnesses before expanding shifted seed
-families, while retaining every shifted family as a later fallback. Detour paths
-now also use each unique local polygon support plane as an exact arrangement-cell
-signature.
+winding vector across every already-certified leg and accepts a fallback-built
+target only after the complete path succeeds. The strict-AABB detour cursor now
+exhausts its already-built direct witnesses before expanding shifted seed
+families, while retaining every shifted family as a later fallback. If that
+cursor emitted earlier target batches but also skipped an uncertified family,
+exhaustion still surfaces `UnknownClassification` after the emitted paths fail;
+partial emission no longer flattens the omitted family into ordinary absence.
+Fully materialized detour families carry the same uncertainty on every
+surviving target, where a complete successful path discharges it and an
+all-target failure preserves it.
+Detour paths now also use each unique local polygon support plane as an exact
+arrangement-cell signature.
 Those open cells are convex and disjoint from every local polygon surface, so
 the breadth-first search globally enqueues only the first certified-preferred
 geometric target for each cell while same-point definition transitions remain
