@@ -492,7 +492,11 @@ as exact axis-defined targets rather than being discarded candidate-locally.
 If one of those fallback axis-defined targets later proves unusable and no
 other certified reference target succeeds, that uncertified reconstruction now
 still surfaces `UnknownClassification` instead of being flattened back into a
-plain absent target.
+plain absent target. Conversely, once strict target validity and the complete
+reference winding trace both succeed, the exact axis-defined target is promoted
+to a certified reference: its retained definitions are normalized to triples
+that reconstruct the point, and uncertainty from an unused richer definition
+family no longer rejects that proven propagation path.
 If a whole projected witness or seed family has no certified target and only
 uncertified candidates, that local family now returns
 `UnknownClassification` so later projected/support/escape backtracking can

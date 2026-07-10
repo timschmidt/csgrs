@@ -4936,11 +4936,10 @@ fn search_projected_reference_families_lazy_escape(
         traced_direct_targets.push(projected_target.clone());
         match trace_projected_target(projected_target) {
             Ok(Some(winding)) => {
-                if projected_target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(Some((projected_target.clone(), winding)));
-                }
+                return Ok(Some((
+                    certify_reference_target_after_trace(projected_target.clone()),
+                    winding,
+                )));
             }
             Ok(None) => {
                 if projected_target.uncertified_definition_fallback {
@@ -4955,12 +4954,11 @@ fn search_projected_reference_families_lazy_escape(
     }
 
     match projected_support_search() {
-        Ok(Some(found)) => {
-            if found.0.uncertified_definition_fallback {
-                saw_unknown = true;
-            } else {
-                return Ok(Some(found));
-            }
+        Ok(Some((target, winding))) => {
+            return Ok(Some((
+                certify_reference_target_after_trace(target),
+                winding,
+            )));
         }
         Ok(None) => {}
         Err(crate::error::HypermeshError::UnknownClassification) => {
@@ -4985,11 +4983,10 @@ fn search_projected_reference_families_lazy_escape(
         {
             match trace_projected_target(projected_target) {
                 Ok(Some(winding)) => {
-                    if projected_target.uncertified_definition_fallback {
-                        saw_unknown = true;
-                    } else {
-                        return Ok(Some((projected_target.clone(), winding)));
-                    }
+                    return Ok(Some((
+                        certify_reference_target_after_trace(projected_target.clone()),
+                        winding,
+                    )));
                 }
                 Ok(None) => {
                     if projected_target.uncertified_definition_fallback {
@@ -5004,12 +5001,11 @@ fn search_projected_reference_families_lazy_escape(
         }
 
         match axis_escape_search(projected_target) {
-            Ok(Some(found)) => {
-                if found.0.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(Some(found));
-                }
+            Ok(Some((target, winding))) => {
+                return Ok(Some((
+                    certify_reference_target_after_trace(target),
+                    winding,
+                )));
             }
             Ok(None) => {
                 if projected_target.uncertified_definition_fallback {
@@ -5023,12 +5019,11 @@ fn search_projected_reference_families_lazy_escape(
         }
 
         match tight_escape_search(projected_target) {
-            Ok(Some(found)) => {
-                if found.0.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(Some(found));
-                }
+            Ok(Some((target, winding))) => {
+                return Ok(Some((
+                    certify_reference_target_after_trace(target),
+                    winding,
+                )));
             }
             Ok(None) => {
                 if projected_target.uncertified_definition_fallback {
@@ -5512,12 +5507,11 @@ fn projection_escape_reference_with_search_and_axis_options_and_bounds_family(
             continue;
         }
         match search(&escape_bounds) {
-            Ok(Some(found)) => {
-                if found.0.uncertified_definition_fallback {
-                    saw_unknown = true;
-                } else {
-                    return Ok(Some(found));
-                }
+            Ok(Some((target, winding))) => {
+                return Ok(Some((
+                    certify_reference_target_after_trace(target),
+                    winding,
+                )));
             }
             Ok(None) => {}
             Err(crate::error::HypermeshError::UnknownClassification) => {
@@ -8396,12 +8390,11 @@ fn projection_axis_escape_reference_with_search_and_axis_options_tracking_unknow
             for stop_value in stop_values {
                 let corridor = axis_escape_bounds(projected, axis, stop_value.clone())?;
                 match search(&corridor) {
-                    Ok(Some(found)) => {
-                        if found.0.uncertified_definition_fallback {
-                            saw_unknown = true;
-                        } else {
-                            return Ok(Some(found));
-                        }
+                    Ok(Some((target, winding))) => {
+                        return Ok(Some((
+                            certify_reference_target_after_trace(target),
+                            winding,
+                        )));
                     }
                     Ok(None) => {}
                     Err(crate::error::HypermeshError::UnknownClassification) => {
@@ -9113,11 +9106,10 @@ fn trace_reference_targets_backtracking_unknown_with_query_caches(
         }
         match trace(&target) {
             Ok(Some(winding)) => {
-                if target.uncertified_definition_fallback {
-                    saw_unknown = true;
-                    continue;
-                }
-                return Ok(Some((target, winding)));
+                return Ok(Some((
+                    certify_reference_target_after_trace(target),
+                    winding,
+                )));
             }
             Ok(None) => {
                 if target.uncertified_definition_fallback {
@@ -10639,6 +10631,13 @@ fn certified_reference_definitions(point: &Point3, definitions: &[[Plane; 3]]) -
     certified
 }
 
+fn certify_reference_target_after_trace(mut target: ReferenceTarget) -> ReferenceTarget {
+    // Callers have already certified strict target validity and its winding trace.
+    target.definitions = certified_reference_definitions(&target.point, &target.definitions);
+    target.uncertified_definition_fallback = false;
+    target
+}
+
 fn certified_reference_result(
     (point, definitions, winding): (Point3, Vec<[Plane; 3]>, Vec<i32>),
 ) -> (Point3, Vec<[Plane; 3]>, Vec<i32>) {
@@ -11915,6 +11914,24 @@ mod tests {
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(r(x), r(y), r(z))
+    }
+
+    fn assert_certified_reference_result(
+        found: Option<(ReferenceTarget, Vec<i32>)>,
+        expected_point: &Point3,
+        expected_winding: &[i32],
+    ) {
+        let (target, winding) = found.expect("expected a certified reference");
+        assert_eq!(&target.point, expected_point);
+        assert_eq!(winding, expected_winding);
+        assert!(!target.uncertified_definition_fallback);
+        assert!(!target.definitions.is_empty());
+        assert!(
+            target
+                .definitions
+                .iter()
+                .all(|definition| affine_from_planes(definition).as_ref() == Ok(expected_point))
+        );
     }
 
     fn sample_segment_intersection(other_polygon_idx: usize) -> PairwiseIntersection {
@@ -13761,10 +13778,10 @@ mod tests {
     }
 
     #[test]
-    fn projected_support_plane_cell_reference_reports_uncertain_boundary_seed_family() {
+    fn projected_support_plane_cell_reference_certifies_interior_target_after_boundary_seed() {
         let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
-        let err = support_plane_cell_reference_with_halfspaces(
+        let found = support_plane_cell_reference_with_halfspaces(
             &p(0, 2, 5),
             &axis_defs(&p(0, 2, 5)),
             &[0],
@@ -13772,9 +13789,9 @@ mod tests {
             &[],
             projected_reference_halfspaces(&p(0, 2, 5), &bounds).unwrap(),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &Point3::new(q(4, 3), r(2), q(4, 3)), &[0]);
     }
 
     #[test]
@@ -14164,7 +14181,7 @@ mod tests {
     }
 
     #[test]
-    fn projected_reference_search_skips_fallback_projected_target_even_when_trace_succeeds() {
+    fn projected_reference_search_certifies_fallback_projected_target_after_trace_succeeds() {
         let fallback = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
         let certified = ReferenceTarget::axis_defined(p(2, 2, 3));
 
@@ -14184,14 +14201,14 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(found, Some((certified, vec![43])));
+        assert_certified_reference_result(found, &p(1, 2, 3), &[41]);
     }
 
     #[test]
-    fn projected_reference_search_reports_unknown_when_only_fallback_projected_target_traces() {
+    fn projected_reference_search_certifies_only_fallback_projected_target_after_trace() {
         let fallback = ReferenceTarget::axis_defined_fallback(p(1, 2, 3));
 
-        let err = search_projected_reference_families(
+        let found = search_projected_reference_families(
             std::slice::from_ref(&fallback),
             &[],
             || Ok(None),
@@ -14199,13 +14216,13 @@ mod tests {
             |_target| Ok(None),
             |_target| Ok(None),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(1, 2, 3), &[41]);
     }
 
     #[test]
-    fn projected_reference_search_skips_fallback_projected_support_success() {
+    fn projected_reference_search_certifies_fallback_projected_support_success() {
         let escape_target = ReferenceTarget::axis_defined(p(4, 2, 3));
         let found = search_projected_reference_families(
             &[],
@@ -14222,15 +14239,12 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            found,
-            Some((ReferenceTarget::axis_defined(p(5, 2, 3)), vec![43]))
-        );
+        assert_certified_reference_result(found, &p(1, 2, 3), &[41]);
     }
 
     #[test]
-    fn projected_reference_search_reports_unknown_when_only_fallback_projected_support_succeeds() {
-        let err = search_projected_reference_families(
+    fn projected_reference_search_certifies_only_fallback_projected_support_success() {
+        let found = search_projected_reference_families(
             &[],
             &[],
             || {
@@ -14243,9 +14257,9 @@ mod tests {
             |_target| Ok(None),
             |_target| Ok(None),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(1, 2, 3), &[41]);
     }
 
     #[test]
@@ -14265,7 +14279,7 @@ mod tests {
     }
 
     #[test]
-    fn projected_reference_search_skips_fallback_axis_escape_success() {
+    fn projected_reference_search_certifies_fallback_axis_escape_success() {
         let escape_target = ReferenceTarget::axis_defined(p(1, 2, 3));
         let found = search_projected_reference_families(
             &[],
@@ -14282,16 +14296,13 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            found,
-            Some((ReferenceTarget::axis_defined(p(3, 2, 3)), vec![43]))
-        );
+        assert_certified_reference_result(found, &p(2, 2, 3), &[41]);
     }
 
     #[test]
-    fn projected_reference_search_reports_unknown_when_only_fallback_axis_escape_succeeds() {
+    fn projected_reference_search_certifies_only_fallback_axis_escape_success() {
         let escape_target = ReferenceTarget::axis_defined(p(1, 2, 3));
-        let err = search_projected_reference_families(
+        let found = search_projected_reference_families(
             &[],
             std::slice::from_ref(&escape_target),
             || Ok(None),
@@ -14304,9 +14315,9 @@ mod tests {
             },
             |_target| Ok(None),
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(2, 2, 3), &[41]);
     }
 
     #[test]
@@ -14329,9 +14340,9 @@ mod tests {
     }
 
     #[test]
-    fn projected_reference_search_reports_unknown_when_only_fallback_tight_escape_succeeds() {
+    fn projected_reference_search_certifies_only_fallback_tight_escape_success() {
         let escape_target = ReferenceTarget::axis_defined(p(1, 2, 3));
-        let err = search_projected_reference_families(
+        let found = search_projected_reference_families(
             &[],
             std::slice::from_ref(&escape_target),
             || Ok(None),
@@ -14344,13 +14355,13 @@ mod tests {
                 )))
             },
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(2, 2, 3), &[41]);
     }
 
     #[test]
-    fn projected_reference_search_skips_fallback_tight_escape_success_for_later_certified_escape() {
+    fn projected_reference_search_certifies_first_fallback_tight_escape_success() {
         let first_escape = ReferenceTarget::axis_defined(p(1, 2, 3));
         let second_escape = ReferenceTarget::axis_defined(p(4, 2, 3));
         let found = search_projected_reference_families(
@@ -14372,10 +14383,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            found,
-            Some((ReferenceTarget::axis_defined(p(5, 2, 3)), vec![43]))
-        );
+        assert_certified_reference_result(found, &p(2, 2, 3), &[41]);
     }
 
     #[test]
@@ -18735,15 +18743,14 @@ mod tests {
     }
 
     #[test]
-    fn projection_axis_escape_reference_reports_unknown_when_only_fallback_corridor_witness_exists()
-    {
+    fn projection_axis_escape_reference_certifies_fallback_corridor_witness_after_trace() {
         let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
         left.delta_w = vec![1];
         let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
         right.delta_w = vec![1];
         let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
-        let err = projection_axis_escape_reference(
+        let found = projection_axis_escape_reference(
             &p(-1, 3, 3),
             &axis_defs(&p(-1, 3, 3)),
             &[0],
@@ -18751,9 +18758,9 @@ mod tests {
             &bounds,
             &[left, right],
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &Point3::new(q(5, 2), r(3), r(3)), &[-1]);
     }
 
     #[test]
@@ -22979,7 +22986,7 @@ mod tests {
     }
 
     #[test]
-    fn projection_axis_escape_reference_skips_fallback_corridor_success() {
+    fn projection_axis_escape_reference_certifies_fallback_corridor_success() {
         let projected = p(1, 3, 3);
         let axis_options = vec![
             (vec![r(0)], vec![r(1), r(2)]),
@@ -23006,14 +23013,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            found,
-            Some((ReferenceTarget::axis_defined(p(2, 3, 3)), vec![13]))
-        );
+        assert_certified_reference_result(found, &p(1, 3, 3), &[11]);
     }
 
     #[test]
-    fn projection_axis_escape_reference_reports_unknown_when_only_fallback_corridor_succeeds() {
+    fn projection_axis_escape_reference_certifies_only_fallback_corridor_success() {
         let projected = p(1, 3, 3);
         let axis_options = vec![
             (vec![r(0)], vec![r(1)]),
@@ -23021,7 +23025,7 @@ mod tests {
             (vec![r(0)], vec![r(6)]),
         ];
 
-        let err = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
+        let found = projection_axis_escape_reference_with_search_and_axis_options_tracking_unknown(
             &projected,
             &axis_options,
             false,
@@ -23036,9 +23040,9 @@ mod tests {
                 }
             },
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(1, 3, 3), &[11]);
     }
 
     #[test]
@@ -23171,7 +23175,7 @@ mod tests {
     }
 
     #[test]
-    fn projection_escape_reference_skips_fallback_box_success() {
+    fn projection_escape_reference_certifies_fallback_box_success() {
         let axis_options = vec![
             (vec![r(0)], vec![r(1), r(2)]),
             (vec![r(0)], vec![r(1)]),
@@ -23207,14 +23211,11 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            found,
-            Some((ReferenceTarget::axis_defined(p(2, 0, 0)), vec![9]))
-        );
+        assert_certified_reference_result(found, &p(1, 1, 1), &[7]);
     }
 
     #[test]
-    fn projection_escape_reference_reports_unknown_when_only_fallback_box_succeeds() {
+    fn projection_escape_reference_certifies_only_fallback_box_success() {
         let axis_options = vec![
             (vec![r(0)], vec![r(1)]),
             (vec![r(0)], vec![r(1)]),
@@ -23222,7 +23223,7 @@ mod tests {
         ];
         let bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
 
-        let err = projection_escape_reference_with_search_and_axis_options_and_bounds_family(
+        let found = projection_escape_reference_with_search_and_axis_options_and_bounds_family(
             &axis_options,
             &bounds,
             false,
@@ -23242,9 +23243,9 @@ mod tests {
                 Ok(family)
             },
         )
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(1, 1, 1), &[7]);
     }
 
     #[test]
@@ -24605,7 +24606,7 @@ mod tests {
     }
 
     #[test]
-    fn reference_target_trace_search_skips_fallback_target_even_when_trace_succeeds() {
+    fn reference_target_trace_search_certifies_fallback_target_after_trace_succeeds() {
         let fallback = ReferenceTarget::axis_defined_fallback(p(1, 1, 1));
         let certified = ReferenceTarget::axis_defined(p(2, 2, 2));
 
@@ -24622,19 +24623,19 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(found, Some((certified, vec![37])));
+        assert_certified_reference_result(found, &p(1, 1, 1), &[31]);
     }
 
     #[test]
-    fn reference_target_trace_search_reports_unknown_when_only_fallback_target_traces() {
+    fn reference_target_trace_search_certifies_only_fallback_target_after_trace() {
         let fallback = ReferenceTarget::axis_defined_fallback(p(1, 1, 1));
 
-        let err = trace_reference_targets_backtracking_unknown(vec![fallback], &[], |_target| {
+        let found = trace_reference_targets_backtracking_unknown(vec![fallback], &[], |_target| {
             Ok(Some(vec![31]))
         })
-        .unwrap_err();
+        .unwrap();
 
-        assert_eq!(err, crate::error::HypermeshError::UnknownClassification);
+        assert_certified_reference_result(found, &p(1, 1, 1), &[31]);
     }
 
     #[test]
