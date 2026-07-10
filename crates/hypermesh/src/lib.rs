@@ -69,6 +69,7 @@ pub mod bvh;
 pub mod clip;
 pub mod error;
 pub mod geometry;
+mod halfspace;
 pub mod intersection;
 pub mod local_bsp;
 pub mod mesh;

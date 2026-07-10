@@ -11,6 +11,11 @@ use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
 };
+use crate::halfspace::{
+    aabb_core_halfspaces, halfspace_has_opposite_pair, halfspace_is_degenerate_bound,
+    limit_plane_families_match_as_sets, negated_halfspace, point_satisfies_halfspaces,
+    support_side_halfspace,
+};
 use crate::polygon::ConvexPolygon;
 use crate::winding::{WindingNumberTransitionVector, WindingNumberVector};
 
@@ -14314,68 +14319,14 @@ fn axis_probe_definitions(
     probe_definitions_from_active_halfspaces(witness, halfspaces, active_planes, &extra_planes)
 }
 
-fn aabb_core_halfspaces(bounds: &Aabb) -> HypermeshResult<Vec<LimitPlane3>> {
-    let mut halfspaces = Vec::with_capacity(6);
-    for axis in 0..3 {
-        let min = axis_ref(&bounds.min, axis);
-        let max = axis_ref(&bounds.max, axis);
-        halfspaces.push(axis_halfspace(axis, true, min.clone()));
-        halfspaces.push(axis_halfspace(axis, false, max.clone()));
-    }
-    Ok(halfspaces)
-}
-
-fn axis_halfspace(axis: usize, lower_bound: bool, value: Real) -> LimitPlane3 {
-    let zero = Real::zero();
-    let one = Real::one();
-    let minus_one = -Real::one();
-    let normal = match (axis, lower_bound) {
-        (0, true) => Point3::new(minus_one, zero.clone(), zero),
-        (1, true) => Point3::new(zero.clone(), minus_one, zero),
-        (2, true) => Point3::new(zero.clone(), zero, minus_one),
-        (0, false) => Point3::new(one, zero.clone(), zero),
-        (1, false) => Point3::new(zero.clone(), one, zero),
-        (2, false) => Point3::new(zero.clone(), zero, one),
-        _ => panic!("axis must be in 0..3"),
-    };
-    let offset = if lower_bound { value } else { -value };
-    LimitPlane3::new(normal, offset)
-}
-
 fn plane_halfspace(plane: &Plane) -> LimitPlane3 {
     LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
-}
-
-fn negated_halfspace(halfspace: &LimitPlane3) -> LimitPlane3 {
-    LimitPlane3::new(
-        Point3::new(
-            -halfspace.normal.x.clone(),
-            -halfspace.normal.y.clone(),
-            -halfspace.normal.z.clone(),
-        ),
-        -halfspace.offset.clone(),
-    )
 }
 
 fn push_plane_equality_halfspaces(halfspaces: &mut Vec<LimitPlane3>, plane: &Plane) {
     let halfspace = plane_halfspace(plane);
     halfspaces.push(halfspace.clone());
     halfspaces.push(negated_halfspace(&halfspace));
-}
-
-fn support_side_halfspace(plane: &Plane, positive: bool) -> LimitPlane3 {
-    if positive {
-        LimitPlane3::new(
-            Point3::new(
-                -plane.normal.x.clone(),
-                -plane.normal.y.clone(),
-                -plane.normal.z.clone(),
-            ),
-            -plane.offset.clone(),
-        )
-    } else {
-        LimitPlane3::new(plane.normal.clone(), plane.offset.clone())
-    }
 }
 
 fn normal_stop_halfspace(plane: &Plane, stop_point: &Point3, positive_side: bool) -> LimitPlane3 {
@@ -14840,23 +14791,6 @@ fn shifted_halfspace_witness_families_match(
         )
 }
 
-fn limit_plane_families_match_as_sets(left: &[LimitPlane3], right: &[LimitPlane3]) -> bool {
-    if left.len() != right.len() {
-        return false;
-    }
-
-    let mut matched = vec![false; right.len()];
-    for left_halfspace in left {
-        let Some((index, _)) = right.iter().enumerate().find(|(index, right_halfspace)| {
-            !matched[*index] && *right_halfspace == left_halfspace
-        }) else {
-            return false;
-        };
-        matched[index] = true;
-    }
-    true
-}
-
 fn active_halfspace_planes_match_as_sets(
     left_halfspaces: &[LimitPlane3],
     left_active_planes: [Option<usize>; 3],
@@ -15093,16 +15027,6 @@ fn feasible_halfspace_cell_vertices_with_contains(
     Ok(feasible_halfspace_cell_vertex_family_with_contains(halfspaces, contains)?.seeds)
 }
 
-fn point_satisfies_halfspaces(point: &Point3, halfspaces: &[LimitPlane3]) -> HypermeshResult<bool> {
-    for halfspace in halfspaces {
-        let plane = Plane::new(halfspace.normal.clone(), halfspace.offset.clone());
-        if classify_point(point, &plane)? == Classification::Positive {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
 #[cfg(test)]
 fn point_strictly_inside_halfspace_cell(
     point: &Point3,
@@ -15198,27 +15122,6 @@ fn shifted_halfspace_cell(
         shifted.push(LimitPlane3::new(halfspace.normal.clone(), offset));
     }
     Ok(shifted)
-}
-
-fn halfspace_is_degenerate_bound(halfspace: &LimitPlane3, bounds: &Aabb) -> HypermeshResult<bool> {
-    for axis in 0..3 {
-        let min = axis_ref(&bounds.min, axis);
-        let max = axis_ref(&bounds.max, axis);
-        if compare_real(min, max)?.is_ne() {
-            continue;
-        }
-        if *halfspace == axis_halfspace(axis, true, min.clone())
-            || *halfspace == axis_halfspace(axis, false, min.clone())
-        {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-
-fn halfspace_has_opposite_pair(target: &LimitPlane3, halfspaces: &[LimitPlane3]) -> bool {
-    let opposite = negated_halfspace(target);
-    halfspaces.iter().any(|halfspace| halfspace == &opposite)
 }
 
 fn axis_value_after_start(
