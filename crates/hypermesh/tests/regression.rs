@@ -8,6 +8,7 @@ use hypermesh::{
     certify_output_polygon_closure, classify_point, prepare_input,
     triangulate_and_resolve_certified,
 };
+use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
     value.into()
@@ -409,6 +410,94 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     assert_closed_triangle_soup(&difference_soup);
     assert_bounds(&difference_soup, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
     assert_volume_numerator(&difference_soup, ratio(111, 4));
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig {
+        cases: 2,
+        failure_persistence: None,
+        ..ProptestConfig::default()
+    })]
+
+    #[test]
+    fn integer_box_booleans_match_exact_volume_oracle(
+        a_min_x in -4i32..5,
+        a_min_y in -4i32..5,
+        a_min_z in -4i32..5,
+        a_extent_x in 1i32..5,
+        a_extent_y in 1i32..5,
+        a_extent_z in 1i32..5,
+        b_min_x in -4i32..5,
+        b_min_y in -4i32..5,
+        b_min_z in -4i32..5,
+        b_extent_x in 1i32..5,
+        b_extent_y in 1i32..5,
+        b_extent_z in 1i32..5,
+    ) {
+        let a_min = [a_min_x, a_min_y, a_min_z];
+        let a_max = [
+            a_min_x + a_extent_x,
+            a_min_y + a_extent_y,
+            a_min_z + a_extent_z,
+        ];
+        let b_min = [b_min_x, b_min_y, b_min_z];
+        let b_max = [
+            b_min_x + b_extent_x,
+            b_min_y + b_extent_y,
+            b_min_z + b_extent_z,
+        ];
+        let volume = |min: [i32; 3], max: [i32; 3]| {
+            (max[0] - min[0]) * (max[1] - min[1]) * (max[2] - min[2])
+        };
+        let overlap_min = [
+            a_min[0].max(b_min[0]),
+            a_min[1].max(b_min[1]),
+            a_min[2].max(b_min[2]),
+        ];
+        let overlap_max = [
+            a_max[0].min(b_max[0]),
+            a_max[1].min(b_max[1]),
+            a_max[2].min(b_max[2]),
+        ];
+        let overlap_volume = (overlap_max[0] - overlap_min[0]).max(0)
+            * (overlap_max[1] - overlap_min[1]).max(0)
+            * (overlap_max[2] - overlap_min[2]).max(0);
+        let a_volume = volume(a_min, a_max);
+        let b_volume = volume(b_min, b_max);
+        let a = box_mesh(a_min, a_max);
+        let b = box_mesh(b_min, b_max);
+
+        for op in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::SymmetricDifference,
+        ] {
+            let expected_volume = match op {
+                BooleanOp::Union => a_volume + b_volume - overlap_volume,
+                BooleanOp::Intersection => overlap_volume,
+                BooleanOp::Difference => a_volume - overlap_volume,
+                BooleanOp::SymmetricDifference => a_volume + b_volume - 2 * overlap_volume,
+            };
+            let result = run_certified_op(&a, &b, op).map_err(|err| {
+                TestCaseError::fail(format!(
+                    "{op:?} failed for {a_min:?}..{a_max:?} and {b_min:?}..{b_max:?}: {err:?}"
+                ))
+            })?;
+
+            assert_closed_triangle_soup(&result);
+            prop_assert_eq!(
+                signed_volume_numerator(&result),
+                r(6 * expected_volume),
+                "{:?} volume mismatch for {:?}..{:?} and {:?}..{:?}",
+                op,
+                a_min,
+                a_max,
+                b_min,
+                b_max,
+            );
+        }
+    }
 }
 
 #[test]

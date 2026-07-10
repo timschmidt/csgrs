@@ -997,6 +997,10 @@ affine-box overlap through that normal subdivision/reference path, not only
 through the root one-leaf classifier. The suite now also pins the
 "no strict contained source vertex" precondition on the crossing-octahedra
 fixture explicitly, alongside those public Boolean-path regressions.
+Property coverage also generates bounded integer-coordinate closed-box pairs,
+runs every Boolean operator through the public general path, certifies polygon
+closure before triangulation cleanup, and compares the certified triangle
+soup against the exact analytic Boolean volume.
 Shared-face box contact is now likewise covered through that public general
 path as separate per-op regressions, so each Boolean op stays individually
 bounded and debuggable instead of hiding behind one oversized bundled case.
