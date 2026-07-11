@@ -153,6 +153,7 @@ impl_amf_export!(crate::sketch::Profile<M>);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::io::test_support::InvalidIndexed;
     use crate::mesh::Mesh;
     use quick_xml::events::Event;
     use quick_xml::reader::Reader;
@@ -193,5 +194,9 @@ mod tests {
             )
             .is_err()
         );
+        assert!(matches!(
+            to_amf(&InvalidIndexed, "invalid", "millimeter"),
+            Err(IoError::Geometry { format: "AMF", .. })
+        ));
     }
 }

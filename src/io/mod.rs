@@ -160,3 +160,43 @@ pub(crate) fn xml_metadata(
         .replace('"', "&quot;")
         .replace('\'', "&apos;"))
 }
+
+#[cfg(test)]
+pub(crate) mod test_support {
+    use crate::triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D, Triangulated3D};
+    use crate::vertex::Vertex;
+    use hyperlattice::{Point3, Real, Vector3};
+
+    pub(crate) struct InvalidIndexed;
+
+    impl Triangulated3D for InvalidIndexed {
+        fn visit_triangles<F>(&self, _visit: F)
+        where
+            F: FnMut([Vertex; 3]),
+        {
+        }
+    }
+
+    impl IndexedTriangulated3D for InvalidIndexed {
+        fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
+            IndexedTriangleMesh3D {
+                positions: vec![Point3::new(Real::zero(), Real::zero(), Real::zero())],
+                normals: vec![Vector3::z()],
+                faces: vec![[(1, 0), (0, 0), (0, 0)]],
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{finite_f32, finite_f64};
+    use hyperlattice::Real;
+
+    #[test]
+    fn finite_boundary_helpers_reject_unrepresentable_exact_values() {
+        let huge = format!("1{}", "0".repeat(1000)).parse::<Real>().unwrap();
+        assert!(finite_f64(&huge, "test", "coordinate").is_err());
+        assert!(finite_f32(&huge, "test", "coordinate").is_err());
+    }
+}

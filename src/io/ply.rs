@@ -11,6 +11,13 @@ use std::io::Write;
 
 use super::{IoError, finite_f64, single_line_metadata};
 
+fn checked_face_index(index: usize) -> Result<i32, IoError> {
+    i32::try_from(index).map_err(|_| IoError::SizeOverflow {
+        format: "PLY",
+        limit: "signed 32-bit face index",
+    })
+}
+
 fn build_ply_buffers<T: IndexedTriangulated3D>(
     shape: &T,
 ) -> Result<(Vec<Vertex>, Vec<[i32; 3]>), IoError> {
@@ -37,10 +44,7 @@ fn build_ply_buffers<T: IndexedTriangulated3D>(
                         });
                         index
                     });
-                    i32::try_from(index).map_err(|_| IoError::SizeOverflow {
-                        format: "PLY",
-                        limit: "signed 32-bit face index",
-                    })
+                    checked_face_index(index)
                 })
                 .collect::<Result<Vec<_>, _>>()?
                 .try_into()
@@ -140,6 +144,8 @@ impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
 
 #[cfg(test)]
 mod tests {
+    use super::{checked_face_index, to_ply};
+    use crate::io::{IoError, test_support::InvalidIndexed};
     use crate::mesh::Mesh;
     use hyperlattice::Real;
     use ply_rs::parser::Parser;
@@ -161,5 +167,17 @@ mod tests {
     fn comment_cannot_inject_header_records() {
         let mesh = Mesh::<()>::cube(Real::one(), ());
         assert!(mesh.to_ply("safe\nelement vertex 0").is_err());
+    }
+
+    #[test]
+    fn export_rejects_invalid_indices_and_index_overflow() {
+        assert!(matches!(
+            to_ply(&InvalidIndexed, "invalid"),
+            Err(IoError::Geometry { format: "PLY", .. })
+        ));
+        assert!(matches!(
+            checked_face_index(usize::MAX),
+            Err(IoError::SizeOverflow { format: "PLY", .. })
+        ));
     }
 }
