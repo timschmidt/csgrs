@@ -493,7 +493,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ) else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![start_v.clone(), p0, p1], metadata.clone()));
+                polygons.push(Polygon::new(vec![start_v.clone(), p1, p0], metadata.clone()));
             }
             if !top_degenerate {
                 // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
@@ -503,7 +503,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ) else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![end_v.clone(), p0, p1], metadata.clone()));
+                polygons.push(Polygon::new(vec![end_v.clone(), p1, p0], metadata.clone()));
             }
 
             // For the side wall, we normally build a quad spanning from the bottom ring (stack=0)
@@ -517,7 +517,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ) else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![start_v.clone(), p0, p1], metadata.clone()));
+                polygons.push(Polygon::new(vec![start_v.clone(), p1, p0], metadata.clone()));
             } else if top_degenerate {
                 // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
                 let (Some(p0), Some(p1)) = (
@@ -526,7 +526,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ) else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![p0, p1, end_v.clone()], metadata.clone()));
+                polygons.push(Polygon::new(vec![p1, p0, end_v.clone()], metadata.clone()));
             } else {
                 // Normal case: both rings are non-degenerate. Use a quad for the side wall.
                 let (Some(p0), Some(p1), Some(p2), Some(p3)) = (
@@ -537,7 +537,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ) else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![p0, p1, p2, p3], metadata.clone()));
+                polygons.push(Polygon::new(vec![p1, p0, p3, p2], metadata.clone()));
             }
         }
 

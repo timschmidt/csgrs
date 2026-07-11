@@ -2,6 +2,22 @@
 
 use super::support::*;
 
+fn oriented_volume_six(mesh: &Mesh<()>) -> Real {
+    mesh.polygons
+        .iter()
+        .flat_map(|polygon| {
+            (1..polygon.vertices.len() - 1).map(move |index| {
+                let a = &polygon.vertices[0].position;
+                let b = &polygon.vertices[index].position;
+                let c = &polygon.vertices[index + 1].position;
+                a.x.clone() * (b.y.clone() * c.z.clone() - b.z.clone() * c.y.clone())
+                    + a.y.clone() * (b.z.clone() * c.x.clone() - b.x.clone() * c.z.clone())
+                    + a.z.clone() * (b.x.clone() * c.y.clone() - b.y.clone() * c.x.clone())
+            })
+        })
+        .fold(Real::zero(), |volume, tetrahedron| volume + tetrahedron)
+}
+
 #[test]
 fn test_csg_from_polygons_and_to_polygons() {
     let poly: Polygon<()> = Polygon::new(
@@ -199,6 +215,22 @@ fn test_csg_cylinder() {
 
     // We have slices = 16, plus 16*2 polygons for the end caps
     assert_eq!(cylinder.polygons.len(), 48);
+}
+
+#[test]
+fn frustum_family_has_outward_winding() {
+    let meshes = [
+        Mesh::cylinder(r(1.0), r(2.0), 16, ()),
+        Mesh::frustum(r(0.0), r(1.0), r(2.0), 16, ()),
+        Mesh::frustum(r(1.0), r(0.0), r(2.0), 16, ()),
+    ];
+
+    for mesh in meshes {
+        assert!(
+            oriented_volume_six(&mesh) > Real::zero(),
+            "closed frustum-family meshes must use outward winding"
+        );
+    }
 }
 
 #[test]
