@@ -92,7 +92,11 @@ pub fn to_gltf<T: IndexedTriangulated3D>(
             normal_bytes.extend_from_slice(&normal[axis].to_le_bytes());
         }
     }
-    let mut index_bytes = Vec::with_capacity(indices.len() * 4);
+    let index_byte_capacity = indices.len().checked_mul(4).ok_or(IoError::SizeOverflow {
+        format: "glTF",
+        limit: "index byte-buffer capacity",
+    })?;
+    let mut index_bytes = Vec::with_capacity(index_byte_capacity);
     for index in &indices {
         index_bytes.extend_from_slice(&index.to_le_bytes());
     }
@@ -178,6 +182,8 @@ impl_gltf_export!(crate::sketch::Profile<M>);
 
 #[cfg(test)]
 mod tests {
+    use super::{checked_u32, to_gltf};
+    use crate::io::{IoError, test_support::InvalidIndexed};
     use crate::mesh::Mesh;
     use hyperlattice::Real;
 
@@ -191,5 +197,18 @@ mod tests {
         let document = gltf::Gltf::from_slice(output.as_bytes()).unwrap();
         assert_eq!(document.meshes().count(), 1);
         assert_eq!(document.accessors().count(), 3);
+    }
+
+    #[test]
+    fn rejects_empty_invalid_and_overflowing_inputs() {
+        assert!(Mesh::<()>::empty(()).to_gltf("empty").is_err());
+        assert!(matches!(
+            to_gltf(&InvalidIndexed, "invalid"),
+            Err(IoError::Geometry { format: "glTF", .. })
+        ));
+        assert!(matches!(
+            checked_u32(usize::MAX, "test count"),
+            Err(IoError::SizeOverflow { format: "glTF", .. })
+        ));
     }
 }

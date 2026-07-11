@@ -20,6 +20,15 @@ fn triangle_normal(triangle: &[Vertex; 3]) -> Result<Vector3, IoError> {
         })
 }
 
+fn validate_binary_triangle_count(count: usize) -> Result<(), IoError> {
+    u32::try_from(count)
+        .map(|_| ())
+        .map_err(|_| IoError::SizeOverflow {
+            format: "STL",
+            limit: "32-bit binary triangle count",
+        })
+}
+
 /// Serialize a triangulated shape as ASCII STL.
 pub fn to_stl_ascii<T: Triangulated3D>(shape: &T, name: &str) -> Result<String, IoError> {
     let name = single_line_metadata(name, "STL", "solid name")?;
@@ -94,6 +103,7 @@ pub fn to_stl_binary<T: Triangulated3D>(shape: &T, name: &str) -> Result<Vec<u8>
     if let Some(error) = failure {
         return Err(error);
     }
+    validate_binary_triangle_count(triangles.len())?;
 
     fn stl_vertex(vertex: &Vertex) -> Result<stl_io::Vertex, IoError> {
         Ok(StlVertex::new([
@@ -183,6 +193,19 @@ impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
 mod tests {
     use super::*;
 
+    struct DegenerateTriangle;
+
+    impl Triangulated3D for DegenerateTriangle {
+        fn visit_triangles<F>(&self, mut visit: F)
+        where
+            F: FnMut([Vertex; 3]),
+        {
+            let point = Point3::new(Real::zero(), Real::zero(), Real::zero());
+            let vertex = Vertex::new(point, Vector3::z());
+            visit([vertex.clone(), vertex.clone(), vertex]);
+        }
+    }
+
     #[test]
     fn binary_cube_round_trips_through_validated_import() {
         let cube = Mesh::<()>::cube(Real::from(2_u8), ());
@@ -196,5 +219,18 @@ mod tests {
     fn ascii_name_rejects_record_injection() {
         let cube = Mesh::<()>::cube(Real::one(), ());
         assert!(cube.to_stl_ascii("safe\nendsolid forged").is_err());
+    }
+
+    #[test]
+    fn rejects_malformed_degenerate_and_overflowing_inputs() {
+        assert!(Mesh::<()>::from_stl(b"not an STL", ()).is_err());
+        assert!(matches!(
+            to_stl_ascii(&DegenerateTriangle, "degenerate"),
+            Err(IoError::Geometry { format: "STL", .. })
+        ));
+        assert!(matches!(
+            validate_binary_triangle_count(usize::MAX),
+            Err(IoError::SizeOverflow { format: "STL", .. })
+        ));
     }
 }

@@ -348,10 +348,13 @@ where
                 self.image_transform.rotation = *rotation;
             },
             Command::ExtendedCode(ExtendedCode::ImagePolarity(polarity)) => {
-                self.polarity = match polarity {
-                    ImagePolarity::Positive => Polarity::Dark,
-                    ImagePolarity::Negative => Polarity::Clear,
-                };
+                if matches!(polarity, ImagePolarity::Negative) {
+                    return Err(IoError::Unsupported {
+                        format: "Gerber",
+                        detail: "negative image polarity has an unbounded background".into(),
+                    });
+                }
+                self.polarity = Polarity::Dark;
             },
             Command::ExtendedCode(ExtendedCode::ApertureBlock(_)) => {
                 return Err(IoError::Unsupported {
@@ -370,10 +373,19 @@ where
             ) => {},
             Command::FunctionCode(FunctionCode::GCode(GCode::RegionMode(enabled))) => {
                 if *enabled {
+                    if self.region.is_some() {
+                        return Err(IoError::MalformedInput(
+                            "Gerber region mode was opened while already active".into(),
+                        ));
+                    }
                     self.region = Some(RegionBuilder::new());
-                } else if let Some(region) = self.region.take()
-                    && let Some(sketch) = region.into_sketch(self.metadata.clone())?
-                {
+                } else {
+                    let region = self.region.take().ok_or_else(|| {
+                        IoError::MalformedInput(
+                            "Gerber region mode was closed while not active".into(),
+                        )
+                    })?;
+                    let sketch = region.into_sketch(self.metadata.clone())?;
                     self.apply_polarity(sketch)?;
                 }
             },
@@ -406,6 +418,11 @@ where
                 distance_x,
                 distance_y,
             } => {
+                if self.step_repeat.is_some() {
+                    return Err(IoError::MalformedInput(
+                        "Gerber step-repeat was opened while already active".into(),
+                    ));
+                }
                 let distance_x = distance_x * self.unit_scale;
                 let distance_y = distance_y * self.unit_scale;
                 if repeat_x == 0
@@ -425,7 +442,14 @@ where
                     distance_y,
                 })
             },
-            StepAndRepeat::Close => None,
+            StepAndRepeat::Close => {
+                if self.step_repeat.is_none() {
+                    return Err(IoError::MalformedInput(
+                        "Gerber step-repeat was closed while not active".into(),
+                    ));
+                }
+                None
+            },
         };
         Ok(())
     }
@@ -462,7 +486,7 @@ where
                     );
                 }
                 if let Some(region) = &mut self.region {
-                    region.move_to(self.current);
+                    region.move_to(self.current)?;
                 }
             },
             Operation::Interpolate(coords, offset) => {
@@ -479,19 +503,33 @@ where
                     })
                     .unwrap_or((self.source_current, self.current));
 
-                let points = match (self.interpolation_mode, offset) {
-                    (InterpolationMode::Linear, _) | (_, None) => vec![target],
+                let arc = match (self.interpolation_mode, offset) {
+                    (InterpolationMode::Linear, _) | (_, None) => None,
                     (
                         InterpolationMode::ClockwiseCircular
                         | InterpolationMode::CounterclockwiseCircular,
                         Some(offset),
-                    ) => approximate_arc(
-                        self.current,
-                        target,
-                        resolve_offset(offset, self.unit_scale, self.image_transform),
-                        self.interpolation_mode,
-                    )?,
+                    ) => {
+                        if !self.image_transform.preserves_circles() {
+                            return Err(IoError::Unsupported {
+                                format: "Gerber",
+                                detail:
+                                    "circular interpolation under non-uniform image scaling"
+                                        .into(),
+                            });
+                        }
+                        Some(circular_interpolation(
+                            self.current,
+                            target,
+                            resolve_offset(offset, self.unit_scale, self.image_transform),
+                            self.interpolation_mode,
+                            self.image_transform.reverses_orientation(),
+                        )?)
+                    },
                 };
+                let points = arc
+                    .as_ref()
+                    .map_or_else(|| vec![target], |arc| arc.points.clone());
 
                 if let Some(region) = &mut self.region {
                     for point in &points {
@@ -513,41 +551,31 @@ where
                     )));
                 };
 
-                if points.len() > 1 {
-                    let mut path = Vec::with_capacity(points.len() + 1);
-                    path.push(self.current);
-                    path.extend(points.iter().cloned());
-                    if let Some(sketch) = trace_path_to_sketch(
+                if let Some(arc) = &arc {
+                    let sketch = trace_arc_to_sketch(
                         aperture,
-                        &path,
+                        arc,
                         self.metadata.clone(),
                         self.unit_scale,
                         self.aperture_transform,
-                    )? {
-                        self.apply_polarity(sketch)?;
-                        self.source_current = source_target;
-                        self.current = target;
-                        return Ok(());
-                    }
+                    )?;
+                    self.apply_polarity(sketch)?;
+                    self.source_current = source_target;
+                    self.current = target;
+                    return Ok(());
                 }
 
                 let mut start = self.current;
                 for point in points {
-                    if let Some(sketch) = trace_to_sketch(
+                    let sketch = trace_to_sketch(
                         aperture,
                         start,
                         point,
                         self.metadata.clone(),
                         self.unit_scale,
                         self.aperture_transform,
-                    )? {
-                        self.apply_polarity(sketch)?;
-                    } else {
-                        return Err(IoError::Unsupported {
-                            format: "Gerber",
-                            detail: format!("aperture D{code} cannot stroke this segment"),
-                        });
-                    }
+                    )?;
+                    self.apply_polarity(sketch)?;
                     start = point;
                 }
                 self.source_current = source_target;
@@ -628,6 +656,15 @@ struct ImageTransform {
     rotation: ImageRotation,
 }
 
+#[derive(Clone, Debug)]
+struct CircularInterpolation {
+    center: Coord<f64>,
+    radius: f64,
+    start_angle: f64,
+    sweep: f64,
+    points: Vec<Coord<f64>>,
+}
+
 impl Default for ImageTransform {
     fn default() -> Self {
         Self {
@@ -648,9 +685,10 @@ impl RegionBuilder {
         }
     }
 
-    fn move_to(&mut self, point: Coord<f64>) {
-        self.finish_ring();
+    fn move_to(&mut self, point: Coord<f64>) -> Result<(), IoError> {
+        self.finish_ring()?;
         self.current_ring.push(point_from_coord(point));
+        Ok(())
     }
 
     fn line_to(&mut self, start: Coord<f64>, end: Coord<f64>) {
@@ -660,10 +698,14 @@ impl RegionBuilder {
         self.current_ring.push(point_from_coord(end));
     }
 
-    fn finish_ring(&mut self) {
+    fn finish_ring(&mut self) -> Result<(), IoError> {
+        if self.current_ring.is_empty() {
+            return Ok(());
+        }
         if self.current_ring.len() < 3 {
-            self.current_ring.clear();
-            return;
+            return Err(IoError::MalformedInput(
+                "Gerber region contour has fewer than three points".into(),
+            ));
         }
 
         if self.current_ring.first() != self.current_ring.last() {
@@ -672,19 +714,16 @@ impl RegionBuilder {
         }
 
         self.rings.push(std::mem::take(&mut self.current_ring));
+        Ok(())
     }
 
-    fn into_sketch<M>(mut self, metadata: M) -> Result<Option<Profile<M>>, IoError>
+    fn into_sketch<M>(mut self, metadata: M) -> Result<Profile<M>, IoError>
     where
         M: Clone + Debug + Send + Sync,
     {
-        self.finish_ring();
+        self.finish_ring()?;
 
-        let mut rings = self
-            .rings
-            .into_iter()
-            .filter(|ring| ring.len() >= 4)
-            .collect::<Vec<_>>();
+        let mut rings = self.rings;
         if rings.is_empty() {
             return Err(IoError::MalformedInput(
                 "Gerber region contains no valid closed contours".into(),
@@ -715,7 +754,7 @@ impl RegionBuilder {
                 });
             },
         };
-        Ok(Some(Profile::from_region(region, metadata)))
+        Ok(Profile::from_region(region, metadata))
     }
 }
 
@@ -965,6 +1004,18 @@ fn resolve_offset(
 }
 
 impl ImageTransform {
+    fn preserves_circles(self) -> bool {
+        self.scaling.a.is_finite()
+            && self.scaling.b.is_finite()
+            && self.scaling.a.abs() == self.scaling.b.abs()
+    }
+
+    fn reverses_orientation(self) -> bool {
+        let x = self.apply_vector(Coord { x: 1.0, y: 0.0 });
+        let y = self.apply_vector(Coord { x: 0.0, y: 1.0 });
+        x.x * y.y - x.y * y.x < 0.0
+    }
+
     fn apply_point(self, point: Coord<f64>, unit_scale: f64) -> Coord<f64> {
         let mut point = match self.axis_select {
             AxisSelect::AXBY => point,
@@ -1215,19 +1266,18 @@ fn trace_to_sketch<M>(
     metadata: M,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Option<Profile<M>>, IoError>
+) -> Result<Profile<M>, IoError>
 where
     M: Clone + Debug + Send + Sync,
 {
     if nearly_same(start, end) {
-        return flash_to_sketch(aperture, start, metadata, unit_scale, aperture_transform)
-            .map(Some);
+        return flash_to_sketch(aperture, start, metadata, unit_scale, aperture_transform);
     }
 
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            circular_swept_path_sketch(&[start, end], radius, metadata).map(Some)
+            linear_circular_sweep_sketch(start, end, radius, metadata)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             let points = aperture_outline_points(aperture, unit_scale, aperture_transform)?;
@@ -1246,10 +1296,7 @@ where
                     ]
                 })
                 .collect::<Vec<_>>();
-            Ok(Some(polygon_from_coords(
-                convex_hull(swept_points)?,
-                metadata,
-            )?))
+            polygon_from_coords(convex_hull(swept_points)?, metadata)
         },
         Aperture::Macro(..) => Err(IoError::Unsupported {
             format: "Gerber",
@@ -1258,139 +1305,138 @@ where
     }
 }
 
-fn trace_path_to_sketch<M>(
-    aperture: &Aperture,
-    path: &[Coord<f64>],
-    metadata: M,
-    unit_scale: f64,
-    aperture_transform: ApertureTransform,
-) -> Result<Option<Profile<M>>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
-    if path.len() < 2 {
-        return Ok(None);
-    }
-
-    match aperture {
-        Aperture::Circle(circle) => {
-            let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            circular_swept_path_sketch(path, radius, metadata).map(Some)
-        },
-        Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => Ok(None),
-        Aperture::Macro(..) => Err(IoError::Unsupported {
-            format: "Gerber",
-            detail: "aperture macro strokes are not supported".into(),
-        }),
-    }
-}
-
-/// Approximate an aperture stroke along an already-finite Gerber centerline as a
-/// single region before it reaches hypercurve boolean composition.
-///
-/// Gerber import is an API boundary with decimal coordinates, so this is a
-/// finite-output construction rather than internal topology. Building one
-/// conservative swept envelope avoids the numerically fragile cascade of chord
-/// capsule booleans while preserving the broad Gerber trace shape. The finite
-/// boundary discipline follows Hobby, "Practical Segment Intersection with
-/// Finite Precision Output," *Computational Geometry* 13(4), 1999
-/// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-fn circular_swept_path_sketch<M>(
-    path: &[Coord<f64>],
+fn linear_circular_sweep_sketch<M>(
+    start: Coord<f64>,
+    end: Coord<f64>,
     radius: f64,
     metadata: M,
 ) -> Result<Profile<M>, IoError>
 where
     M: Clone + Debug + Send + Sync,
 {
-    if !radius.is_finite() || radius <= 0.0 {
+    let points = circle_points(positive(radius, "circular stroke radius")?, 64)
+        .into_iter()
+        .flat_map(|point| {
+            [start, end].map(|center| Coord {
+                x: point.x + center.x,
+                y: point.y + center.y,
+            })
+        })
+        .collect();
+    polygon_from_coords(convex_hull(points)?, metadata)
+}
+
+fn trace_arc_to_sketch<M>(
+    aperture: &Aperture,
+    arc: &CircularInterpolation,
+    metadata: M,
+    unit_scale: f64,
+    aperture_transform: ApertureTransform,
+) -> Result<Profile<M>, IoError>
+where
+    M: Clone + Debug + Send + Sync,
+{
+    match aperture {
+        Aperture::Circle(circle) => {
+            let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
+            circular_arc_sweep_sketch(arc, radius, metadata)
+        },
+        Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
+            Err(IoError::Unsupported {
+                format: "Gerber",
+                detail: "curved strokes with non-circular apertures are not supported".into(),
+            })
+        },
+        Aperture::Macro(..) => Err(IoError::Unsupported {
+            format: "Gerber",
+            detail: "aperture macro strokes are not supported".into(),
+        }),
+    }
+}
+
+/// Construct the complete bounded projection of a circular Gerber interpolation
+/// swept by a circular aperture.
+///
+/// The boundary is an annular sector with semicircular end caps. Full circles
+/// become a disk or annulus. This retains the command's topology directly and
+/// only samples its circular boundary at the finite file-import boundary.
+fn circular_arc_sweep_sketch<M>(
+    arc: &CircularInterpolation,
+    aperture_radius: f64,
+    metadata: M,
+) -> Result<Profile<M>, IoError>
+where
+    M: Clone + Debug + Send + Sync,
+{
+    if !aperture_radius.is_finite() || aperture_radius <= 0.0 {
         return Err(IoError::Geometry {
             format: "Gerber",
             detail: "circular aperture radius must be finite and positive".into(),
         });
     }
-    let path = path
-        .iter()
-        .copied()
-        .fold(Vec::<Coord<f64>>::new(), |mut points, point| {
-            if points
-                .last()
-                .is_none_or(|previous| !nearly_same(*previous, point))
-            {
-                points.push(point);
-            }
-            points
-        });
-    if path.len() < 2 {
-        return Err(IoError::Geometry {
-            format: "Gerber",
-            detail: "trace centerline has no non-zero segment".into(),
-        });
-    }
-    let normals = path
-        .windows(2)
-        .map(|segment| {
-            let dx = segment[1].x - segment[0].x;
-            let dy = segment[1].y - segment[0].y;
-            let length = dx.hypot(dy);
-            Coord {
-                x: -dy / length,
-                y: dx / length,
-            }
-        })
-        .collect::<Vec<_>>();
+    let outer_radius = arc.radius + aperture_radius;
+    let inner_radius = arc.radius - aperture_radius;
+    let full_circle = (arc.sweep.abs() - std::f64::consts::TAU).abs() <= 1.0e-12;
 
-    let mut left = Vec::with_capacity(path.len());
-    let mut right = Vec::with_capacity(path.len());
-    left.push(offset_coord(path[0], normals[0], radius));
-    right.push(offset_coord(path[0], normals[0], -radius));
-    for index in 1..path.len() - 1 {
-        let previous = normals[index - 1];
-        let next = normals[index];
-        let denominator = 1.0 + previous.x * next.x + previous.y * next.y;
-        if denominator <= 1e-12 {
-            return Err(IoError::Geometry {
-                format: "Gerber",
-                detail: "trace contains a reversing cusp with no finite sweep join".into(),
-            });
+    if full_circle {
+        let outer = polygon_from_coords(
+            translated_circle_points(arc.center, outer_radius, 96),
+            metadata.clone(),
+        )?;
+        if inner_radius <= 0.0 {
+            return Ok(outer);
         }
-        let miter = Coord {
-            x: (previous.x + next.x) / denominator,
-            y: (previous.y + next.y) / denominator,
-        };
-        left.push(offset_coord(path[index], miter, radius));
-        right.push(offset_coord(path[index], miter, -radius));
+        let inner = polygon_from_coords(
+            translated_circle_points(arc.center, inner_radius, 96),
+            metadata.clone(),
+        )?;
+        return Ok(add_aperture_hole(outer, inner, metadata));
     }
-    let last = path.len() - 1;
-    left.push(offset_coord(path[last], normals[last - 1], radius));
-    right.push(offset_coord(path[last], normals[last - 1], -radius));
+    if inner_radius <= 0.0 {
+        return Err(IoError::Unsupported {
+            format: "Gerber",
+            detail: "partial circular trace whose aperture reaches its interpolation center"
+                .into(),
+        });
+    }
 
-    let mut boundary = left;
-    let end_angle = normals[last - 1].y.atan2(normals[last - 1].x);
-    for index in 1..=16 {
-        boundary.push(coord_on_circle(
-            path[last],
-            radius,
-            end_angle - std::f64::consts::PI * index as f64 / 16.0,
-        ));
-    }
-    boundary.extend(right.iter().rev().skip(1).copied());
-    let start_angle = (-normals[0].y).atan2(-normals[0].x);
-    for index in 1..16 {
-        boundary.push(coord_on_circle(
-            path[0],
-            radius,
-            start_angle - std::f64::consts::PI * index as f64 / 16.0,
-        ));
-    }
+    let (start_angle, sweep) = if arc.sweep > 0.0 {
+        (arc.start_angle, arc.sweep)
+    } else {
+        (arc.start_angle + arc.sweep, -arc.sweep)
+    };
+    let end_angle = start_angle + sweep;
+    let mut boundary = arc_points(arc.center, outer_radius, start_angle, end_angle, false, 32);
+    boundary.extend(
+        arc_points(
+            coord_on_circle(arc.center, arc.radius, end_angle),
+            aperture_radius,
+            end_angle,
+            end_angle + std::f64::consts::PI,
+            false,
+            16,
+        )
+        .into_iter()
+        .skip(1),
+    );
+    boundary.extend(
+        arc_points(arc.center, inner_radius, end_angle, start_angle, true, 32)
+            .into_iter()
+            .skip(1),
+    );
+    boundary.extend(
+        arc_points(
+            coord_on_circle(arc.center, arc.radius, start_angle),
+            aperture_radius,
+            start_angle + std::f64::consts::PI,
+            start_angle + std::f64::consts::TAU,
+            false,
+            16,
+        )
+        .into_iter()
+        .skip(1),
+    );
     polygon_from_coords(boundary, metadata)
-}
-
-fn offset_coord(point: Coord<f64>, normal: Coord<f64>, distance: f64) -> Coord<f64> {
-    Coord {
-        x: point.x + normal.x * distance,
-        y: point.y + normal.y * distance,
-    }
 }
 
 fn aperture_outline_points(
@@ -1467,12 +1513,13 @@ fn aperture_outline_points(
         .collect())
 }
 
-fn approximate_arc(
+fn circular_interpolation(
     start: Coord<f64>,
     end: Coord<f64>,
     offset: Coord<f64>,
     mode: InterpolationMode,
-) -> Result<Vec<Coord<f64>>, IoError> {
+    orientation_reversed: bool,
+) -> Result<CircularInterpolation, IoError> {
     let center = Coord {
         x: start.x + offset.x,
         y: start.y + offset.y,
@@ -1483,10 +1530,19 @@ fn approximate_arc(
             "Gerber circular interpolation requires a finite non-zero center offset".into(),
         ));
     }
+    let end_radius = (end.x - center.x).hypot(end.y - center.y);
+    if !end_radius.is_finite()
+        || (!nearly_same(start, end)
+            && (end_radius - radius).abs() > 1.0e-9 * radius.max(end_radius).max(1.0))
+    {
+        return Err(IoError::MalformedInput(
+            "Gerber circular interpolation endpoints do not share one center radius".into(),
+        ));
+    }
 
     let start_angle = (start.y - center.y).atan2(start.x - center.x);
     let mut end_angle = (end.y - center.y).atan2(end.x - center.x);
-    let clockwise = mode == InterpolationMode::ClockwiseCircular;
+    let clockwise = (mode == InterpolationMode::ClockwiseCircular) ^ orientation_reversed;
 
     if nearly_same(start, end) {
         end_angle = if clockwise {
@@ -1496,8 +1552,23 @@ fn approximate_arc(
         };
     }
 
-    let points = arc_points(center, radius, start_angle, end_angle, clockwise, 32);
-    Ok(points.into_iter().skip(1).collect())
+    let mut sweep = end_angle - start_angle;
+    if clockwise && sweep >= 0.0 {
+        sweep -= std::f64::consts::TAU;
+    } else if !clockwise && sweep <= 0.0 {
+        sweep += std::f64::consts::TAU;
+    }
+    let points = arc_points(center, radius, start_angle, end_angle, clockwise, 32)
+        .into_iter()
+        .skip(1)
+        .collect();
+    Ok(CircularInterpolation {
+        center,
+        radius,
+        start_angle,
+        sweep,
+        points,
+    })
 }
 
 fn arc_points(
@@ -1530,6 +1601,20 @@ fn circle_points(radius: f64, segments: usize) -> Vec<Coord<f64>> {
         .map(|i| {
             let theta = std::f64::consts::TAU * (i as f64) / (segments as f64);
             origin_circle_coord(radius, theta)
+        })
+        .collect()
+}
+
+fn translated_circle_points(
+    center: Coord<f64>,
+    radius: f64,
+    segments: usize,
+) -> Vec<Coord<f64>> {
+    circle_points(radius, segments)
+        .into_iter()
+        .map(|point| Coord {
+            x: point.x + center.x,
+            y: point.y + center.y,
         })
         .collect()
 }
@@ -1810,8 +1895,12 @@ mod tests {
     use super::{Coord, FromGerber, ToGerber, convex_hull};
     use crate::csg::CSG;
     use crate::hyper_math::{Real, hreal_from_f64, pi};
+    use crate::io::IoError;
     use crate::sketch::Profile;
-    use gerber_types::{CoordinateFormat, CoordinateMode, ZeroOmission};
+    use gerber_types::{
+        Command, CoordinateFormat, CoordinateMode, ExtendedCode, FunctionCode, GCode,
+        ZeroOmission,
+    };
 
     fn r(value: f64) -> Real {
         hreal_from_f64(value).expect("test values must be finite")
@@ -1926,6 +2015,59 @@ mod tests {
     }
 
     #[test]
+    fn imports_full_circle_trace_as_annulus() {
+        let gerber = b"G04 full circle*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X1000000Y0I-1000000J0D01*\nM02*\n";
+
+        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        assert_eq!(parsed.as_region().material_contours().len(), 1);
+        assert_eq!(parsed.as_region().hole_contours().len(), 1);
+        assert_bounds_close(&parsed, r(-1.1), r(-1.1), r(1.1), r(1.1), r(0.01));
+    }
+
+    #[test]
+    fn circular_trace_rejects_inconsistent_or_collapsed_topology() {
+        let inconsistent = b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y2000000I-1000000J0D01*\nM02*\n";
+        assert!(matches!(
+            Profile::<()>::from_gerber(inconsistent, ()),
+            Err(IoError::MalformedInput(_))
+        ));
+
+        let collapsed = b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,3*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
+        assert!(matches!(
+            Profile::<()>::from_gerber(collapsed, ()),
+            Err(IoError::Unsupported {
+                format: "Gerber",
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn circular_interpolation_accounts_for_orientation_reversal() {
+        use gerber_types::InterpolationMode;
+
+        let normal = super::circular_interpolation(
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: -1.0, y: 0.0 },
+            InterpolationMode::CounterclockwiseCircular,
+            false,
+        )
+        .unwrap();
+        let mirrored = super::circular_interpolation(
+            Coord { x: -1.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: 1.0, y: 0.0 },
+            InterpolationMode::CounterclockwiseCircular,
+            true,
+        )
+        .unwrap();
+        assert!(normal.sweep > 0.0);
+        assert!(mirrored.sweep < 0.0);
+        assert!((normal.sweep.abs() - mirrored.sweep.abs()).abs() < 1.0e-12);
+    }
+
+    #[test]
     fn imports_step_repeat() {
         let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
 
@@ -1999,5 +2141,44 @@ mod tests {
     fn rejects_unterminated_region() {
         let gerber = b"%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nM02*\n";
         assert!(Profile::<()>::from_gerber(gerber, ()).is_err());
+    }
+
+    #[test]
+    fn rejects_malformed_and_unsupported_curved_aperture_input() {
+        assert!(Profile::<()>::from_gerber(b"not Gerber", ()).is_err());
+        let rectangular_arc = b"G04 unsupported curved aperture*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
+        assert!(matches!(
+            Profile::<()>::from_gerber(rectangular_arc, ()),
+            Err(IoError::Unsupported {
+                format: "Gerber",
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn rejects_invalid_region_state_and_coordinate_overflow() {
+        let mut builder = super::RegionBuilder::new();
+        builder.move_to(Coord { x: 0.0, y: 0.0 }).unwrap();
+        assert!(builder.move_to(Coord { x: 1.0, y: 1.0 }).is_err());
+
+        let options = super::GerberExportOptions::default();
+        assert!(super::export_coordinate_number(1.0e100, options).is_err());
+
+        let mut state = super::ImportState::new(gerber_types::Unit::Millimeters, ());
+        let apertures = std::collections::HashMap::new();
+        let close_region =
+            Command::FunctionCode(FunctionCode::GCode(GCode::RegionMode(false)));
+        assert!(state.apply_command(&close_region, &apertures).is_err());
+        let negative = Command::ExtendedCode(ExtendedCode::ImagePolarity(
+            gerber_types::ImagePolarity::Negative,
+        ));
+        assert!(matches!(
+            state.apply_command(&negative, &apertures),
+            Err(IoError::Unsupported {
+                format: "Gerber",
+                ..
+            })
+        ));
     }
 }

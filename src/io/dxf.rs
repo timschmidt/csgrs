@@ -208,6 +208,14 @@ pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, IoError> {
             return;
         }
         let result = (|| {
+            let first_edge = &triangle[1].position - &triangle[0].position;
+            let second_edge = &triangle[2].position - &triangle[0].position;
+            first_edge.unit_cross_checked(&second_edge).map_err(|error| {
+                IoError::Geometry {
+                    format: "DXF",
+                    detail: format!("degenerate export triangle: {error}"),
+                }
+            })?;
             let points = triangle
                 .iter()
                 .map(|vertex| {
@@ -251,6 +259,19 @@ impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
 mod tests {
     use super::*;
 
+    struct DegenerateTriangle;
+
+    impl Triangulated3D for DegenerateTriangle {
+        fn visit_triangles<F>(&self, mut visit: F)
+        where
+            F: FnMut([Vertex; 3]),
+        {
+            let point = Point3::new(Real::zero(), Real::zero(), Real::zero());
+            let vertex = Vertex::new(point, Vector3::z());
+            visit([vertex.clone(), vertex.clone(), vertex]);
+        }
+    }
+
     #[test]
     fn arbitrary_normal_circle_is_built_in_its_ocs_plane() {
         let mut drawing = Drawing::new();
@@ -286,5 +307,11 @@ mod tests {
         drawing.save(&mut bytes).unwrap();
         let error = Mesh::<()>::from_dxf(&bytes, ()).unwrap_err();
         assert!(matches!(error, IoError::Unsupported { format: "DXF", .. }));
+    }
+
+    #[test]
+    fn malformed_input_and_degenerate_export_are_rejected() {
+        assert!(Mesh::<()>::from_dxf(b"not a DXF", ()).is_err());
+        assert!(to_dxf(&DegenerateTriangle).is_err());
     }
 }

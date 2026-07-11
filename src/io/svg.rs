@@ -1,4 +1,9 @@
 //! Strict SVG document import and fallible finite SVG export.
+//!
+//! Filled SVG geometry becomes native region topology. Strokes are retained as
+//! centerline wires because `Profile` does not model SVG paint decoration;
+//! width, joins, caps, dashes, and markers are therefore rejected when they
+//! would change the imported topology.
 
 use crate::csg::CSG;
 use crate::io::{IoError, finite_f64};
@@ -48,13 +53,14 @@ impl SvgOptions {
         }
         let requested = (std::f64::consts::TAU * radius / self.curve_tolerance)
             .ceil()
-            .max(16.0) as usize;
-        if requested > self.max_curve_segments {
+            .max(16.0);
+        if requested > self.max_curve_segments as f64 {
             return Err(IoError::SizeOverflow {
                 format: "SVG",
                 limit: "configured curve-segment count",
             });
         }
+        let requested = requested as usize;
         Ok(requested)
     }
 }
@@ -155,59 +161,47 @@ impl StyleContext {
 }
 
 fn parse_numbers(value: &str) -> Result<Vec<f64>, IoError> {
-    value
-        .replace(',', " ")
-        .split_whitespace()
-        .map(|part| {
-            part.parse::<f64>().map_err(|error| {
-                IoError::MalformedInput(format!("invalid SVG number: {error}"))
-            })
+    svgtypes::NumberListParser::from(value)
+        .map(|number| {
+            let number = number.map_err(|error| {
+                IoError::MalformedInput(format!("invalid SVG number list: {error}"))
+            })?;
+            if number.is_finite() {
+                Ok(number)
+            } else {
+                Err(IoError::MalformedInput(
+                    "SVG number list contains a non-finite value".into(),
+                ))
+            }
         })
         .collect()
 }
 
 fn parse_transform(value: &str) -> Result<Affine2, IoError> {
-    let mut remaining = value.trim();
     let mut transform = Affine2::IDENTITY;
-    while !remaining.is_empty() {
-        let open = remaining.find('(').ok_or_else(|| {
-            IoError::MalformedInput(format!("invalid SVG transform {value:?}"))
+    for token in svgtypes::TransformListParser::from(value) {
+        use svgtypes::TransformListToken;
+        let token = token.map_err(|error| {
+            IoError::MalformedInput(format!("invalid SVG transform {value:?}: {error}"))
         })?;
-        let close = remaining[open + 1..]
-            .find(')')
-            .map(|index| index + open + 1)
-            .ok_or_else(|| {
-                IoError::MalformedInput(format!("invalid SVG transform {value:?}"))
-            })?;
-        let name = remaining[..open].trim();
-        let numbers = parse_numbers(&remaining[open + 1..close])?;
-        let next = match (name, numbers.as_slice()) {
-            ("matrix", &[a, b, c, d, e, f]) => Affine2([a, b, c, d, e, f]),
-            ("translate", &[x]) => Affine2([1.0, 0.0, 0.0, 1.0, x, 0.0]),
-            ("translate", &[x, y]) => Affine2([1.0, 0.0, 0.0, 1.0, x, y]),
-            ("scale", &[scale]) => Affine2([scale, 0.0, 0.0, scale, 0.0, 0.0]),
-            ("scale", &[x, y]) => Affine2([x, 0.0, 0.0, y, 0.0, 0.0]),
-            ("rotate", &[degrees]) => rotation(degrees),
-            ("rotate", &[degrees, x, y]) => Affine2([1.0, 0.0, 0.0, 1.0, x, y])
-                .then(rotation(degrees))
-                .then(Affine2([1.0, 0.0, 0.0, 1.0, -x, -y])),
-            ("skewX", &[degrees]) => {
-                Affine2([1.0, 0.0, degrees.to_radians().tan(), 1.0, 0.0, 0.0])
+        let next = match token {
+            TransformListToken::Matrix { a, b, c, d, e, f } => Affine2([a, b, c, d, e, f]),
+            TransformListToken::Translate { tx, ty } => Affine2([1.0, 0.0, 0.0, 1.0, tx, ty]),
+            TransformListToken::Scale { sx, sy } => Affine2([sx, 0.0, 0.0, sy, 0.0, 0.0]),
+            TransformListToken::Rotate { angle } => rotation(angle),
+            TransformListToken::SkewX { angle } => {
+                Affine2([1.0, 0.0, angle.to_radians().tan(), 1.0, 0.0, 0.0])
             },
-            ("skewY", &[degrees]) => {
-                Affine2([1.0, degrees.to_radians().tan(), 0.0, 1.0, 0.0, 0.0])
-            },
-            _ => {
-                return Err(IoError::Unsupported {
-                    format: "SVG",
-                    detail: format!("transform {name} with {} arguments", numbers.len()),
-                });
+            TransformListToken::SkewY { angle } => {
+                Affine2([1.0, angle.to_radians().tan(), 0.0, 1.0, 0.0, 0.0])
             },
         };
+        if next.0.iter().any(|value| !value.is_finite()) {
+            return Err(IoError::MalformedInput(
+                "SVG transform contains a non-finite value".into(),
+            ));
+        }
         transform = transform.then(next);
-        remaining = remaining[close + 1..].trim_start_matches(|character: char| {
-            character.is_whitespace() || character == ','
-        });
     }
     Ok(transform)
 }
@@ -232,6 +226,17 @@ fn apply_style(
         "fill-opacity",
         "stroke-opacity",
         "stroke-width",
+        "clip-path",
+        "mask",
+        "stroke-dasharray",
+        "stroke-dashoffset",
+        "stroke-linecap",
+        "stroke-linejoin",
+        "stroke-miterlimit",
+        "vector-effect",
+        "marker-start",
+        "marker-mid",
+        "marker-end",
     ] {
         if let Some(value) = attrs.get(name) {
             properties.push((name, value));
@@ -279,6 +284,14 @@ fn apply_style(
                     ));
                 }
             },
+            "clip-path" | "mask" | "stroke-dasharray" | "stroke-dashoffset"
+            | "stroke-linecap" | "stroke-linejoin" | "stroke-miterlimit" | "vector-effect"
+            | "marker-start" | "marker-mid" | "marker-end" => {
+                return Err(IoError::Unsupported {
+                    format: "SVG",
+                    detail: format!("style property {name}"),
+                });
+            },
             _ => {},
         }
     }
@@ -291,7 +304,11 @@ fn apply_style(
 }
 
 fn unit_interval(value: &str, name: &str) -> Result<f64, IoError> {
-    let value = value.parse::<f64>()?;
+    let value = if let Some(percent) = value.strip_suffix('%') {
+        percent.parse::<f64>()? / 100.0
+    } else {
+        value.parse::<f64>()?
+    };
     if !value.is_finite() || !(0.0..=1.0).contains(&value) {
         return Err(IoError::MalformedInput(format!(
             "SVG {name} must be between zero and one"
@@ -438,6 +455,17 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
             if matches!(name, tag::Group | tag::SVG) {
                 match kind {
                     Start => {
+                        if name == tag::SVG
+                            && contexts.len() > 1
+                            && ["x", "y", "viewBox", "preserveAspectRatio"]
+                                .iter()
+                                .any(|attribute| attrs.contains_key(*attribute))
+                        {
+                            return Err(IoError::Unsupported {
+                                format: "SVG",
+                                detail: "nested SVG viewport transforms".into(),
+                            });
+                        }
                         let parent = *contexts.last().ok_or_else(|| {
                             IoError::MalformedInput("SVG style context stack is empty".into())
                         })?;
@@ -452,8 +480,7 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                 }
                 continue;
             }
-            if matches!(kind, End) || matches!(name, tag::Description | tag::Title | tag::Text)
-            {
+            if matches!(kind, End) || matches!(name, tag::Description | tag::Title) {
                 continue;
             }
             let parent = *contexts.last().ok_or_else(|| {
@@ -784,5 +811,66 @@ mod tests {
         ] {
             assert!(Profile::<()>::from_svg(document, ()).is_err());
         }
+    }
+
+    #[test]
+    fn parses_svg_number_grammar_and_style_overrides() {
+        let document = r#"<svg xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" transform="translate(3-4)">
+                <polygon fill="black" points="0-0 2-0 2-2 0-2"/>
+                <line x1="0" y1="0" x2="2" y2="2" stroke="black"/>
+                <circle r="10" opacity="0"/>
+            </g>
+        </svg>"#;
+        let profile = Profile::<()>::from_svg(document, ()).unwrap();
+        assert_eq!(profile.as_region().material_contours().len(), 1);
+        assert_eq!(profile.wires().len(), 1);
+        let bounds = profile.bounding_box();
+        for (actual, expected) in [
+            (&bounds.mins.x, 3.0),
+            (&bounds.mins.y, -6.0),
+            (&bounds.maxs.x, 5.0),
+            (&bounds.maxs.y, -2.0),
+        ] {
+            let actual = actual.to_f64_lossy().unwrap();
+            assert!(
+                (actual - expected).abs() < 1e-9,
+                "expected {expected}, got {actual}"
+            );
+        }
+    }
+
+    #[test]
+    fn exported_svg_round_trips_through_importer() {
+        let square = Profile::<()>::square(Real::from(3_u8), ());
+        let document = square.to_svg().unwrap();
+        let reparsed = Profile::<()>::from_svg(&document, ()).unwrap();
+        let bounds = reparsed.bounding_box();
+        assert_eq!(bounds.mins.x, Real::zero());
+        assert_eq!(bounds.mins.y, Real::zero());
+        assert_eq!(bounds.maxs.x, Real::from(3_u8));
+        assert_eq!(bounds.maxs.y, Real::from(3_u8));
+    }
+
+    #[test]
+    fn reports_unrepresentable_svg_geometry_features() {
+        for document in [
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><text>geometry</text></svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><line x2="1" stroke="black" stroke-dasharray="1 1"/></svg>"#,
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><svg x="1"><rect width="1" height="1"/></svg></svg>"#,
+        ] {
+            assert!(matches!(
+                Profile::<()>::from_svg(document, ()),
+                Err(IoError::Unsupported { format: "SVG", .. })
+            ));
+        }
+
+        let transparent = r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" opacity="0%"/></svg>"#;
+        assert!(
+            Profile::<()>::from_svg(transparent, ())
+                .unwrap()
+                .as_region()
+                .is_empty()
+        );
     }
 }
