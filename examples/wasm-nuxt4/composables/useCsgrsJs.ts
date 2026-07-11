@@ -1,7 +1,7 @@
 // Make sure we get the typing from the csgrs WASM module
 import type { 
   MeshJs, 
-  SketchJs, 
+  ProfileJs,
   PlaneJs, 
   PolygonJs, 
   VertexJs, 
@@ -11,7 +11,7 @@ import type {
 
 type CsgrsModule = {
   MeshJs: typeof MeshJs;
-  SketchJs: typeof SketchJs;
+  ProfileJs: typeof ProfileJs;
   PlaneJs: typeof PlaneJs;
   PolygonJs: typeof PolygonJs;
   VertexJs: typeof VertexJs;

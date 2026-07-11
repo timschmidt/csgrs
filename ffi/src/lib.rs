@@ -1272,7 +1272,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.union(rhs))) }
+                unsafe { out_handle(out, mesh_handle::<$family>(lhs.union(rhs)?)) }
             })
         }
 
@@ -1285,7 +1285,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.difference(rhs))) }
+                unsafe { out_handle(out, mesh_handle::<$family>(lhs.difference(rhs)?)) }
             })
         }
 
@@ -1298,7 +1298,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.intersection(rhs))) }
+                unsafe { out_handle(out, mesh_handle::<$family>(lhs.intersection(rhs)?)) }
             })
         }
 
@@ -1311,7 +1311,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.xor(rhs))) }
+                unsafe { out_handle(out, mesh_handle::<$family>(lhs.xor(rhs)?)) }
             })
         }
 
@@ -1527,7 +1527,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.union(rhs))) }
+                unsafe { out_handle(out, profile_handle::<$family>(lhs.union(rhs)?)) }
             })
         }
 
@@ -1540,7 +1540,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.difference(rhs))) }
+                unsafe { out_handle(out, profile_handle::<$family>(lhs.difference(rhs)?)) }
             })
         }
 
@@ -1553,7 +1553,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.intersection(rhs))) }
+                unsafe { out_handle(out, profile_handle::<$family>(lhs.intersection(rhs)?)) }
             })
         }
 
@@ -1566,7 +1566,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
                 let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.xor(rhs))) }
+                unsafe { out_handle(out, profile_handle::<$family>(lhs.xor(rhs)?)) }
             })
         }
 

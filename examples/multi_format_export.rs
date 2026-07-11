@@ -139,7 +139,7 @@ fn export_to_obj(
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let obj_content = csg.to_obj(name);
+        let obj_content = csg.try_to_obj(name).unwrap();
         let vertex_count = obj_content
             .lines()
             .filter(|line| line.starts_with("v "))
@@ -250,7 +250,7 @@ mod tests {
 
         #[cfg(feature = "obj-io")]
         {
-            let obj_content = cube.to_obj("test_cube");
+            let obj_content = cube.try_to_obj("test_cube").unwrap();
 
             // Check that OBJ content contains expected elements
             assert!(obj_content.contains("o test_cube"));
@@ -270,7 +270,7 @@ mod tests {
 
         #[cfg(feature = "obj-io")]
         {
-            let obj_content = sphere.to_obj("test_sphere");
+            let obj_content = sphere.try_to_obj("test_sphere").unwrap();
 
             // Verify OBJ format structure
             let lines: Vec<&str> = obj_content.lines().collect();
@@ -329,21 +329,21 @@ mod tests {
         {
             // Test union
             let union_result = cube.union(&sphere);
-            let union_obj = union_result.to_obj("union_test");
+            let union_obj = union_result.try_to_obj("union_test").unwrap();
             assert!(union_obj.contains("o union_test"));
             assert!(union_obj.contains("v "));
             assert!(union_obj.contains("f "));
 
             // Test difference
             let diff_result = cube.difference(&sphere);
-            let diff_obj = diff_result.to_obj("diff_test");
+            let diff_obj = diff_result.try_to_obj("diff_test").unwrap();
             assert!(diff_obj.contains("o diff_test"));
             assert!(diff_obj.contains("v "));
             assert!(diff_obj.contains("f "));
 
             // Test intersection
             let intersect_result = cube.intersection(&sphere);
-            let intersect_obj = intersect_result.to_obj("intersect_test");
+            let intersect_obj = intersect_result.try_to_obj("intersect_test").unwrap();
             assert!(intersect_obj.contains("o intersect_test"));
             assert!(intersect_obj.contains("v "));
             assert!(intersect_obj.contains("f "));

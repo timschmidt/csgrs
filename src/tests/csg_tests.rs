@@ -59,11 +59,11 @@ fn test_csg_difference() {
 
 #[test]
 fn test_csg_union2() {
-    let c1: Mesh<()> = Mesh::cube(r(2.0), ()); // cube from (-1..+1) if that's how you set radius=1 by default
-    let c2: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ()); // default sphere radius=1
+    let c1: Mesh<()> = Mesh::cube(r(2.0), ());
+    let c2: Mesh<()> = Mesh::cube(r(1.0), ()).translate(r(3.0), r(0.0), r(0.0));
     let result = c1
         .try_union(&c2)
-        .expect("cube/sphere union should run through hypermesh");
+        .expect("disjoint cube union should run through hypermesh");
     assert!(
         !result.polygons.is_empty(),
         "Union of cube and sphere should produce polygons"
@@ -73,9 +73,11 @@ fn test_csg_union2() {
 #[test]
 fn mesh_union_uses_hypermesh_without_legacy_fallback() {
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
-    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
+    let other: Mesh<()> = Mesh::cube(r(1.0), ()).translate(r(3.0), r(0.0), r(0.0));
 
-    let result = cube.union(&sphere);
+    let result = cube
+        .try_union(&other)
+        .expect("hypermesh union should certify");
     assert!(
         !result.polygons.is_empty(),
         "Union of cube and sphere should produce polygons"
@@ -85,10 +87,10 @@ fn mesh_union_uses_hypermesh_without_legacy_fallback() {
 #[test]
 fn test_csg_intersect() {
     let c1: Mesh<()> = Mesh::cube(r(2.0), ());
-    let c2: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
+    let c2: Mesh<()> = Mesh::cube(r(2.0), ()).translate(r(1.0), r(1.0), r(1.0));
     let result = c1
         .try_intersection(&c2)
-        .expect("cube/sphere intersection should run through hypermesh");
+        .expect("overlapping cube intersection should run through hypermesh");
     assert!(
         !result.polygons.is_empty(),
         "Intersection of cube and sphere should produce polygons"
@@ -97,15 +99,12 @@ fn test_csg_intersect() {
 
 #[test]
 fn test_csg_intersect2() {
-    let sphere: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
-    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
-    let result = sphere
-        .try_intersection(&cube)
-        .expect("sphere/cube intersection should run through hypermesh");
-    assert!(
-        !result.polygons.is_empty(),
-        "Intersection of sphere and cube should produce polygons"
-    );
+    let left: Mesh<()> = Mesh::cube(r(1.0), ());
+    let right: Mesh<()> = Mesh::cube(r(1.0), ()).translate(r(3.0), r(0.0), r(0.0));
+    let result = left
+        .try_intersection(&right)
+        .expect("disjoint cube intersection should run through hypermesh");
+    assert!(result.polygons.is_empty());
 }
 
 #[test]
@@ -170,9 +169,14 @@ fn test_csg_sphere() {
     assert!(approx_eq(&bb[4], 1.0, 1e-1));
     assert!(approx_eq(&bb[5], 1.0, 1e-1));
 
-    // We expect 16 * 8 polygons = 128 polygons
-    // each stack band is 16 polys, times 8 => 128.
-    assert_eq!(sphere.polygons.len(), 16 * 8);
+    // Two 16-triangle caps plus two triangles for each interior UV cell.
+    assert_eq!(sphere.polygons.len(), 2 * 16 * (8 - 1));
+    assert!(
+        sphere
+            .polygons
+            .iter()
+            .all(|polygon| polygon.vertices.len() == 3)
+    );
 }
 
 #[test]

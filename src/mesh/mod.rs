@@ -549,6 +549,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// This legacy convenience method returns empty buffers when validation
     /// rejects the mesh. Prefer [`Mesh::try_get_vertices_and_indices`] when the
     /// caller needs to distinguish empty geometry from invalid topology.
+    #[deprecated(
+        since = "0.23.0",
+        note = "use try_get_vertices_and_indices to preserve validation failures"
+    )]
     pub fn get_vertices_and_indices(&self) -> (Vec<Point3>, Vec<[u32; 3]>) {
         self.try_get_vertices_and_indices().unwrap_or_default()
     }

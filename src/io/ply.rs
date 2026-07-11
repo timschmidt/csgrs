@@ -109,6 +109,7 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     }
 }
 
+#[cfg(feature = "sketch")]
 impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
     #[doc = " Export this Profile to PLY format as a string"]
     pub fn to_ply(&self, comment: &str) -> String {

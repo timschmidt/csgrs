@@ -6,7 +6,7 @@
 use csgrs::csg::CSG;
 use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
-use csgrs::sketch::Profile;
+use csgrs::profile::Profile;
 use hyperlattice::{Point3, Real, Vector3};
 use image::{Rgba, RgbaImage};
 use std::fs;

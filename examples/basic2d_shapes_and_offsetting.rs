@@ -1,6 +1,6 @@
 //! Basic 2D sketches, including offset variants, exported as flat STL files.
 
-use csgrs::sketch::Profile;
+use csgrs::profile::Profile;
 use hyperlattice::Real;
 use std::{fs, path::Path};
 

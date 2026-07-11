@@ -365,12 +365,12 @@ mod tests {
         assert!(qy.abs() < tolerance());
         assert!((qz - std::f64::consts::FRAC_1_SQRT_2).abs() < tolerance());
 
-        let opposite = rotation_between_quaternion_components(&x, &-x).unwrap();
+        let opposite = rotation_between_quaternion_components(&x, &-x.clone()).unwrap();
         assert!(opposite[0].abs() < tolerance());
         assert!(
-            (opposite[1] * opposite[1]
-                + opposite[2] * opposite[2]
-                + opposite[3] * opposite[3]
+            (opposite[1].clone() * opposite[1].clone()
+                + opposite[2].clone() * opposite[2].clone()
+                + opposite[3].clone() * opposite[3].clone()
                 - 1.0)
                 .abs()
                 < tolerance()

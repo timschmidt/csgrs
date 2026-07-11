@@ -39,7 +39,12 @@ fn real_half() -> Real {
     (Real::one() / Real::from(2_u8)).expect("nonzero exact denominator")
 }
 
-/// Boolean operations + transformations
+/// Compatibility Boolean operations and shared transformations.
+///
+/// `Mesh` and `Profile` expose inherent `try_union`, `try_difference`,
+/// `try_intersection`, and `try_xor` methods for typed error handling. The
+/// Boolean methods on this trait preserve the established infallible API and
+/// panic when the corresponding certified operation cannot be completed.
 pub trait CSG: Sized + Clone {
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
@@ -104,9 +109,9 @@ pub trait CSG: Sized + Clone {
     /// Rotates Self by x_degrees, y_degrees, z_degrees
     ///
     /// Primitive degree inputs are promoted into `Real` for the
-    /// degree-to-radian conversion and trigonometric terms before returning to
-    /// the current homogeneous `Matrix4<f64>` boundary. This keeps non-finite
-    /// angles out of transform carriers and follows Yap, "Towards Exact
+    /// degree-to-radian conversion and trigonometric terms while constructing
+    /// the homogeneous hyperlattice [`Matrix4`]. This keeps non-finite angles
+    /// out of transform carriers and follows Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The matrix formula is
     /// the same trigonometric rotation formula underlying Rodrigues' theorem;
