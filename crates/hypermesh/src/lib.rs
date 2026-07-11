@@ -94,7 +94,7 @@ pub use operations::{
     EmberConfig, boolean_difference, boolean_intersection, boolean_operation, boolean_union,
 };
 pub use output::{
-    BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureReport,
+    BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureReport, TriangleSource,
     certify_output_polygon_closure, extract_output, triangle_soup_closure_report,
     triangle_soup_is_closed, triangulate_and_resolve_certified,
 };

@@ -407,6 +407,15 @@ pub struct OutputPolygon {
     pub source_polygon: isize,
 }
 
+/// Input triangle that contributed an output triangle.
+#[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+pub struct TriangleSource {
+    /// Source mesh index.
+    pub mesh: isize,
+    /// Global source triangle index across the ordered input mesh streams.
+    pub triangle: isize,
+}
+
 /// Indexed triangle soup using hyperreal output vertices.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct TriangleSoup {
@@ -414,6 +423,8 @@ pub struct TriangleSoup {
     pub vertices: Vec<OutputVertex>,
     /// Triangle vertex indices.
     pub triangles: Vec<[usize; 3]>,
+    /// Source polygon for each triangle, parallel to `triangles`.
+    pub sources: Vec<TriangleSource>,
 }
 
 /// Exact closure summary for an indexed triangle soup.
@@ -875,6 +886,10 @@ fn triangulate_polygons(polygons: &[ConvexPolygon]) -> HypermeshResult<TriangleS
 
         for index in 1..(vertex_count - 1) {
             soup.triangles.push([base, base + index, base + index + 1]);
+            soup.sources.push(TriangleSource {
+                mesh: polygon.mesh_index,
+                triangle: polygon.polygon_index,
+            });
         }
     }
 
@@ -934,19 +949,27 @@ fn merge_duplicate_vertices(input: &TriangleSoup) -> TriangleSoup {
     TriangleSoup {
         vertices,
         triangles,
+        sources: input.sources.clone(),
     }
 }
 
 fn remove_degenerate_and_duplicate_triangles(soup: &mut TriangleSoup) {
     let mut seen = BTreeSet::new();
-    soup.triangles.retain(|triangle| {
+    let mut triangles = Vec::with_capacity(soup.triangles.len());
+    let mut sources = Vec::with_capacity(soup.sources.len());
+    for (triangle, source) in soup.triangles.drain(..).zip(soup.sources.drain(..)) {
         if triangle[0] == triangle[1] || triangle[1] == triangle[2] || triangle[0] == triangle[2] {
-            return false;
+            continue;
         }
-        let mut key = *triangle;
+        let mut key = triangle;
         key.sort();
-        seen.insert(key)
-    });
+        if seen.insert(key) {
+            triangles.push(triangle);
+            sources.push(source);
+        }
+    }
+    soup.triangles = triangles;
+    soup.sources = sources;
 }
 
 fn triangle_edge_counts(triangles: &[[usize; 3]]) -> BTreeMap<[usize; 2], DirectedEdgeUses> {
@@ -1041,7 +1064,7 @@ fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
 
                 for pair in chain.windows(2) {
                     if pair[0] != pair[1] && pair[0] != ec && pair[1] != ec {
-                        new_triangles.push([pair[0], pair[1], ec]);
+                        new_triangles.push(([pair[0], pair[1], ec], soup.sources[face_index]));
                     }
                 }
                 to_remove.insert(face_index);
@@ -1055,13 +1078,19 @@ fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
     }
 
     let mut kept = Vec::with_capacity(soup.triangles.len() + new_triangles.len());
+    let mut kept_sources = Vec::with_capacity(soup.sources.len() + new_triangles.len());
     for (index, triangle) in soup.triangles.iter().enumerate() {
         if !to_remove.contains(&index) {
             kept.push(*triangle);
+            kept_sources.push(soup.sources[index]);
         }
     }
-    kept.extend(new_triangles);
+    for (triangle, source) in new_triangles {
+        kept.push(triangle);
+        kept_sources.push(source);
+    }
     soup.triangles = kept;
+    soup.sources = kept_sources;
     Ok(true)
 }
 
@@ -1168,8 +1197,10 @@ fn insert_or_find_vertex(soup: &mut TriangleSoup, vertex: OutputVertex) -> usize
 
 fn split_edges_at_vertex(soup: &mut TriangleSoup, edges: &[[usize; 2]], vertex: usize) {
     let mut new_triangles = Vec::new();
+    let mut new_sources = Vec::new();
     let mut kept = Vec::new();
-    for triangle in &soup.triangles {
+    let mut kept_sources = Vec::new();
+    for (face_index, triangle) in soup.triangles.iter().enumerate() {
         let mut split = false;
         for edge_index in 0..3 {
             let ea = triangle[edge_index];
@@ -1182,16 +1213,21 @@ fn split_edges_at_vertex(soup: &mut TriangleSoup, edges: &[[usize; 2]], vertex: 
             {
                 new_triangles.push([ea, vertex, ec]);
                 new_triangles.push([vertex, eb, ec]);
+                new_sources.push(soup.sources[face_index]);
+                new_sources.push(soup.sources[face_index]);
                 split = true;
                 break;
             }
         }
         if !split {
             kept.push(*triangle);
+            kept_sources.push(soup.sources[face_index]);
         }
     }
     kept.extend(new_triangles);
+    kept_sources.extend(new_sources);
     soup.triangles = kept;
+    soup.sources = kept_sources;
 }
 
 fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
@@ -1386,6 +1422,7 @@ mod tests {
         TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)],
             triangles: vec![[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
+            sources: vec![TriangleSource::default(); 4],
         }
     }
 
@@ -1394,12 +1431,29 @@ mod tests {
         let soup = TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2], [0, 3, 2]],
+            sources: vec![
+                TriangleSource {
+                    mesh: 0,
+                    triangle: 3,
+                },
+                TriangleSource {
+                    mesh: 1,
+                    triangle: 9,
+                },
+            ],
         };
 
         let resolved = resolve_tjunctions(&soup).unwrap();
 
         assert_eq!(resolved.vertices.len(), 3);
         assert_eq!(resolved.triangles.len(), 1);
+        assert_eq!(
+            resolved.sources,
+            vec![TriangleSource {
+                mesh: 0,
+                triangle: 3
+            }]
+        );
     }
 
     #[test]
@@ -1407,12 +1461,26 @@ mod tests {
         let soup = TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
+            sources: vec![TriangleSource {
+                mesh: 1,
+                triangle: 7,
+            }],
         };
 
         let resolved = resolve_tjunctions(&soup).unwrap();
 
         assert_eq!(resolved.vertices.len(), 4);
         assert_eq!(resolved.triangles.len(), 2);
+        assert_eq!(
+            resolved.sources,
+            vec![
+                TriangleSource {
+                    mesh: 1,
+                    triangle: 7
+                };
+                2
+            ]
+        );
         assert!(
             resolved
                 .triangles
@@ -1426,6 +1494,7 @@ mod tests {
         let soup = TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
+            sources: vec![TriangleSource::default()],
         };
 
         let err = resolve_tjunctions_with_pass_limit(&soup, 1).unwrap_err();
@@ -1438,6 +1507,7 @@ mod tests {
         let soup = TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
+            sources: vec![TriangleSource::default()],
         };
 
         let resolved = resolve_tjunctions_with_pass_limit(&soup, 2).unwrap();
@@ -1895,6 +1965,7 @@ mod tests {
         let flat = TriangleSoup {
             vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)],
             triangles: vec![[0, 1, 2]],
+            sources: vec![TriangleSource::default()],
         };
         assert_eq!(
             certify_positive_signed_volume(&flat),
