@@ -183,7 +183,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 },
             }
         }
-        Ok(Mesh::from_polygons(&polygons, metadata))
+        Ok(Mesh::from_polygons(&polygons))
     }
 
     pub fn to_dxf(&self) -> Result<Vec<u8>, IoError> {
@@ -249,7 +249,7 @@ pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, IoError> {
 }
 
 #[cfg(feature = "sketch")]
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
+impl crate::sketch::Profile {
     pub fn to_dxf(&self) -> Result<Vec<u8>, IoError> {
         to_dxf(self)
     }

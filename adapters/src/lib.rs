@@ -53,7 +53,7 @@ mod tests {
     #[test]
     fn raw_real_profile_stays_exact_at_boundary() {
         let width = Real::from(3_i128);
-        let profile = Profile::<RawReal, ()>::square(width.clone(), ()).unwrap();
+        let profile = Profile::<RawReal>::square(width.clone()).unwrap();
         let bounds = profile.bounding_box().unwrap();
 
         assert_eq!(bounds.mins, [Real::zero(), Real::zero(), Real::zero()]);

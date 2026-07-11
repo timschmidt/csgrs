@@ -1,7 +1,7 @@
 //! WebAssembly bindings and JavaScript-facing conversion helpers.
 
 use serde_json::Value as JsonValue;
-use serde_wasm_bindgen::from_value;
+use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
 use crate::hyper_math::{Real, hreal_from_f64, hreal_to_f64};
@@ -17,7 +17,7 @@ pub mod sketch_js;
 pub mod vector_js;
 pub mod vertex_js;
 
-fn js_metadata_to_string(metadata: JsValue) -> Result<Option<String>, JsValue> {
+fn js_metadata(metadata: JsValue) -> Result<Option<JsonValue>, JsValue> {
     if metadata.is_undefined() || metadata.is_null() {
         return Ok(None);
     }
@@ -27,12 +27,16 @@ fn js_metadata_to_string(metadata: JsValue) -> Result<Option<String>, JsValue> {
         JsValue::from_str(&format!("Failed to serialize metadata from JS: {:?}", e))
     })?;
 
-    // Store it as a JSON string in Rust metadata
-    let s = serde_json::to_string(&json).map_err(|e| {
-        JsValue::from_str(&format!("Failed to stringify metadata as JSON: {}", e))
-    })?;
+    Ok(Some(json))
+}
 
-    Ok(Some(s))
+fn metadata_to_js(metadata: &Option<JsonValue>) -> Result<JsValue, JsValue> {
+    match metadata {
+        Some(metadata) => to_value(metadata).map_err(|error| {
+            JsValue::from_str(&format!("Failed to return metadata: {error}"))
+        }),
+        None => Ok(JsValue::NULL),
+    }
 }
 
 pub(crate) fn finite_matrix4(values: [Real; 16]) -> Option<Matrix4> {

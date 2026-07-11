@@ -16,7 +16,6 @@ use hypercurve::{
 };
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use std::fmt::Debug;
-use std::sync::OnceLock;
 
 fn mesh_projection_options() -> FiniteProjectionOptions {
     FiniteProjectionOptions::try_new(1e-3)
@@ -53,7 +52,7 @@ fn hyper_direction_points_down(direction: &Vector3) -> bool {
     hreal_lt_f64(&direction.dot(&z_axis), 0.0)
 }
 
-impl<M: Clone + Debug + Send + Sync> Profile<M> {
+impl Profile {
     fn projected_region_profiles_for_mesh(&self) -> Vec<FiniteRegionProfile2> {
         match self.project_region_profiles(&mesh_projection_options()) {
             Ok(Classification::Decided(profiles)) => profiles,
@@ -68,8 +67,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around `extrude_vector` with a z-axis direction.
-    pub fn extrude(&self, height: Real) -> Mesh<M> {
-        self.extrude_vector(Vector3::from_xyz(Real::zero(), Real::zero(), height))
+    pub fn extrude<M: Clone + Debug + Send + Sync>(
+        &self,
+        height: Real,
+        metadata: M,
+    ) -> Mesh<M> {
+        self.extrude_vector(
+            Vector3::from_xyz(Real::zero(), Real::zero(), height),
+            metadata,
+        )
     }
 
     /// **Mathematical Foundation: Vector-Based Linear Extrusion**
@@ -150,7 +156,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// see Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn extrude_vector(&self, direction: Vector3) -> Mesh<M> {
+    pub fn extrude_vector<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: Vector3,
+        metadata: M,
+    ) -> Mesh<M> {
         let direction_point = hyperlimit::Point3::new(
             direction.0[0].clone(),
             direction.0[1].clone(),
@@ -165,17 +175,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 Some(true)
             )
         {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
 
         if !self.region.material_contours().is_empty()
             || !self.region.hole_contours().is_empty()
         {
-            return self.extrude_region_vector(direction);
+            return self.extrude_region_vector(direction, &metadata);
         }
 
         if !self.wires().is_empty() {
-            return self.extrude_wires_vector(direction);
+            return self.extrude_wires_vector(direction, &metadata);
         }
 
         // Finite projection data is not Profile's CAD source of truth. Linear
@@ -184,7 +194,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         // boundary advocated by Yap, "Towards Exact Geometric Computation,"
         // *Computational Geometry* 7(1-2), 1997
         // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        Mesh::empty(self.metadata.clone())
+        Mesh::empty()
     }
 
     /// Extrude native hypercurve topology without routing through a separate 2D
@@ -200,7 +210,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Meisters,
     /// "Polygons Have Ears," *American Mathematical Monthly* 82(6), 1975
     /// (<https://doi.org/10.2307/2319703>).
-    fn extrude_region_vector(&self, direction: Vector3) -> Mesh<M> {
+    fn extrude_region_vector<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: Vector3,
+        metadata: &M,
+    ) -> Mesh<M> {
         let dir_unit = hunit_vector3(&direction).unwrap_or_else(Vector3::z);
         let flip = hyper_direction_points_down(&direction);
         let bottom_normal = -dir_unit.clone();
@@ -242,7 +256,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                             self.origin_transform.clone(),
                         ),
                     ],
-                    self.metadata.clone(),
+                    metadata.clone(),
                 ));
             }
 
@@ -266,21 +280,39 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                             self.origin_transform.clone(),
                         ),
                     ],
-                    self.metadata.clone(),
+                    metadata.clone(),
                 ));
             }
 
-            self.push_region_ring_sides(&exterior, direction.clone(), flip, &mut polygons);
+            self.push_region_ring_sides(
+                &exterior,
+                direction.clone(),
+                flip,
+                metadata,
+                &mut polygons,
+            );
             for hole in &holes {
-                self.push_region_ring_sides(hole, direction.clone(), flip, &mut polygons);
+                self.push_region_ring_sides(
+                    hole,
+                    direction.clone(),
+                    flip,
+                    metadata,
+                    &mut polygons,
+                );
             }
         }
 
         for wire in self.projected_wire_polylines_for_mesh() {
-            self.push_polyline_sides(wire.points(), direction.clone(), flip, &mut polygons);
+            self.push_polyline_sides(
+                wire.points(),
+                direction.clone(),
+                flip,
+                metadata,
+                &mut polygons,
+            );
         }
 
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        Mesh::from_polygons(&polygons)
     }
 
     /// Extrude native open hypercurve wires into ruled side surfaces.
@@ -291,32 +323,44 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// Yap's exact-geometric-computation boundary: Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    fn extrude_wires_vector(&self, direction: Vector3) -> Mesh<M> {
+    fn extrude_wires_vector<M: Clone + Debug + Send + Sync>(
+        &self,
+        direction: Vector3,
+        metadata: &M,
+    ) -> Mesh<M> {
         let flip = hyper_direction_points_down(&direction);
         let mut polygons = Vec::new();
         for wire in self.projected_wire_polylines_for_mesh() {
-            self.push_polyline_sides(wire.points(), direction.clone(), flip, &mut polygons);
+            self.push_polyline_sides(
+                wire.points(),
+                direction.clone(),
+                flip,
+                metadata,
+                &mut polygons,
+            );
         }
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        Mesh::from_polygons(&polygons)
     }
 
-    fn push_region_ring_sides(
+    fn push_region_ring_sides<M: Clone + Send + Sync>(
         &self,
         ring: &[[f64; 2]],
         direction: Vector3,
         flip: bool,
+        metadata: &M,
         polygons: &mut Vec<Polygon<M>>,
     ) {
         // Closed region rings and open wires share side-strip emission after
         // crossing the hypercurve-to-mesh sampling boundary.
-        self.push_polyline_sides(ring, direction, flip, polygons);
+        self.push_polyline_sides(ring, direction, flip, metadata, polygons);
     }
 
-    fn push_polyline_sides(
+    fn push_polyline_sides<M: Clone + Send + Sync>(
         &self,
         polyline: &[[f64; 2]],
         direction: Vector3,
         flip: bool,
+        metadata: &M,
         polygons: &mut Vec<Polygon<M>>,
     ) {
         for window in polyline.windows(2) {
@@ -346,7 +390,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 )
             })
             .collect::<Vec<_>>();
-            polygons.push(Polygon::new(vertices, self.metadata.clone()));
+            polygons.push(Polygon::new(vertices, metadata.clone()));
         }
     }
 
@@ -356,7 +400,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///   - The `bottom` polygon,
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
-    pub fn loft(
+    pub fn loft<M: Clone + Debug + Send + Sync>(
         bottom: &Polygon<M>,
         top: &Polygon<M>,
         flip_bottom_polygon: bool,
@@ -406,7 +450,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             polygons.push(side_poly);
         }
 
-        Ok(Mesh::from_polygons(&polygons, bottom.metadata.clone()))
+        Ok(Mesh::from_polygons(&polygons))
     }
 
     // Perform a linear extrusion along some axis, with optional twist, center, slices, scale, etc.
@@ -664,10 +708,11 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `segments`: Number of angular subdivisions (≥ 2)
     ///
     /// Returns Mesh with revolution surfaces only
-    pub fn revolve(
+    pub fn revolve<M: Clone + Debug + Send + Sync>(
         &self,
         angle_degs: Real,
         segments: usize,
+        metadata: M,
     ) -> Result<Mesh<M>, ValidationError> {
         if segments < 2 {
             return Err(ValidationError::FieldLessThan {
@@ -878,17 +923,15 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 ext_ccw,
                 angle_radians.clone(),
                 segments,
-                &self.metadata,
+                &metadata,
             ));
 
             if do_caps {
-                if let Some(cap) =
-                    build_cap_polygon(outer, Real::zero(), ext_ccw, &self.metadata)
-                {
+                if let Some(cap) = build_cap_polygon(outer, Real::zero(), ext_ccw, &metadata) {
                     new_polygons.push(cap);
                 }
                 if let Some(cap) =
-                    build_cap_polygon(outer, angle_radians.clone(), !ext_ccw, &self.metadata)
+                    build_cap_polygon(outer, angle_radians.clone(), !ext_ccw, &metadata)
                 {
                     new_polygons.push(cap);
                 }
@@ -901,7 +944,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                     hole_ccw,
                     angle_radians.clone(),
                     segments,
-                    &self.metadata,
+                    &metadata,
                 ));
             }
         };
@@ -924,18 +967,14 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                 true,
                 angle_radians.clone(),
                 segments,
-                &self.metadata,
+                &metadata,
             ));
         }
 
         //----------------------------------------------------------------------
         // 3) Return the new CSG:
         //----------------------------------------------------------------------
-        Ok(Mesh {
-            polygons: new_polygons,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-        })
+        Ok(Mesh::from_polygons(&new_polygons))
     }
 
     /// Sweep (a.k.a. “extrude along path”) –
@@ -961,13 +1000,17 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///   treated as **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
-    pub fn sweep(&self, path: &[Point3]) -> Mesh<M> {
+    pub fn sweep<M: Clone + Debug + Send + Sync>(
+        &self,
+        path: &[Point3],
+        metadata: M,
+    ) -> Mesh<M> {
         // sanity checks
         if path.len() < 2 {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
         if path.iter().any(|p| hvector3_from_point3(p).is_none()) {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
         let n_path = path.len();
         let path_start =
@@ -990,7 +1033,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         let mut orientation = hrotation_between_vectors(&Vector3::z(), &dir_prev)
             .unwrap_or_else(Matrix4::identity);
         let Some(first_translation) = htranslation_matrix(&path[0].to_vector()) else {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         };
         slice_xforms.push(first_translation * orientation.clone());
 
@@ -1012,7 +1055,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
 
             // now the slice that lives at path[i]
             let Some(translation) = htranslation_matrix(&path[i].to_vector()) else {
-                return Mesh::empty(self.metadata.clone());
+                return Mesh::empty();
             };
             slice_xforms.push(translation * orientation.clone());
 
@@ -1077,7 +1120,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         }
 
         if rings.is_empty() {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
 
         // build polygons
@@ -1106,7 +1149,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                             Vertex::new(v1.clone(), Vector3::zeros()),
                             Vertex::new(v2.clone(), Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                     // triangle 2  (v0-v2-v3)
                     out_polys.push(Polygon::new(
@@ -1115,7 +1158,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                             Vertex::new(v2.clone(), Vector3::zeros()),
                             Vertex::new(v3.clone(), Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                 }
             }
@@ -1157,7 +1200,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                             Vertex::new(p1, Vector3::zeros()),
                             Vertex::new(p0, Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                 }
 
@@ -1184,7 +1227,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
                             Vertex::new(p1, Vector3::zeros()),
                             Vertex::new(p2, Vector3::zeros()),
                         ],
-                        self.metadata.clone(),
+                        metadata.clone(),
                     ));
                 }
             };
@@ -1194,36 +1237,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             }
         }
 
-        Mesh::from_polygons(&out_polys, self.metadata.clone())
+        Mesh::from_polygons(&out_polys)
     }
-}
-
-/// Helper to build a single Polygon from a “slice” of 3D points.
-///
-/// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
-fn _polygon_from_slice<M: Clone + Send + Sync>(
-    slice_pts: &[Point3],
-    flip_winding: bool,
-    metadata: M,
-) -> Polygon<M> {
-    if slice_pts.len() < 3 {
-        // degenerate polygon
-        return Polygon::new(vec![], metadata);
-    }
-    // Build the vertex list
-    let mut verts: Vec<Vertex> = slice_pts
-        .iter()
-        .map(|p| Vertex::new(p.clone(), Vector3::zeros()))
-        .collect();
-
-    if flip_winding {
-        verts.reverse();
-        for v in &mut verts {
-            v.flip();
-        }
-    }
-
-    Polygon::new(verts, metadata)
 }
 
 fn close_region_ring(mut points: Vec<[f64; 2]>) -> Vec<[f64; 2]> {

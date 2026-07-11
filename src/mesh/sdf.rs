@@ -136,20 +136,20 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(grid) = hypersdf_grid(min_pt.clone(), max_pt.clone(), nx, ny, nz) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         let Ok(iso_value) = hreal_from_f64(iso_value) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         let Ok(grid_report) = prepared.sample_grid_preview(grid, SdfSamplingPrecision::F64)
         else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         diagnostics.hypersdf_preview = Some(SdfMeshPreviewReport::surface_nets_diagnostic(
@@ -213,7 +213,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         }
 
         // Allocate storage for field values:
@@ -224,7 +224,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         // Sample the SDF at each grid cell with optimized iteration pattern:
@@ -400,7 +400,7 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
     else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
         diagnostics.positive_sample_count = diagnostics.sample_count;
-        return (Mesh::empty(metadata), diagnostics);
+        return (Mesh::empty(), diagnostics);
     };
 
     // The shape describing our discrete grid for Surface Nets:
@@ -534,7 +534,7 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
     }
 
     // Return as a Mesh
-    (Mesh::from_polygons(&triangles, metadata), diagnostics)
+    (Mesh::from_polygons(&triangles), diagnostics)
 }
 
 fn hypersdf_grid(

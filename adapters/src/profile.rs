@@ -12,88 +12,80 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Profile<A, M>
+pub struct Profile<A>
 where
     A: ScalarAdapter,
-    M: Clone + Send + Sync + Debug,
 {
-    inner: CoreProfile<M>,
+    inner: CoreProfile,
     _adapter: PhantomData<fn() -> A>,
 }
 
-pub type RawProfile<M> = Profile<RawReal, M>;
-pub type ProfileF32<M> = Profile<F32, M>;
-pub type ProfileF64<M> = Profile<F64, M>;
-pub type ProfileI128<M> = Profile<I128, M>;
+pub type RawProfile = Profile<RawReal>;
+pub type ProfileF32 = Profile<F32>;
+pub type ProfileF64 = Profile<F64>;
+pub type ProfileI128 = Profile<I128>;
 
-impl<A, M> Clone for Profile<A, M>
+impl<A> Clone for Profile<A>
 where
     A: ScalarAdapter,
-    M: Clone + Send + Sync + Debug,
 {
     fn clone(&self) -> Self {
         Self::from_raw(self.inner.clone())
     }
 }
 
-impl<A, M> Profile<A, M>
+impl<A> Profile<A>
 where
     A: ScalarAdapter,
-    M: Clone + Send + Sync + Debug,
 {
-    pub fn from_raw(inner: CoreProfile<M>) -> Self {
+    pub fn from_raw(inner: CoreProfile) -> Self {
         Self {
             inner,
             _adapter: PhantomData,
         }
     }
 
-    pub fn into_raw(self) -> CoreProfile<M> {
+    pub fn into_raw(self) -> CoreProfile {
         self.inner
     }
 
-    pub fn raw(&self) -> &CoreProfile<M> {
+    pub fn raw(&self) -> &CoreProfile {
         &self.inner
     }
 
-    pub fn raw_mut(&mut self) -> &mut CoreProfile<M> {
+    pub fn raw_mut(&mut self) -> &mut CoreProfile {
         &mut self.inner
     }
 
-    pub fn empty(metadata: M) -> Self {
-        Self::from_raw(CoreProfile::empty(metadata))
+    pub fn empty() -> Self {
+        Self::from_raw(CoreProfile::empty())
     }
 
-    pub fn square(width: A::Scalar, metadata: M) -> AdapterResult<Self> {
-        Ok(Self::from_raw(CoreProfile::square(
-            A::into_real(width)?,
-            metadata,
-        )))
+    pub fn square(width: A::Scalar) -> AdapterResult<Self> {
+        Ok(Self::from_raw(CoreProfile::square(A::into_real(width)?)))
     }
 
-    pub fn rectangle(width: A::Scalar, length: A::Scalar, metadata: M) -> AdapterResult<Self> {
+    pub fn rectangle(width: A::Scalar, length: A::Scalar) -> AdapterResult<Self> {
         Ok(Self::from_raw(CoreProfile::rectangle(
             A::into_real(width)?,
             A::into_real(length)?,
-            metadata,
         )))
     }
 
-    pub fn circle(radius: A::Scalar, segments: usize, metadata: M) -> AdapterResult<Self> {
+    pub fn circle(radius: A::Scalar, segments: usize) -> AdapterResult<Self> {
         Ok(Self::from_raw(CoreProfile::circle(
             A::into_real(radius)?,
             segments,
-            metadata,
         )))
     }
 
-    pub fn polygon(points: &[[A::Scalar; 2]], metadata: M) -> AdapterResult<Self> {
+    pub fn polygon(points: &[[A::Scalar; 2]]) -> AdapterResult<Self> {
         let points = points
             .iter()
             .cloned()
             .map(scalar2_to_real::<A>)
             .collect::<AdapterResult<Vec<_>>>()?;
-        Ok(Self::from_raw(CoreProfile::polygon(&points, metadata)))
+        Ok(Self::from_raw(CoreProfile::polygon(&points)))
     }
 
     pub fn union(&self, other: &Self) -> AdapterResult<Self> {
@@ -173,24 +165,41 @@ where
         })
     }
 
-    pub fn extrude(&self, height: A::Scalar) -> AdapterResult<Mesh<A, M>> {
-        Ok(Mesh::from_raw(self.inner.extrude(A::into_real(height)?)))
-    }
-
-    pub fn extrude_vector(&self, direction: [A::Scalar; 3]) -> AdapterResult<Mesh<A, M>> {
-        let [x, y, z] = scalar3_to_real::<A>(direction)?;
+    pub fn extrude<M>(&self, height: A::Scalar, metadata: M) -> AdapterResult<Mesh<A, M>>
+    where
+        M: Clone + Send + Sync + Debug,
+    {
         Ok(Mesh::from_raw(
-            self.inner.extrude_vector(Vector3::from_xyz(x, y, z)),
+            self.inner.extrude(A::into_real(height)?, metadata),
         ))
     }
 
-    pub fn revolve(
+    pub fn extrude_vector<M>(
+        &self,
+        direction: [A::Scalar; 3],
+        metadata: M,
+    ) -> AdapterResult<Mesh<A, M>>
+    where
+        M: Clone + Send + Sync + Debug,
+    {
+        let [x, y, z] = scalar3_to_real::<A>(direction)?;
+        Ok(Mesh::from_raw(
+            self.inner
+                .extrude_vector(Vector3::from_xyz(x, y, z), metadata),
+        ))
+    }
+
+    pub fn revolve<M>(
         &self,
         angle_degrees: A::Scalar,
         segments: usize,
-    ) -> AdapterResult<Mesh<A, M>> {
+        metadata: M,
+    ) -> AdapterResult<Mesh<A, M>>
+    where
+        M: Clone + Send + Sync + Debug,
+    {
         self.inner
-            .revolve(A::into_real(angle_degrees)?, segments)
+            .revolve(A::into_real(angle_degrees)?, segments, metadata)
             .map(Mesh::from_raw)
             .map_err(|err| AdapterError::Validation(err.to_string()))
     }

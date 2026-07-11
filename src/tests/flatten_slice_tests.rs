@@ -7,7 +7,7 @@ fn test_flatten_and_union_single_polygon() {
     // Create a Mesh with one polygon (a unit square).
     let square_poly =
         polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square_poly], ());
+    let csg = Mesh::from_polygons(&[square_poly]);
 
     // Flatten & union it
     let flat_csg = csg.flatten();
@@ -25,7 +25,7 @@ fn test_flatten_and_union_single_polygon() {
 fn flatten_promotes_union_projection_to_hypercurve_region() {
     let square_poly =
         polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square_poly], ());
+    let csg = Mesh::from_polygons(&[square_poly]);
 
     let flat = csg.flatten();
 
@@ -48,7 +48,7 @@ fn flatten_promotes_union_projection_to_hypercurve_region() {
 fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
     let square_poly =
         polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square_poly], ());
+    let csg = Mesh::from_polygons(&[square_poly]);
 
     let sketch = Profile::from(csg);
 
@@ -75,7 +75,7 @@ fn slice_open_intersection_chain_is_native_hypercurve_wire() {
         ],
         (),
     );
-    let mesh = Mesh::from_polygons(&[polygon], ());
+    let mesh = Mesh::from_polygons(&[polygon]);
 
     let section = mesh.slice(Plane::from_normal(Vector3::z(), r(0.0)));
 
@@ -98,7 +98,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let square1 = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Second square from (1,0) to (2,1)
     let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square1, square2], ());
+    let csg = Mesh::from_polygons(&[square1, square2]);
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.as_region().is_empty(), "Union should not be empty");
@@ -115,7 +115,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
 fn flatten_union_normalizes_opposite_projected_winding() {
     let ccw = polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0]]);
     let cw = polygon_from_xy_points(&[[0.0, 0.0], [0.0, 2.0], [2.0, 2.0], [2.0, 0.0]]);
-    let mesh = Mesh::from_polygons(&[ccw, cw], ());
+    let mesh = Mesh::from_polygons(&[ccw, cw]);
 
     let flat = mesh.flatten();
 
@@ -136,7 +136,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let square_a = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Square B at (2..3, 2..3)
     let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
-    let csg = Mesh::from_polygons(&[square_a, square_b], ());
+    let csg = Mesh::from_polygons(&[square_a, square_b]);
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.as_region().is_empty());
@@ -158,7 +158,7 @@ fn test_flatten_and_union_near_xy_plane() {
         (),
     );
 
-    let csg = Mesh::from_polygons(&[poly1], ());
+    let csg = Mesh::from_polygons(&[poly1]);
     let flat_csg = csg.flatten();
 
     assert!(
@@ -185,7 +185,7 @@ fn test_flatten_and_union_collinear_edges() {
         [2.0, 1.0],
     ]);
 
-    let csg = Mesh::<()>::from_polygons(&[rect1, rect2], ());
+    let csg = Mesh::<()>::from_polygons(&[rect1, rect2]);
     let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish

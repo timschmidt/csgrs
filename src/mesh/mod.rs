@@ -57,10 +57,6 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
 
     /// Lazily calculated AABB that spans `polygons`.
     pub bounding_box: OnceLock<Aabb>,
-
-    /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
-    /// for optional metadata.
-    pub metadata: M,
 }
 
 fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
@@ -306,12 +302,6 @@ fn cross3(lhs: [f64; 3], rhs: [f64; 3]) -> [f64; 3] {
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
-    /// Compare just the `metadata` fields of two meshes
-    #[inline]
-    pub fn same_metadata(&self, other: &Self) -> bool {
-        self.metadata == other.metadata
-    }
-
     /// Example: retain only polygons whose metadata matches `needle`
     #[inline]
     pub fn filter_polygons_by_metadata(&self, needle: &M) -> Mesh<M> {
@@ -325,27 +315,24 @@ impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
         Mesh {
             polygons: polys,
             bounding_box: std::sync::OnceLock::new(),
-            metadata: self.metadata.clone(),
         }
     }
 }
 
 impl<M: Clone + Send + Sync + Debug> Mesh<M> {
-    /// Return a new empty mesh with explicit metadata.
-    pub fn empty(metadata: M) -> Self {
+    /// Return a new empty mesh.
+    pub fn empty() -> Self {
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
-            metadata,
         }
     }
 
     /// Build a Mesh from an existing polygon list
-    pub fn from_polygons(polygons: &[Polygon<M>], metadata: M) -> Self {
+    pub fn from_polygons(polygons: &[Polygon<M>]) -> Self {
         Mesh {
             polygons: polygons.to_vec(),
             bounding_box: OnceLock::new(),
-            metadata,
         }
     }
 
@@ -363,7 +350,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Mesh {
             polygons,
             bounding_box: OnceLock::new(),
-            metadata,
         }
     }
 
@@ -377,12 +363,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .into_iter()
             .map(|polygon| polygon.map_metadata(&mut f))
             .collect();
-        let metadata = f(self.metadata);
-
         Mesh {
             polygons,
             bounding_box: OnceLock::new(),
-            metadata,
         }
     }
 
@@ -406,7 +389,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             })
             .collect::<Vec<_>>();
 
-        Mesh::from_polygons(&triangles, self.metadata.clone())
+        Mesh::from_polygons(&triangles)
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
@@ -426,7 +409,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             })
             .collect();
 
-        Mesh::from_polygons(&new_polygons, self.metadata.clone())
+        Mesh::from_polygons(&new_polygons)
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, in place.
@@ -879,7 +862,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let self_buffers = self.to_hypermesh_buffers();
         let other_buffers = other.to_hypermesh_buffers();
         if self.polygons.is_empty() || self_buffers.indices.is_empty() {
-            return Ok(other.clone().with_metadata(self.metadata.clone()));
+            return Ok(other.clone());
         }
         if other.polygons.is_empty() || other_buffers.indices.is_empty() {
             return Ok(self.clone());
@@ -896,13 +879,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let self_buffers = self.to_hypermesh_buffers();
         let other_buffers = other.to_hypermesh_buffers();
         if self.polygons.is_empty() || self_buffers.indices.is_empty() {
-            return Ok(Mesh::empty(self.metadata.clone()));
+            return Ok(Mesh::empty());
         }
         if other.polygons.is_empty() || other_buffers.indices.is_empty() {
             return Ok(self.clone());
         }
         if self_buffers == other_buffers {
-            return Ok(Mesh::empty(self.metadata.clone()));
+            return Ok(Mesh::empty());
         }
         self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Difference)
     }
@@ -917,7 +900,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             || self_buffers.indices.is_empty()
             || other_buffers.indices.is_empty()
         {
-            return Ok(Mesh::empty(self.metadata.clone()));
+            return Ok(Mesh::empty());
         }
         if self_buffers == other_buffers {
             return Ok(self.clone());
@@ -931,22 +914,22 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let self_buffers = self.to_hypermesh_buffers();
         let other_buffers = other.to_hypermesh_buffers();
         if self.polygons.is_empty() || self_buffers.indices.is_empty() {
-            return Ok(other.clone().with_metadata(self.metadata.clone()));
+            return Ok(other.clone());
         }
         if other.polygons.is_empty() || other_buffers.indices.is_empty() {
             return Ok(self.clone());
         }
         if self_buffers == other_buffers {
-            return Ok(Mesh::empty(self.metadata.clone()));
+            return Ok(Mesh::empty());
         }
         self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Xor)
     }
 }
 
 impl Mesh<()> {
-    /// Return a new empty mesh with unit metadata.
+    /// Return a new empty mesh.
     pub fn new() -> Self {
-        Self::empty(())
+        Self::empty()
     }
 }
 
@@ -966,7 +949,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// ```
     fn union(&self, other: &Mesh<M>) -> Mesh<M> {
         if self.polygons.is_empty() {
-            return other.clone().with_metadata(self.metadata.clone());
+            return other.clone();
         }
         if other.polygons.is_empty() {
             return self.clone();
@@ -990,7 +973,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// ```
     fn difference(&self, other: &Mesh<M>) -> Mesh<M> {
         if self.polygons.is_empty() {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
         if other.polygons.is_empty() {
             return self.clone();
@@ -1014,7 +997,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// ```
     fn intersection(&self, other: &Mesh<M>) -> Mesh<M> {
         if self.polygons.is_empty() || other.polygons.is_empty() {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
         self.try_intersection(other)
             .unwrap_or_else(|error| panic!("hypermesh intersection failed: {error}"))
@@ -1162,7 +1145,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 }
 
 #[cfg(feature = "sketch")]
-impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
+impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Convert a Profile into a Mesh.
     ///
     /// Closed area sketches are consumed only from hypercurve-owned finite
@@ -1178,7 +1161,7 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>): topology lives in
     /// hyper geometry, while mesh vertices are the finite API-boundary
     /// realization.
-    fn from(sketch: Profile<M>) -> Self {
+    pub fn from_profile(sketch: Profile, metadata: M) -> Self {
         fn ring_to_vertices(ring: &[[f64; 2]]) -> Vec<Vertex> {
             let mut vertices: Vec<_> = ring
                 .iter()
@@ -1220,20 +1203,18 @@ impl<M: Clone + Send + Sync + Debug> From<Profile<M>> for Mesh<M> {
                     std::iter::once(profile.material().points())
                         .chain(profile.holes().iter().map(|hole| hole.points()))
                 })
-                .filter_map(|ring| ring_to_polygon(ring, &sketch.metadata))
+                .filter_map(|ring| ring_to_polygon(ring, &metadata))
                 .collect();
 
             return Mesh {
                 polygons: final_polygons,
                 bounding_box: OnceLock::new(),
-                metadata: sketch.metadata.clone(),
             };
         }
 
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
-            metadata: sketch.metadata.clone(),
         }
     }
 }
@@ -1346,7 +1327,7 @@ mod tests {
             ),
         ];
 
-        let triangulated = Mesh::from_polygons(&polygons, ()).triangulate();
+        let triangulated = Mesh::from_polygons(&polygons).triangulate();
 
         assert_eq!(triangulated.polygons.len(), 3);
     }

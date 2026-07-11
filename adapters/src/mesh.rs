@@ -66,8 +66,8 @@ where
         &mut self.inner
     }
 
-    pub fn empty(metadata: M) -> Self {
-        Self::from_raw(CoreMesh::empty(metadata))
+    pub fn empty() -> Self {
+        Self::from_raw(CoreMesh::empty())
     }
 
     pub fn cube(width: A::Scalar, metadata: M) -> AdapterResult<Self> {

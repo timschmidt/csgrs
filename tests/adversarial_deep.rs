@@ -26,10 +26,10 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
 
 #[test]
 fn curve_boolean_outputs_can_be_extruded() {
-    let left = Profile::<()>::rectangle(r(2.0), r(1.0), ());
-    let right = Profile::<()>::circle(r(0.75), 32, ()).translate(r(1.0), r(0.5), r(0.0));
+    let left = Profile::rectangle(r(2.0), r(1.0));
+    let right = Profile::circle(r(0.75), 32).translate(r(1.0), r(0.5), r(0.0));
     let sketch = left.union(&right);
-    let mesh = sketch.extrude(r(0.4));
+    let mesh = sketch.extrude(r(0.4), ());
 
     assert!(!mesh.polygons.is_empty());
 }

@@ -4,10 +4,11 @@ use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use crate::wasm::real_to_js;
 use crate::wasm::{
-    js_metadata_to_string, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,
+    js_metadata, metadata_to_js, plane_js::PlaneJs, point_js::Point3Js, vector_js::Vector3Js,
     vertex_js::VertexJs,
 };
 use js_sys::{Object, Reflect};
+use serde_json::Value as JsonValue;
 use wasm_bindgen::prelude::*;
 
 fn validate_polygon_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
@@ -19,7 +20,7 @@ fn validate_polygon_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> 
 
 #[wasm_bindgen]
 pub struct PolygonJs {
-    pub(crate) inner: Polygon<Option<String>>,
+    pub(crate) inner: Polygon<Option<JsonValue>>,
 }
 
 #[wasm_bindgen]
@@ -27,7 +28,7 @@ impl PolygonJs {
     /// Construct a polygon from a list of vertices and optional metadata.
     ///
     /// Metadata may be any JSON-serializable value; it is stored as a JSON string
-    /// in the underlying Rust `Polygon<Option<String>>`.
+    /// in the underlying Rust `Polygon<JsonValue>`.
     #[wasm_bindgen(constructor)]
     pub fn new(vertices: Vec<VertexJs>, metadata: JsValue) -> Result<PolygonJs, JsValue> {
         PolygonJs::from_vertices(vertices, metadata)
@@ -47,7 +48,7 @@ impl PolygonJs {
         // Geometry 7(1-2), 1997
         // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let verts: Vec<Vertex> = vertices.into_iter().map(|v| v.inner).collect();
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        let meta = js_metadata(metadata)?;
 
         Ok(PolygonJs {
             inner: Polygon::new(verts, meta),
@@ -93,17 +94,18 @@ impl PolygonJs {
         obj.into()
     }
 
-    /// Get metadata as a JSON string, or `null` if none.
+    /// Get metadata as its original JSON-compatible JavaScript value.
     #[wasm_bindgen(js_name = metadata)]
-    pub fn metadata(&self) -> Option<String> {
-        self.inner.metadata.clone()
+    pub fn metadata(&self) -> Result<JsValue, JsValue> {
+        metadata_to_js(&self.inner.metadata)
     }
 
     /// Set metadata from any JSON-serializable JS value.
     #[wasm_bindgen(js_name = setMetadata)]
-    pub fn set_metadata(&mut self, metadata: JsValue) {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+    pub fn set_metadata(&mut self, metadata: JsValue) -> Result<(), JsValue> {
+        let meta = js_metadata(metadata)?;
         self.inner.set_metadata(meta);
+        Ok(())
     }
 
     /// Recalculate a normal from all vertices and return it.
@@ -173,13 +175,13 @@ impl PolygonJs {
 }
 
 // Optional conversions for convenience
-impl From<Polygon<Option<String>>> for PolygonJs {
-    fn from(p: Polygon<Option<String>>) -> Self {
+impl From<Polygon<Option<JsonValue>>> for PolygonJs {
+    fn from(p: Polygon<Option<JsonValue>>) -> Self {
         PolygonJs { inner: p }
     }
 }
 
-impl From<&PolygonJs> for Polygon<Option<String>> {
+impl From<&PolygonJs> for Polygon<Option<JsonValue>> {
     fn from(p: &PolygonJs) -> Self {
         p.inner.clone()
     }

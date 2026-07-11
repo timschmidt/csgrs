@@ -29,7 +29,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-1.0e3, 1.0e3))
 }
 
-fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
+fn assert_sketch_finite(sketch: &Profile) {
     let profiles = sketch.region_profiles();
     for ring in profiles.iter().flat_map(|profile| {
         std::iter::once(profile.material().points())
@@ -59,29 +59,29 @@ fuzz_target!(|bytes: &[u8]| {
     let positive_a = at_least_tolerance(a.abs());
     let positive_b = at_least_tolerance(b.abs());
 
-    let sketch: Profile<Option<()>> = match tag {
-        0 => Profile::rectangle(a, b, None),
-        1 => Profile::square(a, None),
-        2 => Profile::circle(a, segments, None),
-        3 => Profile::right_triangle(a, b, None),
-        4 => Profile::ellipse(a, b, segments, None),
-        5 => Profile::regular_ngon(segments, a, None),
-        6 => Profile::arrow(a, b, c, positive_b, None),
-        7 => Profile::trapezoid(a, b, c, real(0.25), None),
-        8 => Profile::star(segments, a, b, None),
-        9 => Profile::rounded_rectangle(a, b, c, segments, None),
-        10 => Profile::squircle(a, b, segments, None),
-        11 => Profile::keyhole(a, b, c, segments, None),
-        12 => Profile::reuleaux(segments, a, segments, None),
-        13 => Profile::ring(a, b, segments, None),
-        14 => Profile::pie_slice(a, b, c, segments, None),
-        15 => Profile::heart(a, b, segments, None),
-        16 => Profile::crescent(positive_a, positive_b, c, segments, None),
-        17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2), None),
-        18 => Profile::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments, None),
-        19 => Profile::cycloidal_gear(a, teeth, teeth.saturating_add(1), b, segments, None),
-        20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c, None),
-        _ => Profile::cycloidal_rack(a, teeth, positive_b, c, segments, None),
+    let sketch: Profile = match tag {
+        0 => Profile::rectangle(a, b ),
+        1 => Profile::square(a ),
+        2 => Profile::circle(a, segments ),
+        3 => Profile::right_triangle(a, b ),
+        4 => Profile::ellipse(a, b, segments ),
+        5 => Profile::regular_ngon(segments, a ),
+        6 => Profile::arrow(a, b, c, positive_b ),
+        7 => Profile::trapezoid(a, b, c, real(0.25) ),
+        8 => Profile::star(segments, a, b ),
+        9 => Profile::rounded_rectangle(a, b, c, segments ),
+        10 => Profile::squircle(a, b, segments ),
+        11 => Profile::keyhole(a, b, c, segments ),
+        12 => Profile::reuleaux(segments, a, segments ),
+        13 => Profile::ring(a, b, segments ),
+        14 => Profile::pie_slice(a, b, c, segments ),
+        15 => Profile::heart(a, b, segments ),
+        16 => Profile::crescent(positive_a, positive_b, c, segments ),
+        17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2) ),
+        18 => Profile::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments ),
+        19 => Profile::cycloidal_gear(a, teeth, teeth.saturating_add(1), b, segments ),
+        20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c ),
+        _ => Profile::cycloidal_rack(a, teeth, positive_b, c, segments ),
     };
 
     assert_sketch_finite(&sketch);

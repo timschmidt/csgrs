@@ -36,6 +36,9 @@ pub enum HypermeshError {
     /// The boolean output could not be triangulated for csgrs.
     #[error("hypermesh materialization failed: {0}")]
     Materialize(::hypermesh::HypermeshError),
+    /// Hypermesh returned a triangle without a valid source polygon.
+    #[error("hypermesh returned invalid source triangle {triangle} for mesh {mesh}")]
+    InvalidSource { mesh: isize, triangle: isize },
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -166,13 +169,46 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .map_err(HypermeshError::Boolean)?;
         let soup = ::hypermesh::triangulate_and_resolve_certified(&result)
             .map_err(HypermeshError::Materialize)?;
-        Ok(Self::from_hypermesh_soup(&soup, self.metadata.clone()))
+        let left_metadata = self
+            .triangulate()
+            .polygons
+            .into_iter()
+            .map(|polygon| polygon.metadata)
+            .collect::<Vec<_>>();
+        let right_metadata = other
+            .triangulate()
+            .polygons
+            .into_iter()
+            .map(|polygon| polygon.metadata)
+            .collect::<Vec<_>>();
+        Self::from_hypermesh_soup(&soup, &left_metadata, &right_metadata)
     }
 
-    fn from_hypermesh_soup(soup: &TriangleSoup, metadata: M) -> Self {
+    fn from_hypermesh_soup(
+        soup: &TriangleSoup,
+        left_metadata: &[M],
+        right_metadata: &[M],
+    ) -> Result<Self, HypermeshError> {
         let mut polygons = Vec::with_capacity(soup.triangles.len());
 
-        for triangle in &soup.triangles {
+        for (triangle, source) in soup.triangles.iter().zip(&soup.sources) {
+            let source_index = usize::try_from(source.triangle).map_err(|_| {
+                HypermeshError::InvalidSource {
+                    mesh: source.mesh,
+                    triangle: source.triangle,
+                }
+            })?;
+            let metadata = match source.mesh {
+                0 => left_metadata.get(source_index),
+                1 => source_index
+                    .checked_sub(left_metadata.len())
+                    .and_then(|index| right_metadata.get(index)),
+                _ => None,
+            }
+            .ok_or(HypermeshError::InvalidSource {
+                mesh: source.mesh,
+                triangle: source.triangle,
+            })?;
             let Some(a) = soup_vertex_position(soup, triangle[0]) else {
                 continue;
             };
@@ -193,7 +229,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             ));
         }
 
-        Self::from_polygons(&polygons, metadata)
+        Ok(Self::from_polygons(&polygons))
     }
 }
 
@@ -477,7 +513,7 @@ mod tests {
             ],
             (),
         );
-        let buffers = Mesh::from_polygons(&[first, second], ()).to_hypermesh_buffers();
+        let buffers = Mesh::from_polygons(&[first, second]).to_hypermesh_buffers();
         let positions = buffers
             .positions
             .chunks_exact(3)

@@ -111,7 +111,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             && finite_mesh_scalar(&length)
             && finite_mesh_scalar(&height))
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         // Define the eight corner points of the prism.
         //    (x, y, z)
@@ -207,7 +207,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         );
 
         // Combine all faces into a Mesh
-        Mesh::from_polygons(&[bottom, top, front, back, left, right], metadata)
+        Mesh::from_polygons(&[bottom, top, front, back, left, right])
     }
 
     pub fn cube(width: Real, metadata: M) -> Mesh<M> {
@@ -277,7 +277,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
         if !finite_mesh_scalar(&radius) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         let segments = segments.max(3);
         let stacks = stacks.max(2);
@@ -310,14 +310,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut grid = Vec::with_capacity(segments);
         for longitude in 0..segments {
             let Some(theta) = fraction(longitude, segments).map(|value| value * tau()) else {
-                return Mesh::empty(metadata);
+                return Mesh::empty();
             };
             let mut column = Vec::with_capacity(stacks + 1);
             column.push(north.clone());
             for latitude in 1..stacks {
                 let Some(phi) = fraction(latitude, stacks).map(|value| value * Real::pi())
                 else {
-                    return Mesh::empty(metadata);
+                    return Mesh::empty();
                 };
                 column.push(vertex(theta.clone(), phi));
             }
@@ -367,7 +367,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 }
             }
         }
-        Mesh::from_polygons(&polygons, metadata)
+        Mesh::from_polygons(&polygons)
     }
 
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
@@ -405,7 +405,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             || !finite_mesh_scalar(&radius1)
             || !finite_mesh_scalar(&radius2)
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         let segments = segments.max(3);
         // Compute the axis and check that start and end do not coincide.
@@ -417,19 +417,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let ray = &end - &start;
         let Some(axis_length) = ray.dot(&ray).sqrt().ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         if !hmesh_scalar_positive(&axis_length) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         let Ok(axis_z) = ray.normalize_checked() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
 
         // Pick axes in hyperlattice so primitive floats only carry the final
         // mesh-boundary basis.
         let Ok((axis_x, axis_y)) = axis_z.orthonormal_basis_checked() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
 
         // The cap centers for the bottom and top.
@@ -471,16 +471,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         // For each slice of the circle (0..segments)
         for i in 0..segments {
             let Some(slice0) = fraction(i, segments) else {
-                return Mesh::empty(metadata);
+                return Mesh::empty();
             };
             let Some(slice1) = fraction(i + 1, segments) else {
-                return Mesh::empty(metadata);
+                return Mesh::empty();
             };
 
             // In the normal frustum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
@@ -491,7 +491,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     point(Real::zero(), slice0.clone(), -Real::one()),
                     point(Real::zero(), slice1.clone(), -Real::one()),
                 ) else {
-                    return Mesh::empty(metadata);
+                    return Mesh::empty();
                 };
                 polygons.push(Polygon::new(vec![start_v.clone(), p0, p1], metadata.clone()));
             }
@@ -501,7 +501,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     point(Real::one(), slice1.clone(), Real::one()),
                     point(Real::one(), slice0.clone(), Real::one()),
                 ) else {
-                    return Mesh::empty(metadata);
+                    return Mesh::empty();
                 };
                 polygons.push(Polygon::new(vec![end_v.clone(), p0, p1], metadata.clone()));
             }
@@ -515,7 +515,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     point(Real::one(), slice0.clone(), Real::zero()),
                     point(Real::one(), slice1.clone(), Real::zero()),
                 ) else {
-                    return Mesh::empty(metadata);
+                    return Mesh::empty();
                 };
                 polygons.push(Polygon::new(vec![start_v.clone(), p0, p1], metadata.clone()));
             } else if top_degenerate {
@@ -524,7 +524,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     point(Real::zero(), slice1.clone(), Real::zero()),
                     point(Real::zero(), slice0.clone(), Real::zero()),
                 ) else {
-                    return Mesh::empty(metadata);
+                    return Mesh::empty();
                 };
                 polygons.push(Polygon::new(vec![p0, p1, end_v.clone()], metadata.clone()));
             } else {
@@ -535,13 +535,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     point(Real::one(), slice0.clone(), Real::zero()),
                     point(Real::one(), slice1.clone(), Real::zero()),
                 ) else {
-                    return Mesh::empty(metadata);
+                    return Mesh::empty();
                 };
                 polygons.push(Polygon::new(vec![p0, p1, p2, p3], metadata.clone()));
             }
         }
 
-        Mesh::from_polygons(&polygons, metadata)
+        Mesh::from_polygons(&polygons)
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
@@ -656,7 +656,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             polygons.push(poly);
         }
 
-        Ok(Mesh::from_polygons(&polygons, metadata))
+        Ok(Mesh::from_polygons(&polygons))
     }
 
     /// Creates a 3D "egg" shape by revolving `Profile::egg()`.
@@ -677,16 +677,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Self {
         if !finite_mesh_scalar(&width) || !finite_mesh_scalar(&length) || revolve_segments < 3
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
-        let egg_2d = Profile::egg(width, length, outline_segments, metadata.clone());
+        let egg_2d = Profile::egg(width, length, outline_segments);
 
         // Build a large rectangle that cuts off everything
         let cutter_height = Real::from(9999_u16); // some large number
         let half_cutter =
             (cutter_height.clone() / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
-        let rect_cutter = Profile::square(cutter_height.clone(), metadata.clone()).translate(
+        let rect_cutter = Profile::square(cutter_height.clone()).translate(
             -cutter_height,
             -half_cutter,
             Real::zero(),
@@ -695,9 +695,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let half_egg = egg_2d.difference(&rect_cutter);
 
         half_egg
-            .revolve(Real::from(360_u16), revolve_segments)
-            .map(|mesh| mesh.convex_hull())
-            .unwrap_or_else(|_| Mesh::empty(metadata))
+            .revolve(Real::from(360_u16), revolve_segments, metadata.clone())
+            .map(|mesh| mesh.convex_hull(metadata))
+            .unwrap_or_else(|_| Mesh::empty())
     }
 
     /// Creates a 3D "teardrop" solid by revolving the existing 2D `teardrop` profile 360° around the Y-axis (via revolve).
@@ -718,17 +718,17 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Self {
         if !finite_mesh_scalar(&width) || !finite_mesh_scalar(&length) || revolve_segments < 3
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Profile::teardrop(width, length, shape_segments, metadata.clone());
+        let td_2d = Profile::teardrop(width, length, shape_segments);
 
         // Build a large rectangle that cuts off everything
         let cutter_height = Real::from(9999_u16); // some large number
         let half_cutter =
             (cutter_height.clone() / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
-        let rect_cutter = Profile::square(cutter_height.clone(), metadata.clone()).translate(
+        let rect_cutter = Profile::square(cutter_height.clone()).translate(
             -cutter_height,
             -half_cutter,
             Real::zero(),
@@ -738,9 +738,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         // revolve 360 degrees
         half_teardrop
-            .revolve(Real::from(360_u16), revolve_segments)
-            .map(|mesh| mesh.convex_hull())
-            .unwrap_or_else(|_| Mesh::empty(metadata))
+            .revolve(Real::from(360_u16), revolve_segments, metadata.clone())
+            .map(|mesh| mesh.convex_hull(metadata))
+            .unwrap_or_else(|_| Mesh::empty())
     }
 
     /// Creates a 3D "teardrop cylinder" by extruding the existing 2D `teardrop` in the Z+ axis.
@@ -763,12 +763,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             && finite_mesh_scalar(&length)
             && finite_mesh_scalar(&height))
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         // Make a 2D teardrop in the XY plane.
-        let td_2d = Profile::teardrop(width, length, shape_segments, metadata.clone());
-        td_2d.extrude(height)
+        let td_2d = Profile::teardrop(width, length, shape_segments);
+        td_2d.extrude(height, metadata)
     }
 
     /// Creates an ellipsoid by taking a sphere of radius=1 and scaling it by (rx, ry, rz).
@@ -789,7 +789,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Self {
         if !(finite_mesh_scalar(&rx) && finite_mesh_scalar(&ry) && finite_mesh_scalar(&rz)) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         let base_sphere = Self::sphere(Real::one(), segments, stacks, metadata.clone());
@@ -827,35 +827,35 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         if !finite_mesh_point(&start) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         // Compute the arrow's total length and unit direction through the
         // hyper geometry boundary used by primitive axis construction.
         let Some(arrow_length) = direction.dot(&direction).sqrt().ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         if !hmesh_scalar_positive(&arrow_length) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         let Ok(unit_dir) = direction.normalize_checked() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
 
         // Define proportions:
         // - Arrow head occupies 20% of total length.
         // - Shaft occupies the remainder.
         let Some(head_fraction) = real_from_ratio(1, 5) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let head_length = arrow_length.clone() * head_fraction;
         let shaft_length = arrow_length.clone() - head_length.clone();
 
         // Define thickness parameters proportional to the arrow length.
         let Some(shaft_radius_fraction) = real_from_ratio(3, 100) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(head_base_radius_fraction) = real_from_ratio(3, 50) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let shaft_radius = arrow_length.clone() * shaft_radius_fraction;
         let head_base_radius = arrow_length.clone() * head_base_radius_fraction;
@@ -882,7 +882,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
         if orientation {
             let Some(half_length) = (arrow_length.clone() / Real::from(2_u8)).ok() else {
-                return Mesh::empty(metadata);
+                return Mesh::empty();
             };
             let negative_half_length = -half_length.clone();
             let to_midpoint =
@@ -921,7 +921,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Regular octahedron scaled by `radius`
     pub fn octahedron(radius: Real, metadata: M) -> Self {
         if !finite_mesh_scalar(&radius) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         let pts = &[
             [Real::one(), Real::zero(), Real::zero()],
@@ -951,8 +951,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ]
             })
             .collect();
-        Self::polyhedron(&scaled, &faces, metadata.clone())
-            .unwrap_or_else(|_| Mesh::empty(metadata))
+        Self::polyhedron(&scaled, &faces, metadata.clone()).unwrap_or_else(|_| Mesh::empty())
     }
 
     /// Regular icosahedron scaled by `radius`.
@@ -967,27 +966,27 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// ratio; see Coxeter, *Regular Polytopes*, 3rd ed., 1973.
     pub fn icosahedron(radius: Real, metadata: M) -> Self {
         if !finite_mesh_scalar(&radius) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
         // radius scale factor
         let Some(factor_fraction) = real_from_ratio(2939, 5000) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let factor = radius * factor_fraction;
         // golden ratio
         let Some(sqrt_five) = Real::from(5_u8).sqrt().ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(phi) = ((Real::one() + sqrt_five) / Real::from(2_u8)).ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         // normalise so the circum-radius is 1
         let phi_squared = phi.clone() * phi.clone();
         let Some(len) = (Real::one() + phi_squared).sqrt().ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(inv_len) = (Real::one() / len).ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let a = inv_len;
         let b = phi * a.clone();
@@ -1034,7 +1033,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         Self::polyhedron(&pts, &faces, metadata.clone())
             .map(|mesh| mesh.scale(factor.clone(), factor.clone(), factor))
-            .unwrap_or_else(|_| Mesh::empty(metadata))
+            .unwrap_or_else(|_| Mesh::empty())
     }
 
     /// Torus centred at the origin in the *XY* plane.
@@ -1065,18 +1064,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             || segments_major < 3
             || segments_minor < 3
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         let profile_offset = major_r;
-        let circle = Profile::circle(minor_r, segments_minor, metadata.clone()).translate(
+        let circle = Profile::circle(minor_r, segments_minor).translate(
             profile_offset,
             Real::zero(),
             Real::zero(),
         );
         circle
-            .revolve(Real::from(360_u16), segments_major)
-            .unwrap_or_else(|_| Mesh::empty(metadata))
+            .revolve(Real::from(360_u16), segments_major, metadata)
+            .unwrap_or_else(|_| Mesh::empty())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1092,7 +1091,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         if !finite_mesh_scalar(&thickness) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         Profile::involute_gear(
@@ -1102,9 +1101,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             clearance,
             backlash,
             segments_per_flank,
-            metadata.clone(),
         )
-        .extrude(thickness)
+        .extrude(thickness, metadata)
     }
 
     #[cfg(feature = "sketch")]
@@ -1118,18 +1116,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         if !finite_mesh_scalar(&thickness) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
-        Profile::cycloidal_gear(
-            module,
-            teeth,
-            pin_teeth,
-            clearance,
-            segments_per_flank,
-            metadata.clone(),
-        )
-        .extrude(thickness)
+        Profile::cycloidal_gear(module, teeth, pin_teeth, clearance, segments_per_flank)
+            .extrude(thickness, metadata)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1150,7 +1141,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             || !finite_mesh_scalar(&thickness)
             || !finite_mesh_scalar(&helix_angle_deg)
         {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         let base_slice = Profile::involute_gear(
@@ -1160,35 +1151,34 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             clearance,
             backlash,
             segments_per_flank,
-            metadata.clone(),
         );
         if base_slice.is_empty() {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         let Ok(dz) = thickness / Real::from(slices as u64) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(d_psi_rad) = degrees_to_radians(helix_angle_deg)
             .and_then(|angle| (angle / Real::from(slices as u64)).ok())
         else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         if !finite_mesh_scalar(&dz) || !finite_mesh_scalar(&d_psi_rad) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
-        let mut acc = Mesh::empty(metadata.clone());
+        let mut acc = Mesh::empty();
         let mut z_curr = Real::zero();
         for i in 0..slices {
             let Some(rotation_deg) =
                 radians_to_degrees(Real::from(i as u64) * d_psi_rad.clone())
             else {
-                return Mesh::empty(metadata);
+                return Mesh::empty();
             };
             let slice = base_slice
                 .rotate(Real::zero(), Real::zero(), rotation_deg)
-                .extrude(dz.clone())
+                .extrude(dz.clone(), metadata.clone())
                 .translate(Real::zero(), Real::zero(), z_curr.clone());
             acc = if i == 0 { slice } else { acc.union(&slice) };
             z_curr = z_curr + dz.clone();

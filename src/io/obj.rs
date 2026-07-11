@@ -326,7 +326,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 "OBJ input contains no polygonal faces".into(),
             ));
         }
-        Ok(Mesh::from_polygons(&polygons, metadata))
+        Ok(Mesh::from_polygons(&polygons))
     }
 
     fn parse_obj_face(
@@ -398,7 +398,7 @@ fn parse_obj_index(raw: &str, label: &str, value_count: usize) -> Result<usize, 
 }
 
 #[cfg(feature = "sketch")]
-impl<M: Clone + Debug + Send + Sync> Profile<M> {
+impl Profile {
     #[doc = " Export this Profile to OBJ format as a string"]
     pub fn to_obj(&self, object_name: &str) -> Result<String, IoError> {
         self::to_obj(self, object_name)

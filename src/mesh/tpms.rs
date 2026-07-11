@@ -64,31 +64,31 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         F: Fn(&Point3) -> Real,
     {
         let Some(thickness_h) = hreal_from_f64(thickness).ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         if !hreal_gt_f64(&thickness_h, 0.0) {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         }
 
         let aabb = self.bounding_box();
         let min_pt = aabb.mins;
         let max_pt = aabb.maxs;
         let Some(half) = hreal_from_f64(0.5).ok() else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let half_thickness = thickness_h.clone() * half;
         let step = max_axis_step(&min_pt, &max_pt, resolution);
         let Some(padding) = hreal_max(&[step, thickness_h.clone()]) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(negative_padding) = hreal_sub(Real::zero(), padding.clone()) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(sample_min) = hpoint_pad(&min_pt, negative_padding) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         let Some(sample_max) = hpoint_pad(&max_pt, padding) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
 
         Mesh::sdf(
@@ -126,7 +126,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let Some(scale) = tpms_scale(period) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         self.tpms_from_sdf(
             move |p: &Point3| {
@@ -150,7 +150,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let Some(scale) = tpms_scale(period) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         self.tpms_solid_from_sdf(
             move |p: &Point3| {
@@ -176,7 +176,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let Some(scale) = tpms_scale(period) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         self.tpms_from_sdf(
             move |p: &Point3| {
@@ -200,7 +200,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let Some(scale) = tpms_scale(period) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         self.tpms_solid_from_sdf(
             move |p: &Point3| {
@@ -226,7 +226,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let Some(scale) = tpms_scale(period) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         self.tpms_from_sdf(
             move |p: &Point3| {
@@ -250,7 +250,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
         let Some(scale) = tpms_scale(period) else {
-            return Mesh::empty(metadata);
+            return Mesh::empty();
         };
         self.tpms_solid_from_sdf(
             move |p: &Point3| {

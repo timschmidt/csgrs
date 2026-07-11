@@ -178,7 +178,15 @@ macro_rules! impl_gltf_export {
 
 impl_gltf_export!(crate::mesh::Mesh<M>);
 #[cfg(feature = "sketch")]
-impl_gltf_export!(crate::sketch::Profile<M>);
+impl crate::sketch::Profile {
+    pub fn to_gltf(&self, name: &str) -> Result<String, IoError> {
+        to_gltf(self, name)
+    }
+
+    pub fn write_gltf<W: Write>(&self, writer: &mut W, name: &str) -> Result<(), IoError> {
+        write_gltf(self, writer, name)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -201,7 +209,7 @@ mod tests {
 
     #[test]
     fn rejects_empty_invalid_and_overflowing_inputs() {
-        assert!(Mesh::<()>::empty(()).to_gltf("empty").is_err());
+        assert!(Mesh::<()>::empty().to_gltf("empty").is_err());
         assert!(matches!(
             to_gltf(&InvalidIndexed, "invalid"),
             Err(IoError::Geometry { format: "glTF", .. })

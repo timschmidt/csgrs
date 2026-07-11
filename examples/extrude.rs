@@ -9,16 +9,16 @@ const PATH: &str = "stl/examples/extrude";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = Profile::<()>::square(r(1.5), ());
-    let circle = Profile::<()>::circle(r(0.5), 32, ()).translate(r(1.5), r(0.0), r(0.0));
-    let star = Profile::<()>::star(5, r(1.2), r(0.45), ());
+    let square = Profile::square(r(1.5));
+    let circle = Profile::circle(r(0.5), 32).translate(r(1.5), r(0.0), r(0.0));
+    let star = Profile::star(5, r(1.2), r(0.45));
 
-    write_mesh(&square.extrude(r(1.0)), "square_extrude");
+    write_mesh(&square.extrude(r(1.0), ()), "square_extrude");
     write_mesh(
-        &star.extrude_vector(v3(0.4, 0.25, 1.0)),
+        &star.extrude_vector(v3(0.4, 0.25, 1.0), ()),
         "star_vector_extrude",
     );
-    write_mesh(&circle.revolve(r(360.0), 48).unwrap(), "circle_revolve");
+    write_mesh(&circle.revolve(r(360.0), 48, ()).unwrap(), "circle_revolve");
 
     let path = (0..40)
         .map(|i| {
@@ -26,7 +26,7 @@ fn main() {
             p3(t.cos() * 0.6, t.sin() * 0.6, i as f64 * 0.04)
         })
         .collect::<Vec<_>>();
-    write_mesh(&Profile::<()>::circle(r(0.08), 12, ()).sweep(&path), "sweep");
+    write_mesh(&Profile::circle(r(0.08), 12).sweep(&path, ()), "sweep");
 
     let bottom = Polygon::new(
         vec![
@@ -46,7 +46,7 @@ fn main() {
         ],
         (),
     );
-    write_mesh(&Profile::<()>::loft(&bottom, &top, true).unwrap(), "loft");
+    write_mesh(&Profile::loft(&bottom, &top, true).unwrap(), "loft");
 }
 
 fn r(value: f64) -> Real {

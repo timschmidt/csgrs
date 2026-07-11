@@ -9,10 +9,10 @@ const PATH: &str = "stl/examples/basic2d_shapes";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = Profile::<()>::square(r(2.0), ());
-    let circle = Profile::<()>::circle(r(1.0), 64, ());
-    let ring = Profile::<()>::ring(r(2.0), r(0.25), 64, ());
-    let keyhole = Profile::<()>::keyhole(r(1.0), r(0.4), r(1.5), 32, ());
+    let square = Profile::square(r(2.0));
+    let circle = Profile::circle(r(1.0), 64);
+    let ring = Profile::ring(r(2.0), r(0.25), 64);
+    let keyhole = Profile::keyhole(r(1.0), r(0.4), r(1.5), 32);
 
     write_sketch(&square, "square");
     write_sketch(&circle, "circle");
@@ -30,7 +30,7 @@ fn r(value: f64) -> Real {
     Real::try_from(value).expect("example values must be finite")
 }
 
-fn write_sketch(sketch: &Profile<()>, name: &str) {
+fn write_sketch(sketch: &Profile, name: &str) {
     fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
         sketch.to_stl_binary(name).unwrap(),

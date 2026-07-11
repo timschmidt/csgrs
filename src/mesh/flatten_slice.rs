@@ -24,7 +24,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///   discipline in Hobby, "Practical Segment Intersection with Finite
     ///   Precision Output," *Computational Geometry* 13(4), 1999
     ///   (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-    pub fn flatten(&self) -> Profile<M> {
+    pub fn flatten(&self) -> Profile {
         let policy = CurvePolicy::certified();
         let mut flattened_region = Region2::empty();
         let mut material_contours = Vec::new();
@@ -79,9 +79,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         Profile::from_region_and_wires_with_origin(
             flattened_region,
             Vec::new(),
-            self.metadata.clone(),
             Vertex::default(),
-            Profile::<M>::prepare_origin_transform(Vertex::default()),
+            Profile::prepare_origin_transform(Vertex::default()),
         )
     }
 
@@ -118,7 +117,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
-    pub fn slice(&self, plane: Plane) -> Profile<M> {
+    pub fn slice(&self, plane: Plane) -> Profile {
         let (coplanar_polys, intersection_edges) =
             slice_polygons_by_plane(&self.polygons, &plane);
 
@@ -194,9 +193,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         Profile::from_region_and_wires_with_origin(
             region,
             open_wires,
-            self.metadata.clone(),
             Vertex::default(),
-            Profile::<M>::prepare_origin_transform(Vertex::default()),
+            Profile::prepare_origin_transform(Vertex::default()),
         )
     }
 }

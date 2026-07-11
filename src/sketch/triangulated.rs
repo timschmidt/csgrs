@@ -5,7 +5,7 @@ use crate::triangulated::{IndexedTriangulated3D, Triangulated3D};
 use crate::vertex::Vertex;
 use hyperlattice::Vector3;
 
-impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Profile<M> {
+impl Triangulated3D for Profile {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),
@@ -32,4 +32,4 @@ impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Profile<M> {
     }
 }
 
-impl<M: Clone + Send + Sync + std::fmt::Debug> IndexedTriangulated3D for Profile<M> {}
+impl IndexedTriangulated3D for Profile {}

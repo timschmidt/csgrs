@@ -76,7 +76,7 @@ impl GraphicLineStrings {
 }
 
 #[derive(Clone, Debug)]
-pub struct Profile<M> {
+pub struct Profile {
     /// Primary hypercurve region for 2D CAD topology.
     ///
     /// Filled Profile topology is owned by this region. Topology-sensitive
@@ -96,24 +96,19 @@ pub struct Profile<M> {
     /// Lazily calculated AABB that spans the finite boundary projection.
     pub(crate) bounding_box: OnceLock<Aabb>,
 
-    /// Whole-sketch metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
-    /// for optional metadata.
-    pub(crate) metadata: M,
-
     /// Origin of the sketch in 3D space.
     pub(crate) origin: Vertex,
 
     pub(crate) origin_transform: OriginTransform,
 }
 
-impl<M: Clone + Send + Sync + Debug> Profile<M> {
-    /// Return a new empty sketch with explicit metadata.
-    pub fn empty(metadata: M) -> Self {
+impl Profile {
+    /// Return a new empty sketch.
+    pub fn empty() -> Self {
         Profile {
             region: Region2::empty(),
             wires: Vec::new(),
             bounding_box: OnceLock::new(),
-            metadata,
             origin: Vertex::default(),
             origin_transform: Self::prepare_origin_transform(Vertex::default()),
         }
@@ -329,8 +324,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// "Practical Segment Intersection with Finite Precision Output,"
     /// *Computational Geometry* 13(4), 1999
     /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-    pub fn from_region(region: Region2, metadata: M) -> Profile<M> {
-        Self::from_region_and_wires(region, Vec::new(), metadata)
+    pub fn from_region(region: Region2) -> Profile {
+        Self::from_region_and_wires(region, Vec::new())
     }
 
     /// Create a Profile from one native hypercurve contour.
@@ -341,8 +336,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// all topology in hypercurve, following Yap, "Towards Exact Geometric
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn from_contour(contour: Contour2, metadata: M) -> Profile<M> {
-        Self::from_region(Region2::from_material_contours(vec![contour]), metadata)
+    pub fn from_contour(contour: Contour2) -> Profile {
+        Self::from_region(Region2::from_material_contours(vec![contour]))
     }
 
     /// Create a Profile from a native hypercurve region and open curve strings.
@@ -353,15 +348,10 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>), and
     /// avoids making finite boundary products the source of CAD topology.
-    pub fn from_region_and_wires(
-        region: Region2,
-        wires: Vec<CurveString2>,
-        metadata: M,
-    ) -> Profile<M> {
+    pub fn from_region_and_wires(region: Region2, wires: Vec<CurveString2>) -> Profile {
         Self::from_region_and_wires_with_origin(
             region,
             wires,
-            metadata,
             Vertex::default(),
             Self::prepare_origin_transform(Vertex::default()),
         )
@@ -370,15 +360,13 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     pub(crate) fn from_region_and_wires_with_origin(
         region: Region2,
         wires: Vec<CurveString2>,
-        metadata: M,
         origin: Vertex,
         origin_transform: OriginTransform,
-    ) -> Profile<M> {
+    ) -> Profile {
         Profile {
             region,
             wires,
             bounding_box: OnceLock::new(),
-            metadata,
             origin,
             origin_transform,
         }
@@ -407,8 +395,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// predicates and topology use exact objects follows Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn from_wires(wires: Vec<CurveString2>, metadata: M) -> Profile<M> {
-        Self::from_region_and_wires(Region2::empty(), wires, metadata)
+    pub fn from_wires(wires: Vec<CurveString2>) -> Profile {
+        Self::from_region_and_wires(Region2::empty(), wires)
     }
 
     /// Create a wire-only Profile from one native hypercurve curve string.
@@ -418,8 +406,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// It follows Yap's exact-geometric-computation split between source
     /// topology and finite output boundaries
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn from_wire(wire: CurveString2, metadata: M) -> Profile<M> {
-        Self::from_wires(vec![wire], metadata)
+    pub fn from_wire(wire: CurveString2) -> Profile {
+        Self::from_wires(vec![wire])
     }
 
     /// Borrow the native hypercurve region that now carries Profile topology.
@@ -432,7 +420,7 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         &self.wires
     }
 
-    /// Consume this sketch into its native hypercurve CAD topology and metadata.
+    /// Consume this sketch into its native hypercurve CAD topology.
     ///
     /// This is the ownership counterpart to [`Profile::as_region`] and
     /// [`Profile::wires`]. Callers that need to pass Profile topology into other
@@ -442,8 +430,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// objects backed by hyperreal predicates, following Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn into_region_and_wires(self) -> (Region2, Vec<CurveString2>, M) {
-        (self.region, self.wires, self.metadata)
+    pub fn into_region_and_wires(self) -> (Region2, Vec<CurveString2>) {
+        (self.region, self.wires)
     }
 
     /// Project native open wires into finite XY polylines.
@@ -605,7 +593,6 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
             return Ok(Self::from_region_and_wires_with_origin(
                 Region2::empty(),
                 Vec::new(),
-                self.metadata.clone(),
                 self.origin.clone(),
                 self.origin_transform.clone(),
             ));
@@ -633,7 +620,7 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         // matches Yap's exact-object
         // boundary by avoiding a finite detour solely to retain wires.
         let wires = self.boolean_wires_with(other, op);
-        let mut sketch = Self::from_region_and_wires(region, wires, self.metadata.clone());
+        let mut sketch = Self::from_region_and_wires(region, wires);
         sketch.origin = self.origin.clone();
         sketch.origin_transform = self.origin_transform.clone();
         Ok(sketch)
@@ -749,64 +736,6 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
                 CurveString2::from_real_point_iter(transformed).ok()
             })
             .collect()
-    }
-
-    /// Return this sketch with replacement metadata.
-    pub fn with_metadata<NewM: Clone + Send + Sync + Debug>(
-        self,
-        metadata: NewM,
-    ) -> Profile<NewM> {
-        Profile {
-            region: self.region,
-            wires: self.wires,
-            bounding_box: OnceLock::new(),
-            metadata,
-            origin: self.origin.clone(),
-            origin_transform: self.origin_transform.clone(),
-        }
-    }
-
-    /// Map this sketch's metadata while preserving its geometry and origin.
-    pub fn map_metadata<NewM: Clone + Send + Sync + Debug, F>(self, f: F) -> Profile<NewM>
-    where
-        F: FnOnce(M) -> NewM,
-    {
-        Profile {
-            region: self.region,
-            wires: self.wires,
-            bounding_box: OnceLock::new(),
-            metadata: f(self.metadata),
-            origin: self.origin.clone(),
-            origin_transform: self.origin_transform.clone(),
-        }
-    }
-
-    /// Borrow this sketch's metadata without exposing topology internals.
-    ///
-    /// Profile geometry is owned by hypercurve [`Region2`] and [`CurveString2`]
-    /// fields behind constructor/accessor APIs. Metadata remains the caller's
-    /// domain payload, so this accessor mirrors [`crate::polygon::Polygon`]
-    /// while allowing the Profile storage layout to keep moving toward
-    /// hypercurve-owned CAD topology. Keeping payload data separate from exact
-    /// geometric objects follows Yap's exact-geometric-computation split
-    /// between combinatorial/topological structure and finite API data:
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub const fn metadata(&self) -> &M {
-        &self.metadata
-    }
-
-    /// Mutably borrow this sketch's metadata.
-    ///
-    /// This changes only caller-owned payload data; hypercurve region and wire
-    /// topology remain accessible through dedicated Profile APIs.
-    pub const fn metadata_mut(&mut self) -> &mut M {
-        &mut self.metadata
-    }
-
-    /// Replace this sketch's metadata in place.
-    pub fn set_metadata(&mut self, metadata: M) {
-        self.metadata = metadata;
     }
 
     /// Set the origin used when rendering or lifting this sketch into 3D.
@@ -988,15 +917,12 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// internal follows Yap, "Towards Exact Geometric Computation,"
     /// Computational Geometry 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    pub fn renormalize(&self) -> Profile<M> {
+    pub fn renormalize(&self) -> Profile {
         if !self.wires.is_empty()
             || (!self.region.is_empty() && Self::region_has_nonzero_area(&self.region))
         {
-            let mut sketch = Self::from_region_and_wires(
-                self.region.clone(),
-                self.wires.clone(),
-                self.metadata.clone(),
-            );
+            let mut sketch =
+                Self::from_region_and_wires(self.region.clone(), self.wires.clone());
             sketch.origin = self.origin.clone();
             sketch.origin_transform = self.origin_transform.clone();
             return sketch;
@@ -1005,7 +931,6 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         Self::from_region_and_wires_with_origin(
             Region2::empty(),
             Vec::new(),
-            self.metadata.clone(),
             self.origin.clone(),
             self.origin_transform.clone(),
         )
@@ -1077,7 +1002,7 @@ fn planar_similarity_from_matrix(mat: &Matrix4) -> Option<Similarity2> {
     .ok()
 }
 
-impl<M: Clone + Send + Sync + Debug> Profile<M> {
+impl Profile {
     /// Compute a certified profile union.
     pub fn try_union(&self, other: &Self) -> Result<Self, ProfileBooleanError> {
         self.boolean_region_with(other, BooleanOp::Union)
@@ -1099,10 +1024,10 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     }
 }
 
-impl Profile<()> {
-    /// Return a new empty sketch with unit metadata.
+impl Profile {
+    /// Return a new empty sketch.
     pub fn new() -> Self {
-        Self::empty(())
+        Self::empty()
     }
 }
 
@@ -1127,7 +1052,7 @@ fn curve_string_to_polyline(wire: &CurveString2) -> Option<Vec<(f64, f64)>> {
     )
 }
 
-impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
+impl CSG for Profile {
     /// Return a new Profile representing union of the two Sketches.
     ///
     /// ```text
@@ -1141,7 +1066,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn union(&self, other: &Profile<M>) -> Profile<M> {
+    fn union(&self, other: &Profile) -> Profile {
         self.try_union(other)
             .unwrap_or_else(|error| panic!("profile union failed: {error}"))
     }
@@ -1159,7 +1084,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn difference(&self, other: &Profile<M>) -> Profile<M> {
+    fn difference(&self, other: &Profile) -> Profile {
         self.try_difference(other)
             .unwrap_or_else(|error| panic!("profile difference failed: {error}"))
     }
@@ -1177,7 +1102,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn intersection(&self, other: &Profile<M>) -> Profile<M> {
+    fn intersection(&self, other: &Profile) -> Profile {
         self.try_intersection(other)
             .unwrap_or_else(|error| panic!("profile intersection failed: {error}"))
     }
@@ -1196,7 +1121,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn xor(&self, other: &Profile<M>) -> Profile<M> {
+    fn xor(&self, other: &Profile) -> Profile {
         self.try_xor(other)
             .unwrap_or_else(|error| panic!("profile xor failed: {error}"))
     }
@@ -1216,7 +1141,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>); the affine projection
     /// is the ordinary homogeneous-coordinate convention described by Foley et
     /// al., *Computer Graphics: Principles and Practice*, 2nd ed., 1990.
-    fn transform(&self, mat: &Matrix4) -> Profile<M> {
+    fn transform(&self, mat: &Matrix4) -> Profile {
         if let Some(region) = self.transformed_region_with_matrix(mat) {
             // Open wires follow the same finite projection boundary as region
             // rings, but rebuild directly as `CurveString2` instead of routing
@@ -1228,7 +1153,6 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             return Self::from_region_and_wires_with_origin(
                 region,
                 wires,
-                self.metadata.clone(),
                 self.origin.clone(),
                 self.origin_transform.clone(),
             );
@@ -1239,7 +1163,6 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
             return Self::from_region_and_wires_with_origin(
                 Region2::empty(),
                 wires,
-                self.metadata.clone(),
                 self.origin.clone(),
                 self.origin_transform.clone(),
             );
@@ -1248,7 +1171,6 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
         Self::from_region_and_wires_with_origin(
             Region2::empty(),
             Vec::new(),
-            self.metadata.clone(),
             self.origin.clone(),
             self.origin_transform.clone(),
         )
@@ -1301,14 +1223,13 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     /// coordinates at API boundaries as advocated by Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    fn inverse(&self) -> Profile<M> {
+    fn inverse(&self) -> Profile {
         if !self.wires.is_empty()
             || (!self.region.is_empty() && Self::region_has_nonzero_area(&self.region))
         {
             return Self::from_region_and_wires_with_origin(
                 self.region.clone(),
                 self.wires.clone(),
-                self.metadata.clone(),
                 self.origin.clone(),
                 self.origin_transform.clone(),
             );
@@ -1317,7 +1238,6 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
         Self::from_region_and_wires_with_origin(
             Region2::empty(),
             Vec::new(),
-            self.metadata.clone(),
             self.origin.clone(),
             self.origin_transform.clone(),
         )
@@ -1325,7 +1245,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
 }
 
 #[cfg(feature = "mesh")]
-impl<M: Clone + Send + Sync + Debug> From<Mesh<M>> for Profile<M> {
+impl<M: Clone + Send + Sync + Debug> From<Mesh<M>> for Profile {
     fn from(mesh: Mesh<M>) -> Self {
         mesh.flatten()
     }

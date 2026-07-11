@@ -104,7 +104,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+        Mesh::from_polygons(&smoothed_polygons)
     }
 
     /// **Mathematical Foundation: Taubin Mesh Smoothing**
@@ -221,7 +221,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        Mesh::from_polygons(&smoothed_polygons, self.metadata.clone())
+        Mesh::from_polygons(&smoothed_polygons)
     }
 
     fn polygon_vertex_indices(&self, vertex_map: &VertexIndexMap) -> Vec<Vec<Option<usize>>> {

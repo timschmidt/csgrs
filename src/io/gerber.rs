@@ -105,8 +105,8 @@ impl Default for GerberExportOptions {
 }
 
 /// Parse Gerber data into a `Profile`.
-pub trait FromGerber<M>: Sized {
-    fn from_gerber(gerber_data: &[u8], metadata: M) -> Result<Self, IoError>;
+pub trait FromGerber: Sized {
+    fn from_gerber(gerber_data: &[u8]) -> Result<Self, IoError>;
 }
 
 /// Serialize geometry to Gerber.
@@ -116,12 +116,9 @@ pub trait ToGerber {
     -> Result<Vec<u8>, IoError>;
 }
 
-impl<M> FromGerber<M> for Profile<M>
-where
-    M: Clone + Debug + Send + Sync,
-{
+impl FromGerber for Profile {
     #[allow(clippy::result_large_err)]
-    fn from_gerber(gerber_data: &[u8], metadata: M) -> Result<Self, IoError> {
+    fn from_gerber(gerber_data: &[u8]) -> Result<Self, IoError> {
         preflight_gerber_input(gerber_data)?;
 
         let reader = BufReader::new(Cursor::new(gerber_data));
@@ -143,7 +140,7 @@ where
         let units = doc.units.ok_or_else(|| {
             IoError::MalformedInput("Gerber input does not declare units".into())
         })?;
-        let mut state = ImportState::<M>::new(units, metadata);
+        let mut state = ImportState::new(units);
         for command in doc.commands() {
             state.apply_command(command, &doc.apertures)?;
         }
@@ -158,10 +155,7 @@ fn preflight_gerber_input(gerber_data: &[u8]) -> Result<(), IoError> {
     Ok(())
 }
 
-impl<M> ToGerber for Profile<M>
-where
-    M: Clone + Debug + Send + Sync,
-{
+impl ToGerber for Profile {
     fn to_gerber(&self) -> Result<Vec<u8>, IoError> {
         self.to_gerber_with_options(GerberExportOptions::default())
     }
@@ -250,9 +244,8 @@ where
     }
 }
 
-struct ImportState<M> {
-    sketch: Profile<M>,
-    metadata: M,
+struct ImportState {
+    sketch: Profile,
     unit_scale: f64,
     coordinate_mode: CoordinateMode,
     source_current: Coord<f64>,
@@ -266,14 +259,10 @@ struct ImportState<M> {
     region: Option<RegionBuilder>,
 }
 
-impl<M> ImportState<M>
-where
-    M: Clone + Debug + Send + Sync,
-{
-    fn new(unit: Unit, metadata: M) -> Self {
+impl ImportState {
+    fn new(unit: Unit) -> Self {
         Self {
-            sketch: Profile::empty(metadata.clone()),
-            metadata,
+            sketch: Profile::empty(),
             unit_scale: unit_scale(unit),
             coordinate_mode: CoordinateMode::Absolute,
             source_current: Coord { x: 0.0, y: 0.0 },
@@ -288,7 +277,7 @@ where
         }
     }
 
-    fn finish(self) -> Result<Profile<M>, IoError> {
+    fn finish(self) -> Result<Profile, IoError> {
         if self.region.is_some() {
             return Err(IoError::MalformedInput(
                 "Gerber input ends inside a region".into(),
@@ -385,7 +374,7 @@ where
                             "Gerber region mode was closed while not active".into(),
                         )
                     })?;
-                    let sketch = region.into_sketch(self.metadata.clone())?;
+                    let sketch = region.into_sketch()?;
                     self.apply_polarity(sketch)?;
                 }
             },
@@ -454,7 +443,7 @@ where
         Ok(())
     }
 
-    fn apply_polarity(&mut self, sketch: Profile<M>) -> Result<(), IoError> {
+    fn apply_polarity(&mut self, sketch: Profile) -> Result<(), IoError> {
         let sketches = repeat_sketches(sketch, self.step_repeat)?;
         for sketch in sketches {
             self.sketch = match self.polarity {
@@ -555,7 +544,6 @@ where
                     let sketch = trace_arc_to_sketch(
                         aperture,
                         arc,
-                        self.metadata.clone(),
                         self.unit_scale,
                         self.aperture_transform,
                     )?;
@@ -571,7 +559,6 @@ where
                         aperture,
                         start,
                         point,
-                        self.metadata.clone(),
                         self.unit_scale,
                         self.aperture_transform,
                     )?;
@@ -605,7 +592,6 @@ where
                 let sketch = flash_to_sketch(
                     aperture,
                     self.current,
-                    self.metadata.clone(),
                     self.unit_scale,
                     self.aperture_transform,
                 )?;
@@ -717,10 +703,7 @@ impl RegionBuilder {
         Ok(())
     }
 
-    fn into_sketch<M>(mut self, metadata: M) -> Result<Profile<M>, IoError>
-    where
-        M: Clone + Debug + Send + Sync,
-    {
+    fn into_sketch(mut self) -> Result<Profile, IoError> {
         self.finish_ring()?;
 
         let mut rings = self.rings;
@@ -754,7 +737,7 @@ impl RegionBuilder {
                 });
             },
         };
-        Ok(Profile::from_region(region, metadata))
+        Ok(Profile::from_region(region))
     }
 }
 
@@ -1070,27 +1053,20 @@ impl ImageTransform {
     }
 }
 
-fn flash_to_sketch<M>(
+fn flash_to_sketch(
     aperture: &Aperture,
     center: Coord<f64>,
-    metadata: M,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     let mut sketch = match aperture {
         Aperture::Circle(circle) => {
             let diameter = positive(
                 aperture_transform.scale_length(circle.diameter * unit_scale),
                 "circle aperture diameter",
             )?;
-            let mut sketch = Profile::circle(
-                required_real(diameter * 0.5, "circle aperture radius")?,
-                64,
-                metadata.clone(),
-            );
+            let mut sketch =
+                Profile::circle(required_real(diameter * 0.5, "circle aperture radius")?, 64);
             if let Some(hole_diameter) = circle.hole_diameter {
                 let hole_diameter = positive(
                     aperture_transform.scale_length(hole_diameter * unit_scale),
@@ -1106,18 +1082,16 @@ where
                     Profile::circle(
                         required_real(hole_diameter * 0.5, "circle aperture hole radius")?,
                         64,
-                        metadata.clone(),
                     ),
-                    metadata,
                 );
             }
             sketch
         },
         Aperture::Rectangle(rect) => {
-            aperture_rect_sketch(rect, metadata, unit_scale, aperture_transform, false)?
+            aperture_rect_sketch(rect, unit_scale, aperture_transform, false)?
         },
         Aperture::Obround(rect) => {
-            aperture_rect_sketch(rect, metadata, unit_scale, aperture_transform, true)?
+            aperture_rect_sketch(rect, unit_scale, aperture_transform, true)?
         },
         Aperture::Polygon(polygon) => {
             if polygon.vertices < 3 {
@@ -1133,7 +1107,6 @@ where
             let mut sketch = Profile::regular_ngon(
                 polygon.vertices as usize,
                 required_real(diameter * 0.5, "polygon aperture radius")?,
-                metadata.clone(),
             )
             .rotate(
                 Real::zero(),
@@ -1155,9 +1128,7 @@ where
                     Profile::circle(
                         required_real(hole_diameter * 0.5, "polygon aperture hole radius")?,
                         64,
-                        metadata.clone(),
                     ),
-                    metadata,
                 );
             }
             sketch
@@ -1178,16 +1149,13 @@ where
     ))
 }
 
-fn add_aperture_hole<M>(outer: Profile<M>, hole: Profile<M>, metadata: M) -> Profile<M>
-where
-    M: Clone + Debug + Send + Sync,
-{
+fn add_aperture_hole(outer: Profile, hole: Profile) -> Profile {
     let mut holes = outer.as_region().hole_contours().to_vec();
     holes.extend(hole.as_region().material_contours().iter().cloned());
-    Profile::from_region(
-        hypercurve::Region2::new(outer.as_region().material_contours().to_vec(), holes),
-        metadata,
-    )
+    Profile::from_region(hypercurve::Region2::new(
+        outer.as_region().material_contours().to_vec(),
+        holes,
+    ))
 }
 
 impl ApertureTransform {
@@ -1196,16 +1164,12 @@ impl ApertureTransform {
     }
 }
 
-fn aperture_rect_sketch<M>(
+fn aperture_rect_sketch(
     rect: &Rectangular,
-    metadata: M,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
     rounded: bool,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     let width = positive(
         aperture_transform.scale_length(rect.x * unit_scale),
         "rectangular aperture width",
@@ -1220,13 +1184,11 @@ where
             required_real(height, "rectangular aperture height")?,
             required_real(width.min(height) * 0.5, "obround aperture radius")?,
             16,
-            metadata.clone(),
         )
     } else {
         Profile::rectangle(
             required_real(width, "rectangular aperture width")?,
             required_real(height, "rectangular aperture height")?,
-            metadata.clone(),
         )
     }
     .translate(
@@ -1250,34 +1212,28 @@ where
             Profile::circle(
                 required_real(hole_diameter * 0.5, "rectangular aperture hole radius")?,
                 64,
-                metadata.clone(),
             ),
-            metadata,
         );
     }
 
     Ok(sketch)
 }
 
-fn trace_to_sketch<M>(
+fn trace_to_sketch(
     aperture: &Aperture,
     start: Coord<f64>,
     end: Coord<f64>,
-    metadata: M,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     if nearly_same(start, end) {
-        return flash_to_sketch(aperture, start, metadata, unit_scale, aperture_transform);
+        return flash_to_sketch(aperture, start, unit_scale, aperture_transform);
     }
 
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            linear_circular_sweep_sketch(start, end, radius, metadata)
+            linear_circular_sweep_sketch(start, end, radius)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             let points = aperture_outline_points(aperture, unit_scale, aperture_transform)?;
@@ -1296,7 +1252,7 @@ where
                     ]
                 })
                 .collect::<Vec<_>>();
-            polygon_from_coords(convex_hull(swept_points)?, metadata)
+            polygon_from_coords(convex_hull(swept_points)?)
         },
         Aperture::Macro(..) => Err(IoError::Unsupported {
             format: "Gerber",
@@ -1305,15 +1261,11 @@ where
     }
 }
 
-fn linear_circular_sweep_sketch<M>(
+fn linear_circular_sweep_sketch(
     start: Coord<f64>,
     end: Coord<f64>,
     radius: f64,
-    metadata: M,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     let points = circle_points(positive(radius, "circular stroke radius")?, 64)
         .into_iter()
         .flat_map(|point| {
@@ -1323,23 +1275,19 @@ where
             })
         })
         .collect();
-    polygon_from_coords(convex_hull(points)?, metadata)
+    polygon_from_coords(convex_hull(points)?)
 }
 
-fn trace_arc_to_sketch<M>(
+fn trace_arc_to_sketch(
     aperture: &Aperture,
     arc: &CircularInterpolation,
-    metadata: M,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            circular_arc_sweep_sketch(arc, radius, metadata)
+            circular_arc_sweep_sketch(arc, radius)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             Err(IoError::Unsupported {
@@ -1360,14 +1308,10 @@ where
 /// The boundary is an annular sector with semicircular end caps. Full circles
 /// become a disk or annulus. This retains the command's topology directly and
 /// only samples its circular boundary at the finite file-import boundary.
-fn circular_arc_sweep_sketch<M>(
+fn circular_arc_sweep_sketch(
     arc: &CircularInterpolation,
     aperture_radius: f64,
-    metadata: M,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     if !aperture_radius.is_finite() || aperture_radius <= 0.0 {
         return Err(IoError::Geometry {
             format: "Gerber",
@@ -1379,18 +1323,14 @@ where
     let full_circle = (arc.sweep.abs() - std::f64::consts::TAU).abs() <= 1.0e-12;
 
     if full_circle {
-        let outer = polygon_from_coords(
-            translated_circle_points(arc.center, outer_radius, 96),
-            metadata.clone(),
-        )?;
+        let outer =
+            polygon_from_coords(translated_circle_points(arc.center, outer_radius, 96))?;
         if inner_radius <= 0.0 {
             return Ok(outer);
         }
-        let inner = polygon_from_coords(
-            translated_circle_points(arc.center, inner_radius, 96),
-            metadata.clone(),
-        )?;
-        return Ok(add_aperture_hole(outer, inner, metadata));
+        let inner =
+            polygon_from_coords(translated_circle_points(arc.center, inner_radius, 96))?;
+        return Ok(add_aperture_hole(outer, inner));
     }
     if inner_radius <= 0.0 {
         return Err(IoError::Unsupported {
@@ -1436,7 +1376,7 @@ where
         .into_iter()
         .skip(1),
     );
-    polygon_from_coords(boundary, metadata)
+    polygon_from_coords(boundary)
 }
 
 fn aperture_outline_points(
@@ -1667,13 +1607,7 @@ fn rounded_rect_points(
         .collect()
 }
 
-fn polygon_from_coords<M>(
-    mut points: Vec<Coord<f64>>,
-    metadata: M,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<Profile, IoError> {
     if points.len() < 3 {
         return Err(IoError::Geometry {
             format: "Gerber",
@@ -1691,20 +1625,17 @@ where
         format: "Gerber",
         detail: format!("invalid finite contour: {error}"),
     })?;
-    Ok(Profile::from_contour(contour, metadata))
+    Ok(Profile::from_contour(contour))
 }
 
 const fn point_from_coord(coord: Coord<f64>) -> [f64; 2] {
     [coord.x, coord.y]
 }
 
-fn repeat_sketches<M>(
-    sketch: Profile<M>,
+fn repeat_sketches(
+    sketch: Profile,
     step_repeat: Option<StepRepeatState>,
-) -> Result<Vec<Profile<M>>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Vec<Profile>, IoError> {
     let Some(step_repeat) = step_repeat else {
         return Ok(vec![sketch]);
     };
@@ -1748,13 +1679,10 @@ where
     Ok(sketches)
 }
 
-fn apply_aperture_transform<M>(
-    sketch: Profile<M>,
+fn apply_aperture_transform(
+    sketch: Profile,
     aperture_transform: ApertureTransform,
-) -> Result<Profile<M>, IoError>
-where
-    M: Clone + Debug + Send + Sync,
-{
+) -> Result<Profile, IoError> {
     let (sx, sy) = match aperture_transform.mirroring {
         Mirroring::None => (1.0, 1.0),
         Mirroring::X => (-1.0, 1.0),
@@ -1907,7 +1835,7 @@ mod tests {
     }
 
     fn assert_bounds_close(
-        sketch: &Profile<()>,
+        sketch: &Profile,
         min_x: Real,
         min_y: Real,
         max_x: Real,
@@ -1921,7 +1849,7 @@ mod tests {
         assert!((bounds.maxs.y - max_y).abs() < tolerance);
     }
 
-    fn native_region_area(sketch: &Profile<()>) -> Real {
+    fn native_region_area(sketch: &Profile) -> Real {
         sketch
             .region_profiles()
             .iter()
@@ -1953,7 +1881,7 @@ mod tests {
 
     #[test]
     fn exports_and_imports_square_region() {
-        let square = Profile::<()>::square(r(5.0), ());
+        let square = Profile::square(r(5.0));
 
         let gerber = square.to_gerber().unwrap();
         let gerber_text = String::from_utf8(gerber.clone()).unwrap();
@@ -1961,7 +1889,7 @@ mod tests {
         assert!(gerber_text.contains("G36*"));
         assert!(gerber_text.contains("G37*"));
 
-        let parsed = Profile::<()>::from_gerber(&gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(&gerber).unwrap();
         assert_bounds_close(&parsed, r(0.0), r(0.0), r(5.0), r(5.0), r(1.0e-9));
     }
 
@@ -1969,7 +1897,7 @@ mod tests {
     fn imports_region_as_native_hypercurve_region() {
         let gerber = b"G04 region*\n%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y3000000D01*\nX0Y3000000D01*\nX0Y0D01*\nG37*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_eq!(parsed.material_contour_count(), 1);
         assert!(!parsed.as_region().is_empty());
 
@@ -1980,7 +1908,7 @@ mod tests {
     fn imports_circle_flash() {
         let gerber = b"G04 flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,2*%\nD10*\nX3000000Y4000000D03*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_bounds_close(&parsed, r(2.0), r(3.0), r(4.0), r(5.0), r(1.0e-6));
     }
 
@@ -1988,7 +1916,7 @@ mod tests {
     fn imports_circular_trace_as_capsule() {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_bounds_close(&parsed, r(-0.5), r(-0.5), r(4.5), r(0.5), r(1.0e-6));
     }
 
@@ -1996,7 +1924,7 @@ mod tests {
     fn imports_rectangular_trace_as_sweep() {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_bounds_close(&parsed, r(-0.5), r(-1.0), r(4.5), r(1.0), r(1.0e-6));
     }
 
@@ -2004,7 +1932,7 @@ mod tests {
     fn imports_arc_trace() {
         let gerber = b"G04 arc*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         let bounds = parsed.bounding_box();
         let (min_x, min_y, max_x, max_y) =
             (bounds.mins.x, bounds.mins.y, bounds.maxs.x, bounds.maxs.y);
@@ -2018,7 +1946,7 @@ mod tests {
     fn imports_full_circle_trace_as_annulus() {
         let gerber = b"G04 full circle*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X1000000Y0I-1000000J0D01*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_eq!(parsed.as_region().material_contours().len(), 1);
         assert_eq!(parsed.as_region().hole_contours().len(), 1);
         assert_bounds_close(&parsed, r(-1.1), r(-1.1), r(1.1), r(1.1), r(0.01));
@@ -2028,13 +1956,13 @@ mod tests {
     fn circular_trace_rejects_inconsistent_or_collapsed_topology() {
         let inconsistent = b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y2000000I-1000000J0D01*\nM02*\n";
         assert!(matches!(
-            Profile::<()>::from_gerber(inconsistent, ()),
+            Profile::from_gerber(inconsistent),
             Err(IoError::MalformedInput(_))
         ));
 
         let collapsed = b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,3*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
         assert!(matches!(
-            Profile::<()>::from_gerber(collapsed, ()),
+            Profile::from_gerber(collapsed),
             Err(IoError::Unsupported {
                 format: "Gerber",
                 ..
@@ -2071,7 +1999,7 @@ mod tests {
     fn imports_step_repeat() {
         let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_bounds_close(&parsed, r(-0.5), r(-0.5), r(2.5), r(3.5), r(1.0e-6));
     }
 
@@ -2079,7 +2007,7 @@ mod tests {
     fn imports_load_rotation_for_flashes() {
         let gerber = b"G04 rotated flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\n%LR90*%\nX0Y0D03*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_bounds_close(&parsed, r(-1.0), r(-0.5), r(1.0), r(0.5), r(1.0e-6));
     }
 
@@ -2087,7 +2015,7 @@ mod tests {
     fn imports_aperture_holes() {
         let gerber = b"G04 aperture hole*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,4X2*%\nD10*\nX0Y0D03*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_eq!(parsed.as_region().material_contours().len(), 1);
         assert_eq!(parsed.as_region().hole_contours().len(), 1);
         let area = native_region_area(&parsed);
@@ -2101,14 +2029,14 @@ mod tests {
     fn imports_clear_polarity_as_difference() {
         let gerber = b"G04 clear polarity*\n%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y4000000D01*\nX0Y4000000D01*\nX0Y0D01*\nG37*\n%ADD10R,2X2*%\nD10*\n%LPC*%\nX2000000Y2000000D03*\nM02*\n";
 
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         let area = native_region_area(&parsed);
         assert!((area - r(12.0)).abs() < r(1.0e-6));
     }
 
     #[test]
     fn rejects_empty_export() {
-        let sketch = Profile::<()>::empty(());
+        let sketch = Profile::empty();
         assert!(sketch.to_gerber().is_err());
     }
 
@@ -2124,7 +2052,7 @@ mod tests {
             ..super::GerberExportOptions::default()
         };
         assert!(
-            Profile::<()>::square(r(1.0), ())
+            Profile::square(r(1.0))
                 .to_gerber_with_options(options)
                 .is_err()
         );
@@ -2133,22 +2061,22 @@ mod tests {
     #[test]
     fn imports_incremental_coordinates() {
         let gerber = b"G04 incremental*\n%MOMM*%\n%FSLIX46Y46*%\n%ADD10C,1*%\nD10*\nX1000000Y1000000D03*\nX2000000D03*\nM02*\n";
-        let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        let parsed = Profile::from_gerber(gerber).unwrap();
         assert_bounds_close(&parsed, r(0.5), r(0.5), r(3.5), r(1.5), r(1.0e-6));
     }
 
     #[test]
     fn rejects_unterminated_region() {
         let gerber = b"%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nM02*\n";
-        assert!(Profile::<()>::from_gerber(gerber, ()).is_err());
+        assert!(Profile::from_gerber(gerber).is_err());
     }
 
     #[test]
     fn rejects_malformed_and_unsupported_curved_aperture_input() {
-        assert!(Profile::<()>::from_gerber(b"not Gerber", ()).is_err());
+        assert!(Profile::from_gerber(b"not Gerber").is_err());
         let rectangular_arc = b"G04 unsupported curved aperture*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
         assert!(matches!(
-            Profile::<()>::from_gerber(rectangular_arc, ()),
+            Profile::from_gerber(rectangular_arc),
             Err(IoError::Unsupported {
                 format: "Gerber",
                 ..
@@ -2165,7 +2093,7 @@ mod tests {
         let options = super::GerberExportOptions::default();
         assert!(super::export_coordinate_number(1.0e100, options).is_err());
 
-        let mut state = super::ImportState::new(gerber_types::Unit::Millimeters, ());
+        let mut state = super::ImportState::new(gerber_types::Unit::Millimeters);
         let apertures = std::collections::HashMap::new();
         let close_region =
             Command::FunctionCode(FunctionCode::GCode(GCode::RegionMode(false)));
