@@ -6,12 +6,11 @@
 //! unported; topology-sensitive consumers should treat these polygons as
 //! compatibility inputs, not the long-term semantic numeric core.
 
-use csgrs::float_types::Real;
 use geo::{Coord, LineString, Polygon};
 use std::f64::consts::PI;
 
 /// Run the `circle_polygon` design-readiness check or report helper.
-pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<Real> {
+pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<f64> {
     if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
         return Polygon::new(geo::LineString(vec![]), vec![]);
     }
@@ -30,7 +29,7 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
 }
 
 /// Run the `rect_polygon` design-readiness check or report helper.
-pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Polygon<Real> {
+pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Polygon<f64> {
     if !(center[0].is_finite()
         && center[1].is_finite()
         && size[0].is_finite()
@@ -79,7 +78,7 @@ pub fn trapezoid_polygon(
     size: [f64; 2],
     delta: [f64; 2],
     angle_degrees: f64,
-) -> Polygon<Real> {
+) -> Polygon<f64> {
     if !(center[0].is_finite()
         && center[1].is_finite()
         && size[0].is_finite()
@@ -127,7 +126,7 @@ pub fn rounded_rect_polygon(
     radius: f64,
     angle_degrees: f64,
     segments_per_corner: usize,
-) -> Polygon<Real> {
+) -> Polygon<f64> {
     if !(center[0].is_finite()
         && center[1].is_finite()
         && size[0].is_finite()
@@ -189,7 +188,7 @@ pub fn chamfered_rect_polygon(
     chamfer: f64,
     corners: [bool; 4],
     angle_degrees: f64,
-) -> Polygon<Real> {
+) -> Polygon<f64> {
     if !(center[0].is_finite()
         && center[1].is_finite()
         && size[0].is_finite()
@@ -252,7 +251,7 @@ pub fn chamfered_rect_polygon(
 }
 
 /// Run the `line_polygon` design-readiness check or report helper.
-pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygon<Real>> {
+pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygon<f64>> {
     if !all_finite(start) || !all_finite(end) || !width.is_finite() {
         return None;
     }
@@ -275,7 +274,7 @@ pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygo
 }
 
 /// Run the `polygon_from_points` design-readiness check or report helper.
-pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<Real> {
+pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<f64> {
     if points
         .iter()
         .any(|point| !point[0].is_finite() || !point[1].is_finite())
@@ -302,10 +301,10 @@ pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<Real> {
 
 /// Run the `transform_polygon` design-readiness check or report helper.
 pub fn transform_polygon(
-    polygon: &Polygon<Real>,
+    polygon: &Polygon<f64>,
     origin: [f64; 2],
     angle_degrees: f64,
-) -> Polygon<Real> {
+) -> Polygon<f64> {
     if !origin[0].is_finite() || !origin[1].is_finite() || !angle_degrees.is_finite() {
         return polygon.clone();
     }
@@ -356,7 +355,7 @@ pub fn arc_line_polygons(
     angle_degrees: f64,
     width: f64,
     segments: usize,
-) -> Vec<Polygon<Real>> {
+) -> Vec<Polygon<f64>> {
     if !all_finite([center[0], center[1]])
         || !all_finite([start[0], start[1]])
         || !width.is_finite()
@@ -398,11 +397,7 @@ pub fn arc_line_polygons(
 /// The evaluation uses de Casteljau subdivision, the stable geometric
 /// construction presented in Farin, *Curves and Surfaces for CAGD: A Practical
 /// Guide*, 5th ed., Academic Press, 2002.
-pub fn bezier_line_polygons(
-    points: &[[f64; 2]],
-    width: f64,
-    segments: usize,
-) -> Vec<Polygon<Real>> {
+pub fn bezier_line_polygons(points: &[[f64; 2]], width: f64, segments: usize) -> Vec<Polygon<f64>> {
     if points.len() < 4
         || points.iter().any(|point| !all_finite(*point))
         || !width.is_finite()

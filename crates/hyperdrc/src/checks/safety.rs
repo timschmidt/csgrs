@@ -38,7 +38,7 @@ pub fn high_voltage_edge_readiness(
         return Vec::new();
     };
     let outline_rect = axis_aligned_outline_rect(outline);
-    let allowed = outline.offset(-edge_clearance);
+    let allowed = outline.offset(crate::geometry::exact_real(-edge_clearance));
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -151,7 +151,10 @@ pub fn voltage_clearance_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
+            let overlap = left
+                .sketch
+                .offset(crate::geometry::exact_real(clearance))
+                .intersection(&right.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance(
@@ -250,7 +253,10 @@ pub fn protective_earth_spacing_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = hv.sketch.offset(clearance).intersection(&pe.sketch);
+            let overlap = hv
+                .sketch
+                .offset(crate::geometry::exact_real(clearance))
+                .intersection(&pe.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance(
@@ -350,7 +356,10 @@ pub fn surge_protection_keepout_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = source.sketch.offset(keepout).intersection(&neighbor.sketch);
+            let overlap = source
+                .sketch
+                .offset(crate::geometry::exact_real(keepout))
+                .intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance(

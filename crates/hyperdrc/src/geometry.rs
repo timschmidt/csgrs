@@ -18,6 +18,11 @@ pub use source_units::{
 };
 pub use violations::multipolygon_to_shapes;
 
+pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
+    hyperreal::Real::try_from(value)
+        .expect("DRC geometry distances must be finite before exact lifting")
+}
+
 #[cfg(test)]
 mod tests {
     use geo::{Area, Coord, LineString, MultiPolygon, Polygon};

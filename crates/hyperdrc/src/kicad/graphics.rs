@@ -5,7 +5,7 @@
 //! scan and keeps arc/outline reconstruction in one place.
 
 use geo::Polygon;
-use hyperlimit::{Point2, PredicatePolicy, point2_equal_with_policy};
+use hyperlimit::{Point2, point2_equal};
 
 use crate::geometry::{
     RuleGeometryProvenance, arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon,
@@ -209,9 +209,7 @@ fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
     let Some(right) = exact_or_lift_point(right, provenance) else {
         return false;
     };
-    point2_equal_with_policy(&left, &right, PredicatePolicy::STRICT)
-        .value()
-        .unwrap_or(false)
+    point2_equal(&left, &right).value().unwrap_or(false)
 }
 
 fn exact_or_lift_point(point: &ParsedPoint2, provenance: RuleGeometryProvenance) -> Option<Point2> {

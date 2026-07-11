@@ -4,7 +4,7 @@
 //! fallbacks where two shapes are close but do not intersect.
 
 use geo::{Coord, LineString, MultiPolygon, Polygon};
-use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection};
+use hyperlimit::{Point2, SegmentIntersection};
 
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
 
@@ -201,15 +201,7 @@ fn segments_intersect_with_grid(
     // Computation," Computational Geometry 7.1-2 (1997), and Shewchuk,
     // "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
     // Predicates," Discrete & Computational Geometry 18.3 (1997).
-    match hyperlimit::classify_segment_intersection_with_policy(
-        &a,
-        &b,
-        &c,
-        &d,
-        PredicatePolicy::STRICT,
-    )
-    .value()
-    {
+    match hyperlimit::classify_segment_intersection(&a, &b, &c, &d).value() {
         Some(SegmentIntersection::Disjoint) => false,
         Some(_) => true,
         // A strict predicate over lifted finite dyadics should decide. If a
@@ -264,7 +256,7 @@ fn exact_coords_equal_with_grid(
     let Some(right) = lift_coord(right, provenance) else {
         return false;
     };
-    hyperlimit::point2_equal_with_policy(&left, &right, PredicatePolicy::STRICT)
+    hyperlimit::point2_equal(&left, &right)
         .value()
         .unwrap_or(false)
 }

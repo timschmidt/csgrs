@@ -243,7 +243,9 @@ pub fn dense_pad_via_spacing_readiness(
                 continue;
             }
 
-            let keepout = via.sketch.offset(min_via_clearance);
+            let keepout = via
+                .sketch
+                .offset(crate::geometry::exact_real(min_via_clearance));
             let shapes = multipolygon_to_shapes(
                 &keepout.intersection(&pad.sketch).to_multipolygon(),
                 min_area,

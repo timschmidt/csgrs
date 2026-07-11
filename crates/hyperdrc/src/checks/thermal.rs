@@ -470,7 +470,10 @@ pub fn hot_component_spacing_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = hot.sketch.offset(spacing).intersection(&neighbor.sketch);
+            let overlap = hot
+                .sketch
+                .offset(crate::geometry::exact_real(spacing))
+                .intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance(

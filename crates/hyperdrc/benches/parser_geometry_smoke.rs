@@ -3380,6 +3380,7 @@ fn main() {
         diagnostics: Vec::new(),
         violation_count: stub_violations.len(),
         waived_count: 0,
+        waived_violations: Vec::new(),
         summary: report_summary(&stub_violations, 0),
         violations: stub_violations,
     };
@@ -3579,6 +3580,8 @@ fn manifest_x2_layer(name: &str, source_path: &str, file_function: &str) -> Mani
         generation_software: Some("KiCad,KiCad,9.0".to_string()),
         project_id: Some("Bench,550e8400-e29b-41d4-a716-446655440000,A".to_string()),
         md5: Some("d41d8cd98f00b204e9800998ecf8427e".to_string()),
+        units: Some("MM".to_string()),
+        coordinate_format: Some("4.6".to_string()),
     }
 }
 
@@ -3594,6 +3597,8 @@ fn manifest_without_file_function_layer(name: &str, source_path: &str) -> Manife
         generation_software: Some("KiCad,KiCad,9.0".to_string()),
         project_id: Some("Bench,550e8400-e29b-41d4-a716-446655440000,A".to_string()),
         md5: Some("d41d8cd98f00b204e9800998ecf8427e".to_string()),
+        units: None,
+        coordinate_format: None,
     }
 }
 

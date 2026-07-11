@@ -81,7 +81,10 @@ pub fn rf_keepout_readiness(
             }
             exact_pair_count += 1;
 
-            let overlap = rf.sketch.offset(clearance).intersection(&neighbor.sketch);
+            let overlap = rf
+                .sketch
+                .offset(crate::geometry::exact_real(clearance))
+                .intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance(
@@ -182,7 +185,7 @@ pub fn antenna_copper_keepout_readiness(
 
             let overlap = antenna
                 .sketch
-                .offset(keepout)
+                .offset(crate::geometry::exact_real(keepout))
                 .intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()

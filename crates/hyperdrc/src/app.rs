@@ -10718,7 +10718,7 @@ mod tests {
         let path = PathBuf::from(format!("/tmp/hyperdrc-x2-metadata-{process_id}.gbr"));
         fs::write(
             &path,
-            "%TF.FileFunction,Copper,L1,Top*%\n%TF.FilePolarity,Positive*%\n%TF.SameCoordinates,PX1*%\n%TO.N,GND*%\n%TO.C,U1*%\n%TO.P,U1,1*%\n%TD.N*%\n%TD*%\n%LPD*%\n%SRX2Y1I1.0J0.0*%\nG04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%AMTHERM*1,1,0.5,0,0,0*%\n%ADD10C,1*%\nD10*\nG75*\nG36*\nG01X0Y0D02*\nG02X4000000Y0I2000000J0D01*\nG37*\n%SR*%\nM02*\n",
+            "%TF.FileFunction,Copper,L1,Top*%\n%TF.FilePolarity,Positive*%\n%TF.SameCoordinates,PX1*%\n%TO.N,GND*%\n%TO.C,U1*%\n%TO.P,U1,1*%\n%TD.N*%\n%TD*%\n%LPD*%\n%SRX2Y1I5.0J0.0*%\nG04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%AMTHERM*1,1,0.5,0,0,0*%\n%ADD10C,1*%\nD10*\nG75*\nG36*\nG01X0Y0D02*\nG02X4000000Y0I2000000J0D01*\nG37*\n%SR*%\nM02*\n",
         )
         .unwrap();
 

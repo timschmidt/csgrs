@@ -48,6 +48,16 @@ rusqlite = { version = "0.39.0", features = ["bundled"] }
 [dev-dependencies]
 proptest = "1.6"
 
+# Keep transitive sibling crates unified while using local path development mode.
+[patch.crates-io]
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypermesh = { path = "../hypermesh" }
+hyperphysics = { path = "../hyperphysics" }
+hyperreal = { path = "../hyperreal" }
+hypersolve = { path = "../hypersolve" }
+hypertri = { path = "../hypertri" }
+
 [[bench]]
 name = "parser_geometry_smoke"
 harness = false

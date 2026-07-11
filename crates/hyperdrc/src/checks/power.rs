@@ -70,7 +70,7 @@ pub fn switch_node_keepout_readiness(
 
             let overlap = switch_feature
                 .sketch
-                .offset(keepout)
+                .offset(crate::geometry::exact_real(keepout))
                 .intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
@@ -172,7 +172,7 @@ pub fn inductor_copper_keepout_readiness(
 
             let overlap = inductor
                 .sketch
-                .offset(keepout)
+                .offset(crate::geometry::exact_real(keepout))
                 .intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()

@@ -79,7 +79,7 @@ pub fn sensitive_net_spacing_readiness(
 
             let overlap = sensitive
                 .sketch
-                .offset(clearance)
+                .offset(crate::geometry::exact_real(clearance))
                 .intersection(&noisy.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
@@ -291,7 +291,7 @@ pub fn mixed_signal_partition_readiness(
 
             let overlap = sensitive
                 .sketch
-                .offset(separation)
+                .offset(crate::geometry::exact_real(separation))
                 .intersection(&digital.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()

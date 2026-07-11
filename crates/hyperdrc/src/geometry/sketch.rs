@@ -3,7 +3,6 @@
 //! Keep these wrappers small and explicit: most checks operate on `Profile`
 //! topology, while parsers naturally produce `geo` polygons.
 
-use csgrs::float_types::Real;
 use csgrs::sketch::Profile;
 use geo::{Area, LineString, Polygon};
 use hypercurve::{Contour2, Region2};
@@ -11,13 +10,13 @@ use hypercurve::{Contour2, Region2};
 use crate::{LayerMetadata, PcbSketch};
 
 /// Convert one `geo` polygon into a `csgrs::Profile` with layer metadata.
-pub fn polygon_to_profile(polygon: Polygon<Real>, metadata: Option<LayerMetadata>) -> PcbSketch {
+pub fn polygon_to_profile(polygon: Polygon<f64>, metadata: Option<LayerMetadata>) -> PcbSketch {
     polygons_to_profile(vec![polygon], metadata)
 }
 
 /// Convert `geo` polygons into a `csgrs::Profile` with layer metadata.
 pub fn polygons_to_profile(
-    polygons: Vec<Polygon<Real>>,
+    polygons: Vec<Polygon<f64>>,
     metadata: Option<LayerMetadata>,
 ) -> PcbSketch {
     let mut material = Vec::new();
@@ -50,7 +49,7 @@ enum RingRole {
     Hole,
 }
 
-fn linestring_to_contour(ring: &LineString<Real>, role: RingRole) -> Option<Contour2> {
+fn linestring_to_contour(ring: &LineString<f64>, role: RingRole) -> Option<Contour2> {
     let mut points = ring
         .0
         .iter()

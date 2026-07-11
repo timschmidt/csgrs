@@ -75,8 +75,8 @@ pub fn mask_island_keepout(
             let neighbor =
                 polygon_to_profile(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
             let overlap = island
-                .offset(keepout)
-                .intersection(&neighbor.offset(keepout));
+                .offset(crate::geometry::exact_real(keepout))
+                .intersection(&neighbor.offset(crate::geometry::exact_real(keepout)));
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
 
             if !shapes.is_empty() {
@@ -214,7 +214,7 @@ pub fn board_edge_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let allowed = board.offset(-clearance);
+    let allowed = board.offset(crate::geometry::exact_real(-clearance));
     let intrusion = copper.difference(&allowed);
     let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
 
@@ -274,7 +274,7 @@ pub fn board_outline_cutout_clearance_with_grid(
     for cutout in board_outline_cutouts(&outline_polygons) {
         let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
         let clearance_band = if clearance > 0.0 {
-            cutout.offset(clearance)
+            cutout.offset(crate::geometry::exact_real(clearance))
         } else {
             cutout.clone()
         };
@@ -361,7 +361,7 @@ pub fn silkscreen_board_edge_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let allowed = board.offset(-clearance);
+    let allowed = board.offset(crate::geometry::exact_real(-clearance));
     let intrusion = silk.difference(&allowed);
     shapes_violation(
         "silkscreen-to-board-edge-clearance",
@@ -382,7 +382,7 @@ pub fn solder_mask_board_edge_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let allowed = board.offset(-clearance);
+    let allowed = board.offset(crate::geometry::exact_real(-clearance));
     let intrusion = mask.difference(&allowed);
     shapes_violation(
         "solder-mask-to-board-edge-clearance",
@@ -645,8 +645,8 @@ pub fn paste_aperture_spacing(
             .collect::<Vec<_>>();
         let remaining = polygons_to_profile(candidate_polygons, Some(metadata(paste_name)));
         let overlap = island
-            .offset(expansion)
-            .intersection(&remaining.offset(expansion));
+            .offset(crate::geometry::exact_real(expansion))
+            .intersection(&remaining.offset(crate::geometry::exact_real(expansion)));
         let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
@@ -894,7 +894,7 @@ pub fn solder_mask_annular_ring_readiness(
         let candidates = mask_index.candidates_near_polygon(&copper_polygon, min_mask_annular_ring);
         candidate_openings += candidates.len();
         let required_opening = polygon_to_profile(copper_polygon, Some(metadata(copper_name)))
-            .offset(min_mask_annular_ring);
+            .offset(crate::geometry::exact_real(min_mask_annular_ring));
         let missing_relief = if candidates.is_empty() {
             required_opening
         } else {
@@ -1048,7 +1048,9 @@ pub fn silkscreen_min_width(
         // on dense Gerber packages, while island-local opening is equivalent
         // for independent silkscreen strokes.
         let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
-        let reconstructed = island.offset(-radius).offset(radius);
+        let reconstructed = island
+            .offset(crate::geometry::exact_real(-radius))
+            .offset(crate::geometry::exact_real(radius));
         let thin_features = island.difference(&reconstructed);
         shapes.extend(multipolygon_to_shapes(
             &thin_features.to_multipolygon(),
@@ -1184,7 +1186,9 @@ pub fn min_copper_neck_width(
         );
         let source = MultiPolygon(vec![polygon.clone()]);
         let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
-        let reconstructed = island.offset(-radius).offset(radius);
+        let reconstructed = island
+            .offset(crate::geometry::exact_real(-radius))
+            .offset(crate::geometry::exact_real(radius));
         let thin_features = island.difference(&reconstructed);
         let thin = thin_features.to_multipolygon();
         if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
@@ -1251,7 +1255,9 @@ pub fn solder_mask_sliver(
     // Same opening operation as the copper neck-width check, applied to residual
     // mask geometry. The result is the geometry that is too thin to survive the
     // configured web width.
-    let reconstructed = mask.offset(-radius).offset(radius);
+    let reconstructed = mask
+        .offset(crate::geometry::exact_real(-radius))
+        .offset(crate::geometry::exact_real(radius));
     let slivers = mask.difference(&reconstructed);
     shapes_violation(
         "solder-mask-sliver",
@@ -1341,8 +1347,8 @@ pub fn solder_mask_opening_spacing(
             let neighbor =
                 polygon_to_profile(openings[neighbor_index].clone(), Some(metadata(mask_name)));
             let bridge_conflict = opening
-                .offset(expansion)
-                .intersection(&neighbor.offset(expansion));
+                .offset(crate::geometry::exact_real(expansion))
+                .intersection(&neighbor.offset(crate::geometry::exact_real(expansion)));
             let shapes = multipolygon_to_shapes(&bridge_conflict.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;
@@ -2747,15 +2753,7 @@ fn ring_segment_intersection_with_grid(
     let b = lift_coord_with_provenance(end_a, provenance)?;
     let c = lift_coord_with_provenance(start_b, provenance)?;
     let d = lift_coord_with_provenance(end_b, provenance)?;
-    match hyperlimit::classify_segment_intersection_with_policy(
-        &a,
-        &b,
-        &c,
-        &d,
-        PredicatePolicy::STRICT,
-    )
-    .value()
-    {
+    match hyperlimit::classify_segment_intersection(&a, &b, &c, &d).value() {
         Some(SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch) => return None,
         Some(
             SegmentIntersection::Proper
@@ -2871,7 +2869,9 @@ fn indexed_difference(
         let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedDifferenceMode::CoverAsIs => cover_sketch,
-            IndexedDifferenceMode::CoverOffset(distance) => cover_sketch.offset(distance),
+            IndexedDifferenceMode::CoverOffset(distance) => {
+                cover_sketch.offset(crate::geometry::exact_real(distance))
+            }
         };
         remainder_polygons.extend(subject_island.difference(&cover_sketch).to_multipolygon().0);
     }
@@ -2934,10 +2934,12 @@ fn indexed_intersection_with_mode(
         let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedCoverMode::AsIs => cover_sketch,
-            IndexedCoverMode::Offset(distance) => cover_sketch.offset(distance),
-            IndexedCoverMode::OffsetRing(distance) => {
-                cover_sketch.offset(distance).difference(&cover_sketch)
+            IndexedCoverMode::Offset(distance) => {
+                cover_sketch.offset(crate::geometry::exact_real(distance))
             }
+            IndexedCoverMode::OffsetRing(distance) => cover_sketch
+                .offset(crate::geometry::exact_real(distance))
+                .difference(&cover_sketch),
         };
         overlap_polygons.extend(
             subject_island

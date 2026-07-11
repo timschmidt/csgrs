@@ -466,7 +466,7 @@ pub fn high_speed_edge_readiness_with_grid(
         return Vec::new();
     };
     let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let allowed = outline.offset(-edge_clearance);
+    let allowed = outline.offset(crate::geometry::exact_real(-edge_clearance));
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -552,7 +552,7 @@ pub fn edge_copper_pullback_readiness_with_grid(
         return Vec::new();
     };
     let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let allowed = outline.offset(-edge_clearance);
+    let allowed = outline.offset(crate::geometry::exact_real(-edge_clearance));
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -657,7 +657,7 @@ pub fn edge_stitching_readiness_with_grid(
         return Vec::new();
     };
     let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-    let allowed = outline.offset(-edge_clearance);
+    let allowed = outline.offset(crate::geometry::exact_real(-edge_clearance));
     let features = selected_copper_features(board, selected_layers);
     let ground_vias = features
         .iter()
@@ -2096,7 +2096,7 @@ pub fn gold_finger_spacing_readiness(
             exact_pair_count += 1;
             let overlap = left
                 .sketch
-                .offset(minimum_spacing)
+                .offset(crate::geometry::exact_real(minimum_spacing))
                 .intersection(&right.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
@@ -2685,7 +2685,10 @@ fn collect_net_spacing_violation(
     // feature. In computational geometry terms this is a set-membership test
     // against an offset region; see Lee and Preparata, "Computational Geometry -
     // A Survey", IEEE TC, 1984.
-    let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
+    let overlap = left
+        .sketch
+        .offset(crate::geometry::exact_real(clearance))
+        .intersection(&right.sketch);
     let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
     let locations = if shapes.is_empty()
         && polygon_boundary_distance(
@@ -2820,7 +2823,10 @@ fn collect_registration_tolerance_violation(
     // thousands of disconnected islands; broad-phase feature culling keeps the
     // exact Minkowski offset bounded while preserving the same conservative
     // geometric predicate.
-    let overlap = left.sketch.offset(tolerance).intersection(&right.sketch);
+    let overlap = left
+        .sketch
+        .offset(crate::geometry::exact_real(tolerance))
+        .intersection(&right.sketch);
     let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
     let locations = if shapes.is_empty()
         && polygon_boundary_distance(

@@ -1301,7 +1301,9 @@ pub fn fiducial_keepout_readiness(
     );
 
     for fiducial in fiducials {
-        let keepout = fiducial.sketch.offset(clearance);
+        let keepout = fiducial
+            .sketch
+            .offset(crate::geometry::exact_real(clearance));
         for blocker_index in
             blocker_index.near_circle(fiducial.location, feature_query_radius(fiducial, clearance))
         {
@@ -1504,7 +1506,7 @@ pub fn conformal_coating_keepout_readiness(
     let mut exact_pair_count = 0usize;
 
     for &no_coat in &no_coat_features {
-        let keepout_sketch = no_coat.sketch.offset(keepout);
+        let keepout_sketch = no_coat.sketch.offset(crate::geometry::exact_real(keepout));
         let query_radius = feature_query_radius(no_coat, keepout);
         for neighbor_index in pad_index.near_circle(no_coat.location, query_radius) {
             candidate_count += 1;

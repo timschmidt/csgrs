@@ -1,13 +1,12 @@
 //! Conversion from raw geometry into reportable violation shapes.
 
-use csgrs::float_types::Real;
 use geo::{Area, Coord, LineString, MultiPolygon};
 
 use crate::report::ViolationPolygon;
 
 /// Run the `multipolygon_to_shapes` design-readiness check or report helper.
 pub fn multipolygon_to_shapes(
-    multipolygon: &MultiPolygon<Real>,
+    multipolygon: &MultiPolygon<f64>,
     min_area: f64,
 ) -> Vec<ViolationPolygon> {
     multipolygon
@@ -28,6 +27,6 @@ pub fn multipolygon_to_shapes(
         .collect()
 }
 
-fn ring_to_coordinates(ring: &LineString<Real>) -> Vec<[f64; 2]> {
+fn ring_to_coordinates(ring: &LineString<f64>) -> Vec<[f64; 2]> {
     ring.0.iter().map(|Coord { x, y }| [*x, *y]).collect()
 }
