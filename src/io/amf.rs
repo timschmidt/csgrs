@@ -148,7 +148,29 @@ macro_rules! impl_amf_export {
 
 impl_amf_export!(crate::mesh::Mesh<M>);
 #[cfg(feature = "sketch")]
-impl_amf_export!(crate::sketch::Profile<M>);
+impl crate::sketch::Profile {
+    pub fn to_amf(&self, name: &str, units: &str) -> Result<String, IoError> {
+        to_amf(self, name, units)
+    }
+
+    pub fn write_amf<W: Write>(
+        &self,
+        writer: &mut W,
+        name: &str,
+        units: &str,
+    ) -> Result<(), IoError> {
+        write_amf(self, writer, name, units)
+    }
+
+    pub fn to_amf_with_color(
+        &self,
+        name: &str,
+        units: &str,
+        color: (Real, Real, Real),
+    ) -> Result<String, IoError> {
+        to_amf_with_color(self, name, units, color)
+    }
+}
 
 #[cfg(test)]
 mod tests {

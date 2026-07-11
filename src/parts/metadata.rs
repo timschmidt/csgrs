@@ -210,7 +210,7 @@ pub struct CsgPartInterface {
 }
 
 /// Metadata wrapper intended for `Mesh<PartMetadata>` and
-/// `Profile<PartMetadata>`.
+/// mesh polygons annotated with `PartMetadata`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PartMetadata {
     /// Stable local handle for this CSG object.

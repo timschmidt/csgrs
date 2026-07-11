@@ -12,7 +12,7 @@ fn test_csg_from_polygons_and_to_polygons() {
         ],
         (),
     );
-    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()], ());
+    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()]);
     assert_eq!(csg.polygons.len(), 1);
     assert_eq!(csg.polygons[0].vertices.len(), 3);
 }
@@ -264,7 +264,7 @@ fn test_csg_convex_hull() {
     // If we take a shape with some random points, the hull should just enclose them
     let c1: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
     // The convex_hull of a sphere's sampling is basically that same shape, but let's see if it runs.
-    let hull = c1.convex_hull();
+    let hull = c1.convex_hull(());
     // The hull should have some polygons
     assert!(!hull.polygons.is_empty());
 }
@@ -275,7 +275,7 @@ fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
     let c1: Mesh<()> = Mesh::cube(r(2.0), ()).center();
     let c2: Mesh<()> = Mesh::cube(r(1.0), ()).center();
-    let sum = c1.minkowski_sum(&c2);
+    let sum = c1.minkowski_sum(&c2, ());
     let bb_sum = sum.bounding_box();
     // Expect bounding box from -1.5..+1.5 in each axis if both cubes were centered at (0,0,0).
     assert!(approx_eq(&bb_sum.mins.x, -1.5, 0.01));
@@ -328,8 +328,8 @@ fn test_csg_ray_intersections() {
 
 #[test]
 fn test_csg_square() {
-    let sq: Profile<()> = Profile::square(r(2.0), ());
-    let mesh_2d: Mesh<()> = sq.into();
+    let sq: Profile = Profile::square(r(2.0));
+    let mesh_2d: Mesh<()> = Mesh::from_profile(sq, ());
     // Single polygon, 4 vertices
     assert_eq!(mesh_2d.polygons.len(), 1);
     let poly = &mesh_2d.polygons[0];
@@ -342,8 +342,8 @@ fn test_csg_square() {
 
 #[test]
 fn test_csg_circle() {
-    let circle: Profile<()> = Profile::circle(r(2.0), 32, ());
-    let mesh_2d: Mesh<()> = circle.into();
+    let circle: Profile = Profile::circle(r(2.0), 32);
+    let mesh_2d: Mesh<()> = Mesh::from_profile(circle, ());
     // Single polygon with 32 segments => 32 or 33 vertices if closed
     assert_eq!(mesh_2d.polygons.len(), 1);
     let poly = &mesh_2d.polygons[0];
@@ -356,8 +356,8 @@ fn test_csg_circle() {
 
 #[test]
 fn test_csg_extrude() {
-    let sq: Profile<()> = Profile::square(r(2.0), ());
-    let extruded = sq.extrude(r(5.0));
+    let sq: Profile = Profile::square(r(2.0));
+    let extruded = sq.extrude(r(5.0), ());
     // We expect:
     //   bottom polygon: 2 (square triangulated)
     //   top polygon 2 (square triangulated)
@@ -374,10 +374,10 @@ fn test_csg_extrude() {
 fn test_csg_revolve() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it's from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
-    let square: Profile<()> = Profile::square(r(2.0), ()).translate(r(1.0), r(0.0), r(0.0));
+    let square: Profile = Profile::square(r(2.0)).translate(r(1.0), r(0.0), r(0.0));
 
     // Now revolve this translated square around the Z-axis, 360° in 16 segments.
-    let revolve = square.revolve(r(360.0), 16).unwrap();
+    let revolve = square.revolve(r(360.0), 16, ()).unwrap();
 
     // We expect a ring-like “tube” instead of a degenerate shape.
     assert!(!revolve.polygons.is_empty());
@@ -407,7 +407,7 @@ fn test_csg_vertices() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_csg_offset_2d() {
-    let square: Profile<()> = Profile::square(r(2.0), ());
+    let square: Profile = Profile::square(r(2.0));
     let grown = square.offset(r(0.5));
     let shrunk = square.offset(r(-0.5));
     let bb_square = square.bounding_box();
@@ -431,7 +431,7 @@ fn test_csg_text() {
     // We can't easily test visually, but we can at least test that it doesn't panic
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../../asar.ttf");
-    let text_csg: Profile<()> = Profile::text("ABC", font_data, r(10.0), ());
+    let text_csg: Profile = Profile::text("ABC", font_data, r(10.0));
     assert!(!text_csg.region_profiles().is_empty());
 }
 
@@ -440,9 +440,9 @@ fn test_csg_text() {
 fn test_truetype_text_spacing_and_line_breaks() {
     let font_data = include_bytes!("../../asar.ttf");
 
-    let compact: Profile<()> = Profile::text("AA", font_data, r(20.0), ());
-    let spaced: Profile<()> = Profile::text("A A", font_data, r(20.0), ());
-    let stacked: Profile<()> = Profile::text("A\nA", font_data, r(20.0), ());
+    let compact: Profile = Profile::text("AA", font_data, r(20.0));
+    let spaced: Profile = Profile::text("A A", font_data, r(20.0));
+    let stacked: Profile = Profile::text("A\nA", font_data, r(20.0));
 
     let compact_bb = compact.bounding_box();
     let spaced_bb = spaced.bounding_box();

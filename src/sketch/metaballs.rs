@@ -6,18 +6,16 @@ use hashbrown::HashMap;
 use hypercurve::{Contour2, Point2, Region2};
 use hyperlimit::{real_max, real_min};
 use hyperreal::RealSign;
-use std::fmt::Debug;
 
 type SamplePoint = [f64; 2];
 type Segment = [SamplePoint; 2];
 
-impl<M: Clone + Debug + Send + Sync> Profile<M> {
+impl Profile {
     /// Create a 2D metaball iso-contour in XY plane from hypercurve centers.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
     /// - `iso_value`: threshold for the iso-surface.
     /// - `padding`: extra boundary beyond each ball's radius.
-    /// - `metadata`: optional user metadata.
     ///
     /// This samples a Wyvill-style soft object field and extracts 2D
     /// isocontours with the marching-squares analogue of Lorensen and Cline's
@@ -38,21 +36,20 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
-        metadata: M,
-    ) -> Profile<M> {
+    ) -> Profile {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
-            return Profile::empty(metadata);
+            return Profile::empty();
         }
 
         let Some(padding_h) = hreal_from_f64(&padding).ok() else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         if matches!(hreal_sign(&padding_h), Some(RealSign::Negative)) {
-            return Profile::empty(metadata);
+            return Profile::empty();
         }
         let Some(iso_value_h) = hreal_from_f64(&iso_value).ok() else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
 
         let valid_balls = balls
@@ -64,33 +61,33 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             })
             .collect::<Vec<_>>();
         if valid_balls.is_empty() {
-            return Profile::empty(metadata);
+            return Profile::empty();
         }
 
         // 1) Compute bounding box around all metaballs in hyperreal space.
         let Some((min_x, min_y, max_x, max_y)) =
             metaball_bounds_hreal(&valid_balls, &padding_h)
         else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
 
         let Some(nx_step_count) = hreal_from_f64(nx - 1).ok() else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         let Some(ny_step_count) = hreal_from_f64(ny - 1).ok() else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         let Some(dx) = ((max_x.clone() - min_x.clone()) / nx_step_count).ok() else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         let Some(dy) = ((max_y.clone() - min_y.clone()) / ny_step_count).ok() else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         let Some(x_coords) = grid_axis_coords(&min_x, &dx, nx) else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         let Some(y_coords) = grid_axis_coords(&min_y, &dy, ny) else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
 
         // 2) Fill a grid with the summed "influence" minus iso_value
@@ -225,10 +222,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             .collect::<Vec<_>>();
 
         if material.is_empty() {
-            return Profile::empty(metadata);
+            return Profile::empty();
         }
 
-        Profile::from_region(Region2::from_material_contours(material), metadata)
+        Profile::from_region(Region2::from_material_contours(material))
     }
 }
 

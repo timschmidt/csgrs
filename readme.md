@@ -141,95 +141,60 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 
 ### Profile Structure
 
-- **`Profile<M>`** stores and manipulates 2D CAD geometry as hypercurve topology. It contains:
+- **`Profile`** stores and manipulates 2D CAD geometry as hypercurve topology. It contains:
   - a [`hypercurve::Region2`](https://docs.rs/hypercurve/latest/hypercurve/struct.Region2.html) for filled material and hole contours
   - native [`hypercurve::CurveString2`](https://docs.rs/hypercurve/latest/hypercurve/struct.CurveString2.html) wires for open paths
   - finite boundary projections used only at IO/API edges
   - an internal cached bounding box for finite boundary projections
-  - caller-owned metadata of type `M`, accessed through `metadata`, `metadata_mut`, `set_metadata`, `with_metadata`, and `map_metadata`
 
-`Profile<M>` provides methods for working with planar XY shapes made of filled regions and open paths.
+`Profile` provides methods for working with planar XY shapes made of filled regions and open paths.
 Prefer `Profile::from_region`, `Profile::from_wires`, `Profile::from_region_and_wires`,
 `as_region`, `wires`, `into_region_and_wires`, `region_profiles`, and
 `wire_polylines` so topology stays in hypercurve objects instead of a finite
 boundary projection. The old `geo`-based Profile constructors and accessors
 are no longer public API, and the crate no longer depends on `geo`.
-`Profile` values are triangulated with hypertri when exported as STL or converted into a `Mesh<M>`.
+`Profile` values are triangulated with hypertri when exported as STL or converted into a `Mesh<M>`. Profiles carry geometry only; callers provide face metadata when creating a mesh.
 
 ### 2D Shapes in Profile
 
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Profile::square(width: Real, metadata: M)`**
-- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Profile::rectangle(width: Real, length: Real, metadata: M)`**
-- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Profile::circle(radius: Real, segments: usize, metadata: M)`**
-- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Profile::polygon(&[[x1,y1],[x2,y2],...], metadata: M)`**
-- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Profile::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: M)`**
-- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Profile::ellipse(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/regular_ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Profile::regular_ngon(sides: usize, radius: Real, metadata: M)`**
-- <img src="docs/sketch_arrow.png" width="128" alt="top down view of a 2D arrow"/> **`Profile::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: M)`**
-- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Profile::right_triangle(width: Real, height: Real, metadata: M)`**
-- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Profile::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: M)`**
-- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Profile::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: M)`**
-- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Profile::teardrop(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/sketch_egg.png" width="128" alt="top down view of an egg shape"/> **`Profile::egg(width: Real, length: Real, segments: usize, metadata: M)`**
-- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Profile::squircle(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Profile::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: M)`**
-- <img src="docs/reuleaux.png" width="128"/> **`Profile::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: M)`**
-- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Profile::ring(id: Real, thickness: Real, segments: usize, metadata: M)`**
-- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Profile::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: M)`**
-- <img src="docs/supershape.png" width="128"/> **`Profile::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: M)`**
-- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Profile::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: M)`**
-- <img src="docs/circle_with_flat.png" width="128" alt="top down view of a circle with a flat edge"/> **`Profile::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
-- <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Profile::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
-- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Profile::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Profile::text(text: &str, font_data: &[u8], size: Real, metadata: M)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Profile::metaballs(balls: &[(hypercurve::Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
-- <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Profile::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: M)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
-- <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Profile::bezier(control: &[[Real; 2]], segments: usize, metadata: M)`**
-- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Profile::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: M)`**
-- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Profile::heart(width: Real, height: Real, segments: usize, metadata: M)`**
-- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Profile::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: M)`** -
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Profile::square(width: Real)`**
+- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Profile::rectangle(width: Real, length: Real)`**
+- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Profile::circle(radius: Real, segments: usize)`**
+- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Profile::polygon(&[[x1,y1],[x2,y2],...])`**
+- Other profile constructors follow the same rule: they accept geometry parameters only and return an unannotated `Profile`.
 - <img src="docs/hilbert_curve.png" width="128" alt="top down view of a hilbert curve"/> **`Profile::hilbert(order: usize, padding: Real)`** - fill an existing Profile with a hilbert curve
-- <img src="docs/involute_gear.png" width="128" alt="top down view of a involute gear profile"/> **`Profile::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: M)`**
-- **`Profile::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
-- **`Profile::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: M)`** - under construction
-- **`Profile::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
 
 ```rust
-// Alias the library’s generic Profile type with unit metadata:
-type Profile = csgrs::profile::Profile<()>;
+use csgrs::profile::Profile;
 use csgrs::Real;
 
-let square = Profile::square(Real::one(), ());
-let rect = Profile::rectangle(Real::from(2), Real::from(4), ());
-let circle = Profile::circle(Real::one(), 32, ());
-let circle2 = Profile::circle(Real::from(2), 64, ());
+let square = Profile::square(Real::one());
+let rect = Profile::rectangle(Real::from(2), Real::from(4));
+let circle = Profile::circle(Real::one(), 32);
+let circle2 = Profile::circle(Real::from(2), 64);
 
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let sketch_text = Profile::text("Hello!", font_data, Real::from(20), ());
+let sketch_text = Profile::text("Hello!", font_data, Real::from(20));
 
 // Then extrude the text to make it 3D:
-let text_3d = sketch_text.extrude(Real::one());
+let text_3d = sketch_text.extrude(Real::one(), ());
 ```
 
 ### Extrusions and Revolves
 
 Extrusions build 3D polygons from 2D Geometries.
 
-- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Profile::extrude(height: Real)`** - Simple extrude in Z+
-- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Profile::extrude_vector(direction: Vector3)`** - Extrude along Vector3 direction
-- <img src="docs/revolve.png" width="128"  alt="an arch with round ends"/> **`Profile::revolve(angle_degs, segments)`** - Extrude while rotating around the Y axis
+- <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Profile::extrude(height: Real, metadata: M)`** - Simple extrude in Z+
+- <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Profile::extrude_vector(direction: Vector3, metadata: M)`** - Extrude along Vector3 direction
+- <img src="docs/revolve.png" width="128"  alt="an arch with round ends"/> **`Profile::revolve(angle_degs, segments, metadata: M)`** - Extrude while rotating around the Y axis
 - <img src="docs/loft.png" width="128" alt="an angled view of a lofted tapered prism"/> **`Profile::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
-- <img src="docs/sweep.png" width="128" alt="a Profile swept along a 3D path"/> **`Profile::sweep(path: &[Point3<Real>])`** - Sweep a Profile along a path defined by a series of Points
+- <img src="docs/sweep.png" width="128" alt="a Profile swept along a 3D path"/> **`Profile::sweep(path: &[Point3<Real>], metadata: M)`** - Sweep a Profile along a path defined by a series of Points
 
 ```rust
-let square = Profile::square(2.0, ());
-let prism = square.extrude(5.0);
+let square = Profile::square(Real::from(2));
+let prism = square.extrude(Real::from(5), ());
 
-let revolve_shape = square.revolve(360.0, 16);
-
-let bottom = Profile::circle(2.0, 64, ());
-let top = bottom.translate(0.0, 0.0, 5.0);
-let lofted = Profile::loft(&bottom.polygons[0], &top.polygons[0], false);
+let revolve_shape = square.revolve(Real::from(360), 16, ())?;
 ```
 
 ### Misc Profile operations
@@ -251,12 +216,14 @@ let lofted = Profile::loft(&bottom.polygons[0], &top.polygons[0], false);
     - a metadata field of type `M` defined by you
   - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
   - lazily retained connectivity/query state where repeated operations benefit
-  - another metadata field of type `M` also defined by you
 
 `Mesh<M>` provides methods for working with 3D shapes. You can build a
 `Mesh<M>` from polygons with `Mesh::from_polygons(...)`.
 Polygons must be closed, planar, and have 3 or more vertices.
 Polygons are triangulated when being exported or converted to query meshes.
+Metadata belongs exclusively to polygons. Boolean operations preserve source-face
+metadata through hypermesh provenance; operations that create unrelated faces,
+such as extrusion and convex hull, require an explicit metadata value.
 
 ### 3D Shapes in Mesh
 
@@ -354,7 +321,7 @@ let intersection_result = cylinder.try_intersection(&sphere)?;
 let xor_result = cylinder.try_xor(&sphere)?;
 ```
 
-`Mesh<M>` and `Profile<M>` provide typed `try_union`, `try_difference`,
+`Mesh<M>` and `Profile` provide typed `try_union`, `try_difference`,
 `try_intersection`, and `try_xor` methods. The methods on `csgrs::csg::CSG`
 remain compatibility conveniences and panic when a certified Boolean reports
 an error or uncertainty.
@@ -398,8 +365,8 @@ let mirrored = cube.mirror(plane_x);
 ### Miscellaneous Mesh Operations
 
 - **`Mesh::vertices()`** - collect all vertices from the `Mesh`
-- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull()`** - uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
-- <img src="docs/minkowski_sum.png" width="128"/> **`Mesh::minkowski_sum(&other)`** - naive Minkowski sum, then takes the hull.
+- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull(metadata)`** - uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
+- <img src="docs/minkowski_sum.png" width="128"/> **`Mesh::minkowski_sum(&other, metadata)`** - naive Minkowski sum, then takes the hull.
 - **`Mesh::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`Mesh::flatten()`** - flattens a 3D shape into 2D (on the XY plane), unions the outlines.
 - **`Mesh::slice(plane)`** - slices the CSG by a plane and returns the cross-section polygons.
@@ -455,8 +422,8 @@ values or emitting a partial document.
 - **PLY**: `mesh.to_ply(comment)`
 - **AMF**: `mesh.to_amf(name, units)` and `mesh.to_amf_with_color(name, units, color)`
 - **glTF 2.0**: `mesh.to_gltf(name)`
-- **SVG profiles**: `Profile::from_svg(document, metadata)` and `profile.to_svg()`
-- **Gerber profiles**: `Profile::from_gerber(data, metadata)` and `profile.to_gerber()`
+- **SVG profiles**: `Profile::from_svg(document)` and `profile.to_svg()`
+- **Gerber profiles**: `Profile::from_gerber(data)` and `profile.to_gerber()`
 
 Each method returns `Result<_, csgrs::io::IoError>`. OBJ import deliberately
 rejects texture-coordinate data, STL import validates closed and consistently
@@ -516,7 +483,11 @@ work. There are no Cargo precision flags and no global float tolerance setter.
 
 ## Working with Metadata
 
-`Mesh<M>` and `Profile<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Profile<M>` carry caller-owned metadata. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
+`Mesh<M>` is generic over polygon metadata `M: Clone`; `Profile` is not
+generic and carries no metadata. Each polygon in a `Mesh<M>` owns one `M`.
+Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional
+face metadata. Mesh-level metadata is deliberately absent, so booleans and
+other topology changes have one unambiguous provenance model.
 Use cases include storing color, ID, or layer info.
 
 ```rust

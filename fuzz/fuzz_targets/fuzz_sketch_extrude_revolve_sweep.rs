@@ -55,25 +55,25 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let width = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let height = at_least_tolerance(decode_real(bytes, &mut idx).abs());
-    let sketch: Profile<Option<()>> = Profile::rectangle(width.clone(), height, None);
+    let sketch: Profile = Profile::rectangle(width.clone(), height );
     let tag = bytes[idx % bytes.len()] % 4;
     idx += 1;
     let mesh = match tag {
-        0 => sketch.extrude(decode_real(bytes, &mut idx)),
+        0 => sketch.extrude(decode_real(bytes, &mut idx), ()),
         1 => sketch.extrude_vector(Vector3::from_xyz(
             decode_real(bytes, &mut idx),
             decode_real(bytes, &mut idx),
             decode_real(bytes, &mut idx),
-        )),
+        ), ()),
         2 => {
             let angle = clamp_real(decode_real(bytes, &mut idx), -720.0, 720.0);
             let segments = (bytes[idx % bytes.len()] as usize % 16) + 2;
             match sketch
                 .translate(width, Real::zero(), Real::zero())
-                .revolve(angle, segments)
+                .revolve(angle, segments, ())
             {
                 Ok(mesh) => mesh,
-                Err(_) => Mesh::empty(None),
+                Err(_) => Mesh::empty(),
             }
         },
         _ => {
@@ -87,7 +87,7 @@ fuzz_target!(|bytes: &[u8]| {
                     decode_real(bytes, &mut idx),
                 ));
             }
-            sketch.sweep(&path)
+            sketch.sweep(&path, ())
         },
     };
 

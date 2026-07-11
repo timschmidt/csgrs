@@ -14,7 +14,7 @@ use std::ptr;
 use std::slice;
 
 type MeshOf<F> = Mesh<<F as Family>::Adapter, ()>;
-type ProfileOf<F> = Profile<<F as Family>::Adapter, ()>;
+type ProfileOf<F> = Profile<<F as Family>::Adapter>;
 type AdapterScalar<F> = <<F as Family>::Adapter as ScalarAdapter>::Scalar;
 
 #[repr(C)]
@@ -278,10 +278,10 @@ enum MeshKind {
 }
 
 enum ProfileKind {
-    F32(Profile<F32, ()>),
-    F64(Profile<F64, ()>),
-    I128(Profile<I128, ()>),
-    Real(Profile<RawReal, ()>),
+    F32(Profile<F32>),
+    F64(Profile<F64>),
+    I128(Profile<I128>),
+    Real(Profile<RawReal>),
 }
 
 #[derive(Debug)]
@@ -1463,7 +1463,6 @@ macro_rules! export_family {
             ffi_status(|| {
                 let profile = ProfileOf::<$family>::square(
                     <$family as Family>::scalar_to_adapter(width)?,
-                    (),
                 )?;
                 unsafe { out_handle(out, profile_handle::<$family>(profile)) }
             })
@@ -1479,7 +1478,6 @@ macro_rules! export_family {
                 let profile = ProfileOf::<$family>::rectangle(
                     <$family as Family>::scalar_to_adapter(width)?,
                     <$family as Family>::scalar_to_adapter(length)?,
-                    (),
                 )?;
                 unsafe { out_handle(out, profile_handle::<$family>(profile)) }
             })
@@ -1495,7 +1493,6 @@ macro_rules! export_family {
                 let profile = ProfileOf::<$family>::circle(
                     <$family as Family>::scalar_to_adapter(radius)?,
                     segments,
-                    (),
                 )?;
                 unsafe { out_handle(out, profile_handle::<$family>(profile)) }
             })
@@ -1513,7 +1510,7 @@ macro_rules! export_family {
                     .copied()
                     .map(<$family as Family>::vec2_to_adapter)
                     .collect::<FfiResult<Vec<_>>>()?;
-                let profile = ProfileOf::<$family>::polygon(&points, ())?;
+                let profile = ProfileOf::<$family>::polygon(&points )?;
                 unsafe { out_handle(out, profile_handle::<$family>(profile)) }
             })
         }
@@ -1663,7 +1660,7 @@ macro_rules! export_family {
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let mesh = profile.extrude(<$family as Family>::scalar_to_adapter(height)?)?;
+                let mesh = profile.extrude(<$family as Family>::scalar_to_adapter(height)?, ())?;
                 unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
             })
         }
@@ -1677,7 +1674,7 @@ macro_rules! export_family {
             ffi_status(|| {
                 let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
                 let mesh = profile
-                    .extrude_vector(<$family as Family>::vec3_to_adapter(direction)?)?;
+                    .extrude_vector(<$family as Family>::vec3_to_adapter(direction)?, ())?;
                 unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
             })
         }
@@ -1694,6 +1691,7 @@ macro_rules! export_family {
                 let mesh = profile.revolve(
                     <$family as Family>::scalar_to_adapter(angle_degrees)?,
                     segments,
+                    (),
                 )?;
                 unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
             })

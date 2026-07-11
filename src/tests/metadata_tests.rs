@@ -66,7 +66,7 @@ fn test_csg_construction_with_metadata() {
         ],
         "PolyB".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly_a.clone(), poly_b.clone()], "Mesh".to_string());
+    let csg = Mesh::from_polygons(&[poly_a.clone(), poly_b.clone()]);
 
     assert_eq!(csg.polygons.len(), 2);
     assert_eq!(csg.polygons[0].metadata(), &"PolyA".to_string());
@@ -80,14 +80,12 @@ fn test_union_metadata() {
 
     let union_csg = cube1.union(&cube2);
 
-    for poly in &union_csg.polygons {
-        let data = poly.metadata();
-        assert!(
-            data == "Cube1" || data == "Cube2",
-            "Union polygon has unexpected shared data = {:?}",
-            data
-        );
-    }
+    let metadata = union_csg
+        .polygons
+        .iter()
+        .map(|polygon| polygon.metadata().as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
 }
 
 #[test]
@@ -97,14 +95,12 @@ fn test_difference_metadata() {
 
     let result = cube1.difference(&cube2);
 
-    for poly in &result.polygons {
-        let metadata = poly.metadata();
-        assert!(
-            metadata == "Cube1",
-            "Difference polygon has unexpected metadata = {:?}",
-            metadata
-        );
-    }
+    let metadata = result
+        .polygons
+        .iter()
+        .map(|polygon| polygon.metadata().as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
 }
 
 #[test]
@@ -114,14 +110,27 @@ fn test_intersect_metadata() {
 
     let result = cube1.intersection(&cube2);
 
-    for poly in &result.polygons {
-        let data = poly.metadata();
-        assert!(
-            data == "Cube1" || data == "Cube2",
-            "Intersection polygon has unexpected shared data = {:?}",
-            data
-        );
-    }
+    let metadata = result
+        .polygons
+        .iter()
+        .map(|polygon| polygon.metadata().as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
+}
+
+#[test]
+fn test_empty_union_does_not_relabel_faces() {
+    let empty = Mesh::<String>::empty();
+    let cube = Mesh::cube(r(1.0), "right".to_string());
+
+    let result = empty.union(&cube);
+
+    assert!(
+        result
+            .polygons
+            .iter()
+            .all(|polygon| polygon.metadata() == "right")
+    );
 }
 
 #[test]
@@ -145,7 +154,7 @@ fn test_subdivide_metadata() {
         ],
         "LargeQuad".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly], "Mesh".to_string());
+    let csg = Mesh::from_polygons(&[poly]);
     let subdivided = csg.subdivide_triangles(1.try_into().expect("not 0"));
 
     assert!(subdivided.polygons.len() > 1);
@@ -164,7 +173,7 @@ fn test_transform_metadata() {
         ],
         "Tri".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly], "Mesh".to_string());
+    let csg = Mesh::from_polygons(&[poly]);
     let csg_trans = csg.translate(r(10.0), r(5.0), r(0.0));
     let csg_scale = csg_trans.scale(r(2.0), r(2.0), r(1.0));
     let csg_rot = csg_scale.rotate(r(0.0), r(0.0), r(45.0));
@@ -183,12 +192,16 @@ fn test_complex_metadata_struct_in_boolean_ops() {
     let csg2 = Mesh::cube(r(2.0), Color(0, 255, 0)).translate(r(0.5), r(0.5), r(0.5));
 
     let unioned = csg1.union(&csg2);
-    for poly in &unioned.polygons {
-        let col = poly.metadata();
-        assert!(
-            *col == Color(255, 0, 0) || *col == Color(0, 255, 0),
-            "Unexpected color in union: {:?}",
-            col
-        );
-    }
+    assert!(
+        unioned
+            .polygons
+            .iter()
+            .any(|polygon| polygon.metadata() == &Color(255, 0, 0))
+    );
+    assert!(
+        unioned
+            .polygons
+            .iter()
+            .any(|polygon| polygon.metadata() == &Color(0, 255, 0))
+    );
 }

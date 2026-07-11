@@ -351,12 +351,11 @@ fn points(value: &str) -> Result<Vec<[Real; 2]>, IoError> {
         .collect()
 }
 
-fn imported_path<M: Clone + Debug + Send + Sync>(
+fn imported_path(
     data: &str,
     context: StyleContext,
     source_index: u64,
-    metadata: M,
-) -> Result<Profile<M>, IoError> {
+) -> Result<Profile, IoError> {
     let mut region = Region2::empty();
     let mut wires = Vec::new();
     if context.fills() {
@@ -382,13 +381,10 @@ fn imported_path<M: Clone + Debug + Send + Sync>(
             detail: format!("stroked path was not retained: {blocker:?}"),
         })?);
     }
-    Ok(Profile::from_region_and_wires(region, wires, metadata))
+    Ok(Profile::from_region_and_wires(region, wires))
 }
 
-fn styled_shape<M: Clone + Debug + Send + Sync>(
-    shape: Profile<M>,
-    context: StyleContext,
-) -> Profile<M> {
+fn styled_shape(shape: Profile, context: StyleContext) -> Profile {
     if context.fills() && context.strokes() {
         let wires = shape
             .as_region()
@@ -397,11 +393,7 @@ fn styled_shape<M: Clone + Debug + Send + Sync>(
             .chain(shape.as_region().hole_contours())
             .map(|contour| contour.curve_string().clone())
             .collect();
-        Profile::from_region_and_wires(
-            shape.as_region().clone(),
-            wires,
-            shape.metadata().clone(),
-        )
+        Profile::from_region_and_wires(shape.as_region().clone(), wires)
     } else if context.strokes() {
         let wires = shape
             .as_region()
@@ -410,40 +402,32 @@ fn styled_shape<M: Clone + Debug + Send + Sync>(
             .chain(shape.as_region().hole_contours())
             .map(|contour| contour.curve_string().clone())
             .collect();
-        Profile::from_wires(wires, shape.metadata().clone())
+        Profile::from_wires(wires)
     } else if context.fills() {
         shape
     } else {
-        Profile::empty(shape.metadata().clone())
+        Profile::empty()
     }
 }
 
-pub trait FromSVG<M>: Sized {
-    fn from_svg(document: &str, metadata: M) -> Result<Self, IoError>;
-    fn from_svg_with_options(
-        document: &str,
-        metadata: M,
-        options: SvgOptions,
-    ) -> Result<Self, IoError>;
+pub trait FromSVG: Sized {
+    fn from_svg(document: &str) -> Result<Self, IoError>;
+    fn from_svg_with_options(document: &str, options: SvgOptions) -> Result<Self, IoError>;
 }
 
-impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
-    fn from_svg(document: &str, metadata: M) -> Result<Self, IoError> {
-        Self::from_svg_with_options(document, metadata, SvgOptions::default())
+impl FromSVG for Profile {
+    fn from_svg(document: &str) -> Result<Self, IoError> {
+        Self::from_svg_with_options(document, SvgOptions::default())
     }
 
-    fn from_svg_with_options(
-        document: &str,
-        metadata: M,
-        options: SvgOptions,
-    ) -> Result<Self, IoError> {
+    fn from_svg_with_options(document: &str, options: SvgOptions) -> Result<Self, IoError> {
         use svg::node::element::tag;
         use svg::node::element::tag::Type::{Empty, End, Start};
         use svg::parser::Event;
 
         let options = options.validate()?;
         let mut contexts = vec![StyleContext::default()];
-        let mut output = Profile::empty(metadata.clone());
+        let mut output = Profile::empty();
         let mut source_index = 0_u64;
         for event in svg::read(document)? {
             let Event::Tag(name, kind, attrs) = event else {
@@ -495,18 +479,17 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                     let data = attrs.get("d").ok_or_else(|| {
                         IoError::MalformedInput("missing SVG path d attribute".into())
                     })?;
-                    imported_path(data, context, source_index, metadata.clone())?
+                    imported_path(data, context, source_index)?
                 },
                 tag::Circle => {
                     let radius = number(&attrs, "r", None)?;
                     let segments = options.segments_for_radius(radius)?;
                     styled_shape(
-                        Profile::circle(real(radius, "radius")?, segments, metadata.clone())
-                            .translate(
-                                real(number(&attrs, "cx", Some(0.0))?, "cx")?,
-                                real(number(&attrs, "cy", Some(0.0))?, "cy")?,
-                                Real::zero(),
-                            ),
+                        Profile::circle(real(radius, "radius")?, segments).translate(
+                            real(number(&attrs, "cx", Some(0.0))?, "cx")?,
+                            real(number(&attrs, "cy", Some(0.0))?, "cy")?,
+                            Real::zero(),
+                        ),
                         context,
                     )
                 },
@@ -524,7 +507,6 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                             real(2.0 * rx, "rx")?,
                             real(2.0 * ry, "ry")?,
                             segments,
-                            metadata.clone(),
                         )
                         .translate(
                             real(number(&attrs, "cx", Some(0.0))?, "cx")?,
@@ -534,7 +516,7 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                         context,
                     )
                 },
-                tag::Rectangle => rectangle(&attrs, context, options, metadata.clone())?,
+                tag::Rectangle => rectangle(&attrs, context, options)?,
                 tag::Line => {
                     let wire = CurveString2::from_real_point_iter([
                         [
@@ -551,9 +533,9 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                         detail: error.to_string(),
                     })?;
                     if context.strokes() {
-                        Profile::from_wires(vec![wire], metadata.clone())
+                        Profile::from_wires(vec![wire])
                     } else {
-                        Profile::empty(metadata.clone())
+                        Profile::empty()
                     }
                 },
                 tag::Polygon => {
@@ -565,7 +547,7 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                             "SVG polygon requires at least three points".into(),
                         ));
                     }
-                    styled_shape(Profile::polygon(&polygon_points, metadata.clone()), context)
+                    styled_shape(Profile::polygon(&polygon_points), context)
                 },
                 tag::Polyline => {
                     let polyline_points = points(attrs.get("points").ok_or_else(|| {
@@ -577,9 +559,7 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                             detail: error.to_string(),
                         })?;
                     let region = if context.fills() {
-                        Profile::polygon(&polyline_points, metadata.clone())
-                            .as_region()
-                            .clone()
+                        Profile::polygon(&polyline_points).as_region().clone()
                     } else {
                         Region2::empty()
                     };
@@ -588,7 +568,7 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
                     } else {
                         Vec::new()
                     };
-                    Profile::from_region_and_wires(region, wires, metadata.clone())
+                    Profile::from_region_and_wires(region, wires)
                 },
                 other => {
                     return Err(IoError::Unsupported {
@@ -610,12 +590,11 @@ impl<M: Clone + Debug + Send + Sync> FromSVG<M> for Profile<M> {
     }
 }
 
-fn rectangle<M: Clone + Debug + Send + Sync>(
+fn rectangle(
     attrs: &svg::node::Attributes,
     context: StyleContext,
     options: SvgOptions,
-    metadata: M,
-) -> Result<Profile<M>, IoError> {
+) -> Result<Profile, IoError> {
     let x = number(attrs, "x", Some(0.0))?;
     let y = number(attrs, "y", Some(0.0))?;
     let width = number(attrs, "width", None)?;
@@ -647,7 +626,7 @@ fn rectangle<M: Clone + Debug + Send + Sync>(
     let rx = rx.clamp(0.0, width / 2.0);
     let ry = ry.clamp(0.0, height / 2.0);
     let shape = if rx == 0.0 || ry == 0.0 {
-        Profile::rectangle(real(width, "width")?, real(height, "height")?, metadata)
+        Profile::rectangle(real(width, "width")?, real(height, "height")?)
     } else {
         let segments = options.segments_for_radius(rx.max(ry))? / 4;
         let mut boundary = Vec::new();
@@ -666,7 +645,7 @@ fn rectangle<M: Clone + Debug + Send + Sync>(
                 ]);
             }
         }
-        Profile::polygon(&boundary, metadata)
+        Profile::polygon(&boundary)
     };
     Ok(styled_shape(
         shape.translate(real(x, "x")?, real(y, "y")?, Real::zero()),
@@ -679,7 +658,7 @@ pub trait ToSVG {
     fn to_svg_with_options(&self, options: SvgOptions) -> Result<String, IoError>;
 }
 
-impl<M: Clone + Debug + Send + Sync> ToSVG for Profile<M> {
+impl ToSVG for Profile {
     fn to_svg(&self) -> Result<String, IoError> {
         self.to_svg_with_options(SvgOptions::default())
     }
@@ -769,7 +748,7 @@ mod tests {
     #[test]
     fn imports_inherited_transform_and_svg_defaults() {
         let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><g transform="translate(3 4)"><circle r="2"/></g></svg>"#;
-        let profile = Profile::<()>::from_svg(document, ()).unwrap();
+        let profile = Profile::from_svg(document).unwrap();
         let bounds = profile.bounding_box();
         for (actual, expected) in [
             (&bounds.mins.x, 1.0),
@@ -784,7 +763,7 @@ mod tests {
     #[test]
     fn polyline_fill_closes_but_stroke_remains_open() {
         let document = r#"<svg xmlns="http://www.w3.org/2000/svg"><polyline points="0,0 2,0 1,1" stroke="black"/></svg>"#;
-        let profile = Profile::<()>::from_svg(document, ()).unwrap();
+        let profile = Profile::from_svg(document).unwrap();
         assert_eq!(profile.as_region().material_contours().len(), 1);
         assert_eq!(profile.wires().len(), 1);
         assert_ne!(profile.wires()[0].start(), profile.wires()[0].end());
@@ -792,14 +771,14 @@ mod tests {
 
     #[test]
     fn export_reports_empty_geometry() {
-        assert!(Profile::<()>::empty(()).to_svg().is_err());
+        assert!(Profile::empty().to_svg().is_err());
     }
 
     #[test]
     fn rejects_unbounded_curve_sampling() {
         let document =
             r#"<svg xmlns="http://www.w3.org/2000/svg"><circle r="1000000"/></svg>"#;
-        assert!(Profile::<()>::from_svg(document, ()).is_err());
+        assert!(Profile::from_svg(document).is_err());
     }
 
     #[test]
@@ -809,7 +788,7 @@ mod tests {
             r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="2" height="2" rx="-1"/></svg>"#,
             r#"<svg xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 1,1"/></svg>"#,
         ] {
-            assert!(Profile::<()>::from_svg(document, ()).is_err());
+            assert!(Profile::from_svg(document).is_err());
         }
     }
 
@@ -822,7 +801,7 @@ mod tests {
                 <circle r="10" opacity="0"/>
             </g>
         </svg>"#;
-        let profile = Profile::<()>::from_svg(document, ()).unwrap();
+        let profile = Profile::from_svg(document).unwrap();
         assert_eq!(profile.as_region().material_contours().len(), 1);
         assert_eq!(profile.wires().len(), 1);
         let bounds = profile.bounding_box();
@@ -842,9 +821,9 @@ mod tests {
 
     #[test]
     fn exported_svg_round_trips_through_importer() {
-        let square = Profile::<()>::square(Real::from(3_u8), ());
+        let square = Profile::square(Real::from(3_u8));
         let document = square.to_svg().unwrap();
-        let reparsed = Profile::<()>::from_svg(&document, ()).unwrap();
+        let reparsed = Profile::from_svg(&document).unwrap();
         let bounds = reparsed.bounding_box();
         assert_eq!(bounds.mins.x, Real::zero());
         assert_eq!(bounds.mins.y, Real::zero());
@@ -860,17 +839,12 @@ mod tests {
             r#"<svg xmlns="http://www.w3.org/2000/svg"><svg x="1"><rect width="1" height="1"/></svg></svg>"#,
         ] {
             assert!(matches!(
-                Profile::<()>::from_svg(document, ()),
+                Profile::from_svg(document),
                 Err(IoError::Unsupported { format: "SVG", .. })
             ));
         }
 
         let transparent = r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" opacity="0%"/></svg>"#;
-        assert!(
-            Profile::<()>::from_svg(transparent, ())
-                .unwrap()
-                .as_region()
-                .is_empty()
-        );
+        assert!(Profile::from_svg(transparent).unwrap().as_region().is_empty());
     }
 }

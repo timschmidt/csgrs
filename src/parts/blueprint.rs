@@ -194,10 +194,13 @@ pub fn blueprint_from_aabb_parts(
 ) -> BlueprintReport {
     let aabb_parts = parts
         .iter()
-        .map(|mesh| AabbPart {
-            handle: mesh.metadata.handle.clone(),
-            bounds: mesh.bounding_box(),
-            metadata: mesh.metadata.clone(),
+        .filter_map(|mesh| {
+            let metadata = mesh.polygons.first()?.metadata.clone();
+            Some(AabbPart {
+                handle: metadata.handle.clone(),
+                bounds: mesh.bounding_box(),
+                metadata,
+            })
         })
         .collect::<Vec<_>>();
 

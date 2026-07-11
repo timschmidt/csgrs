@@ -11,7 +11,7 @@ fn main() {
 
     let cube = Mesh::<()>::cube(r(1.5), ());
     let sphere = Mesh::<()>::sphere(r(0.4), 16, 8, ());
-    write_mesh(&cube.minkowski_sum(&sphere), "rounded_cube");
+    write_mesh(&cube.minkowski_sum(&sphere, ()), "rounded_cube");
 }
 
 fn r(value: f64) -> Real {

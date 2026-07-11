@@ -64,10 +64,10 @@ fn plane_split_uses_exact_hyperreal_side_classification() {
 
 #[test]
 fn profile_offset_and_extrude_keep_hyperreal_scalars() {
-    let profile = Profile::<()>::square(r(2.0), ());
+    let profile = Profile::square(r(2.0));
     #[cfg(feature = "offset")]
     let profile = profile.offset(r(0.125));
-    let mesh = profile.extrude(r(0.75));
+    let mesh = profile.extrude(r(0.75), ());
 
     assert!(!mesh.polygons.is_empty());
     assert!(mesh.bounding_box().maxs.z >= r(0.75));

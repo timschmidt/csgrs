@@ -3,14 +3,13 @@
 use crate::hyper_math::{Real, hreal_to_f64};
 use crate::sketch::Profile;
 use hypercurve::{Contour2, CurveString2, Region2};
-use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
 
 // For flattening curves, how many segments per quad/cubic
 const CURVE_STEPS: usize = 8;
 
-impl<M: Clone + Debug + Send + Sync> Profile<M> {
+impl Profile {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
     /// Each glyph's closed contours become native `hypercurve::Region2`
@@ -26,28 +25,27 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// - `text`: the text string
     /// - `font_data`: raw bytes of a TTF file
     /// - `scale`: a uniform scale factor for glyphs
-    /// - `metadata`: optional metadata for the resulting `Profile`
     ///
     /// # Returns
     /// A `Profile` whose filled glyph outlines are stored as a native region and
     /// whose rare open glyph contours are stored as native wires.
-    pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: M) -> Self {
+    pub fn text(text: &str, font_data: &[u8], scale: Real) -> Self {
         // 1) Parse the TTF font
         let face = match ttf_parser::Face::parse(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
                 // If the font fails to parse, return an empty 2D Profile
-                return Profile::empty(metadata);
+                return Profile::empty();
             },
         };
 
         // Treat `scale` as points-per-em and convert points to millimeters.
         let units_per_em = f64::from(face.units_per_em());
         let Some(scale) = hreal_to_f64(&scale) else {
-            return Profile::empty(metadata);
+            return Profile::empty();
         };
         if scale <= 0.0 || units_per_em <= 0.0 {
-            return Profile::empty(metadata);
+            return Profile::empty();
         }
         let font_scale = scale * 0.3527777 / units_per_em;
         let default_advance = default_advance(&face, font_scale);
@@ -153,9 +151,8 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         Profile::from_region_and_wires_with_origin(
             Region2::new(material_contours, hole_contours),
             wires,
-            metadata,
             crate::vertex::Vertex::default(),
-            Profile::<M>::prepare_origin_transform(crate::vertex::Vertex::default()),
+            Profile::prepare_origin_transform(crate::vertex::Vertex::default()),
         )
     }
 }

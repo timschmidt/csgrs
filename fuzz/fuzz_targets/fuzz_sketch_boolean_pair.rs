@@ -30,7 +30,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-100.0, 100.0))
 }
 
-fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Profile<M>) {
+fn assert_sketch_finite(sketch: &Profile) {
     let profiles = sketch.region_profiles();
     for ring in profiles.iter().flat_map(|profile| {
         std::iter::once(profile.material().points())
@@ -48,15 +48,13 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let mut idx = 0usize;
-    let a: Profile<Option<()>> = Profile::rectangle(
+    let a: Profile = Profile::rectangle(
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
-        None,
     );
     let b = Profile::circle(
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         (bytes[idx % bytes.len()] as usize % 32) + 3,
-        None,
     )
     .translate(
         decode_real(bytes, &mut idx),

@@ -4,12 +4,13 @@ use crate::csg::CSG;
 use crate::hyper_math::Real;
 use crate::mesh::{Mesh, plane::Plane};
 use crate::wasm::{
-    finite_matrix4, js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs,
-    point_js::Point3Js, polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
+    finite_matrix4, js_metadata, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
+    polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
 };
 use crate::wasm::{point3_from_js_or_origin, real_from_js, real_from_js_or_zero, real_to_js};
 use hyperlattice::{Point3, Vector3};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
+use serde_json::Value as JsonValue;
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
@@ -28,7 +29,7 @@ fn wasm_point3_boundary(x: f64, y: f64, z: f64) -> Point3 {
 
 #[wasm_bindgen]
 pub struct MeshJs {
-    pub(crate) inner: Mesh<Option<String>>,
+    pub(crate) inner: Mesh<Option<JsonValue>>,
 }
 
 #[wasm_bindgen]
@@ -36,15 +37,14 @@ impl MeshJs {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
-            inner: Mesh::empty(None),
+            inner: Mesh::empty(),
         }
     }
 
     #[wasm_bindgen(js_name=fromPolygons)]
-    pub fn from_polygons(polygons: Vec<PolygonJs>, metadata: JsValue) -> MeshJs {
+    pub fn from_polygons(polygons: Vec<PolygonJs>) -> MeshJs {
         let poly_vec: Vec<_> = polygons.iter().map(|p| p.inner.clone()).collect();
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        let mesh = Mesh::from_polygons(&poly_vec, meta);
+        let mesh = Mesh::from_polygons(&poly_vec);
         MeshJs { inner: mesh }
     }
 
@@ -153,7 +153,7 @@ impl MeshJs {
 
         let indices = hypertri::earcut(&exact_points, &holes)
             .map_err(|err| JsValue::from_str(&format!("hypertri earcut failed: {err:?}")))?;
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        let meta = js_metadata(metadata)?;
         let mut polygons = Vec::with_capacity(indices.len() / 3);
 
         for tri in indices.chunks_exact(3) {
@@ -178,7 +178,7 @@ impl MeshJs {
         }
 
         Ok(MeshJs {
-            inner: Mesh::from_polygons(&polygons, meta),
+            inner: Mesh::from_polygons(&polygons).with_metadata(meta),
         })
     }
 
@@ -486,18 +486,20 @@ impl MeshJs {
 
     #[cfg(feature = "chull-io")]
     #[wasm_bindgen(js_name=convexHull)]
-    pub fn convex_hull(&self) -> Self {
-        Self {
-            inner: self.inner.convex_hull(),
-        }
+    pub fn convex_hull(&self, metadata: JsValue) -> Result<Self, JsValue> {
+        let metadata = js_metadata(metadata)?;
+        Ok(Self {
+            inner: self.inner.convex_hull(metadata),
+        })
     }
 
     #[cfg(feature = "chull-io")]
     #[wasm_bindgen(js_name=minkowskiSum)]
-    pub fn minkowski_sum(&self, other: &MeshJs) -> Self {
-        Self {
-            inner: self.inner.minkowski_sum(&other.inner),
-        }
+    pub fn minkowski_sum(&self, other: &MeshJs, metadata: JsValue) -> Result<Self, JsValue> {
+        let metadata = js_metadata(metadata)?;
+        Ok(Self {
+            inner: self.inner.minkowski_sum(&other.inner, metadata),
+        })
     }
 
     #[wasm_bindgen(js_name=flatten)]
@@ -542,10 +544,10 @@ impl MeshJs {
 
         vec![
             MeshJs {
-                inner: Mesh::from_polygons(&front_polys, self.inner.metadata.clone()),
+                inner: Mesh::from_polygons(&front_polys),
             },
             MeshJs {
-                inner: Mesh::from_polygons(&back_polys, self.inner.metadata.clone()),
+                inner: Mesh::from_polygons(&back_polys),
             },
         ]
     }
@@ -733,22 +735,18 @@ impl MeshJs {
     }
 
     #[wasm_bindgen(js_name=fromSketch)]
-    pub fn from_sketch(sketch_js: &SketchJs) -> MeshJs {
-        let mesh = Mesh::from(sketch_js.inner.clone());
-        Self { inner: mesh }
+    pub fn from_sketch(sketch_js: &SketchJs, metadata: JsValue) -> Result<MeshJs, JsValue> {
+        let metadata = js_metadata(metadata)?;
+        let mesh = Mesh::from_profile(sketch_js.inner.clone(), metadata);
+        Ok(Self { inner: mesh })
     }
 
     // Metadata
-    #[wasm_bindgen(js_name = sameMetadata)]
-    pub fn same_metadata(&self, other: &MeshJs) -> bool {
-        self.inner.same_metadata(&other.inner)
-    }
-
     #[wasm_bindgen(js_name=filterPolygonsByMetadata)]
-    pub fn filter_polygons_by_metadata(&self, needle: JsValue) -> MeshJs {
-        let meta = js_metadata_to_string(needle).unwrap_or(None);
+    pub fn filter_polygons_by_metadata(&self, needle: JsValue) -> Result<MeshJs, JsValue> {
+        let meta = js_metadata(needle)?;
         let mesh = self.inner.filter_polygons_by_metadata(&meta);
-        MeshJs { inner: mesh }
+        Ok(MeshJs { inner: mesh })
     }
 
     // Mass Properties
@@ -798,11 +796,11 @@ impl MeshJs {
 
     // 3D Shapes
     #[wasm_bindgen(js_name = cube)]
-    pub fn cube(size: f64, metadata: JsValue) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    pub fn cube(size: f64, metadata: JsValue) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::cube(real_from_js_or_zero(size), meta),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = sphere)]
@@ -811,37 +809,47 @@ impl MeshJs {
         segments_u: usize,
         segments_v: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::sphere(real_from_js_or_zero(radius), segments_u, segments_v, meta),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = cylinder)]
-    pub fn cylinder(radius: f64, height: f64, segments: usize, metadata: JsValue) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    pub fn cylinder(
+        radius: f64,
+        height: f64,
+        segments: usize,
+        metadata: JsValue,
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::cylinder(
                 real_from_js_or_zero(radius),
                 real_from_js_or_zero(height),
                 segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = cuboid)]
-    pub fn cuboid(width: f64, length: f64, height: f64, metadata: JsValue) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    pub fn cuboid(
+        width: f64,
+        length: f64,
+        height: f64,
+        metadata: JsValue,
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::cuboid(
                 real_from_js_or_zero(width),
                 real_from_js_or_zero(length),
                 real_from_js_or_zero(height),
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = frustum_ptp)]
@@ -852,11 +860,11 @@ impl MeshJs {
         radius2: f64,
         segments: usize,
         metadata: JsValue,
-    ) -> Self {
+    ) -> Result<Self, JsValue> {
         let start: Point3 = start.into();
         let end: Point3 = end.into();
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::frustum_ptp(
                 start,
                 end,
@@ -865,7 +873,7 @@ impl MeshJs {
                 segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = frustum_ptpComponents)]
@@ -880,11 +888,11 @@ impl MeshJs {
         radius2: f64,
         segments: usize,
         metadata: JsValue,
-    ) -> Self {
+    ) -> Result<Self, JsValue> {
         let start: Point3 = wasm_point3_boundary(start_x, start_y, start_z);
         let end: Point3 = wasm_point3_boundary(end_x, end_y, end_z);
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::frustum_ptp(
                 start,
                 end,
@@ -893,7 +901,7 @@ impl MeshJs {
                 segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = frustum)]
@@ -903,9 +911,9 @@ impl MeshJs {
         height: f64,
         segments: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::frustum(
                 real_from_js_or_zero(radius1),
                 real_from_js_or_zero(radius2),
@@ -913,7 +921,7 @@ impl MeshJs {
                 segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = polyhedron)]
@@ -945,7 +953,7 @@ impl MeshJs {
 
         let faces_ref: Vec<&[usize]> = faces_vec.iter().map(|f| f.as_slice()).collect();
 
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        let meta = js_metadata(metadata)?;
 
         let mesh = Mesh::polyhedron(&points_3d, &faces_ref, meta)
             .map_err(|e| JsValue::from_str(&format!("Polyhedron creation failed: {:?}", e)))?;
@@ -960,9 +968,9 @@ impl MeshJs {
         revolve_segments: usize,
         outline_segments: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::egg(
                 real_from_js_or_zero(width),
                 real_from_js_or_zero(length),
@@ -970,7 +978,7 @@ impl MeshJs {
                 outline_segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = teardrop)]
@@ -980,9 +988,9 @@ impl MeshJs {
         revolve_segments: usize,
         shape_segments: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::teardrop(
                 real_from_js_or_zero(width),
                 real_from_js_or_zero(length),
@@ -990,7 +998,7 @@ impl MeshJs {
                 shape_segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = teardropCylinder)]
@@ -1000,9 +1008,9 @@ impl MeshJs {
         height: f64,
         shape_segments: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::teardrop_cylinder(
                 real_from_js_or_zero(width),
                 real_from_js_or_zero(length),
@@ -1010,7 +1018,7 @@ impl MeshJs {
                 shape_segments,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = ellipsoid)]
@@ -1021,9 +1029,9 @@ impl MeshJs {
         segments: usize,
         stacks: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::ellipsoid(
                 real_from_js_or_zero(rx),
                 real_from_js_or_zero(ry),
@@ -1032,7 +1040,7 @@ impl MeshJs {
                 stacks,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = arrow)]
@@ -1042,29 +1050,29 @@ impl MeshJs {
         segments: usize,
         orientation: bool,
         metadata: JsValue,
-    ) -> Self {
+    ) -> Result<Self, JsValue> {
         let start: Point3 = start.into();
         let dir: Vector3 = direction.into();
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::arrow(start, dir, segments, orientation, meta),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = octahedron)]
-    pub fn octahedron(radius: f64, metadata: JsValue) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    pub fn octahedron(radius: f64, metadata: JsValue) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::octahedron(real_from_js_or_zero(radius), meta),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = icosahedron)]
-    pub fn icosahedron(radius: f64, metadata: JsValue) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    pub fn icosahedron(radius: f64, metadata: JsValue) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::icosahedron(real_from_js_or_zero(radius), meta),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = torus)]
@@ -1074,9 +1082,9 @@ impl MeshJs {
         segments_major: usize,
         segments_minor: usize,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::torus(
                 real_from_js_or_zero(major_r),
                 real_from_js_or_zero(minor_r),
@@ -1084,7 +1092,7 @@ impl MeshJs {
                 segments_minor,
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name = spurGearInvolute)]
@@ -1097,9 +1105,9 @@ impl MeshJs {
         segments_per_flank: usize,
         thickness: f64,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        Self {
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
+        Ok(Self {
             inner: Mesh::spur_gear_involute(
                 real_from_js_or_zero(module_),
                 teeth,
@@ -1110,7 +1118,7 @@ impl MeshJs {
                 real_from_js_or_zero(thickness),
                 meta,
             ),
-        }
+        })
     }
 
     #[wasm_bindgen(js_name=gyroid)]
@@ -1120,15 +1128,15 @@ impl MeshJs {
         scale: f64,
         iso_value: f64,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
         let gyroid_mesh = self.inner.gyroid(
             resolution.try_into().unwrap(),
             real_from_js_or_zero(scale),
             real_from_js_or_zero(iso_value),
             meta,
         );
-        Self { inner: gyroid_mesh }
+        Ok(Self { inner: gyroid_mesh })
     }
 
     #[wasm_bindgen(js_name=schwarzP)]
@@ -1138,17 +1146,17 @@ impl MeshJs {
         scale: f64,
         iso_value: f64,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
         let schwarzp_mesh = self.inner.schwarz_p(
             resolution.try_into().unwrap(),
             real_from_js_or_zero(scale),
             real_from_js_or_zero(iso_value),
             meta,
         );
-        Self {
+        Ok(Self {
             inner: schwarzp_mesh,
-        }
+        })
     }
 
     #[wasm_bindgen(js_name=schwarzD)]
@@ -1158,21 +1166,21 @@ impl MeshJs {
         scale: f64,
         iso_value: f64,
         metadata: JsValue,
-    ) -> Self {
-        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+    ) -> Result<Self, JsValue> {
+        let meta = js_metadata(metadata)?;
         let schwarzd_mesh = self.inner.schwarz_d(
             resolution.try_into().unwrap(),
             real_from_js_or_zero(scale),
             real_from_js_or_zero(iso_value),
             meta,
         );
-        Self {
+        Ok(Self {
             inner: schwarzd_mesh,
-        }
+        })
     }
 
     // #[wasm_bindgen(js_name=metaballs)]
-    // pub fn metaballs(balls: JsValue, resolution_x: u32, resolution_y: u32, resolution_z: u32, iso_value: f64, padding: f64) -> Self {
+    // pub fn metaballs(balls: JsValue, resolution_x: u32, resolution_y: u32, resolution_z: u32, iso_value: f64, padding: f64) -> Result<Self, JsValue> {
     // Parse the list of MetaBallJs objects or raw data.
     // let balls_vec: Vec<MetaBallJs> = from_value(balls).unwrap_or_else(|_| vec![]);
     // let meta_balls: Vec<MetaBall> = balls_vec.into_iter().map(|b| b.inner).collect();

@@ -145,7 +145,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         if balls.is_empty() {
             diagnostics.sample_count = 0;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         }
 
         let valid_balls = balls
@@ -161,31 +161,31 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(padding_h) = hreal_from_f64(padding).ok() else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
         let padding_is_negative = matches!(hreal_sign(&padding_h), Some(RealSign::Negative));
         let Some(iso_value_h) = hreal_from_f64(iso_value).ok() else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         if valid_balls.is_empty() || padding_is_negative {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         }
 
         let Some((min_pt, max_pt)) = metaball_bounds_hreal(&valid_balls, &padding_h) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         let Some(grid) = MetaballSamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
-            return (Mesh::empty(metadata), diagnostics);
+            return (Mesh::empty(), diagnostics);
         };
 
         // Create and fill the scalar-field array with "field_value - iso_value"
@@ -369,7 +369,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         // Build and return a Mesh from these polygons
-        (Mesh::from_polygons(&triangles, metadata), diagnostics)
+        (Mesh::from_polygons(&triangles), diagnostics)
     }
 }
 

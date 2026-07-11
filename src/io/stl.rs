@@ -161,7 +161,7 @@ where
             metadata.clone(),
         ));
     }
-    Ok(Mesh::from_polygons(&polygons, metadata))
+    Ok(Mesh::from_polygons(&polygons))
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -179,7 +179,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 }
 
 #[cfg(feature = "sketch")]
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
+impl crate::sketch::Profile {
     pub fn to_stl_ascii(&self, name: &str) -> Result<String, IoError> {
         to_stl_ascii(self, name)
     }

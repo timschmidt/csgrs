@@ -39,7 +39,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// following Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7.1-2 (1997),
     /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
-    pub fn convex_hull(&self) -> Mesh<M> {
+    pub fn convex_hull(&self, metadata: M) -> Mesh<M> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Point3> = self
             .polygons
@@ -55,7 +55,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Ok(h) => h,
             Err(_) => {
                 // Fallback to an empty CSG if hull generation fails
-                return Mesh::empty(self.metadata.clone());
+                return Mesh::empty();
             },
         };
 
@@ -84,10 +84,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let vv0 = Vertex::new(p0, normal.clone());
             let vv1 = Vertex::new(p1, normal.clone());
             let vv2 = Vertex::new(p2, normal);
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()));
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], metadata.clone()));
         }
 
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        Mesh::from_polygons(&polygons)
     }
 
     /// Compute the Minkowski sum: self ⊕ other
@@ -97,7 +97,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// the Minkowski sum of the convex hulls of A and B.
     ///
     /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
-    pub fn minkowski_sum(&self, other: &Mesh<M>) -> Mesh<M> {
+    pub fn minkowski_sum(&self, other: &Mesh<M>, metadata: M) -> Mesh<M> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3> = self
             .polygons
@@ -113,7 +113,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             .collect();
 
         if verts_a.is_empty() || verts_b.is_empty() {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
 
         // For Minkowski, add every point in A to every point in B
@@ -125,13 +125,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         // Early return if no points generated
         if sum_points.is_empty() {
-            return Mesh::empty(self.metadata.clone());
+            return Mesh::empty();
         }
 
         // Compute convex hull with proper error handling
         let hull = match ConvexHullWrapper::try_new(&sum_points, None) {
             Ok(h) => h,
-            Err(_) => return Mesh::empty(self.metadata.clone()), // Robust fallback for degenerate cases
+            Err(_) => return Mesh::empty(), // Robust fallback for degenerate cases
         };
         let (verts, indices) = hull.vertices_indices();
 
@@ -151,10 +151,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 let vv0 = Vertex::new(p0, normal.clone());
                 let vv1 = Vertex::new(p1, normal.clone());
                 let vv2 = Vertex::new(p2, normal);
-                Some(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()))
+                Some(Polygon::new(vec![vv0, vv1, vv2], metadata.clone()))
             })
             .collect();
 
-        Mesh::from_polygons(&polygons, self.metadata.clone())
+        Mesh::from_polygons(&polygons)
     }
 }

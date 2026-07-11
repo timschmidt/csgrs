@@ -3,16 +3,14 @@
 use crate::io::svg::FromSVG;
 use crate::sketch::Profile;
 use image::GrayImage;
-use std::fmt::Debug;
 
-impl<M: Clone + Debug + Send + Sync> Profile<M> {
+impl Profile {
     /// Builds a new Profile from the "on" pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
     /// - `img` – The raster source (`image::GrayImage`).
     /// - `threshold` – Pixels whose value is **≥ `threshold`** are treated as *solid*; all others are ignored.
     /// - `closepaths` – Forwarded to the contour tracer; when `true` it will attempt to close any open contours so that we get valid closed polygons wherever possible.
-    /// - `metadata`: optional metadata to attach to the resulting polygons
     ///
     /// # Returns
     /// A 2D shape in the XY plane (z=0) representing all traced contours. Each contour
@@ -22,15 +20,16 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// # Example
     /// ```ignore
     /// # use csgrs::profile::Profile;
+    /// # use hyperlattice::Real;
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();
-    /// let my_sketch = Profile::<()>::from_image(&img, 128, true, ());
+    /// let my_sketch = Profile::from_image(&img, 128, true );
     /// // optionally extrude it:
-    /// let my_mesh = my_sketch.extrude(5.0);
+    /// let my_mesh = my_sketch.extrude(Real::from(5), ());
     /// # }
     /// ```
-    pub fn from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M) -> Self {
+    pub fn from_image(img: &GrayImage, threshold: u8, closepaths: bool) -> Self {
         let width = img.width() as usize;
         let height = img.height() as usize;
 
@@ -64,10 +63,10 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
             d = svg_path
         );
 
-        if let Ok(parsed) = <Profile<M>>::from_svg(&svg_doc, metadata.clone()) {
+        if let Ok(parsed) = <Profile>::from_svg(&svg_doc) {
             parsed
         } else {
-            Profile::empty(metadata.clone())
+            Profile::empty()
         }
     }
 }

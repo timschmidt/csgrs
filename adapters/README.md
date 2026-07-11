@@ -53,7 +53,7 @@ fn main() -> Result<(), csgrs_adapter::AdapterError> {
 The adapter matrix should stay two-dimensional:
 
 - Add a scalar by implementing `ScalarAdapter` once.
-- Add a Rust operation by forwarding through `Mesh<A, M>` or `Profile<A, M>` once.
+- Add a Rust operation by forwarding through `Mesh<A, M>` or `Profile<A>` once.
 - Generate language bindings from the Rust adapter facade or a C ABI layer.
 
 Do not add crates per scalar-language pair. The intended layout is:

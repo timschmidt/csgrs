@@ -16,7 +16,7 @@ fn main() {
     let union = cube.union(&sphere);
 
     write_mesh(&union, "union");
-    write_mesh(&union.convex_hull(), "convex_hull");
+    write_mesh(&union.convex_hull(()), "convex_hull");
 }
 
 fn r(value: f64) -> Real {

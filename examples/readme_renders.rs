@@ -31,36 +31,33 @@ fn main() {
 }
 
 fn render_readme_sketches() {
-    render_sketch("square", &Profile::<()>::square(r(2.0), ()));
-    render_sketch("rectangle", &Profile::<()>::rectangle(r(2.4), r(1.35), ()));
-    render_sketch("circle", &Profile::<()>::circle(r(1.0), 96, ()));
+    render_sketch("square", &Profile::square(r(2.0)));
+    render_sketch("rectangle", &Profile::rectangle(r(2.4), r(1.35)));
+    render_sketch("circle", &Profile::circle(r(1.0), 96));
     render_sketch(
         "polygon",
-        &Profile::<()>::polygon(
-            &[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]],
-            (),
-        ),
+        &Profile::polygon(&[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]]),
     );
     render_sketch(
         "rounded_rectangle",
-        &Profile::<()>::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12, ()),
+        &Profile::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12),
     );
-    render_sketch("ellipse", &Profile::<()>::ellipse(r(2.3), r(1.3), 96, ()));
-    render_sketch("regular_ngon", &Profile::<()>::regular_ngon(6, r(1.0), ()));
+    render_sketch("ellipse", &Profile::ellipse(r(2.3), r(1.3), 96));
+    render_sketch("regular_ngon", &Profile::regular_ngon(6, r(1.0)));
     render_sketch(
         "sketch_arrow",
-        &Profile::<()>::arrow(r(2.2), r(0.35), r(0.8), r(1.0), ()),
+        &Profile::arrow(r(2.2), r(0.35), r(0.8), r(1.0)),
     );
     render_sketch(
         "trapezoid",
-        &Profile::<()>::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45), ()),
+        &Profile::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45)),
     );
-    render_sketch("star", &Profile::<()>::star(5, r(1.1), r(0.45), ()));
-    render_sketch("heart", &Profile::<()>::heart(r(2.0), r(1.8), 160, ()));
-    render_sketch("ring", &Profile::<()>::ring(r(1.4), r(0.35), 96, ()));
+    render_sketch("star", &Profile::star(5, r(1.1), r(0.45)));
+    render_sketch("heart", &Profile::heart(r(2.0), r(1.8), 160));
+    render_sketch("ring", &Profile::ring(r(1.4), r(0.35), 96));
     render_sketch(
         "pie_slice",
-        &Profile::<()>::pie_slice(r(1.1), r(-35.0), r(115.0), 64, ()),
+        &Profile::pie_slice(r(1.1), r(-35.0), r(115.0), 64),
     );
 }
 
@@ -81,23 +78,27 @@ fn render_readme_meshes() {
         &Mesh::<()>::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false, ()),
     );
 
-    let star = Profile::<()>::star(5, r(1.0), r(0.45), ());
-    render_mesh("extrude", &star.extrude(r(0.65)));
-    render_mesh("extrude_vector", &star.extrude_vector(v3(0.45, 0.25, 0.9)));
+    let star = Profile::star(5, r(1.0), r(0.45));
+    render_mesh("extrude", &star.extrude(r(0.65), ()));
+    render_mesh(
+        "extrude_vector",
+        &star.extrude_vector(v3(0.45, 0.25, 0.9), ()),
+    );
     render_mesh(
         "revolve",
-        &Profile::<()>::circle(r(0.18), 32, ())
+        &Profile::circle(r(0.18), 32)
             .translate(r(1.0), r(0.0), r(0.0))
-            .revolve(r(265.0), 32)
+            .revolve(r(265.0), 32, ())
             .expect("revolve"),
     );
 
     render_mesh("inverse", &Mesh::<()>::sphere(r(1.0), 32, 16, ()).inverse());
     render_mesh("csg", &cube_minus_translated_sphere());
-    render_mesh("convex_hull", &Mesh::<()>::cube(r(1.2), ()).convex_hull());
+    render_mesh("convex_hull", &Mesh::<()>::cube(r(1.2), ()).convex_hull(()));
     render_mesh(
         "minkowski_sum",
-        &Mesh::<()>::cube(r(1.1), ()).minkowski_sum(&Mesh::<()>::sphere(r(0.45), 16, 8, ())),
+        &Mesh::<()>::cube(r(1.1), ())
+            .minkowski_sum(&Mesh::<()>::sphere(r(0.45), 16, 8, ()), ()),
     );
 
     let balls = [
@@ -131,7 +132,7 @@ fn cube_minus_translated_sphere() -> Mesh<()> {
     cube.difference(&sphere)
 }
 
-fn render_sketch(name: &str, sketch: &Profile<()>) {
+fn render_sketch(name: &str, sketch: &Profile) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
     let profiles = sketch.region_profiles();
     let wires = sketch.wire_polylines();

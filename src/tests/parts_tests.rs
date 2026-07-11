@@ -45,8 +45,9 @@ fn installation_vector_rejects_exact_zero_direction() {
 fn mesh_transform_preserves_part_metadata() {
     let mesh = Mesh::cube(Real::from(2), metadata("cube", Some(vec3(0, 0, 5))));
     let moved = mesh.translate(Real::from(3), Real::from(0), Real::from(0));
-    assert_eq!(moved.metadata.handle, "cube");
-    assert!(moved.metadata.interface.has_installation_vector());
+    let metadata = &moved.polygons[0].metadata;
+    assert_eq!(metadata.handle, "cube");
+    assert!(metadata.interface.has_installation_vector());
 }
 
 #[test]
