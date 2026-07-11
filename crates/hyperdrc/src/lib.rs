@@ -99,14 +99,100 @@ pub use cli::{Check, Cli, OutputFormat};
 pub use report::{Diagnostic, Report, ReportSummary, Severity, Violation};
 
 use csgrs::sketch::Profile;
+use csgrs::{csg::CSG, io::gerber::FromGerber};
 use geo::{Coord, LineString, MultiPolygon, Polygon};
+use hyperlattice::{Aabb, Matrix4};
+use std::ops::{Deref, DerefMut};
 
 /// PCB geometry sketch tagged with layer/source metadata.
 ///
 /// This is the current `csgrs` compatibility boundary. Keep application checks
 /// from learning more about the `csgrs` numeric model so the future hyperreal
 /// sketch port can replace this alias without changing parser/report APIs.
-pub type PcbSketch = Profile<Option<LayerMetadata>>;
+#[derive(Clone, Debug)]
+pub struct PcbSketch {
+    profile: Profile,
+    metadata: Option<LayerMetadata>,
+}
+
+impl PcbSketch {
+    /// Attach PCB layer metadata to metadata-free profile geometry.
+    pub fn new(profile: Profile, metadata: Option<LayerMetadata>) -> Self {
+        Self { profile, metadata }
+    }
+
+    /// Return the PCB-owned layer metadata.
+    pub fn metadata(&self) -> &Option<LayerMetadata> {
+        &self.metadata
+    }
+
+    /// Parse Gerber geometry and attach its caller-owned layer metadata.
+    pub fn from_gerber(
+        data: &[u8],
+        metadata: Option<LayerMetadata>,
+    ) -> Result<Self, csgrs::io::IoError> {
+        Ok(Self::new(Profile::from_gerber(data)?, metadata))
+    }
+
+    /// Offset the profile while retaining its PCB layer metadata.
+    pub fn offset(&self, distance: hyperreal::Real) -> Self {
+        Self::new(self.profile.offset(distance), self.metadata.clone())
+    }
+}
+
+impl Deref for PcbSketch {
+    type Target = Profile;
+
+    fn deref(&self) -> &Self::Target {
+        &self.profile
+    }
+}
+
+impl DerefMut for PcbSketch {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.profile
+    }
+}
+
+impl CSG for PcbSketch {
+    fn union(&self, other: &Self) -> Self {
+        Self::new(self.profile.union(&other.profile), self.metadata.clone())
+    }
+
+    fn difference(&self, other: &Self) -> Self {
+        Self::new(
+            self.profile.difference(&other.profile),
+            self.metadata.clone(),
+        )
+    }
+
+    fn intersection(&self, other: &Self) -> Self {
+        Self::new(
+            self.profile.intersection(&other.profile),
+            self.metadata.clone(),
+        )
+    }
+
+    fn xor(&self, other: &Self) -> Self {
+        Self::new(self.profile.xor(&other.profile), self.metadata.clone())
+    }
+
+    fn transform(&self, matrix: &Matrix4) -> Self {
+        Self::new(self.profile.transform(matrix), self.metadata.clone())
+    }
+
+    fn inverse(&self) -> Self {
+        Self::new(self.profile.inverse(), self.metadata.clone())
+    }
+
+    fn bounding_box(&self) -> Aabb {
+        self.profile.bounding_box()
+    }
+
+    fn invalidate_bounding_box(&mut self) {
+        self.profile.invalidate_bounding_box();
+    }
+}
 
 /// Compatibility methods for the current `csgrs::Profile` sketch API.
 ///
@@ -125,6 +211,33 @@ pub trait PcbSketchExt {
 }
 
 impl PcbSketchExt for PcbSketch {
+    fn to_multipolygon(&self) -> MultiPolygon<f64> {
+        MultiPolygon(
+            self.region_profiles()
+                .into_iter()
+                .filter_map(|profile| {
+                    let exterior = finite_ring_to_linestring(profile.material().points())?;
+                    let interiors = profile
+                        .holes()
+                        .iter()
+                        .filter_map(|hole| finite_ring_to_linestring(hole.points()))
+                        .collect();
+                    Some(Polygon::new(exterior, interiors))
+                })
+                .collect(),
+        )
+    }
+
+    fn geometry(&self) -> MultiPolygon<f64> {
+        self.to_multipolygon()
+    }
+
+    fn bounding_rect(&self) -> Option<geo::Rect<f64>> {
+        geo::BoundingRect::bounding_rect(&self.to_multipolygon())
+    }
+}
+
+impl PcbSketchExt for Profile {
     fn to_multipolygon(&self) -> MultiPolygon<f64> {
         MultiPolygon(
             self.region_profiles()

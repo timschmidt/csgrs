@@ -23,6 +23,7 @@ clap = { version = "4.5", features = ["derive"] }
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 csgrs = { path = "../csgrs", default-features = false, features = ["sketch", "gerber-io", "offset"] }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
 flate2 = "1.0"
 geo = { version = "0.31.0", default-features = false }
 hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }

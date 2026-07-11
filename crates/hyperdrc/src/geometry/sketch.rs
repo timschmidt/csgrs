@@ -35,12 +35,15 @@ pub fn polygons_to_profile(
     if material.is_empty() && holes.is_empty() {
         return empty_profile(metadata);
     }
-    Profile::<Option<LayerMetadata>>::from_region(Region2::new(material, holes), metadata)
+    PcbSketch::new(
+        Profile::from_region(Region2::new(material, holes)),
+        metadata,
+    )
 }
 
 /// Create an empty `csgrs::Profile` with layer metadata.
 pub fn empty_profile(metadata: Option<LayerMetadata>) -> PcbSketch {
-    Profile::<Option<LayerMetadata>>::empty(metadata)
+    PcbSketch::new(Profile::empty(), metadata)
 }
 
 #[derive(Clone, Copy)]

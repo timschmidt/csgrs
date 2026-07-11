@@ -846,6 +846,7 @@ dependencies = [
  "flate2",
  "geo",
  "hypercurve",
+ "hyperlattice",
  "hyperlimit",
  "hyperpath",
  "hyperreal",

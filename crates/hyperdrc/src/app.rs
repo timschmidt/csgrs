@@ -2,7 +2,6 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, anyhow};
-use csgrs::io::gerber::FromGerber;
 
 use crate::cli::{Check, Cli, DEFAULT_CHECKS, OutputFormat};
 use crate::config::{self, EffectiveRules};
