@@ -691,13 +691,16 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = toSTLASCII)]
     pub fn to_stl_ascii(&self) -> Result<String, JsValue> {
-        let stl_content = self.inner.to_stl_ascii("mesh");
-        Ok(stl_content)
+        self.inner
+            .to_stl_ascii("mesh")
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name = toAMF)]
-    pub fn to_amf(&self, object_name: &str, units: &str) -> String {
-        self.inner.to_amf(object_name, units)
+    pub fn to_amf(&self, object_name: &str, units: &str) -> Result<String, JsValue> {
+        self.inner
+            .to_amf(object_name, units)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name = toAMFWithColor)]
@@ -708,21 +711,25 @@ impl MeshJs {
         r: f64,
         g: f64,
         b: f64,
-    ) -> String {
-        self.inner.to_amf_with_color(
-            object_name,
-            units,
-            (
-                real_from_js_or_zero(r),
-                real_from_js_or_zero(g),
-                real_from_js_or_zero(b),
-            ),
-        )
+    ) -> Result<String, JsValue> {
+        self.inner
+            .to_amf_with_color(
+                object_name,
+                units,
+                (
+                    real_from_js_or_zero(r),
+                    real_from_js_or_zero(g),
+                    real_from_js_or_zero(b),
+                ),
+            )
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name = toGLTF)]
-    pub fn to_gltf(&self, object_name: &str) -> String {
-        self.inner.to_gltf(object_name)
+    pub fn to_gltf(&self, object_name: &str) -> Result<String, JsValue> {
+        self.inner
+            .to_gltf(object_name)
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name=fromSketch)]

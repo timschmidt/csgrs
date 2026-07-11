@@ -348,8 +348,10 @@ impl SketchJs {
     }
 
     #[wasm_bindgen(js_name = toSVG)]
-    pub fn to_svg(&self) -> String {
-        self.inner.to_svg()
+    pub fn to_svg(&self) -> Result<String, JsValue> {
+        self.inner
+            .to_svg()
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name=fromMesh)]

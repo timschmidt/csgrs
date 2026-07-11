@@ -82,7 +82,7 @@ use csgrs::Real;
 
 type Mesh = csgrs::mesh::Mesh<()>;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a cube
     let cube: Mesh = Mesh::cube(Real::from(2), ()); // 2×2×2 cube at origin, no metadata
 
@@ -95,8 +95,9 @@ fn main() {
     let result = cube.try_difference(&sphere).expect("certified mesh difference");
 
     // Write the result as an ASCII STL:
-    let stl = result.to_stl_ascii("cube_minus_sphere");
-    std::fs::write("cube_sphere_difference.stl", stl).unwrap();
+    let stl = result.to_stl_ascii("cube_minus_sphere")?;
+    std::fs::write("cube_sphere_difference.stl", stl)?;
+    Ok(())
 }
 ```
 
@@ -411,28 +412,28 @@ let mirrored = cube.mirror(plane_x);
 
 ### STL
 
-- **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
-- **Export Binary STL**: `csg.to_stl_binary("solid_name") -> io::Result<Vec<u8>>`
-- **Import STL**: `Mesh::from_stl(&stl_data) -> io::Result<CSG<M>>`
+- **Export ASCII STL**: `mesh.to_stl_ascii("solid_name") -> Result<String, IoError>`
+- **Export Binary STL**: `mesh.to_stl_binary("solid_name") -> Result<Vec<u8>, IoError>`
+- **Import STL**: `Mesh::from_stl(&stl_data, metadata) -> Result<Mesh<M>, IoError>`
 
 ```rust
 // Save to ASCII STL
-let stl_text = csg_union.to_stl_ascii("union_solid");
+let stl_text = csg_union.to_stl_ascii("union_solid")?;
 std::fs::write("union_ascii.stl", stl_text).unwrap();
 
 // Save to binary STL
-let stl_bytes = csg_union.to_stl_binary("union_solid").unwrap();
-std::fs::write("union_bin.stl", stl_bytes).unwrap();
+let stl_bytes = csg_union.to_stl_binary("union_solid")?;
+std::fs::write("union_bin.stl", stl_bytes)?;
 
 // Load from an STL file on disk
 let file_data = std::fs::read("some_file.stl")?;
-let imported_mesh = Mesh::from_stl(&file_data)?;
+let imported_mesh = Mesh::from_stl(&file_data, ())?;
 ```
 
 ### DXF
 
-- **Export**: `csg.to_dxf() -> Result<Vec<u8>, Box<dyn Error>>`
-- **Import**: `Mesh::from_dxf(&dxf_data) -> Result<CSG<M>, Box<dyn Error>>`
+- **Export**: `mesh.to_dxf() -> Result<Vec<u8>, IoError>`
+- **Import**: `Mesh::from_dxf(&dxf_data, metadata) -> Result<Mesh<M>, IoError>`
 
 ```rust
 // Export DXF
@@ -441,8 +442,25 @@ std::fs::write("output.dxf", dxf_bytes)?;
 
 // Import DXF
 let dxf_data = std::fs::read("some_file.dxf")?;
-let csg_dxf = CSG::from_dxf(&dxf_data)?;
+let mesh_dxf = Mesh::from_dxf(&dxf_data, ())?;
 ```
+
+### Other interchange formats
+
+All interchange exporters are fallible. They reject non-finite or unrepresentable
+coordinates and metadata that cannot be encoded safely instead of substituting
+values or emitting a partial document.
+
+- **OBJ**: `mesh.to_obj(name)` and `Mesh::from_obj(reader, metadata)`
+- **PLY**: `mesh.to_ply(comment)`
+- **AMF**: `mesh.to_amf(name, units)` and `mesh.to_amf_with_color(name, units, color)`
+- **glTF 2.0**: `mesh.to_gltf(name)`
+- **SVG profiles**: `Profile::from_svg(document, metadata)` and `profile.to_svg()`
+- **Gerber profiles**: `Profile::from_gerber(data, metadata)` and `profile.to_gerber()`
+
+Each method returns `Result<_, csgrs::io::IoError>`. OBJ import deliberately
+rejects texture-coordinate data, STL import validates closed and consistently
+oriented topology, and DXF import reports unsupported entity types explicitly.
 
 ### Hershey Text
 

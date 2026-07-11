@@ -39,7 +39,7 @@ fn test_polygon_construction() {
 #[cfg(feature = "stl-io")]
 fn test_to_stl_ascii() {
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
-    let stl_str = cube.to_stl_ascii("test_cube");
+    let stl_str = cube.to_stl_ascii("test_cube").unwrap();
     // Basic checks
     assert!(stl_str.contains("solid test_cube"));
     assert!(stl_str.contains("endsolid test_cube"));
