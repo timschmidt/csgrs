@@ -1,0 +1,78 @@
+name: Deploy demo
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build demo
+    runs-on: ubuntu-latest
+    env:
+      TRUNK_COLOR: never
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hypermesh
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hypergraphics
+          path: hypergraphics
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperreal
+          path: hyperreal
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperlattice
+          path: hyperlattice
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperlimit
+          path: hyperlimit
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hypertri
+          path: hypertri
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hypermesh/examples/hypermesh_ui
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: trunk@0.21.14
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - run: trunk build --release --locked --public-url "${{ steps.pages.outputs.base_path }}/"
+        working-directory: hypermesh/examples/hypermesh_ui
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: hypermesh/examples/hypermesh_ui/dist
+
+  deploy:
+    name: Deploy demo
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

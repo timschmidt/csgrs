@@ -53,3 +53,45 @@ jobs:
           workspaces: hypermesh
       - run: ${{ matrix.command }}
         working-directory: hypermesh
+
+  demo:
+    name: demo-wasm
+    runs-on: ubuntu-latest
+    env:
+      TRUNK_COLOR: never
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hypermesh
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hypergraphics
+          path: hypergraphics
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperreal
+          path: hyperreal
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperlattice
+          path: hyperlattice
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hyperlimit
+          path: hyperlimit
+      - uses: actions/checkout@v4
+        with:
+          repository: timschmidt/hypertri
+          path: hypertri
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hypermesh/examples/hypermesh_ui
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: trunk@0.21.14
+      - run: trunk build --release --locked
+        working-directory: hypermesh/examples/hypermesh_ui
