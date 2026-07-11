@@ -132,20 +132,22 @@ pub(crate) fn hreal_sign(value: &Real) -> Option<RealSign> {
     value.refine_sign_until(128)
 }
 
-pub(crate) fn hreal_cmp_f64<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Ordering {
-    let Ok(lhs) = lhs.into_real() else {
-        return Ordering::Equal;
-    };
-    let Ok(rhs) = rhs.into_real() else {
-        return Ordering::Equal;
-    };
-    hyperlimit::compare_reals(&lhs, &rhs)
-        .value()
-        .unwrap_or_else(|| match (lhs - rhs).refine_sign_until(128) {
+pub(crate) fn hreal_try_cmp<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Option<Ordering> {
+    let lhs = lhs.into_real().ok()?;
+    let rhs = rhs.into_real().ok()?;
+    hyperlimit::compare_reals(&lhs, &rhs).value().or_else(|| {
+        match (lhs - rhs).refine_sign_until(128) {
             Some(RealSign::Positive) => Ordering::Greater,
             Some(RealSign::Negative) => Ordering::Less,
-            Some(RealSign::Zero) | None => Ordering::Equal,
-        })
+            Some(RealSign::Zero) => Ordering::Equal,
+            None => return None,
+        }
+        .into()
+    })
+}
+
+pub(crate) fn hreal_cmp_f64<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Ordering {
+    hreal_try_cmp(lhs, rhs).unwrap_or(Ordering::Equal)
 }
 
 pub(crate) fn hreal_gt_f64<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> bool {
@@ -218,26 +220,12 @@ pub(crate) fn hreal_max(values: &[Real]) -> Option<Real> {
     })
 }
 
-pub(crate) fn hreal_clamp_f64(value: Real, min: f64, max: f64) -> Option<Real> {
-    let min = hreal_from_f64(min).ok()?;
-    let max = hreal_from_f64(max).ok()?;
-    hyperlimit::real_clamp(value, &min, &max).value()
-}
-
 pub(crate) fn hreal_sqrt<T: IntoReal>(value: T) -> Option<Real> {
     value.into_real().ok()?.sqrt().ok()
 }
 
-pub(crate) fn hreal_atan<T: IntoReal>(value: T) -> Option<Real> {
-    value.into_real().ok()?.atan().ok()
-}
-
 pub(crate) fn hreal_tan<T: IntoReal>(value: T) -> Option<Real> {
     value.into_real().ok()?.tan().ok()
-}
-
-pub(crate) fn hreal_pow<B: IntoReal, E: IntoReal>(base: B, exponent: E) -> Option<Real> {
-    base.into_real().ok()?.pow(exponent.into_real().ok()?).ok()
 }
 
 pub(crate) fn hreal_affine<O: IntoReal, T: IntoReal, D: IntoReal>(

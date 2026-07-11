@@ -54,6 +54,7 @@ fuzz_target!(|bytes: &[u8]| {
     let segments = (bytes[idx % bytes.len()] as usize % 24) + 1;
     idx += 1;
     let teeth = (bytes[idx % bytes.len()] as usize % 24) + 1;
+    let positive_b = at_least_tolerance(b.abs());
 
     let mesh = match tag {
         0 => Mesh::cuboid(a, b, c, ()),
@@ -91,7 +92,7 @@ fuzz_target!(|bytes: &[u8]| {
             c,
             (),
         ),
-        13 => Mesh::spur_gear_cycloid(a, teeth, teeth.saturating_add(1), b, segments, c, ()),
+        13 => Mesh::spur_gear_cycloid(a, teeth, positive_b, b, segments, c, ()),
         _ => Mesh::helical_involute_gear(
             a,
             teeth,

@@ -79,9 +79,9 @@ fuzz_target!(|bytes: &[u8]| {
         16 => Profile::crescent(positive_a, positive_b, c, segments ),
         17 => Profile::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2) ),
         18 => Profile::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments ),
-        19 => Profile::cycloidal_gear(a, teeth, teeth.saturating_add(1), b, segments ),
+        19 => Profile::cycloidal_gear(a, teeth, positive_b, b, segments ),
         20 => Profile::involute_rack(a, teeth, b, c.clone(), real(0.01) * c ),
-        _ => Profile::cycloidal_rack(a, teeth, positive_b, c, segments ),
+        _ => Profile::cycloidal_rack(a, teeth, c, segments ),
     };
 
     assert_sketch_finite(&sketch);

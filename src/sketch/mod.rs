@@ -1,8 +1,8 @@
 //! `Profile` struct and implementations of the `CSGOps` trait for `Profile`
 
 use crate::hyper_math::{
-    Aabb, Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
-    hreal_to_f64, hrotation_between_vectors, hunit_vector3,
+    Aabb, Real, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum, hreal_to_f64,
+    hreal_try_cmp, hrotation_between_vectors, hunit_vector3,
 };
 
 #[cfg(feature = "mesh")]
@@ -257,16 +257,16 @@ impl Profile {
         let (mut min_x, mut min_y, mut max_x, mut max_y) =
             (first[0], first[1], first[0], first[1]);
         for point in iter {
-            if matches!(hreal_cmp_f64(point[0], min_x), Ordering::Less) {
+            if matches!(hreal_try_cmp(point[0], min_x)?, Ordering::Less) {
                 min_x = point[0];
             }
-            if matches!(hreal_cmp_f64(point[1], min_y), Ordering::Less) {
+            if matches!(hreal_try_cmp(point[1], min_y)?, Ordering::Less) {
                 min_y = point[1];
             }
-            if matches!(hreal_cmp_f64(point[0], max_x), Ordering::Greater) {
+            if matches!(hreal_try_cmp(point[0], max_x)?, Ordering::Greater) {
                 max_x = point[0];
             }
-            if matches!(hreal_cmp_f64(point[1], max_y), Ordering::Greater) {
+            if matches!(hreal_try_cmp(point[1], max_y)?, Ordering::Greater) {
                 max_y = point[1];
             }
         }
@@ -304,9 +304,9 @@ impl Profile {
             .expect("positive finite projection tolerance");
         match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
             Ok(Classification::Decided(profiles)) => profiles.iter().any(|profile| {
-                !matches!(
-                    hreal_cmp_f64(profile.projected_filled_area(), 0.0),
-                    Ordering::Equal
+                matches!(
+                    hreal_try_cmp(profile.projected_filled_area(), 0.0),
+                    Some(Ordering::Greater | Ordering::Less)
                 )
             }),
             Ok(Classification::Uncertain(_)) | Err(_) => false,
@@ -640,8 +640,8 @@ impl Profile {
             hreal_mul(&mat[0][1], &mat[1][0]).and_then(|cross| hreal_sub(main, cross))
         })?;
         if !matches!(
-            hreal_cmp_f64(determinant, 0.0),
-            Ordering::Greater | Ordering::Less
+            hreal_try_cmp(determinant, 0.0),
+            Some(Ordering::Greater | Ordering::Less)
         ) {
             return None;
         }

@@ -27,7 +27,7 @@
 //! simple finite profile projections rather than importing a separate skeleton
 //! geometry model.
 
-use crate::hyper_math::{Real, hreal_abs, hreal_cmp_f64, hreal_sign};
+use crate::hyper_math::{Real, hreal_abs, hreal_sign, hreal_try_cmp};
 use crate::sketch::Profile;
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveString2, FiniteRegionProfile2, OffsetCap,
@@ -59,7 +59,7 @@ impl Profile {
     /// (1997) while preserving the zero-radius offset identity discussed in
     /// Farouki and Neff (1990).
     fn native_zero_offset(&self, distance: Real) -> Option<Profile> {
-        matches!(hreal_cmp_f64(&distance, 0.0), std::cmp::Ordering::Equal).then(|| {
+        matches!(hreal_try_cmp(&distance, 0.0), Some(std::cmp::Ordering::Equal)).then(|| {
             Profile::from_region_and_wires_with_origin(
                 self.region.clone(),
                 self.wires.clone(),
@@ -78,7 +78,10 @@ impl Profile {
     fn native_wire_outline_offset(&self, distance: Real, cap: OffsetCap) -> Option<Profile> {
         if !self.region.is_empty()
             || self.wires.is_empty()
-            || !matches!(hreal_cmp_f64(&distance, 0.0), std::cmp::Ordering::Greater)
+            || !matches!(
+                hreal_try_cmp(&distance, 0.0),
+                Some(std::cmp::Ordering::Greater)
+            )
         {
             return None;
         }
