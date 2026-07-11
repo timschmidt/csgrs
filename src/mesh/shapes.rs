@@ -7,18 +7,12 @@ use crate::polygon::Polygon;
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
-use hyperlattice::{Matrix4, Point3, Real, Vector3};
+#[cfg(feature = "sketch")]
+use hypercurve::triangulate_finite_rings;
+use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
 use std::cmp::Ordering;
 use std::fmt::Debug;
-
-fn finite_mesh_scalar(_value: &Real) -> bool {
-    true
-}
-
-fn finite_mesh_point(_point: &Point3) -> bool {
-    true
-}
 
 /// Accept any finite, strictly positive mesh scalar exactly.
 ///
@@ -26,44 +20,291 @@ fn finite_mesh_point(_point: &Point3) -> bool {
 /// decisions should not collapse small nonzero values through a tolerance band.
 /// This follows Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn real_cmp(lhs: &Real, rhs: &Real) -> Ordering {
-    hyperlimit::compare_reals(lhs, rhs)
-        .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
+    hyperlimit::compare_reals(lhs, rhs).value().or_else(|| {
+        match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
             Some(RealSign::Positive) => Ordering::Greater,
             Some(RealSign::Negative) => Ordering::Less,
-            Some(RealSign::Zero) | None => Ordering::Equal,
-        })
+            Some(RealSign::Zero) => Ordering::Equal,
+            None => return None,
+        }
+        .into()
+    })
 }
 
 fn hmesh_scalar_positive(value: &Real) -> bool {
-    matches!(real_cmp(value, &Real::zero()), Ordering::Greater)
+    matches!(real_cmp(value, &Real::zero()), Some(Ordering::Greater))
 }
 
 fn hmesh_scalar_nonzero(value: &Real) -> bool {
-    !matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+    matches!(
+        real_cmp(value, &Real::zero()),
+        Some(Ordering::Less | Ordering::Greater)
+    )
+}
+
+fn hmesh_scalar_nonnegative(value: &Real) -> bool {
+    matches!(
+        real_cmp(value, &Real::zero()),
+        Some(Ordering::Equal | Ordering::Greater)
+    )
 }
 
 fn real_from_ratio(numerator: u64, denominator: u64) -> Option<Real> {
     (Real::from(numerator) / Real::from(denominator)).ok()
 }
 
-fn fraction(index: usize, count: usize) -> Option<Real> {
-    (Real::from(index as u64) / Real::from(count as u64)).ok()
+fn sampled_sin_cos(index: usize, count: usize, sweep: f64) -> Option<(Real, Real)> {
+    let index = if sweep == std::f64::consts::TAU {
+        index % count
+    } else {
+        index
+    };
+    let angle = sweep * index as f64 / count as f64;
+    let (sin, cos) = angle.sin_cos();
+    Some((Real::try_from(sin).ok()?, Real::try_from(cos).ok()?))
 }
 
-fn tau() -> Real {
-    Real::from(2_u8) * Real::pi()
+fn assembled_arrow<M: Clone + Debug + Send + Sync>(
+    start: Point3,
+    direction: Vector3,
+    segments: usize,
+    orientation: bool,
+    metadata: M,
+) -> Mesh<M> {
+    if segments < 3 {
+        return Mesh::empty();
+    }
+    let Some(length) = direction.dot(&direction).sqrt().ok() else {
+        return Mesh::empty();
+    };
+    if !hmesh_scalar_positive(&length) {
+        return Mesh::empty();
+    }
+    let Ok(axis) = direction.normalize_checked() else {
+        return Mesh::empty();
+    };
+    let Ok((axis_x, axis_y)) = axis.orthonormal_basis_checked() else {
+        return Mesh::empty();
+    };
+    let shaft_length = length.clone() * real_from_ratio(4, 5).expect("nonzero denominator");
+    let head_length = length.clone() - shaft_length.clone();
+    let shaft_radius = length.clone() * real_from_ratio(3, 100).expect("nonzero denominator");
+    let head_radius = length * real_from_ratio(3, 50).expect("nonzero denominator");
+    let end = start.clone() + direction;
+    let head_base = if orientation {
+        start.clone() + axis.clone() * head_length
+    } else {
+        start.clone() + axis.clone() * shaft_length
+    };
+    let (shaft_start, shaft_end, head_start, head_end, head_r1, head_r2) = if orientation {
+        (
+            head_base.clone(),
+            end,
+            start,
+            head_base.clone(),
+            Real::zero(),
+            head_radius.clone(),
+        )
+    } else {
+        (
+            start,
+            head_base.clone(),
+            head_base.clone(),
+            end,
+            head_radius.clone(),
+            Real::zero(),
+        )
+    };
+    let shaft = Mesh::frustum_ptp(
+        shaft_start,
+        shaft_end,
+        shaft_radius.clone(),
+        shaft_radius.clone(),
+        segments,
+        metadata.clone(),
+    );
+    let head = Mesh::frustum_ptp(
+        head_start,
+        head_end,
+        head_r1,
+        head_r2,
+        segments,
+        metadata.clone(),
+    );
+    let mut polygons = shaft
+        .polygons
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| {
+            if orientation {
+                index % 3 != 0
+            } else {
+                index % 3 != 1
+            }
+        })
+        .map(|(_, polygon)| polygon.clone())
+        .chain(
+            head.polygons
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| index % 2 == 1)
+                .map(|(_, polygon)| polygon.clone()),
+        )
+        .collect::<Vec<_>>();
+
+    let shoulder_normal = if orientation { axis.clone() } else { -axis };
+    for segment in 0..segments {
+        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, std::f64::consts::TAU)
+        else {
+            return Mesh::empty();
+        };
+        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, std::f64::consts::TAU)
+        else {
+            return Mesh::empty();
+        };
+        let ring_point = |radius: &Real, sin: &Real, cos: &Real| {
+            let radial = axis_x.clone() * cos.clone() + axis_y.clone() * sin.clone();
+            head_base.clone() + radial * radius.clone()
+        };
+        let inner0 = Vertex::new(
+            ring_point(&shaft_radius, &sin0, &cos0),
+            shoulder_normal.clone(),
+        );
+        let inner1 = Vertex::new(
+            ring_point(&shaft_radius, &sin1, &cos1),
+            shoulder_normal.clone(),
+        );
+        let outer0 = Vertex::new(
+            ring_point(&head_radius, &sin0, &cos0),
+            shoulder_normal.clone(),
+        );
+        let outer1 = Vertex::new(
+            ring_point(&head_radius, &sin1, &cos1),
+            shoulder_normal.clone(),
+        );
+        let vertices = if orientation {
+            vec![inner0, outer0, outer1, inner1]
+        } else {
+            vec![inner0, inner1, outer1, outer0]
+        };
+        polygons.push(Polygon::new(vertices, metadata.clone()));
+    }
+    Mesh::from_polygons(&polygons)
 }
 
 #[cfg(feature = "sketch")]
-fn degrees_to_radians(degrees: Real) -> Option<Real> {
-    (degrees * Real::pi() / Real::from(180_u8)).ok()
+fn positive_x_half(profile: &Profile) -> Option<Profile> {
+    let (min_x, min_y, max_x, max_y) = profile.native_xy_bounds()?;
+    match real_cmp(&min_x, &Real::zero())? {
+        Ordering::Equal | Ordering::Greater => return Some(profile.clone()),
+        Ordering::Less => {},
+    }
+    if !matches!(real_cmp(&max_x, &Real::zero())?, Ordering::Greater) {
+        return None;
+    }
+    let width = -min_x.clone();
+    let height = max_y - min_y.clone();
+    if !hmesh_scalar_positive(&width) || !hmesh_scalar_positive(&height) {
+        return None;
+    }
+    let cutter = Profile::rectangle(width, height).translate(min_x, min_y, Real::zero());
+    profile.try_difference(&cutter).ok()
 }
 
 #[cfg(feature = "sketch")]
-fn radians_to_degrees(radians: Real) -> Option<Real> {
-    (radians * Real::from(180_u8) / Real::pi()).ok()
+fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
+    profile: &Profile,
+    thickness: &Real,
+    total_twist: f64,
+    slices: usize,
+    metadata: M,
+) -> Mesh<M> {
+    let Some(height) = thickness.to_f64_lossy() else {
+        return Mesh::empty();
+    };
+    let profiles = profile.region_profiles();
+    if profiles.len() != 1 || !profiles[0].holes().is_empty() {
+        return Mesh::empty();
+    }
+    let mut exterior = profiles[0].material().points().to_vec();
+    if exterior.len() > 1 && exterior.first() == exterior.last() {
+        exterior.pop();
+    }
+    if exterior.len() < 3 {
+        return Mesh::empty();
+    }
+    let mut closed = exterior.clone();
+    closed.push(exterior[0]);
+    let Ok(triangles) = triangulate_finite_rings(&closed, &[]) else {
+        return Mesh::empty();
+    };
+    let transform_point = |point: [f64; 2], level: usize| -> Option<Point3> {
+        let t = level as f64 / slices as f64;
+        let angle = total_twist * t;
+        let (sin, cos) = angle.sin_cos();
+        Some(Point3::new(
+            Real::try_from(point[0] * cos - point[1] * sin).ok()?,
+            Real::try_from(point[0] * sin + point[1] * cos).ok()?,
+            Real::try_from(height * t).ok()?,
+        ))
+    };
+    let rings = (0..=slices)
+        .map(|level| {
+            exterior
+                .iter()
+                .copied()
+                .map(|point| transform_point(point, level))
+                .collect::<Option<Vec<_>>>()
+        })
+        .collect::<Option<Vec<_>>>();
+    let Some(rings) = rings else {
+        return Mesh::empty();
+    };
+    let mut polygons = Vec::new();
+    for triangle in triangles {
+        let bottom = triangle.map(|point| transform_point(point, 0));
+        let top = triangle.map(|point| transform_point(point, slices));
+        let [Some(b0), Some(b1), Some(b2)] = bottom else {
+            return Mesh::empty();
+        };
+        let [Some(t0), Some(t1), Some(t2)] = top else {
+            return Mesh::empty();
+        };
+        polygons.push(Polygon::new(
+            vec![
+                Vertex::new(b2, -Vector3::z()),
+                Vertex::new(b1, -Vector3::z()),
+                Vertex::new(b0, -Vector3::z()),
+            ],
+            metadata.clone(),
+        ));
+        polygons.push(Polygon::new(
+            vec![
+                Vertex::new(t0, Vector3::z()),
+                Vertex::new(t1, Vector3::z()),
+                Vertex::new(t2, Vector3::z()),
+            ],
+            metadata.clone(),
+        ));
+    }
+    for level in 0..slices {
+        for index in 0..exterior.len() {
+            let next = (index + 1) % exterior.len();
+            let mut side = Polygon::new(
+                vec![
+                    Vertex::new(rings[level][index].clone(), Vector3::zeros()),
+                    Vertex::new(rings[level][next].clone(), Vector3::zeros()),
+                    Vertex::new(rings[level + 1][next].clone(), Vector3::zeros()),
+                    Vertex::new(rings[level + 1][index].clone(), Vector3::zeros()),
+                ],
+                metadata.clone(),
+            );
+            side.set_new_normal();
+            polygons.push(side);
+        }
+    }
+    Mesh::from_polygons(&polygons)
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -107,9 +348,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Diagonal**: d = √(w² + l² + h²)
     /// - **Centroid**: (w/2, l/2, h/2)
     pub fn cuboid(width: Real, length: Real, height: Real, metadata: M) -> Mesh<M> {
-        if !(finite_mesh_scalar(&width)
-            && finite_mesh_scalar(&length)
-            && finite_mesh_scalar(&height))
+        if !(hmesh_scalar_positive(&width)
+            && hmesh_scalar_positive(&length)
+            && hmesh_scalar_positive(&height))
         {
             return Mesh::empty();
         }
@@ -254,7 +495,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Angular Distortion**: Increases towards poles (unavoidable)
     ///
     /// ### **Numerical Considerations**
-    /// - **Trigonometric Precision**: Uses tau() and pi() for accuracy
+    /// - **Trigonometric Sampling**: Samples finite angles once, then promotes
+    ///   their coordinates to exact dyadic `Real` values
     /// - **Pole Handling**: Avoids division by zero at singularities
     /// - **Winding Consistency**: Maintains outward-facing orientation
     ///
@@ -270,34 +512,47 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `stacks`: Latitude divisions (≥ 2, recommend ≥ 6)
     /// - `metadata`: Optional metadata for all faces
     ///
-    /// Longitude/latitude sampling is evaluated through hyperreal trigonometry
-    /// before the finite vertices are exported to hypermesh-compatible mesh
-    /// polygons, following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Longitude/latitude trigonometry is evaluated once at the finite
+    /// tessellation boundary. The resulting dyadic coordinates are promoted to
+    /// `Real`, so downstream topology predicates remain exact without retaining
+    /// costly symbolic trigonometric nodes in every mesh vertex.
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
-        if !finite_mesh_scalar(&radius) {
+        if !hmesh_scalar_positive(&radius) || segments < 3 || stacks < 2 {
             return Mesh::empty();
         }
-        let segments = segments.max(3);
-        let stacks = stacks.max(2);
-        let vertex = |theta: Real, phi: Real| -> Vertex {
-            let sin_theta = theta.clone().sin();
-            let cos_theta = theta.cos();
-            let sin_phi = phi.clone().sin();
-            let cos_phi = phi.cos();
-            let dir =
-                Vector3::from_xyz(cos_theta * sin_phi.clone(), cos_phi, sin_theta * sin_phi);
-            let normal = dir.normalize_checked().unwrap_or_else(|_| dir.clone());
-            Vertex::new(
-                Point3::new(
-                    dir.0[0].clone() * radius.clone(),
-                    dir.0[1].clone() * radius.clone(),
-                    dir.0[2].clone() * radius.clone(),
-                ),
-                normal,
-            )
-        };
+
+        let mut longitudes = Vec::with_capacity(segments);
+        for longitude in 0..segments {
+            let Some(sample) = sampled_sin_cos(longitude, segments, std::f64::consts::TAU)
+            else {
+                return Mesh::empty();
+            };
+            longitudes.push(sample);
+        }
+        let mut latitudes = Vec::with_capacity(stacks - 1);
+        for latitude in 1..stacks {
+            let Some(sample) = sampled_sin_cos(latitude, stacks, std::f64::consts::PI) else {
+                return Mesh::empty();
+            };
+            latitudes.push(sample);
+        }
+
+        let vertex =
+            |sin_theta: &Real, cos_theta: &Real, sin_phi: &Real, cos_phi: &Real| -> Vertex {
+                let dir = Vector3::from_xyz(
+                    cos_theta.clone() * sin_phi.clone(),
+                    cos_phi.clone(),
+                    sin_theta.clone() * sin_phi.clone(),
+                );
+                Vertex::new(
+                    Point3::new(
+                        dir.0[0].clone() * radius.clone(),
+                        dir.0[1].clone() * radius.clone(),
+                        dir.0[2].clone() * radius.clone(),
+                    ),
+                    dir,
+                )
+            };
 
         let north = Vertex::new(
             Point3::new(Real::zero(), radius.clone(), Real::zero()),
@@ -308,18 +563,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             -Vector3::y(),
         );
         let mut grid = Vec::with_capacity(segments);
-        for longitude in 0..segments {
-            let Some(theta) = fraction(longitude, segments).map(|value| value * tau()) else {
-                return Mesh::empty();
-            };
+        for (sin_theta, cos_theta) in &longitudes {
             let mut column = Vec::with_capacity(stacks + 1);
             column.push(north.clone());
-            for latitude in 1..stacks {
-                let Some(phi) = fraction(latitude, stacks).map(|value| value * Real::pi())
-                else {
-                    return Mesh::empty();
-                };
-                column.push(vertex(theta.clone(), phi));
+            for (sin_phi, cos_phi) in &latitudes {
+                column.push(vertex(sin_theta, cos_theta, sin_phi, cos_phi));
             }
             column.push(south.clone());
             grid.push(column);
@@ -400,14 +648,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         segments: usize,
         metadata: M,
     ) -> Mesh<M> {
-        if !finite_mesh_point(&start)
-            || !finite_mesh_point(&end)
-            || !finite_mesh_scalar(&radius1)
-            || !finite_mesh_scalar(&radius2)
+        if segments < 3
+            || !hmesh_scalar_nonnegative(&radius1)
+            || !hmesh_scalar_nonnegative(&radius2)
         {
             return Mesh::empty();
         }
-        let segments = segments.max(3);
         // Compute the axis and check that start and end do not coincide.
         //
         // The axis length and checked unit direction are evaluated through
@@ -439,13 +685,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // A closure that returns a vertex on the lateral surface.
         // For a given stack (0.0 for bottom, 1.0 for top), slice (fraction along the circle),
         // and a normal blend factor (used for cap smoothing), compute the vertex.
-        let point = |stack: Real, slice: Real, normal_blend: Real| -> Option<Vertex> {
+        let point = |stack: Real, sin_angle: &Real, cos_angle: &Real, normal_blend: Real| {
             // Linear interpolation of radius.
             let radius_delta = radius2.clone() - radius1.clone();
             let r = radius1.clone() + stack.clone() * radius_delta;
-            let angle = slice * tau();
-            let sin_angle = angle.clone().sin();
-            let cos_angle = angle.cos();
             let radial_dir = Vector3::from_xyz(
                 axis_x.0[0].clone() * cos_angle.clone()
                     + axis_y.0[0].clone() * sin_angle.clone(),
@@ -454,13 +697,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 axis_x.0[2].clone() * cos_angle + axis_y.0[2].clone() * sin_angle,
             );
             let position = start.clone() + ray.clone() * stack + radial_dir.clone() * r;
-            let radial_normal_scale = Real::one() - normal_blend.abs();
-            let normal =
-                radial_dir * radial_normal_scale + axis_z.clone() * normal_blend.clone();
-            Some(Vertex::new(
-                position,
-                normal.normalize_checked().unwrap_or_else(|_| axis_z.clone()),
-            ))
+            let normal = if hmesh_scalar_nonzero(&normal_blend) {
+                axis_z.clone() * normal_blend
+            } else {
+                let axial_component = radius1.clone() - radius2.clone();
+                let normal =
+                    radial_dir * axis_length.clone() + axis_z.clone() * axial_component;
+                normal.normalize_checked().ok()?
+            };
+            Some(Vertex::new(position, normal))
         };
 
         let mut polygons = Vec::new();
@@ -476,10 +721,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         // For each slice of the circle (0..segments)
         for i in 0..segments {
-            let Some(slice0) = fraction(i, segments) else {
+            let Some((sin0, cos0)) = sampled_sin_cos(i, segments, std::f64::consts::TAU)
+            else {
                 return Mesh::empty();
             };
-            let Some(slice1) = fraction(i + 1, segments) else {
+            let Some((sin1, cos1)) = sampled_sin_cos(i + 1, segments, std::f64::consts::TAU)
+            else {
                 return Mesh::empty();
             };
 
@@ -488,8 +735,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             if !bottom_degenerate {
                 // Bottom cap: a triangle fan from the bottom center to two consecutive points on the bottom ring.
                 let (Some(p0), Some(p1)) = (
-                    point(Real::zero(), slice0.clone(), -Real::one()),
-                    point(Real::zero(), slice1.clone(), -Real::one()),
+                    point(Real::zero(), &sin0, &cos0, -Real::one()),
+                    point(Real::zero(), &sin1, &cos1, -Real::one()),
                 ) else {
                     return Mesh::empty();
                 };
@@ -498,8 +745,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             if !top_degenerate {
                 // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
                 let (Some(p0), Some(p1)) = (
-                    point(Real::one(), slice1.clone(), Real::one()),
-                    point(Real::one(), slice0.clone(), Real::one()),
+                    point(Real::one(), &sin1, &cos1, Real::one()),
+                    point(Real::one(), &sin0, &cos0, Real::one()),
                 ) else {
                     return Mesh::empty();
                 };
@@ -512,8 +759,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             if bottom_degenerate {
                 // Bottom is a point (start_v); create a triangle from start_v to two consecutive points on the top ring.
                 let (Some(p0), Some(p1)) = (
-                    point(Real::one(), slice0.clone(), Real::zero()),
-                    point(Real::one(), slice1.clone(), Real::zero()),
+                    point(Real::one(), &sin0, &cos0, Real::zero()),
+                    point(Real::one(), &sin1, &cos1, Real::zero()),
                 ) else {
                     return Mesh::empty();
                 };
@@ -521,8 +768,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             } else if top_degenerate {
                 // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
                 let (Some(p0), Some(p1)) = (
-                    point(Real::zero(), slice1.clone(), Real::zero()),
-                    point(Real::zero(), slice0.clone(), Real::zero()),
+                    point(Real::zero(), &sin1, &cos1, Real::zero()),
+                    point(Real::zero(), &sin0, &cos0, Real::zero()),
                 ) else {
                     return Mesh::empty();
                 };
@@ -530,10 +777,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             } else {
                 // Normal case: both rings are non-degenerate. Use a quad for the side wall.
                 let (Some(p0), Some(p1), Some(p2), Some(p3)) = (
-                    point(Real::zero(), slice1.clone(), Real::zero()),
-                    point(Real::zero(), slice0.clone(), Real::zero()),
-                    point(Real::one(), slice0.clone(), Real::zero()),
-                    point(Real::one(), slice1.clone(), Real::zero()),
+                    point(Real::zero(), &sin1, &cos1, Real::zero()),
+                    point(Real::zero(), &sin0, &cos0, Real::zero()),
+                    point(Real::one(), &sin0, &cos0, Real::zero()),
+                    point(Real::one(), &sin1, &cos1, Real::zero()),
                 ) else {
                     return Mesh::empty();
                 };
@@ -622,15 +869,19 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut polygons = Vec::new();
 
         for face in faces {
-            // Skip degenerate faces
             if face.len() < 3 {
-                continue;
+                return Err(ValidationError::InvalidArguments);
+            }
+            if face
+                .iter()
+                .enumerate()
+                .any(|(index, value)| face[index + 1..].contains(value))
+            {
+                return Err(ValidationError::InvalidArguments);
             }
 
-            // Gather the vertices for this face
             let mut face_vertices = Vec::with_capacity(face.len());
             for &idx in face.iter() {
-                // Ensure the index is valid
                 if idx >= points.len() {
                     return Err(ValidationError::IndexOutOfRangeWithLen {
                         index: idx,
@@ -645,7 +896,35 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ));
             }
 
-            // Build the polygon (plane is auto-computed from first 3 vertices).
+            let base = face_vertices[0].position.to_vector();
+            let support = (1..face_vertices.len() - 1).find_map(|left| {
+                (left + 1..face_vertices.len()).find_map(|right| {
+                    let a = face_vertices[left].position.to_vector() - base.clone();
+                    let b = face_vertices[right].position.to_vector() - base.clone();
+                    let normal = a.cross(&b);
+                    matches!(
+                        real_cmp(&normal.dot(&normal), &Real::zero()),
+                        Some(Ordering::Greater)
+                    )
+                    .then_some((normal, left, right))
+                })
+            });
+            let Some((normal, support_left, support_right)) = support else {
+                return Err(ValidationError::InvalidArguments);
+            };
+            for (index, vertex) in face_vertices.iter().enumerate() {
+                if index == 0 || index == support_left || index == support_right {
+                    continue;
+                }
+                let offset = vertex.position.to_vector() - base.clone();
+                if !matches!(
+                    real_cmp(&normal.dot(&offset), &Real::zero()),
+                    Some(Ordering::Equal)
+                ) {
+                    return Err(ValidationError::InvalidArguments);
+                }
+            }
+
             let mut poly = Polygon::new(face_vertices, metadata.clone());
 
             // Set each vertex normal to match the polygon’s plane normal,
@@ -675,24 +954,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         outline_segments: usize,
         metadata: M,
     ) -> Self {
-        if !finite_mesh_scalar(&width) || !finite_mesh_scalar(&length) || revolve_segments < 3
+        if !hmesh_scalar_positive(&width)
+            || !hmesh_scalar_positive(&length)
+            || revolve_segments < 3
         {
             return Mesh::empty();
         }
 
         let egg_2d = Profile::egg(width, length, outline_segments);
 
-        // Build a large rectangle that cuts off everything
-        let cutter_height = Real::from(9999_u16); // some large number
-        let half_cutter =
-            (cutter_height.clone() / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
-        let rect_cutter = Profile::square(cutter_height.clone()).translate(
-            -cutter_height,
-            -half_cutter,
-            Real::zero(),
-        );
-
-        let half_egg = egg_2d.difference(&rect_cutter);
+        let Some(half_egg) = positive_x_half(&egg_2d) else {
+            return Mesh::empty();
+        };
 
         half_egg
             .revolve(Real::from(360_u16), revolve_segments, metadata.clone())
@@ -716,7 +989,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         shape_segments: usize,
         metadata: M,
     ) -> Self {
-        if !finite_mesh_scalar(&width) || !finite_mesh_scalar(&length) || revolve_segments < 3
+        if !hmesh_scalar_positive(&width)
+            || !hmesh_scalar_positive(&length)
+            || revolve_segments < 3
         {
             return Mesh::empty();
         }
@@ -724,17 +999,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // Make a 2D teardrop in the XY plane.
         let td_2d = Profile::teardrop(width, length, shape_segments);
 
-        // Build a large rectangle that cuts off everything
-        let cutter_height = Real::from(9999_u16); // some large number
-        let half_cutter =
-            (cutter_height.clone() / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
-        let rect_cutter = Profile::square(cutter_height.clone()).translate(
-            -cutter_height,
-            -half_cutter,
-            Real::zero(),
-        );
-
-        let half_teardrop = td_2d.difference(&rect_cutter);
+        let Some(half_teardrop) = positive_x_half(&td_2d) else {
+            return Mesh::empty();
+        };
 
         // revolve 360 degrees
         half_teardrop
@@ -759,9 +1026,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         shape_segments: usize,
         metadata: M,
     ) -> Self {
-        if !(finite_mesh_scalar(&width)
-            && finite_mesh_scalar(&length)
-            && finite_mesh_scalar(&height))
+        if !(hmesh_scalar_positive(&width)
+            && hmesh_scalar_positive(&length)
+            && hmesh_scalar_positive(&height))
         {
             return Mesh::empty();
         }
@@ -788,7 +1055,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         stacks: usize,
         metadata: M,
     ) -> Self {
-        if !(finite_mesh_scalar(&rx) && finite_mesh_scalar(&ry) && finite_mesh_scalar(&rz)) {
+        if !(hmesh_scalar_positive(&rx)
+            && hmesh_scalar_positive(&ry)
+            && hmesh_scalar_positive(&rz))
+        {
             return Mesh::empty();
         }
 
@@ -826,101 +1096,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         orientation: bool,
         metadata: M,
     ) -> Mesh<M> {
-        if !finite_mesh_point(&start) {
-            return Mesh::empty();
-        }
-        // Compute the arrow's total length and unit direction through the
-        // hyper geometry boundary used by primitive axis construction.
-        let Some(arrow_length) = direction.dot(&direction).sqrt().ok() else {
-            return Mesh::empty();
-        };
-        if !hmesh_scalar_positive(&arrow_length) {
-            return Mesh::empty();
-        }
-        let Ok(unit_dir) = direction.normalize_checked() else {
-            return Mesh::empty();
-        };
-
-        // Define proportions:
-        // - Arrow head occupies 20% of total length.
-        // - Shaft occupies the remainder.
-        let Some(head_fraction) = real_from_ratio(1, 5) else {
-            return Mesh::empty();
-        };
-        let head_length = arrow_length.clone() * head_fraction;
-        let shaft_length = arrow_length.clone() - head_length.clone();
-
-        // Define thickness parameters proportional to the arrow length.
-        let Some(shaft_radius_fraction) = real_from_ratio(3, 100) else {
-            return Mesh::empty();
-        };
-        let Some(head_base_radius_fraction) = real_from_ratio(3, 50) else {
-            return Mesh::empty();
-        };
-        let shaft_radius = arrow_length.clone() * shaft_radius_fraction;
-        let head_base_radius = arrow_length.clone() * head_base_radius_fraction;
-        let tip_radius = Real::zero();
-
-        // Build the shaft as a vertical cylinder along Z from 0 to shaft_length.
-        let shaft =
-            Mesh::cylinder(shaft_radius, shaft_length.clone(), segments, metadata.clone());
-
-        // Build the arrow head as a frustum from z = shaft_length to z = shaft_length + head_length.
-        let head = Mesh::frustum_ptp(
-            Point3::new(Real::zero(), Real::zero(), shaft_length.clone()),
-            Point3::new(Real::zero(), Real::zero(), arrow_length.clone()),
-            head_base_radius,
-            tip_radius,
-            segments,
-            metadata.clone(),
-        );
-
-        // Combine the shaft and head.
-        let mut canonical_arrow = shaft.union(&head);
-
-        // If the arrow should point toward start, mirror the geometry in canonical space.
-        // The mirror transform about the plane z = arrow_length/2 maps any point (0,0,z) to (0,0, arrow_length - z).
-        if orientation {
-            let Some(half_length) = (arrow_length.clone() / Real::from(2_u8)).ok() else {
-                return Mesh::empty();
-            };
-            let negative_half_length = -half_length.clone();
-            let to_midpoint =
-                Matrix4::affine_translation([Real::zero(), Real::zero(), half_length]);
-            let reflect_z =
-                Matrix4::affine_nonuniform_scale([Real::one(), Real::one(), -Real::one()]);
-            let from_midpoint = Matrix4::affine_translation([
-                Real::zero(),
-                Real::zero(),
-                negative_half_length,
-            ]);
-            let mirror_mat: Matrix4 = to_midpoint * reflect_z * from_midpoint;
-            canonical_arrow = canonical_arrow.transform(&mirror_mat).inverse();
-        }
-        // In both cases, we now have a canonical arrow that extends from z=0 to z=arrow_length.
-        // For orientation == false, z=0 is the base.
-        // For orientation == true, after mirroring z=0 is now the tip.
-
-        // Compute the rotation that maps the canonical +Z axis to the provided
-        // direction. Dot/cross/unit-vector work is delegated to hyperlattice via
-        // `hrotation_between_vectors`, following Yap's exact geometric
-        // computation boundary split.
-        let z_axis = Vector3::z();
-        let rot_mat: Matrix4 = Matrix4::rotation_between_vectors(&z_axis, &unit_dir)
-            .unwrap_or_else(|_| Matrix4::identity());
-
-        // Rotate the arrow.
-        let rotated_arrow = canonical_arrow.transform(&rot_mat);
-
-        // Finally, translate the arrow so that the anchored vertex (canonical (0,0,0)) moves to 'start'.
-        // In the false case, (0,0,0) is the base (arrow extends from start to start+direction).
-        // In the true case, after mirroring, (0,0,0) is the tip (arrow extends from start to start+direction).
-        rotated_arrow.translate(start.x, start.y, start.z)
+        assembled_arrow(start, direction, segments, orientation, metadata)
     }
 
     /// Regular octahedron scaled by `radius`
     pub fn octahedron(radius: Real, metadata: M) -> Self {
-        if !finite_mesh_scalar(&radius) {
+        if !hmesh_scalar_positive(&radius) {
             return Mesh::empty();
         }
         let pts = &[
@@ -965,14 +1146,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// the classical regular icosahedron coordinate model using the golden
     /// ratio; see Coxeter, *Regular Polytopes*, 3rd ed., 1973.
     pub fn icosahedron(radius: Real, metadata: M) -> Self {
-        if !finite_mesh_scalar(&radius) {
+        if !hmesh_scalar_positive(&radius) {
             return Mesh::empty();
         }
-        // radius scale factor
-        let Some(factor_fraction) = real_from_ratio(2939, 5000) else {
-            return Mesh::empty();
-        };
-        let factor = radius * factor_fraction;
         // golden ratio
         let Some(sqrt_five) = Real::from(5_u8).sqrt().ok() else {
             return Mesh::empty();
@@ -985,10 +1161,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(len) = (Real::one() + phi_squared).sqrt().ok() else {
             return Mesh::empty();
         };
-        let Some(inv_len) = (Real::one() / len).ok() else {
+        let Some(a) = (radius / len).ok() else {
             return Mesh::empty();
         };
-        let a = inv_len;
         let b = phi * a.clone();
 
         // 12 vertices ----------------------------------------------------
@@ -1031,9 +1206,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             &[9, 8, 1],
         ];
 
-        Self::polyhedron(&pts, &faces, metadata.clone())
-            .map(|mesh| mesh.scale(factor.clone(), factor.clone(), factor))
-            .unwrap_or_else(|_| Mesh::empty())
+        Self::polyhedron(&pts, &faces, metadata).unwrap_or_else(|_| Mesh::empty())
     }
 
     /// Torus centred at the origin in the *XY* plane.
@@ -1057,10 +1230,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         segments_minor: usize,
         metadata: M,
     ) -> Self {
-        if !finite_mesh_scalar(&major_r)
-            || !finite_mesh_scalar(&minor_r)
-            || !hmesh_scalar_nonzero(&major_r)
-            || !hmesh_scalar_nonzero(&minor_r)
+        if !hmesh_scalar_positive(&major_r)
+            || !hmesh_scalar_positive(&minor_r)
+            || !matches!(real_cmp(&major_r, &minor_r), Some(Ordering::Greater))
             || segments_major < 3
             || segments_minor < 3
         {
@@ -1090,7 +1262,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         thickness: Real,
         metadata: M,
     ) -> Mesh<M> {
-        if !finite_mesh_scalar(&thickness) {
+        if !hmesh_scalar_positive(&thickness) {
             return Mesh::empty();
         }
 
@@ -1109,18 +1281,24 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     pub fn spur_gear_cycloid(
         module: Real,
         teeth: usize,
-        pin_teeth: usize,
+        generating_radius: Real,
         clearance: Real,
         segments_per_flank: usize,
         thickness: Real,
         metadata: M,
     ) -> Mesh<M> {
-        if !finite_mesh_scalar(&thickness) {
+        if !hmesh_scalar_positive(&thickness) {
             return Mesh::empty();
         }
 
-        Profile::cycloidal_gear(module, teeth, pin_teeth, clearance, segments_per_flank)
-            .extrude(thickness, metadata)
+        Profile::cycloidal_gear(
+            module,
+            teeth,
+            generating_radius,
+            clearance,
+            segments_per_flank,
+        )
+        .extrude(thickness, metadata)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1138,9 +1316,30 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         if slices < 2
-            || !finite_mesh_scalar(&thickness)
-            || !finite_mesh_scalar(&helix_angle_deg)
+            || teeth < 4
+            || !hmesh_scalar_positive(&module)
+            || !hmesh_scalar_positive(&thickness)
+            || !matches!(
+                real_cmp(&helix_angle_deg, &Real::from(-90_i8)),
+                Some(Ordering::Greater)
+            )
+            || !matches!(
+                real_cmp(&helix_angle_deg, &Real::from(90_i8)),
+                Some(Ordering::Less)
+            )
         {
+            return Mesh::empty();
+        }
+        let (Some(module_value), Some(height), Some(helix_angle)) = (
+            module.to_f64_lossy(),
+            thickness.to_f64_lossy(),
+            helix_angle_deg.to_f64_lossy(),
+        ) else {
+            return Mesh::empty();
+        };
+        let pitch_radius = 0.5 * module_value * teeth as f64;
+        let total_twist = height * helix_angle.to_radians().tan() / pitch_radius;
+        if !total_twist.is_finite() {
             return Mesh::empty();
         }
 
@@ -1155,34 +1354,6 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         if base_slice.is_empty() {
             return Mesh::empty();
         }
-
-        let Ok(dz) = thickness / Real::from(slices as u64) else {
-            return Mesh::empty();
-        };
-        let Some(d_psi_rad) = degrees_to_radians(helix_angle_deg)
-            .and_then(|angle| (angle / Real::from(slices as u64)).ok())
-        else {
-            return Mesh::empty();
-        };
-        if !finite_mesh_scalar(&dz) || !finite_mesh_scalar(&d_psi_rad) {
-            return Mesh::empty();
-        }
-
-        let mut acc = Mesh::empty();
-        let mut z_curr = Real::zero();
-        for i in 0..slices {
-            let Some(rotation_deg) =
-                radians_to_degrees(Real::from(i as u64) * d_psi_rad.clone())
-            else {
-                return Mesh::empty();
-            };
-            let slice = base_slice
-                .rotate(Real::zero(), Real::zero(), rotation_deg)
-                .extrude(dz.clone(), metadata.clone())
-                .translate(Real::zero(), Real::zero(), z_curr.clone());
-            acc = if i == 0 { slice } else { acc.union(&slice) };
-            z_curr = z_curr + dz.clone();
-        }
-        acc
+        twisted_profile_extrusion(&base_slice, &thickness, total_twist, slices, metadata)
     }
 }

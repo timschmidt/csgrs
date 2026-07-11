@@ -193,6 +193,30 @@ fn test_csg_sphere() {
             .iter()
             .all(|polygon| polygon.vertices.len() == 3)
     );
+    assert!(oriented_volume_six(&sphere) > Real::zero());
+}
+
+#[test]
+fn round_primitive_vertices_are_directly_exportable() {
+    let meshes = [
+        Mesh::sphere(r(2.0), 16, 8, ()),
+        Mesh::frustum(r(2.0), r(1.0), r(3.0), 16, ()),
+        Mesh::arrow(p3(1.0, 2.0, 3.0), v3(2.0, 3.0, 4.0), 16, false, ()),
+    ];
+    for mesh in meshes {
+        for vertex in mesh.vertices() {
+            for coordinate in [
+                &vertex.position.x,
+                &vertex.position.y,
+                &vertex.position.z,
+                &vertex.normal.0[0],
+                &vertex.normal.0[1],
+                &vertex.normal.0[2],
+            ] {
+                assert!(coordinate.to_f64_lossy().is_some());
+            }
+        }
+    }
 }
 
 #[test]
@@ -234,6 +258,163 @@ fn frustum_family_has_outward_winding() {
 }
 
 #[test]
+fn solid_primitives_reject_nonpositive_dimensions() {
+    assert!(Mesh::<()>::cube(Real::zero(), ()).polygons.is_empty());
+    assert!(
+        Mesh::<()>::cuboid(r(1.0), r(-1.0), r(1.0), ())
+            .polygons
+            .is_empty()
+    );
+    assert!(Mesh::<()>::sphere(r(-1.0), 16, 8, ()).polygons.is_empty());
+    assert!(
+        Mesh::<()>::ellipsoid(r(1.0), Real::zero(), r(1.0), 16, 8, ())
+            .polygons
+            .is_empty()
+    );
+    assert!(Mesh::<()>::octahedron(Real::zero(), ()).polygons.is_empty());
+    assert!(Mesh::<()>::icosahedron(r(-1.0), ()).polygons.is_empty());
+    assert!(
+        Mesh::<()>::cylinder(r(-1.0), r(2.0), 16, ())
+            .polygons
+            .is_empty()
+    );
+    assert!(
+        Mesh::<()>::frustum(r(1.0), r(-1.0), r(2.0), 16, ())
+            .polygons
+            .is_empty()
+    );
+}
+
+#[test]
+fn icosahedron_radius_is_its_circumradius() {
+    let radius = r(3.25);
+    let mesh = Mesh::<()>::icosahedron(radius.clone(), ());
+    assert!(!mesh.polygons.is_empty());
+
+    for vertex in mesh.polygons.iter().flat_map(|polygon| &polygon.vertices) {
+        let coordinates = [
+            vertex.position.x.to_f64_lossy().unwrap_or(f64::NAN),
+            vertex.position.y.to_f64_lossy().unwrap_or(f64::NAN),
+            vertex.position.z.to_f64_lossy().unwrap_or(f64::NAN),
+        ];
+        let squared_distance = coordinates.iter().map(|value| value * value).sum::<f64>();
+        assert!(
+            (squared_distance - 3.25_f64.powi(2)).abs() < 1.0e-9,
+            "squared distance was {squared_distance}, coordinates were {coordinates:?}"
+        );
+    }
+}
+
+#[test]
+fn tapered_frustum_side_normals_include_axial_slope() {
+    let mesh = Mesh::<()>::frustum(r(2.0), r(1.0), r(2.0), 16, ());
+    assert!(!mesh.polygons.is_empty());
+
+    for side in mesh.polygons.iter().skip(2).step_by(3) {
+        for vertex in &side.vertices {
+            assert!(
+                vertex.normal.0[2] > Real::zero(),
+                "a narrowing +Z frustum must have side normals pointing partly +Z"
+            );
+            let squared_length = vertex
+                .normal
+                .0
+                .iter()
+                .map(|component| {
+                    component
+                        .to_f64_lossy()
+                        .expect("frustum normal component must be approximable")
+                        .powi(2)
+                })
+                .sum::<f64>();
+            assert!((squared_length - 1.0).abs() < 1.0e-9);
+        }
+    }
+}
+
+#[test]
+fn representative_mesh_shape_constructors_produce_topology() {
+    let meshes = [
+        ("cuboid", Mesh::<()>::cuboid(r(2.0), r(3.0), r(4.0), ())),
+        ("sphere", Mesh::<()>::sphere(r(2.0), 12, 6, ())),
+        ("cylinder", Mesh::<()>::cylinder(r(2.0), r(4.0), 12, ())),
+        ("frustum", Mesh::<()>::frustum(r(2.0), r(1.0), r(4.0), 12, ())),
+        (
+            "ellipsoid",
+            Mesh::<()>::ellipsoid(r(2.0), r(3.0), r(4.0), 12, 6, ()),
+        ),
+        (
+            "arrow",
+            Mesh::<()>::arrow(p3(1.0, 2.0, 3.0), v3(2.0, 3.0, 4.0), 12, false, ()),
+        ),
+        ("octahedron", Mesh::<()>::octahedron(r(2.0), ())),
+        ("icosahedron", Mesh::<()>::icosahedron(r(2.0), ())),
+        ("torus", Mesh::<()>::torus(r(3.0), r(1.0), 12, 8, ())),
+        (
+            "spur_gear_involute",
+            Mesh::<()>::spur_gear_involute(r(2.0), 12, r(20.0), r(0.0), r(0.0), 4, r(2.0), ()),
+        ),
+        (
+            "spur_gear_cycloid",
+            Mesh::<()>::spur_gear_cycloid(r(2.0), 12, r(1.0), r(0.0), 4, r(2.0), ()),
+        ),
+        (
+            "helical_involute_gear",
+            Mesh::<()>::helical_involute_gear(
+                r(2.0),
+                12,
+                r(20.0),
+                r(0.0),
+                r(0.0),
+                4,
+                r(6.0),
+                r(20.0),
+                4,
+                (),
+            ),
+        ),
+    ];
+
+    for (name, mesh) in meshes {
+        assert!(!mesh.polygons.is_empty(), "{name} returned empty topology");
+    }
+}
+
+#[test]
+fn helical_gear_twist_is_derived_from_helix_angle() {
+    let mesh = Mesh::<()>::helical_involute_gear(
+        r(2.0),
+        12,
+        r(20.0),
+        r(0.0),
+        r(0.0),
+        4,
+        r(6.0),
+        r(20.0),
+        4,
+        (),
+    );
+    let side = mesh
+        .polygons
+        .iter()
+        .find(|polygon| polygon.vertices.len() == 4)
+        .expect("helical gear must have connected side faces");
+    let angle = |vertex: &Vertex| {
+        let x = vertex.position.x.to_f64_lossy().expect("finite x");
+        let y = vertex.position.y.to_f64_lossy().expect("finite y");
+        y.atan2(x)
+    };
+    let mut measured = angle(&side.vertices[3]) - angle(&side.vertices[0]);
+    if measured > std::f64::consts::PI {
+        measured -= std::f64::consts::TAU;
+    } else if measured < -std::f64::consts::PI {
+        measured += std::f64::consts::TAU;
+    }
+    let expected = 6.0 * 20.0_f64.to_radians().tan() / 12.0;
+    assert!((measured - expected / 4.0).abs() < 1.0e-9);
+}
+
+#[test]
 fn test_csg_polyhedron() {
     // A simple tetrahedron
     let pts = &[
@@ -246,6 +427,20 @@ fn test_csg_polyhedron() {
     let csg_tetra: Mesh<()> = Mesh::polyhedron(pts, &faces, ()).unwrap();
     // We should have exactly 4 triangular faces
     assert_eq!(csg_tetra.polygons.len(), 4);
+}
+
+#[test]
+fn polyhedron_rejects_degenerate_and_nonplanar_faces() {
+    let points = &[
+        [r(0.0), r(0.0), r(0.0)],
+        [r(1.0), r(0.0), r(0.0)],
+        [r(1.0), r(1.0), r(0.0)],
+        [r(0.0), r(1.0), r(1.0)],
+    ];
+    assert!(Mesh::<()>::polyhedron(points, &[&[0, 1]], ()).is_err());
+    assert!(Mesh::<()>::polyhedron(points, &[&[0, 1, 1]], ()).is_err());
+    assert!(Mesh::<()>::polyhedron(points, &[&[0, 1, 2, 3]], ()).is_err());
+    assert!(Mesh::<()>::polyhedron(points, &[&[0, 1, points.len()]], ()).is_err());
 }
 
 #[test]
