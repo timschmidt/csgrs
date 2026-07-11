@@ -502,6 +502,39 @@ impl SketchJs {
         Ok(MeshJs { inner: mesh })
     }
 
+    #[wasm_bindgen(js_name = extrudeTwisted)]
+    pub fn extrude_twisted(
+        &self,
+        height: f64,
+        twist_degrees: f64,
+        end_scale_x: f64,
+        end_scale_y: f64,
+        slices: usize,
+        metadata: JsValue,
+    ) -> Result<MeshJs, JsValue> {
+        let metadata = js_metadata(metadata)?;
+        let promote = |value, name| {
+            real_from_js(value)
+                .ok_or_else(|| JsValue::from_str(&format!("{name} must be finite")))
+        };
+        let mesh = self
+            .inner
+            .extrude_twisted(
+                promote(height, "height")?,
+                promote(twist_degrees, "twistDegrees")?,
+                [
+                    promote(end_scale_x, "endScaleX")?,
+                    promote(end_scale_y, "endScaleY")?,
+                ],
+                slices,
+                metadata,
+            )
+            .map_err(|error| {
+                JsValue::from_str(&format!("Twisted extrusion failed: {error}"))
+            })?;
+        Ok(MeshJs { inner: mesh })
+    }
+
     #[wasm_bindgen(js_name = revolve)]
     pub fn revolve(
         &self,

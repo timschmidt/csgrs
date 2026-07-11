@@ -38,7 +38,7 @@ fn loft_revolve_and_sweep_accept_hyperreal_geometry() {
         (),
     );
     assert!(
-        !Profile::loft(&bottom, &top, true)
+        !Profile::loft(&[bottom, top])
             .expect("loft")
             .polygons
             .is_empty()
