@@ -10,7 +10,7 @@ fn test_same_number_of_vertices() {
     let top = make_polygon_3d(&[[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [0.5, 0.5, 1.0]]);
 
     // This should succeed with no panic:
-    let csg = Profile::loft(&bottom, &top, true).unwrap();
+    let csg = Profile::loft(&[bottom, top]).unwrap();
 
     // Expect:
     //  - bottom polygon
@@ -18,7 +18,7 @@ fn test_same_number_of_vertices() {
     //  - 3 side polygons (one for each edge of the triangle)
     assert_eq!(
         csg.polygons.len(),
-        1 /*bottom*/ + 1 /*top*/ + 3 // sides
+        1 /*bottom*/ + 1 /*top*/ + 6 // triangulated sides
     );
 }
 
@@ -35,7 +35,7 @@ fn test_different_number_of_vertices_panics() {
     ]);
 
     // Call the API and assert the specific error variant is returned
-    let result = Profile::loft(&bottom, &top, true);
+    let result = Profile::loft(&[bottom, top]);
     assert!(matches!(
         result,
         Err(ValidationError::MismatchedVertexCount { left: 3, right: 4 })
@@ -59,10 +59,10 @@ fn test_consistent_winding() {
         [0.0, 1.0, 1.0],
     ]);
 
-    let csg = Profile::loft(&bottom, &top, false).unwrap();
+    let csg = Profile::loft(&[bottom, top]).unwrap();
 
-    // Expect 1 bottom + 1 top + 4 side faces = 6 polygons
-    assert_eq!(csg.polygons.len(), 6);
+    // Expect 1 bottom + 1 top + 8 side triangles = 10 polygons
+    assert_eq!(csg.polygons.len(), 10);
 
     // Optionally check that each polygon has at least 3 vertices
     for poly in &csg.polygons {
@@ -90,10 +90,10 @@ fn test_inverted_orientation() {
     // We can fix by flipping `top`:
     top.flip();
 
-    let csg = Profile::loft(&bottom, &top, false).unwrap();
+    let csg = Profile::loft(&[bottom, top]).unwrap();
 
-    // Expect 1 bottom + 1 top + 4 sides = 6 polygons
-    assert_eq!(csg.polygons.len(), 6);
+    // Expect 1 bottom + 1 top + 8 side triangles = 10 polygons
+    assert_eq!(csg.polygons.len(), 10);
 
     // Check bounding box for sanity
     let bbox = csg.bounding_box();
@@ -110,7 +110,7 @@ fn test_union_of_extruded_shapes() {
     // First shape: triangle
     let bottom1 = make_polygon_3d(&[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0], [1.0, 1.0, 0.0]]);
     let top1 = make_polygon_3d(&[[0.0, 0.0, 1.0], [2.0, 0.0, 1.0], [1.0, 1.0, 1.0]]);
-    let csg1 = Profile::loft(&bottom1, &top1, true).unwrap();
+    let csg1 = Profile::loft(&[bottom1, top1]).unwrap();
 
     // Second shape: small shifted square
     let bottom2 = make_polygon_3d(&[
@@ -125,7 +125,7 @@ fn test_union_of_extruded_shapes() {
         [2.0, 0.8, 1.5],
         [1.0, 0.8, 1.5],
     ]);
-    let csg2 = Profile::loft(&bottom2, &top2, true).unwrap();
+    let csg2 = Profile::loft(&[bottom2, top2]).unwrap();
 
     // Union them
     let unioned = csg1.union(&csg2);

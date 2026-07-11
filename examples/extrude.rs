@@ -46,7 +46,7 @@ fn main() {
         ],
         (),
     );
-    write_mesh(&Profile::loft(&bottom, &top, true).unwrap(), "loft");
+    write_mesh(&Profile::loft(&[bottom, top]).unwrap(), "loft");
 }
 
 fn r(value: f64) -> Real {

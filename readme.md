@@ -186,8 +186,9 @@ Extrusions build 3D polygons from 2D Geometries.
 
 - <img src="docs/extrude.png" width="128" alt="an angled view of an extruded star"/> **`Profile::extrude(height: Real, metadata: M)`** - Simple extrude in Z+
 - <img src="docs/extrude_vector.png" width="128"  alt="an angled view of a star extruded at an angle"/> **`Profile::extrude_vector(direction: Vector3, metadata: M)`** - Extrude along Vector3 direction
+- **`Profile::extrude_twisted(height, twist_degrees, [scale_x, scale_y], slices, metadata)`** - Build one connected twisted or tapered extrusion with exact slice heights
 - <img src="docs/revolve.png" width="128"  alt="an arch with round ends"/> **`Profile::revolve(angle_degs, segments, metadata: M)`** - Extrude while rotating around the Y axis
-- <img src="docs/loft.png" width="128" alt="an angled view of a lofted tapered prism"/> **`Profile::loft(&bottom_polygon, &top_polygon, false)`** - Helper function which extrudes between two Mesh Polygons, optionally with caps
+- <img src="docs/loft.png" width="128" alt="an angled view of a lofted tapered prism"/> **`Profile::loft(&[bottom_polygon, middle_polygon, top_polygon])`** - Loft a closed mesh through corresponding polygon sections
 - <img src="docs/sweep.png" width="128" alt="a Profile swept along a 3D path"/> **`Profile::sweep(path: &[Point3<Real>], metadata: M)`** - Sweep a Profile along a path defined by a series of Points
 
 ```rust
