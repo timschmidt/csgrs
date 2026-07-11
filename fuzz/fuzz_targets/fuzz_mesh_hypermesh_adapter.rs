@@ -127,7 +127,6 @@ fuzz_target!(|bytes: &[u8]| {
         assert_eq!(vertex_map.vertex_count(), 0);
         assert!(adjacency.is_empty());
         assert!(mesh.try_get_vertices_and_indices().is_err());
-        assert_eq!(mesh.get_vertices_and_indices(), (Vec::new(), Vec::new()));
     }
 
     if let Ok(exact) = mesh.to_hypermesh_exact() {

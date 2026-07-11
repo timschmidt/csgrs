@@ -13,28 +13,24 @@ use hyperlattice::{Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
 
-fn real_f64(value: &Real) -> std::io::Result<f64> {
-    value
-        .to_f64_lossy()
-        .filter(|value| value.is_finite())
-        .ok_or_else(|| invalid_obj_data("coordinate has no finite OBJ representation"))
+use super::{IoError, finite_f64, single_line_metadata};
+
+type ObjFace = Vec<(usize, usize)>;
+type ObjBuffers = (Vec<Point3>, Vec<Vector3>, Vec<ObjFace>);
+
+fn invalid_obj_data(message: impl Into<String>) -> IoError {
+    IoError::MalformedInput(format!("OBJ: {}", message.into()))
 }
 
-fn invalid_obj_data(message: impl Into<String>) -> std::io::Error {
-    std::io::Error::new(std::io::ErrorKind::InvalidData, message.into())
-}
-
-fn invalid_obj_data_at_line(line: usize, message: impl Into<String>) -> std::io::Error {
+fn invalid_obj_data_at_line(line: usize, message: impl Into<String>) -> IoError {
     invalid_obj_data(format!("line {line}: {}", message.into()))
 }
 
-fn obj_line_error(line: usize, error: std::io::Error) -> std::io::Error {
+fn obj_line_error(line: usize, error: IoError) -> IoError {
     invalid_obj_data_at_line(line, error.to_string())
 }
 
-fn build_obj_buffers<T: IndexedTriangulated3D>(
-    shape: &T,
-) -> (Vec<Point3>, Vec<Vector3>, Vec<Vec<(usize, usize)>>) {
+fn build_obj_buffers<T: IndexedTriangulated3D>(shape: &T) -> ObjBuffers {
     let indexed = shape.indexed_triangles();
     let faces = indexed.faces.into_iter().map(Vec::from).collect();
     (indexed.positions, indexed.normals, faces)
@@ -46,10 +42,17 @@ fn build_obj_buffers<T: IndexedTriangulated3D>(
 #[doc = ""]
 #[doc = " # Arguments"]
 #[doc = " * `object_name` - Name for the object in the OBJ file"]
-pub fn try_to_obj<T: IndexedTriangulated3D>(
+pub fn to_obj<T: IndexedTriangulated3D>(
     shape: &T,
     object_name: &str,
-) -> std::io::Result<String> {
+) -> Result<String, IoError> {
+    let object_name = single_line_metadata(object_name, "OBJ", "object name")?;
+    if object_name.contains('#') {
+        return Err(IoError::InvalidMetadata {
+            format: "OBJ",
+            field: "object name",
+        });
+    }
     let (vertices, normals, faces) = build_obj_buffers(shape);
 
     let mut obj_content = String::new();
@@ -61,9 +64,9 @@ pub fn try_to_obj<T: IndexedTriangulated3D>(
     for vertex in &vertices {
         obj_content.push_str(&format!(
             "v {:.17} {:.17} {:.17}\n",
-            real_f64(&vertex.x)?,
-            real_f64(&vertex.y)?,
-            real_f64(&vertex.z)?
+            finite_f64(&vertex.x, "OBJ", "vertex x")?,
+            finite_f64(&vertex.y, "OBJ", "vertex y")?,
+            finite_f64(&vertex.z, "OBJ", "vertex z")?
         ));
     }
     obj_content.push('\n');
@@ -71,9 +74,9 @@ pub fn try_to_obj<T: IndexedTriangulated3D>(
     for normal in &normals {
         obj_content.push_str(&format!(
             "vn {:.17} {:.17} {:.17}\n",
-            real_f64(&normal.0[0])?,
-            real_f64(&normal.0[1])?,
-            real_f64(&normal.0[2])?
+            finite_f64(&normal.0[0], "OBJ", "normal x")?,
+            finite_f64(&normal.0[1], "OBJ", "normal y")?,
+            finite_f64(&normal.0[2], "OBJ", "normal z")?
         ));
     }
     obj_content.push('\n');
@@ -90,15 +93,6 @@ pub fn try_to_obj<T: IndexedTriangulated3D>(
     Ok(obj_content)
 }
 
-/// Legacy infallible OBJ export.
-#[deprecated(
-    since = "0.23.0",
-    note = "use try_to_obj to preserve conversion failures"
-)]
-pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String {
-    try_to_obj(shape, object_name).expect("OBJ export requires finite coordinates")
-}
-
 #[doc = " Export any `Triangulated3D` shape to an OBJ file"]
 #[doc = ""]
 #[doc = " # Arguments"]
@@ -108,22 +102,16 @@ pub fn write_obj<T: IndexedTriangulated3D, W: Write>(
     shape: &T,
     writer: &mut W,
     object_name: &str,
-) -> std::io::Result<()> {
-    let obj_content = try_to_obj(shape, object_name)?;
-    writer.write_all(obj_content.as_bytes())
+) -> Result<(), IoError> {
+    let obj_content = to_obj(shape, object_name)?;
+    writer.write_all(obj_content.as_bytes())?;
+    Ok(())
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
-    /// Export this mesh to OBJ while preserving conversion failures.
-    pub fn try_to_obj(&self, object_name: &str) -> std::io::Result<String> {
-        self::try_to_obj(self, object_name)
-    }
-
     #[doc = " Export this Mesh to OBJ format as a string"]
-    #[deprecated(since = "0.23.0", note = "use try_to_obj")]
-    pub fn to_obj(&self, object_name: &str) -> String {
-        self.try_to_obj(object_name)
-            .expect("OBJ export requires finite coordinates")
+    pub fn to_obj(&self, object_name: &str) -> Result<String, IoError> {
+        self::to_obj(self, object_name)
     }
 
     #[doc = " Export this Mesh to an OBJ file"]
@@ -131,7 +119,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         &self,
         writer: &mut W,
         object_name: &str,
-    ) -> std::io::Result<()> {
+    ) -> Result<(), IoError> {
         self::write_obj(self, writer, object_name)
     }
 
@@ -149,7 +137,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), while retaining the
     /// Wavefront OBJ `v`/`vn` finite boundary format.
-    pub fn from_obj<R: BufRead>(reader: R, metadata: M) -> std::io::Result<Mesh<M>> {
+    pub fn from_obj<R: BufRead>(reader: R, metadata: M) -> Result<Mesh<M>, IoError> {
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
         let mut polygons = Vec::new();
@@ -157,7 +145,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         for (line_index, line_result) in reader.lines().enumerate() {
             let line_number = line_index + 1;
             let line = line_result?;
-            let line = line.trim();
+            let line = line.split('#').next().unwrap_or("").trim();
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }
@@ -191,11 +179,38 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                             format!("Invalid vertex z coordinate: {e}"),
                         )
                     })?;
-                    let point = Point3::new(x, y, z);
+                    if parts.len() > 5 {
+                        return Err(IoError::Unsupported {
+                            format: "OBJ",
+                            detail: format!(
+                                "line {line_number}: vertex color extensions are not supported"
+                            ),
+                        });
+                    }
+                    let point = if let Some(weight) = parts.get(4) {
+                        let weight: Real = weight.parse().map_err(|error| {
+                            IoError::MalformedInput(format!(
+                                "OBJ line {line_number}: invalid homogeneous weight: {error}"
+                            ))
+                        })?;
+                        Point3::new(
+                            (x / &weight).map_err(|error| IoError::MalformedInput(format!(
+                                "OBJ line {line_number}: invalid homogeneous weight: {error}"
+                            )))?,
+                            (y / &weight).map_err(|error| IoError::MalformedInput(format!(
+                                "OBJ line {line_number}: invalid homogeneous weight: {error}"
+                            )))?,
+                            (z / &weight).map_err(|error| IoError::MalformedInput(format!(
+                                "OBJ line {line_number}: invalid homogeneous weight: {error}"
+                            )))?,
+                        )
+                    } else {
+                        Point3::new(x, y, z)
+                    };
                     vertices.push(point);
                 },
                 "vn" => {
-                    if parts.len() < 4 {
+                    if parts.len() != 4 {
                         return Err(invalid_obj_data_at_line(
                             line_number,
                             "normal line needs three coordinates",
@@ -265,10 +280,29 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         polygons.push(Polygon::new(triangle.to_vec(), metadata.clone()));
                     }
                 },
-                _ => {},
+                "o" | "g" | "s" | "usemtl" | "mtllib" => {},
+                "vt" => {
+                    return Err(IoError::Unsupported {
+                        format: "OBJ",
+                        detail: format!(
+                            "line {line_number}: texture coordinates are not supported"
+                        ),
+                    });
+                },
+                directive => {
+                    return Err(IoError::Unsupported {
+                        format: "OBJ",
+                        detail: format!("line {line_number}: directive {directive:?}"),
+                    });
+                },
             }
         }
 
+        if polygons.is_empty() {
+            return Err(IoError::MalformedInput(
+                "OBJ input contains no polygonal faces".into(),
+            ));
+        }
         Ok(Mesh::from_polygons(&polygons, metadata))
     }
 
@@ -277,10 +311,23 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         vertices: &[Point3],
         normals: &[Vector3],
         line_number: usize,
-    ) -> std::io::Result<Vec<Vertex>> {
+    ) -> Result<Vec<Vertex>, IoError> {
         let mut face_vertices = Vec::new();
         for part in face_parts {
             let indices: Vec<&str> = part.split('/').collect();
+            if indices.len() > 3 {
+                return Err(IoError::MalformedInput(format!(
+                    "OBJ line {line_number}: face token has too many index fields"
+                )));
+            }
+            if indices.get(1).is_some_and(|index| !index.is_empty()) {
+                return Err(IoError::Unsupported {
+                    format: "OBJ",
+                    detail: format!(
+                        "line {line_number}: texture-coordinate indices are not supported"
+                    ),
+                });
+            }
             let vertex_idx = parse_obj_index(indices[0], "vertex", vertices.len())
                 .map_err(|error| obj_line_error(line_number, error))?;
             let position = vertices[vertex_idx].clone();
@@ -297,7 +344,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 }
 
-fn parse_obj_index(raw: &str, label: &str, value_count: usize) -> std::io::Result<usize> {
+fn parse_obj_index(raw: &str, label: &str, value_count: usize) -> Result<usize, IoError> {
     if raw.is_empty() {
         return Err(invalid_obj_data(format!(
             "face token is missing a {label} index"
@@ -329,16 +376,9 @@ fn parse_obj_index(raw: &str, label: &str, value_count: usize) -> std::io::Resul
 
 #[cfg(feature = "sketch")]
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
-    /// Export this profile to OBJ while preserving conversion failures.
-    pub fn try_to_obj(&self, object_name: &str) -> std::io::Result<String> {
-        self::try_to_obj(self, object_name)
-    }
-
     #[doc = " Export this Profile to OBJ format as a string"]
-    #[deprecated(since = "0.23.0", note = "use try_to_obj")]
-    pub fn to_obj(&self, object_name: &str) -> String {
-        self.try_to_obj(object_name)
-            .expect("OBJ export requires finite coordinates")
+    pub fn to_obj(&self, object_name: &str) -> Result<String, IoError> {
+        self::to_obj(self, object_name)
     }
 
     #[doc = " Export this Profile to an OBJ file"]
@@ -346,7 +386,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
         &self,
         writer: &mut W,
         object_name: &str,
-    ) -> std::io::Result<()> {
+    ) -> Result<(), IoError> {
         self::write_obj(self, writer, object_name)
     }
 }
@@ -375,7 +415,6 @@ f -3 -2 -1
     fn from_obj_reports_malformed_vertex_line() {
         let error = Mesh::<()>::from_obj(Cursor::new("v 0 0\n"), ()).unwrap_err();
 
-        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
         assert!(error.to_string().contains("line 1"));
         assert!(
             error
@@ -393,7 +432,6 @@ f 1 2
 ";
         let error = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap_err();
 
-        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
         assert!(error.to_string().contains("line 3"));
         assert!(
             error
@@ -403,7 +441,28 @@ f 1 2
     }
 
     #[test]
-    fn try_to_obj_emits_round_trip_f64_precision() {
+    fn from_obj_applies_homogeneous_weights() {
+        let obj = "v 2 0 0 2\nv 0 2 0 2\nv 0 0 2 2\nf 1 2 3\n";
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+        assert_eq!(mesh.polygons[0].vertices[0].position.x, Real::one());
+    }
+
+    #[test]
+    fn from_obj_rejects_texture_data_deliberately() {
+        let obj = "v 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nf 1/1 2/1 3/1\n";
+        let error = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap_err();
+        assert!(matches!(error, IoError::Unsupported { format: "OBJ", .. }));
+    }
+
+    #[test]
+    fn object_name_cannot_inject_records() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        assert!(mesh.to_obj("safe\nf 1 2 3").is_err());
+        assert!(mesh.to_obj("name#silently truncated").is_err());
+    }
+
+    #[test]
+    fn to_obj_emits_round_trip_f64_precision() {
         let obj = "\
 v 0 0 0
 v 1 0 0
@@ -412,7 +471,7 @@ f 1 2 3
 ";
         let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
 
-        let exported = mesh.try_to_obj("triangle").unwrap();
+        let exported = mesh.to_obj("triangle").unwrap();
 
         assert!(
             exported.contains("v 1.00000000000000000 0.00000000000000000 0.00000000000000000")

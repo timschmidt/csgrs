@@ -61,7 +61,7 @@ opt-level = "z"
 chull = { version = "0.2.4", optional = true }
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypercurve = { path = "../hypercurve", features = ["triangulation"] }
+hypercurve = { path = "../hypercurve", features = ["triangulation", "svg"] }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
 hypermesh = { path = "../hypermesh" }
@@ -69,7 +69,7 @@ hyperphysics = { path = "../hyperphysics" }
 hyperreal = { path = "../hyperreal", default-features = false }
 hypersdf = { path = "../hypersdf", optional = true }
 hypertri = { path = "../hypertri", default-features = false, features = ["earcut"] }
-# hypercurve = { version = "0.3.0", features = ["triangulation"] }
+# hypercurve = { version = "0.3.0", features = ["triangulation", "svg"] }
 # hyperlattice = { version = "0.6.0" }
 # hyperlimit = { version = "0.4.0" }
 # hypermesh = { version = "0.1.0" }
@@ -166,6 +166,7 @@ amf-io = [
 ]
 gltf-io = [
   "base64",
+  "serde_json",
 ]
 gerber-io = [
   "sketch",
@@ -230,4 +231,7 @@ required-features = [
 ]
 
 [dev-dependencies]
+gltf = "1.4.1"
+ply-rs = "0.1.3"
 proptest = "1.9"
+quick-xml = "0.39.4"

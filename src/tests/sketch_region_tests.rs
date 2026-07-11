@@ -292,7 +292,7 @@ fn triangulation_extrusion_and_exports_consume_region_profiles() {
     assert!(!sketch.extrude(r(1.0)).polygons.is_empty());
 
     #[cfg(feature = "svg-io")]
-    assert!(!sketch.to_svg().is_empty());
+    assert!(!sketch.to_svg().unwrap().is_empty());
 
     #[cfg(feature = "gerber-io")]
     assert!(!sketch.to_gerber().unwrap().is_empty());

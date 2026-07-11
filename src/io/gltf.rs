@@ -1,203 +1,195 @@
-#![doc = " glTF 2.0 file format support"]
-#![doc = ""]
-#![doc = " This module provides export functionality for glTF 2.0 files,"]
-#![doc = " a modern, efficient, and widely supported 3D asset format."]
+//! glTF 2.0 JSON export with an embedded binary buffer.
 
+use crate::io::{IoError, finite_f32};
 use crate::triangulated::IndexedTriangulated3D;
-use crate::vertex::Vertex;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
 use hashbrown::HashMap;
+use serde_json::json;
 use std::fmt::Debug;
 use std::io::Write;
 
-fn real_f32(value: &hyperlattice::Real) -> f32 {
-    value
-        .to_f32_lossy()
-        .filter(|value| value.is_finite())
-        .unwrap_or(0.0)
+fn checked_u32(value: usize, limit: &'static str) -> Result<u32, IoError> {
+    u32::try_from(value).map_err(|_| IoError::SizeOverflow {
+        format: "glTF",
+        limit,
+    })
 }
 
-fn build_gltf_buffers<T: IndexedTriangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<u32>) {
+pub fn to_gltf<T: IndexedTriangulated3D>(
+    shape: &T,
+    object_name: &str,
+) -> Result<String, IoError> {
     let indexed = shape.indexed_triangles();
-    let mut vertices = Vec::new();
+    if indexed.faces.is_empty() {
+        return Err(IoError::Geometry {
+            format: "glTF",
+            detail: "cannot export an empty primitive".into(),
+        });
+    }
+
+    let mut vertices = Vec::<([f32; 3], [f32; 3])>::new();
     let mut vertex_map = HashMap::<(usize, usize), u32>::new();
-    let indices = indexed
+    let index_capacity = indexed
         .faces
-        .into_iter()
-        .flat_map(|face| {
-            face.map(|key @ (position, normal)| {
-                *vertex_map.entry(key).or_insert_with(|| {
-                    let index = vertices.len() as u32;
-                    vertices.push(Vertex {
-                        position: indexed.positions[position].clone(),
-                        normal: indexed.normals[normal].clone(),
-                    });
-                    index
-                })
-            })
-        })
-        .collect();
-    (vertices, indices)
-}
-
-/// Build a glTF 2.0 JSON document with a single mesh & single scene,
-/// using POSITION and NORMAL attributes and UNSIGNED_INT indices.
-///
-/// All binary data is stored in a single buffer as a base64-embedded data URI.
-fn gltf_from_vertices(vertices: &[Vertex], indices: &[u32], object_name: &str) -> String {
-    // Pack positions, normals and indices into binary buffers
-    let mut position_bytes = Vec::with_capacity(vertices.len() * 3 * 4);
-    let mut normal_bytes = Vec::with_capacity(vertices.len() * 3 * 4);
-    let mut index_bytes = Vec::with_capacity(indices.len() * 4);
-
-    #[allow(clippy::unnecessary_cast)]
-    {
-        for v in vertices {
-            let px = real_f32(&v.position.x);
-            let py = real_f32(&v.position.y);
-            let pz = real_f32(&v.position.z);
-
-            position_bytes.extend_from_slice(&px.to_le_bytes());
-            position_bytes.extend_from_slice(&py.to_le_bytes());
-            position_bytes.extend_from_slice(&pz.to_le_bytes());
-
-            let nx = real_f32(&v.normal.0[0]);
-            let ny = real_f32(&v.normal.0[1]);
-            let nz = real_f32(&v.normal.0[2]);
-
-            normal_bytes.extend_from_slice(&nx.to_le_bytes());
-            normal_bytes.extend_from_slice(&ny.to_le_bytes());
-            normal_bytes.extend_from_slice(&nz.to_le_bytes());
-        }
-
-        for &idx in indices {
-            index_bytes.extend_from_slice(&idx.to_le_bytes());
+        .len()
+        .checked_mul(3)
+        .ok_or(IoError::SizeOverflow {
+            format: "glTF",
+            limit: "index buffer capacity",
+        })?;
+    let mut indices = Vec::<u32>::with_capacity(index_capacity);
+    for face in indexed.faces {
+        for (position_index, normal_index) in face {
+            if position_index >= indexed.positions.len()
+                || normal_index >= indexed.normals.len()
+            {
+                return Err(IoError::Geometry {
+                    format: "glTF",
+                    detail: "indexed triangle references missing vertex data".into(),
+                });
+            }
+            let key = (position_index, normal_index);
+            let index = if let Some(index) = vertex_map.get(&key) {
+                *index
+            } else {
+                let index = checked_u32(vertices.len(), "u32 vertex index")?;
+                let position = &indexed.positions[position_index];
+                let normal = &indexed.normals[normal_index];
+                vertices.push((
+                    [
+                        finite_f32(&position.x, "glTF", "position x")?,
+                        finite_f32(&position.y, "glTF", "position y")?,
+                        finite_f32(&position.z, "glTF", "position z")?,
+                    ],
+                    [
+                        finite_f32(&normal.0[0], "glTF", "normal x")?,
+                        finite_f32(&normal.0[1], "glTF", "normal y")?,
+                        finite_f32(&normal.0[2], "glTF", "normal z")?,
+                    ],
+                ));
+                vertex_map.insert(key, index);
+                index
+            };
+            indices.push(index);
         }
     }
 
-    let positions_len = position_bytes.len() as u32;
-    let normals_len = normal_bytes.len() as u32;
-    let indices_len = index_bytes.len() as u32;
+    let vertex_byte_capacity =
+        vertices.len().checked_mul(12).ok_or(IoError::SizeOverflow {
+            format: "glTF",
+            limit: "vertex buffer capacity",
+        })?;
+    let mut position_bytes = Vec::with_capacity(vertex_byte_capacity);
+    let mut normal_bytes = Vec::with_capacity(vertex_byte_capacity);
+    let mut minimum = [f32::INFINITY; 3];
+    let mut maximum = [f32::NEG_INFINITY; 3];
+    for (position, normal) in &vertices {
+        for axis in 0..3 {
+            minimum[axis] = minimum[axis].min(position[axis]);
+            maximum[axis] = maximum[axis].max(position[axis]);
+            position_bytes.extend_from_slice(&position[axis].to_le_bytes());
+            normal_bytes.extend_from_slice(&normal[axis].to_le_bytes());
+        }
+    }
+    let mut index_bytes = Vec::with_capacity(indices.len() * 4);
+    for index in &indices {
+        index_bytes.extend_from_slice(&index.to_le_bytes());
+    }
 
-    let positions_offset: u32 = 0;
-    let normals_offset: u32 = positions_offset + positions_len;
-    let indices_offset: u32 = normals_offset + normals_len;
+    let positions_len = checked_u32(position_bytes.len(), "u32 buffer-view length")?;
+    let normals_len = checked_u32(normal_bytes.len(), "u32 buffer-view length")?;
+    let indices_len = checked_u32(index_bytes.len(), "u32 buffer-view length")?;
+    let normals_offset = positions_len;
+    let indices_offset =
+        normals_offset
+            .checked_add(normals_len)
+            .ok_or(IoError::SizeOverflow {
+                format: "glTF",
+                limit: "u32 buffer offset",
+            })?;
 
-    let mut buffer_data = Vec::with_capacity(
-        positions_len as usize + normals_len as usize + indices_len as usize,
+    let mut buffer = Vec::new();
+    buffer.extend_from_slice(&position_bytes);
+    buffer.extend_from_slice(&normal_bytes);
+    buffer.extend_from_slice(&index_bytes);
+    let byte_length = checked_u32(buffer.len(), "u32 buffer length")?;
+    let vertex_count = checked_u32(vertices.len(), "u32 accessor vertex count")?;
+    let index_count = checked_u32(indices.len(), "u32 accessor index count")?;
+    let uri = format!(
+        "data:application/octet-stream;base64,{}",
+        BASE64_ENGINE.encode(buffer)
     );
-    buffer_data.extend_from_slice(&position_bytes);
-    buffer_data.extend_from_slice(&normal_bytes);
-    buffer_data.extend_from_slice(&index_bytes);
 
-    let buffer_byte_length = buffer_data.len() as u32;
-    let buffer_base64 = BASE64_ENGINE.encode(&buffer_data);
-
-    let vertex_count = vertices.len();
-    let index_count = indices.len();
-
-    // Minimal glTF 2.0 JSON with one mesh, one node, one scene.
-    // We do not emit `min`/`max` for accessors to keep it simple.
-    let mut json = String::new();
-    json.push_str("{\n");
-    json.push_str("  \"asset\": {\n");
-    json.push_str("    \"version\": \"2.0\",\n");
-    json.push_str("    \"generator\": \"csgrs\"\n");
-    json.push_str("  },\n");
-    json.push_str("  \"buffers\": [\n");
-    json.push_str(&format!(
-        "    {{\"byteLength\": {}, \"uri\": \"data:application/octet-stream;base64,{}\"}}\n",
-        buffer_byte_length, buffer_base64
-    ));
-    json.push_str("  ],\n");
-    json.push_str("  \"bufferViews\": [\n");
-    json.push_str(&format!(
-        "    {{\"buffer\": 0, \"byteOffset\": {}, \"byteLength\": {}, \"target\": 34962}},\n",
-        positions_offset, positions_len
-    ));
-    json.push_str(&format!(
-        "    {{\"buffer\": 0, \"byteOffset\": {}, \"byteLength\": {}, \"target\": 34962}},\n",
-        normals_offset, normals_len
-    ));
-    json.push_str(&format!(
-        "    {{\"buffer\": 0, \"byteOffset\": {}, \"byteLength\": {}, \"target\": 34963}}\n",
-        indices_offset, indices_len
-    ));
-    json.push_str("  ],\n");
-    json.push_str("  \"accessors\": [\n");
-    json.push_str(&format!(
-        "    {{\"bufferView\": 0, \"componentType\": 5126, \"count\": {}, \"type\": \"VEC3\"}},\n",
-        vertex_count
-    ));
-    json.push_str(&format!(
-        "    {{\"bufferView\": 1, \"componentType\": 5126, \"count\": {}, \"type\": \"VEC3\"}},\n",
-        vertex_count
-    ));
-    json.push_str(&format!(
-        "    {{\"bufferView\": 2, \"componentType\": 5125, \"count\": {}, \"type\": \"SCALAR\"}}\n",
-        index_count
-    ));
-    json.push_str("  ],\n");
-    json.push_str("  \"meshes\": [\n");
-    json.push_str(&format!(
-        "    {{\"name\": \"{}\", \"primitives\": [{{\"attributes\": {{\"POSITION\": 0, \"NORMAL\": 1}}, \"indices\": 2}}]}}\n",
-        object_name
-    ));
-    json.push_str("  ],\n");
-    json.push_str("  \"nodes\": [\n");
-    json.push_str("    {\"mesh\": 0}\n");
-    json.push_str("  ],\n");
-    json.push_str("  \"scenes\": [\n");
-    json.push_str("    {\"nodes\": [0]}\n");
-    json.push_str("  ],\n");
-    json.push_str("  \"scene\": 0\n");
-    json.push_str("}\n");
-
-    json
+    let document = json!({
+        "asset": {"version": "2.0", "generator": "csgrs"},
+        "buffers": [{"byteLength": byte_length, "uri": uri}],
+        "bufferViews": [
+            {"buffer": 0, "byteOffset": 0, "byteLength": positions_len, "target": 34962},
+            {"buffer": 0, "byteOffset": normals_offset, "byteLength": normals_len, "target": 34962},
+            {"buffer": 0, "byteOffset": indices_offset, "byteLength": indices_len, "target": 34963}
+        ],
+        "accessors": [
+            {"bufferView": 0, "componentType": 5126, "count": vertex_count, "type": "VEC3", "min": minimum, "max": maximum},
+            {"bufferView": 1, "componentType": 5126, "count": vertex_count, "type": "VEC3"},
+            {"bufferView": 2, "componentType": 5125, "count": index_count, "type": "SCALAR"}
+        ],
+        "meshes": [{"name": object_name, "primitives": [{"attributes": {"POSITION": 0, "NORMAL": 1}, "indices": 2}]}],
+        "nodes": [{"mesh": 0}],
+        "scenes": [{"nodes": [0]}],
+        "scene": 0
+    });
+    serde_json::to_string_pretty(&document).map_err(|error| IoError::Geometry {
+        format: "glTF",
+        detail: error.to_string(),
+    })
 }
 
-#[doc = " Export any `Triangulated3D` shape to glTF 2.0 JSON as a string"]
-pub fn to_gltf<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String {
-    let (vertices, indices) = build_gltf_buffers(shape);
-    gltf_from_vertices(&vertices, &indices, object_name)
-}
-
-#[doc = " Export any `Triangulated3D` shape to a glTF 2.0 JSON writer"]
 pub fn write_gltf<T: IndexedTriangulated3D, W: Write>(
     shape: &T,
     writer: &mut W,
     object_name: &str,
-) -> std::io::Result<()> {
-    let gltf_content = to_gltf(shape, object_name);
-    writer.write_all(gltf_content.as_bytes())
+) -> Result<(), IoError> {
+    writer.write_all(to_gltf(shape, object_name)?.as_bytes())?;
+    Ok(())
 }
 
-impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
-    pub fn to_gltf(&self, object_name: &str) -> String {
-        self::to_gltf(self, object_name)
-    }
+macro_rules! impl_gltf_export {
+    ($type:ty) => {
+        impl<M: Clone + Debug + Send + Sync> $type {
+            pub fn to_gltf(&self, name: &str) -> Result<String, IoError> {
+                to_gltf(self, name)
+            }
 
-    pub fn write_gltf<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-    ) -> std::io::Result<()> {
-        self::write_gltf(self, writer, object_name)
-    }
+            pub fn write_gltf<W: Write>(
+                &self,
+                writer: &mut W,
+                name: &str,
+            ) -> Result<(), IoError> {
+                write_gltf(self, writer, name)
+            }
+        }
+    };
 }
 
+impl_gltf_export!(crate::mesh::Mesh<M>);
 #[cfg(feature = "sketch")]
-impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
-    pub fn to_gltf(&self, object_name: &str) -> String {
-        self::to_gltf(self, object_name)
-    }
+impl_gltf_export!(crate::sketch::Profile<M>);
 
-    pub fn write_gltf<W: Write>(
-        &self,
-        writer: &mut W,
-        object_name: &str,
-    ) -> std::io::Result<()> {
-        self::write_gltf(self, writer, object_name)
+#[cfg(test)]
+mod tests {
+    use crate::mesh::Mesh;
+    use hyperlattice::Real;
+
+    #[test]
+    fn output_is_valid_json_and_escapes_names() {
+        let mesh = Mesh::<()>::cube(Real::one(), ());
+        let output = mesh.to_gltf("quoted \" name\n").unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(parsed["meshes"][0]["name"], "quoted \" name\n");
+        assert!(parsed["accessors"][0].get("min").is_some());
+        let document = gltf::Gltf::from_slice(output.as_bytes()).unwrap();
+        assert_eq!(document.meshes().count(), 1);
+        assert_eq!(document.accessors().count(), 3);
     }
 }

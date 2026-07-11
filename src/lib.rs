@@ -29,7 +29,6 @@
 //! - **bevymesh**: for conversion to a bevy `Mesh`
 
 #![forbid(unsafe_code)]
-#![cfg_attr(test, allow(deprecated))]
 #![deny(unused)]
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
@@ -56,12 +55,6 @@ pub mod triangulated;
 pub mod voxels;
 
 pub use hyperreal::Real;
-
-/// Compatibility re-exports for trait imports used in examples.
-#[deprecated(since = "0.23.0", note = "import csgrs::csg::CSG directly")]
-pub mod traits {
-    pub use crate::csg::CSG;
-}
 
 #[cfg(feature = "wasm")]
 pub mod wasm;

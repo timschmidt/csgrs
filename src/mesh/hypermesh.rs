@@ -140,15 +140,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Ok(mesh)
     }
 
-    /// Convert this mesh without requiring closed-PWN topology.
-    #[deprecated(
-        since = "0.23.0",
-        note = "use to_hypermesh_triangle_mesh; open surfaces are not valid hypermesh Boolean inputs"
-    )]
-    pub fn to_hypermesh_surface_exact(&self) -> ::hypermesh::HypermeshResult<InputMesh> {
-        self.to_hypermesh_triangle_mesh()
-    }
-
     /// Compute a mesh boolean through exact `hypermesh`.
     ///
     /// The finite `csgrs` polygons are imported as audited exact meshes and the
