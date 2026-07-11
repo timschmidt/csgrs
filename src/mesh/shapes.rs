@@ -230,16 +230,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// ```text
     ///
     /// ### **Tessellation Algorithm**
-    /// 1. **Parameter Grid**: Create (segments+1) × (stacks+1) parameter values
+    /// 1. **Parameter Grid**: Create shared pole and longitude/latitude vertices
     /// 2. **Vertex Generation**: Evaluate M(u,v) at grid points
-    /// 3. **Quadrilateral Formation**: Connect adjacent grid points
-    /// 4. **Degeneracy Handling**: Poles require triangle adaptation
+    /// 3. **Triangle Formation**: Split each interior parameter cell diagonally
+    /// 4. **Degeneracy Handling**: Emit one triangle per polar cell
     ///
     /// ### **Pole Degeneracy Resolution**
     /// At poles (v=0 or v=1), the parameterization becomes singular:
     /// - **North pole** (v=0): All u values map to same point (0, r, 0)
     /// - **South pole** (v=1): All u values map to same point (0, -r, 0)
-    /// - **Solution**: Use triangles instead of quads for polar caps
+    /// - **Solution**: Reuse one exact vertex per pole across all cap triangles
     ///
     /// ### **Normal Vector Computation**
     /// Sphere normals are simply the normalized position vectors:
@@ -281,73 +281,90 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
         let segments = segments.max(3);
         let stacks = stacks.max(2);
-        let mut polygons = Vec::new();
+        let vertex = |theta: Real, phi: Real| -> Vertex {
+            let sin_theta = theta.clone().sin();
+            let cos_theta = theta.cos();
+            let sin_phi = phi.clone().sin();
+            let cos_phi = phi.cos();
+            let dir =
+                Vector3::from_xyz(cos_theta * sin_phi.clone(), cos_phi, sin_theta * sin_phi);
+            let normal = dir.normalize_checked().unwrap_or_else(|_| dir.clone());
+            Vertex::new(
+                Point3::new(
+                    dir.0[0].clone() * radius.clone(),
+                    dir.0[1].clone() * radius.clone(),
+                    dir.0[2].clone() * radius.clone(),
+                ),
+                normal,
+            )
+        };
 
-        for i in 0..segments {
-            for j in 0..stacks {
-                let mut vertices = Vec::new();
-
-                let vertex = |theta: Real, phi: Real| -> Option<Vertex> {
-                    let sin_theta = theta.clone().sin();
-                    let cos_theta = theta.cos();
-                    let sin_phi = phi.clone().sin();
-                    let cos_phi = phi.cos();
-                    let dir = Vector3::from_xyz(
-                        cos_theta * sin_phi.clone(),
-                        cos_phi,
-                        sin_theta * sin_phi,
-                    );
-                    let normal = dir.normalize_checked().unwrap_or_else(|_| dir.clone());
-                    Some(Vertex::new(
-                        Point3::new(
-                            dir.0[0].clone() * radius.clone(),
-                            dir.0[1].clone() * radius.clone(),
-                            dir.0[2].clone() * radius.clone(),
-                        ),
-                        normal,
-                    ))
-                };
-
-                let Some(t0) = fraction(i, segments) else {
+        let north = Vertex::new(
+            Point3::new(Real::zero(), radius.clone(), Real::zero()),
+            Vector3::y(),
+        );
+        let south = Vertex::new(
+            Point3::new(Real::zero(), -radius.clone(), Real::zero()),
+            -Vector3::y(),
+        );
+        let mut grid = Vec::with_capacity(segments);
+        for longitude in 0..segments {
+            let Some(theta) = fraction(longitude, segments).map(|value| value * tau()) else {
+                return Mesh::empty(metadata);
+            };
+            let mut column = Vec::with_capacity(stacks + 1);
+            column.push(north.clone());
+            for latitude in 1..stacks {
+                let Some(phi) = fraction(latitude, stacks).map(|value| value * Real::pi())
+                else {
                     return Mesh::empty(metadata);
                 };
-                let Some(t1) = fraction(i + 1, segments) else {
-                    return Mesh::empty(metadata);
-                };
-                let Some(p0) = fraction(j, stacks) else {
-                    return Mesh::empty(metadata);
-                };
-                let Some(p1) = fraction(j + 1, stacks) else {
-                    return Mesh::empty(metadata);
-                };
+                column.push(vertex(theta.clone(), phi));
+            }
+            column.push(south.clone());
+            grid.push(column);
+        }
 
-                let theta0 = t0 * tau();
-                let theta1 = t1 * tau();
-                let phi0 = p0 * Real::pi();
-                let phi1 = p1 * Real::pi();
-
-                let Some(first) = vertex(theta0.clone(), phi0.clone()) else {
-                    return Mesh::empty(metadata);
-                };
-                vertices.push(first);
-                if j > 0 {
-                    let Some(v) = vertex(theta1.clone(), phi0.clone()) else {
-                        return Mesh::empty(metadata);
-                    };
-                    vertices.push(v);
+        let mut polygons = Vec::with_capacity(2 * segments * (stacks - 1));
+        for longitude in 0..segments {
+            let next = (longitude + 1) % segments;
+            for latitude in 0..stacks {
+                if latitude == 0 {
+                    polygons.push(Polygon::new(
+                        vec![
+                            north.clone(),
+                            grid[next][1].clone(),
+                            grid[longitude][1].clone(),
+                        ],
+                        metadata.clone(),
+                    ));
+                } else if latitude == stacks - 1 {
+                    polygons.push(Polygon::new(
+                        vec![
+                            grid[longitude][latitude].clone(),
+                            grid[next][latitude].clone(),
+                            south.clone(),
+                        ],
+                        metadata.clone(),
+                    ));
+                } else {
+                    polygons.push(Polygon::new(
+                        vec![
+                            grid[longitude][latitude].clone(),
+                            grid[next][latitude].clone(),
+                            grid[next][latitude + 1].clone(),
+                        ],
+                        metadata.clone(),
+                    ));
+                    polygons.push(Polygon::new(
+                        vec![
+                            grid[longitude][latitude].clone(),
+                            grid[next][latitude + 1].clone(),
+                            grid[longitude][latitude + 1].clone(),
+                        ],
+                        metadata.clone(),
+                    ));
                 }
-                if j < stacks - 1 {
-                    let Some(v) = vertex(theta1.clone(), phi1.clone()) else {
-                        return Mesh::empty(metadata);
-                    };
-                    vertices.push(v);
-                }
-                let Some(last) = vertex(theta0, phi1) else {
-                    return Mesh::empty(metadata);
-                };
-                vertices.push(last);
-
-                polygons.push(Polygon::new(vertices, metadata.clone()));
             }
         }
         Mesh::from_polygons(&polygons, metadata)

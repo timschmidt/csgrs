@@ -5,6 +5,7 @@
 
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
+#[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;
 use crate::vertex::Vertex;
@@ -12,11 +13,11 @@ use hyperlattice::{Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
 
-fn real_f64(value: &Real) -> f64 {
+fn real_f64(value: &Real) -> std::io::Result<f64> {
     value
         .to_f64_lossy()
         .filter(|value| value.is_finite())
-        .unwrap_or(0.0)
+        .ok_or_else(|| invalid_obj_data("coordinate has no finite OBJ representation"))
 }
 
 fn invalid_obj_data(message: impl Into<String>) -> std::io::Error {
@@ -45,7 +46,10 @@ fn build_obj_buffers<T: IndexedTriangulated3D>(
 #[doc = ""]
 #[doc = " # Arguments"]
 #[doc = " * `object_name` - Name for the object in the OBJ file"]
-pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String {
+pub fn try_to_obj<T: IndexedTriangulated3D>(
+    shape: &T,
+    object_name: &str,
+) -> std::io::Result<String> {
     let (vertices, normals, faces) = build_obj_buffers(shape);
 
     let mut obj_content = String::new();
@@ -56,20 +60,20 @@ pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String 
 
     for vertex in &vertices {
         obj_content.push_str(&format!(
-            "v {:.6} {:.6} {:.6}\n",
-            real_f64(&vertex.x),
-            real_f64(&vertex.y),
-            real_f64(&vertex.z)
+            "v {:.17} {:.17} {:.17}\n",
+            real_f64(&vertex.x)?,
+            real_f64(&vertex.y)?,
+            real_f64(&vertex.z)?
         ));
     }
     obj_content.push('\n');
 
     for normal in &normals {
         obj_content.push_str(&format!(
-            "vn {:.6} {:.6} {:.6}\n",
-            real_f64(&normal.0[0]),
-            real_f64(&normal.0[1]),
-            real_f64(&normal.0[2])
+            "vn {:.17} {:.17} {:.17}\n",
+            real_f64(&normal.0[0])?,
+            real_f64(&normal.0[1])?,
+            real_f64(&normal.0[2])?
         ));
     }
     obj_content.push('\n');
@@ -83,7 +87,16 @@ pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String 
         obj_content.push('\n');
     }
 
-    obj_content
+    Ok(obj_content)
+}
+
+/// Legacy infallible OBJ export.
+#[deprecated(
+    since = "0.23.0",
+    note = "use try_to_obj to preserve conversion failures"
+)]
+pub fn to_obj<T: IndexedTriangulated3D>(shape: &T, object_name: &str) -> String {
+    try_to_obj(shape, object_name).expect("OBJ export requires finite coordinates")
 }
 
 #[doc = " Export any `Triangulated3D` shape to an OBJ file"]
@@ -96,14 +109,21 @@ pub fn write_obj<T: IndexedTriangulated3D, W: Write>(
     writer: &mut W,
     object_name: &str,
 ) -> std::io::Result<()> {
-    let obj_content = to_obj(shape, object_name);
+    let obj_content = try_to_obj(shape, object_name)?;
     writer.write_all(obj_content.as_bytes())
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
+    /// Export this mesh to OBJ while preserving conversion failures.
+    pub fn try_to_obj(&self, object_name: &str) -> std::io::Result<String> {
+        self::try_to_obj(self, object_name)
+    }
+
     #[doc = " Export this Mesh to OBJ format as a string"]
+    #[deprecated(since = "0.23.0", note = "use try_to_obj")]
     pub fn to_obj(&self, object_name: &str) -> String {
-        self::to_obj(self, object_name)
+        self.try_to_obj(object_name)
+            .expect("OBJ export requires finite coordinates")
     }
 
     #[doc = " Export this Mesh to an OBJ file"]
@@ -216,15 +236,33 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     }
                     let face_vertices =
                         Self::parse_obj_face(&parts[1..], &vertices, &normals, line_number)?;
-                    if face_vertices.len() >= 3 {
-                        for i in 1..face_vertices.len() - 1 {
-                            let triangle = vec![
-                                face_vertices[0].clone(),
-                                face_vertices[i].clone(),
-                                face_vertices[i + 1].clone(),
-                            ];
-                            polygons.push(Polygon::new(triangle, metadata.clone()));
-                        }
+                    let has_normals = parts[1..]
+                        .iter()
+                        .map(|part| {
+                            part.split('/').nth(2).is_some_and(|index| !index.is_empty())
+                        })
+                        .collect::<Vec<_>>();
+                    if has_normals.iter().any(|present| *present)
+                        && has_normals.iter().any(|present| !*present)
+                    {
+                        return Err(invalid_obj_data_at_line(
+                            line_number,
+                            "face mixes vertices with and without normals",
+                        ));
+                    }
+                    let mut face = Polygon::new(face_vertices, metadata.clone());
+                    if !has_normals.iter().any(|present| *present) {
+                        face.set_new_normal();
+                    }
+                    let triangles = face.triangulate();
+                    if triangles.is_empty() {
+                        return Err(invalid_obj_data_at_line(
+                            line_number,
+                            "face could not be triangulated",
+                        ));
+                    }
+                    for triangle in triangles {
+                        polygons.push(Polygon::new(triangle.to_vec(), metadata.clone()));
                     }
                 },
                 _ => {},
@@ -289,10 +327,18 @@ fn parse_obj_index(raw: &str, label: &str, value_count: usize) -> std::io::Resul
     Ok(resolved)
 }
 
+#[cfg(feature = "sketch")]
 impl<M: Clone + Debug + Send + Sync> Profile<M> {
+    /// Export this profile to OBJ while preserving conversion failures.
+    pub fn try_to_obj(&self, object_name: &str) -> std::io::Result<String> {
+        self::try_to_obj(self, object_name)
+    }
+
     #[doc = " Export this Profile to OBJ format as a string"]
+    #[deprecated(since = "0.23.0", note = "use try_to_obj")]
     pub fn to_obj(&self, object_name: &str) -> String {
-        self::to_obj(self, object_name)
+        self.try_to_obj(object_name)
+            .expect("OBJ export requires finite coordinates")
     }
 
     #[doc = " Export this Profile to an OBJ file"]
@@ -331,9 +377,11 @@ f -3 -2 -1
 
         assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
         assert!(error.to_string().contains("line 1"));
-        assert!(error
-            .to_string()
-            .contains("vertex line needs three coordinates"));
+        assert!(
+            error
+                .to_string()
+                .contains("vertex line needs three coordinates")
+        );
     }
 
     #[test]
@@ -347,13 +395,15 @@ f 1 2
 
         assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
         assert!(error.to_string().contains("line 3"));
-        assert!(error
-            .to_string()
-            .contains("face line needs at least three vertices"));
+        assert!(
+            error
+                .to_string()
+                .contains("face line needs at least three vertices")
+        );
     }
 
     #[test]
-    fn to_obj_keeps_lossy_six_decimal_output() {
+    fn try_to_obj_emits_round_trip_f64_precision() {
         let obj = "\
 v 0 0 0
 v 1 0 0
@@ -362,9 +412,32 @@ f 1 2 3
 ";
         let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
 
-        let exported = mesh.to_obj("triangle");
+        let exported = mesh.try_to_obj("triangle").unwrap();
 
-        assert!(exported.contains("v 1.000000 0.000000 0.000000"));
+        assert!(
+            exported.contains("v 1.00000000000000000 0.00000000000000000 0.00000000000000000")
+        );
         assert!(exported.contains("o triangle"));
+    }
+
+    #[test]
+    fn from_obj_triangulates_concave_faces_without_a_triangle_fan() {
+        let obj = "\
+v 0 0 0
+v 2 0 0
+v 2 2 0
+v 1 1 0
+v 0 2 0
+f 1 2 3 4 5
+";
+
+        let mesh = Mesh::<()>::from_obj(Cursor::new(obj), ()).unwrap();
+
+        assert_eq!(mesh.polygons.len(), 3);
+        assert!(
+            mesh.polygons
+                .iter()
+                .all(|polygon| polygon.vertices.len() == 3)
+        );
     }
 }

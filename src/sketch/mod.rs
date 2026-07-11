@@ -2,18 +2,19 @@
 
 use crate::hyper_math::{
     Aabb, Real, hreal_cmp_f64, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum,
-    hrotation_between_vectors, hunit_vector3,
+    hreal_to_f64, hrotation_between_vectors, hunit_vector3,
 };
 
 #[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
 
 use crate::csg::CSG;
+use crate::errors::ProfileBooleanError;
 use crate::vertex::Vertex;
 use hypercurve::{
     Aabb2 as HyperAabb2, BooleanOp, Classification, Contour2, CurvePolicy, CurveResult,
     CurveString2, FillRule, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    Point2, Region2, RegionPointLocation,
+    LineSeg2, Point2, Region2, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hyperreal::RealSign;
@@ -320,8 +321,8 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     /// Create a Profile from a native hypercurve region.
     ///
     /// This is the preferred constructor for topology-producing code. Core CAD
-    /// topology remains in [`Profile::region`]. Keeping exact topology internal
-    /// and emitting finite
+    /// topology remains available through [`Profile::as_region`]. Keeping exact
+    /// topology internal and emitting finite
     /// coordinates only at API and file-format boundaries follows Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Hobby,
@@ -520,14 +521,6 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         wires
     }
 
-    fn fallback_union_region_with(&self, other: &Self) -> Region2 {
-        let mut material_contours = self.region.material_contours().to_vec();
-        material_contours.extend(other.region.material_contours().iter().cloned());
-        let mut hole_contours = self.region.hole_contours().to_vec();
-        hole_contours.extend(other.region.hole_contours().iter().cloned());
-        Region2::new(material_contours, hole_contours)
-    }
-
     /// Resolve certified-disjoint region booleans without entering a finite
     /// polygon clipping backend.
     ///
@@ -577,28 +570,63 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         }
     }
 
-    fn boolean_region_with(&self, other: &Self, op: BooleanOp) -> Option<Self> {
-        if !self.can_use_region_boolean_with(other) {
+    fn empty_region_boolean_with(&self, other: &Self, op: BooleanOp) -> Option<Region2> {
+        let lhs_empty = self.region.is_empty();
+        let rhs_empty = other.region.is_empty();
+        if !lhs_empty && !rhs_empty {
             return None;
         }
-        let policy = CurvePolicy::certified();
-        let region =
-            if let Some(region) = self.disjoint_region_boolean_with(other, op, &policy) {
-                region
-            } else {
-                match self
-                    .region
-                    .boolean_region(&other.region, op, FillRule::NonZero, &policy)
-                {
-                    Ok(Classification::Decided(region)) => region,
-                    Ok(Classification::Uncertain(_)) | Err(_)
-                        if matches!(op, BooleanOp::Union) =>
-                    {
-                        self.fallback_union_region_with(other)
-                    },
-                    Ok(Classification::Uncertain(_)) | Err(_) => return None,
+
+        Some(match op {
+            BooleanOp::Union | BooleanOp::Xor => {
+                if lhs_empty {
+                    other.region.clone()
+                } else {
+                    self.region.clone()
                 }
-            };
+            },
+            BooleanOp::Difference => {
+                if lhs_empty {
+                    Region2::empty()
+                } else {
+                    self.region.clone()
+                }
+            },
+            BooleanOp::Intersection => Region2::empty(),
+        })
+    }
+
+    fn boolean_region_with(
+        &self,
+        other: &Self,
+        op: BooleanOp,
+    ) -> Result<Self, ProfileBooleanError> {
+        if !self.can_use_region_boolean_with(other) {
+            return Ok(Self::from_region_and_wires_with_origin(
+                Region2::empty(),
+                Vec::new(),
+                self.metadata.clone(),
+                self.origin.clone(),
+                self.origin_transform.clone(),
+            ));
+        }
+        let policy = CurvePolicy::certified();
+        let region = if let Some(region) = self.empty_region_boolean_with(other, op) {
+            region
+        } else if let Some(region) = self.disjoint_region_boolean_with(other, op, &policy) {
+            region
+        } else {
+            match self
+                .region
+                .boolean_region(&other.region, op, FillRule::NonZero, &policy)
+            {
+                Ok(Classification::Decided(region)) => region,
+                Ok(Classification::Uncertain(reason)) => {
+                    return Err(ProfileBooleanError::Uncertain(reason));
+                },
+                Err(error) => return Err(ProfileBooleanError::Curve(error)),
+            }
+        };
         // Region booleans operate on filled topology only. Open `CurveString2`
         // wires are independent path topology, so preserve them as native
         // curve strings while keeping the filled result in hypercurve; this
@@ -608,12 +636,18 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
         let mut sketch = Self::from_region_and_wires(region, wires, self.metadata.clone());
         sketch.origin = self.origin.clone();
         sketch.origin_transform = self.origin_transform.clone();
-        Some(sketch)
+        Ok(sketch)
     }
 
     fn transformed_region_with_matrix(&self, mat: &Matrix4) -> Option<Region2> {
         if self.region.is_empty() || !Self::region_has_nonzero_area(&self.region) {
             return None;
+        }
+        if let Some(region) = transform_line_region(&self.region, mat) {
+            return Some(region);
+        }
+        if let Some(transform) = planar_similarity_from_matrix(mat) {
+            return self.region.transform_similarity(&transform).ok();
         }
         let determinant = hreal_mul(&mat[0][0], &mat[1][1]).and_then(|main| {
             hreal_mul(&mat[0][1], &mat[1][0]).and_then(|cross| hreal_sub(main, cross))
@@ -673,6 +707,22 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     }
 
     fn transformed_wires_with_matrix(&self, mat: &Matrix4) -> Vec<CurveString2> {
+        if let Some(wires) = self
+            .wires
+            .iter()
+            .map(|wire| transform_line_curve_string(wire, mat))
+            .collect::<Option<Vec<_>>>()
+        {
+            return wires;
+        }
+        if let Some(transform) = planar_similarity_from_matrix(mat) {
+            return self
+                .wires
+                .iter()
+                .filter_map(|wire| wire.transform_similarity(&transform).ok())
+                .collect();
+        }
+
         let transform_point = |point: (f64, f64)| -> Option<[Real; 2]> {
             Some([
                 hreal_sum(&[
@@ -962,6 +1012,93 @@ impl<M: Clone + Send + Sync + Debug> Profile<M> {
     }
 }
 
+fn transform_line_region(region: &Region2, mat: &Matrix4) -> Option<Region2> {
+    let material = region
+        .material_contours()
+        .iter()
+        .map(|contour| {
+            let curve = transform_line_curve_string(contour.curve_string(), mat)?;
+            Contour2::try_new_with_fill_rule(curve.into_segments(), contour.fill_rule()).ok()
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let holes = region
+        .hole_contours()
+        .iter()
+        .map(|contour| {
+            let curve = transform_line_curve_string(contour.curve_string(), mat)?;
+            Contour2::try_new_with_fill_rule(curve.into_segments(), contour.fill_rule()).ok()
+        })
+        .collect::<Option<Vec<_>>>()?;
+    Some(Region2::new(material, holes))
+}
+
+fn transform_line_curve_string(curve: &CurveString2, mat: &Matrix4) -> Option<CurveString2> {
+    let segments = curve
+        .segments()
+        .iter()
+        .map(|segment| match segment {
+            Segment2::Line(line) => LineSeg2::try_new(
+                transform_point2(line.start(), mat)?,
+                transform_point2(line.end(), mat)?,
+            )
+            .ok()
+            .map(Segment2::Line),
+            Segment2::Arc(_) => None,
+        })
+        .collect::<Option<Vec<_>>>()?;
+    CurveString2::try_new(segments).ok()
+}
+
+fn transform_point2(point: &Point2, mat: &Matrix4) -> Option<Point2> {
+    Some(Point2::new(
+        hreal_sum(&[
+            hreal_mul(&mat[0][0], point.x())?,
+            hreal_mul(&mat[0][1], point.y())?,
+            mat[0][3].clone(),
+        ])?,
+        hreal_sum(&[
+            hreal_mul(&mat[1][0], point.x())?,
+            hreal_mul(&mat[1][1], point.y())?,
+            mat[1][3].clone(),
+        ])?,
+    ))
+}
+
+fn planar_similarity_from_matrix(mat: &Matrix4) -> Option<Similarity2> {
+    Similarity2::try_from_f64_affine(
+        hreal_to_f64(&mat[0][0])?,
+        hreal_to_f64(&mat[0][1])?,
+        hreal_to_f64(&mat[1][0])?,
+        hreal_to_f64(&mat[1][1])?,
+        hreal_to_f64(&mat[0][3])?,
+        hreal_to_f64(&mat[1][3])?,
+        1.0e-12,
+    )
+    .ok()
+}
+
+impl<M: Clone + Send + Sync + Debug> Profile<M> {
+    /// Compute a certified profile union.
+    pub fn try_union(&self, other: &Self) -> Result<Self, ProfileBooleanError> {
+        self.boolean_region_with(other, BooleanOp::Union)
+    }
+
+    /// Compute a certified profile difference.
+    pub fn try_difference(&self, other: &Self) -> Result<Self, ProfileBooleanError> {
+        self.boolean_region_with(other, BooleanOp::Difference)
+    }
+
+    /// Compute a certified profile intersection.
+    pub fn try_intersection(&self, other: &Self) -> Result<Self, ProfileBooleanError> {
+        self.boolean_region_with(other, BooleanOp::Intersection)
+    }
+
+    /// Compute a certified profile symmetric difference.
+    pub fn try_xor(&self, other: &Self) -> Result<Self, ProfileBooleanError> {
+        self.boolean_region_with(other, BooleanOp::Xor)
+    }
+}
+
 impl Profile<()> {
     /// Return a new empty sketch with unit metadata.
     pub fn new() -> Self {
@@ -1005,16 +1142,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          +-------+            +-------+
     /// ```
     fn union(&self, other: &Profile<M>) -> Profile<M> {
-        if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Union) {
-            return sketch;
-        }
-        Self::from_region_and_wires_with_origin(
-            Region2::empty(),
-            self.boolean_wires_with(other, BooleanOp::Union),
-            self.metadata.clone(),
-            self.origin.clone(),
-            self.origin_transform.clone(),
-        )
+        self.try_union(other)
+            .unwrap_or_else(|error| panic!("profile union failed: {error}"))
     }
 
     /// Return a new Profile representing diffarence of the two Sketches.
@@ -1031,16 +1160,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          +-------+
     /// ```
     fn difference(&self, other: &Profile<M>) -> Profile<M> {
-        if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Difference) {
-            return sketch;
-        }
-        Self::from_region_and_wires_with_origin(
-            Region2::empty(),
-            self.boolean_wires_with(other, BooleanOp::Difference),
-            self.metadata.clone(),
-            self.origin.clone(),
-            self.origin_transform.clone(),
-        )
+        self.try_difference(other)
+            .unwrap_or_else(|error| panic!("profile difference failed: {error}"))
     }
 
     /// Return a new Profile representing intersection of the two Sketches.
@@ -1057,16 +1178,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          +-------+
     /// ```
     fn intersection(&self, other: &Profile<M>) -> Profile<M> {
-        if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Intersection) {
-            return sketch;
-        }
-        Self::from_region_and_wires_with_origin(
-            Region2::empty(),
-            self.boolean_wires_with(other, BooleanOp::Intersection),
-            self.metadata.clone(),
-            self.origin.clone(),
-            self.origin_transform.clone(),
-        )
+        self.try_intersection(other)
+            .unwrap_or_else(|error| panic!("profile intersection failed: {error}"))
     }
 
     /// Return a new Profile representing space in this Profile excluding the space in the
@@ -1084,16 +1197,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Profile<M> {
     ///          +-------+            +-------+
     /// ```
     fn xor(&self, other: &Profile<M>) -> Profile<M> {
-        if let Some(sketch) = self.boolean_region_with(other, BooleanOp::Xor) {
-            return sketch;
-        }
-        Self::from_region_and_wires_with_origin(
-            Region2::empty(),
-            self.boolean_wires_with(other, BooleanOp::Xor),
-            self.metadata.clone(),
-            self.origin.clone(),
-            self.origin_transform.clone(),
-        )
+        self.try_xor(other)
+            .unwrap_or_else(|error| panic!("profile xor failed: {error}"))
     }
 
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to this sketch.

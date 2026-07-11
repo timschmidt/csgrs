@@ -34,6 +34,7 @@
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
 pub mod errors;
+#[allow(dead_code, unused_imports)]
 pub(crate) mod hyper_math;
 pub mod io;
 pub mod mesh;
@@ -42,6 +43,7 @@ pub mod polygon;
 #[cfg(feature = "sketch")]
 pub mod sketch;
 #[cfg(feature = "sketch")]
+/// Preferred module path for the hypercurve-backed 2D profile API.
 pub mod profile {
     pub use crate::sketch::*;
 }
@@ -56,6 +58,7 @@ pub mod voxels;
 pub use hyperreal::Real;
 
 /// Compatibility re-exports for trait imports used in examples.
+#[deprecated(since = "0.23.0", note = "import csgrs::csg::CSG directly")]
 pub mod traits {
     pub use crate::csg::CSG;
 }

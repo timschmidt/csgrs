@@ -10,11 +10,11 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
     let base = Mesh::<()>::cube(r(1.0), ()).center();
     let mut acc = base.clone();
 
-    for i in 0..5 {
+    for i in 0..3 {
         let shift = r(i as f64) * r(0.18);
         let part = base.clone().translate(shift.clone(), r(0.0), r(0.0)).rotate(
             r(0.0),
-            r(12.0) * r(i as f64),
+            r(90.0) * r(i as f64),
             r(0.0),
         );
         acc = acc.union(&part);

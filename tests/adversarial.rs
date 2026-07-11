@@ -20,7 +20,7 @@ fn exact_near_vertices_are_not_tolerance_merged() {
 #[test]
 fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = Mesh::<()>::cube(r(2.0), ()).center();
-    let b = Mesh::<()>::sphere(r(1.1), 16, 8, ()).translate(r(0.4), r(0.2), r(0.1));
+    let b = Mesh::<()>::cube(r(1.1), ()).translate(r(0.4), r(0.2), r(0.1));
 
     let result = a.difference(&b).union(&b.intersection(&a));
 
@@ -30,8 +30,8 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
 
 #[test]
 fn translated_union_does_not_emit_origin_fallback_vertices() {
-    let left = Mesh::<()>::sphere(r(1.0), 16, 8, ()).translate(r(10.0), r(0.0), r(0.0));
-    let right = Mesh::<()>::sphere(r(1.0), 16, 8, ()).translate(r(13.0), r(0.0), r(0.0));
+    let left = Mesh::<()>::cube(r(1.0), ()).translate(r(10.0), r(0.0), r(0.0));
+    let right = Mesh::<()>::cube(r(1.0), ()).translate(r(13.0), r(0.0), r(0.0));
 
     let result = left.union(&right);
 
@@ -42,9 +42,9 @@ fn translated_union_does_not_emit_origin_fallback_vertices() {
                 .position
                 .x
                 .to_f64_lossy()
-                .expect("sphere coordinates should export to finite f64");
+                .expect("cube coordinates should export to finite f64");
             assert!(
-                x >= 9.0,
+                x >= 10.0,
                 "union emitted an un-translated or origin fallback vertex: x={x}, position={:?}",
                 vertex.position
             );

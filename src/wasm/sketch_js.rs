@@ -55,7 +55,7 @@ fn promote_polyline(points: Vec<[f64; 2]>, label: &str) -> Result<Vec<[Real; 2]>
         .collect()
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = ProfileJs)]
 pub struct SketchJs {
     pub(crate) inner: Profile<Option<String>>,
 }
@@ -360,31 +360,35 @@ impl SketchJs {
 
     // Boolean Operations
     #[wasm_bindgen(js_name = union)]
-    pub fn union(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.union(&other.inner),
-        }
+    pub fn union(&self, other: &SketchJs) -> Result<Self, JsValue> {
+        self.inner
+            .try_union(&other.inner)
+            .map(|inner| Self { inner })
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name = difference)]
-    pub fn difference(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.difference(&other.inner),
-        }
+    pub fn difference(&self, other: &SketchJs) -> Result<Self, JsValue> {
+        self.inner
+            .try_difference(&other.inner)
+            .map(|inner| Self { inner })
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name = intersection)]
-    pub fn intersection(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.intersection(&other.inner),
-        }
+    pub fn intersection(&self, other: &SketchJs) -> Result<Self, JsValue> {
+        self.inner
+            .try_intersection(&other.inner)
+            .map(|inner| Self { inner })
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     #[wasm_bindgen(js_name = xor)]
-    pub fn xor(&self, other: &SketchJs) -> Self {
-        Self {
-            inner: self.inner.xor(&other.inner),
-        }
+    pub fn xor(&self, other: &SketchJs) -> Result<Self, JsValue> {
+        self.inner
+            .try_xor(&other.inner)
+            .map(|inner| Self { inner })
+            .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 
     // Transformations

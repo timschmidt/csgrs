@@ -33,8 +33,8 @@ maps triangle indices back onto the original 3D vertices.
   boolean geometry.
 - [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
+- [hypermesh](../hypermesh/README.md): exact-aware indexed mesh validation,
+  topology, and 3D Boolean operations.
 - [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
 - [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
   geometry adapters.
@@ -77,7 +77,7 @@ cargo add csgrs
 
 Change `src/main.rs` to the following code:
 ```rust
-use csgrs::traits::CSG;
+use csgrs::csg::CSG;
 use csgrs::Real;
 
 type Mesh = csgrs::mesh::Mesh<()>;
@@ -92,7 +92,7 @@ fn main() {
         .translate(Real::one(), Real::one(), Real::one());
 
     // Perform a difference operation:
-    let result = cube.difference(&sphere);
+    let result = cube.try_difference(&sphere).expect("certified mesh difference");
 
     // Write the result as an ASCII STL:
     let stl = result.to_stl_ascii("cube_minus_sphere");
@@ -195,18 +195,19 @@ are no longer public API, and the crate no longer depends on `geo`.
 
 ```rust
 // Alias the library’s generic Profile type with unit metadata:
-type Profile = csgrs::sketch::Profile<()>;
+type Profile = csgrs::profile::Profile<()>;
+use csgrs::Real;
 
-let square = Profile::square(1.0, ()); // 1×1 at origin
-let rect = Profile::rectangle(2.0, 4.0, ());
-let circle = Profile::circle(1.0, 32, ()); // radius=1, 32 segments
-let circle2 = Profile::circle(2.0, 64, ());
+let square = Profile::square(Real::one(), ());
+let rect = Profile::rectangle(Real::from(2), Real::from(4), ());
+let circle = Profile::circle(Real::one(), 32, ());
+let circle2 = Profile::circle(Real::from(2), 64, ());
 
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let sketch_text = Profile::text("Hello!", font_data, 20.0, ());
+let sketch_text = Profile::text("Hello!", font_data, Real::from(20), ());
 
 // Then extrude the text to make it 3D:
-let text_3d = sketch_text.extrude(1.0);
+let text_3d = sketch_text.extrude(Real::one());
 ```
 
 ### Extrusions and Revolves
@@ -346,14 +347,17 @@ let csg_shape = Mesh::<()>::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, (
 ### CSG Boolean Operations
 
 ```rust
-use csgrs::traits::CSG;
-
-let union_result = cube.union(&sphere);
-let difference_result = cube.difference(&sphere);
-let intersection_result = cylinder.intersection(&sphere);
+let union_result = cube.try_union(&sphere)?;
+let difference_result = cube.try_difference(&sphere)?;
+let intersection_result = cylinder.try_intersection(&sphere)?;
+let xor_result = cylinder.try_xor(&sphere)?;
 ```
 
-Booleans on any type implementing the CSG trait such as `Mesh<M>` or `Profile<M>` return their own type.
+`Mesh<M>` and `Profile<M>` provide typed `try_union`, `try_difference`,
+`try_intersection`, and `try_xor` methods. The methods on `csgrs::csg::CSG`
+remain compatibility conveniences and panic when a certified Boolean reports
+an error or uncertainty.
+
 Types implementing the CSG trait also provide the following transformation functions:
 
 ### Transformations
@@ -543,7 +547,8 @@ if let Some(data_mut) = poly.metadata_mut() {
 ## Project Status
 
 `csgrs` is usable today as a Rust-first CSG and geometry toolkit. The stable
-core is hypermesh-backed `Mesh`, hypercurve-backed `Profile`, hypertri polygon
+core is polygon-backed `Mesh` with hypermesh Boolean conversion,
+hypercurve-backed `Profile`, hypertri polygon
 triangulation, common 2D/3D primitive construction, extrusion/revolve/sweep/loft
 operations, transformations, metadata propagation, cached bounding boxes,
 TriMesh query conversion, ray intersection helpers, and
@@ -559,10 +564,9 @@ The project is also intentionally experimental in several areas:
   error; those errors are not hidden by a legacy mesh-boolean fallback.
 - **Triangulation**: hypertri is the single triangulation backend. It replaces
   the former Spade, Earcut, and `delaunay` dependency matrix.
-- **Numeric model**: hyperreals are the internal scalar model being carried
-  through the codebase. Public constructors still accept finite primitive
-  `f32`/`f64`-shaped values at API and IO edges, then promote them before
-  topology-sensitive work.
+- **Numeric model**: hyperreals are the core scalar model. Primitive `f32` and
+  `f64` entry points live at IO, JavaScript, FFI, and `csgrs-adapter`
+  boundaries, which promote values before topology-sensitive work.
 - **Curves and offsets**: hypercurve is the arc-preserving 2D backend. The
   former Curvo-backed NURBS integration layer has been removed, and remaining
   finite offset compatibility is isolated behind the optional `offset` feature.
@@ -605,8 +609,9 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 - **Feature-complete modeling operations**: add rounded cuboids, chamfers,
   fillets, 3D offsets, bending, threaded parts, richer gear options, and
   attachment/alignment helpers.
-- **Representations**: replace transitional `Mesh` storage with `hypermesh`,
-  keep `Profile` backed by hypercurve, add metadata deduplication, UV support,
+- **Representations**: evaluate native indexed `hypermesh` storage where it
+  improves ownership and conversion costs, keep `Profile` backed by hypercurve,
+  add metadata deduplication, UV support,
   and better conversion among hyper geometry types, query `TriMesh`, and file
   formats.
 - **Performance**: broaden Rayon use in operations that are embarrassingly

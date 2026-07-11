@@ -62,14 +62,12 @@ pub struct HypermeshBuffers {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct PositionKey([String; 3]);
 
-const BOUNDARY_ZERO_ULPS: f64 = 64.0;
-
 impl PositionKey {
     fn new(position: &Point3) -> Self {
         Self([
-            canonical_coordinate_key(&position.x),
-            canonical_coordinate_key(&position.y),
-            canonical_coordinate_key(&position.z),
+            position.x.to_string(),
+            position.y.to_string(),
+            position.z.to_string(),
         ])
     }
 }
@@ -83,34 +81,43 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// canonicalized to shared indices before import into `hypermesh`.
     pub fn to_hypermesh_buffers(&self) -> HypermeshBuffers {
         let tri_mesh = self.triangulate();
-        let mut positions = Vec::with_capacity(tri_mesh.polygons.len() * 9);
+        let mut canonical_positions =
+            Vec::<Point3>::with_capacity(tri_mesh.polygons.len() * 3);
         let mut indices = Vec::with_capacity(tri_mesh.polygons.len() * 3);
-        let mut vertex_indices = HashMap::<PositionKey, usize>::new();
+        let mut vertex_indices = HashMap::<PositionKey, Vec<usize>>::new();
 
         for polygon in &tri_mesh.polygons {
             for vertex in &polygon.vertices {
-                let key = PositionKey::new(&vertex.position);
-                let index = *vertex_indices.entry(key).or_insert_with(|| {
-                    let index = positions.len() / 3;
-                    positions.extend_from_slice(&[
-                        canonical_coordinate(&vertex.position.x),
-                        canonical_coordinate(&vertex.position.y),
-                        canonical_coordinate(&vertex.position.z),
-                    ]);
-                    index
-                });
+                let position = canonical_position(&vertex.position);
+                let key = PositionKey::new(&position);
+                let candidates = vertex_indices.entry(key).or_default();
+                let index = candidates
+                    .iter()
+                    .copied()
+                    .find(|index| canonical_positions[*index] == position)
+                    .unwrap_or_else(|| {
+                        let index = canonical_positions.len();
+                        canonical_positions.push(position);
+                        candidates.push(index);
+                        index
+                    });
                 indices.push(index);
             }
         }
+
+        let positions = canonical_positions
+            .into_iter()
+            .flat_map(|point| [point.x, point.y, point.z])
+            .collect();
 
         HypermeshBuffers { positions, indices }
     }
 
     /// Convert this `csgrs` mesh into an exact `hypermesh` input mesh.
     ///
-    /// The default constructor prepares a closed solid input. Use
-    /// [`Mesh::to_hypermesh_surface_exact`] for open surfaces that should be
-    /// preserved as boundary-allowed surface meshes.
+    /// The returned mesh is validated against hypermesh's closed-PWN input
+    /// contract. Use [`Mesh::to_hypermesh_triangle_mesh`] when a caller only
+    /// needs the indexed triangle carrier and does not intend to run a boolean.
     pub fn to_hypermesh_exact(&self) -> ::hypermesh::HypermeshResult<InputMesh> {
         let buffers = self.to_hypermesh_buffers();
         let mesh = input_mesh_from_buffers(&buffers);
@@ -118,8 +125,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Ok(mesh)
     }
 
-    /// Convert this mesh into a boundary-allowed exact `hypermesh` surface mesh.
-    pub fn to_hypermesh_surface_exact(&self) -> ::hypermesh::HypermeshResult<InputMesh> {
+    /// Convert this mesh into a validated indexed `hypermesh` triangle carrier.
+    ///
+    /// This validates indices and source-triangle degeneracy but deliberately
+    /// does not claim that open surfaces satisfy hypermesh's Boolean input
+    /// contract.
+    pub fn to_hypermesh_triangle_mesh(&self) -> ::hypermesh::HypermeshResult<InputMesh> {
         let buffers = self.to_hypermesh_buffers();
         let mesh = input_mesh_from_buffers(&buffers);
         if mesh.positions.is_empty() {
@@ -127,6 +138,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
         validate_surface_input(&mesh)?;
         Ok(mesh)
+    }
+
+    /// Convert this mesh without requiring closed-PWN topology.
+    #[deprecated(
+        since = "0.23.0",
+        note = "use to_hypermesh_triangle_mesh; open surfaces are not valid hypermesh Boolean inputs"
+    )]
+    pub fn to_hypermesh_surface_exact(&self) -> ::hypermesh::HypermeshResult<InputMesh> {
+        self.to_hypermesh_triangle_mesh()
     }
 
     /// Compute a mesh boolean through exact `hypermesh`.
@@ -151,7 +171,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             HypermeshBooleanOp::Xor => BooleanOp::SymmetricDifference,
         };
         let refs = [left.as_ref(), right.as_ref()];
-        let result = ::hypermesh::boolean_operation(&refs, op, EmberConfig { max_depth: 8 })
+        let result = ::hypermesh::boolean_operation(&refs, op, EmberConfig::default())
             .map_err(HypermeshError::Boolean)?;
         let soup = ::hypermesh::triangulate_and_resolve_certified(&result)
             .map_err(HypermeshError::Materialize)?;
@@ -308,26 +328,18 @@ fn canonical_coordinate(value: &Real) -> Real {
     } else if value.is_rational() {
         value.clone()
     } else if let Some(finite) = value.to_f64_lossy().filter(|value| value.is_finite()) {
-        let finite = if finite.abs() <= BOUNDARY_ZERO_ULPS * f64::EPSILON {
-            0.0
-        } else {
-            finite
-        };
         Real::try_from(finite).unwrap_or_else(|_| value.clone())
     } else {
         value.clone()
     }
 }
 
-fn canonical_coordinate_key(value: &Real) -> String {
-    if let Some(finite) = value.to_f64_lossy().filter(|value| value.is_finite()) {
-        let zero_quantum = BOUNDARY_ZERO_ULPS * f64::EPSILON * finite.abs().max(1.0);
-        if finite.abs() <= zero_quantum {
-            return format!("{:016x}", 0.0f64.to_bits());
-        }
-        return format!("{finite:.12e}");
-    }
-    canonical_coordinate(value).to_string()
+fn canonical_position(position: &Point3) -> Point3 {
+    Point3::new(
+        canonical_coordinate(&position.x),
+        canonical_coordinate(&position.y),
+        canonical_coordinate(&position.z),
+    )
 }
 
 fn input_mesh_from_buffers(buffers: &HypermeshBuffers) -> InputMesh {
@@ -408,11 +420,26 @@ fn hyper_triangle_unit_normal(a: &Point3, b: &Point3, c: &Point3) -> Option<Vect
 mod tests {
     use super::*;
     use crate::hyper_math::hreal_from_f64;
+    use crate::vertex::Vertex;
 
     #[test]
     fn sphere_materializes_as_closed_hypermesh_input() {
         let radius = hreal_from_f64(1.0).expect("finite test radius");
         let sphere = Mesh::sphere(radius, 16, 8, ());
+        let surface = sphere
+            .to_hypermesh_triangle_mesh()
+            .expect("sphere triangles should form a valid indexed carrier");
+        let pole_count = surface
+            .positions
+            .iter()
+            .filter(|point| {
+                point.x.refine_sign_until(128) == Some(hyperreal::RealSign::Zero)
+                    && point.z.refine_sign_until(128) == Some(hyperreal::RealSign::Zero)
+            })
+            .count();
+        assert_eq!(pole_count, 2);
+        assert_eq!(surface.positions.len(), 114);
+        assert_eq!(surface.triangles.len(), 224);
 
         let input = sphere
             .to_hypermesh_exact()
@@ -420,5 +447,53 @@ mod tests {
 
         assert_eq!(input.triangles.len(), 224);
         assert!(hypermesh_is_closed_manifold(&input));
+    }
+
+    #[test]
+    fn hypermesh_buffers_do_not_weld_distinct_exact_nearby_positions() {
+        let zero = Real::zero();
+        let one = Real::one();
+        let epsilon = (one.clone() / Real::from(1_000_000_000_000_000_u64)).unwrap();
+        let normal = Vector3::z();
+        let first = Polygon::new(
+            vec![
+                Vertex::new(
+                    Point3::new(zero.clone(), zero.clone(), zero.clone()),
+                    normal.clone(),
+                ),
+                Vertex::new(
+                    Point3::new(one.clone(), zero.clone(), zero.clone()),
+                    normal.clone(),
+                ),
+                Vertex::new(
+                    Point3::new(zero.clone(), one.clone(), zero.clone()),
+                    normal.clone(),
+                ),
+            ],
+            (),
+        );
+        let second = Polygon::new(
+            vec![
+                Vertex::new(
+                    Point3::new(epsilon.clone(), zero.clone(), zero.clone()),
+                    normal.clone(),
+                ),
+                Vertex::new(
+                    Point3::new(one.clone(), zero.clone(), zero.clone()),
+                    normal.clone(),
+                ),
+                Vertex::new(Point3::new(zero.clone(), one.clone(), zero), normal),
+            ],
+            (),
+        );
+        let buffers = Mesh::from_polygons(&[first, second], ()).to_hypermesh_buffers();
+        let positions = buffers
+            .positions
+            .chunks_exact(3)
+            .map(|row| Point3::new(row[0].clone(), row[1].clone(), row[2].clone()))
+            .collect::<Vec<_>>();
+
+        assert_eq!(positions.len(), 4);
+        assert!(positions.iter().any(|point| point.x == epsilon));
     }
 }

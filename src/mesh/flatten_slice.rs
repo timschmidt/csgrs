@@ -109,7 +109,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// ```ignore
     /// use csgrs::mesh::Mesh;
     /// use csgrs::mesh::plane::Plane;
-    /// use csgrs::sketch::Profile;
+    /// use csgrs::profile::Profile;
     /// use hyperlattice::Vector3;
     /// let cylinder = Mesh::<()>::cylinder(1.0, 2.0, 32, ());
     /// let plane_z0 = Plane::from_normal(Vector3::z(), 0.0);

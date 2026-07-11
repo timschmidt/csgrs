@@ -9,7 +9,7 @@ fn r(value: f64) -> Real {
 fn many_small_hyperreal_transforms_remain_composable() {
     let base = Mesh::<()>::cube(r(0.25), ()).center();
     let combined = (0..8)
-        .map(|i| base.clone().translate(r(i as f64) * r(0.2), r(0.0), r(0.0)))
+        .map(|i| base.clone().translate(r(i as f64) * r(0.5), r(0.0), r(0.0)))
         .reduce(|a, b| a.union(&b))
         .expect("nonempty input");
 

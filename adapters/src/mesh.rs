@@ -131,20 +131,32 @@ where
             .map_err(|err| AdapterError::Validation(err.to_string()))
     }
 
-    pub fn union(&self, other: &Self) -> Self {
-        Self::from_raw(self.inner.union(&other.inner))
+    pub fn union(&self, other: &Self) -> AdapterResult<Self> {
+        self.inner
+            .try_union(&other.inner)
+            .map(Self::from_raw)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn difference(&self, other: &Self) -> Self {
-        Self::from_raw(self.inner.difference(&other.inner))
+    pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
+        self.inner
+            .try_difference(&other.inner)
+            .map(Self::from_raw)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn intersection(&self, other: &Self) -> Self {
-        Self::from_raw(self.inner.intersection(&other.inner))
+    pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
+        self.inner
+            .try_intersection(&other.inner)
+            .map(Self::from_raw)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn xor(&self, other: &Self) -> Self {
-        Self::from_raw(self.inner.xor(&other.inner))
+    pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
+        self.inner
+            .try_xor(&other.inner)
+            .map(Self::from_raw)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn transform(&self, matrix: &Matrix4) -> Self {

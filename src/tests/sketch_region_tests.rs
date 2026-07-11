@@ -151,6 +151,21 @@ fn transform_preserves_native_region_and_wire_topology() {
     assert_eq!(bounds.mins.x, r(5.0));
     assert_eq!(bounds.mins.y, r(-2.0));
     assert_eq!(bounds.maxs.x, r(9.0));
+
+    let third = (Real::one() / Real::from(3_u8)).unwrap();
+    let exactly_moved = Profile::<()>::square(Real::one(), ()).translate(
+        third.clone(),
+        Real::zero(),
+        Real::zero(),
+    );
+    assert_eq!(
+        exactly_moved.as_region().material_contours()[0]
+            .curve_string()
+            .segments()[0]
+            .start()
+            .x(),
+        &third
+    );
 }
 
 #[test]

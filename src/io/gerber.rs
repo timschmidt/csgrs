@@ -876,11 +876,17 @@ where
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
             let mut sketch = Profile::circle(real(radius)?, 64, metadata.clone());
             if let Some(hole_diameter) = circle.hole_diameter {
-                sketch = sketch.difference(&Profile::circle(
-                    real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
-                    64,
+                sketch = add_aperture_hole(
+                    sketch,
+                    Profile::circle(
+                        real(
+                            aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5,
+                        )?,
+                        64,
+                        metadata.clone(),
+                    ),
                     metadata,
-                ));
+                );
             }
             sketch
         },
@@ -900,11 +906,17 @@ where
             )
             .rotate(real(0.0)?, real(0.0)?, real(rotation)?);
             if let Some(hole_diameter) = polygon.hole_diameter {
-                sketch = sketch.difference(&Profile::circle(
-                    real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
-                    64,
+                sketch = add_aperture_hole(
+                    sketch,
+                    Profile::circle(
+                        real(
+                            aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5,
+                        )?,
+                        64,
+                        metadata.clone(),
+                    ),
                     metadata,
-                ));
+                );
             }
             sketch
         },
@@ -913,6 +925,18 @@ where
 
     sketch = apply_aperture_transform(sketch, aperture_transform)?;
     Some(sketch.translate(real(center.x)?, real(center.y)?, real(0.0)?))
+}
+
+fn add_aperture_hole<M>(outer: Profile<M>, hole: Profile<M>, metadata: M) -> Profile<M>
+where
+    M: Clone + Debug + Send + Sync,
+{
+    let mut holes = outer.as_region().hole_contours().to_vec();
+    holes.extend(hole.as_region().material_contours().iter().cloned());
+    Profile::from_region(
+        hypercurve::Region2::new(outer.as_region().material_contours().to_vec(), holes),
+        metadata,
+    )
 }
 
 impl ApertureTransform {
@@ -947,11 +971,15 @@ where
     .translate(real(-width * 0.5)?, real(-height * 0.5)?, real(0.0)?);
 
     if let Some(hole_diameter) = rect.hole_diameter {
-        sketch = sketch.difference(&Profile::circle(
-            real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
-            64,
+        sketch = add_aperture_hole(
+            sketch,
+            Profile::circle(
+                real(aperture_transform.scale_length(hole_diameter * unit_scale) * 0.5)?,
+                64,
+                metadata.clone(),
+            ),
             metadata,
-        ));
+        );
     }
 
     Some(sketch)
@@ -1589,6 +1617,8 @@ mod tests {
         let gerber = b"G04 aperture hole*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,4X2*%\nD10*\nX0Y0D03*\nM02*\n";
 
         let parsed = Profile::<()>::from_gerber(gerber, ()).unwrap();
+        assert_eq!(parsed.as_region().material_contours().len(), 1);
+        assert_eq!(parsed.as_region().hole_contours().len(), 1);
         let area = native_region_area(&parsed);
         assert!(
             (area.clone() - (pi() * r(3.0))).abs() < r(0.05),

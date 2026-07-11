@@ -21,7 +21,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///
     /// # Example
     /// ```ignore
-    /// # use csgrs::sketch::Profile;
+    /// # use csgrs::profile::Profile;
     /// # use image::{GrayImage, Luma};
     /// # fn main() {
     /// let img: GrayImage = image::open("my_binary.png").unwrap().to_luma8();

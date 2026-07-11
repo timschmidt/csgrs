@@ -180,6 +180,7 @@ impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     }
 }
 
+#[cfg(feature = "sketch")]
 impl<M: Clone + Debug + Send + Sync> crate::sketch::Profile<M> {
     pub fn to_amf(&self, object_name: &str, units: &str) -> String {
         self::to_amf(self, object_name, units)

@@ -1,5 +1,6 @@
 //! Shared error types used by geometry validation and file conversion APIs.
 
+use hypercurve::{CurveError, UncertaintyReason};
 use hyperlattice::{Point3, Real};
 
 /// Coordinate validation failure for a single point.
@@ -9,6 +10,17 @@ pub enum PointError {
     NaN(Point3),
     #[error("point {0:?} has infinite fields")]
     Infinite(Point3),
+}
+
+/// Failure to produce a certified 2D profile Boolean.
+#[derive(Clone, Debug, thiserror::Error, PartialEq)]
+pub enum ProfileBooleanError {
+    /// Hypercurve rejected the topology operation.
+    #[error(transparent)]
+    Curve(#[from] CurveError),
+    /// Hypercurve could not certify a required topology decision.
+    #[error("profile boolean is uncertain: {0:?}")]
+    Uncertain(UncertaintyReason),
 }
 
 /// All the possible validation issues we might encounter,

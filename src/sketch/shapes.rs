@@ -95,7 +95,18 @@ fn hellipse_samples(
 }
 
 fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
-    hellipse_samples(samples, radius.clone(), radius, Real::zero(), tau())
+    // A polygonal circle is already a finite approximation. Promote each
+    // correctly rounded sample once, then retain exact binary-rational points
+    // for all subsequent predicates and topology.
+    let mut points = Vec::with_capacity(samples);
+    for index in 0..samples {
+        let angle = std::f64::consts::TAU * index as f64 / samples as f64;
+        points.push([
+            hreal_mul(&radius, hreal_from_f64(angle.cos()).ok()?)?,
+            hreal_mul(&radius, hreal_from_f64(angle.sin()).ok()?)?,
+        ]);
+    }
+    Some(points)
 }
 
 fn hfinite_min_max(values: impl IntoIterator<Item = Real>) -> Option<(Real, Real)> {
@@ -174,7 +185,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///
     /// # Example
     /// ```ignore
-    /// use csgrs::sketch::Profile;
+    /// use csgrs::profile::Profile;
     /// let sq2 = Profile::<()>::rectangle(2.0, 3.0, ());
     /// ```
     pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
@@ -451,7 +462,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     ///
     /// # Example
     /// ```ignore
-    /// use csgrs::sketch::Profile;
+    /// use csgrs::profile::Profile;
     /// let arrow = Profile::<()>::arrow(5.0, 0.5, 2.0, 1.5, ());
     /// ```
     pub fn arrow(
@@ -1407,7 +1418,7 @@ impl<M: Clone + Debug + Send + Sync> Profile<M> {
     /// `segments` controls circle smoothness.
     ///
     /// ```ignore
-    /// use csgrs::sketch::Profile;
+    /// use csgrs::profile::Profile;
     /// let cres = Profile::<()>::crescent(2.0, 1.4, 0.8, 64, ());
     /// ```
     pub fn crescent(

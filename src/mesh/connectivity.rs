@@ -121,7 +121,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        let Ok(mesh) = self.to_hypermesh_surface_exact() else {
+        let Ok(mesh) = self.to_hypermesh_triangle_mesh() else {
             return (vertex_map, adjacency);
         };
         for (index, point) in mesh.positions.iter().enumerate() {
