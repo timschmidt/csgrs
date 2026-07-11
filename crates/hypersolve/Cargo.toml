@@ -12,13 +12,13 @@ categories = ["mathematics", "science", "algorithms"]
 
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Release mode uses crates.io version lines. For local development, comment those and uncomment the path lines.
-# hyperreal = { path = "../hyperreal", default-features = false }
-# hyperlattice = { path = "../hyperlattice", default-features = false }
-# hyperlimit = { path = "../hyperlimit", default-features = false }
-hyperreal = { version = "0.13.0", default-features = false }
-hyperlattice = { version = "0.6.0", default-features = false }
-hyperlimit = { version = "0.4.0", default-features = false }
+# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+hyperreal = { path = "../hyperreal", default-features = false }
+hyperlattice = { path = "../hyperlattice", default-features = false }
+hyperlimit = { path = "../hyperlimit", default-features = false }
+# hyperreal = { version = "0.13.0", default-features = false }
+# hyperlattice = { version = "0.6.0", default-features = false }
+# hyperlimit = { version = "0.4.0", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
