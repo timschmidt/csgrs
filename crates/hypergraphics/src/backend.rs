@@ -24,6 +24,39 @@ out vec4 o_col;
 void main() { o_col = vec4(v_col, u_alpha); }
 "#;
 
+const VS_UNLIT_ES300: &str = r#"#version 300 es
+precision highp float;
+uniform mat4 u_mvp;
+layout(location=0) in vec3 a_pos;
+layout(location=1) in vec3 a_col;
+out vec3 v_col;
+void main() { v_col = a_col; gl_Position = u_mvp * vec4(a_pos, 1.0); }
+"#;
+
+const FS_UNLIT_ES300: &str = r#"#version 300 es
+precision highp float;
+uniform float u_alpha;
+in vec3 v_col;
+out vec4 o_col;
+void main() { o_col = vec4(v_col, u_alpha); }
+"#;
+
+const VS_UNLIT_ES100: &str = r#"#version 100
+precision highp float;
+uniform mat4 u_mvp;
+attribute vec3 a_pos;
+attribute vec3 a_col;
+varying vec3 v_col;
+void main() { v_col = a_col; gl_Position = u_mvp * vec4(a_pos, 1.0); }
+"#;
+
+const FS_UNLIT_ES100: &str = r#"#version 100
+precision mediump float;
+uniform float u_alpha;
+varying vec3 v_col;
+void main() { gl_FragColor = vec4(v_col, u_alpha); }
+"#;
+
 /// GPU-side colored mesh with CopperForge's `xyz rgb` stride.
 pub struct GpuColoredMesh {
     vao: glow::VertexArray,
@@ -133,7 +166,8 @@ impl UnlitProgram {
     /// `gl` must be a current, valid OpenGL context.
     pub unsafe fn new(gl: &Context) -> Result<Self> {
         unsafe {
-            let prog = compile(gl, VS_UNLIT, FS_UNLIT)?;
+            let (vs_src, fs_src) = unlit_shader_sources(gl);
+            let prog = compile(gl, vs_src, fs_src)?;
             let u_mvp = gl
                 .get_uniform_location(prog, "u_mvp")
                 .ok_or_else(|| Error::Backend("unlit shader missing u_mvp".to_string()))?;
@@ -181,6 +215,42 @@ impl UnlitProgram {
 
 unsafe impl Send for UnlitProgram {}
 unsafe impl Sync for UnlitProgram {}
+
+fn unlit_shader_sources(gl: &Context) -> (&'static str, &'static str) {
+    let shading_language = unsafe { gl.get_parameter_string(glow::SHADING_LANGUAGE_VERSION) };
+    match shader_dialect(&shading_language) {
+        ShaderDialect::Desktop330 => (VS_UNLIT, FS_UNLIT),
+        ShaderDialect::Es300 => (VS_UNLIT_ES300, FS_UNLIT_ES300),
+        ShaderDialect::Es100 => (VS_UNLIT_ES100, FS_UNLIT_ES100),
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ShaderDialect {
+    Desktop330,
+    Es300,
+    Es100,
+}
+
+fn shader_dialect(shading_language: &str) -> ShaderDialect {
+    let is_embedded = shading_language.starts_with("WebGL")
+        || shading_language.contains("OpenGL ES")
+        || shading_language.contains("GLSL ES");
+    if !is_embedded {
+        return ShaderDialect::Desktop330;
+    }
+
+    let major = shading_language
+        .find(|character: char| character.is_ascii_digit())
+        .and_then(|start| shading_language[start..].split('.').next())
+        .and_then(|major| major.parse::<u32>().ok())
+        .unwrap_or(1);
+    if major >= 3 {
+        ShaderDialect::Es300
+    } else {
+        ShaderDialect::Es100
+    }
+}
 
 impl Primitive {
     fn to_glow(self) -> u32 {
@@ -230,4 +300,37 @@ fn f64_to_f32(value: f64, name: &'static str) -> Result<f32> {
         return Err(Error::F32Overflow { value: name });
     }
     Ok(narrowed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shader_dialect_distinguishes_webgl_versions() {
+        assert_eq!(shader_dialect("WebGL GLSL ES 1.0"), ShaderDialect::Es100);
+        assert_eq!(
+            shader_dialect("WebGL GLSL ES 3.00 (OpenGL ES 3.0 Chromium)"),
+            ShaderDialect::Es300
+        );
+        assert_eq!(
+            shader_dialect("OpenGL ES GLSL ES 1.00"),
+            ShaderDialect::Es100
+        );
+        assert_eq!(shader_dialect("4.60 NVIDIA"), ShaderDialect::Desktop330);
+    }
+
+    #[test]
+    fn shader_version_directives_are_first() {
+        for source in [
+            VS_UNLIT,
+            FS_UNLIT,
+            VS_UNLIT_ES300,
+            FS_UNLIT_ES300,
+            VS_UNLIT_ES100,
+            FS_UNLIT_ES100,
+        ] {
+            assert!(source.starts_with("#version"));
+        }
+    }
 }

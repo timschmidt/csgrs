@@ -28,3 +28,10 @@ nalgebra = "0.34"
 
 [dev-dependencies]
 proptest = "1.7.0"
+
+# Keep transitive Hyper crates unified while using sibling path dependencies.
+[patch.crates-io]
+hyperreal = { path = "../hyperreal" }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+hypertri = { path = "../hypertri" }
