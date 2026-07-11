@@ -12,7 +12,7 @@
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::{Rational, Real, RealExactSetFacts};
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
@@ -2351,10 +2351,10 @@ fn insert_line_breakpoint(
     line_index: usize,
     line: &LinePathSegment,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<(), LineCubicBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal_with_policy(&existing.point, &point, policy).value() {
+        match point2_equal(&existing.point, &point).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineCubicBezierArrangementError::UndecidablePointEquality),
@@ -2437,7 +2437,7 @@ fn sort_and_dedup_line_breakpoints(
         let mut deduped: Vec<MixedCubicLineArrangementBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match point2_equal_with_policy(&last.point, &point.point, policy).value() {
+                match point2_equal(&last.point, &point.point).value() {
                     Some(true) => continue,
                     Some(false) => {}
                     None => {

@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
@@ -3673,10 +3673,10 @@ fn push_unique_intersection(
     intersections: &mut Vec<LineQuadraticBezierIntersection>,
     parameter: Real,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        match point2_equal_with_policy(&existing.point, &point, policy).value()? {
+        match point2_equal(&existing.point, &point).value()? {
             true => return Some(()),
             false => {}
         }
@@ -3772,10 +3772,10 @@ fn push_unique_rational_quadratic_intersection(
     intersections: &mut Vec<LineRationalQuadraticBezierIntersection>,
     parameter: Real,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        match point2_equal_with_policy(&existing.point, &point, policy).value()? {
+        match point2_equal(&existing.point, &point).value()? {
             true => return Some(()),
             false => {}
         }
@@ -3810,10 +3810,10 @@ fn push_unique_cubic_intersection(
     intersections: &mut Vec<LineCubicBezierIntersection>,
     parameter: Real,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        match point2_equal_with_policy(&existing.point, &point, policy).value()? {
+        match point2_equal(&existing.point, &point).value()? {
             true => return Some(()),
             false => {}
         }

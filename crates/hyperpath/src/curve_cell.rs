@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
@@ -254,6 +254,20 @@ pub struct CurveArrangementCellGraph {
     pub faces: Vec<CurveArrangementCellFace>,
     /// Exact native loop containment/material role reports for retained faces.
     pub loop_roles: Vec<CurveArrangementLoopRoleReport>,
+}
+
+impl CurveArrangementCellGraph {
+    /// Return an empty retained graph when unresolved arrangement evidence
+    /// prevents certified connectivity from being scheduled.
+    pub const fn empty() -> Self {
+        Self {
+            vertices: Vec::new(),
+            edges: Vec::new(),
+            half_edges: Vec::new(),
+            faces: Vec::new(),
+            loop_roles: Vec::new(),
+        }
+    }
 }
 
 pub(crate) fn build_line_arc_cell_graph(
@@ -750,10 +764,10 @@ fn build_curve_cell_graph_full(
 fn curve_vertex_index(
     vertices: &mut Vec<CurveArrangementCellVertex>,
     point: &Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<usize, CurveArrangementCellError> {
     for (index, vertex) in vertices.iter().enumerate() {
-        match point2_equal_with_policy(&vertex.point, point, policy).value() {
+        match point2_equal(&vertex.point, point).value() {
             Some(true) => return Ok(index),
             Some(false) => {}
             None => return Err(CurveArrangementCellError::UndecidablePointEquality),
@@ -799,8 +813,8 @@ fn real_equal(left: &Real, right: &Real, policy: PredicatePolicy) -> bool {
     compare_reals_with_policy(left, right, policy).value() == Some(Ordering::Equal)
 }
 
-fn point_equal(left: &Point2, right: &Point2, policy: PredicatePolicy) -> bool {
-    point2_equal_with_policy(left, right, policy).value() == Some(true)
+fn point_equal(left: &Point2, right: &Point2, _policy: PredicatePolicy) -> bool {
+    point2_equal(left, right).value() == Some(true)
 }
 
 fn homogeneous_point_equal(
@@ -1524,10 +1538,10 @@ fn arc_midpoint_candidate(
     for candidate in candidates {
         match arc.classify_point(&candidate, policy) {
             ExplicitArcPointClassification::OnArc => {
-                if point2_equal_with_policy(&candidate, arc.start(), policy).value()? {
+                if point2_equal(&candidate, arc.start()).value()? {
                     continue;
                 }
-                if point2_equal_with_policy(&candidate, arc.end(), policy).value()? {
+                if point2_equal(&candidate, arc.end()).value()? {
                     continue;
                 }
                 return Some(candidate);
@@ -1884,10 +1898,10 @@ fn arc_endpoint_owned_by_half_open_traversal(
     arc: &ExplicitCircularArc,
     candidate: &Point2,
     forward: bool,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Option<bool> {
-    let is_start = point2_equal_with_policy(candidate, arc.start(), policy).value()?;
-    let is_end = point2_equal_with_policy(candidate, arc.end(), policy).value()?;
+    let is_start = point2_equal(candidate, arc.start()).value()?;
+    let is_end = point2_equal(candidate, arc.end()).value()?;
     if forward && is_end {
         return Some(false);
     }

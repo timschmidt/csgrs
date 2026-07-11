@@ -11,7 +11,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::bezier::QuadraticBezier;
@@ -185,22 +185,74 @@ pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
 
     for (line_index, line) in lines.iter().enumerate() {
         for (curve_index, curve) in curves.iter().enumerate() {
-            let intersection = intersect_line_quadratic_bezier(line, curve, policy);
+            let mut intersection = intersect_line_quadratic_bezier(line, curve, policy);
             if intersection.class != LineQuadraticBezierIntersectionClass::Unknown {
+                let mut candidate_line = line_breakpoints[line_index].clone();
+                let mut candidate_bezier = bezier_breakpoints[curve_index].clone();
+                let mut insertion_error = None;
                 for event in &intersection.intersections {
-                    insert_line_breakpoint(
-                        &mut line_breakpoints[line_index],
+                    if let Err(error) = insert_line_breakpoint(
+                        &mut candidate_line,
                         line_index,
                         line,
                         event.point.clone(),
                         policy,
-                    )?;
-                    insert_bezier_breakpoint(
-                        &mut bezier_breakpoints[curve_index],
-                        curve_index,
-                        event,
-                        policy,
-                    )?;
+                    ) {
+                        insertion_error = Some(error);
+                        break;
+                    }
+                    if let Err(error) =
+                        insert_bezier_breakpoint(&mut candidate_bezier, curve_index, event, policy)
+                    {
+                        insertion_error = Some(error);
+                        break;
+                    }
+                }
+                let overlap_connectivity_uncertain = intersection.class
+                    == LineQuadraticBezierIntersectionClass::Overlap
+                    && candidate_line.iter().any(|line_point| {
+                        candidate_bezier.iter().any(|bezier_point| {
+                            point2_equal(&line_point.point, &bezier_point.point)
+                                .value()
+                                .is_none()
+                        })
+                    });
+                let overlap_order_uncertain = intersection.class
+                    == LineQuadraticBezierIntersectionClass::Overlap
+                    && intersection
+                        .intersections
+                        .iter()
+                        .enumerate()
+                        .any(|(left, event)| {
+                            intersection.intersections[left + 1..].iter().any(|other| {
+                                compare_reals_with_policy(
+                                    &event.parameter,
+                                    &other.parameter,
+                                    policy,
+                                )
+                                .value()
+                                .is_none()
+                            })
+                        });
+                let overlap_image_uncertain = intersection.class
+                    == LineQuadraticBezierIntersectionClass::Overlap
+                    && intersection.intersections.iter().any(|event| {
+                        point2_equal(&eval_quadratic_real(curve, &event.parameter), &event.point)
+                            .value()
+                            != Some(true)
+                    });
+                if intersection.class == LineQuadraticBezierIntersectionClass::Overlap
+                    && (insertion_error.is_some()
+                        || overlap_connectivity_uncertain
+                        || overlap_order_uncertain
+                        || overlap_image_uncertain)
+                {
+                    intersection.class = LineQuadraticBezierIntersectionClass::Unknown;
+                } else if let Some(error) = insertion_error {
+                    return Err(error);
+                } else {
+                    line_breakpoints[line_index] = candidate_line;
+                    bezier_breakpoints[curve_index] = candidate_bezier;
                 }
             }
             events.push(LineQuadraticBezierArrangementEvent {
@@ -216,8 +268,15 @@ pub fn arrange_line_segments_with_quadratic_beziers_and_provenance(
     sort_and_dedup_bezier_breakpoints(&mut bezier_breakpoints, policy)?;
     let line_fragments = build_line_fragments(&line_breakpoints, policy)?;
     let bezier_fragments = build_bezier_fragments(&bezier_breakpoints, curves, policy)?;
-    let cell_graph = build_line_quadratic_cell_graph(&line_fragments, &bezier_fragments, policy)
-        .map_err(line_quadratic_error_from_curve_cell_error)?;
+    let cell_graph = if events
+        .iter()
+        .any(|event| event.class == LineQuadraticBezierIntersectionClass::Unknown)
+    {
+        CurveArrangementCellGraph::empty()
+    } else {
+        build_line_quadratic_cell_graph(&line_fragments, &bezier_fragments, policy)
+            .map_err(line_quadratic_error_from_curve_cell_error)?
+    };
     let facts = LineQuadraticBezierArrangementFacts {
         input_exact: input_exact_facts(lines, curves),
         fragment_exact: fragment_exact_facts(&line_fragments, &bezier_fragments),
@@ -307,10 +366,10 @@ fn insert_line_breakpoint(
     line_index: usize,
     line: &LinePathSegment,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<(), LineQuadraticBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal_with_policy(&existing.point, &point, policy).value() {
+        match point2_equal(&existing.point, &point).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineQuadraticBezierArrangementError::UndecidablePointEquality),
@@ -379,12 +438,10 @@ fn sort_and_dedup_line_breakpoints(
         let mut deduped: Vec<MixedLineArrangementBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match point2_equal_with_policy(&last.point, &point.point, policy).value() {
-                    Some(true) => continue,
-                    Some(false) => {}
-                    None => {
-                        return Err(LineQuadraticBezierArrangementError::UndecidablePointEquality);
-                    }
+                match compare_line_parameters(last, &point, policy) {
+                    Some(Ordering::Equal) => continue,
+                    Some(Ordering::Less | Ordering::Greater) => {}
+                    None => unreachable!("line breakpoint order was certified before sorting"),
                 }
             }
             deduped.push(point);

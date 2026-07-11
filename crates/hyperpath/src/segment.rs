@@ -10,8 +10,8 @@ use std::cmp::Ordering;
 
 use hyperlimit::{
     Aabb2Facts, Certainty, Escalation, Point2, PredicateOutcome, PredicatePolicy, PreparedAabb2,
-    Segment2Facts, aabb2_facts, compare_reals_with_policy, point2_equal_with_policy,
-    predicate::RefinementNeed, segment2_facts,
+    RefinementNeed, Segment2Facts, aabb2_facts, compare_reals_with_policy, point2_equal,
+    segment2_facts,
 };
 use hyperreal::{Real, RealExactSetFacts, RealSign, SymbolicDependencyMask};
 
@@ -196,15 +196,15 @@ impl LinePathSegment {
     pub fn exact_endpoint_equal(
         &self,
         other: &Self,
-        policy: PredicatePolicy,
+        _policy: PredicatePolicy,
     ) -> PredicateOutcome<bool> {
-        let same_direction = point2_equal_with_policy(&self.start, &other.start, policy)
+        let same_direction = point2_equal(&self.start, &other.start)
             .value()
-            .zip(point2_equal_with_policy(&self.end, &other.end, policy).value())
+            .zip(point2_equal(&self.end, &other.end).value())
             .map(|(a, b)| a && b);
-        let reverse_direction = point2_equal_with_policy(&self.start, &other.end, policy)
+        let reverse_direction = point2_equal(&self.start, &other.end)
             .value()
-            .zip(point2_equal_with_policy(&self.end, &other.start, policy).value())
+            .zip(point2_equal(&self.end, &other.start).value())
             .map(|(a, b)| a && b);
         match (same_direction, reverse_direction) {
             (Some(true), _) | (_, Some(true)) => {

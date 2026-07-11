@@ -12,10 +12,9 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Point2, PointSegmentLocation, PredicatePolicy, SegmentIntersection,
-    classify_point_segment_with_policy, classify_segment_intersection_with_policy_and_facts,
-    compare_reals_with_policy, point2_equal_with_policy,
-    proper_segment_intersection_point_with_policy,
+    Point2, PointSegmentLocation, PredicatePolicy, SegmentIntersection, classify_point_segment,
+    classify_segment_intersection_with_facts, compare_reals_with_policy, point2_equal,
+    proper_segment_intersection_point,
 };
 use hyperreal::{Real, RealExactSetFacts};
 
@@ -841,12 +840,11 @@ fn classify_line_arrangement_event(
 ) -> Result<LineArrangementEvent, LineArrangementError> {
     let a = &segments[first];
     let b = &segments[second];
-    let Some(intersection) = classify_segment_intersection_with_policy_and_facts(
+    let Some(intersection) = classify_segment_intersection_with_facts(
         a.start(),
         a.end(),
         b.start(),
         b.end(),
-        policy,
         a.facts().segment,
         b.facts().segment,
     )
@@ -871,15 +869,11 @@ fn classify_line_arrangement_event(
             overlap: None,
         }),
         SegmentIntersection::Proper => {
-            let Some(point) = proper_segment_intersection_point_with_policy(
-                a.start(),
-                a.end(),
-                b.start(),
-                b.end(),
-                policy,
-            )
-            .value()
-            .flatten() else {
+            let Some(point) =
+                proper_segment_intersection_point(a.start(), a.end(), b.start(), b.end())
+                    .value()
+                    .flatten()
+            else {
                 return Ok(LineArrangementEvent {
                     first,
                     second,
@@ -1055,19 +1049,19 @@ fn compare_arc_breakpoints(
     arc: &ExplicitCircularArc,
     policy: PredicatePolicy,
 ) -> Result<Ordering, ExplicitArcArrangementError> {
-    if point2_equal_with_policy(&left.point, &right.point, policy).value() == Some(true) {
+    if point2_equal(&left.point, &right.point).value() == Some(true) {
         return Ok(Ordering::Equal);
     }
     if arc.facts().known_full_circle {
         return compare_full_circle_breakpoints(left, right, arc, policy);
     }
-    if point2_equal_with_policy(&left.point, arc.start(), policy).value() == Some(true)
-        || point2_equal_with_policy(&right.point, arc.end(), policy).value() == Some(true)
+    if point2_equal(&left.point, arc.start()).value() == Some(true)
+        || point2_equal(&right.point, arc.end()).value() == Some(true)
     {
         return Ok(Ordering::Less);
     }
-    if point2_equal_with_policy(&right.point, arc.start(), policy).value() == Some(true)
-        || point2_equal_with_policy(&left.point, arc.end(), policy).value() == Some(true)
+    if point2_equal(&right.point, arc.start()).value() == Some(true)
+        || point2_equal(&left.point, arc.end()).value() == Some(true)
     {
         return Ok(Ordering::Greater);
     }
@@ -1103,10 +1097,10 @@ fn compare_full_circle_breakpoints(
     // inside a half-turn by an exact cross-product sign. This is the same
     // predicate-only discipline Yap advocates for EGC and mirrors the
     // circular-arc traits in CGAL: no angle sampling or tolerance sort is used.
-    if point2_equal_with_policy(&left.point, arc.start(), policy).value() == Some(true) {
+    if point2_equal(&left.point, arc.start()).value() == Some(true) {
         return Ok(Ordering::Less);
     }
-    if point2_equal_with_policy(&right.point, arc.start(), policy).value() == Some(true) {
+    if point2_equal(&right.point, arc.start()).value() == Some(true) {
         return Ok(Ordering::Greater);
     }
     let left_half = full_circle_half_turn_rank(arc, &left.point, policy)?;
@@ -1160,7 +1154,7 @@ fn full_circle_half_turn_rank(
 fn build_arc_fragments(
     arcs: &[ExplicitCircularArc],
     breakpoints: &[Vec<ExplicitArcArrangementBreakpoint>],
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<Vec<ExplicitArcArrangementFragment>, ExplicitArcArrangementError> {
     let mut fragments = Vec::new();
     for points in breakpoints {
@@ -1175,9 +1169,7 @@ fn build_arc_fragments(
             continue;
         }
         for window in points.windows(2) {
-            if point2_equal_with_policy(&window[0].point, &window[1].point, policy).value()
-                == Some(true)
-            {
+            if point2_equal(&window[0].point, &window[1].point).value() == Some(true) {
                 continue;
             }
             let source = &arcs[window[0].arc];
@@ -1239,10 +1231,10 @@ fn point_on_arc_bool_for_arrangement(
 fn push_unique_arc_point(
     points: &mut Vec<Point2>,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<(), ExplicitArcArrangementError> {
     for existing in points.iter() {
-        match point2_equal_with_policy(existing, &point, policy).value() {
+        match point2_equal(existing, &point).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(ExplicitArcArrangementError::UndecidablePointEquality),
@@ -1285,8 +1277,7 @@ fn make_breakpoint(
     point: Point2,
     policy: PredicatePolicy,
 ) -> Result<LineArrangementBreakpoint, LineArrangementError> {
-    match classify_point_segment_with_policy(segment.start(), segment.end(), &point, policy).value()
-    {
+    match classify_point_segment(segment.start(), segment.end(), &point).value() {
         Some(location) if location.is_on_segment() => {}
         Some(_) => {
             return Err(LineArrangementError::SplitPointOffSegment {
@@ -1351,9 +1342,7 @@ fn insert_sorted_breakpoint(
                 return Ok(());
             }
             Ordering::Equal => {
-                if point2_equal_with_policy(&point.point, &sorted[index].point, policy).value()
-                    != Some(true)
-                {
+                if point2_equal(&point.point, &sorted[index].point).value() != Some(true) {
                     return Err(LineArrangementError::UndecidablePointEquality);
                 }
                 return Ok(());
@@ -1363,7 +1352,7 @@ fn insert_sorted_breakpoint(
     }
     if sorted
         .last()
-        .and_then(|last| point2_equal_with_policy(&point.point, &last.point, policy).value())
+        .and_then(|last| point2_equal(&point.point, &last.point).value())
         == Some(true)
     {
         return Ok(());
@@ -1479,10 +1468,10 @@ fn build_line_cell_graph(
 fn cell_vertex_index(
     vertices: &mut Vec<LineArrangementCellVertex>,
     point: &Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<usize, LineArrangementError> {
     for (index, vertex) in vertices.iter().enumerate() {
-        match point2_equal_with_policy(&vertex.point, point, policy).value() {
+        match point2_equal(&vertex.point, point).value() {
             Some(true) => return Ok(index),
             Some(false) => {}
             None => return Err(LineArrangementError::UndecidablePointEquality),
@@ -1664,7 +1653,7 @@ fn collect_shared_points(
 ) -> Result<Vec<Point2>, LineArrangementError> {
     let mut shared = Vec::new();
     for point in [first.start(), first.end()] {
-        if classify_point_segment_with_policy(second.start(), second.end(), point, policy)
+        if classify_point_segment(second.start(), second.end(), point)
             .value()
             .is_some_and(PointSegmentLocation::is_on_segment)
         {
@@ -1672,7 +1661,7 @@ fn collect_shared_points(
         }
     }
     for point in [second.start(), second.end()] {
-        if classify_point_segment_with_policy(first.start(), first.end(), point, policy)
+        if classify_point_segment(first.start(), first.end(), point)
             .value()
             .is_some_and(PointSegmentLocation::is_on_segment)
         {
@@ -1685,10 +1674,10 @@ fn collect_shared_points(
 fn push_unique_point(
     points: &mut Vec<Point2>,
     point: Point2,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<(), LineArrangementError> {
     for existing in points.iter() {
-        match point2_equal_with_policy(existing, &point, policy).value() {
+        match point2_equal(existing, &point).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineArrangementError::UndecidablePointEquality),

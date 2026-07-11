@@ -19,7 +19,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::{Real, RealExactSetFacts};
 
 use crate::arc::{ExplicitArcPointClassification, ExplicitCircularArc};
@@ -686,10 +686,10 @@ fn merge_conic_line_breakpoints(
 fn insert_line_breakpoint(
     breakpoints: &mut Vec<MixedLineArrangementBreakpoint>,
     point: MixedLineArrangementBreakpoint,
-    policy: PredicatePolicy,
+    _policy: PredicatePolicy,
 ) -> Result<(), LineMixedBezierArrangementError> {
     for existing in breakpoints.iter() {
-        match point2_equal_with_policy(&existing.point, &point.point, policy).value() {
+        match point2_equal(&existing.point, &point.point).value() {
             Some(true) => return Ok(()),
             Some(false) => {}
             None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -737,7 +737,7 @@ fn sort_and_dedup_line_breakpoints(
         let mut deduped: Vec<MixedLineArrangementBreakpoint> = Vec::new();
         for point in points.drain(..) {
             if let Some(last) = deduped.last() {
-                match point2_equal_with_policy(&last.point, &point.point, policy).value() {
+                match point2_equal(&last.point, &point.point).value() {
                     Some(true) => continue,
                     Some(false) => {}
                     None => return Err(LineMixedBezierArrangementError::UndecidablePointEquality),
@@ -1440,7 +1440,7 @@ fn endpoint_corner_contact(
     ];
 
     for (left_endpoint, left_point, right_endpoint, right_point) in endpoint_pairs {
-        match point2_equal_with_policy(left_point, right_point, policy).value() {
+        match point2_equal(left_point, right_point).value() {
             Some(true) => {
                 if boxes_touch_only_at_corner(left, right, left_point, policy)? {
                     return Ok(Some((left_endpoint, right_endpoint)));

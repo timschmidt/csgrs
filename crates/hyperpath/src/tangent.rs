@@ -11,7 +11,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::Real;
 use hypersolve::{
     CandidateCertificationReport, Constraint, ConstraintKind, Expr, PreparedProblem, Problem,
@@ -302,7 +302,7 @@ pub fn classify_tangent_join(
     second_tangent: &Point2,
     policy: PredicatePolicy,
 ) -> TangentJoinReport {
-    match point2_equal_with_policy(first_endpoint, second_endpoint, policy).value() {
+    match point2_equal(first_endpoint, second_endpoint).value() {
         Some(false) => TangentJoinReport {
             class: TangentJoinClass::EndpointMismatch,
             endpoints_equal: Some(false),
