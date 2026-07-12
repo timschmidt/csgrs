@@ -35,6 +35,9 @@ use hypercurve::{
 };
 use hyperreal::RealSign;
 
+#[cfg(feature = "offset")]
+use geo::{Buffer as _, Coord, LineString, MultiPolygon, Polygon as GeoPolygon};
+
 impl Profile {
     fn preserve_offset_wires(&self, sketch: &mut Profile) {
         if !self.wires().is_empty() {
@@ -197,6 +200,54 @@ impl Profile {
         self.empty_offset_result()
     }
 
+    /// Build a rounded offset at a finite application/output boundary.
+    ///
+    /// Native hypercurve offsetting remains the primary CAD path. This method
+    /// exists for callers such as OpenSCAD import that already define a finite
+    /// tessellation boundary and require global buffer trimming across complex
+    /// multi-contour profiles. Buffered rings are promoted immediately back to
+    /// native [`Region2`] topology.
+    #[cfg(feature = "offset")]
+    pub fn offset_rounded_finite_output(&self, distance: Real) -> Profile {
+        let Some(distance) = distance.to_f64_lossy() else {
+            return self.empty_offset_result();
+        };
+        let polygons = self
+            .region_profiles()
+            .into_iter()
+            .filter_map(|profile| {
+                let exterior = finite_ring_to_geo(profile.material().points())?;
+                let holes = profile
+                    .holes()
+                    .iter()
+                    .filter_map(|hole| finite_ring_to_geo(hole.points()))
+                    .collect::<Vec<_>>();
+                Some(GeoPolygon::new(exterior, holes))
+            })
+            .collect::<Vec<_>>();
+        if polygons.is_empty() {
+            return self.empty_offset_result();
+        }
+
+        let buffered = MultiPolygon(polygons).buffer(distance);
+        let mut material = Vec::with_capacity(buffered.0.len());
+        let mut holes = Vec::new();
+        for polygon in &buffered.0 {
+            let Some(exterior) = geo_ring_to_contour(polygon.exterior()) else {
+                return self.empty_offset_result();
+            };
+            material.push(exterior);
+            holes.extend(polygon.interiors().iter().filter_map(geo_ring_to_contour));
+        }
+        let region = Region2::new(material, holes);
+        Profile::from_region_and_wires_with_origin(
+            region,
+            Vec::new(),
+            self.origin.clone(),
+            self.origin_transform.clone(),
+        )
+    }
+
     /// Return native inward skeleton-facing linework for finite profile views.
     ///
     /// The returned wires are [`CurveString2`] values constructed from the
@@ -221,6 +272,30 @@ impl Profile {
         self.preserve_offset_wires(&mut sketch);
         sketch
     }
+}
+
+#[cfg(feature = "offset")]
+fn finite_ring_to_geo(points: &[[f64; 2]]) -> Option<LineString<f64>> {
+    (points.len() >= 4).then(|| {
+        LineString::new(
+            points
+                .iter()
+                .map(|point| Coord {
+                    x: point[0],
+                    y: point[1],
+                })
+                .collect(),
+        )
+    })
+}
+
+#[cfg(feature = "offset")]
+fn geo_ring_to_contour(ring: &LineString<f64>) -> Option<Contour2> {
+    let points = ring
+        .points()
+        .map(|point| [point.x(), point.y()])
+        .collect::<Vec<_>>();
+    Contour2::from_finite_ring(&points).ok()
 }
 
 fn native_role_offset_contour(

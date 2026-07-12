@@ -318,6 +318,41 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
     }
 
+    /// Sample every coordinate at an explicit finite application/output boundary.
+    ///
+    /// This is intended for callers whose source language or file format has
+    /// finite-number semantics and which want to retry an operation that could
+    /// not certify a symbolic predicate. Native mesh operations do not call it
+    /// implicitly.
+    pub fn materialize_finite_output(&self) -> Option<Self> {
+        let polygons = self
+            .polygons
+            .iter()
+            .map(|polygon| {
+                let vertices = polygon
+                    .vertices
+                    .iter()
+                    .map(|vertex| {
+                        Some(Vertex::new(
+                            Point3::new(
+                                Real::try_from(vertex.position.x.to_f64_lossy()?).ok()?,
+                                Real::try_from(vertex.position.y.to_f64_lossy()?).ok()?,
+                                Real::try_from(vertex.position.z.to_f64_lossy()?).ok()?,
+                            ),
+                            Vector3::new([
+                                Real::try_from(vertex.normal.0[0].to_f64_lossy()?).ok()?,
+                                Real::try_from(vertex.normal.0[1].to_f64_lossy()?).ok()?,
+                                Real::try_from(vertex.normal.0[2].to_f64_lossy()?).ok()?,
+                            ]),
+                        ))
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some(Polygon::new(vertices, polygon.metadata.clone()))
+            })
+            .collect::<Option<Vec<_>>>()?;
+        Some(Self::from_polygons(&polygons))
+    }
+
     /// **Mathematical Foundation: Dihedral Angle Calculation**
     ///
     /// Computes the dihedral angle between two polygons sharing an edge.

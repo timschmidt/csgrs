@@ -64,6 +64,41 @@ fn rotation_at_exact_degree_landmarks_matches_finite_trigonometry() {
 }
 
 #[test]
+fn finite_output_triangulates_symbolically_rotated_quads() {
+    let rotated = Mesh::cube(r(2.0), ()).rotate(r(18.0), r(37.0), r(11.0));
+    let triangle_count = rotated
+        .polygons
+        .iter()
+        .map(|polygon| polygon.triangulate_finite_output().len())
+        .sum::<usize>();
+    assert_eq!(triangle_count, 12);
+}
+
+#[test]
+fn finite_output_materialization_preserves_sampled_mesh_coordinates() {
+    let symbolic = Mesh::cube(r(2.0), ()).rotate(r(18.0), r(37.0), r(11.0));
+    let finite = symbolic
+        .materialize_finite_output()
+        .expect("rotated cube has finite samples");
+    assert_eq!(finite.polygons.len(), symbolic.polygons.len());
+    for (source_polygon, finite_polygon) in symbolic.polygons.iter().zip(&finite.polygons) {
+        for (source, materialized) in
+            source_polygon.vertices.iter().zip(&finite_polygon.vertices)
+        {
+            for (source, materialized) in [
+                (&source.position.x, &materialized.position.x),
+                (&source.position.y, &materialized.position.y),
+                (&source.position.z, &materialized.position.z),
+            ] {
+                let source = source.to_f64_lossy().expect("finite source");
+                let materialized = materialized.to_f64_lossy().expect("finite result");
+                assert!((source - materialized).abs() <= f64::EPSILON * 4.0);
+            }
+        }
+    }
+}
+
+#[test]
 fn test_csg_union() {
     let cube1: Mesh<()> = Mesh::cube(r(2.0), ()).translate(r(-1.0), r(-1.0), r(-1.0)); // from -1 to +1 in all coords
     let cube2: Mesh<()> = Mesh::cube(r(1.0), ()).translate(r(0.5), r(0.5), r(0.5));

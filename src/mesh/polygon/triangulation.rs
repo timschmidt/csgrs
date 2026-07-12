@@ -29,27 +29,31 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             return Vec::new();
         };
 
-        indices
-            .chunks_exact(3)
-            .filter_map(|triangle| {
-                let [i0, i1, i2] = [triangle[0], triangle[1], triangle[2]];
-                if [i0, i1, i2]
-                    .into_iter()
-                    .any(|index| index >= self.vertices.len())
-                {
-                    return None;
-                }
-                let mut vertices = [
-                    self.vertices[i0].clone(),
-                    self.vertices[i1].clone(),
-                    self.vertices[i2].clone(),
-                ];
-                if reverse_output {
-                    vertices.swap(1, 2);
-                }
-                Some(vertices)
-            })
-            .collect()
+        triangles_from_indices(&self.vertices, &indices, reverse_output)
+    }
+
+    /// Triangulate for a finite renderer or file-format output boundary.
+    ///
+    /// Exact projected triangulation remains the primary path. If symbolic
+    /// coordinates cannot certify a projection ordering, this method samples
+    /// the already finite output coordinates, promotes those samples to exact
+    /// binary rationals, and reruns the same exact ear-clipping kernel. The
+    /// returned triangles retain the original vertices and therefore only the
+    /// boundary scheduling decision is sampled.
+    pub fn triangulate_finite_output(&self) -> Vec<[Vertex; 3]> {
+        let exact = self.triangulate();
+        if !exact.is_empty() || self.vertices.len() < 4 {
+            return exact;
+        }
+
+        let Some(points) = project_to_finite_exact_2d(&self.vertices) else {
+            return Vec::new();
+        };
+        let reverse_output = winding_is_negative(&points);
+        let Ok(indices) = hypertri::earcut(&points, &[]) else {
+            return Vec::new();
+        };
+        triangles_from_indices(&self.vertices, &indices, reverse_output)
     }
 
     /// Uniformly split every triangle into four triangles per level.
@@ -72,6 +76,69 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             .map(|triangle| Polygon::new(triangle.to_vec(), self.metadata.clone()))
             .collect()
     }
+}
+
+fn triangles_from_indices(
+    vertices: &[Vertex],
+    indices: &[usize],
+    reverse_output: bool,
+) -> Vec<[Vertex; 3]> {
+    indices
+        .chunks_exact(3)
+        .filter_map(|triangle| {
+            let [i0, i1, i2] = [triangle[0], triangle[1], triangle[2]];
+            if [i0, i1, i2].into_iter().any(|index| index >= vertices.len()) {
+                return None;
+            }
+            let mut triangle = [
+                vertices[i0].clone(),
+                vertices[i1].clone(),
+                vertices[i2].clone(),
+            ];
+            if reverse_output {
+                triangle.swap(1, 2);
+            }
+            Some(triangle)
+        })
+        .collect()
+}
+
+fn project_to_finite_exact_2d(vertices: &[Vertex]) -> Option<Vec<hypertri::Point2>> {
+    let finite = vertices
+        .iter()
+        .map(|vertex| {
+            Some([
+                vertex.position.x.to_f64_lossy()?,
+                vertex.position.y.to_f64_lossy()?,
+                vertex.position.z.to_f64_lossy()?,
+            ])
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut normal = [0.0_f64; 3];
+    for (current, next) in finite.iter().zip(finite.iter().cycle().skip(1)) {
+        normal[0] += (current[1] - next[1]) * (current[2] + next[2]);
+        normal[1] += (current[2] - next[2]) * (current[0] + next[0]);
+        normal[2] += (current[0] - next[0]) * (current[1] + next[1]);
+    }
+    let drop_axis =
+        (0..3).max_by(|left, right| normal[*left].abs().total_cmp(&normal[*right].abs()))?;
+    if normal[drop_axis] == 0.0 {
+        return None;
+    }
+    finite
+        .into_iter()
+        .map(|point| {
+            let [x, y] = match drop_axis {
+                0 => [point[1], point[2]],
+                1 => [point[2], point[0]],
+                _ => [point[0], point[1]],
+            };
+            Some(hypertri::Point2::new(
+                Real::try_from(x).ok()?,
+                Real::try_from(y).ok()?,
+            ))
+        })
+        .collect()
 }
 
 fn project_to_exact_2d(

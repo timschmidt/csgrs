@@ -73,6 +73,8 @@ wgpu-types = { version = "27", optional = true, default-features = false }
 
 # utils
 rayon = { version = "1.10", optional = true }
+chull = { version = "0.2.4", optional = true }
+geo = { version = "0.32", optional = true }
 thiserror = "2.0"
 hashbrown = { version = "0.15" }
 fast-surface-nets = { version = "0.2.1", optional = true }
@@ -134,7 +136,7 @@ sketch = [
   # hypercurve backed Profile datatype
 ]
 # convex hull and minkowski sum
-chull-io = []
+chull-io = ["dep:chull"]
 stl-io = [
   "stl_io",
 ]
@@ -187,6 +189,7 @@ sdf = [
 ]
 offset = [
   "sketch",
+  "dep:geo",
 ]
 bevymesh = [
   "dep:bevy_mesh",
