@@ -11,7 +11,7 @@
 //! in Schneider and Eberly, *Geometric Tools for Computer Graphics* (Morgan
 //! Kaufmann, 2002).
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::{
     CircularArc2, Contour2, CurveError, CurveResult, CurveString2, LineSeg2, Point2, Region2,
@@ -31,6 +31,46 @@ pub struct Similarity2 {
 }
 
 impl Similarity2 {
+    /// Constructs a planar similarity from exact affine entries.
+    ///
+    /// Equal axis scales, orthogonality, nonsingularity, and orientation are
+    /// certified in `Real`; undecidable classifications are rejected.
+    pub fn try_from_real_affine(
+        a: Real,
+        b: Real,
+        d: Real,
+        e: Real,
+        xoff: Real,
+        yoff: Real,
+    ) -> CurveResult<Self> {
+        let first_len_squared = a.clone() * a.clone() + d.clone() * d.clone();
+        let second_len_squared = b.clone() * b.clone() + e.clone() * e.clone();
+        let equal_scale = (first_len_squared - second_len_squared).refine_sign_until(128);
+        let orthogonal = (a.clone() * b.clone() + d.clone() * e.clone()).refine_sign_until(128);
+        let determinant = a.clone() * e.clone() - b.clone() * d.clone();
+        let determinant_sign = determinant.refine_sign_until(128);
+
+        if equal_scale != Some(RealSign::Zero)
+            || orthogonal != Some(RealSign::Zero)
+            || !matches!(
+                determinant_sign,
+                Some(RealSign::Negative | RealSign::Positive)
+            )
+        {
+            return Err(CurveError::InvalidSimilarityTransform);
+        }
+
+        Ok(Self {
+            a,
+            b,
+            d,
+            e,
+            xoff,
+            yoff,
+            reverses_orientation: determinant_sign == Some(RealSign::Negative),
+        })
+    }
+
     /// Constructs a planar similarity from finite affine entries.
     ///
     /// The transform is:
@@ -182,4 +222,44 @@ fn real_from_f64(value: f64) -> CurveResult<Real> {
         return Err(CurveError::InvalidSimilarityTransform);
     }
     Ok(Real::try_from(value)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Similarity2;
+    use crate::Point2;
+    use hyperreal::Real;
+
+    #[test]
+    fn exact_similarity_preserves_translation_beyond_f64_resolution() {
+        let base = Real::from(1_i64 << 60);
+        let transform = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            base.clone(),
+            Real::zero(),
+        )
+        .unwrap();
+
+        let transformed = transform.transform_point(&Point2::new(Real::one(), Real::zero()));
+
+        assert_eq!(transformed.x(), &(base + Real::one()));
+    }
+
+    #[test]
+    fn exact_similarity_rejects_anisotropic_scale() {
+        assert!(
+            Similarity2::try_from_real_affine(
+                Real::from(2_u8),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+            )
+            .is_err()
+        );
+    }
 }
