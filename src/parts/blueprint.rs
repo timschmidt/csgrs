@@ -418,7 +418,7 @@ fn rects_overlap_2d(a: &ProjectedRect, b: &ProjectedRect) -> bool {
 fn real_cmp(lhs: &Real, rhs: &Real) -> Ordering {
     hyperlimit::compare_reals(lhs, rhs)
         .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
             Some(RealSign::Positive) => Ordering::Greater,
             Some(RealSign::Negative) => Ordering::Less,
             Some(RealSign::Zero) | None => Ordering::Equal,

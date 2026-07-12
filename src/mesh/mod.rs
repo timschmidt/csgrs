@@ -2,7 +2,7 @@
 
 use crate::errors::ValidationError;
 
-use crate::vertex::Vertex;
+use crate::vertex::{Vertex, fresh_position_id};
 
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
@@ -17,9 +17,8 @@ use hyperphysics::{
     Vector3 as HyperVector3,
 };
 use hyperreal::RealSign;
-use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
+use std::{cmp::PartialEq, collections::HashMap, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
-#[cfg(feature = "chull-io")]
 pub mod convex_hull;
 #[cfg(feature = "sketch")]
 pub mod flatten_slice;
@@ -32,6 +31,7 @@ pub mod metaballs;
 pub mod plane;
 pub mod polygon;
 pub use polygon::Polygon;
+use polygon::fresh_plane_id;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
@@ -62,7 +62,7 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
 fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
     hyperlimit::compare_reals(lhs, rhs)
         .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
             Some(RealSign::Positive) => std::cmp::Ordering::Greater,
             Some(RealSign::Negative) => std::cmp::Ordering::Less,
             Some(RealSign::Zero) | None => std::cmp::Ordering::Equal,
@@ -78,7 +78,7 @@ fn real_lt(lhs: &Real, rhs: &Real) -> bool {
 }
 
 fn real_zero(value: &Real) -> bool {
-    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+    matches!(value.refine_sign_until(-128), Some(RealSign::Zero))
 }
 
 fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
@@ -886,8 +886,37 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 
     fn translate_vector(&self, vector: Vector3) -> Self {
         let mut mesh = self.clone();
+        let mut transformed = HashMap::<u64, (Point3, u64)>::new();
+        let mut transformed_coordinates: [HashMap<u64, u64>; 3] =
+            std::array::from_fn(|_| HashMap::new());
+        let mut transformed_planes = HashMap::new();
         for polygon in &mut mesh.polygons {
-            polygon.translate_in_place(&vector);
+            let plane_id = *transformed_planes
+                .entry(polygon.plane_id)
+                .or_insert_with(fresh_plane_id);
+            {
+                let mut vertices = polygon.vertices_mut();
+                for vertex in vertices.iter_mut() {
+                    for (axis, ids) in transformed_coordinates.iter_mut().enumerate() {
+                        vertex.coordinate_ids[axis] = *ids
+                            .entry(vertex.coordinate_ids[axis])
+                            .or_insert_with(fresh_position_id);
+                    }
+                    if let Some((position, position_id)) = transformed.get(&vertex.position_id)
+                    {
+                        vertex.position = position.clone();
+                        vertex.position_id = *position_id;
+                    } else {
+                        let source_id = vertex.position_id;
+                        let position = vertex.position.clone() + vector.clone();
+                        let position_id = fresh_position_id();
+                        transformed.insert(source_id, (position.clone(), position_id));
+                        vertex.position = position;
+                        vertex.position_id = position_id;
+                    }
+                }
+            }
+            polygon.plane_id = plane_id;
         }
         mesh.bounding_box = OnceLock::new();
         mesh
@@ -946,19 +975,49 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         };
 
         let mut mesh = self.clone();
+        let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
+        let matrix_facts = mat.structural_facts();
+        let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
+            std::array::from_fn(|_| HashMap::new());
+        let mut transformed_planes = HashMap::new();
 
         for poly in &mut mesh.polygons {
+            let plane_id = *transformed_planes
+                .entry(poly.plane_id)
+                .or_insert_with(fresh_plane_id);
             let mut vertices = poly.vertices_mut();
             for vert in vertices.iter_mut() {
-                // Transform position using homogeneous coordinates
-                match mat.transform_point3(&vert.position) {
-                    Ok(transformed_position) => vert.position = transformed_position,
-                    Err(_) => {
-                        eprintln!(
-                            "Warning: Invalid homogeneous coordinates after transformation, skipping vertex"
-                        );
-                        continue;
-                    },
+                let source_coordinate_ids = vert.coordinate_ids;
+                for (row, ids) in transformed_coordinates.iter_mut().enumerate() {
+                    let key = std::array::from_fn(|column| {
+                        (matrix_facts.entry_known_zero(row, column) != Some(true))
+                            .then_some(source_coordinate_ids[column])
+                    });
+                    vert.coordinate_ids[row] =
+                        *ids.entry(key).or_insert_with(fresh_position_id);
+                }
+                if let Some((position, position_id)) =
+                    transformed_positions.get(&vert.position_id)
+                {
+                    vert.position = position.clone();
+                    vert.position_id = *position_id;
+                } else {
+                    let source_id = vert.position_id;
+                    match mat.transform_point3(&vert.position) {
+                        Ok(position) => {
+                            let position_id = fresh_position_id();
+                            transformed_positions
+                                .insert(source_id, (position.clone(), position_id));
+                            vert.position = position;
+                            vert.position_id = position_id;
+                        },
+                        Err(_) => {
+                            eprintln!(
+                                "Warning: Invalid homogeneous coordinates after transformation, skipping vertex"
+                            );
+                            continue;
+                        },
+                    }
                 }
 
                 // Transform normal using inverse transpose rule
@@ -967,6 +1026,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                     vert.normal = normal;
                 }
             }
+            drop(vertices);
+            poly.plane_id = plane_id;
         }
 
         // invalidate the old cached bounding box

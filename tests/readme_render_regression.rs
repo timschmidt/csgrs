@@ -5,8 +5,7 @@
     feature = "truetype-text",
     feature = "metaballs",
     feature = "sdf",
-    feature = "offset",
-    feature = "chull-io"
+    feature = "offset"
 ))]
 
 use std::collections::BTreeSet;

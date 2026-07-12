@@ -15,18 +15,9 @@ impl Triangulated3D for Profile {
 
         for tri in triangles_2d {
             f([
-                Vertex {
-                    position: tri[0].clone(),
-                    normal: normal.clone(),
-                },
-                Vertex {
-                    position: tri[1].clone(),
-                    normal: normal.clone(),
-                },
-                Vertex {
-                    position: tri[2].clone(),
-                    normal: normal.clone(),
-                },
+                Vertex::new(tri[0].clone(), normal.clone()),
+                Vertex::new(tri[1].clone(), normal.clone()),
+                Vertex::new(tri[2].clone(), normal.clone()),
             ]);
         }
     }

@@ -485,7 +485,6 @@ impl MeshJs {
         }
     }
 
-    #[cfg(feature = "chull-io")]
     #[wasm_bindgen(js_name=convexHull)]
     pub fn convex_hull(&self, metadata: JsValue) -> Result<Self, JsValue> {
         let metadata = js_metadata(metadata)?;
@@ -494,7 +493,6 @@ impl MeshJs {
         })
     }
 
-    #[cfg(feature = "chull-io")]
     #[wasm_bindgen(js_name=minkowskiSum)]
     pub fn minkowski_sum(&self, other: &MeshJs, metadata: JsValue) -> Result<Self, JsValue> {
         let metadata = js_metadata(metadata)?;

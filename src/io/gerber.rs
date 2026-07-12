@@ -1843,10 +1843,28 @@ mod tests {
         tolerance: Real,
     ) {
         let bounds = sketch.bounding_box();
-        assert!((bounds.mins.x - min_x).abs() < tolerance);
-        assert!((bounds.mins.y - min_y).abs() < tolerance);
-        assert!((bounds.maxs.x - max_x).abs() < tolerance);
-        assert!((bounds.maxs.y - max_y).abs() < tolerance);
+        let actual = [
+            bounds.mins.x.to_f64_lossy(),
+            bounds.mins.y.to_f64_lossy(),
+            bounds.maxs.x.to_f64_lossy(),
+            bounds.maxs.y.to_f64_lossy(),
+        ];
+        assert!(
+            (bounds.mins.x - min_x).abs() < tolerance,
+            "unexpected bounds {actual:?}"
+        );
+        assert!(
+            (bounds.mins.y - min_y).abs() < tolerance,
+            "unexpected bounds {actual:?}"
+        );
+        assert!(
+            (bounds.maxs.x - max_x).abs() < tolerance,
+            "unexpected bounds {actual:?}"
+        );
+        assert!(
+            (bounds.maxs.y - max_y).abs() < tolerance,
+            "unexpected bounds {actual:?}"
+        );
     }
 
     fn native_region_area(sketch: &Profile) -> Real {

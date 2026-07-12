@@ -38,10 +38,10 @@ fn build_ply_buffers<T: IndexedTriangulated3D>(
                     }
                     let index = *vertex_map.entry(key).or_insert_with(|| {
                         let index = vertices.len();
-                        vertices.push(Vertex {
-                            position: indexed.positions[position].clone(),
-                            normal: indexed.normals[normal].clone(),
-                        });
+                        vertices.push(Vertex::new(
+                            indexed.positions[position].clone(),
+                            indexed.normals[normal].clone(),
+                        ));
                         index
                     });
                     checked_face_index(index)

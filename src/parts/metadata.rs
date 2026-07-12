@@ -319,5 +319,5 @@ fn vector_is_zero(vector: &ExactVector3) -> bool {
     let y2 = y.clone() * y;
     let z2 = z.clone() * z;
     let length_squared: Real = x2 + y2 + z2;
-    matches!(length_squared.refine_sign_until(128), Some(RealSign::Zero))
+    matches!(length_squared.refine_sign_until(-128), Some(RealSign::Zero))
 }

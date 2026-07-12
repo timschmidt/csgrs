@@ -583,7 +583,6 @@ fn test_csg_mirror() {
 }
 
 #[test]
-#[cfg(feature = "chull-io")]
 fn test_csg_convex_hull() {
     // If we take a shape with some random points, the hull should just enclose them
     let c1: Mesh<()> = Mesh::sphere(r(1.0), 16, 8, ());
@@ -594,7 +593,6 @@ fn test_csg_convex_hull() {
 }
 
 #[test]
-#[cfg(feature = "chull-io")]
 fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
     let c1: Mesh<()> = Mesh::cube(r(2.0), ()).center();
