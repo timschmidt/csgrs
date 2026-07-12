@@ -2,6 +2,8 @@ use super::Polygon;
 use crate::vertex::Vertex;
 use hyperlattice::{Real, Vector3};
 use hyperreal::RealSign;
+use hypertri::kernel::{ExactKernel, Kernel};
+use hypertri::types::Sign;
 use std::cmp::Ordering;
 use std::num::NonZeroU32;
 
@@ -34,6 +36,9 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         let Some(points) = project_to_exact_2d(&self.vertices, &normal) else {
             return Vec::new();
         };
+        if let Some(indices) = strictly_convex_fan(&points) {
+            return indices;
+        }
         let reverse_output = winding_is_negative(&points);
         let Ok(indices) = hypertri::earcut(&points, &[]) else {
             return Vec::new();
@@ -100,6 +105,27 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             .map(|triangle| Polygon::new(triangle.to_vec(), self.metadata.clone()))
             .collect()
     }
+}
+
+fn strictly_convex_fan(points: &[hypertri::Point2]) -> Option<Vec<[usize; 3]>> {
+    let mut winding = None;
+    for index in 0..points.len() {
+        let sign = ExactKernel::orient2d(
+            &points[index],
+            &points[(index + 1) % points.len()],
+            &points[(index + 2) % points.len()],
+        )
+        .ok()?;
+        if sign == Sign::Zero {
+            return None;
+        }
+        match winding {
+            None => winding = Some(sign),
+            Some(expected) if expected == sign => {},
+            Some(_) => return None,
+        }
+    }
+    Some((1..points.len() - 1).map(|i| [0, i, i + 1]).collect())
 }
 
 fn triangle_indices(

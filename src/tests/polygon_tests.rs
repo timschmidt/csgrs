@@ -72,6 +72,7 @@ fn test_polygon_triangulate() {
         "A quad should triangulate into 2 triangles"
     );
     assert_eq!(triangle_indices.len(), triangles.len());
+    assert_eq!(triangle_indices, [[0, 1, 2], [0, 2, 3]]);
     for (indices, triangle) in triangle_indices.iter().zip(&triangles) {
         for (index, vertex) in indices.iter().zip(triangle) {
             assert_eq!(poly.vertices()[*index], *vertex);
