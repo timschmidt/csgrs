@@ -1,4 +1,82 @@
 impl Rational {
+    fn gcd_word(mut left: u128, mut right: u128) -> u128 {
+        while right != 0 {
+            (left, right) = (right, left % right);
+        }
+        left
+    }
+
+    fn from_word_magnitude_difference(
+        positive: u128,
+        negative: u128,
+        denominator: u128,
+    ) -> Self {
+        let (sign, magnitude) = match positive.cmp(&negative) {
+            Ordering::Greater => (Plus, positive - negative),
+            Ordering::Less => (Minus, negative - positive),
+            Ordering::Equal => return Self::zero(),
+        };
+        let divisor = Self::gcd_word(magnitude, denominator);
+        Self::from_parts_raw(
+            sign,
+            BigUint::from(magnitude / divisor),
+            BigUint::from(denominator / divisor),
+        )
+    }
+
+    fn product_term_words<const FACTORS: usize>(
+        term: [&Self; FACTORS],
+    ) -> Option<(u128, u128)> {
+        let mut magnitude = 1_u128;
+        let mut denominator = 1_u128;
+        for factor in term {
+            magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
+            denominator = denominator.checked_mul(factor.denominator.to_u128()?)?;
+        }
+        Some((magnitude, denominator))
+    }
+
+    fn signed_product_sum_words<const TERMS: usize, const FACTORS: usize>(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+    ) -> Option<Self> {
+        let mut magnitudes = [0_u128; TERMS];
+        let mut denominators = [1_u128; TERMS];
+        let mut common_denominator = 1_u128;
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            let (magnitude, denominator) = Self::product_term_words(terms[i])?;
+            magnitudes[i] = magnitude;
+            denominators[i] = denominator;
+            let divisor = Self::gcd_word(common_denominator, denominator);
+            common_denominator =
+                common_denominator.checked_mul(denominator / divisor)?;
+        }
+
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for i in 0..TERMS {
+            let sign = signs[i];
+            if sign == NoSign {
+                continue;
+            }
+            let magnitude = magnitudes[i]
+                .checked_mul(common_denominator / denominators[i])?;
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            common_denominator,
+        ))
+    }
+
     fn dot_products_dyadic<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
@@ -217,6 +295,10 @@ impl Rational {
             );
             return Some(Self::zero());
         }
+        if let Some(word) = Self::signed_product_sum_words(terms, signs) {
+            crate::trace_dispatch!("rational", "product_sum", "word-sized-shared-scale");
+            return Some(word);
+        }
         let exponent = u32::try_from(FACTORS).ok()?;
         let denominator = shared_denominator
             .expect("nonzero product sum has a live factor denominator")
@@ -296,6 +378,10 @@ impl Rational {
         if nonzero_count == 0 {
             crate::trace_dispatch!("rational", "product_sum", "all-zero");
             return Self::zero();
+        }
+        if let Some(word) = Self::signed_product_sum_words(terms, signs) {
+            crate::trace_dispatch!("rational", "product_sum", "word-sized");
+            return word;
         }
         if nonzero_count == 1 {
             for i in 0..TERMS {
@@ -431,6 +517,11 @@ impl Rational {
         if nonzero_count == 0 {
             crate::trace_dispatch!("rational", "dot_product", "all-zero");
             return Self::zero();
+        }
+        let terms = std::array::from_fn(|i| [left[i], right[i]]);
+        if let Some(word) = Self::signed_product_sum_words(terms, signs) {
+            crate::trace_dispatch!("rational", "dot_product", "word-sized");
+            return word;
         }
         if nonzero_count == 1 {
             let mut positive = BigUint::ZERO;

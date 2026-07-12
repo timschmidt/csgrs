@@ -555,6 +555,22 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_word_overflow_falls_back_to_biguint() {
+        let huge = Rational::from_bigint(BigInt::one() << 200_usize);
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        let expected = &huge * &three - &huge * &two;
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false],
+                [[&huge, &three], [&huge, &two]],
+            ),
+            expected
+        );
+    }
+
+    #[test]
     fn signed_product_sum_shared_denominator_consumes_common_scale() {
         let terms = [
             [
