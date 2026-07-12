@@ -854,6 +854,15 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
             .unwrap_or_else(|error| panic!("hypermesh xor failed: {error}"))
     }
 
+    fn translate_vector(&self, vector: Vector3) -> Self {
+        let mut mesh = self.clone();
+        for polygon in &mut mesh.polygons {
+            polygon.translate_in_place(&vector);
+        }
+        mesh.bounding_box = OnceLock::new();
+        mesh
+    }
+
     /// **Mathematical Foundation: General 3D Transformations**
     ///
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to Mesh.
