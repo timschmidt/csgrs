@@ -64,12 +64,19 @@ fn test_polygon_triangulate() {
         (),
     );
     let triangles = poly.triangulate();
+    let triangle_indices = poly.triangulate_indices();
     // We expect 2 triangles from a quad
     assert_eq!(
         triangles.len(),
         2,
         "A quad should triangulate into 2 triangles"
     );
+    assert_eq!(triangle_indices.len(), triangles.len());
+    for (indices, triangle) in triangle_indices.iter().zip(&triangles) {
+        for (index, vertex) in indices.iter().zip(triangle) {
+            assert_eq!(poly.vertices()[*index], *vertex);
+        }
+    }
 }
 
 #[test]
