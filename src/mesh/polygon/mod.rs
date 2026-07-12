@@ -133,6 +133,16 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         self.bounding_box = OnceLock::new();
     }
 
+    pub(crate) fn translate_in_place(&mut self, offset: &Vector3) {
+        for vertex in &mut self.vertices {
+            vertex.position = vertex.position.clone() + offset;
+        }
+        self.plane.point_a = self.plane.point_a.clone() + offset;
+        self.plane.point_b = self.plane.point_b.clone() + offset;
+        self.plane.point_c = self.plane.point_c.clone() + offset;
+        self.bounding_box = OnceLock::new();
+    }
+
     /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
         // 1) reverse vertices

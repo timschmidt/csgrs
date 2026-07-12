@@ -505,6 +505,38 @@ fn test_csg_transform_translate_rotate_scale() {
 }
 
 #[test]
+fn translation_preserves_normals_and_moves_support_planes_exactly() {
+    let mesh = Mesh::cube(Real::from(2), ());
+    let offset = Vector3::new([Real::from(3), Real::from(-5), Real::from(7)]);
+    let translated = mesh.translate_vector(offset.clone());
+
+    for (before, after) in mesh.polygons.iter().zip(&translated.polygons) {
+        assert_eq!(before.vertices().len(), after.vertices().len());
+        for (before, after) in before.vertices().iter().zip(after.vertices()) {
+            assert_eq!(after.position, before.position.clone() + &offset);
+            assert_eq!(after.normal, before.normal);
+        }
+        assert_eq!(
+            after.plane().point_a,
+            before.plane().point_a.clone() + &offset
+        );
+        assert_eq!(
+            after.plane().point_b,
+            before.plane().point_b.clone() + &offset
+        );
+        assert_eq!(
+            after.plane().point_c,
+            before.plane().point_c.clone() + &offset
+        );
+    }
+
+    let before_bounds = mesh.bounding_box();
+    let after_bounds = translated.bounding_box();
+    assert_eq!(after_bounds.mins, before_bounds.mins + &offset);
+    assert_eq!(after_bounds.maxs, before_bounds.maxs + &offset);
+}
+
+#[test]
 fn test_csg_mirror() {
     let c: Mesh<()> = Mesh::cube(r(2.0), ());
     let plane_x = Plane::from_normal(Vector3::x(), r(0.0)); // x=0 plane

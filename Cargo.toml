@@ -120,6 +120,10 @@ hypersolve = { path = "../hypersolve" }
 
 [features]
 default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+dispatch-trace = [
+  "hypermesh/dispatch-trace",
+  "hyperreal/dispatch-trace",
+]
 parallel = [
   "rayon",
   "hashbrown/rayon"
