@@ -51,7 +51,7 @@ fn boolean_operation_general(
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
     crate::trace_dispatch!("boolean-operation", "prepare-input");
-    let soup = prepare_input(meshes)?;
+    let mut soup = prepare_input(meshes)?;
 
     let process_bounds = expanded_bounds(&soup.bounds);
     let ref_point = outside_reference_point(&process_bounds);
@@ -59,7 +59,12 @@ fn boolean_operation_general(
     let indicator = make_indicator(op, soup.num_meshes);
     crate::trace_dispatch!("boolean-operation", "subdivide");
     let classified = subdivide_for_operation(
-        SubdivisionTask::new(soup.polygons.clone(), process_bounds, ref_point, ref_wnv),
+        SubdivisionTask::new(
+            std::mem::take(&mut soup.polygons),
+            process_bounds,
+            ref_point,
+            ref_wnv,
+        ),
         &indicator,
         SubdivisionConfig {
             max_depth: config.max_depth,

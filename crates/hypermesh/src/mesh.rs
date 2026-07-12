@@ -1,5 +1,7 @@
 //! Input mesh conversion into polygon soup.
 
+use std::collections::HashMap;
+
 use hyperlattice::{Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
@@ -94,7 +96,7 @@ impl PolygonSoup {
         for polygon in &self.polygons {
             vertices.extend(polygon.vertices()?);
         }
-        self.bounds = bounds_for_positions(&vertices)?;
+        self.bounds = bounds_for_positions(vertices.iter())?;
         Ok(())
     }
 }
@@ -104,17 +106,12 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
     crate::trace_dispatch!("prepare-input", "start");
     validate_non_empty_mesh_views(meshes)?;
 
-    let all_positions = meshes
-        .iter()
-        .flat_map(|mesh| mesh.positions.iter().cloned())
-        .collect::<Vec<_>>();
-    let bounds = bounds_for_positions(&all_positions)?;
+    let bounds = bounds_for_positions(meshes.iter().flat_map(|mesh| mesh.positions.iter()))?;
     crate::trace_dispatch!("prepare-input", "bounds-computed");
 
     let mut polygons = Vec::new();
     let mut polygon_index = 0isize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
-        let mut mesh_edges = Vec::with_capacity(mesh.triangles.len() * 3);
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -145,15 +142,12 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
                     triangle_index,
                 });
             }
-            mesh_edges.push([p0.clone(), p1.clone()]);
-            mesh_edges.push([p1.clone(), p2.clone()]);
-            mesh_edges.push([p2.clone(), p0.clone()]);
             polygon.delta_w = vec![0; meshes.len()];
             polygon.delta_w[mesh_index] = 1;
             polygons.push(polygon);
             polygon_index += 1;
         }
-        let edge_balance = classify_edge_balance(&mesh_edges);
+        let edge_balance = classify_indexed_edge_balance(mesh);
         if edge_balance.boundary_edges != 0 {
             return Err(HypermeshError::OpenInput {
                 mesh_index,
@@ -174,6 +168,59 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
         bounds,
         num_meshes: meshes.len(),
     })
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct PositionBucket([Option<u64>; 3]);
+
+fn classify_indexed_edge_balance(mesh: &MeshRef<'_>) -> EdgeBalance {
+    let mut canonical_positions: Vec<&Point3> = Vec::with_capacity(mesh.positions.len());
+    let mut buckets = HashMap::<PositionBucket, Vec<usize>>::new();
+    let mut canonical_indices = Vec::with_capacity(mesh.positions.len());
+    for position in mesh.positions {
+        let key = PositionBucket([
+            position.x.to_f64_lossy().map(f64::to_bits),
+            position.y.to_f64_lossy().map(f64::to_bits),
+            position.z.to_f64_lossy().map(f64::to_bits),
+        ]);
+        let candidates = buckets.entry(key).or_default();
+        let canonical = candidates
+            .iter()
+            .copied()
+            .find(|index| *canonical_positions[*index] == *position)
+            .unwrap_or_else(|| {
+                let index = canonical_positions.len();
+                canonical_positions.push(position);
+                candidates.push(index);
+                index
+            });
+        canonical_indices.push(canonical);
+    }
+
+    let mut edge_uses = HashMap::<(usize, usize), [usize; 2]>::new();
+    for triangle in mesh.triangles {
+        let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
+        for [start, end] in [[a, b], [b, c], [c, a]] {
+            let (key, direction) = if start < end {
+                ((start, end), 0)
+            } else {
+                ((end, start), 1)
+            };
+            edge_uses.entry(key).or_default()[direction] += 1;
+        }
+    }
+
+    edge_uses
+        .values()
+        .fold(EdgeBalance::default(), |mut balance, uses| {
+            if uses[0] + uses[1] == 1 {
+                balance.boundary_edges += 1;
+            }
+            if uses[0] != uses[1] {
+                balance.unbalanced_edges += 1;
+            }
+            balance
+        })
 }
 
 fn validate_non_empty_mesh_views(meshes: &[MeshRef<'_>]) -> HypermeshResult<()> {
@@ -230,12 +277,15 @@ fn undirected_edges_match(left: &[Point3; 2], right: &[Point3; 2]) -> bool {
     (left[0] == right[0] && left[1] == right[1]) || (left[0] == right[1] && left[1] == right[0])
 }
 
-fn bounds_for_positions(positions: &[Point3]) -> HypermeshResult<Aabb> {
-    let first = positions.first().ok_or(HypermeshError::EmptyInput)?;
+fn bounds_for_positions<'a>(
+    positions: impl IntoIterator<Item = &'a Point3>,
+) -> HypermeshResult<Aabb> {
+    let mut positions = positions.into_iter();
+    let first = positions.next().ok_or(HypermeshError::EmptyInput)?;
     let mut min = first.clone();
     let mut max = first.clone();
 
-    for position in &positions[1..] {
+    for position in positions {
         for axis in 0..3 {
             if compare_real(axis_ref(position, axis), axis_ref(&min, axis))?.is_lt() {
                 *crate::geometry::axis_mut(&mut min, axis) = axis_ref(position, axis).clone();
@@ -247,4 +297,34 @@ fn bounds_for_positions(positions: &[Point3]) -> HypermeshResult<Aabb> {
     }
 
     Ok(Aabb::new(min, max))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn indexed_edge_balance_canonicalizes_coincident_input_vertices() {
+        let geometric = [
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(Real::one(), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::one(), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), Real::one()),
+        ];
+        let faces = [[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]];
+        let mut positions = Vec::new();
+        let mut triangles = Vec::new();
+        for face in faces {
+            let start = positions.len();
+            positions.extend(face.map(|index| geometric[index].clone()));
+            triangles.push(Triangle::new(start, start + 1, start + 2));
+        }
+        let mesh = InputMesh::new(positions, triangles);
+
+        assert_eq!(
+            classify_indexed_edge_balance(&mesh.as_ref()),
+            EdgeBalance::default()
+        );
+        prepare_input(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
+    }
 }
