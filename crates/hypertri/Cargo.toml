@@ -18,7 +18,7 @@ cdt = []
 nd = []
 runtime-select = []
 f64-interop = []
-serde = ["dep:serde"]
+serde = ["dep:serde", "hyperreal/serde"]
 
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.

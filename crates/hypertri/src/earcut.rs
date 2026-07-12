@@ -128,10 +128,66 @@ where
     }
 
     let triangles = clip_ring::<K>(vertices, ring, winding, &mut diagnostics)?;
+    let triangles = if holes.is_empty() {
+        triangles
+    } else {
+        split_edges_at_input_vertices(vertices, triangles)?
+    };
     Ok(EarcutReport {
         triangles,
         diagnostics,
     })
+}
+
+fn split_edges_at_input_vertices(
+    vertices: &[Point2],
+    triangles: TriangleIndices,
+) -> Result<TriangleIndices> {
+    let mut pending = triangles
+        .chunks_exact(3)
+        .map(|triangle| [triangle[0], triangle[1], triangle[2]])
+        .collect::<Vec<_>>();
+    let mut conforming = Vec::with_capacity(triangles.len());
+
+    while let Some(triangle) = pending.pop() {
+        let mut split = None;
+        for (edge_start, edge_end, opposite) in [
+            (triangle[0], triangle[1], triangle[2]),
+            (triangle[1], triangle[2], triangle[0]),
+            (triangle[2], triangle[0], triangle[1]),
+        ] {
+            for candidate in 0..vertices.len() {
+                if candidate == edge_start
+                    || candidate == edge_end
+                    || candidate == opposite
+                    || points_equal(&vertices[candidate], &vertices[edge_start])
+                    || points_equal(&vertices[candidate], &vertices[edge_end])
+                {
+                    continue;
+                }
+                if predicates::point_on_segment(
+                    &vertices[edge_start],
+                    &vertices[edge_end],
+                    &vertices[candidate],
+                )? {
+                    split = Some((edge_start, edge_end, opposite, candidate));
+                    break;
+                }
+            }
+            if split.is_some() {
+                break;
+            }
+        }
+
+        if let Some((edge_start, edge_end, opposite, candidate)) = split {
+            pending.push([candidate, edge_end, opposite]);
+            pending.push([edge_start, candidate, opposite]);
+        } else {
+            conforming.extend(triangle);
+        }
+    }
+
+    Ok(conforming)
 }
 
 fn normalized_ring<K>(vertices: &[Point2], range: RingRange) -> Result<Vec<usize>>
@@ -1127,6 +1183,95 @@ mod tests {
 
         assert_eq!(triangles.len(), 42);
         assert!(triangles.iter().all(|&index| index < vertices.len()));
+    }
+
+    #[test]
+    fn vertically_aligned_holes_have_conforming_internal_edges() {
+        let vertices = vec![
+            exact_point(-5, -5),
+            exact_point(5, -5),
+            exact_point(5, 5),
+            exact_point(-5, 5),
+            exact_point(-2, 1),
+            exact_point(2, 1),
+            exact_point(2, 2),
+            exact_point(-2, 2),
+            exact_point(-2, -2),
+            exact_point(2, -2),
+            exact_point(2, -1),
+            exact_point(-2, -1),
+        ];
+
+        let triangles = triangulate(&vertices, &[4, 8]).unwrap();
+        let mut edge_counts = std::collections::BTreeMap::new();
+        for triangle in triangles.chunks_exact(3) {
+            for edge in [
+                [triangle[0], triangle[1]],
+                [triangle[1], triangle[2]],
+                [triangle[2], triangle[0]],
+            ] {
+                let mut edge = edge;
+                edge.sort();
+                *edge_counts.entry(edge).or_insert(0_usize) += 1;
+            }
+        }
+        let boundary_edges = [
+            [0, 1],
+            [1, 2],
+            [2, 3],
+            [0, 3],
+            [4, 5],
+            [5, 6],
+            [6, 7],
+            [4, 7],
+            [8, 9],
+            [9, 10],
+            [10, 11],
+            [8, 11],
+        ];
+        let unexpected = edge_counts
+            .into_iter()
+            .filter(|(edge, count)| *count != 2 && !boundary_edges.contains(edge))
+            .collect::<Vec<_>>();
+        assert!(
+            unexpected.is_empty(),
+            "non-conforming internal edges: {unexpected:?}"
+        );
+    }
+
+    #[test]
+    fn conformity_pass_splits_a_diagonal_at_source_vertices() {
+        let vertices = vec![
+            exact_point(0, 0),
+            exact_point(0, 1),
+            exact_point(0, 2),
+            exact_point(0, 3),
+            exact_point(2, 0),
+        ];
+        let triangles = split_edges_at_input_vertices(&vertices, vec![0, 3, 4]).unwrap();
+        assert_eq!(triangles.len(), 9);
+        for triangle in triangles.chunks_exact(3) {
+            for edge in [
+                [triangle[0], triangle[1]],
+                [triangle[1], triangle[2]],
+                [triangle[2], triangle[0]],
+            ] {
+                for candidate in 0..vertices.len() {
+                    if edge.contains(&candidate) {
+                        continue;
+                    }
+                    assert!(
+                        !predicates::point_on_segment(
+                            &vertices[edge[0]],
+                            &vertices[edge[1]],
+                            &vertices[candidate],
+                        )
+                        .unwrap(),
+                        "edge {edge:?} was not split at {candidate}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
