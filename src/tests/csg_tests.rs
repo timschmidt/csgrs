@@ -572,6 +572,24 @@ fn translation_preserves_normals_and_moves_support_planes_exactly() {
 }
 
 #[test]
+fn owned_rigid_transforms_match_borrowed_csg_transforms() {
+    let mesh = Mesh::cube(Real::from(2), ());
+    let translated =
+        mesh.clone()
+            .into_translated(Real::from(3), Real::from(-5), Real::from(7));
+    let borrowed_translation = mesh.translate(Real::from(3), Real::from(-5), Real::from(7));
+    assert_eq!(translated.polygons, borrowed_translation.polygons);
+    assert_eq!(translated.bounding_box(), borrowed_translation.bounding_box());
+
+    let rotated = mesh
+        .clone()
+        .into_rotated(Real::from(120), Real::from(0), Real::from(240));
+    let borrowed_rotation = mesh.rotate(Real::from(120), Real::from(0), Real::from(240));
+    assert_eq!(rotated.polygons, borrowed_rotation.polygons);
+    assert_eq!(rotated.bounding_box(), borrowed_rotation.bounding_box());
+}
+
+#[test]
 fn test_csg_mirror() {
     let c: Mesh<()> = Mesh::cube(r(2.0), ());
     let plane_x = Plane::from_normal(Vector3::x(), r(0.0)); // x=0 plane
