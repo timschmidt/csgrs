@@ -55,7 +55,7 @@ pub struct GraphicLineString {
 }
 
 impl GraphicLineString {
-    pub fn line_count(&self) -> usize {
+    pub const fn line_count(&self) -> usize {
         self.points.len().saturating_sub(1)
     }
 }
@@ -245,7 +245,7 @@ impl Profile {
                 if matches!(hreal_sign(&area), Some(RealSign::Zero)) {
                     return false;
                 }
-                return true;
+                true
             },
             Ok(Classification::Decided(None)) | Ok(Classification::Uncertain(_)) | Err(_) => {
                 false
@@ -297,7 +297,7 @@ impl Profile {
         )
     }
 
-    pub(crate) fn from_region_and_wires_with_origin(
+    pub(crate) const fn from_region_and_wires_with_origin(
         region: Region2,
         wires: Vec<CurveString2>,
         origin: Vertex,
@@ -351,7 +351,7 @@ impl Profile {
     }
 
     /// Borrow the native hypercurve region that now carries Profile topology.
-    pub fn as_region(&self) -> &Region2 {
+    pub const fn as_region(&self) -> &Region2 {
         &self.region
     }
 

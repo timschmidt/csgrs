@@ -31,6 +31,15 @@
 #![forbid(unsafe_code)]
 #![deny(unused)]
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
+// JavaScript bindings intentionally mirror flat host APIs, and public geometry
+// errors retain their structured diagnostic payloads.
+#![allow(
+    clippy::items_after_test_module,
+    clippy::new_without_default,
+    clippy::result_large_err,
+    clippy::should_implement_trait,
+    clippy::too_many_arguments
+)]
 
 pub mod errors;
 #[allow(dead_code, unused_imports)]

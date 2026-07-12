@@ -42,7 +42,7 @@ fn wasm_plane_from_points_or_default(
     ])
 }
 
-fn validate_plane_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
+const fn validate_plane_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
     if vertices.len() < 3 {
         return Err("Plane.fromVertices requires at least 3 vertices");
     }
@@ -55,6 +55,7 @@ pub struct PlaneJs {
 }
 
 #[wasm_bindgen]
+#[allow(clippy::missing_const_for_fn)]
 impl PlaneJs {
     #[wasm_bindgen(constructor)]
     pub fn new(vertices: Vec<VertexJs>) -> Result<PlaneJs, JsValue> {

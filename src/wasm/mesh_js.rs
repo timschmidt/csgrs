@@ -33,6 +33,7 @@ pub struct MeshJs {
 }
 
 #[wasm_bindgen]
+#[allow(clippy::missing_const_for_fn)]
 impl MeshJs {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
@@ -57,7 +58,7 @@ impl MeshJs {
         use crate::vertex::Vertex;
 
         fn parse_points(data: &[f64], label: &str) -> Result<Vec<Point3>, JsValue> {
-            if data.len() % 3 != 0 {
+            if !data.len().is_multiple_of(3) {
                 return Err(JsValue::from_str(&format!(
                     "{label} must contain x/y/z triples"
                 )));
@@ -157,9 +158,9 @@ impl MeshJs {
         let mut polygons = Vec::with_capacity(indices.len() / 3);
 
         for tri in indices.chunks_exact(3) {
-            let i0 = tri[0] as usize;
-            let i1 = tri[1] as usize;
-            let i2 = tri[2] as usize;
+            let i0 = tri[0];
+            let i1 = tri[1];
+            let i2 = tri[2];
             if i0 >= vertices.len() || i1 >= vertices.len() || i2 >= vertices.len() {
                 continue;
             }

@@ -20,7 +20,7 @@ impl Default for Vertex {
 impl Vertex {
     /// Create a new [`Vertex`].
     #[inline]
-    pub fn new(position: Point3, normal: Vector3) -> Self {
+    pub const fn new(position: Point3, normal: Vector3) -> Self {
         Self { position, normal }
     }
 
@@ -413,10 +413,10 @@ impl Vertex {
         let mut neighbor_normals = Vec::new();
 
         for &neighbor_idx in neighbors {
-            if let Some(neighbor_position) = vertex_positions.get(&neighbor_idx) {
-                if let Some(edge_length) = point_distance(&self.position, neighbor_position) {
-                    edge_lengths.push(edge_length);
-                }
+            if let Some(neighbor_position) = vertex_positions.get(&neighbor_idx)
+                && let Some(edge_length) = point_distance(&self.position, neighbor_position)
+            {
+                edge_lengths.push(edge_length);
             }
             if let Some(neighbor_normal) = vertex_normals.get(&neighbor_idx) {
                 neighbor_normals.push(neighbor_normal.clone());

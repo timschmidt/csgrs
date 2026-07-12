@@ -119,7 +119,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     ///
     /// The slice has a fixed length, so the polygon cannot become degenerate
     /// through this API. Its plane and cached bounds are refreshed on drop.
-    pub fn vertices_mut(&mut self) -> PolygonVerticesMut<'_, M> {
+    pub const fn vertices_mut(&mut self) -> PolygonVerticesMut<'_, M> {
         PolygonVerticesMut { polygon: self }
     }
 

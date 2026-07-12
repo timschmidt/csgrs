@@ -95,8 +95,11 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mut canonical_positions = Vec::<Point3>::with_capacity(triangle_capacity * 3);
         let mut indices = Vec::with_capacity(triangle_capacity * 3);
         let mut vertex_indices = HashMap::<PositionKey, Vec<usize>>::new();
-        let mut metadata =
-            Vec::with_capacity(retain_metadata.then_some(triangle_capacity).unwrap_or(0));
+        let mut metadata = Vec::with_capacity(if retain_metadata {
+            triangle_capacity
+        } else {
+            0
+        });
 
         let mut push_triangle = |vertices: &[Vertex]| {
             for vertex in vertices {
