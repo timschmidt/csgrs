@@ -156,17 +156,20 @@ impl Real {
             }
         }
 
-        let mut reduced = rational.fract();
-        if reduced.sign() == Sign::Minus {
-            reduced = reduced.neg();
-        }
-
-        let negate = if reduced > *rationals::HALF {
-            reduced = Rational::one() - reduced;
-            true
+        // Cosine is even, then each whole pi turn flips its sign. Folding a
+        // fractional turn above one half back onto the principal curve flips
+        // it once more: cos(pi * (n + f)) = (-1)^n cos(pi * f).
+        let magnitude = if rational.sign() == Sign::Minus {
+            rational.neg()
         } else {
-            false
+            rational
         };
+        let mut negate = magnitude.shifted_big_integer(0).bit(0);
+        let mut reduced = magnitude.fract();
+        if reduced > *rationals::HALF {
+            reduced = Rational::one() - reduced;
+            negate = !negate;
+        }
 
         let denominator = reduced.denominator();
         let exact = if reduced.is_zero() {

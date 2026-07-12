@@ -299,6 +299,9 @@ mod tests {
         assert_eq!(pi_fraction(1, 3).cos(), half);
         assert_eq!(pi_fraction(1, 2).cos(), zero);
         assert_eq!(pi_fraction(2, 3).cos(), minus_half);
+        assert_eq!(pi_fraction(4, 3).cos(), minus_half);
+        assert_eq!(pi_fraction(5, 3).cos(), half);
+        assert_eq!(pi_fraction(-4, 3).cos(), minus_half);
         assert_eq!(pi_fraction(1, 1).cos(), minus_one);
         assert_eq!(pi_fraction(3, 2).cos(), zero);
         assert_eq!(pi_fraction(-1, 3).cos(), half);
