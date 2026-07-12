@@ -284,6 +284,31 @@ mod tests {
     }
 
     #[test]
+    fn exact_msd_matches_f64_floor_for_small_rationals() {
+        for numerator in 1..=128 {
+            for denominator in 1..=128 {
+                let rational = Rational::fraction(numerator, denominator).unwrap();
+                let expected = ((numerator as f64) / (denominator as f64))
+                    .log2()
+                    .floor() as i32;
+                assert_eq!(rational.msd_exact(), Some(expected));
+            }
+        }
+    }
+
+    #[test]
+    fn exact_msd_handles_large_shift_boundaries_without_rounding() {
+        let power = BigUint::one() << 4096usize;
+        let exact = Rational::from_fraction_parts(Plus, power.clone(), BigUint::one());
+        let below = Rational::from_fraction_parts(Plus, &power - BigUint::one(), BigUint::one());
+        let reciprocal = Rational::from_fraction_parts(Plus, BigUint::one(), power);
+
+        assert_eq!(exact.msd_exact(), Some(4096));
+        assert_eq!(below.msd_exact(), Some(4095));
+        assert_eq!(reciprocal.msd_exact(), Some(-4096));
+    }
+
+    #[test]
     fn dyadic_add_sub_stay_reduced() {
         let three_eighths = Rational::fraction(3, 8).unwrap();
         let five_sixteenths = Rational::fraction(5, 16).unwrap();

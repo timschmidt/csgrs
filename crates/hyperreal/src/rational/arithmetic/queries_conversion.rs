@@ -217,9 +217,9 @@ impl Rational {
 
     pub(crate) fn magnitude_at_least_power_of_two(&self, exponent: u32) -> bool {
         // Hot constructors sometimes need only a threshold such as |x| >= 8.
-        // Bit lengths prove almost every case without the exact shift/compare
-        // used by msd_exact(); only boundary-sized rationals allocate a shifted
-        // denominator for the final comparison.
+        // Bit lengths prove almost every case. Boundary-sized rationals use the
+        // same borrowed bit comparison as msd_exact(), avoiding a shifted
+        // BigUint temporary for the final comparison.
         if self.sign == NoSign {
             return false;
         }
@@ -233,7 +233,27 @@ impl Rational {
             return false;
         }
 
-        self.numerator >= (&self.denominator << exponent as usize)
+        Self::compare_shifted_to(&self.denominator, u64::from(exponent), &self.numerator)
+            != Ordering::Greater
+    }
+
+    #[inline]
+    fn compare_shifted_to(left: &BigUint, shift: u64, right: &BigUint) -> Ordering {
+        let left_bits = left.bits().saturating_add(shift);
+        let right_bits = right.bits();
+        match left_bits.cmp(&right_bits) {
+            Ordering::Equal => {}
+            ordering => return ordering,
+        }
+
+        for bit in (0..right_bits).rev() {
+            let left_bit = bit >= shift && left.bit(bit - shift);
+            match left_bit.cmp(&right.bit(bit)) {
+                Ordering::Equal => {}
+                ordering => return ordering,
+            }
+        }
+        Ordering::Equal
     }
 
     pub(crate) fn msd_exact(&self) -> Option<i32> {
@@ -249,9 +269,11 @@ impl Rational {
         let candidate = numerator_bits - denominator_bits;
 
         let below = if candidate >= 0 {
-            self.numerator < (&self.denominator << candidate as usize)
+            Self::compare_shifted_to(&self.denominator, candidate as u64, &self.numerator)
+                == Ordering::Greater
         } else {
-            (&self.numerator << (-candidate) as usize) < self.denominator
+            Self::compare_shifted_to(&self.numerator, candidate.unsigned_abs() as u64, &self.denominator)
+                == Ordering::Less
         };
 
         if below {
