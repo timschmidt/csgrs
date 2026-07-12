@@ -34,6 +34,36 @@ fn test_csg_from_polygons_and_to_polygons() {
 }
 
 #[test]
+fn rotation_at_exact_degree_landmarks_matches_finite_trigonometry() {
+    let source = Polygon::new(
+        vec![
+            Vertex::new(p3(10.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(11.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(10.0, 1.0, 0.0), Vector3::z()),
+        ],
+        (),
+    );
+    let mesh = Mesh::from_polygons(&[source]);
+
+    for degrees in [120.0_f64, 239.0, 240.0, 241.0] {
+        let rotated = mesh.rotate(r(0.0), r(0.0), r(degrees));
+        let point = &rotated.polygons[0].vertices[0].position;
+        let radians = degrees.to_radians();
+        let actual_x = point.x.to_f64_lossy().expect("finite rotated x");
+        let actual_y = point.y.to_f64_lossy().expect("finite rotated y");
+
+        assert!(
+            (actual_x - 10.0 * radians.cos()).abs() < 1.0e-9,
+            "x mismatch at {degrees} degrees: {actual_x}"
+        );
+        assert!(
+            (actual_y - 10.0 * radians.sin()).abs() < 1.0e-9,
+            "y mismatch at {degrees} degrees: {actual_y}"
+        );
+    }
+}
+
+#[test]
 fn test_csg_union() {
     let cube1: Mesh<()> = Mesh::cube(r(2.0), ()).translate(r(-1.0), r(-1.0), r(-1.0)); // from -1 to +1 in all coords
     let cube2: Mesh<()> = Mesh::cube(r(1.0), ()).translate(r(0.5), r(0.5), r(0.5));
