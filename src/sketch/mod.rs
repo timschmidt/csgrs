@@ -1,8 +1,8 @@
 //! `Profile` struct and implementations of the `CSGOps` trait for `Profile`
 
 use crate::hyper_math::{
-    Aabb, Real, hreal_from_f64, hreal_mul, hreal_sign, hreal_sub, hreal_sum, hreal_to_f64,
-    hreal_try_cmp, hrotation_between_vectors, hunit_vector3,
+    Aabb, Real, hreal_from_f64, hreal_mul, hreal_sign, hreal_sum, hrotation_between_vectors,
+    hunit_vector3,
 };
 
 #[cfg(feature = "mesh")]
@@ -18,7 +18,6 @@ use hypercurve::{
 };
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hyperreal::RealSign;
-use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -191,7 +190,7 @@ impl Profile {
         }
     }
 
-    /// Bounds of all native hypercurve topology projected to finite XY.
+    /// Certified bounds of all native hypercurve topology in XY.
     ///
     /// This merges filled [`Region2`] contours and open [`CurveString2`] wires
     /// directly. Native hypercurve AABBs preserve line and circular-arc geometry without
@@ -210,82 +209,34 @@ impl Profile {
         } else {
             match HyperAabb2::from_region(&self.region, &policy) {
                 Ok(Classification::Decided(bbox)) => Some(bbox),
-                Ok(Classification::Uncertain(_)) | Err(_) => {
-                    return self.projected_native_xy_bounds();
-                },
+                Ok(Classification::Uncertain(_)) | Err(_) => return None,
             }
         };
 
         for wire in &self.wires {
             let wire_box = match HyperAabb2::from_curve_string(wire, &policy) {
                 Ok(Classification::Decided(bbox)) => bbox,
-                Ok(Classification::Uncertain(_)) | Err(_) => {
-                    return self.projected_native_xy_bounds();
-                },
+                Ok(Classification::Uncertain(_)) | Err(_) => return None,
             };
             native_box = match native_box {
                 Some(current) => match current.union(&wire_box, &policy) {
                     Classification::Decided(merged) => Some(merged),
-                    Classification::Uncertain(_) => return self.projected_native_xy_bounds(),
+                    Classification::Uncertain(_) => return None,
                 },
                 None => Some(wire_box),
             };
         }
 
-        native_box
-            .as_ref()
-            .and_then(hyper_aabb_to_finite_xy_bounds)
-            .or_else(|| self.projected_native_xy_bounds())
-    }
-
-    fn projected_native_xy_bounds(&self) -> Option<(Real, Real, Real, Real)> {
-        let options = FiniteProjectionOptions::try_new(1e-3).ok()?;
-        let region_profiles = match self.project_region_profiles(&options) {
-            Ok(Classification::Decided(profiles)) => profiles,
-            Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
-        };
-        let wire_polylines = self.project_wire_polylines(&options);
-        let mut iter = region_profiles
-            .iter()
-            .flat_map(|profile| {
-                std::iter::once(profile.material().points())
-                    .chain(profile.holes().iter().map(|hole| hole.points()))
-            })
-            .flat_map(|ring| ring.iter())
-            .chain(wire_polylines.iter().flat_map(|wire| wire.points()));
-        let first = iter.next()?;
-        let (mut min_x, mut min_y, mut max_x, mut max_y) =
-            (first[0], first[1], first[0], first[1]);
-        for point in iter {
-            if matches!(hreal_try_cmp(point[0], min_x)?, Ordering::Less) {
-                min_x = point[0];
-            }
-            if matches!(hreal_try_cmp(point[1], min_y)?, Ordering::Less) {
-                min_y = point[1];
-            }
-            if matches!(hreal_try_cmp(point[0], max_x)?, Ordering::Greater) {
-                max_x = point[0];
-            }
-            if matches!(hreal_try_cmp(point[1], max_y)?, Ordering::Greater) {
-                max_y = point[1];
-            }
-        }
-        Some((
-            hreal_from_f64(min_x).ok()?,
-            hreal_from_f64(min_y).ok()?,
-            hreal_from_f64(max_x).ok()?,
-            hreal_from_f64(max_y).ok()?,
-        ))
+        native_box.as_ref().map(hyper_aabb_to_xy_bounds)
     }
 
     /// Decide whether a native region has any material contour with nonzero
     /// area.
     ///
     /// `Region2::filled_area` keeps material-minus-hole area semantics and
-    /// Green's-theorem contour accumulation inside hypercurve. Only exact zero
-    /// area is rejected; finite projected rings are only a fallback for contours
-    /// that cannot yet report exact area, preserving the exact-computation
-    /// boundary described by Yap,
+    /// Green's-theorem contour accumulation stays inside hypercurve. Only a
+    /// certified nonzero area is accepted; uncertain classifications fail
+    /// closed without a finite projection fallback, following Yap's
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub(crate) fn region_has_nonzero_area(region: &Region2) -> bool {
@@ -297,19 +248,8 @@ impl Profile {
                 return true;
             },
             Ok(Classification::Decided(None)) | Ok(Classification::Uncertain(_)) | Err(_) => {
+                false
             },
-        }
-
-        let options = FiniteProjectionOptions::try_new(1e-3)
-            .expect("positive finite projection tolerance");
-        match region.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
-            Ok(Classification::Decided(profiles)) => profiles.iter().any(|profile| {
-                matches!(
-                    hreal_try_cmp(profile.projected_filled_area(), 0.0),
-                    Some(Ordering::Greater | Ordering::Less)
-                )
-            }),
-            Ok(Classification::Uncertain(_)) | Err(_) => false,
         }
     }
 
@@ -497,16 +437,14 @@ impl Profile {
     }
 
     fn boolean_wires_with(&self, other: &Self, op: BooleanOp) -> Vec<CurveString2> {
-        let mut wires = match op {
+        match op {
             BooleanOp::Union | BooleanOp::Intersection | BooleanOp::Xor => {
                 let mut wires = self.wires.clone();
                 wires.extend(other.wires.iter().cloned());
                 wires
             },
             BooleanOp::Difference => self.wires.clone(),
-        };
-        wires.retain(|wire| curve_string_to_polyline(wire).is_some());
-        wires
+        }
     }
 
     /// Resolve certified-disjoint region booleans without entering a finite
@@ -636,61 +574,7 @@ impl Profile {
         if let Some(transform) = planar_similarity_from_matrix(mat) {
             return self.region.transform_similarity(&transform).ok();
         }
-        let determinant = hreal_mul(&mat[0][0], &mat[1][1]).and_then(|main| {
-            hreal_mul(&mat[0][1], &mat[1][0]).and_then(|cross| hreal_sub(main, cross))
-        })?;
-        if !matches!(
-            hreal_try_cmp(determinant, 0.0),
-            Some(Ordering::Greater | Ordering::Less)
-        ) {
-            return None;
-        }
-
-        let transform_point = |point: &[f64; 2]| -> Option<[Real; 2]> {
-            Some([
-                hreal_sum(&[
-                    hreal_mul(&mat[0][0], point[0])?,
-                    hreal_mul(&mat[0][1], point[1])?,
-                    mat[0][3].clone(),
-                ])?,
-                hreal_sum(&[
-                    hreal_mul(&mat[1][0], point[0])?,
-                    hreal_mul(&mat[1][1], point[1])?,
-                    mat[1][3].clone(),
-                ])?,
-            ])
-        };
-
-        let options = FiniteProjectionOptions::try_new(1e-3).ok()?;
-        let profiles = match self.project_region_profiles(&options) {
-            Ok(Classification::Decided(profiles)) => profiles,
-            Ok(Classification::Uncertain(_)) | Err(_) => return None,
-        };
-        let material = profiles
-            .iter()
-            .map(|profile| {
-                profile
-                    .material()
-                    .points()
-                    .iter()
-                    .map(transform_point)
-                    .collect::<Option<Vec<[Real; 2]>>>()
-            })
-            .filter_map(|ring| ring.and_then(|ring| Contour2::from_real_ring(&ring).ok()))
-            .collect::<Vec<_>>();
-        let holes = profiles
-            .iter()
-            .flat_map(|profile| profile.holes().iter())
-            .map(|ring| {
-                ring.points()
-                    .iter()
-                    .map(transform_point)
-                    .collect::<Option<Vec<[Real; 2]>>>()
-            })
-            .filter_map(|ring| ring.and_then(|ring| Contour2::from_real_ring(&ring).ok()))
-            .collect::<Vec<_>>();
-
-        (!material.is_empty()).then(|| Region2::new(material, holes))
+        None
     }
 
     fn transformed_wires_with_matrix(&self, mat: &Matrix4) -> Vec<CurveString2> {
@@ -709,33 +593,7 @@ impl Profile {
                 .filter_map(|wire| wire.transform_similarity(&transform).ok())
                 .collect();
         }
-
-        let transform_point = |point: (f64, f64)| -> Option<[Real; 2]> {
-            Some([
-                hreal_sum(&[
-                    hreal_mul(&mat[0][0], point.0)?,
-                    hreal_mul(&mat[0][1], point.1)?,
-                    mat[0][3].clone(),
-                ])?,
-                hreal_sum(&[
-                    hreal_mul(&mat[1][0], point.0)?,
-                    hreal_mul(&mat[1][1], point.1)?,
-                    mat[1][3].clone(),
-                ])?,
-            ])
-        };
-
-        self.wires
-            .iter()
-            .filter_map(curve_string_to_polyline)
-            .filter_map(|points| {
-                let transformed = points
-                    .into_iter()
-                    .map(transform_point)
-                    .collect::<Option<Vec<[Real; 2]>>>()?;
-                CurveString2::from_real_point_iter(transformed).ok()
-            })
-            .collect()
+        Vec::new()
     }
 
     /// Set the origin used when rendering or lifting this sketch into 3D.
@@ -990,14 +848,13 @@ fn transform_point2(point: &Point2, mat: &Matrix4) -> Option<Point2> {
 }
 
 fn planar_similarity_from_matrix(mat: &Matrix4) -> Option<Similarity2> {
-    Similarity2::try_from_f64_affine(
-        hreal_to_f64(&mat[0][0])?,
-        hreal_to_f64(&mat[0][1])?,
-        hreal_to_f64(&mat[1][0])?,
-        hreal_to_f64(&mat[1][1])?,
-        hreal_to_f64(&mat[0][3])?,
-        hreal_to_f64(&mat[1][3])?,
-        1.0e-12,
+    Similarity2::try_from_real_affine(
+        mat[0][0].clone(),
+        mat[0][1].clone(),
+        mat[1][0].clone(),
+        mat[1][1].clone(),
+        mat[0][3].clone(),
+        mat[1][3].clone(),
     )
     .ok()
 }
@@ -1031,24 +888,12 @@ impl Profile {
     }
 }
 
-fn hyper_aabb_to_finite_xy_bounds(bbox: &HyperAabb2) -> Option<(Real, Real, Real, Real)> {
-    Some((
+fn hyper_aabb_to_xy_bounds(bbox: &HyperAabb2) -> (Real, Real, Real, Real) {
+    (
         bbox.min_x().clone(),
         bbox.min_y().clone(),
         bbox.max_x().clone(),
         bbox.max_y().clone(),
-    ))
-}
-
-fn curve_string_to_polyline(wire: &CurveString2) -> Option<Vec<(f64, f64)>> {
-    let options = FiniteProjectionOptions::try_new(1e-3).ok()?;
-    Some(
-        wire.project_to_finite_polyline(&options)
-            .ok()?
-            .into_points()
-            .into_iter()
-            .map(|point| (point[0], point[1]))
-            .collect(),
     )
 }
 

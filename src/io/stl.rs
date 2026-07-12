@@ -2,7 +2,7 @@
 
 use crate::io::{IoError, finite_f32, finite_f64, single_line_metadata};
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use hyperlattice::{Point3, Real, Vector3};

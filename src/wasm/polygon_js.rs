@@ -1,6 +1,6 @@
 //! JavaScript wrapper for polygons.
 
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use crate::wasm::real_to_js;
 use crate::wasm::{

@@ -366,7 +366,7 @@ let mirrored = cube.mirror(plane_x);
 ### Miscellaneous Mesh Operations
 
 - **`Mesh::vertices()`** - collect all vertices from the `Mesh`
-- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull(metadata)`** - uses [`chull`](https://crates.io/crates/chull) to generate a 3D convex hull.
+- <img src="docs/convex_hull.png" width="128"/> **`Mesh::convex_hull(metadata)`** - generates a 3D hull with exact hyperreal orientation predicates.
 - <img src="docs/minkowski_sum.png" width="128"/> **`Mesh::minkowski_sum(&other, metadata)`** - naive Minkowski sum, then takes the hull.
 - **`Mesh::ray_intersections(origin, direction)`** — returns all intersection points and distances.
 - **`Mesh::flatten()`** - flattens a 3D shape into 2D (on the XY plane), unions the outlines.
@@ -492,7 +492,7 @@ other topology changes have one unambiguous provenance model.
 Use cases include storing color, ID, or layer info.
 
 ```rust
-use csgrs::polygon::Polygon;
+use csgrs::mesh::Polygon;
 use csgrs::vertex::Vertex;
 use hyperlattice::{Point3, Real, Vector3};
 

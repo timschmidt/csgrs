@@ -1,4 +1,4 @@
-use csgrs::{csg::CSG, polygon::Polygon, sketch::Profile, vertex::Vertex};
+use csgrs::{csg::CSG, mesh::Polygon, sketch::Profile, vertex::Vertex};
 use hyperlattice::{Point3, Real, Vector3};
 
 fn r(value: f64) -> Real {

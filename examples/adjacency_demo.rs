@@ -84,7 +84,7 @@ fn main() {
     println!("\n5. Laplacian smoothing using global connectivity:");
 
     // Track a specific vertex to show position changes
-    let test_vertex_pos = sphere.polygons[0].vertices[0].position.clone();
+    let test_vertex_pos = sphere.polygons[0].vertices()[0].position.clone();
     println!(
         "   Original test vertex position: ({:.3}, {:.3}, {:.3})",
         test_vertex_pos.x, test_vertex_pos.y, test_vertex_pos.z
@@ -94,8 +94,8 @@ fn main() {
     let smoothed_weak = sphere.laplacian_smooth(r(0.1), 1, false);
     let smoothed_strong = sphere.laplacian_smooth(r(0.3), 1, false);
 
-    let weak_pos = smoothed_weak.polygons[0].vertices[0].position.clone();
-    let strong_pos = smoothed_strong.polygons[0].vertices[0].position.clone();
+    let weak_pos = smoothed_weak.polygons[0].vertices()[0].position.clone();
+    let strong_pos = smoothed_strong.polygons[0].vertices()[0].position.clone();
 
     println!(
         "   After weak smoothing (λ=0.1): ({:.3}, {:.3}, {:.3})",

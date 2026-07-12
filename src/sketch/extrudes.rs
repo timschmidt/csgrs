@@ -2,11 +2,11 @@
 
 use crate::errors::ValidationError;
 use crate::hyper_math::{
-    hreal_lt_f64, hreal_mul, hreal_sign, hrotation_between_vectors, htranslation_matrix,
+    hreal_lt_f64, hreal_sign, hreal_try_cmp, hrotation_between_vectors, htranslation_matrix,
     hunit_cross_vector3, hunit_vector3, hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
 use hypercurve::{
@@ -33,17 +33,13 @@ fn finite_xy_point3(x: f64, y: f64) -> Option<Point3> {
     Some(Point3::new(finite_real(x)?, finite_real(y)?, Real::zero()))
 }
 
-fn materialize_finite_point3(point: Point3) -> Option<Point3> {
-    let materialize = |value: &Real| {
-        value
-            .to_f64_lossy()
-            .filter(|value| value.is_finite())
-            .and_then(finite_real)
-    };
+/// Materialize a vertex only after a user-requested sweep/revolution sampling
+/// step has produced its final mesh coordinate.
+fn materialize_mesh_sample_point3(point: Point3) -> Option<Point3> {
     Some(Point3::new(
-        materialize(&point.x)?,
-        materialize(&point.y)?,
-        materialize(&point.z)?,
+        finite_real(point.x.to_f64_lossy()?)?,
+        finite_real(point.y.to_f64_lossy()?)?,
+        finite_real(point.z.to_f64_lossy()?)?,
     ))
 }
 
@@ -554,37 +550,36 @@ impl Profile {
         if height_sign == RealSign::Zero {
             return Err(ValidationError::InvalidArguments);
         }
-        let Some(twist) = twist_degrees.to_f64_lossy().filter(|value| value.is_finite())
-        else {
+        if hreal_sign(&twist_degrees).is_none() {
             return Err(ValidationError::InvalidArguments);
-        };
-        let Some(scale_x) = end_scale[0]
-            .to_f64_lossy()
-            .filter(|value| value.is_finite() && *value >= 0.0)
-        else {
+        }
+        if !matches!(
+            hreal_try_cmp(&end_scale[0], Real::zero()),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) {
             return Err(ValidationError::InvalidArguments);
-        };
-        let Some(scale_y) = end_scale[1]
-            .to_f64_lossy()
-            .filter(|value| value.is_finite() && *value >= 0.0)
-        else {
+        }
+        if !matches!(
+            hreal_try_cmp(&end_scale[1], Real::zero()),
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) {
             return Err(ValidationError::InvalidArguments);
-        };
-
-        #[derive(Clone, Copy)]
-        struct Slice {
-            sin: f64,
-            cos: f64,
-            scale_x: f64,
-            scale_y: f64,
         }
 
-        fn map_point(point: [f64; 2], slice: Slice, z: &Real) -> Option<Point3> {
-            let x = point[0] * slice.scale_x;
-            let y = point[1] * slice.scale_y;
-            Some(Point3::new(
-                finite_real(x.mul_add(slice.cos, -y * slice.sin))?,
-                finite_real(x.mul_add(slice.sin, y * slice.cos))?,
+        #[derive(Clone)]
+        struct Slice {
+            sin: Real,
+            cos: Real,
+            scale_x: Real,
+            scale_y: Real,
+        }
+
+        fn map_point(point: [f64; 2], slice: &Slice, z: &Real) -> Option<Point3> {
+            let x = finite_real(point[0])? * slice.scale_x.clone();
+            let y = finite_real(point[1])? * slice.scale_y.clone();
+            materialize_mesh_sample_point3(Point3::new(
+                x.clone() * slice.cos.clone() - y.clone() * slice.sin.clone(),
+                x * slice.sin.clone() + y * slice.cos.clone(),
                 z.clone(),
             ))
         }
@@ -600,10 +595,10 @@ impl Profile {
             for edge in ring.windows(2) {
                 for slice in 0..slice_parameters.len() - 1 {
                     let points = [
-                        map_point(edge[0], slice_parameters[slice], &heights[slice]),
-                        map_point(edge[1], slice_parameters[slice], &heights[slice]),
-                        map_point(edge[1], slice_parameters[slice + 1], &heights[slice + 1]),
-                        map_point(edge[0], slice_parameters[slice + 1], &heights[slice + 1]),
+                        map_point(edge[0], &slice_parameters[slice], &heights[slice]),
+                        map_point(edge[1], &slice_parameters[slice], &heights[slice]),
+                        map_point(edge[1], &slice_parameters[slice + 1], &heights[slice + 1]),
+                        map_point(edge[0], &slice_parameters[slice + 1], &heights[slice + 1]),
                     ]
                     .into_iter()
                     .collect::<Option<Vec<_>>>();
@@ -628,23 +623,18 @@ impl Profile {
         let mut slice_parameters = Vec::with_capacity(slices + 1);
         let mut heights = Vec::with_capacity(slices + 1);
         for index in 0..=slices {
-            let fraction = index as f64 / slices as f64;
-            let radians = (twist * fraction).to_radians();
-            let (sin, cos) = radians.sin_cos();
+            let fraction = (Real::from(index as u64) / Real::from(slices as u64))
+                .map_err(|_| ValidationError::InvalidArguments)?;
+            let radians =
+                twist_degrees.clone() * fraction.clone() * Real::pi() / Real::from(180_u16);
+            let radians = radians.map_err(|_| ValidationError::InvalidArguments)?;
             slice_parameters.push(Slice {
-                sin,
-                cos,
-                scale_x: (scale_x - 1.0).mul_add(fraction, 1.0),
-                scale_y: (scale_y - 1.0).mul_add(fraction, 1.0),
+                sin: radians.clone().sin(),
+                cos: radians.cos(),
+                scale_x: Real::one() + (end_scale[0].clone() - Real::one()) * fraction.clone(),
+                scale_y: Real::one() + (end_scale[1].clone() - Real::one()) * fraction.clone(),
             });
-            let fraction = Real::from(index as u64) / Real::from(slices as u64);
-            let Some(z) = fraction
-                .ok()
-                .and_then(|fraction| hreal_mul(&height, fraction))
-            else {
-                return Err(ValidationError::InvalidArguments);
-            };
-            heights.push(z);
+            heights.push(height.clone() * fraction);
         }
 
         let height_positive = height_sign == RealSign::Positive;
@@ -689,13 +679,13 @@ impl Profile {
             for triangle in triangles {
                 let bottom = triangle
                     .iter()
-                    .filter_map(|point| map_point(*point, slice_parameters[0], &heights[0]))
+                    .filter_map(|point| map_point(*point, &slice_parameters[0], &heights[0]))
                     .collect::<Vec<_>>();
                 push_clean_face(bottom, height_positive, &metadata, &mut polygons);
                 let top = triangle
                     .iter()
                     .filter_map(|point| {
-                        map_point(*point, slice_parameters[slices], &heights[slices])
+                        map_point(*point, &slice_parameters[slices], &heights[slices])
                     })
                     .collect::<Vec<_>>();
                 push_clean_face(top, !height_positive, &metadata, &mut polygons);
@@ -813,20 +803,25 @@ impl Profile {
                 min: 2,
             });
         }
-        let Some(angle_degs) = angle_degs.to_f64_lossy().filter(|angle| angle.is_finite())
-        else {
+        let Some(angle_sign) = hreal_sign(&angle_degs) else {
             return Err(ValidationError::InvalidArguments);
         };
-        if angle_degs == 0.0 || angle_degs.abs() > 360.0 {
+        if angle_sign == RealSign::Zero
+            || matches!(
+                hreal_try_cmp(angle_degs.clone().abs(), Real::from(360_u16)),
+                Some(std::cmp::Ordering::Greater) | None
+            )
+        {
             return Err(ValidationError::InvalidArguments);
         }
 
-        fn map_point(point: [f64; 2], sin_cos: (f64, f64)) -> Option<Point3> {
+        fn map_point(point: [f64; 2], sin_cos: &(Real, Real)) -> Option<Point3> {
             let (sin, cos) = sin_cos;
-            Some(Point3::new(
-                finite_real(point[0] * cos)?,
+            let radius = finite_real(point[0])?;
+            materialize_mesh_sample_point3(Point3::new(
+                radius.clone() * cos.clone(),
                 finite_real(point[1])?,
-                finite_real(point[0] * sin)?,
+                radius * sin.clone(),
             ))
         }
 
@@ -835,7 +830,7 @@ impl Profile {
             sweep_positive: bool,
             full_revolve: bool,
             segments: usize,
-            samples: &[(f64, f64)],
+            samples: &[(Real, Real)],
             metadata: &M,
             polygons: &mut Vec<Polygon<M>>,
         ) {
@@ -846,16 +841,16 @@ impl Profile {
                     } else {
                         slice + 1
                     };
-                    let Some(a) = map_point(edge[0], samples[slice]) else {
+                    let Some(a) = map_point(edge[0], &samples[slice]) else {
                         continue;
                     };
-                    let Some(b) = map_point(edge[1], samples[slice]) else {
+                    let Some(b) = map_point(edge[1], &samples[slice]) else {
                         continue;
                     };
-                    let Some(c) = map_point(edge[1], samples[next_slice]) else {
+                    let Some(c) = map_point(edge[1], &samples[next_slice]) else {
                         continue;
                     };
-                    let Some(d) = map_point(edge[0], samples[next_slice]) else {
+                    let Some(d) = map_point(edge[0], &samples[next_slice]) else {
                         continue;
                     };
                     push_clean_face(vec![a, b, c, d], !sweep_positive, metadata, polygons);
@@ -873,15 +868,22 @@ impl Profile {
             }
         }
 
-        let full_revolve = angle_degs.abs() == 360.0;
-        let angle_positive = angle_degs > 0.0;
+        let full_revolve = matches!(
+            hreal_try_cmp(angle_degs.clone().abs(), Real::from(360_u16)),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let angle_positive = angle_sign == RealSign::Positive;
         let slice_count = if full_revolve { segments } else { segments + 1 };
         let samples = (0..slice_count)
             .map(|slice| {
-                let radians = angle_degs.to_radians() * slice as f64 / segments as f64;
-                radians.sin_cos()
+                let fraction =
+                    (Real::from(slice as u64) / Real::from(segments as u64)).ok()?;
+                let radians =
+                    (angle_degs.clone() * Real::pi() * fraction / Real::from(180_u16)).ok()?;
+                Some((radians.clone().sin(), radians.cos()))
             })
-            .collect::<Vec<_>>();
+            .collect::<Option<Vec<_>>>()
+            .ok_or(ValidationError::InvalidArguments)?;
         let mut polygons = Vec::new();
 
         for profile in self.projected_region_profiles_for_mesh() {
@@ -937,12 +939,12 @@ impl Profile {
                 for triangle in triangles {
                     let start = triangle
                         .iter()
-                        .filter_map(|point| map_point(*point, samples[0]))
+                        .filter_map(|point| map_point(*point, &samples[0]))
                         .collect::<Vec<_>>();
                     push_clean_face(start, sweep_positive, &metadata, &mut polygons);
                     let end = triangle
                         .iter()
-                        .filter_map(|point| map_point(*point, samples[slice_count - 1]))
+                        .filter_map(|point| map_point(*point, &samples[slice_count - 1]))
                         .collect::<Vec<_>>();
                     push_clean_face(end, !sweep_positive, &metadata, &mut polygons);
                 }
@@ -1110,12 +1112,12 @@ impl Profile {
         #[inline]
         fn map_pt(p2: [f64; 2], m: &Matrix4) -> Option<Point3> {
             let [x, y] = p2;
-            materialize_finite_point3(m.transform_point3(&finite_xy_point3(x, y)?).ok()?)
+            materialize_mesh_sample_point3(m.transform_point3(&finite_xy_point3(x, y)?).ok()?)
         }
 
         #[inline]
         fn map_real_xy(x: Real, y: Real, m: &Matrix4) -> Option<Point3> {
-            materialize_finite_point3(
+            materialize_mesh_sample_point3(
                 m.transform_point3(&Point3::new(x, y, Real::zero())).ok()?,
             )
         }

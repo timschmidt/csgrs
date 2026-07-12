@@ -2,8 +2,8 @@
 
 use crate::mesh::Mesh;
 use crate::mesh::connectivity::VertexIndexMap;
+use hashbrown::HashMap;
 use hyperlattice::{Point3, Real};
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -43,56 +43,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
         let polygon_vertex_indices = self.polygon_vertex_indices(&vertex_map);
         let mut smoothed_polygons = self.polygons.clone();
+        let mut positions = vertex_map.index_to_position.clone();
 
         for iteration in 0..iterations {
-            // Build current vertex position mapping
-            let mut current_positions: HashMap<usize, Point3> = HashMap::new();
-            for (polygon, indices) in smoothed_polygons.iter().zip(&polygon_vertex_indices) {
-                for (vertex, idx) in polygon.vertices.iter().zip(indices) {
-                    if let Some(idx) = idx {
-                        current_positions.insert(*idx, vertex.position.clone());
-                    }
-                }
-            }
-
-            // Compute Laplacian for each vertex
-            let mut laplacian_updates: HashMap<usize, Point3> = HashMap::new();
-            for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(current_position) = current_positions.get(&vertex_idx).cloned() {
-                    // Check if this is a boundary vertex
-                    if preserve_boundaries && neighbors.len() < 4 {
-                        // Boundary vertex - skip smoothing
-                        laplacian_updates.insert(vertex_idx, current_position);
-                        continue;
-                    }
-
-                    let neighbor_positions = neighbors
-                        .iter()
-                        .filter_map(|neighbor_idx| {
-                            current_positions.get(neighbor_idx).cloned()
-                        })
-                        .collect::<Vec<_>>();
-
-                    if let Some(neighbor_avg) = Point3::centroid(&neighbor_positions) {
-                        let new_position = current_position.lerp(&neighbor_avg, &lambda);
-                        laplacian_updates.insert(vertex_idx, new_position);
-                    } else {
-                        laplacian_updates.insert(vertex_idx, current_position);
-                    }
-                }
-            }
-
-            // Apply updates to mesh vertices
-            for (polygon, indices) in smoothed_polygons.iter_mut().zip(&polygon_vertex_indices)
-            {
-                for (vertex, idx) in polygon.vertices.iter_mut().zip(indices) {
-                    if let Some(idx) = idx {
-                        if let Some(new_position) = laplacian_updates.get(idx) {
-                            vertex.position = new_position.clone();
-                        }
-                    }
-                }
-            }
+            positions = smoothing_pass(&positions, &adjacency, &lambda, preserve_boundaries);
 
             // Progress feedback for long smoothing operations
             if iterations > 10 && iteration % (iterations / 10) == 0 {
@@ -104,6 +58,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
+        apply_positions(&mut smoothed_polygons, &polygon_vertex_indices, &positions);
         Mesh::from_polygons(&smoothed_polygons)
     }
 
@@ -133,94 +88,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
         let polygon_vertex_indices = self.polygon_vertex_indices(&vertex_map);
         let mut smoothed_polygons = self.polygons.clone();
+        let mut positions = vertex_map.index_to_position.clone();
 
         for _ in 0..iterations {
-            // --- Lambda (shrinking) pass ---
-            let mut current_positions: HashMap<usize, Point3> = HashMap::new();
-            for (polygon, indices) in smoothed_polygons.iter().zip(&polygon_vertex_indices) {
-                for (vertex, idx) in polygon.vertices.iter().zip(indices) {
-                    if let Some(idx) = idx {
-                        current_positions.insert(*idx, vertex.position.clone());
-                    }
-                }
-            }
-
-            let mut updates: HashMap<usize, Point3> = HashMap::new();
-            for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(current_position) = current_positions.get(&vertex_idx).cloned() {
-                    if preserve_boundaries && neighbors.len() < 4 {
-                        updates.insert(vertex_idx, current_position);
-                        continue;
-                    }
-
-                    let neighbor_positions = neighbors
-                        .iter()
-                        .filter_map(|neighbor_idx| {
-                            current_positions.get(neighbor_idx).cloned()
-                        })
-                        .collect::<Vec<_>>();
-
-                    if let Some(neighbor_avg) = Point3::centroid(&neighbor_positions) {
-                        updates
-                            .insert(vertex_idx, current_position.lerp(&neighbor_avg, &lambda));
-                    }
-                }
-            }
-
-            for (polygon, indices) in smoothed_polygons.iter_mut().zip(&polygon_vertex_indices)
-            {
-                for (vertex, idx) in polygon.vertices.iter_mut().zip(indices) {
-                    if let Some(idx) = idx {
-                        if let Some(new_position) = updates.get(idx) {
-                            vertex.position = new_position.clone();
-                        }
-                    }
-                }
-            }
-
-            // --- Mu (inflating) pass ---
-            current_positions.clear();
-            for (polygon, indices) in smoothed_polygons.iter().zip(&polygon_vertex_indices) {
-                for (vertex, idx) in polygon.vertices.iter().zip(indices) {
-                    if let Some(idx) = idx {
-                        current_positions.insert(*idx, vertex.position.clone());
-                    }
-                }
-            }
-
-            updates.clear();
-            for (&vertex_idx, neighbors) in &adjacency {
-                if let Some(current_position) = current_positions.get(&vertex_idx).cloned() {
-                    if preserve_boundaries && neighbors.len() < 4 {
-                        updates.insert(vertex_idx, current_position);
-                        continue;
-                    }
-
-                    let neighbor_positions = neighbors
-                        .iter()
-                        .filter_map(|neighbor_idx| {
-                            current_positions.get(neighbor_idx).cloned()
-                        })
-                        .collect::<Vec<_>>();
-
-                    if let Some(neighbor_avg) = Point3::centroid(&neighbor_positions) {
-                        updates.insert(vertex_idx, current_position.lerp(&neighbor_avg, &mu));
-                    }
-                }
-            }
-
-            for (polygon, indices) in smoothed_polygons.iter_mut().zip(&polygon_vertex_indices)
-            {
-                for (vertex, idx) in polygon.vertices.iter_mut().zip(indices) {
-                    if let Some(idx) = idx {
-                        if let Some(new_position) = updates.get(idx) {
-                            vertex.position = new_position.clone();
-                        }
-                    }
-                }
-            }
+            positions = smoothing_pass(&positions, &adjacency, &lambda, preserve_boundaries);
+            positions = smoothing_pass(&positions, &adjacency, &mu, preserve_boundaries);
         }
 
+        apply_positions(&mut smoothed_polygons, &polygon_vertex_indices, &positions);
         Mesh::from_polygons(&smoothed_polygons)
     }
 
@@ -235,5 +110,47 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     .collect()
             })
             .collect()
+    }
+}
+
+fn smoothing_pass(
+    positions: &HashMap<usize, Point3>,
+    adjacency: &HashMap<usize, Vec<usize>>,
+    factor: &Real,
+    preserve_boundaries: bool,
+) -> HashMap<usize, Point3> {
+    positions
+        .iter()
+        .map(|(&vertex_index, current)| {
+            let Some(neighbors) = adjacency.get(&vertex_index) else {
+                return (vertex_index, current.clone());
+            };
+            if preserve_boundaries && neighbors.len() < 4 {
+                return (vertex_index, current.clone());
+            }
+
+            let neighbor_positions = neighbors
+                .iter()
+                .filter_map(|neighbor| positions.get(neighbor).cloned())
+                .collect::<Vec<_>>();
+            let updated = Point3::centroid(&neighbor_positions)
+                .map_or_else(|| current.clone(), |average| current.lerp(&average, factor));
+            (vertex_index, updated)
+        })
+        .collect()
+}
+
+fn apply_positions<M: Clone + Send + Sync>(
+    polygons: &mut [crate::mesh::Polygon<M>],
+    polygon_vertex_indices: &[Vec<Option<usize>>],
+    positions: &HashMap<usize, Point3>,
+) {
+    for (polygon, indices) in polygons.iter_mut().zip(polygon_vertex_indices) {
+        let mut vertices = polygon.vertices_mut();
+        for (vertex, index) in vertices.iter_mut().zip(indices) {
+            if let Some(position) = index.and_then(|index| positions.get(&index)) {
+                vertex.position = position.clone();
+            }
+        }
     }
 }

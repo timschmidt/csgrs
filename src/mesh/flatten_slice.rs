@@ -210,9 +210,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 /// Precision Output," *Computational Geometry* 13(4), 1999
 /// (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
 fn slice_polygons_by_plane<M: Clone + Send + Sync>(
-    polygons: &[crate::polygon::Polygon<M>],
+    polygons: &[crate::mesh::Polygon<M>],
     slicing_plane: &Plane,
-) -> (Vec<crate::polygon::Polygon<M>>, Vec<[Vertex; 2]>) {
+) -> (Vec<crate::mesh::Polygon<M>>, Vec<[Vertex; 2]>) {
     let mut coplanar_polygons = Vec::new();
     let mut intersection_edges = Vec::new();
 

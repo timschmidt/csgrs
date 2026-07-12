@@ -16,7 +16,7 @@ use hyperlattice::{Point3, Real, Vector3};
 use hypermesh::{BooleanOp, EmberConfig, InputMesh, Triangle, TriangleSoup};
 
 use crate::{
-    polygon::Polygon,
+    mesh::Polygon,
     triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D, Triangulated3D},
     vertex::Vertex,
 };
@@ -352,10 +352,6 @@ impl IndexedTriangulated3D for TriangleSoup {
 fn canonical_coordinate(value: &Real) -> Real {
     if matches!(value.refine_sign_until(128), Some(hyperreal::RealSign::Zero)) {
         Real::zero()
-    } else if value.is_rational() {
-        value.clone()
-    } else if let Some(finite) = value.to_f64_lossy().filter(|value| value.is_finite()) {
-        Real::try_from(finite).unwrap_or_else(|_| value.clone())
     } else {
         value.clone()
     }

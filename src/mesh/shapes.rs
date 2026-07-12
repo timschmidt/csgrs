@@ -3,7 +3,7 @@
 use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
@@ -216,13 +216,10 @@ fn positive_x_half(profile: &Profile) -> Option<Profile> {
 fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
     profile: &Profile,
     thickness: &Real,
-    total_twist: f64,
+    total_twist: Real,
     slices: usize,
     metadata: M,
 ) -> Mesh<M> {
-    let Some(height) = thickness.to_f64_lossy() else {
-        return Mesh::empty();
-    };
     let profiles = profile.region_profiles();
     if profiles.len() != 1 || !profiles[0].holes().is_empty() {
         return Mesh::empty();
@@ -240,13 +237,16 @@ fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
         return Mesh::empty();
     };
     let transform_point = |point: [f64; 2], level: usize| -> Option<Point3> {
-        let t = level as f64 / slices as f64;
-        let angle = total_twist * t;
-        let (sin, cos) = angle.sin_cos();
+        let t = real_from_ratio(level as u64, slices as u64)?;
+        let angle = total_twist.clone() * t.clone();
+        let sin = angle.clone().sin();
+        let cos = angle.cos();
+        let x = Real::try_from(point[0]).ok()?;
+        let y = Real::try_from(point[1]).ok()?;
         Some(Point3::new(
-            Real::try_from(point[0] * cos - point[1] * sin).ok()?,
-            Real::try_from(point[0] * sin + point[1] * cos).ok()?,
-            Real::try_from(height * t).ok()?,
+            x.clone() * cos.clone() - y.clone() * sin.clone(),
+            x * sin + y * cos,
+            thickness.clone() * t,
         ))
     };
     let rings = (0..=slices)
@@ -926,12 +926,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
 
             let mut poly = Polygon::new(face_vertices, metadata.clone());
-
-            // Set each vertex normal to match the polygon’s plane normal,
-            let plane_normal = poly.plane.normal();
-            for v in &mut poly.vertices {
-                v.normal = plane_normal.clone();
-            }
+            poly.set_new_normal();
             polygons.push(poly);
         }
 
@@ -1330,18 +1325,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         {
             return Mesh::empty();
         }
-        let (Some(module_value), Some(height), Some(helix_angle)) = (
-            module.to_f64_lossy(),
-            thickness.to_f64_lossy(),
-            helix_angle_deg.to_f64_lossy(),
-        ) else {
+        let Some(pitch_radius) = real_from_ratio(teeth as u64, 2)
+            .map(|teeth_over_two| module.clone() * teeth_over_two)
+        else {
             return Mesh::empty();
         };
-        let pitch_radius = 0.5 * module_value * teeth as f64;
-        let total_twist = height * helix_angle.to_radians().tan() / pitch_radius;
-        if !total_twist.is_finite() {
+        let helix_radians = (helix_angle_deg.clone() * Real::pi() / Real::from(180_u16)).ok();
+        let Some(helix_radians) = helix_radians else {
             return Mesh::empty();
-        }
+        };
+        let tangent = (helix_radians.clone().sin() / helix_radians.cos()).ok();
+        let Some(total_twist) =
+            tangent.and_then(|tangent| (thickness.clone() * tangent / pitch_radius).ok())
+        else {
+            return Mesh::empty();
+        };
 
         let base_slice = Profile::involute_gear(
             module,

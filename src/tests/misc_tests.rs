@@ -74,6 +74,9 @@ fn test_negative_extrude_has_downward_top_normal() {
 #[test]
 fn test_taubin_smoothing() {
     let mesh: Mesh<()> = Mesh::cube(r(1.0), ());
+    for polygon in &mesh.polygons {
+        let _ = polygon.bounding_box();
+    }
     let original_positions: Vec<_> = mesh
         .polygons
         .iter()
@@ -107,4 +110,29 @@ fn test_taubin_smoothing() {
         moved_count > 0,
         "Taubin smoothing should change vertex positions"
     );
+
+    for polygon in &smoothed.polygons {
+        let bounds = polygon.bounding_box();
+        for support in [
+            &polygon.plane().point_a,
+            &polygon.plane().point_b,
+            &polygon.plane().point_c,
+        ] {
+            assert!(
+                polygon
+                    .vertices()
+                    .iter()
+                    .any(|vertex| &vertex.position == support),
+                "the refreshed plane must use current polygon vertices"
+            );
+        }
+        for vertex in polygon.vertices() {
+            assert!(vertex.position.x >= bounds.mins.x);
+            assert!(vertex.position.x <= bounds.maxs.x);
+            assert!(vertex.position.y >= bounds.mins.y);
+            assert!(vertex.position.y <= bounds.maxs.y);
+            assert!(vertex.position.z >= bounds.mins.z);
+            assert!(vertex.position.z <= bounds.maxs.z);
+        }
+    }
 }

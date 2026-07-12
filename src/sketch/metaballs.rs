@@ -1,13 +1,24 @@
 //! Provides a `MetaBall` struct and functions for creating a `Profile` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, hreal_sign, hreal_to_f64};
+use crate::hyper_math::{Real, hreal_from_f64, hreal_gt_f64, hreal_sign};
 use crate::sketch::Profile;
 use hashbrown::HashMap;
 use hypercurve::{Contour2, Point2, Region2};
 use hyperlimit::{real_max, real_min};
 use hyperreal::RealSign;
 
-type SamplePoint = [f64; 2];
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+enum GridEdge {
+    Horizontal(usize, usize),
+    Vertical(usize, usize),
+}
+
+#[derive(Clone, Debug)]
+struct SamplePoint {
+    coordinates: [Real; 2],
+    edge: GridEdge,
+}
+
 type Segment = [SamplePoint; 2];
 
 impl Profile {
@@ -131,26 +142,22 @@ impl Profile {
             }
         }
 
-        // 3) Marching squares -> native finite line segments.
-        //
-        // The samples are finite because marching squares is an extraction
-        // boundary for a sampled implicit field; closed stitched loops are
-        // promoted immediately to hypercurve contours below.
+        // 3) Marching squares -> exact interpolated line segments.
         let mut contours = Vec::<Segment>::new();
 
         // Interpolator:
         let interpolate = |(x1, y1, v1): (&Real, &Real, &Real),
                            (x2, y2, v2): (&Real, &Real, &Real)|
-         -> Option<(f64, f64)> {
+         -> Option<[Real; 2]> {
             let delta = v2.clone() - v1.clone();
             if matches!(hreal_sign(&delta), Some(RealSign::Zero)) {
-                Some((hreal_to_f64(x1)?, hreal_to_f64(y1)?))
+                Some([x1.clone(), y1.clone()])
             } else {
                 let t = (Real::zero() - v1.clone()) / delta; // crossing at 0
                 let t = t.ok()?;
                 let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
                 let y = y1.clone() + t * (y2.clone() - y1.clone());
-                Some((hreal_to_f64(&x)?, hreal_to_f64(&y)?))
+                Some([x, y])
             }
         };
 
@@ -189,26 +196,27 @@ impl Profile {
 
                 let mut pts = Vec::new();
                 // function to check each edge
-                let mut check_edge = |mask_a: u8, mask_b: u8, a: usize, b: usize| {
-                    let inside_a = (c & mask_a) != 0;
-                    let inside_b = (c & mask_b) != 0;
-                    if inside_a != inside_b {
-                        if let Some((px, py)) = interpolate(corners[a], corners[b]) {
-                            pts.push((px, py));
+                let mut check_edge =
+                    |mask_a: u8, mask_b: u8, a: usize, b: usize, edge: GridEdge| {
+                        let inside_a = (c & mask_a) != 0;
+                        let inside_b = (c & mask_b) != 0;
+                        if inside_a != inside_b {
+                            if let Some(coordinates) = interpolate(corners[a], corners[b]) {
+                                pts.push(SamplePoint { coordinates, edge });
+                            }
                         }
-                    }
-                };
+                    };
 
-                check_edge(1, 2, 0, 1);
-                check_edge(2, 4, 1, 2);
-                check_edge(4, 8, 2, 3);
-                check_edge(8, 1, 3, 0);
+                check_edge(1, 2, 0, 1, GridEdge::Horizontal(ix, iy));
+                check_edge(2, 4, 1, 2, GridEdge::Vertical(ix + 1, iy));
+                check_edge(4, 8, 2, 3, GridEdge::Horizontal(ix, iy + 1));
+                check_edge(8, 1, 3, 0, GridEdge::Vertical(ix, iy));
 
                 // 2 intersections => one segment; 4 intersections in ambiguous
                 // cells => two segments. Keep these as native point pairs so
                 // Finite polygon samples are not the source representation for metaball topology.
                 for pair in pts.chunks_exact(2) {
-                    contours.push([[pair[0].0, pair[0].1], [pair[1].0, pair[1].1]]);
+                    contours.push([pair[0].clone(), pair[1].clone()]);
                 }
             }
         }
@@ -217,8 +225,14 @@ impl Profile {
         let stitched = stitch(&contours);
         let material = stitched
             .iter()
-            .filter(|line| line.len() >= 4 && same_point(line[0], *line.last().unwrap()))
-            .filter_map(|line| Contour2::from_finite_ring(line).ok())
+            .filter(|line| line.len() >= 4 && same_point(&line[0], line.last().unwrap()))
+            .filter_map(|line| {
+                let coordinates = line
+                    .iter()
+                    .map(|point| point.coordinates.clone())
+                    .collect::<Vec<_>>();
+                Contour2::from_real_ring(&coordinates).ok()
+            })
             .collect::<Vec<_>>();
 
         if material.is_empty() {
@@ -262,27 +276,18 @@ fn grid_axis_coords(origin: &Real, step: &Real, count: usize) -> Option<Vec<Real
         .collect()
 }
 
-// helper – quantise to avoid FP noise
-#[inline]
-fn key(point: SamplePoint) -> (i64, i64) {
-    (
-        (point[0] * 1e8).round() as i64,
-        (point[1] * 1e8).round() as i64,
-    )
-}
-
-fn same_point(a: SamplePoint, b: SamplePoint) -> bool {
-    key(a) == key(b)
+fn same_point(a: &SamplePoint, b: &SamplePoint) -> bool {
+    a.edge == b.edge
 }
 
 /// stitch all 2-point segments into longer polylines,
 /// close them when the ends meet
 fn stitch(contours: &[Segment]) -> Vec<Vec<SamplePoint>> {
     // adjacency map  endpoint -> (line index, end-id 0|1)
-    let mut adj: HashMap<(i64, i64), Vec<(usize, usize)>> = HashMap::new();
+    let mut adj: HashMap<GridEdge, Vec<(usize, usize)>> = HashMap::new();
     for (idx, segment) in contours.iter().enumerate() {
-        adj.entry(key(segment[0])).or_default().push((idx, 0));
-        adj.entry(key(segment[1])).or_default().push((idx, 1));
+        adj.entry(segment[0].edge).or_default().push((idx, 0));
+        adj.entry(segment[1].edge).or_default().push((idx, 1));
     }
 
     let mut used = vec![false; contours.len()];
@@ -295,13 +300,13 @@ fn stitch(contours: &[Segment]) -> Vec<Vec<SamplePoint>> {
         used[start] = true;
 
         // current chain of points
-        let mut chain = vec![contours[start][0], contours[start][1]];
+        let mut chain = vec![contours[start][0].clone(), contours[start][1].clone()];
 
         extend_chain(&mut chain, contours, &adj, &mut used, true);
         extend_chain(&mut chain, contours, &adj, &mut used, false);
 
-        if chain.len() >= 3 && !same_point(chain[0], *chain.last().unwrap()) {
-            chain.push(chain[0]);
+        if chain.len() >= 3 && !same_point(&chain[0], chain.last().unwrap()) {
+            chain.push(chain[0].clone());
         }
         chains.push(chain);
     }
@@ -311,17 +316,17 @@ fn stitch(contours: &[Segment]) -> Vec<Vec<SamplePoint>> {
 fn extend_chain(
     chain: &mut Vec<SamplePoint>,
     contours: &[Segment],
-    adj: &HashMap<(i64, i64), Vec<(usize, usize)>>,
+    adj: &HashMap<GridEdge, Vec<(usize, usize)>>,
     used: &mut [bool],
     forward: bool,
 ) {
     loop {
         let endpoint = if forward {
-            *chain.last().unwrap()
+            chain.last().unwrap()
         } else {
-            chain[0]
+            &chain[0]
         };
-        let Some(cands) = adj.get(&key(endpoint)) else {
+        let Some(cands) = adj.get(&endpoint.edge) else {
             break;
         };
         let mut found = None;
@@ -330,7 +335,7 @@ fn extend_chain(
                 continue;
             }
             used[idx] = true;
-            let other = contours[idx][1 - end_id];
+            let other = contours[idx][1 - end_id].clone();
             found = Some(other);
             break;
         }
