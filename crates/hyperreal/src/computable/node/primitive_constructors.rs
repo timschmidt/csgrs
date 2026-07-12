@@ -272,8 +272,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Int(BigInt::zero())),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Valid(BoundInfo::Zero)),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::NoSign)),
+            bound: Cell::new(BoundCache::Valid(BoundInfo::Zero)),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::NoSign)),
             signal: None,
         }
     }
@@ -284,8 +284,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::One),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Valid(BoundInfo::with_sign(Sign::Plus, Some(0)))),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Valid(BoundInfo::with_sign(Sign::Plus, Some(0)))),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -384,8 +384,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledSin(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -398,8 +398,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledCos(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -413,8 +413,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledCosRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -428,8 +428,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::CosLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -447,8 +447,8 @@ impl Computable {
         Self {
             internal: Box::new(internal),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -466,8 +466,8 @@ impl Computable {
         Self {
             internal: Box::new(internal),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -485,8 +485,8 @@ impl Computable {
         Self {
             internal: Box::new(internal),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -499,8 +499,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::SinLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -513,8 +513,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::TanLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -526,8 +526,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledTan(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -540,8 +540,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledSinRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -554,8 +554,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledTanRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -568,8 +568,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledAsinh(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -583,8 +583,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledAsin(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -597,8 +597,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AsinhRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -612,8 +612,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledAtanh(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -627,8 +627,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AtanhRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -641,8 +641,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AcosPositive(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -656,8 +656,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AcosPositiveRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -671,8 +671,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AcosNegativeRational(magnitude)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -686,8 +686,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AsinDeferred(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -700,8 +700,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AtanhDirect(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -714,8 +714,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AcoshNearOne(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -727,8 +727,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AcoshDirect(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -742,8 +742,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AsinhNearZero(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -757,8 +757,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AsinhDirect(value)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -771,8 +771,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Constant(constant)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Valid(constant.bound_info())),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Valid(constant.bound_info())),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -797,8 +797,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }

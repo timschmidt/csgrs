@@ -25,7 +25,7 @@ impl Computable {
                 return left.clone().multiply_rational(scale.neg());
             }
         }
-        let exact_sign = match *self.exact_sign.borrow() {
+        let exact_sign = match self.exact_sign.get() {
             // Preserve known exact signs for the cheap sign-first path in
             // predicates; this avoids a recursive sign walk on first query.
             ExactSignCache::Valid(sign) => ExactSignCache::Valid(negate_sign(sign)),
@@ -34,8 +34,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Negate(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -100,7 +100,7 @@ impl Computable {
             crate::trace_dispatch!("computable", "inverse", "square-of-inverse");
             return child.clone().inverse().square();
         }
-        let exact_sign = match *self.exact_sign.borrow() {
+        let exact_sign = match self.exact_sign.get() {
             // Reciprocal preserves sign for structurally nonzero values and lets
             // sign queries remain structural through inverse chains.
             ExactSignCache::Valid(sign) if sign != Sign::NoSign => ExactSignCache::Valid(sign),
@@ -109,8 +109,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -127,15 +127,15 @@ impl Computable {
         // Exact sign is unchanged by binary scaling when the inner sign is
         // already proven; this makes compare/sign predicates avoid descending
         // into a one-step structural walk on hot paths.
-        let exact_sign = match *self.exact_sign.borrow() {
+        let exact_sign = match self.exact_sign.get() {
             ExactSignCache::Valid(sign) => ExactSignCache::Valid(sign),
             _ => ExactSignCache::Invalid,
         };
         Self {
             internal: Box::new(Approximation::Offset(self, n)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -181,7 +181,7 @@ impl Computable {
                     .multiply(Self::rational(scale.clone() * scale));
             }
         }
-        let exact_sign = match *self.exact_sign.borrow() {
+        let exact_sign = match self.exact_sign.get() {
             // Squared values are nonnegative when defined; structural zero is
             // preserved as exact zero.
             ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
@@ -193,8 +193,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Square(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -226,13 +226,13 @@ impl Computable {
         }
         let exact_sign = {
             let left_sign = left_exact.as_ref().map(Rational::sign).or_else(|| {
-                match *self.exact_sign.borrow() {
+                match self.exact_sign.get() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
                 }
             });
             let right_sign = right_exact.as_ref().map(Rational::sign).or_else(|| {
-                match *other.exact_sign.borrow() {
+                match other.exact_sign.get() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
                 }
@@ -303,8 +303,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Multiply(self, other)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -348,7 +348,7 @@ impl Computable {
             }
         }
         let scale_sign = scale.sign();
-        let exact_sign = match (*self.exact_sign.borrow(), scale_sign) {
+        let exact_sign = match (self.exact_sign.get(), scale_sign) {
             (ExactSignCache::Valid(Sign::NoSign), _) => ExactSignCache::Valid(Sign::NoSign),
             (ExactSignCache::Valid(Sign::Plus), Sign::Plus) => ExactSignCache::Valid(Sign::Plus),
             (ExactSignCache::Valid(Sign::Plus), Sign::Minus) => ExactSignCache::Valid(Sign::Minus),
@@ -359,8 +359,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Multiply(Self::rational(scale), self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -411,13 +411,13 @@ impl Computable {
         // can answer from the certificate.
         let child_sign = {
             let left_sign = left_exact.as_ref().map(Rational::sign).or_else(|| {
-                match *self.exact_sign.borrow() {
+                match self.exact_sign.get() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
                 }
             });
             let right_sign = right_exact.as_ref().map(Rational::sign).or_else(|| {
-                match *other.exact_sign.borrow() {
+                match other.exact_sign.get() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
                 }
@@ -457,12 +457,12 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Add(self, other)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(if certified_bound == BoundInfo::Unknown {
+            bound: Cell::new(if certified_bound == BoundInfo::Unknown {
                 BoundCache::Invalid
             } else {
                 BoundCache::Valid(certified_bound)
             }),
-            exact_sign: RefCell::new(match certified_sign {
+            exact_sign: Cell::new(match certified_sign {
                 Some(sign) => ExactSignCache::Valid(sign),
                 None => ExactSignCache::Invalid,
             }),
@@ -477,8 +477,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Int(n)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -493,8 +493,8 @@ impl Computable {
         let series = Self {
             internal: Box::new(Approximation::ErfSeries(self.clone())),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         };
         let gaussian = self.square().negate().exp();
@@ -512,8 +512,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Erfc(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -557,8 +557,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::NormalSf(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -571,8 +571,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::NormalInterval { lo, hi }),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -582,8 +582,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::LogPnorm(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Minus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Minus)),
             signal: None,
         }
     }
@@ -593,8 +593,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::LogNormalSf(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Minus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Minus)),
             signal: None,
         }
     }
@@ -604,8 +604,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::LogDnorm(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Minus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Minus)),
             signal: None,
         }
     }
@@ -615,8 +615,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::NormalQuantile { p, seed, seed_prec }),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }

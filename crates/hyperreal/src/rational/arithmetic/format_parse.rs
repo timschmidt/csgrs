@@ -18,6 +18,9 @@ impl fmt::Display for Rational {
             let round = &whole * &self.denominator;
             let mut left = &self.numerator - &round;
             let mut digits = f.precision().unwrap_or(1000);
+            if digits == 0 {
+                return Ok(());
+            }
             loop {
                 left *= &*TEN;
                 let digit = &left / &self.denominator;
@@ -106,4 +109,3 @@ impl std::str::FromStr for Rational {
         }
     }
 }
-

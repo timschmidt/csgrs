@@ -134,8 +134,8 @@ fn raw(kind: Approximation) -> Computable {
     Computable {
         internal: Box::new(kind),
         cache: std::cell::RefCell::new(crate::computable::Cache::Invalid),
-        bound: std::cell::RefCell::new(crate::computable::BoundCache::Invalid),
-        exact_sign: std::cell::RefCell::new(crate::computable::ExactSignCache::Invalid),
+        bound: std::cell::Cell::new(crate::computable::BoundCache::Invalid),
+        exact_sign: std::cell::Cell::new(crate::computable::ExactSignCache::Invalid),
         signal: None,
     }
 }

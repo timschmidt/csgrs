@@ -12,9 +12,9 @@ pub struct Computable {
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) cache: RefCell<Cache>,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub(crate) bound: RefCell<BoundCache>,
+    pub(crate) bound: Cell<BoundCache>,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub(crate) exact_sign: RefCell<ExactSignCache>,
+    pub(crate) exact_sign: Cell<ExactSignCache>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) signal: Option<Signal>,
 }

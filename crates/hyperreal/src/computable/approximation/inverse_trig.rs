@@ -235,7 +235,10 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
         let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);
         let residual = atan_anchor_residual(r, 1, 1);
         let reduced = atan_rational_small(signal, &residual, work_precision);
-        return scale(quarter_pi + scale(reduced, 2), -(extra + 2));
+        // Sampling pi two bits coarser gives its integer approximation exactly
+        // the weight needed for a pi/4 anchor when both terms are shifted back
+        // by `extra`: pi*2^(1-p)/8 = (pi/4)*2^(-p).
+        return scale(quarter_pi + reduced, -extra);
     }
 
     let anchor = atan(signal, signed::TWO.deref(), work_precision);

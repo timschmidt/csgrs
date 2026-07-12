@@ -17,7 +17,7 @@ use num::{One, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
-    cell::RefCell,
+    cell::{Cell, RefCell},
     ops::{Deref, Neg},
     sync::LazyLock,
 };

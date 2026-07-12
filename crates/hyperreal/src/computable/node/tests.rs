@@ -3,6 +3,7 @@ mod tests {
     use super::*;
     use num::Signed;
     use num::bigint::BigUint;
+    use std::mem::size_of;
 
     #[test]
     fn compare() {
@@ -80,6 +81,35 @@ mod tests {
         assert_eq!(one.zero_status(), ZeroKnowledge::NonZero);
         assert_eq!(zero.exact_sign(), Some(Sign::NoSign));
         assert_eq!(one.exact_sign(), Some(Sign::Plus));
+    }
+
+    #[test]
+    fn layout_sizes() {
+        assert!(
+            size_of::<Computable>() <= 80,
+            "Computable grew to {} bytes",
+            size_of::<Computable>()
+        );
+        assert!(
+            size_of::<Approximation>() <= 168,
+            "Approximation grew to {} bytes",
+            size_of::<Approximation>()
+        );
+        assert!(
+            size_of::<Cache>() <= 40,
+            "Cache grew to {} bytes",
+            size_of::<Cache>()
+        );
+        assert!(
+            size_of::<BoundCache>() <= 12,
+            "BoundCache grew to {} bytes",
+            size_of::<BoundCache>()
+        );
+        assert!(
+            size_of::<ExactSignCache>() <= 1,
+            "ExactSignCache grew to {} bytes",
+            size_of::<ExactSignCache>()
+        );
     }
 
     #[test]
@@ -285,8 +315,8 @@ mod tests {
         let ln = Computable {
             internal: Box::new(Approximation::PrescaledLn(zero)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         };
         let zero = BigInt::zero();
@@ -300,8 +330,8 @@ mod tests {
         let ln = Computable {
             internal: Box::new(Approximation::PrescaledLn(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         };
         let five: BigInt = "5".parse().unwrap();
@@ -1334,5 +1364,15 @@ mod tests {
         let forty: BigInt = "40".parse().unwrap();
         let b = scale(ten.clone(), 2);
         assert_eq!(forty, b);
+    }
+
+    #[test]
+    fn msd_refines_ambiguous_unit_approximations_at_binary_boundaries() {
+        for value in [
+            Computable::rational(Rational::fraction(1, 4).unwrap()).atan(),
+            Computable::rational(Rational::fraction(1, 4).unwrap()).asinh(),
+        ] {
+            assert_eq!(value.msd(-128), Some(-3));
+        }
     }
 }

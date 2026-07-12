@@ -1,14 +1,19 @@
 impl Real {
     /// Are two Reals definitely unequal?
     pub fn definitely_not_equal(&self, other: &Self) -> bool {
-        if self.rational.sign() == Sign::NoSign {
-            return other.class.is_non_zero() && other.rational.sign() != Sign::NoSign;
+        if let (Some(left), Some(right)) =
+            (self.exact_rational_ref(), other.exact_rational_ref())
+        {
+            return left != right;
         }
-        if other.rational.sign() == Sign::NoSign {
-            return self.class.is_non_zero() && self.rational.sign() != Sign::NoSign;
+
+        let left_sign = self.structural_facts().sign;
+        let right_sign = other.structural_facts().sign;
+        if let (Some(left), Some(right)) = (left_sign, right_sign) {
+            return left != right;
         }
+
         false
-        /* ... TODO add more cases which definitely aren't equal */
     }
 
     /// Our best attempt to discern the [`Sign`] of this Real.

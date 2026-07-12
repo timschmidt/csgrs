@@ -167,12 +167,15 @@ impl Rational {
     /// Integer exponentiation. Raise this Rational to an integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         const TOO_MANY_BITS: u64 = 1000;
-        // Arguably wrong if self is also zero
         if exp == BigInt::ZERO {
             return Ok(Self::one());
         }
         if self.sign == NoSign {
-            return Ok(Self::zero());
+            return if exp.sign() == Minus {
+                Err(Problem::DivideByZero)
+            } else {
+                Ok(Self::zero())
+            };
         }
         // Plus or minus one exactly
         if self.is_integer() && self.numerator == *ONE.deref() {

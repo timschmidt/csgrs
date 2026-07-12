@@ -137,14 +137,6 @@ impl PartialEq for Class {
 }
 
 impl Class {
-    // Could treat Exp specially for large negative exponents
-    fn is_non_zero(&self) -> bool {
-        // Every current symbolic class except the rational scale itself is
-        // constructed as non-zero. Keeping this invariant lets zero/sign
-        // queries short-circuit without touching the computable graph.
-        true
-    }
-
     fn is_ln(&self) -> bool {
         // Only simple `Ln(base)` values participate in the two-log sum/difference
         // collapse. Wider log classes intentionally skip that shortcut so the

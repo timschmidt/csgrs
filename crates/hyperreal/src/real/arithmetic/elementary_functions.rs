@@ -72,7 +72,7 @@ impl Real {
         }
 
         let seed = seed.clamp(-Self::NORMAL_MAX_ABS, Self::NORMAL_MAX_ABS);
-        let seed_scale = 2_f64.powi((-Self::NORMAL_QUANTILE_SEED_PRECISION) as i32);
+        let seed_scale = 2_f64.powi(-Self::NORMAL_QUANTILE_SEED_PRECISION);
         let seed_int = BigInt::from((seed * seed_scale).round() as i64);
 
         crate::trace_dispatch!("real", trace_name, "normal-quantile-computable");

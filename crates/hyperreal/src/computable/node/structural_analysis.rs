@@ -223,10 +223,9 @@ impl Computable {
     }
 
     fn cached_bound(&self) -> Option<BoundInfo> {
-        let bound = self.bound.borrow();
-        match &*bound {
+        match self.bound.get() {
             BoundCache::Invalid => None,
-            BoundCache::Valid(info) => Some(info.clone()),
+            BoundCache::Valid(info) => Some(info),
         }
     }
 
@@ -234,7 +233,7 @@ impl Computable {
         // Unknown facts are intentionally not cached; a later approximation may
         // discover a real sign/MSD and should be allowed to populate the cache.
         if *info != BoundInfo::Unknown {
-            self.bound.replace(BoundCache::Valid(info.clone()));
+            self.bound.set(BoundCache::Valid(*info));
         }
     }
 
@@ -490,7 +489,7 @@ impl Computable {
         // the expression shape or a separated cached approximation proves the
         // sign. Unknown is cached separately so impossible structural proofs do
         // not repeat on every predicate query.
-        let cached_sign = *self.exact_sign.borrow();
+        let cached_sign = self.exact_sign.get();
         match cached_sign {
             ExactSignCache::Valid(sign) => return Some(sign),
             ExactSignCache::Unknown => {
@@ -518,7 +517,7 @@ impl Computable {
         }
 
         fn cached_exact_sign(node: &Computable) -> Option<Option<Sign>> {
-            let cached_sign = *node.exact_sign.borrow();
+            let cached_sign = node.exact_sign.get();
             match cached_sign {
                 ExactSignCache::Invalid => None,
                 ExactSignCache::Unknown => {

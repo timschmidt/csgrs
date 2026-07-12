@@ -89,7 +89,7 @@ impl Computable {
             }
         }
         crate::trace_dispatch!("computable", "sqrt", "generic-sqrt-node");
-        let exact_sign = match *self.exact_sign.borrow() {
+        let exact_sign = match self.exact_sign.get() {
             // Square roots are nonnegative where defined and preserve structural zero.
             ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
             ExactSignCache::Valid(Sign::Plus) | ExactSignCache::Valid(Sign::Minus) => {
@@ -100,8 +100,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -112,8 +112,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::IntegralAtan(n)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -127,8 +127,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AtanRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -142,8 +142,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::AsinRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -175,8 +175,8 @@ impl Computable {
                 return Self {
                     internal: Box::new(Approximation::PrescaledAtan(self)),
                     cache: RefCell::new(Cache::Invalid),
-                    bound: RefCell::new(BoundCache::Invalid),
-                    exact_sign: RefCell::new(ExactSignCache::Invalid),
+                    bound: Cell::new(BoundCache::Invalid),
+                    exact_sign: Cell::new(ExactSignCache::Invalid),
                     signal: None,
                 };
             }
@@ -195,8 +195,8 @@ impl Computable {
             return Self {
                 internal: Box::new(Approximation::PrescaledAtan(self)),
                 cache: RefCell::new(Cache::Invalid),
-                bound: RefCell::new(BoundCache::Invalid),
-                exact_sign: RefCell::new(ExactSignCache::Invalid),
+                bound: Cell::new(BoundCache::Invalid),
+                exact_sign: Cell::new(ExactSignCache::Invalid),
                 signal: None,
             };
         }

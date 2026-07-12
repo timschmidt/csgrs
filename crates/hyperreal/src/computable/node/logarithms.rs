@@ -318,8 +318,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledLn(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }
@@ -332,8 +332,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledLnRational(rational)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -346,8 +346,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::BinaryScaledLnRational { residual, shift }),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Invalid),
             signal: None,
         }
     }

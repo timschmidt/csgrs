@@ -8,7 +8,7 @@ pub(crate) enum Cache {
     Valid((Precision, BigInt)),
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub(crate) enum BoundCache {
     #[default]
     Invalid,
@@ -23,7 +23,7 @@ pub(crate) enum ExactSignCache {
     Valid(Sign),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum BoundInfo {
     // Unknown means the expression may still be zero or either sign; callers
     // must not use it to short-circuit exact predicates.

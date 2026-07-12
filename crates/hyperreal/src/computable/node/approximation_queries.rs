@@ -648,14 +648,17 @@ impl Computable {
             let one = signed::ONE.deref();
             let minus_one = signed::MINUS_ONE.deref();
 
-            if appr > *minus_one && appr < *one {
+            // Approximation results carry an absolute error of at most one at
+            // their scale. Magnitude one therefore does not prove a leading
+            // bit; refine until the approximation is separated from zero.
+            if appr >= *minus_one && appr <= *one {
                 try_once = true;
             }
         }
 
         if try_once {
             let appr = self.approx(p - 1);
-            if appr.magnitude() < &BigUint::one() {
+            if appr.magnitude() <= &BigUint::one() {
                 return None;
             }
         }

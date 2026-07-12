@@ -300,6 +300,42 @@ fn divide_scaled(numerator: BigInt, denominator: BigInt, p: Precision) -> BigInt
     }
 }
 
+fn divide_scaled_refining<F>(
+    signal: &Option<Signal>,
+    p: Precision,
+    mut components: F,
+) -> BigInt
+where
+    F: FnMut(Precision) -> (BigInt, BigInt),
+{
+    let mut working_precision = p - 8;
+
+    loop {
+        let (numerator, denominator) = components(working_precision);
+        if !denominator.is_zero() {
+            let denominator_msd = working_precision
+                + denominator.magnitude().bits() as Precision
+                - 1;
+            // Quotient sensitivity is proportional to 1/d^2. Each bit that
+            // |d| lies below one therefore costs two source bits.
+            let required_precision = p + 2 * denominator_msd.min(0) - 8;
+            if working_precision <= required_precision {
+                return divide_scaled(numerator, denominator, p);
+            }
+            working_precision = required_precision;
+        } else {
+            working_precision -= 8;
+        }
+
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+        if p - working_precision > 16_384 {
+            panic!("ArithmeticException");
+        }
+    }
+}
+
 fn tan_scaled_argument(
     signal: &Option<Signal>,
     op_appr: BigInt,
@@ -755,23 +791,11 @@ fn cot_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precisio
         return Zero::zero();
     }
 
-    let working_prec = p - 8;
-    let (sin_appr, cos_appr) = sin_cos_half_pi_minus_rational(signal, r, working_prec);
-    let abs_sin = sin_appr.abs();
-
-    if abs_sin.is_zero() {
-        panic!("ArithmeticException");
-    }
-
-    let scaled_numerator = cos_appr << -p;
-    let adjustment = &abs_sin >> 1;
-
-    if scaled_numerator.sign() == Sign::Minus {
-        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_sin;
-        -rounded
-    } else {
-        (scaled_numerator + adjustment) / abs_sin
-    }
+    divide_scaled_refining(signal, p, |working_precision| {
+        let (sin_appr, cos_appr) =
+            sin_cos_half_pi_minus_rational(signal, r, working_precision);
+        (cos_appr, sin_appr)
+    })
 }
 
 // Compute tangent of |c| < 1.
@@ -785,28 +809,12 @@ fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         return Zero::zero();
     }
 
-    let working_prec = p - 8;
-    let sin_appr = sin(signal, c, working_prec);
-    let cos_appr = cos(signal, c, working_prec);
-    let abs_cos = cos_appr.abs();
-
-    if abs_cos.is_zero() {
-        panic!("ArithmeticException");
-    }
-
-    let scaled_numerator = if cos_appr.sign() == Sign::Minus {
-        -sin_appr << -p
-    } else {
-        sin_appr << -p
-    };
-    let adjustment = &abs_cos >> 1;
-
-    if scaled_numerator.sign() == Sign::Minus {
-        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_cos;
-        -rounded
-    } else {
-        (scaled_numerator + adjustment) / abs_cos
-    }
+    divide_scaled_refining(signal, p, |working_precision| {
+        (
+            sin(signal, c, working_precision),
+            cos(signal, c, working_precision),
+        )
+    })
 }
 
 fn tan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
@@ -817,28 +825,12 @@ fn tan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
         return Zero::zero();
     }
 
-    let working_prec = p - 8;
-    let sin_appr = sin_rational(signal, r, working_prec);
-    let cos_appr = cos_rational(signal, r, working_prec);
-    let abs_cos = cos_appr.abs();
-
-    if abs_cos.is_zero() {
-        panic!("ArithmeticException");
-    }
-
-    let scaled_numerator = if cos_appr.sign() == Sign::Minus {
-        -sin_appr << -p
-    } else {
-        sin_appr << -p
-    };
-    let adjustment = &abs_cos >> 1;
-
-    if scaled_numerator.sign() == Sign::Minus {
-        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_cos;
-        -rounded
-    } else {
-        (scaled_numerator + adjustment) / abs_cos
-    }
+    divide_scaled_refining(signal, p, |working_precision| {
+        (
+            sin_rational(signal, r, working_precision),
+            cos_rational(signal, r, working_precision),
+        )
+    })
 }
 
 fn tan_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
@@ -850,39 +842,21 @@ fn tan_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> Bi
         return Zero::zero();
     }
 
-    let working_prec = p - 8;
     let multiple = large_rational_half_pi_multiple(signal, r);
     if let Some(reduced) = tan_large_rational_quarter_pi(signal, r, &multiple, p) {
         return reduced;
     }
-    let (sin_residual, cos_residual) =
-        sin_cos_large_rational_residual(signal, r, &multiple, working_prec);
-    let (sin_appr, cos_appr) = match large_rational_quadrant(&multiple).to_u8() {
-        Some(0) => (sin_residual, cos_residual),
-        Some(1) => (cos_residual, -sin_residual),
-        Some(2) => (-sin_residual, -cos_residual),
-        Some(3) => (-cos_residual, sin_residual),
-        _ => unreachable!("quadrant reduction is modulo four"),
-    };
-    let abs_cos = cos_appr.abs();
-
-    if abs_cos.is_zero() {
-        panic!("ArithmeticException");
-    }
-
-    let scaled_numerator = if cos_appr.sign() == Sign::Minus {
-        -sin_appr << -p
-    } else {
-        sin_appr << -p
-    };
-    let adjustment = &abs_cos >> 1;
-
-    if scaled_numerator.sign() == Sign::Minus {
-        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_cos;
-        -rounded
-    } else {
-        (scaled_numerator + adjustment) / abs_cos
-    }
+    divide_scaled_refining(signal, p, |working_precision| {
+        let (sin_residual, cos_residual) =
+            sin_cos_large_rational_residual(signal, r, &multiple, working_precision);
+        match large_rational_quadrant(&multiple).to_u8() {
+            Some(0) => (sin_residual, cos_residual),
+            Some(1) => (cos_residual, -sin_residual),
+            Some(2) => (-sin_residual, -cos_residual),
+            Some(3) => (-cos_residual, sin_residual),
+            _ => unreachable!("quadrant reduction is modulo four"),
+        }
+    })
 }
 
 // Compute cotangent of |c| < 1.
@@ -895,24 +869,12 @@ fn cot(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         return Zero::zero();
     }
 
-    let working_prec = p - 8;
-    let sin_appr = sin(signal, c, working_prec);
-    let cos_appr = cos(signal, c, working_prec);
-    let abs_sin = sin_appr.abs();
-
-    if abs_sin.is_zero() {
-        panic!("ArithmeticException");
-    }
-
-    let scaled_numerator = cos_appr << -p;
-    let adjustment = &abs_sin >> 1;
-
-    if scaled_numerator.sign() == Sign::Minus {
-        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_sin;
-        -rounded
-    } else {
-        (scaled_numerator + adjustment) / abs_sin
-    }
+    divide_scaled_refining(signal, p, |working_precision| {
+        (
+            cos(signal, c, working_precision),
+            sin(signal, c, working_precision),
+        )
+    })
 }
 
 // Compute an approximation of ln(1+x) to precision p.

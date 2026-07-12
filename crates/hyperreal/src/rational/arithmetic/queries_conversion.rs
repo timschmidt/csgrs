@@ -84,6 +84,9 @@ impl Rational {
             return self.clone();
         }
         let n = &self.numerator / &self.denominator;
+        if n.is_zero() {
+            return Self::zero();
+        }
         Self {
             sign: self.sign,
             numerator: n,
@@ -320,7 +323,11 @@ impl Rational {
     /// assert_eq!(seven_fifths.shifted_big_integer(3), eleven);
     /// ```
     pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
-        let whole = (&self.numerator << shift) / &self.denominator;
+        let whole = if shift >= 0 {
+            (&self.numerator << shift as usize) / &self.denominator
+        } else {
+            &self.numerator / (&self.denominator << shift.unsigned_abs() as usize)
+        };
         BigInt::from_biguint(self.sign, whole)
     }
 

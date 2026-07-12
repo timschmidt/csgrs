@@ -68,8 +68,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::PrescaledExp(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -166,8 +166,8 @@ impl Computable {
         Self {
             internal: Box::new(Approximation::Expm1(self)),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(exact_sign),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
             signal: None,
         }
     }
@@ -537,8 +537,8 @@ impl Computable {
             return Self {
                 internal: Box::new(Approximation::PrescaledTan(self)),
                 cache: RefCell::new(Cache::Invalid),
-                bound: RefCell::new(BoundCache::Invalid),
-                exact_sign: RefCell::new(ExactSignCache::Invalid),
+                bound: Cell::new(BoundCache::Invalid),
+                exact_sign: Cell::new(ExactSignCache::Invalid),
                 signal: None,
             };
         }
@@ -555,8 +555,8 @@ impl Computable {
             return Self {
                 internal: Box::new(Approximation::PrescaledTan(self)),
                 cache: RefCell::new(Cache::Invalid),
-                bound: RefCell::new(BoundCache::Invalid),
-                exact_sign: RefCell::new(ExactSignCache::Invalid),
+                bound: Cell::new(BoundCache::Invalid),
+                exact_sign: Cell::new(ExactSignCache::Invalid),
                 signal: None,
             };
         }
@@ -569,8 +569,8 @@ impl Computable {
             return Self {
                 internal: Box::new(Approximation::PrescaledCot(complement)),
                 cache: RefCell::new(Cache::Invalid),
-                bound: RefCell::new(BoundCache::Invalid),
-                exact_sign: RefCell::new(ExactSignCache::Invalid),
+                bound: Cell::new(BoundCache::Invalid),
+                exact_sign: Cell::new(ExactSignCache::Invalid),
                 signal: None,
             };
         }
