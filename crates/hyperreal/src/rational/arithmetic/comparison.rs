@@ -6,7 +6,7 @@ impl PartialEq for Rational {
         if self.denominator == other.denominator {
             self.numerator == other.numerator
         } else {
-            Self::definitely_equal(&self.clone().reduce(), &other.clone().reduce())
+            &self.numerator * &other.denominator == &other.numerator * &self.denominator
         }
     }
 }
@@ -40,4 +40,3 @@ impl PartialOrd for Rational {
         }
     }
 }
-

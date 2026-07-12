@@ -77,6 +77,7 @@ static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
 static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
 static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
+static RATIONAL_ONE: LazyLock<Rational> = LazyLock::new(Rational::one);
 
 macro_rules! trace_rational_temporary {
     () => {{
@@ -105,4 +106,3 @@ macro_rules! trace_rational_power_of_two_common_factor {
         crate::dispatch_trace::record_rational_power_of_two_common_factor($shift);
     }};
 }
-

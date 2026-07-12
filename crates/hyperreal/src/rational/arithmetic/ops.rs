@@ -202,16 +202,3 @@ impl<T: AsRef<Rational>> Div<T> for Rational {
         &self / other.as_ref()
     }
 }
-
-impl Rational {
-    fn definitely_equal(&self, other: &Self) -> bool {
-        if self.sign != other.sign {
-            return false;
-        }
-        if self.denominator != other.denominator {
-            return false;
-        }
-        self.numerator == other.numerator
-    }
-}
-

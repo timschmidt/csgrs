@@ -1,4 +1,10 @@
 impl Rational {
+    /// Returns a shared multiplicative identity for borrowed exact kernels.
+    #[inline]
+    pub fn one_ref() -> &'static Self {
+        &RATIONAL_ONE
+    }
+
     ///
     /// This is a stored-sign structural predicate. It deliberately avoids
     /// constructing a comparison value so downstream numeric kernels can ask
@@ -422,6 +428,18 @@ impl Rational {
     #[inline]
     pub fn sign(&self) -> Sign {
         self.sign
+    }
+
+    /// Returns whether this value is strictly negative without allocating.
+    #[inline]
+    pub fn is_negative(&self) -> bool {
+        self.sign == Minus
+    }
+
+    /// Returns whether this value is strictly positive without allocating.
+    #[inline]
+    pub fn is_positive(&self) -> bool {
+        self.sign == Plus
     }
 
 }

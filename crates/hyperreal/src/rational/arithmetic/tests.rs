@@ -543,6 +543,35 @@ mod tests {
     }
 
     #[test]
+    fn sign_queries_are_strict() {
+        assert!(Rational::new(-1).is_negative());
+        assert!(!Rational::new(-1).is_positive());
+        assert!(!Rational::zero().is_negative());
+        assert!(!Rational::zero().is_positive());
+        assert!(!Rational::one().is_negative());
+        assert!(Rational::one().is_positive());
+        assert_eq!(Rational::one_ref(), &Rational::one());
+        assert!(std::ptr::eq(Rational::one_ref(), Rational::one_ref()));
+    }
+
+    #[test]
+    fn equality_cross_multiplies_unequal_denominators() {
+        let half = Rational::fraction(1, 2).unwrap();
+        let two_quarters = Rational {
+            sign: Plus,
+            numerator: BigUint::from(2_u8),
+            denominator: BigUint::from(4_u8),
+        };
+        let three_sixths = Rational {
+            sign: Plus,
+            numerator: BigUint::from(3_u8),
+            denominator: BigUint::from(6_u8),
+        };
+        assert_eq!(half, two_quarters);
+        assert_eq!(two_quarters, three_sixths);
+    }
+
+    #[test]
     fn same() {
         use std::cmp::Ordering;
 
