@@ -725,7 +725,7 @@ fn polygon_edge_counts(
             }
             let canonical_edge = sorted_edge([start, end]);
             let follows_canonical_edge = start == canonical_edge[0];
-            for canonical_subedge in split_segment_subedges_exact(
+            for &canonical_subedge in split_segment_subedges_exact(
                 &mut split_edge_cache,
                 vertices,
                 axis_order,
@@ -750,44 +750,42 @@ fn polygon_edge_counts(
     Ok(counts)
 }
 
-fn split_segment_subedges_exact(
-    cache: &mut HashMap<[usize; 2], Vec<[usize; 2]>>,
+fn split_segment_subedges_exact<'a>(
+    cache: &'a mut HashMap<[usize; 2], Vec<[usize; 2]>>,
     vertices: &[OutputVertex],
     axis_order: &[Vec<usize>; 3],
     edge: [usize; 2],
-) -> HypermeshResult<Vec<[usize; 2]>> {
+) -> HypermeshResult<&'a [[usize; 2]]> {
     let edge = sorted_edge(edge);
-    if let Some(subedges) = cache.get(&edge) {
-        return Ok(subedges.clone());
-    }
-
-    let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
-    let mut on_edge = Vec::new();
-    let (start, end) = candidate_vertex_index_range_for_edge(axis_order, vertices, edge, axis)?;
-    for &vertex_index in &axis_order[axis][start..end] {
-        if vertex_index == edge[0] || vertex_index == edge[1] {
-            continue;
+    if !cache.contains_key(&edge) {
+        let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
+        let mut on_edge = Vec::new();
+        let (start, end) = candidate_vertex_index_range_for_edge(axis_order, vertices, edge, axis)?;
+        for &vertex_index in &axis_order[axis][start..end] {
+            if vertex_index == edge[0] || vertex_index == edge[1] {
+                continue;
+            }
+            if point_on_segment_exact(
+                &vertices[vertex_index],
+                &vertices[edge[0]],
+                &vertices[edge[1]],
+            )? {
+                on_edge.push(vertex_index);
+            }
         }
-        if point_on_segment_exact(
-            &vertices[vertex_index],
-            &vertices[edge[0]],
-            &vertices[edge[1]],
-        )? {
-            on_edge.push(vertex_index);
-        }
+
+        let mut chain = Vec::with_capacity(on_edge.len() + 2);
+        chain.push(edge[0]);
+        chain.extend(sort_along_segment(&on_edge, edge[0], edge[1], vertices)?);
+        chain.push(edge[1]);
+
+        let subedges = chain
+            .windows(2)
+            .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
+            .collect();
+        cache.insert(edge, subedges);
     }
-
-    let mut chain = Vec::with_capacity(on_edge.len() + 2);
-    chain.push(edge[0]);
-    chain.extend(sort_along_segment(&on_edge, edge[0], edge[1], vertices)?);
-    chain.push(edge[1]);
-
-    let subedges: Vec<[usize; 2]> = chain
-        .windows(2)
-        .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
-        .collect();
-    cache.insert(edge, subedges.clone());
-    Ok(subedges)
+    Ok(cache.get(&edge).expect("cached edge was just inserted"))
 }
 
 fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[Vec<usize>; 3]> {
@@ -1137,6 +1135,9 @@ fn proper_segment_intersection(
     c: &OutputVertex,
     d: &OutputVertex,
 ) -> HypermeshResult<Option<OutputVertex>> {
+    if !segment_bounds_overlap_exact(a, b, c, d)? {
+        return Ok(None);
+    }
     let ab = sub_vertex(b, a);
     let cd = sub_vertex(d, c);
     let normal = cross_arrays(&ab, &cd);
@@ -1251,6 +1252,9 @@ fn point_on_segment_exact(
     start: &OutputVertex,
     end: &OutputVertex,
 ) -> HypermeshResult<bool> {
+    if !point_within_segment_bounds_exact(point, start, end)? {
+        return Ok(false);
+    }
     let ab = sub_vertex(end, start);
     let av = sub_vertex(point, start);
     let cross = cross_arrays(&ab, &av);
@@ -1261,19 +1265,53 @@ fn point_on_segment_exact(
         return Ok(false);
     }
 
+    Ok(point != start && point != end)
+}
+
+fn point_within_segment_bounds_exact(
+    point: &OutputVertex,
+    start: &OutputVertex,
+    end: &OutputVertex,
+) -> HypermeshResult<bool> {
     for axis in 0..3 {
         let p = vertex_axis(point, axis);
         let a = vertex_axis(start, axis);
         let b = vertex_axis(end, axis);
-        if compare_real(p, a)?.is_lt() && compare_real(p, b)?.is_lt() {
-            return Ok(false);
-        }
-        if compare_real(p, a)?.is_gt() && compare_real(p, b)?.is_gt() {
+        let (min, max) = ordered_reals(a, b)?;
+        if compare_real(p, min)?.is_lt() || compare_real(p, max)?.is_gt() {
             return Ok(false);
         }
     }
+    Ok(true)
+}
 
-    Ok(point != start && point != end)
+fn segment_bounds_overlap_exact(
+    a: &OutputVertex,
+    b: &OutputVertex,
+    c: &OutputVertex,
+    d: &OutputVertex,
+) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        let a = vertex_axis(a, axis);
+        let b = vertex_axis(b, axis);
+        let c = vertex_axis(c, axis);
+        let d = vertex_axis(d, axis);
+        let (left_min, left_max) = ordered_reals(a, b)?;
+        let (right_min, right_max) = ordered_reals(c, d)?;
+        if compare_real(left_max, right_min)?.is_lt() || compare_real(right_max, left_min)?.is_lt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn ordered_reals<'a>(left: &'a Real, right: &'a Real) -> HypermeshResult<(&'a Real, &'a Real)> {
+    if compare_real(left, right)?.is_le() {
+        Ok((left, right))
+    } else {
+        Ok((right, left))
+    }
 }
 
 fn sort_along_segment(
@@ -1664,8 +1702,9 @@ mod tests {
         let axis_order = sorted_vertex_indices_by_axis(&vertices).unwrap();
         let mut cache = HashMap::new();
 
-        let forward =
-            split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [0, 1]).unwrap();
+        let forward = split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [0, 1])
+            .unwrap()
+            .to_vec();
         let reversed =
             split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [1, 0]).unwrap();
 
