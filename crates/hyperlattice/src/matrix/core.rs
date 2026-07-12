@@ -206,9 +206,9 @@ fn matrix_zero_masks<const N: usize>(matrix: &[[Real; N]; N]) -> (u16, [u8; N], 
     let mut entry_mask = 0_u16;
     let mut row_masks = [0_u8; N];
     let mut column_masks = [0_u8; N];
-    for row in 0..N {
-        for column in 0..N {
-            if matrix[row][column].definitely_zero() {
+    for (row, values) in matrix.iter().enumerate() {
+        for (column, value) in values.iter().enumerate() {
+            if value.definitely_zero() {
                 entry_mask |= matrix_entry_bit::<N>(row, column);
                 row_masks[row] |= 1_u8 << column;
                 column_masks[column] |= 1_u8 << row;
@@ -221,9 +221,9 @@ fn matrix_zero_masks<const N: usize>(matrix: &[[Real; N]; N]) -> (u16, [u8; N], 
 #[inline]
 fn matrix_one_mask<const N: usize>(matrix: &[[Real; N]; N]) -> u16 {
     let mut mask = 0_u16;
-    for row in 0..N {
-        for column in 0..N {
-            if matrix[row][column].definitely_one() {
+    for (row, values) in matrix.iter().enumerate() {
+        for (column, value) in values.iter().enumerate() {
+            if value.definitely_one() {
                 mask |= matrix_entry_bit::<N>(row, column);
             }
         }
@@ -239,9 +239,9 @@ fn matrix_zero_masks_assuming_size<const N: usize, const M: usize>(
     let mut entry_mask = 0_u16;
     let mut row_masks = [0_u8; M];
     let mut column_masks = [0_u8; M];
-    for row in 0..M {
-        for column in 0..M {
-            if matrix[row][column].definitely_zero() {
+    for (row, values) in matrix.iter().take(M).enumerate() {
+        for (column, value) in values.iter().take(M).enumerate() {
+            if value.definitely_zero() {
                 entry_mask |= matrix_entry_bit::<M>(row, column);
                 row_masks[row] |= 1_u8 << column;
                 column_masks[column] |= 1_u8 << row;
@@ -255,9 +255,9 @@ fn matrix_zero_masks_assuming_size<const N: usize, const M: usize>(
 fn matrix_one_mask_assuming_size<const N: usize, const M: usize>(matrix: &[[Real; N]; N]) -> u16 {
     debug_assert_eq!(N, M);
     let mut mask = 0_u16;
-    for row in 0..M {
-        for column in 0..M {
-            if matrix[row][column].definitely_one() {
+    for (row, values) in matrix.iter().take(M).enumerate() {
+        for (column, value) in values.iter().take(M).enumerate() {
+            if value.definitely_one() {
                 mask |= matrix_entry_bit::<M>(row, column);
             }
         }
@@ -283,9 +283,9 @@ fn matrix_symbolic_dependency_mask_assuming_size<const N: usize, const M: usize>
 ) -> RealSymbolicDependencyMask {
     debug_assert_eq!(N, M);
     let mut mask = RealSymbolicDependencyMask::NONE;
-    for row in 0..M {
-        for column in 0..M {
-            mask = mask.union(matrix[row][column].detailed_facts().symbolic.dependencies);
+    for values in matrix.iter().take(M) {
+        for value in values.iter().take(M) {
+            mask = mask.union(value.detailed_facts().symbolic.dependencies);
         }
     }
     mask
@@ -4169,18 +4169,18 @@ fn divide_matrix4_by_affine_linear_diagonal(
         [
             {
                 let row = left[0][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[0][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[0][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[0][0].clone();
@@ -4192,18 +4192,18 @@ fn divide_matrix4_by_affine_linear_diagonal(
         [
             {
                 let row = left[1][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[1][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[1][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[1][0].clone();
@@ -4215,18 +4215,18 @@ fn divide_matrix4_by_affine_linear_diagonal(
         [
             {
                 let row = left[2][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[2][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[2][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[2][0].clone();
@@ -4238,18 +4238,18 @@ fn divide_matrix4_by_affine_linear_diagonal(
         [
             {
                 let row = left[3][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[3][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[3][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[3][0].clone();
@@ -4299,18 +4299,18 @@ fn divide_matrix4_by_affine_linear_diagonal_ref(
         [
             {
                 let row = left[0][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[0][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[0][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[0][0].clone();
@@ -4322,18 +4322,18 @@ fn divide_matrix4_by_affine_linear_diagonal_ref(
         [
             {
                 let row = left[1][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[1][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[1][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[1][0].clone();
@@ -4345,18 +4345,18 @@ fn divide_matrix4_by_affine_linear_diagonal_ref(
         [
             {
                 let row = left[2][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[2][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[2][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[2][0].clone();
@@ -4368,18 +4368,18 @@ fn divide_matrix4_by_affine_linear_diagonal_ref(
         [
             {
                 let row = left[3][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[3][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let row = left[3][2].clone();
-                let row = row * &inv_a22;
-                row
+
+                row * &inv_a22
             },
             {
                 let x = left[3][0].clone();
@@ -4745,7 +4745,7 @@ fn divide_matrix4_by_affine_checked_assuming_affine_translation(
         "helper",
         "right-divide4-checked-by-affine-translation"
     );
-    Ok(divide_matrix4_by_affine_translation(left, right)?)
+    divide_matrix4_by_affine_translation(left, right)
 }
 
 #[inline]
@@ -4785,7 +4785,7 @@ fn divide_matrix4_affine_by_affine_checked_assuming_affine_translation(
         "helper",
         "right-divide4-checked-affine-by-affine-translation"
     );
-    Ok(divide_matrix4_affine_by_affine_translation(left, right)?)
+    divide_matrix4_affine_by_affine_translation(left, right)
 }
 
 #[inline]
@@ -4906,7 +4906,7 @@ fn divide_matrix4_by_affine_checked_with_abort_assuming_affine_translation(
         "helper",
         "right-divide4-checked-abort-by-affine-translation"
     );
-    Ok(divide_matrix4_by_affine_translation(left, right)?)
+    divide_matrix4_by_affine_translation(left, right)
 }
 
 #[inline]
@@ -4953,7 +4953,7 @@ fn divide_matrix4_affine_by_affine_checked_with_abort_assuming_affine_translatio
         "helper",
         "right-divide4-checked-abort-affine-by-affine-translation"
     );
-    Ok(divide_matrix4_affine_by_affine_translation(left, right)?)
+    divide_matrix4_affine_by_affine_translation(left, right)
 }
 
 #[inline]
@@ -5514,13 +5514,13 @@ fn divide_matrix3_by_affine_linear_diagonal(
         [
             {
                 let row = left[0][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[0][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let x = left[0][0].clone();
@@ -5531,13 +5531,13 @@ fn divide_matrix3_by_affine_linear_diagonal(
         [
             {
                 let row = left[1][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[1][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let x = left[1][0].clone();
@@ -5548,13 +5548,13 @@ fn divide_matrix3_by_affine_linear_diagonal(
         [
             {
                 let row = left[2][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[2][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let x = left[2][0].clone();
@@ -5600,13 +5600,13 @@ fn divide_matrix3_by_affine_ref_linear_diagonal(
         [
             {
                 let row = left[0][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[0][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let x = left[0][0].clone();
@@ -5617,13 +5617,13 @@ fn divide_matrix3_by_affine_ref_linear_diagonal(
         [
             {
                 let row = left[1][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[1][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let x = left[1][0].clone();
@@ -5634,13 +5634,13 @@ fn divide_matrix3_by_affine_ref_linear_diagonal(
         [
             {
                 let row = left[2][0].clone();
-                let row = row * &inv_a00;
-                row
+
+                row * &inv_a00
             },
             {
                 let row = left[2][1].clone();
-                let row = row * &inv_a11;
-                row
+
+                row * &inv_a11
             },
             {
                 let x = left[2][0].clone();
@@ -5818,6 +5818,7 @@ fn invert_matrix4_by_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4];
 }
 
 #[inline]
+#[allow(clippy::needless_range_loop)]
 fn invert_matrix4_by_upper_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     // Invert upper-triangular matrices via explicit fixed-size triangular
     // back-substitution. The inverse is upper-triangular with row-local support
@@ -5845,7 +5846,7 @@ fn invert_matrix4_by_upper_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[R
                 Real::zero()
             };
             for k in row..col {
-                value = value - (&result[row][k] * &matrix[k][col]);
+                value -= &result[row][k] * &matrix[k][col];
             }
             result[row][col] = value.mul_cached(&inv_diagonal[col]);
         }
@@ -5854,6 +5855,7 @@ fn invert_matrix4_by_upper_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[R
 }
 
 #[inline]
+#[allow(clippy::needless_range_loop)]
 fn invert_matrix4_by_lower_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     // Lower-triangular inverse is the mirrored O(n²) triangular solve used by the
     // upper branch, using the identity support `col <= row` directly.
@@ -5880,7 +5882,7 @@ fn invert_matrix4_by_lower_triangular(matrix: &[[Real; 4]; 4]) -> BlasResult<[[R
                 Real::zero()
             };
             for k in (col + 1)..=row {
-                value = value - (&result[row][k] * &matrix[k][col]);
+                value -= &result[row][k] * &matrix[k][col];
             }
             result[row][col] = value.mul_cached(&inv_diagonal[col]);
         }
@@ -7140,6 +7142,7 @@ fn divide_matrix4_by_diagonal_checked_with_abort(
 }
 
 #[inline]
+#[allow(clippy::needless_range_loop)]
 fn divide_matrix4_by_upper_triangular(
     mut left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -7193,7 +7196,7 @@ fn divide_matrix4_by_upper_triangular(
         for col in 0..4 {
             let mut value = left[row][col].clone();
             for k in 0..col {
-                value = value - (&left[row][k] * &right[k][col]);
+                value -= &left[row][k] * &right[k][col];
             }
             left[row][col] = value.mul_cached(&inv_diagonal[col]);
         }
@@ -7360,6 +7363,7 @@ fn divide_matrix4_by_upper_triangular_checked_with_abort(
 }
 
 #[inline]
+#[allow(clippy::needless_range_loop)]
 fn divide_matrix4_by_lower_triangular(
     mut left: [[Real; 4]; 4],
     right: &[[Real; 4]; 4],
@@ -7407,7 +7411,7 @@ fn divide_matrix4_by_lower_triangular(
         for col in (0..4).rev() {
             let mut value = left[row][col].clone();
             for k in (col + 1)..4 {
-                value = value - (&left[row][k] * &right[k][col]);
+                value -= &left[row][k] * &right[k][col];
             }
             left[row][col] = value.mul_cached(&inv_diagonal[col]);
         }
@@ -10920,6 +10924,7 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts(
 }
 
 #[inline]
+#[allow(clippy::too_many_arguments)]
 fn transform_vector4_rhs_ref_with_facts(
     left: &[[Real; 4]; 4],
     right: &[Real; 4],
@@ -14720,9 +14725,8 @@ impl Matrix4 {
         let to = to.normalize_checked()?;
         let dot = from.dot(&to);
 
-        match (dot.clone() - Real::one()).refine_sign_until(128) {
-            Some(RealSign::Zero) => return Ok(Self::identity()),
-            _ => {}
+        if let Some(RealSign::Zero) = (dot.clone() - Real::one()).refine_sign_until(128) {
+            return Ok(Self::identity());
         }
 
         let (axis, angle) = match (dot + Real::one()).refine_sign_until(128) {
@@ -15264,7 +15268,7 @@ impl Matrix4 {
                 // special-point row scheduling aligned with projective geometry
                 // routines (Yap, "Towards Exact Geometric Computation", 1997).
                 let rhs_div = [rhs_div_x, rhs_div_y, rhs_div_z, rhs_div_3_scale];
-                return Ok(Vector4(
+                Ok(Vector4(
                     transform_vector4_rhs_point_with_scaled_w_ref_cached(
                         &self.0,
                         &rhs_div,
@@ -15274,16 +15278,16 @@ impl Matrix4 {
                         inv3_is_one,
                         &inv3,
                     ),
-                ));
+                ))
             }
             Vector4HomogeneousKind::Direction => {
                 let rhs_div = [rhs_div_x, rhs_div_y, rhs_div_z, Real::zero()];
                 let direction_is_diagonal = matrix4_direction_linear_is_diagonal(&self.0);
-                return Ok(Vector4(transform_vector4_rhs_direction_ref_cached(
+                Ok(Vector4(transform_vector4_rhs_direction_ref_cached(
                     &self.0,
                     &rhs_div,
                     direction_is_diagonal,
-                )));
+                )))
             }
             Vector4HomogeneousKind::Unknown => {
                 let matrix_facts = matrix4_facts(&self.0);
@@ -15296,7 +15300,7 @@ impl Matrix4 {
                 let all_translation_zero = translation_is_zero.iter().all(|value| *value);
                 let all_translation_nonzero = translation_is_zero.iter().all(|value| !*value);
                 let rhs_div = [rhs_div_x, rhs_div_y, rhs_div_z, rhs_div_3_scale];
-                return Ok(Vector4(transform_vector4_rhs_ref_with_facts(
+                Ok(Vector4(transform_vector4_rhs_ref_with_facts(
                     &self.0,
                     &rhs_div,
                     &translation_is_zero,
@@ -15305,9 +15309,9 @@ impl Matrix4 {
                     matrix_facts.direction_linear_is_diagonal,
                     Some(matrix_facts),
                     vector_facts,
-                )));
+                )))
             }
-        };
+        }
     }
 
     /// Divides a matrix by a known 4x4 diagonal divisor and applies the result

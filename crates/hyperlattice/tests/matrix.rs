@@ -729,7 +729,7 @@ fn matrix4_negative_homogeneous_weight_stays_on_generic_projective_path() {
         expected_negative
     );
     assert_eq!(
-        transform.transform_vec4_batch(&[negative_weight.clone()]),
+        transform.transform_vec4_batch(std::slice::from_ref(&negative_weight)),
         vec![expected_negative.clone()]
     );
 

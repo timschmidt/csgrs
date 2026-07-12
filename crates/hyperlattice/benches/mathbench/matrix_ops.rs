@@ -1,3 +1,4 @@
+#[allow(clippy::needless_range_loop)]
 fn bench_matrix_operations_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,

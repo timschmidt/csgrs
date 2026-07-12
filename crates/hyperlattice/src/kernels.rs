@@ -16,6 +16,7 @@ pub type ExactRealSetFacts = hyperreal::RealExactSetFacts;
 
 /// Already-known exact-rational representation class for a real value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(clippy::enum_variant_names)]
 pub(crate) enum ExactRationalKind {
     /// The scalar is not structurally known to be exact rational.
     NonRational,

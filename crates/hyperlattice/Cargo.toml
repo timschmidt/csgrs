@@ -16,8 +16,8 @@ categories = ["mathematics"]
 # local development, then switch back to crates.io versions before publishing.
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
-#hyperreal = { path = "../hyperreal" }
-hyperreal = { version = "0.13.0" }
+hyperreal = { path = "../hyperreal" }
+#hyperreal = { version = "0.13.1" }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]

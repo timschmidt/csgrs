@@ -22,5 +22,6 @@ pub fn abort_signal() -> hyperlattice::AbortSignal {
 #[allow(dead_code)]
 pub fn unknown_zero() -> Real {
     let one = r(1);
-    sin(one.clone()) - sin(one)
+    let nearby = one.clone() + frac(1, 1_u64 << 60);
+    sin(one) - sin(nearby)
 }

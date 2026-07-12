@@ -19,11 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         backend:
-          - name: realistic
+          - name: default
             args: ""
-          - name: approx
-            args: "--no-default-features --features approx-backend"
-          - name: all-backends
+          - name: all-features
             args: "--all-features"
 
     steps:

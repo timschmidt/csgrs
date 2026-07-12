@@ -95,7 +95,7 @@ mod enabled {
         rows()
             .lock()
             .expect("dispatch trace rows lock poisoned")
-            .insert(name.into(), trace);
+            .insert(name, trace);
     }
 
     pub fn trace_cases<T>(name: impl Into<String>, cases: &[T], mut sample: impl FnMut(&T)) {
