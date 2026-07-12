@@ -23,7 +23,8 @@ use super::{
 };
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
+    Aabb, Classification, Plane, PreparedPoint3, axis_mut, axis_ref, classify_point, classify_real,
+    compare_real,
 };
 use crate::halfspace::aabb_core_halfspaces;
 use crate::polygon::ConvexPolygon;
@@ -48,9 +49,10 @@ pub(super) fn detour_arrangement_cell(
     point: &Point3,
     arrangement_planes: &[Plane],
 ) -> HypermeshResult<Vec<Classification>> {
+    let point = PreparedPoint3::new(point);
     arrangement_planes
         .iter()
-        .map(|plane| classify_point(point, plane))
+        .map(|plane| point.classify(plane))
         .collect()
 }
 
@@ -3761,19 +3763,20 @@ pub(super) fn point_lies_on_traced_surface(
     point: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
+    let point = PreparedPoint3::new(point);
     for polygon in polygons {
         if polygon.mesh_index < 0 {
             continue;
         }
 
-        if classify_point(point, &polygon.support)? != Classification::On {
+        if point.classify(&polygon.support)? != Classification::On {
             continue;
         }
 
         let mut inside_polygon = true;
         let mut on_edge = false;
         for edge in &polygon.edges {
-            match classify_point(point, edge)? {
+            match point.classify(edge)? {
                 Classification::Positive => {
                     inside_polygon = false;
                     break;

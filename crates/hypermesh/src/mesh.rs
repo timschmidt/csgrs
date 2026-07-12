@@ -101,6 +101,7 @@ impl PolygonSoup {
 
 /// Prepares borrowed mesh views into a combined polygon soup.
 pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
+    crate::trace_dispatch!("prepare-input", "start");
     validate_non_empty_mesh_views(meshes)?;
 
     let all_positions = meshes
@@ -108,6 +109,7 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
         .flat_map(|mesh| mesh.positions.iter().cloned())
         .collect::<Vec<_>>();
     let bounds = bounds_for_positions(&all_positions)?;
+    crate::trace_dispatch!("prepare-input", "bounds-computed");
 
     let mut polygons = Vec::new();
     let mut polygon_index = 0isize;
@@ -166,6 +168,7 @@ pub fn prepare_input(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
         }
     }
 
+    crate::trace_dispatch!("prepare-input", "complete");
     Ok(PolygonSoup {
         polygons,
         bounds,

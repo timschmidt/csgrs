@@ -36,9 +36,12 @@ pub fn boolean_operation(
     op: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
+    crate::trace_dispatch!("boolean-operation", "start");
     validate_mesh_refs(meshes)?;
     let result = boolean_operation_general(meshes, op, config)?;
+    crate::trace_dispatch!("boolean-operation", "certify-output-closure");
     certify_output_polygon_closure(&result)?;
+    crate::trace_dispatch!("boolean-operation", "complete");
     Ok(result)
 }
 
@@ -47,12 +50,14 @@ fn boolean_operation_general(
     op: BooleanOp,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
+    crate::trace_dispatch!("boolean-operation", "prepare-input");
     let soup = prepare_input(meshes)?;
 
     let process_bounds = expanded_bounds(&soup.bounds);
     let ref_point = outside_reference_point(&process_bounds);
     let ref_wnv = vec![0; soup.num_meshes];
     let indicator = make_indicator(op, soup.num_meshes);
+    crate::trace_dispatch!("boolean-operation", "subdivide");
     let classified = subdivide_for_operation(
         SubdivisionTask::new(soup.polygons.clone(), process_bounds, ref_point, ref_wnv),
         &indicator,

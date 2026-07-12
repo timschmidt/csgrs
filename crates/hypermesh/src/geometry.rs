@@ -1,47 +1,14 @@
-//! Hyperreal planes, AABBs, and exact classification helpers.
+//! Hyperreal planes, AABBs, and vector helpers.
 
 use std::cmp::Ordering;
 
-use hyperlattice::{
-    HomogeneousPoint3, Plane3Coefficients, Point3, ProjectivePlane3, Real,
-    homogeneous_point_plane_expression,
+use hyperlattice::{Plane3Coefficients, Point3, ProjectivePlane3, Real};
+
+use crate::error::HypermeshResult;
+pub use crate::predicate::{
+    Classification, classify_point, classify_projective_point, compare_real,
 };
-use hyperlimit::{PredicateOutcome, Sign, classify_real_sign};
-
-use crate::error::{HypermeshError, HypermeshResult};
-
-/// Certified point-vs-plane classification.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Classification {
-    /// Point is on the negative side of the plane.
-    Negative,
-    /// Point lies exactly on the plane.
-    On,
-    /// Point is on the positive side of the plane.
-    Positive,
-}
-
-impl Classification {
-    /// Returns true when the classification is positive.
-    pub const fn is_positive(self) -> bool {
-        matches!(self, Self::Positive)
-    }
-
-    /// Returns true when the classification is negative.
-    pub const fn is_negative(self) -> bool {
-        matches!(self, Self::Negative)
-    }
-
-    /// Returns true when the point is on the negative side or on the plane.
-    pub const fn is_non_positive(self) -> bool {
-        !self.is_positive()
-    }
-
-    /// Returns true when the point is on the positive side or on the plane.
-    pub const fn is_non_negative(self) -> bool {
-        !self.is_negative()
-    }
-}
+pub(crate) use crate::predicate::{PreparedPoint3, classify_real};
 
 /// Exact plane `normal . point + offset = 0`.
 #[derive(Clone, Debug, PartialEq)]
@@ -220,44 +187,6 @@ impl Aabb {
         let mut min = self.min.clone();
         *axis_mut(&mut min, axis) = value;
         Self::new(min, self.max.clone())
-    }
-}
-
-/// Classifies an affine point against a plane.
-pub fn classify_point(point: &Point3, plane: &Plane) -> HypermeshResult<Classification> {
-    classify_real(&plane.expression_at_point(point))
-}
-
-/// Classifies a homogeneous point against a plane.
-pub fn classify_projective_point(
-    point: &HomogeneousPoint3,
-    plane: &Plane,
-) -> HypermeshResult<Classification> {
-    classify_real(&homogeneous_point_plane_expression(point, plane))
-}
-
-/// Returns a certified ordering for two exact reals.
-pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
-    match hyperlimit::compare_reals(left, right) {
-        PredicateOutcome::Decided { value, .. } => Ok(value),
-        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
-    }
-}
-
-pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
-    match classify_real_sign(value) {
-        PredicateOutcome::Decided {
-            value: Sign::Negative,
-            ..
-        } => Ok(Classification::Negative),
-        PredicateOutcome::Decided {
-            value: Sign::Zero, ..
-        } => Ok(Classification::On),
-        PredicateOutcome::Decided {
-            value: Sign::Positive,
-            ..
-        } => Ok(Classification::Positive),
-        PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
     }
 }
 

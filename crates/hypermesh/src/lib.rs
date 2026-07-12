@@ -65,6 +65,9 @@
 #![deny(dead_code)]
 #![warn(missing_docs)]
 
+mod trace;
+pub(crate) use trace::trace_dispatch;
+
 pub mod bvh;
 pub mod clip;
 pub mod error;
@@ -76,6 +79,7 @@ pub mod mesh;
 pub mod operations;
 pub mod output;
 pub mod polygon;
+mod predicate;
 pub mod segment_trace;
 pub mod subdivision;
 pub mod winding;

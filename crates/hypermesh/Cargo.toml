@@ -11,7 +11,25 @@ hyperreal = { path = "../hyperreal" }
 hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
 
 [dev-dependencies]
+criterion = "0.5"
 proptest = "1.7.0"
+
+[features]
+default = []
+dispatch-trace = [
+    "hyperreal/dispatch-trace",
+    "hyperlattice/hyperreal-dispatch-trace",
+    "hyperlimit/dispatch-trace",
+]
+
+[[bench]]
+name = "end_to_end"
+harness = false
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["dispatch-trace"]
 
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }
