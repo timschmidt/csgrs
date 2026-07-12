@@ -11,6 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ./.github/actions/hyper-workspace
+
       - name: Rust/Cargo Cache
         uses: Swatinem/rust-cache@v2
 
