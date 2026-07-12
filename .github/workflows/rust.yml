@@ -2,275 +2,73 @@ name: Rust CI
 
 on: [push, pull_request]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   check:
-    name: Check
+    name: Check ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: no-default-features
+            command: cargo check --locked --no-default-features
+          - name: default
+            command: cargo check --locked
+          - name: all-features
+            command: cargo check --locked --all-features
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Rust/Cargo Cache
-        uses: Swatinem/rust-cache@v2
-        
-      - name: Run Check minimal f32 single threaded earcut
-        run: cargo check --no-default-features --features
-          "f32 earcut"
-          
-      - name: Run Check minimal f32 parallel threaded earcut
-        run: cargo check --no-default-features --features
-          "f32 parallel earcut"
-          
-      - name: Run Check minimal f32 single threaded delaunay
-        run: cargo check --no-default-features --features
-          "f32 delaunay"
-          
-      - name: Run Check minimal f32 parallel threaded delaunay
-        run: cargo check --no-default-features --features
-          "f32 parallel delaunay"
-          
-      - name: Run Check minimal f64 single threaded earcut
-        run: cargo check --no-default-features --features
-          "f64 earcut"
-          
-      - name: Run Check minimal f32 parallel threaded earcut
-        run: cargo check --no-default-features --features
-          "f64 parallel earcut"
-          
-      - name: Run Check minimal f64 single threaded delaunay
-        run: cargo check --no-default-features --features
-          "f64 delaunay"
-          
-      - name: Run Check minimal f64 parallel threaded delaunay
-        run: cargo check --no-default-features --features
-          "f64 parallel delaunay"
-        
-      - name: Run Check f32 single threaded earcut
-        run: cargo check --no-default-features --features
-          "f32 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Check f32 parallel earcut
-        run: cargo check --no-default-features --features
-          "f32 earcut parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          
-      - name: Run Check f32 single threaded delaunay
-        run: cargo check --no-default-features --features
-          "f32 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Check f32 parallel delaunay
-        run: cargo check --no-default-features --features
-          "f32 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          
-      - name: Run Check f64 single threaded earcut
-        run: cargo check --no-default-features --features
-          "f64 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Check f64 parallel earcut
-        run: cargo check --no-default-features --features
-          "f64 earcut parallel stl-io svg-io amf-io obj-io ply-io dxf-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          
-      - name: Run Check f64 single threaded delaunay
-        run: cargo check --no-default-features --features
-          "f64 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Check f64 parallel delaunay
-        run: cargo check --no-default-features --features
-          "f64 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
+      - uses: ./.github/actions/hyper-workspace
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: ${{ matrix.command }}
 
   test:
-    name: Test Suite
+    name: Test ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            command: cargo test --locked
+          - name: all-features
+            command: cargo test --locked --all-features
     steps:
       - uses: actions/checkout@v4
-
-      - name: Rust/Cargo Cache
-        uses: Swatinem/rust-cache@v2
-        
-      - name: Run Test minimal f32 single threaded earcut
-        run: cargo test --lib --no-default-features --features
-          "f32 earcut"
-          
-      - name: Run Test minimal f32 parallel threaded earcut
-        run: cargo test --lib --no-default-features --features
-          "f32 parallel earcut"
-          
-      - name: Run Test minimal f32 single threaded delaunay
-        run: cargo test --lib --no-default-features --features
-          "f32 delaunay"
-          
-      - name: Run Test minimal f32 parallel threaded delaunay
-        run: cargo test --lib --no-default-features --features
-          "f32 parallel delaunay"
-          
-      - name: Run Test minimal f64 single threaded earcut
-        run: cargo test --lib --no-default-features --features
-          "f64 earcut"
-          
-      - name: Run Test minimal f32 parallel threaded earcut
-        run: cargo test --lib --no-default-features --features
-          "f64 parallel earcut"
-          
-      - name: Run Test minimal f64 single threaded delaunay
-        run: cargo test --lib --no-default-features --features
-          "f64 delaunay"
-          
-      - name: Run Test minimal f64 parallel threaded delaunay
-        run: cargo test --lib --no-default-features --features
-          "f64 parallel delaunay"
-          
-      - name: Run Test f32 single threaded earcut
-        run: cargo test --lib --no-default-features --features
-          "f32 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Test f32 parallel earcut
-        run: cargo test --lib --no-default-features --features
-          "f32 earcut parallel stl-io svg-io amf-io obj-io ply-io dxf-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          
-      - name: Run Test f32 single threaded delaunay
-        run: cargo test --lib --no-default-features --features
-          "f32 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Test f32 parallel delaunay
-        run: cargo test --lib --no-default-features --features
-          "f32 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          
-      - name: Run Test f64 single threaded earcut
-        run: cargo test --lib --no-default-features --features
-          "f64 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Test f64 parallel earcut
-        run: cargo test --lib --no-default-features --features
-          "f64 earcut parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          
-      - name: Run Test f64 single threaded delaunay
-        run: cargo test --lib --no-default-features --features
-          "f64 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-        
-      - name: Run Test f64 parallel delaunay
-        run: cargo test --lib --no-default-features --features
-          "f64 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
+      - uses: ./.github/actions/hyper-workspace
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: ${{ matrix.command }}
 
   fmt:
     name: Formatting
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-
-      - name: Run Fmt
-        run: cargo fmt --all -- --check
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/hyper-workspace
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --locked --all-targets --all-features -- -D warnings
 
-      - name: Rust/Cargo Cache
-        uses: Swatinem/rust-cache@v2
-          
-      - name: Run Clippy minimal f32 single threaded earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f32 earcut"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f32 parallel threaded earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f32 parallel earcut"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f32 single threaded delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f32 delaunay"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f32 parallel threaded delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f32 parallel delaunay"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f64 single threaded earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f64 earcut"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f32 parallel threaded earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f64 parallel earcut"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f64 single threaded delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f64 delaunay"
-          -- -D warnings
-          
-      - name: Run Clippy minimal f64 parallel threaded delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f64 parallel delaunay"
-          -- -D warnings
-          
-      - name: Run Clippy f32 single threaded earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f32 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-        
-      - name: Run Clippy f32 parallel earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f32 earcut parallel stl-io svg-io amf-io obj-io ply-io dxf-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-          
-      - name: Run Clippy f32 single threaded delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f32 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-        
-      - name: Run Clippy f32 parallel delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f32 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-          
-      - name: Run Clippy f64 single threaded earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f64 earcut stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-        
-      - name: Run Clippy f64 parallel earcut
-        run: cargo clippy --lib --no-default-features --features
-          "f64 earcut parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-          
-      - name: Run Clippy f64 single threaded delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f64 delaunay stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-        
-      - name: Run Clippy f64 parallel delaunay
-        run: cargo clippy --lib --no-default-features --features
-          "f64 delaunay parallel stl-io svg-io dxf-io amf-io obj-io ply-io truetype-text hershey-text image-io chull-io metaballs sdf offset"
-          -- -D warnings
-
-  style:
-    name: Check spelling and semver
+  spelling:
+    name: Spelling
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Remove untracked files
-        run: git clean -df
-
-      - name: Rust/Cargo Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Check semver
-        uses: obi1kenobi/cargo-semver-checks-action@v2
-        with:
-          package: csgrs
-          feature-group: only-explicit-features
-          features: |
-            f32,earcut,parallel,stl-io,svg-io,dxf-io,truetype-text,hershey-text,image-io
-      - name: Check spelling
-        run: |
-          if ! command -v typos >/dev/null; then
-            cargo install typos-cli
-          fi
-          typos
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@master

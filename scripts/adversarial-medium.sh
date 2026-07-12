@@ -16,5 +16,3 @@ run cargo test --test adversarial_stress
 run cargo test --test adversarial_fixtures
 run cargo test --doc
 run cargo check --features "parallel"
-run cargo check --features "nurbs"
-run cargo check --manifest-path fuzz/Cargo.toml --locked

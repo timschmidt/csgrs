@@ -12,7 +12,12 @@ cgs = "CSG"
 CGS = "CSG"
 
 iy = "iy"
+iz = "iz"
 toi = "toi"
+ein = "ein"
+espace = "espace"
+metalness = "metalness"
+PN = "PN"
 
 # Abbreviation for homogeneous coordinates
 hom = "hom"

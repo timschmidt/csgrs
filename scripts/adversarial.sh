@@ -36,9 +36,8 @@ done
 
 expect_fail cargo check --no-default-features --features "geo"
 
-run cargo check --manifest-path fuzz/Cargo.toml --locked
-
 if [[ "${RUN_FUZZ_SECONDS:-0}" != "0" ]]; then
+  run cargo check --manifest-path fuzz/Cargo.toml --locked
   cargo_fuzz=(cargo fuzz)
   if cargo +nightly fuzz --help >/dev/null 2>&1; then
     cargo_fuzz=(cargo +nightly fuzz)
