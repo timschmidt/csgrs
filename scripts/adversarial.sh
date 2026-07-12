@@ -26,8 +26,8 @@ run cargo test --test adversarial_fixtures
 feature_sets=(
   "mesh sketch"
   "mesh sketch parallel"
-  "mesh sketch stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io chull-io metaballs sdf offset"
-  "mesh sketch parallel stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io chull-io metaballs sdf offset"
+  "mesh sketch stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io metaballs sdf offset"
+  "mesh sketch parallel stl-io dxf-io obj-io ply-io amf-io gltf-io gerber-io metaballs sdf offset"
 )
 
 for features in "${feature_sets[@]}"; do

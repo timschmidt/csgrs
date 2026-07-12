@@ -19,18 +19,9 @@ impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Mesh<M> {
                 .unwrap_or_else(|_| Vector3::z());
             for tri in triangles {
                 f([
-                    Vertex {
-                        position: tri[0].position.clone(),
-                        normal: normal.clone(),
-                    },
-                    Vertex {
-                        position: tri[1].position.clone(),
-                        normal: normal.clone(),
-                    },
-                    Vertex {
-                        position: tri[2].position.clone(),
-                        normal: normal.clone(),
-                    },
+                    Vertex::new(tri[0].position.clone(), normal.clone()),
+                    Vertex::new(tri[1].position.clone(), normal.clone()),
+                    Vertex::new(tri[2].position.clone(), normal.clone()),
                 ]);
             }
         }

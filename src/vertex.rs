@@ -3,12 +3,29 @@
 use hashbrown::HashMap;
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_POSITION_ID: AtomicU64 = AtomicU64::new(1);
+
+pub(crate) fn fresh_position_id() -> u64 {
+    NEXT_POSITION_ID.fetch_add(1, Ordering::Relaxed)
+}
 
 /// A vertex of a polygon, holding position and normal.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Vertex {
     pub position: Point3,
     pub normal: Vector3,
+    pub(crate) position_id: u64,
+    pub(crate) coordinate_ids: [u64; 3],
+    pub(crate) ruled_line: Option<[u64; 2]>,
+    pub(crate) hull_candidate: bool,
+}
+
+impl PartialEq for Vertex {
+    fn eq(&self, other: &Self) -> bool {
+        self.position == other.position && self.normal == other.normal
+    }
 }
 
 impl Default for Vertex {
@@ -20,8 +37,29 @@ impl Default for Vertex {
 impl Vertex {
     /// Create a new [`Vertex`].
     #[inline]
-    pub const fn new(position: Point3, normal: Vector3) -> Self {
-        Self { position, normal }
+    pub fn new(position: Point3, normal: Vector3) -> Self {
+        Self {
+            position,
+            normal,
+            position_id: fresh_position_id(),
+            coordinate_ids: [
+                fresh_position_id(),
+                fresh_position_id(),
+                fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
+        }
+    }
+
+    pub(crate) fn with_normal(mut self, normal: Vector3) -> Self {
+        self.normal = normal;
+        self
+    }
+
+    pub(crate) const fn exclude_from_hull(mut self) -> Self {
+        self.hull_candidate = false;
+        self
     }
 
     /// Flip vertex normal.
@@ -179,11 +217,11 @@ fn equal_thirds() -> [Real; 3] {
 }
 
 fn real_exactly_zero(value: &Real) -> bool {
-    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+    matches!(value.refine_sign_until(-128), Some(RealSign::Zero))
 }
 
 fn real_positive(value: &Real) -> bool {
-    matches!(value.refine_sign_until(128), Some(RealSign::Positive))
+    matches!(value.refine_sign_until(-128), Some(RealSign::Positive))
 }
 
 fn normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<Vec<Real>> {

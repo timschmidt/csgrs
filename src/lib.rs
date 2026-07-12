@@ -11,7 +11,7 @@
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
 //! - **gerber-io**: Gerber/RS-274X import/export for 2D `Profile` geometry
-//! - **chull-io**: convex hull and minkowski sum
+//! - Exact convex hull and Minkowski sum are always available through `hypermesh`.
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
 //! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
 //! - **hypertri**: hyperreal-backed polygon and sketch triangulation

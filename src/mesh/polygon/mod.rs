@@ -6,6 +6,13 @@ use hyperlattice::{Aabb, Point3, Vector3};
 use hyperreal::RealSign;
 use std::ops::{Deref, DerefMut};
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_PLANE_ID: AtomicU64 = AtomicU64::new(1);
+
+pub(crate) fn fresh_plane_id() -> u64 {
+    NEXT_PLANE_ID.fetch_add(1, Ordering::Relaxed)
+}
 
 mod triangulation;
 
@@ -16,6 +23,7 @@ mod triangulation;
 pub struct Polygon<M: Clone> {
     pub(crate) vertices: Vec<Vertex>,
     pub(crate) plane: Plane,
+    pub(crate) plane_id: u64,
     bounding_box: OnceLock<Aabb>,
     pub(crate) metadata: M,
 }
@@ -65,6 +73,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         Polygon {
             vertices,
             plane,
+            plane_id: fresh_plane_id(),
             bounding_box: OnceLock::new(),
             metadata,
         }
@@ -75,9 +84,15 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         Polygon {
             vertices: self.vertices,
             plane: self.plane,
+            plane_id: self.plane_id,
             bounding_box: self.bounding_box,
             metadata,
         }
+    }
+
+    pub(crate) const fn with_plane_id(mut self, plane_id: u64) -> Self {
+        self.plane_id = plane_id;
+        self
     }
 
     /// Map this polygon's metadata while preserving its geometry.
@@ -88,6 +103,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         Polygon {
             vertices: self.vertices,
             plane: self.plane,
+            plane_id: self.plane_id,
             bounding_box: self.bounding_box,
             metadata: f(self.metadata),
         }
@@ -133,16 +149,6 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         self.bounding_box = OnceLock::new();
     }
 
-    pub(crate) fn translate_in_place(&mut self, offset: &Vector3) {
-        for vertex in &mut self.vertices {
-            vertex.position = vertex.position.clone() + offset;
-        }
-        self.plane.point_a = self.plane.point_a.clone() + offset;
-        self.plane.point_b = self.plane.point_b.clone() + offset;
-        self.plane.point_c = self.plane.point_c.clone() + offset;
-        self.bounding_box = OnceLock::new();
-    }
-
     /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
         // 1) reverse vertices
@@ -177,7 +183,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         if let Some(mut poly_normal) = hyper_polygon_newell_normal(&self.vertices) {
             let plane_normal = self.plane.normal();
             if matches!(
-                poly_normal.dot(&plane_normal).refine_sign_until(128),
+                poly_normal.dot(&plane_normal).refine_sign_until(-128),
                 Some(RealSign::Negative)
             ) {
                 poly_normal = -poly_normal;

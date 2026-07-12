@@ -4,6 +4,7 @@ use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::mesh::Mesh;
 use crate::mesh::Polygon;
+use crate::mesh::polygon::fresh_plane_id;
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::vertex::Vertex;
@@ -12,6 +13,7 @@ use hypercurve::triangulate_finite_rings;
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 /// Accept any finite, strictly positive mesh scalar exactly.
@@ -22,7 +24,7 @@ use std::fmt::Debug;
 /// Geometry* 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
     hyperlimit::compare_reals(lhs, rhs).value().or_else(|| {
-        match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+        match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
             Some(RealSign::Positive) => Ordering::Greater,
             Some(RealSign::Negative) => Ordering::Less,
             Some(RealSign::Zero) => Ordering::Equal,
@@ -30,6 +32,43 @@ fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
         }
         .into()
     })
+}
+
+#[cfg(test)]
+mod retained_topology_tests {
+    use super::*;
+    use crate::csg::CSG;
+
+    #[test]
+    fn frustum_reuses_ring_positions_through_transform() {
+        let mesh = Mesh::frustum_ptp(
+            Point3::origin(),
+            Point3::new(Real::zero(), Real::zero(), Real::from(2_u8)),
+            Real::from(2_u8),
+            Real::from(3_u8),
+            6,
+            (),
+        );
+        assert_eq!(
+            mesh.polygons[0].vertices[2].position,
+            mesh.polygons[2].vertices[0].position
+        );
+        assert_eq!(
+            mesh.polygons[0].vertices[2].position_id,
+            mesh.polygons[2].vertices[0].position_id
+        );
+
+        let rotated = mesh.rotate(Real::from(-35_i8), Real::zero(), Real::zero());
+        assert_eq!(
+            rotated.polygons[0].vertices[2].position_id,
+            rotated.polygons[2].vertices[0].position_id
+        );
+        let translated = rotated.translate(Real::zero(), Real::from(5_u8), Real::from(2_u8));
+        assert_eq!(
+            translated.polygons[0].vertices[2].position_id,
+            translated.polygons[2].vertices[0].position_id
+        );
+    }
 }
 
 fn hmesh_scalar_positive(value: &Real) -> bool {
@@ -54,15 +93,30 @@ fn real_from_ratio(numerator: u64, denominator: u64) -> Option<Real> {
     (Real::from(numerator) / Real::from(denominator)).ok()
 }
 
-fn sampled_sin_cos(index: usize, count: usize, sweep: f64) -> Option<(Real, Real)> {
-    let index = if sweep == std::f64::consts::TAU {
-        index % count
-    } else {
-        index
-    };
-    let angle = sweep * index as f64 / count as f64;
+fn sampled_sin_cos(index: usize, count: usize, sweep: &Real) -> Option<(Real, Real)> {
+    let angle = sweep.to_f64_lossy()? * index as f64 / count as f64;
     let (sin, cos) = angle.sin_cos();
     Some((Real::try_from(sin).ok()?, Real::try_from(cos).ok()?))
+}
+
+fn retain_equal_coordinate_ids<'a>(vertices: impl IntoIterator<Item = &'a mut Vertex>) {
+    let mut coordinates = HashMap::<(usize, Option<u64>), Vec<(Real, u64)>>::new();
+    for vertex in vertices {
+        for axis in 0..3 {
+            let coordinate = match axis {
+                0 => &vertex.position.x,
+                1 => &vertex.position.y,
+                _ => &vertex.position.z,
+            };
+            let bucket = coordinate.to_f64_lossy().map(f64::to_bits);
+            let entries = coordinates.entry((axis, bucket)).or_default();
+            if let Some((_, id)) = entries.iter().find(|(value, _)| value == coordinate) {
+                vertex.coordinate_ids[axis] = *id;
+            } else {
+                entries.push((coordinate.clone(), vertex.coordinate_ids[axis]));
+            }
+        }
+    }
 }
 
 fn assembled_arrow<M: Clone + Debug + Send + Sync>(
@@ -155,12 +209,10 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
 
     let shoulder_normal = if orientation { axis.clone() } else { -axis };
     for segment in 0..segments {
-        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, std::f64::consts::TAU)
-        else {
+        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, &Real::tau()) else {
             return Mesh::empty();
         };
-        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, std::f64::consts::TAU)
-        else {
+        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, &Real::tau()) else {
             return Mesh::empty();
         };
         let ring_point = |radius: &Real, sin: &Real, cos: &Real| {
@@ -193,7 +245,7 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
     Mesh::from_polygons(polygons)
 }
 
-#[cfg(all(feature = "chull-io", feature = "sketch"))]
+#[cfg(feature = "sketch")]
 fn positive_x_half(profile: &Profile) -> Option<Profile> {
     let (min_x, min_y, max_x, max_y) = profile.native_xy_bounds()?;
     match real_cmp(&min_x, &Real::zero())? {
@@ -495,8 +547,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Angular Distortion**: Increases towards poles (unavoidable)
     ///
     /// ### **Numerical Considerations**
-    /// - **Trigonometric Sampling**: Samples finite angles once, then promotes
-    ///   their coordinates to exact dyadic `Real` values
+    /// - **Trigonometric Sampling**: Starts from canonical symbolic pi/tau and
+    ///   projects the explicitly polygonal sweep once before sampling
     /// - **Pole Handling**: Avoids division by zero at singularities
     /// - **Winding Consistency**: Maintains outward-facing orientation
     ///
@@ -512,10 +564,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `stacks`: Latitude divisions (≥ 2, recommend ≥ 6)
     /// - `metadata`: Optional metadata for all faces
     ///
-    /// Longitude/latitude trigonometry is evaluated once at the finite
-    /// tessellation boundary. The resulting dyadic coordinates are promoted to
-    /// `Real`, so downstream topology predicates remain exact without retaining
-    /// costly symbolic trigonometric nodes in every mesh vertex.
+    /// Longitude/latitude sweeps use canonical symbolic pi/tau. The explicitly
+    /// polygonal sphere projects those sweeps at its tessellation boundary,
+    /// retaining exact dyadic coordinates for downstream topology.
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
         if !hmesh_scalar_positive(&radius) || segments < 3 || stacks < 2 {
             return Mesh::empty();
@@ -523,15 +574,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         let mut longitudes = Vec::with_capacity(segments);
         for longitude in 0..segments {
-            let Some(sample) = sampled_sin_cos(longitude, segments, std::f64::consts::TAU)
-            else {
+            let Some(sample) = sampled_sin_cos(longitude, segments, &Real::tau()) else {
                 return Mesh::empty();
             };
             longitudes.push(sample);
         }
         let mut latitudes = Vec::with_capacity(stacks - 1);
         for latitude in 1..stacks {
-            let Some(sample) = sampled_sin_cos(latitude, stacks, std::f64::consts::PI) else {
+            let Some(sample) = sampled_sin_cos(latitude, stacks, &Real::pi()) else {
                 return Mesh::empty();
             };
             latitudes.push(sample);
@@ -682,13 +732,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let start_v = Vertex::new(start.clone(), -axis_z.clone());
         let end_v = Vertex::new(end.clone(), axis_z.clone());
 
-        // A closure that returns a vertex on the lateral surface.
-        // For a given stack (0.0 for bottom, 1.0 for top), slice (fraction along the circle),
-        // and a normal blend factor (used for cap smoothing), compute the vertex.
-        let point = |stack: Real, sin_angle: &Real, cos_angle: &Real, normal_blend: Real| {
-            // Linear interpolation of radius.
-            let radius_delta = radius2.clone() - radius1.clone();
-            let r = radius1.clone() + stack.clone() * radius_delta;
+        let ring_point = |stack: &Real, radius: &Real, sin_angle: &Real, cos_angle: &Real| {
             let radial_dir = Vector3::from_xyz(
                 axis_x.0[0].clone() * cos_angle.clone()
                     + axis_y.0[0].clone() * sin_angle.clone(),
@@ -696,19 +740,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     + axis_y.0[1].clone() * sin_angle.clone(),
                 axis_x.0[2].clone() * cos_angle + axis_y.0[2].clone() * sin_angle,
             );
-            let position = start.clone() + ray.clone() * stack + radial_dir.clone() * r;
-            let normal = if hmesh_scalar_nonzero(&normal_blend) {
-                axis_z.clone() * normal_blend
-            } else {
-                let axial_component = radius1.clone() - radius2.clone();
-                let normal =
-                    radial_dir * axis_length.clone() + axis_z.clone() * axial_component;
-                normal.normalize_checked().ok()?
-            };
-            Some(Vertex::new(position, normal))
+            let position = start.clone()
+                + ray.clone() * stack.clone()
+                + radial_dir.clone() * radius.clone();
+            let axial_component = radius1.clone() - radius2.clone();
+            let side_normal = (radial_dir * axis_length.clone()
+                + axis_z.clone() * axial_component)
+                .normalize_checked()
+                .ok()?;
+            Some((position, side_normal))
         };
-
-        let mut polygons = Vec::new();
 
         // Special-case flags for degenerate faces.
         let bottom_degenerate = !hmesh_scalar_nonzero(&radius1);
@@ -719,72 +760,96 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty();
         }
 
-        // For each slice of the circle (0..segments)
+        let mut bottom_ring = Vec::with_capacity(segments);
+        let mut top_ring = Vec::with_capacity(segments);
         for i in 0..segments {
-            let Some((sin0, cos0)) = sampled_sin_cos(i, segments, std::f64::consts::TAU)
-            else {
+            let Some((sin, cos)) = sampled_sin_cos(i, segments, &Real::tau()) else {
                 return Mesh::empty();
             };
-            let Some((sin1, cos1)) = sampled_sin_cos(i + 1, segments, std::f64::consts::TAU)
-            else {
-                return Mesh::empty();
-            };
-
-            // In the normal frustum_ptp, we always add a bottom cap triangle (fan) and a top cap triangle.
-            // Here, we only add the cap triangle if the corresponding radius is not degenerate.
             if !bottom_degenerate {
-                // Bottom cap: a triangle fan from the bottom center to two consecutive points on the bottom ring.
-                let (Some(p0), Some(p1)) = (
-                    point(Real::zero(), &sin0, &cos0, -Real::one()),
-                    point(Real::zero(), &sin1, &cos1, -Real::one()),
-                ) else {
+                let Some((position, normal)) = ring_point(&Real::zero(), &radius1, &sin, &cos)
+                else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![start_v.clone(), p1, p0], metadata.clone()));
+                bottom_ring.push(Vertex::new(position, normal));
             }
             if !top_degenerate {
-                // Top cap: a triangle fan from the top center to two consecutive points on the top ring.
-                let (Some(p0), Some(p1)) = (
-                    point(Real::one(), &sin1, &cos1, Real::one()),
-                    point(Real::one(), &sin0, &cos0, Real::one()),
-                ) else {
+                let Some((position, normal)) = ring_point(&Real::one(), &radius2, &sin, &cos)
+                else {
                     return Mesh::empty();
                 };
-                polygons.push(Polygon::new(vec![end_v.clone(), p1, p0], metadata.clone()));
+                top_ring.push(Vertex::new(position, normal));
+            }
+        }
+        if !bottom_degenerate && !top_degenerate {
+            let surface_id = crate::vertex::fresh_position_id();
+            for (bottom, top) in bottom_ring.iter_mut().zip(&mut top_ring) {
+                let line_id = crate::vertex::fresh_position_id();
+                bottom.ruled_line = Some([surface_id, line_id]);
+                top.ruled_line = Some([surface_id, line_id]);
+            }
+        }
+        retain_equal_coordinate_ids(bottom_ring.iter_mut().chain(&mut top_ring));
+
+        let mut polygons = Vec::with_capacity(3 * segments);
+        let bottom_cap_plane_id = fresh_plane_id();
+        let top_cap_plane_id = fresh_plane_id();
+
+        // For each slice of the circle (0..segments)
+        for i in 0..segments {
+            let next = (i + 1) % segments;
+
+            if !bottom_degenerate {
+                polygons.push(
+                    Polygon::new(
+                        vec![
+                            start_v.clone().exclude_from_hull(),
+                            bottom_ring[next].clone().with_normal(-axis_z.clone()),
+                            bottom_ring[i].clone().with_normal(-axis_z.clone()),
+                        ],
+                        metadata.clone(),
+                    )
+                    .with_plane_id(bottom_cap_plane_id),
+                );
+            }
+            if !top_degenerate {
+                polygons.push(
+                    Polygon::new(
+                        vec![
+                            end_v.clone().exclude_from_hull(),
+                            top_ring[i].clone().with_normal(axis_z.clone()),
+                            top_ring[next].clone().with_normal(axis_z.clone()),
+                        ],
+                        metadata.clone(),
+                    )
+                    .with_plane_id(top_cap_plane_id),
+                );
             }
 
-            // For the side wall, we normally build a quad spanning from the bottom ring (stack=0)
-            // to the top ring (stack=1). If one of the rings is degenerate, that ring reduces to a single point.
-            // In that case, we output a triangle.
             if bottom_degenerate {
-                // Bottom is a point (start_v); create a triangle from start_v to two consecutive points on the top ring.
-                let (Some(p0), Some(p1)) = (
-                    point(Real::one(), &sin0, &cos0, Real::zero()),
-                    point(Real::one(), &sin1, &cos1, Real::zero()),
-                ) else {
-                    return Mesh::empty();
-                };
-                polygons.push(Polygon::new(vec![start_v.clone(), p1, p0], metadata.clone()));
+                polygons.push(Polygon::new(
+                    vec![start_v.clone(), top_ring[next].clone(), top_ring[i].clone()],
+                    metadata.clone(),
+                ));
             } else if top_degenerate {
-                // Top is a point (end_v); create a triangle from two consecutive points on the bottom ring to end_v.
-                let (Some(p0), Some(p1)) = (
-                    point(Real::zero(), &sin1, &cos1, Real::zero()),
-                    point(Real::zero(), &sin0, &cos0, Real::zero()),
-                ) else {
-                    return Mesh::empty();
-                };
-                polygons.push(Polygon::new(vec![p1, p0, end_v.clone()], metadata.clone()));
+                polygons.push(Polygon::new(
+                    vec![
+                        bottom_ring[i].clone(),
+                        bottom_ring[next].clone(),
+                        end_v.clone(),
+                    ],
+                    metadata.clone(),
+                ));
             } else {
-                // Normal case: both rings are non-degenerate. Use a quad for the side wall.
-                let (Some(p0), Some(p1), Some(p2), Some(p3)) = (
-                    point(Real::zero(), &sin1, &cos1, Real::zero()),
-                    point(Real::zero(), &sin0, &cos0, Real::zero()),
-                    point(Real::one(), &sin0, &cos0, Real::zero()),
-                    point(Real::one(), &sin1, &cos1, Real::zero()),
-                ) else {
-                    return Mesh::empty();
-                };
-                polygons.push(Polygon::new(vec![p1, p0, p3, p2], metadata.clone()));
+                polygons.push(Polygon::new(
+                    vec![
+                        bottom_ring[i].clone(),
+                        bottom_ring[next].clone(),
+                        top_ring[next].clone(),
+                        top_ring[i].clone(),
+                    ],
+                    metadata.clone(),
+                ));
             }
         }
 
@@ -941,7 +1006,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `revolve_segments`: Number of segments for the revolution.
     /// - `outline_segments`: Number of segments for the 2D egg outline itself.
     /// - `metadata`: Optional metadata.
-    #[cfg(all(feature = "chull-io", feature = "sketch"))]
+    #[cfg(feature = "sketch")]
     pub fn egg(
         width: Real,
         length: Real,
@@ -976,7 +1041,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - `revolve_segments`: Number of segments for the revolution (the "circular" direction).
     /// - `shape_segments`: Number of segments for the 2D teardrop outline itself.
     /// - `metadata`: Optional metadata.
-    #[cfg(all(feature = "chull-io", feature = "sketch"))]
+    #[cfg(feature = "sketch")]
     pub fn teardrop(
         width: Real,
         length: Real,

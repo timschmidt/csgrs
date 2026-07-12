@@ -115,13 +115,13 @@ fn newell_hreal_normal(points: &[Vector3]) -> Vector3 {
 }
 
 fn hreal_is_exact_zero(value: &Real) -> bool {
-    matches!(value.refine_sign_until(128), Some(RealSign::Zero))
+    matches!(value.refine_sign_until(-128), Some(RealSign::Zero))
 }
 
 fn hreal_cmp(lhs: &Real, rhs: &Real) -> Ordering {
     hyperlimit::compare_reals(lhs, rhs)
         .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(128) {
+        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
             Some(RealSign::Positive) => Ordering::Greater,
             Some(RealSign::Negative) => Ordering::Less,
             Some(RealSign::Zero) | None => Ordering::Equal,
@@ -233,7 +233,7 @@ impl Plane {
         let should_flip = plane_hq
             .unit_hreal_normal()
             .map(|plane_normal| plane_normal.dot(&reference_normal))
-            .and_then(|dot| dot.refine_sign_until(128))
+            .and_then(|dot| dot.refine_sign_until(-128))
             .is_some_and(|sign| matches!(sign, RealSign::Negative));
 
         if should_flip {
@@ -557,7 +557,7 @@ impl Plane {
 }
 
 fn normals_same_direction(lhs: &Vector3, rhs: &Vector3) -> bool {
-    matches!(lhs.dot(rhs).refine_sign_until(128), Some(RealSign::Positive))
+    matches!(lhs.dot(rhs).refine_sign_until(-128), Some(RealSign::Positive))
 }
 
 #[cfg(test)]
@@ -581,34 +581,98 @@ fn test_plane_orientation() {
         Vertex {
             position: test_point(1152.0, 256.0, 512.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(1152.0, 256.0, 256.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(768.0, 256.0, 256.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(768.0, 256.0, 512.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(896.0, 256.0, 512.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(896.0, 256.0, 384.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(1024.0, 256.0, 384.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
         Vertex {
             position: test_point(1024.0, 256.0, 512.0),
             normal: test_vector(0.0, 1.0, 0.0),
+            position_id: crate::vertex::fresh_position_id(),
+            coordinate_ids: [
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+                crate::vertex::fresh_position_id(),
+            ],
+            ruled_line: None,
+            hull_candidate: true,
         },
     ];
 

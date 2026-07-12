@@ -175,7 +175,10 @@ fn dominant_axis(normal: &Vector3) -> Option<usize> {
             axis = candidate;
         }
     }
-    if matches!(squared[axis].refine_sign_until(128), Some(RealSign::Positive)) {
+    if matches!(
+        squared[axis].refine_sign_until(-128),
+        Some(RealSign::Positive)
+    ) {
         Some(axis)
     } else {
         None
@@ -189,7 +192,7 @@ fn winding_is_negative(points: &[hypertri::Point2]) -> bool {
             area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone()
         },
     );
-    matches!(area.refine_sign_until(128), Some(RealSign::Negative))
+    matches!(area.refine_sign_until(-128), Some(RealSign::Negative))
 }
 
 fn subdivide_triangle(triangle: [Vertex; 3]) -> [[Vertex; 3]; 4] {

@@ -35,7 +35,7 @@ fn rotation_between_quaternion_components(from: &Vector3, to: &Vector3) -> Optio
     let dot = a.dot(&b);
 
     if matches!(
-        (dot.clone() + Real::one()).refine_sign_until(128),
+        (dot.clone() + Real::one()).refine_sign_until(-128),
         Some(RealSign::Zero)
     ) {
         let seed = if a.0[0].abs() < real(0.9) {
@@ -110,7 +110,7 @@ impl Vector3Js {
     #[wasm_bindgen(js_name = isOrthogonal)]
     pub fn is_orthogonal(&self, other: &Vector3Js) -> bool {
         matches!(
-            self.inner.dot(&other.inner).refine_sign_until(128),
+            self.inner.dot(&other.inner).refine_sign_until(-128),
             Some(RealSign::Zero)
         )
     }

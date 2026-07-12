@@ -12,12 +12,11 @@ use std::cmp::Ordering;
 fn sampled_sin_cos(
     index: usize,
     count: usize,
-    start: f64,
-    sweep: f64,
+    start: &Real,
+    sweep: &Real,
 ) -> Option<(Real, Real)> {
-    let angle = start + sweep * index as f64 / count as f64;
-    let (sin, cos) = angle.sin_cos();
-    Some((hreal_from_f64(sin).ok()?, hreal_from_f64(cos).ok()?))
+    let angle = exact_sample_angle(index, count, start, sweep)?;
+    Some((angle.clone().sin(), angle.cos()))
 }
 
 fn sampled_ellipse_point(
@@ -25,8 +24,8 @@ fn sampled_ellipse_point(
     ry: &Real,
     index: usize,
     count: usize,
-    start: f64,
-    sweep: f64,
+    start: &Real,
+    sweep: &Real,
 ) -> Option<[Real; 2]> {
     let (sin, cos) = sampled_sin_cos(index, count, start, sweep)?;
     Some([hreal_mul(rx, cos)?, hreal_mul(ry, sin)?])
@@ -48,32 +47,44 @@ fn exact_ratio(numerator: usize, denominator: usize) -> Option<Real> {
     (Real::from(numerator as u64) / Real::from(denominator as u64)).ok()
 }
 
-/// Materialize a user-requested polygonal approximation after all analytic
-/// construction has completed in `Real`.
-fn finite_tessellation_profile(points: &[[Real; 2]]) -> Profile {
-    let finite = points
-        .iter()
-        .map(|point| Some([point[0].to_f64_lossy()?, point[1].to_f64_lossy()?]))
-        .collect::<Option<Vec<_>>>();
-    finite
-        .and_then(|points| Contour2::from_finite_ring(&points).ok())
+fn signed_sqrt(value: Real) -> Option<Real> {
+    let sign = hreal_try_cmp(&value, 0.0)?;
+    let root = hreal_abs(value)?.sqrt().ok()?;
+    Some(if sign == Ordering::Less { -root } else { root })
+}
+
+/// Materialize an explicitly polygonal approximation without demoting its
+/// exact-real analytic samples.
+fn tessellation_profile(points: &[[Real; 2]]) -> Profile {
+    Contour2::from_real_ring(points)
+        .ok()
         .map(Profile::from_contour)
         .unwrap_or_else(Profile::empty)
 }
 
 fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
-    // A polygonal circle is already a finite approximation. Promote each
-    // correctly rounded sample once, then retain exact binary-rational points
-    // for all subsequent predicates and topology.
     let mut points = Vec::with_capacity(samples);
     for index in 0..samples {
-        let angle = std::f64::consts::TAU * index as f64 / samples as f64;
-        points.push([
-            hreal_mul(&radius, hreal_from_f64(angle.cos()).ok()?)?,
-            hreal_mul(&radius, hreal_from_f64(angle.sin()).ok()?)?,
-        ]);
+        points.push(exact_polar(
+            &radius,
+            exact_sample_angle(index, samples, &Real::zero(), &Real::tau())?,
+        ));
     }
     Some(points)
+}
+
+fn translated_circle_profile(
+    radius: Real,
+    segments: usize,
+    center_x: &Real,
+    center_y: &Real,
+) -> Option<Profile> {
+    let mut points = hcircle_samples(segments, radius)?;
+    for [x, y] in &mut points {
+        *x = center_x + &*x;
+        *y = center_y + &*y;
+    }
+    Some(tessellation_profile(&points))
 }
 
 fn hfinite_nonzero(value: Real) -> bool {
@@ -148,7 +159,10 @@ fn sampled_involute_gear(
     let base_radius = pitch_radius * pressure_angle.cos();
     let outer_radius = pitch_radius + module;
     let root_radius = pitch_radius - 1.25 * module - clearance;
-    let angular_pitch = std::f64::consts::TAU / teeth as f64;
+    let Some(tau) = Real::tau().to_f64_lossy() else {
+        return Profile::empty();
+    };
+    let angular_pitch = tau / teeth as f64;
     let half_tooth_angle = 0.5 * (0.5 * angular_pitch - backlash / pitch_radius);
     if !(base_radius > 0.0 && root_radius > 0.0 && half_tooth_angle > 0.0) {
         return Profile::empty();
@@ -261,7 +275,10 @@ fn sampled_cycloidal_gear(
         ]
     };
     let radius = |point: [f64; 2]| point[0].hypot(point[1]);
-    let lobe_extremum = std::f64::consts::PI * generator / pitch_radius;
+    let Some((pi, tau)) = Real::pi().to_f64_lossy().zip(Real::tau().to_f64_lossy()) else {
+        return Profile::empty();
+    };
+    let lobe_extremum = pi * generator / pitch_radius;
     let solve_first_lobe = |target: f64, increasing: bool, curve: &dyn Fn(f64) -> [f64; 2]| {
         let end_radius = radius(curve(lobe_extremum));
         let scale = target.abs().max(end_radius.abs()).max(1.0);
@@ -292,7 +309,7 @@ fn sampled_cycloidal_gear(
     let Some(root_parameter) = solve_first_lobe(flank_root_radius, false, &hypocycloid) else {
         return Profile::empty();
     };
-    let angular_pitch = std::f64::consts::TAU / teeth as f64;
+    let angular_pitch = tau / teeth as f64;
     let pitch_half_thickness = 0.25 * angular_pitch;
     let rotate = |point: [f64; 2], angle: f64| {
         let (sin, cos) = angle.sin_cos();
@@ -458,7 +475,7 @@ impl Profile {
         let Some(points) = hcircle_samples(segments, radius) else {
             return Profile::empty();
         };
-        finite_tessellation_profile(&points)
+        tessellation_profile(&points)
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
@@ -584,13 +601,13 @@ impl Profile {
         };
         let Some(points) = (0..segments)
             .map(|index| {
-                sampled_ellipse_point(&rx, &ry, index, segments, 0.0, std::f64::consts::TAU)
+                sampled_ellipse_point(&rx, &ry, index, segments, &Real::zero(), &Real::tau())
             })
             .collect::<Option<Vec<_>>>()
         else {
             return Profile::empty();
         };
-        finite_tessellation_profile(&points)
+        tessellation_profile(&points)
     }
 
     /// **Mathematical Foundation: Regular Polygon Construction**
@@ -651,7 +668,7 @@ impl Profile {
         let Some(points) = hcircle_samples(sides, radius) else {
             return Profile::empty();
         };
-        finite_tessellation_profile(&points)
+        tessellation_profile(&points)
     }
 
     /// Creates a 2D arrow in the XY plane.
@@ -702,7 +719,7 @@ impl Profile {
             [Real::zero(), half_shaft_width],         // Back to top-left to close
         ];
 
-        Self::polygonal_region(points)
+        tessellation_profile(&points)
     }
 
     /// Trapezoid from (0,0) -> (bottom_width,0) -> (top_width+top_offset,height) -> (top_offset,height)
@@ -744,8 +761,8 @@ impl Profile {
                 &outer_radius,
                 i,
                 num_points,
-                0.0,
-                std::f64::consts::TAU,
+                &Real::zero(),
+                &Real::tau(),
             ) else {
                 return Profile::empty();
             };
@@ -754,15 +771,15 @@ impl Profile {
                 &inner_radius,
                 (i * 2) + 1,
                 num_points * 2,
-                0.0,
-                std::f64::consts::TAU,
+                &Real::zero(),
+                &Real::tau(),
             ) else {
                 return Profile::empty();
             };
             points.push(outer_point);
             points.push(inner_point);
         }
-        Self::polygonal_region(points)
+        tessellation_profile(&points)
     }
 
     /// Teardrop shape.  A simple approach:
@@ -771,8 +788,7 @@ impl Profile {
     ///
     /// This is just one of many possible "teardrop" definitions.
     ///
-    /// The semicircular cap is sampled once at the finite tessellation
-    /// boundary, then promoted to exact dyadic `hypercurve` topology.
+    /// The semicircular cap retains exact rational multiples of symbolic pi.
     pub fn teardrop(width: Real, length: Real, segments: usize) -> Profile {
         if segments < 2
             || !hprofile_scalar_positive(&width)
@@ -792,7 +808,7 @@ impl Profile {
         let mut points = vec![[Real::zero(), Real::zero()]]; // Start at the tip
         for i in 0..=segments {
             let Some([dx, dy]) =
-                sampled_ellipse_point(&r, &r, i, segments, 0.0, std::f64::consts::PI)
+                sampled_ellipse_point(&r, &r, i, segments, &Real::zero(), &Real::pi())
             else {
                 return Profile::empty();
             };
@@ -803,15 +819,14 @@ impl Profile {
             points.push([x, y]);
         }
 
-        Self::polygonal_region(points)
+        tessellation_profile(&points)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
     ///
-    /// The analytic outline is sampled at the finite tessellation boundary,
-    /// normalized to the requested dimensions, and promoted to exact dyadic
-    /// coordinates for downstream topology.
+    /// Angles are constructed symbolically before the explicitly polygonal
+    /// outline is projected to finite samples for normalization.
     pub fn egg(width: Real, length: Real, segments: usize) -> Profile {
         if segments < 3
             || !hprofile_scalar_positive(&width)
@@ -821,8 +836,19 @@ impl Profile {
         }
         let mut raw = Vec::with_capacity(segments);
         for i in 0..segments {
-            let theta = std::f64::consts::TAU * i as f64 / segments as f64;
-            raw.push((-theta.sin(), theta.cos() * (1.0 + 0.2 * theta.cos())));
+            let Some(theta) = exact_sample_angle(i, segments, &Real::zero(), &Real::tau())
+            else {
+                return Profile::empty();
+            };
+            let Some((sin, cos)) = theta
+                .clone()
+                .sin()
+                .to_f64_lossy()
+                .zip(theta.cos().to_f64_lossy())
+            else {
+                return Profile::empty();
+            };
+            raw.push((-sin, cos * (1.0 + 0.2 * cos)));
         }
         let min_x = raw.iter().map(|point| point.0).fold(f64::INFINITY, f64::min);
         let max_x = raw
@@ -852,7 +878,7 @@ impl Profile {
     /// `corner_segments` controls the smoothness of each rounded corner.
     ///
     /// Corner-radius admission and clamping use exact hyperreal comparisons.
-    /// Arc samples are promoted once to exact dyadic `hypercurve` topology.
+    /// Arc samples retain exact rational multiples of symbolic pi.
     pub fn rounded_rectangle(
         width: Real,
         height: Real,
@@ -895,21 +921,19 @@ impl Profile {
         let Some(top) = hreal_sub(&height, &r) else {
             return Profile::empty();
         };
+        let Some(half_pi) = (Real::pi() / Real::from(2_u8)).ok() else {
+            return Profile::empty();
+        };
         for (cx, cy, start_angle) in [
-            (r.clone(), r.clone(), std::f64::consts::PI),
-            (right.clone(), r.clone(), 1.5 * std::f64::consts::PI),
-            (right, top.clone(), 0.0),
-            (r.clone(), top, 0.5 * std::f64::consts::PI),
+            (r.clone(), r.clone(), Real::pi()),
+            (right.clone(), r.clone(), Real::pi() + half_pi.clone()),
+            (right, top.clone(), Real::zero()),
+            (r.clone(), top, half_pi.clone()),
         ] {
             for i in 0..=corner_segments {
-                let Some([dx, dy]) = sampled_ellipse_point(
-                    &r,
-                    &r,
-                    i,
-                    corner_segments,
-                    start_angle,
-                    std::f64::consts::FRAC_PI_2,
-                ) else {
+                let Some([dx, dy]) =
+                    sampled_ellipse_point(&r, &r, i, corner_segments, &start_angle, &half_pi)
+                else {
                     return Profile::empty();
                 };
                 let (Some(x), Some(y)) =
@@ -921,15 +945,14 @@ impl Profile {
             }
         }
 
-        Self::polygonal_region(points)
+        tessellation_profile(&points)
     }
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
     ///
     /// This is Lamé's superellipse specialized to exponent 4. The signed
-    /// square-root form is evaluated at the finite tessellation boundary and
-    /// promoted to exact dyadic topology. See also Lamé,
+    /// square-root form is evaluated in exact-real arithmetic. See also Lamé,
     /// *Examen des différentes méthodes employées pour résoudre les problèmes
     /// de géométrie*, 1818.
     pub fn squircle(width: Real, height: Real, segments: usize) -> Profile {
@@ -944,12 +967,13 @@ impl Profile {
         };
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
-            let angle = std::f64::consts::TAU * i as f64 / segments as f64;
-            let (sin_t, cos_t) = angle.sin_cos();
-            let (Some(ct), Some(st)) = (
-                hreal_from_f64(cos_t.signum() * cos_t.abs().sqrt()).ok(),
-                hreal_from_f64(sin_t.signum() * sin_t.abs().sqrt()).ok(),
-            ) else {
+            let Some(angle) = exact_sample_angle(i, segments, &Real::zero(), &Real::tau())
+            else {
+                return Profile::empty();
+            };
+            let (Some(ct), Some(st)) =
+                (signed_sqrt(angle.clone().cos()), signed_sqrt(angle.sin()))
+            else {
                 return Profile::empty();
             };
             let (Some(x), Some(y)) = (hreal_mul(&rx, ct), hreal_mul(&ry, st)) else {
@@ -958,7 +982,7 @@ impl Profile {
             points.push([x, y]);
         }
 
-        Self::polygonal_region(points)
+        tessellation_profile(&points)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -1013,11 +1037,10 @@ impl Profile {
 
         // Opposite vertices of an odd regular polygon are separated by the
         // requested width: W = 2 R cos(pi / (2 n)).
-        let Some(cos_half_angle) =
-            hreal_from_f64((std::f64::consts::PI / (2 * sides) as f64).cos()).ok()
-        else {
+        let Some(half_angle) = (Real::pi() / Real::from((2 * sides) as u64)).ok() else {
             return Profile::empty();
         };
+        let cos_half_angle = half_angle.cos();
         let Some(denom) = hreal_mul(2.0, cos_half_angle) else {
             return Profile::empty();
         };
@@ -1029,7 +1052,7 @@ impl Profile {
         let mut verts = Vec::with_capacity(sides);
         for i in 0..sides {
             let Some([x, y]) =
-                sampled_ellipse_point(&r_circ, &r_circ, i, sides, 0.0, std::f64::consts::TAU)
+                sampled_ellipse_point(&r_circ, &r_circ, i, sides, &Real::zero(), &Real::tau())
             else {
                 return Profile::empty();
             };
@@ -1037,19 +1060,18 @@ impl Profile {
         }
 
         // Build the first disk and use it as the running intersection
-        let base = Profile::circle(diameter.clone(), circle_segments).translate(
-            verts[0].0.clone(),
-            verts[0].1.clone(),
-            Real::zero(),
-        );
+        let Some(base) = translated_circle_profile(
+            diameter.clone(),
+            circle_segments,
+            &verts[0].0,
+            &verts[0].1,
+        ) else {
+            return Profile::empty();
+        };
 
         verts.iter().skip(1).fold(base, |acc, (x, y)| {
-            let disk = Profile::circle(diameter.clone(), circle_segments).translate(
-                x.clone(),
-                y.clone(),
-                Real::zero(),
-            );
-            acc.intersection(&disk)
+            translated_circle_profile(diameter.clone(), circle_segments, x, y)
+                .map_or_else(Profile::empty, |disk| acc.intersection(&disk))
         })
     }
 
@@ -1128,7 +1150,7 @@ impl Profile {
             points.push(exact_polar(&radius, angle));
         }
 
-        finite_tessellation_profile(&points)
+        tessellation_profile(&points)
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
@@ -1167,7 +1189,11 @@ impl Profile {
         };
         let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
-            let theta = std::f64::consts::TAU * i as f64 / segments as f64;
+            let Some(theta) = exact_sample_angle(i, segments, &Real::zero(), &Real::tau())
+                .and_then(|angle| angle.to_f64_lossy())
+            else {
+                return Profile::empty();
+            };
             let angle = m * theta * 0.25;
             let sum = (angle.cos() / a).abs().powf(n2) + (angle.sin() / b).abs().powf(n3);
             let radius = sum.powf(-1.0 / n1);
@@ -1497,13 +1523,23 @@ impl Profile {
 
         let mut raw = Vec::with_capacity(segments);
         for i in 0..segments {
-            let t = std::f64::consts::TAU * i as f64 / segments as f64;
+            let Some(t) = exact_sample_angle(i, segments, &Real::zero(), &Real::tau()) else {
+                return Profile::empty();
+            };
+            let values = [
+                t.clone().sin(),
+                t.clone().cos(),
+                (Real::from(2_u8) * t.clone()).cos(),
+                (Real::from(3_u8) * t.clone()).cos(),
+                (Real::from(4_u8) * t).cos(),
+            ]
+            .map(|value| value.to_f64_lossy());
+            let [Some(sin), Some(cos), Some(cos_2), Some(cos_3), Some(cos_4)] = values else {
+                return Profile::empty();
+            };
             raw.push((
-                16.0 * t.sin().powi(3),
-                13.0 * t.cos()
-                    - 5.0 * (2.0 * t).cos()
-                    - 2.0 * (3.0 * t).cos()
-                    - (4.0 * t).cos(),
+                16.0 * sin.powi(3),
+                13.0 * cos - 5.0 * cos_2 - 2.0 * cos_3 - cos_4,
             ));
         }
         let min_x = raw.iter().map(|point| point.0).fold(f64::INFINITY, f64::min);
@@ -1697,7 +1733,7 @@ impl Profile {
             }
         }
 
-        finite_tessellation_profile(&outline)
+        tessellation_profile(&outline)
     }
 
     /// Generate a linear cycloidal rack profile.
@@ -1764,7 +1800,7 @@ impl Profile {
         for point in top.into_iter().rev() {
             outline.push(point);
         }
-        finite_tessellation_profile(&outline)
+        tessellation_profile(&outline)
     }
 
     /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").
@@ -1880,7 +1916,7 @@ impl Profile {
                 chord.clone() * (yc - yt * cos_theta),
             ]);
         }
-        finite_tessellation_profile(&points)
+        tessellation_profile(&points)
     }
 
     /// Build a Hilbert-curve path that fills this sketch.
@@ -2082,6 +2118,7 @@ fn hilbert_points(order: usize) -> Vec<(Real, Real)> {
 mod tests {
     use super::*;
     use crate::hyper_math::{Real, hreal_from_f64, tolerance};
+    use hyperreal::SymbolicDependencyMask;
 
     fn r(value: f64) -> Real {
         hreal_from_f64(value).expect("test values must be finite")
@@ -2094,6 +2131,43 @@ mod tests {
         assert!(hprofile_scalar_positive(tolerance() * r(2.0)));
         assert!(!hprofile_scalar_positive(Real::zero()));
         assert!(!hprofile_scalar_positive(-tolerance()));
+    }
+
+    #[test]
+    fn circular_profile_samples_retain_symbolic_pi_before_projection() {
+        let points = hcircle_samples(7, Real::one()).unwrap();
+        assert!(points.iter().flatten().any(|coordinate| {
+            coordinate
+                .detailed_facts()
+                .symbolic
+                .dependencies
+                .contains(SymbolicDependencyMask::PI)
+        }));
+    }
+
+    #[test]
+    fn symbolic_ring_difference_remains_decided() {
+        assert!(!Profile::ring(r(2.0), r(0.5), 24).is_empty());
+    }
+
+    #[test]
+    fn symbolic_circle_keyway_difference_remains_decided() {
+        assert!(!Profile::circle_with_keyway(r(3.0), 24, r(1.0), r(1.0)).is_empty());
+    }
+
+    #[test]
+    fn symbolic_circle_flat_difference_remains_decided() {
+        assert!(!Profile::circle_with_flat(r(3.0), 24, r(1.0)).is_empty());
+    }
+
+    #[test]
+    fn symbolic_circle_two_flats_difference_remains_decided() {
+        assert!(!Profile::circle_with_two_flats(r(3.0), 24, r(1.0)).is_empty());
+    }
+
+    #[test]
+    fn symbolic_crescent_difference_remains_decided() {
+        assert!(!Profile::crescent(r(3.0), r(2.0), r(1.5), 24).is_empty());
     }
 
     #[test]
@@ -2147,8 +2221,20 @@ mod tests {
     fn naca_airfoil_scales_uniformly_with_chord() {
         let unit = Profile::airfoil_naca4(r(2.0), r(4.0), r(12.0), r(1.0), 24);
         let scaled = Profile::airfoil_naca4(r(2.0), r(4.0), r(12.0), r(10.0), 24);
-        let unit_bounds = unit.native_xy_bounds().expect("unit airfoil bounds");
-        let scaled_bounds = scaled.native_xy_bounds().expect("scaled airfoil bounds");
+        let unit_box = unit.bounding_box();
+        let scaled_box = scaled.bounding_box();
+        let unit_bounds = (
+            unit_box.mins.x,
+            unit_box.mins.y,
+            unit_box.maxs.x,
+            unit_box.maxs.y,
+        );
+        let scaled_bounds = (
+            scaled_box.mins.x,
+            scaled_box.mins.y,
+            scaled_box.maxs.x,
+            scaled_box.maxs.y,
+        );
 
         for (unit, scaled) in [
             (unit_bounds.0, scaled_bounds.0),
@@ -2221,8 +2307,11 @@ mod tests {
     #[test]
     fn reuleaux_pentagon_uses_opposite_vertex_width() {
         let profile = Profile::reuleaux(5, r(3.0), 32);
-        let (min_x, _, max_x, _) = profile.native_xy_bounds().expect("Reuleaux bounds");
-        let width = (max_x - min_x).to_f64_lossy().expect("finite Reuleaux width");
+        assert!(!profile.is_empty());
+        let bounds = profile.bounding_box();
+        let width = (&bounds.maxs.x - &bounds.mins.x)
+            .to_f64_lossy()
+            .expect("finite Reuleaux width");
         assert!(width > 2.8 && width <= 3.0);
     }
 

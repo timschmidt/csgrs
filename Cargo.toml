@@ -27,7 +27,6 @@ features = [
   "gltf-io",
   "gerber-io",
   "svg-io",
-  "chull-io",
   "image-io",
   "metaballs",
   "sdf",
@@ -77,7 +76,6 @@ wgpu-types = { version = "27", optional = true, default-features = false }
 
 # utils
 rayon = { version = "1.10", optional = true }
-chull = { version = "0.2.4", optional = true }
 geo = { version = "0.32", optional = true }
 thiserror = "2.0"
 hashbrown = { version = "0.15" }
@@ -125,7 +123,7 @@ hypertri = { path = "../hypertri" }
 hypersolve = { path = "../hypersolve" }
 
 [features]
-default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+default = ["mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
 dispatch-trace = [
   "hypermesh/dispatch-trace",
   "hyperreal/dispatch-trace",
@@ -139,8 +137,6 @@ mesh = [] # Compatibility feature; Mesh is the always-available core carrier.
 sketch = [
   # hypercurve backed Profile datatype
 ]
-# convex hull and minkowski sum
-chull-io = ["dep:chull"]
 stl-io = [
   "stl_io",
 ]
@@ -207,7 +203,6 @@ wasm = [
   "stl-io",
   "amf-io",
   "gltf-io",
-  "chull-io",
   "sdf",
   "uuid",
   "wasm-bindgen",
@@ -227,7 +222,6 @@ required-features = [
   "metaballs",
   "sdf",
   "offset",
-  "chull-io",
 ]
 
 [dev-dependencies]

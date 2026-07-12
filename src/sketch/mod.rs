@@ -230,6 +230,46 @@ impl Profile {
         native_box.as_ref().map(hyper_aabb_to_xy_bounds)
     }
 
+    fn projected_xy_bounds(&self) -> Option<(Real, Real, Real, Real)> {
+        let options = FiniteProjectionOptions::try_new(1e-3).ok()?;
+        let profiles = match self.project_region_profiles(&options).ok()? {
+            Classification::Decided(profiles) => profiles,
+            Classification::Uncertain(_) => return None,
+        };
+        let wires = self.project_wire_polylines(&options);
+        let mut bounds: Option<(f64, f64, f64, f64)> = None;
+        let mut include = |[x, y]: [f64; 2]| {
+            bounds = Some(match bounds {
+                Some((min_x, min_y, max_x, max_y)) => {
+                    (min_x.min(x), min_y.min(y), max_x.max(x), max_y.max(y))
+                },
+                None => (x, y, x, y),
+            });
+        };
+        for profile in &profiles {
+            for point in profile.material().points() {
+                include(*point);
+            }
+            for hole in profile.holes() {
+                for point in hole.points() {
+                    include(*point);
+                }
+            }
+        }
+        for wire in &wires {
+            for point in wire.points() {
+                include(*point);
+            }
+        }
+        let (min_x, min_y, max_x, max_y) = bounds?;
+        Some((
+            hreal_from_f64(min_x).ok()?,
+            hreal_from_f64(min_y).ok()?,
+            hreal_from_f64(max_x).ok()?,
+            hreal_from_f64(max_y).ok()?,
+        ))
+    }
+
     /// Decide whether a native region has any material contour with nonzero
     /// area.
     ///
@@ -565,7 +605,7 @@ impl Profile {
     }
 
     fn transformed_region_with_matrix(&self, mat: &Matrix4) -> Option<Region2> {
-        if self.region.is_empty() || !Self::region_has_nonzero_area(&self.region) {
+        if self.region.is_empty() {
             return None;
         }
         if let Some(region) = transform_line_region(&self.region, mat) {
@@ -1038,6 +1078,13 @@ impl CSG for Profile {
         self.bounding_box
             .get_or_init(|| {
                 if let Some((min_x, min_y, max_x, max_y)) = self.native_xy_bounds() {
+                    return Aabb::new(
+                        Point3::new(min_x, min_y, Real::zero()),
+                        Point3::new(max_x, max_y, Real::zero()),
+                    );
+                }
+
+                if let Some((min_x, min_y, max_x, max_y)) = self.projected_xy_bounds() {
                     return Aabb::new(
                         Point3::new(min_x, min_y, Real::zero()),
                         Point3::new(max_x, max_y, Real::zero()),

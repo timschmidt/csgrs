@@ -129,14 +129,14 @@ pub(crate) fn hreal_to_f64(value: &Real) -> Option<f64> {
 }
 
 pub(crate) fn hreal_sign(value: &Real) -> Option<RealSign> {
-    value.refine_sign_until(128)
+    value.refine_sign_until(-128)
 }
 
 pub(crate) fn hreal_try_cmp<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Option<Ordering> {
     let lhs = lhs.into_real().ok()?;
     let rhs = rhs.into_real().ok()?;
     hyperlimit::compare_reals(&lhs, &rhs).value().or_else(|| {
-        match (lhs - rhs).refine_sign_until(128) {
+        match (lhs - rhs).refine_sign_until(-128) {
             Some(RealSign::Positive) => Ordering::Greater,
             Some(RealSign::Negative) => Ordering::Less,
             Some(RealSign::Zero) => Ordering::Equal,
@@ -170,7 +170,7 @@ pub(crate) fn hreal_f64s_exactly_equal<L: IntoReal, R: IntoReal>(lhs: L, rhs: R)
     let Ok(rhs) = rhs.into_real() else {
         return false;
     };
-    matches!((lhs - rhs).refine_sign_until(128), Some(RealSign::Zero))
+    matches!((lhs - rhs).refine_sign_until(-128), Some(RealSign::Zero))
 }
 
 pub(crate) fn hreal_mul<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Option<Real> {
@@ -290,7 +290,10 @@ pub(crate) fn htriangle_area2_is_nonzero(a: &Point3, b: &Point3, c: &Point3) -> 
     let ab = b - a;
     let ac = c - a;
     let area2 = ab.cross(&ac);
-    !matches!(area2.dot(&area2).refine_sign_until(128), Some(RealSign::Zero))
+    !matches!(
+        area2.dot(&area2).refine_sign_until(-128),
+        Some(RealSign::Zero)
+    )
 }
 
 pub(crate) fn hvector2_from_xy(point: (Real, Real)) -> Vector2 {

@@ -77,7 +77,7 @@ fuzz_target!(|bytes: &[u8]| {
         .chain(front.iter())
         .chain(back.iter())
     {
-        for vertex in &poly.vertices {
+        for vertex in poly.vertices() {
             assert!(vertex.position.x.is_finite());
             assert!(vertex.position.y.is_finite());
             assert!(vertex.position.z.is_finite());

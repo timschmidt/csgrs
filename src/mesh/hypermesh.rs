@@ -368,7 +368,7 @@ impl IndexedTriangulated3D for TriangleSoup {
 }
 
 fn canonical_coordinate(value: &Real) -> Real {
-    if matches!(value.refine_sign_until(128), Some(hyperreal::RealSign::Zero)) {
+    if matches!(value.refine_sign_until(-128), Some(hyperreal::RealSign::Zero)) {
         Real::zero()
     } else {
         value.clone()
@@ -474,8 +474,8 @@ mod tests {
             .positions
             .iter()
             .filter(|point| {
-                point.x.refine_sign_until(128) == Some(hyperreal::RealSign::Zero)
-                    && point.z.refine_sign_until(128) == Some(hyperreal::RealSign::Zero)
+                point.x.refine_sign_until(-128) == Some(hyperreal::RealSign::Zero)
+                    && point.z.refine_sign_until(-128) == Some(hyperreal::RealSign::Zero)
             })
             .count();
         assert_eq!(pole_count, 2);
