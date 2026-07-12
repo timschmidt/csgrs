@@ -196,6 +196,56 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         exact_convex_hull(&points, metadata)
     }
 
+    /// Compute a convex hull at a finite application or file-format boundary.
+    ///
+    /// Coordinates are sampled once to `f64` for `chull`, then promoted back
+    /// to exact binary rationals. Internal geometry algorithms should continue
+    /// to use [`Mesh::convex_hull`].
+    #[cfg(feature = "chull-io")]
+    pub fn convex_hull_finite_output(&self, metadata: M) -> Mesh<M> {
+        use chull::ConvexHullWrapper;
+
+        let points = self
+            .polygons
+            .iter()
+            .flat_map(|polygon| polygon.vertices.iter())
+            .filter_map(|vertex| {
+                vertex
+                    .position
+                    .to_f64_array_lossy()
+                    .map(|point| point.to_vec())
+            })
+            .collect::<Vec<_>>();
+        let Ok(hull) = ConvexHullWrapper::try_new(&points, None) else {
+            return Mesh::empty();
+        };
+        let (vertices, indices) = hull.vertices_indices();
+        let polygons = indices
+            .chunks_exact(3)
+            .filter_map(|triangle| {
+                let p0 =
+                    Point3::try_from_f64_array(vertices[triangle[0]].clone().try_into().ok()?)
+                        .ok()?;
+                let p1 =
+                    Point3::try_from_f64_array(vertices[triangle[1]].clone().try_into().ok()?)
+                        .ok()?;
+                let p2 =
+                    Point3::try_from_f64_array(vertices[triangle[2]].clone().try_into().ok()?)
+                        .ok()?;
+                let normal = hyper_triangle_unit_normal(&p0, &p1, &p2)?;
+                Some(Polygon::new(
+                    vec![
+                        Vertex::new(p0, normal.clone()),
+                        Vertex::new(p1, normal.clone()),
+                        Vertex::new(p2, normal),
+                    ],
+                    metadata.clone(),
+                ))
+            })
+            .collect::<Vec<_>>();
+        Mesh::from_polygons(&polygons)
+    }
+
     /// Compute the Minkowski sum: self ⊕ other
     ///
     /// **Mathematical Foundation**: For convex sets A and B, A ⊕ B = {a + b | a ∈ A, b ∈ B}.

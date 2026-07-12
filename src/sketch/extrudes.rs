@@ -1310,8 +1310,51 @@ fn close_region_ring(mut points: Vec<[f64; 2]>) -> Vec<[f64; 2]> {
     points
 }
 
+fn clean_region_ring(points: Vec<[f64; 2]>) -> Option<Vec<[f64; 2]>> {
+    if points
+        .iter()
+        .flatten()
+        .any(|coordinate| !coordinate.is_finite())
+    {
+        return None;
+    }
+
+    let mut points = points;
+    while points.len() > 1 && points.first() == points.last() {
+        points.pop();
+    }
+    points.dedup();
+
+    loop {
+        if points.len() < 3 {
+            return None;
+        }
+        let mut keep = vec![true; points.len()];
+        for index in 0..points.len() {
+            let previous = points[(index + points.len() - 1) % points.len()];
+            let current = points[index];
+            let next = points[(index + 1) % points.len()];
+            let cross = (current[0] - previous[0]) * (next[1] - current[1])
+                - (current[1] - previous[1]) * (next[0] - current[0]);
+            if cross == 0.0 {
+                keep[index] = false;
+            }
+        }
+        if keep.iter().all(|value| *value) {
+            break;
+        }
+        points = points
+            .into_iter()
+            .zip(keep)
+            .filter_map(|(point, keep)| keep.then_some(point))
+            .collect();
+    }
+
+    Some(close_region_ring(points))
+}
+
 fn orient_region_ring(points: Vec<[f64; 2]>, counterclockwise: bool) -> Option<Vec<[f64; 2]>> {
-    let mut points = close_region_ring(points);
+    let mut points = clean_region_ring(points)?;
     let exact = points
         .iter()
         .map(|point| {
@@ -1369,6 +1412,23 @@ mod tests {
         };
         assert_eq!(sign(&material), Some(hyperlimit::Sign::Positive));
         assert_eq!(sign(&hole), Some(hyperlimit::Sign::Negative));
+    }
+
+    #[test]
+    fn orient_region_ring_removes_segments_omitted_by_cap_triangulation() {
+        let ring = vec![
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [2.0, 0.0],
+            [2.0, 1.0],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [0.0, 0.0],
+        ];
+        let cleaned = orient_region_ring(ring, true).expect("valid ring");
+        assert_eq!(cleaned.len(), 5);
+        assert_eq!(cleaned.first(), cleaned.last());
+        assert!(!cleaned.contains(&[1.0, 0.0]));
     }
 
     #[test]
