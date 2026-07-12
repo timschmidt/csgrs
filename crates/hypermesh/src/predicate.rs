@@ -135,19 +135,26 @@ fn classify_exact_rational_coordinates(
         return None;
     };
 
-    let value =
-        Rational::signed_product_sum([true; 4], [[a, x], [b, y], [c, z], [d, homogeneous_weight]]);
-    Some(if value.is_zero() {
-        Classification::On
-    } else if value.is_negative() {
-        Classification::Negative
-    } else {
-        Classification::Positive
-    })
+    Some(
+        match Rational::signed_product_sum_ordering(
+            [true; 4],
+            [[a, x], [b, y], [c, z], [d, homogeneous_weight]],
+        ) {
+            Ordering::Less => Classification::Negative,
+            Ordering::Equal => Classification::On,
+            Ordering::Greater => Classification::Positive,
+        },
+    )
 }
 
 /// Returns a certified ordering for two exact reals.
 pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
+    if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+        crate::trace_dispatch!("compare-real", "exact-rational");
+        return Ok(left
+            .partial_cmp(right)
+            .expect("exact rationals are totally ordered"));
+    }
     crate::trace_dispatch!("compare-real", "hyperlimit");
     match hyperlimit::compare_reals(left, right) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
@@ -225,6 +232,18 @@ mod tests {
         assert_eq!(
             classify_projective_point(&point, &plane).unwrap(),
             Classification::On
+        );
+    }
+
+    #[test]
+    fn exact_real_comparison_matches_rational_ordering() {
+        assert_eq!(
+            compare_real(&Real::from(-3), &Real::from(2)).unwrap(),
+            Ordering::Less,
+        );
+        assert_eq!(
+            compare_real(&Real::from(5), &Real::from(5)).unwrap(),
+            Ordering::Equal,
         );
     }
 }
