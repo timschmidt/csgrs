@@ -28,7 +28,7 @@ fn test_csg_from_polygons_and_to_polygons() {
         ],
         (),
     );
-    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()]);
+    let csg: Mesh<()> = Mesh::from_polygons(vec![poly.clone()]);
     assert_eq!(csg.polygons.len(), 1);
     assert_eq!(csg.polygons[0].vertices.len(), 3);
 }
@@ -43,7 +43,7 @@ fn rotation_at_exact_degree_landmarks_matches_finite_trigonometry() {
         ],
         (),
     );
-    let mesh = Mesh::from_polygons(&[source]);
+    let mesh = Mesh::from_polygons(vec![source]);
 
     for degrees in [120.0_f64, 239.0, 240.0, 241.0] {
         let rotated = mesh.rotate(r(0.0), r(0.0), r(degrees));

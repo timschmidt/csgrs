@@ -177,7 +177,7 @@ fn exact_convex_hull<M: Clone + Debug + Send + Sync>(
             ))
         })
         .collect::<Vec<_>>();
-    Mesh::from_polygons(&polygons)
+    Mesh::from_polygons(polygons)
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -243,7 +243,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 ))
             })
             .collect::<Vec<_>>();
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(polygons)
     }
 
     /// Compute the Minkowski sum: self ⊕ other

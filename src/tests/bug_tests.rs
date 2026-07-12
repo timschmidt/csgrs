@@ -47,7 +47,7 @@ fn test_contains_vertex() {
 #[test]
 fn test_union_crash() {
     let items: [Mesh<()>; 2] = [
-        Mesh::from_polygons(&[
+        Mesh::from_polygons(vec![
             Polygon::new(
                 vec![
                     Vertex {
@@ -175,7 +175,7 @@ fn test_union_crash() {
                 (),
             ),
         ]),
-        Mesh::from_polygons(&[
+        Mesh::from_polygons(vec![
             Polygon::new(
                 vec![
                     Vertex {

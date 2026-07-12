@@ -197,9 +197,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     /// Build a Mesh from an existing polygon list
-    pub fn from_polygons(polygons: &[Polygon<M>]) -> Self {
+    pub fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
         Mesh {
-            polygons: polygons.to_vec(),
+            polygons,
             bounding_box: OnceLock::new(),
         }
     }
@@ -257,7 +257,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             })
             .collect::<Vec<_>>();
 
-        Mesh::from_polygons(&triangles)
+        Mesh::from_polygons(triangles)
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
@@ -277,7 +277,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             })
             .collect();
 
-        Mesh::from_polygons(&new_polygons)
+        Mesh::from_polygons(new_polygons)
     }
 
     /// Subdivide all polygons in this Mesh 'levels' times, in place.
@@ -350,7 +350,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 Some(Polygon::new(vertices, polygon.metadata.clone()))
             })
             .collect::<Option<Vec<_>>>()?;
-        Some(Self::from_polygons(&polygons))
+        Some(Self::from_polygons(polygons))
     }
 
     /// **Mathematical Foundation: Dihedral Angle Calculation**
@@ -1198,7 +1198,7 @@ mod tests {
             ),
         ];
 
-        let triangulated = Mesh::from_polygons(&polygons).triangulate();
+        let triangulated = Mesh::from_polygons(polygons).triangulate();
 
         assert_eq!(triangulated.polygons.len(), 3);
     }

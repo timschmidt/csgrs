@@ -326,7 +326,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 "OBJ input contains no polygonal faces".into(),
             ));
         }
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(polygons))
     }
 
     fn parse_obj_face(

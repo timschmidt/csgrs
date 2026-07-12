@@ -66,7 +66,7 @@ fn test_csg_construction_with_metadata() {
         ],
         "PolyB".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly_a.clone(), poly_b.clone()]);
+    let csg = Mesh::from_polygons(vec![poly_a.clone(), poly_b.clone()]);
 
     assert_eq!(csg.polygons.len(), 2);
     assert_eq!(csg.polygons[0].metadata(), &"PolyA".to_string());
@@ -154,7 +154,7 @@ fn test_subdivide_metadata() {
         ],
         "LargeQuad".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly]);
+    let csg = Mesh::from_polygons(vec![poly]);
     let subdivided = csg.subdivide_triangles(1.try_into().expect("not 0"));
 
     assert!(subdivided.polygons.len() > 1);
@@ -173,7 +173,7 @@ fn test_transform_metadata() {
         ],
         "Tri".to_string(),
     );
-    let csg = Mesh::from_polygons(&[poly]);
+    let csg = Mesh::from_polygons(vec![poly]);
     let csg_trans = csg.translate(r(10.0), r(5.0), r(0.0));
     let csg_scale = csg_trans.scale(r(2.0), r(2.0), r(1.0));
     let csg_rot = csg_scale.rotate(r(0.0), r(0.0), r(45.0));

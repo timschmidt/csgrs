@@ -364,7 +364,7 @@ impl Profile {
             );
         }
 
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(polygons)
     }
 
     /// Extrude native open hypercurve wires into ruled side surfaces.
@@ -391,7 +391,7 @@ impl Profile {
                 &mut polygons,
             );
         }
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(polygons)
     }
 
     fn push_region_ring_sides<M: Clone + Send + Sync>(
@@ -521,7 +521,7 @@ impl Profile {
             }
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(polygons))
     }
 
     /// Extrude along +Z while linearly varying rotation and XY scale.
@@ -703,7 +703,7 @@ impl Profile {
             );
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(polygons))
     }
 
     /// **Mathematical Foundation: Surface of Revolution Generation**
@@ -966,7 +966,7 @@ impl Profile {
             );
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(polygons))
     }
 
     /// Sweep (a.k.a. “extrude along path”) –
@@ -1293,7 +1293,7 @@ impl Profile {
             }
         }
 
-        Mesh::from_polygons(&out_polys)
+        Mesh::from_polygons(out_polys)
     }
 }
 
