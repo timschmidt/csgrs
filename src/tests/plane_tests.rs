@@ -134,7 +134,7 @@ fn plane_from_vertices_uses_hyperreal_support_triangle_ranking() {
         Vertex::new(p3(0.0, 3.0, 0.0), Vector3::z()),
     ];
 
-    let plane = Plane::from_vertices(vertices.clone());
+    let plane = Plane::from_vertices(&vertices);
     let normal = plane.normal();
 
     assert!((normal.norm() - r(1.0)).abs() < tolerance());

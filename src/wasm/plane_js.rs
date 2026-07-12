@@ -35,7 +35,7 @@ fn wasm_plane_from_points_or_default(
     // is built, following Yap, "Towards Exact Geometric Computation,"
     // Computational Geometry 7(1-2), 1997
     // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    Plane::from_vertices(vec![
+    Plane::from_vertices(&[
         Vertex::new(point_a, normal.clone()),
         Vertex::new(point_b, normal.clone()),
         Vertex::new(point_c, normal),
@@ -72,7 +72,7 @@ impl PlaneJs {
         // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         let verts: Vec<Vertex> = vertices.into_iter().map(|v| v.inner).collect();
 
-        let plane = Plane::from_vertices(verts);
+        let plane = Plane::from_vertices(&verts);
         Ok(PlaneJs { inner: plane })
     }
 

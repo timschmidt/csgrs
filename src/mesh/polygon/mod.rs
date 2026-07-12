@@ -68,7 +68,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     pub fn new(vertices: Vec<Vertex>, metadata: M) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
 
-        let plane = Plane::from_vertices(vertices.clone());
+        let plane = Plane::from_vertices(&vertices);
 
         Polygon {
             vertices,
@@ -145,7 +145,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 
     fn refresh_geometry(&mut self) {
-        self.plane = Plane::from_vertices(self.vertices.clone());
+        self.plane = Plane::from_vertices(&self.vertices);
         self.bounding_box = OnceLock::new();
     }
 

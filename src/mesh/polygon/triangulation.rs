@@ -8,15 +8,25 @@ use std::num::NonZeroU32;
 impl<M: Clone + Send + Sync> Polygon<M> {
     /// Triangulate this polygon using exact projected coordinates.
     pub fn triangulate(&self) -> Vec<[Vertex; 3]> {
+        self.triangulate_indices()
+            .into_iter()
+            .map(|[i0, i1, i2]| {
+                [
+                    self.vertices[i0].clone(),
+                    self.vertices[i1].clone(),
+                    self.vertices[i2].clone(),
+                ]
+            })
+            .collect()
+    }
+
+    /// Triangulate this polygon into indices of its existing vertices.
+    pub fn triangulate_indices(&self) -> Vec<[usize; 3]> {
         if self.vertices.len() < 3 {
             return Vec::new();
         }
         if self.vertices.len() == 3 {
-            return vec![[
-                self.vertices[0].clone(),
-                self.vertices[1].clone(),
-                self.vertices[2].clone(),
-            ]];
+            return vec![[0, 1, 2]];
         }
 
         let normal = (self.plane.point_b.clone() - self.plane.point_a.clone())
@@ -29,7 +39,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
             return Vec::new();
         };
 
-        triangles_from_indices(&self.vertices, &indices, reverse_output)
+        triangle_indices(&indices, self.vertices.len(), reverse_output)
     }
 
     /// Triangulate for a finite renderer or file-format output boundary.
@@ -41,7 +51,21 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     /// returned triangles retain the original vertices and therefore only the
     /// boundary scheduling decision is sampled.
     pub fn triangulate_finite_output(&self) -> Vec<[Vertex; 3]> {
-        let exact = self.triangulate();
+        self.triangulate_indices_finite_output()
+            .into_iter()
+            .map(|[i0, i1, i2]| {
+                [
+                    self.vertices[i0].clone(),
+                    self.vertices[i1].clone(),
+                    self.vertices[i2].clone(),
+                ]
+            })
+            .collect()
+    }
+
+    /// Triangulate into existing-vertex indices for a finite output boundary.
+    pub fn triangulate_indices_finite_output(&self) -> Vec<[usize; 3]> {
+        let exact = self.triangulate_indices();
         if !exact.is_empty() || self.vertices.len() < 4 {
             return exact;
         }
@@ -53,7 +77,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         let Ok(indices) = hypertri::earcut(&points, &[]) else {
             return Vec::new();
         };
-        triangles_from_indices(&self.vertices, &indices, reverse_output)
+        triangle_indices(&indices, self.vertices.len(), reverse_output)
     }
 
     /// Uniformly split every triangle into four triangles per level.
@@ -78,23 +102,19 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 }
 
-fn triangles_from_indices(
-    vertices: &[Vertex],
+fn triangle_indices(
     indices: &[usize],
+    vertex_count: usize,
     reverse_output: bool,
-) -> Vec<[Vertex; 3]> {
+) -> Vec<[usize; 3]> {
     indices
         .chunks_exact(3)
         .filter_map(|triangle| {
             let [i0, i1, i2] = [triangle[0], triangle[1], triangle[2]];
-            if [i0, i1, i2].into_iter().any(|index| index >= vertices.len()) {
+            if [i0, i1, i2].into_iter().any(|index| index >= vertex_count) {
                 return None;
             }
-            let mut triangle = [
-                vertices[i0].clone(),
-                vertices[i1].clone(),
-                vertices[i2].clone(),
-            ];
+            let mut triangle = [i0, i1, i2];
             if reverse_output {
                 triangle.swap(1, 2);
             }

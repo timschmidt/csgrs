@@ -184,7 +184,7 @@ impl Plane {
     ///
     /// Cost: O(n^2)
     /// A lower cost option may be a grid sub-sampled farthest pair search
-    pub fn from_vertices(vertices: Vec<Vertex>) -> Plane {
+    pub fn from_vertices(vertices: &[Vertex]) -> Plane {
         let n = vertices.len();
         let reference_plane = Plane {
             point_a: vertices[0].position.clone(),
@@ -703,7 +703,7 @@ fn test_plane_orientation() {
     for cycle_rotation in 0..vertices.len() {
         let mut vertices = vertices.clone();
         vertices.rotate_right(cycle_rotation);
-        let plane = Plane::from_vertices(vertices.to_vec());
+        let plane = Plane::from_vertices(&vertices);
 
         assert!(
             plane.normal() == test_vector(0.0, 1.0, 0.0),
