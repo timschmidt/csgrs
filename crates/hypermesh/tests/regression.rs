@@ -433,6 +433,56 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     assert_volume_numerator(&difference_soup, ratio(111, 4));
 }
 
+#[test]
+fn overlapping_axis_aligned_box_xor_is_closed_but_non_manifold() {
+    assert_overlapping_box_xor_topology(
+        box_mesh([0, -1, 0], [1, 1, 2]),
+        box_mesh([0, 0, 1], [4, 4, 4]),
+        [51, 1, 3, 50],
+    );
+    assert_overlapping_box_xor_topology(
+        box_mesh([-1, 0, 0], [0, 3, 1]),
+        box_mesh([-1, 2, -3], [2, 5, 1]),
+        [38, 1, 2, 37],
+    );
+}
+
+fn assert_overlapping_box_xor_topology(a: InputMesh, b: InputMesh, volumes: [i32; 4]) {
+    for (op, expected_volume) in [
+        (BooleanOp::Union, volumes[0]),
+        (BooleanOp::Intersection, volumes[1]),
+        (BooleanOp::Difference, volumes[2]),
+    ] {
+        let result = run_certified_op(&a, &b, op).unwrap();
+        assert_closed_triangle_soup(&result);
+        assert_volume_numerator(&result, r(6 * expected_volume));
+    }
+
+    let xor_result = boolean_operation(
+        &[a.as_ref(), b.as_ref()],
+        BooleanOp::SymmetricDifference,
+        config(),
+    )
+    .unwrap();
+    let indicator = hypermesh::winding::make_indicator(BooleanOp::SymmetricDifference, 2);
+    for winding in xor_result.winding_pairs() {
+        let winding = winding
+            .as_ref()
+            .expect("general XOR output must retain winding evidence");
+        assert_ne!(
+            indicator(&winding.w_front),
+            indicator(&winding.w_back),
+            "emitted XOR polygon does not separate inside from outside",
+        );
+    }
+
+    let xor = triangulate_and_resolve_certified(&xor_result).unwrap();
+    assert_no_boundary_edges(&xor);
+    let closure = hypermesh::triangle_soup_closure_report(&xor);
+    assert!(closure.non_manifold_edges > 0);
+    assert_volume_numerator(&xor, r(6 * volumes[3]));
+}
+
 proptest! {
     #![proptest_config(ProptestConfig {
         cases: 2,
@@ -506,7 +556,15 @@ proptest! {
                 ))
             })?;
 
-            assert_closed_triangle_soup(&result);
+            assert_no_boundary_edges(&result);
+            // XOR sheets can meet along input-boundary intersections, and
+            // contact-only unions can retain balanced non-manifold edges.
+            let strictly_separated = (0..3).any(|axis| overlap_max[axis] < overlap_min[axis]);
+            if op != BooleanOp::SymmetricDifference
+                && (overlap_volume > 0 || strictly_separated)
+            {
+                assert_closed_triangle_soup(&result);
+            }
             prop_assert_eq!(
                 signed_volume_numerator(&result),
                 r(6 * expected_volume),
