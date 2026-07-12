@@ -571,6 +571,29 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback() {
+        let one = Rational::one();
+        let two = Rational::new(2);
+        let three = Rational::new(3);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&three, &one], [&two, &one]],
+            ),
+            Ordering::Greater,
+        );
+
+        let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(
+                [false, true],
+                [[&huge, &three], [&huge, &two]],
+            ),
+            Ordering::Less,
+        );
+    }
+
+    #[test]
     fn signed_product_sum_shared_denominator_consumes_common_scale() {
         let terms = [
             [

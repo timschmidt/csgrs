@@ -40,6 +40,19 @@ impl Rational {
         terms: [[&Self; FACTORS]; TERMS],
         signs: [Sign; TERMS],
     ) -> Option<Self> {
+        let (positive, negative, common_denominator) =
+            Self::signed_product_sum_word_totals(terms, signs)?;
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            common_denominator,
+        ))
+    }
+
+    fn signed_product_sum_word_totals<const TERMS: usize, const FACTORS: usize>(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+    ) -> Option<(u128, u128, u128)> {
         let mut magnitudes = [0_u128; TERMS];
         let mut denominators = [1_u128; TERMS];
         let mut common_denominator = 1_u128;
@@ -70,11 +83,7 @@ impl Rational {
                 NoSign => {}
             }
         }
-        Some(Self::from_word_magnitude_difference(
-            positive,
-            negative,
-            common_denominator,
-        ))
+        Some((positive, negative, common_denominator))
     }
 
     fn dot_products_dyadic<const N: usize>(
@@ -489,6 +498,26 @@ impl Rational {
         }
 
         Self::from_signed_magnitude_difference(positive, negative, common_denominator)
+    }
+
+    /// Compare a fixed signed sum of products with zero without materializing
+    /// the resulting rational when the complete expression fits in `u128`.
+    pub fn signed_product_sum_ordering<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; FACTORS]; TERMS],
+    ) -> Ordering {
+        debug_assert!(FACTORS > 0);
+        let signs = std::array::from_fn(|i| Self::product_term_sign(positive_terms[i], terms[i]));
+        if let Some((positive, negative, _)) = Self::signed_product_sum_word_totals(terms, signs) {
+            crate::trace_dispatch!("rational", "product_sum_ordering", "word-sized");
+            return positive.cmp(&negative);
+        }
+        crate::trace_dispatch!("rational", "product_sum_ordering", "arbitrary-precision");
+        match Self::signed_product_sum(positive_terms, terms).sign() {
+            Minus => Ordering::Less,
+            NoSign => Ordering::Equal,
+            Plus => Ordering::Greater,
+        }
     }
 
     pub(crate) fn dot_products<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Self {
