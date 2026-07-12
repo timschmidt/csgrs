@@ -120,11 +120,11 @@ impl Profile {
                 }
 
                 if matches!(hreal_sign(&distance_sq), Some(RealSign::Zero)) {
-                    sum = sum + hreal_from_f64(1.0e10).ok()?;
+                    sum += hreal_from_f64(1.0e10).ok()?;
                     continue;
                 }
                 let denominator = distance_sq;
-                sum = sum + (radius_squared / denominator).ok()?;
+                sum += (radius_squared / denominator).ok()?;
             }
             Some(sum)
         }
@@ -200,10 +200,10 @@ impl Profile {
                     |mask_a: u8, mask_b: u8, a: usize, b: usize, edge: GridEdge| {
                         let inside_a = (c & mask_a) != 0;
                         let inside_b = (c & mask_b) != 0;
-                        if inside_a != inside_b {
-                            if let Some(coordinates) = interpolate(corners[a], corners[b]) {
-                                pts.push(SamplePoint { coordinates, edge });
-                            }
+                        if inside_a != inside_b
+                            && let Some(coordinates) = interpolate(corners[a], corners[b])
+                        {
+                            pts.push(SamplePoint { coordinates, edge });
                         }
                     };
 

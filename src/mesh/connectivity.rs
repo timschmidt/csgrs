@@ -83,7 +83,7 @@ impl VertexIndexMap {
     }
 
     /// Get total number of unique vertices
-    pub fn vertex_count(&self) -> usize {
+    pub const fn vertex_count(&self) -> usize {
         self.position_to_index.len()
     }
 

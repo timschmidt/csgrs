@@ -93,7 +93,7 @@ fn hyper_direction_points_down(direction: &Vector3) -> bool {
         return false;
     };
     let z_axis = Vector3::z();
-    hreal_lt_f64(&direction.dot(&z_axis), 0.0)
+    hreal_lt_f64(direction.dot(&z_axis), 0.0)
 }
 
 impl Profile {

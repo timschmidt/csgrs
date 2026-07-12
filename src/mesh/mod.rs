@@ -119,12 +119,9 @@ fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
 
 fn hyperphysics_vector3_from_point3(point: &Point3) -> Result<HyperVector3, ValidationError> {
     Ok(HyperVector3::new([
-        hyperphysics::Real::try_from(point.x.clone())
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(point.clone())))?,
-        hyperphysics::Real::try_from(point.y.clone())
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(point.clone())))?,
-        hyperphysics::Real::try_from(point.z.clone())
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(point.clone())))?,
+        point.x.clone(),
+        point.y.clone(),
+        point.z.clone(),
     ]))
 }
 
@@ -189,7 +186,7 @@ impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
 
 impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new empty mesh.
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
@@ -197,7 +194,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     /// Build a Mesh from an existing polygon list
-    pub fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
+    pub const fn from_polygons(polygons: Vec<Polygon<M>>) -> Self {
         Mesh {
             polygons,
             bounding_box: OnceLock::new(),
@@ -511,10 +508,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
             for tri in &triangles {
                 if let Some((point, t)) = ray_triangle_intersection(&seg_start, &seg_dir, tri)
+                    && !real_lt(&t, &Real::zero())
+                    && !real_gt(&t, &Real::one())
                 {
-                    if !real_lt(&t, &Real::zero()) && !real_gt(&t, &Real::one()) {
-                        seg_hits.push((point, t));
-                    }
+                    seg_hits.push((point, t));
                 }
             }
 
@@ -639,8 +636,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         &self,
         density: Real,
     ) -> Result<HyperMassPropertyReport3, ValidationError> {
-        let density = hyperphysics::Real::try_from(density)
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), None))?;
         let mesh = self.to_hyperphysics_closed_triangle_mesh()?;
         mesh.uniform_density_mass_properties(density)
             .map_err(|err| ValidationError::Other(format!("{err:?}"), None))
@@ -795,7 +790,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
 impl Mesh<()> {
     /// Return a new empty mesh.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self::empty()
     }
 }

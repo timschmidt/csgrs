@@ -143,7 +143,7 @@ fn readme_png_references(repo: &Path) -> BTreeSet<String> {
         while let Some(start) = rest.find("docs/") {
             let tail = &rest[start + "docs/".len()..];
             let end = tail
-                .find(|ch: char| matches!(ch, '"' | '\'' | ')' | '>' | '<' | ' ' | '\t'))
+                .find(['"', '\'', ')', '>', '<', ' ', '\t'])
                 .unwrap_or(tail.len());
             let name = &tail[..end];
             if name.ends_with(".png") {

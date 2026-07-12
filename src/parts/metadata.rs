@@ -271,7 +271,7 @@ impl CsgPartInterface {
     }
 
     /// Returns true when a part has a replayable installation vector.
-    pub fn has_installation_vector(&self) -> bool {
+    pub const fn has_installation_vector(&self) -> bool {
         self.documentation.installation.is_some()
     }
 }

@@ -11,7 +11,7 @@ use js_sys::{Object, Reflect};
 use serde_json::Value as JsonValue;
 use wasm_bindgen::prelude::*;
 
-fn validate_polygon_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
+const fn validate_polygon_vertices(vertices: &[VertexJs]) -> Result<(), &'static str> {
     if vertices.len() < 3 {
         return Err("Polygon.fromVertices requires at least 3 vertices");
     }

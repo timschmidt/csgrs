@@ -334,7 +334,7 @@ impl Plane {
         self.normal().dot(&self.point_a.to_vector())
     }
 
-    pub fn flip(&mut self) {
+    pub const fn flip(&mut self) {
         std::mem::swap(&mut self.point_a, &mut self.point_b);
     }
 
@@ -481,16 +481,16 @@ impl Plane {
 
                     // If the edge between these two vertices crosses the plane,
                     // compute intersection and add that intersection to both sets
-                    if (type_i | type_j) == SPANNING {
-                        if let Some(intersection) = self.edge_intersection_parameter(
+                    if (type_i | type_j) == SPANNING
+                        && let Some(intersection) = self.edge_intersection_parameter(
                             vertex_i,
                             vertex_j,
                             hnormal.as_ref(),
-                        ) {
-                            let vertex_new = vertex_i.interpolate(vertex_j, intersection);
-                            split_front.push(vertex_new.clone());
-                            split_back.push(vertex_new);
-                        }
+                        )
+                    {
+                        let vertex_new = vertex_i.interpolate(vertex_j, intersection);
+                        split_front.push(vertex_new.clone());
+                        split_back.push(vertex_new);
                     }
                 }
 
