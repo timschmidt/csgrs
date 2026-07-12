@@ -86,6 +86,13 @@ pub fn cube_pair() -> [InputMesh; 2] {
     ]
 }
 
+pub fn nested_cube_pair() -> [InputMesh; 2] {
+    [
+        cube([r(0), r(0), r(0)], r(2)),
+        cube([r(0), r(0), r(0)], r(1)),
+    ]
+}
+
 pub fn octahedron_pair() -> [InputMesh; 2] {
     [
         octahedron([r(0), r(0), r(0)], r(3)),

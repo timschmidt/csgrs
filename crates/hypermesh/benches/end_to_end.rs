@@ -10,6 +10,7 @@ use hypermesh::{
 
 fn bench_end_to_end(c: &mut Criterion) {
     let cubes = common::cube_pair();
+    let nested_cubes = common::nested_cube_pair();
     let octahedra = common::octahedron_pair();
 
     c.bench_function("prepare_input/cube_pair", |b| {
@@ -23,7 +24,11 @@ fn bench_end_to_end(c: &mut Criterion) {
     group.sample_size(20);
     group.warm_up_time(Duration::from_secs(1));
     group.measurement_time(Duration::from_secs(4));
-    for (name, meshes) in [("cubes", &cubes), ("octahedra", &octahedra)] {
+    for (name, meshes) in [
+        ("cubes", &cubes),
+        ("nested_cubes", &nested_cubes),
+        ("octahedra", &octahedra),
+    ] {
         for op in [
             BooleanOp::Union,
             BooleanOp::Intersection,

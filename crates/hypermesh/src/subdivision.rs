@@ -40,6 +40,7 @@ use crate::winding::{
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use std::cell::RefCell;
+use std::sync::Arc;
 
 use hyperlimit::{
     HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
@@ -144,7 +145,7 @@ type PolygonFamilyProfile = Vec<(isize, isize, usize, Vec<i32>)>;
 
 #[derive(Clone, Debug, PartialEq)]
 struct LeafClassificationCacheEntry {
-    context: Option<LeafClassificationCacheContextKey>,
+    context: Option<Arc<LeafClassificationCacheContextKey>>,
     support: Plane,
     edges: Vec<Plane>,
     delta_w: Vec<i32>,
@@ -159,7 +160,7 @@ struct LeafPointClassificationState {
 
 #[derive(Clone, Debug, PartialEq)]
 struct LeafPointClassificationCacheEntry {
-    context: Option<LeafClassificationCacheContextKey>,
+    context: Option<Arc<LeafClassificationCacheContextKey>>,
     support: Plane,
     point: crate::segment_trace::InteriorLeafPoint,
     delta_w: Vec<i32>,
@@ -387,14 +388,14 @@ fn process_leaf_into_inner_with_pairwise_cache(
         stats.certified_complete = true;
         return Ok(stats);
     }
-    let leaf_cache_context = LeafClassificationCacheContextKey {
+    let leaf_cache_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(polygons),
         polygons: polygons.to_vec(),
         bounds: bounds.clone(),
         ref_point: ref_point.clone(),
         ref_definitions: ref_definitions.to_vec(),
         ref_wnv: ref_wnv.to_vec(),
-    };
+    });
 
     let intersections = pairwise_query(polygons)?;
     stats.intersection_count = intersections.iter().map(Vec::len).sum();
@@ -1800,11 +1801,12 @@ fn polygon_family_profile(polygons: &[ConvexPolygon]) -> PolygonFamilyProfile {
 }
 
 fn leaf_classification_cache_context_matches(
-    left: Option<&LeafClassificationCacheContextKey>,
-    right: Option<&LeafClassificationCacheContextKey>,
+    left: Option<&Arc<LeafClassificationCacheContextKey>>,
+    right: Option<&Arc<LeafClassificationCacheContextKey>>,
 ) -> bool {
     match (left, right) {
         (None, None) => true,
+        (Some(left), Some(right)) if Arc::ptr_eq(left, right) => true,
         (Some(left), Some(right)) => {
             left.polygon_profile == right.polygon_profile
                 && polygon_families_match_as_multisets(&left.polygons, &right.polygons)
@@ -1936,7 +1938,7 @@ fn emit_one_direct(
     class_polygons: &[ConvexPolygon],
     indicator: &Indicator,
     cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
-    context: Option<&LeafClassificationCacheContextKey>,
+    context: Option<&Arc<LeafClassificationCacheContextKey>>,
     probe_query_caches: &mut LeafProbeQueryCaches,
     output: &mut Vec<ClassifiedPolygon>,
     output_buckets: &mut ClassifiedPolygonBucketState,
@@ -1974,7 +1976,7 @@ fn emit_one_direct(
 
 fn cached_leaf_classification_with(
     cache: &mut Vec<LeafClassificationCacheEntry>,
-    context: Option<&LeafClassificationCacheContextKey>,
+    context: Option<&Arc<LeafClassificationCacheContextKey>>,
     support: &Plane,
     edges: &[Plane],
     delta_w: &[i32],
@@ -2002,7 +2004,7 @@ fn cached_leaf_classification_with(
 
 fn cached_leaf_point_classification_with(
     cache: &mut Vec<LeafPointClassificationCacheEntry>,
-    context: Option<&LeafClassificationCacheContextKey>,
+    context: Option<&Arc<LeafClassificationCacheContextKey>>,
     support: &Plane,
     point: &crate::segment_trace::InteriorLeafPoint,
     delta_w: &[i32],
@@ -2038,7 +2040,7 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
     bounds: &Aabb,
     host_delta_w: &[i32],
     point_cache: &mut Vec<LeafPointClassificationCacheEntry>,
-    context: Option<&LeafClassificationCacheContextKey>,
+    context: Option<&Arc<LeafClassificationCacheContextKey>>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
 

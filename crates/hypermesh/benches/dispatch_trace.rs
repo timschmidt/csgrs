@@ -5,6 +5,7 @@ use hypermesh::{BooleanOp, EmberConfig, boolean_operation};
 fn main() {
     for (name, meshes) in [
         ("cubes", common::cube_pair()),
+        ("nested_cubes", common::nested_cube_pair()),
         ("octahedra", common::octahedron_pair()),
     ] {
         for op in [

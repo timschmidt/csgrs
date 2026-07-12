@@ -175,22 +175,22 @@ fn cached_leaf_classification_reuses_rotated_edge_cycles() {
 #[test]
 fn cached_leaf_classification_distinguishes_leaf_context() {
     let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let left_context = LeafClassificationCacheContextKey {
+    let left_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
         bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         ref_point: p(0, 0, -1),
         ref_definitions: vec![axis_plane_definition(&p(0, 0, -1))],
         ref_wnv: vec![0],
-    };
-    let right_context = LeafClassificationCacheContextKey {
+    });
+    let right_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
         bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         ref_point: p(0, 0, 1),
         ref_definitions: vec![axis_plane_definition(&p(0, 0, 1))],
         ref_wnv: vec![0],
-    };
+    });
     let mut cache = Vec::new();
     let mut calls = 0;
 
@@ -206,6 +206,10 @@ fn cached_leaf_classification_distinguishes_leaf_context() {
         },
     )
     .unwrap();
+    assert!(Arc::ptr_eq(
+        cache[0].context.as_ref().unwrap(),
+        &left_context
+    ));
     let second = cached_leaf_classification_with(
         &mut cache,
         Some(&right_context),
@@ -285,22 +289,22 @@ fn cached_leaf_point_classification_distinguishes_context() {
         .into_iter()
         .next()
         .unwrap();
-    let left_context = LeafClassificationCacheContextKey {
+    let left_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
         bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         ref_point: p(0, 0, -1),
         ref_definitions: vec![axis_plane_definition(&p(0, 0, -1))],
         ref_wnv: vec![0],
-    };
-    let right_context = LeafClassificationCacheContextKey {
+    });
+    let right_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
         bounds: Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         ref_point: p(0, 0, 1),
         ref_definitions: vec![axis_plane_definition(&p(0, 0, 1))],
         ref_wnv: vec![0],
-    };
+    });
     let mut cache = Vec::new();
     let mut calls = 0;
 
