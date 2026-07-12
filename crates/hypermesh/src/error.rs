@@ -18,6 +18,21 @@ pub enum HypermeshError {
     },
     /// A mesh operation needs at least one point.
     EmptyInput,
+    /// A query supplied a point slice different from the one used to build an
+    /// acceleration structure.
+    PointCountMismatch {
+        /// Point count retained by the acceleration structure.
+        expected: usize,
+        /// Point count supplied to the query.
+        actual: usize,
+    },
+    /// A convex hull requires a three-dimensional point set.
+    DegeneratePointSet,
+    /// Convex hull construction could not certify a required predicate.
+    ConvexHullPredicate {
+        /// Hull stage that required the undecidable predicate.
+        stage: &'static str,
+    },
     /// An individual input mesh has no positions or no triangles.
     EmptyMesh {
         /// Index of the empty mesh in the input slice.
@@ -97,6 +112,16 @@ impl fmt::Display for HypermeshError {
                 "vertex index {index} is out of bounds for {vertex_count} vertices"
             ),
             Self::EmptyInput => f.write_str("input mesh set is empty"),
+            Self::PointCountMismatch { expected, actual } => write!(
+                f,
+                "point acceleration structure contains {expected} points but query supplied {actual}"
+            ),
+            Self::DegeneratePointSet => {
+                f.write_str("convex hull input does not span three dimensions")
+            }
+            Self::ConvexHullPredicate { stage } => {
+                write!(f, "convex hull could not certify predicate during {stage}")
+            }
             Self::EmptyMesh { mesh_index } => {
                 write!(f, "input mesh {mesh_index} has no positions or triangles")
             }

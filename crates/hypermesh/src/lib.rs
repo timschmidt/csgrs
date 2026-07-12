@@ -73,6 +73,7 @@ pub(crate) use trace::trace_dispatch;
 
 pub mod bvh;
 pub mod clip;
+pub mod convex_hull;
 pub mod error;
 pub mod geometry;
 mod halfspace;
@@ -87,7 +88,10 @@ pub mod segment_trace;
 pub mod subdivision;
 pub mod winding;
 
-pub use bvh::{ExactBvh, PolygonBounds};
+pub use bvh::{ExactBvh, ExactPointBvh, PolygonBounds};
+pub use convex_hull::{
+    convex_hull, convex_hull_with_coplanar_groups, convex_hull_with_retained_facts,
+};
 pub use error::{HypermeshError, HypermeshResult};
 pub use geometry::{Aabb, Classification, Plane, classify_point, classify_projective_point};
 pub use hyperlattice::{Point3, Real, Vector3};

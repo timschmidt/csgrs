@@ -4800,7 +4800,7 @@ fn deferred_projected_escape_direct_targets(
         strict_seeds,
         report_witness,
         halfspaces,
-        |seed, halfspaces| point_strictly_inside_halfspaces_or_unknown(seed, halfspaces),
+        point_strictly_inside_halfspaces_or_unknown,
         |seed| reference_target_from_halfspace_witness(seed, halfspaces, [None, None, None]),
     )
 }

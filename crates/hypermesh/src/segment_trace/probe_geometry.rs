@@ -286,7 +286,7 @@ pub(super) fn adjacent_normal_probes(
         polygons,
         positive_side,
         |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
-        |point, polygon| classify_point_in_polygon(point, polygon),
+        classify_point_in_polygon,
         |corridor, stop_point| {
             collect_normal_probe_targets(&retained_definitions, |definition| {
                 strict_normal_probe_targets(

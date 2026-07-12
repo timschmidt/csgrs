@@ -3280,13 +3280,10 @@ fn strict_aabb_target_families_with_seed_families(
             }
             Err(err) => return Err(err),
         };
-        if !target.uncertified_definition_fallback {
-            if !certified_direct_target_points
-                .iter()
-                .any(|existing| *existing == target.point)
-            {
-                certified_direct_target_points.push(target.point.clone());
-            }
+        if !target.uncertified_definition_fallback
+            && !certified_direct_target_points.contains(&target.point)
+        {
+            certified_direct_target_points.push(target.point.clone());
         }
         push_unique_detour_target(&mut direct_targets, target);
     }

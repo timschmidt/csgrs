@@ -339,14 +339,13 @@ mod tests {
 
     #[test]
     fn exact_transition_reachability_prunes_correlated_difference_states() {
-        assert_eq!(
-            can_boolean_op_be_inside_with_transition_reachability(
+        assert!(
+            !can_boolean_op_be_inside_with_transition_reachability(
                 BooleanOp::Difference,
                 &[1, 1],
                 &[vec![1, 1]],
             )
-            .unwrap(),
-            false
+            .unwrap()
         );
 
         assert!(
@@ -361,27 +360,25 @@ mod tests {
 
     #[test]
     fn exact_transition_reachability_handles_independent_transition_grid() {
-        assert_eq!(
+        assert!(
             can_boolean_op_be_inside_with_transition_reachability(
                 BooleanOp::Intersection,
                 &[0, 0, 0],
                 &[vec![1, 0, 0], vec![0, 1, 0], vec![0, 0, 1]],
             )
-            .unwrap(),
-            true
+            .unwrap()
         );
     }
 
     #[test]
     fn exact_transition_reachability_keeps_states_recoverable_by_remaining_transitions() {
-        assert_eq!(
+        assert!(
             can_boolean_op_be_inside_with_transition_reachability(
                 BooleanOp::Difference,
                 &[1, 2],
                 &[vec![0, -3], vec![0, 1]],
             )
-            .unwrap(),
-            true
+            .unwrap()
         );
     }
 }

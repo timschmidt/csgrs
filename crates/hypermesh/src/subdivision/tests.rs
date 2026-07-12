@@ -11439,7 +11439,7 @@ fn support_plane_cell_search_backtracks_after_uncertified_current_cell() {
     assert!(
         call_halfspace_counts[1..]
             .iter()
-            .any(|count| *count == root_halfspace_count || *count > root_halfspace_count)
+            .any(|count| *count >= root_halfspace_count)
     );
     assert_eq!(found, Some(ReferenceTarget::axis_defined(p(1, 1, 1))));
 }

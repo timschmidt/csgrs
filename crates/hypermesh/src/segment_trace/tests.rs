@@ -730,11 +730,11 @@ fn no_plane_detour_target_evaluation_prefers_lower_ranked_leg_first() {
         &point,
         &[],
         &[],
-        &[start_definitions.clone()],
-        &[end_definitions.clone()],
+        std::slice::from_ref(&start_definitions),
+        std::slice::from_ref(&end_definitions),
         true,
         &mut DefinitionNoPlaneReplacementCycleGuardCache::default(),
-        &mut DefinitionNoPlaneReplacementReachabilityCache::default(),
+        &DefinitionNoPlaneReplacementReachabilityCache::default(),
         &mut Vec::new(),
         &mut Vec::new(),
         &mut StrictAabbTargetFamilyCache::default(),
@@ -4970,9 +4970,14 @@ fn normal_probe_is_clipped_before_intervening_surface() {
         .find(|point| !point.planes.is_empty())
         .expect("shifted edge construction should retain defining planes");
 
-    let probes =
-        adjacent_normal_probes(&interior, &leaf.support, &bounds, &[blocker.clone()], true)
-            .unwrap();
+    let probes = adjacent_normal_probes(
+        &interior,
+        &leaf.support,
+        &bounds,
+        std::slice::from_ref(&blocker),
+        true,
+    )
+    .unwrap();
     let probe = probes
         .into_iter()
         .find(|probe| probe.side == Classification::Positive)
@@ -6639,7 +6644,7 @@ fn leaf_classification_uses_certified_slanted_normal_probe() {
         &p(0, 0, 0),
         &ref_definitions,
         &[0],
-        &[leaf.clone()],
+        std::slice::from_ref(&leaf),
         &bounds,
         &leaf.delta_w,
     )
@@ -6676,7 +6681,7 @@ fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_
         &ref_point,
         &ref_definitions,
         &[0],
-        &[leaf.clone()],
+        std::slice::from_ref(&leaf),
         &bounds,
         &leaf.delta_w,
     )
@@ -6824,7 +6829,7 @@ fn adjacent_normal_probe_stop_values_exist_for_slanted_leaf_case() {
         &leaf.support.normal,
         &leaf.support,
         &bounds,
-        &[leaf.clone()],
+        std::slice::from_ref(&leaf),
         &mut |_interior, direction, polygon| Ok(dot_direction(&polygon.support.normal, direction)),
         &mut |point, polygon| classify_point_in_polygon(point, polygon),
     )
@@ -9843,7 +9848,14 @@ fn probe_reachability_definition_search_continues_after_boundary_direct_check() 
             &end,
             &[axis_plane_definition(&start)],
             &[axis_plane_definition(&end)],
-            || probe_reaches_adjacent_cell(&start, &end, &host_support, &[blocker.clone()]),
+            || {
+                probe_reaches_adjacent_cell(
+                    &start,
+                    &end,
+                    &host_support,
+                    std::slice::from_ref(&blocker),
+                )
+            },
             |_start_definition, _end_definition| Ok(true),
         )
         .unwrap()
@@ -11465,7 +11477,7 @@ fn no_plane_cycle_guard_reuses_cached_whole_query_false_across_visited_points() 
     let end_definitions = [axis_plane_definition(&end)];
     let mut no_plane_replacement_cycle_guard_cache =
         DefinitionNoPlaneReplacementCycleGuardCache::default();
-    let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::from(vec![
+    let no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::from(vec![
         DefinitionNoPlaneReplacementReachabilityCacheEntry {
             start: start.clone(),
             end: end.clone(),
@@ -11497,7 +11509,7 @@ fn no_plane_cycle_guard_reuses_cached_whole_query_false_across_visited_points() 
             &end_definitions,
             false,
             &mut no_plane_replacement_cycle_guard_cache,
-            &mut no_plane_replacement_cache,
+            &no_plane_replacement_cache,
             &mut halfspace_report_cache,
             &mut halfspace_seed_family_cache,
             &mut strict_aabb_target_families,
@@ -11528,7 +11540,7 @@ fn no_plane_cycle_guard_reuses_cached_whole_query_true_for_initial_visited_point
     let end_definitions = [axis_plane_definition(&end)];
     let mut no_plane_replacement_cycle_guard_cache =
         DefinitionNoPlaneReplacementCycleGuardCache::default();
-    let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::from(vec![
+    let no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::from(vec![
         DefinitionNoPlaneReplacementReachabilityCacheEntry {
             start: start.clone(),
             end: end.clone(),
@@ -11558,7 +11570,7 @@ fn no_plane_cycle_guard_reuses_cached_whole_query_true_for_initial_visited_point
             &end_definitions,
             false,
             &mut no_plane_replacement_cycle_guard_cache,
-            &mut no_plane_replacement_cache,
+            &no_plane_replacement_cache,
             &mut halfspace_report_cache,
             &mut halfspace_seed_family_cache,
             &mut strict_aabb_target_families,

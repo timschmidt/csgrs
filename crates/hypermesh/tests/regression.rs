@@ -842,12 +842,9 @@ fn disjoint_boxes_use_general_leaf_path() -> HypermeshResult<()> {
     let right = box_mesh([3, 0, 0], [4, 1, 1]);
     let refs = [left.as_ref(), right.as_ref()];
     let left_soup = passthrough(&left).unwrap();
-    let config = EmberConfig {
-        // Keep this at depth zero so the test exercises the root certified
-        // leaf classifier without subdivision.
-        max_depth: 0,
-        ..config()
-    };
+    // Keep this at depth zero so the test exercises the root certified leaf
+    // classifier without subdivision.
+    let config = EmberConfig { max_depth: 0 };
 
     let union_result = boolean_operation(&refs, BooleanOp::Union, config)?;
     let union = triangulate_and_resolve_certified(&union_result)?;

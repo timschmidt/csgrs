@@ -578,6 +578,55 @@ fn exact_bvh_reports_overlapping_polygon_bounds() {
 }
 
 #[test]
+fn exact_bvh_builds_a_hierarchy_for_nontrivial_inputs() {
+    let polygons = (0..32)
+        .map(|x| {
+            make_triangle(
+                &p(x * 3, 0, 0),
+                &p(x * 3 + 1, 0, 0),
+                &p(x * 3, 1, 0),
+                0,
+                x as isize,
+            )
+        })
+        .collect::<Vec<_>>();
+    let bvh = hypermesh::ExactBvh::build(&polygons).unwrap();
+
+    assert!(bvh.node_count() > 1);
+    assert!(bvh.node_count() < polygons.len());
+}
+
+#[test]
+fn point_bvh_halfspace_candidates_match_bruteforce() {
+    let points = (-16..=16)
+        .flat_map(|x| (-2..=2).map(move |y| p(x, y, x - y)))
+        .collect::<Vec<_>>();
+    let bvh = hypermesh::ExactPointBvh::build(&points).unwrap();
+    let plane = hypermesh::Plane::from_coefficients(
+        hypermesh::Real::from(2),
+        hypermesh::Real::from(-1),
+        hypermesh::Real::one(),
+        hypermesh::Real::from(-3),
+    );
+    let mut accelerated = Vec::new();
+    bvh.query_positive_halfspace(&points, &plane, |index| accelerated.push(index))
+        .unwrap();
+    accelerated.sort_unstable();
+    let brute = points
+        .iter()
+        .enumerate()
+        .filter_map(|(index, point)| {
+            (hypermesh::classify_point(point, &plane).unwrap()
+                == hypermesh::Classification::Positive)
+                .then_some(index)
+        })
+        .collect::<Vec<_>>();
+
+    assert!(bvh.node_count() > 1);
+    assert_eq!(accelerated, brute);
+}
+
+#[test]
 fn trace_axis_segment_accumulates_exact_winding_crossing() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];

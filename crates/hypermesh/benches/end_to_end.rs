@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
-    BooleanOp, EmberConfig, boolean_operation, prepare_input, triangulate_and_resolve_certified,
+    BooleanOp, EmberConfig, Point3, Real, boolean_operation, convex_hull, prepare_input,
+    triangulate_and_resolve_certified,
 };
 
 fn bench_end_to_end(c: &mut Criterion) {
@@ -60,6 +61,17 @@ fn bench_end_to_end(c: &mut Criterion) {
             triangulate_and_resolve_certified(black_box(&cube_union))
                 .expect("benchmark output is certified")
         })
+    });
+
+    let hull_points = (-8..=8)
+        .flat_map(|x| {
+            (-8..=8).flat_map(move |y| {
+                (-8..=8).map(move |z| Point3::new(Real::from(x), Real::from(y), Real::from(z)))
+            })
+        })
+        .collect::<Vec<_>>();
+    c.bench_function("convex_hull/grid_4913", |b| {
+        b.iter(|| convex_hull(black_box(&hull_points)).expect("point set spans 3D"))
     });
 }
 
