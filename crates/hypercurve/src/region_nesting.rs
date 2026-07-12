@@ -1855,7 +1855,7 @@ fn evaluate_unordered_segments_region_result(
             output_ring_count,
             output_boundary_segment_count,
             output_boundary_segment_kind_counts,
-            arranged_source_reports: native_arranged_source_reports(&segments, &arranged.segments),
+            arranged_source_reports: native_arranged_source_reports(segments, &arranged.segments),
             source_reports: assembled.source_reports,
             boundary_build_report: Some(boundary_build_report),
             status,
@@ -11748,10 +11748,8 @@ impl RegionLineSegmentRegionBuildReport2 {
 
     /// Returns retained output role report count when role assignment was reached.
     pub fn role_report_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.role_reports().len()),
-            None => None,
-        }
+        self.boundary_build_report()
+            .map(|report| report.role_reports().len())
     }
 
     /// Returns retained output role reports when role assignment was reached.

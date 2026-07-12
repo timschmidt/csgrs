@@ -7,7 +7,10 @@
 use crate::boolean::{
     BooleanFragmentClassification, validate_boolean_fragment_classification_boundary_action,
 };
-use crate::classify::is_zero;
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
+use crate::classify::{compare_reals, is_zero};
 use crate::{
     Classification, Contour2, CurveError, CurvePolicy, CurveResult, FillRule, ParamRange, Point2,
     RegionContourKey, RegionContourRole, RegionSide, RetainedTopologyStatus, Segment2, SegmentKind,
@@ -1949,8 +1952,35 @@ fn endpoint_adjacency(
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; fragments.len()];
     let mut predecessors = vec![None; fragments.len()];
+    let mut starts_by_identity = HashMap::with_capacity(fragments.len());
 
+    for (index, fragment) in fragments.iter().enumerate() {
+        if starts_by_identity
+            .insert(fragment.segment.start().identity(), index)
+            .is_some()
+        {
+            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+        }
+    }
+
+    let mut unmatched_ends = Vec::new();
     for (left_index, left) in fragments.iter().enumerate() {
+        let Some(&right_index) = starts_by_identity.get(&left.segment.end().identity()) else {
+            unmatched_ends.push(left_index);
+            continue;
+        };
+        if left_index == right_index {
+            unmatched_ends.push(left_index);
+            continue;
+        }
+        successors[left_index] = Some(right_index);
+        if predecessors[right_index].replace(left_index).is_some() {
+            return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+        }
+    }
+
+    for left_index in unmatched_ends {
+        let left = &fragments[left_index];
         for (right_index, right) in fragments.iter().enumerate() {
             if left_index == right_index {
                 continue;
@@ -1964,9 +1994,10 @@ fn endpoint_adjacency(
                 continue;
             }
 
-            if successors[left_index].replace(right_index).is_some()
-                || predecessors[right_index].replace(left_index).is_some()
-            {
+            if successors[left_index].replace(right_index).is_some() {
+                return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+            }
+            if predecessors[right_index].replace(left_index).is_some() {
                 return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
             }
         }
@@ -2016,6 +2047,18 @@ fn points_match(
     right: &crate::Point2,
     policy: &CurvePolicy,
 ) -> Classification<bool> {
+    if left == right {
+        return Classification::Decided(true);
+    }
+    if matches!(
+        compare_reals(left.x(), right.x(), policy),
+        Some(Ordering::Less | Ordering::Greater)
+    ) || matches!(
+        compare_reals(left.y(), right.y(), policy),
+        Some(Ordering::Less | Ordering::Greater)
+    ) {
+        return Classification::Decided(false);
+    }
     let distance = left.distance_squared(right);
     match is_zero(&distance, policy) {
         Some(matches) => Classification::Decided(matches),

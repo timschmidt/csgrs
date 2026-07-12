@@ -46,13 +46,17 @@ pub struct SegmentSplitMarker {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourSplitMarkers {
     segment_markers: Vec<Vec<SegmentSplitMarker>>,
+    source_incidence_certified: bool,
 }
 
 impl ContourSplitMarkers {
     /// Constructs split markers from already-normalized per-segment markers.
     pub fn new(segment_markers: Vec<Vec<SegmentSplitMarker>>) -> CurveResult<Self> {
         validate_split_markers(&segment_markers)?;
-        Ok(Self { segment_markers })
+        Ok(Self {
+            segment_markers,
+            source_incidence_certified: false,
+        })
     }
 
     /// Constructs a marker set containing only each segment's endpoints.
@@ -73,7 +77,10 @@ impl ContourSplitMarkers {
             ]);
         }
 
-        Self { segment_markers }
+        Self {
+            segment_markers,
+            source_incidence_certified: true,
+        }
     }
 
     /// Builds split markers from one contour-pair event set.
@@ -127,6 +134,10 @@ impl ContourSplitMarkers {
     /// Returns true when the marker set contains no segments.
     pub fn is_empty(&self) -> bool {
         self.segment_markers.is_empty()
+    }
+
+    pub(crate) const fn source_incidence_certified(&self) -> bool {
+        self.source_incidence_certified
     }
 
     /// Merges another contour-pair event set into this marker set.

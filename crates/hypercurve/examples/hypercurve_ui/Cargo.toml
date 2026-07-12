@@ -42,3 +42,6 @@ web-sys = { version = "0.3.81", features = [
 
 [dev-dependencies]
 proptest = "1"
+
+[patch.crates-io]
+hyperreal = { path = "../../../hyperreal" }

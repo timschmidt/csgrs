@@ -1,6 +1,7 @@
 //! Line and circular-arc segment primitives.
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
+use std::rc::Rc;
 
 use crate::classify::{LineSide, classify_oriented_line, in_closed_unit_interval, is_zero};
 use crate::{Classification, CurveError, CurvePolicy, CurveResult, Point2};
@@ -10,20 +11,35 @@ use crate::{Classification, CurveError, CurvePolicy, CurveResult, Point2};
 pub struct LineSeg2 {
     start: Point2,
     end: Point2,
+    support: Option<Rc<LineSupport2>>,
+}
+
+#[derive(Debug, PartialEq)]
+struct LineSupport2 {
+    start: Point2,
+    end: Point2,
 }
 
 impl LineSeg2 {
     /// Constructs a line segment and rejects equal endpoints when provable.
     pub fn try_new(start: Point2, end: Point2) -> CurveResult<Self> {
-        if start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
             return Err(CurveError::ZeroLengthLine);
         }
-        Ok(Self { start, end })
+        Ok(Self {
+            start,
+            end,
+            support: None,
+        })
     }
 
     /// Constructs a line segment without validating endpoint distinctness.
-    pub const fn new_unchecked(start: Point2, end: Point2) -> Self {
-        Self { start, end }
+    pub fn new_unchecked(start: Point2, end: Point2) -> Self {
+        Self {
+            start,
+            end,
+            support: None,
+        }
     }
 
     /// Returns the segment start point.
@@ -41,6 +57,74 @@ impl LineSeg2 {
         self.end.delta_from(&self.start)
     }
 
+    pub(crate) fn support_delta(&self) -> (Real, Real) {
+        self.support.as_ref().map_or_else(
+            || self.delta(),
+            |support| support.end.delta_from(&support.start),
+        )
+    }
+
+    pub(crate) const fn has_retained_support(&self) -> bool {
+        self.support.is_some()
+    }
+
+    pub(crate) fn support_start(&self) -> &Point2 {
+        self.support
+            .as_ref()
+            .map_or(&self.start, |support| &support.start)
+    }
+
+    pub(crate) fn fragment_between(&self, start: Point2, end: Point2) -> CurveResult<Self> {
+        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+            return Err(CurveError::ZeroLengthLine);
+        }
+        let support = self.support.clone().or_else(|| {
+            Some(Rc::new(LineSupport2 {
+                start: self.start.clone(),
+                end: self.end.clone(),
+            }))
+        });
+        Ok(Self {
+            start,
+            end,
+            support,
+        })
+    }
+
+    pub(crate) fn map_points<F>(&self, mut map: F) -> CurveResult<Self>
+    where
+        F: FnMut(&Point2) -> Point2,
+    {
+        let start = map(&self.start);
+        let end = map(&self.end);
+        self.map_points_between(start, end, map)
+    }
+
+    pub(crate) fn map_points_between<F>(
+        &self,
+        start: Point2,
+        end: Point2,
+        mut map: F,
+    ) -> CurveResult<Self>
+    where
+        F: FnMut(&Point2) -> Point2,
+    {
+        if start == end || start.distance_squared(&end).zero_status() == ZeroStatus::Zero {
+            return Err(CurveError::ZeroLengthLine);
+        }
+        let support = self.support.as_ref().map(|support| {
+            Rc::new(LineSupport2 {
+                start: map(&support.start),
+                end: map(&support.end),
+            })
+        });
+        Ok(Self {
+            start,
+            end,
+            support,
+        })
+    }
+
     /// Returns squared segment length.
     pub fn length_squared(&self) -> Real {
         self.start.distance_squared(&self.end)
@@ -56,12 +140,18 @@ impl LineSeg2 {
         Self {
             start: self.end.clone(),
             end: self.start.clone(),
+            support: self.support.clone(),
         }
     }
 
     /// Classifies a point relative to this oriented line segment's supporting line.
     pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
-        classify_oriented_line(&self.start, &self.end, point, policy)
+        let support_start = self.support_start();
+        let support_end = self
+            .support
+            .as_ref()
+            .map_or(&self.end, |support| &support.end);
+        classify_oriented_line(support_start, support_end, point, policy)
     }
 
     /// Prepares this line segment for repeated supporting-line classifications.

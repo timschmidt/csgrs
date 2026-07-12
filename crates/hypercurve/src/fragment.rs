@@ -17,8 +17,7 @@ use crate::classify::{
 };
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
-    CurveResult, LineSeg2, NumericMode, ParamRange, Point2, Segment2, SegmentSplitMarker,
-    UncertaintyReason,
+    CurveResult, NumericMode, ParamRange, Point2, Segment2, SegmentSplitMarker, UncertaintyReason,
 };
 
 /// One source-contour fragment between adjacent split markers.
@@ -85,9 +84,11 @@ impl ContourFragmentSet {
             }
         }
 
-        Ok(Classification::Decided(Self::new_with_policy(
-            fragments, policy,
-        )?))
+        // Marker validation and adjacent-pair construction already certify
+        // forward, disjoint source ranges. Re-running the generic fragment-set
+        // validator here discards that ordering provenance and asks exact-real
+        // arithmetic to rediscover equal shared marker parameters.
+        Ok(Classification::Decided(Self { fragments }))
     }
 
     /// Returns fragments in contour traversal order.
@@ -222,6 +223,9 @@ fn validate_split_markers_against_contour(
                 return Err(CurveError::Topology(
                     "contour split marker references a different source segment".into(),
                 ));
+            }
+            if markers.source_incidence_certified() {
+                continue;
             }
             match split_marker_matches_source_segment(source_segment, marker, policy)? {
                 Classification::Decided(()) => {}
@@ -469,7 +473,8 @@ fn build_fragment_segment(
     }
 
     match source_segment {
-        Segment2::Line(_) => LineSeg2::try_new(start.point.clone(), end.point.clone())
+        Segment2::Line(line) => line
+            .fragment_between(start.point.clone(), end.point.clone())
             .map(Segment2::Line)
             .map(Classification::Decided),
         Segment2::Arc(arc) => build_arc_fragment_segment(arc, start, end, policy),

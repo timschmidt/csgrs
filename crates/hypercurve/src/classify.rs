@@ -130,7 +130,11 @@ pub(crate) fn classify_oriented_line(
                 Classification::Decided(LineSide::from_predicate_sign(value))
             }
             hyperlimit::PredicateOutcome::Unknown { .. } => {
-                Classification::Uncertain(UncertaintyReason::Predicate)
+                let det = orient2d_real_expr(from, to, point);
+                real_sign(&det, policy)
+                    .map(LineSide::from_real_sign)
+                    .map(Classification::Decided)
+                    .unwrap_or(Classification::Uncertain(UncertaintyReason::Predicate))
             }
         }
     }
@@ -201,7 +205,11 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
         // This follows Yap's exact geometric computation split between exact
         // predicate decisions and approximate edge views; see Yap, "Towards
         // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
-        return hyperlimit::compare_reals_with_policy(left, right, policy.predicate_policy).value();
+        if let Some(ordering) =
+            hyperlimit::compare_reals_with_policy(left, right, policy.predicate_policy).value()
+        {
+            return Some(ordering);
+        }
     }
 
     let delta = left - right;

@@ -1,18 +1,38 @@
 //! Two-dimensional points backed by [`hyperreal::Real`].
 
-use hyperreal::Real;
+use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_POINT_ID: AtomicU64 = AtomicU64::new(1);
+
+fn fresh_point_id() -> u64 {
+    NEXT_POINT_ID.fetch_add(1, Ordering::Relaxed)
+}
 
 /// A two-dimensional point.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Point2 {
     x: Real,
     y: Real,
+    identity: u64,
+}
+
+impl PartialEq for Point2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.identity == other.identity
+            || ((&self.x - &other.x).zero_status() == ZeroStatus::Zero
+                && (&self.y - &other.y).zero_status() == ZeroStatus::Zero)
+    }
 }
 
 impl Point2 {
     /// Constructs a point from Real coordinates.
-    pub const fn new(x: Real, y: Real) -> Self {
-        Self { x, y }
+    pub fn new(x: Real, y: Real) -> Self {
+        Self {
+            x,
+            y,
+            identity: fresh_point_id(),
+        }
     }
 
     /// Constructs a point from values convertible into Real coordinates.
@@ -21,10 +41,7 @@ impl Point2 {
         X: Into<Real>,
         Y: Into<Real>,
     {
-        Self {
-            x: x.into(),
-            y: y.into(),
-        }
+        Self::new(x.into(), y.into())
     }
 
     /// Returns the x coordinate.
@@ -35,6 +52,10 @@ impl Point2 {
     /// Returns the y coordinate.
     pub const fn y(&self) -> &Real {
         &self.y
+    }
+
+    pub(crate) const fn identity(&self) -> u64 {
+        self.identity
     }
 
     /// Returns `self - other` as a coordinate pair.
@@ -51,18 +72,15 @@ impl Point2 {
     /// Linearly interpolates between two points.
     pub fn lerp(&self, other: &Self, t: Real) -> Self {
         let one_minus_t = Real::one() - &t;
-        Self {
-            x: (&self.x * &one_minus_t) + (&other.x * &t),
-            y: (&self.y * &one_minus_t) + (&other.y * &t),
-        }
+        Self::new(
+            (&self.x * &one_minus_t) + (&other.x * &t),
+            (&self.y * &one_minus_t) + (&other.y * &t),
+        )
     }
 
     /// Translates the point by the given Real delta.
     pub fn translated(&self, dx: Real, dy: Real) -> Self {
-        Self {
-            x: &self.x + dx,
-            y: &self.y + dy,
-        }
+        Self::new(&self.x + dx, &self.y + dy)
     }
 
     /// Returns conservative structural facts for this point's coordinates.

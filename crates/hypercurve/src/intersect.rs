@@ -394,11 +394,27 @@ impl LineSeg2 {
         let (rx, ry) = self.delta();
         let (sx, sy) = other.delta();
         let qmp = other.start().delta_from(self.start());
+        let (support_rx, support_ry) = if self.has_retained_support() {
+            self.support_delta()
+        } else {
+            (rx.clone(), ry.clone())
+        };
+        let (support_sx, support_sy) = if other.has_retained_support() {
+            other.support_delta()
+        } else {
+            (sx.clone(), sy.clone())
+        };
+        let support_qmp = other.support_start().delta_from(self.support_start());
 
-        let denominator = cross(&rx, &ry, &sx, &sy);
+        let denominator = cross(&support_rx, &support_ry, &support_sx, &support_sy);
         match is_zero(&denominator, policy) {
-            Some(false) => intersect_non_parallel(self, policy, &rx, &ry, &sx, &sy, qmp),
-            Some(true) => intersect_parallel(self, other, policy, &rx, &ry, qmp),
+            Some(false) => intersect_non_parallel(self, other, policy, &rx, &ry, &sx, &sy, qmp),
+            Some(true) => {
+                intersect_parallel(self, other, policy, &support_rx, &support_ry, support_qmp)
+            }
+            None if line_segments_decided_axis_separated(self, other, policy) => {
+                Ok(LineLineIntersection::None)
+            }
             None => Ok(LineLineIntersection::Uncertain {
                 reason: UncertaintyReason::RealSign,
             }),
@@ -512,6 +528,37 @@ impl LineSeg2 {
     }
 }
 
+fn line_segments_decided_axis_separated(
+    first: &LineSeg2,
+    second: &LineSeg2,
+    policy: &CurvePolicy,
+) -> bool {
+    fn endpoints_strictly_before(
+        first: [&Real; 2],
+        second: [&Real; 2],
+        policy: &CurvePolicy,
+    ) -> bool {
+        first.into_iter().all(|left| {
+            second
+                .iter()
+                .all(|right| compare_reals(left, right, policy) == Some(Ordering::Less))
+        })
+    }
+
+    let first_x = [first.start().x(), first.end().x()];
+    let second_x = [second.start().x(), second.end().x()];
+    if endpoints_strictly_before(first_x, second_x, policy)
+        || endpoints_strictly_before(second_x, first_x, policy)
+    {
+        return true;
+    }
+
+    let first_y = [first.start().y(), first.end().y()];
+    let second_y = [second.start().y(), second.end().y()];
+    endpoints_strictly_before(first_y, second_y, policy)
+        || endpoints_strictly_before(second_y, first_y, policy)
+}
+
 impl CircularArc2 {
     /// Classifies the relation between this arc's full circle and another.
     ///
@@ -597,6 +644,7 @@ impl CircularArc2 {
 
 fn intersect_non_parallel(
     a: &LineSeg2,
+    b: &LineSeg2,
     policy: &CurvePolicy,
     rx: &Real,
     ry: &Real,
@@ -604,7 +652,16 @@ fn intersect_non_parallel(
     sy: &Real,
     qmp: (Real, Real),
 ) -> CurveResult<LineLineIntersection> {
+    if let Some(intersection) = non_parallel_endpoint_intersection(a, b, policy)? {
+        return Ok(intersection);
+    }
+
     let denominator = cross(rx, ry, sx, sy);
+    if is_zero(&denominator, policy) != Some(false) {
+        return Ok(LineLineIntersection::Uncertain {
+            reason: UncertaintyReason::RealSign,
+        });
+    }
     let t_numerator = cross(&qmp.0, &qmp.1, sx, sy);
     let u_numerator = cross(&qmp.0, &qmp.1, rx, ry);
     let t = (t_numerator / &denominator)?;
@@ -643,6 +700,46 @@ fn intersect_non_parallel(
         b_param: u,
         kind,
     })
+}
+
+fn non_parallel_endpoint_intersection(
+    a: &LineSeg2,
+    b: &LineSeg2,
+    policy: &CurvePolicy,
+) -> CurveResult<Option<LineLineIntersection>> {
+    for (a_point, a_param) in [(a.start(), Real::zero()), (a.end(), Real::one())] {
+        for (b_point, b_param) in [(b.start(), Real::zero()), (b.end(), Real::one())] {
+            if a_point == b_point {
+                return Ok(Some(LineLineIntersection::Point {
+                    point: a_point.clone(),
+                    a_param,
+                    b_param,
+                    kind: IntersectionKind::Endpoint,
+                }));
+            }
+        }
+    }
+    for (point, a_param) in [(a.start(), Real::zero()), (a.end(), Real::one())] {
+        if b.contains_point(point, policy) == Classification::Decided(true) {
+            return Ok(Some(LineLineIntersection::Point {
+                point: point.clone(),
+                a_param,
+                b_param: parameter_on_line(b, point, policy)?,
+                kind: IntersectionKind::Endpoint,
+            }));
+        }
+    }
+    for (point, b_param) in [(b.start(), Real::zero()), (b.end(), Real::one())] {
+        if a.contains_point(point, policy) == Classification::Decided(true) {
+            return Ok(Some(LineLineIntersection::Point {
+                point: point.clone(),
+                a_param: parameter_on_line(a, point, policy)?,
+                b_param,
+                kind: IntersectionKind::Endpoint,
+            }));
+        }
+    }
+    Ok(None)
 }
 
 fn intersect_parallel(

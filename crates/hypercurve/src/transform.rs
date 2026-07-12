@@ -45,10 +45,10 @@ impl Similarity2 {
     ) -> CurveResult<Self> {
         let first_len_squared = a.clone() * a.clone() + d.clone() * d.clone();
         let second_len_squared = b.clone() * b.clone() + e.clone() * e.clone();
-        let equal_scale = (first_len_squared - second_len_squared).refine_sign_until(128);
-        let orthogonal = (a.clone() * b.clone() + d.clone() * e.clone()).refine_sign_until(128);
+        let equal_scale = (first_len_squared - second_len_squared).refine_sign_until(-128);
+        let orthogonal = (a.clone() * b.clone() + d.clone() * e.clone()).refine_sign_until(-128);
         let determinant = a.clone() * e.clone() - b.clone() * d.clone();
-        let determinant_sign = determinant.refine_sign_until(128);
+        let determinant_sign = determinant.refine_sign_until(-128);
 
         if equal_scale != Some(RealSign::Zero)
             || orthogonal != Some(RealSign::Zero)
@@ -157,10 +157,7 @@ impl Segment2 {
 impl LineSeg2 {
     /// Applies a certified planar similarity transform.
     pub fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
-        Self::try_new(
-            transform.transform_point(self.start()),
-            transform.transform_point(self.end()),
-        )
+        self.map_points(|point| transform.transform_point(point))
     }
 }
 
@@ -183,11 +180,36 @@ impl CircularArc2 {
 impl CurveString2 {
     /// Applies a certified planar similarity transform while preserving line/arc topology.
     pub fn transform_similarity(&self, transform: &Similarity2) -> CurveResult<Self> {
-        let segments = self
-            .segments()
-            .iter()
-            .map(|segment| segment.transform_similarity(transform))
-            .collect::<CurveResult<Vec<_>>>()?;
+        let source_start = self.start().ok_or(CurveError::EmptyCurveString)?;
+        let transformed_start = transform.transform_point(source_start);
+        let mut transformed_segment_start = transformed_start.clone();
+        let mut segments = Vec::with_capacity(self.segments().len());
+        for segment in self.segments() {
+            let transformed_end = if segment.end() == source_start {
+                transformed_start.clone()
+            } else {
+                transform.transform_point(segment.end())
+            };
+            let transformed = match segment {
+                Segment2::Line(line) => line
+                    .map_points_between(
+                        transformed_segment_start,
+                        transformed_end.clone(),
+                        |point| transform.transform_point(point),
+                    )
+                    .map(Segment2::Line)?,
+                Segment2::Arc(arc) => CircularArc2::try_from_center_with_bulge(
+                    transformed_segment_start,
+                    transformed_end.clone(),
+                    transform.transform_point(arc.center()),
+                    arc.is_clockwise() ^ transform.reverses_orientation(),
+                    arc.bulge().cloned(),
+                )
+                .map(Segment2::Arc)?,
+            };
+            transformed_segment_start = transformed_end;
+            segments.push(transformed);
+        }
         Self::try_new(segments)
     }
 }

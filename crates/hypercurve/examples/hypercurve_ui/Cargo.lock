@@ -1611,9 +1611,7 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "158f5ff74eddb87664f7a574cc059e619ea5b27eb96d6121e58f9f866f45feba"
+version = "0.13.1"
 dependencies = [
  "num",
 ]

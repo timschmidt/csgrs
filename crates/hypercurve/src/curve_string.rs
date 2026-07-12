@@ -999,6 +999,9 @@ impl CurveString2 {
         }
 
         for segment in &segments {
+            if segment.start() == segment.end() {
+                return Err(CurveError::ZeroLengthLine);
+            }
             match segment
                 .start()
                 .distance_squared(segment.end())
@@ -1010,6 +1013,9 @@ impl CurveString2 {
         }
 
         for adjacent in segments.windows(2) {
+            if adjacent[0].end() == adjacent[1].start() {
+                continue;
+            }
             let distance = adjacent[0].end().distance_squared(adjacent[1].start());
             match distance.zero_status() {
                 hyperreal::ZeroKnowledge::Zero => {}

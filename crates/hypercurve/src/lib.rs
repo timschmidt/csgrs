@@ -1,3 +1,10 @@
+#![allow(
+    clippy::large_enum_variant,
+    clippy::result_large_err,
+    clippy::too_many_arguments,
+    clippy::type_complexity
+)]
+
 //! Curve primitives built on the hyper geometry stack.
 //!
 //! This crate starts with a line/circular-arc core using [`hyperreal::Real`]

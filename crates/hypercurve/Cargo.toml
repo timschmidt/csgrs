@@ -20,7 +20,7 @@ all-features = true
 # hypersolve = { path = "../hypersolve", default-features = false }
 # hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
 # hypertri = { path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
-hyperreal = { version = "0.13.0", default-features = false }
+hyperreal = { version = "0.13.1", default-features = false }
 hypersolve = { version = "0.3.0", default-features = false }
 hyperlimit = { version = "0.4.0", default-features = false, features = ["std"], optional = true }
 hypertri = { version = "0.4.0", default-features = false, features = ["earcut"], optional = true }
@@ -80,3 +80,6 @@ harness = false
 name = "svg_io"
 harness = false
 required-features = ["svg"]
+
+[patch.crates-io]
+hyperreal = { path = "../hyperreal" }

@@ -1,12 +1,13 @@
 use hypercurve::{
-    BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
+    Aabb2, BooleanBoundaryChain, BooleanBoundaryChainAssemblyStage2, BooleanBoundaryChainSet,
     BooleanBoundaryContourTransferStage2, BooleanBoundaryFragmentEmissionStage2,
     BooleanBoundaryFragmentSet, BooleanBoundaryLoop, BooleanBoundaryLoopConstructionStage2,
     BooleanBoundaryLoopExtractionStage2, BooleanBoundaryLoopSet, BooleanFragmentAction,
     BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionStage2,
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurveError, CurvePolicy,
-    DirectedBooleanFragment, FillRule, LineSeg2, ParamRange, Real, Region2, RegionContourKey,
-    RegionContourRole, RegionPointLocation, RegionSide, Segment2, SegmentKind, SegmentKindCounts,
+    BooleanOp, BulgeVertex2, Classification, Contour2, ContourFragmentSet, ContourOperand,
+    ContourSplitMarkers, CurveError, CurvePolicy, DirectedBooleanFragment, FillRule,
+    LineLineIntersection, LineSeg2, ParamRange, Real, Region2, RegionContourKey, RegionContourRole,
+    RegionPointLocation, RegionSide, Segment2, SegmentIntersection, SegmentKind, SegmentKindCounts,
     UncertaintyReason,
 };
 
@@ -37,6 +38,458 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
 
 fn policy() -> CurvePolicy {
     CurvePolicy::certified()
+}
+
+fn symbolic_regular_polygon(radius: Real, sides: usize) -> Contour2 {
+    symbolic_regular_polygon_at(radius, sides, Real::zero(), Real::zero())
+}
+
+fn symbolic_regular_polygon_at(
+    radius: Real,
+    sides: usize,
+    center_x: Real,
+    center_y: Real,
+) -> Contour2 {
+    let points = (0..sides)
+        .map(|index| {
+            let fraction = (Real::from(index as u64) / Real::from(sides as u64)).unwrap();
+            let angle = Real::tau() * fraction;
+            [
+                center_x.clone() + radius.clone() * angle.clone().cos(),
+                center_y.clone() + radius.clone() * angle.sin(),
+            ]
+        })
+        .collect::<Vec<_>>();
+    Contour2::from_real_ring(&points).unwrap()
+}
+
+#[test]
+fn transcendental_point_equality_requires_exact_coordinate_evidence() {
+    let seventh = (Real::pi() / Real::from(7_u8)).unwrap();
+    let fifth = (Real::pi() / Real::from(5_u8)).unwrap();
+    let point = hypercurve::Point2::new(seventh.clone().sin(), seventh.cos());
+    let clone = point.clone();
+    let reconstructed = hypercurve::Point2::new(
+        (Real::pi() / Real::from(7_u8)).unwrap().sin(),
+        (Real::pi() / Real::from(7_u8)).unwrap().cos(),
+    );
+    let distinct = hypercurve::Point2::new(fifth.clone().sin(), fifth.cos());
+
+    assert_eq!(point, clone);
+    assert_eq!(point, reconstructed);
+    assert_ne!(point, distinct);
+}
+
+#[test]
+fn symbolic_regular_polygon_booleans_with_rectangle_are_decided() {
+    let circle =
+        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 7)]);
+    let rectangle = Region2::from_material_contours(vec![rectangle(0, -1, 3, 1)]);
+
+    let intersections = circle.intersect_region(&rectangle, &policy()).unwrap();
+    let pair = &intersections.pairs()[0];
+    let source = circle.material_contours()[0].clone();
+    let markers = ContourSplitMarkers::from_intersections(
+        &source,
+        pair.intersections(),
+        ContourOperand::First,
+        &policy(),
+    );
+    assert!(
+        matches!(markers, Classification::Decided(_)),
+        "symbolic markers were {markers:#?}"
+    );
+    let Classification::Decided(markers) = markers else {
+        unreachable!()
+    };
+    let split = ContourFragmentSet::from_split_markers(&source, &markers, &policy()).unwrap();
+    assert!(
+        matches!(split, Classification::Decided(_)),
+        "symbolic fragment split was {split:#?}"
+    );
+    let fragments = intersections
+        .split_regions_with_report(&circle.as_view(), &rectangle.as_view(), &policy())
+        .unwrap();
+    assert!(
+        matches!(
+            fragments.fragments_classification(),
+            Classification::Decided(_)
+        ),
+        "symbolic split was {fragments:#?}"
+    );
+    let Classification::Decided(fragment_set) = fragments.fragments_classification() else {
+        unreachable!()
+    };
+    let selection = fragment_set
+        .classify_for_boolean_with_report(
+            &circle.as_view(),
+            &rectangle.as_view(),
+            BooleanOp::Union,
+            &policy(),
+        )
+        .unwrap();
+    assert!(
+        matches!(
+            selection.selection_classification(),
+            Classification::Decided(_)
+        ),
+        "symbolic selection was {selection:#?}"
+    );
+    let selection_value = selection.selection().unwrap();
+    let emission = selection_value
+        .emit_boundary_fragments_with_report(fragment_set)
+        .unwrap();
+    assert!(
+        emission.fragments().is_some(),
+        "symbolic emission was {emission:#?}"
+    );
+    let chains = emission
+        .fragments()
+        .unwrap()
+        .assemble_chains_with_report(&policy());
+    assert!(
+        chains.chains().is_some(),
+        "symbolic chains were {chains:#?}"
+    );
+    let loops = chains.chains().unwrap().closed_loops_with_report();
+    assert!(loops.loops().is_some(), "symbolic loops were {loops:#?}");
+    let contours = loops
+        .loops()
+        .unwrap()
+        .to_contours_with_report(FillRule::NonZero);
+    assert!(
+        contours.contours().is_some(),
+        "symbolic contours were {contours:#?}"
+    );
+
+    let report = circle
+        .boolean_region_with_report(&rectangle, BooleanOp::Union, FillRule::NonZero, &policy())
+        .unwrap();
+    let result = report.region_classification();
+    assert!(
+        matches!(result, Classification::Decided(region) if !region.is_empty()),
+        "symbolic union was {report:#?}"
+    );
+
+    for op in [
+        BooleanOp::Difference,
+        BooleanOp::Intersection,
+        BooleanOp::Xor,
+    ] {
+        let result = circle
+            .boolean_region(&rectangle, op, FillRule::NonZero, &policy())
+            .unwrap();
+        assert!(
+            matches!(result, Classification::Decided(ref region) if !region.is_empty()),
+            "symbolic {op:?} was {result:#?}"
+        );
+    }
+}
+
+#[test]
+fn nested_symbolic_regular_polygon_difference_is_decided() {
+    let outer =
+        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 24)]);
+    let inner = Region2::from_material_contours(vec![symbolic_regular_polygon(
+        (Real::from(3_u8) / Real::from(2_u8)).unwrap(),
+        24,
+    )]);
+
+    let report = outer
+        .boolean_region_with_report(&inner, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap();
+    assert!(
+        matches!(report.region_classification(), Classification::Decided(region) if !region.is_empty()),
+        "nested symbolic difference was {report:#?}"
+    );
+}
+
+#[test]
+fn symbolic_regular_polygon_keyway_difference_is_decided() {
+    let circle =
+        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(3_u8), 24)]);
+    let keyway = Region2::from_material_contours(vec![
+        Contour2::from_real_ring(&[
+            [
+                Real::from(2_u8),
+                (Real::from(-1_i8) / Real::from(2_u8)).unwrap(),
+            ],
+            [
+                Real::from(3_u8),
+                (Real::from(-1_i8) / Real::from(2_u8)).unwrap(),
+            ],
+            [Real::from(3_u8), (Real::one() / Real::from(2_u8)).unwrap()],
+            [Real::from(2_u8), (Real::one() / Real::from(2_u8)).unwrap()],
+        ])
+        .unwrap(),
+    ]);
+
+    let report = circle
+        .boolean_region_with_report(&keyway, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap();
+    assert!(
+        matches!(report.region_classification(), Classification::Decided(region) if !region.is_empty()),
+        "symbolic keyway difference was {report:#?}"
+    );
+}
+
+#[test]
+fn symbolic_regular_polygon_two_cut_differences_are_decided() {
+    let circle =
+        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(3_u8), 24)]);
+    let top = Region2::from_material_contours(vec![rectangle(-3, 1, 3, 3)]);
+    let bottom = Region2::from_material_contours(vec![rectangle(-3, -3, 3, -1)]);
+
+    let Classification::Decided(first) = circle
+        .boolean_region(&top, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap()
+    else {
+        panic!("first symbolic cut was uncertain");
+    };
+    let report = first
+        .boolean_region_with_report(&bottom, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap();
+    assert!(
+        matches!(report.region_classification(), Classification::Decided(region) if !region.is_empty()),
+        "second symbolic cut was {report:#?}"
+    );
+}
+
+#[test]
+fn translated_symbolic_regular_polygon_intersections_are_decided() {
+    let center_radius = Real::from(3_u8).sqrt().unwrap();
+    let centers = (0..3)
+        .map(|index| {
+            let angle = Real::tau() * (Real::from(index as u64) / Real::from(3_u8)).unwrap();
+            (
+                center_radius.clone() * angle.clone().cos(),
+                center_radius.clone() * angle.sin(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let regions = centers
+        .into_iter()
+        .map(|(x, y)| {
+            Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+                Real::from(3_u8),
+                32,
+                x,
+                y,
+            )])
+        })
+        .collect::<Vec<_>>();
+
+    let intersections = regions[0].intersect_region(&regions[1], &policy()).unwrap();
+    assert!(
+        intersections.pairs().iter().all(|pair| {
+            pair.intersections()
+                .events()
+                .iter()
+                .all(|event| !matches!(event, hypercurve::ContourIntersection::Uncertain(_)))
+        }),
+        "translated symbolic intersections were {intersections:#?}"
+    );
+
+    let first_report = regions[0]
+        .boolean_region_with_report(
+            &regions[1],
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    let Classification::Decided(first) = first_report.region_classification() else {
+        panic!("first translated symbolic intersection was {first_report:#?}");
+    };
+    assert!(!first.is_empty());
+    let report = first
+        .boolean_region_with_report(
+            &regions[2],
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    assert!(
+        matches!(report.region_classification(), Classification::Decided(region) if !region.is_empty()),
+        "second translated symbolic intersection was {report:#?}"
+    );
+}
+
+#[test]
+fn translated_symbolic_regular_polygon_boolean_matrix_is_decided() {
+    let shift_angle = (Real::pi() / Real::from(5_u8)).unwrap();
+    let first =
+        Region2::from_material_contours(vec![symbolic_regular_polygon(Real::from(2_u8), 12)]);
+    let second = Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+        Real::from(2_u8),
+        12,
+        shift_angle.clone().sin(),
+        shift_angle.cos(),
+    )]);
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ] {
+        let report = first
+            .boolean_region_with_report(&second, op, FillRule::NonZero, &policy())
+            .unwrap();
+        assert!(
+            matches!(report.region_classification(), Classification::Decided(region) if !region.is_empty()),
+            "translated symbolic {op:?} was {report:#?}"
+        );
+    }
+}
+
+#[test]
+fn translated_symbolic_circle_rectangle_union_is_decided() {
+    let rectangle = Region2::from_material_contours(vec![rectangle(0, 0, 2, 1)]);
+    let circle = Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+        (Real::from(3_u8) / Real::from(4_u8)).unwrap(),
+        32,
+        Real::one(),
+        (Real::one() / Real::from(2_u8)).unwrap(),
+    )]);
+    let crossing = rectangle.material_contours()[0].segments()[0]
+        .intersect_segment(&circle.material_contours()[0].segments()[19], &policy())
+        .unwrap();
+    assert!(
+        matches!(
+            crossing,
+            SegmentIntersection::LineLine(LineLineIntersection::Point { .. })
+        ),
+        "symbolic crossing was {crossing:#?}"
+    );
+    let Classification::Decided(rectangle_box) = Aabb2::from_region(&rectangle, &policy()).unwrap()
+    else {
+        panic!("rectangle bounds were uncertain")
+    };
+    let Classification::Decided(circle_box) = Aabb2::from_region(&circle, &policy()).unwrap()
+    else {
+        panic!("circle bounds were uncertain")
+    };
+    assert_eq!(
+        rectangle_box.overlaps(&circle_box, &policy()),
+        Classification::Decided(true)
+    );
+    let Classification::Decided(rectangle_edge_box) =
+        Aabb2::from_segment(&rectangle.material_contours()[0].segments()[0], &policy()).unwrap()
+    else {
+        panic!("rectangle edge bounds were uncertain")
+    };
+    let Classification::Decided(circle_edge_box) =
+        Aabb2::from_segment(&circle.material_contours()[0].segments()[19], &policy()).unwrap()
+    else {
+        panic!("circle edge bounds were uncertain")
+    };
+    assert_eq!(
+        circle_edge_box.has_valid_ordering(&policy()),
+        Classification::Decided(true),
+        "circle edge box was {circle_edge_box:#?}"
+    );
+    assert_eq!(
+        rectangle_edge_box.overlaps(&circle_edge_box, &policy()),
+        Classification::Decided(true),
+        "rectangle={:?}, circle={:?}",
+        [
+            rectangle_edge_box.min_x().to_f64_lossy(),
+            rectangle_edge_box.min_y().to_f64_lossy(),
+            rectangle_edge_box.max_x().to_f64_lossy(),
+            rectangle_edge_box.max_y().to_f64_lossy(),
+        ],
+        [
+            circle_edge_box.min_x().to_f64_lossy(),
+            circle_edge_box.min_y().to_f64_lossy(),
+            circle_edge_box.max_x().to_f64_lossy(),
+            circle_edge_box.max_y().to_f64_lossy(),
+        ]
+    );
+    let events = rectangle.intersect_region(&circle, &policy()).unwrap();
+    assert_eq!(events.pairs().len(), 1);
+    assert_eq!(events.pairs()[0].intersections().events().len(), 4);
+
+    let report = rectangle
+        .boolean_region_with_report(&circle, BooleanOp::Union, FillRule::NonZero, &policy())
+        .unwrap();
+    assert!(
+        matches!(report.region_classification(), Classification::Decided(region) if !region.is_empty()),
+        "translated symbolic circle/rectangle union was {report:#?}"
+    );
+}
+
+#[test]
+fn five_translated_symbolic_regular_polygon_intersections_are_decided() {
+    let center_radius = (Real::from(3_u8)
+        / (Real::from(2_u8) * (Real::pi() / Real::from(10_u8)).unwrap().cos()))
+    .unwrap();
+    let regions = (0..5)
+        .map(|index| {
+            let angle = Real::tau() * (Real::from(index as u64) / Real::from(5_u8)).unwrap();
+            Region2::from_material_contours(vec![symbolic_regular_polygon_at(
+                Real::from(3_u8),
+                32,
+                center_radius.clone() * angle.clone().cos(),
+                center_radius.clone() * angle.sin(),
+            )])
+        })
+        .collect::<Vec<_>>();
+
+    let mut intersection = regions[0].clone();
+    for (index, region) in regions.iter().enumerate().skip(1) {
+        let report = intersection
+            .boolean_region_with_report(
+                region,
+                BooleanOp::Intersection,
+                FillRule::NonZero,
+                &policy(),
+            )
+            .unwrap();
+        let Classification::Decided(next) = report.region_classification() else {
+            let events = intersection.intersect_region(region, &policy()).unwrap();
+            let split = events
+                .split_regions_with_report(&intersection.as_view(), &region.as_view(), &policy())
+                .unwrap();
+            let selection = split
+                .fragments()
+                .unwrap()
+                .classify_for_boolean_with_report(
+                    &intersection.as_view(),
+                    &region.as_view(),
+                    BooleanOp::Intersection,
+                    &policy(),
+                )
+                .unwrap();
+            let emission = selection
+                .selection()
+                .unwrap()
+                .emit_boundary_fragments_with_report(split.fragments().unwrap())
+                .unwrap();
+            let Some(emitted) = emission.fragments() else {
+                panic!("symbolic emission failed: {:#?}", emission.report());
+            };
+            let chains = emitted.assemble_chains_with_report(&policy());
+            let Some(chain_set) = chains.chains() else {
+                panic!("symbolic chain assembly failed: {:#?}", chains.report());
+            };
+            let loops = chain_set.closed_loops_with_report();
+            let Some(loop_set) = loops.loops() else {
+                panic!("symbolic loop extraction failed: {:#?}", loops.report());
+            };
+            let contours = loop_set.to_contours_with_report(FillRule::NonZero);
+            panic!(
+                "translated symbolic intersection {index} was {report:#?}\ncontours: {:#?}",
+                contours.report(),
+            );
+        };
+        assert!(
+            !next.is_empty(),
+            "translated symbolic intersection {index} was empty"
+        );
+        intersection = next.clone();
+    }
 }
 
 fn line_segment(x0: i32, y0: i32, x1: i32, y1: i32) -> Segment2 {

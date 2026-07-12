@@ -1462,7 +1462,7 @@ pub(crate) fn boolean_boundary_loops_between(
                 .and_then(BooleanBoundaryLoopSet::from_contour_classification);
             }
         }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(_) => {}
     }
 
     if op == BooleanOp::Xor {
@@ -1541,7 +1541,7 @@ pub(crate) fn boolean_boundary_contours_between(
                 return boundary_overlap_union_contours(first, second, op, fill_rule, policy);
             }
         }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(_) => {}
     }
     if op == BooleanOp::Xor {
         return xor_boundary_contours_by_region(first, second, fill_rule, policy);
@@ -1760,7 +1760,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
                 };
             }
         }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        Classification::Uncertain(_) => {}
     }
     if op == BooleanOp::Xor {
         return match xor_boundary_contours_by_region(first, second, fill_rule, policy)? {
@@ -2170,6 +2170,9 @@ fn boundary_contact_resolution(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    if !saw_overlap && intersections.point_event_count() > 1 {
+        return Ok(Classification::Decided(None));
+    }
 
     let disjoint_interiors = if saw_overlap {
         split_contact_interiors_are_disjoint(first, second, &intersections, policy)?
@@ -2271,6 +2274,7 @@ fn split_contact_interiors_are_disjoint(
 
     let mut first_has_outside_sample = false;
     let mut second_has_outside_sample = false;
+    let mut blocker = None;
     for contour_fragments in fragments.contours() {
         let opposite = match contour_fragments.key.side {
             RegionSide::First => second,
@@ -2281,7 +2285,8 @@ fn split_contact_interiors_are_disjoint(
             let sample = match fragment.segment.representative_point(policy)? {
                 Classification::Decided(sample) => sample,
                 Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                    blocker.get_or_insert(reason);
+                    continue;
                 }
             };
             match opposite.classify_point(&sample, policy) {
@@ -2295,11 +2300,16 @@ fn split_contact_interiors_are_disjoint(
                 Classification::Decided(RegionPointLocation::Inside) => {
                     return Ok(Classification::Decided(false));
                 }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+                Classification::Uncertain(reason) => {
+                    blocker.get_or_insert(reason);
+                }
             }
         }
     }
 
+    if let Some(reason) = blocker {
+        return Ok(Classification::Uncertain(reason));
+    }
     Ok(Classification::Decided(
         first_has_outside_sample && second_has_outside_sample,
     ))
@@ -2365,12 +2375,14 @@ fn scan_unsplit_contact_samples(
     has_outside_sample: &mut bool,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
+    let mut blocker = None;
     for contour in contours {
         for segment in contour.segments() {
             let sample = match segment.representative_point(policy)? {
                 Classification::Decided(sample) => sample,
                 Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                    blocker.get_or_insert(reason);
+                    continue;
                 }
             };
             match opposite.classify_point(&sample, policy) {
@@ -2381,12 +2393,17 @@ fn scan_unsplit_contact_samples(
                 Classification::Decided(RegionPointLocation::Inside) => {
                     return Ok(Classification::Decided(false));
                 }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+                Classification::Uncertain(reason) => {
+                    blocker.get_or_insert(reason);
+                }
             }
         }
     }
 
-    Ok(Classification::Decided(true))
+    Ok(match blocker {
+        Some(reason) => Classification::Uncertain(reason),
+        None => Classification::Decided(true),
+    })
 }
 
 fn boundary_contact_containment_relation(

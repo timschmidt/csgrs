@@ -1665,6 +1665,7 @@ pub(crate) fn point_on_contour_boundary_with_cached_aabbs(
         return Classification::Decided(false);
     }
 
+    let mut blocker = None;
     for (index, segment) in contour.segments().iter().enumerate() {
         if segment_boxes
             .get(index)
@@ -1677,11 +1678,16 @@ pub(crate) fn point_on_contour_boundary_with_cached_aabbs(
         match segment.contains_point(point, policy) {
             Classification::Decided(true) => return Classification::Decided(true),
             Classification::Decided(false) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            Classification::Uncertain(reason) => {
+                blocker.get_or_insert(reason);
+            }
         }
     }
 
-    Classification::Decided(false)
+    match blocker {
+        Some(reason) => Classification::Uncertain(reason),
+        None => Classification::Decided(false),
+    }
 }
 
 fn contour_winding_number_unchecked_with_cached_aabb(
@@ -1845,6 +1851,9 @@ fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {
 fn closed_curve_string_status(curve: &CurveString2) -> CurveResult<Classification<()>> {
     let start = curve.start().ok_or(CurveError::EmptyCurveString)?;
     let end = curve.end().ok_or(CurveError::EmptyCurveString)?;
+    if start == end {
+        return Ok(Classification::Decided(()));
+    }
     Ok(closure_status_from_distance(&start.distance_squared(end)))
 }
 
