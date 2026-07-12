@@ -91,6 +91,16 @@ pub(crate) fn compare_reals_report_with_policy(
     right: &Real,
     policy: PredicatePolicy,
 ) -> PredicateReport<Ordering> {
+    if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
+        crate::trace_dispatch!("hyperlimit", "compare_reals", "exact-rational");
+        return PredicateReport::from_outcome(PredicateOutcome::decided(
+            left.partial_cmp(right)
+                .expect("exact rational ordering is total"),
+            Certainty::Exact,
+            Escalation::Exact,
+        ));
+    }
+
     crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign");
     let difference = sub_ref(left, right);
     PredicateReport::from_outcome(map_outcome(
@@ -531,13 +541,13 @@ mod tests {
     }
 
     #[test]
-    fn real_ordering_report_exposes_sign_decision_certificate() {
+    fn exact_rational_ordering_report_exposes_exact_certificate() {
         let report = compare_reals_report(&real(7), &real(3));
 
         assert_eq!(report.value(), Some(Ordering::Greater));
         assert_eq!(
             report.certificate,
-            crate::PredicateCertificate::StructuralFact
+            crate::PredicateCertificate::ExactRealFact
         );
     }
 
