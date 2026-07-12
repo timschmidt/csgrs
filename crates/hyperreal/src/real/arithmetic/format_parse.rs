@@ -35,11 +35,11 @@ impl fmt::Display for Real {
             match &self.class {
                 One => Ok(()),
                 Pi => f.write_str(" Pi"),
-                PiPow(n) => write!(f, " x Pi**({})", &n),
+                PiPow(n) => write!(f, " x Pi**({})", n),
                 PiInv => f.write_str(" / Pi"),
-                PiExp(n) => write!(f, " x Pi x e**({})", &n),
-                PiInvExp(n) => write!(f, " x e**({}) / Pi", &n),
-                PiSqrt(n) => write!(f, " x Pi x √({})", &n),
+                PiExp(n) => write!(f, " x Pi x e**({})", n),
+                PiInvExp(n) => write!(f, " x e**({}) / Pi", n),
+                PiSqrt(n) => write!(f, " x Pi x √({})", n),
                 ConstProduct(product) => write!(
                     f,
                     " x Pi**({}) x e**({})",
@@ -55,17 +55,17 @@ impl fmt::Display for Real {
                     " x Pi**({}) x e**({}) x √({})",
                     product.pi_power, product.exp_power, product.radicand
                 ),
-                Exp(n) => write!(f, " x e**({})", &n),
-                Ln(n) => write!(f, " x ln({})", &n),
+                Exp(n) => write!(f, " x e**({})", n),
+                Ln(n) => write!(f, " x ln({})", n),
                 LnAffine(term) => write!(f, " x ({} + ln({}))", term.offset, term.base),
                 LnProduct(product) => {
                     write!(f, " x ln({}) x ln({})", product.left, product.right)
                 }
-                Log10(n) => write!(f, " x log10({})", &n),
-                Log2(n) => write!(f, " x log2({})", &n),
-                Sqrt(n) => write!(f, " √({})", &n),
-                SinPi(n) => write!(f, " x sin({} x Pi)", &n),
-                TanPi(n) => write!(f, " x tan({} x Pi)", &n),
+                Log10(n) => write!(f, " x log10({})", n),
+                Log2(n) => write!(f, " x log2({})", n),
+                Sqrt(n) => write!(f, " √({})", n),
+                SinPi(n) => write!(f, " x sin({} x Pi)", n),
+                TanPi(n) => write!(f, " x tan({} x Pi)", n),
                 _ => write!(f, " x {:?}", self.class),
             }
         }
@@ -86,4 +86,3 @@ impl std::str::FromStr for Real {
         })
     }
 }
-
