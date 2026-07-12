@@ -590,6 +590,40 @@ mod tests {
     }
 
     #[test]
+    fn dyadic_comparison_handles_unequal_denominators_without_cross_products() {
+        use std::cmp::Ordering;
+
+        let values = [
+            Rational::fraction(-17, 32).unwrap(),
+            Rational::fraction(-1, 2).unwrap(),
+            Rational::fraction(3, 16).unwrap(),
+            Rational::fraction(1, 2).unwrap(),
+            Rational::fraction(17, 32).unwrap(),
+        ];
+        for left in &values {
+            for right in &values {
+                let cross_products = match left.sign.cmp(&right.sign) {
+                    Ordering::Equal if left.sign == Plus => (&left.numerator
+                        * &right.denominator)
+                        .cmp(&(&right.numerator * &left.denominator)),
+                    Ordering::Equal if left.sign == Minus => (&right.numerator
+                        * &left.denominator)
+                        .cmp(&(&left.numerator * &right.denominator)),
+                    ordering => ordering,
+                };
+                assert_eq!(left.partial_cmp(right), Some(cross_products));
+            }
+        }
+
+        let two_quarters = Rational {
+            sign: Plus,
+            numerator: BigUint::from(2_u8),
+            denominator: BigUint::from(4_u8),
+        };
+        assert_eq!(Rational::fraction(1, 2).unwrap(), two_quarters);
+    }
+
+    #[test]
     fn divide_by_zero() {
         let err = Rational::fraction(1, 0).unwrap_err();
         assert_eq!(err, Problem::DivideByZero);
