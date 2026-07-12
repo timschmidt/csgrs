@@ -44,6 +44,10 @@ crate-type = ["cdylib", "rlib"]
 name = "part_blueprint"
 harness = false
 
+[[bench]]
+name = "mesh_pipeline"
+harness = false
+
 [profile.release]
 opt-level = 3
 lto = true

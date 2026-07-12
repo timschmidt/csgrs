@@ -44,7 +44,7 @@ impl MeshJs {
     #[wasm_bindgen(js_name=fromPolygons)]
     pub fn from_polygons(polygons: Vec<PolygonJs>) -> MeshJs {
         let poly_vec: Vec<_> = polygons.iter().map(|p| p.inner.clone()).collect();
-        let mesh = Mesh::from_polygons(&poly_vec);
+        let mesh = Mesh::from_polygons(poly_vec);
         MeshJs { inner: mesh }
     }
 
@@ -178,7 +178,7 @@ impl MeshJs {
         }
 
         Ok(MeshJs {
-            inner: Mesh::from_polygons(&polygons).with_metadata(meta),
+            inner: Mesh::from_polygons(polygons).with_metadata(meta),
         })
     }
 
@@ -544,10 +544,10 @@ impl MeshJs {
 
         vec![
             MeshJs {
-                inner: Mesh::from_polygons(&front_polys),
+                inner: Mesh::from_polygons(front_polys),
             },
             MeshJs {
-                inner: Mesh::from_polygons(&back_polys),
+                inner: Mesh::from_polygons(back_polys),
             },
         ]
     }

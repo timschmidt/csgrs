@@ -369,7 +369,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         // Build and return a Mesh from these polygons
-        (Mesh::from_polygons(&triangles), diagnostics)
+        (Mesh::from_polygons(triangles), diagnostics)
     }
 }
 

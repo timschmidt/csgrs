@@ -161,7 +161,7 @@ where
             metadata.clone(),
         ));
     }
-    Ok(Mesh::from_polygons(&polygons))
+    Ok(Mesh::from_polygons(polygons))
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {

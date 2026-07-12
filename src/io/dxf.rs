@@ -183,7 +183,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 },
             }
         }
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(polygons))
     }
 
     pub fn to_dxf(&self) -> Result<Vec<u8>, IoError> {

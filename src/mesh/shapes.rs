@@ -190,7 +190,7 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
         };
         polygons.push(Polygon::new(vertices, metadata.clone()));
     }
-    Mesh::from_polygons(&polygons)
+    Mesh::from_polygons(polygons)
 }
 
 #[cfg(all(feature = "chull-io", feature = "sketch"))]
@@ -304,7 +304,7 @@ fn twisted_profile_extrusion<M: Clone + Debug + Send + Sync>(
             polygons.push(side);
         }
     }
-    Mesh::from_polygons(&polygons)
+    Mesh::from_polygons(polygons)
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -448,7 +448,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         );
 
         // Combine all faces into a Mesh
-        Mesh::from_polygons(&[bottom, top, front, back, left, right])
+        Mesh::from_polygons(vec![bottom, top, front, back, left, right])
     }
 
     pub fn cube(width: Real, metadata: M) -> Mesh<M> {
@@ -615,7 +615,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 }
             }
         }
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(polygons)
     }
 
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
@@ -788,7 +788,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             }
         }
 
-        Mesh::from_polygons(&polygons)
+        Mesh::from_polygons(polygons)
     }
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
@@ -930,7 +930,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             polygons.push(poly);
         }
 
-        Ok(Mesh::from_polygons(&polygons))
+        Ok(Mesh::from_polygons(polygons))
     }
 
     /// Creates a 3D "egg" shape by revolving `Profile::egg()`.

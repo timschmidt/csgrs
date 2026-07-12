@@ -62,15 +62,15 @@ pub struct HypermeshBuffers {
     pub indices: Vec<usize>,
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-struct PositionKey([String; 3]);
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct PositionKey([Option<u64>; 3]);
 
 impl PositionKey {
     fn new(position: &Point3) -> Self {
         Self([
-            position.x.to_string(),
-            position.y.to_string(),
-            position.z.to_string(),
+            position.x.to_f64_lossy().map(f64::to_bits),
+            position.y.to_f64_lossy().map(f64::to_bits),
+            position.z.to_f64_lossy().map(f64::to_bits),
         ])
     }
 }
@@ -83,14 +83,23 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// topology-bearing vertex identity, so equal finite coordinates are
     /// canonicalized to shared indices before import into `hypermesh`.
     pub fn to_hypermesh_buffers(&self) -> HypermeshBuffers {
-        let tri_mesh = self.triangulate();
-        let mut canonical_positions =
-            Vec::<Point3>::with_capacity(tri_mesh.polygons.len() * 3);
-        let mut indices = Vec::with_capacity(tri_mesh.polygons.len() * 3);
-        let mut vertex_indices = HashMap::<PositionKey, Vec<usize>>::new();
+        self.build_hypermesh_buffers(false).0
+    }
 
-        for polygon in &tri_mesh.polygons {
-            for vertex in &polygon.vertices {
+    fn build_hypermesh_buffers(&self, retain_metadata: bool) -> (HypermeshBuffers, Vec<M>) {
+        let triangle_capacity = self
+            .polygons
+            .iter()
+            .map(|polygon| polygon.vertices.len().saturating_sub(2))
+            .sum::<usize>();
+        let mut canonical_positions = Vec::<Point3>::with_capacity(triangle_capacity * 3);
+        let mut indices = Vec::with_capacity(triangle_capacity * 3);
+        let mut vertex_indices = HashMap::<PositionKey, Vec<usize>>::new();
+        let mut metadata =
+            Vec::with_capacity(retain_metadata.then_some(triangle_capacity).unwrap_or(0));
+
+        let mut push_triangle = |vertices: &[Vertex]| {
+            for vertex in vertices {
                 let position = canonical_position(&vertex.position);
                 let key = PositionKey::new(&position);
                 let candidates = vertex_indices.entry(key).or_default();
@@ -106,6 +115,22 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     });
                 indices.push(index);
             }
+        };
+
+        for polygon in &self.polygons {
+            if polygon.vertices.len() == 3 {
+                push_triangle(&polygon.vertices);
+                if retain_metadata {
+                    metadata.push(polygon.metadata.clone());
+                }
+                continue;
+            }
+            for triangle in polygon.triangulate() {
+                push_triangle(&triangle);
+                if retain_metadata {
+                    metadata.push(polygon.metadata.clone());
+                }
+            }
         }
 
         let positions = canonical_positions
@@ -113,7 +138,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .flat_map(|point| [point.x, point.y, point.z])
             .collect();
 
-        HypermeshBuffers { positions, indices }
+        (HypermeshBuffers { positions, indices }, metadata)
     }
 
     /// Convert this `csgrs` mesh into an exact `hypermesh` input mesh.
@@ -156,8 +181,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         other: &Self,
         operation: HypermeshBooleanOp,
     ) -> Result<Self, HypermeshError> {
-        let left = self.to_hypermesh_exact().map_err(HypermeshError::Mesh)?;
-        let right = other.to_hypermesh_exact().map_err(HypermeshError::Mesh)?;
+        let (left_buffers, left_metadata) = self.build_hypermesh_buffers(true);
+        let (right_buffers, right_metadata) = other.build_hypermesh_buffers(true);
+        let left = input_mesh_from_buffers(&left_buffers);
+        let right = input_mesh_from_buffers(&right_buffers);
         let op = match operation {
             HypermeshBooleanOp::Union => BooleanOp::Union,
             HypermeshBooleanOp::Difference => BooleanOp::Difference,
@@ -169,18 +196,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .map_err(HypermeshError::Boolean)?;
         let soup = ::hypermesh::triangulate_and_resolve_certified(&result)
             .map_err(HypermeshError::Materialize)?;
-        let left_metadata = self
-            .triangulate()
-            .polygons
-            .into_iter()
-            .map(|polygon| polygon.metadata)
-            .collect::<Vec<_>>();
-        let right_metadata = other
-            .triangulate()
-            .polygons
-            .into_iter()
-            .map(|polygon| polygon.metadata)
-            .collect::<Vec<_>>();
         Self::from_hypermesh_soup(&soup, &left_metadata, &right_metadata)
     }
 
@@ -229,7 +244,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             ));
         }
 
-        Ok(Self::from_polygons(&polygons))
+        Ok(Self::from_polygons(polygons))
     }
 }
 
@@ -509,7 +524,7 @@ mod tests {
             ],
             (),
         );
-        let buffers = Mesh::from_polygons(&[first, second]).to_hypermesh_buffers();
+        let buffers = Mesh::from_polygons(vec![first, second]).to_hypermesh_buffers();
         let positions = buffers
             .positions
             .chunks_exact(3)

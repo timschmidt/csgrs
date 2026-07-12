@@ -534,7 +534,7 @@ fn mesh_from_sampled_field<M: Clone + Debug + Send + Sync>(
     }
 
     // Return as a Mesh
-    (Mesh::from_polygons(&triangles), diagnostics)
+    (Mesh::from_polygons(triangles), diagnostics)
 }
 
 fn hypersdf_grid(
