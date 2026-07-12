@@ -193,7 +193,7 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
     Mesh::from_polygons(&polygons)
 }
 
-#[cfg(feature = "sketch")]
+#[cfg(all(feature = "chull-io", feature = "sketch"))]
 fn positive_x_half(profile: &Profile) -> Option<Profile> {
     let (min_x, min_y, max_x, max_y) = profile.native_xy_bounds()?;
     match real_cmp(&min_x, &Real::zero())? {
