@@ -183,8 +183,8 @@ pub(super) fn polygon_axis_values(polygons: &[ConvexPolygon]) -> HypermeshResult
     let mut values = [Vec::new(), Vec::new(), Vec::new()];
     for polygon in polygons {
         for vertex in polygon.vertices()? {
-            for axis in 0..3 {
-                push_unique_ordered_axis_value(&mut values[axis], axis_ref(&vertex, axis).clone())?;
+            for (axis, axis_values) in values.iter_mut().enumerate() {
+                push_unique_ordered_axis_value(axis_values, axis_ref(&vertex, axis).clone())?;
             }
         }
     }
@@ -1066,9 +1066,9 @@ pub(super) fn root_split_basis_from_events(
     intersection_segments: &[IntersectionSegment],
 ) -> HypermeshResult<Vec<RootSplitPlane>> {
     let mut basis = Vec::new();
-    for axis in 0..3 {
+    for (axis, axis_values) in axis_values.iter().enumerate() {
         for (_gap, value) in
-            arrangement_split_candidates_from_axis_values(bounds, &axis_values[axis], axis)?
+            arrangement_split_candidates_from_axis_values(bounds, axis_values, axis)?
         {
             push_root_split_plane(&mut basis, axis, value, SplitSource::Arrangement)?;
         }

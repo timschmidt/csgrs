@@ -3048,7 +3048,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                 },
                                 start_definitions,
                                 end_definitions,
-                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                &mut interior_box_axis_intervals_cell.borrow_mut(),
                                 &mut **trace_without_detours_cell.borrow_mut(),
                             )
                         },
@@ -3064,10 +3064,10 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                 progressive_interior_box_detours,
                                 no_plane_replacement_cycle_guard_cache,
                                 no_plane_replacement_cache,
-                                &mut **halfspace_report_cache_cell.borrow_mut(),
-                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                &mut halfspace_report_cache_cell.borrow_mut(),
+                                &mut halfspace_seed_family_cache_cell.borrow_mut(),
                                 strict_aabb_target_families,
-                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                &mut interior_box_axis_intervals_cell.borrow_mut(),
                                 surface_cache,
                                 surface_query,
                                 &mut **trace_without_detours_cell.borrow_mut(),
@@ -3085,13 +3085,13 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                             let report = match report {
                                 Some(report) => Some(report.clone()),
                                 None => cached_optional_halfspace_feasibility_report_with(
-                                    &mut **halfspace_report_cache_cell.borrow_mut(),
+                                    &mut halfspace_report_cache_cell.borrow_mut(),
                                     halfspaces,
                                     local_unknown,
                                 )?,
                             };
                             cached_halfspace_cell_seed_families_from_optional_report_with(
-                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                &mut halfspace_seed_family_cache_cell.borrow_mut(),
                                 bounds,
                                 halfspaces,
                                 report.as_ref(),
@@ -3132,7 +3132,7 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                 },
                                 start_definitions,
                                 end_definitions,
-                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                &mut interior_box_axis_intervals_cell.borrow_mut(),
                                 &mut **trace_without_detours_cell.borrow_mut(),
                             )
                         },
@@ -3148,10 +3148,10 @@ fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacemen
                                 progressive_interior_box_detours,
                                 no_plane_replacement_cycle_guard_cache,
                                 no_plane_replacement_cache,
-                                &mut **halfspace_report_cache_cell.borrow_mut(),
-                                &mut **halfspace_seed_family_cache_cell.borrow_mut(),
+                                &mut halfspace_report_cache_cell.borrow_mut(),
+                                &mut halfspace_seed_family_cache_cell.borrow_mut(),
                                 strict_aabb_target_families,
-                                &mut **interior_box_axis_intervals_cell.borrow_mut(),
+                                &mut interior_box_axis_intervals_cell.borrow_mut(),
                                 surface_cache,
                                 surface_query,
                                 &mut **trace_without_detours_cell.borrow_mut(),
@@ -3509,7 +3509,7 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
             let mut next_path = path.clone();
             let detour_uncertified_definition_fallback = detour.uncertified_definition_fallback;
             next_path.insert(edge_index + 1, detour);
-            if seen_paths.iter().any(|seen| *seen == next_path) {
+            if seen_paths.contains(&next_path) {
                 continue;
             }
             let mut complete = true;
@@ -3644,7 +3644,7 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                 &mut no_step_affine_cache,
                 &mut no_step_path_cache,
                 &mut no_step_step_cache,
-                |mut no_step_affine_cache, mut no_step_path_cache, mut no_step_step_cache| {
+                |no_step_affine_cache, no_step_path_cache, no_step_step_cache| {
                     ordered_axis_orderings_by_no_step_precheck_with(
                         start_planes,
                         end_planes,
@@ -3657,9 +3657,9 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
                                 polygons,
                                 std::slice::from_ref(current_definitions),
                                 std::slice::from_ref(next_definitions),
-                                &mut no_step_affine_cache,
-                                &mut no_step_path_cache,
-                                &mut no_step_step_cache,
+                                no_step_affine_cache,
+                                no_step_path_cache,
+                                no_step_step_cache,
                                 no_step_cache,
                                 direct_probe_reachability_cache,
                                 trace_bounds,
@@ -3939,7 +3939,7 @@ pub(super) fn plane_replacement_path_reaches_adjacent_cell_with_step_detours_for
         let mut current_trace_planes = current_planes.clone();
         let mut valid = true;
 
-        for (_step_index, plane_index) in ordering.iter().copied().enumerate() {
+        for plane_index in ordering.iter().copied() {
             let mut next_planes = current_planes.clone();
             next_planes[plane_index] = end_planes[plane_index].clone();
             if next_planes == current_planes {

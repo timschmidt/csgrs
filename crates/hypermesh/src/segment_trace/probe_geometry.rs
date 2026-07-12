@@ -169,13 +169,13 @@ pub(super) fn probe_definitions_from_active_halfspaces(
 
     for first in 0..active.len() {
         for second in (first + 1)..active.len() {
-            for axis in 0..3 {
+            for axis_plane in &axis_definition {
                 push_verified_probe_definition(
                     &mut definitions,
                     [
                         active[first].clone(),
                         active[second].clone(),
-                        axis_definition[axis].clone(),
+                        axis_plane.clone(),
                     ],
                     witness,
                     &mut saw_unknown,
@@ -1192,7 +1192,7 @@ pub(super) fn adjacent_axis_probes(
             }
             segment_plane_crossing(interior, endpoint, &polygon.support)
         },
-        |crossing, polygon| classify_point_in_polygon(crossing, polygon),
+        classify_point_in_polygon,
         |corridor| {
             collect_axis_probe_targets(&interior.planes, |definition| {
                 if let Some(definition) = definition
@@ -1351,11 +1351,11 @@ pub(super) fn adjacent_axis_probe_stop_values_with_queries(
         let mut insert_at = stop_values.len();
         let mut duplicate = false;
         for (index, existing) in stop_values.iter().enumerate() {
-            if compare_real(&crossing_value, existing)?.is_eq() {
+            if compare_real(crossing_value, existing)?.is_eq() {
                 duplicate = true;
                 break;
             }
-            if axis_value_before_stop(&crossing_value, existing, direction_positive)? {
+            if axis_value_before_stop(crossing_value, existing, direction_positive)? {
                 insert_at = index;
                 break;
             }

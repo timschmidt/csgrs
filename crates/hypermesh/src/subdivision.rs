@@ -693,16 +693,16 @@ fn subdivide_into_inner_with(
 
     let mut output_buckets = ClassifiedPolygonBucketState::from_classified(output);
 
-    if let Some(op) = reachability_op {
-        if cached_winding_reachability_with(
+    if let Some(op) = reachability_op
+        && cached_winding_reachability_with(
             winding_reachability_cache,
             op,
             &task.ref_wnv,
             &task.polygons,
             || can_discard_by_winding_reachability(op, &task.ref_wnv, &task.polygons),
-        )? {
-            return Ok(());
-        }
+        )?
+    {
+        return Ok(());
     }
 
     let can_split = can_split_bounds(&task.bounds)?;
@@ -1186,25 +1186,25 @@ fn cached_child_reference_with(
         })
         .cloned();
     if let Some(existing) = existing {
-        if let Ok(result) = &existing.result {
-            if !child_reference_cache_entry_matches_exact_state(
+        if let Ok(result) = &existing.result
+            && !child_reference_cache_entry_matches_exact_state(
                 &existing,
                 old_ref,
                 old_ref_definitions,
                 old_wnv,
                 source_polygons,
                 bounds,
-            ) {
-                cache_child_reference_result(
-                    cache,
-                    old_ref,
-                    old_ref_definitions,
-                    old_wnv,
-                    source_polygons,
-                    bounds,
-                    result,
-                );
-            }
+            )
+        {
+            cache_child_reference_result(
+                cache,
+                old_ref,
+                old_ref_definitions,
+                old_wnv,
+                source_polygons,
+                bounds,
+                result,
+            );
         }
         return existing.result.map(certified_reference_result);
     }
@@ -1488,8 +1488,8 @@ fn reusable_child_subdivision_if_certified(
             if existing.polygon_profile != polygon_profile
                 || existing.task.ref_wnv != task.ref_wnv
                 || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
-                || !matches!(existing.result, Ok(_))
-                || (existing.task.depth != task.depth && existing.task.depth <= task.depth)
+                || existing.result.is_err()
+                || existing.task.depth < task.depth
             {
                 continue;
             }
@@ -1505,11 +1505,10 @@ fn reusable_child_subdivision_if_certified(
                 &task.bounds,
                 &task.polygons,
                 query_caches,
-            )? {
-                if let Ok(result) = &existing.result {
-                    reused = Some(result.clone());
-                    break;
-                }
+            )? && let Ok(result) = &existing.result
+            {
+                reused = Some(result.clone());
+                break;
             }
         }
     }
@@ -1542,8 +1541,8 @@ fn reusable_child_subdivision_from_cached_trace_if_certified(
         for existing in cache_ref.iter().rev() {
             if existing.polygon_profile != polygon_profile
                 || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
-                || !matches!(existing.result, Ok(_))
-                || (existing.task.depth != task.depth && existing.task.depth <= task.depth)
+                || existing.result.is_err()
+                || existing.task.depth < task.depth
             {
                 continue;
             }
@@ -1616,7 +1615,7 @@ fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
             if existing.polygon_profile != polygon_profile
                 || existing.task.ref_wnv != task.ref_wnv
                 || !polygon_families_match_as_multisets(&existing.task.polygons, &task.polygons)
-                || !matches!(existing.result, Ok(_))
+                || existing.result.is_err()
             {
                 continue;
             }
@@ -4359,7 +4358,7 @@ fn projection_escape_bounds_family_from_axis_options_with_extents(
         }
     }
 
-    keyed_boxes.sort_by(|left, right| left.0.cmp(&right.0));
+    keyed_boxes.sort_by_key(|left| left.0);
 
     let mut family = Vec::new();
     for (_, escape_bounds) in keyed_boxes {
@@ -4492,7 +4491,7 @@ fn escaped_reference_axis_stop_values_tracking_unknown(
         |projected, endpoint, polygon, axis| {
             reference_axis_surface_crossing(projected, endpoint, polygon, axis)
         },
-        |crossing, polygon| classify_point_in_local_polygon(crossing, polygon),
+        classify_point_in_local_polygon,
     )?;
     *saw_unknown |= family_unknown;
     Ok(stop_values)
@@ -5260,19 +5259,18 @@ fn prime_support_reference_query_caches_with_known_halfspace_report(
         Ok(None) => None,
         Err(err) => Some(Err(err.clone())),
     };
-    if let Some(cached_feasible) = cached_feasible {
-        if !query_caches
+    if let Some(cached_feasible) = cached_feasible
+        && !query_caches
             .feasible_cache
             .iter()
             .any(|existing| limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces))
-        {
-            query_caches
-                .feasible_cache
-                .push(HalfspaceFeasibilityCacheEntry {
-                    halfspaces: halfspaces.to_vec(),
-                    feasible: cached_feasible,
-                });
-        }
+    {
+        query_caches
+            .feasible_cache
+            .push(HalfspaceFeasibilityCacheEntry {
+                halfspaces: halfspaces.to_vec(),
+                feasible: cached_feasible,
+            });
     }
 }
 
@@ -5686,10 +5684,10 @@ fn reusable_support_reference_accept_if_certified(
     for existing in cache.iter().rev() {
         if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
             || !support_reference_polygon_context_matches(existing.context.as_ref(), Some(context))
-            || !existing
+            || existing
                 .context
                 .as_ref()
-                .is_some_and(|existing| existing.old_wnv == context.old_wnv)
+                .is_none_or(|existing| existing.old_wnv != context.old_wnv)
             || !support_optional_halfspace_reports_match_for_cache(
                 &existing.halfspaces,
                 existing.report.as_ref(),
@@ -7233,11 +7231,11 @@ fn trace_reference_target_from_validated_bounds(
         &target.definitions,
         &trace_bounds,
     ) {
-        Ok(winding) => return Ok(Some(winding)),
+        Ok(winding) => Ok(Some(winding)),
         Err(crate::error::HypermeshError::UnknownClassification) => {
-            return Err(crate::error::HypermeshError::UnknownClassification);
+            Err(crate::error::HypermeshError::UnknownClassification)
         }
-        Err(err) => return Err(err),
+        Err(err) => Err(err),
     }
 }
 
@@ -7425,8 +7423,8 @@ fn support_plane_cell_reference_with_halfspaces_and_query_caches(
                         report_cache,
                         feasible_cache,
                         halfspaces,
-                        |halfspaces| halfspace_system_report(halfspaces),
-                        |halfspaces| halfspace_system_is_feasible(halfspaces),
+                        halfspace_system_report,
+                        halfspace_system_is_feasible,
                     )
                 },
                 trace_cache,
@@ -8385,13 +8383,13 @@ fn reference_definitions_from_active_halfspaces(
 
     for first in 0..active.len() {
         for second in (first + 1)..active.len() {
-            for axis in 0..3 {
+            for axis_plane in &axis_definition {
                 push_verified_definition(
                     &mut definitions,
                     [
                         active[first].clone(),
                         active[second].clone(),
-                        axis_definition[axis].clone(),
+                        axis_plane.clone(),
                     ],
                     witness,
                     &mut saw_unknown,

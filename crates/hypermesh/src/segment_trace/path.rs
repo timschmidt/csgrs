@@ -1015,7 +1015,7 @@ pub(super) fn trace_segment_with_detour_batches_breadth_first_with_surface_query
             let mut next_path = path.clone();
             let detour_uncertified_definition_fallback = detour.uncertified_definition_fallback;
             next_path.insert(edge_index + 1, detour);
-            if seen_paths.iter().any(|seen| *seen == next_path) {
+            if seen_paths.contains(&next_path) {
                 continue;
             }
 
@@ -1607,8 +1607,8 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
     end_planes: &[Plane; 3],
     winding: &[i32],
     polygons: &[ConvexPolygon],
-    mut affine_cache: &mut PlaneReplacementAffineCache,
-    mut step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
+    affine_cache: &mut PlaneReplacementAffineCache,
+    step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
     trace_bounds: Option<&Aabb>,
     mut trace_step: impl FnMut(
         &Point3,
@@ -1622,7 +1622,7 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
     for ordering in AXIS_ORDERINGS {
         let mut current_planes = start_planes.clone();
         let mut current_point =
-            match cached_affine_from_planes_with(&mut affine_cache, &current_planes, || {
+            match cached_affine_from_planes_with(affine_cache, &current_planes, || {
                 affine_from_planes(&current_planes)
             }) {
                 Ok(point) if point_is_inside_optional_trace_bounds(&point, trace_bounds)? => point,
@@ -1641,7 +1641,7 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
                 continue;
             }
             let (next_point, next_trace_planes) =
-                match cached_affine_from_planes_with(&mut affine_cache, &next_planes, || {
+                match cached_affine_from_planes_with(affine_cache, &next_planes, || {
                     affine_from_planes(&next_planes)
                 }) {
                     Ok(point) => {
@@ -1664,7 +1664,7 @@ pub(super) fn trace_plane_replacement_path_with_tracer_and_caches(
                     Err(err) => return Err(err),
                 };
             let next_winding = match cached_plane_replacement_step_with(
-                &mut step_cache,
+                step_cache,
                 &current_point,
                 &next_point,
                 &current_trace_planes,
@@ -2193,8 +2193,8 @@ pub(super) fn interior_box_detour_targets(
                 }
             })
         },
-        |crossing, polygon| classify_point_in_polygon(crossing, polygon),
-        |bounds| strict_aabb_targets(bounds),
+        classify_point_in_polygon,
+        strict_aabb_targets,
     )
 }
 
@@ -2515,10 +2515,7 @@ impl StrictAabbTargetCursor {
                 Err(err) => return Err(err),
             };
             if !target.uncertified_definition_fallback
-                && !self
-                    .certified_direct_target_points
-                    .iter()
-                    .any(|existing| *existing == target.point)
+                && !self.certified_direct_target_points.contains(&target.point)
             {
                 self.certified_direct_target_points
                     .push(target.point.clone());
@@ -2649,7 +2646,7 @@ impl InteriorBoxDetourTargetCursor {
             )?;
             saw_unknown |= trace_unknown;
             for candidate in trace_candidates {
-                if !bounds.iter().any(|existing| *existing == candidate) {
+                if !bounds.contains(&candidate) {
                     bounds.push(candidate);
                 }
             }
@@ -2943,7 +2940,7 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
     let refinement_len = seeds.len().min(DIRECT_TARGET_RANK_REFINEMENT_LIMIT);
     let mut certified_direct_target_points = Vec::new();
     let mut front_direct_targets = Vec::with_capacity(refinement_len);
-    for (_index, seed) in seeds.iter().take(refinement_len).enumerate() {
+    for seed in seeds.iter().take(refinement_len) {
         let target = match build_detour_target(
             seed,
             &halfspaces,
@@ -2962,13 +2959,10 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families_and_di
                 };
             }
         };
-        if !target.uncertified_definition_fallback {
-            if !certified_direct_target_points
-                .iter()
-                .any(|existing| *existing == target.point)
-            {
-                certified_direct_target_points.push(target.point.clone());
-            }
+        if !target.uncertified_definition_fallback
+            && !certified_direct_target_points.contains(&target.point)
+        {
+            certified_direct_target_points.push(target.point.clone());
         }
         push_unique_detour_target(&mut exhausted_direct_targets, target.clone());
         push_unique_detour_target(&mut front_direct_targets, target);
@@ -4302,8 +4296,8 @@ pub(super) fn normalized_cycle_guard_visited_points(
         .iter()
         .filter(|visited| {
             !(visited.point == *start
-                && definition_families_match_as_sets(&visited.definitions, start_definitions))
-                && !(visited.point == *end
+                && definition_families_match_as_sets(&visited.definitions, start_definitions)
+                || visited.point == *end
                     && definition_families_match_as_sets(&visited.definitions, end_definitions))
         })
         .cloned()

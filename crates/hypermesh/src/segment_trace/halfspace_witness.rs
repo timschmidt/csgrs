@@ -203,7 +203,7 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
             Ok(vec![ShiftedHalfspaceWitness::with_family(
                 witness.clone(),
                 shifted.clone(),
-                active_planes_from_optional_report(shifted_report.as_ref(), &witness),
+                active_planes_from_optional_report(shifted_report.as_ref(), witness),
                 false,
             )])
         },
@@ -219,7 +219,7 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
         &mut witnesses,
         strict_shift_seeds,
         |witness| {
-            if !point_strictly_inside_halfspace_cell_or_unknown(&witness, bounds, halfspaces)? {
+            if !point_strictly_inside_halfspace_cell_or_unknown(witness, bounds, halfspaces)? {
                 return Ok(Vec::new());
             }
             Ok(vec![ShiftedHalfspaceWitness::with_family(
@@ -234,7 +234,7 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
         &mut witnesses,
         shifted_vertices,
         |witness| {
-            if !point_strictly_inside_halfspace_cell_or_unknown(&witness, bounds, halfspaces)? {
+            if !point_strictly_inside_halfspace_cell_or_unknown(witness, bounds, halfspaces)? {
                 return Ok(Vec::new());
             }
             Ok(vec![ShiftedHalfspaceWitness::with_family(
@@ -249,7 +249,7 @@ pub(super) fn shifted_halfspace_cell_witnesses_from_seed(
         &mut witnesses,
         shifted_geometry_seeds,
         |witness| {
-            if !point_strictly_inside_halfspace_cell_or_unknown(&witness, bounds, halfspaces)? {
+            if !point_strictly_inside_halfspace_cell_or_unknown(witness, bounds, halfspaces)? {
                 return Ok(Vec::new());
             }
             Ok(vec![ShiftedHalfspaceWitness::with_family(

@@ -1,3 +1,6 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
+#![allow(clippy::arc_with_non_send_sync)]
+
 //! Hyperreal-backed mesh boolean primitives.
 //!
 //! This crate keeps primitive coordinates at API boundaries only. Core

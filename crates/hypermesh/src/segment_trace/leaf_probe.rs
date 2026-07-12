@@ -719,10 +719,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
             }
             Err(err) => return Err(err),
         };
-        if !probe.uncertified_definition_fallback
-            && !certified_probe_points
-                .iter()
-                .any(|existing| *existing == probe.point)
+        if !probe.uncertified_definition_fallback && !certified_probe_points.contains(&probe.point)
         {
             certified_probe_points.push(probe.point.clone());
         }
@@ -768,9 +765,7 @@ fn try_strict_normal_probe_targets_progressively_with_query_caches(
                 Err(err) => return Err(err),
             };
             if !probe.uncertified_definition_fallback
-                && !certified_probe_points
-                    .iter()
-                    .any(|existing| *existing == probe.point)
+                && !certified_probe_points.contains(&probe.point)
             {
                 certified_probe_points.push(probe.point.clone());
             }
@@ -913,7 +908,8 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
         Ok(None) => Ok(Vec::new()),
         Err(err) => Err(err),
     };
-    let winding = try_leaf_probe_family_with_queries(
+
+    try_leaf_probe_family_with_queries(
         point,
         positive_side,
         probe_result,
@@ -925,8 +921,7 @@ fn try_strict_normal_probe_report_witness_winding_with_queries(
         host_delta_w,
         probe_query_caches,
         saw_unknown,
-    );
-    winding
+    )
 }
 
 fn try_strict_normal_seed_winding_with_queries(
@@ -999,10 +994,7 @@ fn try_strict_normal_seed_winding_with_queries(
             }
             Err(err) => return Err(err),
         };
-        if !probe.uncertified_definition_fallback
-            && !certified_probe_points
-                .iter()
-                .any(|existing| *existing == probe.point)
+        if !probe.uncertified_definition_fallback && !certified_probe_points.contains(&probe.point)
         {
             certified_probe_points.push(probe.point.clone());
         }
@@ -1061,9 +1053,7 @@ fn try_strict_normal_seed_winding_with_queries(
                 Err(err) => return Err(err),
             };
             if !probe.uncertified_definition_fallback
-                && !certified_probe_points
-                    .iter()
-                    .any(|existing| *existing == probe.point)
+                && !certified_probe_points.contains(&probe.point)
             {
                 certified_probe_points.push(probe.point.clone());
             }
@@ -1366,10 +1356,7 @@ fn try_strict_axis_seed_winding_with_queries(
             }
             Err(err) => return Err(err),
         };
-        if !probe.uncertified_definition_fallback
-            && !certified_probe_points
-                .iter()
-                .any(|existing| *existing == probe.point)
+        if !probe.uncertified_definition_fallback && !certified_probe_points.contains(&probe.point)
         {
             certified_probe_points.push(probe.point.clone());
         }

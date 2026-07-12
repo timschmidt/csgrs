@@ -328,7 +328,7 @@ pub(super) fn strict_leaf_witness_points_with_seed_families(
         leaf,
         vertices,
         &mut seed_families_for,
-        |leaf, witness| strict_leaf_cell_points(leaf, witness),
+        strict_leaf_cell_points,
     )
 }
 

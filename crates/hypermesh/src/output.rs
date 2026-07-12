@@ -564,7 +564,7 @@ fn output_polygon_closure_report_from_indexed_vertices(
     vertices: &[OutputVertex],
     indexed_polygons: &[Vec<usize>],
 ) -> HypermeshResult<TriangleSoupClosureReport> {
-    let axis_order = sorted_vertex_indices_by_axis(&vertices)?;
+    let axis_order = sorted_vertex_indices_by_axis(vertices)?;
     let edge_counts = polygon_edge_counts(vertices, indexed_polygons, &axis_order)?;
     let mut report = TriangleSoupClosureReport::default();
     for uses in edge_counts.values().copied() {
@@ -757,7 +757,7 @@ fn split_segment_subedges_exact<'a>(
     edge: [usize; 2],
 ) -> HypermeshResult<&'a [[usize; 2]]> {
     let edge = sorted_edge(edge);
-    if !cache.contains_key(&edge) {
+    if let std::collections::hash_map::Entry::Vacant(e) = cache.entry(edge) {
         let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
         let mut on_edge = Vec::new();
         let (start, end) = candidate_vertex_index_range_for_edge(axis_order, vertices, edge, axis)?;
@@ -783,7 +783,7 @@ fn split_segment_subedges_exact<'a>(
             .windows(2)
             .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
             .collect();
-        cache.insert(edge, subedges);
+        e.insert(subedges);
     }
     Ok(cache.get(&edge).expect("cached edge was just inserted"))
 }
@@ -794,8 +794,8 @@ fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[
         (0..vertices.len()).collect::<Vec<_>>(),
         (0..vertices.len()).collect::<Vec<_>>(),
     ];
-    for axis in 0..3 {
-        order[axis].sort_by(|left, right| {
+    for (axis, axis_order) in order.iter_mut().enumerate() {
+        axis_order.sort_by(|left, right| {
             compare_real(
                 vertex_axis(&vertices[*left], axis),
                 vertex_axis(&vertices[*right], axis),
