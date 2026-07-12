@@ -53,7 +53,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
 
     fn add(self, other: T) -> Self::Output {
         let other = other.as_ref();
-        if self.class == other.class {
+        if self.same_symbolic_basis(other) {
             // Same symbolic basis: combine only the rational scale and keep the existing
             // computable certificate.
             let rational = &self.rational + &other.rational;
@@ -207,7 +207,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
 
     fn sub(self, other: T) -> Self::Output {
         let other = other.as_ref();
-        if self.class == other.class {
+        if self.same_symbolic_basis(other) {
             // Same symbolic basis subtraction mirrors addition: update the scale only.
             let rational = &self.rational - &other.rational;
             if rational.sign() == Sign::NoSign {

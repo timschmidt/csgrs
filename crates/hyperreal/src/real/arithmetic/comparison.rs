@@ -3,7 +3,7 @@
 // however it needn't be complete or reflexive.
 impl PartialEq for Real {
     fn eq(&self, other: &Self) -> bool {
-        self.rational == other.rational && self.class == other.class
+        self.rational == other.rational && self.same_symbolic_basis(other)
     }
 }
 
@@ -55,4 +55,3 @@ impl PartialEq<Real> for Rational {
         other.class == Class::One && *self == other.rational
     }
 }
-

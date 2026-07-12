@@ -106,6 +106,16 @@ impl Real {
         }
     }
 
+    pub(super) fn same_symbolic_basis(&self, other: &Self) -> bool {
+        match (&self.class, &other.class) {
+            (Irrational, Irrational) => match (&self.computable, &other.computable) {
+                (Some(left), Some(right)) => Computable::internal_structural_eq(left, right),
+                _ => false,
+            },
+            _ => self.class == other.class,
+        }
+    }
+
     fn computable_ref(&self) -> &Computable {
         self.computable
             .as_ref()

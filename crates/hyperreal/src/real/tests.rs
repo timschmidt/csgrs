@@ -282,6 +282,41 @@ mod tests {
     }
 
     #[test]
+    fn distinct_opaque_irrationals_do_not_share_an_algebraic_basis() {
+        let left = pi_fraction(1, 5).sin() + Real::one();
+        let right = pi_fraction(1, 7).sin() + Real::one();
+
+        assert_ne!(left, right);
+        assert_ne!(&left - &right, Real::zero());
+        assert_ne!((&left / &right).unwrap(), Real::one());
+
+        let clone = left.clone();
+        assert_eq!(left, clone);
+        assert_eq!(&left - &clone, Real::zero());
+        assert_eq!((&left / &clone).unwrap(), Real::one());
+    }
+
+    #[test]
+    fn opposite_sign_sum_does_not_certify_sign_from_inexact_msd() {
+        let five_pi_over_four =
+            Real::tau() * (Real::from(20_u8) / Real::from(32_u8)).expect("nonzero sample count");
+        let offset_sample = (Real::one() / Real::from(2_u8)).unwrap()
+            + (Real::from(3_u8) / Real::from(4_u8)).unwrap() * five_pi_over_four.sin();
+
+        assert_eq!(
+            offset_sample.refine_sign_until(-4096),
+            Some(RealSign::Negative),
+            "offset sample facts were {:#?}",
+            offset_sample.structural_facts()
+        );
+        let approximation = offset_sample.to_f64_lossy().unwrap();
+        assert!(
+            (approximation - (0.5 - 0.375 * std::f64::consts::SQRT_2)).abs() < 1.0e-12,
+            "5pi/4 offset sample was {approximation}"
+        );
+    }
+
+    #[test]
     fn cos_pi_rational_multiples_shift_through_sin() {
         let zero = Real::zero();
         let one: Real = 1.into();

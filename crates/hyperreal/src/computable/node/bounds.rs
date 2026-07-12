@@ -187,22 +187,26 @@ impl BoundInfo {
                 Self::NonZero {
                     sign: left_sign,
                     msd: left_msd,
-                    ..
+                    exact_msd: left_exact_msd,
                 },
                 Self::NonZero {
                     sign: right_sign,
                     msd: right_msd,
-                    ..
+                    exact_msd: right_exact_msd,
                 },
             ) => {
                 let sign = match (left_sign, right_sign) {
                     (Some(left), Some(right)) if left == right => Some(left),
                     (Some(Sign::Plus), Some(Sign::Minus))
-                    | (Some(Sign::Minus), Some(Sign::Plus)) => match (left_msd, right_msd) {
-                        (Some(left), Some(right)) if left > right + 1 => left_sign,
-                        (Some(left), Some(right)) if right > left + 1 => right_sign,
-                        _ => None,
-                    },
+                    | (Some(Sign::Minus), Some(Sign::Plus))
+                        if left_exact_msd && right_exact_msd =>
+                    {
+                        match (left_msd, right_msd) {
+                            (Some(left), Some(right)) if left > right => left_sign,
+                            (Some(left), Some(right)) if right > left => right_sign,
+                            _ => None,
+                        }
+                    }
                     _ => None,
                 };
                 let msd = match (left_sign, right_sign, left_msd, right_msd) {
@@ -223,11 +227,6 @@ impl BoundInfo {
                 match sign {
                     Some(sign) => Self::NonZero {
                         sign: Some(sign),
-                        msd,
-                        exact_msd: false,
-                    },
-                    None if msd.is_some() => Self::NonZero {
-                        sign: None,
                         msd,
                         exact_msd: false,
                     },

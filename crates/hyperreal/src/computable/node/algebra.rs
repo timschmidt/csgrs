@@ -422,35 +422,11 @@ impl Computable {
                     _ => None,
                 }
             });
-            let (left_planning_sign, left_planning_msd) = self.planning_sign_and_msd();
-            let (right_planning_sign, right_planning_msd) = other.planning_sign_and_msd();
-            let left_planning_msd = left_planning_msd.flatten();
-            let right_planning_msd = right_planning_msd.flatten();
-            if let Some(sign) = match (left_sign, right_sign) {
+            match (left_sign, right_sign) {
                 (Some(Sign::NoSign), Some(sign)) | (Some(sign), Some(Sign::NoSign)) => Some(sign),
                 (Some(Sign::Plus), Some(Sign::Plus)) => Some(Sign::Plus),
                 (Some(Sign::Minus), Some(Sign::Minus)) => Some(Sign::Minus),
                 _ => None,
-            } {
-                Some(sign)
-            } else if let (Some(left_sign), Some(right_sign), Some(left_msd), Some(right_msd)) = (
-                left_planning_sign,
-                right_planning_sign,
-                left_planning_msd,
-                right_planning_msd,
-            ) {
-                match (left_sign, right_sign) {
-                    (Sign::Plus, Sign::Minus) if left_msd > right_msd => Some(Sign::Plus),
-                    (Sign::Plus, Sign::Minus) if right_msd > left_msd => Some(Sign::Minus),
-                    (Sign::Minus, Sign::Plus) if left_msd > right_msd => Some(Sign::Minus),
-                    (Sign::Minus, Sign::Plus) if right_msd > left_msd => Some(Sign::Plus),
-                    (Sign::Plus, Sign::Plus) => Some(Sign::Plus),
-                    (Sign::Minus, Sign::Minus) => Some(Sign::Minus),
-                    (Sign::NoSign, Sign::NoSign) => Some(Sign::NoSign),
-                    _ => None,
-                }
-            } else {
-                None
             }
         };
         let certified_sign = certified_bound.known_sign().or(child_sign);

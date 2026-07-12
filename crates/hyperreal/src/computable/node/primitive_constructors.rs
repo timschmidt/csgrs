@@ -10,7 +10,7 @@ impl Computable {
         Self::rational(HALF_RATIONAL.clone())
     }
 
-    fn internal_structural_eq(left: &Self, right: &Self) -> bool {
+    pub(crate) fn internal_structural_eq(left: &Self, right: &Self) -> bool {
         fn compare_nodes(left: &Approximation, right: &Approximation) -> bool {
             match (left, right) {
                 (Approximation::One, Approximation::One) => true,

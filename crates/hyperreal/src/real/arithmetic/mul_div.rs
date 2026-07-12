@@ -510,7 +510,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             crate::trace_dispatch!("real", "div", "zero");
             return Ok(Real::zero());
         }
-        if self.class == other.class {
+        if self.same_symbolic_basis(other) {
             crate::trace_dispatch!("real", "div", "same-class");
             let rational = &self.rational / &other.rational;
             return Ok(Real::new(rational));
@@ -901,4 +901,3 @@ impl DivAssign<f64> for Real {
         *self = (&*self / other).expect("division assignment by zero finite f64");
     }
 }
-

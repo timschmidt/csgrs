@@ -1064,6 +1064,18 @@ mod tests {
     }
 
     #[test]
+    fn opposite_sign_add_with_inexact_msd_is_not_certified_nonzero() {
+        let half = Computable::rational(Rational::fraction(1, 2).unwrap());
+        let negative_radical = Computable::rational(Rational::new(2))
+            .sqrt()
+            .multiply_rational(Rational::fraction(-3, 8).unwrap());
+        let sum = half.add(negative_radical);
+
+        assert_eq!(sum.zero_status(), ZeroKnowledge::Unknown);
+        assert_eq!(sum.sign_until(-64), Some(RealSign::Negative));
+    }
+
+    #[test]
     fn add_ignores_tiny_term_at_target_precision() {
         let big = Computable::pi();
         let tiny = Computable::rational(
