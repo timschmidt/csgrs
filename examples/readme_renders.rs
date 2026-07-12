@@ -165,13 +165,13 @@ fn render_mesh(name: &str, mesh: &Mesh<()>) {
     let projected = triangles
         .iter()
         .filter_map(|poly| {
-            if poly.vertices.len() < 3 {
+            if poly.vertices().len() < 3 {
                 return None;
             }
             Some([
-                project_point(&poly.vertices[0].position),
-                project_point(&poly.vertices[1].position),
-                project_point(&poly.vertices[2].position),
+                project_point(&poly.vertices()[0].position),
+                project_point(&poly.vertices()[1].position),
+                project_point(&poly.vertices()[2].position),
             ])
         })
         .collect::<Vec<_>>();

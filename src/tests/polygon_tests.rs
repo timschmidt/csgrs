@@ -1,7 +1,6 @@
 //! Tests for polygon construction and manipulation.
 
 use super::support::*;
-use crate::polygon::build_orthonormal_basis;
 
 #[test]
 fn test_polygon_new() {
@@ -130,13 +129,56 @@ fn polygon_newell_normal_and_basis_use_hyperreal_checked_normalization() {
         assert!(vertex.normal.dot(&Vector3::z()) > r(1.0) - tolerance());
     }
 
-    let (u, v) = build_orthonormal_basis(v3(2.0, 3.0, 6.0));
     let n = v3(2.0, 3.0, 6.0).normalize().unwrap();
+    let (u, v) = n.orthonormal_basis_checked().unwrap();
     assert!((u.norm() - r(1.0)).abs() < tolerance());
     assert!((v.norm() - r(1.0)).abs() < tolerance());
     assert!(u.dot(&v).abs() < tolerance());
     assert!(u.dot(&n).abs() < tolerance());
     assert!(v.dot(&n).abs() < tolerance());
+}
+
+#[test]
+fn triangulation_preserves_exact_coordinates_beyond_f64_resolution() {
+    let base = Real::from(1_i64 << 60);
+    let one = Real::one();
+    let zero = Real::zero();
+    let point = |x: Real, y: Real| Point3::new(x, y, zero.clone());
+    let polygon = Polygon::new(
+        vec![
+            Vertex::new(point(base.clone(), zero.clone()), Vector3::z()),
+            Vertex::new(point(base.clone() + one.clone(), zero.clone()), Vector3::z()),
+            Vertex::new(point(base.clone() + one.clone(), one.clone()), Vector3::z()),
+            Vertex::new(point(base, one), Vector3::z()),
+        ],
+        (),
+    );
+
+    assert_eq!(polygon.triangulate().len(), 2);
+}
+
+#[test]
+fn mutable_vertex_access_refreshes_plane_and_bounds() {
+    let mut polygon = Polygon::new(
+        vec![
+            Vertex::new(Point3::origin(), Vector3::z()),
+            Vertex::new(p3(1.0, 0.0, 0.0), Vector3::z()),
+            Vertex::new(p3(0.0, 1.0, 0.0), Vector3::z()),
+        ],
+        (),
+    );
+    let old_bounds = polygon.bounding_box();
+
+    {
+        let mut vertices = polygon.vertices_mut();
+        for vertex in vertices.iter_mut() {
+            vertex.position.z += r(2.0);
+        }
+    }
+
+    assert_eq!(old_bounds.mins.z, Real::zero());
+    assert_eq!(polygon.bounding_box().mins.z, r(2.0));
+    assert_eq!(polygon.plane().point_a.z, r(2.0));
 }
 
 // ------------------------------------------------------------

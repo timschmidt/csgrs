@@ -4,7 +4,7 @@
 #![doc = " a widely-supported 3D file format used by many modeling and rendering applications."]
 
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 use crate::triangulated::IndexedTriangulated3D;

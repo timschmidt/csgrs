@@ -37,7 +37,7 @@ fn translated_union_does_not_emit_origin_fallback_vertices() {
 
     assert!(!result.polygons.is_empty());
     for polygon in &result.polygons {
-        for vertex in &polygon.vertices {
+        for vertex in polygon.vertices() {
             let x = vertex
                 .position
                 .x

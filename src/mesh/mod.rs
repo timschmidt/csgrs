@@ -2,8 +2,6 @@
 
 use crate::errors::ValidationError;
 
-use crate::mesh::plane::Plane;
-use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 
 #[cfg(feature = "sketch")]
@@ -21,7 +19,7 @@ use hyperphysics::{
 use hyperreal::RealSign;
 use std::{cmp::PartialEq, fmt::Debug, num::NonZeroU32, sync::OnceLock};
 
-#[cfg(feature = "chull")]
+#[cfg(feature = "chull-io")]
 pub mod convex_hull;
 #[cfg(feature = "sketch")]
 pub mod flatten_slice;
@@ -32,6 +30,8 @@ pub mod manifold;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 pub mod plane;
+pub mod polygon;
+pub use polygon::Polygon;
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
@@ -69,17 +69,6 @@ fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
         })
 }
 
-fn real_cmp_for_finite_bounds(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
-    hyperlimit::compare_reals(lhs, rhs)
-        .value()
-        .or_else(|| {
-            let lhs = lhs.to_f64_lossy()?;
-            let rhs = rhs.to_f64_lossy()?;
-            lhs.partial_cmp(&rhs)
-        })
-        .unwrap_or(std::cmp::Ordering::Equal)
-}
-
 fn real_gt(lhs: &Real, rhs: &Real) -> bool {
     matches!(real_cmp(lhs, rhs), std::cmp::Ordering::Greater)
 }
@@ -102,40 +91,22 @@ fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
     let mut max_z = min_z.clone();
 
     for point in &points[1..] {
-        if matches!(
-            real_cmp_for_finite_bounds(&point.x, &min_x),
-            std::cmp::Ordering::Less
-        ) {
+        if matches!(real_cmp(&point.x, &min_x), std::cmp::Ordering::Less) {
             min_x = point.x.clone();
         }
-        if matches!(
-            real_cmp_for_finite_bounds(&point.y, &min_y),
-            std::cmp::Ordering::Less
-        ) {
+        if matches!(real_cmp(&point.y, &min_y), std::cmp::Ordering::Less) {
             min_y = point.y.clone();
         }
-        if matches!(
-            real_cmp_for_finite_bounds(&point.z, &min_z),
-            std::cmp::Ordering::Less
-        ) {
+        if matches!(real_cmp(&point.z, &min_z), std::cmp::Ordering::Less) {
             min_z = point.z.clone();
         }
-        if matches!(
-            real_cmp_for_finite_bounds(&point.x, &max_x),
-            std::cmp::Ordering::Greater
-        ) {
+        if matches!(real_cmp(&point.x, &max_x), std::cmp::Ordering::Greater) {
             max_x = point.x.clone();
         }
-        if matches!(
-            real_cmp_for_finite_bounds(&point.y, &max_y),
-            std::cmp::Ordering::Greater
-        ) {
+        if matches!(real_cmp(&point.y, &max_y), std::cmp::Ordering::Greater) {
             max_y = point.y.clone();
         }
-        if matches!(
-            real_cmp_for_finite_bounds(&point.z, &max_z),
-            std::cmp::Ordering::Greater
-        ) {
+        if matches!(real_cmp(&point.z, &max_z), std::cmp::Ordering::Greater) {
             max_z = point.z.clone();
         }
     }
@@ -179,126 +150,23 @@ fn ray_triangle_intersection(
         &c,
     ) {
         hyperlimit::PredicateOutcome::Decided { value: report, .. } => {
-            let Some(point) = report.point else {
-                return ray_triangle_intersection_lossy(origin, direction, tri);
-            };
-            let Some(t) = report.parameter else {
-                return ray_triangle_intersection_lossy(origin, direction, tri);
-            };
             if matches!(
                 report.relation,
                 hyperlimit::RayTriangleIntersection::Disjoint
                     | hyperlimit::RayTriangleIntersection::Coplanar
             ) {
-                ray_triangle_intersection_lossy(origin, direction, tri)
-            } else {
-                Some((Point3::new(point.x, point.y, point.z), t))
+                return None;
             }
+            let point = report.point?;
+            let parameter = report.parameter?;
+            Some((Point3::new(point.x, point.y, point.z), parameter))
         },
-        hyperlimit::PredicateOutcome::Unknown { .. } => {
-            ray_triangle_intersection_lossy(origin, direction, tri)
-        },
+        hyperlimit::PredicateOutcome::Unknown { .. } => None,
     }
 }
 
 fn hyperlimit_point3(point: &Point3) -> hyperlimit::Point3 {
     hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
-}
-
-fn point3_to_f64(point: &Point3) -> Option<[f64; 3]> {
-    Some([
-        point.x.to_f64_lossy()?,
-        point.y.to_f64_lossy()?,
-        point.z.to_f64_lossy()?,
-    ])
-}
-
-fn vector3_to_f64(vector: &Vector3) -> Option<[f64; 3]> {
-    Some([
-        vector.0[0].to_f64_lossy()?,
-        vector.0[1].to_f64_lossy()?,
-        vector.0[2].to_f64_lossy()?,
-    ])
-}
-
-fn ray_triangle_intersection_lossy(
-    origin: &Point3,
-    direction: &Vector3,
-    tri: &[Vertex; 3],
-) -> Option<(Point3, Real)> {
-    let origin = point3_to_f64(origin)?;
-    let direction = vector3_to_f64(direction)?;
-    let a = point3_to_f64(&tri[0].position)?;
-    let b = point3_to_f64(&tri[1].position)?;
-    let c = point3_to_f64(&tri[2].position)?;
-
-    let edge1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
-    let edge2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-    let h = cross3(direction, edge2);
-    let det = dot3(edge1, h);
-    if det.abs() < 1e-12 {
-        return None;
-    }
-
-    let inv_det = 1.0 / det;
-    let s = [origin[0] - a[0], origin[1] - a[1], origin[2] - a[2]];
-    let u = inv_det * dot3(s, h);
-    if !(0.0..=1.0).contains(&u) {
-        return None;
-    }
-
-    let q = cross3(s, edge1);
-    let v = inv_det * dot3(direction, q);
-    if v < 0.0 || u + v > 1.0 {
-        return None;
-    }
-
-    let t = inv_det * dot3(edge2, q);
-    if t < 0.0 {
-        return None;
-    }
-
-    Some((
-        Point3::new(
-            Real::try_from(origin[0] + direction[0] * t).ok()?,
-            Real::try_from(origin[1] + direction[1] * t).ok()?,
-            Real::try_from(origin[2] + direction[2] * t).ok()?,
-        ),
-        Real::try_from(t).ok()?,
-    ))
-}
-
-fn point_triangle_plane_distance_lossy(point: &Point3, tri: &[Vertex; 3]) -> Option<f64> {
-    let point = point3_to_f64(point)?;
-    let a = point3_to_f64(&tri[0].position)?;
-    let b = point3_to_f64(&tri[1].position)?;
-    let c = point3_to_f64(&tri[2].position)?;
-    let normal = cross3(subtract3(b, a), subtract3(c, a));
-    let normal_len = norm3(normal);
-    if normal_len <= f64::EPSILON {
-        return None;
-    }
-    Some((dot3(subtract3(point, a), normal) / normal_len).abs())
-}
-
-fn dot3(lhs: [f64; 3], rhs: [f64; 3]) -> f64 {
-    lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]
-}
-
-fn norm3(value: [f64; 3]) -> f64 {
-    dot3(value, value).sqrt()
-}
-
-fn subtract3(lhs: [f64; 3], rhs: [f64; 3]) -> [f64; 3] {
-    [lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2]]
-}
-
-fn cross3(lhs: [f64; 3], rhs: [f64; 3]) -> [f64; 3] {
-    [
-        lhs[1] * rhs[2] - lhs[2] * rhs[1],
-        lhs[2] * rhs[0] - lhs[0] * rhs[2],
-        lhs[0] * rhs[1] - lhs[1] * rhs[0],
-    ]
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
@@ -562,11 +430,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             if real_zero(&(a.1.clone() - b.1.clone())) {
                 return true;
             }
-            if let (Some(lhs), Some(rhs)) = (a.1.to_f64_lossy(), b.1.to_f64_lossy())
-                && (lhs - rhs).abs() <= 1e-10
-            {
-                return true;
-            }
             let a_point = hyperlimit::Point3::new(a.0.x.clone(), a.0.y.clone(), a.0.z.clone());
             let b_point = hyperlimit::Point3::new(b.0.x.clone(), b.0.y.clone(), b.0.z.clone());
             matches!(
@@ -696,16 +559,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         | hyperlimit::Triangle3Location::OnVertex
                 )
             );
-            if on_triangle
-                && point_triangle_plane_distance_lossy(point, &tri)
-                    .is_some_and(|distance| distance <= 1e-8)
-            {
+            if on_triangle {
                 return false;
             }
-        }
-
-        if let Some(inside) = self.contains_vertex_winding_lossy(point) {
-            return inside;
         }
 
         let one = Real::one();
@@ -718,30 +574,6 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         );
 
         self.ray_intersections(point, &direction).len() % 2 == 1
-    }
-
-    fn contains_vertex_winding_lossy(&self, point: &Point3) -> Option<bool> {
-        let point = point3_to_f64(point)?;
-        let mut solid_angle = 0.0_f64;
-
-        for tri in self.polygons.iter().flat_map(|polygon| polygon.triangulate()) {
-            let a = subtract3(point3_to_f64(&tri[0].position)?, point);
-            let b = subtract3(point3_to_f64(&tri[1].position)?, point);
-            let c = subtract3(point3_to_f64(&tri[2].position)?, point);
-            let la = norm3(a);
-            let lb = norm3(b);
-            let lc = norm3(c);
-            if la <= f64::EPSILON || lb <= f64::EPSILON || lc <= f64::EPSILON {
-                return Some(false);
-            }
-
-            let numerator = dot3(a, cross3(b, c));
-            let denominator =
-                la * lb * lc + dot3(a, b) * lc + dot3(b, c) * la + dot3(c, a) * lb;
-            solid_angle += (2.0 * numerator.atan2(denominator)).abs();
-        }
-
-        Some(solid_angle.abs() > std::f64::consts::PI * 2.0)
     }
 
     /// Mass properties through the Hyper physics stack.
@@ -1077,7 +909,8 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         let mut mesh = self.clone();
 
         for poly in &mut mesh.polygons {
-            for vert in &mut poly.vertices {
+            let mut vertices = poly.vertices_mut();
+            for vert in vertices.iter_mut() {
                 // Transform position using homogeneous coordinates
                 match mat.transform_point3(&vert.position) {
                     Ok(transformed_position) => vert.position = transformed_position,
@@ -1095,12 +928,6 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                     vert.normal = normal;
                 }
             }
-
-            // Reconstruct plane from transformed vertices for consistency
-            poly.plane = Plane::from_vertices(poly.vertices.clone());
-
-            // Invalidate the polygon's bounding box
-            poly.bounding_box = OnceLock::new();
         }
 
         // invalidate the old cached bounding box

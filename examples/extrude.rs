@@ -1,6 +1,11 @@
 //! Extrude, vector-extrude, revolve, loft, and sweep sketches into meshes.
 
-use csgrs::{csg::CSG, mesh::Mesh, polygon::Polygon, sketch::Profile, vertex::Vertex};
+use csgrs::{
+    csg::CSG,
+    mesh::{Mesh, Polygon},
+    sketch::Profile,
+    vertex::Vertex,
+};
 use hyperlattice::{Point3, Real, Vector3};
 use std::{fs, path::Path};
 

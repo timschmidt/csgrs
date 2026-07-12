@@ -77,7 +77,7 @@
 //!   refinement depends on the hyperreal expression
 //! - **Polygon Splitting**: O(n) per polygon, where n is the number of vertices
 //!
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hyperreal::RealSign;

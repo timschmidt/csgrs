@@ -58,7 +58,6 @@ opt-level = "z"
 [dependencies]
 # geometry
 #alum = "0.6.1"
-chull = { version = "0.2.4", optional = true }
 hypercurve = { version = "0.3.0", path = "../hypercurve", features = ["triangulation", "svg"] }
 hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
 hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
@@ -131,9 +130,7 @@ sketch = [
   # hypercurve backed Profile datatype
 ]
 # convex hull and minkowski sum
-chull-io = [
-  "chull",
-]
+chull-io = []
 stl-io = [
   "stl_io",
 ]

@@ -32,6 +32,35 @@ fn sampled_ellipse_point(
     Some([hreal_mul(rx, cos)?, hreal_mul(ry, sin)?])
 }
 
+fn exact_sample_angle(index: usize, count: usize, start: &Real, sweep: &Real) -> Option<Real> {
+    let fraction = (Real::from(index as u64) / Real::from(count as u64)).ok()?;
+    Some(start.clone() + sweep.clone() * fraction)
+}
+
+fn exact_polar(radius: &Real, angle: Real) -> [Real; 2] {
+    [
+        radius.clone() * angle.clone().cos(),
+        radius.clone() * angle.sin(),
+    ]
+}
+
+fn exact_ratio(numerator: usize, denominator: usize) -> Option<Real> {
+    (Real::from(numerator as u64) / Real::from(denominator as u64)).ok()
+}
+
+/// Materialize a user-requested polygonal approximation after all analytic
+/// construction has completed in `Real`.
+fn finite_tessellation_profile(points: &[[Real; 2]]) -> Profile {
+    let finite = points
+        .iter()
+        .map(|point| Some([point[0].to_f64_lossy()?, point[1].to_f64_lossy()?]))
+        .collect::<Option<Vec<_>>>();
+    finite
+        .and_then(|points| Contour2::from_finite_ring(&points).ok())
+        .map(Profile::from_contour)
+        .unwrap_or_else(Profile::empty)
+}
+
 fn hcircle_samples(samples: usize, radius: Real) -> Option<Vec<[Real; 2]>> {
     // A polygonal circle is already a finite approximation. Promote each
     // correctly rounded sample once, then retain exact binary-rational points
@@ -429,7 +458,7 @@ impl Profile {
         let Some(points) = hcircle_samples(segments, radius) else {
             return Profile::empty();
         };
-        Self::polygonal_region(points)
+        finite_tessellation_profile(&points)
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
@@ -561,7 +590,7 @@ impl Profile {
         else {
             return Profile::empty();
         };
-        Self::polygonal_region(points)
+        finite_tessellation_profile(&points)
     }
 
     /// **Mathematical Foundation: Regular Polygon Construction**
@@ -622,7 +651,7 @@ impl Profile {
         let Some(points) = hcircle_samples(sides, radius) else {
             return Profile::empty();
         };
-        Self::polygonal_region(points)
+        finite_tessellation_profile(&points)
     }
 
     /// Creates a 2D arrow in the XY plane.
@@ -790,9 +819,6 @@ impl Profile {
         {
             return Profile::empty();
         }
-        let (Some(width), Some(length)) = (width.to_f64_lossy(), length.to_f64_lossy()) else {
-            return Profile::empty();
-        };
         let mut raw = Vec::with_capacity(segments);
         for i in 0..segments {
             let theta = std::f64::consts::TAU * i as f64 / segments as f64;
@@ -810,16 +836,16 @@ impl Profile {
             .fold(f64::NEG_INFINITY, f64::max);
         let points = raw
             .into_iter()
-            .map(|(x, y)| {
-                [
-                    width * ((x - min_x) / (max_x - min_x) - 0.5),
-                    length * ((y - min_y) / (max_y - min_y) - 0.5),
-                ]
+            .map(|(x, y)| -> Option<[Real; 2]> {
+                Some([
+                    width.clone()
+                        * hreal_from_f64((x - min_x) / (max_x - min_x) - 0.5).ok()?,
+                    length.clone()
+                        * hreal_from_f64((y - min_y) / (max_y - min_y) - 0.5).ok()?,
+                ])
             })
-            .collect::<Vec<_>>();
-        Contour2::from_finite_ring(&points)
-            .map(Profile::from_contour)
-            .unwrap_or_else(|_| Profile::empty())
+            .collect::<Option<Vec<_>>>();
+        points.map_or_else(Profile::empty, Self::polygonal_region)
     }
 
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
@@ -1074,7 +1100,7 @@ impl Profile {
         let Some(sweep_magnitude) = hreal_abs(&sweep_degrees_real) else {
             return Profile::empty();
         };
-        if !hfinite_nonzero(sweep_degrees_real)
+        if !hfinite_nonzero(sweep_degrees_real.clone())
             || !matches!(
                 hreal_try_cmp(&sweep_magnitude, 360.0),
                 Some(Ordering::Less | Ordering::Equal)
@@ -1086,28 +1112,23 @@ impl Profile {
             return Profile::circle(radius, segments);
         }
 
-        let (Some(start), Some(end)) =
-            (start_angle_deg.to_f64_lossy(), end_angle_deg.to_f64_lossy())
-        else {
+        let start_rad = (start_angle_deg * Real::pi() / Real::from(180_u16)).ok();
+        let sweep = (sweep_degrees_real * Real::pi() / Real::from(180_u16)).ok();
+        let (Some(start_rad), Some(sweep)) = (start_rad, sweep) else {
             return Profile::empty();
         };
-        let sweep_degrees = end - start;
-        let start_rad = start.to_radians();
-        let sweep = sweep_degrees.to_radians();
 
         // Build a ring of coordinates starting at (0,0), going around the arc, and closing at (0,0).
         let mut points = Vec::with_capacity(segments + 2);
         points.push([Real::zero(), Real::zero()]);
         for i in 0..=segments {
-            let Some(point) =
-                sampled_ellipse_point(&radius, &radius, i, segments, start_rad, sweep)
-            else {
+            let Some(angle) = exact_sample_angle(i, segments, &start_rad, &sweep) else {
                 return Profile::empty();
             };
-            points.push(point);
+            points.push(exact_polar(&radius, angle));
         }
 
-        Self::polygonal_region(points)
+        finite_tessellation_profile(&points)
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
@@ -1474,9 +1495,6 @@ impl Profile {
             return Profile::empty();
         }
 
-        let (Some(width), Some(height)) = (width.to_f64_lossy(), height.to_f64_lossy()) else {
-            return Profile::empty();
-        };
         let mut raw = Vec::with_capacity(segments);
         for i in 0..segments {
             let t = std::f64::consts::TAU * i as f64 / segments as f64;
@@ -1500,16 +1518,14 @@ impl Profile {
             .fold(f64::NEG_INFINITY, f64::max);
         let points = raw
             .into_iter()
-            .map(|(x, y)| {
-                [
-                    width * (x - min_x) / (max_x - min_x),
-                    height * (y - min_y) / (max_y - min_y),
-                ]
+            .map(|(x, y)| -> Option<[Real; 2]> {
+                Some([
+                    width.clone() * hreal_from_f64((x - min_x) / (max_x - min_x)).ok()?,
+                    height.clone() * hreal_from_f64((y - min_y) / (max_y - min_y)).ok()?,
+                ])
             })
-            .collect::<Vec<_>>();
-        Contour2::from_finite_ring(&points)
-            .map(Profile::from_contour)
-            .unwrap_or_else(|_| Profile::empty())
+            .collect::<Option<Vec<_>>>();
+        points.map_or_else(Profile::empty, Self::polygonal_region)
     }
 
     /// 2-D crescent obtained by subtracting a displaced smaller circle
@@ -1632,55 +1648,56 @@ impl Profile {
         {
             return Profile::empty();
         }
-        let (Some(module), Some(pressure_angle), Some(clearance), Some(backlash)) = (
-            module_.to_f64_lossy(),
-            pressure_angle_deg.to_f64_lossy(),
-            clearance.to_f64_lossy(),
-            backlash.to_f64_lossy(),
-        ) else {
+        let Some(pressure_angle) =
+            (pressure_angle_deg * Real::pi() / Real::from(180_u16)).ok()
+        else {
             return Profile::empty();
         };
-        let pitch = std::f64::consts::PI * module;
-        let dedendum = 1.25 * module + clearance;
-        let root_y = -dedendum;
-        let tooth_thickness = 0.5 * pitch - backlash;
-        let half_thickness = 0.5 * tooth_thickness;
-        let tan_alpha = pressure_angle.to_radians().tan();
-        let root_slant = dedendum * tan_alpha;
-        let tip_slant = module * tan_alpha;
-        let tip_width = tooth_thickness - 2.0 * tip_slant;
-        let root_space = pitch - tooth_thickness - 2.0 * root_slant;
-        if !(tooth_thickness > 0.0
-            && tan_alpha.is_finite()
-            && tip_width > 0.0
-            && root_space >= 0.0)
+        let pitch = Real::pi() * module_.clone();
+        let dedendum = module_.clone()
+            * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
+            + clearance;
+        let root_y = -dedendum.clone();
+        let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
+        let tooth_thickness = pitch.clone() * half.clone() - backlash;
+        let half_thickness = tooth_thickness.clone() * half;
+        let Some(tan_alpha) = (pressure_angle.clone().sin() / pressure_angle.cos()).ok()
+        else {
+            return Profile::empty();
+        };
+        let root_slant = dedendum.clone() * tan_alpha.clone();
+        let tip_slant = module_.clone() * tan_alpha;
+        let tip_width = tooth_thickness.clone() - Real::from(2_u8) * tip_slant.clone();
+        let root_space =
+            pitch.clone() - tooth_thickness.clone() - Real::from(2_u8) * root_slant.clone();
+        if !hprofile_scalar_positive(&tooth_thickness)
+            || !hprofile_scalar_positive(&tip_width)
+            || !hprofile_scalar_nonnegative(&root_space)
         {
             return Profile::empty();
         }
-        let first_x = -half_thickness - root_slant;
-        let mut outline = Vec::<[f64; 2]>::with_capacity(6 * num_teeth + 1);
-        outline.push([first_x, root_y]);
+        let first_x = -half_thickness.clone() - root_slant.clone();
+        let mut outline = Vec::<[Real; 2]>::with_capacity(6 * num_teeth + 1);
+        outline.push([first_x.clone(), root_y.clone()]);
 
         for i in 0..num_teeth {
-            let tooth_center = i as f64 * pitch;
-            let left_pitch = tooth_center - half_thickness;
-            let right_pitch = tooth_center + half_thickness;
-            outline.push([left_pitch, 0.0]);
-            outline.push([left_pitch + tip_slant, module]);
-            outline.push([right_pitch - tip_slant, module]);
-            outline.push([right_pitch, 0.0]);
-            outline.push([right_pitch + root_slant, root_y]);
+            let tooth_center = Real::from(i as u64) * pitch.clone();
+            let left_pitch = tooth_center.clone() - half_thickness.clone();
+            let right_pitch = tooth_center + half_thickness.clone();
+            outline.push([left_pitch.clone(), Real::zero()]);
+            outline.push([left_pitch + tip_slant.clone(), module_.clone()]);
+            outline.push([right_pitch.clone() - tip_slant.clone(), module_.clone()]);
+            outline.push([right_pitch.clone(), Real::zero()]);
+            outline.push([right_pitch + root_slant.clone(), root_y.clone()]);
 
             if i < num_teeth - 1 {
-                let next_left_pitch = (i + 1) as f64 * pitch - half_thickness;
-                outline.push([next_left_pitch - root_slant, root_y]);
+                let next_left_pitch =
+                    Real::from((i + 1) as u64) * pitch.clone() - half_thickness.clone();
+                outline.push([next_left_pitch - root_slant.clone(), root_y.clone()]);
             }
         }
 
-        outline.push([first_x, root_y]);
-        Contour2::from_finite_ring(&outline)
-            .map(Profile::from_contour)
-            .unwrap_or_else(|_| Profile::empty())
+        finite_tessellation_profile(&outline)
     }
 
     /// Generate a linear cycloidal rack profile.
@@ -1711,43 +1728,43 @@ impl Profile {
         {
             return Profile::empty();
         }
-        let (Some(module), Some(clearance)) =
-            (module_.to_f64_lossy(), clearance.to_f64_lossy())
-        else {
-            return Profile::empty();
-        };
-        let generating_radius = 0.5 * module;
-        let pitch = std::f64::consts::PI * module;
-        let root_y = -(1.25 * module + clearance);
+        let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
+        let generating_radius = module_.clone() * half.clone();
+        let pitch = Real::pi() * module_.clone();
+        let root_y = -(module_.clone()
+            * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
+            + clearance);
 
-        let left_edge = -0.5 * pitch;
-        let right_edge = (num_teeth as f64 - 0.5) * pitch;
-        let mut top = Vec::<[f64; 2]>::with_capacity(num_teeth * segments_per_flank + 1);
+        let left_edge = -half.clone() * pitch.clone();
+        let right_edge = (Real::from(num_teeth as u64) - half) * pitch.clone();
+        let mut top = Vec::<[Real; 2]>::with_capacity(num_teeth * segments_per_flank + 1);
         for tooth in 0..num_teeth {
-            let tooth_left = (tooth as f64 - 0.5) * pitch;
+            let tooth_left = (Real::from(tooth as u64)
+                - (Real::one() / Real::from(2_u8)).expect("two is nonzero"))
+                * pitch.clone();
             for sample in 0..=segments_per_flank {
                 if tooth > 0 && sample == 0 {
                     continue;
                 }
-                let theta = std::f64::consts::TAU * sample as f64 / segments_per_flank as f64;
+                let Some(fraction) = exact_ratio(sample, segments_per_flank) else {
+                    return Profile::empty();
+                };
+                let theta = Real::tau() * fraction;
                 top.push([
-                    tooth_left + generating_radius * (theta - theta.sin()),
-                    generating_radius * (1.0 - theta.cos()),
+                    tooth_left.clone()
+                        + generating_radius.clone() * (theta.clone() - theta.clone().sin()),
+                    generating_radius.clone() * (Real::one() - theta.cos()),
                 ]);
             }
         }
 
-        let mut outline = Vec::<[f64; 2]>::with_capacity(top.len() + 3);
-        outline.push([left_edge, root_y]);
-        outline.push([right_edge, root_y]);
+        let mut outline = Vec::<[Real; 2]>::with_capacity(top.len() + 3);
+        outline.push([left_edge.clone(), root_y.clone()]);
+        outline.push([right_edge, root_y.clone()]);
         for point in top.into_iter().rev() {
             outline.push(point);
         }
-        outline.push([left_edge, root_y]);
-
-        Contour2::from_finite_ring(&outline)
-            .map(Profile::from_contour)
-            .unwrap_or_else(|_| Profile::empty())
+        finite_tessellation_profile(&outline)
     }
 
     /// Generate a NACA 4-digit airfoil (e.g. "2412", "0015").
@@ -1785,64 +1802,85 @@ impl Profile {
         {
             return Profile::empty();
         }
-        let Some((m, p, thickness, chord)) = [
-            max_camber.to_f64_lossy(),
-            camber_position.to_f64_lossy(),
-            thickness.to_f64_lossy(),
-            chord.to_f64_lossy(),
-        ]
-        .into_iter()
-        .collect::<Option<Vec<_>>>()
-        .map(|values| {
-            (
-                values[0] / 100.0,
-                values[1] / 10.0,
-                values[2] / 100.0,
-                values[3],
-            )
-        }) else {
+        let Some(m) = (max_camber / Real::from(100_u8)).ok() else {
             return Profile::empty();
         };
-        let cambered = m != 0.0;
-        if cambered && !(0.0 < p && p < 1.0) {
+        let Some(p) = (camber_position / Real::from(10_u8)).ok() else {
+            return Profile::empty();
+        };
+        let Some(thickness) = (thickness / Real::from(100_u8)).ok() else {
+            return Profile::empty();
+        };
+        let cambered = !matches!(hreal_try_cmp(&m, Real::zero()), Some(Ordering::Equal));
+        if cambered
+            && (!matches!(hreal_try_cmp(&p, Real::zero()), Some(Ordering::Greater))
+                || !matches!(hreal_try_cmp(&p, Real::one()), Some(Ordering::Less)))
+        {
             return Profile::empty();
         }
 
-        let sample = |x: f64| {
-            let yt = 5.0
-                * thickness
-                * (0.2969 * x.sqrt() - 0.1260 * x - 0.3516 * x.powi(2) + 0.2843 * x.powi(3)
-                    - 0.1015 * x.powi(4));
+        let coefficient = |value: f64| hreal_from_f64(value).expect("finite NACA coefficient");
+
+        let sample = |x: Real| -> Option<(Real, Real, Real, Real, Real)> {
+            let x2 = x.clone() * x.clone();
+            let x3 = x2.clone() * x.clone();
+            let x4 = x3.clone() * x.clone();
+            let yt = Real::from(5_u8)
+                * thickness.clone()
+                * (coefficient(0.2969) * x.clone().sqrt().ok()?
+                    - coefficient(0.1260) * x.clone()
+                    - coefficient(0.3516) * x2.clone()
+                    + coefficient(0.2843) * x3
+                    - coefficient(0.1015) * x4);
             let (yc, dy) = if !cambered {
-                (0.0, 0.0)
-            } else if x < p {
+                (Real::zero(), Real::zero())
+            } else if matches!(hreal_try_cmp(&x, &p), Some(Ordering::Less)) {
+                let p2 = p.clone() * p.clone();
                 (
-                    m / p.powi(2) * (2.0 * p * x - x.powi(2)),
-                    2.0 * m / p.powi(2) * (p - x),
+                    (m.clone() / p2.clone()).ok()?
+                        * (Real::from(2_u8) * p.clone() * x.clone() - x2.clone()),
+                    (Real::from(2_u8) * m.clone() / p2).ok()? * (p.clone() - x.clone()),
                 )
             } else {
+                let one_minus_p = Real::one() - p.clone();
+                let denominator = one_minus_p.clone() * one_minus_p;
                 (
-                    m / (1.0 - p).powi(2) * (1.0 - 2.0 * p + 2.0 * p * x - x.powi(2)),
-                    2.0 * m / (1.0 - p).powi(2) * (p - x),
+                    (m.clone() / denominator.clone()).ok()?
+                        * (Real::one() - Real::from(2_u8) * p.clone()
+                            + Real::from(2_u8) * p.clone() * x.clone()
+                            - x2),
+                    (Real::from(2_u8) * m.clone() / denominator).ok()?
+                        * (p.clone() - x.clone()),
                 )
             };
-            let theta = dy.atan();
-            (x, yc, yt, theta.sin(), theta.cos())
+            let theta = dy.atan().ok()?;
+            Some((x, yc, yt, theta.clone().sin(), theta.cos()))
         };
 
         let mut points = Vec::with_capacity(2 * samples);
         for i in 0..=samples {
-            let (x, yc, yt, sin_theta, cos_theta) = sample(i as f64 / samples as f64);
-            points.push([chord * (x - yt * sin_theta), chord * (yc + yt * cos_theta)]);
+            let Some((x, yc, yt, sin_theta, cos_theta)) =
+                exact_ratio(i, samples).and_then(&sample)
+            else {
+                return Profile::empty();
+            };
+            points.push([
+                chord.clone() * (x - yt.clone() * sin_theta),
+                chord.clone() * (yc + yt * cos_theta),
+            ]);
         }
         for i in (1..samples).rev() {
-            let (x, yc, yt, sin_theta, cos_theta) = sample(i as f64 / samples as f64);
-            points.push([chord * (x + yt * sin_theta), chord * (yc - yt * cos_theta)]);
+            let Some((x, yc, yt, sin_theta, cos_theta)) =
+                exact_ratio(i, samples).and_then(&sample)
+            else {
+                return Profile::empty();
+            };
+            points.push([
+                chord.clone() * (x + yt.clone() * sin_theta),
+                chord.clone() * (yc - yt * cos_theta),
+            ]);
         }
-
-        Contour2::from_finite_ring(&points)
-            .map(Profile::from_contour)
-            .unwrap_or_else(|_| Profile::empty())
+        finite_tessellation_profile(&points)
     }
 
     /// Build a Hilbert-curve path that fills this sketch.

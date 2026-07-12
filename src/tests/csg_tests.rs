@@ -553,15 +553,15 @@ fn test_csg_renormalize() {
     let mut cube: Mesh<()> = Mesh::cube(r(2.0), ());
     // After we do some transforms, normals might be changed. We can artificially change them:
     for poly in &mut cube.polygons {
-        for v in &mut poly.vertices {
+        for v in poly.vertices_mut().iter_mut() {
             v.normal = Vector3::x(); // just set to something
         }
     }
     cube.renormalize();
     // Now each polygon's vertices should match the plane's normal
     for poly in &cube.polygons {
-        for v in &poly.vertices {
-            let plane_normal = poly.plane.normal();
+        for v in poly.vertices() {
+            let plane_normal = poly.plane().normal();
             assert!(approx_eq(&v.normal.0[0], &plane_normal.0[0], tolerance()));
             assert!(approx_eq(&v.normal.0[1], &plane_normal.0[1], tolerance()));
             assert!(approx_eq(&v.normal.0[2], &plane_normal.0[2], tolerance()));
@@ -581,6 +581,21 @@ fn test_csg_ray_intersections() {
     // The distances should be 1 unit from -2.0 -> -1 => t=1, and from -2.0 -> +1 => t=3
     assert!(approx_eq(&hits[0].1, 1.0, tolerance()));
     assert!(approx_eq(&hits[1].1, 3.0, tolerance()));
+}
+
+#[test]
+fn ray_intersections_and_containment_preserve_unit_offsets_beyond_f64_resolution() {
+    let base = Real::from(1_i64 << 60);
+    let half = (Real::one() / Real::from(2_u8)).unwrap();
+    let cube: Mesh<()> =
+        Mesh::cube(Real::one(), ()).translate(base.clone(), Real::zero(), Real::zero());
+    let origin = Point3::new(base.clone() - Real::one(), half.clone(), half.clone());
+    let hits = cube.ray_intersections(&origin, &Vector3::x());
+
+    assert_eq!(hits.len(), 2);
+    assert_eq!(hits[0].1, Real::one());
+    assert_eq!(hits[1].1, Real::from(2_u8));
+    assert!(cube.contains_vertex(&Point3::new(base + half.clone(), half.clone(), half,)));
 }
 
 #[test]

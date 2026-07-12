@@ -5,7 +5,7 @@ use crate::hyper_math::{
     hvector3_from_point3, hvector3_from_vector3,
 };
 use crate::mesh::Mesh;
-use crate::polygon::Polygon;
+use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use hyperlattice::{Point3, Real, Vector3};

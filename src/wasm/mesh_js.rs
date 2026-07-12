@@ -144,7 +144,7 @@ impl MeshJs {
             )?;
         }
 
-        use crate::polygon::Polygon;
+        use crate::mesh::Polygon;
 
         let exact_points = flat_2d
             .chunks_exact(2)
