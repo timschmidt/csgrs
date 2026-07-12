@@ -149,6 +149,28 @@ impl PartialEq for Plane {
 }
 
 impl Plane {
+    pub(crate) fn translate_in_place(&mut self, vector: &Vector3) {
+        self.point_a = self.point_a.clone() + vector.clone();
+        self.point_b = self.point_b.clone() + vector.clone();
+        self.point_c = self.point_c.clone() + vector.clone();
+    }
+
+    pub(crate) fn transform_affine_in_place(&mut self, matrix: &Matrix4) -> bool {
+        let Ok(point_a) = matrix.transform_point3(&self.point_a) else {
+            return false;
+        };
+        let Ok(point_b) = matrix.transform_point3(&self.point_b) else {
+            return false;
+        };
+        let Ok(point_c) = matrix.transform_point3(&self.point_c) else {
+            return false;
+        };
+        self.point_a = point_a;
+        self.point_b = point_b;
+        self.point_c = point_c;
+        true
+    }
+
     /// Tries to pick three vertices that span the largest area triangle
     /// (maximally well-spaced) and returns a plane defined by them.
     /// Care is taken to preserve the original winding of the vertices.

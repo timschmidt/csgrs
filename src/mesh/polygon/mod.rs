@@ -149,6 +149,10 @@ impl<M: Clone + Send + Sync> Polygon<M> {
         self.bounding_box = OnceLock::new();
     }
 
+    pub(crate) fn invalidate_bounding_box(&mut self) {
+        self.bounding_box = OnceLock::new();
+    }
+
     /// Reverses winding order, flips vertices normals, and flips the plane normal
     pub fn flip(&mut self) {
         // 1) reverse vertices
