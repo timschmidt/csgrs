@@ -507,14 +507,17 @@ impl Class {
                     Self::make_const_product(offset.pi_power, offset.exp_power.clone()).1;
                 Computable::add(constant, Computable::rational(offset.offset.clone()))
             }
-            Sqrt(radicand) => Computable::sqrt_rational(radicand.clone()),
+            Sqrt(radicand) => Computable::sqrt_squarefree_rational(radicand.clone()),
             PiSqrt(radicand) => {
-                Computable::pi().multiply(Computable::sqrt_rational(radicand.clone()))
+                Computable::pi()
+                    .multiply(Computable::sqrt_squarefree_rational(radicand.clone()))
             }
             ConstProductSqrt(product) => {
                 let constant =
                     Self::make_const_product(product.pi_power, product.exp_power.clone()).1;
-                constant.multiply(Computable::sqrt_rational(product.radicand.clone()))
+                constant.multiply(Computable::sqrt_squarefree_rational(
+                    product.radicand.clone(),
+                ))
             }
             Ln(base) => Self::ln_computable(base),
             LnAffine(affine) => Computable::add(

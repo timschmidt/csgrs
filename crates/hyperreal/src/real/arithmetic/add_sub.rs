@@ -389,7 +389,7 @@ impl Real {
             Self {
                 rational: a,
                 class: Sqrt(b.clone()),
-                computable: Some(Computable::sqrt_rational(b)),
+                computable: Some(Computable::sqrt_squarefree_rational(b)),
                 signal: None,
                 primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }

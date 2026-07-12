@@ -6,6 +6,22 @@ impl Computable {
         Self::sqrt(rational)
     }
 
+    pub(crate) fn sqrt_squarefree_rational(radicand: Rational) -> Self {
+        debug_assert!(radicand.sign() != Sign::Minus);
+        let child = Self::rational(radicand);
+        let exact_sign = match child.exact_sign.get() {
+            ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
+            _ => ExactSignCache::Valid(Sign::Plus),
+        };
+        Self {
+            internal: Box::new(Approximation::Sqrt(child)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: Cell::new(BoundCache::Invalid),
+            exact_sign: Cell::new(exact_sign),
+            signal: None,
+        }
+    }
+
     /// Square root of this number.
     pub fn sqrt(self) -> Computable {
         if let Approximation::Square(child) = self.internal.as_ref() {
