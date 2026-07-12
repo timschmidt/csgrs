@@ -1676,33 +1676,35 @@ fn cached_child_subdivision_with(
     task: &SubdivisionTask,
     query: impl FnOnce() -> HypermeshResult<Vec<ClassifiedPolygon>>,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
-    if let Some(existing) = cache
+    if let Some(result) = cache
         .borrow()
         .iter()
         .rev()
         .find(|existing| existing.task == *task)
-        .cloned()
+        .map(|existing| existing.result.clone())
     {
-        return existing.result;
+        return result;
     }
 
     let polygon_profile = polygon_family_profile(&task.polygons);
-    let existing = cache
-        .borrow()
-        .iter()
-        .rev()
-        .find(|existing| {
-            existing.polygon_profile == polygon_profile
-                && subdivision_task_state_matches_for_cache(&existing.task, task)
-                && (existing.task.depth == task.depth
-                    || (existing.task.depth > task.depth && existing.result.is_ok()))
-        })
-        .cloned();
-    if let Some(existing) = existing {
-        if existing.task != *task {
-            cache_child_subdivision_result(cache, task, &existing.result);
+    let existing = {
+        let cache_ref = cache.borrow();
+        cache_ref
+            .iter()
+            .rev()
+            .find(|existing| {
+                existing.polygon_profile == polygon_profile
+                    && subdivision_task_state_matches_for_cache(&existing.task, task)
+                    && (existing.task.depth == task.depth
+                        || (existing.task.depth > task.depth && existing.result.is_ok()))
+            })
+            .map(|existing| (existing.task == *task, existing.result.clone()))
+    };
+    if let Some((task_is_identical, result)) = existing {
+        if !task_is_identical {
+            cache_child_subdivision_result(cache, task, &result);
         }
-        return existing.result;
+        return result;
     }
 
     let result = query();

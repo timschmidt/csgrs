@@ -4216,6 +4216,44 @@ fn cached_direct_probe_reachability_reuses_reversed_query() {
 }
 
 #[test]
+fn cached_direct_probe_reachability_shares_identical_polygon_families() {
+    let mut cache = Vec::new();
+    let host_support = Plane::axis_aligned(2, r(0));
+    let polygons = vec![make_triangle(
+        &p(2, -1, -1),
+        &p(2, 1, -1),
+        &p(2, 0, 1),
+        0,
+        0,
+    )];
+
+    cached_direct_probe_reachability_with(
+        &mut cache,
+        &p(0, 0, 0),
+        &p(1, 0, 0),
+        &host_support,
+        &polygons,
+        || Ok(true),
+    )
+    .unwrap();
+    cached_direct_probe_reachability_with(
+        &mut cache,
+        &p(0, 1, 0),
+        &p(1, 1, 0),
+        &host_support,
+        &polygons,
+        || Ok(true),
+    )
+    .unwrap();
+
+    assert_eq!(cache.len(), 2);
+    assert!(std::sync::Arc::ptr_eq(
+        &cache[0].polygons,
+        &cache[1].polygons
+    ));
+}
+
+#[test]
 fn trace_axis_ordered_paths_reuse_equivalent_intermediate_surface_queries() {
     let start = p(0, 0, 0);
     let end = p(1, 1, 0);

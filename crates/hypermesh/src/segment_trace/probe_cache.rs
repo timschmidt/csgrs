@@ -1,5 +1,7 @@
 //! Shared memoization for certified probe queries.
 
+use std::sync::Arc;
+
 use super::{
     halfspace_cell_seed_families_from_optional_report, optional_halfspace_feasibility_report,
 };
@@ -21,7 +23,7 @@ pub(super) struct DirectProbeReachabilityCacheEntry {
     start: Point3,
     end: Point3,
     host_support: Plane,
-    polygons: Vec<ConvexPolygon>,
+    pub(super) polygons: Arc<[ConvexPolygon]>,
     reachable: HypermeshResult<bool>,
 }
 
@@ -123,7 +125,7 @@ pub(super) fn cached_direct_probe_reachability_with(
 ) -> HypermeshResult<bool> {
     if let Some(existing) = cache.iter().rev().find(|existing| {
         existing.host_support == *host_support
-            && existing.polygons == polygons
+            && existing.polygons.as_ref() == polygons
             && ((existing.start == *start && existing.end == *end)
                 || (existing.start == *end && existing.end == *start))
     }) {
@@ -131,11 +133,16 @@ pub(super) fn cached_direct_probe_reachability_with(
     }
 
     let reachable = query();
+    let shared_polygons = cache
+        .iter()
+        .find(|existing| existing.polygons.as_ref() == polygons)
+        .map(|existing| Arc::clone(&existing.polygons))
+        .unwrap_or_else(|| Arc::from(polygons));
     cache.push(DirectProbeReachabilityCacheEntry {
         start: start.clone(),
         end: end.clone(),
         host_support: host_support.clone(),
-        polygons: polygons.to_vec(),
+        polygons: shared_polygons,
         reachable: reachable.clone(),
     });
     reachable
