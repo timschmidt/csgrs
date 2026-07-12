@@ -25,9 +25,49 @@ impl Rational {
         if square == n { Some(root) } else { None }
     }
 
+    fn extract_square_u64(mut rest: u64) -> (u64, u64) {
+        let mut root = 1_u64;
+        for (prime, square) in [(2, 4), (3, 9), (5, 25), (7, 49), (11, 121), (13, 169), (17, 289)] {
+            if rest == 1 {
+                break;
+            }
+            while rest.is_multiple_of(square) {
+                rest /= square;
+                root *= prime;
+            }
+        }
+
+        let divisors = if rest & 1 == 1 {
+            [1_u64, 3, 5, 7, 11, 13, 15, 17, 19]
+        } else {
+            [1_u64, 2, 3, 5, 6, 7, 8, 10, 11]
+        };
+        for divisor in divisors {
+            if rest == divisor {
+                return (root, rest);
+            }
+            if rest.is_multiple_of(divisor) {
+                let square = rest / divisor;
+                let factor = square.isqrt();
+                if factor * factor == square {
+                    return (root * factor, divisor);
+                }
+            }
+        }
+        (root, rest)
+    }
+
     // (root squared times rest) = n
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
         static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
+
+        if let Some(small) = n.to_u64() {
+            let (root, rest) = Self::extract_square_u64(small);
+            if root == 1 && rest == small {
+                return (BigUint::one(), n);
+            }
+            return (BigUint::from(root), BigUint::from(rest));
+        }
 
         // Partial square extraction is a performance shortcut, not full prime
         // factorization. It peels common small squares and then tests a few
@@ -80,19 +120,12 @@ impl Rational {
         if self.sign == NoSign {
             return (Self::zero(), Self::zero());
         }
-        let (nroot, nrest) = Self::extract_square(self.numerator);
-        let (droot, drest) = Self::extract_square(self.denominator);
+        let (sign, numerator, denominator) = self.into_parts();
+        let (nroot, nrest) = Self::extract_square(numerator);
+        let (droot, drest) = Self::extract_square(denominator);
         (
-            Self {
-                sign: Plus,
-                numerator: nroot,
-                denominator: droot,
-            },
-            Self {
-                sign: self.sign,
-                numerator: nrest,
-                denominator: drest,
-            },
+            Self::from_parts_raw(Plus, nroot, droot),
+            Self::from_parts_raw(sign, nrest, drest),
         )
     }
 
@@ -126,11 +159,7 @@ impl Rational {
             return None;
         }
 
-        Some(Self {
-            sign: self.sign,
-            numerator,
-            denominator,
-        })
+        Some(Self::from_parts_raw(self.sign, numerator, denominator))
     }
 
     // This could grow unreasonably in terms of object size
@@ -140,15 +169,15 @@ impl Rational {
             return Self::one();
         }
         if let Some(exp) = exp.to_u32().filter(|exp| *exp <= 64) {
-            return Self {
-                numerator: self.numerator.pow(exp),
-                denominator: self.denominator.pow(exp),
-                sign: if self.sign == Minus && exp % 2 == 1 {
+            return Self::from_parts_raw(
+                if self.sign == Minus && exp % 2 == 1 {
                     Minus
                 } else {
                     Plus
                 },
-            };
+                self.numerator.pow(exp),
+                self.denominator.pow(exp),
+            );
         }
         let mut result = Self::one();
         let mut factor = self.clone();

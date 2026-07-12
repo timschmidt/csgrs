@@ -93,11 +93,7 @@ impl Rational {
         if n.is_zero() {
             return Self::zero();
         }
-        Self {
-            sign: self.sign,
-            numerator: n,
-            denominator: ONE.deref().clone(),
-        }
+        Self::from_parts_raw(self.sign, n, ONE.deref().clone())
     }
 
     /// The fractional part of this Rational.
@@ -124,11 +120,7 @@ impl Rational {
             return Self::zero();
         }
         let n = &self.numerator % &self.denominator;
-        Self {
-            sign: self.sign,
-            numerator: n,
-            denominator: self.denominator.clone(),
-        }
+        Self::from_parts_raw(self.sign, n, self.denominator.clone())
     }
 
     pub(crate) fn denominator(&self) -> &BigUint {
@@ -156,11 +148,7 @@ impl Rational {
 
         (
             shift,
-            Self {
-                sign: self.sign,
-                numerator,
-                denominator,
-            },
+            Self::from_parts_raw(self.sign, numerator, denominator),
         )
     }
 

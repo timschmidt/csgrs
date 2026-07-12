@@ -1,22 +1,36 @@
 impl Rational {
+    #[inline]
+    fn from_parts_raw(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
+        Self(Arc::new(RationalData {
+            sign,
+            numerator,
+            denominator,
+        }))
+    }
+
+    fn into_parts(self) -> (Sign, BigUint, BigUint) {
+        let RationalData {
+            sign,
+            numerator,
+            denominator,
+        } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {
+            sign: shared.sign,
+            numerator: shared.numerator.clone(),
+            denominator: shared.denominator.clone(),
+        });
+        (sign, numerator, denominator)
+    }
+
     /// Zero, the additive identity.
     pub fn zero() -> Self {
         trace_rational_temporary!();
-        Self {
-            sign: NoSign,
-            numerator: BigUint::ZERO,
-            denominator: BigUint::one(),
-        }
+        RATIONAL_ZERO.clone()
     }
 
     /// One, the multiplicative identity.
     pub fn one() -> Self {
         trace_rational_temporary!();
-        Self {
-            sign: Plus,
-            numerator: BigUint::one(),
-            denominator: BigUint::one(),
-        }
+        RATIONAL_ONE.clone()
     }
 
     /// The non-negative Rational corresponding to the provided [`i64`].
@@ -73,11 +87,7 @@ impl Rational {
             return Self::zero();
         }
         trace_rational_temporary!();
-        Self {
-            sign,
-            numerator,
-            denominator,
-        }
+        Self::from_parts_raw(sign, numerator, denominator)
     }
 
     pub(crate) fn add_one(&self) -> Self {
@@ -170,11 +180,11 @@ impl Rational {
             self
         } else {
             trace_rational_temporary!();
-            Self {
-                sign: self.sign,
-                numerator: self.numerator / &divisor,
-                denominator: self.denominator / divisor,
-            }
+            Self::from_parts_raw(
+                self.sign,
+                &self.numerator / &divisor,
+                &self.denominator / divisor,
+            )
         }
     }
 
@@ -196,14 +206,10 @@ impl Rational {
         if divisor == *ONE.deref() {
             self
         } else {
-            let numerator = self.numerator / &divisor;
-            let denominator = self.denominator / &divisor;
+            let numerator = &self.numerator / &divisor;
+            let denominator = &self.denominator / &divisor;
             trace_rational_temporary!();
-            Self {
-                sign: self.sign,
-                numerator,
-                denominator,
-            }
+            Self::from_parts_raw(self.sign, numerator, denominator)
         }
     }
 
@@ -248,11 +254,11 @@ impl Rational {
         // Shift out common powers of two directly.  This is the hot reduction path for
         // exactly representable binary fractions.
         trace_rational_temporary!();
-        Self {
-            sign: self.sign,
-            numerator: self.numerator >> shift,
-            denominator: self.denominator >> shift,
-        }
+        Self::from_parts_raw(
+            self.sign,
+            &self.numerator >> shift,
+            &self.denominator >> shift,
+        )
     }
 
     /// The inverse of this Rational.
@@ -270,11 +276,8 @@ impl Rational {
         if self.numerator == BigUint::ZERO {
             return Err(Problem::DivideByZero);
         }
-        Ok(Self {
-            sign: self.sign,
-            numerator: self.denominator,
-            denominator: self.numerator,
-        })
+        let (sign, numerator, denominator) = self.into_parts();
+        Ok(Self::from_parts_raw(sign, denominator, numerator))
     }
 
     /// Checks if the value is an integer.
@@ -330,11 +333,7 @@ impl Rational {
             Ordering::Equal => return Self::zero(),
         };
         trace_rational_temporary!();
-        Self {
-            sign,
-            numerator,
-            denominator,
-        }
+        Self::from_parts_raw(sign, numerator, denominator)
         .maybe_reduce()
     }
 

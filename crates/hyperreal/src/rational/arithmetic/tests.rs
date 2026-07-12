@@ -190,6 +190,46 @@ mod tests {
     }
 
     #[test]
+    fn word_sized_square_extraction_preserves_exact_product() {
+        for value in [
+            1_u64,
+            2,
+            18,
+            123_456,
+            715_716,
+            u32::MAX as u64,
+            u64::MAX,
+        ] {
+            let (root, rest) = Rational::extract_square(BigUint::from(value));
+            assert_eq!(&root * &root * rest, BigUint::from(value));
+        }
+    }
+
+    #[test]
+    fn clones_share_storage_without_sharing_arithmetic_results() {
+        let value = Rational::fraction(7, 11).unwrap();
+        let clone = value.clone();
+        assert!(Arc::ptr_eq(&value.0, &clone.0));
+
+        let negated = -clone;
+        assert_eq!(value, Rational::fraction(7, 11).unwrap());
+        assert_eq!(negated, Rational::fraction(-7, 11).unwrap());
+        assert!(!Arc::ptr_eq(&value.0, &negated.0));
+    }
+
+    #[test]
+    fn identity_constructors_share_canonical_storage() {
+        let zero = Rational::zero();
+        let another_zero = Rational::zero();
+        let one = Rational::one();
+        let another_one = Rational::one();
+
+        assert!(Arc::ptr_eq(&zero.0, &another_zero.0));
+        assert!(Arc::ptr_eq(&one.0, &another_one.0));
+        assert!(!Arc::ptr_eq(&zero.0, &one.0));
+    }
+
+    #[test]
     fn perfect_nth_root_detects_exact_rational_roots() {
         assert_eq!(
             Rational::new(27).perfect_nth_root(3),
@@ -582,16 +622,16 @@ mod tests {
     #[test]
     fn equality_cross_multiplies_unequal_denominators() {
         let half = Rational::fraction(1, 2).unwrap();
-        let two_quarters = Rational {
-            sign: Plus,
-            numerator: BigUint::from(2_u8),
-            denominator: BigUint::from(4_u8),
-        };
-        let three_sixths = Rational {
-            sign: Plus,
-            numerator: BigUint::from(3_u8),
-            denominator: BigUint::from(6_u8),
-        };
+        let two_quarters = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(2_u8),
+            BigUint::from(4_u8),
+        );
+        let three_sixths = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(3_u8),
+            BigUint::from(6_u8),
+        );
         assert_eq!(half, two_quarters);
         assert_eq!(two_quarters, three_sixths);
     }
@@ -640,11 +680,11 @@ mod tests {
             }
         }
 
-        let two_quarters = Rational {
-            sign: Plus,
-            numerator: BigUint::from(2_u8),
-            denominator: BigUint::from(4_u8),
-        };
+        let two_quarters = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(2_u8),
+            BigUint::from(4_u8),
+        );
         assert_eq!(Rational::fraction(1, 2).unwrap(), two_quarters);
     }
 

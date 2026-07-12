@@ -73,39 +73,23 @@ impl std::str::FromStr for Rational {
         } else if let Some((i, d)) = s.split_once('.') {
             let numerator = BigUint::parse_bytes(i.as_bytes(), 10).ok_or(Problem::BadDecimal)?;
             let whole = if numerator.is_zero() {
-                Self {
-                    sign: NoSign,
-                    numerator,
-                    denominator: One::one(),
-                }
+                Self::from_parts_raw(NoSign, numerator, One::one())
             } else {
-                Self {
-                    sign,
-                    numerator,
-                    denominator: One::one(),
-                }
+                Self::from_parts_raw(sign, numerator, One::one())
             };
             let numerator = BigUint::parse_bytes(d.as_bytes(), 10).ok_or(Problem::BadDecimal)?;
             if numerator.is_zero() {
                 return Ok(whole);
             }
             let denominator = TEN.pow(d.len() as u32);
-            let fraction = Self {
-                sign,
-                numerator,
-                denominator,
-            };
+            let fraction = Self::from_parts_raw(sign, numerator, denominator);
             Ok(whole + fraction)
         } else {
             let numerator = BigUint::parse_bytes(s.as_bytes(), 10).ok_or(Problem::BadInteger)?;
             if numerator.is_zero() {
                 sign = NoSign;
             }
-            Ok(Self {
-                sign,
-                numerator,
-                denominator: One::one(),
-            })
+            Ok(Self::from_parts_raw(sign, numerator, One::one()))
         }
     }
 }

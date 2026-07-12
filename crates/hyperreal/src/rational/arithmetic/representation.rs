@@ -39,13 +39,56 @@
 /// let four = quarter * sixteen;
 /// assert_eq!(four, Rational::new(4));
 /// ```
+pub struct Rational(Arc<RationalData>);
 
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct Rational {
+#[doc(hidden)]
+pub struct RationalData {
     sign: Sign,
     numerator: BigUint,
     denominator: BigUint,
+}
+
+impl std::fmt::Debug for Rational {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Rational")
+            .field("sign", &self.sign)
+            .field("numerator", &self.numerator)
+            .field("denominator", &self.denominator)
+            .finish()
+    }
+}
+
+impl Clone for Rational {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self(Arc::clone(&self.0))
+    }
+}
+
+impl Deref for Rational {
+    type Target = RationalData;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for Rational {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+
+        let mut state = serializer.serialize_struct("Rational", 3)?;
+        state.serialize_field("sign", &self.sign)?;
+        state.serialize_field("numerator", &self.numerator)?;
+        state.serialize_field("denominator", &self.denominator)?;
+        state.end()
+    }
 }
 
 #[cfg(feature = "serde")]
@@ -77,7 +120,11 @@ static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
 static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
 static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
-static RATIONAL_ONE: LazyLock<Rational> = LazyLock::new(Rational::one);
+static RATIONAL_ZERO: LazyLock<Rational> = LazyLock::new(|| {
+    Rational::from_parts_raw(NoSign, BigUint::ZERO, BigUint::one())
+});
+static RATIONAL_ONE: LazyLock<Rational> =
+    LazyLock::new(|| Rational::from_parts_raw(Plus, BigUint::one(), BigUint::one()));
 
 macro_rules! trace_rational_temporary {
     () => {{

@@ -6,7 +6,8 @@ use num::{One, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::Ordering;
-use std::sync::LazyLock;
+use std::ops::Deref;
+use std::sync::{Arc, LazyLock};
 
 include!("arithmetic/representation.rs");
 include!("arithmetic/construction.rs");

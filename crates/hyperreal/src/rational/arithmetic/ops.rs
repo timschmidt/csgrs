@@ -39,11 +39,7 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
             },
         };
         trace_rational_temporary!();
-        Self::Output {
-            sign,
-            numerator,
-            denominator,
-        }
+        Self::Output::from_parts_raw(sign, numerator, denominator)
         .reduce_with_possible_divisor(&common_denominator)
     }
 }
@@ -61,18 +57,20 @@ impl Neg for &Rational {
 
     fn neg(self) -> Self::Output {
         trace_rational_temporary!();
-        let mut ret = self.clone();
-        ret.sign = -ret.sign;
-        ret
+        Self::Output::from_parts_raw(
+            -self.sign,
+            self.numerator.clone(),
+            self.denominator.clone(),
+        )
     }
 }
 
 impl Neg for Rational {
     type Output = Self;
 
-    fn neg(mut self) -> Self {
-        self.sign = -self.sign;
-        self
+    fn neg(self) -> Self {
+        let (sign, numerator, denominator) = self.into_parts();
+        Self::from_parts_raw(-sign, numerator, denominator)
     }
 }
 
@@ -115,11 +113,7 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
             },
         };
         trace_rational_temporary!();
-        Self::Output {
-            sign,
-            numerator,
-            denominator,
-        }
+        Self::Output::from_parts_raw(sign, numerator, denominator)
         .reduce_with_possible_divisor(&common_denominator)
     }
 }
@@ -144,11 +138,7 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         let numerator = &self.numerator * &other.numerator;
         let denominator = &self.denominator * &other.denominator;
         trace_rational_temporary!();
-        Self::Output::maybe_reduce(Self::Output {
-            sign,
-            numerator,
-            denominator,
-        })
+        Self::Output::maybe_reduce(Self::Output::from_parts_raw(sign, numerator, denominator))
     }
 }
 
@@ -178,20 +168,16 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         }
         if self.numerator == other.denominator && self.denominator == other.numerator {
             trace_rational_temporary!();
-            return Self::Output {
+            return Self::Output::from_parts_raw(
                 sign,
-                numerator: &self.numerator * &self.numerator,
-                denominator: &self.denominator * &self.denominator,
-            };
+                &self.numerator * &self.numerator,
+                &self.denominator * &self.denominator,
+            );
         }
         let numerator = &self.numerator * &other.denominator;
         let denominator = &self.denominator * &other.numerator;
         trace_rational_temporary!();
-        Self::Output::maybe_reduce(Self::Output {
-            sign,
-            numerator,
-            denominator,
-        })
+        Self::Output::maybe_reduce(Self::Output::from_parts_raw(sign, numerator, denominator))
     }
 }
 
