@@ -201,15 +201,14 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
     }
 
-    fn rigid_transform(&self, matrix: &Matrix4) -> Self {
-        let mut mesh = self.clone();
+    fn rigid_transform_owned(mut self, matrix: &Matrix4) -> Self {
         let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
         let matrix_facts = matrix.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
         let mut transformed_planes = HashMap::new();
 
-        for polygon in &mut mesh.polygons {
+        for polygon in &mut self.polygons {
             polygon.plane_id = *transformed_planes
                 .entry(polygon.plane_id)
                 .or_insert_with(fresh_plane_id);
@@ -246,8 +245,56 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             );
             polygon.invalidate_bounding_box();
         }
-        mesh.bounding_box = OnceLock::new();
-        mesh
+        self.bounding_box = OnceLock::new();
+        self
+    }
+
+    fn translate_vector_owned(mut self, vector: Vector3) -> Self {
+        let mut transformed = HashMap::<u64, (Point3, u64)>::new();
+        let mut transformed_coordinates: [HashMap<u64, u64>; 3] =
+            std::array::from_fn(|_| HashMap::new());
+        let mut transformed_planes = HashMap::new();
+        for polygon in &mut self.polygons {
+            let plane_id = *transformed_planes
+                .entry(polygon.plane_id)
+                .or_insert_with(fresh_plane_id);
+            for vertex in &mut polygon.vertices {
+                for (axis, ids) in transformed_coordinates.iter_mut().enumerate() {
+                    vertex.coordinate_ids[axis] = *ids
+                        .entry(vertex.coordinate_ids[axis])
+                        .or_insert_with(fresh_position_id);
+                }
+                if let Some((position, position_id)) = transformed.get(&vertex.position_id) {
+                    vertex.position = position.clone();
+                    vertex.position_id = *position_id;
+                } else {
+                    let source_id = vertex.position_id;
+                    let position = vertex.position.clone() + vector.clone();
+                    let position_id = fresh_position_id();
+                    transformed.insert(source_id, (position.clone(), position_id));
+                    vertex.position = position;
+                    vertex.position_id = position_id;
+                }
+            }
+            polygon.plane.translate_in_place(&vector);
+            polygon.invalidate_bounding_box();
+            polygon.plane_id = plane_id;
+        }
+        self.bounding_box = OnceLock::new();
+        self
+    }
+
+    /// Consume and translate this mesh while reusing its polygon storage.
+    pub fn into_translated(self, x: Real, y: Real, z: Real) -> Self {
+        self.translate_vector_owned(Vector3::new([x, y, z]))
+    }
+
+    /// Consume and rigidly rotate this mesh while reusing its polygon storage.
+    pub fn into_rotated(self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
+        let rotation = Matrix4::rotation_z(z_deg.to_radians())
+            * Matrix4::rotation_y(y_deg.to_radians())
+            * Matrix4::rotation_x(x_deg.to_radians());
+        self.rigid_transform_owned(&rotation)
     }
 
     /// Return this mesh with replacement metadata on the mesh and every polygon.
@@ -934,46 +981,11 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     }
 
     fn translate_vector(&self, vector: Vector3) -> Self {
-        let mut mesh = self.clone();
-        let mut transformed = HashMap::<u64, (Point3, u64)>::new();
-        let mut transformed_coordinates: [HashMap<u64, u64>; 3] =
-            std::array::from_fn(|_| HashMap::new());
-        let mut transformed_planes = HashMap::new();
-        for polygon in &mut mesh.polygons {
-            let plane_id = *transformed_planes
-                .entry(polygon.plane_id)
-                .or_insert_with(fresh_plane_id);
-            for vertex in &mut polygon.vertices {
-                for (axis, ids) in transformed_coordinates.iter_mut().enumerate() {
-                    vertex.coordinate_ids[axis] = *ids
-                        .entry(vertex.coordinate_ids[axis])
-                        .or_insert_with(fresh_position_id);
-                }
-                if let Some((position, position_id)) = transformed.get(&vertex.position_id) {
-                    vertex.position = position.clone();
-                    vertex.position_id = *position_id;
-                } else {
-                    let source_id = vertex.position_id;
-                    let position = vertex.position.clone() + vector.clone();
-                    let position_id = fresh_position_id();
-                    transformed.insert(source_id, (position.clone(), position_id));
-                    vertex.position = position;
-                    vertex.position_id = position_id;
-                }
-            }
-            polygon.plane.translate_in_place(&vector);
-            polygon.invalidate_bounding_box();
-            polygon.plane_id = plane_id;
-        }
-        mesh.bounding_box = OnceLock::new();
-        mesh
+        self.clone().translate_vector_owned(vector)
     }
 
     fn rotate(&self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
-        let rotation = Matrix4::rotation_z(z_deg.to_radians())
-            * Matrix4::rotation_y(y_deg.to_radians())
-            * Matrix4::rotation_x(x_deg.to_radians());
-        self.rigid_transform(&rotation)
+        self.clone().into_rotated(x_deg, y_deg, z_deg)
     }
 
     /// **Mathematical Foundation: General 3D Transformations**
