@@ -944,7 +944,7 @@ fn edge_root(
     };
     match crossing_kind {
         SdfDualEdgeCrossingKind::CoincidentZeroEdge => {
-            return (SdfDualEdgeRootEvidence::CoincidentZeroEdge, None, None);
+            (SdfDualEdgeRootEvidence::CoincidentZeroEdge, None, None)
         }
         SdfDualEdgeCrossingKind::EndpointTouch => {
             let Some(lower_value) = lower_value else {

@@ -1,3 +1,5 @@
+#![allow(clippy::large_enum_variant, clippy::result_large_err)]
+
 //! Exact-aware signed-distance and implicit-field carriers.
 //!
 //! `hypersdf` owns continuous implicit geometry over the Hyper stack. It does
