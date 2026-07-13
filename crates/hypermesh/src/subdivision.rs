@@ -5122,7 +5122,7 @@ struct SupportCellSeedFamiliesCacheEntry {
     bounds: Aabb,
     halfspaces: Vec<LimitPlane3>,
     report: Option<hyperlimit::HalfspaceFeasibilityReport>,
-    families: HypermeshResult<SupportCellSeedFamiliesState>,
+    families: HypermeshResult<Arc<SupportCellSeedFamiliesState>>,
 }
 
 #[derive(Clone)]
@@ -5179,7 +5179,7 @@ fn cached_support_cell_seed_families_with(
     halfspaces: &[LimitPlane3],
     report: Option<&hyperlimit::HalfspaceFeasibilityReport>,
     build: impl FnOnce() -> HypermeshResult<SupportCellSeedFamiliesState>,
-) -> HypermeshResult<SupportCellSeedFamiliesState> {
+) -> HypermeshResult<Arc<SupportCellSeedFamiliesState>> {
     if let Some(existing) = cache.iter().find(|existing| {
         existing.bounds == *bounds
             && limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
@@ -5193,7 +5193,7 @@ fn cached_support_cell_seed_families_with(
         return existing.families.clone();
     }
 
-    let families = build();
+    let families = build().map(Arc::new);
     cache.push(SupportCellSeedFamiliesCacheEntry {
         bounds: bounds.clone(),
         halfspaces: halfspaces.to_vec(),
@@ -7612,7 +7612,7 @@ fn support_plane_cell_reference_with_queries_and_trace_surface_caches(
                         let report_witness = report.and_then(|report| report.witness.clone());
                         let mut strict_direct_seed_search_order = Vec::new();
                         let strict_direct_seeds = take_new_point_family(
-                            families.strict_seeds,
+                            families.strict_seeds.clone(),
                             &mut strict_direct_seed_search_order,
                         );
                         let mut direct_unknown = families.saw_unknown;
@@ -9078,7 +9078,7 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
             if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
-                collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
+                collect_point3_family(std::slice::from_ref(witness), |candidate| {
                     point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
                 })
             } else {
@@ -9087,10 +9087,10 @@ fn projected_cell_seed_families_from_optional_report_with_seed_geometry_cache(
                     saw_unknown: false,
                 })
             },
-            collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
+            collect_point3_family(&shifted_vertices, |candidate| {
                 point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
             }),
-            collect_point3_family(Ok(shifted_geometry_seeds.clone()), |candidate| {
+            collect_point3_family(&shifted_geometry_seeds, |candidate| {
                 point_strictly_inside_projected_cell_or_unknown(candidate, bounds, halfspaces)
             }),
         ],
@@ -9324,9 +9324,9 @@ fn strict_support_cell_targets_from_optional_report_with_seed_geometry_cache(
     )?;
     let family_saw_unknown = families.saw_unknown;
     let mut saw_unknown = family_saw_unknown;
-    let strict_seeds = families.strict_seeds;
-    let shifted_vertices = families.shifted_vertices;
-    let shifted_geometry_seeds = families.shifted_geometry_seeds;
+    let strict_seeds = families.strict_seeds.clone();
+    let shifted_vertices = families.shifted_vertices.clone();
+    let shifted_geometry_seeds = families.shifted_geometry_seeds.clone();
     let report_witness = report.and_then(|report| report.witness.clone());
     let mut strict_direct_seed_search_order = Vec::new();
     let strict_direct_seeds =
@@ -9716,14 +9716,14 @@ fn extend_point3_backtracking_unknown(
 }
 
 fn collect_point3_family(
-    candidates: HypermeshResult<Vec<Point3>>,
+    candidates: &[Point3],
     mut keep: impl FnMut(&Point3) -> HypermeshResult<bool>,
 ) -> HypermeshResult<Point3FamilyState> {
     let mut points = Vec::new();
     let mut saw_unknown = false;
-    for candidate in candidates? {
-        match keep(&candidate) {
-            Ok(true) => push_unique_point3(&mut points, candidate),
+    for candidate in candidates {
+        match keep(candidate) {
+            Ok(true) => push_unique_point3(&mut points, candidate.clone()),
             Ok(false) => {}
             Err(crate::error::HypermeshError::UnknownClassification) => {
                 saw_unknown = true;
@@ -9899,7 +9899,7 @@ fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
             if report.is_some_and(|report| report.status == HalfspaceFeasibility::Feasible)
                 && let Some(witness) = report.and_then(|report| report.witness.as_ref())
             {
-                collect_point3_family(Ok(vec![witness.clone()]), |candidate| {
+                collect_point3_family(std::slice::from_ref(witness), |candidate| {
                     point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
                 })
             } else {
@@ -9908,10 +9908,10 @@ fn support_cell_seed_family_state_from_optional_report_with_seed_geometry_cache(
                     saw_unknown: false,
                 })
             },
-            collect_point3_family(Ok(shifted_vertices.clone()), |candidate| {
+            collect_point3_family(&shifted_vertices, |candidate| {
                 point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
             }),
-            collect_point3_family(Ok(shifted_geometry_seeds.clone()), |candidate| {
+            collect_point3_family(&shifted_geometry_seeds, |candidate| {
                 point_strictly_inside_support_cell_or_unknown(candidate, bounds, halfspaces)
             }),
         ],

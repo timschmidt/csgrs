@@ -3563,7 +3563,8 @@ fn point3_family_search_reports_unknown_if_all_families_are_uncertified() {
 
 #[test]
 fn collect_point3_family_tracks_unknown_after_later_strict_point() {
-    let family = collect_point3_family(Ok(vec![p(1, 2, 3), p(2, 3, 4)]), |candidate| {
+    let candidates = [p(1, 2, 3), p(2, 3, 4)];
+    let family = collect_point3_family(&candidates, |candidate| {
         if *candidate == p(1, 2, 3) {
             Err(crate::error::HypermeshError::UnknownClassification)
         } else {
@@ -3581,7 +3582,8 @@ fn collect_point3_family_tracks_unknown_after_reference_boundary_candidate() {
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let halfspaces = aabb_core_halfspaces(&bounds).unwrap();
 
-    let family = collect_point3_family(Ok(vec![p(0, 2, 2), p(1, 1, 1)]), |candidate| {
+    let candidates = [p(0, 2, 2), p(1, 1, 1)];
+    let family = collect_point3_family(&candidates, |candidate| {
         point_strictly_inside_reference_halfspace_cell_or_unknown(candidate, &bounds, &halfspaces)
     })
     .unwrap();
@@ -8309,8 +8311,8 @@ fn cached_support_cell_seed_families_reuse_identical_state_and_report() {
     .unwrap();
 
     assert_eq!(calls, 1);
-    assert_eq!(first, expected);
-    assert_eq!(first, second);
+    assert_eq!(first.as_ref(), &expected);
+    assert!(Arc::ptr_eq(&first, &second));
 }
 
 #[test]
@@ -8394,8 +8396,8 @@ fn cached_support_cell_seed_families_reuse_none_and_infeasible_reports() {
     .unwrap();
 
     assert_eq!(calls, 1);
-    assert_eq!(first, expected);
-    assert_eq!(first, second);
+    assert_eq!(first.as_ref(), &expected);
+    assert!(Arc::ptr_eq(&first, &second));
 }
 
 #[test]
@@ -8444,8 +8446,8 @@ fn cached_support_cell_seed_families_reuse_same_witness_different_active_planes(
     .unwrap();
 
     assert_eq!(calls, 1);
-    assert_eq!(first, expected);
-    assert_eq!(first, second);
+    assert_eq!(first.as_ref(), &expected);
+    assert!(Arc::ptr_eq(&first, &second));
 }
 
 #[test]
