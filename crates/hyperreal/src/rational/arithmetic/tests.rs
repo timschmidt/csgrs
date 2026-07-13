@@ -294,6 +294,28 @@ mod tests {
     }
 
     #[test]
+    fn word_sized_add_sub_matches_arbitrary_precision_fallback() {
+        let left = Rational::fraction(-17, 30).unwrap();
+        let right = Rational::fraction(11, 42).unwrap();
+        assert_eq!(&left + &right, Rational::fraction(-32, 105).unwrap());
+        assert_eq!(&left - &right, Rational::fraction(-29, 35).unwrap());
+
+        let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
+        assert_eq!(&huge + &right - &huge, right);
+    }
+
+    #[test]
+    fn word_sized_mul_div_matches_arbitrary_precision_fallback() {
+        let left = Rational::fraction(-17, 30).unwrap();
+        let right = Rational::fraction(11, 42).unwrap();
+        assert_eq!(&left * &right, Rational::fraction(-187, 1260).unwrap());
+        assert_eq!(&left / &right, Rational::fraction(-119, 55).unwrap());
+
+        let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
+        assert_eq!(&huge * &right / &huge, right);
+    }
+
+    #[test]
     fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
         assert!(
             !Rational::fraction(7, 1)

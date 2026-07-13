@@ -1,5 +1,63 @@
 use core::ops::*;
 
+impl Rational {
+    fn add_sub_words(&self, other: &Self, subtract: bool) -> Option<Self> {
+        let left_denominator = self.denominator.to_u128()?;
+        let right_denominator = other.denominator.to_u128()?;
+        let divisor = Self::gcd_word(left_denominator, right_denominator);
+        let left_scale = right_denominator / divisor;
+        let right_scale = left_denominator / divisor;
+        let denominator = left_denominator.checked_mul(left_scale)?;
+        let left = self.numerator.to_u128()?.checked_mul(left_scale)?;
+        let right = other.numerator.to_u128()?.checked_mul(right_scale)?;
+        let right_sign = if subtract { -other.sign } else { other.sign };
+
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for (sign, magnitude) in [(self.sign, left), (right_sign, right)] {
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    fn mul_div_words(&self, other: &Self, divide: bool) -> Option<Self> {
+        let left_numerator = self.numerator.to_u128()?;
+        let left_denominator = self.denominator.to_u128()?;
+        let right_numerator = other.numerator.to_u128()?;
+        let right_denominator = other.denominator.to_u128()?;
+        let (numerator, denominator) = if divide {
+            (
+                left_numerator.checked_mul(right_denominator)?,
+                left_denominator.checked_mul(right_numerator)?,
+            )
+        } else {
+            (
+                left_numerator.checked_mul(right_numerator)?,
+                left_denominator.checked_mul(right_denominator)?,
+            )
+        };
+        let sign = self.sign * other.sign;
+        let (positive, negative) = if sign == Minus {
+            (0, numerator)
+        } else {
+            (numerator, 0)
+        };
+        Some(Self::from_word_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+}
+
 impl<T: AsRef<Rational>> Add<T> for &Rational {
     type Output = Rational;
 
@@ -18,6 +76,10 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
         }
         if other.is_one() {
             return self.add_one();
+        }
+        if let Some(result) = self.add_sub_words(other, false) {
+            crate::trace_dispatch!("rational", "add", "word-sized");
+            return result;
         }
 
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
@@ -93,6 +155,10 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
         if self.is_one() {
             return -other.subtract_one();
         }
+        if let Some(result) = self.add_sub_words(other, true) {
+            crate::trace_dispatch!("rational", "sub", "word-sized");
+            return result;
+        }
 
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
         trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
@@ -135,6 +201,10 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         if sign == NoSign {
             return Self::Output::zero();
         }
+        if let Some(result) = self.mul_div_words(other, false) {
+            crate::trace_dispatch!("rational", "mul", "word-sized");
+            return result;
+        }
         let numerator = &self.numerator * &other.numerator;
         let denominator = &self.denominator * &other.denominator;
         trace_rational_temporary!();
@@ -165,6 +235,10 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         let sign = self.sign * other.sign;
         if sign == NoSign {
             return Self::Output::zero();
+        }
+        if let Some(result) = self.mul_div_words(other, true) {
+            crate::trace_dispatch!("rational", "div", "word-sized");
+            return result;
         }
         if self.numerator == other.denominator && self.denominator == other.numerator {
             trace_rational_temporary!();
