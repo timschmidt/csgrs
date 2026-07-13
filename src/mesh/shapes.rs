@@ -83,6 +83,21 @@ mod retained_topology_tests {
             translated.polygons[2].vertices[0].position_id
         );
     }
+
+    #[test]
+    fn sphere_reuses_only_tessellation_positions() {
+        let segments = 6;
+        let stacks = 4;
+        let mesh = Mesh::sphere(Real::from(2), segments, stacks, ());
+        let position_ids = mesh
+            .polygons
+            .iter()
+            .flat_map(|polygon| &polygon.vertices)
+            .map(|vertex| vertex.position_id)
+            .collect::<BTreeSet<_>>();
+
+        assert_eq!(position_ids.len(), 2 + segments * (stacks - 1));
+    }
 }
 
 fn hmesh_scalar_positive(value: &Real) -> bool {
@@ -222,11 +237,12 @@ fn assembled_arrow<M: Clone + Debug + Send + Sync>(
         .collect::<Vec<_>>();
 
     let shoulder_normal = if orientation { axis.clone() } else { -axis };
+    let tau = Real::tau();
     for segment in 0..segments {
-        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, &Real::tau()) else {
+        let Some((sin0, cos0)) = sampled_sin_cos(segment, segments, &tau) else {
             return Mesh::empty();
         };
-        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, &Real::tau()) else {
+        let Some((sin1, cos1)) = sampled_sin_cos(segment + 1, segments, &tau) else {
             return Mesh::empty();
         };
         let ring_point = |radius: &Real, sin: &Real, cos: &Real| {
@@ -594,16 +610,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty();
         }
 
-        let mut longitudes = Vec::with_capacity(segments);
-        for longitude in 0..segments {
-            let Some(sample) = sampled_sin_cos(longitude, segments, &Real::tau()) else {
-                return Mesh::empty();
-            };
-            longitudes.push(sample);
-        }
+        let pi = Real::pi();
+        let tau = Real::tau();
         let mut latitudes = Vec::with_capacity(stacks - 1);
         for latitude in 1..stacks {
-            let Some(sample) = sampled_sin_cos(latitude, stacks, &Real::pi()) else {
+            let Some(sample) = sampled_sin_cos(latitude, stacks, &pi) else {
                 return Mesh::empty();
             };
             latitudes.push(sample);
@@ -634,59 +645,72 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Point3::new(Real::zero(), -radius.clone(), Real::zero()),
             -Vector3::y(),
         );
-        let mut grid = Vec::with_capacity(segments);
-        for (sin_theta, cos_theta) in &longitudes {
+        let build_column = |(sin_theta, cos_theta): &(Real, Real)| {
             let mut column = Vec::with_capacity(stacks + 1);
             column.push(north.clone());
             for (sin_phi, cos_phi) in &latitudes {
                 column.push(vertex(sin_theta, cos_theta, sin_phi, cos_phi));
             }
             column.push(south.clone());
-            grid.push(column);
-        }
+            column
+        };
 
         let mut polygons = Vec::with_capacity(2 * segments * (stacks - 1));
-        for longitude in 0..segments {
-            let next = (longitude + 1) % segments;
+        let mut emit_strip = |current: &[Vertex], next: &[Vertex]| {
             for latitude in 0..stacks {
                 if latitude == 0 {
                     polygons.push(Polygon::new(
-                        vec![
-                            north.clone(),
-                            grid[next][1].clone(),
-                            grid[longitude][1].clone(),
-                        ],
+                        vec![current[0].clone(), next[1].clone(), current[1].clone()],
                         metadata.clone(),
                     ));
                 } else if latitude == stacks - 1 {
                     polygons.push(Polygon::new(
                         vec![
-                            grid[longitude][latitude].clone(),
-                            grid[next][latitude].clone(),
-                            south.clone(),
+                            current[latitude].clone(),
+                            next[latitude].clone(),
+                            current[stacks].clone(),
                         ],
                         metadata.clone(),
                     ));
                 } else {
                     polygons.push(Polygon::new(
                         vec![
-                            grid[longitude][latitude].clone(),
-                            grid[next][latitude].clone(),
-                            grid[next][latitude + 1].clone(),
+                            current[latitude].clone(),
+                            next[latitude].clone(),
+                            next[latitude + 1].clone(),
                         ],
                         metadata.clone(),
                     ));
                     polygons.push(Polygon::new(
                         vec![
-                            grid[longitude][latitude].clone(),
-                            grid[next][latitude + 1].clone(),
-                            grid[longitude][latitude + 1].clone(),
+                            current[latitude].clone(),
+                            next[latitude + 1].clone(),
+                            current[latitude + 1].clone(),
                         ],
                         metadata.clone(),
                     ));
                 }
             }
+        };
+
+        let Some(first_longitude) = sampled_sin_cos(0, segments, &tau) else {
+            return Mesh::empty();
+        };
+        let first = build_column(&first_longitude);
+        let Some(second_longitude) = sampled_sin_cos(1, segments, &tau) else {
+            return Mesh::empty();
+        };
+        let mut current = build_column(&second_longitude);
+        emit_strip(&first, &current);
+        for longitude in 2..segments {
+            let Some(sample) = sampled_sin_cos(longitude, segments, &tau) else {
+                return Mesh::empty();
+            };
+            let next = build_column(&sample);
+            emit_strip(&current, &next);
+            current = next;
         }
+        emit_strip(&current, &first);
         Mesh::from_polygons(polygons)
     }
 
@@ -784,8 +808,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
         let mut bottom_ring = Vec::with_capacity(segments);
         let mut top_ring = Vec::with_capacity(segments);
+        let tau = Real::tau();
         for i in 0..segments {
-            let Some((sin, cos)) = sampled_sin_cos(i, segments, &Real::tau()) else {
+            let Some((sin, cos)) = sampled_sin_cos(i, segments, &tau) else {
                 return Mesh::empty();
             };
             if !bottom_degenerate {
