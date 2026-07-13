@@ -321,6 +321,16 @@ mod tests {
 
         let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
         assert_eq!(&huge * &right / &huge, right);
+        assert_eq!(&huge * Rational::one(), huge);
+        assert_eq!(&huge / &huge, Rational::one());
+
+        let huge_ratio: Rational = format!("{}/3", BigInt::from(1_u8) << 200)
+            .parse()
+            .unwrap();
+        let huge_reciprocal: Rational = format!("3/{}", BigInt::from(1_u8) << 200)
+            .parse()
+            .unwrap();
+        assert_eq!(&huge_ratio * &huge_reciprocal, Rational::one());
     }
 
     #[test]

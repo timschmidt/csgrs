@@ -212,6 +212,25 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         if sign == NoSign {
             return Self::Output::zero();
         }
+        if self.is_one() {
+            return other.clone();
+        }
+        if other.is_one() {
+            return self.clone();
+        }
+        if self.is_minus_one() {
+            return -other;
+        }
+        if other.is_minus_one() {
+            return -self;
+        }
+        if self.numerator == other.denominator && self.denominator == other.numerator {
+            return if sign == Minus {
+                Self::Output::minus_one()
+            } else {
+                Self::Output::one()
+            };
+        }
         if let Some(result) = self.mul_div_words(other, false) {
             crate::trace_dispatch!("rational", "mul", "word-sized");
             return result;
@@ -246,6 +265,19 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         let sign = self.sign * other.sign;
         if sign == NoSign {
             return Self::Output::zero();
+        }
+        if other.is_one() {
+            return self.clone();
+        }
+        if other.is_minus_one() {
+            return -self;
+        }
+        if self.numerator == other.numerator && self.denominator == other.denominator {
+            return if sign == Minus {
+                Self::Output::minus_one()
+            } else {
+                Self::Output::one()
+            };
         }
         if let Some(result) = self.mul_div_words(other, true) {
             crate::trace_dispatch!("rational", "div", "word-sized");
