@@ -41,7 +41,7 @@ struct HullFace {
 /// Inputs with fewer than four unique non-coplanar points return
 /// [`HypermeshError::DegeneratePointSet`].
 pub fn convex_hull(input: &[Point3]) -> HypermeshResult<InputMesh> {
-    convex_hull_with_coplanar_groups(input, &[])
+    convex_hull_impl(input, &[], None)
 }
 
 /// Computes an exact convex hull while retaining certified source coplanarity.
@@ -53,13 +53,7 @@ pub fn convex_hull_with_coplanar_groups(
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
 ) -> HypermeshResult<InputMesh> {
-    let coordinate_ids = (0..input.len())
-        .map(|index| {
-            let base = (index as u64).wrapping_mul(5);
-            [base, base + 1, base + 2, base + 3, base + 4]
-        })
-        .collect::<Vec<_>>();
-    convex_hull_with_retained_facts(input, coplanar_groups, &coordinate_ids)
+    convex_hull_impl(input, coplanar_groups, None)
 }
 
 /// Computes an exact convex hull with retained construction identities.
@@ -78,10 +72,20 @@ pub fn convex_hull_with_retained_facts(
             actual: coordinate_ids.len(),
         });
     }
+    convex_hull_impl(input, coplanar_groups, Some(coordinate_ids))
+}
+
+fn convex_hull_impl(
+    input: &[Point3],
+    coplanar_groups: &[Vec<usize>],
+    input_coordinate_ids: Option<&[[u64; 5]]>,
+) -> HypermeshResult<InputMesh> {
     let (points, memberships, coordinate_ids) =
-        deduplicate_points(input, coplanar_groups, coordinate_ids)?;
+        deduplicate_points(input, coplanar_groups, input_coordinate_ids)?;
+    let memberships = memberships.as_deref();
+    let coordinate_ids = coordinate_ids.as_deref();
     let seed = hull_stage(
-        seed_tetrahedron(&points, &memberships, &coordinate_ids),
+        seed_tetrahedron(&points, memberships, coordinate_ids),
         "seed selection",
     )?;
     let interior = hull_stage(tetrahedron_centroid(&points, seed), "seed centroid")?;
@@ -91,11 +95,9 @@ pub fn convex_hull_with_retained_facts(
         Err(error) => return Err(error),
     };
     let mut processed = vec![false; points.len()];
-    let enforce_processed = memberships.iter().any(|groups| !groups.is_empty());
     for index in seed {
         processed[index] = true;
     }
-
     let mut faces = Vec::with_capacity(8);
     for vertices in [
         [seed[0], seed[1], seed[2]],
@@ -107,12 +109,11 @@ pub fn convex_hull_with_retained_facts(
             make_face(
                 vertices,
                 &points,
-                &memberships,
-                &coordinate_ids,
+                memberships,
+                coordinate_ids,
                 point_bvh.as_ref(),
                 &interior,
                 &processed,
-                enforce_processed,
             ),
             "initial face construction",
         )?);
@@ -123,7 +124,7 @@ pub fn convex_hull_with_retained_facts(
             return None;
         }
         while let Some(point) = face.outside.pop() {
-            if !enforce_processed || !processed[point] {
+            if !processed[point] {
                 return Some((index, point));
             }
         }
@@ -134,7 +135,7 @@ pub fn convex_hull_with_retained_facts(
         for (index, face) in faces.iter().enumerate() {
             if face.active
                 && hull_stage(
-                    orientation_index(&points, &memberships, &coordinate_ids, face.vertices, eye),
+                    orientation_index(&points, memberships, coordinate_ids, face.vertices, eye),
                     "visible face classification",
                 )? == Classification::Negative
             {
@@ -163,12 +164,11 @@ pub fn convex_hull_with_retained_facts(
                 make_face(
                     [a, b, eye],
                     &points,
-                    &memberships,
-                    &coordinate_ids,
+                    memberships,
+                    coordinate_ids,
                     point_bvh.as_ref(),
                     &interior,
                     &processed,
-                    enforce_processed,
                 ),
                 "horizon face construction",
             )?);
@@ -188,43 +188,71 @@ fn hull_stage<T>(result: HypermeshResult<T>, stage: &'static str) -> HypermeshRe
 fn deduplicate_points(
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
-    input_coordinate_ids: &[[u64; 5]],
-) -> HypermeshResult<(Vec<Point3>, Vec<BTreeSet<usize>>, Vec<[u64; 5]>)> {
+    input_coordinate_ids: Option<&[[u64; 5]]>,
+) -> HypermeshResult<(
+    Vec<Point3>,
+    Option<Vec<BTreeSet<usize>>>,
+    Option<Vec<[u64; 5]>>,
+)> {
     if input.is_empty() {
         return Err(HypermeshError::EmptyInput);
     }
     let mut points = Vec::with_capacity(input.len());
-    let mut memberships = Vec::<BTreeSet<usize>>::with_capacity(input.len());
-    let mut coordinate_ids = Vec::with_capacity(input.len());
-    let mut input_memberships = vec![Vec::new(); input.len()];
-    for (group_index, group) in coplanar_groups.iter().enumerate() {
-        for &point_index in group {
-            let Some(point_memberships) = input_memberships.get_mut(point_index) else {
-                return Err(HypermeshError::VertexIndexOutOfBounds {
-                    index: point_index,
-                    vertex_count: input.len(),
-                });
-            };
-            point_memberships.push(group_index);
-        }
-    }
-    let mut buckets = HashMap::<PositionBucket, Vec<usize>>::new();
-    for (input_index, point) in input.iter().enumerate() {
-        let candidates = buckets.entry(PositionBucket::new(point)).or_default();
-        let mut duplicate = None;
-        for &candidate in candidates.iter() {
-            if points_equal(&points[candidate], point) {
-                duplicate = Some(candidate);
-                break;
+    let mut memberships =
+        (!coplanar_groups.is_empty()).then(|| Vec::<BTreeSet<usize>>::with_capacity(input.len()));
+    let mut coordinate_ids =
+        input_coordinate_ids.map(|_| Vec::<[u64; 5]>::with_capacity(input.len()));
+    let mut input_memberships = if coplanar_groups.is_empty() {
+        None
+    } else {
+        Some(vec![Vec::new(); input.len()])
+    };
+    if let Some(input_memberships) = &mut input_memberships {
+        for (group_index, group) in coplanar_groups.iter().enumerate() {
+            for &point_index in group {
+                let Some(point_memberships) = input_memberships.get_mut(point_index) else {
+                    return Err(HypermeshError::VertexIndexOutOfBounds {
+                        index: point_index,
+                        vertex_count: input.len(),
+                    });
+                };
+                point_memberships.push(group_index);
             }
         }
+    }
+    let mut buckets = HashMap::<PositionBucket, usize>::with_capacity(input.len());
+    let mut next_in_bucket = Vec::<Option<usize>>::with_capacity(input.len());
+    for (input_index, point) in input.iter().enumerate() {
+        let bucket = PositionBucket::new(point);
+        let mut duplicate = None;
+        let mut candidate = buckets.get(&bucket).copied();
+        while let Some(candidate_index) = candidate {
+            if points_equal(&points[candidate_index], point) {
+                duplicate = Some(candidate_index);
+                break;
+            }
+            candidate = next_in_bucket[candidate_index];
+        }
         if let Some(candidate) = duplicate {
-            memberships[candidate].extend(input_memberships[input_index].iter().copied());
+            if let (Some(memberships), Some(input_memberships)) =
+                (&mut memberships, &input_memberships)
+            {
+                memberships[candidate].extend(input_memberships[input_index].iter().copied());
+            }
         } else {
-            candidates.push(points.len());
+            let point_index = points.len();
+            next_in_bucket.push(buckets.insert(bucket, point_index));
             points.push(point.clone());
-            coordinate_ids.push(input_coordinate_ids[input_index]);
-            memberships.push(input_memberships[input_index].iter().copied().collect());
+            if let (Some(coordinate_ids), Some(input_coordinate_ids)) =
+                (&mut coordinate_ids, input_coordinate_ids)
+            {
+                coordinate_ids.push(input_coordinate_ids[input_index]);
+            }
+            if let (Some(memberships), Some(input_memberships)) =
+                (&mut memberships, &input_memberships)
+            {
+                memberships.push(input_memberships[input_index].iter().copied().collect());
+            }
         }
     }
     Ok((points, memberships, coordinate_ids))
@@ -234,17 +262,15 @@ fn points_equal(left: &Point3, right: &Point3) -> bool {
     if left == right {
         return true;
     }
-    let limit_point =
-        |point: &Point3| hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
-    hyperlimit::point3_equal(&limit_point(left), &limit_point(right))
+    hyperlimit::point3_equal(left, right)
         .value()
         .unwrap_or(false)
 }
 
 fn seed_tetrahedron(
     points: &[Point3],
-    memberships: &[BTreeSet<usize>],
-    coordinate_ids: &[[u64; 5]],
+    memberships: Option<&[BTreeSet<usize>]>,
+    coordinate_ids: Option<&[[u64; 5]]>,
 ) -> HypermeshResult<[usize; 4]> {
     if points.len() < 4 {
         return Err(HypermeshError::DegeneratePointSet);
@@ -253,10 +279,8 @@ fn seed_tetrahedron(
     let p1 = 1;
     let mut p2 = None;
     for (candidate, point) in points.iter().enumerate().skip(2) {
-        if (point - &points[p0])
-            .cross(&(&points[p1] - &points[p0]))
-            .normalize_checked()
-            .is_ok()
+        let cross = (point - &points[p0]).cross(&(&points[p1] - &points[p0]));
+        if cross.structural_facts().squared_norm_zero_status() == hyperlattice::ZeroStatus::NonZero
         {
             p2 = Some(candidate);
             break;
@@ -295,12 +319,11 @@ fn tetrahedron_centroid(points: &[Point3], seed: [usize; 4]) -> HypermeshResult<
 fn make_face(
     mut vertices: [usize; 3],
     points: &[Point3],
-    memberships: &[BTreeSet<usize>],
-    coordinate_ids: &[[u64; 5]],
+    memberships: Option<&[BTreeSet<usize>]>,
+    coordinate_ids: Option<&[[u64; 5]]>,
     point_bvh: Option<&ExactPointBvh>,
     interior: &Point3,
     processed: &[bool],
-    enforce_processed: bool,
 ) -> HypermeshResult<HullFace> {
     if hull_stage(
         orientation(points, vertices, interior),
@@ -310,25 +333,14 @@ fn make_face(
         vertices.swap(1, 2);
     }
     let mut outside = Vec::new();
-    let has_retained_incidence = memberships.iter().any(|groups| !groups.is_empty());
-    if has_retained_incidence {
-        linear_outside_query(
-            points,
-            memberships,
-            coordinate_ids,
-            vertices,
-            &mut outside,
-            processed,
-            enforce_processed,
-        )?;
-    } else if let Some(point_bvh) = point_bvh {
+    if let Some(point_bvh) = point_bvh {
         let query = point_bvh.query_negative_oriented_plane(
             points,
             &points[vertices[0]],
             &points[vertices[1]],
             &points[vertices[2]],
             |point| {
-                if !enforce_processed || !processed[point] {
+                if !processed[point] {
                     outside.push(point);
                 }
             },
@@ -344,7 +356,6 @@ fn make_face(
                     vertices,
                     &mut outside,
                     processed,
-                    enforce_processed,
                 )?;
             }
             Err(error) => return Err(error),
@@ -357,7 +368,6 @@ fn make_face(
             vertices,
             &mut outside,
             processed,
-            enforce_processed,
         )?;
     }
     Ok(HullFace {
@@ -369,15 +379,14 @@ fn make_face(
 
 fn linear_outside_query(
     points: &[Point3],
-    memberships: &[BTreeSet<usize>],
-    coordinate_ids: &[[u64; 5]],
+    memberships: Option<&[BTreeSet<usize>]>,
+    coordinate_ids: Option<&[[u64; 5]]>,
     vertices: [usize; 3],
     outside: &mut Vec<usize>,
     processed: &[bool],
-    enforce_processed: bool,
 ) -> HypermeshResult<()> {
-    for (point_index, _) in points.iter().enumerate() {
-        if enforce_processed && processed[point_index] {
+    for (point_index, &is_processed) in processed.iter().enumerate() {
+        if is_processed {
             continue;
         }
         if hull_stage(
@@ -396,15 +405,7 @@ fn orientation(
     face: [usize; 3],
     point: &Point3,
 ) -> HypermeshResult<Classification> {
-    let limit_point =
-        |point: &Point3| hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
-    match hyperlimit::orient3d(
-        &limit_point(&points[face[0]]),
-        &limit_point(&points[face[1]]),
-        &limit_point(&points[face[2]]),
-        &limit_point(point),
-    )
-    .value()
+    match hyperlimit::orient3d(&points[face[0]], &points[face[1]], &points[face[2]], point).value()
     {
         Some(hyperlimit::Sign::Negative) => Ok(Classification::Negative),
         Some(hyperlimit::Sign::Zero) => Ok(Classification::On),
@@ -415,22 +416,20 @@ fn orientation(
 
 fn orientation_index(
     points: &[Point3],
-    memberships: &[BTreeSet<usize>],
-    coordinate_ids: &[[u64; 5]],
+    memberships: Option<&[BTreeSet<usize>]>,
+    coordinate_ids: Option<&[[u64; 5]]>,
     face: [usize; 3],
     point_index: usize,
 ) -> HypermeshResult<Classification> {
     if face.contains(&point_index) {
         return Ok(Classification::On);
     }
-    if share_coplanar_group(memberships, face, point_index) {
+    if let Some(memberships) = memberships
+        && share_coplanar_group(memberships, face, point_index)
+    {
         return Ok(Classification::On);
     }
-    let has_retained_facts = !memberships[face[0]].is_empty()
-        || !memberships[face[1]].is_empty()
-        || !memberships[face[2]].is_empty()
-        || !memberships[point_index].is_empty();
-    if has_retained_facts
+    if let Some(coordinate_ids) = coordinate_ids
         && (opposite_edges_share_axis_coordinates(coordinate_ids, face, point_index)
             || opposite_edges_share_ruled_surface(coordinate_ids, face, point_index))
     {
@@ -565,6 +564,37 @@ mod tests {
     }
 
     #[test]
+    fn dense_grid_rejects_all_interior_points() {
+        let input = (-4..=4)
+            .flat_map(|x| (-4..=4).flat_map(move |y| (-4..=4).map(move |z| p(x, y, z))))
+            .collect::<Vec<_>>();
+
+        let hull = convex_hull(&input).unwrap();
+        let boundary = Real::from(4);
+        assert!(hull.positions.iter().all(|point| {
+            point.x == boundary
+                || point.x == -boundary.clone()
+                || point.y == boundary
+                || point.y == -boundary.clone()
+                || point.z == boundary
+                || point.z == -boundary.clone()
+        }));
+        crate::prepare_input(&[hull.as_ref()]).unwrap();
+    }
+
+    #[test]
+    fn moment_curve_retains_every_extreme_point() {
+        let input = (-16_i64..16)
+            .map(|t| p(t, t * t, t * t * t))
+            .collect::<Vec<_>>();
+
+        let hull = convex_hull(&input).unwrap();
+        assert_eq!(hull.positions.len(), input.len());
+        assert_eq!(hull.triangles.len(), input.len() * 2 - 4);
+        crate::prepare_input(&[hull.as_ref()]).unwrap();
+    }
+
+    #[test]
     fn hull_retains_exact_offsets_beyond_f64_resolution() {
         let base = Real::from(1_i64 << 60);
         let input = vec![
@@ -626,5 +656,10 @@ mod tests {
             [9, 10, 11, 20, 31],
         ];
         assert!(opposite_edges_share_ruled_surface(&retained, [0, 1, 2], 3));
+        let points = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0), p(0, 0, 1)];
+        assert_eq!(
+            orientation_index(&points, None, Some(&retained), [0, 1, 2], 3).unwrap(),
+            Classification::On
+        );
     }
 }

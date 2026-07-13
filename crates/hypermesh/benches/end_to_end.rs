@@ -73,6 +73,13 @@ fn bench_end_to_end(c: &mut Criterion) {
     c.bench_function("convex_hull/grid_4913", |b| {
         b.iter(|| convex_hull(black_box(&hull_points)).expect("point set spans 3D"))
     });
+
+    let moment_curve = (-32_i64..32)
+        .map(|t| Point3::new(Real::from(t), Real::from(t * t), Real::from(t * t * t)))
+        .collect::<Vec<_>>();
+    c.bench_function("convex_hull/moment_curve_64", |b| {
+        b.iter(|| convex_hull(black_box(&moment_curve)).expect("point set spans 3D"))
+    });
 }
 
 criterion_group!(benches, bench_end_to_end);

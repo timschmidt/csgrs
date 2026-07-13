@@ -41,9 +41,21 @@ impl BoundsBvh {
         }
         let mut tree = Self {
             order: (0..bounds.len()).collect(),
-            nodes: Vec::with_capacity(bounds.len().saturating_mul(2)),
+            nodes: Vec::with_capacity(bvh_node_capacity(bounds.len())),
         };
         tree.build_node(bounds, 0, bounds.len())?;
+        Ok(tree)
+    }
+
+    fn build_points(points: &[Point3]) -> HypermeshResult<Self> {
+        if points.is_empty() {
+            return Ok(Self::default());
+        }
+        let mut tree = Self {
+            order: (0..points.len()).collect(),
+            nodes: Vec::with_capacity(bvh_node_capacity(points.len())),
+        };
+        tree.build_point_node(points, 0, points.len())?;
         Ok(tree)
     }
 
@@ -58,17 +70,19 @@ impl BoundsBvh {
                 .iter()
                 .map(|&index| &item_bounds[index]),
         )?;
+        let children_axis = (end - start > LEAF_SIZE)
+            .then(|| longest_axis(&bounds))
+            .transpose()?;
         let node_index = self.nodes.len();
         self.nodes.push(BvhNode {
-            bounds: bounds.clone(),
+            bounds,
             range: start..end,
             children: None,
         });
-        if end - start <= LEAF_SIZE {
+        let Some(axis) = children_axis else {
             return Ok(node_index);
-        }
+        };
 
-        let axis = longest_axis(&bounds)?;
         self.order[start..end].sort_by(|&left, &right| {
             approximate_center(&item_bounds[left], axis)
                 .total_cmp(&approximate_center(&item_bounds[right], axis))
@@ -77,6 +91,38 @@ impl BoundsBvh {
         let middle = start + (end - start) / 2;
         let left = self.build_node(item_bounds, start, middle)?;
         let right = self.build_node(item_bounds, middle, end)?;
+        self.nodes[node_index].children = Some([left, right]);
+        Ok(node_index)
+    }
+
+    fn build_point_node(
+        &mut self,
+        points: &[Point3],
+        start: usize,
+        end: usize,
+    ) -> HypermeshResult<usize> {
+        let bounds = bounds_for_ordered_points(points, &self.order[start..end])?;
+        let children_axis = (end - start > LEAF_SIZE)
+            .then(|| longest_axis(&bounds))
+            .transpose()?;
+        let node_index = self.nodes.len();
+        self.nodes.push(BvhNode {
+            bounds,
+            range: start..end,
+            children: None,
+        });
+        let Some(axis) = children_axis else {
+            return Ok(node_index);
+        };
+
+        self.order[start..end].sort_by(|&left, &right| {
+            approximate_coordinate(&points[left], axis)
+                .total_cmp(&approximate_coordinate(&points[right], axis))
+                .then_with(|| left.cmp(&right))
+        });
+        let middle = start + (end - start) / 2;
+        let left = self.build_point_node(points, start, middle)?;
+        let right = self.build_point_node(points, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
         Ok(node_index)
     }
@@ -112,6 +158,14 @@ impl BoundsBvh {
         }
         Ok(())
     }
+}
+
+fn bvh_node_capacity(item_count: usize) -> usize {
+    item_count
+        .div_ceil(LEAF_SIZE)
+        .next_power_of_two()
+        .saturating_mul(2)
+        .saturating_sub(1)
 }
 
 /// Exact broad-phase acceleration structure for polygon bounds.
@@ -203,11 +257,7 @@ pub struct ExactPointBvh {
 impl ExactPointBvh {
     /// Builds a hierarchy over borrowed exact points.
     pub fn build(points: &[Point3]) -> HypermeshResult<Self> {
-        let bounds = points
-            .iter()
-            .map(|point| ApproxBounds::new(point.clone(), point.clone()))
-            .collect::<Vec<_>>();
-        let tree = BoundsBvh::build(&bounds)?;
+        let tree = BoundsBvh::build_points(points)?;
         Ok(Self {
             point_count: points.len(),
             tree,
@@ -328,8 +378,11 @@ impl ExactPointBvh {
             return Ok(());
         }
 
-        let mut stack = vec![0];
-        while let Some(node_index) = stack.pop() {
+        let mut stack = [0; usize::BITS as usize];
+        let mut stack_len = 1;
+        while stack_len != 0 {
+            stack_len -= 1;
+            let node_index = stack[stack_len];
             let node = &self.tree.nodes[node_index];
             let bounds_classification = match classify_bounds_against_plane(&node.bounds, plane) {
                 Ok(classification) => classification,
@@ -345,8 +398,9 @@ impl ExactPointBvh {
                 }
                 BoundsPlaneClassification::Crossing => {
                     if let Some([left, right]) = node.children {
-                        stack.push(right);
-                        stack.push(left);
+                        stack[stack_len] = right;
+                        stack[stack_len + 1] = left;
+                        stack_len += 2;
                     } else {
                         for &point_index in &self.tree.order[node.range.clone()] {
                             if classify(&points[point_index])? == Classification::Positive {
@@ -362,16 +416,7 @@ impl ExactPointBvh {
 }
 
 fn orient3d(a: &Point3, b: &Point3, c: &Point3, point: &Point3) -> HypermeshResult<Classification> {
-    let limit_point =
-        |point: &Point3| hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
-    match hyperlimit::orient3d(
-        &limit_point(a),
-        &limit_point(b),
-        &limit_point(c),
-        &limit_point(point),
-    )
-    .value()
-    {
+    match hyperlimit::orient3d(a, b, c, point).value() {
         Some(hyperlimit::Sign::Negative) => Ok(Classification::Negative),
         Some(hyperlimit::Sign::Zero) => Ok(Classification::On),
         Some(hyperlimit::Sign::Positive) => Ok(Classification::Positive),
@@ -440,6 +485,23 @@ fn union_bounds<'a>(
     Ok(result)
 }
 
+fn bounds_for_ordered_points(points: &[Point3], order: &[usize]) -> HypermeshResult<ApproxBounds> {
+    let (&first, rest) = order.split_first().ok_or(HypermeshError::EmptyInput)?;
+    let mut result = ApproxBounds::new(points[first].clone(), points[first].clone());
+    for &point_index in rest {
+        let point = &points[point_index];
+        for axis in 0..3 {
+            if compare_real(axis_ref(point, axis), axis_ref(&result.min, axis))?.is_lt() {
+                *axis_mut(&mut result.min, axis) = axis_ref(point, axis).clone();
+            }
+            if compare_real(axis_ref(point, axis), axis_ref(&result.max, axis))?.is_gt() {
+                *axis_mut(&mut result.max, axis) = axis_ref(point, axis).clone();
+            }
+        }
+    }
+    Ok(result)
+}
+
 fn longest_axis(bounds: &ApproxBounds) -> HypermeshResult<usize> {
     let extents = [
         &bounds.max.x - &bounds.min.x,
@@ -459,6 +521,10 @@ fn approximate_center(bounds: &ApproxBounds, axis: usize) -> f64 {
     let min = axis_ref(&bounds.min, axis).to_f64_lossy().unwrap_or(0.0);
     let max = axis_ref(&bounds.max, axis).to_f64_lossy().unwrap_or(min);
     min + (max - min) * 0.5
+}
+
+fn approximate_coordinate(point: &Point3, axis: usize) -> f64 {
+    axis_ref(point, axis).to_f64_lossy().unwrap_or(0.0)
 }
 
 fn axis_mut(point: &mut Point3, axis: usize) -> &mut crate::Real {
