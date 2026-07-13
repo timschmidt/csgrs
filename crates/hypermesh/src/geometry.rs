@@ -91,7 +91,6 @@ impl Plane {
 
     /// Returns `(axis, value)` for planes of form `normal[axis] * x + d = 0`.
     pub fn axis_split_value(&self) -> Option<(usize, Real)> {
-        let zero = Real::zero();
         for axis in 0..3 {
             let components = [&self.normal.x, &self.normal.y, &self.normal.z];
             if components
@@ -100,7 +99,7 @@ impl Plane {
                 .all(|(i, value)| i == axis || value.definitely_zero())
                 && !components[axis].definitely_zero()
             {
-                let value = ((&zero - &self.offset) / components[axis]).ok()?;
+                let value = -((&self.offset / components[axis]).ok()?);
                 return Some((axis, value));
             }
         }
@@ -229,4 +228,17 @@ pub(crate) fn cross_arrays(left: &[Real; 3], right: &[Real; 3]) -> Point3 {
         (&left[2] * &right[0]) - (&left[0] * &right[2]),
         (&left[0] * &right[1]) - (&left[1] * &right[0]),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn axis_split_value_handles_non_unit_normal_exactly() {
+        let plane =
+            Plane::from_coefficients(Real::from(0), Real::from(2), Real::from(0), Real::from(-6));
+
+        assert_eq!(plane.axis_split_value(), Some((1, Real::from(3))));
+    }
 }
