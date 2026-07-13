@@ -133,19 +133,40 @@ where
     let n1 = first.normal();
     let n2 = second.normal();
     let n3 = third.normal();
-    let minus_d1 = neg(first.offset());
-    let minus_d2 = neg(second.offset());
-    let minus_d3 = neg(third.offset());
 
     HomogeneousPoint3::new(
-        det3(
-            &minus_d1, &n1.y, &n1.z, &minus_d2, &n2.y, &n2.z, &minus_d3, &n3.y, &n3.z,
+        neg_det3(
+            first.offset(),
+            &n1.y,
+            &n1.z,
+            second.offset(),
+            &n2.y,
+            &n2.z,
+            third.offset(),
+            &n3.y,
+            &n3.z,
         ),
-        det3(
-            &n1.x, &minus_d1, &n1.z, &n2.x, &minus_d2, &n2.z, &n3.x, &minus_d3, &n3.z,
+        neg_det3(
+            &n1.x,
+            first.offset(),
+            &n1.z,
+            &n2.x,
+            second.offset(),
+            &n2.z,
+            &n3.x,
+            third.offset(),
+            &n3.z,
         ),
-        det3(
-            &n1.x, &n1.y, &minus_d1, &n2.x, &n2.y, &minus_d2, &n3.x, &n3.y, &minus_d3,
+        neg_det3(
+            &n1.x,
+            &n1.y,
+            first.offset(),
+            &n2.x,
+            &n2.y,
+            second.offset(),
+            &n3.x,
+            &n3.y,
+            third.offset(),
         ),
         det3(
             &n1.x, &n1.y, &n1.z, &n2.x, &n2.y, &n2.z, &n3.x, &n3.y, &n3.z,
@@ -255,8 +276,29 @@ fn det3(
     )
 }
 
-fn neg(value: &Real) -> Real {
-    sub(&Real::from(0), value)
+#[allow(clippy::too_many_arguments)]
+fn neg_det3(
+    a: &Real,
+    b: &Real,
+    c: &Real,
+    d: &Real,
+    e: &Real,
+    f: &Real,
+    g: &Real,
+    h: &Real,
+    i: &Real,
+) -> Real {
+    Real::signed_product_sum(
+        [false, false, false, true, true, true],
+        [
+            [a, e, i],
+            [b, f, g],
+            [c, d, h],
+            [c, e, g],
+            [b, d, i],
+            [a, f, h],
+        ],
+    )
 }
 
 fn sub(left: &Real, right: &Real) -> Real {
