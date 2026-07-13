@@ -627,6 +627,38 @@ fn point_bvh_halfspace_candidates_match_bruteforce() {
 }
 
 #[test]
+fn point_bvh_oriented_plane_candidates_match_orient3d() {
+    let points = (-3..=3)
+        .flat_map(|x| (-3..=3).flat_map(move |y| (-3..=3).map(move |z| p(x, y, z))))
+        .collect::<Vec<_>>();
+    let a = p(0, 0, 0);
+    let b = p(3, 0, 1);
+    let c = p(0, 4, 1);
+    let bvh = hypermesh::ExactPointBvh::build(&points).unwrap();
+
+    let mut positive = Vec::new();
+    bvh.query_positive_oriented_plane(&points, &a, &b, &c, |index| positive.push(index))
+        .unwrap();
+    positive.sort_unstable();
+    let mut negative = Vec::new();
+    bvh.query_negative_oriented_plane(&points, &a, &b, &c, |index| negative.push(index))
+        .unwrap();
+    negative.sort_unstable();
+
+    let expected = |sign| {
+        points
+            .iter()
+            .enumerate()
+            .filter_map(|(index, point)| {
+                (hyperlimit::orient3d(&a, &b, &c, point).value() == Some(sign)).then_some(index)
+            })
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(positive, expected(hyperlimit::Sign::Positive));
+    assert_eq!(negative, expected(hyperlimit::Sign::Negative));
+}
+
+#[test]
 fn trace_axis_segment_accumulates_exact_winding_crossing() {
     let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];

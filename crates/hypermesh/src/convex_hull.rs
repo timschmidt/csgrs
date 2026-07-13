@@ -94,6 +94,16 @@ fn convex_hull_impl(
         Err(HypermeshError::UnknownClassification) => None,
         Err(error) => return Err(error),
     };
+    let approximate_points = points
+        .iter()
+        .map(|point| {
+            [
+                point.x.to_f64_lossy().unwrap_or(0.0),
+                point.y.to_f64_lossy().unwrap_or(0.0),
+                point.z.to_f64_lossy().unwrap_or(0.0),
+            ]
+        })
+        .collect::<Vec<_>>();
     let mut processed = vec![false; points.len()];
     for index in seed {
         processed[index] = true;
@@ -123,12 +133,7 @@ fn convex_hull_impl(
         if !face.active {
             return None;
         }
-        while let Some(point) = face.outside.pop() {
-            if !processed[point] {
-                return Some((index, point));
-            }
-        }
-        None
+        pop_farthest_outside(face, &approximate_points, &processed).map(|point| (index, point))
     }) {
         processed[eye] = true;
         let mut visible = Vec::new();
@@ -176,6 +181,42 @@ fn convex_hull_impl(
     }
 
     compact_hull(points, faces)
+}
+
+fn pop_farthest_outside(
+    face: &mut HullFace,
+    points: &[[f64; 3]],
+    processed: &[bool],
+) -> Option<usize> {
+    face.outside.retain(|&point| !processed[point]);
+    let farthest = face
+        .outside
+        .iter()
+        .enumerate()
+        .max_by(|left, right| {
+            let left = *left.1;
+            let right = *right.1;
+            approximate_face_distance(points, face.vertices, left)
+                .total_cmp(&approximate_face_distance(points, face.vertices, right))
+        })?
+        .0;
+    Some(face.outside.swap_remove(farthest))
+}
+
+fn approximate_face_distance(points: &[[f64; 3]], face: [usize; 3], point: usize) -> f64 {
+    let [a, b, c] = face.map(|index| points[index]);
+    let p = points[point];
+    let ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    let ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    let ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
+    let determinant = (ab[1] * ac[2] - ab[2] * ac[1]) * ap[0]
+        + (ab[2] * ac[0] - ab[0] * ac[2]) * ap[1]
+        + (ab[0] * ac[1] - ab[1] * ac[0]) * ap[2];
+    if determinant.is_finite() {
+        determinant.abs()
+    } else {
+        0.0
+    }
 }
 
 fn hull_stage<T>(result: HypermeshResult<T>, stage: &'static str) -> HypermeshResult<T> {

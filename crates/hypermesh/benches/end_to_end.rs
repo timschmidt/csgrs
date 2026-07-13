@@ -9,6 +9,31 @@ use hypermesh::{
     triangulate_and_resolve_certified,
 };
 
+fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
+    let mut unique = Vec::with_capacity(segments * (stacks - 1) + 2);
+    unique.push(Point3::new(Real::zero(), Real::one(), Real::zero()));
+    for longitude in 0..segments {
+        let theta = std::f64::consts::TAU * longitude as f64 / segments as f64;
+        let (sin_theta, cos_theta) = theta.sin_cos();
+        for latitude in 1..stacks {
+            let phi = std::f64::consts::PI * latitude as f64 / stacks as f64;
+            let (sin_phi, cos_phi) = phi.sin_cos();
+            unique.push(Point3::new(
+                Real::try_from(cos_theta * sin_phi).expect("finite shell coordinate"),
+                Real::try_from(cos_phi).expect("finite shell coordinate"),
+                Real::try_from(sin_theta * sin_phi).expect("finite shell coordinate"),
+            ));
+        }
+    }
+    unique.push(Point3::new(Real::zero(), -Real::one(), Real::zero()));
+
+    let mut points = Vec::with_capacity(unique.len() * 6);
+    for _ in 0..6 {
+        points.extend(unique.iter().cloned());
+    }
+    points
+}
+
 fn bench_end_to_end(c: &mut Criterion) {
     let cubes = common::cube_pair();
     let nested_cubes = common::nested_cube_pair();
@@ -79,6 +104,11 @@ fn bench_end_to_end(c: &mut Criterion) {
         .collect::<Vec<_>>();
     c.bench_function("convex_hull/moment_curve_64", |b| {
         b.iter(|| convex_hull(black_box(&moment_curve)).expect("point set spans 3D"))
+    });
+
+    let curved_shell = curved_shell(16, 8);
+    c.bench_function("convex_hull/curved_shell_684", |b| {
+        b.iter(|| convex_hull(black_box(&curved_shell)).expect("point set spans 3D"))
     });
 }
 

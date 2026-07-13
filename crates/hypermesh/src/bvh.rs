@@ -322,7 +322,16 @@ impl ExactPointBvh {
         // hyperlimit::orient3d uses the opposite sign convention from the
         // cross-product expression returned by Plane::from_points.
         let plane = Plane::from_points(a, b, c).inverted();
-        self.query_positive_with(points, &plane, |point| orient3d(a, b, c, point), callback)
+        self.query_positive_with(
+            points,
+            &plane,
+            |point| match classify_point(point, &plane) {
+                Ok(classification) => Ok(classification),
+                Err(HypermeshError::UnknownClassification) => orient3d(a, b, c, point),
+                Err(error) => Err(error),
+            },
+            callback,
+        )
     }
 
     /// Reports every point strictly on the negative `orient3d` side of the
@@ -346,12 +355,14 @@ impl ExactPointBvh {
         self.query_positive_with(
             points,
             &plane,
-            |point| {
-                Ok(match orient3d(a, b, c, point)? {
+            |point| match classify_point(point, &plane) {
+                Ok(classification) => Ok(classification),
+                Err(HypermeshError::UnknownClassification) => Ok(match orient3d(a, b, c, point)? {
                     Classification::Negative => Classification::Positive,
                     Classification::On => Classification::On,
                     Classification::Positive => Classification::Negative,
-                })
+                }),
+                Err(error) => Err(error),
             },
             callback,
         )
