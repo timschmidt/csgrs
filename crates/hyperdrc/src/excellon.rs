@@ -8,11 +8,12 @@
 //! exporter. Unit inference or malformed-tool recovery is suspect and should be
 //! checked against the fabrication drill report before release.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 
+use crate::Scalar;
 use crate::geometry::{SourceGridFacts, SourceScalar, SourceUnit};
 use crate::kicad::DrillFeature;
 
@@ -150,13 +151,12 @@ pub struct ExcellonDrillSummary {
     /// Count of distinct parsed drill diameters after micron-level quantization.
     pub unique_diameters: usize,
     /// Smallest parsed drill diameter in millimeters.
-    pub min_diameter: Option<f64>,
+    pub min_diameter: Option<Scalar>,
     /// Largest parsed drill diameter in millimeters.
-    pub max_diameter: Option<f64>,
+    pub max_diameter: Option<Scalar>,
     /// Combined source-grid facts for parsed drill hit coordinates.
     ///
-    /// Existing drill geometry remains normalized `f64` millimeters for report
-    /// and legacy rule compatibility. This field preserves Excellon token-grid
+    /// This field preserves Excellon token-grid
     /// structure for future exact clearance checks, following Yap's exact
     /// geometric computation guidance to carry representation facts until an
     /// arithmetic package is deliberately selected. See Yap, "Towards Exact
@@ -209,23 +209,23 @@ pub enum ExcellonIssueKind {
         /// Tool identifier.
         tool: String,
         /// Parsed diameter.
-        diameter: f64,
+        diameter: Scalar,
     },
     /// A tool was defined more than once with the same diameter.
     DuplicateToolDefinition {
         /// Tool identifier.
         tool: String,
         /// Repeated diameter.
-        diameter: f64,
+        diameter: Scalar,
     },
     /// A tool was redefined with a different diameter.
     ToolRedefinition {
         /// Tool identifier.
         tool: String,
         /// First diameter definition.
-        previous: f64,
+        previous: Scalar,
         /// Later diameter definition.
-        replacement: f64,
+        replacement: Scalar,
     },
     /// A selected tool had no definition.
     UnknownToolSelection {
@@ -366,12 +366,12 @@ pub fn parse_excellon(input: &str) -> Vec<DrillFeature> {
 
 /// Run or compute `parse_excellon_report`.
 pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
-    let mut tool_diameter = HashMap::<String, f64>::new();
+    let mut tool_diameter = HashMap::<String, Scalar>::new();
     let mut current_tool: Option<String> = None;
     let mut drills = Vec::new();
     let mut issues = Vec::new();
     let mut has_units = false;
-    let mut units_scale = 1.0;
+    let mut units_scale = Scalar::one();
     let mut declared_unit = None;
     let mut unit_summary = ExcellonUnitSummary::default();
     let mut program = ExcellonProgramInfo::default();
@@ -379,7 +379,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
     let mut routing = ExcellonRoutingSummary::default();
     let mut hits = ExcellonHitSummary::default();
     let mut drill_summary = ExcellonDrillSummary::default();
-    let mut unique_diameters = BTreeSet::<i64>::new();
+    let mut unique_diameters = Vec::<Scalar>::new();
     // IPC-NC-349 carries the CNC drill/rout data, while IPC-6012D separates
     // plated-through and unsupported hole fabrication requirements. Common CAM
     // packages encode that split in the drill sidecar filename, so HyperDRC
@@ -471,11 +471,11 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
             let incoming_scale = match units {
                 ExcellonUnits::Metric => {
                     unit_summary.metric_declarations += 1;
-                    1.0
+                    Scalar::one()
                 }
                 ExcellonUnits::Inch => {
                     unit_summary.inch_declarations += 1;
-                    25.4
+                    "25.4".parse().expect("fixed unit scale must parse")
                 }
             };
             unit_summary.supported_declarations += 1;
@@ -499,14 +499,17 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
             continue;
         }
 
-        if let Some((tool, diameter)) = parse_tool_definition(normalized, units_scale) {
+        if let Some((tool, diameter)) = parse_tool_definition(normalized, &units_scale) {
             let raw_tool = tool.clone();
             match tool_diameter.get(&tool) {
-                Some(previous) if *previous == diameter => {
+                Some(previous) if previous == &diameter => {
                     tool_table.duplicate_definitions += 1;
                     issues.push(ExcellonIssue {
                         line: line_number,
-                        kind: ExcellonIssueKind::DuplicateToolDefinition { tool, diameter },
+                        kind: ExcellonIssueKind::DuplicateToolDefinition {
+                            tool,
+                            diameter: diameter.clone(),
+                        },
                         detail: normalized.to_string(),
                     });
                 }
@@ -516,20 +519,20 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                         line: line_number,
                         kind: ExcellonIssueKind::ToolRedefinition {
                             tool: tool.clone(),
-                            previous: *previous,
-                            replacement: diameter,
+                            previous: previous.clone(),
+                            replacement: diameter.clone(),
                         },
                         detail: normalized.to_string(),
                     });
                 }
                 None => {
-                    if diameter <= 0.0 {
+                    if diameter <= Scalar::zero() {
                         tool_table.non_positive_definitions += 1;
                         issues.push(ExcellonIssue {
                             line: line_number,
                             kind: ExcellonIssueKind::ToolDiameterNotPositive {
                                 tool: tool.clone(),
-                                diameter,
+                                diameter: diameter.clone(),
                             },
                             detail: normalized.to_string(),
                         });
@@ -561,7 +564,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                             continue;
                         };
 
-                        if *diameter <= 0.0 {
+                        if diameter <= &Scalar::zero() {
                             hits.hits_without_diameter += 1;
                             issues.push(ExcellonIssue {
                                 line: line_number,
@@ -575,21 +578,16 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                         }
 
                         current_tool = Some(line_tool.clone());
+                        let drill =
+                            exact_drill_feature(&coordinate, &units_scale, diameter, plated);
                         hits.inline_tool_hits += 1;
                         hits.parsed_hits += 1;
                         record_drill(
                             &mut drills,
                             &mut drill_summary,
                             &mut unique_diameters,
-                            DrillFeature {
-                                location: [
-                                    coordinate.approximate[0] * units_scale,
-                                    coordinate.approximate[1] * units_scale,
-                                ],
-                                diameter: *diameter,
-                                net: None,
-                                plated,
-                            },
+                            drill,
+                            diameter,
                             coordinate.grid,
                         );
                         continue;
@@ -648,7 +646,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                 });
                 continue;
             };
-            if *diameter <= 0.0 {
+            if diameter <= &Scalar::zero() {
                 hits.hits_without_diameter += 1;
                 issues.push(ExcellonIssue {
                     line: line_number,
@@ -658,21 +656,15 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                 continue;
             }
 
+            let drill = exact_drill_feature(&coordinate, &units_scale, diameter, plated);
             hits.active_tool_hits += 1;
             hits.parsed_hits += 1;
             record_drill(
                 &mut drills,
                 &mut drill_summary,
                 &mut unique_diameters,
-                DrillFeature {
-                    location: [
-                        coordinate.approximate[0] * units_scale,
-                        coordinate.approximate[1] * units_scale,
-                    ],
-                    diameter: *diameter,
-                    net: None,
-                    plated,
-                },
+                drill,
+                diameter,
                 coordinate.grid,
             );
             continue;
@@ -768,8 +760,9 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
 fn record_drill(
     drills: &mut Vec<DrillFeature>,
     summary: &mut ExcellonDrillSummary,
-    unique_diameters: &mut BTreeSet<i64>,
+    unique_diameters: &mut Vec<Scalar>,
     drill: DrillFeature,
+    exact_diameter: &Scalar,
     coordinate_grid: SourceGridFacts,
 ) {
     summary.coordinate_grid = if summary.parsed_drills == 0 {
@@ -783,20 +776,36 @@ fn record_drill(
     } else {
         summary.non_plated_drills += 1;
     }
-    summary.min_diameter = Some(
-        summary
-            .min_diameter
-            .map_or(drill.diameter, |current| current.min(drill.diameter)),
-    );
-    summary.max_diameter = Some(
-        summary
-            .max_diameter
-            .map_or(drill.diameter, |current| current.max(drill.diameter)),
-    );
-    if drill.diameter.is_finite() {
-        unique_diameters.insert((drill.diameter * 1_000_000.0).round() as i64);
+    summary.min_diameter = Some(summary.min_diameter.as_ref().map_or_else(
+        || exact_diameter.clone(),
+        |current| current.min(exact_diameter).clone(),
+    ));
+    summary.max_diameter = Some(summary.max_diameter.as_ref().map_or_else(
+        || exact_diameter.clone(),
+        |current| current.max(exact_diameter).clone(),
+    ));
+    if !unique_diameters.iter().any(|value| value == exact_diameter) {
+        unique_diameters.push(exact_diameter.clone());
     }
     drills.push(drill);
+}
+
+/// Build a drill feature while retaining exact Excellon coordinate and diameter data.
+fn exact_drill_feature(
+    coordinate: &ExcellonCoordinate,
+    units_scale: &Scalar,
+    diameter: &Scalar,
+    plated: bool,
+) -> DrillFeature {
+    DrillFeature {
+        location: [
+            &coordinate.value[0] * units_scale,
+            &coordinate.value[1] * units_scale,
+        ],
+        diameter: diameter.clone(),
+        net: None,
+        plated,
+    }
 }
 
 impl ExcellonRoutingSummary {
@@ -885,7 +894,7 @@ fn parse_routed_slot_command(line: &str) -> Option<String> {
     }
 }
 
-fn parse_tool_definition(line: &str, units_scale: f64) -> Option<(String, f64)> {
+fn parse_tool_definition(line: &str, units_scale: &Scalar) -> Option<(String, Scalar)> {
     if !line.starts_with('T') || !line.contains('C') {
         return None;
     }
@@ -925,7 +934,7 @@ fn parse_tool_with_optional_hit(line: &str) -> Option<(String, bool)> {
 
 #[derive(Clone, Debug, PartialEq)]
 struct ExcellonCoordinate {
-    approximate: [f64; 2],
+    value: [Scalar; 2],
     grid: SourceGridFacts,
 }
 
@@ -946,13 +955,13 @@ fn parse_coordinate_source(line: &str) -> Option<ExcellonCoordinate> {
     let x = parse_number_source(&line[x_index + 1..x_end])?;
     let y = parse_number_source(&line[y_index + 1..y_end])?;
     Some(ExcellonCoordinate {
-        approximate: [x.approximate, y.approximate],
+        value: [x.value, y.value],
         grid: x.grid.combine(y.grid),
     })
 }
 
-fn parse_number(raw: &str) -> Option<f64> {
-    parse_number_source(raw).map(|number| number.approximate)
+fn parse_number(raw: &str) -> Option<Scalar> {
+    Some(parse_number_source(raw)?.value)
 }
 
 fn parse_number_source(raw: &str) -> Option<SourceScalar> {
@@ -1002,6 +1011,7 @@ fn is_supported_axis_line(line: &str) -> bool {
 mod tests {
     use proptest::prelude::*;
 
+    use crate::Scalar;
     use crate::geometry::{SourceGridFacts, SourceUnit};
 
     use super::{
@@ -1025,8 +1035,11 @@ mod tests {
         );
 
         assert_eq!(report.drills.len(), 1);
-        assert_eq!(report.drills[0].diameter, 0.6);
-        assert_eq!(report.drills[0].location, [10.0, 20.0]);
+        assert_eq!(report.drills[0].diameter, crate::scalar::scalar("0.6"));
+        assert_eq!(
+            report.drills[0].location,
+            [crate::scalar::scalar("10"), crate::scalar::scalar("20")]
+        );
         assert_eq!(
             report.drill_summary.coordinate_grid,
             SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000)
@@ -1120,9 +1133,9 @@ mod tests {
         );
 
         assert_eq!(drills.len(), 1);
-        assert!((drills[0].diameter - 0.254).abs() < 1.0e-9);
-        assert!((drills[0].location[0] - 25.4).abs() < 1.0e-9);
-        assert!((drills[0].location[1] - 50.8).abs() < 1.0e-9);
+        assert_eq!(drills[0].diameter, crate::scalar::scalar("0.254"));
+        assert_eq!(drills[0].location[0], crate::scalar::scalar("25.4"));
+        assert_eq!(drills[0].location[1], crate::scalar::scalar("50.8"));
     }
 
     #[test]
@@ -1164,8 +1177,14 @@ mod tests {
         assert_eq!(inch_report.unit_summary.supported_declarations, 1);
         assert_eq!(inch_report.unit_summary.metric_declarations, 0);
         assert_eq!(inch_report.unit_summary.inch_declarations, 1);
-        assert!((inch_report.drills[0].diameter - 0.254).abs() < 1.0e-9);
-        assert!((inch_report.drills[0].location[0] - 25.4).abs() < 1.0e-9);
+        assert_eq!(
+            inch_report.drills[0].diameter,
+            crate::scalar::scalar("0.254")
+        );
+        assert_eq!(
+            inch_report.drills[0].location[0],
+            crate::scalar::scalar("25.4")
+        );
     }
 
     #[test]
@@ -1357,8 +1376,14 @@ mod tests {
         assert_eq!(report.hits.invalid_coordinate_records, 1);
         assert_eq!(report.drill_summary.parsed_drills, 2);
         assert_eq!(report.drill_summary.unique_diameters, 1);
-        assert_eq!(report.drill_summary.min_diameter, Some(0.6));
-        assert_eq!(report.drill_summary.max_diameter, Some(0.6));
+        assert_eq!(
+            report.drill_summary.min_diameter,
+            Some("0.6".parse::<Scalar>().unwrap())
+        );
+        assert_eq!(
+            report.drill_summary.max_diameter,
+            Some("0.6".parse::<Scalar>().unwrap())
+        );
     }
 
     #[test]
@@ -1420,8 +1445,14 @@ mod tests {
         assert_eq!(report.drill_summary.plated_drills, 3);
         assert_eq!(report.drill_summary.non_plated_drills, 0);
         assert_eq!(report.drill_summary.unique_diameters, 2);
-        assert_eq!(report.drill_summary.min_diameter, Some(0.3));
-        assert_eq!(report.drill_summary.max_diameter, Some(0.6));
+        assert_eq!(
+            report.drill_summary.min_diameter,
+            Some("0.3".parse::<Scalar>().unwrap())
+        );
+        assert_eq!(
+            report.drill_summary.max_diameter,
+            Some("0.6".parse::<Scalar>().unwrap())
+        );
     }
 
     #[test]

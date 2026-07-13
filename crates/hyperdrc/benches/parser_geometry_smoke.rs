@@ -69,6 +69,7 @@ use hyperdrc::ipc356::{
 };
 use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature, load_kicad_pcb};
 use hyperdrc::report::{Report, Severity, Violation, report_summary};
+use hyperdrc::scalar::scalar;
 use hyperdrc::sexp;
 use hyperdrc::waiver::{Waiver, governance_violations};
 
@@ -267,7 +268,7 @@ fn main() {
         .collect::<Vec<_>>();
     let duplicate_layer_elapsed = time("duplicate_layer_geometry_1k", || {
         for _ in 0..1_000 {
-            let _ = duplicate_layer_geometry_readiness(&duplicate_layers, 1.0e-9);
+            let _ = duplicate_layer_geometry_readiness(&duplicate_layers, &scalar("1.0e-9"));
         }
     });
     let duplicate_island_layer = polygons_to_profile(
@@ -288,7 +289,7 @@ fn main() {
             let _ = duplicate_layer_island_readiness(
                 "bench duplicate islands",
                 &duplicate_island_layer,
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -306,7 +307,11 @@ fn main() {
     );
     let tiny_feature_elapsed = time("tiny_layer_feature_10k", || {
         for _ in 0..10_000 {
-            let _ = tiny_layer_feature_readiness("bench tiny features", &tiny_feature_layer, 0.01);
+            let _ = tiny_layer_feature_readiness(
+                "bench tiny features",
+                &tiny_feature_layer,
+                &scalar("0.01"),
+            );
         }
     });
     let skinny_feature_layer = polygons_to_profile(
@@ -326,8 +331,8 @@ fn main() {
             let _ = skinny_layer_feature_readiness(
                 "bench skinny features",
                 &skinny_feature_layer,
-                0.10,
-                0.01,
+                &scalar("0.10"),
+                &scalar("0.01"),
             );
         }
     });
@@ -354,7 +359,12 @@ fn main() {
     ];
     let density_elapsed = time("local_copper_density_1k", || {
         for _ in 0..1_000 {
-            let _ = local_copper_density_readiness(&density_layers, 10.0, 3.0, 1.0e-9);
+            let _ = local_copper_density_readiness(
+                &density_layers,
+                &scalar("10.0"),
+                &scalar("3.0"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let sparse_copper_intent_board = BoardModel {
@@ -375,7 +385,7 @@ fn main() {
     };
     let copper_width_elapsed = time("copper_width_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = copper_width_readiness(&sparse_copper_intent_board, &[], 0.12);
+            let _ = copper_width_readiness(&sparse_copper_intent_board, &[], &scalar("0.12"));
         }
     });
     let copper_net_intent_elapsed = time("copper_net_intent_sparse_1k", || {
@@ -397,8 +407,12 @@ fn main() {
     );
     let paste_spacing_sparse_elapsed = time("paste_aperture_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                paste_aperture_spacing("bench sparse apertures", &sparse_apertures, 0.10, 1.0e-9);
+            let _ = paste_aperture_spacing(
+                "bench sparse apertures",
+                &sparse_apertures,
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let sparse_ratio_copper = polygons_to_profile(
@@ -423,9 +437,9 @@ fn main() {
                 &sparse_apertures,
                 "bench sparse ratio copper",
                 &sparse_ratio_copper,
-                0.50,
-                1.20,
-                1.0e-9,
+                &scalar("0.50"),
+                &scalar("1.20"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -436,7 +450,7 @@ fn main() {
                 &sparse_apertures,
                 "bench sparse ratio copper",
                 &sparse_ratio_copper,
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -447,8 +461,8 @@ fn main() {
                 &sparse_ratio_copper,
                 "bench sparse cover copper",
                 &sparse_cover_copper,
-                0.0,
-                1.0e-9,
+                &scalar("0.0"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -459,7 +473,7 @@ fn main() {
                 &sparse_ratio_copper,
                 "bench sparse apertures",
                 &sparse_apertures,
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -470,9 +484,9 @@ fn main() {
                 &sparse_ratio_copper,
                 "bench sparse apertures",
                 &sparse_apertures,
-                1.0,
-                3.0,
-                1.0e-9,
+                &scalar("1.0"),
+                &scalar("3.0"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -483,8 +497,8 @@ fn main() {
                 &sparse_ratio_copper,
                 "bench sparse apertures",
                 &sparse_apertures,
-                0.08,
-                1.0e-9,
+                &scalar("0.08"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -495,7 +509,7 @@ fn main() {
                 &sparse_ratio_copper,
                 "bench sparse apertures",
                 &sparse_apertures,
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -506,8 +520,8 @@ fn main() {
                 &sparse_cover_copper,
                 "bench sparse apertures",
                 &sparse_ratio_copper,
-                0.10,
-                1.0e-9,
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -518,7 +532,7 @@ fn main() {
                 &sparse_ratio_copper,
                 "bench sparse apertures",
                 &sparse_apertures,
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -530,8 +544,8 @@ fn main() {
                     &sparse_ratio_copper,
                     "bench sparse apertures",
                     &sparse_apertures,
-                    0.10,
-                    1.0e-9,
+                    &scalar("0.10"),
+                    &scalar("1.0e-9"),
                 );
             }
         });
@@ -540,14 +554,19 @@ fn main() {
             let _ = solder_mask_opening_spacing(
                 "bench sparse apertures",
                 &sparse_apertures,
-                0.10,
-                1.0e-9,
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
             );
         }
     });
     let mask_island_sparse_elapsed = time("mask_island_keepout_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = mask_island_keepout("bench sparse apertures", &sparse_apertures, 0.10, 1.0e-9);
+            let _ = mask_island_keepout(
+                "bench sparse apertures",
+                &sparse_apertures,
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let sparse_silk = polygons_to_profile(
@@ -566,7 +585,7 @@ fn main() {
                 &sparse_silk,
                 "bench sparse apertures",
                 &sparse_apertures,
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -577,15 +596,19 @@ fn main() {
                 &sparse_silk,
                 "bench sparse apertures",
                 &sparse_apertures,
-                0.10,
-                1.0e-9,
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
             );
         }
     });
     let silkscreen_text_height_elapsed = time("silkscreen_text_height_10k", || {
         for _ in 0..10_000 {
-            let _ =
-                silkscreen_text_height_readiness("bench sparse silk", &sparse_silk, 0.80, 1.0e-9);
+            let _ = silkscreen_text_height_readiness(
+                "bench sparse silk",
+                &sparse_silk,
+                &scalar("0.80"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let tombstone_copper = polygons_to_profile(
@@ -619,9 +642,9 @@ fn main() {
                 &tombstone_paste,
                 "bench tombstone copper",
                 &tombstone_copper,
-                2.0,
-                0.30,
-                1.0e-9,
+                &scalar("2.0"),
+                &scalar("0.30"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -629,8 +652,11 @@ fn main() {
         source: "bench".to_string(),
         copper: vec![bench_via("GND", [0.0, 0.0], 0.20)],
         drills: vec![DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.20,
+            location: [
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+            ],
+            diameter: scalar("0.20"),
             net: Some("GND".to_string()),
             plated: true,
         }],
@@ -662,7 +688,7 @@ fn main() {
                 &paste_via_sparse_paste,
                 &paste_via_sparse_board,
                 &[],
-                1.0e-9,
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -674,16 +700,16 @@ fn main() {
                     &paste_via_sparse_paste,
                     "bench thermal copper",
                     &thermal_pad_windowpane_copper,
-                    4.0,
-                    0.65,
-                    1.0e-9,
+                    &scalar("4.0"),
+                    &scalar("0.65"),
+                    &scalar("1.0e-9"),
                 );
             }
         });
     let net_constraint_classes = vec![
         NetClassConfig {
             name: "bench-power-base".to_string(),
-            min_clearance: Some(0.4),
+            min_clearance: Some(hyperdrc::scalar::scalar("0.4")),
             ..NetClassConfig::default()
         },
         NetClassConfig {
@@ -726,14 +752,14 @@ fn main() {
         nets: vec!["REGION_SIG".to_string()],
         regions: vec![NetClassRegionConfig {
             name: "front-end".to_string(),
-            min_x: Some(-1.0),
-            min_y: Some(-1.0),
-            max_x: Some(1.0),
-            max_y: Some(1.0),
+            min_x: Some(hyperdrc::scalar::scalar("-1.0")),
+            min_y: Some(hyperdrc::scalar::scalar("-1.0")),
+            max_x: Some(hyperdrc::scalar::scalar("1.0")),
+            max_y: Some(hyperdrc::scalar::scalar("1.0")),
             layers: vec!["F.Cu".to_string()],
         }],
-        min_width: Some(0.4),
-        min_clearance: Some(0.4),
+        min_width: Some(hyperdrc::scalar::scalar("0.4")),
+        min_clearance: Some(hyperdrc::scalar::scalar("0.4")),
         ..NetClassConfig::default()
     }];
     let mut net_constraint_region_copper = (0..1_000)
@@ -771,8 +797,8 @@ fn main() {
             nets: vec!["USB_D+".to_string()],
             differential_pair: Some("usb".to_string()),
             differential_role: Some(DifferentialRole::Positive),
-            min_pair_spacing: Some(0.2),
-            max_pair_spacing: Some(0.5),
+            min_pair_spacing: Some(hyperdrc::scalar::scalar("0.2")),
+            max_pair_spacing: Some(hyperdrc::scalar::scalar("0.5")),
             ..NetClassConfig::default()
         },
         NetClassConfig {
@@ -780,8 +806,8 @@ fn main() {
             nets: vec!["USB_D-".to_string()],
             differential_pair: Some("usb".to_string()),
             differential_role: Some(DifferentialRole::Negative),
-            min_pair_spacing: Some(0.2),
-            max_pair_spacing: Some(0.5),
+            min_pair_spacing: Some(hyperdrc::scalar::scalar("0.2")),
+            max_pair_spacing: Some(hyperdrc::scalar::scalar("0.5")),
             ..NetClassConfig::default()
         },
     ];
@@ -817,56 +843,56 @@ fn main() {
             name: "bench-rf-microstrip".to_string(),
             nets: vec!["RF_MICRO".to_string()],
             requires_impedance_control: Some(true),
-            target_impedance_ohms: Some(50.0),
-            impedance_tolerance_ohms: Some(10.0),
+            target_impedance_ohms: Some(hyperdrc::scalar::scalar("50.0")),
+            impedance_tolerance_ohms: Some(hyperdrc::scalar::scalar("10.0")),
             ..NetClassConfig::default()
         },
         NetClassConfig {
             name: "bench-rf-stripline".to_string(),
             nets: vec!["RF_STRIP".to_string()],
             requires_impedance_control: Some(true),
-            target_impedance_ohms: Some(50.0),
-            impedance_tolerance_ohms: Some(10.0),
+            target_impedance_ohms: Some(hyperdrc::scalar::scalar("50.0")),
+            impedance_tolerance_ohms: Some(hyperdrc::scalar::scalar("10.0")),
             ..NetClassConfig::default()
         },
     ];
     let net_constraint_impedance_stackup = StackupConfig {
         copper_layer_count: Some(3),
-        finished_thickness: Some(0.54),
+        finished_thickness: Some(hyperdrc::scalar::scalar("0.54")),
         impedance_controlled: Some(true),
         material_family: Some("FR-4".to_string()),
-        material_dielectric_constant: Some(4.2),
-        material_loss_tangent: Some(0.018),
+        material_dielectric_constant: Some(hyperdrc::scalar::scalar("4.2")),
+        material_loss_tangent: Some(hyperdrc::scalar::scalar("0.018")),
         surface_finish: Some(SurfaceFinish::Enig),
         layers: vec![
             StackupLayerConfig {
                 name: "F.Cu".to_string(),
                 kind: StackupLayerKind::Copper,
-                copper_weight_oz: Some(1.0),
+                copper_weight_oz: Some(hyperdrc::scalar::scalar("1.0")),
                 dielectric_thickness: None,
             },
             StackupLayerConfig {
                 name: "Prepreg".to_string(),
                 kind: StackupLayerKind::Prepreg,
                 copper_weight_oz: None,
-                dielectric_thickness: Some(0.18),
+                dielectric_thickness: Some(hyperdrc::scalar::scalar("0.18")),
             },
             StackupLayerConfig {
                 name: "In1.Cu".to_string(),
                 kind: StackupLayerKind::Copper,
-                copper_weight_oz: Some(1.0),
+                copper_weight_oz: Some(hyperdrc::scalar::scalar("1.0")),
                 dielectric_thickness: None,
             },
             StackupLayerConfig {
                 name: "Core".to_string(),
                 kind: StackupLayerKind::Core,
                 copper_weight_oz: None,
-                dielectric_thickness: Some(0.18),
+                dielectric_thickness: Some(hyperdrc::scalar::scalar("0.18")),
             },
             StackupLayerConfig {
                 name: "B.Cu".to_string(),
                 kind: StackupLayerKind::Copper,
-                copper_weight_oz: Some(1.0),
+                copper_weight_oz: Some(hyperdrc::scalar::scalar("1.0")),
                 dielectric_thickness: None,
             },
         ],
@@ -919,7 +945,12 @@ fn main() {
     };
     let different_net_spacing_elapsed = time("different_net_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = net_spacing(&different_net_spacing_board, 0.10, &[], 1.0e-9);
+            let _ = net_spacing(
+                &different_net_spacing_board,
+                &scalar("0.10"),
+                &[],
+                &scalar("1.0e-9"),
+            );
         }
     });
     let registration_board = BoardModel {
@@ -948,7 +979,7 @@ fn main() {
     };
     let registration_elapsed = time("registration_tolerance_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = registration_tolerance(&registration_board, 0.10, 1.0e-9);
+            let _ = registration_tolerance(&registration_board, &scalar("0.10"), &scalar("1.0e-9"));
         }
     });
 
@@ -965,7 +996,12 @@ fn main() {
     };
     let acid_trap_elapsed = time("trace_junction_acid_trap_10k", || {
         for _ in 0..10_000 {
-            let _ = trace_junction_acid_trap_readiness(&acid_trap_board, &[], 30.0, 1.0e-9);
+            let _ = trace_junction_acid_trap_readiness(
+                &acid_trap_board,
+                &[],
+                &scalar("30.0"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let acid_trap_sparse_board = BoardModel {
@@ -982,7 +1018,12 @@ fn main() {
     };
     let acid_trap_sparse_elapsed = time("trace_junction_acid_trap_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = trace_junction_acid_trap_readiness(&acid_trap_sparse_board, &[], 30.0, 1.0e-9);
+            let _ = trace_junction_acid_trap_readiness(
+                &acid_trap_sparse_board,
+                &[],
+                &scalar("30.0"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -1007,7 +1048,7 @@ fn main() {
     };
     let via_in_pad_elapsed = time("via_in_pad_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = via_in_pad_readiness(&via_in_pad_board, &[], 1.0e-9);
+            let _ = via_in_pad_readiness(&via_in_pad_board, &[], &scalar("1.0e-9"));
         }
     });
 
@@ -1032,7 +1073,7 @@ fn main() {
     };
     let teardrop_elapsed = time("teardrop_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = teardrop_readiness(&teardrop_board, &[], 0.12, 1.0e-9);
+            let _ = teardrop_readiness(&teardrop_board, &[], &scalar("0.12"), &scalar("1.0e-9"));
         }
     });
 
@@ -1059,7 +1100,12 @@ fn main() {
     };
     let local_fiducial_elapsed = time("local_fiducial_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = local_fiducial_readiness(&dense_pad_fiducial_board, &[], 0.8, 5.0);
+            let _ = local_fiducial_readiness(
+                &dense_pad_fiducial_board,
+                &[],
+                &scalar("0.8"),
+                &scalar("5.0"),
+            );
         }
     });
     let dense_pad_escape_board = BoardModel {
@@ -1074,12 +1120,24 @@ fn main() {
     };
     let dense_pad_escape_elapsed = time("dense_pad_escape_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = dense_pad_escape_readiness(&dense_pad_escape_board, &[], 0.8, 2.0);
+            let _ = dense_pad_escape_readiness(
+                &dense_pad_escape_board,
+                &[],
+                &scalar("0.8"),
+                &scalar("2.0"),
+            );
         }
     });
     let dense_pad_via_elapsed = time("dense_pad_via_spacing_5k", || {
         for _ in 0..5_000 {
-            let _ = dense_pad_via_spacing_readiness(&dense_pad_board, &[], 0.8, 2.0, 0.15, 1.0e-9);
+            let _ = dense_pad_via_spacing_readiness(
+                &dense_pad_board,
+                &[],
+                &scalar("0.8"),
+                &scalar("2.0"),
+                &scalar("0.15"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let dense_pad_via_sparse_pads_board = BoardModel {
@@ -1103,17 +1161,22 @@ fn main() {
             let _ = dense_pad_via_spacing_readiness(
                 &dense_pad_via_sparse_pads_board,
                 &[],
-                0.8,
-                25.0,
-                0.15,
-                1.0e-9,
+                &scalar("0.8"),
+                &scalar("25.0"),
+                &scalar("0.15"),
+                &scalar("1.0e-9"),
             );
         }
     });
 
     let dense_pad_mask_elapsed = time("dense_pad_mask_bridge_10k", || {
         for _ in 0..10_000 {
-            let _ = dense_pad_mask_bridge_readiness(&dense_pad_board, &[], 0.8, 0.10);
+            let _ = dense_pad_mask_bridge_readiness(
+                &dense_pad_board,
+                &[],
+                &scalar("0.8"),
+                &scalar("0.10"),
+            );
         }
     });
     let dense_pad_mask_sparse_board = BoardModel {
@@ -1137,7 +1200,12 @@ fn main() {
     };
     let dense_pad_mask_sparse_elapsed = time("dense_pad_mask_bridge_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = dense_pad_mask_bridge_readiness(&dense_pad_mask_sparse_board, &[], 0.8, 0.10);
+            let _ = dense_pad_mask_bridge_readiness(
+                &dense_pad_mask_sparse_board,
+                &[],
+                &scalar("0.8"),
+                &scalar("0.10"),
+            );
         }
     });
 
@@ -1158,7 +1226,12 @@ fn main() {
     };
     let component_spacing_elapsed = time("component_spacing_1k", || {
         for _ in 0..1_000 {
-            let _ = component_spacing_readiness(&assembly_sparse_board, &[], 0.25, 0.5);
+            let _ = component_spacing_readiness(
+                &assembly_sparse_board,
+                &[],
+                &scalar("0.25"),
+                &scalar("0.5"),
+            );
         }
     });
     let component_edge_board = BoardModel {
@@ -1187,7 +1260,7 @@ fn main() {
     };
     let component_edge_elapsed = time("component_edge_clearance_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = component_edge_clearance_readiness(&component_edge_board, &[], 0.5);
+            let _ = component_edge_clearance_readiness(&component_edge_board, &[], &scalar("0.5"));
         }
     });
     let component_hole_board = BoardModel {
@@ -1215,8 +1288,13 @@ fn main() {
     };
     let component_hole_elapsed = time("component_hole_clearance_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                component_hole_clearance_readiness(&component_hole_board, &[], &[], 0.25, 1.0e-9);
+            let _ = component_hole_clearance_readiness(
+                &component_hole_board,
+                &[],
+                &[],
+                &scalar("0.25"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let connector_rework_board = BoardModel {
@@ -1241,7 +1319,12 @@ fn main() {
     };
     let connector_rework_elapsed = time("connector_rework_clearance_1k", || {
         for _ in 0..1_000 {
-            let _ = connector_rework_clearance_readiness(&connector_rework_board, &[], 0.25, 0.5);
+            let _ = connector_rework_clearance_readiness(
+                &connector_rework_board,
+                &[],
+                &scalar("0.25"),
+                &scalar("0.5"),
+            );
         }
     });
     let connector_return_sparse_board = BoardModel {
@@ -1261,7 +1344,12 @@ fn main() {
     };
     let connector_return_sparse_elapsed = time("connector_return_path_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = connector_return_path_readiness(&connector_return_sparse_board, &[], 1.0, 2.0);
+            let _ = connector_return_path_readiness(
+                &connector_return_sparse_board,
+                &[],
+                &scalar("1.0"),
+                &scalar("2.0"),
+            );
         }
     });
     let edge_stitching_sparse_board = BoardModel {
@@ -1281,7 +1369,13 @@ fn main() {
     };
     let edge_stitching_sparse_elapsed = time("edge_stitching_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = edge_stitching_readiness(&edge_stitching_sparse_board, &[], 0.50, 0.30, 1.0e-9);
+            let _ = edge_stitching_readiness(
+                &edge_stitching_sparse_board,
+                &[],
+                &scalar("0.50"),
+                &scalar("0.30"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let rectangular_edge_board = BoardModel {
@@ -1310,7 +1404,7 @@ fn main() {
     };
     let board_edge_exposure_elapsed = time("board_edge_exposure_rect_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = board_edge_exposure(&rectangular_edge_board, &[], 1.0e-9);
+            let _ = board_edge_exposure(&rectangular_edge_board, &[], &scalar("1.0e-9"));
         }
     });
     let rectangular_high_speed_edge_board = BoardModel {
@@ -1334,8 +1428,12 @@ fn main() {
     };
     let high_speed_edge_elapsed = time("high_speed_edge_rect_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                high_speed_edge_readiness(&rectangular_high_speed_edge_board, &[], 0.50, 1.0e-9);
+            let _ = high_speed_edge_readiness(
+                &rectangular_high_speed_edge_board,
+                &[],
+                &scalar("0.50"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let rectangular_high_voltage_edge_board = BoardModel {
@@ -1362,8 +1460,8 @@ fn main() {
             let _ = high_voltage_edge_readiness(
                 &rectangular_high_voltage_edge_board,
                 &[],
-                0.80,
-                1.0e-9,
+                &scalar("0.80"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -1379,7 +1477,8 @@ fn main() {
     };
     let chassis_stitching_sparse_elapsed = time("chassis_stitching_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = chassis_stitching_readiness(&chassis_stitching_sparse_board, &[], 0.50);
+            let _ =
+                chassis_stitching_readiness(&chassis_stitching_sparse_board, &[], &scalar("0.50"));
         }
     });
     let asymmetry_board = BoardModel {
@@ -1404,7 +1503,13 @@ fn main() {
     };
     let pad_pair_asymmetry_elapsed = time("pad_pair_asymmetry_1k", || {
         for _ in 0..1_000 {
-            let _ = pad_pair_asymmetry_readiness(&asymmetry_board, &[], 0.30, 1.5, 2.0);
+            let _ = pad_pair_asymmetry_readiness(
+                &asymmetry_board,
+                &[],
+                &scalar("0.30"),
+                &scalar("1.5"),
+                &scalar("2.0"),
+            );
         }
     });
     let mut fiducial_copper = (0..400)
@@ -1426,7 +1531,12 @@ fn main() {
     };
     let fiducial_keepout_elapsed = time("fiducial_keepout_1k", || {
         for _ in 0..1_000 {
-            let _ = fiducial_keepout_readiness(&fiducial_keepout_board, &[], 0.25, 1.0e-9);
+            let _ = fiducial_keepout_readiness(
+                &fiducial_keepout_board,
+                &[],
+                &scalar("0.25"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let fiducial_edge_board = BoardModel {
@@ -1453,7 +1563,7 @@ fn main() {
     };
     let fiducial_edge_elapsed = time("fiducial_edge_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = fiducial_readiness(&fiducial_edge_board, &[], 1.0);
+            let _ = fiducial_readiness(&fiducial_edge_board, &[], &scalar("1.0"));
         }
     });
     let process_keepout_board = BoardModel {
@@ -1486,13 +1596,22 @@ fn main() {
     };
     let selective_wave_elapsed = time("selective_wave_keepout_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                selective_wave_solder_keepout_readiness(&process_keepout_board, &[], 0.25, 1.0e-9);
+            let _ = selective_wave_solder_keepout_readiness(
+                &process_keepout_board,
+                &[],
+                &scalar("0.25"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let press_fit_elapsed = time("press_fit_keepout_1k", || {
         for _ in 0..1_000 {
-            let _ = press_fit_keepout_readiness(&process_keepout_board, &[], 0.35, 1.0e-9);
+            let _ = press_fit_keepout_readiness(
+                &process_keepout_board,
+                &[],
+                &scalar("0.35"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let mouse_bite_drills = (0..1_000)
@@ -1500,22 +1619,31 @@ fn main() {
             let x = index as f64 * 10.0;
             [
                 DrillFeature {
-                    location: [x, 0.0],
-                    diameter: 0.30,
+                    location: [
+                        hyperdrc::Scalar::try_from(x).expect("finite benchmark coordinate"),
+                        hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                    ],
+                    diameter: scalar("0.30"),
                     net: None,
                     plated: false,
                 },
                 DrillFeature {
-                    location: [x + 0.70, 0.0],
-                    diameter: 0.30,
+                    location: [
+                        hyperdrc::Scalar::try_from(x + 0.70).expect("finite benchmark coordinate"),
+                        hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                    ],
+                    diameter: scalar("0.30"),
                     net: None,
                     plated: false,
                 },
             ]
         })
         .chain([DrillFeature {
-            location: [50_000.0, 0.0],
-            diameter: 0.30,
+            location: [
+                hyperdrc::Scalar::try_from(50_000.0).expect("finite benchmark coordinate"),
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+            ],
+            diameter: scalar("0.30"),
             net: None,
             plated: false,
         }])
@@ -1532,10 +1660,10 @@ fn main() {
             let _ = mouse_bite_readiness(
                 &mouse_bite_board,
                 &mouse_bite_drills,
-                0.25,
-                0.50,
-                0.40,
-                1.20,
+                &scalar("0.25"),
+                &scalar("0.50"),
+                &scalar("0.40"),
+                &scalar("1.20"),
             );
         }
     });
@@ -1544,21 +1672,31 @@ fn main() {
         copper: Vec::new(),
         drills: (0..2_000)
             .map(|index| DrillFeature {
-                location: [200.0 + index as f64 * 2.0, 200.0],
-                diameter: 0.40,
+                location: [
+                    hyperdrc::Scalar::try_from(200.0 + index as f64 * 2.0)
+                        .expect("finite benchmark coordinate"),
+                    hyperdrc::Scalar::try_from(200.0).expect("finite benchmark coordinate"),
+                ],
+                diameter: scalar("0.40"),
                 net: None,
                 plated: false,
             })
             .chain([
                 DrillFeature {
-                    location: [10.0, 10.0],
-                    diameter: 1.50,
+                    location: [
+                        hyperdrc::Scalar::try_from(10.0).expect("finite benchmark coordinate"),
+                        hyperdrc::Scalar::try_from(10.0).expect("finite benchmark coordinate"),
+                    ],
+                    diameter: scalar("1.50"),
                     net: None,
                     plated: false,
                 },
                 DrillFeature {
-                    location: [90.0, 90.0],
-                    diameter: 1.50,
+                    location: [
+                        hyperdrc::Scalar::try_from(90.0).expect("finite benchmark coordinate"),
+                        hyperdrc::Scalar::try_from(90.0).expect("finite benchmark coordinate"),
+                    ],
+                    diameter: scalar("1.50"),
                     net: None,
                     plated: false,
                 },
@@ -1574,7 +1712,13 @@ fn main() {
     };
     let tooling_hole_elapsed = time("tooling_hole_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = tooling_hole_readiness(&tooling_hole_board, &[], 0.8, 4.0, 1.0);
+            let _ = tooling_hole_readiness(
+                &tooling_hole_board,
+                &[],
+                &scalar("0.8"),
+                &scalar("4.0"),
+                &scalar("1.0"),
+            );
         }
     });
     let conformal_coating_board = BoardModel {
@@ -1598,7 +1742,12 @@ fn main() {
     };
     let conformal_coating_elapsed = time("conformal_coating_keepout_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = conformal_coating_keepout_readiness(&conformal_coating_board, &[], 0.3, 1.0e-9);
+            let _ = conformal_coating_keepout_readiness(
+                &conformal_coating_board,
+                &[],
+                &scalar("0.3"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -1620,8 +1769,13 @@ fn main() {
     };
     let testpoint_access_elapsed = time("testpoint_accessibility_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                testpoint_accessibility_readiness(&testpoint_board, &testpoints, 0.40, 0.25, 1.0);
+            let _ = testpoint_accessibility_readiness(
+                &testpoint_board,
+                &testpoints,
+                &scalar("0.40"),
+                &scalar("0.25"),
+                &scalar("1.0"),
+            );
         }
     });
     let coverage_board = BoardModel {
@@ -1675,9 +1829,9 @@ fn main() {
             let _ = testpoint_accessibility_readiness(
                 &testpoint_side_board,
                 &testpoint_side_points,
-                0.40,
-                0.35,
-                1.0,
+                &scalar("0.40"),
+                &scalar("0.35"),
+                &scalar("1.0"),
             );
         }
     });
@@ -1707,9 +1861,9 @@ fn main() {
                 &testpoint_copper_board,
                 &testpoint_copper_points,
                 &[],
-                0.40,
-                0.10,
-                1.0e-9,
+                &scalar("0.40"),
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -1727,7 +1881,12 @@ fn main() {
     };
     let antenna_keepout_elapsed = time("antenna_copper_keepout_10k", || {
         for _ in 0..10_000 {
-            let _ = antenna_copper_keepout_readiness(&antenna_board, &[], 0.60, 1.0e-9);
+            let _ = antenna_copper_keepout_readiness(
+                &antenna_board,
+                &[],
+                &scalar("0.60"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let rf_keepout_board = BoardModel {
@@ -1752,7 +1911,8 @@ fn main() {
     };
     let rf_keepout_elapsed = time("rf_keepout_1k", || {
         for _ in 0..1_000 {
-            let _ = rf_keepout_readiness(&rf_keepout_board, 0.60, &[], 1.0e-9);
+            let _ =
+                rf_keepout_readiness(&rf_keepout_board, &scalar("0.60"), &[], &scalar("1.0e-9"));
         }
     });
     let rf_fence_board = BoardModel {
@@ -1776,7 +1936,7 @@ fn main() {
     };
     let rf_via_fence_elapsed = time("rf_via_fence_1k", || {
         for _ in 0..1_000 {
-            let _ = rf_via_fence_readiness(&rf_fence_board, &[], 0.60);
+            let _ = rf_via_fence_readiness(&rf_fence_board, &[], &scalar("0.60"));
         }
     });
 
@@ -1793,7 +1953,12 @@ fn main() {
     };
     let inductor_keepout_elapsed = time("inductor_copper_keepout_10k", || {
         for _ in 0..10_000 {
-            let _ = inductor_copper_keepout_readiness(&power_board, &[], 0.70, 1.0e-9);
+            let _ = inductor_copper_keepout_readiness(
+                &power_board,
+                &[],
+                hyperdrc::scalar::scalar("0.70"),
+                &hyperdrc::scalar::scalar("1e-9"),
+            );
         }
     });
     let switch_node_board = BoardModel {
@@ -1818,7 +1983,12 @@ fn main() {
     };
     let switch_node_elapsed = time("switch_node_keepout_1k", || {
         for _ in 0..1_000 {
-            let _ = switch_node_keepout_readiness(&switch_node_board, &[], 0.60, 1.0e-9);
+            let _ = switch_node_keepout_readiness(
+                &switch_node_board,
+                &[],
+                hyperdrc::scalar::scalar("0.60"),
+                &hyperdrc::scalar::scalar("1e-9"),
+            );
         }
     });
     let sparse_power_summary_board = BoardModel {
@@ -1841,7 +2011,7 @@ fn main() {
     });
     let high_current_neck_elapsed = time("high_current_neck_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = high_current_neck_readiness(&sparse_power_summary_board, &[], 0.30);
+            let _ = high_current_neck_readiness(&sparse_power_summary_board, &[], &scalar("0.30"));
         }
     });
     let pad_entry_board = BoardModel {
@@ -1856,7 +2026,13 @@ fn main() {
     };
     let power_pad_entry_elapsed = time("power_pad_entry_10k", || {
         for _ in 0..10_000 {
-            let _ = power_pad_entry_readiness(&pad_entry_board, &[], 0.20, 0.30, 2);
+            let _ = power_pad_entry_readiness(
+                &pad_entry_board,
+                &[],
+                &scalar("0.20"),
+                &scalar("0.30"),
+                2,
+            );
         }
     });
     let sparse_pad_entry_board = BoardModel {
@@ -1883,7 +2059,13 @@ fn main() {
     };
     let power_pad_entry_sparse_elapsed = time("power_pad_entry_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = power_pad_entry_readiness(&sparse_pad_entry_board, &[], 0.20, 0.30, 2);
+            let _ = power_pad_entry_readiness(
+                &sparse_pad_entry_board,
+                &[],
+                &scalar("0.20"),
+                &scalar("0.30"),
+                2,
+            );
         }
     });
     let power_via_return_board = BoardModel {
@@ -1898,7 +2080,7 @@ fn main() {
     };
     let power_via_return_elapsed = time("power_via_return_10k", || {
         for _ in 0..10_000 {
-            let _ = power_via_return_readiness(&power_via_return_board, &[], 0.50);
+            let _ = power_via_return_readiness(&power_via_return_board, &[], &scalar("0.50"));
         }
     });
     let sparse_power_via_return_board = BoardModel {
@@ -1925,7 +2107,8 @@ fn main() {
     };
     let power_via_return_sparse_elapsed = time("power_via_return_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = power_via_return_readiness(&sparse_power_via_return_board, &[], 0.50);
+            let _ =
+                power_via_return_readiness(&sparse_power_via_return_board, &[], &scalar("0.50"));
         }
     });
     let power_via_array_board = BoardModel {
@@ -1939,7 +2122,7 @@ fn main() {
     };
     let power_via_array_sparse_elapsed = time("power_via_array_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = power_via_array_readiness(&power_via_array_board, &[], 0.50);
+            let _ = power_via_array_readiness(&power_via_array_board, &[], &scalar("0.50"));
         }
     });
     let decoupling_sparse_board = BoardModel {
@@ -1954,7 +2137,7 @@ fn main() {
     };
     let decoupling_sparse_elapsed = time("decoupling_proximity_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = decoupling_proximity_readiness(&decoupling_sparse_board, &[], 1.0);
+            let _ = decoupling_proximity_readiness(&decoupling_sparse_board, &[], &scalar("1.0"));
         }
     });
 
@@ -1971,7 +2154,13 @@ fn main() {
     };
     let thermal_via_distribution_elapsed = time("thermal_via_distribution_10k", || {
         for _ in 0..10_000 {
-            let _ = thermal_via_distribution_readiness(&thermal_board, &[], 2, 1.0, 0.10);
+            let _ = thermal_via_distribution_readiness(
+                &thermal_board,
+                &[],
+                2,
+                &scalar("1.0"),
+                &scalar("0.10"),
+            );
         }
     });
     let thermal_via_cluster_board = BoardModel {
@@ -1991,8 +2180,13 @@ fn main() {
     };
     let thermal_via_cluster_elapsed = time("thermal_via_distribution_clustered_100x1k", || {
         for _ in 0..100 {
-            let _ =
-                thermal_via_distribution_readiness(&thermal_via_cluster_board, &[], 2, 5.0, 0.0);
+            let _ = thermal_via_distribution_readiness(
+                &thermal_via_cluster_board,
+                &[],
+                2,
+                &scalar("5.0"),
+                &scalar("0.0"),
+            );
         }
     });
     let thermal_via_sparse_board = BoardModel {
@@ -2019,7 +2213,7 @@ fn main() {
     };
     let thermal_via_elapsed = time("thermal_via_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = thermal_via_readiness(&thermal_via_sparse_board, &[], 3, 0.10);
+            let _ = thermal_via_readiness(&thermal_via_sparse_board, &[], 3, &scalar("0.10"));
         }
     });
     let thermal_via_distribution_sparse_elapsed =
@@ -2029,8 +2223,8 @@ fn main() {
                     &thermal_via_sparse_board,
                     &[],
                     2,
-                    1.0,
-                    0.10,
+                    &scalar("1.0"),
+                    &scalar("0.10"),
                 );
             }
         });
@@ -2057,28 +2251,38 @@ fn main() {
     };
     let thermal_copper_area_elapsed = time("thermal_copper_area_1k", || {
         for _ in 0..1_000 {
-            let _ = thermal_copper_area_readiness(&thermal_sparse_board, &[], 2.0);
+            let _ = thermal_copper_area_readiness(&thermal_sparse_board, &[], &scalar("2.0"));
         }
     });
     let thermal_relief_elapsed = time("thermal_relief_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = thermal_relief_readiness(&thermal_sparse_board, &[], 1.0e-9);
+            let _ = thermal_relief_readiness(&thermal_sparse_board, &[], &scalar("1.0e-9"));
         }
     });
     let thermal_pad_via_elapsed = time("thermal_pad_via_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = thermal_pad_via_readiness(&thermal_sparse_board, &[], 0.75);
+            let _ = thermal_pad_via_readiness(&thermal_sparse_board, &[], &scalar("0.75"));
         }
     });
     let hot_component_spacing_elapsed = time("hot_component_spacing_1k", || {
         for _ in 0..1_000 {
-            let _ = hot_component_spacing_readiness(&thermal_sparse_board, &[], 0.3, 1.0e-9);
+            let _ = hot_component_spacing_readiness(
+                &thermal_sparse_board,
+                &[],
+                &scalar("0.3"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let thermal_mechanical_elapsed = time("thermal_mechanical_keepout_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                thermal_mechanical_keepout_readiness(&thermal_sparse_board, &[], &[], 0.2, 1.0e-9);
+            let _ = thermal_mechanical_keepout_readiness(
+                &thermal_sparse_board,
+                &[],
+                &[],
+                &scalar("0.2"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -2095,7 +2299,7 @@ fn main() {
     };
     let esd_return_path_elapsed = time("esd_return_path_10k", || {
         for _ in 0..10_000 {
-            let _ = esd_return_path_readiness(&safety_board, &[], 0.50);
+            let _ = esd_return_path_readiness(&safety_board, &[], &scalar("0.50"));
         }
     });
     let esd_protection_board = BoardModel {
@@ -2115,7 +2319,12 @@ fn main() {
     };
     let esd_protection_elapsed = time("esd_protection_1k", || {
         for _ in 0..1_000 {
-            let _ = esd_protection_readiness(&esd_protection_board, &[], 1.0, 2.0);
+            let _ = esd_protection_readiness(
+                &esd_protection_board,
+                &[],
+                &scalar("1.0"),
+                &scalar("2.0"),
+            );
         }
     });
     let protective_spacing_board = BoardModel {
@@ -2130,13 +2339,22 @@ fn main() {
     };
     let protective_earth_spacing_elapsed = time("protective_earth_spacing_10k", || {
         for _ in 0..10_000 {
-            let _ =
-                protective_earth_spacing_readiness(&protective_spacing_board, &[], 0.30, 1.0e-9);
+            let _ = protective_earth_spacing_readiness(
+                &protective_spacing_board,
+                &[],
+                &scalar("0.30"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let voltage_clearance_elapsed = time("voltage_clearance_1k", || {
         for _ in 0..1_000 {
-            let _ = voltage_clearance_readiness(&protective_spacing_board, 0.30, &[], 1.0e-9);
+            let _ = voltage_clearance_readiness(
+                &protective_spacing_board,
+                &scalar("0.30"),
+                &[],
+                &scalar("1.0e-9"),
+            );
         }
     });
     let surge_keepout_board = BoardModel {
@@ -2151,7 +2369,12 @@ fn main() {
     };
     let surge_keepout_elapsed = time("surge_protection_keepout_10k", || {
         for _ in 0..10_000 {
-            let _ = surge_protection_keepout_readiness(&surge_keepout_board, &[], 0.30, 1.0e-9);
+            let _ = surge_protection_keepout_readiness(
+                &surge_keepout_board,
+                &[],
+                &scalar("0.30"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -2168,7 +2391,13 @@ fn main() {
     };
     let mixed_signal_partition_elapsed = time("mixed_signal_partition_10k", || {
         for _ in 0..10_000 {
-            let _ = mixed_signal_partition_readiness(&signal_board, &[], 0.45, 0.20, 1.0e-9);
+            let _ = mixed_signal_partition_readiness(
+                &signal_board,
+                &[],
+                &scalar("0.45"),
+                &scalar("0.20"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let sparse_signal_board = BoardModel {
@@ -2194,12 +2423,17 @@ fn main() {
     };
     let sensitive_spacing_elapsed = time("sensitive_net_spacing_1k", || {
         for _ in 0..1_000 {
-            let _ = sensitive_net_spacing_readiness(&sparse_signal_board, 0.45, &[], 1.0e-9);
+            let _ = sensitive_net_spacing_readiness(
+                &sparse_signal_board,
+                &scalar("0.45"),
+                &[],
+                &scalar("1.0e-9"),
+            );
         }
     });
     let sensitive_return_elapsed = time("sensitive_return_1k", || {
         for _ in 0..1_000 {
-            let _ = sensitive_return_readiness(&sparse_signal_board, &[], 0.30);
+            let _ = sensitive_return_readiness(&sparse_signal_board, &[], &scalar("0.30"));
         }
     });
 
@@ -2217,7 +2451,12 @@ fn main() {
     );
     let min_copper_neck_elapsed = time("min_copper_neck_1k", || {
         for _ in 0..1_000 {
-            let _ = min_copper_neck_width("bench neck islands", &neck_layer, 0.0762, 1.0e-9);
+            let _ = min_copper_neck_width(
+                "bench neck islands",
+                &neck_layer,
+                &scalar("0.0762"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -2225,8 +2464,11 @@ fn main() {
         source: "bench".to_string(),
         copper: vec![bench_segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)],
         drills: vec![DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.60,
+            location: [
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+            ],
+            diameter: scalar("0.60"),
             net: None,
             plated: false,
         }],
@@ -2235,7 +2477,7 @@ fn main() {
     };
     let continuity_elapsed = time("same_net_drill_break_10k", || {
         for _ in 0..10_000 {
-            let _ = same_net_drill_break_readiness(&continuity_board, &[], &[], 1.0e-9);
+            let _ = same_net_drill_break_readiness(&continuity_board, &[], &[], &scalar("1.0e-9"));
         }
     });
     let continuity_sparse_drill_board = BoardModel {
@@ -2243,14 +2485,21 @@ fn main() {
         copper: vec![bench_segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)],
         drills: (0..2_000)
             .map(|index| DrillFeature {
-                location: [10.0 + index as f64 * 2.0, 10.0],
-                diameter: 0.60,
+                location: [
+                    hyperdrc::Scalar::try_from(10.0 + index as f64 * 2.0)
+                        .expect("finite benchmark coordinate"),
+                    hyperdrc::Scalar::try_from(10.0).expect("finite benchmark coordinate"),
+                ],
+                diameter: scalar("0.60"),
                 net: None,
                 plated: false,
             })
             .chain(std::iter::once(DrillFeature {
-                location: [0.0, 0.0],
-                diameter: 0.60,
+                location: [
+                    hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                    hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                ],
+                diameter: scalar("0.60"),
                 net: None,
                 plated: false,
             }))
@@ -2260,8 +2509,12 @@ fn main() {
     };
     let continuity_sparse_drills_elapsed = time("same_net_drill_break_sparse_drills_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                same_net_drill_break_readiness(&continuity_sparse_drill_board, &[], &[], 1.0e-9);
+            let _ = same_net_drill_break_readiness(
+                &continuity_sparse_drill_board,
+                &[],
+                &[],
+                &scalar("1.0e-9"),
+            );
         }
     });
     let same_net_island_sparse_board = BoardModel {
@@ -2278,7 +2531,7 @@ fn main() {
     };
     let same_net_island_sparse_elapsed = time("same_net_island_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = same_net_island_readiness(&same_net_island_sparse_board, &[], 0.10);
+            let _ = same_net_island_readiness(&same_net_island_sparse_board, &[], &scalar("0.10"));
         }
     });
     let plane_clearance_sparse_board = BoardModel {
@@ -2291,8 +2544,12 @@ fn main() {
             .collect(),
         drills: (0..400)
             .map(|index| DrillFeature {
-                location: [index as f64 * 3.0, 0.0],
-                diameter: 0.5,
+                location: [
+                    hyperdrc::Scalar::try_from(index as f64 * 3.0)
+                        .expect("finite benchmark coordinate"),
+                    hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                ],
+                diameter: scalar("0.5"),
                 net: None,
                 plated: false,
             })
@@ -2302,7 +2559,8 @@ fn main() {
     };
     let plane_clearance_sparse_elapsed = time("plane_clearance_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = plane_clearance_readiness(&plane_clearance_sparse_board, &[], 1.0e-9);
+            let _ =
+                plane_clearance_readiness(&plane_clearance_sparse_board, &[], &scalar("1.0e-9"));
         }
     });
     let panelization_sparse_board = BoardModel {
@@ -2334,7 +2592,12 @@ fn main() {
     };
     let panelization_clearance_elapsed = time("panelization_clearance_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = panelization_clearance(&panelization_sparse_board, &[], 0.25, 1.0e-9);
+            let _ = panelization_clearance(
+                &panelization_sparse_board,
+                &[],
+                &scalar("0.25"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -2356,8 +2619,11 @@ fn main() {
             )))
             .collect(),
         drills: vec![DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.40,
+            location: [
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+            ],
+            diameter: scalar("0.40"),
             net: None,
             plated: false,
         }],
@@ -2366,8 +2632,13 @@ fn main() {
     };
     let drill_clearance_elapsed = time("drill_to_copper_clearance_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                drill_to_copper_clearance(&drill_clearance_sparse_board, &[], 0.20, &[], 1.0e-9);
+            let _ = drill_to_copper_clearance(
+                &drill_clearance_sparse_board,
+                &[],
+                &scalar("0.20"),
+                &[],
+                &scalar("1.0e-9"),
+            );
         }
     });
     let plating_intent_board = BoardModel {
@@ -2387,14 +2658,20 @@ fn main() {
             .collect(),
         drills: vec![
             DrillFeature {
-                location: [0.0, 0.0],
-                diameter: 0.30,
+                location: [
+                    hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                    hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                ],
+                diameter: scalar("0.30"),
                 net: Some("GND".to_string()),
                 plated: true,
             },
             DrillFeature {
-                location: [0.0, 2.0],
-                diameter: 0.60,
+                location: [
+                    hyperdrc::Scalar::try_from(0.0).expect("finite benchmark coordinate"),
+                    hyperdrc::Scalar::try_from(2.0).expect("finite benchmark coordinate"),
+                ],
+                diameter: scalar("0.60"),
                 net: None,
                 plated: false,
             },
@@ -2404,7 +2681,7 @@ fn main() {
     };
     let plating_intent_elapsed = time("plating_intent_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = plating_intent(&plating_intent_board, &[], 0.05);
+            let _ = plating_intent(&plating_intent_board, &[], &scalar("0.05"));
         }
     });
     let drill_outline = polygons_to_profile(
@@ -2434,8 +2711,8 @@ fn main() {
                 &drill_outline,
                 &outline_clearance_drills,
                 &[],
-                0.25,
-                1.0e-9,
+                &scalar("0.25"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -2449,7 +2726,7 @@ fn main() {
         .collect::<Vec<_>>();
     let drill_spacing_elapsed = time("drill_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = drill_spacing(&sparse_drills, &[], 0.20);
+            let _ = drill_spacing(&sparse_drills, &[], &scalar("0.20"));
         }
     });
 
@@ -2468,7 +2745,7 @@ fn main() {
                 &board_table_drills,
                 &sidecar_table_drills,
                 &ipc_table_points,
-                0.10,
+                &scalar("0.10"),
             );
         }
     });
@@ -2498,17 +2775,29 @@ fn main() {
     let ipc356_apply_elapsed = time("ipc356_apply_sparse_1k", || {
         for _ in 0..1_000 {
             let mut board = ipc356_board.clone();
-            apply_ipc356_nets(&mut board, &ipc356_points, 0.05);
+            apply_ipc356_nets(
+                &mut board,
+                &ipc356_points,
+                &hyperdrc::scalar::scalar("0.05"),
+            );
         }
     });
     let ipc356_coverage_elapsed = time("ipc356_coverage_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = ipc356_coverage(&ipc356_board, &ipc356_points, 0.05);
+            let _ = ipc356_coverage(
+                &ipc356_board,
+                &ipc356_points,
+                &hyperdrc::scalar::scalar("0.05"),
+            );
         }
     });
     let ipc356_drill_elapsed = time("ipc356_drill_diameter_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = ipc356_drill_diameter(&ipc356_board, &ipc356_points, 0.05);
+            let _ = ipc356_drill_diameter(
+                &ipc356_board,
+                &ipc356_points,
+                &hyperdrc::scalar::scalar("0.05"),
+            );
         }
     });
 
@@ -2527,7 +2816,7 @@ fn main() {
     };
     let mounting_hole_spacing_elapsed = time("mounting_hole_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = mounting_hole_spacing_readiness(&mechanical_spacing_board, 0.5);
+            let _ = mounting_hole_spacing_readiness(&mechanical_spacing_board, &scalar("0.5"));
         }
     });
     let mounting_hole_distribution_board = BoardModel {
@@ -2550,7 +2839,10 @@ fn main() {
     };
     let mounting_hole_distribution_elapsed = time("mounting_hole_distribution_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = mounting_hole_distribution_readiness(&mounting_hole_distribution_board, 8.0);
+            let _ = mounting_hole_distribution_readiness(
+                &mounting_hole_distribution_board,
+                &scalar("8.0"),
+            );
         }
     });
     let mounting_hole_grounding_board = BoardModel {
@@ -2570,7 +2862,11 @@ fn main() {
     };
     let mounting_hole_grounding_elapsed = time("mounting_hole_grounding_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = mounting_hole_grounding_readiness(&mounting_hole_grounding_board, &[], 1.0);
+            let _ = mounting_hole_grounding_readiness(
+                &mounting_hole_grounding_board,
+                &[],
+                &scalar("1.0"),
+            );
         }
     });
     let mounting_hole_keepout_board = BoardModel {
@@ -2594,8 +2890,8 @@ fn main() {
             let _ = mounting_hole_copper_keepout_readiness(
                 &mounting_hole_keepout_board,
                 &[],
-                0.5,
-                1.0e-9,
+                &scalar("0.5"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -2625,7 +2921,11 @@ fn main() {
     };
     let mounting_hole_edge_elapsed = time("mounting_hole_edge_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = mounting_hole_edge_clearance_readiness(&mounting_hole_edge_board, 0.5, 1.0e-9);
+            let _ = mounting_hole_edge_clearance_readiness(
+                &mounting_hole_edge_board,
+                &scalar("0.5"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let mounting_hole_plating_board = BoardModel {
@@ -2645,7 +2945,11 @@ fn main() {
     };
     let mounting_hole_plating_elapsed = time("mounting_hole_plating_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = mounting_hole_plating_intent_readiness(&mounting_hole_plating_board, &[], 1.0);
+            let _ = mounting_hole_plating_intent_readiness(
+                &mounting_hole_plating_board,
+                &[],
+                &scalar("1.0"),
+            );
         }
     });
     let gold_finger_spacing_board = BoardModel {
@@ -2669,7 +2973,12 @@ fn main() {
     };
     let gold_finger_spacing_elapsed = time("gold_finger_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = gold_finger_spacing_readiness(&gold_finger_spacing_board, &[], 0.10, 1.0e-9);
+            let _ = gold_finger_spacing_readiness(
+                &gold_finger_spacing_board,
+                &[],
+                &scalar("0.10"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let gold_finger_intent_board = BoardModel {
@@ -2708,7 +3017,7 @@ fn main() {
     };
     let gold_finger_edge_elapsed = time("gold_finger_edge_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = gold_finger_edge_readiness(&gold_finger_edge_board, &[], 1.0);
+            let _ = gold_finger_edge_readiness(&gold_finger_edge_board, &[], &scalar("1.0"));
         }
     });
     let gold_finger_keepout_board = BoardModel {
@@ -2734,8 +3043,8 @@ fn main() {
                 &gold_finger_keepout_board,
                 &gold_finger_keepout_drills,
                 &[],
-                0.4,
-                1.0e-9,
+                &scalar("0.4"),
+                &scalar("1.0e-9"),
             );
         }
     });
@@ -2765,7 +3074,12 @@ fn main() {
     };
     let edge_plating_elapsed = time("edge_plating_rect_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = edge_plating_intent_readiness(&edge_plating_board, &[], 0.5, 1.0e-9);
+            let _ = edge_plating_intent_readiness(
+                &edge_plating_board,
+                &[],
+                &scalar("0.5"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -2800,7 +3114,11 @@ fn main() {
     };
     let panel_feature_outline_elapsed = time("panel_feature_outline_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = panel_feature_outline_readiness(&panel_feature_outline_board, 0.5, 1.0e-9);
+            let _ = panel_feature_outline_readiness(
+                &panel_feature_outline_board,
+                &scalar("0.5"),
+                &scalar("1.0e-9"),
+            );
         }
     });
 
@@ -2824,7 +3142,7 @@ fn main() {
     };
     let castellation_pitch_elapsed = time("castellation_pitch_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = castellation_pitch_readiness(&castellation_pitch_board, 0.5);
+            let _ = castellation_pitch_readiness(&castellation_pitch_board, &scalar("0.5"));
         }
     });
 
@@ -2840,7 +3158,7 @@ fn main() {
     };
     let short_elapsed = time("different_net_short_10k", || {
         for _ in 0..10_000 {
-            let _ = different_net_short_readiness(&short_board, &[], 1.0e-9);
+            let _ = different_net_short_readiness(&short_board, &[], &scalar("1.0e-9"));
         }
     });
 
@@ -2899,7 +3217,8 @@ fn main() {
     };
     let intra_pair_sparse_elapsed = time("differential_pair_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = differential_pair_spacing_readiness(&intra_pair_sparse_board, &[], 0.30);
+            let _ =
+                differential_pair_spacing_readiness(&intra_pair_sparse_board, &[], &scalar("0.30"));
         }
     });
 
@@ -2920,8 +3239,11 @@ fn main() {
     };
     let pair_to_pair_elapsed = time("differential_pair_to_pair_spacing_10k", || {
         for _ in 0..10_000 {
-            let _ =
-                differential_pair_to_pair_spacing_readiness(&differential_pair_board, &[], 0.40);
+            let _ = differential_pair_to_pair_spacing_readiness(
+                &differential_pair_board,
+                &[],
+                &scalar("0.40"),
+            );
         }
     });
     let pair_to_pair_sparse_board = BoardModel {
@@ -2946,33 +3268,55 @@ fn main() {
     };
     let pair_to_pair_sparse_elapsed = time("differential_pair_to_pair_spacing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ =
-                differential_pair_to_pair_spacing_readiness(&pair_to_pair_sparse_board, &[], 0.30);
+            let _ = differential_pair_to_pair_spacing_readiness(
+                &pair_to_pair_sparse_board,
+                &[],
+                &scalar("0.30"),
+            );
         }
     });
     let pair_skew_elapsed = time("differential_pair_skew_10k", || {
         for _ in 0..10_000 {
-            let _ = differential_pair_skew_readiness(&differential_pair_board, &[], 0.20);
+            let _ =
+                differential_pair_skew_readiness(&differential_pair_board, &[], &scalar("0.20"));
         }
     });
     let pair_width_elapsed = time("differential_pair_width_10k", || {
         for _ in 0..10_000 {
-            let _ = differential_pair_width_readiness(&differential_pair_board, &[], 0.08, 0.04);
+            let _ = differential_pair_width_readiness(
+                &differential_pair_board,
+                &[],
+                &scalar("0.08"),
+                &scalar("0.04"),
+            );
         }
     });
     let pair_neckdown_elapsed = time("differential_pair_neckdown_10k", || {
         for _ in 0..10_000 {
-            let _ = differential_pair_neckdown_readiness(&differential_pair_board, &[], 0.08, 0.50);
+            let _ = differential_pair_neckdown_readiness(
+                &differential_pair_board,
+                &[],
+                &scalar("0.08"),
+                &scalar("0.50"),
+            );
         }
     });
     let pair_via_proximity_elapsed = time("differential_pair_via_proximity_10k", || {
         for _ in 0..10_000 {
-            let _ = differential_pair_via_proximity_readiness(&differential_pair_board, &[], 0.20);
+            let _ = differential_pair_via_proximity_readiness(
+                &differential_pair_board,
+                &[],
+                &scalar("0.20"),
+            );
         }
     });
     let pair_via_return_elapsed = time("differential_pair_via_return_10k", || {
         for _ in 0..10_000 {
-            let _ = differential_pair_via_return_readiness(&differential_pair_board, &[], 0.20);
+            let _ = differential_pair_via_return_readiness(
+                &differential_pair_board,
+                &[],
+                &scalar("0.20"),
+            );
         }
     });
     let mut dense_pair_vias = Vec::new();
@@ -2990,7 +3334,11 @@ fn main() {
     };
     let pair_via_proximity_dense_elapsed = time("differential_pair_via_proximity_dense_1k", || {
         for _ in 0..1_000 {
-            let _ = differential_pair_via_proximity_readiness(&dense_pair_via_board, &[], 0.10);
+            let _ = differential_pair_via_proximity_readiness(
+                &dense_pair_via_board,
+                &[],
+                &scalar("0.10"),
+            );
         }
     });
     let mut sparse_ground_vias = vec![
@@ -3009,7 +3357,8 @@ fn main() {
     };
     let pair_via_return_sparse_elapsed = time("differential_pair_via_return_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = differential_pair_via_return_readiness(&sparse_ground_board, &[], 0.20);
+            let _ =
+                differential_pair_via_return_readiness(&sparse_ground_board, &[], &scalar("0.20"));
         }
     });
     let mut sparse_pair_return_copper = vec![
@@ -3028,7 +3377,8 @@ fn main() {
     };
     let pair_return_sparse_elapsed = time("differential_pair_return_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = differential_pair_return_readiness(&sparse_pair_return_board, &[], 0.30);
+            let _ =
+                differential_pair_return_readiness(&sparse_pair_return_board, &[], &scalar("0.30"));
         }
     });
 
@@ -3045,7 +3395,12 @@ fn main() {
     };
     let split_plane_elapsed = time("split_plane_crossing_10k", || {
         for _ in 0..10_000 {
-            let _ = split_plane_crossing_readiness(&split_plane_board, &[], 0.05, 1.0e-9);
+            let _ = split_plane_crossing_readiness(
+                &split_plane_board,
+                &[],
+                &scalar("0.05"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let split_plane_sparse_board = BoardModel {
@@ -3068,12 +3423,17 @@ fn main() {
     };
     let split_plane_sparse_elapsed = time("split_plane_crossing_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = split_plane_crossing_readiness(&split_plane_sparse_board, &[], 0.05, 1.0e-9);
+            let _ = split_plane_crossing_readiness(
+                &split_plane_sparse_board,
+                &[],
+                &scalar("0.05"),
+                &scalar("1.0e-9"),
+            );
         }
     });
     let return_path_proximity_elapsed = time("return_path_proximity_10k", || {
         for _ in 0..10_000 {
-            let _ = return_path_proximity_readiness(&split_plane_board, &[], 0.50);
+            let _ = return_path_proximity_readiness(&split_plane_board, &[], &scalar("0.50"));
         }
     });
     let mut sparse_return_path_copper = vec![bench_segment("USB_DP", [0.0, 0.0], [1.0, 0.0], 0.10)];
@@ -3094,7 +3454,8 @@ fn main() {
     };
     let return_path_proximity_sparse_elapsed = time("return_path_proximity_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = return_path_proximity_readiness(&sparse_return_path_board, &[], 0.50);
+            let _ =
+                return_path_proximity_readiness(&sparse_return_path_board, &[], &scalar("0.50"));
         }
     });
     let mut sparse_reference_plane_copper =
@@ -3119,7 +3480,11 @@ fn main() {
     };
     let reference_plane_void_sparse_elapsed = time("reference_plane_void_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = reference_plane_void_readiness(&sparse_reference_plane_board, &[], 1.0e-9);
+            let _ = reference_plane_void_readiness(
+                &sparse_reference_plane_board,
+                &[],
+                &scalar("1.0e-9"),
+            );
         }
     });
     let orphaned_zone_sparse_board = BoardModel {
@@ -3146,7 +3511,7 @@ fn main() {
     };
     let orphaned_zone_sparse_elapsed = time("orphaned_zone_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = orphaned_zone_readiness(&orphaned_zone_sparse_board, &[], 0.10);
+            let _ = orphaned_zone_readiness(&orphaned_zone_sparse_board, &[], &scalar("0.10"));
         }
     });
     let return_path_stitching_sparse_board = BoardModel {
@@ -3161,7 +3526,8 @@ fn main() {
     };
     let return_path_stitching_sparse_elapsed = time("return_path_stitching_sparse_1k", || {
         for _ in 0..1_000 {
-            let _ = return_path_readiness(&return_path_stitching_sparse_board, 0.50, &[]);
+            let _ =
+                return_path_readiness(&return_path_stitching_sparse_board, &scalar("0.50"), &[]);
         }
     });
 
@@ -3607,8 +3973,11 @@ fn bench_testpoint(net: &str, location: [f64; 2], diameter: f64) -> Ipc356Point 
         net: net.to_string(),
         reference: Some(net.to_string()),
         pin: Some("1".to_string()),
-        location,
-        diameter: Some(diameter),
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark X"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark Y"),
+        ],
+        diameter: Some(hyperdrc::Scalar::try_from(diameter).expect("finite benchmark diameter")),
         access_side: Some(Ipc356AccessSide::Top),
         feature_type: Some(Ipc356FeatureType::Smd),
         soldermask: Some(Ipc356Soldermask::Open),
@@ -3630,7 +3999,12 @@ fn bench_segment_on_layer(
         layer: layer.to_string(),
         net: Some(net.to_string()),
         kind: CopperKind::Segment,
-        location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+        location: [
+            hyperdrc::Scalar::try_from((start[0] + end[0]) / 2.0)
+                .expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from((start[1] + end[1]) / 2.0)
+                .expect("finite benchmark coordinate"),
+        ],
         sketch: polygons_to_profile(
             vec![line_polygon(start, end, width).expect("benchmark segment should be valid")],
             Some(LayerMetadata {
@@ -3669,7 +4043,10 @@ fn bench_unnetted_pad(location: [f64; 2], size: [f64; 2]) -> CopperFeature {
         layer: "F.Cu".to_string(),
         net: None,
         kind: CopperKind::Pad,
-        location,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
         sketch: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
@@ -3684,7 +4061,10 @@ fn bench_pad_on_layer(layer: &str, net: &str, location: [f64; 2], size: [f64; 2]
         layer: layer.to_string(),
         net: Some(net.to_string()),
         kind: CopperKind::Pad,
-        location,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
         sketch: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
@@ -3699,7 +4079,10 @@ fn bench_fiducial(location: [f64; 2], diameter: f64) -> CopperFeature {
         layer: "F.Cu".to_string(),
         net: None,
         kind: CopperKind::Pad,
-        location,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
         sketch: polygons_to_profile(
             vec![rect_polygon(location, [diameter, diameter], 0.0)],
             Some(LayerMetadata {
@@ -3714,7 +4097,10 @@ fn bench_via(net: &str, location: [f64; 2], diameter: f64) -> CopperFeature {
         layer: "F.Cu".to_string(),
         net: Some(net.to_string()),
         kind: CopperKind::Via,
-        location,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
         sketch: polygons_to_profile(
             vec![circle_polygon(location, diameter / 2.0, 32)],
             Some(LayerMetadata {
@@ -3726,8 +4112,11 @@ fn bench_via(net: &str, location: [f64; 2], diameter: f64) -> CopperFeature {
 
 fn bench_drill(location: [f64; 2], diameter: f64, plated: bool) -> DrillFeature {
     DrillFeature {
-        location,
-        diameter,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
+        diameter: hyperdrc::Scalar::try_from(diameter).expect("finite benchmark drill diameter"),
         net: None,
         plated,
     }
@@ -3735,8 +4124,11 @@ fn bench_drill(location: [f64; 2], diameter: f64, plated: bool) -> DrillFeature 
 
 fn bench_net_drill(net: &str, location: [f64; 2], diameter: f64, plated: bool) -> DrillFeature {
     DrillFeature {
-        location,
-        diameter,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
+        diameter: hyperdrc::Scalar::try_from(diameter).expect("finite benchmark drill diameter"),
         net: Some(net.to_string()),
         plated,
     }
@@ -3747,7 +4139,10 @@ fn bench_zone(net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
         layer: "F.Cu".to_string(),
         net: Some(net.to_string()),
         kind: CopperKind::Zone,
-        location,
+        location: [
+            hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
+            hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
+        ],
         sketch: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {

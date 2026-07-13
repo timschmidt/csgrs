@@ -21,8 +21,6 @@ use crate::{
     kicad, sarif, svg_overlay, waiver,
 };
 
-const LOCAL_COPPER_DENSITY_WINDOW_MULTIPLIER: f64 = 100.0;
-
 #[derive(Clone, Debug)]
 struct Layer {
     path: PathBuf,
@@ -95,31 +93,94 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
             Ok(config::effective_rules(
                 &config,
                 config::RuleOverrides {
-                    keepout: cli.keepout,
-                    clearance: cli.clearance,
-                    paste_tolerance: cli.paste_tolerance,
-                    min_paste_area_ratio: cli.min_paste_area_ratio,
-                    max_paste_area_ratio: cli.max_paste_area_ratio,
-                    min_solder_mask_opening_area_ratio: cli.min_solder_mask_opening_area_ratio,
-                    max_solder_mask_opening_area_ratio: cli.max_solder_mask_opening_area_ratio,
-                    stencil_thickness: cli.stencil_thickness,
-                    min_stencil_area_ratio: cli.min_stencil_area_ratio,
-                    min_width: cli.min_width,
-                    min_mask_width: cli.min_mask_width,
-                    min_solder_mask_annular_ring: cli.min_solder_mask_annular_ring,
-                    min_silkscreen_text_height: cli.min_silkscreen_text_height,
-                    acid_trap_angle: cli.acid_trap_angle,
-                    max_copper_imbalance_ratio: cli.max_copper_imbalance_ratio,
-                    annular_ring: cli.annular_ring,
-                    drill_clearance: cli.drill_clearance,
-                    board_thickness: cli.board_thickness,
-                    max_drill_aspect_ratio: cli.max_drill_aspect_ratio,
-                    net_clearance: cli.net_clearance,
-                    registration_tolerance: cli.registration_tolerance,
-                    panel_clearance: cli.panel_clearance,
-                    ipc356_tolerance: cli.ipc356_tolerance,
-                    min_area: cli.min_area,
-                    max_layer_area: cli.max_layer_area,
+                    keepout: cli.keepout.as_ref().map(crate::cli::ScalarArg::to_scalar),
+                    clearance: cli.clearance.as_ref().map(crate::cli::ScalarArg::to_scalar),
+                    paste_tolerance: cli
+                        .paste_tolerance
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_paste_area_ratio: cli
+                        .min_paste_area_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    max_paste_area_ratio: cli
+                        .max_paste_area_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_solder_mask_opening_area_ratio: cli
+                        .min_solder_mask_opening_area_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    max_solder_mask_opening_area_ratio: cli
+                        .max_solder_mask_opening_area_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    stencil_thickness: cli
+                        .stencil_thickness
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_stencil_area_ratio: cli
+                        .min_stencil_area_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_width: cli.min_width.as_ref().map(crate::cli::ScalarArg::to_scalar),
+                    min_mask_width: cli
+                        .min_mask_width
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_solder_mask_annular_ring: cli
+                        .min_solder_mask_annular_ring
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_silkscreen_text_height: cli
+                        .min_silkscreen_text_height
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    acid_trap_angle: cli
+                        .acid_trap_angle
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    max_copper_imbalance_ratio: cli
+                        .max_copper_imbalance_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    annular_ring: cli
+                        .annular_ring
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    drill_clearance: cli
+                        .drill_clearance
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    board_thickness: cli
+                        .board_thickness
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    max_drill_aspect_ratio: cli
+                        .max_drill_aspect_ratio
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    net_clearance: cli
+                        .net_clearance
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    registration_tolerance: cli
+                        .registration_tolerance
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    panel_clearance: cli
+                        .panel_clearance
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    ipc356_tolerance: cli
+                        .ipc356_tolerance
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
+                    min_area: cli.min_area.as_ref().map(crate::cli::ScalarArg::to_scalar),
+                    max_layer_area: cli
+                        .max_layer_area
+                        .as_ref()
+                        .map(crate::cli::ScalarArg::to_scalar),
                     generated_date_stale_days: cli.generated_date_stale_days,
                 },
             ))
@@ -227,7 +288,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
 
         status_activity("apply IPC-D-356 net annotations", || {
             for board in &mut boards {
-                checks::apply_ipc356_nets(board, &ipc356_points, rules.ipc356_tolerance);
+                checks::apply_ipc356_nets(board, &ipc356_points, &rules.ipc356_tolerance);
             }
             Ok(())
         })?;
@@ -653,8 +714,8 @@ fn run_checks(
                         violations.extend(checks::mask_island_keepout(
                             &layer_name(layer),
                             &layer.sketch,
-                            rules.keepout,
-                            rules.min_area,
+                            &rules.keepout,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -669,7 +730,7 @@ fn run_checks(
                                 &left_layer.sketch,
                                 &layer_name(right_layer),
                                 &right_layer.sketch,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                         } else {
                             violations.extend(checks::copper_overlap_with_ipc356(
@@ -678,7 +739,7 @@ fn run_checks(
                                 &layer_name(right_layer),
                                 &right_layer.sketch,
                                 ipc356_points,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -705,7 +766,7 @@ fn run_checks(
                         violations.extend(checks::board_outline_sanity(
                             &layer_name(board),
                             &board.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                     for board in boards {
@@ -713,7 +774,7 @@ fn run_checks(
                             Some(outline) => violations.extend(checks::board_outline_sanity(
                                 "KiCad Edge.Cuts",
                                 outline,
-                                rules.min_area,
+                                &rules.min_area,
                             )),
                             None => violations.push(Violation::new(
                                 "board-outline-sanity",
@@ -733,7 +794,7 @@ fn run_checks(
                         violations.extend(checks::board_outline_fragments(
                             &layer_name(board),
                             &board.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                     for board in boards {
@@ -741,7 +802,7 @@ fn run_checks(
                             violations.extend(checks::board_outline_fragments(
                                 "KiCad Edge.Cuts",
                                 outline,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -839,8 +900,8 @@ fn run_checks(
                             &paste.sketch,
                             &layer_name(copper),
                             &copper.sketch,
-                            rules.paste_tolerance,
-                            rules.min_area,
+                            &rules.paste_tolerance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -855,7 +916,7 @@ fn run_checks(
                             &paste.sketch,
                             &layer_name(copper),
                             &copper.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -870,9 +931,9 @@ fn run_checks(
                             &paste.sketch,
                             &layer_name(copper),
                             &copper.sketch,
-                            rules.min_paste_area_ratio,
-                            rules.max_paste_area_ratio,
-                            rules.min_area,
+                            &rules.min_paste_area_ratio,
+                            &rules.max_paste_area_ratio,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -882,14 +943,15 @@ fn run_checks(
                     {
                         let paste = &layers[paste_index];
                         let copper = &layers[copper_index];
+                        let min_copper_area = &rules.min_area * crate::scalar::scalar("50");
                         violations.extend(checks::thermal_pad_paste_windowpane_readiness(
                             &layer_name(paste),
                             &paste.sketch,
                             &layer_name(copper),
                             &copper.sketch,
-                            rules.min_area * 50.0,
-                            rules.max_paste_area_ratio,
-                            rules.min_area,
+                            &min_copper_area,
+                            &rules.max_paste_area_ratio,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -903,9 +965,9 @@ fn run_checks(
                         violations.extend(checks::stencil_area_ratio_readiness(
                             &layer_name(paste),
                             &paste.sketch,
-                            rules.stencil_thickness,
-                            rules.min_stencil_area_ratio,
-                            rules.min_area,
+                            &rules.stencil_thickness,
+                            &rules.min_stencil_area_ratio,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -919,8 +981,8 @@ fn run_checks(
                         violations.extend(checks::paste_aperture_aspect_ratio_readiness(
                             &layer_name(paste),
                             &paste.sketch,
-                            4.0,
-                            rules.min_area,
+                            &crate::scalar::scalar("4"),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -935,9 +997,9 @@ fn run_checks(
                             &paste.sketch,
                             &layer_name(copper),
                             &copper.sketch,
-                            rules.min_width * 8.0,
-                            0.35,
-                            rules.min_area,
+                            &(&rules.min_width * crate::scalar::scalar("8")),
+                            &crate::scalar::scalar("0.35"),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -954,7 +1016,7 @@ fn run_checks(
                                 &paste.sketch,
                                 board,
                                 kicad_copper_layers,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -969,8 +1031,8 @@ fn run_checks(
                         violations.extend(checks::minimum_paste_aperture(
                             &layer_name(paste),
                             &paste.sketch,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -993,8 +1055,8 @@ fn run_checks(
                         violations.extend(checks::paste_aperture_spacing(
                             &name,
                             &paste.sketch,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1013,7 +1075,7 @@ fn run_checks(
                                 &paste.sketch,
                                 &layer_name(mask),
                                 &mask.sketch,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -1029,7 +1091,7 @@ fn run_checks(
                             &copper.sketch,
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1044,7 +1106,7 @@ fn run_checks(
                             &copper.sketch,
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1059,9 +1121,9 @@ fn run_checks(
                             &copper.sketch,
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.min_solder_mask_opening_area_ratio,
-                            rules.max_solder_mask_opening_area_ratio,
-                            rules.min_area,
+                            &rules.min_solder_mask_opening_area_ratio,
+                            &rules.max_solder_mask_opening_area_ratio,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1076,8 +1138,8 @@ fn run_checks(
                             &copper.sketch,
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.min_solder_mask_annular_ring,
-                            rules.min_area,
+                            &rules.min_solder_mask_annular_ring,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1092,8 +1154,8 @@ fn run_checks(
                             &copper.sketch,
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.clearance,
-                            rules.min_area,
+                            &rules.clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1108,8 +1170,8 @@ fn run_checks(
                             &copper.sketch,
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.clearance,
-                            rules.min_area,
+                            &rules.clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1123,8 +1185,8 @@ fn run_checks(
                                 &mask.sketch,
                                 &layer_name(board),
                                 &board.sketch,
-                                rules.clearance,
-                                rules.min_area,
+                                &rules.clearance,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -1140,7 +1202,7 @@ fn run_checks(
                             &silk.sketch,
                             &layer_name(blocker),
                             &blocker.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1155,8 +1217,8 @@ fn run_checks(
                             &silk.sketch,
                             &layer_name(blocker),
                             &blocker.sketch,
-                            rules.clearance,
-                            rules.min_area,
+                            &rules.clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1170,8 +1232,8 @@ fn run_checks(
                                 &silk.sketch,
                                 &layer_name(board),
                                 &board.sketch,
-                                rules.clearance,
-                                rules.min_area,
+                                &rules.clearance,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -1192,8 +1254,8 @@ fn run_checks(
                         violations.extend(checks::silkscreen_min_width(
                             &name,
                             &silk.sketch,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1213,8 +1275,8 @@ fn run_checks(
                         violations.extend(checks::silkscreen_text_height_readiness(
                             &name,
                             &silk.sketch,
-                            rules.min_silkscreen_text_height,
-                            rules.min_area,
+                            &rules.min_silkscreen_text_height,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1237,8 +1299,8 @@ fn run_checks(
                         violations.extend(checks::min_copper_neck_width(
                             &name,
                             &copper.sketch,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                     }
                     let mut item_index = gerber_copper_layer_count;
@@ -1256,8 +1318,8 @@ fn run_checks(
                             violations.extend(checks::min_copper_neck_width(
                                 &name,
                                 &copper,
-                                rules.min_width,
-                                rules.min_area,
+                                &rules.min_width,
+                                &rules.min_area,
                             ));
                         }
                     }
@@ -1268,7 +1330,7 @@ fn run_checks(
                         violations.extend(checks::acid_trap_candidates(
                             &layer_name(copper),
                             &copper.sketch,
-                            rules.acid_trap_angle,
+                            &rules.acid_trap_angle,
                         ));
                     }
                     for board in boards {
@@ -1276,7 +1338,7 @@ fn run_checks(
                             violations.extend(checks::acid_trap_candidates(
                                 &format!("{}:{layer_name}", board.source),
                                 &copper,
-                                rules.acid_trap_angle,
+                                &rules.acid_trap_angle,
                             ));
                         }
                     }
@@ -1286,8 +1348,8 @@ fn run_checks(
                         violations.extend(checks::trace_junction_acid_trap_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.acid_trap_angle,
-                            rules.min_area,
+                            &rules.acid_trap_angle,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1296,23 +1358,23 @@ fn run_checks(
                         violations.extend(checks::layer_sanity(
                             &layer_name(layer),
                             &layer.sketch,
-                            rules.max_layer_area,
+                            rules.max_layer_area.as_ref(),
                         ));
                         violations.extend(checks::tiny_layer_feature_readiness(
                             &layer_name(layer),
                             &layer.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                         violations.extend(checks::skinny_layer_feature_readiness(
                             &layer_name(layer),
                             &layer.sketch,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                         violations.extend(checks::duplicate_layer_island_readiness(
                             &layer_name(layer),
                             &layer.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                     let explicit_layers = layers
@@ -1321,7 +1383,7 @@ fn run_checks(
                         .collect::<Vec<_>>();
                     violations.extend(checks::duplicate_layer_geometry_readiness(
                         &explicit_layers,
-                        rules.min_area,
+                        &rules.min_area,
                     ));
                     for board in boards {
                         for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
@@ -1329,23 +1391,23 @@ fn run_checks(
                             violations.extend(checks::layer_sanity(
                                 &name,
                                 &copper,
-                                rules.max_layer_area,
+                                rules.max_layer_area.as_ref(),
                             ));
                             violations.extend(checks::tiny_layer_feature_readiness(
                                 &name,
                                 &copper,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                             violations.extend(checks::skinny_layer_feature_readiness(
                                 &name,
                                 &copper,
-                                rules.min_width,
-                                rules.min_area,
+                                &rules.min_width,
+                                &rules.min_area,
                             ));
                             violations.extend(checks::duplicate_layer_island_readiness(
                                 &name,
                                 &copper,
-                                rules.min_area,
+                                &rules.min_area,
                             ));
                         }
                         let kicad_layers = board
@@ -1357,7 +1419,7 @@ fn run_checks(
                             .collect::<Vec<_>>();
                         violations.extend(checks::duplicate_layer_geometry_readiness(
                             &kicad_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1373,8 +1435,8 @@ fn run_checks(
                             .collect::<Vec<_>>();
                         violations.extend(checks::copper_balance(
                             &gerber_copper,
-                            rules.max_copper_imbalance_ratio,
-                            rules.min_area,
+                            &rules.max_copper_imbalance_ratio,
+                            &rules.min_area,
                         ));
                     }
                     for board in boards {
@@ -1387,8 +1449,8 @@ fn run_checks(
                             .collect::<Vec<_>>();
                         violations.extend(checks::copper_balance(
                             &kicad_copper,
-                            rules.max_copper_imbalance_ratio,
-                            rules.min_area,
+                            &rules.max_copper_imbalance_ratio,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1404,9 +1466,9 @@ fn run_checks(
                             .collect::<Vec<_>>();
                         violations.extend(checks::local_copper_density_readiness(
                             &gerber_copper,
-                            local_copper_density_window(rules.min_width),
-                            rules.max_copper_imbalance_ratio,
-                            rules.min_area,
+                            &local_copper_density_window(&rules.min_width),
+                            &rules.max_copper_imbalance_ratio,
+                            &rules.min_area,
                         ));
                     }
                     for board in boards {
@@ -1419,9 +1481,9 @@ fn run_checks(
                             .collect::<Vec<_>>();
                         violations.extend(checks::local_copper_density_readiness(
                             &kicad_copper,
-                            local_copper_density_window(rules.min_width),
-                            rules.max_copper_imbalance_ratio,
-                            rules.min_area,
+                            &local_copper_density_window(&rules.min_width),
+                            &rules.max_copper_imbalance_ratio,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1430,7 +1492,7 @@ fn run_checks(
                         violations.extend(checks::mechanical_layer_geometry(
                             &layer_name(layer),
                             &layer.sketch,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1450,8 +1512,8 @@ fn run_checks(
                         violations.extend(checks::solder_mask_sliver(
                             &name,
                             &mask.sketch,
-                            rules.min_mask_width,
-                            rules.min_area,
+                            &rules.min_mask_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1461,8 +1523,8 @@ fn run_checks(
                         violations.extend(checks::minimum_mask_opening(
                             &layer_name(mask),
                             &mask.sketch,
-                            rules.min_mask_width,
-                            rules.min_area,
+                            &rules.min_mask_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1481,8 +1543,8 @@ fn run_checks(
                         violations.extend(checks::solder_mask_opening_spacing(
                             &name,
                             &mask.sketch,
-                            rules.min_mask_width,
-                            rules.min_area,
+                            &rules.min_mask_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1490,7 +1552,7 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::annular_ring(
                             board,
-                            rules.annular_ring,
+                            &rules.annular_ring,
                             kicad_copper_layers,
                         ));
                     }
@@ -1499,8 +1561,8 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::annular_ring_tolerance(
                             board,
-                            rules.annular_ring,
-                            rules.registration_tolerance,
+                            &rules.annular_ring,
+                            &rules.registration_tolerance,
                             kicad_copper_layers,
                         ));
                     }
@@ -1510,26 +1572,26 @@ fn run_checks(
                         violations.extend(checks::plating_intent(
                             board,
                             kicad_copper_layers,
-                            rules.ipc356_tolerance,
+                            &rules.ipc356_tolerance,
                         ));
                     }
                 }
                 Check::RoutedSlotReadiness => {
                     for board in boards {
-                        violations.extend(checks::routed_slot_readiness(board, rules.min_width));
+                        violations.extend(checks::routed_slot_readiness(board, &rules.min_width));
                     }
                 }
                 Check::CastellationIntent => {
                     for board in boards {
-                        violations.extend(checks::castellation_intent(board, rules.min_area));
+                        violations.extend(checks::castellation_intent(board, &rules.min_area));
                     }
                 }
                 Check::CastellationHoleReadiness => {
                     for board in boards {
                         violations.extend(checks::castellation_hole_readiness(
                             board,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1538,7 +1600,7 @@ fn run_checks(
                         violations.extend(checks::via_in_pad_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1555,9 +1617,9 @@ fn run_checks(
                             board,
                             excellon_drills,
                             excellon_drill_grid,
-                            rules.drill_clearance,
+                            &rules.drill_clearance,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1588,8 +1650,8 @@ fn run_checks(
                                 &outline.sketch,
                                 &board_drills,
                                 excellon_drills,
-                                rules.drill_clearance,
-                                rules.min_area,
+                                &rules.drill_clearance,
+                                &rules.min_area,
                                 outline.gerber_coordinate_grid.combine(excellon_drill_grid),
                             ));
                         }
@@ -1603,8 +1665,8 @@ fn run_checks(
                                 outline,
                                 &board.drills,
                                 excellon_drills,
-                                rules.drill_clearance,
-                                rules.min_area,
+                                &rules.drill_clearance,
+                                &rules.min_area,
                                 SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter)
                                     .combine(excellon_drill_grid),
                             ));
@@ -1616,14 +1678,14 @@ fn run_checks(
                         violations.extend(checks::drill_spacing(
                             &[],
                             excellon_drills,
-                            rules.drill_clearance,
+                            &rules.drill_clearance,
                         ));
                     } else {
                         for board in boards {
                             violations.extend(checks::drill_spacing(
                                 &board.drills,
                                 excellon_drills,
-                                rules.drill_clearance,
+                                &rules.drill_clearance,
                             ));
                         }
                     }
@@ -1633,16 +1695,16 @@ fn run_checks(
                         violations.extend(checks::drill_aspect_ratio(
                             &format!("{} drills", board.source),
                             &board.drills,
-                            rules.board_thickness,
-                            rules.max_drill_aspect_ratio,
+                            &rules.board_thickness,
+                            &rules.max_drill_aspect_ratio,
                         ));
                     }
                     if !excellon_drills.is_empty() {
                         violations.extend(checks::drill_aspect_ratio(
                             "Excellon drills",
                             excellon_drills,
-                            rules.board_thickness,
-                            rules.max_drill_aspect_ratio,
+                            &rules.board_thickness,
+                            &rules.max_drill_aspect_ratio,
                         ));
                     }
                 }
@@ -1652,7 +1714,7 @@ fn run_checks(
                             &[],
                             excellon_drills,
                             ipc356_points,
-                            rules.ipc356_tolerance,
+                            &rules.ipc356_tolerance,
                         ));
                     } else {
                         for board in boards {
@@ -1660,7 +1722,7 @@ fn run_checks(
                                 &board.drills,
                                 excellon_drills,
                                 ipc356_points,
-                                rules.ipc356_tolerance,
+                                &rules.ipc356_tolerance,
                             ));
                         }
                     }
@@ -1670,7 +1732,7 @@ fn run_checks(
                         violations.extend(checks::copper_width_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_width,
+                            &rules.min_width,
                         ));
                     }
                 }
@@ -1684,8 +1746,8 @@ fn run_checks(
                         violations.extend(checks::teardrop_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_width,
-                            rules.min_area,
+                            &rules.min_width,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1694,7 +1756,7 @@ fn run_checks(
                         violations.extend(checks::thermal_relief_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1703,7 +1765,7 @@ fn run_checks(
                         violations.extend(checks::plane_clearance_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1712,7 +1774,7 @@ fn run_checks(
                         violations.extend(checks::board_edge_exposure_with_grid(
                             board,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                             SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
@@ -1722,8 +1784,8 @@ fn run_checks(
                         violations.extend(checks::high_speed_edge_readiness_with_grid(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 2.0,
-                            rules.min_area,
+                            &(&rules.net_clearance * crate::scalar::scalar("2")),
+                            &rules.min_area,
                             SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
@@ -1733,19 +1795,20 @@ fn run_checks(
                         violations.extend(checks::edge_copper_pullback_readiness_with_grid(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
-                            rules.min_area,
+                            &rules.net_clearance,
+                            &rules.min_area,
                             SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
                 }
                 Check::HighVoltageEdgeReadiness => {
+                    let edge_clearance = &rules.net_clearance * crate::scalar::scalar("4");
                     for board in boards {
                         violations.extend(checks::high_voltage_edge_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
-                            rules.min_area,
+                            &edge_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1770,7 +1833,7 @@ fn run_checks(
                         violations.extend(checks::differential_pair_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -1779,8 +1842,8 @@ fn run_checks(
                         violations.extend(checks::differential_pair_width_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_width,
-                            rules.min_width * 0.5,
+                            &rules.min_width,
+                            &(&rules.min_width * crate::scalar::scalar("0.5")),
                         ));
                     }
                 }
@@ -1789,8 +1852,8 @@ fn run_checks(
                         violations.extend(checks::differential_pair_neckdown_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_width,
-                            rules.net_clearance * 8.0,
+                            &rules.min_width,
+                            &(&rules.net_clearance * crate::scalar::scalar("8")),
                         ));
                     }
                 }
@@ -1799,7 +1862,7 @@ fn run_checks(
                         violations.extend(checks::differential_pair_skew_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -1808,7 +1871,7 @@ fn run_checks(
                         violations.extend(checks::differential_pair_to_pair_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 6.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("6")),
                         ));
                     }
                 }
@@ -1817,7 +1880,7 @@ fn run_checks(
                         violations.extend(checks::differential_pair_via_proximity_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -1826,7 +1889,7 @@ fn run_checks(
                         violations.extend(checks::differential_pair_via_return_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -1843,7 +1906,7 @@ fn run_checks(
                         violations.extend(checks::differential_pair_return_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 2.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("2")),
                         ));
                     }
                 }
@@ -1860,7 +1923,7 @@ fn run_checks(
                         violations.extend(checks::reference_plane_void_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1869,17 +1932,18 @@ fn run_checks(
                         violations.extend(checks::split_plane_crossing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
-                            rules.min_area,
+                            &rules.net_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::ReturnPathProximityReadiness => {
+                    let maximum_return_distance = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::return_path_proximity_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 2.0,
+                            &maximum_return_distance,
                         ));
                     }
                 }
@@ -1888,7 +1952,7 @@ fn run_checks(
                         violations.extend(checks::orphaned_zone_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
+                            &rules.net_clearance,
                         ));
                     }
                 }
@@ -1897,7 +1961,7 @@ fn run_checks(
                         violations.extend(checks::same_net_island_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
+                            &rules.net_clearance,
                         ));
                     }
                 }
@@ -1907,7 +1971,7 @@ fn run_checks(
                             board,
                             excellon_drills,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1916,7 +1980,7 @@ fn run_checks(
                         violations.extend(checks::different_net_short_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -1924,7 +1988,7 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::return_path_readiness(
                             board,
-                            rules.net_clearance,
+                            &rules.net_clearance,
                             kicad_copper_layers,
                         ));
                     }
@@ -1940,16 +2004,17 @@ fn run_checks(
                         violations.extend(checks::power_via_array_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
                 Check::PowerViaReturnReadiness => {
+                    let return_distance = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::power_via_return_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 2.0,
+                            &return_distance,
                         ));
                     }
                 }
@@ -1959,7 +2024,7 @@ fn run_checks(
                             board,
                             kicad_copper_layers,
                             2,
-                            rules.net_clearance,
+                            &rules.net_clearance,
                         ));
                     }
                 }
@@ -1969,8 +2034,8 @@ fn run_checks(
                             board,
                             kicad_copper_layers,
                             2,
-                            rules.net_clearance * 4.0,
-                            rules.net_clearance,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
+                            &rules.net_clearance,
                         ));
                     }
                 }
@@ -1981,111 +2046,123 @@ fn run_checks(
                     }
                 }
                 Check::HighCurrentNeckReadiness => {
+                    let minimum_power_width = &rules.min_width * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::high_current_neck_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_width * 2.0,
+                            &minimum_power_width,
                         ));
                     }
                 }
                 Check::PowerPadEntryReadiness => {
+                    let minimum_entry_width = &rules.min_width * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::power_pad_entry_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
-                            rules.min_width * 2.0,
+                            &rules.net_clearance,
+                            &minimum_entry_width,
                             2,
                         ));
                     }
                 }
                 Check::VoltageClearanceReadiness => {
+                    let clearance = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::voltage_clearance_readiness(
                             board,
-                            rules.net_clearance * 2.0,
+                            &clearance,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::ProtectiveEarthSpacingReadiness => {
+                    let clearance = &rules.net_clearance * crate::scalar::scalar("3");
                     for board in boards {
                         violations.extend(checks::protective_earth_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 3.0,
-                            rules.min_area,
+                            &clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::SurgeProtectionKeepoutReadiness => {
+                    let keepout = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::surge_protection_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 2.0,
-                            rules.min_area,
+                            &keepout,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::SensitiveNetSpacingReadiness => {
+                    let clearance = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::sensitive_net_spacing_readiness(
                             board,
-                            rules.net_clearance * 2.0,
+                            &clearance,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::MixedSignalPartitionReadiness => {
+                    let separation = &rules.net_clearance * crate::scalar::scalar("3");
+                    let guard_distance = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::mixed_signal_partition_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 3.0,
-                            rules.net_clearance * 2.0,
-                            rules.min_area,
+                            &separation,
+                            &guard_distance,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::SensitiveReturnReadiness => {
+                    let guard_distance = &rules.net_clearance * crate::scalar::scalar("2");
                     for board in boards {
                         violations.extend(checks::sensitive_return_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 2.0,
+                            &guard_distance,
                         ));
                     }
                 }
                 Check::RfKeepoutReadiness => {
+                    let clearance = &rules.net_clearance * crate::scalar::scalar("4");
                     for board in boards {
                         violations.extend(checks::rf_keepout_readiness(
                             board,
-                            rules.net_clearance * 4.0,
+                            &clearance,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::AntennaCopperKeepoutReadiness => {
+                    let keepout = &rules.net_clearance * crate::scalar::scalar("6");
                     for board in boards {
                         violations.extend(checks::antenna_copper_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 6.0,
-                            rules.min_area,
+                            &keepout,
+                            &rules.min_area,
                         ));
                     }
                 }
                 Check::RfViaFenceReadiness => {
+                    let fence_distance = &rules.net_clearance * crate::scalar::scalar("6");
                     for board in boards {
                         violations.extend(checks::rf_via_fence_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 6.0,
+                            &fence_distance,
                         ));
                     }
                 }
@@ -2094,7 +2171,7 @@ fn run_checks(
                         violations.extend(checks::chassis_stitching_readiness_with_grid(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                             SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
@@ -2104,9 +2181,9 @@ fn run_checks(
                         violations.extend(checks::edge_stitching_readiness_with_grid(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
-                            rules.net_clearance * 6.0,
-                            rules.min_area,
+                            &rules.net_clearance,
+                            &(&rules.net_clearance * crate::scalar::scalar("6")),
+                            &rules.min_area,
                             SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
@@ -2122,7 +2199,7 @@ fn run_checks(
                         violations.extend(checks::gold_finger_edge_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.clearance * 2.0,
+                            &(&rules.clearance * crate::scalar::scalar("2")),
                         ));
                     }
                 }
@@ -2131,8 +2208,8 @@ fn run_checks(
                         violations.extend(checks::gold_finger_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance,
-                            rules.min_area,
+                            &rules.net_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2142,8 +2219,8 @@ fn run_checks(
                             board,
                             excellon_drills,
                             kicad_copper_layers,
-                            rules.clearance * 2.0,
-                            rules.min_area,
+                            &(&rules.clearance * crate::scalar::scalar("2")),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2152,7 +2229,7 @@ fn run_checks(
                         violations.extend(checks::component_edge_clearance_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.component_edge_clearance,
+                            &rules.assembly.component_edge_clearance,
                         ));
                     }
                 }
@@ -2162,8 +2239,8 @@ fn run_checks(
                             board,
                             excellon_drills,
                             kicad_copper_layers,
-                            rules.assembly.component_hole_clearance,
-                            rules.min_area,
+                            &rules.assembly.component_hole_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2172,8 +2249,8 @@ fn run_checks(
                         violations.extend(checks::component_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.component_edge_clearance,
-                            rules.assembly.connector_min_pad_dimension,
+                            &rules.assembly.component_edge_clearance,
+                            &rules.assembly.connector_min_pad_dimension,
                         ));
                     }
                 }
@@ -2182,8 +2259,8 @@ fn run_checks(
                         violations.extend(checks::connector_rework_clearance_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.connector_rework_clearance,
-                            rules.assembly.connector_min_pad_dimension,
+                            &rules.assembly.connector_rework_clearance,
+                            &rules.assembly.connector_min_pad_dimension,
                         ));
                     }
                 }
@@ -2192,9 +2269,9 @@ fn run_checks(
                         violations.extend(checks::pad_pair_asymmetry_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.pad_pair_max_gap,
-                            rules.assembly.pad_pair_max_area_ratio,
-                            rules.assembly.pad_pair_max_pad_dimension,
+                            &rules.assembly.pad_pair_max_gap,
+                            &rules.assembly.pad_pair_max_area_ratio,
+                            &rules.assembly.pad_pair_max_pad_dimension,
                         ));
                     }
                 }
@@ -2203,8 +2280,8 @@ fn run_checks(
                         violations.extend(checks::connector_return_path_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.clearance * 2.0,
-                            rules.net_clearance * 6.0,
+                            &(&rules.clearance * crate::scalar::scalar("2")),
+                            &(&rules.net_clearance * crate::scalar::scalar("6")),
                         ));
                     }
                 }
@@ -2213,7 +2290,7 @@ fn run_checks(
                         violations.extend(checks::decoupling_proximity_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 6.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("6")),
                         ));
                     }
                 }
@@ -2222,8 +2299,8 @@ fn run_checks(
                         violations.extend(checks::esd_protection_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.clearance * 2.0,
-                            rules.net_clearance * 8.0,
+                            &(&rules.clearance * crate::scalar::scalar("2")),
+                            &(&rules.net_clearance * crate::scalar::scalar("8")),
                         ));
                     }
                 }
@@ -2232,7 +2309,7 @@ fn run_checks(
                         violations.extend(checks::esd_return_path_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -2241,8 +2318,8 @@ fn run_checks(
                         violations.extend(checks::switch_node_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 4.0,
-                            rules.min_area,
+                            &rules.net_clearance * crate::scalar::scalar("4"),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2251,8 +2328,8 @@ fn run_checks(
                         violations.extend(checks::inductor_copper_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 6.0,
-                            rules.min_area,
+                            &rules.net_clearance * crate::scalar::scalar("6"),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2270,9 +2347,9 @@ fn run_checks(
                         violations.extend(checks::testpoint_accessibility_readiness(
                             board,
                             ipc356_points,
-                            rules.assembly.testpoint_min_diameter,
-                            rules.assembly.testpoint_min_spacing,
-                            rules.assembly.testpoint_edge_clearance,
+                            &rules.assembly.testpoint_min_diameter,
+                            &rules.assembly.testpoint_min_spacing,
+                            &rules.assembly.testpoint_edge_clearance,
                         ));
                     }
                 }
@@ -2282,9 +2359,9 @@ fn run_checks(
                             board,
                             ipc356_points,
                             kicad_copper_layers,
-                            rules.assembly.testpoint_min_diameter,
-                            rules.assembly.testpoint_min_spacing,
-                            rules.min_area,
+                            &rules.assembly.testpoint_min_diameter,
+                            &rules.assembly.testpoint_min_spacing,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2293,9 +2370,9 @@ fn run_checks(
                         violations.extend(checks::tooling_hole_readiness(
                             board,
                             excellon_drills,
-                            rules.assembly.tooling_min_diameter,
-                            rules.assembly.tooling_max_diameter,
-                            rules.assembly.tooling_edge_clearance,
+                            &rules.assembly.tooling_min_diameter,
+                            &rules.assembly.tooling_max_diameter,
+                            &rules.assembly.tooling_edge_clearance,
                         ));
                     }
                 }
@@ -2304,10 +2381,10 @@ fn run_checks(
                         violations.extend(checks::mouse_bite_readiness(
                             board,
                             excellon_drills,
-                            rules.assembly.mouse_bite_min_diameter,
-                            rules.assembly.mouse_bite_max_diameter,
-                            rules.assembly.mouse_bite_min_spacing,
-                            rules.assembly.mouse_bite_max_spacing,
+                            &rules.assembly.mouse_bite_min_diameter,
+                            &rules.assembly.mouse_bite_max_diameter,
+                            &rules.assembly.mouse_bite_min_spacing,
+                            &rules.assembly.mouse_bite_max_spacing,
                         ));
                     }
                 }
@@ -2316,7 +2393,7 @@ fn run_checks(
                         violations.extend(checks::fiducial_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.fiducial_edge_clearance,
+                            &rules.assembly.fiducial_edge_clearance,
                         ));
                     }
                 }
@@ -2325,8 +2402,8 @@ fn run_checks(
                         violations.extend(checks::local_fiducial_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.local_fiducial_pitch,
-                            rules.assembly.local_fiducial_search_radius,
+                            &rules.assembly.local_fiducial_pitch,
+                            &rules.assembly.local_fiducial_search_radius,
                         ));
                     }
                 }
@@ -2335,8 +2412,8 @@ fn run_checks(
                         violations.extend(checks::fiducial_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.fiducial_edge_clearance,
-                            rules.min_area,
+                            &rules.assembly.fiducial_edge_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2345,8 +2422,8 @@ fn run_checks(
                         violations.extend(checks::dense_pad_escape_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.dense_pad_pitch,
-                            rules.assembly.dense_pad_via_search_radius,
+                            &rules.assembly.dense_pad_pitch,
+                            &rules.assembly.dense_pad_via_search_radius,
                         ));
                     }
                 }
@@ -2355,10 +2432,10 @@ fn run_checks(
                         violations.extend(checks::dense_pad_via_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.dense_pad_pitch,
-                            rules.assembly.dense_pad_via_search_radius,
-                            rules.net_clearance,
-                            rules.min_area,
+                            &rules.assembly.dense_pad_pitch,
+                            &rules.assembly.dense_pad_via_search_radius,
+                            &rules.net_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2367,21 +2444,25 @@ fn run_checks(
                         violations.extend(checks::dense_pad_mask_bridge_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.dense_pad_pitch,
-                            rules.min_mask_width,
+                            &rules.assembly.dense_pad_pitch,
+                            &rules.min_mask_width,
                         ));
                     }
                 }
                 Check::SelectiveWaveSolderKeepoutReadiness => {
+                    let keepout = if rules.assembly.selective_solder_keepout
+                        >= rules.assembly.wave_solder_keepout
+                    {
+                        &rules.assembly.selective_solder_keepout
+                    } else {
+                        &rules.assembly.wave_solder_keepout
+                    };
                     for board in boards {
                         violations.extend(checks::selective_wave_solder_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules
-                                .assembly
-                                .selective_solder_keepout
-                                .max(rules.assembly.wave_solder_keepout),
-                            rules.min_area,
+                            keepout,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2390,8 +2471,8 @@ fn run_checks(
                         violations.extend(checks::press_fit_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.press_fit_keepout,
-                            rules.min_area,
+                            &rules.assembly.press_fit_keepout,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2400,8 +2481,8 @@ fn run_checks(
                         violations.extend(checks::conformal_coating_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.assembly.conformal_coating_keepout,
-                            rules.min_area,
+                            &rules.assembly.conformal_coating_keepout,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2410,7 +2491,7 @@ fn run_checks(
                         violations.extend(checks::thermal_pad_via_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.min_width * 12.0,
+                            &(&rules.min_width * crate::scalar::scalar("12")),
                         ));
                     }
                 }
@@ -2419,7 +2500,7 @@ fn run_checks(
                         violations.extend(checks::thermal_copper_area_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 8.0,
+                            &(&rules.net_clearance * crate::scalar::scalar("8")),
                         ));
                     }
                 }
@@ -2428,8 +2509,8 @@ fn run_checks(
                         violations.extend(checks::hot_component_spacing_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.net_clearance * 6.0,
-                            rules.min_area,
+                            &(&rules.net_clearance * crate::scalar::scalar("6")),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2439,8 +2520,8 @@ fn run_checks(
                             board,
                             excellon_drills,
                             kicad_copper_layers,
-                            rules.clearance * 3.0,
-                            rules.min_area,
+                            &(&rules.clearance * crate::scalar::scalar("3")),
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2449,7 +2530,7 @@ fn run_checks(
                         violations.extend(checks::mounting_hole_grounding_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.panel_clearance * 4.0,
+                            &(&rules.panel_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -2458,8 +2539,8 @@ fn run_checks(
                         violations.extend(checks::mounting_hole_copper_keepout_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.panel_clearance,
-                            rules.min_area,
+                            &rules.panel_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2467,8 +2548,8 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::mounting_hole_edge_clearance_readiness(
                             board,
-                            rules.panel_clearance,
-                            rules.min_area,
+                            &rules.panel_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2477,7 +2558,7 @@ fn run_checks(
                         violations.extend(checks::mounting_hole_plating_intent_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.panel_clearance * 4.0,
+                            &(&rules.panel_clearance * crate::scalar::scalar("4")),
                         ));
                     }
                 }
@@ -2485,7 +2566,7 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::mounting_hole_distribution_readiness(
                             board,
-                            rules.panel_clearance * 8.0,
+                            &(&rules.panel_clearance * crate::scalar::scalar("8")),
                         ));
                     }
                 }
@@ -2493,7 +2574,7 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::mounting_hole_spacing_readiness(
                             board,
-                            rules.panel_clearance,
+                            &rules.panel_clearance,
                         ));
                     }
                 }
@@ -2501,8 +2582,8 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::panel_feature_outline_readiness(
                             board,
-                            rules.panel_clearance,
-                            rules.min_area,
+                            &rules.panel_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2511,8 +2592,8 @@ fn run_checks(
                         violations.extend(checks::edge_plating_intent_readiness(
                             board,
                             kicad_copper_layers,
-                            rules.panel_clearance,
-                            rules.min_area,
+                            &rules.panel_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2520,7 +2601,7 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::castellation_pitch_readiness(
                             board,
-                            rules.drill_clearance,
+                            &rules.drill_clearance,
                         ));
                     }
                 }
@@ -2535,9 +2616,9 @@ fn run_checks(
                         );
                         violations.extend(checks::net_spacing(
                             board,
-                            rules.net_clearance,
+                            &rules.net_clearance,
                             kicad_copper_layers,
-                            rules.min_area,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2545,8 +2626,8 @@ fn run_checks(
                     for board in boards {
                         violations.extend(checks::registration_tolerance(
                             board,
-                            rules.registration_tolerance,
-                            rules.min_area,
+                            &rules.registration_tolerance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2555,8 +2636,8 @@ fn run_checks(
                         violations.extend(checks::panelization_clearance(
                             board,
                             excellon_drills,
-                            rules.panel_clearance,
-                            rules.min_area,
+                            &rules.panel_clearance,
+                            &rules.min_area,
                         ));
                     }
                 }
@@ -2565,7 +2646,7 @@ fn run_checks(
                         violations.extend(checks::ipc356_coverage(
                             board,
                             ipc356_points,
-                            rules.ipc356_tolerance,
+                            &rules.ipc356_tolerance,
                         ));
                     }
                 }
@@ -2574,7 +2655,7 @@ fn run_checks(
                         violations.extend(checks::ipc356_drill_diameter(
                             board,
                             ipc356_points,
-                            rules.ipc356_tolerance,
+                            &rules.ipc356_tolerance,
                         ));
                     }
                 }
@@ -3528,8 +3609,8 @@ fn run_board_edge_clearance(
                 &copper.sketch,
                 &layer_name(board),
                 &board.sketch,
-                rules.clearance,
-                rules.min_area,
+                &rules.clearance,
+                &rules.min_area,
             ));
         }
     }
@@ -3542,8 +3623,8 @@ fn run_board_edge_clearance(
                     &copper,
                     "KiCad Edge.Cuts",
                     outline,
-                    rules.clearance,
-                    rules.min_area,
+                    &rules.clearance,
+                    &rules.min_area,
                 ));
             }
         }
@@ -3570,8 +3651,8 @@ fn run_board_outline_cutout_clearance(
                 &subject.sketch,
                 &layer_name(outline),
                 &outline.sketch,
-                rules.clearance,
-                rules.min_area,
+                &rules.clearance,
+                &rules.min_area,
                 subject
                     .gerber_coordinate_grid
                     .combine(outline.gerber_coordinate_grid),
@@ -3587,8 +3668,8 @@ fn run_board_outline_cutout_clearance(
                     &copper,
                     "KiCad Edge.Cuts",
                     outline,
-                    rules.clearance,
-                    rules.min_area,
+                    &rules.clearance,
+                    &rules.min_area,
                     SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                 ));
             }
@@ -8305,8 +8386,10 @@ fn layer_name(layer: &Layer) -> String {
     layer.path.display().to_string()
 }
 
-fn local_copper_density_window(min_width: f64) -> f64 {
-    (min_width * LOCAL_COPPER_DENSITY_WINDOW_MULTIPLIER).max(1.0)
+fn local_copper_density_window(min_width: &crate::Scalar) -> crate::Scalar {
+    let window = min_width * crate::scalar::scalar("100");
+    let one = crate::scalar::scalar("1");
+    if window >= one { window } else { one }
 }
 
 fn print_text_report(report: &Report) {
@@ -8477,7 +8560,7 @@ mod tests {
                 sketch: empty_profile(Some(crate::LayerMetadata {
                     name: (*layer).to_string(),
                 })),
-                location: [0.0, 0.0],
+                location: [crate::Scalar::zero(), crate::Scalar::zero()],
             });
         }
 
@@ -8486,8 +8569,11 @@ mod tests {
             copper,
             drills: if has_drill {
                 vec![kicad::DrillFeature {
-                    location: [1.0, 1.0],
-                    diameter: 0.6,
+                    location: [
+                        crate::geometry::exact_real(1.0),
+                        crate::geometry::exact_real(1.0),
+                    ],
+                    diameter: crate::scalar::scalar("0.6"),
                     net: None,
                     plated: true,
                 }]

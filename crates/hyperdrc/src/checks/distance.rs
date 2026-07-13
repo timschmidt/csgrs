@@ -6,8 +6,324 @@
 use geo::{Coord, LineString, MultiPolygon, Polygon};
 use hyperlimit::{Point2, SegmentIntersection};
 
+use crate::Scalar;
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
 
+/// Exact boundary distance over a finite polygon projection.
+///
+/// The `geo` polygons are a named compatibility input from current rendering
+/// adapters. Every finite coordinate is lifted exactly as its IEEE-754 dyadic,
+/// and all metric arithmetic after that boundary remains in [`Scalar`]. Empty
+/// or non-finite input has no distance and returns `None` instead of smuggling
+/// an infinity sentinel into the internal scalar domain.
+pub(super) fn polygon_boundary_distance_scalar(
+    left: &MultiPolygon<f64>,
+    right: &MultiPolygon<f64>,
+) -> Option<Scalar> {
+    polygon_boundary_distance_scalar_with_grid(left, right, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+/// Decide whether any polygon boundary pair is within an exact threshold.
+///
+/// Finite edge AABBs are used only to reject segment pairs whose axis gap is
+/// conservatively greater than the outward-rounded threshold. Every surviving
+/// pair is lifted and measured in [`Scalar`], and the walk exits on the first
+/// exact threshold hit.
+pub(super) fn polygon_boundaries_within_scalar(
+    left: &MultiPolygon<f64>,
+    right: &MultiPolygon<f64>,
+    threshold: &Scalar,
+) -> bool {
+    let Some(projected) = threshold.to_f64_lossy().filter(|value| value.is_finite()) else {
+        return true;
+    };
+    let broad_threshold = if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    };
+    left.0.iter().any(|left_polygon| {
+        right.0.iter().any(|right_polygon| {
+            let left_rings =
+                std::iter::once(left_polygon.exterior()).chain(left_polygon.interiors().iter());
+            let right_rings = std::iter::once(right_polygon.exterior())
+                .chain(right_polygon.interiors().iter())
+                .collect::<Vec<_>>();
+            left_rings.into_iter().any(|left_ring| {
+                right_rings.iter().any(|right_ring| {
+                    ring_boundaries_within_scalar(left_ring, right_ring, threshold, broad_threshold)
+                })
+            })
+        })
+    })
+}
+
+pub(super) fn exact_point_polygon_boundary_within_scalar(
+    point: &[Scalar; 2],
+    projected_point: [f64; 2],
+    polygons: &MultiPolygon<f64>,
+    threshold: &Scalar,
+) -> bool {
+    let Some(projected) = threshold.to_f64_lossy().filter(|value| value.is_finite()) else {
+        return true;
+    };
+    let broad_threshold = if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    };
+    let provenance = RuleGeometryProvenance::new(
+        "exact-point-polygon-clearance",
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    );
+    polygons.0.iter().any(|polygon| {
+        std::iter::once(polygon.exterior())
+            .chain(polygon.interiors().iter())
+            .any(|ring| {
+                ring.0.windows(2).any(|segment| {
+                    if segment_axis_gap_exceeds(
+                        projected_point[0],
+                        projected_point[0],
+                        segment[0].x,
+                        segment[1].x,
+                        broad_threshold,
+                    ) || segment_axis_gap_exceeds(
+                        projected_point[1],
+                        projected_point[1],
+                        segment[0].y,
+                        segment[1].y,
+                        broad_threshold,
+                    ) {
+                        return false;
+                    }
+                    let Some(start) = lift_scalar_coord(segment[0], provenance) else {
+                        return true;
+                    };
+                    let Some(end) = lift_scalar_coord(segment[1], provenance) else {
+                        return true;
+                    };
+                    point_segment_distance_from_scalars(point, &start, &end)
+                        .is_some_and(|distance| &distance <= threshold)
+                })
+            })
+    })
+}
+
+fn ring_boundaries_within_scalar(
+    left: &LineString<f64>,
+    right: &LineString<f64>,
+    threshold: &Scalar,
+    broad_threshold: f64,
+) -> bool {
+    left.0.windows(2).any(|left_segment| {
+        right.0.windows(2).any(|right_segment| {
+            if segment_axis_gap_exceeds(
+                left_segment[0].x,
+                left_segment[1].x,
+                right_segment[0].x,
+                right_segment[1].x,
+                broad_threshold,
+            ) || segment_axis_gap_exceeds(
+                left_segment[0].y,
+                left_segment[1].y,
+                right_segment[0].y,
+                right_segment[1].y,
+                broad_threshold,
+            ) {
+                return false;
+            }
+            segment_distance_scalar_with_grid(
+                left_segment[0],
+                left_segment[1],
+                right_segment[0],
+                right_segment[1],
+                SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+            )
+            .is_some_and(|distance| &distance <= threshold)
+        })
+    })
+}
+
+fn segment_axis_gap_exceeds(
+    left_start: f64,
+    left_end: f64,
+    right_start: f64,
+    right_end: f64,
+    broad_threshold: f64,
+) -> bool {
+    if !left_start.is_finite()
+        || !left_end.is_finite()
+        || !right_start.is_finite()
+        || !right_end.is_finite()
+    {
+        return false;
+    }
+    let left_min = left_start.min(left_end);
+    let left_max = left_start.max(left_end);
+    let right_min = right_start.min(right_end);
+    let right_max = right_start.max(right_end);
+    let gap = if left_max < right_min {
+        right_min - left_max
+    } else if right_max < left_min {
+        left_min - right_max
+    } else {
+        0.0
+    };
+    gap.next_down() > broad_threshold
+}
+
+pub(super) fn polygon_boundary_distance_scalar_with_grid(
+    left: &MultiPolygon<f64>,
+    right: &MultiPolygon<f64>,
+    grid: SourceGridFacts,
+) -> Option<Scalar> {
+    let mut minimum = None;
+    for left_polygon in &left.0 {
+        for right_polygon in &right.0 {
+            minimum = minimum_scalar(
+                minimum,
+                single_polygon_boundary_distance_scalar(left_polygon, right_polygon, grid),
+            );
+        }
+    }
+    minimum
+}
+
+fn single_polygon_boundary_distance_scalar(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    grid: SourceGridFacts,
+) -> Option<Scalar> {
+    let mut minimum = ring_boundary_distance_scalar(left.exterior(), right.exterior(), grid);
+
+    for left_hole in left.interiors() {
+        minimum = minimum_scalar(
+            minimum,
+            ring_boundary_distance_scalar(left_hole, right.exterior(), grid),
+        );
+        for right_hole in right.interiors() {
+            minimum = minimum_scalar(
+                minimum,
+                ring_boundary_distance_scalar(left_hole, right_hole, grid),
+            );
+        }
+    }
+
+    for right_hole in right.interiors() {
+        minimum = minimum_scalar(
+            minimum,
+            ring_boundary_distance_scalar(left.exterior(), right_hole, grid),
+        );
+    }
+
+    minimum
+}
+
+fn ring_boundary_distance_scalar(
+    left: &LineString<f64>,
+    right: &LineString<f64>,
+    grid: SourceGridFacts,
+) -> Option<Scalar> {
+    let mut minimum = None;
+    for left_segment in left.0.windows(2) {
+        for right_segment in right.0.windows(2) {
+            minimum = minimum_scalar(
+                minimum,
+                segment_distance_scalar_with_grid(
+                    left_segment[0],
+                    left_segment[1],
+                    right_segment[0],
+                    right_segment[1],
+                    grid,
+                ),
+            );
+        }
+    }
+    minimum
+}
+
+fn segment_distance_scalar_with_grid(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+    grid: SourceGridFacts,
+) -> Option<Scalar> {
+    if !coords_are_finite_4(a_start, a_end, b_start, b_end) {
+        return None;
+    }
+    if segments_intersect_with_grid(a_start, a_end, b_start, b_end, grid) {
+        return Some(Scalar::zero());
+    }
+
+    [
+        point_segment_distance_scalar_with_grid(a_start, b_start, b_end, grid),
+        point_segment_distance_scalar_with_grid(a_end, b_start, b_end, grid),
+        point_segment_distance_scalar_with_grid(b_start, a_start, a_end, grid),
+        point_segment_distance_scalar_with_grid(b_end, a_start, a_end, grid),
+    ]
+    .into_iter()
+    .fold(None, minimum_scalar)
+}
+
+fn point_segment_distance_scalar_with_grid(
+    point: Coord<f64>,
+    start: Coord<f64>,
+    end: Coord<f64>,
+    grid: SourceGridFacts,
+) -> Option<Scalar> {
+    let provenance = RuleGeometryProvenance::new("exact-clearance-metric", grid);
+    let point = lift_scalar_coord(point, provenance)?;
+    let start = lift_scalar_coord(start, provenance)?;
+    let end = lift_scalar_coord(end, provenance)?;
+    point_segment_distance_from_scalars(&point, &start, &end)
+}
+
+fn point_segment_distance_from_scalars(
+    point: &[Scalar; 2],
+    start: &[Scalar; 2],
+    end: &[Scalar; 2],
+) -> Option<Scalar> {
+    let dx = &end[0] - &start[0];
+    let dy = &end[1] - &start[1];
+    let length_squared = &dx * &dx + &dy * &dy;
+    if length_squared == Scalar::zero() {
+        return scalar_point_distance(&point, &start);
+    }
+
+    let point_dx = &point[0] - &start[0];
+    let point_dy = &point[1] - &start[1];
+    let numerator = point_dx * &dx + point_dy * &dy;
+    let t = if numerator <= Scalar::zero() {
+        Scalar::zero()
+    } else if numerator >= length_squared {
+        Scalar::one()
+    } else {
+        (numerator / &length_squared).ok()?
+    };
+    let projection = [&start[0] + &t * &dx, &start[1] + &t * &dy];
+    scalar_point_distance(&point, &projection)
+}
+
+fn lift_scalar_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<[Scalar; 2]> {
+    Some([provenance.lift_f64(coord.x)?, provenance.lift_f64(coord.y)?])
+}
+
+fn scalar_point_distance(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &left[0] - &right[0];
+    let dy = &left[1] - &right[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
+}
+
+fn minimum_scalar(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
+    match (left, right) {
+        (Some(left), Some(right)) => Some(if left <= right { left } else { right }),
+        (Some(value), None) | (None, Some(value)) => Some(value),
+        (None, None) => None,
+    }
+}
+
+#[cfg(test)]
 pub(super) fn polygon_boundary_distance(
     left: &MultiPolygon<f64>,
     right: &MultiPolygon<f64>,
@@ -15,6 +331,7 @@ pub(super) fn polygon_boundary_distance(
     polygon_boundary_distance_with_grid(left, right, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
 }
 
+#[cfg(test)]
 pub(super) fn polygon_boundary_distance_with_grid(
     left: &MultiPolygon<f64>,
     right: &MultiPolygon<f64>,
@@ -39,6 +356,7 @@ pub(super) fn polygon_boundary_distance_with_grid(
     minimum
 }
 
+#[cfg(test)]
 fn single_polygon_boundary_distance(
     left: &Polygon<f64>,
     right: &Polygon<f64>,
@@ -60,6 +378,7 @@ fn single_polygon_boundary_distance(
     minimum
 }
 
+#[cfg(test)]
 fn ring_boundary_distance(
     left: &LineString<f64>,
     right: &LineString<f64>,
@@ -96,6 +415,7 @@ fn segment_distance(
     )
 }
 
+#[cfg(test)]
 fn segment_distance_with_grid(
     a_start: Coord<f64>,
     a_end: Coord<f64>,
@@ -128,6 +448,7 @@ fn point_segment_distance(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>)
     point_segment_distance_with_grid(point, start, end, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
 }
 
+#[cfg(test)]
 fn point_segment_distance_with_grid(
     point: Coord<f64>,
     start: Coord<f64>,
@@ -235,6 +556,7 @@ fn lift_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<P
     ))
 }
 
+#[cfg(test)]
 fn exact_coords_equal_with_grid(
     left: Coord<f64>,
     right: Coord<f64>,
@@ -261,6 +583,7 @@ fn exact_coords_equal_with_grid(
         .unwrap_or(false)
 }
 
+#[cfg(test)]
 fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     if !left[0].is_finite()
         || !left[1].is_finite()
@@ -291,6 +614,7 @@ fn coords_are_finite_4(
         && fourth.y.is_finite()
 }
 
+#[cfg(test)]
 fn coords_are_finite_3(first: Coord<f64>, second: Coord<f64>, third: Coord<f64>) -> bool {
     first.x.is_finite()
         && first.y.is_finite()
@@ -307,8 +631,8 @@ mod tests {
     use crate::geometry::{SourceGridFacts, SourceUnit};
 
     use super::{
-        point_segment_distance, polygon_boundary_distance, polygon_boundary_distance_with_grid,
-        segment_distance, segments_intersect,
+        point_segment_distance, polygon_boundary_distance, polygon_boundary_distance_scalar,
+        polygon_boundary_distance_with_grid, segment_distance, segments_intersect,
     };
 
     fn square(x: f64, y: f64, size: f64) -> Polygon<f64> {
@@ -420,6 +744,17 @@ mod tests {
         let right = MultiPolygon(vec![square(0.0, 3.0, 1.0)]);
 
         assert_eq!(polygon_boundary_distance(&left, &right), 2.0);
+    }
+
+    #[test]
+    fn scalar_boundary_distance_retains_exact_projected_coordinates() {
+        let left = MultiPolygon(vec![square(0.0, 0.0, 1.0)]);
+        let right = MultiPolygon(vec![square(3.0, 0.0, 1.0)]);
+
+        assert_eq!(
+            polygon_boundary_distance_scalar(&left, &right),
+            Some(crate::scalar::scalar("2"))
+        );
     }
 
     #[test]

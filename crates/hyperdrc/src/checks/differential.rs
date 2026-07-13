@@ -12,11 +12,11 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use geo::BoundingRect;
 
-use super::distance::polygon_boundary_distance;
+use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
-use crate::PcbSketchExt;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
+use crate::{PcbSketchExt, Scalar};
 
 /// Warn when inferred differential-pair segment widths look narrow or unbalanced.
 ///
@@ -32,8 +32,8 @@ use crate::report::{Severity, Violation};
 pub fn differential_pair_width_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    minimum_segment_width: f64,
-    maximum_side_width_delta: f64,
+    minimum_segment_width: &Scalar,
+    maximum_side_width_delta: &Scalar,
 ) -> Vec<Violation> {
     let mut pairs = BTreeMap::<String, PairWidthUse>::new();
     let mut violations = Vec::new();
@@ -49,23 +49,25 @@ pub fn differential_pair_width_readiness(
             continue;
         };
         let estimated_width = estimated_segment_width(feature);
-        if estimated_width <= 0.0 {
+        if estimated_width <= Scalar::zero() {
             continue;
         }
 
         let side_use = pairs.entry(pair.clone()).or_default().side_mut(side);
         side_use.layers.insert(feature.layer.clone());
-        side_use.locations.push(feature.location);
-        side_use.widths.push(estimated_width);
+        side_use
+            .locations
+            .push(feature.location_f64_compatibility_required());
+        side_use.widths.push(estimated_width.clone());
 
-        if estimated_width < minimum_segment_width {
+        if &estimated_width < minimum_segment_width {
             violations.push(Violation::new(
                 "differential-pair-width-readiness",
                 Severity::Warning,
                 vec![feature.layer.clone()],
                 None,
                 Vec::new(),
-                vec![feature.location],
+                vec![feature.location_f64_compatibility_required()],
                 Some(format!(
                     "likely differential pair {pair} segment on net {net} has approximate width {estimated_width:.6}, below review threshold {minimum_segment_width:.6}; review impedance, neck-down, and fabricator trace-width rules"
                 )),
@@ -88,8 +90,8 @@ pub fn differential_pair_width_readiness(
         let Some(negative_width) = usage.negative.minimum_width() else {
             continue;
         };
-        let delta = (positive_width - negative_width).abs();
-        if delta <= maximum_side_width_delta {
+        let delta = (&positive_width - &negative_width).abs();
+        if &delta <= maximum_side_width_delta {
             continue;
         }
 
@@ -124,8 +126,8 @@ pub fn differential_pair_width_readiness(
 pub fn differential_pair_neckdown_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    minimum_segment_width: f64,
-    maximum_neckdown_length: f64,
+    minimum_segment_width: &Scalar,
+    maximum_neckdown_length: &Scalar,
 ) -> Vec<Violation> {
     let mut candidate_count = 0usize;
     let mut violations = Vec::new();
@@ -141,14 +143,14 @@ pub fn differential_pair_neckdown_readiness(
         };
         let estimated_width = estimated_segment_width(feature);
         let estimated_length = estimated_segment_length(feature);
-        if estimated_width <= 0.0 || estimated_length <= 0.0 {
+        if estimated_width <= Scalar::zero() || estimated_length <= Scalar::zero() {
             continue;
         }
-        if estimated_width >= minimum_segment_width {
+        if &estimated_width >= minimum_segment_width {
             continue;
         }
         candidate_count += 1;
-        if estimated_length <= maximum_neckdown_length {
+        if &estimated_length <= maximum_neckdown_length {
             continue;
         }
 
@@ -158,7 +160,7 @@ pub fn differential_pair_neckdown_readiness(
             vec![feature.layer.clone()],
             None,
             Vec::new(),
-            vec![feature.location],
+            vec![feature.location_f64_compatibility_required()],
             Some(format!(
                 "likely differential pair {pair} segment on net {net} has approximate neck-down width {estimated_width:.6} and length {estimated_length:.6}, above allowed neck-down length {maximum_neckdown_length:.6}; review impedance discontinuity and escape routing"
             )),
@@ -189,7 +191,7 @@ pub fn differential_pair_neckdown_readiness(
 pub fn differential_pair_skew_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    maximum_pair_skew: f64,
+    maximum_pair_skew: &Scalar,
 ) -> Vec<Violation> {
     let mut pairs = BTreeMap::<String, PairLengthUse>::new();
     for feature in selected_copper_features(board, selected_layers) {
@@ -203,14 +205,16 @@ pub fn differential_pair_skew_readiness(
             continue;
         };
         let estimated_length = estimated_segment_length(feature);
-        if estimated_length <= 0.0 {
+        if estimated_length <= Scalar::zero() {
             continue;
         }
 
         let side_use = pairs.entry(pair).or_default().side_mut(side);
         side_use.layers.insert(feature.layer.clone());
-        side_use.locations.push(feature.location);
-        side_use.estimated_length += estimated_length;
+        side_use
+            .locations
+            .push(feature.location_f64_compatibility_required());
+        side_use.estimated_length += &estimated_length;
     }
     log::trace!(
         "differential pair skew readiness: source={} inferred_pairs={} selected_layers={} threshold={:.6}",
@@ -222,11 +226,13 @@ pub fn differential_pair_skew_readiness(
 
     let mut violations = Vec::new();
     for (pair, usage) in pairs {
-        if usage.positive.estimated_length <= 0.0 || usage.negative.estimated_length <= 0.0 {
+        if usage.positive.estimated_length <= Scalar::zero()
+            || usage.negative.estimated_length <= Scalar::zero()
+        {
             continue;
         }
-        let skew = (usage.positive.estimated_length - usage.negative.estimated_length).abs();
-        if skew <= maximum_pair_skew {
+        let skew = (&usage.positive.estimated_length - &usage.negative.estimated_length).abs();
+        if &skew <= maximum_pair_skew {
             continue;
         }
 
@@ -263,7 +269,7 @@ pub fn differential_pair_skew_readiness(
 pub fn differential_pair_via_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    maximum_via_pair_gap: f64,
+    maximum_via_pair_gap: &Scalar,
 ) -> Vec<Violation> {
     let mut pairs = BTreeMap::<String, PairViaUse>::new();
     for feature in selected_copper_features(board, selected_layers) {
@@ -279,25 +285,40 @@ pub fn differential_pair_via_proximity_readiness(
 
         let side_use = pairs.entry(pair).or_default().side_mut(side);
         side_use.layers.insert(feature.layer.clone());
-        side_use.locations.push(feature.location);
+        side_use.locations.push(ExactReportPoint {
+            exact: feature.location.clone(),
+            report: feature.location_f64_compatibility_required(),
+        });
     }
     let mut violations = Vec::new();
     let mut indexed_pair_sides = 0usize;
     let mut spatial_buckets = 0usize;
     let mut candidate_hits = 0usize;
+    let broad_phase_gap = scalar_broad_phase_radius(maximum_via_pair_gap);
     for (pair, usage) in pairs {
         if usage.positive.locations.is_empty() || usage.negative.locations.is_empty() {
             continue;
         }
 
         let negative_index = PointSpatialIndex::new(
-            usage.negative.locations.iter().copied(),
-            maximum_via_pair_gap,
+            usage
+                .negative
+                .locations
+                .iter()
+                .map(|location| location.report),
+            broad_phase_gap,
         );
         indexed_pair_sides += 1;
         spatial_buckets += negative_index.bucket_count();
         for positive in &usage.positive.locations {
-            let nearby = negative_index.centers_within(*positive, maximum_via_pair_gap);
+            let nearby = negative_index
+                .candidate_centers_near(positive.report, broad_phase_gap)
+                .into_iter()
+                .filter(|index| {
+                    exact_distance_scalar(&positive.exact, &usage.negative.locations[*index].exact)
+                        .is_some_and(|distance| &distance <= maximum_via_pair_gap)
+                })
+                .collect::<Vec<_>>();
             candidate_hits += nearby.len();
             if !nearby.is_empty() {
                 continue;
@@ -309,7 +330,7 @@ pub fn differential_pair_via_proximity_readiness(
                 usage.layers(),
                 None,
                 Vec::new(),
-                vec![*positive],
+                vec![positive.report],
                 Some(format!(
                     "likely differential pair {pair} positive-side via has no parsed negative-side via within {maximum_via_pair_gap:.6}; review layer-change symmetry and return-path stitching"
                 )),
@@ -317,13 +338,24 @@ pub fn differential_pair_via_proximity_readiness(
         }
 
         let positive_index = PointSpatialIndex::new(
-            usage.positive.locations.iter().copied(),
-            maximum_via_pair_gap,
+            usage
+                .positive
+                .locations
+                .iter()
+                .map(|location| location.report),
+            broad_phase_gap,
         );
         indexed_pair_sides += 1;
         spatial_buckets += positive_index.bucket_count();
         for negative in &usage.negative.locations {
-            let nearby = positive_index.centers_within(*negative, maximum_via_pair_gap);
+            let nearby = positive_index
+                .candidate_centers_near(negative.report, broad_phase_gap)
+                .into_iter()
+                .filter(|index| {
+                    exact_distance_scalar(&negative.exact, &usage.positive.locations[*index].exact)
+                        .is_some_and(|distance| &distance <= maximum_via_pair_gap)
+                })
+                .collect::<Vec<_>>();
             candidate_hits += nearby.len();
             if !nearby.is_empty() {
                 continue;
@@ -335,7 +367,7 @@ pub fn differential_pair_via_proximity_readiness(
                 usage.layers(),
                 None,
                 Vec::new(),
-                vec![*negative],
+                vec![negative.report],
                 Some(format!(
                     "likely differential pair {pair} negative-side via has no parsed positive-side via within {maximum_via_pair_gap:.6}; review layer-change symmetry and return-path stitching"
                 )),
@@ -373,7 +405,7 @@ pub fn differential_pair_via_proximity_readiness(
 pub fn differential_pair_via_return_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    stitching_distance: f64,
+    stitching_distance: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let ground_vias = features
@@ -396,11 +428,17 @@ pub fn differential_pair_via_return_readiness(
 
         let side_use = pair_vias.entry(pair).or_default().side_mut(side);
         side_use.layers.insert(feature.layer.clone());
-        side_use.locations.push(feature.location);
+        side_use.locations.push(ExactReportPoint {
+            exact: feature.location.clone(),
+            report: feature.location_f64_compatibility_required(),
+        });
     }
+    let broad_phase_distance = scalar_broad_phase_radius(stitching_distance);
     let ground_index = PointSpatialIndex::new(
-        ground_vias.iter().map(|ground| ground.location),
-        stitching_distance,
+        ground_vias
+            .iter()
+            .map(|ground| ground.location_f64_compatibility_required()),
+        broad_phase_distance,
     );
 
     let inferred_pair_count = pair_vias.len();
@@ -411,8 +449,20 @@ pub fn differential_pair_via_return_readiness(
             continue;
         }
 
-        for location in usage.locations() {
-            let nearby_ground = ground_index.centers_within(location, stitching_distance);
+        for location in usage
+            .positive
+            .locations
+            .iter()
+            .chain(&usage.negative.locations)
+        {
+            let nearby_ground = ground_index
+                .candidate_centers_near(location.report, broad_phase_distance)
+                .into_iter()
+                .filter(|index| {
+                    exact_distance_scalar(&location.exact, &ground_vias[*index].location)
+                        .is_some_and(|distance| &distance <= stitching_distance)
+                })
+                .collect::<Vec<_>>();
             candidate_hits += nearby_ground.len();
             if !nearby_ground.is_empty() {
                 continue;
@@ -424,7 +474,7 @@ pub fn differential_pair_via_return_readiness(
                 usage.layers(),
                 None,
                 Vec::new(),
-                vec![location],
+                vec![location.report],
                 Some(format!(
                     "likely differential pair {pair} via transition has no parsed ground stitching via within {stitching_distance:.6}; review return-path continuity through the layer change"
                 )),
@@ -463,7 +513,7 @@ pub fn differential_pair_via_return_readiness(
 pub fn differential_pair_to_pair_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    minimum_pair_to_pair_gap: f64,
+    minimum_pair_to_pair_gap: &Scalar,
 ) -> Vec<Violation> {
     let mut features = Vec::new();
     let mut pairs = Vec::new();
@@ -485,7 +535,8 @@ pub fn differential_pair_to_pair_spacing_readiness(
         pairs.push(pair);
         bounds.push(feature_bounds);
     }
-    let feature_index = CopperSpatialIndex::new(&features, minimum_pair_to_pair_gap);
+    let broad_phase_gap = scalar_broad_phase_radius(minimum_pair_to_pair_gap);
+    let feature_index = CopperSpatialIndex::new(&features, broad_phase_gap);
     log::trace!(
         "differential pair-to-pair spacing readiness: source={} features={} buckets={} selected_layers={} threshold={:.6}",
         board.source,
@@ -502,7 +553,7 @@ pub fn differential_pair_to_pair_spacing_readiness(
 
     for left_index in 0..features.len() {
         let left = features[left_index];
-        for right_index in feature_index.same_layer_near_feature(left, minimum_pair_to_pair_gap) {
+        for right_index in feature_index.same_layer_near_feature(left, broad_phase_gap) {
             if right_index <= left_index {
                 continue;
             }
@@ -511,18 +562,20 @@ pub fn differential_pair_to_pair_spacing_readiness(
                 || !expanded_rects_overlap(
                     &bounds[left_index],
                     &bounds[right_index],
-                    minimum_pair_to_pair_gap,
+                    broad_phase_gap,
                 )
             {
                 continue;
             }
             exact_pairs += 1;
             let right = features[right_index];
-            let gap = polygon_boundary_distance(
+            let Some(gap) = polygon_boundary_distance_scalar(
                 &left.sketch.to_multipolygon(),
                 &right.sketch.to_multipolygon(),
-            );
-            if !gap.is_finite() || gap > minimum_pair_to_pair_gap {
+            ) else {
+                continue;
+            };
+            if &gap > minimum_pair_to_pair_gap {
                 continue;
             }
 
@@ -538,7 +591,10 @@ pub fn differential_pair_to_pair_spacing_readiness(
                 vec![left.layer.clone()],
                 None,
                 Vec::new(),
-                vec![left.location, right.location],
+                vec![
+                    left.location_f64_compatibility_required(),
+                    right.location_f64_compatibility_required(),
+                ],
                 Some(format!(
                     "likely differential pairs {first_pair} and {second_pair} have pair-to-pair copper spacing {gap:.6} on {}, below review threshold {minimum_pair_to_pair_gap:.6}; review crosstalk, impedance, and routing constraints",
                     left.layer
@@ -585,18 +641,18 @@ impl PairViaUse {
             .cloned()
             .collect()
     }
-
-    fn locations(&self) -> Vec<[f64; 2]> {
-        let mut locations = self.positive.locations.clone();
-        locations.extend(self.negative.locations.clone());
-        locations
-    }
 }
 
 #[derive(Default)]
 struct SideViaUse {
     layers: BTreeSet<String>,
-    locations: Vec<[f64; 2]>,
+    locations: Vec<ExactReportPoint>,
+}
+
+#[derive(Clone)]
+struct ExactReportPoint {
+    exact: [Scalar; 2],
+    report: [f64; 2],
 }
 
 #[derive(Default)]
@@ -661,24 +717,35 @@ impl PairWidthUse {
 struct SideWidthUse {
     layers: BTreeSet<String>,
     locations: Vec<[f64; 2]>,
-    widths: Vec<f64>,
+    widths: Vec<Scalar>,
 }
 
 impl SideWidthUse {
-    fn minimum_width(&self) -> Option<f64> {
+    fn minimum_width(&self) -> Option<Scalar> {
         self.widths
             .iter()
-            .copied()
-            .filter(|width| width.is_finite() && *width > 0.0)
-            .min_by(|left, right| left.total_cmp(right))
+            .filter(|width| *width > &Scalar::zero())
+            .fold(None, |minimum, width| match minimum {
+                Some(current) if width >= &current => Some(current),
+                _ => Some(width.clone()),
+            })
     }
 }
 
-#[derive(Default)]
 struct SideLengthUse {
     layers: BTreeSet<String>,
     locations: Vec<[f64; 2]>,
-    estimated_length: f64,
+    estimated_length: Scalar,
+}
+
+impl Default for SideLengthUse {
+    fn default() -> Self {
+        Self {
+            layers: BTreeSet::new(),
+            locations: Vec::new(),
+            estimated_length: Scalar::zero(),
+        }
+    }
 }
 
 fn differential_pair_key(net: &str) -> Option<(String, DifferentialSide)> {
@@ -754,22 +821,58 @@ fn ordered_pair_names(left: &str, right: &str) -> (String, String) {
     }
 }
 
-fn estimated_segment_length(feature: &CopperFeature) -> f64 {
+fn estimated_segment_length(feature: &CopperFeature) -> Scalar {
     feature
         .sketch
-        .to_multipolygon()
-        .bounding_rect()
-        .map(|rect| rect.width().max(rect.height()))
-        .unwrap_or(0.0)
+        .as_region()
+        .material_contours()
+        .iter()
+        .flat_map(|contour| contour.segments())
+        .filter_map(|segment| {
+            let dx = segment.end().x() - segment.start().x();
+            let dy = segment.end().y() - segment.start().y();
+            (&dx * &dx + &dy * &dy).sqrt().ok()
+        })
+        .fold(Scalar::zero(), |maximum, length| {
+            if length > maximum { length } else { maximum }
+        })
 }
 
-fn estimated_segment_width(feature: &CopperFeature) -> f64 {
+fn estimated_segment_width(feature: &CopperFeature) -> Scalar {
+    if let Some(bounds) = feature.sketch.exact_bounds() {
+        let width = &bounds[2] - &bounds[0];
+        let height = &bounds[3] - &bounds[1];
+        return if width <= height { width } else { height };
+    }
     feature
         .sketch
-        .to_multipolygon()
+        .geometry()
         .bounding_rect()
-        .map(|rect| rect.width().min(rect.height()))
-        .unwrap_or(0.0)
+        .and_then(|bounds| {
+            let width =
+                Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?;
+            let height =
+                Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?;
+            Some(if width <= height { width } else { height })
+        })
+        .unwrap_or_else(Scalar::zero)
+}
+
+fn exact_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &left[0] - &right[0];
+    let dy = &left[1] - &right[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
+}
+
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("differential broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
 }
 
 #[cfg(test)]
@@ -795,7 +898,12 @@ mod tests {
             "F.Cu",
         )]);
 
-        let violations = differential_pair_neckdown_readiness(&board, &[], 0.08, 1.0);
+        let violations = differential_pair_neckdown_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("1.0"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "differential-pair-neckdown-readiness");
@@ -816,7 +924,15 @@ mod tests {
             0.10,
             "F.Cu",
         )]);
-        assert!(differential_pair_neckdown_readiness(&wide, &[], 0.08, 1.0).is_empty());
+        assert!(
+            differential_pair_neckdown_readiness(
+                &wide,
+                &[],
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("1.0")
+            )
+            .is_empty()
+        );
 
         let short = board_with_copper(vec![segment(
             "USB_DP",
@@ -825,14 +941,38 @@ mod tests {
             0.05,
             "F.Cu",
         )]);
-        assert!(differential_pair_neckdown_readiness(&short, &[], 0.08, 1.0).is_empty());
+        assert!(
+            differential_pair_neckdown_readiness(
+                &short,
+                &[],
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("1.0")
+            )
+            .is_empty()
+        );
 
         let unpaired =
             board_with_copper(vec![segment("GPIO", [0.0, 0.0], [3.0, 0.0], 0.05, "F.Cu")]);
-        assert!(differential_pair_neckdown_readiness(&unpaired, &[], 0.08, 1.0).is_empty());
+        assert!(
+            differential_pair_neckdown_readiness(
+                &unpaired,
+                &[],
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("1.0")
+            )
+            .is_empty()
+        );
 
         let selected = vec!["B.Cu".to_string()];
-        assert!(differential_pair_neckdown_readiness(&wide, &selected, 0.08, 1.0).is_empty());
+        assert!(
+            differential_pair_neckdown_readiness(
+                &wide,
+                &selected,
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("1.0")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -850,7 +990,12 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = differential_pair_neckdown_readiness(&board, &[], 0.08, 1.0);
+        let violations = differential_pair_neckdown_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("1.0"),
+        );
 
         assert!(
             violations.is_empty(),
@@ -865,7 +1010,8 @@ mod tests {
             via("USB_DM", [2.0, 0.0], 0.30, "F.Cu"),
         ]);
 
-        let violations = differential_pair_via_proximity_readiness(&board, &[], 0.50);
+        let violations =
+            differential_pair_via_proximity_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -881,19 +1027,39 @@ mod tests {
             via("USB_DP", [0.0, 0.0], 0.30, "F.Cu"),
             via("USB_DM", [0.2, 0.0], 0.30, "F.Cu"),
         ]);
-        assert!(differential_pair_via_proximity_readiness(&nearby, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_via_proximity_readiness(&nearby, &[], &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
 
         let missing = board_with_copper(vec![via("USB_DP", [0.0, 0.0], 0.30, "F.Cu")]);
-        assert!(differential_pair_via_proximity_readiness(&missing, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_via_proximity_readiness(
+                &missing,
+                &[],
+                &crate::scalar::scalar("0.50")
+            )
+            .is_empty()
+        );
 
         let nonvia = board_with_copper(vec![
             segment("USB_DP", [0.0, 0.0], [1.0, 0.0], 0.10, "F.Cu"),
             via("USB_DM", [2.0, 0.0], 0.30, "F.Cu"),
         ]);
-        assert!(differential_pair_via_proximity_readiness(&nonvia, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_via_proximity_readiness(&nonvia, &[], &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
 
         let selected = vec!["B.Cu".to_string()];
-        assert!(differential_pair_via_proximity_readiness(&nearby, &selected, 0.50).is_empty());
+        assert!(
+            differential_pair_via_proximity_readiness(
+                &nearby,
+                &selected,
+                &crate::scalar::scalar("0.50")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -911,7 +1077,8 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = differential_pair_via_proximity_readiness(&board, &[], 0.20);
+        let violations =
+            differential_pair_via_proximity_readiness(&board, &[], &crate::scalar::scalar("0.20"));
 
         assert!(
             violations.is_empty(),
@@ -930,7 +1097,8 @@ mod tests {
         let board = board_with_copper(copper);
         let start = Instant::now();
 
-        let violations = differential_pair_via_proximity_readiness(&board, &[], 0.10);
+        let violations =
+            differential_pair_via_proximity_readiness(&board, &[], &crate::scalar::scalar("0.10"));
 
         assert!(violations.is_empty());
         assert!(
@@ -947,7 +1115,8 @@ mod tests {
             via("GND", [2.0, 0.0], 0.30, "F.Cu"),
         ]);
 
-        let violations = differential_pair_via_return_readiness(&board, &[], 0.50);
+        let violations =
+            differential_pair_via_return_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -964,16 +1133,33 @@ mod tests {
             via("USB_DM", [0.2, 0.0], 0.30, "F.Cu"),
             via("GND", [0.1, 0.0], 0.30, "F.Cu"),
         ]);
-        assert!(differential_pair_via_return_readiness(&stitched, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_via_return_readiness(&stitched, &[], &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
 
         let missing_side = board_with_copper(vec![
             via("USB_DP", [0.0, 0.0], 0.30, "F.Cu"),
             via("GND", [0.1, 0.0], 0.30, "F.Cu"),
         ]);
-        assert!(differential_pair_via_return_readiness(&missing_side, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_via_return_readiness(
+                &missing_side,
+                &[],
+                &crate::scalar::scalar("0.50")
+            )
+            .is_empty()
+        );
 
         let selected = vec!["B.Cu".to_string()];
-        assert!(differential_pair_via_return_readiness(&stitched, &selected, 0.50).is_empty());
+        assert!(
+            differential_pair_via_return_readiness(
+                &stitched,
+                &selected,
+                &crate::scalar::scalar("0.50")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -992,7 +1178,8 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = differential_pair_via_return_readiness(&board, &[], 0.20);
+        let violations =
+            differential_pair_via_return_readiness(&board, &[], &crate::scalar::scalar("0.20"));
 
         assert!(
             violations.is_empty(),
@@ -1017,7 +1204,8 @@ mod tests {
         let board = board_with_copper(copper);
         let start = Instant::now();
 
-        let violations = differential_pair_via_return_readiness(&board, &[], 0.20);
+        let violations =
+            differential_pair_via_return_readiness(&board, &[], &crate::scalar::scalar("0.20"));
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -1033,7 +1221,12 @@ mod tests {
             segment("USB_DM", [0.0, 0.3], [2.0, 0.3], 0.10, "F.Cu"),
         ]);
 
-        let violations = differential_pair_width_readiness(&board, &[], 0.08, 0.05);
+        let violations = differential_pair_width_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("0.05"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "differential-pair-width-readiness");
@@ -1052,7 +1245,12 @@ mod tests {
             segment("USB_DM", [0.0, 0.3], [2.0, 0.3], 0.10, "F.Cu"),
         ]);
 
-        let violations = differential_pair_width_readiness(&board, &[], 0.08, 0.04);
+        let violations = differential_pair_width_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("0.04"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1069,7 +1267,15 @@ mod tests {
             segment("USB_DP", [0.0, 0.0], [2.0, 0.0], 0.10, "F.Cu"),
             segment("USB_DM", [0.0, 0.3], [2.0, 0.3], 0.11, "F.Cu"),
         ]);
-        assert!(differential_pair_width_readiness(&balanced, &[], 0.08, 0.04).is_empty());
+        assert!(
+            differential_pair_width_readiness(
+                &balanced,
+                &[],
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("0.04")
+            )
+            .is_empty()
+        );
 
         let missing = board_with_copper(vec![segment(
             "USB_DP",
@@ -1078,15 +1284,39 @@ mod tests {
             0.10,
             "F.Cu",
         )]);
-        assert!(differential_pair_width_readiness(&missing, &[], 0.08, 0.04).is_empty());
+        assert!(
+            differential_pair_width_readiness(
+                &missing,
+                &[],
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("0.04")
+            )
+            .is_empty()
+        );
 
         let mut pad_feature = segment("USB_DP", [0.0, 0.0], [2.0, 0.0], 0.05, "F.Cu");
         pad_feature.kind = CopperKind::Pad;
         let unsegmented = board_with_copper(vec![pad_feature]);
-        assert!(differential_pair_width_readiness(&unsegmented, &[], 0.08, 0.04).is_empty());
+        assert!(
+            differential_pair_width_readiness(
+                &unsegmented,
+                &[],
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("0.04")
+            )
+            .is_empty()
+        );
 
         let selected = vec!["B.Cu".to_string()];
-        assert!(differential_pair_width_readiness(&balanced, &selected, 0.08, 0.04).is_empty());
+        assert!(
+            differential_pair_width_readiness(
+                &balanced,
+                &selected,
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("0.04")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -1111,7 +1341,12 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = differential_pair_width_readiness(&board, &[], 0.08, 0.02);
+        let violations = differential_pair_width_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("0.02"),
+        );
 
         assert!(
             violations.is_empty(),
@@ -1126,7 +1361,8 @@ mod tests {
             segment("USB_DM", [0.0, 0.3], [2.0, 0.3], 0.10, "F.Cu"),
         ]);
 
-        let violations = differential_pair_skew_readiness(&board, &[], 0.50);
+        let violations =
+            differential_pair_skew_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "differential-pair-skew-readiness");
@@ -1144,7 +1380,10 @@ mod tests {
             segment("USB_DP", [0.0, 0.0], [2.0, 0.0], 0.10, "F.Cu"),
             segment("USB_DM", [0.0, 0.3], [2.1, 0.3], 0.10, "F.Cu"),
         ]);
-        assert!(differential_pair_skew_readiness(&balanced, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_skew_readiness(&balanced, &[], &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
 
         let missing = board_with_copper(vec![segment(
             "USB_DP",
@@ -1153,10 +1392,16 @@ mod tests {
             0.10,
             "F.Cu",
         )]);
-        assert!(differential_pair_skew_readiness(&missing, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_skew_readiness(&missing, &[], &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
 
         let selected = vec!["B.Cu".to_string()];
-        assert!(differential_pair_skew_readiness(&balanced, &selected, 0.50).is_empty());
+        assert!(
+            differential_pair_skew_readiness(&balanced, &selected, &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
     }
 
     #[test]
@@ -1168,7 +1413,10 @@ mod tests {
             segment("USB_DM", [0.0, 0.3], [0.5, 0.3], 0.10, "F.Cu"),
         ]);
 
-        assert!(differential_pair_skew_readiness(&board, &[], 0.50).is_empty());
+        assert!(
+            differential_pair_skew_readiness(&board, &[], &crate::scalar::scalar("0.50"))
+                .is_empty()
+        );
     }
 
     #[test]
@@ -1193,7 +1441,8 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = differential_pair_skew_readiness(&board, &[], 0.10);
+        let violations =
+            differential_pair_skew_readiness(&board, &[], &crate::scalar::scalar("0.10"));
 
         assert!(
             violations.is_empty(),
@@ -1210,7 +1459,11 @@ mod tests {
             segment("USB2_DM", [0.0, 0.62], [2.0, 0.62], 0.10, "F.Cu"),
         ]);
 
-        let violations = differential_pair_to_pair_spacing_readiness(&board, &[], 0.30);
+        let violations = differential_pair_to_pair_spacing_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.30"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(
@@ -1236,7 +1489,14 @@ mod tests {
             segment("USB3_DP", [0.0, 0.38], [2.0, 0.38], 0.10, "B.Cu"),
         ]);
 
-        assert!(differential_pair_to_pair_spacing_readiness(&board, &[], 0.30).is_empty());
+        assert!(
+            differential_pair_to_pair_spacing_readiness(
+                &board,
+                &[],
+                &crate::scalar::scalar("0.30")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -1248,7 +1508,14 @@ mod tests {
 
         let selected = vec!["B.Cu".to_string()];
 
-        assert!(differential_pair_to_pair_spacing_readiness(&board, &selected, 0.30).is_empty());
+        assert!(
+            differential_pair_to_pair_spacing_readiness(
+                &board,
+                &selected,
+                &crate::scalar::scalar("0.30")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -1267,7 +1534,11 @@ mod tests {
         let board = board_with_copper(copper);
 
         let started = std::time::Instant::now();
-        let violations = differential_pair_to_pair_spacing_readiness(&board, &[], 0.20);
+        let violations = differential_pair_to_pair_spacing_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.20"),
+        );
         let elapsed = started.elapsed();
 
         assert!(
@@ -1301,7 +1572,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+            location: [
+                crate::geometry::exact_real((start[0] + end[0]) / 2.0),
+                crate::geometry::exact_real((start[1] + end[1]) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
@@ -1316,7 +1590,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Via,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {

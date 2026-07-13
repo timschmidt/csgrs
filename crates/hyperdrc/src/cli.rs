@@ -1,6 +1,36 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use clap::{Parser, ValueEnum};
+
+use crate::Scalar;
+
+/// Exact decimal supplied at the command-line boundary.
+///
+/// Clap requires parsed argument values to be thread-safe, while
+/// `hyperreal::Real` intentionally contains local refinement caches. Keep the
+/// validated source spelling at this I/O edge and construct the internal
+/// scalar only when rule resolution begins.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ScalarArg(String);
+
+impl ScalarArg {
+    /// Promote this validated command-line token into the internal scalar domain.
+    pub fn to_scalar(&self) -> Scalar {
+        crate::scalar::parse_source_scalar(&self.0)
+            .expect("ScalarArg is validated when parsed by clap")
+    }
+}
+
+impl FromStr for ScalarArg {
+    type Err = String;
+
+    fn from_str(token: &str) -> Result<Self, Self::Err> {
+        crate::scalar::parse_source_scalar(token)
+            .map(|_| Self(token.to_string()))
+            .ok_or_else(|| format!("expected an exact finite decimal, got {token:?}"))
+    }
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
 /// Public enumeration for `Check`.
@@ -771,7 +801,7 @@ pub struct Cli {
     /// Keepout distance for mask island isolation checks, in Gerber units.
     #[arg(long)]
     /// Field `keepout`.
-    pub keepout: Option<f64>,
+    pub keepout: Option<ScalarArg>,
 
     /// Board outline layer index for board-edge clearance checks.
     #[arg(long)]
@@ -822,112 +852,112 @@ pub struct Cli {
     /// Clearance distance for board-edge checks, in Gerber units.
     #[arg(long)]
     /// Field `clearance`.
-    pub clearance: Option<f64>,
+    pub clearance: Option<ScalarArg>,
 
     /// Allowed paste overhang beyond copper, in Gerber units.
     #[arg(long)]
     /// Field `paste_tolerance`.
-    pub paste_tolerance: Option<f64>,
+    pub paste_tolerance: Option<ScalarArg>,
 
     /// Minimum paste-to-copper area ratio for each paired copper island.
     #[arg(long)]
     /// Field `min_paste_area_ratio`.
-    pub min_paste_area_ratio: Option<f64>,
+    pub min_paste_area_ratio: Option<ScalarArg>,
 
     /// Maximum paste-to-copper area ratio for each paired copper island.
     #[arg(long)]
     /// Field `max_paste_area_ratio`.
-    pub max_paste_area_ratio: Option<f64>,
+    pub max_paste_area_ratio: Option<ScalarArg>,
 
     /// Stencil foil thickness used by stencil area-ratio readiness checks.
     #[arg(long)]
     /// Field `stencil_thickness`.
-    pub stencil_thickness: Option<f64>,
+    pub stencil_thickness: Option<ScalarArg>,
 
     /// Minimum acceptable stencil aperture area ratio.
     #[arg(long)]
     /// Field `min_stencil_area_ratio`.
-    pub min_stencil_area_ratio: Option<f64>,
+    pub min_stencil_area_ratio: Option<ScalarArg>,
 
     /// Minimum copper width used by the neck-width morphology check.
     #[arg(long)]
     /// Field `min_width`.
-    pub min_width: Option<f64>,
+    pub min_width: Option<ScalarArg>,
 
     /// Minimum solder mask web width used by the sliver morphology check.
     #[arg(long)]
     /// Field `min_mask_width`.
-    pub min_mask_width: Option<f64>,
+    pub min_mask_width: Option<ScalarArg>,
 
     /// Minimum solder-mask opening-to-copper area ratio for paired mask openings.
     #[arg(long = "min-solder-mask-opening-area-ratio")]
     /// Field `min_solder_mask_opening_area_ratio`.
-    pub min_solder_mask_opening_area_ratio: Option<f64>,
+    pub min_solder_mask_opening_area_ratio: Option<ScalarArg>,
 
     /// Maximum solder-mask opening-to-copper area ratio for paired mask openings.
     #[arg(long = "max-solder-mask-opening-area-ratio")]
     /// Field `max_solder_mask_opening_area_ratio`.
-    pub max_solder_mask_opening_area_ratio: Option<f64>,
+    pub max_solder_mask_opening_area_ratio: Option<ScalarArg>,
 
     /// Minimum solder mask relief beyond copper for mask annular-ring readiness.
     #[arg(long = "min-solder-mask-annular-ring")]
     /// Field `min_solder_mask_annular_ring`.
-    pub min_solder_mask_annular_ring: Option<f64>,
+    pub min_solder_mask_annular_ring: Option<ScalarArg>,
 
     /// Minimum apparent silkscreen text or marking height.
     #[arg(long = "min-silkscreen-text-height")]
     /// Field `min_silkscreen_text_height`.
-    pub min_silkscreen_text_height: Option<f64>,
+    pub min_silkscreen_text_height: Option<ScalarArg>,
 
     /// Maximum interior angle to report as an acid-trap candidate.
     #[arg(long)]
     /// Field `acid_trap_angle`.
-    pub acid_trap_angle: Option<f64>,
+    pub acid_trap_angle: Option<ScalarArg>,
 
     /// Warn when the largest selected copper layer area exceeds the smallest by this ratio.
     #[arg(long)]
     /// Field `max_copper_imbalance_ratio`.
-    pub max_copper_imbalance_ratio: Option<f64>,
+    pub max_copper_imbalance_ratio: Option<ScalarArg>,
 
     /// Minimum acceptable annular ring around plated drills, in KiCad units.
     #[arg(long)]
     /// Field `annular_ring`.
-    pub annular_ring: Option<f64>,
+    pub annular_ring: Option<ScalarArg>,
 
     /// Drill-to-copper clearance, in KiCad or Excellon units.
     #[arg(long)]
     /// Field `drill_clearance`.
-    pub drill_clearance: Option<f64>,
+    pub drill_clearance: Option<ScalarArg>,
 
     /// Finished board thickness used by drill aspect-ratio readiness checks.
     #[arg(long)]
     /// Field `board_thickness`.
-    pub board_thickness: Option<f64>,
+    pub board_thickness: Option<ScalarArg>,
 
     /// Maximum allowed board-thickness-to-drill-diameter ratio.
     #[arg(long)]
     /// Field `max_drill_aspect_ratio`.
-    pub max_drill_aspect_ratio: Option<f64>,
+    pub max_drill_aspect_ratio: Option<ScalarArg>,
 
     /// Different-net copper spacing for KiCad net-aware checks.
     #[arg(long)]
     /// Field `net_clearance`.
-    pub net_clearance: Option<f64>,
+    pub net_clearance: Option<ScalarArg>,
 
     /// Layer registration tolerance for cross-layer KiCad copper proximity checks.
     #[arg(long)]
     /// Field `registration_tolerance`.
-    pub registration_tolerance: Option<f64>,
+    pub registration_tolerance: Option<ScalarArg>,
 
     /// Clearance from copper to panel features, NPTH drills, or Excellon panel drills.
     #[arg(long)]
     /// Field `panel_clearance`.
-    pub panel_clearance: Option<f64>,
+    pub panel_clearance: Option<ScalarArg>,
 
     /// Coordinate tolerance for matching IPC-D-356 records to parsed board geometry.
     #[arg(long)]
     /// Field `ipc356_tolerance`.
-    pub ipc356_tolerance: Option<f64>,
+    pub ipc356_tolerance: Option<ScalarArg>,
 
     /// Print detected KiCad copper layers to stderr before running checks.
     #[arg(long)]
@@ -937,12 +967,12 @@ pub struct Cli {
     /// Ignore violation shapes whose area is at or below this threshold.
     #[arg(long)]
     /// Field `min_area`.
-    pub min_area: Option<f64>,
+    pub min_area: Option<ScalarArg>,
 
     /// Warn when a parsed layer's total polygon area exceeds this value.
     #[arg(long)]
     /// Field `max_layer_area`.
-    pub max_layer_area: Option<f64>,
+    pub max_layer_area: Option<ScalarArg>,
 
     /// Maximum allowed age for generated-date filename tags before manifest freshness warnings.
     #[arg(long = "generated-date-stale-days")]
@@ -1794,10 +1824,30 @@ mod tests {
                 Check::SilkscreenTextHeightReadiness
             ]
         );
-        assert_eq!(cli.min_solder_mask_opening_area_ratio, Some(1.05));
-        assert_eq!(cli.max_solder_mask_opening_area_ratio, Some(2.25));
-        assert_eq!(cli.min_solder_mask_annular_ring, Some(0.075));
-        assert_eq!(cli.min_silkscreen_text_height, Some(0.9));
+        assert_eq!(
+            cli.min_solder_mask_opening_area_ratio
+                .as_ref()
+                .map(super::ScalarArg::to_scalar),
+            Some(crate::scalar::scalar("1.05"))
+        );
+        assert_eq!(
+            cli.max_solder_mask_opening_area_ratio
+                .as_ref()
+                .map(super::ScalarArg::to_scalar),
+            Some(crate::scalar::scalar("2.25"))
+        );
+        assert_eq!(
+            cli.min_solder_mask_annular_ring
+                .as_ref()
+                .map(super::ScalarArg::to_scalar),
+            Some(crate::scalar::scalar("0.075"))
+        );
+        assert_eq!(
+            cli.min_silkscreen_text_height
+                .as_ref()
+                .map(super::ScalarArg::to_scalar),
+            Some(crate::scalar::scalar("0.9"))
+        );
     }
 
     #[test]

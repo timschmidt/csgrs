@@ -7,29 +7,27 @@
 //! a substitute for field solving, fabricator stackup tuning, or frequency-
 //! dependent roughness/loss review.
 
-use std::f64::consts::PI;
-
+use crate::Scalar;
 use crate::constraint_policy::{StackupConfig, StackupLayerConfig, StackupLayerKind};
-
-const CENTERED_STRIPLINE_BALANCE_TOLERANCE: f64 = 0.10;
+use crate::scalar::scalar;
 
 /// Summary of a supported trace impedance estimate.
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(super) struct TraceImpedanceEstimate {
     /// Estimated characteristic impedance in ohms.
-    pub(super) impedance_ohms: f64,
+    pub(super) impedance_ohms: Scalar,
     /// Analytical model used for the estimate.
     pub(super) model: ImpedanceModel,
     /// Parsed conductor width in the same units as the stackup thickness.
-    pub(super) trace_width: f64,
+    pub(super) trace_width: Scalar,
     /// Model dielectric height in stackup units.
     ///
     /// For outer microstrip this is the height to the adjacent reference
     /// copper. For centered stripline this is the total spacing between the two
     /// adjacent reference copper layers.
-    pub(super) dielectric_height: f64,
+    pub(super) dielectric_height: Scalar,
     /// Relative dielectric constant used by the estimate.
-    pub(super) dielectric_constant: f64,
+    pub(super) dielectric_constant: Scalar,
 }
 
 /// Analytical model used by [`TraceImpedanceEstimate`].
@@ -61,13 +59,13 @@ pub(super) enum ImpedanceModel {
 pub(super) fn estimate_single_ended_impedance(
     stackup: &StackupConfig,
     layer_name: &str,
-    trace_width: f64,
+    trace_width: Scalar,
 ) -> Option<TraceImpedanceEstimate> {
-    if !trace_width.is_finite() || trace_width <= 0.0 {
+    if trace_width <= Scalar::zero() {
         return None;
     }
-    let dielectric_constant = stackup.material_dielectric_constant?;
-    if !dielectric_constant.is_finite() || dielectric_constant <= 0.0 {
+    let dielectric_constant = stackup.material_dielectric_constant.as_ref()?;
+    if dielectric_constant <= &Scalar::zero() {
         return None;
     }
 
@@ -93,15 +91,18 @@ pub(super) fn estimate_single_ended_impedance(
 
         let dielectric_height =
             dielectric_height_between(&stackup.layers, signal_index, reference_index)?;
-        let impedance_ohms =
-            hammerstad_jensen_microstrip_ohms(trace_width, dielectric_height, dielectric_constant)?;
+        let impedance_ohms = hammerstad_jensen_microstrip_ohms(
+            &trace_width,
+            &dielectric_height,
+            dielectric_constant,
+        )?;
 
         return Some(TraceImpedanceEstimate {
             impedance_ohms,
             model: ImpedanceModel::OuterMicrostrip,
             trace_width,
             dielectric_height,
-            dielectric_constant,
+            dielectric_constant: dielectric_constant.clone(),
         });
     }
 
@@ -111,20 +112,20 @@ pub(super) fn estimate_single_ended_impedance(
         dielectric_height_between(&stackup.layers, upper_reference_index, signal_index)?;
     let lower_height =
         dielectric_height_between(&stackup.layers, signal_index, lower_reference_index)?;
-    if !approximately_centered_between_planes(upper_height, lower_height) {
+    if !approximately_centered_between_planes(&upper_height, &lower_height) {
         return None;
     }
 
-    let dielectric_height = upper_height + lower_height;
+    let dielectric_height = &upper_height + &lower_height;
     let impedance_ohms =
-        wheeler_centered_stripline_ohms(trace_width, dielectric_height, dielectric_constant)?;
+        wheeler_centered_stripline_ohms(&trace_width, &dielectric_height, dielectric_constant)?;
 
     Some(TraceImpedanceEstimate {
         impedance_ohms,
         model: ImpedanceModel::CenteredStripline,
         trace_width,
         dielectric_height,
-        dielectric_constant,
+        dielectric_constant: dielectric_constant.clone(),
     })
 }
 
@@ -132,13 +133,13 @@ fn dielectric_height_between(
     layers: &[StackupLayerConfig],
     signal_index: usize,
     reference_index: usize,
-) -> Option<f64> {
+) -> Option<Scalar> {
     let (start, end) = if signal_index < reference_index {
         (signal_index + 1, reference_index)
     } else {
         (reference_index + 1, signal_index)
     };
-    let mut height = 0.0;
+    let mut height = Scalar::zero();
     for layer in &layers[start..end] {
         if !matches!(
             layer.kind,
@@ -146,84 +147,84 @@ fn dielectric_height_between(
         ) {
             continue;
         }
-        let thickness = layer.dielectric_thickness?;
-        if !thickness.is_finite() || thickness <= 0.0 {
+        let thickness = layer.dielectric_thickness.as_ref()?;
+        if thickness <= &Scalar::zero() {
             return None;
         }
         height += thickness;
     }
 
-    (height.is_finite() && height > 0.0).then_some(height)
+    (height > Scalar::zero()).then_some(height)
 }
 
 fn hammerstad_jensen_microstrip_ohms(
-    trace_width: f64,
-    dielectric_height: f64,
-    dielectric_constant: f64,
-) -> Option<f64> {
-    if !dielectric_height.is_finite()
-        || dielectric_height <= 0.0
-        || !dielectric_constant.is_finite()
-        || dielectric_constant <= 0.0
+    trace_width: &Scalar,
+    dielectric_height: &Scalar,
+    dielectric_constant: &Scalar,
+) -> Option<Scalar> {
+    if trace_width <= &Scalar::zero()
+        || dielectric_height <= &Scalar::zero()
+        || dielectric_constant <= &Scalar::zero()
     {
         return None;
     }
 
-    let width_to_height = trace_width / dielectric_height;
-    if !width_to_height.is_finite() || width_to_height <= 0.0 {
+    let width_to_height = (trace_width / dielectric_height).ok()?;
+    if width_to_height <= Scalar::zero() {
         return None;
     }
 
-    let correction = if width_to_height < 1.0 {
-        0.04 * (1.0 - width_to_height).powi(2)
+    let correction = if width_to_height < Scalar::one() {
+        let difference = Scalar::one() - &width_to_height;
+        scalar("0.04") * (&difference * &difference)
     } else {
-        0.0
+        Scalar::zero()
     };
-    let effective_dielectric_constant = (dielectric_constant + 1.0) / 2.0
-        + (dielectric_constant - 1.0) / 2.0 * (1.0 + 12.0 / width_to_height).powf(-0.5)
-        + correction;
+    let mean_dielectric = ((dielectric_constant + Scalar::one()) / scalar("2")).ok()?;
+    let contrast = ((dielectric_constant - Scalar::one()) / scalar("2")).ok()?;
+    let reciprocal_term = (scalar("12") / &width_to_height).ok()?;
+    let root_factor = (Scalar::one() + reciprocal_term).pow(scalar("-0.5")).ok()?;
+    let effective_dielectric_constant = mean_dielectric + contrast * root_factor + correction;
+    let dielectric_root = effective_dielectric_constant.sqrt().ok()?;
 
-    let impedance = if width_to_height <= 1.0 {
-        (60.0 / effective_dielectric_constant.sqrt())
-            * ((8.0 / width_to_height) + 0.25 * width_to_height).ln()
+    let impedance = if width_to_height <= Scalar::one() {
+        let scale = (scalar("60") / dielectric_root).ok()?;
+        let reciprocal_width = (scalar("8") / &width_to_height).ok()?;
+        let logarithm = (reciprocal_width + scalar("0.25") * &width_to_height)
+            .ln()
+            .ok()?;
+        scale * logarithm
     } else {
-        (120.0 * PI)
-            / (effective_dielectric_constant.sqrt()
-                * (width_to_height + 1.393 + 0.667 * (width_to_height + 1.444).ln()))
+        let logarithm = (&width_to_height + scalar("1.444")).ln().ok()?;
+        let shape = &width_to_height + scalar("1.393") + scalar("0.667") * logarithm;
+        ((scalar("120") * Scalar::pi()) / (dielectric_root * shape)).ok()?
     };
 
-    (impedance.is_finite() && impedance > 0.0).then_some(impedance)
+    (impedance > Scalar::zero()).then_some(impedance)
 }
 
-fn approximately_centered_between_planes(upper_height: f64, lower_height: f64) -> bool {
-    if !upper_height.is_finite()
-        || !lower_height.is_finite()
-        || upper_height <= 0.0
-        || lower_height <= 0.0
-    {
+fn approximately_centered_between_planes(upper_height: &Scalar, lower_height: &Scalar) -> bool {
+    if upper_height <= &Scalar::zero() || lower_height <= &Scalar::zero() {
         return false;
     }
-    let average = (upper_height + lower_height) / 2.0;
-    (upper_height - lower_height).abs() <= average * CENTERED_STRIPLINE_BALANCE_TOLERANCE
+    let average = ((upper_height + lower_height) / scalar("2")).expect("nonzero exact denominator");
+    (upper_height - lower_height).abs() <= average * scalar("0.10")
 }
 
 fn wheeler_centered_stripline_ohms(
-    trace_width: f64,
-    plane_spacing: f64,
-    dielectric_constant: f64,
-) -> Option<f64> {
-    if !trace_width.is_finite()
-        || trace_width <= 0.0
-        || !plane_spacing.is_finite()
-        || plane_spacing <= 0.0
-        || !dielectric_constant.is_finite()
-        || dielectric_constant <= 0.0
+    trace_width: &Scalar,
+    plane_spacing: &Scalar,
+    dielectric_constant: &Scalar,
+) -> Option<Scalar> {
+    if trace_width <= &Scalar::zero()
+        || plane_spacing <= &Scalar::zero()
+        || dielectric_constant <= &Scalar::zero()
     {
         return None;
     }
 
-    let width_to_spacing = trace_width / plane_spacing;
-    if !width_to_spacing.is_finite() || width_to_spacing <= 0.0 {
+    let width_to_spacing = (trace_width / plane_spacing).ok()?;
+    if width_to_spacing <= Scalar::zero() {
         return None;
     }
 
@@ -231,8 +232,11 @@ fn wheeler_centered_stripline_ohms(
     // tools refine with thickness and roughness corrections. This expression is
     // the common zero-thickness centered-strip first-pass form used here only to
     // flag obvious net-class/stackup mismatches before fabricator field solving.
-    let impedance = (30.0 * PI / dielectric_constant.sqrt()) / (width_to_spacing + 0.441);
-    (impedance.is_finite() && impedance > 0.0).then_some(impedance)
+    let numerator = scalar("30") * Scalar::pi();
+    let dielectric_root = dielectric_constant.clone().sqrt().ok()?;
+    let denominator = dielectric_root * (width_to_spacing + scalar("0.441"));
+    let impedance = (numerator / denominator).ok()?;
+    (impedance > Scalar::zero()).then_some(impedance)
 }
 
 #[cfg(test)]
@@ -242,8 +246,8 @@ mod tests {
     fn layer(
         name: &str,
         kind: StackupLayerKind,
-        copper_weight_oz: Option<f64>,
-        dielectric_thickness: Option<f64>,
+        copper_weight_oz: Option<Scalar>,
+        dielectric_thickness: Option<Scalar>,
     ) -> StackupLayerConfig {
         StackupLayerConfig {
             name: name.to_string(),
@@ -256,24 +260,29 @@ mod tests {
     #[test]
     fn outer_microstrip_estimate_matches_expected_fr4_range() {
         let stackup = StackupConfig {
-            material_dielectric_constant: Some(4.2),
+            material_dielectric_constant: Some(scalar("4.2")),
             layers: vec![
-                layer("F.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Prepreg", StackupLayerKind::Prepreg, None, Some(0.18)),
-                layer("B.Cu", StackupLayerKind::Copper, Some(1.0), None),
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer(
+                    "Prepreg",
+                    StackupLayerKind::Prepreg,
+                    None,
+                    Some(scalar("0.18")),
+                ),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
             ],
             ..StackupConfig::default()
         };
 
-        let estimate = estimate_single_ended_impedance(&stackup, "F.Cu", 0.32)
+        let estimate = estimate_single_ended_impedance(&stackup, "F.Cu", scalar("0.32"))
             .expect("two-layer FR-4 stackup should support outer microstrip");
 
         assert_eq!(estimate.model, ImpedanceModel::OuterMicrostrip);
-        assert_eq!(estimate.trace_width, 0.32);
-        assert_eq!(estimate.dielectric_height, 0.18);
-        assert_eq!(estimate.dielectric_constant, 4.2);
+        assert_eq!(estimate.trace_width, scalar("0.32"));
+        assert_eq!(estimate.dielectric_height, scalar("0.18"));
+        assert_eq!(estimate.dielectric_constant, scalar("4.2"));
         assert!(
-            (48.0..=58.0).contains(&estimate.impedance_ohms),
+            estimate.impedance_ohms >= scalar("48") && estimate.impedance_ohms <= scalar("58"),
             "estimated impedance {} should stay in a plausible FR-4 range",
             estimate.impedance_ohms
         );
@@ -282,47 +291,57 @@ mod tests {
     #[test]
     fn bottom_outer_microstrip_uses_previous_copper_reference() {
         let stackup = StackupConfig {
-            material_dielectric_constant: Some(4.2),
+            material_dielectric_constant: Some(scalar("4.2")),
             layers: vec![
-                layer("F.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Core", StackupLayerKind::Core, None, Some(0.18)),
-                layer("B.Cu", StackupLayerKind::Copper, Some(1.0), None),
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer("Core", StackupLayerKind::Core, None, Some(scalar("0.18"))),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
             ],
             ..StackupConfig::default()
         };
 
-        let top = estimate_single_ended_impedance(&stackup, "F.Cu", 0.32)
+        let top = estimate_single_ended_impedance(&stackup, "F.Cu", scalar("0.32"))
             .expect("top layer should use the next copper reference");
-        let bottom = estimate_single_ended_impedance(&stackup, "B.Cu", 0.32)
+        let bottom = estimate_single_ended_impedance(&stackup, "B.Cu", scalar("0.32"))
             .expect("bottom layer should use the previous copper reference");
 
-        assert!((top.impedance_ohms - bottom.impedance_ohms).abs() < 1.0e-12);
-        assert_eq!(bottom.dielectric_height, 0.18);
+        assert_eq!(top.impedance_ohms, bottom.impedance_ohms);
+        assert_eq!(bottom.dielectric_height, scalar("0.18"));
         assert_eq!(bottom.model, ImpedanceModel::OuterMicrostrip);
     }
 
     #[test]
     fn centered_stripline_estimate_matches_expected_fr4_range() {
         let stackup = StackupConfig {
-            material_dielectric_constant: Some(4.2),
+            material_dielectric_constant: Some(scalar("4.2")),
             layers: vec![
-                layer("F.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Prepreg", StackupLayerKind::Prepreg, None, Some(0.18)),
-                layer("In1.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Core", StackupLayerKind::Core, None, Some(0.18)),
-                layer("B.Cu", StackupLayerKind::Copper, Some(1.0), None),
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer(
+                    "Prepreg",
+                    StackupLayerKind::Prepreg,
+                    None,
+                    Some(scalar("0.18")),
+                ),
+                layer(
+                    "In1.Cu",
+                    StackupLayerKind::Copper,
+                    Some(scalar("1.0")),
+                    None,
+                ),
+                layer("Core", StackupLayerKind::Core, None, Some(scalar("0.18"))),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
             ],
             ..StackupConfig::default()
         };
 
-        let estimate = estimate_single_ended_impedance(&stackup, "In1.Cu", 0.17)
+        let estimate = estimate_single_ended_impedance(&stackup, "In1.Cu", scalar("0.17"))
             .expect("centered inner layer should support stripline estimate");
 
         assert_eq!(estimate.model, ImpedanceModel::CenteredStripline);
-        assert_eq!(estimate.trace_width, 0.17);
-        assert_eq!(estimate.dielectric_height, 0.36);
+        assert_eq!(estimate.trace_width, scalar("0.17"));
+        assert_eq!(estimate.dielectric_height, scalar("0.36"));
         assert!(
-            (48.0..=54.0).contains(&estimate.impedance_ohms),
+            estimate.impedance_ohms >= scalar("48") && estimate.impedance_ohms <= scalar("54"),
             "estimated stripline impedance {} should stay in a plausible FR-4 range",
             estimate.impedance_ohms
         );
@@ -331,38 +350,51 @@ mod tests {
     #[test]
     fn estimate_rejects_inner_or_underdefined_stackups() {
         let missing_reference = StackupConfig {
-            material_dielectric_constant: Some(4.2),
+            material_dielectric_constant: Some(scalar("4.2")),
             layers: vec![
-                layer("F.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Core", StackupLayerKind::Core, None, Some(1.5)),
-            ],
-            ..StackupConfig::default()
-        };
-        assert!(estimate_single_ended_impedance(&missing_reference, "F.Cu", 0.3).is_none());
-
-        let missing_dielectric_constant = StackupConfig {
-            layers: vec![
-                layer("F.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Core", StackupLayerKind::Core, None, Some(0.18)),
-                layer("B.Cu", StackupLayerKind::Copper, Some(1.0), None),
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer("Core", StackupLayerKind::Core, None, Some(scalar("1.5"))),
             ],
             ..StackupConfig::default()
         };
         assert!(
-            estimate_single_ended_impedance(&missing_dielectric_constant, "F.Cu", 0.3).is_none()
+            estimate_single_ended_impedance(&missing_reference, "F.Cu", scalar("0.3")).is_none()
         );
 
-        let inner_layer = StackupConfig {
-            material_dielectric_constant: Some(4.2),
+        let missing_dielectric_constant = StackupConfig {
             layers: vec![
-                layer("F.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Prepreg", StackupLayerKind::Prepreg, None, Some(0.12)),
-                layer("In1.Cu", StackupLayerKind::Copper, Some(1.0), None),
-                layer("Core", StackupLayerKind::Core, None, Some(0.40)),
-                layer("B.Cu", StackupLayerKind::Copper, Some(1.0), None),
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer("Core", StackupLayerKind::Core, None, Some(scalar("0.18"))),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
             ],
             ..StackupConfig::default()
         };
-        assert!(estimate_single_ended_impedance(&inner_layer, "In1.Cu", 0.3).is_none());
+        assert!(
+            estimate_single_ended_impedance(&missing_dielectric_constant, "F.Cu", scalar("0.3"))
+                .is_none()
+        );
+
+        let inner_layer = StackupConfig {
+            material_dielectric_constant: Some(scalar("4.2")),
+            layers: vec![
+                layer("F.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+                layer(
+                    "Prepreg",
+                    StackupLayerKind::Prepreg,
+                    None,
+                    Some(scalar("0.12")),
+                ),
+                layer(
+                    "In1.Cu",
+                    StackupLayerKind::Copper,
+                    Some(scalar("1.0")),
+                    None,
+                ),
+                layer("Core", StackupLayerKind::Core, None, Some(scalar("0.40"))),
+                layer("B.Cu", StackupLayerKind::Copper, Some(scalar("1.0")), None),
+            ],
+            ..StackupConfig::default()
+        };
+        assert!(estimate_single_ended_impedance(&inner_layer, "In1.Cu", scalar("0.3")).is_none());
     }
 }

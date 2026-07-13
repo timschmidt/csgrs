@@ -159,13 +159,13 @@ fn drill_geometry_signature(report: &ExcellonReport) -> Option<(u8, Vec<(i64, i6
     let mut signature = report
         .drills
         .iter()
-        .map(|drill| {
-            (
-                rounded_microunits(drill.location[0]),
-                rounded_microunits(drill.location[1]),
-                rounded_microunits(drill.diameter),
+        .filter_map(|drill| {
+            Some((
+                rounded_microunits(drill.location_f64_compatibility_required()[0]),
+                rounded_microunits(drill.location_f64_compatibility_required()[1]),
+                rounded_microunits(drill.diameter_f64_compatibility()?),
                 drill.plated,
-            )
+            ))
         })
         .collect::<Vec<_>>();
     signature.sort_unstable();
@@ -191,18 +191,21 @@ fn collect_plating_split_holes(
     };
 
     for drill in &report.drills {
-        if !(drill.location[0].is_finite()
-            && drill.location[1].is_finite()
-            && drill.diameter.is_finite()
-            && drill.diameter > 0.0)
+        if !(drill.location_f64_compatibility_required()[0].is_finite()
+            && drill.location_f64_compatibility_required()[1].is_finite()
+            && drill.diameter > crate::Scalar::zero())
         {
             continue;
         }
         holes
             .entry((
-                rounded_microunits(drill.location[0]),
-                rounded_microunits(drill.location[1]),
-                rounded_microunits(drill.diameter),
+                rounded_microunits(drill.location_f64_compatibility_required()[0]),
+                rounded_microunits(drill.location_f64_compatibility_required()[1]),
+                rounded_microunits(
+                    drill
+                        .diameter_f64_compatibility()
+                        .expect("positive parsed drill diameter must project for signature output"),
+                ),
             ))
             .or_default()
             .push((intent, report.source.clone()));
@@ -279,26 +282,28 @@ fn check_drill_diameter_outliers(report: &ExcellonReport, violations: &mut Vec<V
     let mut diameters = report
         .drills
         .iter()
-        .map(|drill| drill.diameter)
-        .filter(|diameter| diameter.is_finite() && *diameter > 0.0)
+        .map(|drill| drill.diameter.clone())
+        .filter(|diameter| diameter > &crate::Scalar::zero())
         .collect::<Vec<_>>();
     if diameters.len() < 4 {
         return;
     }
-    diameters.sort_by(f64::total_cmp);
-    let median = diameters[diameters.len() / 2];
-    if median <= 0.0 || !median.is_finite() {
+    diameters.sort_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal));
+    let median = diameters[diameters.len() / 2].clone();
+    if median <= crate::Scalar::zero() {
         return;
     }
 
     let outliers = diameters
         .into_iter()
         .filter(|diameter| {
-            let tiny_outlier = *diameter <= 0.075 && *diameter * 8.0 < median;
-            let large_outlier = *diameter >= 6.0 && *diameter > median * 8.0;
+            let tiny_outlier = diameter <= &crate::scalar::scalar("0.075")
+                && diameter * crate::scalar::scalar("8") < median;
+            let large_outlier = diameter >= &crate::scalar::scalar("6")
+                && diameter > &(&median * crate::scalar::scalar("8"));
             tiny_outlier || large_outlier
         })
-        .map(|diameter| format!("{diameter:.6}"))
+        .map(|diameter| format!("{diameter:#.6}"))
         .collect::<std::collections::BTreeSet<_>>();
     if outliers.is_empty() {
         return;
@@ -317,7 +322,7 @@ fn check_drill_diameter_outliers(report: &ExcellonReport, violations: &mut Vec<V
         Vec::new(),
         Vec::new(),
         Some(format!(
-            "Excellon file {} contains drill diameter outlier(s) relative to median {:.6}: {}",
+            "Excellon file {} contains drill diameter outlier(s) relative to median {:#.6}: {}",
             report.source,
             median,
             outliers.into_iter().collect::<Vec<_>>().join(", ")
@@ -348,13 +353,17 @@ pub fn excellon_issue_severity(kind: &ExcellonIssueKind) -> Severity {
 #[cfg(test)]
 mod tests {
     use super::{excellon_batch_readiness, excellon_readiness};
+    use crate::Scalar;
     use crate::excellon::ExcellonUnits;
     use crate::excellon::{ExcellonIssue, ExcellonIssueKind, ExcellonReport};
 
     fn clean_report(source: &str, drills: usize, unit: ExcellonUnits) -> ExcellonReport {
         let drill_template = crate::kicad::DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.6,
+            location: [
+                crate::geometry::exact_real(0.0),
+                crate::geometry::exact_real(0.0),
+            ],
+            diameter: crate::scalar::scalar("0.6"),
             net: None,
             plated: false,
         };
@@ -377,8 +386,11 @@ mod tests {
 
     fn no_unit_report(source: &str, drills: usize, include_missing_issue: bool) -> ExcellonReport {
         let drill_template = crate::kicad::DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.6,
+            location: [
+                crate::geometry::exact_real(0.0),
+                crate::geometry::exact_real(0.0),
+            ],
+            diameter: crate::scalar::scalar("0.6"),
             net: None,
             plated: false,
         };
@@ -513,8 +525,11 @@ mod tests {
         let report = ExcellonReport {
             source: "ok.drl".to_string(),
             drills: vec![crate::kicad::DrillFeature {
-                location: [0.0, 0.0],
-                diameter: 0.6,
+                location: [
+                    crate::geometry::exact_real(0.0),
+                    crate::geometry::exact_real(0.0),
+                ],
+                diameter: crate::scalar::scalar("0.6"),
                 net: None,
                 plated: false,
             }],
@@ -522,7 +537,7 @@ mod tests {
                 line: 3,
                 kind: ExcellonIssueKind::DuplicateToolDefinition {
                     tool: "T01".to_string(),
-                    diameter: 0.6,
+                    diameter: "0.6".parse::<Scalar>().unwrap(),
                 },
                 detail: "T01".to_string(),
             }],
@@ -543,20 +558,20 @@ mod tests {
 
     #[test]
     fn drill_diameter_outliers_are_reported_without_flagging_tooling_holes() {
-        let drill = |diameter| crate::kicad::DrillFeature {
-            location: [diameter, 0.0],
-            diameter,
+        let drill = |diameter: &str| crate::kicad::DrillFeature {
+            location: [crate::scalar::scalar(diameter), crate::Scalar::zero()],
+            diameter: crate::scalar::scalar(diameter),
             net: None,
             plated: false,
         };
         let outlier_report = ExcellonReport {
             source: "mixed-table.drl".to_string(),
             drills: vec![
-                drill(0.30),
-                drill(0.30),
-                drill(0.35),
-                drill(0.40),
-                drill(12.70),
+                drill("0.30"),
+                drill("0.30"),
+                drill("0.35"),
+                drill("0.40"),
+                drill("12.70"),
             ],
             issues: Vec::new(),
             has_units: true,
@@ -571,11 +586,11 @@ mod tests {
         let tooling_report = ExcellonReport {
             source: "tooling.drl".to_string(),
             drills: vec![
-                drill(0.30),
-                drill(0.30),
-                drill(0.35),
-                drill(0.40),
-                drill(3.20),
+                drill("0.30"),
+                drill("0.30"),
+                drill("0.35"),
+                drill("0.40"),
+                drill("3.20"),
             ],
             issues: Vec::new(),
             has_units: true,
@@ -624,7 +639,7 @@ mod tests {
         let first = clean_report("pth.drl", 2, ExcellonUnits::Metric);
         let duplicate = clean_report("pth-copy.drl", 2, ExcellonUnits::Metric);
         let mut npth = clean_report("npth.drl", 2, ExcellonUnits::Metric);
-        npth.drills[0].diameter = 0.9;
+        npth.drills[0].diameter = crate::scalar::scalar("0.9");
 
         let violations = excellon_batch_readiness(&[first, duplicate, npth]);
 
@@ -642,15 +657,15 @@ mod tests {
     #[test]
     fn excellon_batch_readiness_reports_plated_nonplated_split_conflicts() {
         let mut plated = clean_report("widget-PTH.drl", 2, ExcellonUnits::Metric);
-        plated.drills[0].location = [1.0, 2.0];
-        plated.drills[0].diameter = 0.6;
-        plated.drills[1].location = [3.0, 4.0];
-        plated.drills[1].diameter = 0.8;
+        plated.drills[0].location = [crate::scalar::scalar("1"), crate::scalar::scalar("2")];
+        plated.drills[0].diameter = crate::scalar::scalar("0.6");
+        plated.drills[1].location = [crate::scalar::scalar("3"), crate::scalar::scalar("4")];
+        plated.drills[1].diameter = crate::scalar::scalar("0.8");
         let mut non_plated = clean_report("widget-NPTH.drl", 2, ExcellonUnits::Metric);
-        non_plated.drills[0].location = [1.0, 2.0];
-        non_plated.drills[0].diameter = 0.6;
-        non_plated.drills[1].location = [8.0, 9.0];
-        non_plated.drills[1].diameter = 3.2;
+        non_plated.drills[0].location = [crate::scalar::scalar("1"), crate::scalar::scalar("2")];
+        non_plated.drills[0].diameter = crate::scalar::scalar("0.6");
+        non_plated.drills[1].location = [crate::scalar::scalar("8"), crate::scalar::scalar("9")];
+        non_plated.drills[1].diameter = crate::scalar::scalar("3.2");
 
         let violations = excellon_batch_readiness(&[plated, non_plated]);
 
@@ -692,8 +707,11 @@ mod tests {
     #[test]
     fn batch_readiness_flags_mixed_unit_declarations() {
         let drill = crate::kicad::DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.6,
+            location: [
+                crate::geometry::exact_real(0.0),
+                crate::geometry::exact_real(0.0),
+            ],
+            diameter: crate::scalar::scalar("0.6"),
             net: None,
             plated: false,
         };
@@ -738,8 +756,11 @@ mod tests {
     #[test]
     fn batch_readiness_warns_when_unit_declarations_are_inconsistent_across_files() {
         let drill = crate::kicad::DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.6,
+            location: [
+                crate::geometry::exact_real(0.0),
+                crate::geometry::exact_real(0.0),
+            ],
+            diameter: crate::scalar::scalar("0.6"),
             net: None,
             plated: false,
         };
@@ -792,8 +813,11 @@ mod tests {
         let missing_a = ExcellonReport {
             source: "missing-a.drl".to_string(),
             drills: vec![crate::kicad::DrillFeature {
-                location: [0.0, 0.0],
-                diameter: 0.6,
+                location: [
+                    crate::geometry::exact_real(0.0),
+                    crate::geometry::exact_real(0.0),
+                ],
+                diameter: crate::scalar::scalar("0.6"),
                 net: None,
                 plated: false,
             }],
@@ -814,8 +838,11 @@ mod tests {
         let missing_b = ExcellonReport {
             source: "missing-b.drl".to_string(),
             drills: vec![crate::kicad::DrillFeature {
-                location: [1.0, 1.0],
-                diameter: 0.8,
+                location: [
+                    crate::geometry::exact_real(1.0),
+                    crate::geometry::exact_real(1.0),
+                ],
+                diameter: crate::scalar::scalar("0.8"),
                 net: None,
                 plated: false,
             }],

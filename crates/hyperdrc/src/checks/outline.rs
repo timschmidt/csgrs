@@ -8,7 +8,9 @@ use geo::BoundingRect;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
-use crate::kicad::{CopperFeature, DrillFeature};
+use crate::kicad::CopperFeature;
+#[cfg(test)]
+use crate::kicad::DrillFeature;
 use crate::{PcbSketch, PcbSketchExt};
 
 /// Return the board rectangle when the outline is one simple axis-aligned box.
@@ -46,29 +48,24 @@ pub(super) fn axis_aligned_outline_rect_with_grid(
     on_rect_edges.then_some(bounds)
 }
 
-/// Return whether a circular drill keepout is fully inside a rectangular board.
-pub(super) fn drill_keepout_inside_rect(
-    drill: &DrillFeature,
-    rect: &geo::Rect<f64>,
-    edge_clearance: f64,
-) -> bool {
-    drill_keepout_inside_rect_with_grid(
-        drill,
-        rect,
-        edge_clearance,
-        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
-    )
-}
-
 /// Return whether a drill keepout is inside a rectangle using retained grid facts.
+#[cfg(test)]
 pub(super) fn drill_keepout_inside_rect_with_grid(
     drill: &DrillFeature,
     rect: &geo::Rect<f64>,
     edge_clearance: f64,
     grid: SourceGridFacts,
 ) -> bool {
-    let radius = drill.diameter / 2.0 + edge_clearance;
-    circle_inside_rect_with_grid(drill.location, radius, rect, grid)
+    let Some(diameter) = drill.diameter_f64_compatibility() else {
+        return false;
+    };
+    let radius = diameter / 2.0 + edge_clearance;
+    circle_inside_rect_with_grid(
+        drill.location_f64_compatibility_required(),
+        radius,
+        rect,
+        grid,
+    )
 }
 
 /// Return whether feature bounds are fully inside the rectangular board.
@@ -145,6 +142,7 @@ pub(super) fn feature_bounds_inside_rect_margin_with_grid(
         && exact_lt_with_grid(feature_max.y, max.y - margin, grid)
 }
 
+#[cfg(test)]
 fn circle_inside_rect_with_grid(
     center: [f64; 2],
     radius: f64,
@@ -226,7 +224,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some("HV_BUS".to_string()),
             kind: CopperKind::Segment,
-            location: center,
+            location: [
+                crate::geometry::exact_real(center[0]),
+                crate::geometry::exact_real(center[1]),
+            ],
             sketch: sketch_rect(center, size),
         }
     }
@@ -301,8 +302,11 @@ mod tests {
         let rect =
             axis_aligned_outline_rect(&outline).expect("simple rectangle should be detected");
         let drill = DrillFeature {
-            location: [50.0, 50.0],
-            diameter: 0.30,
+            location: [
+                crate::geometry::exact_real(50.0),
+                crate::geometry::exact_real(50.0),
+            ],
+            diameter: crate::scalar::scalar("0.30"),
             net: None,
             plated: false,
         };

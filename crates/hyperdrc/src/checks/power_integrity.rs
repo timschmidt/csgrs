@@ -10,11 +10,11 @@
 
 use geo::BoundingRect;
 
-use super::distance::polygon_boundary_distance;
+use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::CopperSpatialIndex;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbSketch, PcbSketchExt};
+use crate::{PcbSketch, PcbSketchExt, Scalar};
 
 /// Warn when a likely high-current pad has weak local same-net copper support.
 ///
@@ -33,12 +33,13 @@ use crate::{PcbSketch, PcbSketchExt};
 pub fn power_pad_entry_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    support_distance: f64,
-    minimum_entry_width: f64,
+    support_distance: &Scalar,
+    minimum_entry_width: &Scalar,
     minimum_parallel_vias: usize,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let feature_index = CopperSpatialIndex::new(&features, support_distance);
+    let broad_phase_distance = scalar_broad_phase_radius(support_distance);
+    let feature_index = CopperSpatialIndex::new(&features, broad_phase_distance);
     let mut candidate_pads = 0usize;
     let mut candidate_supports = 0usize;
     let mut exact_supports = 0usize;
@@ -56,13 +57,18 @@ pub fn power_pad_entry_readiness(
             continue;
         }
         candidate_pads += 1;
-        let (support, support_candidates, support_exact) =
-            local_pad_support(pad, &features, &feature_index, support_distance);
+        let (support, support_candidates, support_exact) = local_pad_support(
+            pad,
+            &features,
+            &feature_index,
+            support_distance,
+            broad_phase_distance,
+        );
         candidate_supports += support_candidates;
         exact_supports += support_exact;
         if support.has_zone
             || support.via_count >= minimum_parallel_vias
-            || support.maximum_segment_width >= minimum_entry_width
+            || &support.maximum_segment_width >= minimum_entry_width
         {
             continue;
         }
@@ -73,7 +79,7 @@ pub fn power_pad_entry_readiness(
             vec![pad.layer.clone()],
             None,
             Vec::new(),
-            vec![pad.location],
+            vec![pad.location_f64_compatibility_required()],
             Some(format!(
                 "likely high-current pad on net {net} has no local same-net pour, only {} nearby same-net via(s), and widest entry segment {:.6} below preferred width {:.6}; review connector/regulator pad current density and copper spreading",
                 support.via_count,
@@ -120,7 +126,7 @@ pub fn power_pad_entry_readiness(
 pub fn power_via_return_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    return_distance: f64,
+    return_distance: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let return_features = features
@@ -128,7 +134,8 @@ pub fn power_via_return_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
-    let return_index = CopperSpatialIndex::new(&return_features, return_distance);
+    let broad_phase_distance = scalar_broad_phase_radius(return_distance);
+    let return_index = CopperSpatialIndex::new(&return_features, broad_phase_distance);
     let mut candidate_vias = 0usize;
     let mut candidate_returns = 0usize;
     let mut exact_returns = 0usize;
@@ -146,8 +153,13 @@ pub fn power_via_return_readiness(
             continue;
         }
         candidate_vias += 1;
-        let (has_return, return_candidates, return_exact) =
-            has_nearby_return(via, &return_features, &return_index, return_distance);
+        let (has_return, return_candidates, return_exact) = has_nearby_return(
+            via,
+            &return_features,
+            &return_index,
+            return_distance,
+            broad_phase_distance,
+        );
         candidate_returns += return_candidates;
         exact_returns += return_exact;
         if has_return {
@@ -160,7 +172,7 @@ pub fn power_via_return_readiness(
             vec![via.layer.clone()],
             None,
             Vec::new(),
-            vec![via.location],
+            vec![via.location_f64_compatibility_required()],
             Some(format!(
                 "likely high-current via on net {net} has no parsed same-layer ground return copper within {return_distance:.6}; review power-loop area, decoupling return, and stitching intent"
             )),
@@ -184,25 +196,35 @@ pub fn power_via_return_readiness(
     violations
 }
 
-#[derive(Default)]
 struct PadSupport {
     has_zone: bool,
     via_count: usize,
-    maximum_segment_width: f64,
+    maximum_segment_width: Scalar,
+}
+
+impl Default for PadSupport {
+    fn default() -> Self {
+        Self {
+            has_zone: false,
+            via_count: 0,
+            maximum_segment_width: Scalar::zero(),
+        }
+    }
 }
 
 fn local_pad_support(
     pad: &CopperFeature,
     features: &[&CopperFeature],
     feature_index: &CopperSpatialIndex<'_>,
-    support_distance: f64,
+    support_distance: &Scalar,
+    broad_phase_distance: f64,
 ) -> (PadSupport, usize, usize) {
     let mut support = PadSupport::default();
     let Some(pad_bounds) = pad.sketch.to_multipolygon().bounding_rect() else {
         return (support, 0, 0);
     };
     let pad_geometry = pad.sketch.to_multipolygon();
-    let candidates = feature_index.same_layer_near_feature(pad, support_distance);
+    let candidates = feature_index.same_layer_near_feature(pad, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
 
@@ -220,12 +242,13 @@ fn local_pad_support(
         let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
             continue;
         };
-        if !expanded_rects_overlap(&pad_bounds, &feature_bounds, support_distance) {
+        if !expanded_rects_overlap(&pad_bounds, &feature_bounds, broad_phase_distance) {
             continue;
         }
         exact_count += 1;
-        let distance = polygon_boundary_distance(&pad_geometry, &feature.sketch.to_multipolygon());
-        if distance > support_distance {
+        if polygon_boundary_distance_scalar(&pad_geometry, &feature.sketch.to_multipolygon())
+            .is_none_or(|distance| &distance > support_distance)
+        {
             continue;
         }
 
@@ -233,9 +256,10 @@ fn local_pad_support(
             CopperKind::Zone => support.has_zone = true,
             CopperKind::Via => support.via_count += 1,
             CopperKind::Segment => {
-                support.maximum_segment_width = support
-                    .maximum_segment_width
-                    .max(minimum_bounding_dimension(&feature.sketch));
+                let width = minimum_bounding_dimension_scalar(&feature.sketch);
+                if width > support.maximum_segment_width {
+                    support.maximum_segment_width = width;
+                }
             }
             CopperKind::Pad => {}
         }
@@ -248,13 +272,14 @@ fn has_nearby_return(
     via: &CopperFeature,
     return_features: &[&CopperFeature],
     return_index: &CopperSpatialIndex<'_>,
-    return_distance: f64,
+    return_distance: &Scalar,
+    broad_phase_distance: f64,
 ) -> (bool, usize, usize) {
     let Some(via_bounds) = via.sketch.to_multipolygon().bounding_rect() else {
         return (false, 0, 0);
     };
     let via_geometry = via.sketch.to_multipolygon();
-    let candidates = return_index.same_layer_near_feature(via, return_distance);
+    let candidates = return_index.same_layer_near_feature(via, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
 
@@ -264,13 +289,13 @@ fn has_nearby_return(
         let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
             continue;
         };
-        if !expanded_rects_overlap(&via_bounds, &feature_bounds, return_distance) {
+        if !expanded_rects_overlap(&via_bounds, &feature_bounds, broad_phase_distance) {
             continue;
         }
 
         exact_count += 1;
-        if polygon_boundary_distance(&via_geometry, &feature.sketch.to_multipolygon())
-            <= return_distance
+        if polygon_boundary_distance_scalar(&via_geometry, &feature.sketch.to_multipolygon())
+            .is_some_and(|distance| &distance <= return_distance)
         {
             has_return = true;
             break;
@@ -291,16 +316,23 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn minimum_bounding_dimension(sketch: &PcbSketch) -> f64 {
+fn minimum_bounding_dimension_scalar(sketch: &PcbSketch) -> Scalar {
+    if let Some(bounds) = sketch.exact_bounds() {
+        let width = &bounds[2] - &bounds[0];
+        let height = &bounds[3] - &bounds[1];
+        return if width <= height { width } else { height };
+    }
     sketch
         .to_multipolygon()
         .bounding_rect()
-        .map(|bounds| {
-            let width = bounds.max().x - bounds.min().x;
-            let height = bounds.max().y - bounds.min().y;
-            width.min(height)
+        .and_then(|bounds| {
+            let width =
+                Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?;
+            let height =
+                Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?;
+            Some(if width <= height { width } else { height })
         })
-        .unwrap_or(0.0)
+        .unwrap_or_else(Scalar::zero)
 }
 
 fn looks_high_current_net(net: &str) -> bool {
@@ -329,6 +361,17 @@ fn expanded_rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>, expansi
         && left.max().y + expansion >= right.min().y
 }
 
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("power-integrity broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -350,7 +393,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
@@ -365,7 +411,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+            location: [
+                crate::geometry::exact_real((start[0] + end[0]) / 2.0),
+                crate::geometry::exact_real((start[1] + end[1]) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
@@ -380,7 +429,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Zone,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
@@ -395,7 +447,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Via,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![circle_polygon(location, 0.10, 32)],
                 Some(LayerMetadata {
@@ -412,7 +467,13 @@ mod tests {
             segment("VIN", [0.5, 0.0], [2.0, 0.0], 0.12),
         ]);
 
-        let violations = power_pad_entry_readiness(&board, &[], 0.20, 0.30, 2);
+        let violations = power_pad_entry_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.20"),
+            &crate::scalar::scalar("0.30"),
+            2,
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "power-pad-entry-readiness");
@@ -434,9 +495,36 @@ mod tests {
             via("VIN", [-0.2, 0.0]),
         ]);
 
-        assert!(power_pad_entry_readiness(&poured, &[], 0.20, 0.30, 2).is_empty());
-        assert!(power_pad_entry_readiness(&wide, &[], 0.20, 0.30, 2).is_empty());
-        assert!(power_pad_entry_readiness(&vias, &[], 0.20, 0.30, 2).is_empty());
+        assert!(
+            power_pad_entry_readiness(
+                &poured,
+                &[],
+                &crate::scalar::scalar("0.20"),
+                &crate::scalar::scalar("0.30"),
+                2,
+            )
+            .is_empty()
+        );
+        assert!(
+            power_pad_entry_readiness(
+                &wide,
+                &[],
+                &crate::scalar::scalar("0.20"),
+                &crate::scalar::scalar("0.30"),
+                2,
+            )
+            .is_empty()
+        );
+        assert!(
+            power_pad_entry_readiness(
+                &vias,
+                &[],
+                &crate::scalar::scalar("0.20"),
+                &crate::scalar::scalar("0.30"),
+                2,
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -446,7 +534,13 @@ mod tests {
             pad("GPIO_LED", [2.0, 0.0], [1.0, 1.0]),
         ]);
 
-        let violations = power_pad_entry_readiness(&board, &[], 0.20, 0.30, 2);
+        let violations = power_pad_entry_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.20"),
+            &crate::scalar::scalar("0.30"),
+            2,
+        );
 
         assert!(violations.is_empty());
     }
@@ -455,7 +549,13 @@ mod tests {
     fn power_pad_entry_respects_selected_layers() {
         let board = board(vec![pad("VIN", [0.0, 0.0], [1.0, 1.0])]);
 
-        let violations = power_pad_entry_readiness(&board, &[String::from("B.Cu")], 0.20, 0.30, 2);
+        let violations = power_pad_entry_readiness(
+            &board,
+            &[String::from("B.Cu")],
+            &crate::scalar::scalar("0.20"),
+            &crate::scalar::scalar("0.30"),
+            2,
+        );
 
         assert!(violations.is_empty());
     }
@@ -480,7 +580,13 @@ mod tests {
         let board = board(copper);
 
         let started = std::time::Instant::now();
-        let violations = power_pad_entry_readiness(&board, &[], 0.20, 0.30, 2);
+        let violations = power_pad_entry_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.20"),
+            &crate::scalar::scalar("0.30"),
+            2,
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -496,7 +602,7 @@ mod tests {
             segment("GND", [2.0, 0.0], [3.0, 0.0], 0.20),
         ]);
 
-        let violations = power_via_return_readiness(&board, &[], 0.50);
+        let violations = power_via_return_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "power-via-return-readiness");
@@ -509,7 +615,7 @@ mod tests {
             segment("GND", [0.25, 0.0], [1.0, 0.0], 0.20),
         ]);
 
-        let violations = power_via_return_readiness(&board, &[], 0.50);
+        let violations = power_via_return_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert!(violations.is_empty());
     }
@@ -522,8 +628,18 @@ mod tests {
             via("VIN", [2.0, 0.0]),
         ]);
 
-        assert_eq!(power_via_return_readiness(&board, &[], 0.50).len(), 1);
-        assert!(power_via_return_readiness(&board, &[String::from("B.Cu")], 0.50).is_empty());
+        assert_eq!(
+            power_via_return_readiness(&board, &[], &crate::scalar::scalar("0.50")).len(),
+            1
+        );
+        assert!(
+            power_via_return_readiness(
+                &board,
+                &[String::from("B.Cu")],
+                &crate::scalar::scalar("0.50"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -546,7 +662,7 @@ mod tests {
         let board = board(copper);
 
         let started = std::time::Instant::now();
-        let violations = power_via_return_readiness(&board, &[], 0.50);
+        let violations = power_via_return_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert_eq!(violations.len(), 1);
         assert!(

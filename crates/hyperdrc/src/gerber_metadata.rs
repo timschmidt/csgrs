@@ -10,6 +10,7 @@ use std::fmt::Debug;
 
 use crate::date::parse_iso_day;
 use crate::geometry::{SourceGridFacts, SourceUnit};
+use crate::scalar::{Scalar, parse_source_scalar};
 
 /// Gerber file units declared by the `%MO...*%` mode command.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -187,9 +188,9 @@ pub enum GerberImageTransformKind {
     /// Mirror mode declared by `%LM...*%`.
     Mirror(GerberMirrorMode),
     /// Rotation angle in degrees declared by `%LR...*%`.
-    Rotation(f64),
+    Rotation(Scalar),
     /// Scale factor declared by `%LS...*%`.
-    Scale(f64),
+    Scale(Scalar),
 }
 
 /// Gerber mirror mode declared by `%LM...*%`.
@@ -251,9 +252,9 @@ pub enum GerberStepRepeatEventKind {
         /// Number of repeated copies in the Y direction.
         y_repeats: u32,
         /// X-axis step distance in the file's current unit system.
-        x_step: f64,
+        x_step: Scalar,
         /// Y-axis step distance in the file's current unit system.
-        y_step: f64,
+        y_step: Scalar,
     },
     /// `%SR*%` ends the current step-and-repeat block.
     End,
@@ -1466,7 +1467,7 @@ fn capture_rotation_command(command: &str, line: usize, report: &mut GerberMetad
     let Some(value) = command.strip_prefix("LR") else {
         return;
     };
-    let Some(rotation) = parse_finite_f64(value) else {
+    let Some(rotation) = parse_source_scalar(value) else {
         let kind = if value.is_empty() {
             GerberMetadataIssueKind::MissingImageCommandValue {
                 command: "LR".to_string(),
@@ -1491,7 +1492,7 @@ fn capture_scale_command(command: &str, line: usize, report: &mut GerberMetadata
     let Some(value) = command.strip_prefix("LS") else {
         return;
     };
-    let Some(scale) = parse_finite_f64(value).filter(|scale| *scale > 0.0) else {
+    let Some(scale) = parse_source_scalar(value).filter(|scale| scale > &Scalar::zero()) else {
         let kind = if value.is_empty() {
             GerberMetadataIssueKind::MissingImageCommandValue {
                 command: "LS".to_string(),
@@ -1826,7 +1827,7 @@ fn parse_coordinate_format(value: &str) -> Option<GerberCoordinateFormat> {
     })
 }
 
-fn parse_step_repeat_value(value: &str) -> Option<(u32, u32, f64, f64)> {
+fn parse_step_repeat_value(value: &str) -> Option<(u32, u32, Scalar, Scalar)> {
     let fields = parse_letter_value_fields(value)?;
     let mut x_repeats = None;
     let mut y_repeats = None;
@@ -1842,10 +1843,10 @@ fn parse_step_repeat_value(value: &str) -> Option<(u32, u32, f64, f64)> {
                 y_repeats = parse_positive_u32(raw_value);
             }
             'I' if x_step.is_none() => {
-                x_step = parse_non_negative_f64(raw_value);
+                x_step = parse_non_negative_scalar(raw_value);
             }
             'J' if y_step.is_none() => {
-                y_step = parse_non_negative_f64(raw_value);
+                y_step = parse_non_negative_scalar(raw_value);
             }
             _ => return None,
         }
@@ -1894,17 +1895,8 @@ fn parse_positive_u32(value: &str) -> Option<u32> {
         .filter(|value| *value > 0)
 }
 
-fn parse_non_negative_f64(value: &str) -> Option<f64> {
-    let parsed = value.parse::<f64>().ok()?;
-    (parsed.is_finite() && parsed >= 0.0).then_some(parsed)
-}
-
-fn parse_finite_f64(value: &str) -> Option<f64> {
-    value
-        .trim()
-        .parse::<f64>()
-        .ok()
-        .filter(|value| value.is_finite())
+fn parse_non_negative_scalar(value: &str) -> Option<Scalar> {
+    parse_source_scalar(value).filter(|value| value >= &Scalar::zero())
 }
 
 fn parse_aperture_definition_value(value: &str, line: usize) -> Option<GerberApertureDefinition> {
@@ -2006,7 +1998,7 @@ fn valid_aperture_parameters(template: &str, parameters: Option<&str>) -> bool {
                 return false;
             };
             (values.len() == 1 || values.len() == 2)
-                && values[0] >= 0.0
+                && values[0] >= Scalar::zero()
                 && optional_positive(values.get(1))
         }
         "R" | "O" => {
@@ -2014,8 +2006,8 @@ fn valid_aperture_parameters(template: &str, parameters: Option<&str>) -> bool {
                 return false;
             };
             (values.len() == 2 || values.len() == 3)
-                && values[0] >= 0.0
-                && values[1] >= 0.0
+                && values[0] >= Scalar::zero()
+                && values[1] >= Scalar::zero()
                 && optional_positive(values.get(2))
         }
         "P" => {
@@ -2023,16 +2015,18 @@ fn valid_aperture_parameters(template: &str, parameters: Option<&str>) -> bool {
                 return false;
             };
             (values.len() == 2 || values.len() == 3 || values.len() == 4)
-                && values[0] >= 0.0
-                && values[1] >= 3.0
-                && values[1].fract().abs() <= f64::EPSILON
+                && values[0] >= Scalar::zero()
+                && values[1] >= Scalar::from(3)
+                && values[1]
+                    .fract_certified()
+                    .is_ok_and(|fraction| fraction.definitely_zero())
                 && optional_positive(values.get(3))
         }
         _ => true,
     }
 }
 
-fn parse_aperture_numeric_parameters(parameters: Option<&str>) -> Option<Vec<f64>> {
+fn parse_aperture_numeric_parameters(parameters: Option<&str>) -> Option<Vec<Scalar>> {
     parameters?
         .split('X')
         .map(str::trim)
@@ -2040,13 +2034,13 @@ fn parse_aperture_numeric_parameters(parameters: Option<&str>) -> Option<Vec<f64
             if field.is_empty() {
                 return None;
             }
-            field.parse::<f64>().ok().filter(|value| value.is_finite())
+            parse_source_scalar(field)
         })
         .collect()
 }
 
-fn optional_positive(value: Option<&f64>) -> bool {
-    value.is_none_or(|value| *value > 0.0)
+fn optional_positive(value: Option<&Scalar>) -> bool {
+    value.is_none_or(|value| value > &Scalar::zero())
 }
 
 fn same_aperture_definition(
@@ -2354,6 +2348,7 @@ mod tests {
         GerberObjectMetadata, GerberQuadrantMode, GerberRegionEventKind, GerberStepRepeatEventKind,
         GerberUnits, parse_gerber_metadata, parse_gerber_metadata_report,
     };
+    use crate::Scalar;
     use crate::geometry::{SourceGridFacts, SourceUnit};
 
     #[test]
@@ -2754,8 +2749,8 @@ mod tests {
                 (2, GerberImageTransformKind::Mirror(GerberMirrorMode::X)),
                 (3, GerberImageTransformKind::Mirror(GerberMirrorMode::Y)),
                 (4, GerberImageTransformKind::Mirror(GerberMirrorMode::XY)),
-                (5, GerberImageTransformKind::Rotation(90.0)),
-                (6, GerberImageTransformKind::Scale(0.5)),
+                (5, GerberImageTransformKind::Rotation(Scalar::from(90))),
+                (6, GerberImageTransformKind::Scale("0.5".parse().unwrap()),),
             ]
         );
         assert!(report.issues.iter().any(|issue| {
@@ -2891,8 +2886,8 @@ mod tests {
                 y_step,
             } if *x_repeats == 2
                 && *y_repeats == 3
-                && (*x_step - 1.25).abs() <= f64::EPSILON
-                && (*y_step - 2.5).abs() <= f64::EPSILON
+                && x_step == &"1.25".parse::<Scalar>().unwrap()
+                && y_step == &"2.5".parse::<Scalar>().unwrap()
         ));
         assert!(matches!(
             &report.step_repeat_events[1].kind,

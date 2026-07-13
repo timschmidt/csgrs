@@ -9,19 +9,16 @@
 //! stackups, fixtures, plating notes, and chassis bonds. Treat suspect findings
 //! as prompts for mechanical drawing and fabrication-note verification.
 
-use csgrs::csg::CSG;
+use csgrs::{csg::CSG, sketch::Profile};
 use geo::BoundingRect;
 
-use super::distance::polygon_boundary_distance;
-use super::outline::{
-    axis_aligned_outline_rect, drill_keepout_inside_rect, feature_bounds_inside_rect,
-};
+use super::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
+use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex};
-use super::spread::maximum_point_spread;
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
+use crate::geometry::{multipolygon_to_shapes_scalar, polygon_bounds_scalar, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketchExt};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
 /// Review likely mounting holes for nearby ground or chassis bonding copper.
 ///
@@ -33,7 +30,7 @@ use crate::{LayerMetadata, PcbSketchExt};
 pub fn mounting_hole_grounding_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    grounding_distance: f64,
+    grounding_distance: &Scalar,
 ) -> Vec<Violation> {
     let copper = selected_copper_features(board, selected_layers);
     let grounding_features = copper
@@ -46,12 +43,13 @@ pub fn mounting_hole_grounding_readiness(
         })
         .copied()
         .collect::<Vec<_>>();
-    let grounding_index = CopperSpatialIndex::new(&grounding_features, grounding_distance);
+    let broad_phase_distance = scalar_broad_phase_radius(grounding_distance);
+    let grounding_index = CopperSpatialIndex::new(&grounding_features, broad_phase_distance);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
     let mut exact_distance_count = 0_usize;
     log::trace!(
-        "mounting-hole grounding readiness: source={} holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:.6}",
+        "mounting-hole grounding readiness: source={} holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:#.6}",
         board.source,
         likely_mounting_holes(board, grounding_distance).len(),
         grounding_features.len(),
@@ -59,15 +57,23 @@ pub fn mounting_hole_grounding_readiness(
     );
 
     for drill in likely_mounting_holes(board, grounding_distance) {
-        let search_radius = drill.diameter / 2.0 + grounding_distance;
+        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
+            continue;
+        };
+        let search_radius = drill_radius + grounding_distance;
+        let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
         let has_grounding_intent = grounding_index
-            .all_layers_near_circle(drill.location, search_radius)
+            .all_layers_near_circle(
+                drill.location_f64_compatibility_required(),
+                broad_phase_radius,
+            )
             .into_iter()
             .any(|feature_index| {
                 candidate_count += 1;
                 let feature = grounding_features[feature_index];
                 exact_distance_count += 1;
-                distance(drill.location, feature.location) <= search_radius
+                distance_scalar(&drill.location, &feature.location)
+                    .is_some_and(|distance| distance <= search_radius)
             });
         if has_grounding_intent {
             continue;
@@ -79,9 +85,9 @@ pub fn mounting_hole_grounding_readiness(
             vec![board.source.clone()],
             None,
             Vec::new(),
-            vec![drill.location],
+            vec![drill.location_f64_compatibility_required()],
             Some(format!(
-                "likely mounting hole diameter {:.6} has no parsed ground or chassis copper within {:.6}; review chassis bonding, isolation, or keepout intent",
+                "likely mounting hole diameter {:#.6} has no parsed ground or chassis copper within {:#.6}; review chassis bonding, isolation, or keepout intent",
                 drill.diameter, grounding_distance
             )),
         ));
@@ -108,16 +114,17 @@ pub fn mounting_hole_grounding_readiness(
 pub fn mounting_hole_copper_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
+    keepout: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let copper = selected_copper_features(board, selected_layers);
-    let copper_index = CopperSpatialIndex::new(&copper, keepout);
+    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+    let copper_index = CopperSpatialIndex::new(&copper, broad_phase_keepout);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
     let mut exact_pair_count = 0_usize;
     log::trace!(
-        "mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:.6} min_area={min_area:.9}",
+        "mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}",
         board.source,
         likely_mounting_holes(board, keepout).len(),
         copper.len(),
@@ -126,8 +133,15 @@ pub fn mounting_hole_copper_keepout_readiness(
 
     for drill in likely_mounting_holes(board, keepout) {
         let keepout_sketch = drill_keepout(drill, keepout);
-        let query_radius = drill.diameter / 2.0 + keepout * 2.0;
-        for feature_index in copper_index.all_layers_near_circle(drill.location, query_radius) {
+        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
+            continue;
+        };
+        let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
+        let broad_phase_radius = scalar_broad_phase_radius(&query_radius);
+        for feature_index in copper_index.all_layers_near_circle(
+            drill.location_f64_compatibility_required(),
+            broad_phase_radius,
+        ) {
             candidate_count += 1;
             let feature = copper[feature_index];
             if feature
@@ -145,12 +159,13 @@ pub fn mounting_hole_copper_keepout_readiness(
             // region as a circular keepout and report nearby non-ground copper
             // so the release package makes the grounding/isolation intent clear.
             let overlap = keepout_sketch.intersection(&feature.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundaries_within_scalar(
                     &keepout_sketch.to_multipolygon(),
                     &feature.sketch.to_multipolygon(),
-                ) <= keepout;
+                    keepout,
+                );
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -162,12 +177,12 @@ pub fn mounting_hole_copper_keepout_readiness(
                 None,
                 shapes,
                 if fallback_hit {
-                    vec![drill.location, feature.location]
+                    vec![drill.location_f64_compatibility_required(), feature.location_f64_compatibility_required()]
                 } else {
                     Vec::new()
                 },
                 Some(format!(
-                    "non-ground {:?} copper is inside likely mounting-hole keepout {:.6}; review screw, standoff, washer, or chassis clearance",
+                    "non-ground {:?} copper is inside likely mounting-hole keepout {:#.6}; review screw, standoff, washer, or chassis clearance",
                     feature.kind, keepout
                 )),
             ));
@@ -194,8 +209,8 @@ pub fn mounting_hole_copper_keepout_readiness(
 /// clamp, washer, and edge-clearance intent.
 pub fn mounting_hole_edge_clearance_readiness(
     board: &BoardModel,
-    edge_clearance: f64,
-    min_area: f64,
+    edge_clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
@@ -206,38 +221,48 @@ pub fn mounting_hole_edge_clearance_readiness(
     let mut exact_difference_count = 0_usize;
 
     for drill in likely_mounting_holes(board, edge_clearance) {
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| drill_keepout_inside_rect(drill, rect, edge_clearance))
-        {
-            skipped_rect_inside += 1;
+        if let Some(rect) = &outline_rect {
+            if drill_keepout_inside_rect_scalar(drill, rect, edge_clearance) {
+                skipped_rect_inside += 1;
+                continue;
+            }
+            violations.push(mounting_hole_edge_violation(
+                board,
+                drill,
+                edge_clearance,
+                Vec::new(),
+            ));
             continue;
         }
 
         let keepout_sketch = drill_keepout(drill, edge_clearance);
         exact_difference_count += 1;
-        let outside_outline = keepout_sketch.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
+        let (shapes, uncertain) = match keepout_sketch.try_difference(outline) {
+            Ok(outside_outline) => (
+                multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area),
+                false,
+            ),
+            Err(error) => {
+                log::warn!(
+                    "mounting-hole edge clearance used conservative finding after uncertified profile difference: {error}"
+                );
+                (Vec::new(), true)
+            }
+        };
+        if shapes.is_empty() && !uncertain {
             continue;
         }
 
-        violations.push(Violation::new(
-            "mounting-hole-edge-clearance-readiness",
-            Severity::Warning,
-            vec![board.source.clone()],
-            None,
+        violations.push(mounting_hole_edge_violation(
+            board,
+            drill,
+            edge_clearance,
             shapes,
-            vec![drill.location],
-            Some(format!(
-                "likely mounting-hole screw or washer keepout {:.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent",
-                edge_clearance
-            )),
         ));
     }
 
     log::trace!(
-        "mounting-hole edge clearance readiness: source={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} edge_clearance={edge_clearance:.6} min_area={min_area:.9}",
+        "mounting-hole edge clearance readiness: source={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} edge_clearance={edge_clearance:#.6} min_area={min_area:#.9}",
         board.source,
         outline_rect.is_some(),
         skipped_rect_inside,
@@ -257,7 +282,7 @@ pub fn mounting_hole_edge_clearance_readiness(
 pub fn mounting_hole_plating_intent_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    grounding_distance: f64,
+    grounding_distance: &Scalar,
 ) -> Vec<Violation> {
     let copper = selected_copper_features(board, selected_layers);
     let grounding_features = copper
@@ -270,12 +295,13 @@ pub fn mounting_hole_plating_intent_readiness(
         })
         .copied()
         .collect::<Vec<_>>();
-    let grounding_index = CopperSpatialIndex::new(&grounding_features, grounding_distance);
+    let broad_phase_distance = scalar_broad_phase_radius(grounding_distance);
+    let grounding_index = CopperSpatialIndex::new(&grounding_features, broad_phase_distance);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
     let mut exact_distance_count = 0_usize;
     log::trace!(
-        "mounting-hole plating intent readiness: source={} plated_holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:.6}",
+        "mounting-hole plating intent readiness: source={} plated_holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:#.6}",
         board.source,
         likely_plated_mounting_holes(board, grounding_distance).len(),
         grounding_features.len(),
@@ -287,15 +313,23 @@ pub fn mounting_hole_plating_intent_readiness(
             .net
             .as_deref()
             .is_some_and(looks_ground_or_chassis_net);
-        let search_radius = drill.diameter / 2.0 + grounding_distance;
+        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
+            continue;
+        };
+        let search_radius = drill_radius + grounding_distance;
+        let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
         let has_grounding_copper = grounding_index
-            .all_layers_near_circle(drill.location, search_radius)
+            .all_layers_near_circle(
+                drill.location_f64_compatibility_required(),
+                broad_phase_radius,
+            )
             .into_iter()
             .any(|feature_index| {
                 candidate_count += 1;
                 let feature = grounding_features[feature_index];
                 exact_distance_count += 1;
-                distance(drill.location, feature.location) <= search_radius
+                distance_scalar(&drill.location, &feature.location)
+                    .is_some_and(|distance| distance <= search_radius)
             });
         if drill_net_is_ground || has_grounding_copper {
             continue;
@@ -307,9 +341,9 @@ pub fn mounting_hole_plating_intent_readiness(
             vec![board.source.clone()],
             None,
             Vec::new(),
-            vec![drill.location],
+            vec![drill.location_f64_compatibility_required()],
             Some(format!(
-                "large plated mounting-style hole diameter {:.6} has no parsed ground/chassis net or nearby bonding copper; review plated versus isolated hardware intent",
+                "large plated mounting-style hole diameter {:#.6} has no parsed ground/chassis net or nearby bonding copper; review plated versus isolated hardware intent",
                 drill.diameter
             )),
         ));
@@ -330,14 +364,14 @@ pub fn mounting_hole_plating_intent_readiness(
 /// Run the `mounting_hole_distribution_readiness` design-readiness check or report helper.
 ///
 /// The check compares the exact maximum span of likely hardware holes against
-/// the requested review spacing. The span calculation reduces hole centers to a
-/// convex hull and then uses rotating calipers; Andrew (1979), "Another
-/// Efficient Algorithm for Convex Hulls in Two Dimensions", and Toussaint
-/// (1983), "Solving Geometric Problems with the Rotating Calipers", describe
-/// the two geometric primitives used here.
+/// the requested review spacing. The span calculation reduces exact hole
+/// centers to an exact monotone-chain convex hull, then compares hull pairs in
+/// hyperreal squared-distance space and takes a single square root for the
+/// winning span. Andrew (1979), "Another Efficient Algorithm for Convex Hulls
+/// in Two Dimensions", describes the hull primitive used here.
 pub fn mounting_hole_distribution_readiness(
     board: &BoardModel,
-    minimum_spacing: f64,
+    minimum_spacing: &Scalar,
 ) -> Vec<Violation> {
     let holes = likely_hardware_holes(board, minimum_spacing);
     if holes.is_empty() {
@@ -351,28 +385,31 @@ pub fn mounting_hole_distribution_readiness(
             vec![board.source.clone()],
             None,
             Vec::new(),
-            vec![holes[0].location],
+            vec![holes[0].location_f64_compatibility_required()],
             Some(format!(
                 "only one likely mounting hole was parsed; review enclosure support, board retention, or intentional single-fastener design"
             )),
         )];
     }
 
-    let spread = maximum_point_spread(holes.iter().map(|hole| hole.location));
-    let maximum_spacing = spread.distance;
-    let span_locations = spread
-        .endpoints
-        .map(|endpoints| endpoints.to_vec())
+    let Some((maximum_spacing, endpoints)) = maximum_exact_point_spread(&holes) else {
+        return Vec::new();
+    };
+    let span_locations = endpoints
+        .map(|[left, right]| {
+            vec![
+                left.location_f64_compatibility_required(),
+                right.location_f64_compatibility_required(),
+            ]
+        })
         .unwrap_or_default();
     log::trace!(
-        "mounting-hole distribution readiness: source={} holes={} hull_points={} caliper_steps={} maximum_spacing={maximum_spacing:.6} minimum_spacing={minimum_spacing:.6}",
+        "mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}",
         board.source,
-        holes.len(),
-        spread.hull_points,
-        spread.caliper_steps
+        holes.len()
     );
 
-    if maximum_spacing >= minimum_spacing {
+    if &maximum_spacing >= minimum_spacing {
         return Vec::new();
     }
 
@@ -388,7 +425,7 @@ pub fn mounting_hole_distribution_readiness(
         Vec::new(),
         span_locations,
         Some(format!(
-            "likely mounting holes span only {maximum_spacing:.6}, below review spacing {minimum_spacing:.6}; review enclosure support and board retention distribution"
+            "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution"
         )),
     )]
 }
@@ -402,16 +439,17 @@ pub fn mounting_hole_distribution_readiness(
 /// mechanical review prompt for screw heads, washers, standoffs, and breakout.
 pub fn mounting_hole_spacing_readiness(
     board: &BoardModel,
-    minimum_edge_spacing: f64,
+    minimum_edge_spacing: &Scalar,
 ) -> Vec<Violation> {
-    let holes = likely_hardware_holes(board, minimum_edge_spacing * 4.0);
+    let holes = likely_hardware_holes(board, &(minimum_edge_spacing * crate::scalar::scalar("4")));
     let indexed_holes = holes
         .iter()
         .map(|drill| (*drill).clone())
         .collect::<Vec<_>>();
-    let hole_index = DrillSpatialIndex::new(&indexed_holes, minimum_edge_spacing);
+    let broad_phase_spacing = scalar_broad_phase_radius(minimum_edge_spacing);
+    let hole_index = DrillSpatialIndex::new(&indexed_holes, broad_phase_spacing);
     log::trace!(
-        "mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:.6}",
+        "mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
         board.source,
         holes.len(),
         hole_index.bucket_count()
@@ -423,14 +461,21 @@ pub fn mounting_hole_spacing_readiness(
     for left_index in 0..holes.len() {
         let left = holes[left_index];
         for right_index in
-            hole_index.later_candidates_within_spacing(left_index, minimum_edge_spacing)
+            hole_index.later_candidates_within_spacing(left_index, broad_phase_spacing)
         {
             candidate_count += 1;
             let right = holes[right_index];
-            let center_spacing = distance(left.location, right.location);
-            let edge_spacing = center_spacing - (left.diameter + right.diameter) / 2.0;
+            let Some(center_spacing) = distance_scalar(&left.location, &right.location) else {
+                continue;
+            };
+            let Ok(combined_radius) =
+                (&left.diameter + &right.diameter) / crate::scalar::scalar("2")
+            else {
+                continue;
+            };
+            let edge_spacing = center_spacing - combined_radius;
             exact_pair_count += 1;
-            if edge_spacing >= minimum_edge_spacing {
+            if &edge_spacing >= minimum_edge_spacing {
                 continue;
             }
 
@@ -440,9 +485,12 @@ pub fn mounting_hole_spacing_readiness(
                 vec![board.source.clone()],
                 None,
                 Vec::new(),
-                vec![left.location, right.location],
+                vec![
+                    left.location_f64_compatibility_required(),
+                    right.location_f64_compatibility_required(),
+                ],
                 Some(format!(
-                    "likely mounting-hole edge spacing {edge_spacing:.6} is below review spacing {minimum_edge_spacing:.6}; review screw head, washer, standoff, and drill breakout spacing"
+                    "likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing"
                 )),
             ));
         }
@@ -472,8 +520,8 @@ pub fn mounting_hole_spacing_readiness(
 /// issues during fixture triage.
 pub fn panel_feature_outline_readiness(
     board: &BoardModel,
-    edge_distance: f64,
-    min_area: f64,
+    edge_distance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let Some(panel_features) = &board.panel_features else {
         return Vec::new();
@@ -495,24 +543,34 @@ pub fn panel_feature_outline_readiness(
     };
 
     let outline_geometry = outline.to_multipolygon();
+    let outline_rect_bounds = axis_aligned_outline_rect(outline)
+        .as_ref()
+        .and_then(rect_bounds_scalar);
     let mut violations = Vec::new();
     let mut feature_count = 0_usize;
     let mut exact_boundary_count = 0_usize;
     for polygon in panel_features.to_multipolygon().0 {
         feature_count += 1;
+        exact_boundary_count += 1;
+        let polygon_geometry = geo::MultiPolygon(vec![polygon.clone()]);
+        let Some(boundary_distance) = outline_rect_bounds
+            .as_ref()
+            .and_then(|bounds| polygon_inside_rect_boundary_gap_scalar(&polygon, bounds))
+            .or_else(|| polygon_boundary_distance_scalar(&polygon_geometry, &outline_geometry))
+        else {
+            continue;
+        };
+        if &boundary_distance <= edge_distance {
+            continue;
+        }
+
         let feature = polygons_to_profile(
             vec![polygon],
             Some(LayerMetadata {
                 name: "KiCad panel feature".to_string(),
             }),
         );
-        exact_boundary_count += 1;
-        if polygon_boundary_distance(&feature.to_multipolygon(), &outline_geometry) <= edge_distance
-        {
-            continue;
-        }
-
-        let shapes = multipolygon_to_shapes(&feature.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&feature.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
         }
@@ -525,13 +583,13 @@ pub fn panel_feature_outline_readiness(
             shapes,
             Vec::new(),
             Some(format!(
-                "parsed panel/rout feature is more than {edge_distance:.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent"
+                "parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent"
             )),
         ));
     }
 
     log::trace!(
-        "panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:.6} min_area={min_area:.9}",
+        "panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:#.6} min_area={min_area:#.9}",
         board.source,
         feature_count,
         exact_boundary_count,
@@ -553,8 +611,8 @@ pub fn panel_feature_outline_readiness(
 pub fn edge_plating_intent_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    edge_distance: f64,
-    min_area: f64,
+    edge_distance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
@@ -562,17 +620,21 @@ pub fn edge_plating_intent_readiness(
 
     let outline_geometry = outline.to_multipolygon();
     let outline_rect = axis_aligned_outline_rect(outline);
+    let broad_phase_edge_distance = scalar_broad_phase_radius(edge_distance);
     let mut violations = Vec::new();
     let mut exact_boundary_count = 0_usize;
     let mut skipped_interior_count = 0_usize;
     for feature in selected_copper_features(board, selected_layers) {
         let feature_geometry = feature.sketch.to_multipolygon();
-        let reaches_outline = if let Some(rect) = &outline_rect {
-            feature_near_rect_outline(feature, rect, edge_distance)
+        let boundary_candidate = if let Some(rect) = &outline_rect {
+            feature_near_rect_outline(feature, rect, broad_phase_edge_distance)
         } else {
-            exact_boundary_count += 1;
-            polygon_boundary_distance(&feature_geometry, &outline_geometry) <= edge_distance
+            true
         };
+        let reaches_outline = boundary_candidate
+            && polygon_boundary_distance_scalar(&feature_geometry, &outline_geometry)
+                .is_some_and(|distance| &distance <= edge_distance);
+        exact_boundary_count += usize::from(boundary_candidate);
 
         if !reaches_outline
             && outline_rect
@@ -584,7 +646,7 @@ pub fn edge_plating_intent_readiness(
         }
 
         let outside_outline = feature.sketch.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
         if !reaches_outline && shapes.is_empty() {
             continue;
         }
@@ -605,7 +667,7 @@ pub fn edge_plating_intent_readiness(
             None,
             shapes,
             if reaches_outline {
-                vec![feature.location]
+                vec![feature.location_f64_compatibility_required()]
             } else {
                 Vec::new()
             },
@@ -638,16 +700,17 @@ pub fn edge_plating_intent_readiness(
 /// pattern described by Ericson, *Real-Time Collision Detection* (2005).
 pub fn castellation_pitch_readiness(
     board: &BoardModel,
-    minimum_edge_spacing: f64,
+    minimum_edge_spacing: &Scalar,
 ) -> Vec<Violation> {
     let holes = plated_edge_holes(board, minimum_edge_spacing);
     let indexed_holes = holes
         .iter()
         .map(|drill| (*drill).clone())
         .collect::<Vec<_>>();
-    let hole_index = DrillSpatialIndex::new(&indexed_holes, minimum_edge_spacing);
+    let broad_phase_spacing = scalar_broad_phase_radius(minimum_edge_spacing);
+    let hole_index = DrillSpatialIndex::new(&indexed_holes, broad_phase_spacing);
     log::trace!(
-        "castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:.6}",
+        "castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
         board.source,
         holes.len(),
         hole_index.bucket_count()
@@ -659,14 +722,21 @@ pub fn castellation_pitch_readiness(
     for left_index in 0..holes.len() {
         let left = holes[left_index];
         for right_index in
-            hole_index.later_candidates_within_spacing(left_index, minimum_edge_spacing)
+            hole_index.later_candidates_within_spacing(left_index, broad_phase_spacing)
         {
             candidate_count += 1;
             let right = holes[right_index];
-            let edge_spacing =
-                distance(left.location, right.location) - (left.diameter + right.diameter) / 2.0;
+            let Some(center_spacing) = distance_scalar(&left.location, &right.location) else {
+                continue;
+            };
+            let Ok(combined_radius) =
+                (&left.diameter + &right.diameter) / crate::scalar::scalar("2")
+            else {
+                continue;
+            };
+            let edge_spacing = center_spacing - combined_radius;
             exact_pair_count += 1;
-            if edge_spacing >= minimum_edge_spacing {
+            if &edge_spacing >= minimum_edge_spacing {
                 continue;
             }
 
@@ -676,9 +746,12 @@ pub fn castellation_pitch_readiness(
                 vec![board.source.clone()],
                 None,
                 Vec::new(),
-                vec![left.location, right.location],
+                vec![
+                    left.location_f64_compatibility_required(),
+                    right.location_f64_compatibility_required(),
+                ],
                 Some(format!(
-                    "plated edge-hole spacing {edge_spacing:.6} is below castellation review spacing {minimum_edge_spacing:.6}; review half-hole pitch, breakout, and routed-edge plating capability"
+                    "plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability"
                 )),
             ));
         }
@@ -696,26 +769,54 @@ pub fn castellation_pitch_readiness(
     violations
 }
 
-fn likely_mounting_holes(board: &BoardModel, clearance_hint: f64) -> Vec<&DrillFeature> {
-    let minimum_diameter = clearance_hint.max(1.0);
+fn likely_mounting_holes<'a>(
+    board: &'a BoardModel,
+    clearance_hint: &Scalar,
+) -> Vec<&'a DrillFeature> {
+    let one = crate::scalar::scalar("1");
+    let minimum_diameter = if clearance_hint >= &one {
+        clearance_hint
+    } else {
+        &one
+    };
     board
         .drills
         .iter()
-        .filter(|drill| !drill.plated && drill.diameter >= minimum_diameter)
+        .filter(|drill| !drill.plated && &drill.diameter >= minimum_diameter)
         .collect()
 }
 
-fn likely_plated_mounting_holes(board: &BoardModel, clearance_hint: f64) -> Vec<&DrillFeature> {
-    let minimum_diameter = clearance_hint.max(1.0);
+fn likely_plated_mounting_holes<'a>(
+    board: &'a BoardModel,
+    clearance_hint: &Scalar,
+) -> Vec<&'a DrillFeature> {
+    let one = crate::scalar::scalar("1");
+    let minimum_diameter = if clearance_hint >= &one {
+        clearance_hint
+    } else {
+        &one
+    };
     board
         .drills
         .iter()
-        .filter(|drill| drill.plated && drill.diameter >= minimum_diameter)
+        .filter(|drill| drill.plated && &drill.diameter >= minimum_diameter)
         .collect()
 }
 
-fn likely_hardware_holes(board: &BoardModel, spacing_hint: f64) -> Vec<&DrillFeature> {
-    let minimum_diameter = (spacing_hint * 0.25).clamp(1.0, 3.2);
+fn likely_hardware_holes<'a>(
+    board: &'a BoardModel,
+    spacing_hint: &Scalar,
+) -> Vec<&'a DrillFeature> {
+    let quarter = spacing_hint * crate::scalar::scalar("0.25");
+    let one = crate::scalar::scalar("1");
+    let maximum = crate::scalar::scalar("3.2");
+    let minimum_diameter = if quarter < one {
+        one
+    } else if quarter > maximum {
+        maximum
+    } else {
+        quarter
+    };
     board
         .drills
         .iter()
@@ -723,7 +824,7 @@ fn likely_hardware_holes(board: &BoardModel, spacing_hint: f64) -> Vec<&DrillFea
         .collect()
 }
 
-fn plated_edge_holes(board: &BoardModel, edge_distance: f64) -> Vec<&DrillFeature> {
+fn plated_edge_holes<'a>(board: &'a BoardModel, edge_distance: &Scalar) -> Vec<&'a DrillFeature> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
@@ -731,10 +832,12 @@ fn plated_edge_holes(board: &BoardModel, edge_distance: f64) -> Vec<&DrillFeatur
         let holes = board
             .drills
             .iter()
-            .filter(|drill| drill.plated && drill_near_rect_outline(drill, &rect, edge_distance))
+            .filter(|drill| {
+                drill.plated && drill_near_rect_outline_scalar(drill, &rect, edge_distance)
+            })
             .collect::<Vec<_>>();
         log::trace!(
-            "plated edge-hole classification: source={} outline=axis-aligned-rect drills={} edge_holes={} edge_distance={edge_distance:.6}",
+            "plated edge-hole classification: source={} outline=axis-aligned-rect drills={} edge_holes={} edge_distance={edge_distance:#.6}",
             board.source,
             board.drills.len(),
             holes.len()
@@ -749,14 +852,15 @@ fn plated_edge_holes(board: &BoardModel, edge_distance: f64) -> Vec<&DrillFeatur
         .iter()
         .filter(|drill| {
             drill.plated
-                && polygon_boundary_distance(
-                    &drill_keepout(drill, 0.0).to_multipolygon(),
+                && polygon_boundary_distance_scalar(
+                    &drill_keepout(drill, &Scalar::zero()).to_multipolygon(),
                     &outline_geometry,
-                ) <= edge_distance
+                )
+                .is_some_and(|distance| &distance <= edge_distance)
         })
         .collect::<Vec<_>>();
     log::trace!(
-        "plated edge-hole classification: source={} outline=general drills={} edge_holes={} edge_distance={edge_distance:.6}",
+        "plated edge-hole classification: source={} outline=general drills={} edge_holes={} edge_distance={edge_distance:#.6}",
         board.source,
         board.drills.len(),
         holes.len()
@@ -764,35 +868,49 @@ fn plated_edge_holes(board: &BoardModel, edge_distance: f64) -> Vec<&DrillFeatur
     holes
 }
 
-fn drill_near_rect_outline(
+fn drill_near_rect_outline_scalar(
     drill: &DrillFeature,
     rect: &geo::Rect<f64>,
-    edge_distance: f64,
+    edge_distance: &Scalar,
 ) -> bool {
-    let radius = drill.diameter / 2.0;
-    let min = rect.min();
-    let max = rect.max();
-    let x = drill.location[0];
-    let y = drill.location[1];
+    let Ok(radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
+        return true;
+    };
+    let Some([min_x, min_y, max_x, max_y]) = rect_bounds_scalar(rect) else {
+        return true;
+    };
+    let x = &drill.location[0];
+    let y = &drill.location[1];
 
-    let outside_dx = if x < min.x {
-        min.x - x
-    } else if x > max.x {
-        x - max.x
+    let outside_dx = if x < &min_x {
+        &min_x - x
+    } else if x > &max_x {
+        x - &max_x
     } else {
-        0.0
+        Scalar::zero()
     };
-    let outside_dy = if y < min.y {
-        min.y - y
-    } else if y > max.y {
-        y - max.y
+    let outside_dy = if y < &min_y {
+        &min_y - y
+    } else if y > &max_y {
+        y - &max_y
     } else {
-        0.0
+        Scalar::zero()
     };
-    let boundary_gap = if outside_dx > 0.0 || outside_dy > 0.0 {
-        outside_dx.hypot(outside_dy) - radius
+    let boundary_gap = if outside_dx > Scalar::zero() || outside_dy > Scalar::zero() {
+        let Some(outside_distance) = (&outside_dx * &outside_dx + &outside_dy * &outside_dy)
+            .sqrt()
+            .ok()
+        else {
+            return true;
+        };
+        outside_distance - radius
     } else {
-        (x - min.x).min(max.x - x).min(y - min.y).min(max.y - y) - radius
+        let gaps = [x - &min_x, &max_x - x, y - &min_y, &max_y - y];
+        let minimum_gap = gaps
+            .into_iter()
+            .reduce(|left, right| if left <= right { left } else { right })
+            .unwrap_or_else(Scalar::zero);
+        minimum_gap - radius
     };
 
     // This is an analytic narrow phase for the common rectangular board
@@ -800,7 +918,7 @@ fn drill_near_rect_outline(
     // preserving the same circle-to-outline distance predicate used by the
     // general fallback. The broad/narrow split follows Ericson, Real-Time
     // Collision Detection (2005), applied here to fabrication edge-hole review.
-    boundary_gap <= edge_distance
+    &boundary_gap <= edge_distance
 }
 
 fn feature_near_rect_outline(
@@ -852,17 +970,168 @@ fn feature_near_rect_outline(
     inside_gap <= edge_distance
 }
 
-fn drill_keepout(drill: &DrillFeature, keepout: f64) -> crate::PcbSketch {
-    polygons_to_profile(
-        vec![circle_polygon(
-            drill.location,
-            drill.diameter / 2.0 + keepout,
-            48,
-        )],
+fn drill_keepout(drill: &DrillFeature, keepout: &Scalar) -> PcbSketch {
+    let radius = (drill.diameter.clone() / crate::scalar::scalar("2"))
+        .map(|radius| radius + keepout)
+        .unwrap_or_else(|_| Scalar::zero());
+    PcbSketch::new(
+        Profile::circle(radius, 64).translate(
+            drill.location[0].clone(),
+            drill.location[1].clone(),
+            Scalar::zero(),
+        ),
         Some(LayerMetadata {
             name: "mounting-hole keepout".to_string(),
         }),
     )
+}
+
+fn drill_keepout_inside_rect_scalar(
+    drill: &DrillFeature,
+    rect: &geo::Rect<f64>,
+    clearance: &Scalar,
+) -> bool {
+    let Some([min_x, min_y, max_x, max_y]) = rect_bounds_scalar(rect) else {
+        return false;
+    };
+    let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
+        return false;
+    };
+    let radius = drill_radius + clearance;
+    &drill.location[0] - &radius >= min_x
+        && &drill.location[0] + &radius <= max_x
+        && &drill.location[1] - &radius >= min_y
+        && &drill.location[1] + &radius <= max_y
+}
+
+fn rect_bounds_scalar(rect: &geo::Rect<f64>) -> Option<[Scalar; 4]> {
+    Some([
+        Scalar::try_from(rect.min().x).ok()?,
+        Scalar::try_from(rect.min().y).ok()?,
+        Scalar::try_from(rect.max().x).ok()?,
+        Scalar::try_from(rect.max().y).ok()?,
+    ])
+}
+
+fn polygon_inside_rect_boundary_gap_scalar(
+    polygon: &geo::Polygon<f64>,
+    rect: &[Scalar; 4],
+) -> Option<Scalar> {
+    let bounds = polygon_bounds_scalar(polygon)?;
+    if bounds[0] < rect[0] || bounds[1] < rect[1] || bounds[2] > rect[2] || bounds[3] > rect[3] {
+        return None;
+    }
+    [
+        &bounds[0] - &rect[0],
+        &bounds[1] - &rect[1],
+        &rect[2] - &bounds[2],
+        &rect[3] - &bounds[3],
+    ]
+    .into_iter()
+    .reduce(|left, right| if left <= right { left } else { right })
+}
+
+fn mounting_hole_edge_violation(
+    board: &BoardModel,
+    drill: &DrillFeature,
+    edge_clearance: &Scalar,
+    shapes: Vec<crate::report::ViolationPolygon>,
+) -> Violation {
+    Violation::new(
+        "mounting-hole-edge-clearance-readiness",
+        Severity::Warning,
+        vec![board.source.clone()],
+        None,
+        shapes,
+        vec![drill.location_f64_compatibility_required()],
+        Some(format!(
+            "likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent"
+        )),
+    )
+}
+
+fn maximum_exact_point_spread<'a>(
+    holes: &[&'a DrillFeature],
+) -> Option<(Scalar, Option<[&'a DrillFeature; 2]>)> {
+    let hull = exact_point_hull(holes);
+    if hull.len() < 2 {
+        return Some((Scalar::zero(), None));
+    }
+    let mut maximum_squared = Scalar::zero();
+    let mut endpoints = None;
+    for left_index in 0..hull.len() - 1 {
+        for right_index in left_index + 1..hull.len() {
+            let dx = &hull[right_index].location[0] - &hull[left_index].location[0];
+            let dy = &hull[right_index].location[1] - &hull[left_index].location[1];
+            let distance_squared = &dx * &dx + &dy * &dy;
+            if endpoints.is_none() || distance_squared > maximum_squared {
+                maximum_squared = distance_squared;
+                endpoints = Some([hull[left_index], hull[right_index]]);
+            }
+        }
+    }
+    Some((maximum_squared.sqrt().ok()?, endpoints))
+}
+
+fn exact_point_hull<'a>(holes: &[&'a DrillFeature]) -> Vec<&'a DrillFeature> {
+    let mut points = holes.to_vec();
+    points.sort_by(|left, right| {
+        left.location[0]
+            .partial_cmp(&right.location[0])
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| {
+                left.location[1]
+                    .partial_cmp(&right.location[1])
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+    });
+    points.dedup_by(|left, right| left.location == right.location);
+    if points.len() <= 1 {
+        return points;
+    }
+
+    let mut lower = Vec::new();
+    for point in &points {
+        while lower.len() >= 2
+            && exact_cross(lower[lower.len() - 2], lower[lower.len() - 1], point) <= Scalar::zero()
+        {
+            lower.pop();
+        }
+        lower.push(*point);
+    }
+
+    let mut upper = Vec::new();
+    for point in points.iter().rev() {
+        while upper.len() >= 2
+            && exact_cross(upper[upper.len() - 2], upper[upper.len() - 1], point) <= Scalar::zero()
+        {
+            upper.pop();
+        }
+        upper.push(*point);
+    }
+    lower.pop();
+    upper.pop();
+    lower.extend(upper);
+    lower
+}
+
+fn exact_cross(origin: &DrillFeature, left: &DrillFeature, right: &DrillFeature) -> Scalar {
+    let left_x = &left.location[0] - &origin.location[0];
+    let left_y = &left.location[1] - &origin.location[1];
+    let right_x = &right.location[0] - &origin.location[0];
+    let right_y = &right.location[1] - &origin.location[1];
+    left_x * right_y - left_y * right_x
+}
+
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("mechanical broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
 }
 
 fn selected_copper_features<'a>(
@@ -903,10 +1172,10 @@ fn looks_edge_plating_net(net: Option<&str>) -> bool {
         || normalized.contains("plated-edge")
 }
 
-fn distance(start: [f64; 2], end: [f64; 2]) -> f64 {
-    let dx = end[0] - start[0];
-    let dy = end[1] - start[1];
-    (dx * dx + dy * dy).sqrt()
+fn distance_scalar(start: &[Scalar; 2], end: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &end[0] - &start[0];
+    let dy = &end[1] - &start[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 #[cfg(test)]
@@ -914,6 +1183,7 @@ mod tests {
     use crate::LayerMetadata;
     use crate::geometry::{circle_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+    use crate::scalar::scalar;
 
     use super::{
         castellation_pitch_readiness, edge_plating_intent_readiness,
@@ -930,7 +1200,7 @@ mod tests {
             vec![npth([10.0, 10.0], 3.2), npth([20.0, 10.0], 0.4)],
         );
 
-        let violations = mounting_hole_grounding_readiness(&board, &[], 1.0);
+        let violations = mounting_hole_grounding_readiness(&board, &[], &scalar("1.0"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "mounting-hole-grounding-readiness");
@@ -944,7 +1214,7 @@ mod tests {
             vec![npth([10.0, 10.0], 3.2)],
         );
 
-        assert!(mounting_hole_grounding_readiness(&board, &[], 1.0).is_empty());
+        assert!(mounting_hole_grounding_readiness(&board, &[], &scalar("1.0")).is_empty());
     }
 
     #[test]
@@ -962,7 +1232,7 @@ mod tests {
         let board = board_with(copper, vec![npth([-10.0, -10.0], 3.2)]);
 
         let started = std::time::Instant::now();
-        let violations = mounting_hole_grounding_readiness(&board, &[], 1.0);
+        let violations = mounting_hole_grounding_readiness(&board, &[], &scalar("1.0"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -981,7 +1251,8 @@ mod tests {
             vec![npth([10.0, 10.0], 2.0)],
         );
 
-        let violations = mounting_hole_copper_keepout_readiness(&board, &[], 0.5, 0.0);
+        let violations =
+            mounting_hole_copper_keepout_readiness(&board, &[], &scalar("0.5"), &scalar("0.0"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(
@@ -1004,14 +1275,19 @@ mod tests {
                         name: "B.Cu pad".to_string(),
                     }),
                 ),
-                location: [10.8, 10.0],
+                location: [crate::scalar::scalar("10.8"), crate::scalar::scalar("10")],
             }],
             vec![npth([10.0, 10.0], 2.0)],
         );
 
         assert!(
-            mounting_hole_copper_keepout_readiness(&board, &["F.Cu".to_string()], 0.5, 0.0)
-                .is_empty()
+            mounting_hole_copper_keepout_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                &scalar("0.5"),
+                &crate::scalar::scalar("0.0"),
+            )
+            .is_empty()
         );
     }
 
@@ -1031,7 +1307,12 @@ mod tests {
         let board = board_with(copper_features, vec![npth([-10.0, -10.0], 2.0)]);
 
         let started = std::time::Instant::now();
-        let violations = mounting_hole_copper_keepout_readiness(&board, &[], 0.5, 1.0e-9);
+        let violations = mounting_hole_copper_keepout_readiness(
+            &board,
+            &[],
+            &scalar("0.5"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1050,7 +1331,8 @@ mod tests {
             }),
         ));
 
-        let violations = mounting_hole_edge_clearance_readiness(&board, 0.5, 1.0e-9);
+        let violations =
+            mounting_hole_edge_clearance_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(
@@ -1062,7 +1344,10 @@ mod tests {
     #[test]
     fn mounting_hole_edge_clearance_allows_inset_or_missing_outline() {
         let mut board = board_with(vec![], vec![npth([5.0, 5.0], 2.0)]);
-        assert!(mounting_hole_edge_clearance_readiness(&board, 0.5, 1.0e-9).is_empty());
+        assert!(
+            mounting_hole_edge_clearance_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"))
+                .is_empty()
+        );
 
         board.board_outline = Some(polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
@@ -1070,7 +1355,10 @@ mod tests {
                 name: "outline".to_string(),
             }),
         ));
-        assert!(mounting_hole_edge_clearance_readiness(&board, 0.5, 1.0e-9).is_empty());
+        assert!(
+            mounting_hole_edge_clearance_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"))
+                .is_empty()
+        );
     }
 
     #[test]
@@ -1091,7 +1379,8 @@ mod tests {
         board.board_outline = Some(outline());
 
         let started = std::time::Instant::now();
-        let violations = mounting_hole_edge_clearance_readiness(&board, 0.5, 1.0e-9);
+        let violations =
+            mounting_hole_edge_clearance_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1104,7 +1393,7 @@ mod tests {
     fn mounting_hole_plating_intent_reports_unbonded_large_plated_hole() {
         let board = board_with(vec![], vec![pth([10.0, 10.0], 3.2, Some("MOUNT"))]);
 
-        let violations = mounting_hole_plating_intent_readiness(&board, &[], 1.0);
+        let violations = mounting_hole_plating_intent_readiness(&board, &[], &scalar("1.0"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(
@@ -1116,13 +1405,17 @@ mod tests {
     #[test]
     fn mounting_hole_plating_intent_accepts_ground_net_or_nearby_bonding_copper() {
         let ground_net = board_with(vec![], vec![pth([10.0, 10.0], 3.2, Some("GND"))]);
-        assert!(mounting_hole_plating_intent_readiness(&ground_net, &[], 1.0).is_empty());
+        assert!(
+            mounting_hole_plating_intent_readiness(&ground_net, &[], &scalar("1.0")).is_empty()
+        );
 
         let nearby_chassis = board_with(
             vec![copper("CHASSIS", CopperKind::Pad, [11.0, 10.0], 0.4)],
             vec![pth([10.0, 10.0], 3.2, Some("MOUNT"))],
         );
-        assert!(mounting_hole_plating_intent_readiness(&nearby_chassis, &[], 1.0).is_empty());
+        assert!(
+            mounting_hole_plating_intent_readiness(&nearby_chassis, &[], &scalar("1.0")).is_empty()
+        );
     }
 
     #[test]
@@ -1140,7 +1433,7 @@ mod tests {
         let board = board_with(copper, vec![pth([-10.0, -10.0], 3.2, Some("MOUNT"))]);
 
         let started = std::time::Instant::now();
-        let violations = mounting_hole_plating_intent_readiness(&board, &[], 1.0);
+        let violations = mounting_hole_plating_intent_readiness(&board, &[], &scalar("1.0"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1152,7 +1445,7 @@ mod tests {
     #[test]
     fn mounting_hole_distribution_reports_single_or_clustered_holes() {
         let single = board_with(vec![], vec![npth([10.0, 10.0], 3.2)]);
-        let single_violations = mounting_hole_distribution_readiness(&single, 8.0);
+        let single_violations = mounting_hole_distribution_readiness(&single, &scalar("8.0"));
         assert_eq!(single_violations.len(), 1);
         assert_eq!(
             single_violations[0].check,
@@ -1163,7 +1456,7 @@ mod tests {
             vec![],
             vec![npth([10.0, 10.0], 3.2), pth([12.0, 10.0], 3.2, Some("GND"))],
         );
-        let clustered_violations = mounting_hole_distribution_readiness(&clustered, 8.0);
+        let clustered_violations = mounting_hole_distribution_readiness(&clustered, &scalar("8.0"));
         assert_eq!(clustered_violations.len(), 1);
         assert_eq!(
             clustered_violations[0].check,
@@ -1178,13 +1471,13 @@ mod tests {
     #[test]
     fn mounting_hole_distribution_accepts_absent_or_well_spaced_holes() {
         let absent = board_with(vec![], vec![npth([0.0, 0.0], 0.5)]);
-        assert!(mounting_hole_distribution_readiness(&absent, 8.0).is_empty());
+        assert!(mounting_hole_distribution_readiness(&absent, &scalar("8.0")).is_empty());
 
         let spaced = board_with(
             vec![],
             vec![npth([0.0, 0.0], 3.2), pth([20.0, 0.0], 3.2, Some("GND"))],
         );
-        assert!(mounting_hole_distribution_readiness(&spaced, 8.0).is_empty());
+        assert!(mounting_hole_distribution_readiness(&spaced, &scalar("8.0")).is_empty());
     }
 
     #[test]
@@ -1203,7 +1496,7 @@ mod tests {
         let board = board_with(vec![], drills);
 
         let started = std::time::Instant::now();
-        let violations = mounting_hole_distribution_readiness(&board, 8.0);
+        let violations = mounting_hole_distribution_readiness(&board, &scalar("8.0"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1219,7 +1512,7 @@ mod tests {
             vec![npth([0.0, 0.0], 3.0), pth([3.4, 0.0], 3.0, Some("GND"))],
         );
 
-        let violations = mounting_hole_spacing_readiness(&board, 0.5);
+        let violations = mounting_hole_spacing_readiness(&board, &scalar("0.5"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "mounting-hole-spacing-readiness");
@@ -1237,7 +1530,7 @@ mod tests {
             ],
         );
 
-        assert!(mounting_hole_spacing_readiness(&board, 0.5).is_empty());
+        assert!(mounting_hole_spacing_readiness(&board, &scalar("0.5")).is_empty());
     }
 
     #[test]
@@ -1250,7 +1543,7 @@ mod tests {
         let board = board_with(vec![], drills);
 
         let started = std::time::Instant::now();
-        let violations = mounting_hole_spacing_readiness(&board, 0.5);
+        let violations = mounting_hole_spacing_readiness(&board, &scalar("0.5"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1268,7 +1561,11 @@ mod tests {
                 name: "panel".to_string(),
             }),
         ));
-        let missing = panel_feature_outline_readiness(&missing_outline, 0.5, 1.0e-9);
+        let missing = panel_feature_outline_readiness(
+            &missing_outline,
+            &scalar("0.5"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
         assert_eq!(missing.len(), 1);
         assert_eq!(missing[0].check, "panel-feature-outline-readiness");
 
@@ -1280,7 +1577,8 @@ mod tests {
                 name: "panel".to_string(),
             }),
         ));
-        let interior_violations = panel_feature_outline_readiness(&interior, 0.5, 1.0e-9);
+        let interior_violations =
+            panel_feature_outline_readiness(&interior, &scalar("0.5"), &scalar("1.0e-9"));
         assert_eq!(interior_violations.len(), 1);
         assert_eq!(
             interior_violations[0].check,
@@ -1291,7 +1589,9 @@ mod tests {
     #[test]
     fn panel_feature_outline_readiness_accepts_edge_adjacent_or_absent_features() {
         let absent = board_with(vec![], vec![]);
-        assert!(panel_feature_outline_readiness(&absent, 0.5, 1.0e-9).is_empty());
+        assert!(
+            panel_feature_outline_readiness(&absent, &scalar("0.5"), &scalar("1.0e-9")).is_empty()
+        );
 
         let mut near_edge = board_with(vec![], vec![]);
         near_edge.board_outline = Some(outline());
@@ -1301,7 +1601,10 @@ mod tests {
                 name: "panel".to_string(),
             }),
         ));
-        assert!(panel_feature_outline_readiness(&near_edge, 0.5, 1.0e-9).is_empty());
+        assert!(
+            panel_feature_outline_readiness(&near_edge, &scalar("0.5"), &scalar("1.0e-9"))
+                .is_empty()
+        );
     }
 
     #[test]
@@ -1328,7 +1631,7 @@ mod tests {
         ));
 
         let started = std::time::Instant::now();
-        let violations = panel_feature_outline_readiness(&board, 0.5, 1.0e-9);
+        let violations = panel_feature_outline_readiness(&board, &scalar("0.5"), &scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1344,7 +1647,8 @@ mod tests {
             vec![],
         );
         edge_intent.board_outline = Some(outline());
-        let intent_violations = edge_plating_intent_readiness(&edge_intent, &[], 0.5, 1.0e-9);
+        let intent_violations =
+            edge_plating_intent_readiness(&edge_intent, &[], &scalar("0.5"), &scalar("1.0e-9"));
         assert_eq!(intent_violations.len(), 1);
         assert_eq!(intent_violations[0].check, "edge-plating-intent-readiness");
 
@@ -1353,7 +1657,8 @@ mod tests {
             vec![],
         );
         crossing.board_outline = Some(outline());
-        let crossing_violations = edge_plating_intent_readiness(&crossing, &[], 0.5, 1.0e-9);
+        let crossing_violations =
+            edge_plating_intent_readiness(&crossing, &[], &scalar("0.5"), &scalar("1.0e-9"));
         assert_eq!(crossing_violations.len(), 1);
         assert_eq!(
             crossing_violations[0].check,
@@ -1368,7 +1673,10 @@ mod tests {
             vec![],
         );
         interior.board_outline = Some(outline());
-        assert!(edge_plating_intent_readiness(&interior, &[], 0.5, 1.0e-9).is_empty());
+        assert!(
+            edge_plating_intent_readiness(&interior, &[], &scalar("0.5"), &scalar("1.0e-9"))
+                .is_empty()
+        );
 
         let mut back_layer = board_with(
             vec![CopperFeature {
@@ -1381,14 +1689,19 @@ mod tests {
                         name: "B.Cu copper".to_string(),
                     }),
                 ),
-                location: [0.25, 5.0],
+                location: [crate::scalar::scalar("0.25"), crate::scalar::scalar("5")],
             }],
             vec![],
         );
         back_layer.board_outline = Some(outline());
         assert!(
-            edge_plating_intent_readiness(&back_layer, &["F.Cu".to_string()], 0.5, 1.0e-9)
-                .is_empty()
+            edge_plating_intent_readiness(
+                &back_layer,
+                &["F.Cu".to_string()],
+                &scalar("0.5"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -1412,7 +1725,8 @@ mod tests {
         board.board_outline = Some(outline());
 
         let started = std::time::Instant::now();
-        let violations = edge_plating_intent_readiness(&board, &[], 0.5, 1.0e-9);
+        let violations =
+            edge_plating_intent_readiness(&board, &[], &scalar("0.5"), &scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1432,7 +1746,7 @@ mod tests {
         );
         board.board_outline = Some(outline());
 
-        let violations = castellation_pitch_readiness(&board, 0.5);
+        let violations = castellation_pitch_readiness(&board, &scalar("0.5"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "castellation-pitch-readiness");
@@ -1451,7 +1765,7 @@ mod tests {
         );
         board.board_outline = Some(outline());
 
-        assert!(castellation_pitch_readiness(&board, 0.5).is_empty());
+        assert!(castellation_pitch_readiness(&board, &scalar("0.5")).is_empty());
     }
 
     #[test]
@@ -1474,7 +1788,7 @@ mod tests {
         ));
 
         let started = std::time::Instant::now();
-        let violations = castellation_pitch_readiness(&board, 0.5);
+        let violations = castellation_pitch_readiness(&board, &scalar("0.5"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1495,8 +1809,11 @@ mod tests {
 
     fn npth(location: [f64; 2], diameter: f64) -> DrillFeature {
         DrillFeature {
-            location,
-            diameter,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
+            diameter: crate::geometry::exact_real(diameter),
             net: None,
             plated: false,
         }
@@ -1504,8 +1821,11 @@ mod tests {
 
     fn pth(location: [f64; 2], diameter: f64, net: Option<&str>) -> DrillFeature {
         DrillFeature {
-            location,
-            diameter,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
+            diameter: crate::geometry::exact_real(diameter),
             net: net.map(str::to_string),
             plated: true,
         }
@@ -1531,7 +1851,10 @@ mod tests {
                     name: "F.Cu copper".to_string(),
                 }),
             ),
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
         }
     }
 }

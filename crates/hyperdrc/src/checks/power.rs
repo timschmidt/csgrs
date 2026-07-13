@@ -8,15 +8,13 @@
 //! heuristics, not loop-area extraction or EMI simulation. Suspect findings need
 //! review against the schematic, regulator layout guide, and measured layout.
 
-use csgrs::csg::CSG;
-use geo::BoundingRect;
-
 use crate::PcbSketchExt;
-use crate::checks::distance::polygon_boundary_distance;
-use crate::checks::spatial::CopperSpatialIndex;
-use crate::geometry::multipolygon_to_shapes;
+use crate::Scalar;
+use crate::checks::distance::polygon_boundary_distance_scalar;
+use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
+use csgrs::csg::CSG;
 
 /// Review likely switching nodes for nearby non-ground copper.
 ///
@@ -29,32 +27,33 @@ use crate::report::{Severity, Violation};
 pub fn switch_node_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
+    keepout: Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let feature_index = CopperSpatialIndex::new(&features, keepout);
     let switching = features
         .iter()
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_switching_net))
         .collect::<Vec<_>>();
     log::trace!(
-        "switch-node keepout readiness: source={} switching={} features={} buckets={} keepout={keepout:.6}",
+        "switch-node keepout readiness: source={} switching={} features={} keepout={keepout:#.6}",
         board.source,
         switching.len(),
         features.len(),
-        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
     let mut exact_pair_count = 0_usize;
 
     for switch_feature in switching {
-        for neighbor_index in feature_index.same_layer_near_feature(switch_feature, keepout) {
+        for neighbor in &features {
+            let neighbor = *neighbor;
             candidate_count += 1;
-            let neighbor = features[neighbor_index];
             if std::ptr::eq(switch_feature, neighbor) {
+                continue;
+            }
+            if switch_feature.layer != neighbor.layer {
                 continue;
             }
             if switch_feature.net == neighbor.net {
@@ -63,21 +62,22 @@ pub fn switch_node_keepout_readiness(
             if neighbor.net.as_deref().is_some_and(looks_ground_net) {
                 continue;
             }
-            if !sketches_within_clearance(&switch_feature.sketch, &neighbor.sketch, keepout) {
+            if !sketches_within_clearance(&switch_feature.sketch, &neighbor.sketch, &keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let overlap = switch_feature
                 .sketch
-                .offset(crate::geometry::exact_real(keepout))
+                .offset(keepout.clone())
                 .intersection(&neighbor.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundary_distance_scalar(
                     &switch_feature.sketch.to_multipolygon(),
                     &neighbor.sketch.to_multipolygon(),
-                ) <= keepout;
+                )
+                .is_some_and(|distance| distance <= keepout);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -88,9 +88,12 @@ pub fn switch_node_keepout_readiness(
                 vec![switch_feature.layer.clone()],
                 None,
                 shapes,
-                vec![switch_feature.location, neighbor.location],
+                vec![
+                    switch_feature.location_f64_compatibility_required(),
+                    neighbor.location_f64_compatibility_required(),
+                ],
                 Some(format!(
-                    "likely switching node {:?} is within keepout {keepout:.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
+                    "likely switching node {:?} is within keepout {keepout:#.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
                     switch_feature.net, neighbor.net
                 )),
             ));
@@ -125,15 +128,14 @@ pub fn switch_node_keepout_readiness(
 pub fn inductor_copper_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
+    keepout: Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if keepout <= 0.0 {
+    if keepout <= Scalar::zero() {
         return Vec::new();
     }
 
     let features = selected_copper_features(board, selected_layers);
-    let feature_index = CopperSpatialIndex::new(&features, keepout);
     let inductors = features
         .iter()
         .copied()
@@ -145,41 +147,44 @@ pub fn inductor_copper_keepout_readiness(
         })
         .collect::<Vec<_>>();
     log::trace!(
-        "inductor copper keepout readiness: source={} inductors={} features={} buckets={} keepout={keepout:.6}",
+        "inductor copper keepout readiness: source={} inductors={} features={} keepout={keepout:#.6}",
         board.source,
         inductors.len(),
         features.len(),
-        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
     let mut exact_pair_count = 0_usize;
 
     for inductor in inductors {
-        for neighbor_index in feature_index.same_layer_near_feature(inductor, keepout) {
+        for neighbor in &features {
+            let neighbor = *neighbor;
             candidate_count += 1;
-            let neighbor = features[neighbor_index];
             if std::ptr::eq(inductor, neighbor) {
+                continue;
+            }
+            if inductor.layer != neighbor.layer {
                 continue;
             }
             if inductor.net == neighbor.net {
                 continue;
             }
-            if !sketches_within_clearance(&inductor.sketch, &neighbor.sketch, keepout) {
+            if !sketches_within_clearance(&inductor.sketch, &neighbor.sketch, &keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let overlap = inductor
                 .sketch
-                .offset(crate::geometry::exact_real(keepout))
+                .offset(keepout.clone())
                 .intersection(&neighbor.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundary_distance_scalar(
                     &inductor.sketch.to_multipolygon(),
                     &neighbor.sketch.to_multipolygon(),
-                ) <= keepout;
+                )
+                .is_some_and(|distance| distance <= keepout);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -190,9 +195,12 @@ pub fn inductor_copper_keepout_readiness(
                 vec![inductor.layer.clone()],
                 None,
                 shapes,
-                vec![inductor.location, neighbor.location],
+                vec![
+                    inductor.location_f64_compatibility_required(),
+                    neighbor.location_f64_compatibility_required(),
+                ],
                 Some(format!(
-                    "likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:.6}; review inductor copper-free region, EMI coupling, and regulator layout",
+                    "likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:#.6}; review inductor copper-free region, EMI coupling, and regulator layout",
                     inductor.net, neighbor.net
                 )),
             ));
@@ -225,22 +233,21 @@ fn selected_copper_features<'a>(
 fn sketches_within_clearance(
     left: &crate::PcbSketch,
     right: &crate::PcbSketch,
-    clearance: f64,
+    clearance: &Scalar,
 ) -> bool {
-    let Some(left_bounds) = left.geometry().bounding_rect() else {
+    if left.is_empty() || right.is_empty() {
         return true;
-    };
-    let Some(right_bounds) = right.geometry().bounding_rect() else {
-        return true;
-    };
+    }
+    let left_bounds = left.bounding_box();
+    let right_bounds = right.bounding_box();
 
     // Broad-phase culling before exact offset/intersection, following the
     // broad/narrow collision pattern from Lin and Canny, "A Fast Algorithm for
     // Incremental Distance Calculation", IEEE ICRA, 1991.
-    left_bounds.min().x - clearance <= right_bounds.max().x
-        && left_bounds.max().x + clearance >= right_bounds.min().x
-        && left_bounds.min().y - clearance <= right_bounds.max().y
-        && left_bounds.max().y + clearance >= right_bounds.min().y
+    &left_bounds.mins.x - clearance <= right_bounds.maxs.x
+        && &left_bounds.maxs.x + clearance >= right_bounds.mins.x
+        && &left_bounds.mins.y - clearance <= right_bounds.maxs.y
+        && &left_bounds.maxs.y + clearance >= right_bounds.mins.y
 }
 
 fn looks_switching_net(net: &str) -> bool {
@@ -285,7 +292,12 @@ mod tests {
             copper_rect("GND", CopperKind::Zone, "F.Cu", 0.0, 2.0, 2.0, 3.0),
         ]);
 
-        let violations = switch_node_keepout_readiness(&board, &[], 0.3, 1.0e-9);
+        let violations = switch_node_keepout_readiness(
+            &board,
+            &[],
+            crate::scalar::scalar("0.3"),
+            &crate::scalar::scalar("1e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "switch-node-keepout-readiness");
@@ -306,11 +318,19 @@ mod tests {
             copper_rect("ADC_IN", CopperKind::Segment, "F.Cu", 4.0, 0.0, 5.0, 0.5),
         ]);
 
-        assert!(switch_node_keepout_readiness(&board, &[], 0.3, 1.0e-9).is_empty());
+        assert!(
+            switch_node_keepout_readiness(
+                &board,
+                &[],
+                crate::scalar::scalar("0.3"),
+                &crate::scalar::scalar("1e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
-    fn switch_node_keepout_readiness_culls_sparse_neighbor_fields() {
+    fn switch_node_keepout_readiness_handles_sparse_neighbor_fields() {
         let mut copper = sparse_signal_rects("GPIO", 2_000, 100.0);
         copper.push(copper_rect(
             "BUCK_SW",
@@ -341,7 +361,12 @@ mod tests {
         ));
         let board = board_with_copper(copper);
 
-        let violations = switch_node_keepout_readiness(&board, &[], 0.3, 1.0e-9);
+        let violations = switch_node_keepout_readiness(
+            &board,
+            &[],
+            crate::scalar::scalar("0.3"),
+            &crate::scalar::scalar("1e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(violations[0].message.as_ref().is_some_and(|message| {
@@ -356,7 +381,12 @@ mod tests {
             copper_rect("PGND", CopperKind::Zone, "F.Cu", 1.2, 0.0, 2.0, 0.8),
         ]);
 
-        let violations = inductor_copper_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = inductor_copper_keepout_readiness(
+            &board,
+            &[],
+            crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "inductor-copper-keepout-readiness");
@@ -376,15 +406,28 @@ mod tests {
             copper_rect("GND", CopperKind::Zone, "F.Cu", 1.2, 0.0, 2.0, 0.8),
         ]);
 
-        assert!(inductor_copper_keepout_readiness(&board, &[], 0.30, 1.0e-9).is_empty());
         assert!(
-            inductor_copper_keepout_readiness(&board, &["F.Cu".to_string()], 0.30, 1.0e-9)
-                .is_empty()
+            inductor_copper_keepout_readiness(
+                &board,
+                &[],
+                crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1e-9"),
+            )
+            .is_empty()
+        );
+        assert!(
+            inductor_copper_keepout_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1e-9"),
+            )
+            .is_empty()
         );
     }
 
     #[test]
-    fn inductor_copper_keepout_readiness_culls_sparse_copper_fields() {
+    fn inductor_copper_keepout_readiness_handles_sparse_copper_fields() {
         let mut copper = sparse_signal_rects("SIG", 2_000, 100.0);
         copper.push(copper_rect(
             "COIL_SW",
@@ -406,7 +449,12 @@ mod tests {
         ));
         let board = board_with_copper(copper);
 
-        let violations = inductor_copper_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = inductor_copper_keepout_readiness(
+            &board,
+            &[],
+            crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "inductor-copper-keepout-readiness");
@@ -435,7 +483,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            location: [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
+            location: [
+                crate::geometry::exact_real((min_x + max_x) / 2.0),
+                crate::geometry::exact_real((min_y + max_y) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],

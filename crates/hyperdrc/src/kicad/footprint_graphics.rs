@@ -402,7 +402,10 @@ fn push_graphic_features(
                         name: metadata_name.to_string(),
                     }),
                 ),
-                location,
+                location: [
+                    crate::geometry::exact_real(location[0]),
+                    crate::geometry::exact_real(location[1]),
+                ],
             });
         }
     }

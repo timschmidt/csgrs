@@ -6,7 +6,7 @@
 
 /// Height above which a populated BOM row needs explicit mechanical-height
 /// handoff language rather than only row-local metadata.
-pub(super) const TALL_COMPONENT_HEIGHT_MM: f64 = 5.0;
+pub(super) const TALL_COMPONENT_HEIGHT_MM: &str = "5";
 
 pub(super) fn mentions_reflow_profile_handoff(text: &str) -> bool {
     has_any(

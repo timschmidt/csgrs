@@ -10,12 +10,12 @@ use std::collections::{BTreeMap, HashMap};
 use csgrs::csg::CSG;
 use geo::BoundingRect;
 
-use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::spatial::CopperSpatialIndex;
-use crate::geometry::multipolygon_to_shapes;
+use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbSketch, PcbSketchExt};
+use crate::{PcbSketch, PcbSketchExt, Scalar};
 
 const DENSE_PAD_CLUSTER_MIN_PADS: usize = 16;
 
@@ -28,16 +28,17 @@ const DENSE_PAD_CLUSTER_MIN_PADS: usize = 16;
 pub fn local_fiducial_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    pitch_threshold: f64,
-    search_radius: f64,
+    pitch_threshold: &Scalar,
+    search_radius: &Scalar,
 ) -> Vec<Violation> {
+    let broad_search_radius = scalar_broad_phase_radius(search_radius);
     let features = selected_copper_features(board, selected_layers);
     let fiducials = features
         .iter()
         .copied()
         .filter(|feature| likely_fiducial(feature))
         .collect::<Vec<_>>();
-    let fiducial_index = CopperSpatialIndex::new(&fiducials, search_radius);
+    let fiducial_index = CopperSpatialIndex::new(&fiducials, broad_search_radius);
     let mut pads_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
     for feature in features {
         if feature.kind == CopperKind::Pad && !likely_fiducial(feature) {
@@ -48,7 +49,7 @@ pub fn local_fiducial_readiness(
         }
     }
     log::trace!(
-        "local fiducial readiness: source={} layers={} fiducials={} buckets={} pitch_threshold={pitch_threshold:.6} search_radius={search_radius:.6}",
+        "local fiducial readiness: source={} layers={} fiducials={} buckets={} pitch_threshold={pitch_threshold:#.6} search_radius={search_radius:#.6}",
         board.source,
         pads_by_layer.len(),
         fiducials.len(),
@@ -67,14 +68,19 @@ pub fn local_fiducial_readiness(
         };
 
         let cluster_center = average_location(&pads);
-        let fiducial_candidates =
-            fiducial_index.same_layer_centers_within(cluster_center, &layer, search_radius);
+        let projected_center = project_location(&cluster_center);
+        let fiducial_candidates = fiducial_index.same_layer_candidate_centers_near(
+            projected_center,
+            &layer,
+            broad_search_radius,
+        );
         candidate_count += fiducial_candidates.len();
         let nearby_fiducials = fiducial_candidates
             .into_iter()
             .filter(|&index| {
                 exact_distance_count += 1;
-                distance(fiducials[index].location, cluster_center) <= search_radius
+                exact_distance(&fiducials[index].location, &cluster_center)
+                    .is_some_and(|distance| &distance <= search_radius)
             })
             .count();
         if nearby_fiducials >= 2 {
@@ -87,9 +93,9 @@ pub fn local_fiducial_readiness(
             vec![layer],
             None,
             Vec::new(),
-            vec![cluster_center],
+            vec![projected_center],
             Some(format!(
-                "dense pad cluster has minimum pitch {min_pitch:.6} but only {nearby_fiducials} likely local fiducial(s) within {search_radius:.6}; review local fiducials for fine-pitch assembly"
+                "dense pad cluster has minimum pitch {min_pitch:#.6} but only {nearby_fiducials} likely local fiducial(s) within {search_radius:#.6}; review local fiducials for fine-pitch assembly"
             )),
         ));
     }
@@ -115,13 +121,14 @@ pub fn local_fiducial_readiness(
 pub fn dense_pad_escape_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    pitch_threshold: f64,
-    via_search_radius: f64,
+    pitch_threshold: &Scalar,
+    via_search_radius: &Scalar,
 ) -> Vec<Violation> {
+    let broad_via_search_radius = scalar_broad_phase_radius(via_search_radius);
     let (pads_by_layer, vias) = dense_pad_inputs(board, selected_layers);
-    let via_index = CopperSpatialIndex::new(&vias, via_search_radius);
+    let via_index = CopperSpatialIndex::new(&vias, broad_via_search_radius);
     log::trace!(
-        "dense-pad escape readiness: source={} layers={} vias={} buckets={} pitch_threshold={pitch_threshold:.6} via_search_radius={via_search_radius:.6}",
+        "dense-pad escape readiness: source={} layers={} vias={} buckets={} pitch_threshold={pitch_threshold:#.6} via_search_radius={via_search_radius:#.6}",
         board.source,
         pads_by_layer.len(),
         vias.len(),
@@ -136,11 +143,14 @@ pub fn dense_pad_escape_readiness(
         else {
             continue;
         };
-        let via_candidates = via_index.all_layers_near_circle(cluster_center, via_search_radius);
+        let projected_center = project_location(&cluster_center);
+        let via_candidates =
+            via_index.all_layers_near_circle(projected_center, broad_via_search_radius);
         candidate_count += via_candidates.len();
         let has_escape_via = via_candidates.into_iter().any(|index| {
             exact_distance_count += 1;
-            distance(vias[index].location, cluster_center) <= via_search_radius
+            exact_distance(&vias[index].location, &cluster_center)
+                .is_some_and(|distance| &distance <= via_search_radius)
         });
         if has_escape_via {
             continue;
@@ -152,9 +162,9 @@ pub fn dense_pad_escape_readiness(
             vec![layer],
             None,
             Vec::new(),
-            vec![cluster_center],
+            vec![projected_center],
             Some(format!(
-                "dense pad cluster has minimum pitch {min_pitch:.6} with no parsed escape via within {via_search_radius:.6}; review BGA/fine-pitch escape strategy"
+                "dense pad cluster has minimum pitch {min_pitch:#.6} with no parsed escape via within {via_search_radius:#.6}; review BGA/fine-pitch escape strategy"
             )),
         ));
     }
@@ -189,19 +199,22 @@ pub fn dense_pad_escape_readiness(
 pub fn dense_pad_via_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    pitch_threshold: f64,
-    via_search_radius: f64,
-    min_via_clearance: f64,
-    min_area: f64,
+    pitch_threshold: &Scalar,
+    via_search_radius: &Scalar,
+    min_via_clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if min_via_clearance <= 0.0 {
+    if min_via_clearance <= &Scalar::zero() {
         return Vec::new();
     }
 
+    let broad_via_search_radius = scalar_broad_phase_radius(via_search_radius);
+    let broad_via_clearance = scalar_broad_phase_radius(min_via_clearance);
+
     let (pads_by_layer, vias) = dense_pad_inputs(board, selected_layers);
-    let via_index = CopperSpatialIndex::new(&vias, via_search_radius);
+    let via_index = CopperSpatialIndex::new(&vias, broad_via_search_radius);
     log::trace!(
-        "dense pad/via spacing readiness: source={} layers={} vias={} buckets={} pitch_threshold={pitch_threshold:.6} via_search_radius={via_search_radius:.6}",
+        "dense pad/via spacing readiness: source={} layers={} vias={} buckets={} pitch_threshold={pitch_threshold:#.6} via_search_radius={via_search_radius:#.6}",
         board.source,
         pads_by_layer.len(),
         vias.len(),
@@ -219,17 +232,20 @@ pub fn dense_pad_via_spacing_readiness(
         else {
             continue;
         };
-        let pad_index = CopperSpatialIndex::new(&pads, min_via_clearance);
+        let pad_index = CopperSpatialIndex::new(&pads, broad_via_clearance);
         pad_bucket_count += pad_index.bucket_count();
 
-        let via_candidates = via_index.all_layers_near_circle(cluster_center, via_search_radius);
+        let projected_center = project_location(&cluster_center);
+        let via_candidates =
+            via_index.all_layers_near_circle(projected_center, broad_via_search_radius);
         candidate_count += via_candidates.len();
         for via in via_candidates
             .into_iter()
             .map(|index| vias[index])
             .filter(|via| {
                 exact_via_distance_count += 1;
-                distance(via.location, cluster_center) <= via_search_radius
+                exact_distance(&via.location, &cluster_center)
+                    .is_some_and(|distance| &distance <= via_search_radius)
             })
         {
             let Some((pad, clearance, pad_candidates)) =
@@ -239,14 +255,12 @@ pub fn dense_pad_via_spacing_readiness(
             };
             pad_candidate_count += pad_candidates;
             exact_pad_clearance_count += pad_candidates;
-            if clearance >= min_via_clearance {
+            if &clearance >= min_via_clearance {
                 continue;
             }
 
-            let keepout = via
-                .sketch
-                .offset(crate::geometry::exact_real(min_via_clearance));
-            let shapes = multipolygon_to_shapes(
+            let keepout = via.sketch.offset(min_via_clearance.clone());
+            let shapes = multipolygon_to_shapes_scalar(
                 &keepout.intersection(&pad.sketch).to_multipolygon(),
                 min_area,
             );
@@ -256,9 +270,13 @@ pub fn dense_pad_via_spacing_readiness(
                 vec![layer.clone(), via.layer.clone()],
                 None,
                 shapes,
-                vec![pad.location, via.location, cluster_center],
+                vec![
+                    pad.location_f64_compatibility_required(),
+                    via.location_f64_compatibility_required(),
+                    projected_center,
+                ],
                 Some(format!(
-                    "dense pad cluster has minimum pitch {min_pitch:.6}; nearest pad/via clearance {clearance:.6} is below {min_via_clearance:.6}, review BGA escape spacing, soldermask web, and via fill/cap intent"
+                    "dense pad cluster has minimum pitch {min_pitch:#.6}; nearest pad/via clearance {clearance:#.6} is below {min_via_clearance:#.6}, review BGA escape spacing, soldermask web, and via fill/cap intent"
                 )),
             ));
         }
@@ -295,10 +313,10 @@ pub fn dense_pad_via_spacing_readiness(
 pub fn dense_pad_mask_bridge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    pitch_threshold: f64,
-    min_mask_web: f64,
+    pitch_threshold: &Scalar,
+    min_mask_web: &Scalar,
 ) -> Vec<Violation> {
-    if min_mask_web <= 0.0 {
+    if min_mask_web <= &Scalar::zero() {
         return Vec::new();
     }
 
@@ -312,7 +330,7 @@ pub fn dense_pad_mask_bridge_readiness(
         }
     }
     log::trace!(
-        "dense pad mask-bridge readiness: source={} layers={} pitch_threshold={pitch_threshold:.6}",
+        "dense pad mask-bridge readiness: source={} layers={} pitch_threshold={pitch_threshold:#.6}",
         board.source,
         pads_by_layer.len()
     );
@@ -344,9 +362,13 @@ pub fn dense_pad_mask_bridge_readiness(
             vec![layer],
             None,
             Vec::new(),
-            vec![left.location, right.location, average_location(&pads)],
+            vec![
+                left.location_f64_compatibility_required(),
+                right.location_f64_compatibility_required(),
+                project_location(&average_location(&pads)),
+            ],
             Some(format!(
-                "dense pad cluster has minimum pitch {min_pitch:.6}; nearest pad copper spacing {clearance:.6} is below mask web {min_mask_web:.6}, review BGA solder-mask bridge and NSMD/SMD pad definition"
+                "dense pad cluster has minimum pitch {min_pitch:#.6}; nearest pad copper spacing {clearance:#.6} is below mask web {min_mask_web:#.6}, review BGA solder-mask bridge and NSMD/SMD pad definition"
             )),
         ));
     }
@@ -388,7 +410,10 @@ fn dense_pad_inputs<'a>(
     (pads_by_layer, vias)
 }
 
-fn dense_cluster_context(pads: &[&CopperFeature], pitch_threshold: f64) -> Option<(f64, [f64; 2])> {
+fn dense_cluster_context(
+    pads: &[&CopperFeature],
+    pitch_threshold: &Scalar,
+) -> Option<(Scalar, [Scalar; 2])> {
     if pads.len() < DENSE_PAD_CLUSTER_MIN_PADS {
         return None;
     }
@@ -412,15 +437,19 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
     min_dimension >= 0.5 && max_dimension <= 2.5 && min_dimension / max_dimension >= 0.75
 }
 
-fn minimum_feature_pitch_within(features: &[&CopperFeature], threshold: f64) -> Option<f64> {
-    if threshold <= 0.0 {
+fn minimum_feature_pitch_within(features: &[&CopperFeature], threshold: &Scalar) -> Option<Scalar> {
+    if threshold <= &Scalar::zero() {
         return None;
     }
 
-    let mut min_pitch = f64::INFINITY;
+    let broad_threshold = scalar_broad_phase_radius(threshold);
+    let mut min_pitch: Option<Scalar> = None;
     let mut grid: HashMap<(i64, i64), Vec<&CopperFeature>> = HashMap::new();
     for feature in features {
-        let cell = pitch_cell(feature.location, threshold);
+        let cell = pitch_cell(
+            feature.location_f64_compatibility_required(),
+            broad_threshold,
+        );
         for dx in -1..=1 {
             for dy in -1..=1 {
                 let neighbor_cell = (cell.0 + dx, cell.1 + dy);
@@ -428,9 +457,13 @@ fn minimum_feature_pitch_within(features: &[&CopperFeature], threshold: f64) -> 
                     continue;
                 };
                 for candidate in candidates {
-                    let pitch = distance(feature.location, candidate.location);
-                    if pitch <= threshold {
-                        min_pitch = min_pitch.min(pitch);
+                    let Some(pitch) = exact_distance(&feature.location, &candidate.location) else {
+                        continue;
+                    };
+                    if &pitch <= threshold
+                        && min_pitch.as_ref().is_none_or(|current| &pitch < current)
+                    {
+                        min_pitch = Some(pitch);
                     }
                 }
             }
@@ -438,7 +471,7 @@ fn minimum_feature_pitch_within(features: &[&CopperFeature], threshold: f64) -> 
         grid.entry(cell).or_default().push(*feature);
     }
 
-    min_pitch.is_finite().then_some(min_pitch)
+    min_pitch
 }
 
 fn pitch_cell(location: [f64; 2], cell_size: f64) -> (i64, i64) {
@@ -450,17 +483,18 @@ fn pitch_cell(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 
 fn nearest_feature_pair_within<'a>(
     features: &[&'a CopperFeature],
-    threshold: f64,
+    threshold: &Scalar,
 ) -> (
-    Option<(&'a CopperFeature, &'a CopperFeature, f64)>,
+    Option<(&'a CopperFeature, &'a CopperFeature, Scalar)>,
     usize,
     usize,
 ) {
-    if threshold <= 0.0 {
+    if threshold <= &Scalar::zero() {
         return (None, 0, 0);
     }
 
-    let index = CopperSpatialIndex::new(features, threshold);
+    let broad_threshold = scalar_broad_phase_radius(threshold);
+    let index = CopperSpatialIndex::new(features, broad_threshold);
     let mut nearest = None;
     let mut candidate_pairs = 0_usize;
     let mut exact_pairs = 0_usize;
@@ -468,7 +502,7 @@ fn nearest_feature_pair_within<'a>(
         let Some(left_bounds) = left.sketch.geometry().bounding_rect() else {
             continue;
         };
-        for right_index in index.same_layer_near_feature(left, threshold) {
+        for right_index in index.same_layer_near_feature(left, broad_threshold) {
             if right_index <= left_index {
                 continue;
             }
@@ -477,17 +511,17 @@ fn nearest_feature_pair_within<'a>(
             let Some(right_bounds) = right.sketch.geometry().bounding_rect() else {
                 continue;
             };
-            if !rects_within_clearance(&left_bounds, &right_bounds, threshold) {
+            if !rects_within_clearance(&left_bounds, &right_bounds, broad_threshold) {
                 continue;
             }
             exact_pairs += 1;
             let clearance = copper_clearance(&left.sketch, &right.sketch);
-            if clearance >= threshold {
+            if &clearance >= threshold {
                 continue;
             }
             if nearest
                 .as_ref()
-                .is_none_or(|(_, _, current): &(_, _, f64)| clearance < *current)
+                .is_none_or(|(_, _, current): &(_, _, Scalar)| &clearance < current)
             {
                 nearest = Some((*left, right, clearance));
             }
@@ -498,7 +532,7 @@ fn nearest_feature_pair_within<'a>(
     // *Real-Time Collision Detection* (2005); exact boundary distance remains
     // the readiness predicate so false positives from large cells are harmless.
     log::trace!(
-        "nearest dense-pad mask-web pair: pads={} buckets={} candidate_pairs={} exact_pairs={} threshold={threshold:.6}",
+        "nearest dense-pad mask-web pair: pads={} buckets={} candidate_pairs={} exact_pairs={} threshold={threshold:#.6}",
         features.len(),
         index.bucket_count(),
         candidate_pairs,
@@ -519,9 +553,9 @@ fn nearest_pad_to_via<'a>(
     pads: &[&'a CopperFeature],
     pad_index: &CopperSpatialIndex<'_>,
     via: &CopperFeature,
-    clearance: f64,
-) -> Option<(&'a CopperFeature, f64, usize)> {
-    let candidates = pad_index.all_layers_near_feature(via, clearance);
+    clearance: &Scalar,
+) -> Option<(&'a CopperFeature, Scalar, usize)> {
+    let candidates = pad_index.all_layers_near_feature(via, scalar_broad_phase_radius(clearance));
     let candidate_count = candidates.len();
     candidates
         .into_iter()
@@ -540,26 +574,46 @@ fn nearest_pad_to_via<'a>(
         })
 }
 
-fn copper_clearance(left: &PcbSketch, right: &PcbSketch) -> f64 {
-    polygon_boundary_distance(&left.to_multipolygon(), &right.to_multipolygon())
+fn copper_clearance(left: &PcbSketch, right: &PcbSketch) -> Scalar {
+    polygon_boundary_distance_scalar(&left.to_multipolygon(), &right.to_multipolygon())
+        .unwrap_or_else(Scalar::zero)
 }
 
-fn average_location(features: &[&CopperFeature]) -> [f64; 2] {
-    let mut sum = [0.0, 0.0];
+fn average_location(features: &[&CopperFeature]) -> [Scalar; 2] {
+    let mut sum = [Scalar::zero(), Scalar::zero()];
     for feature in features {
-        sum[0] += feature.location[0];
-        sum[1] += feature.location[1];
+        sum[0] += &feature.location[0];
+        sum[1] += &feature.location[1];
     }
+    let count = Scalar::from(features.len() as u64);
     [
-        sum[0] / features.len() as f64,
-        sum[1] / features.len() as f64,
+        (sum[0].clone() / &count).expect("nonempty feature cluster count"),
+        (sum[1].clone() / &count).expect("nonempty feature cluster count"),
     ]
 }
 
-fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
+fn exact_distance(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &left[0] - &right[0];
+    let dy = &left[1] - &right[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
+}
+
+fn project_location(location: &[Scalar; 2]) -> [f64; 2] {
+    [
+        location[0]
+            .to_f64_lossy()
+            .expect("finite dense-pad report coordinate"),
+        location[1]
+            .to_f64_lossy()
+            .expect("finite dense-pad report coordinate"),
+    ]
+}
+
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    value
+        .to_f64_lossy()
+        .filter(|value| value.is_finite())
+        .map_or(f64::MAX, |value| value.max(0.0).next_up())
 }
 
 #[cfg(test)]
@@ -572,11 +626,15 @@ mod tests {
     use crate::geometry::{circle_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 
+    fn s(value: f64) -> crate::Scalar {
+        crate::geometry::exact_real(value)
+    }
+
     #[test]
     fn local_fiducial_readiness_reports_dense_clusters_without_nearby_fiducials() {
         let board = board_with_copper(dense_pad_cluster());
 
-        let violations = local_fiducial_readiness(&board, &[], 0.8, 5.0);
+        let violations = local_fiducial_readiness(&board, &[], &s(0.8), &s(5.0));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "local-fiducial-readiness");
@@ -587,7 +645,9 @@ mod tests {
         let mut copper = dense_pad_cluster();
         copper.push(fiducial("F.Cu", [-1.0, -1.0], 0.8));
         copper.push(fiducial("F.Cu", [2.5, -1.0], 0.8));
-        assert!(local_fiducial_readiness(&board_with_copper(copper), &[], 0.8, 5.0).is_empty());
+        assert!(
+            local_fiducial_readiness(&board_with_copper(copper), &[], &s(0.8), &s(5.0)).is_empty()
+        );
 
         let mut sparse = Vec::new();
         for index in 0..DENSE_PAD_CLUSTER_MIN_PADS {
@@ -598,7 +658,9 @@ mod tests {
                 0.20,
             ));
         }
-        assert!(local_fiducial_readiness(&board_with_copper(sparse), &[], 0.8, 5.0).is_empty());
+        assert!(
+            local_fiducial_readiness(&board_with_copper(sparse), &[], &s(0.8), &s(5.0)).is_empty()
+        );
     }
 
     #[test]
@@ -615,7 +677,8 @@ mod tests {
         copper.push(fiducial("F.Cu", [2.5, -1.0], 0.8));
 
         let started = std::time::Instant::now();
-        let violations = local_fiducial_readiness(&board_with_copper(copper), &[], 0.8, 5.0);
+        let violations =
+            local_fiducial_readiness(&board_with_copper(copper), &[], &s(0.8), &s(5.0));
 
         assert!(violations.is_empty());
         assert!(
@@ -628,7 +691,7 @@ mod tests {
     fn dense_pad_escape_readiness_reports_missing_escape_via() {
         let board = board_with_copper(dense_pad_cluster());
 
-        let violations = dense_pad_escape_readiness(&board, &[], 0.8, 2.0);
+        let violations = dense_pad_escape_readiness(&board, &[], &s(0.8), &s(2.0));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "dense-pad-escape-readiness");
@@ -643,7 +706,8 @@ mod tests {
         copper.push(copper_via("ESC", [0.75, 0.75], 0.20));
 
         let started = std::time::Instant::now();
-        let violations = dense_pad_escape_readiness(&board_with_copper(copper), &[], 0.8, 2.0);
+        let violations =
+            dense_pad_escape_readiness(&board_with_copper(copper), &[], &s(0.8), &s(2.0));
 
         assert!(violations.is_empty());
         assert!(
@@ -658,7 +722,14 @@ mod tests {
         copper.push(copper_via("ESC", [0.32, 0.0], 0.20));
         let board = board_with_copper(copper);
 
-        let violations = dense_pad_via_spacing_readiness(&board, &[], 0.8, 2.0, 0.15, 1.0e-9);
+        let violations = dense_pad_via_spacing_readiness(
+            &board,
+            &[],
+            &s(0.8),
+            &s(2.0),
+            &s(0.15),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "dense-pad-via-spacing-readiness");
@@ -686,10 +757,10 @@ mod tests {
             dense_pad_via_spacing_readiness(
                 &board_with_copper(sparse),
                 &[],
-                0.8,
-                2.0,
-                0.15,
-                1.0e-9
+                &s(0.8),
+                &s(2.0),
+                &s(0.15),
+                &crate::scalar::scalar("1.0e-9")
             )
             .is_empty()
         );
@@ -697,8 +768,15 @@ mod tests {
         let mut far = dense_pad_cluster();
         far.push(copper_via("ESC", [10.0, 10.0], 0.20));
         assert!(
-            dense_pad_via_spacing_readiness(&board_with_copper(far), &[], 0.8, 2.0, 0.15, 1.0e-9)
-                .is_empty()
+            dense_pad_via_spacing_readiness(
+                &board_with_copper(far),
+                &[],
+                &s(0.8),
+                &s(2.0),
+                &s(0.15),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
 
         let mut selected_out = dense_pad_cluster();
@@ -707,10 +785,10 @@ mod tests {
             dense_pad_via_spacing_readiness(
                 &board_with_copper(selected_out),
                 &["F.Cu".to_string()],
-                0.8,
-                2.0,
-                0.15,
-                1.0e-9
+                &s(0.8),
+                &s(2.0),
+                &s(0.15),
+                &crate::scalar::scalar("1.0e-9")
             )
             .is_empty()
         );
@@ -728,10 +806,10 @@ mod tests {
         let violations = dense_pad_via_spacing_readiness(
             &board_with_copper(copper),
             &[],
-            0.8,
-            2.0,
-            0.15,
-            1.0e-9,
+            &s(0.8),
+            &s(2.0),
+            &s(0.15),
+            &crate::scalar::scalar("1.0e-9"),
         );
 
         assert_eq!(violations.len(), 1);
@@ -759,10 +837,10 @@ mod tests {
         let violations = dense_pad_via_spacing_readiness(
             &board_with_copper(copper),
             &[],
-            0.8,
-            25.0,
-            0.15,
-            1.0e-9,
+            &s(0.8),
+            &s(25.0),
+            &s(0.15),
+            &crate::scalar::scalar("1.0e-9"),
         );
 
         assert_eq!(violations.len(), 1);
@@ -776,7 +854,7 @@ mod tests {
     fn dense_pad_mask_bridge_readiness_reports_tight_dense_pad_web() {
         let board = board_with_copper(dense_pad_cluster_with_size(0.45));
 
-        let violations = dense_pad_mask_bridge_readiness(&board, &[], 0.8, 0.10);
+        let violations = dense_pad_mask_bridge_readiness(&board, &[], &s(0.8), &s(0.10));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "dense-pad-mask-bridge-readiness");
@@ -794,8 +872,8 @@ mod tests {
             dense_pad_mask_bridge_readiness(
                 &board_with_copper(dense_pad_cluster_with_size(0.25)),
                 &[],
-                0.8,
-                0.10
+                &s(0.8),
+                &s(0.10)
             )
             .is_empty()
         );
@@ -810,7 +888,8 @@ mod tests {
             ));
         }
         assert!(
-            dense_pad_mask_bridge_readiness(&board_with_copper(sparse), &[], 0.8, 0.10).is_empty()
+            dense_pad_mask_bridge_readiness(&board_with_copper(sparse), &[], &s(0.8), &s(0.10))
+                .is_empty()
         );
 
         let selected_out = dense_pad_cluster_with_size(0.45)
@@ -824,8 +903,8 @@ mod tests {
             dense_pad_mask_bridge_readiness(
                 &board_with_copper(selected_out),
                 &["F.Cu".to_string()],
-                0.8,
-                0.10
+                &s(0.8),
+                &s(0.10)
             )
             .is_empty()
         );
@@ -850,7 +929,7 @@ mod tests {
 
         let started = std::time::Instant::now();
         let violations =
-            dense_pad_mask_bridge_readiness(&board_with_copper(copper), &[], 0.8, 0.10);
+            dense_pad_mask_bridge_readiness(&board_with_copper(copper), &[], &s(0.8), &s(0.10));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -873,7 +952,7 @@ mod tests {
         let board = board_with_copper(copper);
 
         let start = std::time::Instant::now();
-        let violations = dense_pad_escape_readiness(&board, &[], 0.8, 2.0);
+        let violations = dense_pad_escape_readiness(&board, &[], &s(0.8), &s(2.0));
 
         assert!(violations.is_empty());
         assert!(
@@ -916,7 +995,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, [width, height], 0.0)],
                 Some(LayerMetadata {
@@ -931,7 +1013,10 @@ mod tests {
             layer: layer.to_string(),
             net: None,
             kind: CopperKind::Pad,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, [diameter, diameter], 0.0)],
                 Some(LayerMetadata {
@@ -955,7 +1040,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Via,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {

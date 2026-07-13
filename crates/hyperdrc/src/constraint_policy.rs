@@ -4,6 +4,7 @@
 //! constraint checks. Keeping them outside `config.rs` makes the config loader
 //! easier to scan while keeping electrical/manufacturing policy fields together.
 
+use crate::Scalar;
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize, Default)]
@@ -13,17 +14,21 @@ pub struct StackupConfig {
     /// Field `copper_layer_count`.
     pub copper_layer_count: Option<usize>,
     /// Field `finished_thickness`.
-    pub finished_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub finished_thickness: Option<Scalar>,
     /// Field `impedance_controlled`.
     pub impedance_controlled: Option<bool>,
     /// Field `material_family`.
     pub material_family: Option<String>,
     /// Field `material_dielectric_constant`.
-    pub material_dielectric_constant: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub material_dielectric_constant: Option<Scalar>,
     /// Field `material_loss_tangent`.
-    pub material_loss_tangent: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub material_loss_tangent: Option<Scalar>,
     /// Field `material_tg_c`.
-    pub material_tg_c: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub material_tg_c: Option<Scalar>,
     /// Field `surface_finish`.
     pub surface_finish: Option<SurfaceFinish>,
     /// Field `soldermask_process`.
@@ -45,13 +50,17 @@ pub struct StackupConfig {
 /// Public data model for `FabricationCapabilityConfig`.
 pub struct FabricationCapabilityConfig {
     /// Field `min_finished_thickness`.
-    pub min_finished_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_finished_thickness: Option<Scalar>,
     /// Field `preferred_min_finished_thickness`.
-    pub preferred_min_finished_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_min_finished_thickness: Option<Scalar>,
     /// Field `preferred_max_finished_thickness`.
-    pub preferred_max_finished_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_max_finished_thickness: Option<Scalar>,
     /// Field `max_finished_thickness`.
-    pub max_finished_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_finished_thickness: Option<Scalar>,
     /// Field `max_copper_layers`.
     pub max_copper_layers: Option<usize>,
     /// Field `preferred_max_copper_layers`.
@@ -59,29 +68,41 @@ pub struct FabricationCapabilityConfig {
     /// Field `cost_escalation_copper_layers`.
     pub cost_escalation_copper_layers: Option<usize>,
     /// Field `min_copper_weight_oz`.
-    pub min_copper_weight_oz: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_copper_weight_oz: Option<Scalar>,
     /// Field `preferred_min_copper_weight_oz`.
-    pub preferred_min_copper_weight_oz: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_min_copper_weight_oz: Option<Scalar>,
     /// Field `preferred_max_copper_weight_oz`.
-    pub preferred_max_copper_weight_oz: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_max_copper_weight_oz: Option<Scalar>,
     /// Field `cost_escalation_copper_weight_oz`.
-    pub cost_escalation_copper_weight_oz: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub cost_escalation_copper_weight_oz: Option<Scalar>,
     /// Field `max_copper_weight_oz`.
-    pub max_copper_weight_oz: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_copper_weight_oz: Option<Scalar>,
     /// Field `min_dielectric_thickness`.
-    pub min_dielectric_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_dielectric_thickness: Option<Scalar>,
     /// Field `preferred_min_dielectric_thickness`.
-    pub preferred_min_dielectric_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_min_dielectric_thickness: Option<Scalar>,
     /// Field `cost_escalation_min_dielectric_thickness`.
-    pub cost_escalation_min_dielectric_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub cost_escalation_min_dielectric_thickness: Option<Scalar>,
     /// Field `min_dielectric_constant`.
-    pub min_dielectric_constant: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_dielectric_constant: Option<Scalar>,
     /// Field `max_dielectric_constant`.
-    pub max_dielectric_constant: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_dielectric_constant: Option<Scalar>,
     /// Field `max_loss_tangent`.
-    pub max_loss_tangent: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_loss_tangent: Option<Scalar>,
     /// Field `min_tg_c`.
-    pub min_tg_c: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_tg_c: Option<Scalar>,
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]
@@ -93,9 +114,11 @@ pub struct StackupLayerConfig {
     /// Field `kind`.
     pub kind: StackupLayerKind,
     /// Field `copper_weight_oz`.
-    pub copper_weight_oz: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub copper_weight_oz: Option<Scalar>,
     /// Field `dielectric_thickness`.
-    pub dielectric_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub dielectric_thickness: Option<Scalar>,
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Default, Eq, PartialEq)]
@@ -167,37 +190,47 @@ pub struct NetClassConfig {
     /// are selectors, not scalar policy defaults.
     pub regions: Vec<NetClassRegionConfig>,
     /// Field `min_width`.
-    pub min_width: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_width: Option<Scalar>,
     /// Field `min_clearance`.
-    pub min_clearance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_clearance: Option<Scalar>,
     /// Field `max_layer_count`.
     pub max_layer_count: Option<usize>,
     /// Field `min_via_count`.
     pub min_via_count: Option<usize>,
     /// Field `min_current_width`.
-    pub min_current_width: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_current_width: Option<Scalar>,
     /// Field `min_voltage_clearance`.
-    pub min_voltage_clearance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_voltage_clearance: Option<Scalar>,
     /// Field `requires_reference_plane`.
     pub requires_reference_plane: Option<bool>,
     /// Field `requires_impedance_control`.
     pub requires_impedance_control: Option<bool>,
     /// Field `target_impedance_ohms`.
-    pub target_impedance_ohms: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub target_impedance_ohms: Option<Scalar>,
     /// Field `impedance_tolerance_ohms`.
-    pub impedance_tolerance_ohms: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub impedance_tolerance_ohms: Option<Scalar>,
     /// Field `differential_pair`.
     pub differential_pair: Option<String>,
     /// Field `differential_role`.
     pub differential_role: Option<DifferentialRole>,
     /// Field `min_pair_spacing`.
-    pub min_pair_spacing: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_pair_spacing: Option<Scalar>,
     /// Field `max_pair_spacing`.
-    pub max_pair_spacing: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_pair_spacing: Option<Scalar>,
     /// Field `max_length`.
-    pub max_length: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_length: Option<Scalar>,
     /// Field `max_pair_skew`.
-    pub max_pair_skew: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_pair_skew: Option<Scalar>,
     /// Field `max_via_count`.
     pub max_via_count: Option<usize>,
 }
@@ -209,13 +242,17 @@ pub struct NetClassRegionConfig {
     /// Field `name`.
     pub name: String,
     /// Field `min_x`.
-    pub min_x: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_x: Option<Scalar>,
     /// Field `min_y`.
-    pub min_y: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_y: Option<Scalar>,
     /// Field `max_x`.
-    pub max_x: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_x: Option<Scalar>,
     /// Field `max_y`.
-    pub max_y: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_y: Option<Scalar>,
     /// Field `layers`.
     pub layers: Vec<String>,
 }

@@ -8,8 +8,7 @@ use geo::Polygon;
 use hyperlimit::{Point2, point2_equal};
 
 use crate::geometry::{
-    RuleGeometryProvenance, arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon,
-    polygon_from_points,
+    arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
 };
 use crate::sexp::Sexp;
 
@@ -197,29 +196,17 @@ fn closed_polygon_from_lines(lines: &[EdgeLine]) -> Option<Polygon<f64>> {
 fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
     // Outline stitching changes imported topology before board-level checks
     // run, so endpoint equality must be exact after lifting finite parser
-    // coordinates. Decimal KiCad tokens now carry exact `Real` values and
-    // shared-denominator facts; finite f64 lifting remains only a compatibility
-    // fallback. Route equality through `hyperlimit` rather than a local
+    // coordinates. Decimal KiCad tokens carry exact `Real` values and
+    // shared-denominator facts. Route equality through `hyperlimit` rather than a local
     // tolerance, in the exact-geometric-computation style of Yap, "Towards
     // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
-    let provenance = RuleGeometryProvenance::new("kicad-edge-stitching", left.combined_grid(right));
-    let Some(left) = exact_or_lift_point(left, provenance) else {
-        return false;
-    };
-    let Some(right) = exact_or_lift_point(right, provenance) else {
-        return false;
-    };
+    let left = exact_point(left);
+    let right = exact_point(right);
     point2_equal(&left, &right).value().unwrap_or(false)
 }
 
-fn exact_or_lift_point(point: &ParsedPoint2, provenance: RuleGeometryProvenance) -> Option<Point2> {
-    if let Some([x, y]) = &point.exact {
-        return Some(Point2::new(x.clone(), y.clone()));
-    }
-    Some(Point2::new(
-        provenance.lift_f64(point.approximate[0])?,
-        provenance.lift_f64(point.approximate[1])?,
-    ))
+fn exact_point(point: &ParsedPoint2) -> Point2 {
+    Point2::new(point.exact[0].clone(), point.exact[1].clone())
 }
 
 fn is_edge_cuts(item: &Sexp) -> bool {

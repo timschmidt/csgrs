@@ -9,6 +9,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use serde::Deserialize;
 
+use crate::Scalar;
 use crate::assembly_policy::{
     AssemblyBaseRules, AssemblyPolicyConfig, AssemblyProfile, AssemblyRules,
 };
@@ -18,60 +19,93 @@ use crate::package_policy::{
     PackageProfile,
 };
 
+macro_rules! pick {
+    ($override_value:expr, $config_value:expr, $default_value:literal $(,)?) => {
+        $override_value
+            .or_else(|| $config_value.clone())
+            .unwrap_or_else(|| crate::scalar::scalar(stringify!($default_value)))
+    };
+}
+
 #[derive(Clone, Debug, Deserialize, Default)]
 #[serde(default)]
 /// Public data model for `RuleConfig`.
 pub struct RuleConfig {
     /// Field `keepout`.
-    pub keepout: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub keepout: Option<Scalar>,
     /// Field `clearance`.
-    pub clearance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub clearance: Option<Scalar>,
     /// Field `paste_tolerance`.
-    pub paste_tolerance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub paste_tolerance: Option<Scalar>,
     /// Field `min_paste_area_ratio`.
-    pub min_paste_area_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_paste_area_ratio: Option<Scalar>,
     /// Field `max_paste_area_ratio`.
-    pub max_paste_area_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_paste_area_ratio: Option<Scalar>,
     /// Field `min_solder_mask_opening_area_ratio`.
-    pub min_solder_mask_opening_area_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_solder_mask_opening_area_ratio: Option<Scalar>,
     /// Field `max_solder_mask_opening_area_ratio`.
-    pub max_solder_mask_opening_area_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_solder_mask_opening_area_ratio: Option<Scalar>,
     /// Field `stencil_thickness`.
-    pub stencil_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub stencil_thickness: Option<Scalar>,
     /// Field `min_stencil_area_ratio`.
-    pub min_stencil_area_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_stencil_area_ratio: Option<Scalar>,
     /// Field `min_width`.
-    pub min_width: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_width: Option<Scalar>,
     /// Field `min_mask_width`.
-    pub min_mask_width: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_mask_width: Option<Scalar>,
     /// Field `min_solder_mask_annular_ring`.
-    pub min_solder_mask_annular_ring: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_solder_mask_annular_ring: Option<Scalar>,
     /// Field `min_silkscreen_text_height`.
-    pub min_silkscreen_text_height: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_silkscreen_text_height: Option<Scalar>,
     /// Field `acid_trap_angle`.
-    pub acid_trap_angle: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub acid_trap_angle: Option<Scalar>,
     /// Field `max_copper_imbalance_ratio`.
-    pub max_copper_imbalance_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_copper_imbalance_ratio: Option<Scalar>,
     /// Field `annular_ring`.
-    pub annular_ring: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub annular_ring: Option<Scalar>,
     /// Field `drill_clearance`.
-    pub drill_clearance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub drill_clearance: Option<Scalar>,
     /// Field `board_thickness`.
-    pub board_thickness: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub board_thickness: Option<Scalar>,
     /// Field `max_drill_aspect_ratio`.
-    pub max_drill_aspect_ratio: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_drill_aspect_ratio: Option<Scalar>,
     /// Field `net_clearance`.
-    pub net_clearance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub net_clearance: Option<Scalar>,
     /// Field `registration_tolerance`.
-    pub registration_tolerance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub registration_tolerance: Option<Scalar>,
     /// Field `panel_clearance`.
-    pub panel_clearance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub panel_clearance: Option<Scalar>,
     /// Field `ipc356_tolerance`.
-    pub ipc356_tolerance: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub ipc356_tolerance: Option<Scalar>,
     /// Field `min_area`.
-    pub min_area: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub min_area: Option<Scalar>,
     /// Field `max_layer_area`.
-    pub max_layer_area: Option<f64>,
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub max_layer_area: Option<Scalar>,
     /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: Option<usize>,
     /// Field `assembly_profile`.
@@ -92,59 +126,59 @@ pub struct RuleConfig {
     pub net_classes: Vec<NetClassConfig>,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 /// Public data model for `EffectiveRules`.
 pub struct EffectiveRules {
     /// Field `keepout`.
-    pub keepout: f64,
+    pub keepout: Scalar,
     /// Field `clearance`.
-    pub clearance: f64,
+    pub clearance: Scalar,
     /// Field `paste_tolerance`.
-    pub paste_tolerance: f64,
+    pub paste_tolerance: Scalar,
     /// Field `min_paste_area_ratio`.
-    pub min_paste_area_ratio: f64,
+    pub min_paste_area_ratio: Scalar,
     /// Field `max_paste_area_ratio`.
-    pub max_paste_area_ratio: f64,
+    pub max_paste_area_ratio: Scalar,
     /// Field `min_solder_mask_opening_area_ratio`.
-    pub min_solder_mask_opening_area_ratio: f64,
+    pub min_solder_mask_opening_area_ratio: Scalar,
     /// Field `max_solder_mask_opening_area_ratio`.
-    pub max_solder_mask_opening_area_ratio: f64,
+    pub max_solder_mask_opening_area_ratio: Scalar,
     /// Field `stencil_thickness`.
-    pub stencil_thickness: f64,
+    pub stencil_thickness: Scalar,
     /// Field `min_stencil_area_ratio`.
-    pub min_stencil_area_ratio: f64,
+    pub min_stencil_area_ratio: Scalar,
     /// Field `min_width`.
-    pub min_width: f64,
+    pub min_width: Scalar,
     /// Field `min_mask_width`.
-    pub min_mask_width: f64,
+    pub min_mask_width: Scalar,
     /// Field `min_solder_mask_annular_ring`.
-    pub min_solder_mask_annular_ring: f64,
+    pub min_solder_mask_annular_ring: Scalar,
     /// Field `min_silkscreen_text_height`.
-    pub min_silkscreen_text_height: f64,
+    pub min_silkscreen_text_height: Scalar,
     /// Field `acid_trap_angle`.
-    pub acid_trap_angle: f64,
+    pub acid_trap_angle: Scalar,
     /// Field `max_copper_imbalance_ratio`.
-    pub max_copper_imbalance_ratio: f64,
+    pub max_copper_imbalance_ratio: Scalar,
     /// Field `annular_ring`.
-    pub annular_ring: f64,
+    pub annular_ring: Scalar,
     /// Field `drill_clearance`.
-    pub drill_clearance: f64,
+    pub drill_clearance: Scalar,
     /// Field `board_thickness`.
-    pub board_thickness: f64,
+    pub board_thickness: Scalar,
     /// Field `max_drill_aspect_ratio`.
-    pub max_drill_aspect_ratio: f64,
+    pub max_drill_aspect_ratio: Scalar,
     /// Field `net_clearance`.
-    pub net_clearance: f64,
+    pub net_clearance: Scalar,
     /// Field `registration_tolerance`.
-    pub registration_tolerance: f64,
+    pub registration_tolerance: Scalar,
     /// Field `panel_clearance`.
-    pub panel_clearance: f64,
+    pub panel_clearance: Scalar,
     /// Field `ipc356_tolerance`.
-    pub ipc356_tolerance: f64,
+    pub ipc356_tolerance: Scalar,
     /// Field `min_area`.
-    pub min_area: f64,
+    pub min_area: Scalar,
     /// Field `max_layer_area`.
-    pub max_layer_area: Option<f64>,
+    pub max_layer_area: Option<Scalar>,
     /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: usize,
     /// Field `assembly`.
@@ -171,55 +205,55 @@ impl RuleConfig {
 /// Public data model for `RuleOverrides`.
 pub struct RuleOverrides {
     /// Field `keepout`.
-    pub keepout: Option<f64>,
+    pub keepout: Option<Scalar>,
     /// Field `clearance`.
-    pub clearance: Option<f64>,
+    pub clearance: Option<Scalar>,
     /// Field `paste_tolerance`.
-    pub paste_tolerance: Option<f64>,
+    pub paste_tolerance: Option<Scalar>,
     /// Field `min_paste_area_ratio`.
-    pub min_paste_area_ratio: Option<f64>,
+    pub min_paste_area_ratio: Option<Scalar>,
     /// Field `max_paste_area_ratio`.
-    pub max_paste_area_ratio: Option<f64>,
+    pub max_paste_area_ratio: Option<Scalar>,
     /// Field `min_solder_mask_opening_area_ratio`.
-    pub min_solder_mask_opening_area_ratio: Option<f64>,
+    pub min_solder_mask_opening_area_ratio: Option<Scalar>,
     /// Field `max_solder_mask_opening_area_ratio`.
-    pub max_solder_mask_opening_area_ratio: Option<f64>,
+    pub max_solder_mask_opening_area_ratio: Option<Scalar>,
     /// Field `stencil_thickness`.
-    pub stencil_thickness: Option<f64>,
+    pub stencil_thickness: Option<Scalar>,
     /// Field `min_stencil_area_ratio`.
-    pub min_stencil_area_ratio: Option<f64>,
+    pub min_stencil_area_ratio: Option<Scalar>,
     /// Field `min_width`.
-    pub min_width: Option<f64>,
+    pub min_width: Option<Scalar>,
     /// Field `min_mask_width`.
-    pub min_mask_width: Option<f64>,
+    pub min_mask_width: Option<Scalar>,
     /// Field `min_solder_mask_annular_ring`.
-    pub min_solder_mask_annular_ring: Option<f64>,
+    pub min_solder_mask_annular_ring: Option<Scalar>,
     /// Field `min_silkscreen_text_height`.
-    pub min_silkscreen_text_height: Option<f64>,
+    pub min_silkscreen_text_height: Option<Scalar>,
     /// Field `acid_trap_angle`.
-    pub acid_trap_angle: Option<f64>,
+    pub acid_trap_angle: Option<Scalar>,
     /// Field `max_copper_imbalance_ratio`.
-    pub max_copper_imbalance_ratio: Option<f64>,
+    pub max_copper_imbalance_ratio: Option<Scalar>,
     /// Field `annular_ring`.
-    pub annular_ring: Option<f64>,
+    pub annular_ring: Option<Scalar>,
     /// Field `drill_clearance`.
-    pub drill_clearance: Option<f64>,
+    pub drill_clearance: Option<Scalar>,
     /// Field `board_thickness`.
-    pub board_thickness: Option<f64>,
+    pub board_thickness: Option<Scalar>,
     /// Field `max_drill_aspect_ratio`.
-    pub max_drill_aspect_ratio: Option<f64>,
+    pub max_drill_aspect_ratio: Option<Scalar>,
     /// Field `net_clearance`.
-    pub net_clearance: Option<f64>,
+    pub net_clearance: Option<Scalar>,
     /// Field `registration_tolerance`.
-    pub registration_tolerance: Option<f64>,
+    pub registration_tolerance: Option<Scalar>,
     /// Field `panel_clearance`.
-    pub panel_clearance: Option<f64>,
+    pub panel_clearance: Option<Scalar>,
     /// Field `ipc356_tolerance`.
-    pub ipc356_tolerance: Option<f64>,
+    pub ipc356_tolerance: Option<Scalar>,
     /// Field `min_area`.
-    pub min_area: Option<f64>,
+    pub min_area: Option<Scalar>,
     /// Field `max_layer_area`.
-    pub max_layer_area: Option<f64>,
+    pub max_layer_area: Option<Scalar>,
     /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: Option<usize>,
 }
@@ -227,76 +261,78 @@ pub struct RuleOverrides {
 /// Run or compute `effective_rules`.
 pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> EffectiveRules {
     let package_profile = config.package_profile.unwrap_or_default();
-    let clearance = pick(overrides.clearance, config.clearance, 0.25);
-    let min_width = pick(overrides.min_width, config.min_width, 0.15);
-    let net_clearance = pick(overrides.net_clearance, config.net_clearance, 0.15);
+    let clearance = pick!(overrides.clearance, config.clearance, 0.25);
+    let min_width = pick!(overrides.min_width, config.min_width, 0.15);
+    let net_clearance = pick!(overrides.net_clearance, config.net_clearance, 0.15);
     let assembly_profile = config.assembly_profile.unwrap_or_default();
     EffectiveRules {
-        keepout: pick(overrides.keepout, config.keepout, 0.15),
-        clearance,
-        paste_tolerance: pick(overrides.paste_tolerance, config.paste_tolerance, 0.0),
-        min_paste_area_ratio: pick(
+        keepout: pick!(overrides.keepout, config.keepout, 0.15),
+        clearance: clearance.clone(),
+        paste_tolerance: pick!(overrides.paste_tolerance, config.paste_tolerance, 0.0),
+        min_paste_area_ratio: pick!(
             overrides.min_paste_area_ratio,
             config.min_paste_area_ratio,
             0.50,
         ),
-        max_paste_area_ratio: pick(
+        max_paste_area_ratio: pick!(
             overrides.max_paste_area_ratio,
             config.max_paste_area_ratio,
             1.20,
         ),
-        min_solder_mask_opening_area_ratio: pick(
+        min_solder_mask_opening_area_ratio: pick!(
             overrides.min_solder_mask_opening_area_ratio,
             config.min_solder_mask_opening_area_ratio,
             1.00,
         ),
-        max_solder_mask_opening_area_ratio: pick(
+        max_solder_mask_opening_area_ratio: pick!(
             overrides.max_solder_mask_opening_area_ratio,
             config.max_solder_mask_opening_area_ratio,
             3.00,
         ),
-        stencil_thickness: pick(overrides.stencil_thickness, config.stencil_thickness, 0.12),
-        min_stencil_area_ratio: pick(
+        stencil_thickness: pick!(overrides.stencil_thickness, config.stencil_thickness, 0.12),
+        min_stencil_area_ratio: pick!(
             overrides.min_stencil_area_ratio,
             config.min_stencil_area_ratio,
             0.66,
         ),
-        min_width,
-        min_mask_width: pick(overrides.min_mask_width, config.min_mask_width, 0.1),
-        min_solder_mask_annular_ring: pick(
+        min_width: min_width.clone(),
+        min_mask_width: pick!(overrides.min_mask_width, config.min_mask_width, 0.1),
+        min_solder_mask_annular_ring: pick!(
             overrides.min_solder_mask_annular_ring,
             config.min_solder_mask_annular_ring,
             0.05,
         ),
-        min_silkscreen_text_height: pick(
+        min_silkscreen_text_height: pick!(
             overrides.min_silkscreen_text_height,
             config.min_silkscreen_text_height,
             0.80,
         ),
-        acid_trap_angle: pick(overrides.acid_trap_angle, config.acid_trap_angle, 30.0),
-        max_copper_imbalance_ratio: pick(
+        acid_trap_angle: pick!(overrides.acid_trap_angle, config.acid_trap_angle, 30.0),
+        max_copper_imbalance_ratio: pick!(
             overrides.max_copper_imbalance_ratio,
             config.max_copper_imbalance_ratio,
             3.0,
         ),
-        annular_ring: pick(overrides.annular_ring, config.annular_ring, 0.15),
-        drill_clearance: pick(overrides.drill_clearance, config.drill_clearance, 0.25),
-        board_thickness: pick(overrides.board_thickness, config.board_thickness, 1.6),
-        max_drill_aspect_ratio: pick(
+        annular_ring: pick!(overrides.annular_ring, config.annular_ring, 0.15),
+        drill_clearance: pick!(overrides.drill_clearance, config.drill_clearance, 0.25),
+        board_thickness: pick!(overrides.board_thickness, config.board_thickness, 1.6),
+        max_drill_aspect_ratio: pick!(
             overrides.max_drill_aspect_ratio,
             config.max_drill_aspect_ratio,
             10.0,
         ),
-        net_clearance,
-        registration_tolerance: pick(
+        net_clearance: net_clearance.clone(),
+        registration_tolerance: pick!(
             overrides.registration_tolerance,
             config.registration_tolerance,
             0.1,
         ),
-        panel_clearance: pick(overrides.panel_clearance, config.panel_clearance, 0.5),
-        ipc356_tolerance: pick(overrides.ipc356_tolerance, config.ipc356_tolerance, 0.1),
-        min_area: pick(overrides.min_area, config.min_area, 1.0e-9),
-        max_layer_area: overrides.max_layer_area.or(config.max_layer_area),
+        panel_clearance: pick!(overrides.panel_clearance, config.panel_clearance, 0.5),
+        ipc356_tolerance: pick!(overrides.ipc356_tolerance, config.ipc356_tolerance, 0.1),
+        min_area: pick!(overrides.min_area, config.min_area, 1.0e-9),
+        max_layer_area: overrides
+            .max_layer_area
+            .or_else(|| config.max_layer_area.clone()),
         generated_date_stale_days: overrides
             .generated_date_stale_days
             .or(config.generated_date_stale_days)
@@ -319,10 +355,6 @@ pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> Effecti
     }
 }
 
-fn pick(override_value: Option<f64>, config_value: Option<f64>, default_value: f64) -> f64 {
-    override_value.or(config_value).unwrap_or(default_value)
-}
-
 #[cfg(test)]
 mod tests {
     use std::fs;
@@ -335,14 +367,14 @@ mod tests {
     #[test]
     fn cli_overrides_config_and_defaults() {
         let config = RuleConfig {
-            keepout: Some(0.2),
-            min_area: Some(0.01),
+            keepout: Some(crate::scalar::scalar("0.2")),
+            min_area: Some(crate::scalar::scalar("0.01")),
             ..RuleConfig::default()
         };
         let rules = effective_rules(
             &config,
             RuleOverrides {
-                keepout: Some(0.3),
+                keepout: Some(crate::scalar::scalar("0.3")),
                 clearance: None,
                 paste_tolerance: None,
                 min_paste_area_ratio: None,
@@ -371,13 +403,25 @@ mod tests {
             },
         );
 
-        assert_eq!(rules.keepout, 0.3);
-        assert_eq!(rules.min_area, 0.01);
-        assert_eq!(rules.clearance, 0.25);
-        assert_eq!(rules.min_solder_mask_opening_area_ratio, 1.0);
-        assert_eq!(rules.max_solder_mask_opening_area_ratio, 3.0);
-        assert_eq!(rules.min_solder_mask_annular_ring, 0.05);
-        assert_eq!(rules.min_silkscreen_text_height, 0.80);
+        assert_eq!(rules.keepout, crate::scalar::scalar("0.3"));
+        assert_eq!(rules.min_area, crate::scalar::scalar("0.01"));
+        assert_eq!(rules.clearance, crate::scalar::scalar("0.25"));
+        assert_eq!(
+            rules.min_solder_mask_opening_area_ratio,
+            crate::scalar::scalar("1.0")
+        );
+        assert_eq!(
+            rules.max_solder_mask_opening_area_ratio,
+            crate::scalar::scalar("3.0")
+        );
+        assert_eq!(
+            rules.min_solder_mask_annular_ring,
+            crate::scalar::scalar("0.05")
+        );
+        assert_eq!(
+            rules.min_silkscreen_text_height,
+            crate::scalar::scalar("0.80")
+        );
         assert_eq!(rules.generated_date_stale_days, 30);
         assert_eq!(rules.assembly.profile, AssemblyProfile::ProductionSmt);
         assert_eq!(rules.assembly.component_edge_clearance, 0.5);
@@ -430,7 +474,7 @@ mod tests {
 
         let config = RuleConfig::load(&path).unwrap();
 
-        assert_eq!(config.keepout, Some(0.42));
+        assert_eq!(config.keepout, Some(crate::scalar::scalar("0.42")));
         assert_eq!(config.generated_date_stale_days, Some(45));
         assert_eq!(
             config.package_profile,
@@ -677,19 +721,46 @@ mod tests {
         let config = RuleConfig::load(&path).unwrap();
 
         assert_eq!(config.assembly_profile, Some(AssemblyProfile::TestFixture));
-        assert_eq!(config.assembly.component_edge_clearance, Some(0.6));
-        assert_eq!(config.assembly.testpoint_min_diameter, Some(0.45));
-        assert_eq!(config.assembly.tooling_min_diameter, Some(1.2));
-        assert_eq!(config.assembly.dense_pad_pitch, Some(0.65));
-        assert_eq!(config.assembly.selective_solder_keepout, Some(0.8));
-        assert_eq!(config.assembly.press_fit_keepout, Some(1.1));
-        assert_eq!(config.assembly.conformal_coating_keepout, Some(0.9));
+        assert_eq!(
+            config.assembly.component_edge_clearance,
+            Some(crate::scalar::scalar("0.6"))
+        );
+        assert_eq!(
+            config.assembly.testpoint_min_diameter,
+            Some(crate::scalar::scalar("0.45"))
+        );
+        assert_eq!(
+            config.assembly.tooling_min_diameter,
+            Some(crate::scalar::scalar("1.2"))
+        );
+        assert_eq!(
+            config.assembly.dense_pad_pitch,
+            Some(crate::scalar::scalar("0.65"))
+        );
+        assert_eq!(
+            config.assembly.selective_solder_keepout,
+            Some(crate::scalar::scalar("0.8"))
+        );
+        assert_eq!(
+            config.assembly.press_fit_keepout,
+            Some(crate::scalar::scalar("1.1"))
+        );
+        assert_eq!(
+            config.assembly.conformal_coating_keepout,
+            Some(crate::scalar::scalar("0.9"))
+        );
         let stackup = config.stackup.unwrap();
         assert_eq!(stackup.copper_layer_count, Some(2));
         assert_eq!(stackup.material_family.as_deref(), Some("FR-4"));
-        assert_eq!(stackup.material_dielectric_constant, Some(4.2));
-        assert_eq!(stackup.material_loss_tangent, Some(0.018));
-        assert_eq!(stackup.material_tg_c, Some(150.0));
+        assert_eq!(
+            stackup.material_dielectric_constant,
+            Some(crate::scalar::scalar("4.2"))
+        );
+        assert_eq!(
+            stackup.material_loss_tangent,
+            Some(crate::scalar::scalar("0.018"))
+        );
+        assert_eq!(stackup.material_tg_c, Some(crate::scalar::scalar("150.0")));
         assert_eq!(stackup.soldermask_process.as_deref(), Some("LPI"));
         assert_eq!(stackup.target_ipc_class.as_deref(), Some("IPC Class 2"));
         assert_eq!(stackup.fabrication_capability.max_copper_layers, Some(4));
@@ -703,78 +774,117 @@ mod tests {
         );
         assert_eq!(
             stackup.fabrication_capability.min_finished_thickness,
-            Some(0.6)
+            Some(crate::scalar::scalar("0.6"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .preferred_min_finished_thickness,
-            Some(0.8)
+            Some(crate::scalar::scalar("0.8"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .preferred_max_finished_thickness,
-            Some(1.6)
+            Some(crate::scalar::scalar("1.6"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .preferred_min_copper_weight_oz,
-            Some(0.5)
+            Some(crate::scalar::scalar("0.5"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .preferred_max_copper_weight_oz,
-            Some(2.0)
+            Some(crate::scalar::scalar("2.0"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .cost_escalation_copper_weight_oz,
-            Some(3.0)
+            Some(crate::scalar::scalar("3.0"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .preferred_min_dielectric_thickness,
-            Some(0.075)
+            Some(crate::scalar::scalar("0.075"))
         );
         assert_eq!(
             stackup
                 .fabrication_capability
                 .cost_escalation_min_dielectric_thickness,
-            Some(0.05)
+            Some(crate::scalar::scalar("0.05"))
         );
-        assert_eq!(stackup.fabrication_capability.max_loss_tangent, Some(0.025));
-        assert_eq!(stackup.fabrication_capability.min_tg_c, Some(130.0));
+        assert_eq!(
+            stackup.fabrication_capability.max_loss_tangent,
+            Some(crate::scalar::scalar("0.025"))
+        );
+        assert_eq!(
+            stackup.fabrication_capability.min_tg_c,
+            Some(crate::scalar::scalar("130.0"))
+        );
         assert_eq!(config.net_classes[0].name, "power");
         assert_eq!(config.net_classes[0].net_patterns, vec!["PWR_*"]);
         assert_eq!(config.net_classes[0].regions[0].name, "power-entry");
-        assert_eq!(config.net_classes[0].regions[0].max_x, Some(25.0));
+        assert_eq!(
+            config.net_classes[0].regions[0].max_x,
+            Some(crate::scalar::scalar("25.0"))
+        );
         assert_eq!(
             config.net_classes[0].regions[0].layers,
             vec!["F.Cu", "B.Cu"]
         );
-        assert_eq!(config.net_classes[0].min_current_width, Some(0.75));
-        assert_eq!(config.net_classes[0].min_voltage_clearance, Some(0.5));
+        assert_eq!(
+            config.net_classes[0].min_current_width,
+            Some(crate::scalar::scalar("0.75"))
+        );
+        assert_eq!(
+            config.net_classes[0].min_voltage_clearance,
+            Some(crate::scalar::scalar("0.5"))
+        );
         assert_eq!(config.net_classes[0].requires_reference_plane, Some(true));
         assert_eq!(config.net_classes[0].requires_impedance_control, Some(true));
-        assert_eq!(config.net_classes[0].target_impedance_ohms, Some(50.0));
-        assert_eq!(config.net_classes[0].impedance_tolerance_ohms, Some(5.0));
+        assert_eq!(
+            config.net_classes[0].target_impedance_ohms,
+            Some(crate::scalar::scalar("50.0"))
+        );
+        assert_eq!(
+            config.net_classes[0].impedance_tolerance_ohms,
+            Some(crate::scalar::scalar("5.0"))
+        );
         assert_eq!(config.net_classes[0].max_via_count, Some(4));
-        assert_eq!(config.net_classes[0].max_length, Some(75.0));
+        assert_eq!(
+            config.net_classes[0].max_length,
+            Some(crate::scalar::scalar("75.0"))
+        );
         assert_eq!(
             config.net_classes[1].differential_pair.as_deref(),
             Some("usb")
         );
         assert_eq!(config.net_classes[1].extends, vec!["power"]);
-        assert_eq!(config.net_classes[1].min_pair_spacing, Some(0.12));
-        assert_eq!(config.net_classes[1].max_pair_spacing, Some(0.22));
-        assert_eq!(config.net_classes[1].max_pair_skew, Some(0.15));
-        assert_eq!(config.net_classes[1].target_impedance_ohms, Some(90.0));
-        assert_eq!(config.net_classes[1].impedance_tolerance_ohms, Some(10.0));
+        assert_eq!(
+            config.net_classes[1].min_pair_spacing,
+            Some(crate::scalar::scalar("0.12"))
+        );
+        assert_eq!(
+            config.net_classes[1].max_pair_spacing,
+            Some(crate::scalar::scalar("0.22"))
+        );
+        assert_eq!(
+            config.net_classes[1].max_pair_skew,
+            Some(crate::scalar::scalar("0.15"))
+        );
+        assert_eq!(
+            config.net_classes[1].target_impedance_ohms,
+            Some(crate::scalar::scalar("90.0"))
+        );
+        assert_eq!(
+            config.net_classes[1].impedance_tolerance_ohms,
+            Some(crate::scalar::scalar("10.0"))
+        );
         let _ = fs::remove_file(path);
     }
 }

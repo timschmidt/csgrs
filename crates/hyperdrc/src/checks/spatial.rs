@@ -26,6 +26,7 @@ const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
 /// full all-pairs CSG pass. Buckets are grouped by layer so same-layer queries
 /// borrow the layer key once instead of allocating one key per bucket probe.
 pub(super) struct CopperSpatialIndex<'a> {
+    #[allow(dead_code)]
     features: &'a [&'a CopperFeature],
     buckets_by_layer: BTreeMap<String, BTreeMap<(i64, i64), Vec<usize>>>,
     all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>>,
@@ -46,7 +47,8 @@ impl<'a> CopperSpatialIndex<'a> {
         let mut all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
 
         for (index, feature) in features.iter().enumerate() {
-            let (bucket_x, bucket_y) = center_bucket_key(feature.location, cell_size);
+            let (bucket_x, bucket_y) =
+                center_bucket_key(feature.location_f64_compatibility_required(), cell_size);
             buckets_by_layer
                 .entry(feature.layer.clone())
                 .or_default()
@@ -80,7 +82,11 @@ impl<'a> CopperSpatialIndex<'a> {
         radius: f64,
     ) -> Vec<usize> {
         let query_radius = radius + feature_span(feature) / 2.0 + self.maximum_span / 2.0;
-        self.near_center_on_layer(feature.location, &feature.layer, query_radius)
+        self.near_center_on_layer(
+            feature.location_f64_compatibility_required(),
+            &feature.layer,
+            query_radius,
+        )
     }
 
     /// Return candidate features on any layer near the queried feature.
@@ -96,7 +102,7 @@ impl<'a> CopperSpatialIndex<'a> {
         radius: f64,
     ) -> Vec<usize> {
         let query_radius = radius + feature_span(feature) / 2.0 + self.maximum_span / 2.0;
-        self.near_center_all_layers(feature.location, query_radius)
+        self.near_center_all_layers(feature.location_f64_compatibility_required(), query_radius)
     }
 
     /// Return same-layer candidate centers within a circle.
@@ -104,6 +110,7 @@ impl<'a> CopperSpatialIndex<'a> {
     /// This preserves checks that intentionally reason about parsed locations
     /// rather than copper outlines, such as looking for a ground-stitching via
     /// near an RF feed.
+    #[cfg(test)]
     pub(super) fn same_layer_centers_within(
         &self,
         center: [f64; 2],
@@ -115,9 +122,33 @@ impl<'a> CopperSpatialIndex<'a> {
             .into_iter()
             .filter(|&index| {
                 let candidate = self.features[index];
-                let dx = candidate.location[0] - center[0];
-                let dy = candidate.location[1] - center[1];
+                let location = candidate.location_f64_compatibility_required();
+                let dx = location[0] - center[0];
+                let dy = location[1] - center[1];
                 dx * dx + dy * dy <= radius_squared
+            })
+            .collect()
+    }
+
+    /// Return conservative same-layer grid candidates near a center.
+    ///
+    /// This performs no primitive circular-distance rejection. Exact callers
+    /// use it so projection roundoff cannot discard a true threshold candidate
+    /// before narrow-phase refinement.
+    pub(super) fn same_layer_candidate_centers_near(
+        &self,
+        center: [f64; 2],
+        layer: &str,
+        radius: f64,
+    ) -> Vec<usize> {
+        self.near_center_on_layer(center, layer, radius)
+            .into_iter()
+            .filter(|&index| {
+                conservative_projected_distance_may_be_within(
+                    self.features[index].location_f64_compatibility_required(),
+                    center,
+                    radius,
+                )
             })
             .collect()
     }
@@ -297,13 +328,14 @@ impl<'a> DrillSpatialIndex<'a> {
     pub(super) fn new(drills: &'a [DrillFeature], nominal_spacing: f64) -> Self {
         let maximum_radius = drills
             .iter()
-            .map(|drill| drill.diameter / 2.0)
+            .filter_map(DrillFeature::diameter_f64_compatibility)
+            .map(|diameter| diameter / 2.0)
             .fold(0.0_f64, f64::max);
         let cell_size = (maximum_radius * 2.0 + nominal_spacing).max(SPATIAL_GRID_EPSILON);
         let mut buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
 
         for (index, drill) in drills.iter().enumerate() {
-            let key = center_bucket_key(drill.location, cell_size);
+            let key = center_bucket_key(drill.location_f64_compatibility_required(), cell_size);
             buckets.entry(key).or_default().push(index);
         }
 
@@ -330,11 +362,24 @@ impl<'a> DrillSpatialIndex<'a> {
         spacing: f64,
     ) -> Vec<usize> {
         let drill = &self.drills[drill_index];
-        let query_radius = drill.diameter / 2.0 + self.maximum_radius + spacing;
-        let min_x = bucket_coordinate(drill.location[0] - query_radius, self.cell_size);
-        let max_x = bucket_coordinate(drill.location[0] + query_radius, self.cell_size);
-        let min_y = bucket_coordinate(drill.location[1] - query_radius, self.cell_size);
-        let max_y = bucket_coordinate(drill.location[1] + query_radius, self.cell_size);
+        let query_radius =
+            drill.diameter_f64_compatibility().unwrap_or(0.0) / 2.0 + self.maximum_radius + spacing;
+        let min_x = bucket_coordinate(
+            drill.location_f64_compatibility_required()[0] - query_radius,
+            self.cell_size,
+        );
+        let max_x = bucket_coordinate(
+            drill.location_f64_compatibility_required()[0] + query_radius,
+            self.cell_size,
+        );
+        let min_y = bucket_coordinate(
+            drill.location_f64_compatibility_required()[1] - query_radius,
+            self.cell_size,
+        );
+        let max_y = bucket_coordinate(
+            drill.location_f64_compatibility_required()[1] + query_radius,
+            self.cell_size,
+        );
         let mut candidates = Vec::new();
 
         for x in min_x..=max_x {
@@ -354,11 +399,30 @@ impl<'a> DrillSpatialIndex<'a> {
     ///
     /// This supports cross-source drill-table matching where the exact
     /// predicate is center tolerance rather than edge spacing.
+    #[cfg(test)]
     pub(super) fn centers_within(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
         candidate_centers_within(&self.buckets, self.cell_size, center, radius)
             .into_iter()
             .filter(|&index| {
-                squared_distance(self.drills[index].location, center) <= radius * radius
+                squared_distance(
+                    self.drills[index].location_f64_compatibility_required(),
+                    center,
+                ) <= radius * radius
+            })
+            .collect()
+    }
+
+    /// Return conservative drill-center candidates without a primitive
+    /// circular-distance rejection.
+    pub(super) fn candidate_centers_near(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
+        candidate_centers_within(&self.buckets, self.cell_size, center, radius)
+            .into_iter()
+            .filter(|&index| {
+                conservative_projected_distance_may_be_within(
+                    self.drills[index].location_f64_compatibility_required(),
+                    center,
+                    radius,
+                )
             })
             .collect()
     }
@@ -403,6 +467,7 @@ impl PointSpatialIndex {
     }
 
     /// Return point indexes whose centers are within `radius` of `center`.
+    #[cfg(test)]
     pub(super) fn centers_within(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
         candidate_centers_within(&self.buckets, self.cell_size, center, radius)
             .into_iter()
@@ -419,6 +484,11 @@ impl PointSpatialIndex {
     /// candidate with their exact predicate.
     pub(super) fn candidate_centers_near(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
         candidate_centers_within(&self.buckets, self.cell_size, center, radius)
+            .into_iter()
+            .filter(|&index| {
+                conservative_projected_distance_may_be_within(self.points[index], center, radius)
+            })
+            .collect()
     }
 
     /// Return a stored point by index for narrow-phase refinement.
@@ -463,6 +533,35 @@ fn bucket_coordinate(value: f64, cell_size: f64) -> i64 {
     (value / cell_size).floor() as i64
 }
 
+/// Conservatively filter a projected center-distance candidate.
+///
+/// Each finite projection is treated as a one-ULP interval around the stored
+/// primitive. The lower-bound axis separations can therefore reject only pairs
+/// whose exact coordinates cannot be within the projected search radius. This
+/// remains a non-certifying broad phase; callers perform the exact predicate.
+fn conservative_projected_distance_may_be_within(
+    left: [f64; 2],
+    right: [f64; 2],
+    radius: f64,
+) -> bool {
+    if !left.into_iter().chain(right).all(f64::is_finite) || !radius.is_finite() {
+        return true;
+    }
+    let lower_dx =
+        ((left[0] - right[0]).abs() - projection_ulp(left[0]) - projection_ulp(right[0])).max(0.0);
+    let lower_dy =
+        ((left[1] - right[1]).abs() - projection_ulp(left[1]) - projection_ulp(right[1])).max(0.0);
+    let expanded_radius = radius.abs() + projection_ulp(radius);
+    lower_dx * lower_dx + lower_dy * lower_dy <= expanded_radius * expanded_radius
+}
+
+fn projection_ulp(value: f64) -> f64 {
+    (value.next_up() - value)
+        .abs()
+        .max((value - value.next_down()).abs())
+}
+
+#[cfg(test)]
 fn squared_distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     let dx = left[0] - right[0];
     let dy = left[1] - right[1];
@@ -536,7 +635,11 @@ mod tests {
         let features = vec![&ground, &far_ground];
         let index = CopperSpatialIndex::new(&features, 0.50);
 
-        let candidates = index.same_layer_centers_within(rf.location, &rf.layer, 0.50);
+        let candidates = index.same_layer_centers_within(
+            rf.location_f64_compatibility_required(),
+            &rf.layer,
+            0.50,
+        );
 
         assert_eq!(candidates, vec![0]);
     }
@@ -635,7 +738,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+            location: [
+                crate::geometry::exact_real((start[0] + end[0]) / 2.0),
+                crate::geometry::exact_real((start[1] + end[1]) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
@@ -647,8 +753,11 @@ mod tests {
 
     fn drill(location: [f64; 2], diameter: f64) -> DrillFeature {
         DrillFeature {
-            location,
-            diameter,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
+            diameter: crate::geometry::exact_real(diameter),
             net: None,
             plated: true,
         }

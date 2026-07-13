@@ -214,31 +214,56 @@ fn report_precedence_conflicts(
 }
 
 fn inherit_unset_constraints(child: &mut NetClassConfig, parent: &NetClassConfig) {
-    child.min_width = child.min_width.or(parent.min_width);
-    child.min_clearance = child.min_clearance.or(parent.min_clearance);
+    child.min_width = child.min_width.clone().or_else(|| parent.min_width.clone());
+    child.min_clearance = child
+        .min_clearance
+        .clone()
+        .or_else(|| parent.min_clearance.clone());
     child.max_layer_count = child.max_layer_count.or(parent.max_layer_count);
     child.min_via_count = child.min_via_count.or(parent.min_via_count);
-    child.min_current_width = child.min_current_width.or(parent.min_current_width);
-    child.min_voltage_clearance = child.min_voltage_clearance.or(parent.min_voltage_clearance);
+    child.min_current_width = child
+        .min_current_width
+        .clone()
+        .or_else(|| parent.min_current_width.clone());
+    child.min_voltage_clearance = child
+        .min_voltage_clearance
+        .clone()
+        .or_else(|| parent.min_voltage_clearance.clone());
     child.requires_reference_plane = child
         .requires_reference_plane
         .or(parent.requires_reference_plane);
     child.requires_impedance_control = child
         .requires_impedance_control
         .or(parent.requires_impedance_control);
-    child.target_impedance_ohms = child.target_impedance_ohms.or(parent.target_impedance_ohms);
+    child.target_impedance_ohms = child
+        .target_impedance_ohms
+        .clone()
+        .or_else(|| parent.target_impedance_ohms.clone());
     child.impedance_tolerance_ohms = child
         .impedance_tolerance_ohms
-        .or(parent.impedance_tolerance_ohms);
+        .clone()
+        .or_else(|| parent.impedance_tolerance_ohms.clone());
     child.differential_pair = child
         .differential_pair
         .clone()
         .or_else(|| parent.differential_pair.clone());
     child.differential_role = child.differential_role.or(parent.differential_role);
-    child.min_pair_spacing = child.min_pair_spacing.or(parent.min_pair_spacing);
-    child.max_pair_spacing = child.max_pair_spacing.or(parent.max_pair_spacing);
-    child.max_length = child.max_length.or(parent.max_length);
-    child.max_pair_skew = child.max_pair_skew.or(parent.max_pair_skew);
+    child.min_pair_spacing = child
+        .min_pair_spacing
+        .clone()
+        .or_else(|| parent.min_pair_spacing.clone());
+    child.max_pair_spacing = child
+        .max_pair_spacing
+        .clone()
+        .or_else(|| parent.max_pair_spacing.clone());
+    child.max_length = child
+        .max_length
+        .clone()
+        .or_else(|| parent.max_length.clone());
+    child.max_pair_skew = child
+        .max_pair_skew
+        .clone()
+        .or_else(|| parent.max_pair_skew.clone());
     child.max_via_count = child.max_via_count.or(parent.max_via_count);
 }
 
@@ -287,14 +312,14 @@ mod tests {
                 nets: vec!["SHOULD_NOT_MATCH".to_string()],
                 regions: vec![NetClassRegionConfig {
                     name: "parent-region".to_string(),
-                    min_x: Some(0.0),
-                    min_y: Some(0.0),
-                    max_x: Some(1.0),
-                    max_y: Some(1.0),
+                    min_x: Some(crate::scalar::scalar("0.0")),
+                    min_y: Some(crate::scalar::scalar("0.0")),
+                    max_x: Some(crate::scalar::scalar("1.0")),
+                    max_y: Some(crate::scalar::scalar("1.0")),
                     ..NetClassRegionConfig::default()
                 }],
-                min_width: Some(0.25),
-                min_clearance: Some(0.40),
+                min_width: Some(crate::scalar::scalar("0.25")),
+                min_clearance: Some(crate::scalar::scalar("0.40")),
                 requires_reference_plane: Some(true),
                 ..NetClassConfig::default()
             },
@@ -302,7 +327,7 @@ mod tests {
                 name: "child".to_string(),
                 extends: vec!["base".to_string()],
                 nets: vec!["SIG".to_string()],
-                min_width: Some(0.30),
+                min_width: Some(crate::scalar::scalar("0.30")),
                 ..NetClassConfig::default()
             },
         ];
@@ -312,8 +337,14 @@ mod tests {
         assert!(resolution.violations.is_empty());
         assert_eq!(resolution.classes[1].nets, vec!["SIG"]);
         assert!(resolution.classes[1].regions.is_empty());
-        assert_eq!(resolution.classes[1].min_width, Some(0.30));
-        assert_eq!(resolution.classes[1].min_clearance, Some(0.40));
+        assert_eq!(
+            resolution.classes[1].min_width,
+            Some(crate::scalar::scalar("0.30"))
+        );
+        assert_eq!(
+            resolution.classes[1].min_clearance,
+            Some(crate::scalar::scalar("0.40"))
+        );
         assert_eq!(resolution.classes[1].requires_reference_plane, Some(true));
     }
 
@@ -323,13 +354,13 @@ mod tests {
             NetClassConfig {
                 name: "a".to_string(),
                 extends: vec!["b".to_string(), "missing".to_string()],
-                min_width: Some(0.2),
+                min_width: Some(crate::scalar::scalar("0.2")),
                 ..NetClassConfig::default()
             },
             NetClassConfig {
                 name: "b".to_string(),
                 extends: vec!["a".to_string()],
-                min_clearance: Some(0.3),
+                min_clearance: Some(crate::scalar::scalar("0.3")),
                 ..NetClassConfig::default()
             },
         ];
@@ -358,14 +389,14 @@ mod tests {
         let classes = vec![
             NetClassConfig {
                 name: "slow".to_string(),
-                min_width: Some(0.20),
-                min_clearance: Some(0.30),
+                min_width: Some(crate::scalar::scalar("0.20")),
+                min_clearance: Some(crate::scalar::scalar("0.30")),
                 ..NetClassConfig::default()
             },
             NetClassConfig {
                 name: "fast".to_string(),
-                min_width: Some(0.25),
-                min_clearance: Some(0.30),
+                min_width: Some(crate::scalar::scalar("0.25")),
+                min_clearance: Some(crate::scalar::scalar("0.30")),
                 ..NetClassConfig::default()
             },
             NetClassConfig {
@@ -378,7 +409,7 @@ mod tests {
                 name: "explicit-child".to_string(),
                 extends: vec!["slow".to_string(), "fast".to_string()],
                 nets: vec!["EXPLICIT".to_string()],
-                min_width: Some(0.30),
+                min_width: Some(crate::scalar::scalar("0.30")),
                 ..NetClassConfig::default()
             },
         ];
@@ -390,8 +421,14 @@ mod tests {
             .filter_map(|violation| violation.message.as_deref())
             .collect::<Vec<_>>();
 
-        assert_eq!(resolution.classes[2].min_width, Some(0.20));
-        assert_eq!(resolution.classes[3].min_width, Some(0.30));
+        assert_eq!(
+            resolution.classes[2].min_width,
+            Some(crate::scalar::scalar("0.20"))
+        );
+        assert_eq!(
+            resolution.classes[3].min_width,
+            Some(crate::scalar::scalar("0.30"))
+        );
         assert_eq!(
             messages
                 .iter()

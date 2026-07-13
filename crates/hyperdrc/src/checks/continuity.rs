@@ -14,10 +14,10 @@ use std::collections::BTreeMap;
 
 use geo::{Area, BoundingRect};
 
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
+use crate::geometry::{circle_polygon, multipolygon_to_shapes_scalar, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
 use super::spatial::CopperSpatialIndex;
 
@@ -33,7 +33,7 @@ use super::spatial::CopperSpatialIndex;
 pub fn different_net_short_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> = BTreeMap::new();
     for feature in selected_copper_features(board, selected_layers)
@@ -77,7 +77,7 @@ pub fn different_net_short_readiness(
                 }
 
                 let overlap = left.sketch.intersection(&right.sketch);
-                let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+                let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
                 let has_area = !shapes.is_empty()
                     || overlap
                         .to_multipolygon()
@@ -94,7 +94,10 @@ pub fn different_net_short_readiness(
                     vec![left.layer.clone()],
                     None,
                     shapes,
-                    vec![left.location, right.location],
+                    vec![
+                        left.location_f64_compatibility_required(),
+                        right.location_f64_compatibility_required(),
+                    ],
                     Some(format!(
                         "net {:?} overlaps net {:?} on {}; review isolation test, netlist parity, and copper assignment",
                         left.net, right.net, left.layer
@@ -118,7 +121,7 @@ pub fn same_net_drill_break_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
     selected_layers: &[String],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let drills = board
         .drills
@@ -137,7 +140,8 @@ pub fn same_net_drill_break_readiness(
         .collect::<Vec<_>>();
     let maximum_drill_radius = drills
         .iter()
-        .map(|drill| drill.diameter / 2.0)
+        .filter_map(|drill| drill.diameter_f64_compatibility())
+        .map(|diameter| diameter / 2.0)
         .fold(0.0_f64, f64::max);
     // Drill-break review is a conservative continuity proxy for IPC-9252B
     // electrical-test risk. The grid broad phase follows Ericson, Real-Time
@@ -148,10 +152,15 @@ pub fn same_net_drill_break_readiness(
     let mut candidate_pairs = 0_usize;
     let mut keepouts_built = 0_usize;
     for drill in &drills {
-        let drill_radius = drill.diameter / 2.0;
+        let Some(drill_diameter) = drill.diameter_f64_compatibility() else {
+            continue;
+        };
+        let drill_radius = drill_diameter / 2.0;
         let mut drill_sketch = None;
 
-        for candidate_index in copper_index.all_layers_near_circle(drill.location, drill_radius) {
+        for candidate_index in copper_index
+            .all_layers_near_circle(drill.location_f64_compatibility_required(), drill_radius)
+        {
             candidate_pairs += 1;
             let feature = copper[candidate_index];
 
@@ -160,7 +169,7 @@ pub fn same_net_drill_break_readiness(
                 drill_keepout_sketch(drill)
             });
             let overlap = drill_sketch.intersection(&feature.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty()
                 && !overlap
                     .to_multipolygon()
@@ -177,7 +186,7 @@ pub fn same_net_drill_break_readiness(
                 vec![feature.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location, feature.location],
+                vec![drill.location_f64_compatibility_required(), feature.location_f64_compatibility_required()],
                 Some(format!(
                     "non-plated drill/slot intersects routed copper for net {:?}; review same-net continuity, zone refill, and bare-board electrical test",
                     feature.net
@@ -212,8 +221,15 @@ fn selected_copper_features<'a>(
 }
 
 fn drill_keepout_sketch(drill: &DrillFeature) -> PcbSketch {
+    let diameter = drill
+        .diameter_f64_compatibility()
+        .expect("parsed drill diameter must have a finite geometry projection");
     polygons_to_profile(
-        vec![circle_polygon(drill.location, drill.diameter / 2.0, 32)],
+        vec![circle_polygon(
+            drill.location_f64_compatibility_required(),
+            diameter / 2.0,
+            32,
+        )],
         Some(LayerMetadata {
             name: "non-plated drill continuity keepout".to_string(),
         }),
@@ -241,7 +257,8 @@ mod tests {
             pad(Some("B"), [0.4, 0.0], [1.0, 1.0]),
         ]);
 
-        let violations = different_net_short_readiness(&board, &[], 1.0e-9);
+        let violations =
+            different_net_short_readiness(&board, &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "different-net-short-readiness");
@@ -259,25 +276,37 @@ mod tests {
             pad(Some("A"), [0.0, 0.0], [1.0, 1.0]),
             pad(Some("A"), [0.4, 0.0], [1.0, 1.0]),
         ]);
-        assert!(different_net_short_readiness(&same_net, &[], 1.0e-9).is_empty());
+        assert!(
+            different_net_short_readiness(&same_net, &[], &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
 
         let unnetted = board_with_copper(vec![
             pad(Some("A"), [0.0, 0.0], [1.0, 1.0]),
             pad(None, [0.4, 0.0], [1.0, 1.0]),
         ]);
-        assert!(different_net_short_readiness(&unnetted, &[], 1.0e-9).is_empty());
+        assert!(
+            different_net_short_readiness(&unnetted, &[], &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
 
         let distant = board_with_copper(vec![
             pad(Some("A"), [0.0, 0.0], [1.0, 1.0]),
             pad(Some("B"), [2.0, 0.0], [1.0, 1.0]),
         ]);
-        assert!(different_net_short_readiness(&distant, &[], 1.0e-9).is_empty());
+        assert!(
+            different_net_short_readiness(&distant, &[], &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
 
         let other_layer = board_with_copper(vec![
             pad(Some("A"), [0.0, 0.0], [1.0, 1.0]),
             pad_on_layer("B.Cu", Some("B"), [0.4, 0.0], [1.0, 1.0]),
         ]);
-        assert!(different_net_short_readiness(&other_layer, &[], 1.0e-9).is_empty());
+        assert!(
+            different_net_short_readiness(&other_layer, &[], &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
     }
 
     #[test]
@@ -287,9 +316,21 @@ mod tests {
             pad_on_layer("B.Cu", Some("B"), [0.4, 0.0], [1.0, 1.0]),
         ]);
 
-        assert!(different_net_short_readiness(&board, &["F.Cu".to_string()], 1.0e-9).is_empty());
+        assert!(
+            different_net_short_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
         assert_eq!(
-            different_net_short_readiness(&board, &["B.Cu".to_string()], 1.0e-9).len(),
+            different_net_short_readiness(
+                &board,
+                &["B.Cu".to_string()],
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .len(),
             1
         );
     }
@@ -309,7 +350,8 @@ mod tests {
         let board = board_with_copper(copper);
 
         let start = std::time::Instant::now();
-        let violations = different_net_short_readiness(&board, &[], 1.0e-9);
+        let violations =
+            different_net_short_readiness(&board, &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -323,7 +365,8 @@ mod tests {
         let mut board = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)]);
         board.drills = vec![npth([0.0, 0.0], 0.60)];
 
-        let violations = same_net_drill_break_readiness(&board, &[], &[], 1.0e-9);
+        let violations =
+            same_net_drill_break_readiness(&board, &[], &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "same-net-drill-break-readiness");
@@ -340,7 +383,12 @@ mod tests {
         let board = board_with_copper(vec![zone("PWR", [0.0, 0.0], [2.0, 2.0])]);
         let sidecar_drills = vec![npth([0.0, 0.0], 0.75)];
 
-        let violations = same_net_drill_break_readiness(&board, &sidecar_drills, &[], 1.0e-9);
+        let violations = same_net_drill_break_readiness(
+            &board,
+            &sidecar_drills,
+            &[],
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].layers, vec!["F.Cu"]);
@@ -350,20 +398,37 @@ mod tests {
     fn same_net_drill_break_allows_plated_unnetted_pads_distant_or_selected_out() {
         let mut plated = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)]);
         plated.drills = vec![DrillFeature {
-            location: [0.0, 0.0],
-            diameter: 0.60,
+            location: [
+                crate::geometry::exact_real(0.0),
+                crate::geometry::exact_real(0.0),
+            ],
+            diameter: crate::scalar::scalar("0.60"),
             net: Some("SIG".to_string()),
             plated: true,
         }];
-        assert!(same_net_drill_break_readiness(&plated, &[], &[], 1.0e-9).is_empty());
+        assert!(
+            same_net_drill_break_readiness(&plated, &[], &[], &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
 
         let mut unnetted_pad = board_with_copper(vec![pad(None, [0.0, 0.0], [1.0, 1.0])]);
         unnetted_pad.drills = vec![npth([0.0, 0.0], 0.60)];
-        assert!(same_net_drill_break_readiness(&unnetted_pad, &[], &[], 1.0e-9).is_empty());
+        assert!(
+            same_net_drill_break_readiness(
+                &unnetted_pad,
+                &[],
+                &[],
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
 
         let mut distant = board_with_copper(vec![segment("SIG", [2.0, 0.0], [3.0, 0.0], 0.30)]);
         distant.drills = vec![npth([0.0, 0.0], 0.60)];
-        assert!(same_net_drill_break_readiness(&distant, &[], &[], 1.0e-9).is_empty());
+        assert!(
+            same_net_drill_break_readiness(&distant, &[], &[], &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
 
         let mut selected_out = board_with_copper(vec![segment_on_layer(
             "B.Cu",
@@ -374,8 +439,13 @@ mod tests {
         )]);
         selected_out.drills = vec![npth([0.0, 0.0], 0.60)];
         assert!(
-            same_net_drill_break_readiness(&selected_out, &[], &["F.Cu".to_string()], 1.0e-9)
-                .is_empty()
+            same_net_drill_break_readiness(
+                &selected_out,
+                &[],
+                &["F.Cu".to_string()],
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -391,7 +461,8 @@ mod tests {
         board.drills = vec![npth([0.0, 0.0], 0.60)];
 
         let start = std::time::Instant::now();
-        let violations = same_net_drill_break_readiness(&board, &[], &[], 1.0e-9);
+        let violations =
+            same_net_drill_break_readiness(&board, &[], &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -409,7 +480,8 @@ mod tests {
         board.drills.push(npth([0.0, 0.0], 0.60));
 
         let start = std::time::Instant::now();
-        let violations = same_net_drill_break_readiness(&board, &[], &[], 1.0e-9);
+        let violations =
+            same_net_drill_break_readiness(&board, &[], &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -443,7 +515,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+            location: [
+                crate::geometry::exact_real((start[0] + end[0]) / 2.0),
+                crate::geometry::exact_real((start[1] + end[1]) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("segment should be valid")],
                 Some(LayerMetadata {
@@ -458,7 +533,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Zone,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
@@ -482,7 +560,10 @@ mod tests {
             layer: layer.to_string(),
             net: net.map(str::to_string),
             kind: CopperKind::Pad,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
@@ -494,8 +575,11 @@ mod tests {
 
     fn npth(location: [f64; 2], diameter: f64) -> DrillFeature {
         DrillFeature {
-            location,
-            diameter,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
+            diameter: crate::geometry::exact_real(diameter),
             net: None,
             plated: false,
         }
@@ -507,7 +591,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Via,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {

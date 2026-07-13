@@ -89,6 +89,7 @@ pub mod pdf_overlay;
 pub mod process_lifecycle;
 pub mod report;
 pub mod sarif;
+pub mod scalar;
 pub mod sexp;
 pub mod sqlite_report;
 pub mod svg_overlay;
@@ -97,6 +98,7 @@ pub mod waiver;
 pub use app::{RunOutcome, run, run_cli};
 pub use cli::{Check, Cli, OutputFormat};
 pub use report::{Diagnostic, Report, ReportSummary, Severity, Violation};
+pub use scalar::Scalar;
 
 use csgrs::sketch::Profile;
 use csgrs::{csg::CSG, io::gerber::FromGerber};
@@ -113,12 +115,41 @@ use std::ops::{Deref, DerefMut};
 pub struct PcbSketch {
     profile: Profile,
     metadata: Option<LayerMetadata>,
+    exact_bounds: Option<[Scalar; 4]>,
+    had_non_finite_input: bool,
 }
 
 impl PcbSketch {
     /// Attach PCB layer metadata to metadata-free profile geometry.
     pub fn new(profile: Profile, metadata: Option<LayerMetadata>) -> Self {
-        Self { profile, metadata }
+        Self {
+            profile,
+            metadata,
+            exact_bounds: None,
+            had_non_finite_input: false,
+        }
+    }
+
+    pub(crate) fn new_with_exact_bounds(
+        profile: Profile,
+        metadata: Option<LayerMetadata>,
+        exact_bounds: Option<[Scalar; 4]>,
+        had_non_finite_input: bool,
+    ) -> Self {
+        Self {
+            profile,
+            metadata,
+            exact_bounds,
+            had_non_finite_input,
+        }
+    }
+
+    pub(crate) fn exact_bounds(&self) -> Option<&[Scalar; 4]> {
+        self.exact_bounds.as_ref()
+    }
+
+    pub(crate) const fn had_non_finite_input(&self) -> bool {
+        self.had_non_finite_input
     }
 
     /// Return the PCB-owned layer metadata.
@@ -136,7 +167,45 @@ impl PcbSketch {
 
     /// Offset the profile while retaining its PCB layer metadata.
     pub fn offset(&self, distance: hyperreal::Real) -> Self {
-        Self::new(self.profile.offset(distance), self.metadata.clone())
+        let exact_bounds = self.exact_bounds.as_ref().map(|bounds| {
+            [
+                &bounds[0] - &distance,
+                &bounds[1] - &distance,
+                &bounds[2] + &distance,
+                &bounds[3] + &distance,
+            ]
+        });
+        Self::new_with_exact_bounds(
+            self.profile.offset(distance),
+            self.metadata.clone(),
+            exact_bounds,
+            self.had_non_finite_input,
+        )
+    }
+
+    /// Compute a certified profile difference without panicking when the
+    /// native topology kernel cannot certify a boundary decision.
+    pub fn try_difference(&self, other: &Self) -> Result<Self, csgrs::errors::ProfileBooleanError> {
+        let mut result = Self::new(
+            self.profile.try_difference(&other.profile)?,
+            self.metadata.clone(),
+        );
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        Ok(result)
+    }
+
+    /// Compute a certified profile intersection without panicking when the
+    /// native topology kernel cannot certify a boundary decision.
+    pub fn try_intersection(
+        &self,
+        other: &Self,
+    ) -> Result<Self, csgrs::errors::ProfileBooleanError> {
+        let mut result = Self::new(
+            self.profile.try_intersection(&other.profile)?,
+            self.metadata.clone(),
+        );
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        Ok(result)
     }
 }
 
@@ -150,39 +219,52 @@ impl Deref for PcbSketch {
 
 impl DerefMut for PcbSketch {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        self.exact_bounds = None;
         &mut self.profile
     }
 }
 
 impl CSG for PcbSketch {
     fn union(&self, other: &Self) -> Self {
-        Self::new(self.profile.union(&other.profile), self.metadata.clone())
+        let mut result = Self::new(self.profile.union(&other.profile), self.metadata.clone());
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        result
     }
 
     fn difference(&self, other: &Self) -> Self {
-        Self::new(
+        let mut result = Self::new(
             self.profile.difference(&other.profile),
             self.metadata.clone(),
-        )
+        );
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        result
     }
 
     fn intersection(&self, other: &Self) -> Self {
-        Self::new(
+        let mut result = Self::new(
             self.profile.intersection(&other.profile),
             self.metadata.clone(),
-        )
+        );
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        result
     }
 
     fn xor(&self, other: &Self) -> Self {
-        Self::new(self.profile.xor(&other.profile), self.metadata.clone())
+        let mut result = Self::new(self.profile.xor(&other.profile), self.metadata.clone());
+        result.had_non_finite_input = self.had_non_finite_input || other.had_non_finite_input;
+        result
     }
 
     fn transform(&self, matrix: &Matrix4) -> Self {
-        Self::new(self.profile.transform(matrix), self.metadata.clone())
+        let mut result = Self::new(self.profile.transform(matrix), self.metadata.clone());
+        result.had_non_finite_input = self.had_non_finite_input;
+        result
     }
 
     fn inverse(&self) -> Self {
-        Self::new(self.profile.inverse(), self.metadata.clone())
+        let mut result = Self::new(self.profile.inverse(), self.metadata.clone());
+        result.had_non_finite_input = self.had_non_finite_input;
+        result
     }
 
     fn bounding_box(&self) -> Aabb {
@@ -190,6 +272,7 @@ impl CSG for PcbSketch {
     }
 
     fn invalidate_bounding_box(&mut self) {
+        self.exact_bounds = None;
         self.profile.invalidate_bounding_box();
     }
 }

@@ -4,6 +4,7 @@
 //! geometry windows. Keeping those selector semantics out of the constraint
 //! predicates lets the checks stay focused on electrical/manufacturing policy.
 
+use crate::Scalar;
 use crate::constraint_policy::{NetClassConfig, NetClassRegionConfig};
 use crate::kicad::CopperFeature;
 use crate::report::{Severity, Violation};
@@ -102,7 +103,7 @@ fn class_matches_feature_region(class: &NetClassConfig, feature: &CopperFeature)
         {
             return false;
         }
-        bounds.contains(feature.location)
+        bounds.contains(feature.location_f64_compatibility_required())
     })
 }
 
@@ -122,39 +123,31 @@ fn region_label(region: &NetClassRegionConfig, index: usize) -> String {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 struct RegionBounds {
-    min_x: f64,
-    min_y: f64,
-    max_x: f64,
-    max_y: f64,
+    min_x: Scalar,
+    min_y: Scalar,
+    max_x: Scalar,
+    max_y: Scalar,
 }
 
 impl RegionBounds {
-    fn contains(self, point: [f64; 2]) -> bool {
-        point[0].is_finite()
-            && point[1].is_finite()
-            && point[0] >= self.min_x
-            && point[0] <= self.max_x
-            && point[1] >= self.min_y
-            && point[1] <= self.max_y
+    fn contains(&self, point: [f64; 2]) -> bool {
+        let (Ok(x), Ok(y)) = (Scalar::try_from(point[0]), Scalar::try_from(point[1])) else {
+            return false;
+        };
+        x >= self.min_x && x <= self.max_x && y >= self.min_y && y <= self.max_y
     }
 }
 
 fn region_bounds(region: &NetClassRegionConfig) -> Option<RegionBounds> {
     let bounds = RegionBounds {
-        min_x: region.min_x?,
-        min_y: region.min_y?,
-        max_x: region.max_x?,
-        max_y: region.max_y?,
+        min_x: region.min_x.clone()?,
+        min_y: region.min_y.clone()?,
+        max_x: region.max_x.clone()?,
+        max_y: region.max_y.clone()?,
     };
-    (bounds.min_x.is_finite()
-        && bounds.min_y.is_finite()
-        && bounds.max_x.is_finite()
-        && bounds.max_y.is_finite()
-        && bounds.min_x <= bounds.max_x
-        && bounds.min_y <= bounds.max_y)
-        .then_some(bounds)
+    (bounds.min_x <= bounds.max_x && bounds.min_y <= bounds.max_y).then_some(bounds)
 }
 
 #[cfg(test)]
@@ -176,10 +169,10 @@ mod tests {
                 nets: vec!["SIG".to_string()],
                 regions: vec![NetClassRegionConfig {
                     name: "front-end".to_string(),
-                    min_x: Some(0.0),
-                    min_y: Some(0.0),
-                    max_x: Some(2.0),
-                    max_y: Some(2.0),
+                    min_x: Some(crate::scalar::scalar("0.0")),
+                    min_y: Some(crate::scalar::scalar("0.0")),
+                    max_x: Some(crate::scalar::scalar("2.0")),
+                    max_y: Some(crate::scalar::scalar("2.0")),
                     layers: vec!["F.Cu".to_string()],
                 }],
                 ..NetClassConfig::default()
@@ -209,10 +202,10 @@ mod tests {
             name: "bad region".to_string(),
             nets: vec!["SIG".to_string()],
             regions: vec![NetClassRegionConfig {
-                min_x: Some(2.0),
-                min_y: Some(0.0),
-                max_x: Some(1.0),
-                max_y: Some(2.0),
+                min_x: Some(crate::scalar::scalar("2.0")),
+                min_y: Some(crate::scalar::scalar("0.0")),
+                max_x: Some(crate::scalar::scalar("1.0")),
+                max_y: Some(crate::scalar::scalar("2.0")),
                 ..NetClassRegionConfig::default()
             }],
             ..NetClassConfig::default()
@@ -229,7 +222,10 @@ mod tests {
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
             sketch: polygons_to_profile(vec![rect_polygon(location, [0.2, 0.2], 0.0)], None),
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
         }
     }
 }

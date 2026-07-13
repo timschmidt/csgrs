@@ -16,7 +16,10 @@ pub use sketch::{empty_profile, polygon_to_profile, polygons_to_profile};
 pub use source_units::{
     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,
 };
+#[cfg(test)]
 pub use violations::multipolygon_to_shapes;
+pub use violations::multipolygon_to_shapes_scalar;
+pub(crate) use violations::{multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar};
 
 pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
     hyperreal::Real::try_from(value)
@@ -111,6 +114,19 @@ mod tests {
             single.to_multipolygon().unsigned_area(),
             square.unsigned_area(),
         );
+    }
+
+    #[test]
+    fn profile_constructors_promote_input_bounds_once_for_exact_broad_phases() {
+        let sketch = polygons_to_profile(vec![rect_polygon([3.0, -2.0], [4.0, 6.0], 0.0)], None);
+        let bounds = sketch
+            .exact_bounds()
+            .expect("finite input polygons should retain promoted exact bounds");
+
+        assert_eq!(bounds[0], crate::scalar::scalar("1"));
+        assert_eq!(bounds[1], crate::scalar::scalar("-5"));
+        assert_eq!(bounds[2], crate::scalar::scalar("5"));
+        assert_eq!(bounds[3], crate::scalar::scalar("1"));
     }
 
     #[test]

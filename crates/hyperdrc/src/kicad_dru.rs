@@ -5,6 +5,7 @@
 //! spacing issues earlier in KiCad without pretending to translate every
 //! HyperDRC readiness check into KiCad's rule language.
 
+use crate::Scalar;
 use crate::config::EffectiveRules;
 
 /// Render a KiCad custom-rule file from the resolved HyperDRC rule thresholds.
@@ -20,7 +21,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
         "hyperdrc-copper-clearance",
         "Copper clearance exported from HyperDRC net_clearance.",
         "clearance",
-        rules.net_clearance,
+        &rules.net_clearance,
         "A.Type == 'track' || A.Type == 'via' || A.Type == 'pad'",
     );
     push_rule(
@@ -28,7 +29,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
         "hyperdrc-track-width",
         "Minimum copper width exported from HyperDRC min_width.",
         "track_width",
-        rules.min_width,
+        &rules.min_width,
         "A.Type == 'track'",
     );
     push_rule(
@@ -36,7 +37,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
         "hyperdrc-annular-ring",
         "Minimum annular ring exported from HyperDRC annular_ring.",
         "annular_width",
-        rules.annular_ring,
+        &rules.annular_ring,
         "A.Type == 'via' || A.Type == 'pad'",
     );
     push_rule(
@@ -44,7 +45,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
         "hyperdrc-silk-clearance",
         "Silkscreen clearance exported from HyperDRC clearance.",
         "silk_clearance",
-        rules.clearance,
+        &rules.clearance,
         "A.Layer == 'F.SilkS' || A.Layer == 'B.SilkS'",
     );
     push_rule(
@@ -52,7 +53,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
         "hyperdrc-board-edge-clearance",
         "Copper to board edge clearance exported from HyperDRC clearance.",
         "edge_clearance",
-        rules.clearance,
+        &rules.clearance,
         "A.Type == 'track' || A.Type == 'via' || A.Type == 'pad' || A.Type == 'zone'",
     );
     push_rule(
@@ -60,7 +61,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
         "hyperdrc-hole-clearance",
         "Hole to copper clearance exported from HyperDRC drill_clearance.",
         "hole_clearance",
-        rules.drill_clearance,
+        &rules.drill_clearance,
         "A.Type == 'via' || A.Type == 'pad'",
     );
     text
@@ -167,10 +168,10 @@ fn push_rule(
     name: &str,
     note: &str,
     constraint: &str,
-    min_mm: f64,
+    min_mm: &Scalar,
     condition: &str,
 ) {
-    if !min_mm.is_finite() || min_mm <= 0.0 {
+    if min_mm <= &Scalar::zero() {
         return;
     }
     text.push_str(&format!(
@@ -180,8 +181,8 @@ fn push_rule(
     ));
 }
 
-fn format_mm(value: f64) -> String {
-    let formatted = format!("{value:.6}");
+fn format_mm(value: &Scalar) -> String {
+    let formatted = format!("{value:#.6}");
     formatted
         .trim_end_matches('0')
         .trim_end_matches('.')
@@ -218,10 +219,10 @@ mod tests {
         let rules = effective_rules(
             &RuleConfig::default(),
             RuleOverrides {
-                net_clearance: Some(0.1234567),
-                min_width: Some(0.25),
-                annular_ring: Some(0.2),
-                drill_clearance: Some(0.35),
+                net_clearance: Some(crate::scalar::scalar("0.1234567")),
+                min_width: Some(crate::scalar::scalar("0.25")),
+                annular_ring: Some(crate::scalar::scalar("0.2")),
+                drill_clearance: Some(crate::scalar::scalar("0.35")),
                 ..RuleOverrides::default()
             },
         );

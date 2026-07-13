@@ -1,9 +1,8 @@
 //! Source-unit and rule-provenance carriers for exact geometry adapters.
 //!
-//! These types are intentionally small metadata packets. They do not replace
-//! the current `geo`/`csgrs` compatibility geometry, but they give parser and
-//! rule code a stable place to carry source-grid information until the rest of
-//! `hyperdrc` is ported to hyperreal geometry.
+//! These types are intentionally small metadata packets. Parsed source scalars
+//! enter the hyperreal domain here and retain source-grid information for
+//! downstream geometry and rule code.
 
 use hyperreal::{Rational, Real};
 
@@ -178,20 +177,11 @@ impl SourceUnit {
     }
 }
 
-/// A parsed scalar with both compatibility and exact source-token forms.
-///
-/// The `approximate` field keeps current `geo`/`csgrs` call sites working at
-/// API edges. The `exact` field lets exact predicates consume the decimal token
-/// directly when the token grammar is supported. This is the local parser
-/// analogue of Yap's separation between geometric structure and numeric
-/// approximation; exact decisions should prefer `exact`, while rendering and
-/// legacy interop can continue using `approximate`.
+/// A parsed scalar retained exactly from its source token.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SourceScalar {
-    /// Compatibility value used by existing `f64` geometry code.
-    pub approximate: f64,
-    /// Exact decimal-token value, when retained.
-    pub exact: Option<Real>,
+    /// Exact source-token value.
+    pub value: Real,
     /// Source-grid facts associated with this scalar.
     pub grid: SourceGridFacts,
 }
@@ -199,18 +189,18 @@ pub struct SourceScalar {
 impl SourceScalar {
     /// Parse a source numeric token at a known unit boundary.
     pub fn parse(unit: SourceUnit, token: &str) -> Option<Self> {
-        let approximate = token.parse::<f64>().ok()?;
-        if !approximate.is_finite() {
-            return None;
-        }
-        let exact = token.parse::<Rational>().ok().map(Real::from);
+        let value = token.parse::<Rational>().ok().map(Real::from)?;
         let grid = SourceGridFacts::decimal_token(unit, token)
             .unwrap_or_else(|| SourceGridFacts::primitive_float_edge(unit));
-        Some(Self {
-            approximate,
-            exact,
-            grid,
-        })
+        Some(Self { value, grid })
+    }
+
+    /// Approximate this exact input for a finite legacy adapter.
+    ///
+    /// This method exists only while `geo`-based parser consumers are being
+    /// removed. New internal models must retain [`Self::value`] instead.
+    pub(crate) fn to_f64_compatibility(&self) -> Option<f64> {
+        self.value.to_f64_lossy()
     }
 }
 
@@ -292,10 +282,9 @@ mod tests {
         let scalar = SourceScalar::parse(SourceUnit::KiCadMillimeter, "-12.345")
             .expect("plain KiCad decimal token should parse");
 
-        assert_eq!(scalar.approximate, -12.345);
         assert_eq!(
-            scalar.exact,
-            Some(Real::from(Rational::fraction(-12_345, 1_000).unwrap()))
+            scalar.value,
+            Real::from(Rational::fraction(-12_345, 1_000).unwrap())
         );
         assert_eq!(
             scalar.grid,

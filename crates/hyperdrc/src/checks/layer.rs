@@ -12,24 +12,23 @@ use std::collections::BTreeMap;
 
 use csgrs::csg::CSG;
 use geo::{
-    Area, BoundingRect, Contains, Coord, Line, LineString, MultiPolygon, Point, Polygon,
+    Area, BoundingRect, Coord, Line, LineString, MultiPolygon, Polygon,
     line_intersection::{LineIntersection, line_intersection},
 };
 use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_reals_with_policy};
 
-use crate::checks::distance::polygon_boundary_distance_with_grid;
+use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::geometry::{
-    RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes, polygon_to_profile,
+    RuleGeometryProvenance, SourceGridFacts, multipolygon_area_scalar,
+    multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar, polygon_to_profile,
     polygons_to_profile, rect_polygon,
 };
 use crate::ipc356::Ipc356Point;
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
-const LOCAL_COPPER_DENSITY_FLOOR: f64 = 0.05;
-const LOCAL_COPPER_DENSITY_DELTA: f64 = 0.50;
-const DUPLICATE_LAYER_OVERLAP_RATIO: f64 = 0.999_999;
+const DUPLICATE_LAYER_OVERLAP_RATIO: &str = "0.999999";
 const DUPLICATE_LAYER_SIGNATURE_SCALE: f64 = 1_000_000.0;
 
 /// Run the `mask_island_keepout` design-readiness check or report helper.
@@ -41,11 +40,13 @@ const DUPLICATE_LAYER_SIGNATURE_SCALE: f64 = 1_000_000.0;
 pub fn mask_island_keepout(
     layer_name: &str,
     sketch: &PcbSketch,
-    keepout: f64,
-    min_area: f64,
+    keepout: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let polygons = sketch.to_multipolygon().0;
-    let index = LayerPolygonSpatialIndex::new(&polygons, keepout * 2.0);
+    let doubled_keepout = keepout * crate::scalar::scalar("2");
+    let broad_phase_keepout = scalar_broad_phase_radius(&doubled_keepout);
+    let index = LayerPolygonSpatialIndex::new(&polygons, broad_phase_keepout);
     log::trace!(
         "mask-island keepout: layer={layer_name} islands={} buckets={} keepout={keepout:.6}",
         polygons.len(),
@@ -55,13 +56,13 @@ pub fn mask_island_keepout(
     let mut candidate_pairs = 0usize;
 
     for island_index in 0..polygons.len() {
-        let candidate_indexes = index.later_candidates_near(island_index, keepout * 2.0);
+        let candidate_indexes = index.later_candidates_near(island_index, broad_phase_keepout);
         candidate_pairs += candidate_indexes.len();
         for neighbor_index in candidate_indexes {
             if !polygons_within_clearance(
                 &polygons[island_index],
                 &polygons[neighbor_index],
-                keepout * 2.0,
+                broad_phase_keepout,
             ) {
                 continue;
             }
@@ -75,9 +76,9 @@ pub fn mask_island_keepout(
             let neighbor =
                 polygon_to_profile(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
             let overlap = island
-                .offset(crate::geometry::exact_real(keepout))
-                .intersection(&neighbor.offset(crate::geometry::exact_real(keepout)));
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+                .offset(keepout.clone())
+                .intersection(&neighbor.offset(keepout.clone()));
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
 
             if !shapes.is_empty() {
                 violations.push(Violation::new(
@@ -124,7 +125,7 @@ pub fn copper_overlap(
     left: &PcbSketch,
     right_name: &str,
     right: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     intersection_violation(
         PairCheck {
@@ -147,15 +148,15 @@ pub fn copper_overlap_with_ipc356(
     right_name: &str,
     right: &PcbSketch,
     ipc356_points: &[Ipc356Point],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overlap = left.intersection(right).to_multipolygon();
-    let shapes = multipolygon_to_shapes(&overlap, min_area);
+    let overlap = left.intersection(right);
+    let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
     if shapes.is_empty() {
         return Vec::new();
     }
 
-    let nets = ipc356_nets_in_multipolygon(&overlap, ipc356_points);
+    let nets = ipc356_nets_in_sketch(&overlap, ipc356_points);
     let (severity, message) = match nets.as_slice() {
         [net] => (
             Severity::Warning,
@@ -187,18 +188,14 @@ pub fn copper_overlap_with_ipc356(
     )]
 }
 
-fn ipc356_nets_in_multipolygon(
-    overlap: &MultiPolygon<f64>,
-    ipc356_points: &[Ipc356Point],
-) -> Vec<String> {
+fn ipc356_nets_in_sketch(overlap: &PcbSketch, ipc356_points: &[Ipc356Point]) -> Vec<String> {
     let mut nets = std::collections::BTreeSet::new();
     for point in ipc356_points {
         let net = point.net.trim();
         if net.is_empty() {
             continue;
         }
-        let location = Point::new(point.location[0], point.location[1]);
-        if overlap.contains(&location) {
+        if overlap.contains_xy(point.location[0].clone(), point.location[1].clone()) == Some(true) {
             nets.insert(net.to_string());
         }
     }
@@ -211,12 +208,12 @@ pub fn board_edge_clearance(
     copper: &PcbSketch,
     board_name: &str,
     board: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = board.offset(crate::geometry::exact_real(-clearance));
+    let allowed = board.offset(-clearance.clone());
     let intrusion = copper.difference(&allowed);
-    let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
 
     if shapes.is_empty() {
         return Vec::new();
@@ -245,8 +242,8 @@ pub fn board_outline_cutout_clearance(
     subject: &PcbSketch,
     outline_name: &str,
     outline: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     board_outline_cutout_clearance_with_grid(
         subject_name,
@@ -265,28 +262,29 @@ pub fn board_outline_cutout_clearance_with_grid(
     subject: &PcbSketch,
     outline_name: &str,
     outline: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let outline_polygons = outline.to_multipolygon();
     for cutout in board_outline_cutouts(&outline_polygons) {
         let cutout = polygon_to_profile(cutout, Some(metadata("board cutout")));
-        let clearance_band = if clearance > 0.0 {
-            cutout.offset(crate::geometry::exact_real(clearance))
+        let clearance_band = if clearance > &Scalar::zero() {
+            cutout.offset(clearance.clone())
         } else {
             cutout.clone()
         };
 
         let intrusion = subject.intersection(&clearance_band);
-        let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         let touches_cutout = shapes.is_empty()
-            && polygon_boundary_distance_with_grid(
+            && polygon_boundary_distance_scalar_with_grid(
                 &subject.to_multipolygon(),
                 &cutout.to_multipolygon(),
                 grid,
-            ) <= clearance;
+            )
+            .is_some_and(|distance| &distance <= clearance);
         if shapes.is_empty() && !touches_cutout {
             continue;
         }
@@ -327,8 +325,8 @@ fn board_outline_cutouts(outline: &MultiPolygon<f64>) -> Vec<Polygon<f64>> {
                 polygon_contains_other_outer(
                     outer,
                     inner,
-                    BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
-                    BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+                    &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
+                    &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
                 )
             });
         if !is_nested {
@@ -358,12 +356,12 @@ pub fn silkscreen_board_edge_clearance(
     silk: &PcbSketch,
     board_name: &str,
     board: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = board.offset(crate::geometry::exact_real(-clearance));
+    let allowed = board.offset(-clearance.clone());
     let intrusion = silk.difference(&allowed);
-    shapes_violation(
+    shapes_violation_scalar(
         "silkscreen-to-board-edge-clearance",
         Severity::Warning,
         vec![silk_name.to_string(), board_name.to_string()],
@@ -379,12 +377,12 @@ pub fn solder_mask_board_edge_clearance(
     mask: &PcbSketch,
     board_name: &str,
     board: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let allowed = board.offset(crate::geometry::exact_real(-clearance));
+    let allowed = board.offset(-clearance.clone());
     let intrusion = mask.difference(&allowed);
-    shapes_violation(
+    shapes_violation_scalar(
         "solder-mask-to-board-edge-clearance",
         Severity::Warning,
         vec![mask_name.to_string(), board_name.to_string()],
@@ -408,16 +406,16 @@ pub fn paste_overhang(
     paste: &PcbSketch,
     copper_name: &str,
     copper: &PcbSketch,
-    tolerance: f64,
-    min_area: f64,
+    tolerance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let overhang = indexed_difference(
         paste_name,
         paste,
         copper_name,
         copper,
-        tolerance,
-        IndexedDifferenceMode::CoverOffset(tolerance),
+        scalar_broad_phase_radius(tolerance),
+        IndexedDifferenceMode::CoverOffset(tolerance.clone()),
     );
     shapes_violation(
         "paste-aperture-overhang",
@@ -440,7 +438,7 @@ pub fn paste_aperture_coverage(
     paste: &PcbSketch,
     copper_name: &str,
     copper: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let uncovered_copper = indexed_difference(
         copper_name,
@@ -450,7 +448,7 @@ pub fn paste_aperture_coverage(
         0.0,
         IndexedDifferenceMode::CoverAsIs,
     );
-    shapes_violation(
+    shapes_violation_scalar(
         "paste-aperture-coverage",
         Severity::Warning,
         vec![paste_name.to_string(), copper_name.to_string()],
@@ -471,16 +469,16 @@ pub fn solder_mask_overlap_clearance(
     copper: &PcbSketch,
     mask_name: &str,
     mask: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let vulnerable_copper = indexed_intersection_with_mode(
         copper_name,
         copper,
         mask_name,
         mask,
-        clearance,
-        IndexedCoverMode::OffsetRing(clearance),
+        scalar_broad_phase_radius(clearance),
+        IndexedCoverMode::OffsetRing(clearance.clone()),
     );
     shapes_violation(
         "solder-mask-overlap-clearance",
@@ -504,46 +502,51 @@ pub fn paste_aperture_ratio(
     paste: &PcbSketch,
     copper_name: &str,
     copper: &PcbSketch,
-    min_ratio: f64,
-    max_ratio: f64,
-    min_area: f64,
+    min_ratio: &Scalar,
+    max_ratio: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let paste_polygons = paste.to_multipolygon().0;
     let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
     log::trace!(
-        "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:.3} max_ratio={max_ratio:.3}",
+        "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
         paste_polygons.len(),
         paste_index.bucket_count()
     );
     let mut candidate_apertures = 0usize;
 
     for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
-        let copper_area = copper_polygon.unsigned_area();
-        if copper_area <= min_area {
+        let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+            continue;
+        };
+        if &copper_area <= min_area {
             continue;
         }
 
         let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
         let candidate_indexes = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_apertures += candidate_indexes.len();
-        let paste_area = candidate_indexes
-            .into_iter()
-            .map(|index| &paste_polygons[index])
-            .filter(|paste_polygon| {
-                let paste_island =
-                    polygon_to_profile((*paste_polygon).clone(), Some(metadata(paste_name)));
-                island
-                    .intersection(&paste_island)
-                    .to_multipolygon()
-                    .unsigned_area()
-                    > min_area
-            })
-            .map(Polygon::unsigned_area)
-            .sum::<f64>();
-        let ratio = paste_area / copper_area;
+        let paste_area = Scalar::sum_owned(
+            candidate_indexes
+                .into_iter()
+                .map(|index| &paste_polygons[index])
+                .filter_map(|paste_polygon| {
+                    let paste_island =
+                        polygon_to_profile((*paste_polygon).clone(), Some(metadata(paste_name)));
+                    let overlap = island.intersection(&paste_island).to_multipolygon();
+                    let area = multipolygon_area_scalar(&overlap)?;
+                    (&area > min_area)
+                        .then(|| polygon_area_scalar(paste_polygon))
+                        .flatten()
+                })
+                .collect::<Vec<_>>(),
+        );
+        let Ok(ratio) = paste_area / copper_area else {
+            continue;
+        };
 
-        if ratio >= min_ratio && ratio <= max_ratio {
+        if &ratio >= min_ratio && &ratio <= max_ratio {
             continue;
         }
 
@@ -552,10 +555,10 @@ pub fn paste_aperture_ratio(
             Severity::Warning,
             vec![paste_name.to_string(), copper_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes(&island.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area),
             Vec::new(),
             Some(format!(
-                "paste-to-copper area ratio {ratio:.3} is outside configured range {min_ratio:.3}..{max_ratio:.3}"
+                "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}"
             )),
         ));
     }
@@ -573,20 +576,23 @@ pub fn paste_aperture_ratio(
 pub fn minimum_paste_aperture(
     paste_name: &str,
     paste: &PcbSketch,
-    min_width: f64,
-    min_area: f64,
+    min_width: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for (island_index, polygon) in paste.to_multipolygon().0.into_iter().enumerate() {
-        let Some(bounds) = polygon.bounding_rect() else {
+        let Some(bounds) = polygon_bounds_scalar(&polygon) else {
             continue;
         };
-        let width = bounds.max().x - bounds.min().x;
-        let height = bounds.max().y - bounds.min().y;
-        let smallest_dimension = width.min(height);
+        let width = &bounds[2] - &bounds[0];
+        let height = &bounds[3] - &bounds[1];
+        let smallest_dimension = if width <= height { width } else { height };
+        let Some(area) = polygon_area_scalar(&polygon) else {
+            continue;
+        };
 
-        if smallest_dimension >= min_width || polygon.unsigned_area() <= min_area {
+        if &smallest_dimension >= min_width || &area <= min_area {
             continue;
         }
 
@@ -596,10 +602,10 @@ pub fn minimum_paste_aperture(
             Severity::Warning,
             vec![paste_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes(&aperture.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&aperture.to_multipolygon(), min_area),
             Vec::new(),
             Some(format!(
-                "paste aperture minimum dimension {smallest_dimension:.6} is below {min_width:.6}"
+                "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}"
             )),
         ));
     }
@@ -617,22 +623,25 @@ pub fn minimum_paste_aperture(
 pub fn paste_aperture_spacing(
     paste_name: &str,
     paste: &PcbSketch,
-    min_spacing: f64,
-    min_area: f64,
+    min_spacing: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let polygons = paste.to_multipolygon().0;
-    let index = LayerPolygonSpatialIndex::new(&polygons, min_spacing);
+    let broad_phase_spacing = scalar_broad_phase_radius(min_spacing);
+    let index = LayerPolygonSpatialIndex::new(&polygons, broad_phase_spacing);
     log::trace!(
         "paste-aperture-spacing: layer={paste_name} apertures={} buckets={} min_spacing={min_spacing:.6}",
         polygons.len(),
         index.bucket_count()
     );
     let mut violations = Vec::new();
-    let expansion = min_spacing / 2.0;
+    let Ok(expansion) = min_spacing.clone() / crate::scalar::scalar("2") else {
+        return Vec::new();
+    };
     let mut candidate_pairs = 0usize;
 
     for island_index in 0..polygons.len() {
-        let candidate_indexes = index.candidates_near(island_index, min_spacing);
+        let candidate_indexes = index.candidates_near(island_index, broad_phase_spacing);
         candidate_pairs += candidate_indexes.len();
         if candidate_indexes.is_empty() {
             continue;
@@ -645,9 +654,9 @@ pub fn paste_aperture_spacing(
             .collect::<Vec<_>>();
         let remaining = polygons_to_profile(candidate_polygons, Some(metadata(paste_name)));
         let overlap = island
-            .offset(crate::geometry::exact_real(expansion))
-            .intersection(&remaining.offset(crate::geometry::exact_real(expansion)));
-        let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            .offset(expansion.clone())
+            .intersection(&remaining.offset(expansion.clone()));
+        let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
         }
@@ -685,7 +694,7 @@ pub fn paste_mask_alignment(
     paste: &PcbSketch,
     mask_name: &str,
     mask: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let outside_mask_opening = indexed_difference(
         paste_name,
@@ -695,7 +704,7 @@ pub fn paste_mask_alignment(
         0.0,
         IndexedDifferenceMode::CoverAsIs,
     );
-    shapes_violation(
+    shapes_violation_scalar(
         "paste-mask-alignment",
         Severity::Warning,
         vec![paste_name.to_string(), mask_name.to_string()],
@@ -716,10 +725,10 @@ pub fn exposed_copper(
     copper: &PcbSketch,
     mask_name: &str,
     mask_openings: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let overlap = indexed_intersection(copper_name, copper, mask_name, mask_openings, 0.0);
-    shapes_violation(
+    shapes_violation_scalar(
         "exposed-copper",
         Severity::Warning,
         vec![copper_name.to_string(), mask_name.to_string()],
@@ -740,7 +749,7 @@ pub fn solder_mask_opening_coverage(
     copper: &PcbSketch,
     mask_name: &str,
     mask_openings: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let covered_copper = indexed_difference(
         copper_name,
@@ -750,7 +759,7 @@ pub fn solder_mask_opening_coverage(
         0.0,
         IndexedDifferenceMode::CoverAsIs,
     );
-    shapes_violation(
+    shapes_violation_scalar(
         "solder-mask-opening-coverage",
         Severity::Error,
         vec![copper_name.to_string(), mask_name.to_string()],
@@ -780,46 +789,51 @@ pub fn solder_mask_opening_ratio_readiness(
     copper: &PcbSketch,
     mask_name: &str,
     mask_openings: &PcbSketch,
-    min_ratio: f64,
-    max_ratio: f64,
-    min_area: f64,
+    min_ratio: &Scalar,
+    max_ratio: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mask_polygons = mask_openings.to_multipolygon().0;
     let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, 0.0);
     log::trace!(
-        "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:.3} max_ratio={max_ratio:.3}",
+        "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
         mask_polygons.len(),
         mask_index.bucket_count()
     );
     let mut candidate_openings = 0usize;
 
     for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
-        let copper_area = copper_polygon.unsigned_area();
-        if copper_area <= min_area {
+        let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+            continue;
+        };
+        if &copper_area <= min_area {
             continue;
         }
 
         let island = polygon_to_profile(copper_polygon.clone(), Some(metadata(copper_name)));
         let candidate_indexes = mask_index.candidates_near_polygon(&copper_polygon, 0.0);
         candidate_openings += candidate_indexes.len();
-        let opening_area = candidate_indexes
-            .into_iter()
-            .map(|index| &mask_polygons[index])
-            .filter(|mask_polygon| {
-                let mask_island =
-                    polygon_to_profile((*mask_polygon).clone(), Some(metadata(mask_name)));
-                island
-                    .intersection(&mask_island)
-                    .to_multipolygon()
-                    .unsigned_area()
-                    > min_area
-            })
-            .map(Polygon::unsigned_area)
-            .sum::<f64>();
-        let ratio = opening_area / copper_area;
+        let opening_area = Scalar::sum_owned(
+            candidate_indexes
+                .into_iter()
+                .map(|index| &mask_polygons[index])
+                .filter_map(|mask_polygon| {
+                    let mask_island =
+                        polygon_to_profile((*mask_polygon).clone(), Some(metadata(mask_name)));
+                    let overlap = island.intersection(&mask_island).to_multipolygon();
+                    let area = multipolygon_area_scalar(&overlap)?;
+                    (&area > min_area)
+                        .then(|| polygon_area_scalar(mask_polygon))
+                        .flatten()
+                })
+                .collect::<Vec<_>>(),
+        );
+        let Ok(ratio) = opening_area / copper_area else {
+            continue;
+        };
 
-        if ratio >= min_ratio && ratio <= max_ratio {
+        if &ratio >= min_ratio && &ratio <= max_ratio {
             continue;
         }
 
@@ -828,10 +842,10 @@ pub fn solder_mask_opening_ratio_readiness(
             Severity::Warning,
             vec![copper_name.to_string(), mask_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes(&island.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area),
             Vec::new(),
             Some(format!(
-                "solder-mask opening-to-copper area ratio {ratio:.3} is outside configured range {min_ratio:.3}..{max_ratio:.3}; review NSMD/SMD pad definition and BGA mask opening growth"
+                "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth"
             )),
         ));
     }
@@ -865,17 +879,18 @@ pub fn solder_mask_annular_ring_readiness(
     copper: &PcbSketch,
     mask_name: &str,
     mask_openings: &PcbSketch,
-    min_mask_annular_ring: f64,
-    min_area: f64,
+    min_mask_annular_ring: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if min_mask_annular_ring <= 0.0 {
+    if min_mask_annular_ring <= &Scalar::zero() {
         return Vec::new();
     }
 
     let copper_polygons = copper.to_multipolygon().0;
     let copper_count = copper_polygons.len();
     let mask_polygons = mask_openings.to_multipolygon().0;
-    let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, min_mask_annular_ring);
+    let broad_phase_ring = scalar_broad_phase_radius(min_mask_annular_ring);
+    let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, broad_phase_ring);
     log::trace!(
         "solder-mask annular-ring readiness: copper={copper_name} copper_islands={} mask={mask_name} mask_openings={} mask_buckets={} min_ring={min_mask_annular_ring:.6}",
         copper_count,
@@ -887,14 +902,14 @@ pub fn solder_mask_annular_ring_readiness(
     let mut candidate_openings = 0usize;
 
     for (island_index, copper_polygon) in copper_polygons.into_iter().enumerate() {
-        if copper_polygon.unsigned_area() <= min_area {
+        if polygon_area_scalar(&copper_polygon).is_none_or(|area| &area <= min_area) {
             continue;
         }
 
-        let candidates = mask_index.candidates_near_polygon(&copper_polygon, min_mask_annular_ring);
+        let candidates = mask_index.candidates_near_polygon(&copper_polygon, broad_phase_ring);
         candidate_openings += candidates.len();
         let required_opening = polygon_to_profile(copper_polygon, Some(metadata(copper_name)))
-            .offset(crate::geometry::exact_real(min_mask_annular_ring));
+            .offset(min_mask_annular_ring.clone());
         let missing_relief = if candidates.is_empty() {
             required_opening
         } else {
@@ -905,7 +920,7 @@ pub fn solder_mask_annular_ring_readiness(
             let mask_sketch = polygons_to_profile(candidate_openings, Some(metadata(mask_name)));
             required_opening.difference(&mask_sketch)
         };
-        let shapes = multipolygon_to_shapes(&missing_relief.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&missing_relief.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
         }
@@ -943,16 +958,16 @@ pub fn solder_mask_expansion(
     copper: &PcbSketch,
     mask_name: &str,
     mask_openings: &PcbSketch,
-    max_expansion: f64,
-    min_area: f64,
+    max_expansion: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let excessive_opening = indexed_difference(
         mask_name,
         mask_openings,
         copper_name,
         copper,
-        max_expansion,
-        IndexedDifferenceMode::CoverOffset(max_expansion),
+        scalar_broad_phase_radius(max_expansion),
+        IndexedDifferenceMode::CoverOffset(max_expansion.clone()),
     );
     shapes_violation(
         "solder-mask-expansion",
@@ -975,7 +990,7 @@ pub fn silkscreen_overlap(
     silk: &PcbSketch,
     blocker_name: &str,
     blocker: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let overlap = indexed_intersection_with_mode(
         silk_name,
@@ -985,7 +1000,7 @@ pub fn silkscreen_overlap(
         0.0,
         IndexedCoverMode::AsIs,
     );
-    shapes_violation(
+    shapes_violation_scalar(
         "silkscreen-overlap",
         Severity::Warning,
         vec![silk_name.to_string(), blocker_name.to_string()],
@@ -1006,16 +1021,16 @@ pub fn silkscreen_clearance(
     silk: &PcbSketch,
     blocker_name: &str,
     blocker: &PcbSketch,
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let intrusion = indexed_intersection_with_mode(
         silk_name,
         silk,
         blocker_name,
         blocker,
-        clearance,
-        IndexedCoverMode::Offset(clearance),
+        scalar_broad_phase_radius(clearance),
+        IndexedCoverMode::Offset(clearance.clone()),
     );
     shapes_violation(
         "silkscreen-clearance",
@@ -1031,13 +1046,15 @@ pub fn silkscreen_clearance(
 pub fn silkscreen_min_width(
     silk_name: &str,
     silk: &PcbSketch,
-    min_width: f64,
-    min_area: f64,
+    min_width: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let radius = min_width / 2.0;
+    let Ok(radius) = min_width.clone() / crate::scalar::scalar("2") else {
+        return Vec::new();
+    };
     let polygons = silk.to_multipolygon().0;
     log::trace!(
-        "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:.6}",
+        "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}",
         polygons.len()
     );
     let mut shapes = Vec::new();
@@ -1047,15 +1064,21 @@ pub fn silkscreen_min_width(
         // time. Whole-layer opening can create pathological boolean operations
         // on dense Gerber packages, while island-local opening is equivalent
         // for independent silkscreen strokes.
+        let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(&polygon)
+            .is_some_and(|dimension| dimension > Scalar::zero() && &dimension < min_width);
+        let area_above_gate = polygon_area_scalar(&polygon).is_some_and(|area| &area > min_area);
         let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
-        let reconstructed = island
-            .offset(crate::geometry::exact_real(-radius))
-            .offset(crate::geometry::exact_real(radius));
+        let reconstructed = island.offset(-radius.clone()).offset(radius.clone());
         let thin_features = island.difference(&reconstructed);
-        shapes.extend(multipolygon_to_shapes(
-            &thin_features.to_multipolygon(),
-            min_area,
-        ));
+        let mut island_shapes =
+            multipolygon_to_shapes_scalar(&thin_features.to_multipolygon(), min_area);
+        // Native offset can conservatively retain an island when collapse is
+        // uncertain. The exact promoted envelope remains a sound readiness
+        // fallback for a globally undersized disconnected stroke.
+        if island_shapes.is_empty() && dimension_below_limit && area_above_gate {
+            island_shapes = multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area);
+        }
+        shapes.extend(island_shapes);
     }
 
     if shapes.is_empty() {
@@ -1092,34 +1115,39 @@ pub fn silkscreen_min_width(
 pub fn silkscreen_text_height_readiness(
     silk_name: &str,
     silk: &PcbSketch,
-    min_text_height: f64,
-    min_area: f64,
+    min_text_height: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if min_text_height <= 0.0 {
+    if min_text_height <= &Scalar::zero() {
         return Vec::new();
     }
 
     let polygons = silk.to_multipolygon().0;
     log::trace!(
-        "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:.6}",
+        "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}",
         polygons.len()
     );
     let mut violations = Vec::new();
     let mut measured_islands = 0usize;
 
     for (island_index, polygon) in polygons.into_iter().enumerate() {
-        let area = polygon.unsigned_area();
-        if area <= min_area {
+        let Some(area) = polygon_area_scalar(&polygon) else {
+            continue;
+        };
+        if &area <= min_area {
             continue;
         }
+        let Some(exact_bounds) = polygon_bounds_scalar(&polygon) else {
+            continue;
+        };
         let Some(bounds) = polygon.bounding_rect() else {
             continue;
         };
         measured_islands += 1;
-        let width = bounds.max().x - bounds.min().x;
-        let height = bounds.max().y - bounds.min().y;
-        let apparent_height = width.max(height);
-        if apparent_height >= min_text_height {
+        let width = &exact_bounds[2] - &exact_bounds[0];
+        let height = &exact_bounds[3] - &exact_bounds[1];
+        let apparent_height = if width >= height { width } else { height };
+        if &apparent_height >= min_text_height {
             continue;
         }
 
@@ -1129,13 +1157,13 @@ pub fn silkscreen_text_height_readiness(
             Severity::Warning,
             vec![silk_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes(&island.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&island.to_multipolygon(), min_area),
             vec![[
                 (bounds.min().x + bounds.max().x) / 2.0,
                 (bounds.min().y + bounds.max().y) / 2.0,
             ]],
             Some(format!(
-                "silkscreen island apparent text height {apparent_height:.6} is below minimum {min_text_height:.6}; review legend, polarity, and pin-1 mark legibility"
+                "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility"
             )),
         ));
     }
@@ -1153,10 +1181,12 @@ pub fn silkscreen_text_height_readiness(
 pub fn min_copper_neck_width(
     copper_name: &str,
     copper: &PcbSketch,
-    min_width: f64,
-    min_area: f64,
+    min_width: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let radius = min_width / 2.0;
+    let Ok(radius) = min_width.clone() / crate::scalar::scalar("2") else {
+        return Vec::new();
+    };
     let source_polygons = copper.to_multipolygon().0;
     log::trace!(
         "min-copper-neck: layer={copper_name} polygons={} min_width={min_width:.6} min_area={min_area:.6}",
@@ -1185,16 +1215,24 @@ pub fn min_copper_neck_width(
             polygon.interiors().len()
         );
         let source = MultiPolygon(vec![polygon.clone()]);
+        let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(&polygon)
+            .is_some_and(|dimension| dimension > Scalar::zero() && &dimension < min_width);
+        let area_above_gate = polygon_area_scalar(&polygon).is_some_and(|area| &area > min_area);
         let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
-        let reconstructed = island
-            .offset(crate::geometry::exact_real(-radius))
-            .offset(crate::geometry::exact_real(radius));
+        let reconstructed = island.offset(-radius.clone()).offset(radius.clone());
         let thin_features = island.difference(&reconstructed);
         let thin = thin_features.to_multipolygon();
         if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
             continue;
         }
-        shapes.extend(multipolygon_to_shapes(&thin, min_area));
+        let mut island_shapes = multipolygon_to_shapes_scalar(&thin, min_area);
+        // Native offset may conservatively retain an island when a collapse
+        // cannot be certified. Its exact promoted envelope still proves that
+        // a globally undersized disconnected trace needs review.
+        if island_shapes.is_empty() && dimension_below_limit && area_above_gate {
+            island_shapes = multipolygon_to_shapes_scalar(&source, min_area);
+        }
+        shapes.extend(island_shapes);
     }
 
     if shapes.is_empty() {
@@ -1217,76 +1255,119 @@ pub fn min_copper_neck_width(
 fn whole_feature_removal_is_width_compliant(
     source: &MultiPolygon<f64>,
     removed: &MultiPolygon<f64>,
-    min_width: f64,
+    min_width: &Scalar,
 ) -> bool {
-    let source_area = source.unsigned_area();
-    if source_area == 0.0 || (removed.unsigned_area() - source_area).abs() > source_area * 1.0e-6 {
+    let Some(source_area) = multipolygon_area_scalar(source) else {
+        return false;
+    };
+    let Some(removed_area) = multipolygon_area_scalar(removed) else {
+        return false;
+    };
+    if source_area == Scalar::zero()
+        || (&removed_area - &source_area).abs() > &source_area * crate::scalar::scalar("1.0e-6")
+    {
         return false;
     }
 
-    source
-        .0
-        .iter()
-        .all(|polygon| shortest_exterior_segment(polygon) >= min_width)
+    source.0.iter().all(|polygon| {
+        shortest_exterior_segment_scalar(polygon).is_some_and(|length| &length >= min_width)
+    })
 }
 
-fn shortest_exterior_segment(polygon: &Polygon<f64>) -> f64 {
-    polygon
+fn shortest_exterior_segment_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
+    let mut lengths = polygon
         .exterior()
         .0
         .windows(2)
-        .map(|segment| {
-            let dx = segment[1].x - segment[0].x;
-            let dy = segment[1].y - segment[0].y;
-            (dx * dx + dy * dy).sqrt()
+        .filter_map(|segment| {
+            let dx = Scalar::try_from(segment[1].x).ok()? - Scalar::try_from(segment[0].x).ok()?;
+            let dy = Scalar::try_from(segment[1].y).ok()? - Scalar::try_from(segment[0].y).ok()?;
+            (&dx * &dx + &dy * &dy).sqrt().ok()
         })
-        .filter(|length| *length > 1.0e-12)
-        .fold(f64::INFINITY, f64::min)
+        .filter(|length| length > &Scalar::zero());
+    let first = lengths.next()?;
+    Some(lengths.fold(
+        first,
+        |shortest, length| {
+            if length < shortest { length } else { shortest }
+        },
+    ))
 }
 
 /// Run the `solder_mask_sliver` design-readiness check or report helper.
 pub fn solder_mask_sliver(
     mask_name: &str,
     mask: &PcbSketch,
-    min_width: f64,
-    min_area: f64,
+    min_width: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let radius = min_width / 2.0;
+    let Ok(radius) = min_width.clone() / crate::scalar::scalar("2") else {
+        return Vec::new();
+    };
     // Same opening operation as the copper neck-width check, applied to residual
     // mask geometry. The result is the geometry that is too thin to survive the
     // configured web width.
-    let reconstructed = mask
-        .offset(crate::geometry::exact_real(-radius))
-        .offset(crate::geometry::exact_real(radius));
+    let reconstructed = mask.offset(-radius.clone()).offset(radius);
     let slivers = mask.difference(&reconstructed);
-    shapes_violation(
+    let mut violations = shapes_violation_scalar(
         "solder-mask-sliver",
         Severity::Warning,
         vec![mask_name.to_string()],
         slivers,
         min_area,
         format!("solder mask geometry is removed by opening with width {min_width}"),
-    )
+    );
+    if violations.is_empty() {
+        let narrow = MultiPolygon(
+            mask.to_multipolygon()
+                .0
+                .into_iter()
+                .filter(|polygon| {
+                    polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
+                        dimension > Scalar::zero() && &dimension < min_width
+                    }) && polygon_area_scalar(polygon).is_some_and(|area| &area > min_area)
+                })
+                .collect(),
+        );
+        let shapes = multipolygon_to_shapes_scalar(&narrow, min_area);
+        if !shapes.is_empty() {
+            violations.push(Violation::new(
+                "solder-mask-sliver",
+                Severity::Warning,
+                vec![mask_name.to_string()],
+                None,
+                shapes,
+                Vec::new(),
+                Some(format!(
+                    "solder mask geometry is below configured width {min_width}"
+                )),
+            ));
+        }
+    }
+    violations
 }
 
 /// Run the `minimum_mask_opening` design-readiness check or report helper.
 pub fn minimum_mask_opening(
     mask_name: &str,
     mask: &PcbSketch,
-    min_opening: f64,
-    min_area: f64,
+    min_opening: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for (island_index, polygon) in mask.to_multipolygon().0.into_iter().enumerate() {
-        let Some(bounds) = polygon.bounding_rect() else {
+        let Some(bounds) = polygon_bounds_scalar(&polygon) else {
             continue;
         };
-        let width = bounds.max().x - bounds.min().x;
-        let height = bounds.max().y - bounds.min().y;
-        let smallest_dimension = width.min(height);
+        let width = &bounds[2] - &bounds[0];
+        let height = &bounds[3] - &bounds[1];
+        let smallest_dimension = if width <= height { width } else { height };
+        let Some(area) = polygon_area_scalar(&polygon) else {
+            continue;
+        };
 
-        if smallest_dimension >= min_opening || polygon.unsigned_area() <= min_area {
+        if &smallest_dimension >= min_opening || &area <= min_area {
             continue;
         }
 
@@ -1296,10 +1377,10 @@ pub fn minimum_mask_opening(
             Severity::Warning,
             vec![mask_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes(&opening.to_multipolygon(), min_area),
+            multipolygon_to_shapes_scalar(&opening.to_multipolygon(), min_area),
             Vec::new(),
             Some(format!(
-                "solder mask opening minimum dimension {smallest_dimension:.6} is below {min_opening:.6}"
+                "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}"
             )),
         ));
     }
@@ -1316,28 +1397,31 @@ pub fn minimum_mask_opening(
 pub fn solder_mask_opening_spacing(
     mask_name: &str,
     mask: &PcbSketch,
-    min_spacing: f64,
-    min_area: f64,
+    min_spacing: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let openings = mask.to_multipolygon().0;
-    let index = LayerPolygonSpatialIndex::new(&openings, min_spacing);
+    let broad_phase_spacing = scalar_broad_phase_radius(min_spacing);
+    let index = LayerPolygonSpatialIndex::new(&openings, broad_phase_spacing);
     log::trace!(
         "solder-mask-opening-spacing: layer={mask_name} openings={} buckets={} min_spacing={min_spacing:.6}",
         openings.len(),
         index.bucket_count()
     );
     let mut violations = Vec::new();
-    let expansion = min_spacing / 2.0;
+    let Ok(expansion) = min_spacing.clone() / crate::scalar::scalar("2") else {
+        return Vec::new();
+    };
     let mut candidate_pairs = 0usize;
 
     for opening_index in 0..openings.len() {
-        let candidate_indexes = index.later_candidates_near(opening_index, min_spacing);
+        let candidate_indexes = index.later_candidates_near(opening_index, broad_phase_spacing);
         candidate_pairs += candidate_indexes.len();
         for neighbor_index in candidate_indexes {
             if !polygons_within_clearance(
                 &openings[opening_index],
                 &openings[neighbor_index],
-                min_spacing,
+                broad_phase_spacing,
             ) {
                 continue;
             }
@@ -1347,9 +1431,10 @@ pub fn solder_mask_opening_spacing(
             let neighbor =
                 polygon_to_profile(openings[neighbor_index].clone(), Some(metadata(mask_name)));
             let bridge_conflict = opening
-                .offset(crate::geometry::exact_real(expansion))
-                .intersection(&neighbor.offset(crate::geometry::exact_real(expansion)));
-            let shapes = multipolygon_to_shapes(&bridge_conflict.to_multipolygon(), min_area);
+                .offset(expansion.clone())
+                .intersection(&neighbor.offset(expansion.clone()));
+            let shapes =
+                multipolygon_to_shapes_scalar(&bridge_conflict.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;
             }
@@ -1381,7 +1466,7 @@ pub fn solder_mask_opening_spacing(
 pub fn acid_trap_candidates(
     copper_name: &str,
     copper: &PcbSketch,
-    max_angle_degrees: f64,
+    max_angle_degrees: &Scalar,
 ) -> Vec<Violation> {
     let mut locations = Vec::new();
 
@@ -1404,7 +1489,7 @@ pub fn acid_trap_candidates(
         Vec::new(),
         locations,
         Some(format!(
-            "copper polygon vertices below {max_angle_degrees} degrees"
+            "copper polygon vertices below {max_angle_degrees:#.3} degrees"
         )),
     )]
 }
@@ -1413,13 +1498,20 @@ pub fn acid_trap_candidates(
 pub fn layer_sanity(
     layer_name: &str,
     sketch: &PcbSketch,
-    max_layer_area: Option<f64>,
+    max_layer_area: Option<&Scalar>,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let multipolygon = sketch.to_multipolygon();
-    let area = multipolygon.unsigned_area();
+    let area = Scalar::sum_owned(
+        multipolygon
+            .0
+            .iter()
+            .map(polygon_area_scalar)
+            .collect::<Option<Vec<_>>>()
+            .unwrap_or_default(),
+    );
 
-    if multipolygon_has_non_finite_coordinates(&multipolygon) {
+    if sketch.had_non_finite_input() || multipolygon_has_non_finite_coordinates(&multipolygon) {
         violations.push(Violation::new(
             "layer-sanity",
             Severity::Error,
@@ -1447,7 +1539,7 @@ pub fn layer_sanity(
         ));
     }
 
-    if area <= 0.0 {
+    if area <= Scalar::zero() {
         violations.push(Violation::new(
             "layer-sanity",
             Severity::Warning,
@@ -1460,9 +1552,9 @@ pub fn layer_sanity(
     }
 
     if let Some(max_layer_area) = max_layer_area
-        && area > max_layer_area
+        && &area > max_layer_area
     {
-        let shapes = multipolygon_to_shapes(&multipolygon, 0.0);
+        let shapes = multipolygon_to_shapes_scalar(&multipolygon, &Scalar::zero());
         violations.push(Violation::new(
             "layer-sanity",
             Severity::Warning,
@@ -1471,7 +1563,7 @@ pub fn layer_sanity(
             shapes,
             Vec::new(),
             Some(format!(
-                "layer area {area:.9} exceeds maximum expected area {max_layer_area:.9}"
+                "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}"
             )),
         ));
     }
@@ -1503,9 +1595,9 @@ pub fn layer_sanity(
 pub fn tiny_layer_feature_readiness(
     layer_name: &str,
     sketch: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if min_area <= 0.0 || !min_area.is_finite() {
+    if min_area <= &Scalar::zero() {
         return Vec::new();
     }
 
@@ -1514,13 +1606,13 @@ pub fn tiny_layer_feature_readiness(
         .0
         .iter()
         .filter(|polygon| {
-            let area = polygon.unsigned_area();
-            area > 0.0 && area <= min_area
+            polygon_area_scalar(polygon)
+                .is_some_and(|area| area > Scalar::zero() && &area <= min_area)
         })
         .cloned()
         .collect::<Vec<_>>();
     log::trace!(
-        "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:.9}",
+        "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}",
         multipolygon.0.len(),
         tiny_polygons.len()
     );
@@ -1531,7 +1623,7 @@ pub fn tiny_layer_feature_readiness(
 
     let tiny = MultiPolygon(tiny_polygons);
     let locations = duplicate_layer_locations(&tiny);
-    let shapes = multipolygon_to_shapes(&tiny, 0.0);
+    let shapes = multipolygon_to_shapes_scalar(&tiny, &Scalar::zero());
     vec![Violation::new(
         "layer-sanity",
         Severity::Warning,
@@ -1540,7 +1632,7 @@ pub fn tiny_layer_feature_readiness(
         shapes,
         locations,
         Some(format!(
-            "layer contains polygon islands at or below reportable feature area {min_area:.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
+            "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
         )),
     )]
 }
@@ -1557,10 +1649,10 @@ pub fn tiny_layer_feature_readiness(
 pub fn skinny_layer_feature_readiness(
     layer_name: &str,
     sketch: &PcbSketch,
-    min_width: f64,
-    min_area: f64,
+    min_width: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if min_width <= 0.0 || !min_width.is_finite() {
+    if min_width <= &Scalar::zero() {
         return Vec::new();
     }
 
@@ -1569,15 +1661,14 @@ pub fn skinny_layer_feature_readiness(
         .0
         .iter()
         .filter(|polygon| {
-            let area = polygon.unsigned_area();
-            area > min_area
-                && polygon_minimum_bounding_dimension(polygon)
-                    .is_some_and(|dimension| dimension > 0.0 && dimension < min_width)
+            polygon_area_scalar(polygon).is_some_and(|area| &area > min_area)
+                && polygon_minimum_bounding_dimension_scalar(polygon)
+                    .is_some_and(|dimension| dimension > Scalar::zero() && &dimension < min_width)
         })
         .cloned()
         .collect::<Vec<_>>();
     log::trace!(
-        "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:.6} min_area={min_area:.9}",
+        "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}",
         multipolygon.0.len(),
         skinny_polygons.len()
     );
@@ -1588,7 +1679,7 @@ pub fn skinny_layer_feature_readiness(
 
     let skinny = MultiPolygon(skinny_polygons);
     let locations = duplicate_layer_locations(&skinny);
-    let shapes = multipolygon_to_shapes(&skinny, min_area);
+    let shapes = multipolygon_to_shapes_scalar(&skinny, min_area);
     vec![Violation::new(
         "layer-sanity",
         Severity::Warning,
@@ -1597,16 +1688,16 @@ pub fn skinny_layer_feature_readiness(
         shapes,
         locations,
         Some(format!(
-            "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
+            "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
         )),
     )]
 }
 
-fn polygon_minimum_bounding_dimension(polygon: &Polygon<f64>) -> Option<f64> {
-    let bounds = polygon.bounding_rect()?;
-    let width = bounds.max().x - bounds.min().x;
-    let height = bounds.max().y - bounds.min().y;
-    Some(width.min(height))
+fn polygon_minimum_bounding_dimension_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
+    let bounds = polygon_bounds_scalar(polygon)?;
+    let width = &bounds[2] - &bounds[0];
+    let height = &bounds[3] - &bounds[1];
+    Some(if width <= height { width } else { height })
 }
 
 /// Warn when one parsed layer contains duplicate polygon islands.
@@ -1622,12 +1713,12 @@ fn polygon_minimum_bounding_dimension(polygon: &Polygon<f64>) -> Option<f64> {
 pub fn duplicate_layer_island_readiness(
     layer_name: &str,
     sketch: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let multipolygon = sketch.to_multipolygon();
     let mut buckets = BTreeMap::<DuplicateIslandSignature, Vec<&Polygon<f64>>>::new();
     for polygon in &multipolygon.0 {
-        if polygon.unsigned_area() <= min_area {
+        if polygon_area_scalar(polygon).is_none_or(|area| &area <= min_area) {
             continue;
         }
         let Some(signature) = duplicate_island_signature(polygon) else {
@@ -1637,7 +1728,7 @@ pub fn duplicate_layer_island_readiness(
     }
     let comparable_polygons = buckets.values().map(Vec::len).sum::<usize>();
     log::trace!(
-        "duplicate-layer island readiness: layer={layer_name} polygons={} comparable_polygons={} candidate_buckets={} min_area={min_area:.9}",
+        "duplicate-layer island readiness: layer={layer_name} polygons={} comparable_polygons={} candidate_buckets={} min_area={min_area:#.9}",
         multipolygon.0.len(),
         comparable_polygons,
         buckets.values().filter(|bucket| bucket.len() > 1).count()
@@ -1651,7 +1742,7 @@ pub fn duplicate_layer_island_readiness(
                 if polygons_are_duplicate(
                     bucket[left_index],
                     bucket[right_index],
-                    BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+                    &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
                 ) {
                     if let Some(location) = polygon_bounds_center(bucket[left_index]) {
                         push_unique_location(&mut locations, location);
@@ -1722,15 +1813,15 @@ fn quantize_layer_signature_value(value: f64) -> i64 {
 /// the final predicate intentionally conservative for CAM handoff use.
 pub fn duplicate_layer_geometry_readiness(
     layers: &[(String, PcbSketch)],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let prepared = layers
         .iter()
         .filter_map(|(name, sketch)| {
             let multipolygon = sketch.to_multipolygon();
-            let area = multipolygon.unsigned_area();
-            let bounds = multipolygon.bounding_rect()?;
-            (area > min_area).then_some(DuplicateLayer {
+            let area = multipolygon_area_scalar(&multipolygon)?;
+            let bounds = multipolygon_bounds_scalar(&multipolygon)?;
+            (&area > min_area).then_some(DuplicateLayer {
                 name,
                 sketch,
                 multipolygon,
@@ -1740,7 +1831,7 @@ pub fn duplicate_layer_geometry_readiness(
         })
         .collect::<Vec<_>>();
     log::trace!(
-        "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:.9}",
+        "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}",
         layers.len(),
         prepared.len()
     );
@@ -1750,27 +1841,33 @@ pub fn duplicate_layer_geometry_readiness(
         for right_index in (left_index + 1)..prepared.len() {
             let left = &prepared[left_index];
             let right = &prepared[right_index];
-            if !areas_approximately_equal(left.area, right.area, BOARD_OUTLINE_GEOMETRY_TOLERANCE)
-                || !rects_approximately_equal(
+            let geometry_tolerance = crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE);
+            if !areas_approximately_equal_scalar(&left.area, &right.area, &geometry_tolerance)
+                || !bounds_approximately_equal_scalar(
                     &left.bounds,
                     &right.bounds,
-                    BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+                    &geometry_tolerance,
                 )
             {
                 continue;
             }
 
             let overlap = left.sketch.intersection(right.sketch);
-            let overlap_area = overlap.to_multipolygon().unsigned_area();
-            let left_coverage = overlap_area / left.area;
-            let right_coverage = overlap_area / right.area;
-            if left_coverage < DUPLICATE_LAYER_OVERLAP_RATIO
-                || right_coverage < DUPLICATE_LAYER_OVERLAP_RATIO
-            {
+            let Some(overlap_area) = multipolygon_area_scalar(&overlap.to_multipolygon()) else {
+                continue;
+            };
+            let Some(left_coverage) = (&overlap_area / &left.area).ok() else {
+                continue;
+            };
+            let Some(right_coverage) = (&overlap_area / &right.area).ok() else {
+                continue;
+            };
+            let overlap_ratio = crate::scalar::scalar(DUPLICATE_LAYER_OVERLAP_RATIO);
+            if left_coverage < overlap_ratio || right_coverage < overlap_ratio {
                 continue;
             }
 
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = duplicate_layer_locations(&left.multipolygon);
             violations.push(Violation::new(
                 "layer-sanity",
@@ -1781,7 +1878,8 @@ pub fn duplicate_layer_geometry_readiness(
                 locations,
                 Some(format!(
                     "layers appear to contain duplicate geometry ({:.6}% overlap by area); review for duplicate or stale fabrication outputs",
-                    left_coverage.min(right_coverage) * 100.0
+                    if left_coverage <= right_coverage { left_coverage } else { right_coverage }
+                        * crate::scalar::scalar("100")
                 )),
             ));
         }
@@ -1794,8 +1892,8 @@ struct DuplicateLayer<'a> {
     name: &'a str,
     sketch: &'a PcbSketch,
     multipolygon: MultiPolygon<f64>,
-    area: f64,
-    bounds: geo::Rect<f64>,
+    area: Scalar,
+    bounds: [Scalar; 4],
 }
 
 fn duplicate_layer_locations(multipolygon: &MultiPolygon<f64>) -> Vec<[f64; 2]> {
@@ -1815,15 +1913,32 @@ fn polygon_bounds_center(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
     ])
 }
 
-fn rects_approximately_equal(
-    left: &geo::Rect<f64>,
-    right: &geo::Rect<f64>,
-    tolerance: f64,
+fn bounds_approximately_equal_scalar(
+    left: &[Scalar; 4],
+    right: &[Scalar; 4],
+    tolerance: &Scalar,
 ) -> bool {
-    (left.min().x - right.min().x).abs() <= tolerance
-        && (left.min().y - right.min().y).abs() <= tolerance
-        && (left.max().x - right.max().x).abs() <= tolerance
-        && (left.max().y - right.max().y).abs() <= tolerance
+    (0..4).all(|index| (&left[index] - &right[index]).abs() <= tolerance.clone())
+}
+
+fn multipolygon_bounds_scalar(multipolygon: &MultiPolygon<f64>) -> Option<[Scalar; 4]> {
+    let mut polygon_bounds = multipolygon.0.iter().filter_map(polygon_bounds_scalar);
+    let mut bounds = polygon_bounds.next()?;
+    for candidate in polygon_bounds {
+        if candidate[0] < bounds[0] {
+            bounds[0] = candidate[0].clone();
+        }
+        if candidate[1] < bounds[1] {
+            bounds[1] = candidate[1].clone();
+        }
+        if candidate[2] > bounds[2] {
+            bounds[2] = candidate[2].clone();
+        }
+        if candidate[3] > bounds[3] {
+            bounds[3] = candidate[3].clone();
+        }
+    }
+    Some(bounds)
 }
 
 fn multipolygon_has_non_finite_coordinates(multipolygon: &MultiPolygon<f64>) -> bool {
@@ -1851,14 +1966,14 @@ fn ring_has_finite_coordinates(ring: &LineString<f64>) -> bool {
 /// Run the `copper_balance` design-readiness check or report helper.
 pub fn copper_balance(
     copper_layers: &[(String, PcbSketch)],
-    max_imbalance_ratio: f64,
-    min_area: f64,
+    max_imbalance_ratio: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut measured = copper_layers
         .iter()
         .filter_map(|(name, sketch)| {
-            let area = sketch.to_multipolygon().unsigned_area();
-            (area > min_area).then_some((name.clone(), area))
+            let area = multipolygon_area_scalar(&sketch.to_multipolygon())?;
+            (&area > min_area).then_some((name.clone(), area))
         })
         .collect::<Vec<_>>();
 
@@ -1873,9 +1988,11 @@ pub fn copper_balance(
     });
     let (smallest_layer, smallest_area) = &measured[0];
     let (largest_layer, largest_area) = &measured[measured.len() - 1];
-    let ratio = largest_area / smallest_area;
+    let Ok(ratio) = largest_area / smallest_area else {
+        return Vec::new();
+    };
 
-    if ratio <= max_imbalance_ratio {
+    if &ratio <= max_imbalance_ratio {
         return Vec::new();
     }
 
@@ -1887,7 +2004,7 @@ pub fn copper_balance(
         Vec::new(),
         Vec::new(),
         Some(format!(
-            "copper area imbalance ratio {ratio:.3} exceeds maximum {max_imbalance_ratio:.3}; smallest layer {smallest_layer} area {smallest_area:.6}, largest layer {largest_layer} area {largest_area:.6}"
+            "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}"
         )),
     )]
 }
@@ -1910,11 +2027,11 @@ pub fn copper_balance(
 /// *Microelectronics Reliability* 100-101 (2019).
 pub fn local_copper_density_readiness(
     copper_layers: &[(String, PcbSketch)],
-    window_size: f64,
-    max_density_ratio: f64,
-    min_area: f64,
+    window_size: &Scalar,
+    max_density_ratio: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    if copper_layers.len() < 2 || window_size <= 0.0 {
+    if copper_layers.len() < 2 || window_size <= &Scalar::zero() {
         return Vec::new();
     }
 
@@ -1923,35 +2040,48 @@ pub fn local_copper_density_readiness(
         return Vec::new();
     };
     log::trace!(
-        "local copper-density readiness: layers={} window_size={window_size:.6} ratio={max_density_ratio:.6}",
+        "local copper-density readiness: layers={} window_size={window_size:#.6} ratio={max_density_ratio:#.6}",
         prepared_layers.len()
     );
 
     let mut violations = Vec::new();
-    let min_x = bounds.min().x;
-    let min_y = bounds.min().y;
-    let max_x = bounds.max().x;
-    let max_y = bounds.max().y;
-    let mut y = min_y;
+    let [min_x, min_y, max_x, max_y] = bounds;
+    let mut y = min_y.clone();
 
     while y < max_y {
-        let mut x = min_x;
+        let mut x = min_x.clone();
         while x < max_x {
-            let width = (max_x - x).min(window_size);
-            let height = (max_y - y).min(window_size);
-            if width * height > min_area {
+            let remaining_width = &max_x - &x;
+            let remaining_height = &max_y - &y;
+            let width = if &remaining_width <= window_size {
+                remaining_width
+            } else {
+                window_size.clone()
+            };
+            let height = if &remaining_height <= window_size {
+                remaining_height
+            } else {
+                window_size.clone()
+            };
+            let window_area = &width * &height;
+            if &window_area > min_area {
+                let two = crate::scalar::scalar("2");
+                let center = [
+                    (&x + (&width / &two).expect("two is nonzero")),
+                    (&y + (&height / &two).expect("two is nonzero")),
+                ];
                 collect_local_density_window(
                     &prepared_layers,
-                    [x + width / 2.0, y + height / 2.0],
+                    center,
                     [width, height],
                     max_density_ratio,
                     min_area,
                     &mut violations,
                 );
             }
-            x += window_size;
+            x = &x + window_size;
         }
-        y += window_size;
+        y = &y + window_size;
     }
 
     violations
@@ -1963,13 +2093,13 @@ struct DensityLayer {
 }
 
 struct DensityPolygon {
-    bounds: geo::Rect<f64>,
-    area: f64,
+    bounds: [Scalar; 4],
+    area: Scalar,
 }
 
 fn prepare_density_layers(
     copper_layers: &[(String, PcbSketch)],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<DensityLayer> {
     copper_layers
         .iter()
@@ -1979,9 +2109,9 @@ fn prepare_density_layers(
                 .0
                 .into_iter()
                 .filter_map(|polygon| {
-                    let area = polygon.unsigned_area();
-                    let bounds = polygon.bounding_rect()?;
-                    (area > min_area).then_some(DensityPolygon { bounds, area })
+                    let area = polygon_area_scalar(&polygon)?;
+                    let bounds = polygon_bounds_scalar(&polygon)?;
+                    (&area > min_area).then_some(DensityPolygon { bounds, area })
                 })
                 .collect::<Vec<_>>();
             (!polygons.is_empty()).then_some(DensityLayer {
@@ -1994,29 +2124,39 @@ fn prepare_density_layers(
 
 fn collect_local_density_window(
     copper_layers: &[DensityLayer],
-    center: [f64; 2],
-    size: [f64; 2],
-    max_density_ratio: f64,
-    min_area: f64,
+    center: [Scalar; 2],
+    size: [Scalar; 2],
+    max_density_ratio: &Scalar,
+    min_area: &Scalar,
     violations: &mut Vec<Violation>,
 ) {
-    let window_polygon = rect_polygon(center, size, 0.0);
-    let window_area = window_polygon.unsigned_area();
-    if window_area <= min_area {
+    let window_area = &size[0] * &size[1];
+    if &window_area <= min_area {
         return;
     }
-    let Some(window_bounds) = window_polygon.bounding_rect() else {
-        return;
-    };
+    let two = crate::scalar::scalar("2");
+    let half_width = (&size[0] / &two).expect("two is nonzero");
+    let half_height = (&size[1] / &two).expect("two is nonzero");
+    let window_bounds = [
+        &center[0] - &half_width,
+        &center[1] - &half_height,
+        &center[0] + &half_width,
+        &center[1] + &half_height,
+    ];
     let mut densities = copper_layers
         .iter()
         .map(|layer| {
-            let copper_area = layer
-                .polygons
-                .iter()
-                .map(|polygon| approximate_window_polygon_area(&window_bounds, polygon))
-                .sum::<f64>();
-            (&layer.name, (copper_area / window_area).clamp(0.0, 1.0))
+            let copper_area =
+                Scalar::sum_owned(layer.polygons.iter().filter_map(|polygon| {
+                    approximate_window_polygon_area(&window_bounds, polygon)
+                }));
+            let mut density = (copper_area / &window_area).unwrap_or_else(|_| Scalar::zero());
+            if density < Scalar::zero() {
+                density = Scalar::zero();
+            } else if density > crate::scalar::scalar("1") {
+                density = crate::scalar::scalar("1");
+            }
+            (&layer.name, density)
         })
         .collect::<Vec<_>>();
 
@@ -2031,46 +2171,75 @@ fn collect_local_density_window(
     let Some((dense_layer, dense_density)) = densities.last() else {
         return;
     };
-    if *dense_density < LOCAL_COPPER_DENSITY_FLOOR {
+    if dense_density < &crate::scalar::scalar("0.05") {
         return;
     }
 
-    let ratio = *dense_density / sparse_density.max(min_area);
-    let delta = *dense_density - *sparse_density;
-    if ratio <= max_density_ratio || delta < LOCAL_COPPER_DENSITY_DELTA {
+    let denominator = if sparse_density >= min_area {
+        sparse_density
+    } else {
+        min_area
+    };
+    let Ok(ratio) = dense_density.clone() / denominator else {
+        return;
+    };
+    let delta = dense_density - sparse_density;
+    if &ratio <= max_density_ratio || delta < crate::scalar::scalar("0.50") {
         return;
     }
 
+    let center_f64 = scalar_point_f64_compatibility(&center);
+    let size_f64 = scalar_point_f64_compatibility(&size);
+    let window_polygon = rect_polygon(center_f64, size_f64, 0.0);
     let window = polygons_to_profile(vec![window_polygon], Some(metadata("density window")));
-    let shapes = multipolygon_to_shapes(&window.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(&window.to_multipolygon(), min_area);
     violations.push(Violation::new(
         "local-copper-density-readiness",
         Severity::Warning,
         vec![(*sparse_layer).clone(), (*dense_layer).clone()],
         None,
         shapes,
-        vec![center],
+        vec![center_f64],
         Some(format!(
-            "local copper density imbalance ratio {ratio:.3} exceeds maximum {max_density_ratio:.3}; sparse layer {sparse_layer} density {sparse_density:.3}, dense layer {dense_layer} density {dense_density:.3}"
+            "local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}"
         )),
     ));
 }
 
-fn approximate_window_polygon_area(window: &geo::Rect<f64>, polygon: &DensityPolygon) -> f64 {
-    let overlap_width = (window.max().x.min(polygon.bounds.max().x)
-        - window.min().x.max(polygon.bounds.min().x))
-    .max(0.0);
-    let overlap_height = (window.max().y.min(polygon.bounds.max().y)
-        - window.min().y.max(polygon.bounds.min().y))
-    .max(0.0);
-    if overlap_width == 0.0 || overlap_height == 0.0 {
-        return 0.0;
+fn approximate_window_polygon_area(
+    window: &[Scalar; 4],
+    polygon: &DensityPolygon,
+) -> Option<Scalar> {
+    let overlap_min_x = if window[0] >= polygon.bounds[0] {
+        &window[0]
+    } else {
+        &polygon.bounds[0]
+    };
+    let overlap_min_y = if window[1] >= polygon.bounds[1] {
+        &window[1]
+    } else {
+        &polygon.bounds[1]
+    };
+    let overlap_max_x = if window[2] <= polygon.bounds[2] {
+        &window[2]
+    } else {
+        &polygon.bounds[2]
+    };
+    let overlap_max_y = if window[3] <= polygon.bounds[3] {
+        &window[3]
+    } else {
+        &polygon.bounds[3]
+    };
+    let overlap_width = overlap_max_x - overlap_min_x;
+    let overlap_height = overlap_max_y - overlap_min_y;
+    if overlap_width <= Scalar::zero() || overlap_height <= Scalar::zero() {
+        return Some(Scalar::zero());
     }
 
-    let bounds_area = (polygon.bounds.max().x - polygon.bounds.min().x)
-        * (polygon.bounds.max().y - polygon.bounds.min().y);
-    if bounds_area <= 0.0 {
-        return 0.0;
+    let bounds_area =
+        (&polygon.bounds[2] - &polygon.bounds[0]) * (&polygon.bounds[3] - &polygon.bounds[1]);
+    if bounds_area <= Scalar::zero() {
+        return Some(Scalar::zero());
     }
 
     // The local density check is a DFM heuristic, so it uses a conservative
@@ -2079,38 +2248,61 @@ fn approximate_window_polygon_area(window: &geo::Rect<f64>, polygon: &DensityPol
     // avoiding a pathological "number of windows times number of layers" boolean
     // workload on large pours. See Kahng et al., "Filling Algorithms and
     // Analyses for Layout Density Control", IEEE TCAD, 1999.
-    polygon.area * (overlap_width * overlap_height / bounds_area)
+    (polygon.area.clone() * overlap_width * overlap_height / bounds_area).ok()
 }
 
-fn combined_density_bounds(copper_layers: &[DensityLayer]) -> Option<geo::Rect<f64>> {
+fn combined_density_bounds(copper_layers: &[DensityLayer]) -> Option<[Scalar; 4]> {
     copper_layers
         .iter()
-        .flat_map(|layer| layer.polygons.iter().map(|polygon| polygon.bounds))
+        .flat_map(|layer| layer.polygons.iter().map(|polygon| polygon.bounds.clone()))
         .reduce(|left, right| {
-            geo::Rect::new(
-                Coord {
-                    x: left.min().x.min(right.min().x),
-                    y: left.min().y.min(right.min().y),
+            [
+                if left[0] <= right[0] {
+                    left[0].clone()
+                } else {
+                    right[0].clone()
                 },
-                Coord {
-                    x: left.max().x.max(right.max().x),
-                    y: left.max().y.max(right.max().y),
+                if left[1] <= right[1] {
+                    left[1].clone()
+                } else {
+                    right[1].clone()
                 },
-            )
+                if left[2] >= right[2] {
+                    left[2].clone()
+                } else {
+                    right[2].clone()
+                },
+                if left[3] >= right[3] {
+                    left[3].clone()
+                } else {
+                    right[3].clone()
+                },
+            ]
         })
+}
+
+fn scalar_point_f64_compatibility(point: &[Scalar; 2]) -> [f64; 2] {
+    [
+        point[0]
+            .to_f64_lossy()
+            .expect("density report x coordinate must be finite"),
+        point[1]
+            .to_f64_lossy()
+            .expect("density report y coordinate must be finite"),
+    ]
 }
 
 /// Run the `mechanical_layer_geometry` design-readiness check or report helper.
 pub fn mechanical_layer_geometry(
     layer_name: &str,
     sketch: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     if !looks_like_mechanical_layer(layer_name) {
         return Vec::new();
     }
 
-    let shapes = multipolygon_to_shapes(&sketch.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(&sketch.to_multipolygon(), min_area);
     if shapes.is_empty() {
         return Vec::new();
     }
@@ -2130,9 +2322,9 @@ pub fn mechanical_layer_geometry(
 pub fn board_outline_sanity(
     layer_name: &str,
     outline: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes(&outline.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(&outline.to_multipolygon(), min_area);
     if !shapes.is_empty() {
         return Vec::new();
     }
@@ -2152,9 +2344,9 @@ pub fn board_outline_sanity(
 pub fn board_outline_fragments(
     layer_name: &str,
     outline: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes(&outline.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(&outline.to_multipolygon(), min_area);
     if shapes.len() <= 1 {
         return Vec::new();
     }
@@ -2282,8 +2474,8 @@ pub fn board_outline_duplicate_readiness_with_grid(
 
     collect_board_outline_overlapping_exteriors(
         &outline.to_multipolygon(),
-        BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO,
-        BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+        &crate::scalar::scalar(BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO),
+        &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
         false,
         grid,
         &mut locations,
@@ -2328,8 +2520,8 @@ pub fn board_outline_nesting_readiness_with_grid(
 
     collect_board_outline_overlapping_exteriors(
         &outline.to_multipolygon(),
-        BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
-        BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+        &crate::scalar::scalar(BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
+        &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
         true,
         grid,
         &mut locations,
@@ -2356,23 +2548,28 @@ fn intersection_violation(
     left: &PcbSketch,
     right_name: &str,
     right: &PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let overlap = left.intersection(right);
-    shapes_violation(
+    let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
+    if shapes.is_empty() {
+        return Vec::new();
+    }
+    vec![Violation::new(
         spec.check,
         spec.severity,
         vec![left_name.to_string(), right_name.to_string()],
-        overlap,
-        min_area,
-        spec.message.to_string(),
-    )
+        None,
+        shapes,
+        Vec::new(),
+        Some(spec.message.to_string()),
+    )]
 }
 
-const BOARD_OUTLINE_NOTCH_ANGLE_DEGREES: f64 = 300.0;
-const BOARD_OUTLINE_GEOMETRY_TOLERANCE: f64 = 1.0e-6;
-const BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO: f64 = 0.999_999;
-const BOARD_OUTLINE_NESTED_OVERLAP_RATIO: f64 = 0.999_99;
+const BOARD_OUTLINE_NOTCH_ANGLE_DEGREES: &str = "300";
+const BOARD_OUTLINE_GEOMETRY_TOLERANCE: &str = "0.000001";
+const BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO: &str = "0.999999";
+const BOARD_OUTLINE_NESTED_OVERLAP_RATIO: &str = "0.99999";
 
 fn collect_ring_self_intersections(multipolygon: &MultiPolygon<f64>) -> Vec<[f64; 2]> {
     collect_ring_self_intersections_with_grid(multipolygon, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
@@ -2455,7 +2652,7 @@ fn collect_board_outline_notches_with_grid(
         else {
             continue;
         };
-        if interior_angle < BOARD_OUTLINE_NOTCH_ANGLE_DEGREES {
+        if interior_angle < crate::scalar::scalar(BOARD_OUTLINE_NOTCH_ANGLE_DEGREES) {
             continue;
         }
 
@@ -2465,8 +2662,8 @@ fn collect_board_outline_notches_with_grid(
 
 fn collect_board_outline_overlapping_exteriors(
     multipolygon: &MultiPolygon<f64>,
-    containment_ratio: f64,
-    geometry_tolerance: f64,
+    containment_ratio: &Scalar,
+    geometry_tolerance: &Scalar,
     detect_nesting: bool,
     grid: SourceGridFacts,
     locations: &mut Vec<[f64; 2]>,
@@ -2520,7 +2717,7 @@ fn collect_board_outline_overlapping_exteriors(
     }
 }
 
-fn polygons_are_duplicate(left: &Polygon<f64>, right: &Polygon<f64>, tolerance: f64) -> bool {
+fn polygons_are_duplicate(left: &Polygon<f64>, right: &Polygon<f64>, tolerance: &Scalar) -> bool {
     polygons_are_duplicate_with_grid(
         left,
         right,
@@ -2532,34 +2729,41 @@ fn polygons_are_duplicate(left: &Polygon<f64>, right: &Polygon<f64>, tolerance: 
 fn polygons_are_duplicate_with_grid(
     left: &Polygon<f64>,
     right: &Polygon<f64>,
-    tolerance: f64,
+    tolerance: &Scalar,
     grid: SourceGridFacts,
 ) -> bool {
     if !polygon_bounding_rects_overlap_with_grid(left, right, grid) {
         return false;
     }
 
-    let left_area = left.unsigned_area();
-    let right_area = right.unsigned_area();
-    if left_area <= 0.0 || right_area <= 0.0 {
+    let Some(left_area) = polygon_area_scalar(left) else {
+        return false;
+    };
+    let Some(right_area) = polygon_area_scalar(right) else {
+        return false;
+    };
+    if left_area <= Scalar::zero() || right_area <= Scalar::zero() {
         return false;
     }
 
-    if !areas_approximately_equal(left_area, right_area, tolerance) {
+    if !areas_approximately_equal_scalar(&left_area, &right_area, tolerance) {
         return false;
     }
 
-    let overlap = polygon_intersection_area(left, right);
-    let left_delta = (left_area - overlap).abs();
-    let right_delta = (right_area - overlap).abs();
-    left_delta <= tolerance_area(left_area) && right_delta <= tolerance_area(right_area)
+    let Some(overlap) = polygon_intersection_area_scalar(left, right) else {
+        return false;
+    };
+    let left_delta = (&left_area - &overlap).abs();
+    let right_delta = (&right_area - &overlap).abs();
+    left_delta <= tolerance_area_scalar(&left_area)
+        && right_delta <= tolerance_area_scalar(&right_area)
 }
 
 fn polygon_contains_other_outer(
     outer: &Polygon<f64>,
     inner: &Polygon<f64>,
-    ratio: f64,
-    tolerance: f64,
+    ratio: &Scalar,
+    tolerance: &Scalar,
 ) -> bool {
     polygon_contains_other_outer_with_grid(
         outer,
@@ -2573,39 +2777,44 @@ fn polygon_contains_other_outer(
 fn polygon_contains_other_outer_with_grid(
     outer: &Polygon<f64>,
     inner: &Polygon<f64>,
-    ratio: f64,
-    tolerance: f64,
+    ratio: &Scalar,
+    tolerance: &Scalar,
     grid: SourceGridFacts,
 ) -> bool {
     if !polygon_bounding_rects_overlap_with_grid(outer, inner, grid) {
         return false;
     }
 
-    let outer_area = outer.unsigned_area();
-    let inner_area = inner.unsigned_area();
-    if outer_area <= 0.0 || inner_area <= 0.0 || outer_area <= inner_area {
+    let Some(outer_area) = polygon_area_scalar(outer) else {
+        return false;
+    };
+    let Some(inner_area) = polygon_area_scalar(inner) else {
+        return false;
+    };
+    if outer_area <= Scalar::zero() || inner_area <= Scalar::zero() || outer_area <= inner_area {
         return false;
     }
 
-    let overlap = polygon_intersection_area(outer, inner);
-    if overlap <= inner_area * 0.25 {
+    let Some(overlap) = polygon_intersection_area_scalar(outer, inner) else {
+        return false;
+    };
+    if overlap <= &inner_area * crate::scalar::scalar("0.25") {
         return false;
     }
 
-    let coverage = overlap / inner_area;
-    let area_gap = outer_area - inner_area;
-    coverage >= ratio
-        && area_gap > tolerance_area(outer_area)
-        && !areas_approximately_equal(outer_area, inner_area, tolerance)
+    let Some(coverage) = (&overlap / &inner_area).ok() else {
+        return false;
+    };
+    let area_gap = &outer_area - &inner_area;
+    coverage >= ratio.clone()
+        && area_gap > tolerance_area_scalar(&outer_area)
+        && !areas_approximately_equal_scalar(&outer_area, &inner_area, tolerance)
 }
 
-fn polygon_intersection_area(left: &Polygon<f64>, right: &Polygon<f64>) -> f64 {
+fn polygon_intersection_area_scalar(left: &Polygon<f64>, right: &Polygon<f64>) -> Option<Scalar> {
     let left_sketch = polygon_to_profile(left.clone(), None);
     let right_sketch = polygon_to_profile(right.clone(), None);
-    left_sketch
-        .intersection(&right_sketch)
-        .to_multipolygon()
-        .unsigned_area()
+    multipolygon_area_scalar(&left_sketch.intersection(&right_sketch).to_multipolygon())
 }
 
 fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
@@ -2617,13 +2826,25 @@ fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
     })
 }
 
-fn tolerance_area(area: f64) -> f64 {
-    (area.abs() * 1.0e-9).max(1.0e-12)
+fn tolerance_area_scalar(area: &Scalar) -> Scalar {
+    let scaled = area.abs() * crate::scalar::scalar("0.000000001");
+    let floor = crate::scalar::scalar("0.000000000001");
+    if scaled >= floor { scaled } else { floor }
 }
 
-fn areas_approximately_equal(left_area: f64, right_area: f64, tolerance: f64) -> bool {
+fn areas_approximately_equal_scalar(
+    left_area: &Scalar,
+    right_area: &Scalar,
+    tolerance: &Scalar,
+) -> bool {
     let diff = (left_area - right_area).abs();
-    let scale = left_area.abs().max(right_area.abs()).max(1.0);
+    let mut scale = left_area.abs();
+    if right_area.abs() > scale {
+        scale = right_area.abs();
+    }
+    if scale < crate::scalar::scalar("1") {
+        scale = crate::scalar::scalar("1");
+    }
     diff <= tolerance * scale
 }
 
@@ -2633,16 +2854,32 @@ fn board_outline_notch_interior_angle_with_grid(
     next: Coord<f64>,
     is_ccw: bool,
     grid: SourceGridFacts,
-) -> Option<f64> {
-    let forward_one = vector(current, previous);
-    let forward_two = vector(next, current);
-    if vector_length(forward_one) == 0.0 || vector_length(forward_two) == 0.0 {
+) -> Option<Scalar> {
+    let provenance = RuleGeometryProvenance::new("board-outline-notch-readiness", grid);
+    let previous_exact = lift_coord_with_provenance(previous, provenance)?;
+    let current_exact = lift_coord_with_provenance(current, provenance)?;
+    let next_exact = lift_coord_with_provenance(next, provenance)?;
+    let first_x = &current_exact.x - &previous_exact.x;
+    let first_y = &current_exact.y - &previous_exact.y;
+    let second_x = &next_exact.x - &current_exact.x;
+    let second_y = &next_exact.y - &current_exact.y;
+    let first_length = (&first_x * &first_x + &first_y * &first_y).sqrt().ok()?;
+    let second_length = (&second_x * &second_x + &second_y * &second_y)
+        .sqrt()
+        .ok()?;
+    if first_length == Scalar::zero() || second_length == Scalar::zero() {
         return None;
     }
-
-    let cross = cross_product(forward_one, forward_two);
-    let dot = dot_product(forward_one, forward_two);
-    let raw_turn = cross.atan2(dot).to_degrees();
+    let mut cosine =
+        ((&first_x * &second_x + &first_y * &second_y) / (first_length * second_length)).ok()?;
+    let negative_one = crate::scalar::scalar("-1");
+    let one = crate::scalar::scalar("1");
+    if cosine < negative_one {
+        cosine = negative_one;
+    } else if cosine > one {
+        cosine = one;
+    }
+    let raw_angle = (cosine.acos().ok()? * crate::scalar::scalar("180") / Scalar::pi()).ok()?;
     let orientation = orient_coords_with_grid(previous, current, next, grid)?;
     let is_reflex = matches!(
         (is_ccw, orientation),
@@ -2652,7 +2889,7 @@ fn board_outline_notch_interior_angle_with_grid(
         return None;
     }
 
-    Some(360.0 - raw_turn.abs())
+    Some(crate::scalar::scalar("360") - raw_angle)
 }
 
 fn orient_coords_with_grid(
@@ -2807,33 +3044,31 @@ fn location_is_close(left: &[f64; 2], right: &[f64; 2]) -> bool {
     (left[0] - right[0]).abs() < EPSILON && (left[1] - right[1]).abs() < EPSILON
 }
 
-fn vector(end: Coord<f64>, start: Coord<f64>) -> (f64, f64) {
-    (end.x - start.x, end.y - start.y)
+/// Project an exact rule distance only for conservative finite spatial-index
+/// candidate generation. The following representable float avoids dropping a
+/// true boundary candidate when the exact value rounds downward.
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("layer broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
 }
 
-fn cross_product(left: (f64, f64), right: (f64, f64)) -> f64 {
-    left.0 * right.1 - left.1 * right.0
-}
-
-fn dot_product(left: (f64, f64), right: (f64, f64)) -> f64 {
-    left.0 * right.0 + left.1 * right.1
-}
-
-fn vector_length(vector: (f64, f64)) -> f64 {
-    (vector.0 * vector.0 + vector.1 * vector.1).sqrt()
-}
-
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 enum IndexedDifferenceMode {
     CoverAsIs,
-    CoverOffset(f64),
+    CoverOffset(Scalar),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 enum IndexedCoverMode {
     AsIs,
-    Offset(f64),
-    OffsetRing(f64),
+    Offset(Scalar),
+    OffsetRing(Scalar),
 }
 
 fn indexed_difference(
@@ -2869,8 +3104,8 @@ fn indexed_difference(
         let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedDifferenceMode::CoverAsIs => cover_sketch,
-            IndexedDifferenceMode::CoverOffset(distance) => {
-                cover_sketch.offset(crate::geometry::exact_real(distance))
+            IndexedDifferenceMode::CoverOffset(ref distance) => {
+                cover_sketch.offset(distance.clone())
             }
         };
         remainder_polygons.extend(subject_island.difference(&cover_sketch).to_multipolygon().0);
@@ -2934,11 +3169,9 @@ fn indexed_intersection_with_mode(
         let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
         let cover_sketch = match mode {
             IndexedCoverMode::AsIs => cover_sketch,
-            IndexedCoverMode::Offset(distance) => {
-                cover_sketch.offset(crate::geometry::exact_real(distance))
-            }
-            IndexedCoverMode::OffsetRing(distance) => cover_sketch
-                .offset(crate::geometry::exact_real(distance))
+            IndexedCoverMode::Offset(ref distance) => cover_sketch.offset(distance.clone()),
+            IndexedCoverMode::OffsetRing(ref distance) => cover_sketch
+                .offset(distance.clone())
                 .difference(&cover_sketch),
         };
         overlap_polygons.extend(
@@ -2971,10 +3204,35 @@ fn shapes_violation(
     severity: Severity,
     layers: Vec<String>,
     sketch: PcbSketch,
-    min_area: f64,
+    min_area: &Scalar,
     message: String,
 ) -> Vec<Violation> {
-    let shapes = multipolygon_to_shapes(&sketch.to_multipolygon(), min_area);
+    let shapes = multipolygon_to_shapes_scalar(&sketch.to_multipolygon(), min_area);
+
+    if shapes.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        check,
+        severity,
+        layers,
+        None,
+        shapes,
+        Vec::new(),
+        Some(message),
+    )]
+}
+
+fn shapes_violation_scalar(
+    check: &str,
+    severity: Severity,
+    layers: Vec<String>,
+    sketch: PcbSketch,
+    min_area: &Scalar,
+    message: String,
+) -> Vec<Violation> {
+    let shapes = multipolygon_to_shapes_scalar(&sketch.to_multipolygon(), min_area);
 
     if shapes.is_empty() {
         return Vec::new();
@@ -2993,7 +3251,7 @@ fn shapes_violation(
 
 fn collect_acute_vertices(
     ring: &LineString<f64>,
-    max_angle_degrees: f64,
+    max_angle_degrees: &Scalar,
     locations: &mut Vec<[f64; 2]>,
 ) {
     let coords = open_ring_coords(ring);
@@ -3009,9 +3267,11 @@ fn collect_acute_vertices(
         // proof. It intentionally reports candidates for review because acute
         // copper notches can be caused by polygon decomposition as well as by
         // intentional footprint geometry.
-        let angle = angle_degrees(previous, current, next);
+        let Some(angle) = angle_degrees_scalar(previous, current, next) else {
+            continue;
+        };
 
-        if angle > 0.0 && angle < max_angle_degrees {
+        if angle > Scalar::zero() && &angle < max_angle_degrees {
             locations.push([current.x, current.y]);
         }
     }
@@ -3025,21 +3285,33 @@ fn open_ring_coords(ring: &LineString<f64>) -> Vec<Coord<f64>> {
     coords
 }
 
-fn angle_degrees(previous: Coord<f64>, current: Coord<f64>, next: Coord<f64>) -> f64 {
-    let ax = previous.x - current.x;
-    let ay = previous.y - current.y;
-    let bx = next.x - current.x;
-    let by = next.y - current.y;
-    let dot = ax * bx + ay * by;
-    let a_len = (ax * ax + ay * ay).sqrt();
-    let b_len = (bx * bx + by * by).sqrt();
-
-    if a_len == 0.0 || b_len == 0.0 {
-        return 0.0;
+fn angle_degrees_scalar(
+    previous: Coord<f64>,
+    current: Coord<f64>,
+    next: Coord<f64>,
+) -> Option<Scalar> {
+    let current_x = Scalar::try_from(current.x).ok()?;
+    let current_y = Scalar::try_from(current.y).ok()?;
+    let ax = Scalar::try_from(previous.x).ok()? - &current_x;
+    let ay = Scalar::try_from(previous.y).ok()? - &current_y;
+    let bx = Scalar::try_from(next.x).ok()? - current_x;
+    let by = Scalar::try_from(next.y).ok()? - current_y;
+    let a_len = (&ax * &ax + &ay * &ay).sqrt().ok()?;
+    let b_len = (&bx * &bx + &by * &by).sqrt().ok()?;
+    if a_len == Scalar::zero() || b_len == Scalar::zero() {
+        return Some(Scalar::zero());
     }
-
-    let cos = (dot / (a_len * b_len)).clamp(-1.0, 1.0);
-    cos.acos().to_degrees()
+    let denominator = a_len * b_len;
+    let mut cosine = ((&ax * &bx + &ay * &by) / denominator).ok()?;
+    let negative_one = crate::scalar::scalar("-1");
+    let one = crate::scalar::scalar("1");
+    if cosine < negative_one {
+        cosine = negative_one;
+    } else if cosine > one {
+        cosine = one;
+    }
+    let radians = cosine.acos().ok()?;
+    (radians * crate::scalar::scalar("180") / Scalar::pi()).ok()
 }
 
 fn looks_like_mechanical_layer(layer_name: &str) -> bool {
@@ -3103,7 +3375,12 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.1, 0.0, 2.1, 1.0)],
         );
 
-        let violations = mask_island_keepout("mask", &layer, 0.1, 1.0e-9);
+        let violations = mask_island_keepout(
+            "mask",
+            &layer,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3120,7 +3397,12 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(5.0, 0.0, 6.0, 1.0)],
         );
 
-        let violations = mask_island_keepout("mask", &layer, 0.1, 1.0e-9);
+        let violations = mask_island_keepout(
+            "mask",
+            &layer,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -3138,7 +3420,12 @@ mod tests {
         let layer = sketch("mask", islands);
 
         let start = Instant::now();
-        let violations = mask_island_keepout("mask", &layer, 0.1, 1.0e-9);
+        let violations = mask_island_keepout(
+            "mask",
+            &layer,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3152,7 +3439,13 @@ mod tests {
         let top = sketch("top", vec![square(0.0, 0.0, 2.0, 2.0)]);
         let bottom = sketch("bottom", vec![square(1.0, 1.0, 3.0, 3.0)]);
 
-        let violations = copper_overlap("top", &top, "bottom", &bottom, 1.0e-9);
+        let violations = copper_overlap(
+            "top",
+            &top,
+            "bottom",
+            &bottom,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].polygons.len(), 1);
@@ -3165,8 +3458,14 @@ mod tests {
         let bottom = sketch("bottom", vec![square(1.0, 1.0, 3.0, 3.0)]);
         let points = vec![ipc_point("GND", [1.5, 1.5])];
 
-        let violations =
-            copper_overlap_with_ipc356("top", &top, "bottom", &bottom, &points, 1.0e-9);
+        let violations = copper_overlap_with_ipc356(
+            "top",
+            &top,
+            "bottom",
+            &bottom,
+            &points,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].severity, crate::report::Severity::Warning);
@@ -3184,8 +3483,14 @@ mod tests {
         let bottom = sketch("bottom", vec![square(1.0, 1.0, 3.0, 3.0)]);
         let points = vec![ipc_point("GND", [1.5, 1.5]), ipc_point("VBUS", [1.6, 1.6])];
 
-        let violations =
-            copper_overlap_with_ipc356("top", &top, "bottom", &bottom, &points, 1.0e-9);
+        let violations = copper_overlap_with_ipc356(
+            "top",
+            &top,
+            "bottom",
+            &bottom,
+            &points,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].severity, crate::report::Severity::Error);
@@ -3210,7 +3515,11 @@ mod tests {
             ),
         ];
 
-        let violations = copper_balance(&layers, 3.0, 1.0e-9);
+        let violations = copper_balance(
+            &layers,
+            &crate::scalar::scalar("3.0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "copper-balance-readiness");
@@ -3233,8 +3542,22 @@ mod tests {
             sketch("F.Cu", vec![square(0.0, 0.0, 2.0, 2.0)]),
         )];
 
-        assert!(copper_balance(&balanced, 3.0, 1.0e-9).is_empty());
-        assert!(copper_balance(&single, 3.0, 1.0e-9).is_empty());
+        assert!(
+            copper_balance(
+                &balanced,
+                &crate::scalar::scalar("3.0"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
+        assert!(
+            copper_balance(
+                &single,
+                &crate::scalar::scalar("3.0"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3260,7 +3583,12 @@ mod tests {
             ),
         ];
 
-        let violations = local_copper_density_readiness(&layers, 10.0, 3.0, 1.0e-9);
+        let violations = local_copper_density_readiness(
+            &layers,
+            &crate::scalar::scalar("10.0"),
+            &crate::scalar::scalar("3.0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "local-copper-density-readiness");
@@ -3295,7 +3623,15 @@ mod tests {
             ),
         ];
 
-        assert!(local_copper_density_readiness(&layers, 10.0, 3.0, 1.0e-9).is_empty());
+        assert!(
+            local_copper_density_readiness(
+                &layers,
+                &crate::scalar::scalar("10.0"),
+                &crate::scalar::scalar("3.0"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3303,7 +3639,14 @@ mod tests {
         let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let copper = sketch("top", vec![square(0.1, 0.1, 1.0, 1.0)]);
 
-        let violations = board_edge_clearance("top", &copper, "edge", &board, 0.25, 1.0e-9);
+        let violations = board_edge_clearance(
+            "top",
+            &copper,
+            "edge",
+            &board,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -3313,8 +3656,14 @@ mod tests {
         let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let silk = sketch("silk", vec![square(0.1, 0.1, 1.0, 1.0)]);
 
-        let violations =
-            silkscreen_board_edge_clearance("silk", &silk, "edge", &board, 0.25, 1.0e-9);
+        let violations = silkscreen_board_edge_clearance(
+            "silk",
+            &silk,
+            "edge",
+            &board,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "silkscreen-to-board-edge-clearance");
@@ -3326,7 +3675,15 @@ mod tests {
         let silk = sketch("silk", vec![square(1.0, 1.0, 2.0, 2.0)]);
 
         assert!(
-            silkscreen_board_edge_clearance("silk", &silk, "edge", &board, 0.25, 1.0e-9).is_empty()
+            silkscreen_board_edge_clearance(
+                "silk",
+                &silk,
+                "edge",
+                &board,
+                &crate::scalar::scalar("0.25"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
         );
     }
 
@@ -3335,8 +3692,14 @@ mod tests {
         let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let mask = sketch("mask", vec![square(0.1, 0.1, 1.0, 1.0)]);
 
-        let violations =
-            solder_mask_board_edge_clearance("mask", &mask, "edge", &board, 0.25, 1.0e-9);
+        let violations = solder_mask_board_edge_clearance(
+            "mask",
+            &mask,
+            "edge",
+            &board,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-to-board-edge-clearance");
@@ -3348,8 +3711,15 @@ mod tests {
         let mask = sketch("mask", vec![square(1.0, 1.0, 2.0, 2.0)]);
 
         assert!(
-            solder_mask_board_edge_clearance("mask", &mask, "edge", &board, 0.25, 1.0e-9)
-                .is_empty()
+            solder_mask_board_edge_clearance(
+                "mask",
+                &mask,
+                "edge",
+                &board,
+                &crate::scalar::scalar("0.25"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
         );
     }
 
@@ -3358,7 +3728,14 @@ mod tests {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let paste = sketch("paste", vec![square(-0.1, 0.0, 1.0, 1.0)]);
 
-        let violations = paste_overhang("paste", &paste, "top", &copper, 0.0, 1.0e-9);
+        let violations = paste_overhang(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("0.0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -3378,7 +3755,14 @@ mod tests {
         let paste = sketch("paste", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
         let start = Instant::now();
-        let violations = paste_overhang("paste", &paste, "top", &copper, 0.0, 1.0e-9);
+        let violations = paste_overhang(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("0.0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3395,7 +3779,13 @@ mod tests {
         );
         let paste = sketch("paste", vec![square(0.1, 0.1, 0.9, 0.9)]);
 
-        let violations = paste_aperture_coverage("paste", &paste, "top", &copper, 1.0e-9);
+        let violations = paste_aperture_coverage(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "paste-aperture-coverage");
@@ -3416,7 +3806,13 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations = paste_aperture_coverage("paste", &paste, "top", &copper, 1.0e-9);
+        let violations = paste_aperture_coverage(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3430,7 +3826,13 @@ mod tests {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let paste = sketch("paste", vec![square(-0.1, -0.1, 1.1, 1.1)]);
 
-        let violations = paste_aperture_coverage("paste", &paste, "top", &copper, 1.0e-9);
+        let violations = paste_aperture_coverage(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -3446,7 +3848,15 @@ mod tests {
             vec![square(0.0, 0.0, 0.25, 1.0), square(1.9, -0.1, 3.1, 1.1)],
         );
 
-        let violations = paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9);
+        let violations = paste_aperture_ratio(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("0.5"),
+            &crate::scalar::scalar("1.2"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -3461,7 +3871,18 @@ mod tests {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let paste = sketch("paste", vec![square(0.0, 0.0, 0.8, 1.0)]);
 
-        assert!(paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9).is_empty());
+        assert!(
+            paste_aperture_ratio(
+                "paste",
+                &paste,
+                "top",
+                &copper,
+                &crate::scalar::scalar("0.5"),
+                &crate::scalar::scalar("1.2"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3479,7 +3900,15 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations = paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9);
+        let violations = paste_aperture_ratio(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("0.5"),
+            &crate::scalar::scalar("1.2"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3492,7 +3921,12 @@ mod tests {
     fn minimum_paste_aperture_reports_too_narrow_apertures() {
         let paste = sketch("paste", vec![square(0.0, 0.0, 0.05, 0.3)]);
 
-        let violations = minimum_paste_aperture("paste", &paste, 0.1, 1.0e-9);
+        let violations = minimum_paste_aperture(
+            "paste",
+            &paste,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "minimum-paste-aperture");
@@ -3502,7 +3936,15 @@ mod tests {
     fn minimum_paste_aperture_allows_large_apertures() {
         let paste = sketch("paste", vec![square(0.0, 0.0, 0.2, 0.3)]);
 
-        assert!(minimum_paste_aperture("paste", &paste, 0.1, 1.0e-9).is_empty());
+        assert!(
+            minimum_paste_aperture(
+                "paste",
+                &paste,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3512,7 +3954,12 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.05, 0.0, 2.05, 1.0)],
         );
 
-        let violations = paste_aperture_spacing("paste", &paste, 0.1, 1.0e-9);
+        let violations = paste_aperture_spacing(
+            "paste",
+            &paste,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -3529,7 +3976,15 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.2, 0.0, 2.2, 1.0)],
         );
 
-        assert!(paste_aperture_spacing("paste", &paste, 0.1, 1.0e-9).is_empty());
+        assert!(
+            paste_aperture_spacing(
+                "paste",
+                &paste,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3545,7 +4000,12 @@ mod tests {
         let paste = sketch("paste", apertures);
 
         let start = Instant::now();
-        let violations = paste_aperture_spacing("paste", &paste, 0.1, 1.0e-9);
+        let violations = paste_aperture_spacing(
+            "paste",
+            &paste,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -3559,7 +4019,13 @@ mod tests {
         let paste = sketch("paste", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let mask = sketch("mask", vec![square(0.1, 0.0, 1.0, 1.0)]);
 
-        let violations = paste_mask_alignment("paste", &paste, "mask", &mask, 1.0e-9);
+        let violations = paste_mask_alignment(
+            "paste",
+            &paste,
+            "mask",
+            &mask,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "paste-mask-alignment");
@@ -3580,7 +4046,13 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations = paste_mask_alignment("paste", &paste, "mask", &mask, 1.0e-9);
+        let violations = paste_mask_alignment(
+            "paste",
+            &paste,
+            "mask",
+            &mask,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3594,14 +4066,28 @@ mod tests {
         let paste = sketch("paste", vec![square(0.1, 0.1, 0.9, 0.9)]);
         let mask = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
-        assert!(paste_mask_alignment("paste", &paste, "mask", &mask, 1.0e-9).is_empty());
+        assert!(
+            paste_mask_alignment(
+                "paste",
+                &paste,
+                "mask",
+                &mask,
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
     fn solder_mask_sliver_reports_thin_mask_webs() {
         let mask = sketch("mask", vec![square(0.0, 0.0, 0.05, 2.0)]);
 
-        let violations = solder_mask_sliver("mask", &mask, 0.1, 1.0e-9);
+        let violations = solder_mask_sliver(
+            "mask",
+            &mask,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -3610,7 +4096,12 @@ mod tests {
     fn minimum_mask_opening_reports_too_small_openings() {
         let mask = sketch("mask", vec![square(0.0, 0.0, 0.05, 0.2)]);
 
-        let violations = minimum_mask_opening("mask", &mask, 0.1, 1.0e-9);
+        let violations = minimum_mask_opening(
+            "mask",
+            &mask,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "minimum-mask-opening");
@@ -3620,7 +4111,15 @@ mod tests {
     fn minimum_mask_opening_allows_large_openings() {
         let mask = sketch("mask", vec![square(0.0, 0.0, 0.2, 0.2)]);
 
-        assert!(minimum_mask_opening("mask", &mask, 0.1, 1.0e-9).is_empty());
+        assert!(
+            minimum_mask_opening(
+                "mask",
+                &mask,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3630,7 +4129,12 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.05, 0.0, 2.05, 1.0)],
         );
 
-        let violations = solder_mask_opening_spacing("mask", &mask, 0.1, 1.0e-9);
+        let violations = solder_mask_opening_spacing(
+            "mask",
+            &mask,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3647,7 +4151,15 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.2, 0.0, 2.2, 1.0)],
         );
 
-        assert!(solder_mask_opening_spacing("mask", &mask, 0.1, 1.0e-9).is_empty());
+        assert!(
+            solder_mask_opening_spacing(
+                "mask",
+                &mask,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -3663,7 +4175,12 @@ mod tests {
         let mask = sketch("mask", openings);
 
         let start = Instant::now();
-        let violations = solder_mask_opening_spacing("mask", &mask, 0.1, 1.0e-9);
+        let violations = solder_mask_opening_spacing(
+            "mask",
+            &mask,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -3681,21 +4198,31 @@ mod tests {
         );
 
         assert_eq!(
-            min_copper_neck_width("top", &narrow_trace, three_mil_mm, 1.0e-9).len(),
+            min_copper_neck_width(
+                "top",
+                &narrow_trace,
+                &crate::scalar::scalar("0.0762"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .len(),
             1
         );
     }
 
     #[test]
     fn minimum_line_width_allows_six_mil_preferred_trace() {
-        let three_mil_mm = 0.0762;
         let six_mil_mm = 0.1524;
         let preferred_trace = sketch(
             "top",
             vec![line_polygon([0.0, 0.0], [2.0, 0.0], six_mil_mm).unwrap()],
         );
 
-        let violations = min_copper_neck_width("top", &preferred_trace, three_mil_mm, 1.0e-9);
+        let violations = min_copper_neck_width(
+            "top",
+            &preferred_trace,
+            &crate::scalar::scalar("0.0762"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(
             violations.is_empty(),
@@ -3718,8 +4245,8 @@ mod tests {
     #[test]
     fn min_copper_neck_width_completes_on_complex_project_copper_layers() {
         let started = Instant::now();
-        let min_width = 0.0762;
-        let min_area = 1.0e-9;
+        let min_width = crate::scalar::scalar("0.0762");
+        let min_area = crate::scalar::scalar("1.0e-9");
 
         for (zip_path, board_entry) in COMPLEX_PROJECT_FIXTURES {
             let Some(board_bytes) = unzip_fixture_entry(zip_path, board_entry) else {
@@ -3732,7 +4259,7 @@ mod tests {
                 if layer_name != "F.Cu" && layer_name != "B.Cu" {
                     continue;
                 }
-                let _ = min_copper_neck_width(&layer_name, &copper, min_width, min_area);
+                let _ = min_copper_neck_width(&layer_name, &copper, &min_width, &min_area);
             }
             let _ = std::fs::remove_file(board_path);
         }
@@ -3757,11 +4284,27 @@ mod tests {
         );
 
         assert_eq!(
-            board_edge_clearance("top", &too_close_trace, "edge", &board, 0.20, 1.0e-9).len(),
+            board_edge_clearance(
+                "top",
+                &too_close_trace,
+                "edge",
+                &board,
+                &crate::scalar::scalar("0.20"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .len(),
             1
         );
         assert!(
-            board_edge_clearance("top", &compliant_trace, "edge", &board, 0.20, 1.0e-9).is_empty()
+            board_edge_clearance(
+                "top",
+                &compliant_trace,
+                "edge",
+                &board,
+                &crate::scalar::scalar("0.20"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
         );
     }
 
@@ -3770,7 +4313,14 @@ mod tests {
         let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let pad = sketch("top", vec![square(9.8, 4.0, 10.2, 4.4)]);
 
-        let violations = board_edge_clearance("top", &pad, "edge", &board, 0.0, 1.0e-9);
+        let violations = board_edge_clearance(
+            "top",
+            &pad,
+            "edge",
+            &board,
+            &crate::scalar::scalar("0.0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -3781,7 +4331,7 @@ mod tests {
             name: "edge".to_string(),
         }));
 
-        let violations = board_outline_sanity("edge", &outline, 1.0e-9);
+        let violations = board_outline_sanity("edge", &outline, &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
     }
@@ -3790,7 +4340,9 @@ mod tests {
     fn board_outline_sanity_accepts_closed_outline_area() {
         let outline = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
 
-        assert!(board_outline_sanity("edge", &outline, 1.0e-9).is_empty());
+        assert!(
+            board_outline_sanity("edge", &outline, &crate::scalar::scalar("1.0e-9")).is_empty()
+        );
     }
 
     #[test]
@@ -3800,7 +4352,8 @@ mod tests {
             vec![square(0.0, 0.0, 1.0, 1.0), square(2.0, 0.0, 3.0, 1.0)],
         );
 
-        let violations = board_outline_fragments("edge", &outline, 1.0e-9);
+        let violations =
+            board_outline_fragments("edge", &outline, &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "board-outline-fragments");
@@ -3810,7 +4363,9 @@ mod tests {
     fn board_outline_fragments_allows_single_region() {
         let outline = sketch("edge", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
-        assert!(board_outline_fragments("edge", &outline, 1.0e-9).is_empty());
+        assert!(
+            board_outline_fragments("edge", &outline, &crate::scalar::scalar("1.0e-9")).is_empty()
+        );
     }
 
     #[test]
@@ -4105,8 +4660,14 @@ mod tests {
         );
         let subject = sketch("top", vec![square(4.0, 4.0, 6.0, 6.0)]);
 
-        let violations =
-            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &subject,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "board-outline-cutout-clearance");
@@ -4120,8 +4681,14 @@ mod tests {
         );
         let near = sketch("top", vec![square(7.15, 4.0, 7.45, 6.0)]);
 
-        let violations =
-            board_outline_cutout_clearance("top", &near, "edge", &outline, 0.25, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &near,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "board-outline-cutout-clearance");
@@ -4135,8 +4702,14 @@ mod tests {
         );
         let far = sketch("top", vec![square(7.8, 4.0, 8.2, 6.0)]);
 
-        let violations =
-            board_outline_cutout_clearance("top", &far, "edge", &outline, 0.25, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &far,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -4149,8 +4722,14 @@ mod tests {
         );
         let subject = sketch("top", vec![square(1.0, 1.0, 2.0, 2.0)]);
 
-        let violations =
-            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &subject,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -4164,8 +4743,15 @@ mod tests {
         let subject = sketch("top", vec![square(1.0, 1.0, 2.0, 2.0)]);
 
         assert!(
-            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9)
-                .is_empty()
+            board_outline_cutout_clearance(
+                "top",
+                &subject,
+                "edge",
+                &outline,
+                &crate::scalar::scalar("0"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -4184,8 +4770,14 @@ mod tests {
             vec![square(4.0, 4.0, 4.5, 4.5), square(13.0, 13.0, 13.5, 13.5)],
         );
 
-        let violations =
-            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &subject,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 2);
     }
@@ -4198,8 +4790,14 @@ mod tests {
         );
         let touching = sketch("top", vec![square(2.0, 4.0, 3.0, 6.0)]);
 
-        let violations =
-            board_outline_cutout_clearance("top", &touching, "edge", &outline, 0.0, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &touching,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -4219,8 +4817,14 @@ mod tests {
         );
         let near = sketch("top", vec![square(7.15, 4.0, 7.45, 6.0)]);
 
-        let violations =
-            board_outline_cutout_clearance("top", &near, "edge", &outline, 0.25, 1.0e-9);
+        let violations = board_outline_cutout_clearance(
+            "top",
+            &near,
+            "edge",
+            &outline,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -4233,7 +4837,13 @@ mod tests {
         );
         let mask_opening = sketch("mask", vec![square(-0.1, -0.1, 1.35, 1.1)]);
 
-        let violations = exposed_copper("top", &copper, "mask", &mask_opening, 1.0e-9);
+        let violations = exposed_copper(
+            "top",
+            &copper,
+            "mask",
+            &mask_opening,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -4253,7 +4863,13 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations = exposed_copper("top", &copper, "mask", &mask_opening, 1.0e-9);
+        let violations = exposed_copper(
+            "top",
+            &copper,
+            "mask",
+            &mask_opening,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4270,8 +4886,13 @@ mod tests {
         );
         let mask_openings = sketch("mask", vec![square(0.1, 0.1, 0.9, 0.9)]);
 
-        let violations =
-            solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
+        let violations = solder_mask_opening_coverage(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-opening-coverage");
@@ -4282,8 +4903,13 @@ mod tests {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let mask_openings = sketch("mask", vec![square(-0.1, -0.1, 1.1, 1.1)]);
 
-        let violations =
-            solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
+        let violations = solder_mask_opening_coverage(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -4312,9 +4938,9 @@ mod tests {
             &copper,
             "mask",
             &mask_openings,
-            1.0,
-            1.5,
-            1.0e-9,
+            &crate::scalar::scalar("1.0"),
+            &crate::scalar::scalar("1.5"),
+            &crate::scalar::scalar("1.0e-9"),
         );
 
         assert_eq!(violations.len(), 2);
@@ -4338,9 +4964,9 @@ mod tests {
                 &copper,
                 "mask",
                 &mask_openings,
-                1.0,
-                1.5,
-                1.0e-9,
+                &crate::scalar::scalar("1.0"),
+                &crate::scalar::scalar("1.5"),
+                &crate::scalar::scalar("1.0e-9"),
             )
             .is_empty()
         );
@@ -4366,9 +4992,9 @@ mod tests {
             &copper,
             "mask",
             &mask_openings,
-            1.0,
-            1.5,
-            1.0e-9,
+            &crate::scalar::scalar("1.0"),
+            &crate::scalar::scalar("1.5"),
+            &crate::scalar::scalar("1.0e-9"),
         );
 
         assert!(violations.is_empty());
@@ -4383,8 +5009,14 @@ mod tests {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let tight_mask = sketch("mask", vec![square(-0.03, -0.03, 1.03, 1.03)]);
 
-        let violations =
-            solder_mask_annular_ring_readiness("top", &copper, "mask", &tight_mask, 0.08, 1.0e-9);
+        let violations = solder_mask_annular_ring_readiness(
+            "top",
+            &copper,
+            "mask",
+            &tight_mask,
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-annular-ring-readiness");
@@ -4402,8 +5034,15 @@ mod tests {
         let mask = sketch("mask", vec![square(-0.10, -0.10, 1.10, 1.10)]);
 
         assert!(
-            solder_mask_annular_ring_readiness("top", &copper, "mask", &mask, 0.08, 1.0e-9)
-                .is_empty()
+            solder_mask_annular_ring_readiness(
+                "top",
+                &copper,
+                "mask",
+                &mask,
+                &crate::scalar::scalar("0.08"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -4422,8 +5061,14 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations =
-            solder_mask_annular_ring_readiness("top", &copper, "mask", &mask, 0.08, 1.0e-9);
+        let violations = solder_mask_annular_ring_readiness(
+            "top",
+            &copper,
+            "mask",
+            &mask,
+            &crate::scalar::scalar("0.08"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4447,8 +5092,13 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations =
-            solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
+        let violations = solder_mask_opening_coverage(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4462,7 +5112,14 @@ mod tests {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let mask_openings = sketch("mask", vec![square(-0.2, -0.2, 1.2, 1.2)]);
 
-        let violations = solder_mask_expansion("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+        let violations = solder_mask_expansion(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-expansion");
@@ -4483,7 +5140,14 @@ mod tests {
         let mask_openings = sketch("mask", vec![square(-0.2, -0.2, 1.2, 1.2)]);
 
         let start = Instant::now();
-        let violations = solder_mask_expansion("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+        let violations = solder_mask_expansion(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4498,7 +5162,15 @@ mod tests {
         let mask_openings = sketch("mask", vec![square(-0.05, -0.05, 1.05, 1.05)]);
 
         assert!(
-            solder_mask_expansion("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9).is_empty()
+            solder_mask_expansion(
+                "top",
+                &copper,
+                "mask",
+                &mask_openings,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -4507,8 +5179,14 @@ mod tests {
         let copper = sketch("top", vec![square(1.05, 0.0, 1.20, 1.0)]);
         let mask_openings = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
-        let violations =
-            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+        let violations = solder_mask_overlap_clearance(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-overlap-clearance");
@@ -4520,8 +5198,15 @@ mod tests {
         let mask_openings = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
         assert!(
-            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9)
-                .is_empty()
+            solder_mask_overlap_clearance(
+                "top",
+                &copper,
+                "mask",
+                &mask_openings,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -4531,8 +5216,15 @@ mod tests {
         let mask_openings = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
         assert!(
-            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9)
-                .is_empty()
+            solder_mask_overlap_clearance(
+                "top",
+                &copper,
+                "mask",
+                &mask_openings,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -4551,8 +5243,14 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations =
-            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+        let violations = solder_mask_overlap_clearance(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4569,8 +5267,13 @@ mod tests {
             vec![line_polygon([-0.2, 0.5], [1.2, 0.5], 0.08).unwrap()],
         );
 
-        let violations =
-            silkscreen_overlap("silk", &silk_text_stroke, "mask", &pad_opening, 1.0e-9);
+        let violations = silkscreen_overlap(
+            "silk",
+            &silk_text_stroke,
+            "mask",
+            &pad_opening,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -4591,7 +5294,7 @@ mod tests {
             &silk_text_stroke,
             "V-Score",
             &panel_feature,
-            1.0e-9,
+            &crate::scalar::scalar("1.0e-9"),
         );
 
         assert_eq!(violations.len(), 1);
@@ -4616,7 +5319,13 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations = silkscreen_overlap("silk", &silk_text_stroke, "mask", &blockers, 1.0e-9);
+        let violations = silkscreen_overlap(
+            "silk",
+            &silk_text_stroke,
+            "mask",
+            &blockers,
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4633,8 +5342,14 @@ mod tests {
             vec![line_polygon([1.08, 0.5], [1.8, 0.5], 0.05).unwrap()],
         );
 
-        let violations =
-            silkscreen_clearance("silk", &silk_text_stroke, "mask", &pad_opening, 0.1, 1.0e-9);
+        let violations = silkscreen_clearance(
+            "silk",
+            &silk_text_stroke,
+            "mask",
+            &pad_opening,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "silkscreen-clearance");
@@ -4649,8 +5364,15 @@ mod tests {
         );
 
         assert!(
-            silkscreen_clearance("silk", &silk_text_stroke, "mask", &pad_opening, 0.1, 1.0e-9)
-                .is_empty()
+            silkscreen_clearance(
+                "silk",
+                &silk_text_stroke,
+                "mask",
+                &pad_opening,
+                &crate::scalar::scalar("0.1"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -4672,8 +5394,14 @@ mod tests {
         );
 
         let start = Instant::now();
-        let violations =
-            silkscreen_clearance("silk", &silk_text_stroke, "mask", &blockers, 0.1, 1.0e-9);
+        let violations = silkscreen_clearance(
+            "silk",
+            &silk_text_stroke,
+            "mask",
+            &blockers,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4689,7 +5417,12 @@ mod tests {
             vec![line_polygon([0.0, 0.0], [2.0, 0.0], 0.08).unwrap()],
         );
 
-        let violations = silkscreen_min_width("silk", &silk, 0.12, 1.0e-9);
+        let violations = silkscreen_min_width(
+            "silk",
+            &silk,
+            &crate::scalar::scalar("0.12"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
     }
@@ -4698,7 +5431,12 @@ mod tests {
     fn silkscreen_min_width_allows_wide_legend_strokes() {
         let silk = sketch("silk", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
-        let violations = silkscreen_min_width("silk", &silk, 0.12, 1.0e-9);
+        let violations = silkscreen_min_width(
+            "silk",
+            &silk,
+            &crate::scalar::scalar("0.12"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -4707,7 +5445,12 @@ mod tests {
     fn silkscreen_text_height_reports_tiny_legend_islands() {
         let silk = sketch("silk", vec![square(0.0, 0.0, 0.45, 0.55)]);
 
-        let violations = silkscreen_text_height_readiness("silk", &silk, 0.80, 1.0e-9);
+        let violations = silkscreen_text_height_readiness(
+            "silk",
+            &silk,
+            &crate::scalar::scalar("0.80"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "silkscreen-text-height-readiness");
@@ -4724,7 +5467,15 @@ mod tests {
             ],
         );
 
-        assert!(silkscreen_text_height_readiness("silk", &silk, 0.80, 1.0e-9).is_empty());
+        assert!(
+            silkscreen_text_height_readiness(
+                "silk",
+                &silk,
+                &crate::scalar::scalar("0.80"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -4882,7 +5633,8 @@ mod tests {
     fn layer_sanity_reports_area_excursions() {
         let flood = sketch("inner", vec![square(0.0, 0.0, 20.0, 20.0)]);
 
-        let violations = layer_sanity("inner", &flood, Some(100.0));
+        let maximum = crate::scalar::scalar("100");
+        let violations = layer_sanity("inner", &flood, Some(&maximum));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -4898,7 +5650,8 @@ mod tests {
     fn layer_sanity_allows_area_equal_to_limit() {
         let flood = sketch("inner", vec![square(0.0, 0.0, 10.0, 10.0)]);
 
-        let violations = layer_sanity("inner", &flood, Some(100.0));
+        let maximum = crate::scalar::scalar("100");
+        let violations = layer_sanity("inner", &flood, Some(&maximum));
 
         assert!(violations.iter().all(|violation| {
             violation
@@ -4914,7 +5667,8 @@ mod tests {
         let duplicate = sketch("B.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let layers = vec![("F.Cu".to_string(), top), ("B.Cu".to_string(), duplicate)];
 
-        let violations = duplicate_layer_geometry_readiness(&layers, 1.0e-9);
+        let violations =
+            duplicate_layer_geometry_readiness(&layers, &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "layer-sanity");
@@ -4942,7 +5696,10 @@ mod tests {
             ("empty".to_string(), empty),
         ];
 
-        assert!(duplicate_layer_geometry_readiness(&layers, 1.0e-9).is_empty());
+        assert!(
+            duplicate_layer_geometry_readiness(&layers, &crate::scalar::scalar("1.0e-9"))
+                .is_empty()
+        );
     }
 
     #[test]
@@ -4955,7 +5712,8 @@ mod tests {
             ],
         );
 
-        let violations = tiny_layer_feature_readiness("F.Cu", &layer, 0.01);
+        let violations =
+            tiny_layer_feature_readiness("F.Cu", &layer, &crate::scalar::scalar("0.01"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "layer-sanity");
@@ -4973,9 +5731,15 @@ mod tests {
     fn tiny_layer_feature_readiness_allows_larger_or_unconfigured_features() {
         let layer = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
 
-        assert!(tiny_layer_feature_readiness("F.Cu", &layer, 0.01).is_empty());
-        assert!(tiny_layer_feature_readiness("F.Cu", &layer, 0.0).is_empty());
-        assert!(tiny_layer_feature_readiness("F.Cu", &layer, f64::NAN).is_empty());
+        assert!(
+            tiny_layer_feature_readiness("F.Cu", &layer, &crate::scalar::scalar("0.01")).is_empty()
+        );
+        assert!(
+            tiny_layer_feature_readiness("F.Cu", &layer, &crate::scalar::scalar("0")).is_empty()
+        );
+        assert!(
+            tiny_layer_feature_readiness("F.Cu", &layer, &crate::scalar::scalar("-1")).is_empty()
+        );
     }
 
     #[test]
@@ -4988,7 +5752,12 @@ mod tests {
             ],
         );
 
-        let violations = skinny_layer_feature_readiness("F.Cu", &layer, 0.10, 0.01);
+        let violations = skinny_layer_feature_readiness(
+            "F.Cu",
+            &layer,
+            &crate::scalar::scalar("0.10"),
+            &crate::scalar::scalar("0.01"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "layer-sanity");
@@ -5007,10 +5776,26 @@ mod tests {
         let wide = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
         let tiny = sketch("F.Cu", vec![rect_polygon([0.0, 0.0], [0.09, 0.09], 0.0)]);
 
-        assert!(skinny_layer_feature_readiness("F.Cu", &wide, 0.10, 0.01).is_empty());
-        assert!(skinny_layer_feature_readiness("F.Cu", &tiny, 0.10, 0.01).is_empty());
-        assert!(skinny_layer_feature_readiness("F.Cu", &wide, 0.0, 0.01).is_empty());
-        assert!(skinny_layer_feature_readiness("F.Cu", &wide, f64::NAN, 0.01).is_empty());
+        for width in ["0.10", "0", "-1"] {
+            assert!(
+                skinny_layer_feature_readiness(
+                    "F.Cu",
+                    &wide,
+                    &crate::scalar::scalar(width),
+                    &crate::scalar::scalar("0.01"),
+                )
+                .is_empty()
+            );
+        }
+        assert!(
+            skinny_layer_feature_readiness(
+                "F.Cu",
+                &tiny,
+                &crate::scalar::scalar("0.10"),
+                &crate::scalar::scalar("0.01"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -5018,7 +5803,8 @@ mod tests {
         let duplicate = square(0.0, 0.0, 10.0, 10.0);
         let layer = sketch("F.Cu", vec![duplicate.clone(), duplicate]);
 
-        let violations = duplicate_layer_island_readiness("F.Cu", &layer, 1.0e-9);
+        let violations =
+            duplicate_layer_island_readiness("F.Cu", &layer, &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "layer-sanity");
@@ -5041,8 +5827,14 @@ mod tests {
         let tiny_duplicate = rect_polygon([0.0, 0.0], [0.03, 0.03], 0.0);
         let tiny = sketch("F.Cu", vec![tiny_duplicate.clone(), tiny_duplicate]);
 
-        assert!(duplicate_layer_island_readiness("F.Cu", &discrete, 1.0e-9).is_empty());
-        assert!(duplicate_layer_island_readiness("F.Cu", &tiny, 0.01).is_empty());
+        assert!(
+            duplicate_layer_island_readiness("F.Cu", &discrete, &crate::scalar::scalar("1.0e-9"),)
+                .is_empty()
+        );
+        assert!(
+            duplicate_layer_island_readiness("F.Cu", &tiny, &crate::scalar::scalar("0.01"),)
+                .is_empty()
+        );
     }
 
     #[test]
@@ -5093,13 +5885,13 @@ mod tests {
         assert!(!super::polygon_contains_other_outer(
             &outer,
             &touching,
-            super::BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
-            super::BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+            &crate::scalar::scalar(super::BOARD_OUTLINE_NESTED_OVERLAP_RATIO),
+            &crate::scalar::scalar(super::BOARD_OUTLINE_GEOMETRY_TOLERANCE),
         ));
         assert!(super::polygons_are_duplicate(
             &outer,
             &outer,
-            super::BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+            &crate::scalar::scalar(super::BOARD_OUTLINE_GEOMETRY_TOLERANCE),
         ));
     }
 
@@ -5109,11 +5901,16 @@ mod tests {
         let mechanical = sketch("board-Mechanical.gbr", vec![square(2.0, 0.0, 3.0, 1.0)]);
 
         assert_eq!(
-            mechanical_layer_geometry("Dwgs.User", &user, 1.0e-9).len(),
+            mechanical_layer_geometry("Dwgs.User", &user, &crate::scalar::scalar("1.0e-9")).len(),
             1
         );
         assert_eq!(
-            mechanical_layer_geometry("board-Mechanical.gbr", &mechanical, 1.0e-9).len(),
+            mechanical_layer_geometry(
+                "board-Mechanical.gbr",
+                &mechanical,
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .len(),
             1
         );
     }
@@ -5122,7 +5919,9 @@ mod tests {
     fn mechanical_layer_geometry_ignores_normal_copper_layers() {
         let copper = sketch("F.Cu", vec![square(0.0, 0.0, 1.0, 1.0)]);
 
-        assert!(mechanical_layer_geometry("F.Cu", &copper, 1.0e-9).is_empty());
+        assert!(
+            mechanical_layer_geometry("F.Cu", &copper, &crate::scalar::scalar("1.0e-9")).is_empty()
+        );
     }
 
     #[test]
@@ -5141,7 +5940,7 @@ mod tests {
             )],
         );
 
-        let violations = acid_trap_candidates("top", &copper, 30.0);
+        let violations = acid_trap_candidates("top", &copper, &crate::scalar::scalar("30.0"));
 
         assert_eq!(violations.len(), 1);
         assert!(!violations[0].locations.is_empty());
@@ -5161,7 +5960,10 @@ mod tests {
             net: net.to_string(),
             reference: None,
             pin: None,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             diameter: None,
             access_side: None,
             feature_type: None,

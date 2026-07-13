@@ -8,16 +8,16 @@
 //! inference, copper-area proxies, and via-count rules are suspect near heat
 //! spreaders, enclosures, unusual airflow, and package-specific requirements.
 
-use csgrs::csg::CSG;
-use geo::{Area, BoundingRect, Contains, Point};
+use csgrs::{csg::CSG, sketch::Profile};
+use geo::BoundingRect;
 
-use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::spread::maximum_point_spread;
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_profile};
+use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
 /// Run the `thermal_relief_readiness` design-readiness check or report helper.
 ///
@@ -28,7 +28,7 @@ use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
 pub fn thermal_relief_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let anchors = features
@@ -58,7 +58,7 @@ pub fn thermal_relief_readiness(
             }
 
             let overlap = anchor.sketch.intersection(&zone.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;
             }
@@ -69,7 +69,10 @@ pub fn thermal_relief_readiness(
                 vec![anchor.layer.clone()],
                 None,
                 shapes,
-                vec![anchor.location, zone.location],
+                vec![
+                    anchor.location_f64_compatibility_required(),
+                    zone.location_f64_compatibility_required(),
+                ],
                 Some(format!(
                     "same-net {:?} copper intersects a copper zone; confirm thermal relief or intentional direct plane connection",
                     anchor.kind
@@ -100,7 +103,7 @@ pub fn thermal_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     minimum_vias: usize,
-    anchor_tolerance: f64,
+    anchor_tolerance: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let vias = features
@@ -108,7 +111,8 @@ pub fn thermal_via_readiness(
         .copied()
         .filter(|feature| feature.kind == CopperKind::Via)
         .collect::<Vec<_>>();
-    let via_index = CopperSpatialIndex::new(&vias, anchor_tolerance);
+    let broad_phase_tolerance = scalar_broad_phase_radius(anchor_tolerance);
+    let via_index = CopperSpatialIndex::new(&vias, broad_phase_tolerance);
     let mut violations = Vec::new();
     let mut candidate_vias = 0usize;
 
@@ -123,8 +127,13 @@ pub fn thermal_via_readiness(
             continue;
         }
 
-        let (zone_vias, zone_candidate_vias) =
-            thermal_zone_vias_indexed(&vias, &via_index, zone, anchor_tolerance);
+        let (zone_vias, zone_candidate_vias) = thermal_zone_vias_indexed(
+            &vias,
+            &via_index,
+            zone,
+            anchor_tolerance,
+            broad_phase_tolerance,
+        );
         candidate_vias += zone_candidate_vias;
         let via_count = zone_vias.len();
         if via_count >= minimum_vias {
@@ -137,7 +146,7 @@ pub fn thermal_via_readiness(
             vec![zone.layer.clone()],
             None,
             Vec::new(),
-            vec![zone.location],
+            vec![zone.location_f64_compatibility_required()],
             Some(format!(
                 "likely power or thermal zone {net} has {via_count} parsed same-net via(s), below review threshold {minimum_vias}"
             )),
@@ -173,10 +182,10 @@ pub fn thermal_via_distribution_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     minimum_vias: usize,
-    minimum_spread: f64,
-    anchor_tolerance: f64,
+    minimum_spread: &Scalar,
+    anchor_tolerance: &Scalar,
 ) -> Vec<Violation> {
-    if minimum_vias < 2 || minimum_spread <= 0.0 {
+    if minimum_vias < 2 || minimum_spread <= &Scalar::zero() {
         return Vec::new();
     }
 
@@ -186,7 +195,8 @@ pub fn thermal_via_distribution_readiness(
         .copied()
         .filter(|feature| feature.kind == CopperKind::Via)
         .collect::<Vec<_>>();
-    let via_index = CopperSpatialIndex::new(&vias, anchor_tolerance);
+    let broad_phase_tolerance = scalar_broad_phase_radius(anchor_tolerance);
+    let via_index = CopperSpatialIndex::new(&vias, broad_phase_tolerance);
     let mut violations = Vec::new();
     let mut candidate_vias = 0usize;
 
@@ -201,13 +211,23 @@ pub fn thermal_via_distribution_readiness(
             continue;
         }
 
-        let (zone_vias, zone_candidate_vias) =
-            thermal_zone_vias_indexed(&vias, &via_index, zone, anchor_tolerance);
+        let (zone_vias, zone_candidate_vias) = thermal_zone_vias_indexed(
+            &vias,
+            &via_index,
+            zone,
+            anchor_tolerance,
+            broad_phase_tolerance,
+        );
         candidate_vias += zone_candidate_vias;
         if zone_vias.len() < minimum_vias {
             continue;
         }
-        let spread = maximum_point_spread(zone_vias.iter().map(|via| via.location));
+        let spread = maximum_point_spread(zone_vias.iter().map(|via| {
+            (
+                via.location.clone(),
+                via.location_f64_compatibility_required(),
+            )
+        }));
         log::trace!(
             "thermal-via distribution readiness: source={} zone_net={net} vias={} hull_points={} caliper_steps={} spread={:.6}",
             board.source,
@@ -216,7 +236,7 @@ pub fn thermal_via_distribution_readiness(
             spread.caliper_steps,
             spread.distance
         );
-        if spread.distance >= minimum_spread {
+        if &spread.distance >= minimum_spread {
             continue;
         }
 
@@ -226,7 +246,7 @@ pub fn thermal_via_distribution_readiness(
             vec![zone.layer.clone()],
             None,
             Vec::new(),
-            zone_vias.iter().map(|via| via.location).collect(),
+            zone_vias.iter().map(|via| via.location_f64_compatibility_required()).collect(),
             Some(format!(
                 "likely power or thermal zone {net} has {} parsed same-net vias but via-field spread {:.6} is below {minimum_spread:.6}; review thermal via distribution and heat spreading",
                 zone_vias.len(),
@@ -262,7 +282,7 @@ pub fn thermal_via_distribution_readiness(
 pub fn thermal_pad_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    minimum_pad_dimension: f64,
+    minimum_pad_dimension: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let vias = features
@@ -285,13 +305,16 @@ pub fn thermal_pad_via_readiness(
         if !looks_ground_net(net) && !looks_high_current_net(net) {
             continue;
         }
-        let Some((min_dimension, max_dimension)) = bounding_dimensions(&pad.sketch) else {
+        let Some((min_dimension, max_dimension)) = bounding_dimensions_scalar(&pad.sketch) else {
             continue;
         };
-        if min_dimension < minimum_pad_dimension {
+        if &min_dimension < minimum_pad_dimension {
             continue;
         }
-        if max_dimension / min_dimension > 3.0 {
+        let Ok(aspect_ratio) = max_dimension / min_dimension else {
+            continue;
+        };
+        if aspect_ratio > crate::scalar::scalar("3") {
             continue;
         }
 
@@ -303,9 +326,9 @@ pub fn thermal_pad_via_readiness(
                 return false;
             }
             exact_via_checks += 1;
-            !multipolygon_to_shapes(
+            !multipolygon_to_shapes_scalar(
                 &via.sketch.intersection(&pad.sketch).to_multipolygon(),
-                1.0e-9,
+                &crate::scalar::scalar("1.0e-9"),
             )
             .is_empty()
         });
@@ -319,7 +342,7 @@ pub fn thermal_pad_via_readiness(
             vec![pad.layer.clone()],
             None,
             Vec::new(),
-            vec![pad.location],
+            vec![pad.location_f64_compatibility_required()],
             Some(format!(
                 "large likely thermal pad on net {net:?} has no parsed same-net via in pad; review exposed-pad thermal via array, fill, tent, and solder-voiding intent"
             )),
@@ -350,7 +373,7 @@ pub fn thermal_pad_via_readiness(
 pub fn thermal_copper_area_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    search_radius: f64,
+    search_radius: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let same_net_zones = features
@@ -364,7 +387,8 @@ pub fn thermal_copper_area_readiness(
                 .is_some_and(looks_thermal_or_power_net)
         })
         .collect::<Vec<_>>();
-    let zone_index = CopperSpatialIndex::new(&same_net_zones, search_radius);
+    let broad_phase_radius = scalar_broad_phase_radius(search_radius);
+    let zone_index = CopperSpatialIndex::new(&same_net_zones, broad_phase_radius);
     log::trace!(
         "thermal copper-area readiness: source={} features={} zones={} buckets={} search_radius={search_radius:.6}",
         board.source,
@@ -388,12 +412,17 @@ pub fn thermal_copper_area_readiness(
         }
         thermal_feature_count += 1;
 
-        let zone_candidates =
-            zone_index.same_layer_centers_within(feature.location, &feature.layer, search_radius);
+        let zone_candidates = zone_index.same_layer_candidate_centers_near(
+            feature.location_f64_compatibility_required(),
+            &feature.layer,
+            broad_phase_radius,
+        );
         candidate_count += zone_candidates.len();
-        let has_nearby_same_net_zone = zone_candidates
-            .into_iter()
-            .any(|zone_index| same_net_zones[zone_index].net == feature.net);
+        let has_nearby_same_net_zone = zone_candidates.into_iter().any(|zone_index| {
+            same_net_zones[zone_index].net == feature.net
+                && point_distance_scalar(&feature.location, &same_net_zones[zone_index].location)
+                    .is_some_and(|distance| &distance <= search_radius)
+        });
         if has_nearby_same_net_zone {
             continue;
         }
@@ -404,7 +433,7 @@ pub fn thermal_copper_area_readiness(
             vec![feature.layer.clone()],
             None,
             Vec::new(),
-            vec![feature.location],
+            vec![feature.location_f64_compatibility_required()],
             Some(format!(
                 "likely heat or power feature on net {net:?} has no parsed same-net copper zone within {search_radius:.6}; review copper area for heat spreading and current return"
             )),
@@ -431,11 +460,12 @@ pub fn thermal_copper_area_readiness(
 pub fn hot_component_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    spacing: f64,
-    min_area: f64,
+    spacing: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let feature_index = CopperSpatialIndex::new(&features, spacing);
+    let broad_phase_spacing = scalar_broad_phase_radius(spacing);
+    let feature_index = CopperSpatialIndex::new(&features, broad_phase_spacing);
     let hot_features = features
         .iter()
         .copied()
@@ -456,7 +486,7 @@ pub fn hot_component_spacing_readiness(
     let mut exact_pair_count = 0_usize;
 
     for hot in hot_features {
-        for neighbor_index in feature_index.same_layer_near_feature(hot, spacing) {
+        for neighbor_index in feature_index.same_layer_near_feature(hot, broad_phase_spacing) {
             candidate_count += 1;
             let neighbor = features[neighbor_index];
             if std::ptr::eq(hot, neighbor) {
@@ -465,21 +495,22 @@ pub fn hot_component_spacing_readiness(
             if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net) {
                 continue;
             }
-            if !sketches_within_clearance(&hot.sketch, &neighbor.sketch, spacing) {
+            if !sketches_within_clearance(&hot.sketch, &neighbor.sketch, broad_phase_spacing) {
                 continue;
             }
             exact_pair_count += 1;
 
             let overlap = hot
                 .sketch
-                .offset(crate::geometry::exact_real(spacing))
+                .offset(spacing.clone())
                 .intersection(&neighbor.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundary_distance_scalar(
                     &hot.sketch.to_multipolygon(),
                     &neighbor.sketch.to_multipolygon(),
-                ) <= spacing;
+                )
+                .is_some_and(|distance| &distance <= spacing);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -490,7 +521,10 @@ pub fn hot_component_spacing_readiness(
                 vec![hot.layer.clone()],
                 None,
                 shapes,
-                vec![hot.location, neighbor.location],
+                vec![
+                    hot.location_f64_compatibility_required(),
+                    neighbor.location_f64_compatibility_required(),
+                ],
                 Some(format!(
                     "likely hot feature {:?} is within thermal spacing {spacing:.6} of neighboring net {:?}; review heat spreading, derating, and component placement",
                     hot.net, neighbor.net
@@ -522,8 +556,8 @@ pub fn thermal_mechanical_keepout_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
     selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
+    keepout: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut mechanical_drills = board
         .drills
@@ -533,18 +567,28 @@ pub fn thermal_mechanical_keepout_readiness(
         .collect::<Vec<_>>();
     mechanical_drills.sort_by(|left, right| {
         left.location[0]
-            .total_cmp(&right.location[0])
-            .then(left.location[1].total_cmp(&right.location[1]))
-            .then(left.diameter.total_cmp(&right.diameter))
+            .partial_cmp(&right.location[0])
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| {
+                left.location[1]
+                    .partial_cmp(&right.location[1])
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| {
+                left.diameter
+                    .partial_cmp(&right.diameter)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
     });
 
     let hot_features = selected_copper_features(board, selected_layers)
         .into_iter()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_hot_component_net))
         .collect::<Vec<_>>();
-    let hot_index = CopperSpatialIndex::new(&hot_features, keepout);
+    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+    let hot_index = CopperSpatialIndex::new(&hot_features, broad_phase_keepout);
     log::trace!(
-        "thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:.6}",
+        "thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:#.6}",
         board.source,
         hot_features.len(),
         hot_index.bucket_count(),
@@ -555,29 +599,56 @@ pub fn thermal_mechanical_keepout_readiness(
     let mut exact_pair_count = 0_usize;
 
     for drill in mechanical_drills {
-        let keepout_radius = drill.diameter / 2.0 + keepout;
-        let keepout_sketch = polygons_to_profile(
-            vec![circle_polygon(drill.location, keepout_radius, 32)],
+        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
+            continue;
+        };
+        let keepout_radius = drill_radius + keepout;
+        let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
+        let center = drill.location_f64_compatibility_required();
+        let broad_candidates = hot_index.all_layers_near_circle(center, broad_phase_radius);
+        candidate_count += broad_candidates.len();
+        let candidates = broad_candidates
+            .into_iter()
+            .filter(|&index| {
+                feature_may_touch_circle(hot_features[index], center, broad_phase_radius)
+            })
+            .collect::<Vec<_>>();
+        if candidates.is_empty() {
+            continue;
+        }
+        let keepout_sketch = PcbSketch::new(
+            Profile::circle(keepout_radius, 64).translate(
+                drill.location[0].clone(),
+                drill.location[1].clone(),
+                Scalar::zero(),
+            ),
             Some(LayerMetadata {
                 name: "thermal mechanical keepout".to_string(),
             }),
         );
 
-        for hot_index in hot_index.all_layers_near_circle(drill.location, keepout_radius) {
-            candidate_count += 1;
+        for hot_index in candidates {
             let hot = hot_features[hot_index];
-            if !feature_may_touch_circle(hot, drill.location, keepout_radius) {
-                continue;
-            }
             exact_pair_count += 1;
-            let overlap = keepout_sketch.intersection(&hot.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let (shapes, uncertain) = match keepout_sketch.try_intersection(&hot.sketch) {
+                Ok(overlap) => (
+                    multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area),
+                    false,
+                ),
+                Err(error) => {
+                    log::warn!(
+                        "thermal mechanical keepout used conservative finding after uncertified profile intersection: {error}"
+                    );
+                    (Vec::new(), true)
+                }
+            };
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundaries_within_scalar(
                     &keepout_sketch.to_multipolygon(),
                     &hot.sketch.to_multipolygon(),
-                ) <= 1.0e-9;
-            if shapes.is_empty() && !fallback_hit {
+                    &Scalar::zero(),
+                );
+            if shapes.is_empty() && !fallback_hit && !uncertain {
                 continue;
             }
 
@@ -587,9 +658,12 @@ pub fn thermal_mechanical_keepout_readiness(
                 vec![hot.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location, hot.location],
+                vec![
+                    drill.location_f64_compatibility_required(),
+                    hot.location_f64_compatibility_required(),
+                ],
                 Some(format!(
-                    "likely hot feature {:?} is inside mechanical thermal keepout {keepout:.6}; review heatsink, standoff, screw, chassis, and airflow clearance",
+                    "likely hot feature {:?} is inside mechanical thermal keepout {keepout:#.6}; review heatsink, standoff, screw, chassis, and airflow clearance",
                     hot.net
                 )),
             ));
@@ -612,35 +686,58 @@ fn thermal_zone_vias_indexed<'a>(
     vias: &[&'a CopperFeature],
     via_index: &CopperSpatialIndex<'a>,
     zone: &CopperFeature,
-    anchor_tolerance: f64,
+    anchor_tolerance: &Scalar,
+    broad_phase_tolerance: f64,
 ) -> (Vec<&'a CopperFeature>, usize) {
-    let candidates = via_index.same_layer_near_feature(zone, anchor_tolerance);
+    let candidates = via_index.same_layer_near_feature(zone, broad_phase_tolerance);
     let candidate_count = candidates.len();
-    let zone_geometry = zone.sketch.geometry();
     let zone_vias = candidates
         .into_iter()
         .filter_map(|via_index| {
             let via = vias[via_index];
             (via.net == zone.net
-                && (zone_geometry.contains(&Point::new(via.location[0], via.location[1]))
-                    || copper_features_touch(via, zone, anchor_tolerance)))
+                && (feature_contains_point_scalar(zone, &via.location)
+                    || copper_features_touch_scalar(via, zone, anchor_tolerance)))
             .then_some(via)
         })
         .collect();
     (zone_vias, candidate_count)
 }
 
-fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: f64) -> bool {
-    left.sketch
+fn copper_features_touch_scalar(
+    left: &CopperFeature,
+    right: &CopperFeature,
+    tolerance: &Scalar,
+) -> bool {
+    !left
+        .sketch
         .intersection(&right.sketch)
-        .to_multipolygon()
-        .0
-        .iter()
-        .any(|polygon| polygon.unsigned_area() > 0.0)
-        || polygon_boundary_distance(
+        .as_region()
+        .material_contours()
+        .is_empty()
+        || polygon_boundary_distance_scalar(
             &left.sketch.to_multipolygon(),
             &right.sketch.to_multipolygon(),
-        ) <= tolerance
+        )
+        .is_some_and(|distance| &distance <= tolerance)
+}
+
+fn feature_contains_point_scalar(feature: &CopperFeature, point: &[Scalar; 2]) -> bool {
+    feature
+        .sketch
+        .contains_xy(point[0].clone(), point[1].clone())
+        == Some(true)
+}
+
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("thermal broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
 }
 
 fn selected_copper_features<'a>(
@@ -654,12 +751,27 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
-    sketch.geometry().bounding_rect().map(|bounds| {
-        let width = bounds.max().x - bounds.min().x;
-        let height = bounds.max().y - bounds.min().y;
-        (width.min(height), width.max(height))
+fn bounding_dimensions_scalar(sketch: &PcbSketch) -> Option<(Scalar, Scalar)> {
+    let (width, height) = if let Some(bounds) = sketch.exact_bounds() {
+        (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1])
+    } else {
+        let bounds = sketch.geometry().bounding_rect()?;
+        (
+            Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?,
+            Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?,
+        )
+    };
+    Some(if width <= height {
+        (width, height)
+    } else {
+        (height, width)
     })
+}
+
+fn point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &left[0] - &right[0];
+    let dy = &left[1] - &right[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
@@ -746,7 +858,13 @@ mod tests {
             copper_disc("VOUT", CopperKind::Via, [0.25, 0.0], 0.20),
         ]);
 
-        let violations = thermal_via_distribution_readiness(&board, &[], 2, 1.0, 0.10);
+        let violations = thermal_via_distribution_readiness(
+            &board,
+            &[],
+            2,
+            &crate::scalar::scalar("1.0"),
+            &crate::scalar::scalar("0.10"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-via-distribution-readiness");
@@ -770,8 +888,26 @@ mod tests {
             copper_disc("VOUT", CopperKind::Via, [0.0, 0.0], 0.20),
         ]);
 
-        assert!(thermal_via_distribution_readiness(&wide, &[], 2, 1.0, 0.10).is_empty());
-        assert!(thermal_via_distribution_readiness(&sparse, &[], 2, 1.0, 0.10).is_empty());
+        assert!(
+            thermal_via_distribution_readiness(
+                &wide,
+                &[],
+                2,
+                &crate::scalar::scalar("1.0"),
+                &crate::scalar::scalar("0.10")
+            )
+            .is_empty()
+        );
+        assert!(
+            thermal_via_distribution_readiness(
+                &sparse,
+                &[],
+                2,
+                &crate::scalar::scalar("1.0"),
+                &crate::scalar::scalar("0.10")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -783,11 +919,24 @@ mod tests {
         ]);
 
         assert!(
-            thermal_via_distribution_readiness(&board, &["F.Cu".to_string()], 2, 1.0, 0.10)
-                .is_empty()
+            thermal_via_distribution_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                2,
+                &crate::scalar::scalar("1.0"),
+                &crate::scalar::scalar("0.10")
+            )
+            .is_empty()
         );
         assert_eq!(
-            thermal_via_distribution_readiness(&board, &["B.Cu".to_string()], 2, 1.0, 0.10).len(),
+            thermal_via_distribution_readiness(
+                &board,
+                &["B.Cu".to_string()],
+                2,
+                &crate::scalar::scalar("1.0"),
+                &crate::scalar::scalar("0.10")
+            )
+            .len(),
             1
         );
     }
@@ -814,7 +963,13 @@ mod tests {
         let board = board_with_copper(copper);
 
         let started = std::time::Instant::now();
-        let violations = thermal_via_distribution_readiness(&board, &[], 2, 5.0, 0.0);
+        let violations = thermal_via_distribution_readiness(
+            &board,
+            &[],
+            2,
+            &crate::scalar::scalar("5.0"),
+            &crate::scalar::scalar("0.0"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -846,7 +1001,13 @@ mod tests {
         let board = board_with_copper(copper);
 
         let started = std::time::Instant::now();
-        let violations = thermal_via_distribution_readiness(&board, &[], 2, 1.0, 0.10);
+        let violations = thermal_via_distribution_readiness(
+            &board,
+            &[],
+            2,
+            &crate::scalar::scalar("1.0"),
+            &crate::scalar::scalar("0.10"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -862,7 +1023,7 @@ mod tests {
             copper_rect("GND", CopperKind::Zone, "F.Cu", -1.0, -1.0, 1.0, 1.0),
         ]);
 
-        let violations = thermal_relief_readiness(&board, &[], 1.0e-9);
+        let violations = thermal_relief_readiness(&board, &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-relief-readiness");
@@ -893,7 +1054,7 @@ mod tests {
         let board = board_with_copper(copper);
 
         let started = std::time::Instant::now();
-        let violations = thermal_relief_readiness(&board, &[], 1.0e-9);
+        let violations = thermal_relief_readiness(&board, &[], &crate::scalar::scalar("1.0e-9"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -914,7 +1075,7 @@ mod tests {
             1.0,
         )]);
 
-        let violations = thermal_via_readiness(&board, &[], 2, 0.10);
+        let violations = thermal_via_readiness(&board, &[], 2, &crate::scalar::scalar("0.10"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-via-readiness");
@@ -941,7 +1102,7 @@ mod tests {
         let board = board_with_copper(copper);
 
         let started = std::time::Instant::now();
-        let violations = thermal_via_readiness(&board, &[], 2, 0.10);
+        let violations = thermal_via_readiness(&board, &[], 2, &crate::scalar::scalar("0.10"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -962,7 +1123,7 @@ mod tests {
             1.5,
         )]);
 
-        let violations = thermal_pad_via_readiness(&board, &[], 2.0);
+        let violations = thermal_pad_via_readiness(&board, &[], &crate::scalar::scalar("2.0"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-pad-via-readiness");
@@ -989,7 +1150,7 @@ mod tests {
         let board = board_with_copper(copper);
 
         let started = std::time::Instant::now();
-        let violations = thermal_pad_via_readiness(&board, &[], 2.0);
+        let violations = thermal_pad_via_readiness(&board, &[], &crate::scalar::scalar("2.0"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1005,7 +1166,7 @@ mod tests {
             copper_rect("VOUT", CopperKind::Zone, "F.Cu", 5.0, 0.0, 7.0, 2.0),
         ]);
 
-        let violations = thermal_copper_area_readiness(&board, &[], 2.0);
+        let violations = thermal_copper_area_readiness(&board, &[], &crate::scalar::scalar("2.0"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-copper-area-readiness");
@@ -1035,7 +1196,9 @@ mod tests {
         ));
         let board = board_with_copper(copper);
 
-        assert!(thermal_copper_area_readiness(&board, &[], 2.0).is_empty());
+        assert!(
+            thermal_copper_area_readiness(&board, &[], &crate::scalar::scalar("2.0")).is_empty()
+        );
     }
 
     #[test]
@@ -1046,7 +1209,12 @@ mod tests {
             copper_rect("GND", CopperKind::Zone, "F.Cu", 0.0, 2.0, 2.0, 3.0),
         ]);
 
-        let violations = hot_component_spacing_readiness(&board, &[], 0.3, 1.0e-9);
+        let violations = hot_component_spacing_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.3"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "hot-component-spacing-readiness");
@@ -1084,7 +1252,12 @@ mod tests {
         ));
         let board = board_with_copper(copper);
 
-        let violations = hot_component_spacing_readiness(&board, &[], 0.3, 1.0e-9);
+        let violations = hot_component_spacing_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.3"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(violations[0].message.as_ref().is_some_and(|message| {
@@ -1104,13 +1277,22 @@ mod tests {
             1.0,
         )]);
         board.drills = vec![DrillFeature {
-            location: [1.4, 0.5],
-            diameter: 0.8,
+            location: [
+                crate::geometry::exact_real(1.4),
+                crate::geometry::exact_real(0.5),
+            ],
+            diameter: crate::scalar::scalar("0.8"),
             net: None,
             plated: false,
         }];
 
-        let violations = thermal_mechanical_keepout_readiness(&board, &[], &[], 0.2, 1.0e-9);
+        let violations = thermal_mechanical_keepout_readiness(
+            &board,
+            &[],
+            &[],
+            &crate::scalar::scalar("0.2"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-mechanical-keepout-readiness");
@@ -1143,14 +1325,23 @@ mod tests {
         ));
         let mut board = board_with_copper(copper);
         board.drills = vec![DrillFeature {
-            location: [1.4, 0.5],
-            diameter: 0.8,
+            location: [
+                crate::geometry::exact_real(1.4),
+                crate::geometry::exact_real(0.5),
+            ],
+            diameter: crate::scalar::scalar("0.8"),
             net: None,
             plated: false,
         }];
 
         let start = std::time::Instant::now();
-        let violations = thermal_mechanical_keepout_readiness(&board, &[], &[], 0.2, 1.0e-9);
+        let violations = thermal_mechanical_keepout_readiness(
+            &board,
+            &[],
+            &[],
+            &crate::scalar::scalar("0.2"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1182,7 +1373,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            location: [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
+            location: [
+                crate::geometry::exact_real((min_x + max_x) / 2.0),
+                crate::geometry::exact_real((min_y + max_y) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
@@ -1216,7 +1410,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {

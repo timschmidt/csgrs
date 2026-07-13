@@ -11,6 +11,9 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 
+use crate::Scalar;
+use crate::scalar::parse_source_scalar;
+
 #[derive(Clone, Debug)]
 /// Public data model for `Ipc356Point`.
 pub struct Ipc356Point {
@@ -21,9 +24,9 @@ pub struct Ipc356Point {
     /// Field `pin`.
     pub pin: Option<String>,
     /// Field `location`.
-    pub location: [f64; 2],
+    pub location: [Scalar; 2],
     /// Field `diameter`.
-    pub diameter: Option<f64>,
+    pub diameter: Option<Scalar>,
     /// Field `access_side`.
     pub access_side: Option<Ipc356AccessSide>,
     /// Field `feature_type`.
@@ -162,17 +165,38 @@ pub struct Ipc356GeometryStats {
     /// Parsed point records included in the geometry summary.
     pub point_records: usize,
     /// Minimum parsed X coordinate.
-    pub min_x: Option<f64>,
+    pub min_x: Option<Scalar>,
     /// Maximum parsed X coordinate.
-    pub max_x: Option<f64>,
+    pub max_x: Option<Scalar>,
     /// Minimum parsed Y coordinate.
-    pub min_y: Option<f64>,
+    pub min_y: Option<Scalar>,
     /// Maximum parsed Y coordinate.
-    pub max_y: Option<f64>,
+    pub max_y: Option<Scalar>,
     /// Smallest positive parsed diameter.
-    pub min_positive_diameter: Option<f64>,
+    pub min_positive_diameter: Option<Scalar>,
     /// Largest positive parsed diameter.
-    pub max_positive_diameter: Option<f64>,
+    pub max_positive_diameter: Option<Scalar>,
+}
+
+impl Ipc356Point {
+    pub(crate) fn location_f64_compatibility(&self) -> Option<[f64; 2]> {
+        Some([
+            self.location[0]
+                .to_f64_lossy()
+                .filter(|coordinate| coordinate.is_finite())?,
+            self.location[1]
+                .to_f64_lossy()
+                .filter(|coordinate| coordinate.is_finite())?,
+        ])
+    }
+
+    /// Project the exact source diameter for finite geometry/report adapters.
+    pub(crate) fn diameter_f64_compatibility(&self) -> Option<f64> {
+        self.diameter
+            .as_ref()?
+            .to_f64_lossy()
+            .filter(|diameter| diameter.is_finite())
+    }
 }
 
 /// Report-level IPC-D-356 parser diagnostic summary.
@@ -389,10 +413,10 @@ impl Ipc356ComponentStats {
 
 impl Ipc356DiameterStats {
     fn count_point(&mut self, point: &Ipc356Point) {
-        match point.diameter {
+        match &point.diameter {
             Some(diameter) => {
                 self.diameter_records += 1;
-                if diameter <= 0.0 {
+                if diameter <= &Scalar::zero() {
                     self.non_positive_diameter_records += 1;
                 }
             }
@@ -404,30 +428,36 @@ impl Ipc356DiameterStats {
 impl Ipc356GeometryStats {
     fn count_point(&mut self, point: &Ipc356Point) {
         self.point_records += 1;
-        self.min_x = Some(
-            self.min_x
-                .map_or(point.location[0], |value| value.min(point.location[0])),
-        );
-        self.max_x = Some(
-            self.max_x
-                .map_or(point.location[0], |value| value.max(point.location[0])),
-        );
-        self.min_y = Some(
-            self.min_y
-                .map_or(point.location[1], |value| value.min(point.location[1])),
-        );
-        self.max_y = Some(
-            self.max_y
-                .map_or(point.location[1], |value| value.max(point.location[1])),
-        );
-        if let Some(diameter) = point.diameter.filter(|diameter| *diameter > 0.0) {
+        self.min_x = Some(self.min_x.as_ref().map_or_else(
+            || point.location[0].clone(),
+            |value| value.min(&point.location[0]).clone(),
+        ));
+        self.max_x = Some(self.max_x.as_ref().map_or_else(
+            || point.location[0].clone(),
+            |value| value.max(&point.location[0]).clone(),
+        ));
+        self.min_y = Some(self.min_y.as_ref().map_or_else(
+            || point.location[1].clone(),
+            |value| value.min(&point.location[1]).clone(),
+        ));
+        self.max_y = Some(self.max_y.as_ref().map_or_else(
+            || point.location[1].clone(),
+            |value| value.max(&point.location[1]).clone(),
+        ));
+        if let Some(diameter) = point
+            .diameter
+            .as_ref()
+            .filter(|diameter| *diameter > &Scalar::zero())
+        {
             self.min_positive_diameter = Some(
                 self.min_positive_diameter
-                    .map_or(diameter, |value| value.min(diameter)),
+                    .as_ref()
+                    .map_or_else(|| diameter.clone(), |value| value.min(diameter).clone()),
             );
             self.max_positive_diameter = Some(
                 self.max_positive_diameter
-                    .map_or(diameter, |value| value.max(diameter)),
+                    .as_ref()
+                    .map_or_else(|| diameter.clone(), |value| value.max(diameter).clone()),
             );
         }
     }
@@ -736,7 +766,7 @@ fn parse_soldermask(value: &str) -> Option<Ipc356Soldermask> {
     }
 }
 
-fn parse_xy_markers(value: &str) -> Option<(f64, f64)> {
+fn parse_xy_markers(value: &str) -> Option<(Scalar, Scalar)> {
     let x_marker = value.find('X')?;
     let y_marker = value.find('Y')?;
     let x_end = if x_marker < y_marker {
@@ -768,23 +798,36 @@ fn take_number(value: &str) -> Option<&str> {
     (end > 0).then_some(&value[..end])
 }
 
-fn parse_ipc_number(value: &str) -> Option<f64> {
+fn parse_ipc_number(value: &str) -> Option<Scalar> {
     let value = value.trim();
     if value.is_empty() {
         return None;
     }
     if value.contains('.') {
-        return value.parse().ok();
+        return parse_source_scalar(value);
     }
 
     let sign = value.starts_with('-');
     let digits = value.trim_start_matches(['+', '-']);
-    if !digits.chars().all(|ch| ch.is_ascii_digit()) {
+    if digits.is_empty() || !digits.chars().all(|ch| ch.is_ascii_digit()) {
         return None;
     }
     if digits.len() <= 4 {
-        let parsed = digits.parse::<f64>().ok()? / 1000.0;
-        return Some(if sign { -parsed } else { parsed });
+        let split = digits.len().saturating_sub(3);
+        let mut normalized = String::new();
+        if sign {
+            normalized.push('-');
+        }
+        if split == 0 {
+            normalized.push_str("0.");
+            normalized.extend(std::iter::repeat_n('0', 3 - digits.len()));
+            normalized.push_str(digits);
+        } else {
+            normalized.push_str(&digits[..split]);
+            normalized.push('.');
+            normalized.push_str(&digits[split..]);
+        }
+        return parse_source_scalar(&normalized);
     }
 
     let split = digits.len().saturating_sub(4);
@@ -795,7 +838,7 @@ fn parse_ipc_number(value: &str) -> Option<f64> {
     normalized.push_str(&digits[..split]);
     normalized.push('.');
     normalized.push_str(&digits[split..]);
-    normalized.parse().ok()
+    parse_source_scalar(&normalized)
 }
 
 #[cfg(test)]
@@ -813,8 +856,11 @@ mod tests {
 
         assert_eq!(points.len(), 1);
         assert_eq!(points[0].net, "GND");
-        assert_eq!(points[0].location, [1.0, 2.0]);
-        assert_eq!(points[0].diameter, Some(0.06));
+        assert_eq!(
+            points[0].location,
+            [crate::scalar::scalar("1.0"), crate::scalar::scalar("2.0")]
+        );
+        assert_eq!(points[0].diameter, Some(crate::scalar::scalar("0.06")));
     }
 
     #[test]
@@ -982,12 +1028,30 @@ mod tests {
         );
 
         assert_eq!(report.geometry_stats.point_records, 4);
-        assert_eq!(report.geometry_stats.min_x, Some(0.5));
-        assert_eq!(report.geometry_stats.max_x, Some(7.0));
-        assert_eq!(report.geometry_stats.min_y, Some(1.0));
-        assert_eq!(report.geometry_stats.max_y, Some(8.0));
-        assert_eq!(report.geometry_stats.min_positive_diameter, Some(0.06));
-        assert_eq!(report.geometry_stats.max_positive_diameter, Some(0.09));
+        assert_eq!(
+            report.geometry_stats.min_x,
+            Some(crate::scalar::scalar("0.5"))
+        );
+        assert_eq!(
+            report.geometry_stats.max_x,
+            Some(crate::scalar::scalar("7.0"))
+        );
+        assert_eq!(
+            report.geometry_stats.min_y,
+            Some(crate::scalar::scalar("1.0"))
+        );
+        assert_eq!(
+            report.geometry_stats.max_y,
+            Some(crate::scalar::scalar("8.0"))
+        );
+        assert_eq!(
+            report.geometry_stats.min_positive_diameter,
+            Some(crate::scalar::scalar("0.06"))
+        );
+        assert_eq!(
+            report.geometry_stats.max_positive_diameter,
+            Some(crate::scalar::scalar("0.09"))
+        );
     }
 
     #[test]

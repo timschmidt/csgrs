@@ -12,9 +12,10 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::PcbSketchExt;
-use crate::checks::distance::polygon_boundary_distance;
+use crate::Scalar;
+use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::spatial::CopperSpatialIndex;
-use crate::geometry::multipolygon_to_shapes;
+use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
 
@@ -31,14 +32,15 @@ use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margi
 pub fn high_voltage_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    edge_clearance: f64,
-    min_area: f64,
+    edge_clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
     let outline_rect = axis_aligned_outline_rect(outline);
-    let allowed = outline.offset(crate::geometry::exact_real(-edge_clearance));
+    let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
+    let allowed = outline.offset(-edge_clearance.clone());
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -50,17 +52,16 @@ pub fn high_voltage_edge_readiness(
         if !looks_high_voltage_net(net) {
             continue;
         }
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
-        {
+        if outline_rect.as_ref().is_some_and(|rect| {
+            feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
+        }) {
             skipped_rect_inside += 1;
             continue;
         }
 
         exact_difference_count += 1;
         let intrusion = feature.sketch.difference(&allowed);
-        let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&intrusion.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
         }
@@ -71,7 +72,7 @@ pub fn high_voltage_edge_readiness(
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![feature.location],
+            vec![feature.location_f64_compatibility_required()],
             Some(format!(
                 "likely high-voltage net {net} is within {edge_clearance:.6} of the board edge; review edge creepage, clearance, and routed-slot barrier intent"
             )),
@@ -99,12 +100,13 @@ pub fn high_voltage_edge_readiness(
 /// no reportable area.
 pub fn voltage_clearance_readiness(
     board: &BoardModel,
-    clearance: f64,
+    clearance: &Scalar,
     selected_layers: &[String],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let feature_index = CopperSpatialIndex::new(&features, clearance);
+    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+    let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);
     let high_voltage_indices = features
         .iter()
         .enumerate()
@@ -129,7 +131,7 @@ pub fn voltage_clearance_readiness(
 
     for &left_index in &high_voltage_indices {
         let left = features[left_index];
-        for right_index in feature_index.same_layer_near_feature(left, clearance) {
+        for right_index in feature_index.same_layer_near_feature(left, broad_phase_clearance) {
             candidate_count += 1;
             let right = features[right_index];
             if left_index == right_index {
@@ -146,23 +148,27 @@ pub fn voltage_clearance_readiness(
             if right_high_voltage && right_index < left_index {
                 continue;
             }
-            if !sketches_within_clearance(&left.sketch, &right.sketch, clearance) {
+            if !sketches_within_clearance(&left.sketch, &right.sketch, broad_phase_clearance) {
                 continue;
             }
             exact_pair_count += 1;
 
             let overlap = left
                 .sketch
-                .offset(crate::geometry::exact_real(clearance))
+                .offset(clearance.clone())
                 .intersection(&right.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundary_distance_scalar(
                     &left.sketch.to_multipolygon(),
                     &right.sketch.to_multipolygon(),
-                ) <= clearance
+                )
+                .is_some_and(|distance| &distance <= clearance)
             {
-                vec![left.location, right.location]
+                vec![
+                    left.location_f64_compatibility_required(),
+                    right.location_f64_compatibility_required(),
+                ]
             } else {
                 Vec::new()
             };
@@ -210,8 +216,8 @@ pub fn voltage_clearance_readiness(
 pub fn protective_earth_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let high_voltage = features
@@ -229,7 +235,8 @@ pub fn protective_earth_spacing_readiness(
                 .is_some_and(looks_protective_earth_net)
         })
         .collect::<Vec<_>>();
-    let protective_index = CopperSpatialIndex::new(&protective, clearance);
+    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+    let protective_index = CopperSpatialIndex::new(&protective, broad_phase_clearance);
     log::trace!(
         "protective-earth spacing readiness: source={} high_voltage={} protective={} buckets={} clearance={clearance:.6}",
         board.source,
@@ -242,27 +249,25 @@ pub fn protective_earth_spacing_readiness(
     let mut candidate_count = 0_usize;
     let mut exact_pair_count = 0_usize;
     for hv in high_voltage {
-        for pe_index in protective_index.same_layer_near_feature(hv, clearance) {
+        for pe_index in protective_index.same_layer_near_feature(hv, broad_phase_clearance) {
             candidate_count += 1;
             let pe = protective[pe_index];
             if hv.net == pe.net {
                 continue;
             }
-            if !sketches_within_clearance(&hv.sketch, &pe.sketch, clearance) {
+            if !sketches_within_clearance(&hv.sketch, &pe.sketch, broad_phase_clearance) {
                 continue;
             }
             exact_pair_count += 1;
 
-            let overlap = hv
-                .sketch
-                .offset(crate::geometry::exact_real(clearance))
-                .intersection(&pe.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let overlap = hv.sketch.offset(clearance.clone()).intersection(&pe.sketch);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundary_distance_scalar(
                     &hv.sketch.to_multipolygon(),
                     &pe.sketch.to_multipolygon(),
-                ) <= clearance;
+                )
+                .is_some_and(|distance| &distance <= clearance);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -274,7 +279,10 @@ pub fn protective_earth_spacing_readiness(
                 None,
                 shapes,
                 if fallback_hit {
-                    vec![hv.location, pe.location]
+                    vec![
+                        hv.location_f64_compatibility_required(),
+                        pe.location_f64_compatibility_required(),
+                    ]
                 } else {
                     Vec::new()
                 },
@@ -310,8 +318,8 @@ pub fn protective_earth_spacing_readiness(
 pub fn surge_protection_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
+    keepout: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let surge = features
@@ -324,7 +332,8 @@ pub fn surge_protection_keepout_readiness(
                 .is_some_and(looks_surge_protection_net)
         })
         .collect::<Vec<_>>();
-    let feature_index = CopperSpatialIndex::new(&features, keepout);
+    let broad_phase_keepout = scalar_broad_phase_radius(keepout);
+    let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);
     log::trace!(
         "surge protection keepout readiness: source={} features={} surge_features={} buckets={} keepout={keepout:.6}",
         board.source,
@@ -337,7 +346,7 @@ pub fn surge_protection_keepout_readiness(
     let mut candidate_count = 0_usize;
     let mut exact_pair_count = 0_usize;
     for source in surge {
-        for neighbor_index in feature_index.same_layer_near_feature(source, keepout) {
+        for neighbor_index in feature_index.same_layer_near_feature(source, broad_phase_keepout) {
             candidate_count += 1;
             let neighbor = features[neighbor_index];
             if std::ptr::eq(source, neighbor) {
@@ -351,21 +360,22 @@ pub fn surge_protection_keepout_readiness(
             {
                 continue;
             }
-            if !sketches_within_clearance(&source.sketch, &neighbor.sketch, keepout) {
+            if !sketches_within_clearance(&source.sketch, &neighbor.sketch, broad_phase_keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let overlap = source
                 .sketch
-                .offset(crate::geometry::exact_real(keepout))
+                .offset(keepout.clone())
                 .intersection(&neighbor.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
+                && polygon_boundary_distance_scalar(
                     &source.sketch.to_multipolygon(),
                     &neighbor.sketch.to_multipolygon(),
-                ) <= keepout;
+                )
+                .is_some_and(|distance| &distance <= keepout);
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -377,7 +387,10 @@ pub fn surge_protection_keepout_readiness(
                 None,
                 shapes,
                 if fallback_hit {
-                    vec![source.location, neighbor.location]
+                    vec![
+                        source.location_f64_compatibility_required(),
+                        neighbor.location_f64_compatibility_required(),
+                    ]
                 } else {
                     Vec::new()
                 },
@@ -422,6 +435,23 @@ fn sketches_within_clearance(
         && left_bounds.max().y + clearance >= right_bounds.min().y
 }
 
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("safety broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
+}
+
+fn exact_point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &left[0] - &right[0];
+    let dy = &left[1] - &right[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
+}
+
 /// Warn when exposed connector-like nets lack nearby ESD protection copper.
 ///
 /// Nets that look like connector, RF, or high-speed interfaces and sit near the
@@ -430,8 +460,8 @@ fn sketches_within_clearance(
 pub fn esd_protection_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    edge_distance: f64,
-    protection_search_radius: f64,
+    edge_distance: &Scalar,
+    protection_search_radius: &Scalar,
 ) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
@@ -447,9 +477,10 @@ pub fn esd_protection_readiness(
             })
         })
         .collect::<Vec<_>>();
-    let protection_index = CopperSpatialIndex::new(&protection_features, protection_search_radius);
+    let broad_phase_radius = scalar_broad_phase_radius(protection_search_radius);
+    let protection_index = CopperSpatialIndex::new(&protection_features, broad_phase_radius);
     log::trace!(
-        "ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:.6} protection_radius={protection_search_radius:.6}",
+        "ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:#.6} protection_radius={protection_search_radius:#.6}",
         board.source,
         features.len(),
         protection_features.len(),
@@ -468,24 +499,26 @@ pub fn esd_protection_readiness(
             continue;
         }
 
-        let edge_gap = polygon_boundary_distance(
+        let Some(edge_gap) = polygon_boundary_distance_scalar(
             &feature.sketch.to_multipolygon(),
             &outline.to_multipolygon(),
-        );
-        if edge_gap > edge_distance {
+        ) else {
+            continue;
+        };
+        if &edge_gap > edge_distance {
             continue;
         }
         edge_candidate_count += 1;
 
-        let protection_candidates = protection_index.same_layer_centers_within(
-            feature.location,
-            &feature.layer,
-            protection_search_radius,
-        );
+        let protection_candidates =
+            protection_index.same_layer_near_feature(feature, broad_phase_radius);
         protection_candidate_count += protection_candidates.len();
         let has_protection = protection_candidates.into_iter().any(|protection_index| {
             exact_protection_checks += 1;
-            !std::ptr::eq(protection_features[protection_index], feature)
+            let protection = protection_features[protection_index];
+            !std::ptr::eq(protection, feature)
+                && exact_point_distance_scalar(&feature.location, &protection.location)
+                    .is_some_and(|distance| &distance <= protection_search_radius)
         });
         if has_protection {
             continue;
@@ -497,9 +530,9 @@ pub fn esd_protection_readiness(
             vec![feature.layer.clone()],
             None,
             Vec::new(),
-            vec![feature.location],
+            vec![feature.location_f64_compatibility_required()],
             Some(format!(
-                "likely edge connector net {net:?} is {edge_gap:.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:.6}"
+                "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}"
             )),
         ));
     }
@@ -530,7 +563,7 @@ pub fn esd_protection_readiness(
 pub fn esd_return_path_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    return_search_radius: f64,
+    return_search_radius: &Scalar,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let return_features = features
@@ -543,9 +576,10 @@ pub fn esd_return_path_readiness(
                 .is_some_and(|net| looks_ground_net(net) || looks_chassis_net(net))
         })
         .collect::<Vec<_>>();
-    let return_index = CopperSpatialIndex::new(&return_features, return_search_radius);
+    let broad_phase_radius = scalar_broad_phase_radius(return_search_radius);
+    let return_index = CopperSpatialIndex::new(&return_features, broad_phase_radius);
     log::trace!(
-        "ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:.6}",
+        "ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:#.6}",
         board.source,
         features.len(),
         return_features.len(),
@@ -565,15 +599,14 @@ pub fn esd_return_path_readiness(
         }
         esd_count += 1;
 
-        let return_candidates = return_index.same_layer_centers_within(
-            feature.location,
-            &feature.layer,
-            return_search_radius,
-        );
+        let return_candidates = return_index.same_layer_near_feature(feature, broad_phase_radius);
         return_candidate_count += return_candidates.len();
         let has_return = return_candidates.into_iter().any(|return_index| {
             exact_return_checks += 1;
-            !std::ptr::eq(return_features[return_index], feature)
+            let return_feature = return_features[return_index];
+            !std::ptr::eq(return_feature, feature)
+                && exact_point_distance_scalar(&feature.location, &return_feature.location)
+                    .is_some_and(|distance| &distance <= return_search_radius)
         });
         if has_return {
             continue;
@@ -585,9 +618,9 @@ pub fn esd_return_path_readiness(
             vec![feature.layer.clone()],
             None,
             Vec::new(),
-            vec![feature.location],
+            vec![feature.location_f64_compatibility_required()],
             Some(format!(
-                "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:.6}; review TVS clamp loop inductance and discharge path"
+                "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path"
             )),
         ));
     }
@@ -755,7 +788,7 @@ mod tests {
             0.20,
         )]);
 
-        let violations = esd_return_path_readiness(&board, &[], 0.50);
+        let violations = esd_return_path_readiness(&board, &[], &crate::scalar::scalar("0.50"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "esd-return-path-readiness");
@@ -768,8 +801,15 @@ mod tests {
             copper_disc_on_layer("CHASSIS", CopperKind::Pad, "B.Cu", [0.25, 0.0], 0.20),
         ]);
 
-        assert!(esd_return_path_readiness(&board, &[], 0.50).is_empty());
-        assert!(esd_return_path_readiness(&board, &["F.Cu".to_string()], 0.50).is_empty());
+        assert!(esd_return_path_readiness(&board, &[], &crate::scalar::scalar("0.50")).is_empty());
+        assert!(
+            esd_return_path_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                &crate::scalar::scalar("0.50")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -779,7 +819,12 @@ mod tests {
             copper_rect("GND", CopperKind::Segment, "F.Cu", 1.1, 0.0, 2.0, 0.2),
         ]);
 
-        let violations = voltage_clearance_readiness(&board, 0.30, &[], 1.0e-9);
+        let violations = voltage_clearance_readiness(
+            &board,
+            &crate::scalar::scalar("0.30"),
+            &[],
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "voltage-clearance-readiness");
@@ -817,7 +862,12 @@ mod tests {
         ));
         let board = board_with_copper(copper);
 
-        let violations = voltage_clearance_readiness(&board, 0.30, &[], 1.0e-9);
+        let violations = voltage_clearance_readiness(
+            &board,
+            &crate::scalar::scalar("0.30"),
+            &[],
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(violations[0].message.as_ref().is_some_and(|message| {
@@ -832,7 +882,12 @@ mod tests {
             copper_rect("PE", CopperKind::Segment, "F.Cu", 1.2, 0.0, 2.0, 0.2),
         ]);
 
-        let violations = protective_earth_spacing_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = protective_earth_spacing_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "protective-earth-spacing-readiness");
@@ -849,8 +904,24 @@ mod tests {
             copper_rect("GPIO", CopperKind::Segment, "F.Cu", 1.2, 0.0, 2.0, 0.2),
         ]);
 
-        assert!(protective_earth_spacing_readiness(&distant, &[], 0.30, 1.0e-9).is_empty());
-        assert!(protective_earth_spacing_readiness(&ordinary, &[], 0.30, 1.0e-9).is_empty());
+        assert!(
+            protective_earth_spacing_readiness(
+                &distant,
+                &[],
+                &crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
+        assert!(
+            protective_earth_spacing_readiness(
+                &ordinary,
+                &[],
+                &crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -861,11 +932,22 @@ mod tests {
         ]);
 
         assert!(
-            protective_earth_spacing_readiness(&board, &["F.Cu".to_string()], 0.30, 1.0e-9)
-                .is_empty()
+            protective_earth_spacing_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                &crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
         assert_eq!(
-            protective_earth_spacing_readiness(&board, &["B.Cu".to_string()], 0.30, 1.0e-9).len(),
+            protective_earth_spacing_readiness(
+                &board,
+                &["B.Cu".to_string()],
+                &crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .len(),
             1
         );
     }
@@ -895,7 +977,12 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = protective_earth_spacing_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = protective_earth_spacing_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -907,7 +994,12 @@ mod tests {
             copper_rect("GPIO", CopperKind::Segment, "F.Cu", 0.7, 0.0, 1.2, 0.5),
         ]);
 
-        let violations = surge_protection_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = surge_protection_keepout_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "surge-protection-keepout-readiness");
@@ -922,7 +1014,12 @@ mod tests {
             copper_rect("GND", CopperKind::Segment, "F.Cu", 0.0, 0.7, 0.5, 1.2),
         ]);
 
-        let violations = surge_protection_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = surge_protection_keepout_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -935,11 +1032,22 @@ mod tests {
         ]);
 
         assert!(
-            surge_protection_keepout_readiness(&board, &["F.Cu".to_string()], 0.30, 1.0e-9)
-                .is_empty()
+            surge_protection_keepout_readiness(
+                &board,
+                &["F.Cu".to_string()],
+                &crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
         assert_eq!(
-            surge_protection_keepout_readiness(&board, &["B.Cu".to_string()], 0.30, 1.0e-9).len(),
+            surge_protection_keepout_readiness(
+                &board,
+                &["B.Cu".to_string()],
+                &crate::scalar::scalar("0.30"),
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .len(),
             1
         );
     }
@@ -969,7 +1077,12 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
-        let violations = surge_protection_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+        let violations = surge_protection_keepout_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.30"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert!(violations.is_empty());
     }
@@ -987,7 +1100,12 @@ mod tests {
             4.4,
         )];
 
-        let violations = high_voltage_edge_readiness(&board, &[], 0.80, 1.0e-9);
+        let violations = high_voltage_edge_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.80"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "high-voltage-edge-readiness");
@@ -1022,7 +1140,12 @@ mod tests {
         ));
 
         let started = Instant::now();
-        let violations = high_voltage_edge_readiness(&board, &[], 0.80, 1.0e-9);
+        let violations = high_voltage_edge_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.80"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1044,7 +1167,12 @@ mod tests {
             8.6,
         )];
 
-        let violations = esd_protection_readiness(&board, &[], 1.0, 2.0);
+        let violations = esd_protection_readiness(
+            &board,
+            &[],
+            &crate::scalar::scalar("1.0"),
+            &crate::scalar::scalar("2.0"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "esd-protection-readiness");
@@ -1073,7 +1201,15 @@ mod tests {
             8.6,
         ));
 
-        assert!(esd_protection_readiness(&board, &[], 1.0, 2.0).is_empty());
+        assert!(
+            esd_protection_readiness(
+                &board,
+                &[],
+                &crate::scalar::scalar("1.0"),
+                &crate::scalar::scalar("2.0")
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -1088,7 +1224,7 @@ mod tests {
         copper.push(copper_disc("CHASSIS", CopperKind::Pad, [0.25, 0.0], 0.20));
         let board = board_with_copper(copper);
 
-        assert!(esd_return_path_readiness(&board, &[], 0.50).is_empty());
+        assert!(esd_return_path_readiness(&board, &[], &crate::scalar::scalar("0.50")).is_empty());
     }
 
     fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
@@ -1137,7 +1273,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            location: [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
+            location: [
+                crate::geometry::exact_real((min_x + max_x) / 2.0),
+                crate::geometry::exact_real((min_y + max_y) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
@@ -1171,7 +1310,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {

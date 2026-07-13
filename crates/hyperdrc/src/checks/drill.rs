@@ -9,19 +9,20 @@
 //! ring, slot, and clearance findings against the drill drawing and CAM import.
 
 use csgrs::csg::CSG;
-use geo::{Area, BoundingRect};
+use csgrs::sketch::Profile;
+use geo::BoundingRect;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
 use crate::geometry::{
-    RuleGeometryProvenance, SourceGridFacts, SourceUnit, circle_polygon, multipolygon_to_shapes,
-    polygons_to_profile,
+    RuleGeometryProvenance, SourceGridFacts, SourceUnit, circle_polygon, multipolygon_area_scalar,
+    multipolygon_to_shapes_scalar, polygons_to_profile,
 };
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
-use super::outline::{axis_aligned_outline_rect_with_grid, drill_keepout_inside_rect_with_grid};
+use super::outline::axis_aligned_outline_rect_with_grid;
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 
 /// Review plated drill land margin using an area-equivalent copper radius.
@@ -34,7 +35,7 @@ use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 /// containment.
 pub fn annular_ring(
     board: &BoardModel,
-    minimum_ring: f64,
+    minimum_ring: &Scalar,
     selected_layers: &[String],
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -53,16 +54,22 @@ pub fn annular_ring(
         // remain shape-agnostic. IPC-2221B and IPC-6012D both treat annular ring
         // as a finished-hole-to-land registration margin; exact containment can
         // be tightened once pad stack drill spans are modeled.
-        let copper_radius = equivalent_radius(&nearest.sketch);
-        let ring = copper_radius - drill.diameter / 2.0;
-        if ring < minimum_ring {
+        let Some(copper_radius) = equivalent_radius_scalar(&nearest.sketch) else {
+            continue;
+        };
+        let drill_diameter = drill.diameter.clone();
+        let Ok(drill_radius) = drill_diameter / crate::scalar::scalar("2") else {
+            continue;
+        };
+        let ring = copper_radius - drill_radius;
+        if &ring < minimum_ring {
             violations.push(Violation::new(
                 "annular-ring-readiness",
                 Severity::Error,
                 vec![nearest.layer.clone()],
                 None,
                 Vec::new(),
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some(format!(
                     "annular ring {ring:.6} is below minimum {minimum_ring:.6}"
                 )),
@@ -82,8 +89,8 @@ pub fn annular_ring(
 /// stacks visible before fabrication release.
 pub fn annular_ring_tolerance(
     board: &BoardModel,
-    minimum_ring: f64,
-    registration_tolerance: f64,
+    minimum_ring: &Scalar,
+    registration_tolerance: &Scalar,
     selected_layers: &[String],
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -97,17 +104,23 @@ pub fn annular_ring_tolerance(
             continue;
         };
 
-        let copper_radius = equivalent_radius(&nearest.sketch);
-        let nominal_ring = copper_radius - drill.diameter / 2.0;
-        let worst_case_ring = nominal_ring - registration_tolerance;
-        if nominal_ring >= minimum_ring && worst_case_ring < minimum_ring {
+        let Some(copper_radius) = equivalent_radius_scalar(&nearest.sketch) else {
+            continue;
+        };
+        let drill_diameter = drill.diameter.clone();
+        let Ok(drill_radius) = drill_diameter / crate::scalar::scalar("2") else {
+            continue;
+        };
+        let nominal_ring = copper_radius - drill_radius;
+        let worst_case_ring = &nominal_ring - registration_tolerance;
+        if &nominal_ring >= minimum_ring && &worst_case_ring < minimum_ring {
             violations.push(Violation::new(
                 "annular-ring-tolerance",
                 Severity::Warning,
                 vec![nearest.layer.clone()],
                 None,
                 Vec::new(),
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some(format!(
                     "nominal annular ring {nominal_ring:.6} passes minimum {minimum_ring:.6}, but worst-case ring {worst_case_ring:.6} after tolerance {registration_tolerance:.6} does not"
                 )),
@@ -127,16 +140,20 @@ pub fn annular_ring_tolerance(
 pub fn plating_intent(
     board: &BoardModel,
     selected_layers: &[String],
-    tolerance: f64,
+    tolerance: &Scalar,
 ) -> Vec<Violation> {
     let copper_features = selected_copper_features(board, selected_layers);
-    let copper_index = CopperSpatialIndex::new(&copper_features, tolerance);
+    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
+    let copper_index = CopperSpatialIndex::new(&copper_features, broad_phase_tolerance);
     let mut violations = Vec::new();
     let mut candidate_hits = 0_usize;
 
     for drill in &board.drills {
         if drill.plated {
-            let candidates = copper_index.all_layers_near_circle(drill.location, tolerance);
+            let candidates = copper_index.all_layers_near_circle(
+                drill.location_f64_compatibility_required(),
+                broad_phase_tolerance,
+            );
             candidate_hits += candidates.len();
             if has_plated_drill_copper(drill, &copper_features, &candidates, tolerance) {
                 continue;
@@ -148,14 +165,27 @@ pub fn plating_intent(
                 vec!["KiCad drills".to_string()],
                 None,
                 Vec::new(),
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some("plated drill has no nearby same-net pad or via copper".to_string()),
             ));
         } else {
-            let search_radius = drill.diameter / 2.0 + tolerance;
-            let candidates = copper_index.all_layers_near_circle(drill.location, search_radius);
+            let drill_diameter = drill.diameter.clone();
+            let Ok(drill_radius) = drill_diameter / crate::scalar::scalar("2") else {
+                continue;
+            };
+            let search_radius = drill_radius + tolerance;
+            let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
+            let candidates = copper_index.all_layers_near_circle(
+                drill.location_f64_compatibility_required(),
+                broad_phase_radius,
+            );
             candidate_hits += candidates.len();
-            if !has_nearby_copper(drill.location, &copper_features, &candidates, search_radius) {
+            if !has_nearby_copper(
+                &drill.location,
+                &copper_features,
+                &candidates,
+                &search_radius,
+            ) {
                 continue;
             }
 
@@ -165,7 +195,7 @@ pub fn plating_intent(
                 vec!["KiCad NPTH drills".to_string()],
                 None,
                 Vec::new(),
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some(
                     "non-plated drill has nearby copper that may imply plated-hole intent"
                         .to_string(),
@@ -195,11 +225,15 @@ pub fn plating_intent(
 /// proxy. The finding is intentionally a warning: IPC-2221B mechanical-outline
 /// guidance and common fabricator DFM rules require the routed cutter width to
 /// be explicit in drawings or drill/rout files.
-pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Vec<Violation> {
+pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: &Scalar) -> Vec<Violation> {
     board
         .drills
         .iter()
-        .filter(|drill| !drill.plated && drill.diameter > 0.0 && drill.diameter < minimum_route_width)
+        .filter(|drill| {
+            !drill.plated
+                && drill.diameter > Scalar::zero()
+                && &drill.diameter < minimum_route_width
+        })
         .map(|drill| {
             Violation::new(
                 "routed-slot-readiness",
@@ -207,7 +241,7 @@ pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Ve
                 vec!["KiCad NPTH drills".to_string()],
                 None,
                 Vec::new(),
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some(format!(
                     "non-plated mechanical drill diameter {:.6} is below minimum route width {:.6}; review routed slot or cutter capability",
                     drill.diameter, minimum_route_width
@@ -227,9 +261,9 @@ pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Ve
 pub fn drill_to_copper_clearance(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
-    clearance: f64,
+    clearance: &Scalar,
     selected_layers: &[String],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     drill_to_copper_clearance_with_grid(
         board,
@@ -251,9 +285,9 @@ pub fn drill_to_copper_clearance_with_grid(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
     extra_drill_grid: SourceGridFacts,
-    clearance: f64,
+    clearance: &Scalar,
     selected_layers: &[String],
-    min_area: f64,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut drills = board
         .drills
@@ -275,8 +309,14 @@ pub fn drill_to_copper_clearance_with_grid(
     let copper_features = selected_copper_features(board, selected_layers);
     let maximum_keepout_radius = drills
         .iter()
-        .map(|(drill, _)| drill.diameter / 2.0 + clearance)
-        .fold(0.0_f64, f64::max);
+        .filter_map(|(drill, _)| drill_radius_with_clearance(drill, clearance))
+        .fold(None, |maximum: Option<Scalar>, radius| {
+            Some(match maximum {
+                Some(maximum) if maximum >= radius => maximum,
+                _ => radius,
+            })
+        })
+        .map_or(0.0, |radius| scalar_broad_phase_radius(&radius));
     // Clearance is still decided by exact geometry below. This grid is only the
     // broad phase described by Ericson, Real-Time Collision Detection, 2005,
     // reducing sparse drill/copper fields before CSG intersection.
@@ -293,10 +333,15 @@ pub fn drill_to_copper_clearance_with_grid(
     let mut exact_intersections = 0_usize;
 
     for (drill, drill_grid) in drills {
-        let keepout_radius = drill.diameter / 2.0 + clearance;
+        let Some(keepout_radius_scalar) = drill_radius_with_clearance(&drill, clearance) else {
+            continue;
+        };
+        let keepout_radius = scalar_broad_phase_radius(&keepout_radius_scalar);
         let mut keepout = None;
 
-        for candidate_index in copper_index.all_layers_near_circle(drill.location, keepout_radius) {
+        for candidate_index in copper_index
+            .all_layers_near_circle(drill.location_f64_compatibility_required(), keepout_radius)
+        {
             candidate_pairs += 1;
             let copper = copper_features[candidate_index];
             if drill.plated && drill.net.is_some() && drill.net == copper.net {
@@ -304,24 +349,22 @@ pub fn drill_to_copper_clearance_with_grid(
             }
             if !copper_may_touch_drill_keepout_with_grid(
                 copper,
-                drill.location,
+                drill.location_f64_compatibility_required(),
                 keepout_radius,
                 drill_grid,
             ) {
                 continue;
             }
 
-            let keepout = keepout.get_or_insert_with(|| {
-                polygons_to_profile(
-                    vec![circle_polygon(drill.location, keepout_radius, 64)],
-                    Some(LayerMetadata {
-                        name: "drill keepout".to_string(),
-                    }),
-                )
-            });
+            let Some(exact_keepout) =
+                drill_keepout_sketch(&drill, keepout_radius_scalar.clone(), "drill keepout")
+            else {
+                continue;
+            };
+            let keepout = keepout.get_or_insert(exact_keepout);
             exact_intersections += 1;
             let overlap = keepout.intersection(&copper.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
                 continue;
             }
@@ -332,7 +375,7 @@ pub fn drill_to_copper_clearance_with_grid(
                 vec![copper.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some(format!(
                     "drill keepout with clearance {clearance} intersects copper"
                 )),
@@ -404,11 +447,12 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
 pub fn drill_spacing(
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
-    clearance: f64,
+    clearance: &Scalar,
 ) -> Vec<Violation> {
     let mut drills = board_drills.to_vec();
     drills.extend_from_slice(extra_drills);
-    let drill_index = DrillSpatialIndex::new(&drills, clearance);
+    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+    let drill_index = DrillSpatialIndex::new(&drills, broad_phase_clearance);
     log::trace!(
         "drill spacing: drills={} spatial_buckets={} clearance={clearance:.6}",
         drills.len(),
@@ -420,14 +464,26 @@ pub fn drill_spacing(
 
     for left_index in 0..drills.len() {
         let left = &drills[left_index];
-        for right_index in drill_index.later_candidates_within_spacing(left_index, clearance) {
+        for right_index in
+            drill_index.later_candidates_within_spacing(left_index, broad_phase_clearance)
+        {
             candidate_pairs += 1;
             let right = &drills[right_index];
-            let edge_gap = distance(left.location, right.location)
-                - left.diameter / 2.0
-                - right.diameter / 2.0;
+            let Some(center_distance) = exact_distance_scalar(&left.location, &right.location)
+            else {
+                continue;
+            };
+            let left_diameter = left.diameter.clone();
+            let right_diameter = right.diameter.clone();
+            let Ok(left_radius) = left_diameter / crate::scalar::scalar("2") else {
+                continue;
+            };
+            let Ok(right_radius) = right_diameter / crate::scalar::scalar("2") else {
+                continue;
+            };
+            let edge_gap = center_distance - left_radius - right_radius;
             exact_pairs += 1;
-            if edge_gap >= clearance {
+            if &edge_gap >= clearance {
                 continue;
             }
 
@@ -437,7 +493,10 @@ pub fn drill_spacing(
                 vec!["drills".to_string()],
                 None,
                 Vec::new(),
-                vec![left.location, right.location],
+                vec![
+                    left.location_f64_compatibility_required(),
+                    right.location_f64_compatibility_required(),
+                ],
                 Some(format!(
                     "drill edge spacing {edge_gap:.6} is below clearance {clearance:.6}"
                 )),
@@ -463,8 +522,8 @@ pub fn board_outline_drill_clearance(
     outline: &PcbSketch,
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     board_outline_drill_clearance_with_grid(
         drill_source,
@@ -489,8 +548,8 @@ pub fn board_outline_drill_clearance_with_grid(
     outline: &PcbSketch,
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
-    clearance: f64,
-    min_area: f64,
+    clearance: &Scalar,
+    min_area: &Scalar,
     grid: SourceGridFacts,
 ) -> Vec<Violation> {
     let mut drills = board_drills.to_vec();
@@ -501,30 +560,62 @@ pub fn board_outline_drill_clearance_with_grid(
     let mut exact_difference_count = 0_usize;
 
     for drill in drills {
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| drill_keepout_inside_rect_with_grid(&drill, rect, clearance, grid))
-        {
+        if outline_rect.as_ref().is_some_and(|rect| {
+            drill_keepout_inside_rect_scalar_with_grid(&drill, rect, clearance, grid)
+        }) {
             skipped_rect_inside += 1;
             continue;
         }
 
-        let keepout = polygons_to_profile(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + clearance,
-                64,
-            )],
-            Some(LayerMetadata {
-                name: "drill edge keepout".to_string(),
-            }),
-        );
-        exact_difference_count += 1;
-        let outside_outline = keepout.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
+        let Some(keepout_radius) = drill_radius_with_clearance(&drill, clearance) else {
             continue;
-        }
+        };
+        let Some(keepout) = drill_keepout_sketch(&drill, keepout_radius, "drill edge keepout")
+        else {
+            continue;
+        };
+        exact_difference_count += 1;
+        let shapes = match keepout.try_difference(outline) {
+            Ok(outside_outline) => {
+                let shapes =
+                    multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
+                if shapes.is_empty() {
+                    continue;
+                }
+                shapes
+            }
+            Err(error) => {
+                let Some(rect) = outline_rect.as_ref() else {
+                    log::warn!(
+                        "board-outline drill clearance retained conservative finding after uncertified profile difference: {error}"
+                    );
+                    violations.push(Violation::new(
+                        "board-outline-drill-clearance",
+                        Severity::Error,
+                        vec![drill_source.to_string(), outline_name.to_string()],
+                        None,
+                        Vec::new(),
+                        vec![drill.location_f64_compatibility_required()],
+                        Some(format!(
+                            "drill edge may be within board outline clearance {clearance}; exact profile difference was uncertain: {error}"
+                        )),
+                    ));
+                    continue;
+                };
+                let Some(outside_area_upper_bound) =
+                    rect_keepout_outside_area_upper_bound(&drill, rect, clearance)
+                else {
+                    continue;
+                };
+                if &outside_area_upper_bound <= min_area {
+                    continue;
+                }
+                log::debug!(
+                    "board-outline drill clearance used exact rectangular fallback after uncertified profile difference: {error}"
+                );
+                Vec::new()
+            }
+        };
 
         violations.push(Violation::new(
             "board-outline-drill-clearance",
@@ -532,7 +623,7 @@ pub fn board_outline_drill_clearance_with_grid(
             vec![drill_source.to_string(), outline_name.to_string()],
             None,
             shapes,
-            vec![drill.location],
+            vec![drill.location_f64_compatibility_required()],
             Some(format!(
                 "drill edge is within board outline clearance {clearance}"
             )),
@@ -558,7 +649,7 @@ pub fn board_outline_drill_clearance_with_grid(
 /// each plated hole and reports exact outside-outline geometry so half-hole,
 /// plated-edge, or accidental-outline-crossing cases are visible before
 /// release.
-pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> {
+pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
@@ -572,15 +663,22 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
         }
         plated_holes += 1;
 
+        let Some(drill_diameter) = drill.diameter_f64_compatibility() else {
+            continue;
+        };
         let hole = polygons_to_profile(
-            vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
+            vec![circle_polygon(
+                drill.location_f64_compatibility_required(),
+                drill_diameter / 2.0,
+                64,
+            )],
             Some(LayerMetadata {
                 name: "plated drill hole".to_string(),
             }),
         );
         exact_difference_count += 1;
         let outside_outline = hole.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
         }
@@ -591,7 +689,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
             vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![drill.location],
+            vec![drill.location_f64_compatibility_required()],
             Some(
                 "plated drill hole crosses the board outline; confirm castellation or plated-edge intent"
                     .to_string(),
@@ -600,7 +698,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
     }
 
     log::trace!(
-        "castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:.9}",
+        "castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:#.9}",
         board.source,
         plated_holes,
         exact_difference_count,
@@ -620,8 +718,8 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
 /// plating capability can be reviewed before release.
 pub fn castellation_hole_readiness(
     board: &BoardModel,
-    minimum_diameter: f64,
-    min_area: f64,
+    minimum_diameter: &Scalar,
+    min_area: &Scalar,
 ) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
@@ -631,20 +729,27 @@ pub fn castellation_hole_readiness(
     let mut exact_difference_count = 0_usize;
 
     for drill in &board.drills {
-        if !drill.plated || drill.diameter >= minimum_diameter {
+        if !drill.plated || &drill.diameter >= minimum_diameter {
             continue;
         }
         undersized_plated_holes += 1;
 
+        let Some(drill_diameter) = drill.diameter_f64_compatibility() else {
+            continue;
+        };
         let hole = polygons_to_profile(
-            vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
+            vec![circle_polygon(
+                drill.location_f64_compatibility_required(),
+                drill_diameter / 2.0,
+                64,
+            )],
             Some(LayerMetadata {
                 name: "plated drill hole".to_string(),
             }),
         );
         exact_difference_count += 1;
         let outside_outline = hole.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
+        let shapes = multipolygon_to_shapes_scalar(&outside_outline.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
         }
@@ -655,7 +760,7 @@ pub fn castellation_hole_readiness(
             vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![drill.location],
+            vec![drill.location_f64_compatibility_required()],
             Some(format!(
                 "plated drill crossing the board outline has diameter {:.6} below minimum castellation diameter {:.6}",
                 drill.diameter, minimum_diameter
@@ -679,27 +784,30 @@ pub fn castellation_hole_readiness(
 pub fn drill_aspect_ratio(
     source: &str,
     drills: &[DrillFeature],
-    board_thickness: f64,
-    max_aspect_ratio: f64,
+    board_thickness: &Scalar,
+    max_aspect_ratio: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for drill in drills {
-        if drill.diameter <= 0.0 {
+        let diameter = drill.diameter.clone();
+        if diameter <= Scalar::zero() {
             violations.push(Violation::new(
                 "drill-aspect-ratio",
                 Severity::Warning,
                 vec![source.to_string()],
                 None,
                 Vec::new(),
-                vec![drill.location],
+                vec![drill.location_f64_compatibility_required()],
                 Some("drill diameter is not positive, so aspect ratio is undefined".to_string()),
             ));
             continue;
         }
 
-        let aspect_ratio = board_thickness / drill.diameter;
-        if aspect_ratio <= max_aspect_ratio {
+        let Ok(aspect_ratio) = board_thickness / &diameter else {
+            continue;
+        };
+        if &aspect_ratio <= max_aspect_ratio {
             continue;
         }
 
@@ -709,7 +817,7 @@ pub fn drill_aspect_ratio(
             vec![source.to_string()],
             None,
             Vec::new(),
-            vec![drill.location],
+            vec![drill.location_f64_compatibility_required()],
             Some(format!(
                 "drill aspect ratio {aspect_ratio:.3} exceeds maximum {max_aspect_ratio:.3} for board thickness {board_thickness:.3}"
             )),
@@ -730,12 +838,17 @@ pub fn drill_table_consistency(
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
     ipc356_points: &[Ipc356Point],
-    tolerance: f64,
+    tolerance: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
-    let extra_drill_index = DrillSpatialIndex::new(extra_drills, tolerance);
-    let ipc_point_index =
-        PointSpatialIndex::new(ipc356_points.iter().map(|point| point.location), tolerance);
+    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
+    let extra_drill_index = DrillSpatialIndex::new(extra_drills, broad_phase_tolerance);
+    let ipc_point_index = PointSpatialIndex::new(
+        ipc356_points
+            .iter()
+            .filter_map(Ipc356Point::location_f64_compatibility),
+        broad_phase_tolerance,
+    );
     log::trace!(
         "drill table consistency: board_drills={} extra_drills={} ipc356_points={} extra_drill_buckets={} ipc356_buckets={} tolerance={tolerance:.6}",
         board_drills.len(),
@@ -750,42 +863,70 @@ pub fn drill_table_consistency(
     let mut extra_ipc_exact = 0_usize;
 
     for board_drill in board_drills {
-        for extra_index in extra_drill_index.centers_within(board_drill.location, tolerance) {
+        for extra_index in extra_drill_index.candidate_centers_near(
+            board_drill.location_f64_compatibility_required(),
+            broad_phase_tolerance,
+        ) {
             board_extra_candidates += 1;
             let extra_drill = &extra_drills[extra_index];
+            if !exact_distance_scalar(&board_drill.location, &extra_drill.location)
+                .is_some_and(|distance| &distance <= tolerance)
+            {
+                continue;
+            }
             board_extra_exact += 1;
-            if !diameters_conflict(board_drill.diameter, extra_drill.diameter, tolerance) {
+            let board_diameter = board_drill.diameter.clone();
+            let extra_diameter = extra_drill.diameter.clone();
+            if !diameters_conflict(&board_diameter, &extra_diameter, tolerance) {
                 continue;
             }
 
             violations.push(drill_table_violation(
                 "KiCad drills",
-                board_drill.diameter,
+                &board_diameter,
                 "Excellon drills",
-                extra_drill.diameter,
-                vec![board_drill.location, extra_drill.location],
+                &extra_diameter,
+                vec![
+                    board_drill.location_f64_compatibility_required(),
+                    extra_drill.location_f64_compatibility_required(),
+                ],
             ));
         }
     }
 
     for extra_drill in extra_drills {
-        for point_index in ipc_point_index.centers_within(extra_drill.location, tolerance) {
+        for point_index in ipc_point_index.candidate_centers_near(
+            extra_drill.location_f64_compatibility_required(),
+            broad_phase_tolerance,
+        ) {
             extra_ipc_candidates += 1;
             let point = &ipc356_points[point_index];
-            let Some(ipc_diameter) = point.diameter else {
+            let Some(point_location) = point.location_f64_compatibility() else {
+                continue;
+            };
+            if !exact_distance_scalar(&extra_drill.location, &point.location)
+                .is_some_and(|distance| &distance <= tolerance)
+            {
+                continue;
+            }
+            let Some(ipc_diameter) = &point.diameter else {
                 continue;
             };
             extra_ipc_exact += 1;
-            if !diameters_conflict(extra_drill.diameter, ipc_diameter, tolerance) {
+            let extra_diameter = extra_drill.diameter.clone();
+            if !diameters_conflict(&extra_diameter, ipc_diameter, tolerance) {
                 continue;
             }
 
             violations.push(drill_table_violation(
                 "Excellon drills",
-                extra_drill.diameter,
+                &extra_diameter,
                 "IPC-D-356 drills",
                 ipc_diameter,
-                vec![extra_drill.location, point.location],
+                vec![
+                    extra_drill.location_f64_compatibility_required(),
+                    point_location,
+                ],
             ));
         }
     }
@@ -808,7 +949,13 @@ pub fn drill_table_consistency(
 pub fn drills_to_sketch(drills: &[DrillFeature], name: &str) -> PcbSketch {
     let polygons = drills
         .iter()
-        .map(|drill| circle_polygon(drill.location, drill.diameter / 2.0, 48))
+        .filter_map(|drill| {
+            Some(circle_polygon(
+                drill.location_f64_compatibility_required(),
+                drill.diameter_f64_compatibility()? / 2.0,
+                48,
+            ))
+        })
         .collect::<Vec<_>>();
 
     polygons_to_profile(
@@ -827,35 +974,42 @@ fn nearest_matching_copper<'a>(
     selected_copper_features(board, selected_layers)
         .into_iter()
         .filter(|feature| drill.net.is_none() || feature.net == drill.net)
-        .min_by(|left, right| {
-            distance(left.location, drill.location)
-                .partial_cmp(&distance(right.location, drill.location))
-                .unwrap_or(std::cmp::Ordering::Equal)
+        .fold(None, |nearest, feature| {
+            let distance = exact_distance_scalar(&feature.location, &drill.location)?;
+            match nearest {
+                Some((current, current_distance)) if current_distance <= distance => {
+                    Some((current, current_distance))
+                }
+                _ => Some((feature, distance)),
+            }
         })
+        .map(|(feature, _)| feature)
 }
 
 fn has_plated_drill_copper(
     drill: &DrillFeature,
     copper_features: &[&CopperFeature],
     candidate_indices: &[usize],
-    tolerance: f64,
+    tolerance: &Scalar,
 ) -> bool {
     candidate_indices.iter().any(|&feature_index| {
         let feature = copper_features[feature_index];
         matches!(feature.kind, CopperKind::Pad | CopperKind::Via)
             && (drill.net.is_none() || feature.net == drill.net)
-            && distance(feature.location, drill.location) <= tolerance
+            && exact_distance_scalar(&feature.location, &drill.location)
+                .is_some_and(|distance| &distance <= tolerance)
     })
 }
 
 fn has_nearby_copper(
-    location: [f64; 2],
+    location: &[Scalar; 2],
     copper_features: &[&CopperFeature],
     candidate_indices: &[usize],
-    tolerance: f64,
+    tolerance: &Scalar,
 ) -> bool {
     candidate_indices.iter().any(|&feature_index| {
-        distance(copper_features[feature_index].location, location) <= tolerance
+        exact_distance_scalar(&copper_features[feature_index].location, location)
+            .is_some_and(|distance| &distance <= tolerance)
     })
 }
 
@@ -870,25 +1024,21 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn equivalent_radius(sketch: &PcbSketch) -> f64 {
-    let area = sketch
-        .to_multipolygon()
-        .0
-        .iter()
-        .map(|polygon| polygon.unsigned_area())
-        .sum::<f64>();
-    (area / std::f64::consts::PI).sqrt()
+fn equivalent_radius_scalar(sketch: &PcbSketch) -> Option<Scalar> {
+    let area = multipolygon_area_scalar(&sketch.to_multipolygon())?;
+    let area_over_pi = (area / Scalar::pi()).ok()?;
+    area_over_pi.sqrt().ok()
 }
 
-fn diameters_conflict(left: f64, right: f64, tolerance: f64) -> bool {
-    left > 0.0 && right > 0.0 && (left - right).abs() > tolerance
+fn diameters_conflict(left: &Scalar, right: &Scalar, tolerance: &Scalar) -> bool {
+    left > &Scalar::zero() && right > &Scalar::zero() && &(left - right).abs() > tolerance
 }
 
 fn drill_table_violation(
     left_source: &str,
-    left_diameter: f64,
+    left_diameter: &Scalar,
     right_source: &str,
-    right_diameter: f64,
+    right_diameter: &Scalar,
     locations: Vec<[f64; 2]>,
 ) -> Violation {
     Violation::new(
@@ -904,10 +1054,95 @@ fn drill_table_violation(
     )
 }
 
-fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
+fn exact_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+    let dx = &left[0] - &right[0];
+    let dy = &left[1] - &right[1];
+    (&dx * &dx + &dy * &dy).sqrt().ok()
+}
+
+pub(super) fn drill_radius_with_clearance(
+    drill: &DrillFeature,
+    clearance: &Scalar,
+) -> Option<Scalar> {
+    let radius = (drill.diameter.clone() / crate::scalar::scalar("2")).ok()?;
+    Some(radius + clearance)
+}
+
+fn drill_keepout_sketch(drill: &DrillFeature, radius: Scalar, name: &str) -> Option<PcbSketch> {
+    let x = drill.location[0].clone();
+    let y = drill.location[1].clone();
+    let profile = Profile::circle(radius, 64).translate(x, y, Scalar::zero());
+    Some(PcbSketch::new(
+        profile,
+        Some(LayerMetadata {
+            name: name.to_string(),
+        }),
+    ))
+}
+
+fn drill_keepout_inside_rect_scalar_with_grid(
+    drill: &DrillFeature,
+    rect: &geo::Rect<f64>,
+    clearance: &Scalar,
+    _grid: SourceGridFacts,
+) -> bool {
+    let Some(radius) = drill_radius_with_clearance(drill, clearance) else {
+        return false;
+    };
+    let (Ok(min_x), Ok(min_y), Ok(max_x), Ok(max_y)) = (
+        Scalar::try_from(rect.min().x),
+        Scalar::try_from(rect.min().y),
+        Scalar::try_from(rect.max().x),
+        Scalar::try_from(rect.max().y),
+    ) else {
+        return false;
+    };
+
+    &drill.location[0] - &radius >= min_x
+        && &drill.location[0] + &radius <= max_x
+        && &drill.location[1] - &radius >= min_y
+        && &drill.location[1] + &radius <= max_y
+}
+
+fn rect_keepout_outside_area_upper_bound(
+    drill: &DrillFeature,
+    rect: &geo::Rect<f64>,
+    clearance: &Scalar,
+) -> Option<Scalar> {
+    let radius = drill_radius_with_clearance(drill, clearance)?;
+    let diameter = &radius + &radius;
+    let x = drill.location[0].clone();
+    let y = drill.location[1].clone();
+    let min_x = Scalar::try_from(rect.min().x).ok()?;
+    let min_y = Scalar::try_from(rect.min().y).ok()?;
+    let max_x = Scalar::try_from(rect.max().x).ok()?;
+    let max_y = Scalar::try_from(rect.max().y).ok()?;
+    let zero = Scalar::zero();
+    let penetrations = [
+        &radius - (&x - &min_x),
+        &radius - (&max_x - &x),
+        &radius - (&y - &min_y),
+        &radius - (&max_y - &y),
+    ];
+    let total_depth =
+        penetrations.into_iter().fold(
+            zero.clone(),
+            |sum, depth| {
+                if depth > zero { sum + depth } else { sum }
+            },
+        );
+    Some(total_depth * diameter)
+}
+
+fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
+    let projected = value
+        .to_f64_lossy()
+        .expect("drill broad-phase radius must fit the finite compatibility index");
+    if projected > 0.0 {
+        projected.next_up()
+    } else {
+        0.0
+    }
 }
 
 #[cfg(test)]
@@ -928,7 +1163,13 @@ mod tests {
         let mut board = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.20)]);
         board.drills = vec![drill(Some("GND"), [0.0, 0.0], 0.40, true)];
 
-        let violations = drill_to_copper_clearance(&board, &[], 0.20, &[], 1.0e-9);
+        let violations = drill_to_copper_clearance(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.20"),
+            &[],
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "drill-to-copper-clearance");
@@ -940,8 +1181,14 @@ mod tests {
         let extra_drills = vec![drill(None, [0.0, 0.0], 0.40, false)];
         let grid = SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000);
 
-        let violations =
-            drill_to_copper_clearance_with_grid(&board, &extra_drills, grid, 0.20, &[], 1.0e-9);
+        let violations = drill_to_copper_clearance_with_grid(
+            &board,
+            &extra_drills,
+            grid,
+            &crate::scalar::scalar("0.20"),
+            &[],
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "drill-to-copper-clearance");
@@ -951,7 +1198,16 @@ mod tests {
     fn drill_to_copper_clearance_allows_same_net_plated_and_selected_out_copper() {
         let mut same_net = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.20)]);
         same_net.drills = vec![drill(Some("SIG"), [0.0, 0.0], 0.40, true)];
-        assert!(drill_to_copper_clearance(&same_net, &[], 0.20, &[], 1.0e-9).is_empty());
+        assert!(
+            drill_to_copper_clearance(
+                &same_net,
+                &[],
+                &crate::scalar::scalar("0.20"),
+                &[],
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
+        );
 
         let mut selected_out = board_with_copper(vec![segment_on_layer(
             "B.Cu",
@@ -962,8 +1218,14 @@ mod tests {
         )]);
         selected_out.drills = vec![drill(None, [0.0, 0.0], 0.40, false)];
         assert!(
-            drill_to_copper_clearance(&selected_out, &[], 0.20, &["F.Cu".to_string()], 1.0e-9)
-                .is_empty()
+            drill_to_copper_clearance(
+                &selected_out,
+                &[],
+                &crate::scalar::scalar("0.20"),
+                &["F.Cu".to_string()],
+                &crate::scalar::scalar("1.0e-9")
+            )
+            .is_empty()
         );
     }
 
@@ -982,7 +1244,13 @@ mod tests {
         board.drills = vec![drill(None, [0.0, 0.0], 0.40, false)];
 
         let started = std::time::Instant::now();
-        let violations = drill_to_copper_clearance(&board, &[], 0.20, &[], 1.0e-9);
+        let violations = drill_to_copper_clearance(
+            &board,
+            &[],
+            &crate::scalar::scalar("0.20"),
+            &[],
+            &crate::scalar::scalar("1.0e-9"),
+        );
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -999,7 +1267,7 @@ mod tests {
             drill(None, [3.0, 0.0], 0.40, true),
         ];
 
-        let violations = super::drill_spacing(&drills, &[], 0.20);
+        let violations = super::drill_spacing(&drills, &[], &crate::scalar::scalar("0.20"));
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "drill-spacing");
@@ -1014,7 +1282,7 @@ mod tests {
         drills.push(drill(None, [0.55, 0.0], 0.40, true));
 
         let started = std::time::Instant::now();
-        let violations = super::drill_spacing(&drills, &[], 0.20);
+        let violations = super::drill_spacing(&drills, &[], &crate::scalar::scalar("0.20"));
 
         assert_eq!(violations.len(), 1);
         assert!(
@@ -1048,8 +1316,8 @@ mod tests {
             &outline,
             &drills,
             &[],
-            0.25,
-            1.0e-9,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
         );
 
         assert_eq!(violations.len(), 1);
@@ -1074,8 +1342,8 @@ mod tests {
             &outline,
             &[],
             &drills,
-            0.25,
-            1.0e-9,
+            &crate::scalar::scalar("0.25"),
+            &crate::scalar::scalar("1.0e-9"),
             grid,
         );
 
@@ -1090,7 +1358,12 @@ mod tests {
         let extra_drills = vec![drill(None, [0.05, 0.0], 0.60, true)];
         let ipc_points = vec![ipc_point([0.06, 0.0], Some(0.80))];
 
-        let violations = drill_table_consistency(&board_drills, &extra_drills, &ipc_points, 0.10);
+        let violations = drill_table_consistency(
+            &board_drills,
+            &extra_drills,
+            &ipc_points,
+            &crate::scalar::scalar("0.10"),
+        );
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -1113,7 +1386,12 @@ mod tests {
         ipc_points.push(ipc_point([0.06, 0.0], Some(0.80)));
 
         let started = std::time::Instant::now();
-        let violations = drill_table_consistency(&board_drills, &extra_drills, &ipc_points, 0.10);
+        let violations = drill_table_consistency(
+            &board_drills,
+            &extra_drills,
+            &ipc_points,
+            &crate::scalar::scalar("0.10"),
+        );
 
         assert_eq!(violations.len(), 2);
         assert!(
@@ -1156,7 +1434,10 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+            location: [
+                crate::geometry::exact_real((start[0] + end[0]) / 2.0),
+                crate::geometry::exact_real((start[1] + end[1]) / 2.0),
+            ],
             sketch: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
@@ -1171,7 +1452,10 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
-            location,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
             sketch: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
@@ -1183,8 +1467,11 @@ mod tests {
 
     fn drill(net: Option<&str>, location: [f64; 2], diameter: f64, plated: bool) -> DrillFeature {
         DrillFeature {
-            location,
-            diameter,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
+            diameter: crate::geometry::exact_real(diameter),
             net: net.map(str::to_string),
             plated,
         }
@@ -1195,8 +1482,11 @@ mod tests {
             net: "SIG".to_string(),
             reference: None,
             pin: None,
-            location,
-            diameter,
+            location: [
+                crate::geometry::exact_real(location[0]),
+                crate::geometry::exact_real(location[1]),
+            ],
+            diameter: diameter.map(crate::geometry::exact_real),
             access_side: None,
             feature_type: None,
             soldermask: None,

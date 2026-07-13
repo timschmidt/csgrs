@@ -91,6 +91,7 @@ fn push_ipc356_testpoints(text: &mut String, ipc356_reports: &[Ipc356Report]) {
                 point.location[1],
                 point
                     .diameter
+                    .as_ref()
                     .map(|diameter| format!("{diameter:.6}"))
                     .unwrap_or_else(|| "\"\"".to_string()),
                 quote(access_side_label(point.access_side)),

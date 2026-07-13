@@ -20,6 +20,7 @@ use super::artifact_handoff::{
 };
 use super::artifact_table::{cell, find_column, parse_table};
 use super::surface_finish::readme_surface_finish_compatibility;
+use crate::Scalar;
 use crate::report::{Diagnostic, Severity, Violation};
 
 #[derive(Clone, Debug)]
@@ -518,7 +519,7 @@ pub fn production_artifact_readiness(
         violations.push(artifact_violation(
             "bom-readme-component-height-handoff",
             Some(format!(
-                "BOM includes component heights above {TALL_COMPONENT_HEIGHT_MM:.1} mm for references ({}) but README does not mention component height, enclosure clearance, mechanical keepout, or mating-height review",
+                "BOM includes component heights above 5.0 mm for references ({}) but README does not mention component height, enclosure clearance, mechanical keepout, or mating-height review",
                 join_limited_set(&tall_component_refs, 8)
             )),
         ));
@@ -532,7 +533,7 @@ pub fn production_artifact_readiness(
         violations.push(artifact_violation(
             "bom-assembly-drawing-height-parity",
             Some(format!(
-                "BOM includes component heights above {TALL_COMPONENT_HEIGHT_MM:.1} mm for references ({}) but no assembly drawing artifact was provided for height/keepout review",
+                "BOM includes component heights above 5.0 mm for references ({}) but no assembly drawing artifact was provided for height/keepout review",
                 join_limited_set(&tall_component_refs, 8)
             )),
         ));
@@ -984,7 +985,7 @@ fn centroid_numeric_diagnostics(
             if value.is_empty() {
                 continue;
             }
-            if value.parse::<f64>().is_err() {
+            if crate::scalar::parse_source_scalar(value).is_none() {
                 diagnostics.push(text_artifact_diagnostic(
                     artifact,
                     Some(row_index + 2),
@@ -1972,7 +1973,9 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                 match height_col {
                     Some(column) if parse_positive_dimension(cell(row, column)).is_some() => {
                         if parse_positive_dimension(cell(row, column))
-                            .is_some_and(|height| height > TALL_COMPONENT_HEIGHT_MM)
+                            .is_some_and(|height| {
+                                height > crate::scalar::scalar(TALL_COMPONENT_HEIGHT_MM)
+                            })
                         {
                             analysis
                                 .tall_component_refs
@@ -2348,7 +2351,7 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         for (label, column) in [("x", x_col), ("y", y_col), ("rotation", rotation_col)] {
             if let Some(column) = column {
                 let value = normalize_numeric_cell(cell(row, column));
-                let Ok(numeric) = value.parse::<f64>() else {
+                let Some(numeric) = crate::scalar::parse_source_scalar(&value) else {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -2359,7 +2362,7 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                     continue;
                 };
-                if matches!(label, "x" | "y") && numeric.abs() > 5_000.0 {
+                if matches!(label, "x" | "y") && numeric.abs() > crate::scalar::scalar("5000") {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -2369,7 +2372,10 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                         )),
                     ));
                 }
-                if label == "rotation" && !(-360.0..=360.0).contains(&numeric) {
+                if label == "rotation"
+                    && (numeric < crate::scalar::scalar("-360")
+                        || numeric > crate::scalar::scalar("360"))
+                {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -2380,9 +2386,9 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                 }
                 if label == "x" {
-                    row_x = Some(format!("{numeric:.4}"));
+                    row_x = Some(format!("{numeric:#.4}"));
                 } else if label == "y" {
-                    row_y = Some(format!("{numeric:.4}"));
+                    row_y = Some(format!("{numeric:#.4}"));
                 } else if label == "rotation"
                     && let Some(reference) = &row_reference
                     && let Some(rotation) = normalized_rotation(cell(row, column))
@@ -3229,15 +3235,14 @@ fn normalize_numeric_cell(value: &str) -> String {
 }
 
 fn normalized_rotation(value: &str) -> Option<String> {
-    let numeric = normalize_numeric_cell(value).parse::<f64>().ok()?;
-    if !numeric.is_finite() {
-        return None;
-    }
-    let normalized = numeric.rem_euclid(360.0);
-    Some(format!("{normalized:.3}"))
+    let numeric = crate::scalar::parse_source_scalar(&normalize_numeric_cell(value))?;
+    let normalized = numeric
+        .rem_euclid_certified(&crate::scalar::scalar("360"))
+        .ok()?;
+    Some(format!("{normalized:#.3}"))
 }
 
-fn parse_positive_dimension(value: &str) -> Option<f64> {
+fn parse_positive_dimension(value: &str) -> Option<Scalar> {
     let trimmed = value.trim();
     if trimmed.is_empty() {
         return None;
@@ -3245,18 +3250,18 @@ fn parse_positive_dimension(value: &str) -> Option<f64> {
     let numeric = trimmed
         .trim_end_matches("mm")
         .trim_end_matches("MM")
-        .parse::<f64>()
-        .ok()?;
-    (numeric.is_finite() && numeric > 0.0).then_some(numeric)
+        .to_string();
+    let numeric = crate::scalar::parse_source_scalar(&numeric)?;
+    (numeric > Scalar::zero()).then_some(numeric)
 }
 
-fn parse_non_negative_money(value: &str) -> Option<f64> {
+fn parse_non_negative_money(value: &str) -> Option<Scalar> {
     let compact = value
         .trim()
         .trim_start_matches('$')
         .replace([',', '€', '£'], "");
-    let numeric = compact.parse::<f64>().ok()?;
-    (numeric.is_finite() && numeric >= 0.0).then_some(numeric)
+    let numeric = crate::scalar::parse_source_scalar(&compact)?;
+    (numeric >= Scalar::zero()).then_some(numeric)
 }
 
 fn normalize_side(side: &str) -> &'static str {
@@ -3758,12 +3763,10 @@ fn parse_quantity(value: &str) -> Option<usize> {
     if let Ok(integer) = trimmed.parse::<usize>() {
         return Some(integer);
     }
-    let numeric = trimmed.parse::<f64>().ok()?;
-    if numeric.fract().abs() <= f64::EPSILON && numeric >= 0.0 {
-        Some(numeric as usize)
-    } else {
-        None
-    }
+    let numeric = crate::scalar::parse_source_scalar(trimmed)?;
+    let rational = numeric.exact_rational()?;
+    let integer = u64::try_from(rational).ok()?;
+    usize::try_from(integer).ok()
 }
 
 fn is_not_populated_row(row: &[String]) -> bool {

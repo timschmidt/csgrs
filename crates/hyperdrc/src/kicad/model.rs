@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use geo::Polygon;
 
 use crate::geometry::{empty_profile, polygons_to_profile};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt};
+use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
 #[derive(Clone, Debug)]
 /// Public data model for `BoardModel`.
@@ -37,7 +37,26 @@ pub struct CopperFeature {
     /// Field `sketch`.
     pub sketch: PcbSketch,
     /// Field `location`.
-    pub location: [f64; 2],
+    pub location: [Scalar; 2],
+}
+
+impl CopperFeature {
+    /// Project an exact feature anchor for finite report, polygon, or spatial-index adapters.
+    pub(crate) fn location_f64_compatibility(&self) -> Option<[f64; 2]> {
+        Some([
+            self.location[0]
+                .to_f64_lossy()
+                .filter(|coordinate| coordinate.is_finite())?,
+            self.location[1]
+                .to_f64_lossy()
+                .filter(|coordinate| coordinate.is_finite())?,
+        ])
+    }
+
+    pub(crate) fn location_f64_compatibility_required(&self) -> [f64; 2] {
+        self.location_f64_compatibility()
+            .expect("parsed copper feature anchors must fit the finite compatibility adapter")
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -57,13 +76,38 @@ pub enum CopperKind {
 /// Public data model for `DrillFeature`.
 pub struct DrillFeature {
     /// Field `location`.
-    pub location: [f64; 2],
+    pub location: [Scalar; 2],
     /// Field `diameter`.
-    pub diameter: f64,
+    pub diameter: Scalar,
     /// Field `net`.
     pub net: Option<String>,
     /// Field `plated`.
     pub plated: bool,
+}
+
+impl DrillFeature {
+    pub(crate) fn location_f64_compatibility(&self) -> Option<[f64; 2]> {
+        Some([
+            self.location[0]
+                .to_f64_lossy()
+                .filter(|coordinate| coordinate.is_finite())?,
+            self.location[1]
+                .to_f64_lossy()
+                .filter(|coordinate| coordinate.is_finite())?,
+        ])
+    }
+
+    /// Project an exact drill center for finite report, polygon, or spatial-index adapters.
+    pub(crate) fn location_f64_compatibility_required(&self) -> [f64; 2] {
+        self.location_f64_compatibility()
+            .expect("parsed drill centers must fit the finite compatibility adapter")
+    }
+
+    pub(crate) fn diameter_f64_compatibility(&self) -> Option<f64> {
+        self.diameter
+            .to_f64_lossy()
+            .filter(|diameter| diameter.is_finite())
+    }
 }
 
 impl BoardModel {

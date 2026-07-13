@@ -28,13 +28,13 @@ use anyhow::{Context, Result};
 use geo::{Area, Polygon};
 use hyperreal::Real;
 
-use crate::LayerMetadata;
 use crate::geometry::{
     SourceGridFacts, SourceScalar, SourceUnit, chamfered_rect_polygon, circle_polygon,
     line_polygon, polygon_from_points, polygons_to_profile, rect_polygon, rounded_rect_polygon,
     trapezoid_polygon,
 };
 use crate::sexp::{self, Sexp};
+use crate::{LayerMetadata, Scalar};
 
 /// Run or compute `load_kicad_pcb`.
 pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
@@ -126,19 +126,35 @@ fn parse_footprints(
     drills: &mut Vec<DrillFeature>,
 ) {
     for footprint in root.named_children("footprint") {
-        let at = xy_from_child(footprint, "at").unwrap_or([0.0, 0.0]);
+        let at_source = xy_from_child_source(footprint, "at");
+        let at = at_source
+            .as_ref()
+            .map_or([0.0, 0.0], |point| point.approximate);
+        let at_exact = at_source
+            .map(|point| point.exact)
+            .unwrap_or_else(exact_origin);
         let footprint_angle = footprint
             .named_child("at")
             .and_then(|at| at.f64_at(3))
             .unwrap_or(0.0);
+        let footprint_angle_exact = exact_scalar_at(footprint.named_child("at"), 3);
 
         for pad in footprint.named_children("pad") {
-            let pad_at = xy_from_child(pad, "at").unwrap_or([0.0, 0.0]);
+            let pad_at_source = xy_from_child_source(pad, "at");
+            let pad_at = pad_at_source
+                .as_ref()
+                .map_or([0.0, 0.0], |point| point.approximate);
+            let pad_at_exact = pad_at_source
+                .map(|point| point.exact)
+                .unwrap_or_else(exact_origin);
             let pad_angle = pad
                 .named_child("at")
                 .and_then(|at| at.f64_at(3))
                 .unwrap_or(0.0);
+            let pad_angle_exact = exact_scalar_at(pad.named_child("at"), 3);
             let location = rotate_translate(pad_at, at, footprint_angle);
+            let location_exact =
+                rotate_translate_scalar(&pad_at_exact, &at_exact, &footprint_angle_exact);
             let size = xy_from_child(pad, "size").unwrap_or([0.0, 0.0]);
             let Some(layers) = atom_values(pad.named_child("layers")) else {
                 continue;
@@ -164,16 +180,19 @@ fn parse_footprints(
                                 name: "KiCad pad".to_string(),
                             }),
                         ),
-                        location,
+                        location: location_exact.clone(),
                     });
                 }
             }
 
             if let Some(drill_spec) = pad.named_child("drill")
-                && let Some(drill) = drill_diameter(drill_spec)
+                && let Some(drill) = drill_diameter_scalar(drill_spec)
             {
-                let drill_location =
-                    drill_location_from_pad(drill_spec, location, pad_angle_absolute);
+                let drill_location = drill_location_from_pad_scalar(
+                    drill_spec,
+                    &location_exact,
+                    &(&footprint_angle_exact + &pad_angle_exact),
+                );
                 drills.push(DrillFeature {
                     location: drill_location,
                     diameter: drill,
@@ -338,12 +357,14 @@ fn parse_tracks_and_vias(
     drills: &mut Vec<DrillFeature>,
 ) {
     for segment in root.named_children("segment") {
-        let Some(start) = xy_from_child(segment, "start") else {
+        let Some(start_source) = xy_from_child_source(segment, "start") else {
             continue;
         };
-        let Some(end) = xy_from_child(segment, "end") else {
+        let Some(end_source) = xy_from_child_source(segment, "end") else {
             continue;
         };
+        let start = start_source.approximate;
+        let end = end_source.approximate;
         let width = segment
             .named_child("width")
             .and_then(|width| width.f64_at(1))
@@ -367,22 +388,29 @@ fn parse_tracks_and_vias(
                     name: "KiCad segment".to_string(),
                 }),
             ),
-            location: midpoint(start, end),
+            location: midpoint_scalar(&start_source.exact, &end_source.exact),
         });
     }
 
     for via in root.named_children("via") {
-        let Some(location) = xy_from_child(via, "at") else {
+        let Some(location_source) = xy_from_child_source(via, "at") else {
             continue;
         };
+        let location = location_source.approximate;
+        let location_exact = location_source.exact;
         let size = via
             .named_child("size")
             .and_then(|size| size.f64_at(1))
             .unwrap_or(0.0);
+        let size_scalar = via
+            .named_child("size")
+            .and_then(|size| SourceScalar::parse(SourceUnit::KiCadMillimeter, size.atom_at(1)?))
+            .map(|size| size.value)
+            .unwrap_or_else(Scalar::zero);
         let drill = via
             .named_child("drill")
-            .and_then(drill_diameter)
-            .unwrap_or(size);
+            .and_then(drill_diameter_scalar)
+            .unwrap_or(size_scalar);
         let net = net_name(via, nets);
         let layers = atom_values(via.named_child("layers"))
             .unwrap_or_else(|| vec!["F.Cu".to_string(), "B.Cu".to_string()]);
@@ -398,12 +426,12 @@ fn parse_tracks_and_vias(
                         name: "KiCad via".to_string(),
                     }),
                 ),
-                location,
+                location: location_exact.clone(),
             });
         }
 
         drills.push(DrillFeature {
-            location,
+            location: location_exact,
             diameter: drill,
             net,
             plated: true,
@@ -411,12 +439,14 @@ fn parse_tracks_and_vias(
     }
 }
 
-fn drill_diameter(drill: &Sexp) -> Option<f64> {
+fn drill_diameter_scalar(drill: &Sexp) -> Option<Scalar> {
     if drill.atom_at(1) == Some("oval") || drill.atom_at(1) == Some("rect") {
-        return Some(drill.f64_at(2)?.max(drill.f64_at(3)?));
+        let width = SourceScalar::parse(SourceUnit::KiCadMillimeter, drill.atom_at(2)?)?.value;
+        let height = SourceScalar::parse(SourceUnit::KiCadMillimeter, drill.atom_at(3)?)?.value;
+        return Some(if width >= height { width } else { height });
     }
 
-    drill.f64_at(1)
+    Some(SourceScalar::parse(SourceUnit::KiCadMillimeter, drill.atom_at(1)?)?.value)
 }
 
 /// Resolve the drilled center of a KiCad pad.
@@ -429,16 +459,18 @@ fn drill_diameter(drill: &Sexp) -> Option<f64> {
 /// Preparata, "Computational Geometry - A Survey", IEEE Transactions on
 /// Computers, 1984, <https://doi.org/10.1109/TC.1984.1676388>; the source
 /// field is defined in the KiCad S-expression pad drill grammar.
-fn drill_location_from_pad(
+fn drill_location_from_pad_scalar(
     drill: &Sexp,
-    pad_location: [f64; 2],
-    pad_angle_degrees: f64,
-) -> [f64; 2] {
-    let offset = xy_from_child(drill, "offset").unwrap_or([0.0, 0.0]);
-    let location = rotate_translate(offset, pad_location, pad_angle_degrees);
-    if offset != [0.0, 0.0] {
+    pad_location: &[Scalar; 2],
+    pad_angle_degrees: &Scalar,
+) -> [Scalar; 2] {
+    let offset = xy_from_child_source(drill, "offset")
+        .map(|point| point.exact)
+        .unwrap_or_else(exact_origin);
+    let location = rotate_translate_scalar(&offset, pad_location, pad_angle_degrees);
+    if offset != exact_origin() {
         log::trace!(
-            "parsed KiCad pad drill offset: pad=({:.3},{:.3}) offset=({:.3},{:.3}) drill=({:.3},{:.3}) angle={:.3}",
+            "parsed KiCad pad drill offset: pad=({},{}) offset=({},{}) drill=({},{}) angle={}",
             pad_location[0],
             pad_location[1],
             offset[0],
@@ -459,30 +491,26 @@ fn parse_zones(root: &Sexp, nets: &HashMap<i32, String>, copper: &mut Vec<Copper
             .and_then(|layer| layer.atom_at(1))
             .unwrap_or("unknown")
             .to_string();
-        let polygons = zone
-            .named_child("polygon")
-            .into_iter()
-            .flat_map(polygons_from_pts)
-            .collect::<Vec<_>>();
-
-        for polygon in polygons {
-            copper.push(CopperFeature {
-                layer: layer.clone(),
-                net: net.clone(),
-                kind: CopperKind::Zone,
-                location: polygon
-                    .exterior()
-                    .0
-                    .first()
-                    .map(|coord| [coord.x, coord.y])
-                    .unwrap_or([0.0, 0.0]),
-                sketch: polygons_to_profile(
-                    vec![polygon],
-                    Some(LayerMetadata {
-                        name: "KiCad zone".to_string(),
-                    }),
-                ),
-            });
+        for polygon_source in zone.named_children("polygon") {
+            let location = points_from_pts_source(polygon_source)
+                .into_iter()
+                .next()
+                .map(|point| point.exact)
+                .unwrap_or_else(exact_origin);
+            for polygon in polygons_from_pts(polygon_source) {
+                copper.push(CopperFeature {
+                    layer: layer.clone(),
+                    net: net.clone(),
+                    kind: CopperKind::Zone,
+                    location: location.clone(),
+                    sketch: polygons_to_profile(
+                        vec![polygon],
+                        Some(LayerMetadata {
+                            name: "KiCad zone".to_string(),
+                        }),
+                    ),
+                });
+            }
         }
     }
 }
@@ -498,10 +526,17 @@ pub(super) fn polygons_from_pts(parent: &Sexp) -> Vec<Polygon<f64>> {
 }
 
 pub(super) fn points_from_pts(parent: &Sexp) -> Vec<[f64; 2]> {
+    points_from_pts_source(parent)
+        .into_iter()
+        .map(|point| point.approximate)
+        .collect()
+}
+
+pub(super) fn points_from_pts_source(parent: &Sexp) -> Vec<ParsedPoint2> {
     parent
         .named_children("pts")
         .flat_map(|pts| pts.named_children("xy"))
-        .filter_map(|xy| Some([xy.f64_at(1)?, xy.f64_at(2)?]))
+        .filter_map(parsed_xy)
         .collect()
 }
 
@@ -551,26 +586,20 @@ fn atom_values(list: Option<&Sexp>) -> Option<Vec<String>> {
 pub(super) struct ParsedPoint2 {
     /// Compatibility coordinates used by current `geo`/`csgrs` geometry.
     pub approximate: [f64; 2],
-    /// Exact source-token coordinates, when the token grammar was retained.
-    pub exact: Option<[Real; 2]>,
+    /// Exact source-token coordinates.
+    pub exact: [Real; 2],
     /// Combined source-grid facts for both coordinates.
     pub grid: SourceGridFacts,
-}
-
-impl ParsedPoint2 {
-    /// Merge source facts for two points consumed by one exact predicate.
-    pub fn combined_grid(&self, other: &Self) -> SourceGridFacts {
-        self.grid.combine(other.grid)
-    }
 }
 
 fn parsed_xy(node: &Sexp) -> Option<ParsedPoint2> {
     let x = SourceScalar::parse(SourceUnit::KiCadMillimeter, node.atom_at(1)?)?;
     let y = SourceScalar::parse(SourceUnit::KiCadMillimeter, node.atom_at(2)?)?;
     let grid = x.grid.combine(y.grid);
-    let exact = x.exact.zip(y.exact).map(|(x, y)| [x, y]);
+    let approximate = [x.to_f64_compatibility()?, y.to_f64_compatibility()?];
+    let exact = [x.value, y.value];
     Some(ParsedPoint2 {
-        approximate: [x.approximate, y.approximate],
+        approximate,
         exact,
         grid,
     })
@@ -623,8 +652,43 @@ pub(super) fn rotate_translate(point: [f64; 2], origin: [f64; 2], angle_degrees:
     ]
 }
 
+fn rotate_translate_scalar(
+    point: &[Scalar; 2],
+    origin: &[Scalar; 2],
+    angle_degrees: &Scalar,
+) -> [Scalar; 2] {
+    let theta = (angle_degrees * Real::pi() / Real::from(180_u16))
+        .expect("180 is a nonzero exact degree-to-radian denominator");
+    let cosine = theta.clone().cos();
+    let sine = theta.sin();
+    [
+        &origin[0] + &point[0] * &cosine - &point[1] * &sine,
+        &origin[1] + &point[0] * &sine + &point[1] * &cosine,
+    ]
+}
+
+fn exact_scalar_at(node: Option<&Sexp>, index: usize) -> Scalar {
+    node.and_then(|node| {
+        SourceScalar::parse(SourceUnit::KiCadMillimeter, node.atom_at(index)?)
+            .map(|value| value.value)
+    })
+    .unwrap_or_else(Scalar::zero)
+}
+
+fn exact_origin() -> [Scalar; 2] {
+    [Scalar::zero(), Scalar::zero()]
+}
+
 pub(super) fn midpoint(start: [f64; 2], end: [f64; 2]) -> [f64; 2] {
     [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0]
+}
+
+fn midpoint_scalar(start: &[Scalar; 2], end: &[Scalar; 2]) -> [Scalar; 2] {
+    let two = Scalar::from(2_u8);
+    [
+        ((&start[0] + &end[0]) / &two).expect("two is nonzero"),
+        ((&start[1] + &end[1]) / &two).expect("two is nonzero"),
+    ]
 }
 
 #[cfg(test)]
@@ -634,6 +698,7 @@ mod tests {
     use geo::Area;
 
     use crate::PcbSketchExt;
+    use crate::Scalar;
     use crate::geometry::{SourceGridFacts, SourceUnit};
     use crate::sexp;
 
@@ -1011,8 +1076,8 @@ mod tests {
 
         assert_eq!(board.drills.len(), 1);
         assert_eq!(board.drills[0].diameter, 0.5);
-        assert!((board.drills[0].location[0] - 9.6).abs() < 1.0e-9);
-        assert!((board.drills[0].location[1] - 22.0).abs() < 1.0e-9);
+        assert_eq!(board.drills[0].location[0], crate::scalar::scalar("9.6"));
+        assert_eq!(board.drills[0].location[1], crate::scalar::scalar("22"));
         assert_eq!(board.drills[0].net.as_deref(), Some("GND"));
         let _ = fs::remove_file(path);
     }
@@ -1460,11 +1525,11 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
 
         assert_eq!(board.drills.len(), 3);
-        assert_eq!(board.drills[0].diameter, 1.8);
+        assert_eq!(board.drills[0].diameter, crate::scalar::scalar("1.8"));
         assert!(!board.drills[0].plated);
-        assert_eq!(board.drills[1].diameter, 2.1);
+        assert_eq!(board.drills[1].diameter, crate::scalar::scalar("2.1"));
         assert!(!board.drills[1].plated);
-        assert_eq!(board.drills[2].diameter, 0.9);
+        assert_eq!(board.drills[2].diameter, crate::scalar::scalar("0.9"));
         let _ = fs::remove_file(path);
     }
 
@@ -1562,7 +1627,8 @@ mod tests {
             point.grid,
             SourceGridFacts::source_grid(SourceUnit::KiCadMillimeter, 1_000)
         );
-        assert!(point.exact.is_some());
+        assert_eq!(point.exact[0], "-1.25".parse::<Scalar>().unwrap());
+        assert_eq!(point.exact[1], "2.500".parse::<Scalar>().unwrap());
     }
 
     #[test]
