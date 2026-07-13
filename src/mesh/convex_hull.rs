@@ -9,18 +9,11 @@ use crate::mesh::plane::Plane;
 use crate::mesh::{Mesh, Polygon};
 use crate::vertex::Vertex;
 
-fn limit_point(point: &Point3) -> hyperlimit::Point3 {
-    hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
-}
-
 fn planes_are_certifiably_coplanar(left: &Plane, right: &Plane) -> bool {
-    let a = limit_point(&left.point_a);
-    let b = limit_point(&left.point_b);
-    let c = limit_point(&left.point_c);
     [&right.point_a, &right.point_b, &right.point_c]
         .into_iter()
         .all(|point| {
-            hyperlimit::orient3d(&a, &b, &c, &limit_point(point)).value()
+            hyperlimit::orient3d(&left.point_a, &left.point_b, &left.point_c, point).value()
                 == Some(hyperlimit::Sign::Zero)
         })
 }
