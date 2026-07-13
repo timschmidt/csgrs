@@ -7,7 +7,11 @@ impl PartialEq for Rational {
             self.numerator == other.numerator
         } else if let Some(ordering) = compare_dyadic_magnitudes(self, other) {
             ordering.is_eq()
+        } else if let Some(ordering) = compare_word_magnitudes(self, other) {
+            crate::trace_dispatch!("rational", "comparison", "word-sized");
+            ordering.is_eq()
         } else {
+            crate::trace_dispatch!("rational", "comparison", "biguint-cross-product");
             &self.numerator * &other.denominator == &other.numerator * &self.denominator
         }
     }
@@ -37,7 +41,15 @@ impl PartialOrd for Rational {
                 Minus => Some(ordering.reverse()),
                 NoSign => unreachable!(),
             }
+        } else if let Some(ordering) = compare_word_magnitudes(self, other) {
+            crate::trace_dispatch!("rational", "comparison", "word-sized");
+            match self.sign {
+                Plus => Some(ordering),
+                Minus => Some(ordering.reverse()),
+                NoSign => unreachable!(),
+            }
         } else {
+            crate::trace_dispatch!("rational", "comparison", "biguint-cross-product");
             let left = &self.numerator * &other.denominator;
             let right = &other.numerator * &self.denominator;
             match self.sign {
@@ -47,6 +59,18 @@ impl PartialOrd for Rational {
             }
         }
     }
+}
+
+fn compare_word_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {
+    let left_cross = left
+        .numerator
+        .to_u128()?
+        .checked_mul(right.denominator.to_u128()?)?;
+    let right_cross = right
+        .numerator
+        .to_u128()?
+        .checked_mul(left.denominator.to_u128()?)?;
+    Some(left_cross.cmp(&right_cross))
 }
 
 fn compare_dyadic_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {

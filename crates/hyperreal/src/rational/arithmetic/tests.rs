@@ -729,6 +729,24 @@ mod tests {
     }
 
     #[test]
+    fn word_comparison_falls_back_exactly_when_cross_products_overflow() {
+        use std::cmp::Ordering;
+
+        let left = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(u128::MAX),
+            BigUint::from(3_u8),
+        );
+        let right = Rational::from_parts_raw(
+            Plus,
+            BigUint::from(u128::MAX - 1),
+            BigUint::from(2_u8),
+        );
+        assert_ne!(left, right);
+        assert_eq!(left.partial_cmp(&right), Some(Ordering::Less));
+    }
+
+    #[test]
     fn same() {
         use std::cmp::Ordering;
 
