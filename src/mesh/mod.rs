@@ -346,6 +346,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .flat_map(|poly| {
                 poly.triangulate().into_iter().map(move |triangle| {
                     Polygon::new(triangle.to_vec(), poly.metadata.clone())
+                        .with_plane_id(poly.plane_id)
                 })
             })
             .collect::<Vec<_>>();
@@ -366,6 +367,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         vec![tri[0].clone(), tri[1].clone(), tri[2].clone()],
                         poly.metadata.clone(),
                     )
+                    .with_plane_id(poly.plane_id)
                 })
             })
             .collect();
@@ -396,9 +398,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .iter()
             .flat_map(|poly| {
                 let polytri = poly.subdivide_triangles(levels);
-                polytri
-                    .into_iter()
-                    .map(move |tri| Polygon::new(tri.to_vec(), poly.metadata.clone()))
+                polytri.into_iter().map(move |tri| {
+                    Polygon::new(tri.to_vec(), poly.metadata.clone())
+                        .with_plane_id(poly.plane_id)
+                })
             })
             .collect();
     }
