@@ -44,8 +44,54 @@ impl Rational {
         let mut magnitude = 1_u128;
         let mut denominator = 1_u128;
         for factor in term {
-            magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
-            denominator = denominator.checked_mul(factor.denominator.to_u128()?)?;
+            let numerator = factor.numerator.to_u128()?;
+            let factor_denominator = factor.denominator.to_u128()?;
+            let Some(next_magnitude) = magnitude.checked_mul(numerator) else {
+                return Self::product_term_words_cross_cancelled(term);
+            };
+            let Some(next_denominator) = denominator.checked_mul(factor_denominator) else {
+                return Self::product_term_words_cross_cancelled(term);
+            };
+            magnitude = next_magnitude;
+            denominator = next_denominator;
+        }
+        Some((magnitude, denominator))
+    }
+
+    fn product_term_words_cross_cancelled<const FACTORS: usize>(
+        term: [&Self; FACTORS],
+    ) -> Option<(u128, u128)> {
+        let mut numerators = [0_u128; FACTORS];
+        let mut denominators = [1_u128; FACTORS];
+        for i in 0..FACTORS {
+            numerators[i] = term[i].numerator.to_u128()?;
+            denominators[i] = term[i].denominator.to_u128()?;
+        }
+
+        for numerator in &mut numerators {
+            if *numerator == 1 {
+                continue;
+            }
+            for denominator in &mut denominators {
+                if *denominator == 1 {
+                    continue;
+                }
+                let divisor = Self::gcd_word(*numerator, *denominator);
+                *numerator /= divisor;
+                *denominator /= divisor;
+                if *numerator == 1 {
+                    break;
+                }
+            }
+        }
+
+        let mut magnitude = 1_u128;
+        let mut denominator = 1_u128;
+        for factor in numerators {
+            magnitude = magnitude.checked_mul(factor)?;
+        }
+        for factor in denominators {
+            denominator = denominator.checked_mul(factor)?;
         }
         Some((magnitude, denominator))
     }

@@ -611,6 +611,19 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_cross_cancels_before_word_overflow() {
+        let a = BigUint::one() << 80_usize;
+        let b = &a - BigUint::one();
+        let ratio = Rational::from_bigint_fraction(BigInt::from(a.clone()), b.clone()).unwrap();
+        let reciprocal = Rational::from_bigint_fraction(BigInt::from(b), a).unwrap();
+
+        assert_eq!(
+            Rational::signed_product_sum([true], [[&ratio, &reciprocal]]),
+            Rational::one(),
+        );
+    }
+
+    #[test]
     fn signed_product_sum_ordering_matches_materialized_result_and_overflow_fallback() {
         let one = Rational::one();
         let two = Rational::new(2);

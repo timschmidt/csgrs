@@ -127,7 +127,7 @@ static RATIONAL_ONE: LazyLock<Rational> =
     LazyLock::new(|| Rational::from_parts_raw(Plus, BigUint::one(), BigUint::one()));
 static RATIONAL_MINUS_ONE: LazyLock<Rational> =
     LazyLock::new(|| Rational::from_parts_raw(Minus, BigUint::one(), BigUint::one()));
-static SMALL_POSITIVE_RATIONALS: LazyLock<[Rational; 15]> = LazyLock::new(|| {
+static SMALL_POSITIVE_RATIONALS: LazyLock<[Rational; 63]> = LazyLock::new(|| {
     std::array::from_fn(|index| {
         Rational::from_parts_raw(
             Plus,
@@ -136,7 +136,7 @@ static SMALL_POSITIVE_RATIONALS: LazyLock<[Rational; 15]> = LazyLock::new(|| {
         )
     })
 });
-static SMALL_NEGATIVE_RATIONALS: LazyLock<[Rational; 15]> = LazyLock::new(|| {
+static SMALL_NEGATIVE_RATIONALS: LazyLock<[Rational; 63]> = LazyLock::new(|| {
     std::array::from_fn(|index| {
         Rational::from_parts_raw(
             Minus,

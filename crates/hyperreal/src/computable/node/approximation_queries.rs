@@ -1,3 +1,36 @@
+struct InlineStack<T, const N: usize> {
+    inline: [Option<T>; N],
+    inline_len: usize,
+    overflow: Vec<T>,
+}
+
+impl<T, const N: usize> InlineStack<T, N> {
+    fn new() -> Self {
+        Self {
+            inline: std::array::from_fn(|_| None),
+            inline_len: 0,
+            overflow: Vec::new(),
+        }
+    }
+
+    fn push(&mut self, value: T) {
+        if self.overflow.is_empty() && self.inline_len < N {
+            self.inline[self.inline_len] = Some(value);
+            self.inline_len += 1;
+        } else {
+            self.overflow.push(value);
+        }
+    }
+
+    fn pop(&mut self) -> Option<T> {
+        if let Some(value) = self.overflow.pop() {
+            return Some(value);
+        }
+        self.inline_len = self.inline_len.checked_sub(1)?;
+        self.inline[self.inline_len].take()
+    }
+}
+
 impl Computable {
     /// An approximation of this Computable scaled to a specific precision.
     ///
@@ -55,10 +88,10 @@ impl Computable {
             return result;
         }
 
-        // Reserve a modest stack size for the flattened traversal path so long
-        // chains of Negate/Add/Offset avoid repeated allocations.
-        let mut frames = Vec::with_capacity(16);
-        let mut values: Vec<BigInt> = Vec::with_capacity(8);
+        // Common expression chains fit inline; unusually deep trees spill to
+        // heap storage without changing the iterative traversal.
+        let mut frames = InlineStack::<Frame<'_>, 16>::new();
+        let mut values = InlineStack::<BigInt, 8>::new();
         frames.push(Frame::Eval(self, p));
 
         while let Some(frame) = frames.pop() {
