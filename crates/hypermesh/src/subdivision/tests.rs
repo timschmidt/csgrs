@@ -36,6 +36,28 @@ fn reference_target_clones_share_definition_families() {
     assert!(Arc::ptr_eq(&target.definitions, &cloned.definitions));
 }
 
+#[test]
+fn support_reference_context_clones_share_immutable_families() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let definitions = axis_defs(&p(0, 0, 1));
+    let context = support_reference_cache_context_key(
+        &p(0, 0, 1),
+        &definitions,
+        &[0],
+        std::slice::from_ref(&polygon),
+    );
+    let cloned = context.clone();
+    let polygon_context = support_reference_polygon_context_key_from_support_context(&context);
+
+    assert!(Arc::ptr_eq(
+        &context.old_ref_definitions,
+        &cloned.old_ref_definitions
+    ));
+    assert!(Arc::ptr_eq(&context.old_wnv, &cloned.old_wnv));
+    assert!(Arc::ptr_eq(&context.polygons, &cloned.polygons));
+    assert!(Arc::ptr_eq(&context.polygons, &polygon_context.polygons));
+}
+
 fn assert_certified_reference_result(
     found: Option<(ReferenceTarget, Vec<i32>)>,
     expected_point: &Point3,
@@ -429,6 +451,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
             .unwrap();
 
     assert_eq!(first, second);
+    assert!(Arc::ptr_eq(&first, &second));
     assert_eq!(cache.borrow().len(), 1);
 }
 
@@ -9014,16 +9037,14 @@ fn reusable_support_reference_accept_from_cached_trace_if_certified_reuses_cache
     );
     assert_eq!(cache.len(), 2);
     assert!(cache.iter().any(|entry| {
-        entry
-            .context
-            .as_ref()
-            .is_some_and(|context| context.old_ref == query_old_ref && context.old_wnv == vec![7])
-            && matches!(
-                &entry.accepted,
-                Ok(Some((target, winding)))
-                    if *target == ReferenceTarget::axis_defined(p(1, 1, 1))
-                        && *winding == vec![7]
-            )
+        entry.context.as_ref().is_some_and(|context| {
+            context.old_ref == query_old_ref && context.old_wnv.as_slice() == [7]
+        }) && matches!(
+            &entry.accepted,
+            Ok(Some((target, winding)))
+                if *target == ReferenceTarget::axis_defined(p(1, 1, 1))
+                    && *winding == vec![7]
+        )
     }));
 }
 
@@ -9663,7 +9684,7 @@ fn reusable_support_reference_result_from_cached_trace_if_certified_reuses_cache
     assert_eq!(cache.len(), 2);
     assert!(cache.iter().any(|entry| {
         entry.context.old_ref == query_old_ref
-            && entry.context.old_wnv == vec![7]
+            && entry.context.old_wnv.as_slice() == [7]
             && matches!(
                 &entry.result,
                 Ok(Some((target, winding)))

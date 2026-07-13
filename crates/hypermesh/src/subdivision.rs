@@ -223,7 +223,7 @@ struct HostBspLeavesCacheEntry {
     host: ConvexPolygon,
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
-    leaves: HypermeshResult<Vec<BspLeaf>>,
+    leaves: HypermeshResult<Arc<Vec<BspLeaf>>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -341,7 +341,9 @@ fn process_leaf_into_inner(
         &leaf_classification_cache,
         &leaf_point_classification_cache,
         |polygons| pairwise_intersections_by_polygon(polygons).map(Arc::new),
-        build_host_bsp_leaves,
+        |polygon, polygons, intersections| {
+            build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new)
+        },
         |polygon, leaf_edges, polygons, intersections| {
             certify_bsp_leaf_and_delta_w_with_host_intersections(
                 polygon,
@@ -371,7 +373,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
         &ConvexPolygon,
         &[ConvexPolygon],
         &[PairwiseIntersection],
-    ) -> HypermeshResult<Vec<BspLeaf>>,
+    ) -> HypermeshResult<Arc<Vec<BspLeaf>>>,
     certify_bsp_leaf: impl Fn(
         &ConvexPolygon,
         &[crate::geometry::Plane],
@@ -2116,7 +2118,7 @@ fn cached_host_bsp_leaves_with(
     polygon: &ConvexPolygon,
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
-) -> HypermeshResult<Vec<BspLeaf>> {
+) -> HypermeshResult<Arc<Vec<BspLeaf>>> {
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *polygon
@@ -2126,7 +2128,7 @@ fn cached_host_bsp_leaves_with(
         return existing.leaves.clone();
     }
 
-    let leaves = build_host_bsp_leaves(polygon, polygons, intersections);
+    let leaves = build_host_bsp_leaves(polygon, polygons, intersections).map(Arc::new);
     cache.borrow_mut().push(HostBspLeavesCacheEntry {
         host: polygon.clone(),
         polygon_profile,
@@ -5507,16 +5509,16 @@ struct ProjectedReferenceResultCacheEntry {
 #[derive(Clone, Debug, PartialEq)]
 struct SupportReferenceCacheContextKey {
     old_ref: Point3,
-    old_ref_definitions: Vec<[Plane; 3]>,
-    old_wnv: Vec<i32>,
+    old_ref_definitions: Arc<Vec<[Plane; 3]>>,
+    old_wnv: Arc<Vec<i32>>,
     polygon_profile: PolygonFamilyProfile,
-    polygons: Vec<ConvexPolygon>,
+    polygons: Arc<Vec<ConvexPolygon>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 struct SupportReferencePolygonContextKey {
     polygon_profile: PolygonFamilyProfile,
-    polygons: Vec<ConvexPolygon>,
+    polygons: Arc<Vec<ConvexPolygon>>,
 }
 
 fn support_reference_cache_context_key(
@@ -5527,10 +5529,10 @@ fn support_reference_cache_context_key(
 ) -> SupportReferenceCacheContextKey {
     SupportReferenceCacheContextKey {
         old_ref: old_ref.clone(),
-        old_ref_definitions: old_ref_definitions.to_vec(),
-        old_wnv: old_wnv.to_vec(),
+        old_ref_definitions: Arc::new(old_ref_definitions.to_vec()),
+        old_wnv: Arc::new(old_wnv.to_vec()),
         polygon_profile: polygon_family_profile(polygons),
-        polygons: polygons.to_vec(),
+        polygons: Arc::new(polygons.to_vec()),
     }
 }
 
@@ -5893,7 +5895,7 @@ fn reusable_support_reference_result_if_certified(
     let mut reused = None;
     for existing in cache.iter().rev() {
         if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            || existing.context.old_wnv != old_wnv
+            || existing.context.old_wnv.as_slice() != old_wnv
             || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
         {
             continue;
@@ -6077,7 +6079,7 @@ fn reusable_projected_reference_result_if_certified(
     let mut reused = None;
     for existing in cache.iter().rev() {
         if !limit_plane_families_match_as_sets(&existing.halfspaces, halfspaces)
-            || existing.context.old_wnv != old_wnv
+            || existing.context.old_wnv.as_slice() != old_wnv
             || !support_reference_polygon_context_matches(Some(&existing.context), polygon_context)
         {
             continue;
