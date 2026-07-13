@@ -8,7 +8,7 @@
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Computable {
-    pub(super) internal: Box<Approximation>,
+    pub(super) internal: Rc<Approximation>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) cache: RefCell<Cache>,
     #[cfg_attr(feature = "serde", serde(skip))]

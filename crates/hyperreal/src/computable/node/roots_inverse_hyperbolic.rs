@@ -14,7 +14,7 @@ impl Computable {
             _ => ExactSignCache::Valid(Sign::Plus),
         };
         Self {
-            internal: Box::new(Approximation::Sqrt(child)),
+            internal: Rc::new(Approximation::Sqrt(child)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -114,7 +114,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Sqrt(self)),
+            internal: Rc::new(Approximation::Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -126,7 +126,7 @@ impl Computable {
         // atan(1/n) kernel used by pi and atan reduction constants. Passing the
         // denominator as an integer keeps the series loop division-only.
         Self {
-            internal: Box::new(Approximation::IntegralAtan(n)),
+            internal: Rc::new(Approximation::IntegralAtan(n)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -141,7 +141,7 @@ impl Computable {
         // same range reductions directly in the approximation kernel.
         crate::trace_dispatch!("computable", "constructor", "atan-rational-deferred");
         Self {
-            internal: Box::new(Approximation::AtanRational(rational)),
+            internal: Rc::new(Approximation::AtanRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -156,7 +156,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asin-rational-deferred");
         let sign = rational.sign();
         Self {
-            internal: Box::new(Approximation::AsinRational(rational)),
+            internal: Rc::new(Approximation::AsinRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(sign)),
@@ -189,7 +189,7 @@ impl Computable {
             if msd < -1 {
                 crate::trace_dispatch!("computable", "atan", "structural-small-prescaled");
                 return Self {
-                    internal: Box::new(Approximation::PrescaledAtan(self)),
+                    internal: Rc::new(Approximation::PrescaledAtan(self)),
                     cache: RefCell::new(Cache::Invalid),
                     bound: Cell::new(BoundCache::Invalid),
                     exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -209,7 +209,7 @@ impl Computable {
             // Small atan arguments use the prescaled series directly.
             crate::trace_dispatch!("computable", "atan", "rough-small-prescaled");
             return Self {
-                internal: Box::new(Approximation::PrescaledAtan(self)),
+                internal: Rc::new(Approximation::PrescaledAtan(self)),
                 cache: RefCell::new(Cache::Invalid),
                 bound: Cell::new(BoundCache::Invalid),
                 exact_sign: Cell::new(ExactSignCache::Invalid),

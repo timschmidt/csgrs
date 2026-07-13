@@ -14,12 +14,16 @@ impl Rational {
         let (sign, magnitude) = match positive.cmp(&negative) {
             Ordering::Greater => (Plus, positive - negative),
             Ordering::Less => (Minus, negative - positive),
-            Ordering::Equal => return Self::zero(),
+            Ordering::Equal => {
+                crate::trace_dispatch!("rational", "word-result", "zero");
+                return Self::zero();
+            }
         };
         let divisor = Self::gcd_word(magnitude, denominator);
         let magnitude = magnitude / divisor;
         let denominator = denominator / divisor;
         if magnitude == denominator {
+            crate::trace_dispatch!("rational", "word-result", "unit");
             return if sign == Minus {
                 Self::minus_one()
             } else {
@@ -29,7 +33,27 @@ impl Rational {
         if denominator == 1
             && let Some(value) = Self::small_integer(sign, magnitude)
         {
+            crate::trace_dispatch!("rational", "word-result", "cached-small-integer");
             return value;
+        }
+        if denominator == 1 {
+            #[cfg(feature = "dispatch-trace")]
+            {
+                let path = match magnitude {
+                    0..=127 => "uncached-integer-65-127",
+                    128..=255 => "uncached-integer-128-255",
+                    256..=1023 => "uncached-integer-256-1023",
+                    1024..=4095 => "uncached-integer-1024-4095",
+                    _ => "uncached-integer-wide",
+                };
+                crate::trace_dispatch!("rational", "word-result", path);
+            }
+        } else if denominator.is_power_of_two() {
+            crate::trace_dispatch!("rational", "word-result", "dyadic-fraction");
+        } else if magnitude <= u128::from(u64::MAX) && denominator <= u128::from(u64::MAX) {
+            crate::trace_dispatch!("rational", "word-result", "small-general-fraction");
+        } else {
+            crate::trace_dispatch!("rational", "word-result", "wide-general-fraction");
         }
         Self::from_parts_raw(
             sign,

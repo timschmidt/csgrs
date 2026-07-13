@@ -22,7 +22,7 @@ serde = ["dep:serde", "dep:serde_json", "dep:ciborium", "num/serde"]
 [dependencies]
 ciborium = { version = "0.2.2", optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
-serde = { version = "1.0.228", features = ["derive"], optional = true }
+serde = { version = "1.0.228", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0.149", optional = true }
 
 [dev-dependencies]

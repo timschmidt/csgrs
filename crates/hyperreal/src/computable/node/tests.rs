@@ -84,6 +84,15 @@ mod tests {
     }
 
     #[test]
+    fn clones_share_immutable_expression_nodes() {
+        let value = Computable::pi().add(Computable::one());
+        let clone = value.clone();
+
+        assert!(Rc::ptr_eq(&value.internal, &clone.internal));
+        assert_eq!(value.approx(-32), clone.approx(-32));
+    }
+
+    #[test]
     fn layout_sizes() {
         assert!(
             size_of::<Computable>() <= 80,
@@ -313,7 +322,7 @@ mod tests {
     fn scaled_ln1() {
         let zero = Computable::integer(BigInt::zero());
         let ln = Computable {
-            internal: Box::new(Approximation::PrescaledLn(zero)),
+            internal: Rc::new(Approximation::PrescaledLn(zero)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -328,7 +337,7 @@ mod tests {
         let zero_4: Rational = "0.4".parse().unwrap();
         let rational = Computable::rational(zero_4);
         let ln = Computable {
-            internal: Box::new(Approximation::PrescaledLn(rational)),
+            internal: Rc::new(Approximation::PrescaledLn(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),

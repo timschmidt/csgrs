@@ -270,7 +270,7 @@ impl Computable {
     pub fn zero() -> Computable {
         crate::trace_dispatch!("computable", "constructor", "zero");
         Self {
-            internal: Box::new(Approximation::Int(BigInt::zero())),
+            internal: Rc::new(Approximation::Int(BigInt::zero())),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Valid(BoundInfo::Zero)),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::NoSign)),
@@ -282,7 +282,7 @@ impl Computable {
     pub fn one() -> Computable {
         crate::trace_dispatch!("computable", "constructor", "one");
         Self {
-            internal: Box::new(Approximation::One),
+            internal: Rc::new(Approximation::One),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Valid(BoundInfo::with_sign(Sign::Plus, Some(0)))),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -382,7 +382,7 @@ impl Computable {
         // kernel directly.
         crate::trace_dispatch!("computable", "constructor", "prescaled-sin");
         Self {
-            internal: Box::new(Approximation::PrescaledSin(value)),
+            internal: Rc::new(Approximation::PrescaledSin(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -396,7 +396,7 @@ impl Computable {
         // approximation node for already-small residuals.
         crate::trace_dispatch!("computable", "constructor", "prescaled-cos");
         Self {
-            internal: Box::new(Approximation::PrescaledCos(value)),
+            internal: Rc::new(Approximation::PrescaledCos(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -411,7 +411,7 @@ impl Computable {
         // digits are requested.
         crate::trace_dispatch!("computable", "constructor", "prescaled-cos-rational");
         Self {
-            internal: Box::new(Approximation::PrescaledCosRational(rational)),
+            internal: Rc::new(Approximation::PrescaledCosRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -426,7 +426,7 @@ impl Computable {
         // residual arithmetic without allocating the generic reducer graph.
         crate::trace_dispatch!("computable", "constructor", "cos-large-rational-deferred");
         Self {
-            internal: Box::new(Approximation::CosLargeRational(rational)),
+            internal: Rc::new(Approximation::CosLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -445,7 +445,7 @@ impl Computable {
         );
         let internal = Approximation::PrescaledCosHalfPiMinusRational(rational);
         Self {
-            internal: Box::new(internal),
+            internal: Rc::new(internal),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -464,7 +464,7 @@ impl Computable {
         );
         let internal = Approximation::PrescaledSinHalfPiMinusRational(rational);
         Self {
-            internal: Box::new(internal),
+            internal: Rc::new(internal),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -483,7 +483,7 @@ impl Computable {
         );
         let internal = Approximation::PrescaledCotHalfPiMinusRational(rational);
         Self {
-            internal: Box::new(internal),
+            internal: Rc::new(internal),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -497,7 +497,7 @@ impl Computable {
         // exact 1e6/1e30 scalar rows avoid eager reducer graph construction.
         crate::trace_dispatch!("computable", "constructor", "sin-large-rational-deferred");
         Self {
-            internal: Box::new(Approximation::SinLargeRational(rational)),
+            internal: Rc::new(Approximation::SinLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -511,7 +511,7 @@ impl Computable {
         // hot 1e6/1e30 rows share the direct half-pi residual used by sin/cos.
         crate::trace_dispatch!("computable", "constructor", "tan-large-rational-deferred");
         Self {
-            internal: Box::new(Approximation::TanLargeRational(rational)),
+            internal: Rc::new(Approximation::TanLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -524,7 +524,7 @@ impl Computable {
         // relies on the public constructor to handle near-pole complements.
         crate::trace_dispatch!("computable", "constructor", "prescaled-tan");
         Self {
-            internal: Box::new(Approximation::PrescaledTan(value)),
+            internal: Rc::new(Approximation::PrescaledTan(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -538,7 +538,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "prescaled-sin-rational");
         let sign = rational.sign();
         Self {
-            internal: Box::new(Approximation::PrescaledSinRational(rational)),
+            internal: Rc::new(Approximation::PrescaledSinRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(sign)),
@@ -552,7 +552,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "prescaled-tan-rational");
         let sign = rational.sign();
         Self {
-            internal: Box::new(Approximation::PrescaledTanRational(rational)),
+            internal: Rc::new(Approximation::PrescaledTanRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(sign)),
@@ -566,7 +566,7 @@ impl Computable {
         // enters the kernel after |x| has been structurally certified tiny.
         crate::trace_dispatch!("computable", "constructor", "prescaled-asinh");
         Self {
-            internal: Box::new(Approximation::PrescaledAsinh(value)),
+            internal: Rc::new(Approximation::PrescaledAsinh(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -581,7 +581,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "prescaled-asin");
         let sign = value.exact_sign();
         Self {
-            internal: Box::new(Approximation::PrescaledAsin(value)),
+            internal: Rc::new(Approximation::PrescaledAsin(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
@@ -595,7 +595,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asinh-rational-deferred");
         let sign = rational.sign();
         Self {
-            internal: Box::new(Approximation::AsinhRational(rational)),
+            internal: Rc::new(Approximation::AsinhRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(sign)),
@@ -610,7 +610,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "prescaled-atanh");
         let sign = value.exact_sign();
         Self {
-            internal: Box::new(Approximation::PrescaledAtanh(value)),
+            internal: Rc::new(Approximation::PrescaledAtanh(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
@@ -625,7 +625,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "atanh-rational-deferred");
         let sign = rational.sign();
         Self {
-            internal: Box::new(Approximation::AtanhRational(rational)),
+            internal: Rc::new(Approximation::AtanhRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(sign)),
@@ -639,7 +639,7 @@ impl Computable {
         // public construction of endpoint-heavy inverse trig expressions.
         crate::trace_dispatch!("computable", "constructor", "acos-positive-deferred");
         Self {
-            internal: Box::new(Approximation::AcosPositive(value)),
+            internal: Rc::new(Approximation::AcosPositive(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -654,7 +654,7 @@ impl Computable {
             "acos-positive-rational-deferred"
         );
         Self {
-            internal: Box::new(Approximation::AcosPositiveRational(rational)),
+            internal: Rc::new(Approximation::AcosPositiveRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -669,7 +669,7 @@ impl Computable {
             "acos-negative-rational-deferred"
         );
         Self {
-            internal: Box::new(Approximation::AcosNegativeRational(magnitude)),
+            internal: Rc::new(Approximation::AcosNegativeRational(magnitude)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -684,7 +684,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asin-deferred");
         let sign = value.exact_sign();
         Self {
-            internal: Box::new(Approximation::AsinDeferred(value)),
+            internal: Rc::new(Approximation::AsinDeferred(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
@@ -698,7 +698,7 @@ impl Computable {
         // approximation identity when a numeric value is requested.
         crate::trace_dispatch!("computable", "constructor", "atanh-direct-deferred");
         Self {
-            internal: Box::new(Approximation::AtanhDirect(value)),
+            internal: Rc::new(Approximation::AtanhDirect(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -712,7 +712,7 @@ impl Computable {
         // the cancellation-resistant approximation path.
         crate::trace_dispatch!("computable", "constructor", "acosh-near-one-deferred");
         Self {
-            internal: Box::new(Approximation::AcoshNearOne(value)),
+            internal: Rc::new(Approximation::AcoshNearOne(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -725,7 +725,7 @@ impl Computable {
         // paths do not eagerly allocate the sqrt/log graph.
         crate::trace_dispatch!("computable", "constructor", "acosh-direct-deferred");
         Self {
-            internal: Box::new(Approximation::AcoshDirect(value)),
+            internal: Rc::new(Approximation::AcoshDirect(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -740,7 +740,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asinh-near-zero-deferred");
         let sign = value.exact_sign();
         Self {
-            internal: Box::new(Approximation::AsinhNearZero(value)),
+            internal: Rc::new(Approximation::AsinhNearZero(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
@@ -755,7 +755,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asinh-direct-deferred");
         let sign = value.exact_sign();
         Self {
-            internal: Box::new(Approximation::AsinhDirect(value)),
+            internal: Rc::new(Approximation::AsinhDirect(value)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
@@ -769,7 +769,7 @@ impl Computable {
         // be initialized directly on each lightweight wrapper.
         crate::trace_dispatch!("computable", "constructor", "shared-constant-wrapper");
         Self {
-            internal: Box::new(Approximation::Constant(constant)),
+            internal: Rc::new(Approximation::Constant(constant)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Valid(constant.bound_info())),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -795,7 +795,7 @@ impl Computable {
         }
         crate::trace_dispatch!("computable", "constructor", "rational-node");
         Self {
-            internal: Box::new(Approximation::Ratio(r)),
+            internal: Rc::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),

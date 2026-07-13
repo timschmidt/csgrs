@@ -132,7 +132,7 @@ fn raw(kind: Approximation) -> Computable {
     // for internal constant identities where adding public simplification would
     // either recurse back into the same constant or erase the intended kernel.
     Computable {
-        internal: Box::new(kind),
+        internal: Rc::new(kind),
         cache: std::cell::RefCell::new(crate::computable::Cache::Invalid),
         bound: std::cell::Cell::new(crate::computable::BoundCache::Invalid),
         exact_sign: std::cell::Cell::new(crate::computable::ExactSignCache::Invalid),

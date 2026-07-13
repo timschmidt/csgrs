@@ -316,7 +316,7 @@ impl Computable {
         // Private constructor for ln(1+x). Public ln range reduction must run
         // first so this node never sees an arbitrary positive value.
         Self {
-            internal: Box::new(Approximation::PrescaledLn(self)),
+            internal: Rc::new(Approximation::PrescaledLn(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -330,7 +330,7 @@ impl Computable {
         // has the same sign as x, so store that cheap certificate too.
         let sign = rational.sign();
         Self {
-            internal: Box::new(Approximation::PrescaledLnRational(rational)),
+            internal: Rc::new(Approximation::PrescaledLnRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(sign)),
@@ -344,7 +344,7 @@ impl Computable {
         // together for hot ln(1+x^2) offenders and lets the approximation
         // kernel combine the two terms without allocating a short-lived graph.
         Self {
-            internal: Box::new(Approximation::BinaryScaledLnRational { residual, shift }),
+            internal: Rc::new(Approximation::BinaryScaledLnRational { residual, shift }),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),

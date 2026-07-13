@@ -66,7 +66,7 @@ impl Computable {
         // exp(x) stays strictly positive across all domain values, so cache
         // that fact directly for fast sign/zero checks.
         Self {
-            internal: Box::new(Approximation::PrescaledExp(self)),
+            internal: Rc::new(Approximation::PrescaledExp(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -164,7 +164,7 @@ impl Computable {
             None => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Expm1(self)),
+            internal: Rc::new(Approximation::Expm1(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -535,7 +535,7 @@ impl Computable {
             // Known |x| < 2: enter the tangent quotient kernel directly.
             crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
             return Self {
-                internal: Box::new(Approximation::PrescaledTan(self)),
+                internal: Rc::new(Approximation::PrescaledTan(self)),
                 cache: RefCell::new(Cache::Invalid),
                 bound: Cell::new(BoundCache::Invalid),
                 exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -553,7 +553,7 @@ impl Computable {
         if abs_rough_appr < unsigned::TWO.deref() {
             crate::trace_dispatch!("computable", "tan", "rough-small-prescaled");
             return Self {
-                internal: Box::new(Approximation::PrescaledTan(self)),
+                internal: Rc::new(Approximation::PrescaledTan(self)),
                 cache: RefCell::new(Cache::Invalid),
                 bound: Cell::new(BoundCache::Invalid),
                 exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -567,7 +567,7 @@ impl Computable {
             let complement = Self::pi().shift_right(1).add(self.negate());
             crate::trace_dispatch!("computable", "tan", "near-half-pi-cotangent-rewrite");
             return Self {
-                internal: Box::new(Approximation::PrescaledCot(complement)),
+                internal: Rc::new(Approximation::PrescaledCot(complement)),
                 cache: RefCell::new(Cache::Invalid),
                 bound: Cell::new(BoundCache::Invalid),
                 exact_sign: Cell::new(ExactSignCache::Invalid),

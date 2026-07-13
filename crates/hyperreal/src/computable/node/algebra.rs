@@ -32,7 +32,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Negate(self)),
+            internal: Rc::new(Approximation::Negate(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -107,7 +107,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Inverse(self)),
+            internal: Rc::new(Approximation::Inverse(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -132,7 +132,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Offset(self, n)),
+            internal: Rc::new(Approximation::Offset(self, n)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -191,7 +191,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Square(self)),
+            internal: Rc::new(Approximation::Square(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -301,7 +301,7 @@ impl Computable {
             }
         }
         Self {
-            internal: Box::new(Approximation::Multiply(self, other)),
+            internal: Rc::new(Approximation::Multiply(self, other)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -357,7 +357,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Box::new(Approximation::Multiply(Self::rational(scale), self)),
+            internal: Rc::new(Approximation::Multiply(Self::rational(scale), self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(exact_sign),
@@ -431,7 +431,7 @@ impl Computable {
         };
         let certified_sign = certified_bound.known_sign().or(child_sign);
         Self {
-            internal: Box::new(Approximation::Add(self, other)),
+            internal: Rc::new(Approximation::Add(self, other)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(if certified_bound == BoundInfo::Unknown {
                 BoundCache::Invalid
@@ -451,7 +451,7 @@ impl Computable {
             return Self::one();
         }
         Self {
-            internal: Box::new(Approximation::Int(n)),
+            internal: Rc::new(Approximation::Int(n)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -467,7 +467,7 @@ impl Computable {
             return Self::zero();
         }
         let series = Self {
-            internal: Box::new(Approximation::ErfSeries(self.clone())),
+            internal: Rc::new(Approximation::ErfSeries(self.clone())),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
@@ -486,7 +486,7 @@ impl Computable {
             return Self::one();
         }
         Self {
-            internal: Box::new(Approximation::Erfc(self)),
+            internal: Rc::new(Approximation::Erfc(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -531,7 +531,7 @@ impl Computable {
             return Self::rational(HALF_RATIONAL.clone());
         }
         Self {
-            internal: Box::new(Approximation::NormalSf(self)),
+            internal: Rc::new(Approximation::NormalSf(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -545,7 +545,7 @@ impl Computable {
             return Self::zero();
         }
         Self {
-            internal: Box::new(Approximation::NormalInterval { lo, hi }),
+            internal: Rc::new(Approximation::NormalInterval { lo, hi }),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -556,7 +556,7 @@ impl Computable {
     /// Natural logarithm of the standard normal CDF.
     pub fn log_pnorm(self) -> Computable {
         Self {
-            internal: Box::new(Approximation::LogPnorm(self)),
+            internal: Rc::new(Approximation::LogPnorm(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Minus)),
@@ -567,7 +567,7 @@ impl Computable {
     /// Natural logarithm of the standard normal upper-tail probability.
     pub fn log_normal_sf(self) -> Computable {
         Self {
-            internal: Box::new(Approximation::LogNormalSf(self)),
+            internal: Rc::new(Approximation::LogNormalSf(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Minus)),
@@ -578,7 +578,7 @@ impl Computable {
     /// Natural logarithm of the standard normal density.
     pub fn log_dnorm(self) -> Computable {
         Self {
-            internal: Box::new(Approximation::LogDnorm(self)),
+            internal: Rc::new(Approximation::LogDnorm(self)),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Valid(Sign::Minus)),
@@ -589,7 +589,7 @@ impl Computable {
     /// Standard normal quantile by Newton iteration with the analytic density.
     pub fn normal_quantile(p: Computable, seed: BigInt, seed_prec: Precision) -> Computable {
         Self {
-            internal: Box::new(Approximation::NormalQuantile { p, seed, seed_prec }),
+            internal: Rc::new(Approximation::NormalQuantile { p, seed, seed_prec }),
             cache: RefCell::new(Cache::Invalid),
             bound: Cell::new(BoundCache::Invalid),
             exact_sign: Cell::new(ExactSignCache::Invalid),
