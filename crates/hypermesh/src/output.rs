@@ -1160,11 +1160,17 @@ fn proper_segment_intersection(
         2 => (0, 1),
         _ => unreachable!("axis must be in 0..3"),
     };
-    let denom = (&ab[u_axis] * &cd[v_axis]) - (&ab[v_axis] * &cd[u_axis]);
+    let denom = Real::signed_product_sum(
+        [true, false],
+        [[&ab[u_axis], &cd[v_axis]], [&ab[v_axis], &cd[u_axis]]],
+    );
     if crate::geometry::classify_real(&denom)? == Classification::On {
         return Ok(None);
     }
-    let t_num = (&ac[u_axis] * &cd[v_axis]) - (&ac[v_axis] * &cd[u_axis]);
+    let t_num = Real::signed_product_sum(
+        [true, false],
+        [[&ac[u_axis], &cd[v_axis]], [&ac[v_axis], &cd[u_axis]]],
+    );
     let t = (t_num / denom).map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
     let point = OutputVertex {
         x: &a.x + &(t.clone() * &ab[0]),
@@ -1391,9 +1397,17 @@ fn signed_volume_numerator(soup: &TriangleSoup) -> Real {
         let v0 = &soup.vertices[triangle[0]];
         let v1 = &soup.vertices[triangle[1]];
         let v2 = &soup.vertices[triangle[2]];
-        let term = &v0.x * &((&v1.y * &v2.z) - (&v1.z * &v2.y))
-            + &v0.y * &((&v1.z * &v2.x) - (&v1.x * &v2.z))
-            + &v0.z * &((&v1.x * &v2.y) - (&v1.y * &v2.x));
+        let term = Real::signed_product_sum(
+            [true, true, true, false, false, false],
+            [
+                [&v0.x, &v1.y, &v2.z],
+                [&v0.y, &v1.z, &v2.x],
+                [&v0.z, &v1.x, &v2.y],
+                [&v0.x, &v1.z, &v2.y],
+                [&v0.y, &v1.x, &v2.z],
+                [&v0.z, &v1.y, &v2.x],
+            ],
+        );
         volume += term;
     }
     volume
@@ -1405,14 +1419,30 @@ fn sub_vertex(left: &OutputVertex, right: &OutputVertex) -> [Real; 3] {
 
 fn cross_arrays(left: &[Real; 3], right: &[Real; 3]) -> [Real; 3] {
     [
-        (&left[1] * &right[2]) - (&left[2] * &right[1]),
-        (&left[2] * &right[0]) - (&left[0] * &right[2]),
-        (&left[0] * &right[1]) - (&left[1] * &right[0]),
+        Real::signed_product_sum(
+            [true, false],
+            [[&left[1], &right[2]], [&left[2], &right[1]]],
+        ),
+        Real::signed_product_sum(
+            [true, false],
+            [[&left[2], &right[0]], [&left[0], &right[2]]],
+        ),
+        Real::signed_product_sum(
+            [true, false],
+            [[&left[0], &right[1]], [&left[1], &right[0]]],
+        ),
     ]
 }
 
 fn dot_arrays(left: &[Real; 3], right: &[Real; 3]) -> Real {
-    (&left[0] * &right[0]) + (&left[1] * &right[1]) + (&left[2] * &right[2])
+    Real::signed_product_sum(
+        [true; 3],
+        [
+            [&left[0], &right[0]],
+            [&left[1], &right[1]],
+            [&left[2], &right[2]],
+        ],
+    )
 }
 
 fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {

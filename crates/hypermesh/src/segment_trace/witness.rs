@@ -38,8 +38,13 @@ pub(super) fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResul
 
     for i in 0..left_coefficients.len() {
         for j in (i + 1)..left_coefficients.len() {
-            let determinant = (left_coefficients[i] * right_coefficients[j])
-                - (left_coefficients[j] * right_coefficients[i]);
+            let determinant = Real::signed_product_sum(
+                [true, false],
+                [
+                    [left_coefficients[i], right_coefficients[j]],
+                    [left_coefficients[j], right_coefficients[i]],
+                ],
+            );
             if classify_real(&determinant)? != Classification::On {
                 return Ok(false);
             }

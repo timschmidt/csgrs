@@ -304,9 +304,27 @@ fn segment_split_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
 
 fn supports_are_parallel(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
     let cross = Point3::new(
-        (&left.normal.y * &right.normal.z) - (&left.normal.z * &right.normal.y),
-        (&left.normal.z * &right.normal.x) - (&left.normal.x * &right.normal.z),
-        (&left.normal.x * &right.normal.y) - (&left.normal.y * &right.normal.x),
+        hyperlattice::Real::signed_product_sum(
+            [true, false],
+            [
+                [&left.normal.y, &right.normal.z],
+                [&left.normal.z, &right.normal.y],
+            ],
+        ),
+        hyperlattice::Real::signed_product_sum(
+            [true, false],
+            [
+                [&left.normal.z, &right.normal.x],
+                [&left.normal.x, &right.normal.z],
+            ],
+        ),
+        hyperlattice::Real::signed_product_sum(
+            [true, false],
+            [
+                [&left.normal.x, &right.normal.y],
+                [&left.normal.y, &right.normal.x],
+            ],
+        ),
     );
     Ok(classify_real(&cross.x)? == Classification::On
         && classify_real(&cross.y)? == Classification::On

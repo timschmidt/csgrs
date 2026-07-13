@@ -224,9 +224,18 @@ pub(crate) fn sub_points(left: &Point3, right: &Point3) -> [Real; 3] {
 
 pub(crate) fn cross_arrays(left: &[Real; 3], right: &[Real; 3]) -> Point3 {
     Point3::new(
-        (&left[1] * &right[2]) - (&left[2] * &right[1]),
-        (&left[2] * &right[0]) - (&left[0] * &right[2]),
-        (&left[0] * &right[1]) - (&left[1] * &right[0]),
+        Real::signed_product_sum(
+            [true, false],
+            [[&left[1], &right[2]], [&left[2], &right[1]]],
+        ),
+        Real::signed_product_sum(
+            [true, false],
+            [[&left[2], &right[0]], [&left[0], &right[2]]],
+        ),
+        Real::signed_product_sum(
+            [true, false],
+            [[&left[0], &right[1]], [&left[1], &right[0]]],
+        ),
     )
 }
 
