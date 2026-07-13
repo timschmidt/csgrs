@@ -17,10 +17,24 @@ impl Rational {
             Ordering::Equal => return Self::zero(),
         };
         let divisor = Self::gcd_word(magnitude, denominator);
+        let magnitude = magnitude / divisor;
+        let denominator = denominator / divisor;
+        if magnitude == denominator {
+            return if sign == Minus {
+                Self::minus_one()
+            } else {
+                Self::one()
+            };
+        }
+        if denominator == 1
+            && let Some(value) = Self::small_integer(sign, magnitude)
+        {
+            return value;
+        }
         Self::from_parts_raw(
             sign,
-            BigUint::from(magnitude / divisor),
-            BigUint::from(denominator / divisor),
+            BigUint::from(magnitude),
+            BigUint::from(denominator),
         )
     }
 

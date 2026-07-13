@@ -311,6 +311,14 @@ mod tests {
         assert_eq!(&left * &right, Rational::fraction(-187, 1260).unwrap());
         assert_eq!(&left / &right, Rational::fraction(-119, 55).unwrap());
 
+        let a = BigUint::one() << 80_usize;
+        let b = &a - BigUint::one();
+        let ratio = Rational::from_bigint_fraction(BigInt::from(a.clone()), b.clone()).unwrap();
+        let reciprocal =
+            Rational::from_bigint_fraction(BigInt::from(b), a).unwrap();
+        assert_eq!(&ratio * &reciprocal, Rational::one());
+        assert_eq!(&ratio / &ratio, Rational::one());
+
         let huge = Rational::from_bigint(BigInt::from(1_u8) << 200);
         assert_eq!(&huge * &right / &huge, right);
     }

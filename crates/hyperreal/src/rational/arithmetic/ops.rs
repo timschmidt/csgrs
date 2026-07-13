@@ -29,21 +29,23 @@ impl Rational {
     }
 
     fn mul_div_words(&self, other: &Self, divide: bool) -> Option<Self> {
-        let left_numerator = self.numerator.to_u128()?;
-        let left_denominator = self.denominator.to_u128()?;
-        let right_numerator = other.numerator.to_u128()?;
-        let right_denominator = other.denominator.to_u128()?;
-        let (numerator, denominator) = if divide {
-            (
-                left_numerator.checked_mul(right_denominator)?,
-                left_denominator.checked_mul(right_numerator)?,
-            )
+        let mut left_numerator = self.numerator.to_u128()?;
+        let mut left_denominator = self.denominator.to_u128()?;
+        let (mut right_numerator, mut right_denominator) = if divide {
+            (other.denominator.to_u128()?, other.numerator.to_u128()?)
         } else {
-            (
-                left_numerator.checked_mul(right_numerator)?,
-                left_denominator.checked_mul(right_denominator)?,
-            )
+            (other.numerator.to_u128()?, other.denominator.to_u128()?)
         };
+
+        let cross = Self::gcd_word(left_numerator, right_denominator);
+        left_numerator /= cross;
+        right_denominator /= cross;
+        let cross = Self::gcd_word(right_numerator, left_denominator);
+        right_numerator /= cross;
+        left_denominator /= cross;
+
+        let numerator = left_numerator.checked_mul(right_numerator)?;
+        let denominator = left_denominator.checked_mul(right_denominator)?;
         let sign = self.sign * other.sign;
         let (positive, negative) = if sign == Minus {
             (0, numerator)
@@ -118,6 +120,12 @@ impl Neg for &Rational {
     type Output = Rational;
 
     fn neg(self) -> Self::Output {
+        if self.is_one() {
+            return Self::Output::minus_one();
+        }
+        if self.is_minus_one() {
+            return Self::Output::one();
+        }
         trace_rational_temporary!();
         Self::Output::from_parts_raw(
             -self.sign,
@@ -130,9 +138,12 @@ impl Neg for &Rational {
 impl Neg for Rational {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        let (sign, numerator, denominator) = self.into_parts();
-        Self::from_parts_raw(-sign, numerator, denominator)
+    fn neg(mut self) -> Self {
+        if let Some(data) = Arc::get_mut(&mut self.0) {
+            data.sign = -data.sign;
+            return self;
+        }
+        -&self
     }
 }
 

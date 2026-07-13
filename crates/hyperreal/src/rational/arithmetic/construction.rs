@@ -33,14 +33,48 @@ impl Rational {
         RATIONAL_ONE.clone()
     }
 
+    fn minus_one() -> Self {
+        trace_rational_temporary!();
+        RATIONAL_MINUS_ONE.clone()
+    }
+
+    fn small_integer(sign: Sign, magnitude: u128) -> Option<Self> {
+        let index = usize::try_from(magnitude.checked_sub(2)?).ok()?;
+        let values = match sign {
+            Plus => &*SMALL_POSITIVE_RATIONALS,
+            Minus => &*SMALL_NEGATIVE_RATIONALS,
+            NoSign => return Some(Self::zero()),
+        };
+        let value = values.get(index).cloned();
+        if value.is_some() {
+            trace_rational_temporary!();
+        }
+        value
+    }
+
     /// The non-negative Rational corresponding to the provided [`i64`].
     pub fn new(n: i64) -> Self {
         // Small scalar constructors are hot. Rational is stored as
         // Sign+BigUint, so going through BigInt first only adds allocation and
         // sign extraction work.
+        let sign = if n < 0 { Minus } else { Plus };
+        let magnitude = n.unsigned_abs();
+        if magnitude == 0 {
+            return Self::zero();
+        }
+        if magnitude == 1 {
+            return if sign == Minus {
+                Self::minus_one()
+            } else {
+                Self::one()
+            };
+        }
+        if let Some(value) = Self::small_integer(sign, u128::from(magnitude)) {
+            return value;
+        }
         Self::from_integer_magnitude(
-            if n < 0 { Minus } else { Plus },
-            BigUint::from(n.unsigned_abs()),
+            sign,
+            BigUint::from(magnitude),
         )
     }
 
@@ -75,6 +109,13 @@ impl Rational {
     }
 
     pub(crate) fn from_integer_magnitude(sign: Sign, numerator: BigUint) -> Self {
+        if numerator.is_one() {
+            return match sign {
+                Minus => Self::minus_one(),
+                Plus => Self::one(),
+                NoSign => Self::zero(),
+            };
+        }
         Self::from_fraction_parts(sign, numerator, BigUint::one())
     }
 
