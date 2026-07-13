@@ -37,6 +37,8 @@ fn test_plane_split_polygon() {
     // in rough terms
     let front_poly = &f[0];
     let back_poly = &b[0];
+    assert_eq!(front_poly.plane_id, poly.plane_id);
+    assert_eq!(back_poly.plane_id, poly.plane_id);
     assert!(front_poly.vertices.len() >= 3);
     assert!(back_poly.vertices.len() >= 3);
 

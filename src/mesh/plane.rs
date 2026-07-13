@@ -519,10 +519,16 @@ impl Plane {
                 // Build new polygons from the front/back vertex lists
                 // if they have at least 3 vertices
                 if split_front.len() >= 3 {
-                    front.push(Polygon::new(split_front, polygon.metadata.clone()));
+                    front.push(
+                        Polygon::new(split_front, polygon.metadata.clone())
+                            .with_plane_id(polygon.plane_id),
+                    );
                 }
                 if split_back.len() >= 3 {
-                    back.push(Polygon::new(split_back, polygon.metadata.clone()));
+                    back.push(
+                        Polygon::new(split_back, polygon.metadata.clone())
+                            .with_plane_id(polygon.plane_id),
+                    );
                 }
             },
         }

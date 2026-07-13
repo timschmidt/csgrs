@@ -5,30 +5,39 @@ use std::fmt::Debug;
 
 use hyperlattice::{Point3, Real, Vector3};
 
-use crate::mesh::plane::Plane;
 use crate::mesh::{Mesh, Polygon};
 use crate::vertex::Vertex;
 
-fn planes_are_certifiably_coplanar(left: &Plane, right: &Plane) -> bool {
-    [&right.point_a, &right.point_b, &right.point_c]
-        .into_iter()
-        .all(|point| {
-            hyperlimit::orient3d(&left.point_a, &left.point_b, &left.point_c, point).value()
-                == Some(hyperlimit::Sign::Zero)
-        })
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct PositionBucket([Option<u64>; 3]);
+
+impl PositionBucket {
+    fn new(point: &Point3) -> Self {
+        Self([&point.x, &point.y, &point.z].map(|coordinate| {
+            coordinate.to_f64_lossy().map(|value| {
+                if value == 0.0 {
+                    0.0_f64.to_bits()
+                } else {
+                    value.to_bits()
+                }
+            })
+        }))
+    }
 }
 
 fn mesh_from_hull<M: Clone + Debug + Send + Sync>(
     points: &[Point3],
     coplanar_groups: &[Vec<usize>],
-    coordinate_ids: &[[u64; 5]],
+    coordinate_ids: Option<&[[u64; 5]]>,
     metadata: M,
 ) -> Mesh<M> {
-    let hull = match hypermesh::convex_hull_with_retained_facts(
-        points,
-        coplanar_groups,
-        coordinate_ids,
-    ) {
+    let hull = match coordinate_ids {
+        Some(coordinate_ids) => {
+            hypermesh::convex_hull_with_retained_facts(points, coplanar_groups, coordinate_ids)
+        },
+        None => hypermesh::convex_hull_with_coplanar_groups(points, coplanar_groups),
+    };
+    let hull = match hull {
         Ok(hull) => hull,
         Err(_) => return Mesh::empty(),
     };
@@ -63,6 +72,33 @@ fn triangle_unit_normal(p0: &Point3, p1: &Point3, p2: &Point3) -> Option<Vector3
     (p1 - p0).cross(&(p2 - p0)).normalize_checked().ok()
 }
 
+fn unique_mesh_positions<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) -> Vec<&Point3> {
+    let mut positions = Vec::new();
+    let mut bucket_heads = HashMap::<PositionBucket, usize>::new();
+    let mut next_in_bucket = Vec::<Option<usize>>::new();
+    for vertex in mesh
+        .polygons
+        .iter()
+        .flat_map(|polygon| polygon.vertices.iter())
+    {
+        let bucket = PositionBucket::new(&vertex.position);
+        let mut candidate = bucket_heads.get(&bucket).copied();
+        let mut duplicate = false;
+        while let Some(candidate_index) = candidate {
+            if positions[candidate_index] == &vertex.position {
+                duplicate = true;
+                break;
+            }
+            candidate = next_in_bucket[candidate_index];
+        }
+        if !duplicate {
+            next_in_bucket.push(bucket_heads.insert(bucket, positions.len()));
+            positions.push(&vertex.position);
+        }
+    }
+    positions
+}
+
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Computes the exact convex hull of all mesh vertices through Hypermesh's
     /// hierarchical point broad phase and certified hull predicates.
@@ -72,7 +108,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut point_indices = HashMap::new();
         let mut coordinate_aliases = HashMap::<(usize, Option<u64>), Vec<(Real, u64)>>::new();
         let mut coordinate_id_aliases = HashMap::new();
-        let mut coplanar_groups: Vec<(u64, Plane, Vec<usize>)> = Vec::new();
+        let mut coplanar_groups = Vec::<Vec<usize>>::new();
+        let mut coplanar_group_indices = HashMap::<u64, usize>::new();
         for polygon in &self.polygons {
             let indices = polygon
                 .vertices
@@ -120,38 +157,22 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     })
                 })
                 .collect::<Vec<_>>();
-            if let Some((_, _, group)) =
-                coplanar_groups.iter_mut().find(|(plane_id, plane, _)| {
-                    *plane_id == polygon.plane_id
-                        || planes_are_certifiably_coplanar(plane, polygon.plane())
-                })
-            {
-                group.extend(indices);
-            } else {
-                coplanar_groups.push((polygon.plane_id, polygon.plane().clone(), indices));
-            }
+            let group_index =
+                *coplanar_group_indices
+                    .entry(polygon.plane_id)
+                    .or_insert_with(|| {
+                        coplanar_groups.push(Vec::new());
+                        coplanar_groups.len() - 1
+                    });
+            coplanar_groups[group_index].extend(indices);
         }
-        let coplanar_groups = coplanar_groups
-            .into_iter()
-            .map(|(_, _, indices)| indices)
-            .collect::<Vec<_>>();
-        mesh_from_hull(&points, &coplanar_groups, &coordinate_ids, metadata)
+        mesh_from_hull(&points, &coplanar_groups, Some(&coordinate_ids), metadata)
     }
 
     /// Computes `self + other` as the exact hull of all pairwise vertex sums.
     pub fn minkowski_sum(&self, other: &Mesh<M>, metadata: M) -> Mesh<M> {
-        let left = self
-            .polygons
-            .iter()
-            .flat_map(|polygon| polygon.vertices.iter())
-            .map(|vertex| &vertex.position)
-            .collect::<Vec<_>>();
-        let right = other
-            .polygons
-            .iter()
-            .flat_map(|polygon| polygon.vertices.iter())
-            .map(|vertex| &vertex.position)
-            .collect::<Vec<_>>();
+        let left = unique_mesh_positions(self);
+        let right = unique_mesh_positions(other);
         if left.is_empty() || right.is_empty() {
             return Mesh::empty();
         }
@@ -163,13 +184,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     .map(move |right| (*left).clone() + right.to_vector())
             })
             .collect::<Vec<_>>();
-        let coordinate_ids = (0..sums.len())
-            .map(|index| {
-                let base = (index as u64).wrapping_mul(5);
-                [base, base + 1, base + 2, base + 3, base + 4]
-            })
-            .collect::<Vec<_>>();
-        mesh_from_hull(&sums, &[], &coordinate_ids, metadata)
+        mesh_from_hull(&sums, &[], None, metadata)
     }
 }
 
@@ -193,7 +208,7 @@ mod tests {
             [10, 11, 12, 13, 14],
             [15, 16, 17, 18, 19],
         ];
-        let mesh = mesh_from_hull(&points, &[], &coordinate_ids, ());
+        let mesh = mesh_from_hull(&points, &[], Some(&coordinate_ids), ());
 
         assert!(
             mesh.polygons

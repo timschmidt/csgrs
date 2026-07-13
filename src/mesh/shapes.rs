@@ -38,6 +38,20 @@ fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
 mod retained_topology_tests {
     use super::*;
     use crate::csg::CSG;
+    use std::collections::BTreeSet;
+
+    #[test]
+    fn cuboid_reuses_eight_corner_position_identities() {
+        let mesh = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
+        let position_ids = mesh
+            .polygons
+            .iter()
+            .flat_map(|polygon| &polygon.vertices)
+            .map(|vertex| vertex.position_id)
+            .collect::<BTreeSet<_>>();
+
+        assert_eq!(position_ids.len(), 8);
+    }
 
     #[test]
     fn frustum_reuses_ring_positions_through_transform() {
@@ -417,6 +431,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let p101 = Point3::new(width.clone(), Real::zero(), height.clone());
         let p111 = Point3::new(width.clone(), length.clone(), height.clone());
         let p011 = Point3::new(Real::zero(), length.clone(), height.clone());
+        let v000 = Vertex::new(p000, Vector3::zero());
+        let v100 = Vertex::new(p100, Vector3::zero());
+        let v110 = Vertex::new(p110, Vector3::zero());
+        let v010 = Vertex::new(p010, Vector3::zero());
+        let v001 = Vertex::new(p001, Vector3::zero());
+        let v101 = Vertex::new(p101, Vector3::zero());
+        let v111 = Vertex::new(p111, Vector3::zero());
+        let v011 = Vertex::new(p011, Vector3::zero());
 
         // We’ll define 6 faces (each a Polygon), in an order that keeps outward-facing normals
         // and consistent (counter-clockwise) vertex winding as viewed from outside the prism.
@@ -426,10 +448,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let bottom_normal = -Vector3::z();
         let bottom = Polygon::new(
             vec![
-                Vertex::new(p000.clone(), bottom_normal.clone()),
-                Vertex::new(p010.clone(), bottom_normal.clone()),
-                Vertex::new(p110.clone(), bottom_normal.clone()),
-                Vertex::new(p100.clone(), bottom_normal.clone()),
+                v000.clone().with_normal(bottom_normal.clone()),
+                v010.clone().with_normal(bottom_normal.clone()),
+                v110.clone().with_normal(bottom_normal.clone()),
+                v100.clone().with_normal(bottom_normal.clone()),
             ],
             metadata.clone(),
         );
@@ -439,10 +461,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let top_normal = Vector3::z();
         let top = Polygon::new(
             vec![
-                Vertex::new(p001.clone(), top_normal.clone()),
-                Vertex::new(p101.clone(), top_normal.clone()),
-                Vertex::new(p111.clone(), top_normal.clone()),
-                Vertex::new(p011.clone(), top_normal.clone()),
+                v001.clone().with_normal(top_normal.clone()),
+                v101.clone().with_normal(top_normal.clone()),
+                v111.clone().with_normal(top_normal.clone()),
+                v011.clone().with_normal(top_normal.clone()),
             ],
             metadata.clone(),
         );
@@ -452,10 +474,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let front_normal = -Vector3::y();
         let front = Polygon::new(
             vec![
-                Vertex::new(p000.clone(), front_normal.clone()),
-                Vertex::new(p100.clone(), front_normal.clone()),
-                Vertex::new(p101.clone(), front_normal.clone()),
-                Vertex::new(p001.clone(), front_normal.clone()),
+                v000.clone().with_normal(front_normal.clone()),
+                v100.clone().with_normal(front_normal.clone()),
+                v101.clone().with_normal(front_normal.clone()),
+                v001.clone().with_normal(front_normal.clone()),
             ],
             metadata.clone(),
         );
@@ -465,10 +487,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let back_normal = Vector3::y();
         let back = Polygon::new(
             vec![
-                Vertex::new(p010.clone(), back_normal.clone()),
-                Vertex::new(p011.clone(), back_normal.clone()),
-                Vertex::new(p111.clone(), back_normal.clone()),
-                Vertex::new(p110.clone(), back_normal.clone()),
+                v010.clone().with_normal(back_normal.clone()),
+                v011.clone().with_normal(back_normal.clone()),
+                v111.clone().with_normal(back_normal.clone()),
+                v110.clone().with_normal(back_normal.clone()),
             ],
             metadata.clone(),
         );
@@ -478,10 +500,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let left_normal = -Vector3::x();
         let left = Polygon::new(
             vec![
-                Vertex::new(p000.clone(), left_normal.clone()),
-                Vertex::new(p001.clone(), left_normal.clone()),
-                Vertex::new(p011.clone(), left_normal.clone()),
-                Vertex::new(p010.clone(), left_normal.clone()),
+                v000.clone().with_normal(left_normal.clone()),
+                v001.clone().with_normal(left_normal.clone()),
+                v011.clone().with_normal(left_normal.clone()),
+                v010.clone().with_normal(left_normal.clone()),
             ],
             metadata.clone(),
         );
@@ -491,10 +513,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let right_normal = Vector3::x();
         let right = Polygon::new(
             vec![
-                Vertex::new(p100, right_normal.clone()),
-                Vertex::new(p110, right_normal.clone()),
-                Vertex::new(p111, right_normal.clone()),
-                Vertex::new(p101, right_normal),
+                v100.with_normal(right_normal.clone()),
+                v110.with_normal(right_normal.clone()),
+                v111.with_normal(right_normal.clone()),
+                v101.with_normal(right_normal),
             ],
             metadata.clone(),
         );

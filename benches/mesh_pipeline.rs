@@ -60,4 +60,53 @@ fn main() {
         "mesh_boolean iterations={boolean_iterations} polygons={polygons} elapsed_us={}",
         start.elapsed().as_micros()
     );
+
+    let hull_source = Mesh::sphere(Real::from(10), 16, 8, ());
+    let hull_iterations = iterations("CSGRS_HULL_BENCH_ITERS", 4);
+    let start = Instant::now();
+    let mut hull_polygons = 0_usize;
+    for _ in 0..hull_iterations {
+        let hull = black_box(&hull_source).convex_hull(());
+        hull_polygons += hull.polygons.len();
+        black_box(hull);
+    }
+    println!(
+        "mesh_convex_hull iterations={hull_iterations} polygons={hull_polygons} elapsed_us={}",
+        start.elapsed().as_micros()
+    );
+
+    let raw_hull_points = hull_source
+        .polygons
+        .iter()
+        .flat_map(|polygon| polygon.vertices().iter())
+        .map(|vertex| vertex.position.clone())
+        .collect::<Vec<_>>();
+    let raw_hull_iterations = iterations("CSGRS_RAW_HULL_BENCH_ITERS", 4);
+    let start = Instant::now();
+    let mut raw_hull_triangles = 0_usize;
+    for _ in 0..raw_hull_iterations {
+        let hull = hypermesh::convex_hull(black_box(&raw_hull_points))
+            .expect("benchmark point cloud spans 3D");
+        raw_hull_triangles += hull.triangles.len();
+        black_box(hull);
+    }
+    println!(
+        "raw_hypermesh_hull iterations={raw_hull_iterations} triangles={raw_hull_triangles} elapsed_us={}",
+        start.elapsed().as_micros()
+    );
+
+    let minkowski_left = Mesh::cube(Real::from(2), ());
+    let minkowski_right = Mesh::cube(Real::from(3), ());
+    let minkowski_iterations = iterations("CSGRS_MINKOWSKI_BENCH_ITERS", 16);
+    let start = Instant::now();
+    let mut minkowski_polygons = 0_usize;
+    for _ in 0..minkowski_iterations {
+        let sum = black_box(&minkowski_left).minkowski_sum(black_box(&minkowski_right), ());
+        minkowski_polygons += sum.polygons.len();
+        black_box(sum);
+    }
+    println!(
+        "mesh_minkowski iterations={minkowski_iterations} polygons={minkowski_polygons} elapsed_us={}",
+        start.elapsed().as_micros()
+    );
 }

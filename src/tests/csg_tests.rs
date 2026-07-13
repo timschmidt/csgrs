@@ -611,6 +611,24 @@ fn test_csg_convex_hull() {
 }
 
 #[test]
+fn triangulation_preserves_retained_support_plane_ids() {
+    let cube: Mesh<()> = Mesh::cube(r(2.0), ());
+    let source_plane_ids = cube
+        .polygons
+        .iter()
+        .map(|polygon| polygon.plane_id)
+        .collect::<Vec<_>>();
+    let triangulated = cube.triangulate();
+
+    assert!(
+        triangulated
+            .polygons
+            .iter()
+            .all(|polygon| { source_plane_ids.contains(&polygon.plane_id) })
+    );
+}
+
+#[test]
 fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
     let c1: Mesh<()> = Mesh::cube(r(2.0), ()).center();
