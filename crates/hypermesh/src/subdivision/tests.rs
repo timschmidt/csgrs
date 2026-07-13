@@ -383,6 +383,7 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
     .unwrap();
 
     assert_eq!(first, second);
+    assert!(Arc::ptr_eq(&first, &second));
     assert_eq!(cache.borrow().len(), 1);
 }
 
@@ -4277,6 +4278,7 @@ fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
     let second = cached_pairwise_intersections_by_polygon_with(&cache, &polygons).unwrap();
 
     assert_eq!(first, second);
+    assert!(Arc::ptr_eq(&first, &second));
     assert_eq!(cache.borrow().len(), 1);
 }
 
@@ -4293,7 +4295,7 @@ fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
     let direct = pairwise_intersections_by_polygon(&second_polygons).unwrap();
 
     assert_eq!(first.len(), 2);
-    assert_eq!(second, direct);
+    assert_eq!(second.as_ref(), &direct);
     assert_eq!(cache.borrow().len(), 2);
 }
 

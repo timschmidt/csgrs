@@ -215,7 +215,7 @@ struct SplitAttemptChild {
 struct PairwiseIntersectionsCacheEntry {
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
-    result: HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    result: HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -232,7 +232,7 @@ struct BspLeafCertificationCacheEntry {
     leaf_edges: Vec<Plane>,
     polygon_profile: PolygonFamilyProfile,
     polygons: Vec<ConvexPolygon>,
-    result: HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>,
+    result: HypermeshResult<Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>>,
 }
 
 struct SubdivisionRuntimeCaches {
@@ -340,7 +340,7 @@ fn process_leaf_into_inner(
         output,
         &leaf_classification_cache,
         &leaf_point_classification_cache,
-        pairwise_intersections_by_polygon,
+        |polygons| pairwise_intersections_by_polygon(polygons).map(Arc::new),
         build_host_bsp_leaves,
         |polygon, leaf_edges, polygons, intersections| {
             certify_bsp_leaf_and_delta_w_with_host_intersections(
@@ -349,6 +349,7 @@ fn process_leaf_into_inner(
                 polygons,
                 Some(intersections),
             )
+            .map(Arc::new)
         },
     )
 }
@@ -363,7 +364,9 @@ fn process_leaf_into_inner_with_pairwise_cache(
     output: &mut Vec<ClassifiedPolygon>,
     leaf_classification_cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     leaf_point_classification_cache: &RefCell<Vec<LeafPointClassificationCacheEntry>>,
-    pairwise_query: impl FnOnce(&[ConvexPolygon]) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    pairwise_query: impl FnOnce(
+        &[ConvexPolygon],
+    ) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
     bsp_leaves_query: impl Fn(
         &ConvexPolygon,
         &[ConvexPolygon],
@@ -374,10 +377,9 @@ fn process_leaf_into_inner_with_pairwise_cache(
         &[crate::geometry::Plane],
         &[ConvexPolygon],
         &[PairwiseIntersection],
-    ) -> HypermeshResult<(
-        Vec<crate::segment_trace::InteriorLeafPoint>,
-        Vec<i32>,
-    )>,
+    ) -> HypermeshResult<
+        Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>,
+    >,
 ) -> HypermeshResult<LeafProcessingStats> {
     let mut stats = LeafProcessingStats {
         polygon_count: polygons.len(),
@@ -432,36 +434,37 @@ fn process_leaf_into_inner_with_pairwise_cache(
             if !take_new_bsp_leaf_edge_cycle(&mut seen_bsp_leaf_edges, &leaf.edges) {
                 continue;
             }
-            let (interior_points, effective_delta_w) =
+            let certification =
                 certify_bsp_leaf(polygon, &leaf.edges, polygons, &intersections[index])?;
+            let (interior_points, effective_delta_w) = certification.as_ref();
             stats.bsp_leaf_count += 1;
             let w_front = cached_leaf_classification_with(
                 &mut leaf_classification_cache.borrow_mut(),
                 Some(&leaf_cache_context),
                 &polygon.support,
                 &leaf.edges,
-                &effective_delta_w,
+                effective_delta_w,
                 || {
                     classify_leaf_polygon_from_interior_points_with_point_cache(
-                        &interior_points,
+                        interior_points,
                         &polygon.support,
                         ref_point,
                         ref_definitions,
                         ref_wnv,
                         polygons,
                         bounds,
-                        &effective_delta_w,
+                        effective_delta_w,
                         &mut leaf_point_classification_cache.borrow_mut(),
                         Some(&leaf_cache_context),
                     )
                 },
             )?;
-            let w_back = propagate_wnv(&w_front, 1, &effective_delta_w)?;
+            let w_back = propagate_wnv(&w_front, 1, effective_delta_w)?;
             let classification = classify_polygon_output(&w_front, &w_back, indicator);
             if classification != 0 {
                 let mut fragment = polygon.clone();
                 fragment.edges = Arc::new(leaf.edges.clone());
-                fragment.delta_w = effective_delta_w;
+                fragment.delta_w = effective_delta_w.clone();
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });
                 classified.is_bsp_fragment = true;
@@ -2139,7 +2142,7 @@ fn cached_bsp_leaf_certification_with(
     leaf_edges: &[crate::geometry::Plane],
     polygons: &[ConvexPolygon],
     intersections: &[PairwiseIntersection],
-) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
+) -> HypermeshResult<Arc<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)>> {
     let polygon_profile = polygon_family_profile(polygons);
     if let Some(existing) = cache.borrow().iter().find(|existing| {
         existing.host == *host
@@ -2155,7 +2158,8 @@ fn cached_bsp_leaf_certification_with(
         leaf_edges,
         polygons,
         Some(intersections),
-    );
+    )
+    .map(Arc::new);
     cache.borrow_mut().push(BspLeafCertificationCacheEntry {
         host: host.clone(),
         leaf_edges: leaf_edges.to_vec(),
@@ -2537,43 +2541,37 @@ fn pairwise_intersections_by_polygon(
 fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
-    if let Some(existing) = cache
+) -> HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>> {
+    if let Some(result) = cache
         .borrow()
         .iter()
         .rev()
         .find(|existing| existing.polygons == polygons)
-        .cloned()
+        .map(|existing| existing.result.clone())
     {
-        return existing.result;
+        return result;
     }
 
     let polygon_profile = polygon_family_profile(polygons);
-    let existing = cache
-        .borrow()
-        .iter()
-        .rev()
-        .find(|existing| {
-            existing.polygon_profile == polygon_profile
-                && (existing.polygons == polygons
-                    || polygon_family_order_mapping(polygons, &existing.polygons).is_some())
-        })
-        .cloned();
-    if let Some(existing) = existing {
-        if existing.polygons == polygons {
-            return existing.result;
+    let existing = cache.borrow().iter().rev().find_map(|existing| {
+        if existing.polygon_profile != polygon_profile {
+            return None;
         }
-        if let Some(query_to_cached) = polygon_family_order_mapping(polygons, &existing.polygons) {
-            let remapped =
-                remap_pairwise_intersections_for_polygon_order(existing.result, &query_to_cached);
-            if remapped.is_ok() {
-                cache_pairwise_intersections_result(cache, polygons, &remapped);
-            }
-            return remapped;
+        let query_to_cached = polygon_family_order_mapping(polygons, &existing.polygons)?;
+        Some((query_to_cached, existing.result.clone()))
+    });
+    if let Some((query_to_cached, result)) = existing {
+        let remapped = result.and_then(|intersections| {
+            remap_pairwise_intersections_for_polygon_order(&intersections, &query_to_cached)
+                .map(Arc::new)
+        });
+        if remapped.is_ok() {
+            cache_pairwise_intersections_result(cache, polygons, &remapped);
         }
+        return remapped;
     }
 
-    let result = pairwise_intersections_by_polygon(polygons);
+    let result = pairwise_intersections_by_polygon(polygons).map(Arc::new);
     cache.borrow_mut().push(PairwiseIntersectionsCacheEntry {
         polygon_profile,
         polygons: polygons.to_vec(),
@@ -2585,7 +2583,7 @@ fn cached_pairwise_intersections_by_polygon_with(
 fn cache_pairwise_intersections_result(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
-    result: &HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    result: &HypermeshResult<Arc<Vec<Vec<PairwiseIntersection>>>>,
 ) {
     if cache
         .borrow()
@@ -2628,10 +2626,9 @@ fn polygon_family_order_mapping(
 }
 
 fn remap_pairwise_intersections_for_polygon_order(
-    intersections: HypermeshResult<Vec<Vec<PairwiseIntersection>>>,
+    intersections: &[Vec<PairwiseIntersection>],
     query_to_cached: &[usize],
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
-    let intersections = intersections?;
     if intersections.len() != query_to_cached.len() {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
