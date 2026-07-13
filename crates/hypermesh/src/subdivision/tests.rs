@@ -28,6 +28,14 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+#[test]
+fn reference_target_clones_share_definition_families() {
+    let target = ReferenceTarget::axis_defined(p(1, 2, 3));
+    let cloned = target.clone();
+
+    assert!(Arc::ptr_eq(&target.definitions, &cloned.definitions));
+}
+
 fn assert_certified_reference_result(
     found: Option<(ReferenceTarget, Vec<i32>)>,
     expected_point: &Point3,
@@ -432,7 +440,7 @@ fn bsp_leaf_edge_cycle_dedupe_skips_rotated_duplicates() {
 
     assert!(take_new_bsp_leaf_edge_cycle(&mut seen, &polygon.edges));
     assert!(!take_new_bsp_leaf_edge_cycle(&mut seen, &rotated_edges));
-    assert_eq!(seen, vec![polygon.edges.clone()]);
+    assert_eq!(seen, vec![polygon.edges.as_ref().clone()]);
 }
 
 fn vertex_key(vertex: &OutputVertex) -> [String; 3] {
@@ -1448,7 +1456,7 @@ fn compute_new_reference_skips_projected_search_after_support_hit() {
     .unwrap();
 
     assert_eq!(point, support.0.point);
-    assert_eq!(definitions, support.0.definitions);
+    assert_eq!(&definitions, support.0.definitions.as_ref());
     assert_eq!(winding, support.1);
     assert!(query_caches.projected_reference_result_cache.is_empty());
     assert!(query_caches.projected_root_cache.is_empty());
@@ -2590,7 +2598,7 @@ fn projected_reference_escape_targets_use_certified_projected_cell_family() {
         targets
             .iter()
             .find(|target| target.point == p(2, 2, 2))
-            .is_some_and(|target| target.definitions != axis_defs(&target.point))
+            .is_some_and(|target| target.definitions.as_ref() != &axis_defs(&target.point))
     );
     for target in &targets {
         assert_eq!(axis_ref(&target.point, 1), &r(2));
@@ -2670,7 +2678,7 @@ fn reference_target_collection_marks_later_targets_uncertain_after_uncertain_can
         if candidate == 0 {
             Ok(vec![ReferenceTarget {
                 point: p(1, 2, 3),
-                definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                definitions: vec![axis_plane_definition(&p(1, 2, 3))].into(),
                 uncertified_definition_fallback: true,
             }])
         } else {
@@ -2709,7 +2717,7 @@ fn reference_target_collection_keeps_certified_duplicate_state_certified() {
         if candidate == 0 {
             Ok(vec![ReferenceTarget {
                 point: point.clone(),
-                definitions: vec![definition.clone()],
+                definitions: vec![definition.clone()].into(),
                 uncertified_definition_fallback: true,
             }])
         } else {
@@ -2769,7 +2777,7 @@ fn reference_target_family_search_tracks_unknown_after_uncertain_family_result()
         [
             Ok(vec![ReferenceTarget {
                 point: p(1, 2, 3),
-                definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                definitions: vec![axis_plane_definition(&p(1, 2, 3))].into(),
                 uncertified_definition_fallback: true,
             }]),
             Ok(vec![ReferenceTarget::axis_defined(p(2, 3, 4))]),
@@ -2794,7 +2802,7 @@ fn reference_target_family_search_ignores_redundant_fallback_duplicate() {
         [
             Ok(vec![ReferenceTarget {
                 point: point.clone(),
-                definitions: vec![definition.clone()],
+                definitions: vec![definition.clone()].into(),
                 uncertified_definition_fallback: true,
             }]),
             Ok(vec![ReferenceTarget::with_definitions(
@@ -2819,7 +2827,7 @@ fn reference_target_family_search_marks_later_targets_uncertain_after_uncertain_
         [
             Ok(vec![ReferenceTarget {
                 point: p(1, 2, 3),
-                definitions: vec![axis_plane_definition(&p(1, 2, 3))],
+                definitions: vec![axis_plane_definition(&p(1, 2, 3))].into(),
                 uncertified_definition_fallback: true,
             }]),
             Ok(vec![ReferenceTarget::axis_defined(p(2, 3, 4))]),
@@ -3619,7 +3627,7 @@ fn reference_result_or_error_prefers_support_after_uncertified_projected_search(
     .unwrap();
 
     assert_eq!(point, support_target.point);
-    assert_eq!(definitions, support_target.definitions);
+    assert_eq!(&definitions, support_target.definitions.as_ref());
     assert_eq!(winding, vec![11]);
 }
 
@@ -3651,7 +3659,7 @@ fn reference_result_with_support_fallback_skips_support_search_after_projected_h
 
     assert_eq!(support_calls, 0);
     assert_eq!(point, projected_target.point);
-    assert_eq!(definitions, projected_target.definitions);
+    assert_eq!(&definitions, projected_target.definitions.as_ref());
     assert_eq!(winding, vec![17]);
 }
 
@@ -3668,7 +3676,7 @@ fn reference_result_with_support_fallback_uses_support_search_when_projected_mis
 
     assert_eq!(support_calls, 1);
     assert_eq!(point, support_target.point);
-    assert_eq!(definitions, support_target.definitions);
+    assert_eq!(&definitions, support_target.definitions.as_ref());
     assert_eq!(winding, vec![11]);
 }
 
@@ -7959,7 +7967,7 @@ fn push_unique_reference_target_prefers_certified_duplicate_definitions() {
     let definition = axis_plane_definition(&point);
     let mut targets = vec![ReferenceTarget {
         point: point.clone(),
-        definitions: vec![definition.clone()],
+        definitions: vec![definition.clone()].into(),
         uncertified_definition_fallback: true,
     }];
 
@@ -12532,7 +12540,7 @@ fn support_plane_cell_reference_returns_exact_definitions() {
             .iter()
             .any(|definition| affine_from_planes(definition).unwrap() == target.point)
     );
-    for definition in &target.definitions {
+    for definition in target.definitions.iter() {
         assert_eq!(affine_from_planes(definition).unwrap(), target.point);
     }
 }
@@ -13895,7 +13903,7 @@ fn segment_interval_witness_finds_strict_overlap_when_midpoint_is_on_boundary() 
 fn support_only_polygon(support: Plane) -> ConvexPolygon {
     ConvexPolygon {
         support,
-        edges: Vec::new(),
+        edges: Vec::new().into(),
         mesh_index: 0,
         polygon_index: 0,
         delta_w: Vec::new(),

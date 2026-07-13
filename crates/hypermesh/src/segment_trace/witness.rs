@@ -26,6 +26,7 @@ use crate::polygon::ConvexPolygon;
 use crate::winding::WindingNumberTransitionVector;
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3};
+use std::sync::Arc;
 
 pub(super) fn planes_are_coplanar(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
     let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
@@ -69,7 +70,7 @@ pub(super) fn classify_point_in_polygon(
         return Ok(PolygonPointLocation::Outside);
     }
     let mut on_edge = false;
-    for edge in &polygon.edges {
+    for edge in polygon.edges.iter() {
         match point.classify(edge)? {
             Classification::Positive => return Ok(PolygonPointLocation::Outside),
             Classification::On => on_edge = true,
@@ -507,7 +508,7 @@ pub(super) fn leaf_halfspaces(leaf: &ConvexPolygon) -> Vec<LimitPlane3> {
     let mut halfspaces = Vec::with_capacity(leaf.edges.len() + 2);
     halfspaces.push(limit_plane_from_plane(&leaf.support));
     halfspaces.push(limit_plane_from_plane(&leaf.support.inverted()));
-    for edge in &leaf.edges {
+    for edge in leaf.edges.iter() {
         halfspaces.push(limit_plane_from_plane(edge));
     }
     halfspaces
@@ -552,7 +553,7 @@ pub(crate) fn certified_leaf_interior_points(
 ) -> HypermeshResult<Vec<InteriorLeafPoint>> {
     let leaf = ConvexPolygon {
         support: support.clone(),
-        edges: edges.to_vec(),
+        edges: Arc::new(edges.to_vec()),
         mesh_index: -1,
         polygon_index: -1,
         delta_w: WindingNumberTransitionVector::new(),
@@ -710,7 +711,7 @@ pub(super) fn strict_leaf_cell_points(
     halfspaces.push(limit_plane_from_plane(&leaf.support));
     halfspaces.push(limit_plane_from_plane(&leaf.support.inverted()));
 
-    for edge in &leaf.edges {
+    for edge in leaf.edges.iter() {
         let margin = edge.expression_at_point(strict_interior);
         if classify_real(&margin)? != Classification::Negative {
             return Ok(Vec::new());
@@ -797,7 +798,7 @@ pub(super) fn strict_leaf_cell_points_from_seed_families_with_tracking_unknown(
     halfspaces.push(limit_plane_from_plane(&leaf.support));
     halfspaces.push(limit_plane_from_plane(&leaf.support.inverted()));
 
-    for edge in &leaf.edges {
+    for edge in leaf.edges.iter() {
         let margin = edge.expression_at_point(strict_interior);
         if classify_real(&margin)? != Classification::Negative {
             return Ok(Vec::new());

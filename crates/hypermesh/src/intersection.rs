@@ -130,7 +130,7 @@ fn intersect_coplanar(
             segment: None,
             overlap: Some(OverlapInfo {
                 other_polygon_idx,
-                other_edges: other.edges.clone(),
+                other_edges: other.edges.as_ref().clone(),
                 other_support: other.support.clone(),
             }),
         })
@@ -239,7 +239,7 @@ fn affine_point_in_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hypermesh
     if classify_point(point, &polygon.support)? != Classification::On {
         return Ok(false);
     }
-    for edge in &polygon.edges {
+    for edge in polygon.edges.iter() {
         if classify_point(point, edge)?.is_positive() {
             return Ok(false);
         }
@@ -254,7 +254,7 @@ fn affine_point_strictly_in_polygon(
     if classify_point(point, &polygon.support)? != Classification::On {
         return Ok(false);
     }
-    for edge in &polygon.edges {
+    for edge in polygon.edges.iter() {
         if classify_point(point, edge)?.is_non_negative() {
             return Ok(false);
         }

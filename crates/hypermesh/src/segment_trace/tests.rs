@@ -7209,7 +7209,7 @@ fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
         limit_plane_from_plane(&leaf.support),
         limit_plane_from_plane(&leaf.support.inverted()),
     ];
-    for edge in &leaf.edges {
+    for edge in leaf.edges.iter() {
         let margin = edge.expression_at_point(&center);
         halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
             edge, &margin, &half,
@@ -7253,7 +7253,7 @@ fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions
         limit_plane_from_plane(&leaf.support),
         limit_plane_from_plane(&leaf.support.inverted()),
     ];
-    for edge in &leaf.edges {
+    for edge in leaf.edges.iter() {
         let margin = edge.expression_at_point(&center);
         halfspaces.push(limit_plane_from_plane(&inward_shifted_edge_plane(
             edge, &margin, &half,
@@ -9160,7 +9160,7 @@ fn detour_trace_reports_unknown_when_fallback_surface_detour_is_skipped() {
     };
     let polygons = vec![ConvexPolygon {
         support: Plane::axis_aligned(0, r(1)),
-        edges: Vec::new(),
+        edges: Vec::new().into(),
         mesh_index: 0,
         polygon_index: 0,
         delta_w: Vec::new(),
@@ -10864,7 +10864,7 @@ fn probe_step_detour_cycle_guard_reports_unknown_when_fallback_surface_detour_is
     };
     let polygons = vec![ConvexPolygon {
         support: Plane::axis_aligned(0, r(1)),
-        edges: Vec::new(),
+        edges: Vec::new().into(),
         mesh_index: 0,
         polygon_index: 0,
         delta_w: Vec::new(),
@@ -12448,7 +12448,7 @@ fn probe_reachability_reports_unknown_when_fallback_surface_detour_is_skipped() 
     };
     let polygons = vec![ConvexPolygon {
         support: Plane::axis_aligned(0, r(1)),
-        edges: Vec::new(),
+        edges: Vec::new().into(),
         mesh_index: 0,
         polygon_index: 0,
         delta_w: Vec::new(),

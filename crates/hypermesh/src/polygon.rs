@@ -1,6 +1,7 @@
 //! Convex polygon representation backed by hyperreal planes.
 
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
+use std::sync::Arc;
 
 use crate::error::HypermeshResult;
 use crate::geometry::{
@@ -35,7 +36,7 @@ pub struct ConvexPolygon {
     /// Supporting plane.
     pub support: Plane,
     /// Edge planes. Interior is on the non-positive side of each edge.
-    pub edges: Vec<Plane>,
+    pub edges: Arc<Vec<Plane>>,
     /// Source mesh index.
     pub mesh_index: isize,
     /// Source polygon index.
@@ -56,7 +57,7 @@ impl ConvexPolygon {
                 Real::zero(),
                 Real::zero(),
             ),
-            edges: Vec::new(),
+            edges: Arc::new(Vec::new()),
             mesh_index: -1,
             polygon_index: -1,
             delta_w: Vec::new(),
@@ -104,12 +105,13 @@ impl ConvexPolygon {
     pub fn inverted(&self) -> Self {
         let mut result = self.clone();
         result.support = self.support.inverted();
-        result.edges = self
-            .edges
-            .iter()
-            .rev()
-            .map(Plane::inverted)
-            .collect::<Vec<_>>();
+        result.edges = Arc::new(
+            self.edges
+                .iter()
+                .rev()
+                .map(Plane::inverted)
+                .collect::<Vec<_>>(),
+        );
         result
     }
 
@@ -118,7 +120,7 @@ impl ConvexPolygon {
         if classify_projective_point(point, &self.support)? != Classification::On {
             return Ok(false);
         }
-        for edge in &self.edges {
+        for edge in self.edges.iter() {
             if classify_projective_point(point, edge)?.is_positive() {
                 return Ok(false);
             }
@@ -131,7 +133,7 @@ impl ConvexPolygon {
         if classify_projective_point(point, &self.support)? != Classification::On {
             return Ok(false);
         }
-        for edge in &self.edges {
+        for edge in self.edges.iter() {
             if classify_projective_point(point, edge)?.is_non_negative() {
                 return Ok(false);
             }
@@ -163,7 +165,7 @@ pub fn make_triangle(
 
     ConvexPolygon {
         support,
-        edges,
+        edges: Arc::new(edges),
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
@@ -195,7 +197,7 @@ pub fn make_quad(
 
     ConvexPolygon {
         support,
-        edges,
+        edges: Arc::new(edges),
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),

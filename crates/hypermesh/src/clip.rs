@@ -3,6 +3,7 @@
 use crate::error::HypermeshResult;
 use crate::geometry::{Aabb, Classification, Plane, classify_projective_point};
 use crate::polygon::ConvexPolygon;
+use std::sync::Arc;
 
 /// Result side from clipping a polygon against a plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -89,9 +90,9 @@ pub fn clip_polygon(poly: &ConvexPolygon, split_plane: &Plane) -> HypermeshResul
     }
 
     let mut left = poly.clone();
-    left.edges = left_edges;
+    left.edges = Arc::new(left_edges);
     let mut right = poly.clone();
-    right.edges = right_edges;
+    right.edges = Arc::new(right_edges);
 
     Ok(ClipResult {
         left,
@@ -116,7 +117,7 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
             current = match min_clip.side {
                 ClipSide::Left => {
                     let mut empty = current;
-                    empty.edges.clear();
+                    Arc::make_mut(&mut empty.edges).clear();
                     empty
                 }
                 ClipSide::Right => current,
@@ -135,7 +136,7 @@ pub fn clip_polygon_to_aabb(poly: &ConvexPolygon, aabb: &Aabb) -> HypermeshResul
             current = match max_clip.side {
                 ClipSide::Right => {
                     let mut empty = current;
-                    empty.edges.clear();
+                    Arc::make_mut(&mut empty.edges).clear();
                     empty
                 }
                 ClipSide::Left => current,

@@ -21,6 +21,14 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
+#[test]
+fn convex_polygon_clones_share_edge_planes() {
+    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let cloned = polygon.clone();
+
+    assert!(std::sync::Arc::ptr_eq(&polygon.edges, &cloned.edges));
+}
+
 fn classified_volume_numerator(output: &[hypermesh::output::ClassifiedPolygon]) -> Real {
     let mut volume = Real::zero();
     for classified in output {

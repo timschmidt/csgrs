@@ -460,7 +460,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
             let classification = classify_polygon_output(&w_front, &w_back, indicator);
             if classification != 0 {
                 let mut fragment = polygon.clone();
-                fragment.edges = leaf.edges.clone();
+                fragment.edges = Arc::new(leaf.edges.clone());
                 fragment.delta_w = effective_delta_w;
                 let mut classified = ClassifiedPolygon::new(fragment, classification);
                 classified.winding = Some(WindingPair { w_front, w_back });
@@ -2218,7 +2218,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
 ) -> HypermeshResult<(Vec<crate::segment_trace::InteriorLeafPoint>, Vec<i32>)> {
     let leaf_polygon = ConvexPolygon {
         support: polygon.support.clone(),
-        edges: leaf_edges.to_vec(),
+        edges: Arc::new(leaf_edges.to_vec()),
         mesh_index: polygon.mesh_index,
         polygon_index: polygon.polygon_index,
         delta_w: polygon.delta_w.clone(),
@@ -2420,7 +2420,7 @@ fn constrain_open_segment_interval_to_polygon(
     lower: &mut Real,
     upper: &mut Real,
 ) -> HypermeshResult<bool> {
-    for edge in &polygon.edges {
+    for edge in polygon.edges.iter() {
         if !constrain_open_segment_interval_to_plane_negative(a, b, edge, lower, upper)? {
             return Ok(false);
         }
@@ -3140,7 +3140,7 @@ fn compute_new_reference_with_query_caches(
         Ok(Some((target, winding))) => {
             return Ok(certified_reference_result((
                 target.point,
-                target.definitions,
+                Arc::unwrap_or_clone(target.definitions),
                 winding,
             )));
         }
@@ -3608,14 +3608,14 @@ fn reference_result_or_error(
     if let Some((target, winding)) = projected {
         return Ok(certified_reference_result((
             target.point,
-            target.definitions,
+            Arc::unwrap_or_clone(target.definitions),
             winding,
         )));
     }
     if let Some((target, winding)) = support {
         return Ok(certified_reference_result((
             target.point,
-            target.definitions,
+            Arc::unwrap_or_clone(target.definitions),
             winding,
         )));
     }
@@ -3635,7 +3635,7 @@ fn reference_result_with_support_fallback(
     if let Some((target, winding)) = projected {
         return Ok(certified_reference_result((
             target.point,
-            target.definitions,
+            Arc::unwrap_or_clone(target.definitions),
             winding,
         )));
     }
@@ -4626,13 +4626,13 @@ fn push_unique_reference_target(
             })
         });
         let mut introduced_new_definition = false;
-        for definition in incoming_definitions {
+        for definition in incoming_definitions.iter() {
             if !existing
                 .definitions
                 .iter()
-                .any(|candidate| reference_definition_planes_match_as_sets(candidate, &definition))
+                .any(|candidate| reference_definition_planes_match_as_sets(candidate, definition))
             {
-                existing.definitions.push(definition);
+                Arc::make_mut(&mut existing.definitions).push(definition.clone());
                 introduced_new_definition = true;
             }
         }
@@ -7133,7 +7133,7 @@ fn axis_escape_bounds(projected: &Point3, axis: usize, stop_value: Real) -> Hype
 #[derive(Clone, Debug, PartialEq)]
 struct ReferenceTarget {
     point: Point3,
-    definitions: Vec<[Plane; 3]>,
+    definitions: Arc<Vec<[Plane; 3]>>,
     uncertified_definition_fallback: bool,
 }
 
@@ -7141,7 +7141,7 @@ impl ReferenceTarget {
     #[cfg(test)]
     fn axis_defined(point: Point3) -> Self {
         Self {
-            definitions: vec![axis_plane_definition(&point)],
+            definitions: Arc::new(vec![axis_plane_definition(&point)]),
             point,
             uncertified_definition_fallback: false,
         }
@@ -7149,7 +7149,7 @@ impl ReferenceTarget {
 
     fn axis_defined_fallback(point: Point3) -> Self {
         Self {
-            definitions: vec![axis_plane_definition(&point)],
+            definitions: Arc::new(vec![axis_plane_definition(&point)]),
             point,
             uncertified_definition_fallback: true,
         }
@@ -7158,7 +7158,7 @@ impl ReferenceTarget {
     fn with_definitions(point: Point3, definitions: Vec<[Plane; 3]>) -> Self {
         Self {
             point,
-            definitions,
+            definitions: Arc::new(definitions),
             uncertified_definition_fallback: false,
         }
     }
@@ -9280,7 +9280,10 @@ fn certified_reference_definitions(point: &Point3, definitions: &[[Plane; 3]]) -
 
 fn certify_reference_target_after_trace(mut target: ReferenceTarget) -> ReferenceTarget {
     // Callers have already certified strict target validity and its winding trace.
-    target.definitions = certified_reference_definitions(&target.point, &target.definitions);
+    target.definitions = Arc::new(certified_reference_definitions(
+        &target.point,
+        &target.definitions,
+    ));
     target.uncertified_definition_fallback = false;
     target
 }
@@ -10477,7 +10480,7 @@ fn point_lies_on_local_polygon(point: &Point3, polygon: &ConvexPolygon) -> Hyper
     {
         return Ok(false);
     }
-    for edge in &polygon.edges {
+    for edge in polygon.edges.iter() {
         if crate::geometry::classify_point(point, edge)?.is_positive() {
             return Ok(false);
         }
@@ -10502,7 +10505,7 @@ fn classify_point_in_local_polygon(
         return Ok(LocalPolygonPointLocation::Outside);
     }
     let mut on_edge = false;
-    for edge in &polygon.edges {
+    for edge in polygon.edges.iter() {
         match crate::geometry::classify_point(point, edge)? {
             crate::geometry::Classification::Positive => {
                 return Ok(LocalPolygonPointLocation::Outside);

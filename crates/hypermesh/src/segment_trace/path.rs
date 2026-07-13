@@ -286,7 +286,7 @@ pub fn trace_axis_segment(
 
         let mut inside = true;
         let mut boundary_edge_count = 0;
-        for edge in &polygon.edges {
+        for edge in polygon.edges.iter() {
             match classify_point(&crossing, edge)? {
                 Classification::Positive => {
                     inside = false;
@@ -1895,7 +1895,7 @@ pub(super) fn trace_direct_segment(
 
         let mut inside = true;
         let mut boundary_edge_count = 0;
-        for edge in &polygon.edges {
+        for edge in polygon.edges.iter() {
             match classify_point(&crossing, edge)? {
                 Classification::Positive => {
                     inside = false;
@@ -3766,7 +3766,7 @@ pub(super) fn point_lies_on_traced_surface(
 
         let mut inside_polygon = true;
         let mut on_edge = false;
-        for edge in &polygon.edges {
+        for edge in polygon.edges.iter() {
             match point.classify(edge)? {
                 Classification::Positive => {
                     inside_polygon = false;

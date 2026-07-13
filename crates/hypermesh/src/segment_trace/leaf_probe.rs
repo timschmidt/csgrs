@@ -48,6 +48,7 @@ use crate::polygon::ConvexPolygon;
 use crate::winding::{WindingNumberTransitionVector, WindingNumberVector};
 use hyperlattice::{Point3, Real};
 use hyperlimit::HalfspaceFeasibility;
+use std::sync::Arc;
 
 /// Classifies a leaf polygon by tracing from a reference point to an off-face
 /// probe and applying the host transition correction.
@@ -88,7 +89,7 @@ pub(crate) fn classify_leaf_polygon_with_probe_query_caches(
 ) -> HypermeshResult<WindingNumberVector> {
     let leaf = ConvexPolygon {
         support: support.clone(),
-        edges: leaf_edges.to_vec(),
+        edges: Arc::new(leaf_edges.to_vec()),
         mesh_index: -1,
         polygon_index: -1,
         delta_w: WindingNumberTransitionVector::new(),

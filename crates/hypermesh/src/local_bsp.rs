@@ -53,7 +53,7 @@ impl LocalBsp {
             support: polygon.support.clone(),
             host_mesh_index: polygon.mesh_index,
             host_polygon_index: polygon.polygon_index,
-            nodes: vec![BspNode::Leaf(BspLeaf::new(polygon.edges.clone()))],
+            nodes: vec![BspNode::Leaf(BspLeaf::new(polygon.edges.as_ref().clone()))],
             root: Some(0),
         }
     }
@@ -392,7 +392,7 @@ mod tests {
         let other = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
         let overlap = OverlapInfo {
             other_polygon_idx: 0,
-            other_edges: other.edges.clone(),
+            other_edges: other.edges.as_ref().clone(),
             other_support: other.support.clone(),
         };
         let mut bsp = LocalBsp::new(&host);
