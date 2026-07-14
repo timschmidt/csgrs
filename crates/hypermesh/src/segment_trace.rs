@@ -106,7 +106,8 @@ pub(crate) use witness::certified_leaf_test_point;
 use witness::*;
 use witness::{
     PolygonPointLocation, classify_point_in_polygon, dominant_normal_axis, interior_leaf_points,
-    planes_are_coplanar, point_strictly_between_axis, segment_plane_crossing, sort_crossing_events,
+    planes_are_coplanar, point_strictly_between_axis, segment_plane_crossing,
+    segment_plane_crossing_from_opposite_values, sort_crossing_events,
 };
 pub(crate) use witness::{certified_leaf_interior_points, certified_leaf_test_points};
 

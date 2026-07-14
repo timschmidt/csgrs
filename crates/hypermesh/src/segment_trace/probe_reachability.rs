@@ -6,8 +6,6 @@ use super::probe_cache::{
     cached_halfspace_cell_seed_families_from_optional_report_with,
     cached_optional_halfspace_feasibility_report_with, cached_surface_query_with,
 };
-#[cfg(test)]
-use super::strict_aabb_targets;
 use super::{
     AXIS_ORDERINGS, DefinitionCycleGuardReachabilityCache,
     DefinitionCycleGuardReachabilityCacheEntry, DefinitionNoDetourReachabilityCache,
@@ -25,10 +23,11 @@ use super::{
     PlaneReplacementReachabilityStepMode, PolygonPointLocation, ProbePoint,
     StrictAabbTargetFamilyCache, StrictAabbTargetFamilyCacheEntry, VisitedDefinitionPoint,
     aabb_from_axis_intervals, adapt_plane_replacement_vertex_to_trace_bounds, affine_from_planes,
-    cached_affine_from_planes_with, cached_detour_target_family, cached_detour_target_family_with,
-    cached_interior_box_axis_intervals_with_surface_queries, cached_strict_aabb_target_families,
-    classify_point_in_polygon, definition_families_match_as_sets, definition_planes_match_as_sets,
-    detour_arrangement_cell, detour_arrangement_cell_state_is_dominated, detour_arrangement_planes,
+    bounds_between_points, cached_affine_from_planes_with, cached_detour_target_family,
+    cached_detour_target_family_with, cached_interior_box_axis_intervals_with_surface_queries,
+    cached_strict_aabb_target_families, classify_point_in_polygon,
+    definition_families_match_as_sets, definition_planes_match_as_sets, detour_arrangement_cell,
+    detour_arrangement_cell_state_is_dominated, detour_arrangement_planes,
     detour_target_family_result_from_targets, endpoint_definition_family,
     evaluate_strict_aabb_target_families_with_direct_ranking, first_changed_axis,
     initial_visited_definition_points, interior_box_axis_intervals_with_surface_queries,
@@ -38,12 +37,14 @@ use super::{
     push_strict_aabb_target_family_bucket_entry, push_unique_detour_target,
     record_detour_arrangement_cell_state,
     search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking_outcome,
-    segment_plane_crossing, unique_definition_family, visited_definition_family_contains,
-    visited_definition_points_match_as_sets, visited_definition_points_subset_of,
+    segment_plane_crossing, segment_plane_crossing_from_opposite_values, unique_definition_family,
+    visited_definition_family_contains, visited_definition_points_match_as_sets,
+    visited_definition_points_subset_of,
 };
+use crate::bvh::bounds_overlap;
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Classification, Plane, classify_point};
-use crate::polygon::ConvexPolygon;
+use crate::geometry::{Aabb, Classification, Plane, PreparedPoint3, classify_point};
+use crate::polygon::{ApproxBounds, ConvexPolygon};
 use hyperlattice::Point3;
 
 fn definition_reachability_bucket_matches(
@@ -477,13 +478,23 @@ pub(super) fn probe_reaches_adjacent_cell(
         return Ok(true);
     };
 
+    let segment_bounds = bounds_between_points(start, probe)?;
+    let segment_bounds = ApproxBounds::new(segment_bounds.min, segment_bounds.max);
+    let start_prepared = PreparedPoint3::new(start);
+    let probe_prepared = PreparedPoint3::new(probe);
     for polygon in polygons {
         if polygon.mesh_index < 0 {
             continue;
         }
 
-        let start_class = classify_point(start, &polygon.support)?;
-        let probe_class = classify_point(probe, &polygon.support)?;
+        if let Some(polygon_bounds) = &polygon.approx_bounds
+            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+        {
+            continue;
+        }
+
+        let start_class = start_prepared.classify(&polygon.support)?;
+        let probe_class = probe_prepared.classify(&polygon.support)?;
 
         if start_class == Classification::On {
             if planes_are_coplanar(&polygon.support, host_support)? {
@@ -512,9 +523,10 @@ pub(super) fn probe_reaches_adjacent_cell(
             continue;
         }
 
-        let Some(crossing) = segment_plane_crossing(start, probe, &polygon.support)? else {
-            continue;
-        };
+        let start_value = polygon.support.expression_at_point(start);
+        let probe_value = polygon.support.expression_at_point(probe);
+        let crossing =
+            segment_plane_crossing_from_opposite_values(start, probe, start_value, probe_value)?;
         if point_strictly_between_axis(&crossing, start, probe, sort_axis)? {
             match classify_point_in_polygon(&crossing, polygon)? {
                 PolygonPointLocation::Outside => {}
@@ -755,63 +767,6 @@ pub(super) fn probe_reaches_adjacent_cell_from_interior_with_caches(
     }
 }
 
-#[cfg(test)]
-#[allow(dead_code)]
-fn probe_reaches_adjacent_cell_with_cycle_guard(
-    start: &Point3,
-    end: &Point3,
-    host_support: &Plane,
-    polygons: &[ConvexPolygon],
-    start_definitions: &[[Plane; 3]],
-    end_definitions: &[[Plane; 3]],
-) -> HypermeshResult<bool> {
-    let mut surface_cache = Vec::new();
-    let mut plane_replacement_affine = PlaneReplacementAffineCache::default();
-    let mut plane_replacement_reachability_paths = PlaneReplacementReachabilityPathCache::default();
-    let mut plane_replacement_reachability_steps = PlaneReplacementReachabilityStepCache::default();
-    let mut plane_replacement_no_nested_ordering_warmups =
-        PlaneReplacementNoNestedOrderingWarmupCache::default();
-    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
-    let mut definition_cycle_guard_reachability = DefinitionCycleGuardReachabilityCache::default();
-    let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
-    let mut no_plane_replacement_cycle_guard_cache =
-        DefinitionNoPlaneReplacementCycleGuardCache::default();
-    let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
-    let mut halfspace_reports = Vec::new();
-    let mut halfspace_seed_families = Vec::new();
-    let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
-    let mut full_no_detour_cache = DefinitionNoDetourReachabilityCache::default();
-    let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
-    let mut direct_probe_reachability_cache = Vec::new();
-    let mut detour_target_cache = DetourTargetFamilyCache::default();
-    probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
-        start,
-        end,
-        host_support,
-        polygons,
-        start_definitions,
-        end_definitions,
-        &mut surface_cache,
-        &mut plane_replacement_affine,
-        &mut plane_replacement_reachability_paths,
-        &mut plane_replacement_reachability_steps,
-        &mut plane_replacement_no_nested_ordering_warmups,
-        &mut interior_box_axis_intervals,
-        &mut definition_cycle_guard_reachability,
-        &mut no_step_cache,
-        &mut no_plane_replacement_cycle_guard_cache,
-        &mut no_plane_replacement_cache,
-        &mut halfspace_reports,
-        &mut halfspace_seed_families,
-        &mut no_step_detour_target_cache,
-        &mut full_no_detour_cache,
-        &mut no_detour_cache,
-        &mut direct_probe_reachability_cache,
-        &mut detour_target_cache,
-        None,
-    )
-}
-
 fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     start: &Point3,
     end: &Point3,
@@ -931,45 +886,6 @@ fn probe_reaches_adjacent_cell_with_cycle_guard_with_caches(
     result
 }
 
-#[cfg(test)]
-#[allow(dead_code)]
-fn probe_reaches_adjacent_cell_with_definitions_budget(
-    start: &Point3,
-    end: &Point3,
-    host_support: &Plane,
-    polygons: &[ConvexPolygon],
-    start_definitions: &[[Plane; 3]],
-    end_definitions: &[[Plane; 3]],
-    remaining_detours: usize,
-) -> HypermeshResult<bool> {
-    let mut trace_without_detours =
-        |start: &Point3,
-         end: &Point3,
-         start_definitions: &[[Plane; 3]],
-         end_definitions: &[[Plane; 3]]| {
-            probe_reaches_adjacent_cell_with_definitions_no_detours(
-                start,
-                end,
-                host_support,
-                polygons,
-                start_definitions,
-                end_definitions,
-            )
-        };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    probe_reaches_adjacent_cell_with_definitions_budget_impl(
-        start,
-        end,
-        polygons,
-        start_definitions,
-        end_definitions,
-        remaining_detours,
-        &mut trace_without_detours,
-        &mut detours_for,
-    )
-}
-
 pub(super) fn cached_definition_no_detour_reachability_with(
     cache: &mut DefinitionNoDetourReachabilityCache,
     start: &Point3,
@@ -1032,7 +948,6 @@ pub(super) fn cached_definition_no_plane_replacement_reachability_with(
 }
 
 #[cfg(test)]
-#[allow(dead_code)]
 pub(super) fn probe_reaches_adjacent_cell_with_cycle_guard_impl(
     start: &Point3,
     end: &Point3,
@@ -1230,104 +1145,6 @@ fn probe_reaches_adjacent_cell_via_detours_with_cycle_guard_with_surface_query(
             &mut saw_unknown,
         )? {
             return Ok(true);
-        }
-    }
-
-    if saw_unknown {
-        Err(HypermeshError::UnknownClassification)
-    } else {
-        Ok(false)
-    }
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-fn probe_reaches_adjacent_cell_via_interior_box_detours_progressively_with_surface_query(
-    start: &Point3,
-    end: &Point3,
-    polygons: &[ConvexPolygon],
-    start_definitions: &[[Plane; 3]],
-    end_definitions: &[[Plane; 3]],
-    visited_points: &[VisitedDefinitionPoint],
-    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
-    surface_cache: &mut Vec<SurfaceCacheEntry>,
-    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
-    trace_without_detours: &mut impl FnMut(
-        &Point3,
-        &Point3,
-        &[[Plane; 3]],
-        &[[Plane; 3]],
-    ) -> HypermeshResult<bool>,
-    detours_for: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
-) -> HypermeshResult<bool> {
-    let (intervals, mut saw_unknown) = cached_interior_box_axis_intervals_with_surface_queries(
-        interior_box_axis_intervals,
-        start,
-        end,
-        || {
-            interior_box_axis_intervals_with_surface_queries(
-                start,
-                end,
-                polygons,
-                &mut |edge_start, edge_end, polygon, axis| {
-                    let start_class = classify_point(edge_start, &polygon.support)?;
-                    let end_class = classify_point(edge_end, &polygon.support)?;
-                    if start_class == Classification::On {
-                        return Ok(Some(edge_start.clone()));
-                    }
-                    if end_class == Classification::On {
-                        return Ok(Some(edge_end.clone()));
-                    }
-                    segment_plane_crossing(edge_start, edge_end, &polygon.support).and_then(
-                        |crossing| {
-                            if let Some(crossing) = crossing {
-                                if !point_strictly_between_axis(
-                                    &crossing, edge_start, edge_end, axis,
-                                )? {
-                                    return Ok(None);
-                                }
-                                Ok(Some(crossing))
-                            } else {
-                                Ok(None)
-                            }
-                        },
-                    )
-                },
-                &mut |crossing, polygon| classify_point_in_polygon(crossing, polygon),
-            )
-        },
-    )?;
-    for x in &intervals[0] {
-        for y in &intervals[1] {
-            for z in &intervals[2] {
-                let bounds = aabb_from_axis_intervals([x, y, z])?;
-                let detours = match strict_aabb_targets(&bounds) {
-                    Ok(detours) => detours,
-                    Err(HypermeshError::UnknownClassification) => {
-                        saw_unknown = true;
-                        continue;
-                    }
-                    Err(err) => return Err(err),
-                };
-                for detour in detours {
-                    if evaluate_probe_detour_target_with_cycle_guard_with_surface_query(
-                        &detour,
-                        start,
-                        end,
-                        polygons,
-                        start_definitions,
-                        end_definitions,
-                        visited_points,
-                        surface_cache,
-                        surface_query,
-                        trace_without_detours,
-                        detours_for,
-                        &mut saw_unknown,
-                    )? {
-                        return Ok(true);
-                    }
-                }
-            }
         }
     }
 
@@ -1753,7 +1570,6 @@ pub(super) fn probe_reaches_adjacent_cell_with_definitions_no_detours_with_cache
 }
 
 #[cfg(test)]
-#[allow(dead_code)]
 fn probe_reaches_adjacent_cell_with_definitions_no_step_detours(
     start: &Point3,
     end: &Point3,
@@ -2850,56 +2666,6 @@ struct ProgressiveNoPlaneDetourSearchOutcome {
     exhausted_targets: Option<HypermeshResult<Vec<DetourTarget>>>,
 }
 
-#[cfg(test)]
-#[allow(dead_code)]
-fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query(
-    start: &Point3,
-    end: &Point3,
-    polygons: &[ConvexPolygon],
-    visited_points: &[VisitedDefinitionPoint],
-    start_definitions: &[[Plane; 3]],
-    end_definitions: &[[Plane; 3]],
-    progressive_interior_box_detours: bool,
-    no_plane_replacement_cycle_guard_cache: &mut DefinitionNoPlaneReplacementCycleGuardCache,
-    no_plane_replacement_cache: &DefinitionNoPlaneReplacementReachabilityCache,
-    halfspace_report_cache: &mut Vec<HalfspaceReportCacheEntry>,
-    halfspace_seed_family_cache: &mut Vec<HalfspaceSeedFamilyCacheEntry>,
-    strict_aabb_target_families: &mut StrictAabbTargetFamilyCache,
-    interior_box_axis_intervals: &mut InteriorBoxAxisIntervalsCache,
-    surface_cache: &mut Vec<SurfaceCacheEntry>,
-    surface_query: &mut impl FnMut(&Point3) -> HypermeshResult<bool>,
-    trace_without_detours: &mut impl FnMut(
-        &Point3,
-        &Point3,
-        &[[Plane; 3]],
-        &[[Plane; 3]],
-    ) -> HypermeshResult<bool>,
-    detour_target_cache: &mut DetourTargetFamilyCache,
-    detours_for_query: &mut impl FnMut(&Point3, &Point3) -> HypermeshResult<Vec<DetourTarget>>,
-) -> HypermeshResult<bool> {
-    probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
-        start,
-        end,
-        polygons,
-        visited_points,
-        start_definitions,
-        end_definitions,
-        progressive_interior_box_detours,
-        no_plane_replacement_cycle_guard_cache,
-        no_plane_replacement_cache,
-        halfspace_report_cache,
-        halfspace_seed_family_cache,
-        strict_aabb_target_families,
-        interior_box_axis_intervals,
-        surface_cache,
-        surface_query,
-        trace_without_detours,
-        detour_target_cache,
-        detours_for_query,
-    )
-    .result
-}
-
 fn probe_reaches_adjacent_cell_via_interior_box_detours_without_plane_replacement_progressively_with_surface_query_outcome(
     start: &Point3,
     end: &Point3,
@@ -3560,53 +3326,6 @@ pub(super) fn probe_reaches_adjacent_cell_with_detour_batches_breadth_first_with
     }
 }
 
-#[cfg(test)]
-#[allow(dead_code)]
-fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement(
-    start_planes: &[Plane; 3],
-    end_planes: &[Plane; 3],
-    host_support: &Plane,
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<bool> {
-    let mut affine_cache = PlaneReplacementAffineCache::default();
-    let mut path_cache = PlaneReplacementReachabilityPathCache::default();
-    let mut step_cache = PlaneReplacementReachabilityStepCache::default();
-    let mut no_nested_ordering_warmup_cache =
-        PlaneReplacementNoNestedOrderingWarmupCache::default();
-    let mut no_step_cache = DefinitionNoDetourReachabilityCache::default();
-    let mut halfspace_reports = Vec::new();
-    let mut halfspace_seed_families = Vec::new();
-    let mut no_detour_cache = DefinitionNoDetourReachabilityCache::default();
-    let mut no_plane_replacement_cycle_guard_cache =
-        DefinitionNoPlaneReplacementCycleGuardCache::default();
-    let mut no_plane_replacement_cache = DefinitionNoPlaneReplacementReachabilityCache::default();
-    let mut strict_aabb_target_families = StrictAabbTargetFamilyCache::default();
-    let mut no_step_detour_target_cache = DetourTargetFamilyCache::default();
-    let mut direct_probe_reachability_cache = Vec::new();
-    let mut interior_box_axis_intervals = InteriorBoxAxisIntervalsCache::default();
-    plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
-        start_planes,
-        end_planes,
-        host_support,
-        polygons,
-        &mut affine_cache,
-        &mut path_cache,
-        &mut step_cache,
-        &mut no_nested_ordering_warmup_cache,
-        &mut interior_box_axis_intervals,
-        &mut no_step_cache,
-        &mut halfspace_reports,
-        &mut halfspace_seed_families,
-        &mut no_detour_cache,
-        &mut no_plane_replacement_cycle_guard_cache,
-        &mut no_plane_replacement_cache,
-        &mut strict_aabb_target_families,
-        &mut no_step_detour_target_cache,
-        &mut direct_probe_reachability_cache,
-        None,
-    )
-}
-
 fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement_with_caches(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],
@@ -3722,7 +3441,6 @@ fn plane_replacement_path_reaches_adjacent_cell_without_nested_plane_replacement
 }
 
 #[cfg(test)]
-#[allow(dead_code)]
 pub(super) fn plane_replacement_path_reaches_adjacent_cell_without_step_detours(
     start_planes: &[Plane; 3],
     end_planes: &[Plane; 3],

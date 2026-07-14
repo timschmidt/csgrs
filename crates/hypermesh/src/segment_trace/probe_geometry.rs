@@ -31,12 +31,13 @@ use super::witness::{
     point_strictly_between_axis, segment_plane_crossing,
 };
 use super::{InteriorLeafPoint, LeafProbeQueryCaches, ProbePoint};
+use crate::bvh::bounds_overlap;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_real, compare_real,
 };
 use crate::halfspace::{aabb_core_halfspaces, negated_halfspace, support_side_halfspace};
-use crate::polygon::ConvexPolygon;
+use crate::polygon::{ApproxBounds, ConvexPolygon};
 use hyperlattice::{Point3, Real, intersect_three_planes};
 use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3};
 
@@ -371,10 +372,18 @@ pub(super) fn adjacent_normal_probe_stop_values_with_queries(
         return Ok((Vec::new(), saw_unknown));
     };
 
+    let bound_point = offset_point(interior, direction, &bound_stop);
+    let segment_bounds = bounds_between_points(interior, &bound_point)?;
+    let segment_bounds = ApproxBounds::new(segment_bounds.min, segment_bounds.max);
     let mut stop_values = vec![bound_stop.clone()];
 
     for polygon in polygons {
         if polygon.mesh_index < 0 {
+            continue;
+        }
+        if let Some(polygon_bounds) = &polygon.approx_bounds
+            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+        {
             continue;
         }
         if planes_are_coplanar(&polygon.support, support)? {

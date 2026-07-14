@@ -15,8 +15,11 @@ use crate::halfspace::{
     halfspace_is_degenerate_bound, limit_plane_families_match_as_sets, point_satisfies_halfspaces,
     support_side_halfspace,
 };
+#[cfg(test)]
+use crate::intersection::intersect_polygons;
 use crate::intersection::{
-    IntersectionSegment, PairwiseIntersection, PairwiseIntersectionType, intersect_polygons,
+    IntersectionSegment, OverlapInfo, PairwiseIntersection, PairwiseIntersectionType,
+    intersect_polygons_with_vertices,
 };
 use crate::local_bsp::{BspLeaf, LocalBsp};
 use crate::mesh::classify_edge_balance;
@@ -2049,6 +2052,7 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
 ) -> HypermeshResult<WindingNumberVector> {
     let mut saw_unknown = false;
+    let mut probe_query_caches = LeafProbeQueryCaches::default();
 
     for point in ordered_interior_points_for_probe_search_with_support(interior_points, support)? {
         let state = cached_leaf_point_classification_with(
@@ -2058,7 +2062,6 @@ fn classify_leaf_polygon_from_interior_points_with_point_cache(
             point,
             host_delta_w,
             || {
-                let mut probe_query_caches = LeafProbeQueryCaches::default();
                 let mut local_unknown = false;
                 let winding = classify_leaf_polygon_interior_point_with_probe_query_caches(
                     point,
@@ -2246,6 +2249,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
             )
         })
         .collect::<Vec<_>>();
+    let leaf_vertices = leaf_polygon.vertices()?;
     let mut delta_w = polygon.delta_w.clone();
 
     for other_index in
@@ -2256,7 +2260,14 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
         let relation = classify_leaf_test_relation(&leaf_test_points, other)?;
-        let intersection = intersect_polygons(&leaf_polygon, other, 0)?;
+        let other_vertices = other.vertices()?;
+        let intersection = intersect_polygons_with_vertices(
+            &leaf_polygon,
+            &leaf_vertices,
+            other,
+            &other_vertices,
+            0,
+        )?;
         match intersection.kind {
             PairwiseIntersectionType::None | PairwiseIntersectionType::Point => {}
             PairwiseIntersectionType::Segment => {
@@ -2512,6 +2523,10 @@ fn pairwise_intersections_by_polygon(
 ) -> HypermeshResult<Vec<Vec<PairwiseIntersection>>> {
     let mut by_polygon = vec![Vec::new(); polygons.len()];
     let bvh = ExactBvh::build(polygons)?;
+    let vertices = polygons
+        .iter()
+        .map(ConvexPolygon::vertices)
+        .collect::<HypermeshResult<Vec<_>>>()?;
     let mut candidate_pairs = Vec::new();
     bvh.intersect_pairs(&bvh, |left, right| {
         if left < right {
@@ -2520,24 +2535,49 @@ fn pairwise_intersections_by_polygon(
     })?;
 
     for (global_i, global_j) in candidate_pairs {
-        let intersection = intersect_polygons(&polygons[global_i], &polygons[global_j], global_j)?;
+        let intersection = intersect_polygons_with_vertices(
+            &polygons[global_i],
+            &vertices[global_i],
+            &polygons[global_j],
+            &vertices[global_j],
+            global_j,
+        )?;
         if matches!(
             intersection.kind,
             PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
         ) {
+            let reverse =
+                reverse_pairwise_intersection(&intersection, &polygons[global_i], global_i);
             by_polygon[global_i].push(intersection);
-        }
-
-        let intersection = intersect_polygons(&polygons[global_j], &polygons[global_i], global_i)?;
-        if matches!(
-            intersection.kind,
-            PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
-        ) {
-            by_polygon[global_j].push(intersection);
+            by_polygon[global_j].push(reverse);
         }
     }
 
     Ok(by_polygon)
+}
+
+fn reverse_pairwise_intersection(
+    intersection: &PairwiseIntersection,
+    other: &ConvexPolygon,
+    other_polygon_idx: usize,
+) -> PairwiseIntersection {
+    PairwiseIntersection {
+        kind: intersection.kind,
+        segment: intersection
+            .segment
+            .as_ref()
+            .map(|segment| IntersectionSegment {
+                v0: segment.v0.clone(),
+                v1: segment.v1.clone(),
+                split_plane: other.support.clone(),
+                other_polygon_idx,
+            }),
+        overlap: intersection.overlap.as_ref().map(|_| OverlapInfo {
+            other_polygon_idx,
+            other_edges: other.edges.as_ref().clone(),
+            other_support: other.support.clone(),
+        }),
+    }
 }
 
 fn cached_pairwise_intersections_by_polygon_with(
@@ -4080,26 +4120,6 @@ fn projected_reference_escape_targets_from_seed_family_state_with_tracking_unkno
     )
 }
 
-#[cfg(test)]
-#[allow(dead_code)]
-fn projected_support_plane_cell_reference(
-    old_ref: &Point3,
-    old_ref_definitions: &[[Plane; 3]],
-    old_wnv: &[i32],
-    bounds: &Aabb,
-    polygons: &[ConvexPolygon],
-    projected_halfspaces: Vec<LimitPlane3>,
-) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    support_plane_cell_reference_with_halfspaces(
-        old_ref,
-        old_ref_definitions,
-        old_wnv,
-        bounds,
-        polygons,
-        projected_halfspaces,
-    )
-}
-
 fn projected_support_plane_cell_reference_with_query_caches(
     old_ref: &Point3,
     old_ref_definitions: &[[Plane; 3]],
@@ -4117,43 +4137,6 @@ fn projected_support_plane_cell_reference_with_query_caches(
         polygons,
         projected_halfspaces,
         query_caches,
-    )
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-fn projection_escape_reference(
-    old_ref: &Point3,
-    old_ref_definitions: &[[Plane; 3]],
-    old_wnv: &[i32],
-    projected: &Point3,
-    bounds: &Aabb,
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    let axis_options = projection_escape_axis_options_family(projected, bounds, polygons)?;
-    projection_escape_reference_with_axis_options(&axis_options, bounds, |escape_bounds| {
-        support_plane_cell_reference(
-            old_ref,
-            old_ref_definitions,
-            old_wnv,
-            escape_bounds,
-            polygons,
-        )
-    })
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-fn projection_escape_reference_with_axis_options(
-    axis_options: &ProjectionEscapeAxisOptions,
-    bounds: &Aabb,
-    search: impl FnMut(&Aabb) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>>,
-) -> HypermeshResult<Option<(ReferenceTarget, Vec<i32>)>> {
-    projection_escape_reference_with_axis_options_tracking_unknown(
-        axis_options,
-        bounds,
-        false,
-        search,
     )
 }
 

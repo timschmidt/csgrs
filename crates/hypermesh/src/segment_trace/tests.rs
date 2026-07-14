@@ -313,6 +313,13 @@ fn arrangement_cell_shortcut_rejects_support_plane_boundary() {
 }
 
 #[test]
+fn traced_cell_shortcut_ignores_spatially_disjoint_support_plane() {
+    let polygon = make_triangle(&p(0, 10, 0), &p(0, 12, 0), &p(0, 10, 2), 0, 0);
+
+    assert!(points_share_open_traced_cell(&p(-1, 0, 0), &p(1, 0, 0), &[polygon],).unwrap());
+}
+
+#[test]
 fn detour_arrangement_cell_state_prefers_later_certified_target() {
     let cell = vec![Classification::Negative, Classification::Positive];
     let mut seen = Vec::new();

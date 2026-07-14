@@ -1,5 +1,7 @@
 //! Exact segment paths, detour construction, and plane replacement.
 
+use std::collections::HashMap;
+
 #[cfg(test)]
 use super::StrictAabbTargetFamilyCacheEntry;
 use super::probe_cache::{SurfaceCacheEntry, cached_surface_query_with};
@@ -17,17 +19,18 @@ use super::{
     extend_shifted_halfspace_seed_families_backtracking_unknown,
     halfspace_cell_seed_families_from_optional_report, optional_halfspace_feasibility_report,
     point_strictly_between_axis, probe_definitions_from_active_halfspaces,
-    probe_definitions_or_axis, segment_plane_crossing, shifted_halfspace_cell_witnesses_from_seed,
-    shifted_halfspace_seed_families_with_report_seed, shifted_halfspace_witness_family_or_empty,
-    sort_crossing_events,
+    probe_definitions_or_axis, segment_plane_crossing, segment_plane_crossing_from_opposite_values,
+    shifted_halfspace_cell_witnesses_from_seed, shifted_halfspace_seed_families_with_report_seed,
+    shifted_halfspace_witness_family_or_empty, sort_crossing_events,
 };
+use crate::bvh::bounds_overlap;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, PreparedPoint3, axis_mut, axis_ref, classify_point, classify_real,
     compare_real,
 };
 use crate::halfspace::aabb_core_halfspaces;
-use crate::polygon::ConvexPolygon;
+use crate::polygon::{ApproxBounds, ConvexPolygon};
 use crate::winding::WindingNumberVector;
 use hyperlattice::{Point3, Real, intersect_three_planes};
 use hyperlimit::{
@@ -37,12 +40,47 @@ use hyperlimit::{
 
 pub(super) fn detour_arrangement_planes(polygons: &[ConvexPolygon]) -> Vec<Plane> {
     let mut planes = Vec::new();
+    let mut approximate_buckets: HashMap<[u64; 4], Vec<usize>> = HashMap::new();
     for polygon in polygons {
-        if !planes.iter().any(|existing| existing == &polygon.support) {
+        let key = approximate_plane_key(&polygon.support);
+        let duplicate = key.as_ref().map_or_else(
+            || planes.iter().any(|existing| existing == &polygon.support),
+            |key| {
+                approximate_buckets.get(key).is_some_and(|indices| {
+                    indices
+                        .iter()
+                        .any(|&index| planes[index] == polygon.support)
+                })
+            },
+        );
+        if !duplicate {
+            let index = planes.len();
             planes.push(polygon.support.clone());
+            if let Some(key) = key {
+                approximate_buckets.entry(key).or_default().push(index);
+            }
         }
     }
     planes
+}
+
+fn approximate_plane_key(plane: &Plane) -> Option<[u64; 4]> {
+    let values = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ];
+    let mut key = [0; 4];
+    for (slot, value) in key.iter_mut().zip(values) {
+        let approximate = value.to_f64_lossy()?;
+        *slot = if approximate == 0.0 {
+            0
+        } else {
+            approximate.to_bits()
+        };
+    }
+    Some(key)
 }
 
 pub(super) fn detour_arrangement_cell(
@@ -239,9 +277,17 @@ pub fn trace_axis_segment(
     }
 
     let dir_sign = if direction.is_gt() { 1 } else { -1 };
+    let start_prepared = PreparedPoint3::new(start);
+    let end_prepared = PreparedPoint3::new(end);
     let mut events = Vec::new();
     for polygon in polygons {
         if polygon.mesh_index < 0 {
+            continue;
+        }
+
+        if let Some(bounds) = &polygon.approx_bounds
+            && !axis_segment_overlaps_bounds(start, end, axis, bounds)?
+        {
             continue;
         }
 
@@ -250,10 +296,8 @@ pub fn trace_axis_segment(
             continue;
         }
 
-        let start_value = polygon.support.expression_at_point(start);
-        let end_value = polygon.support.expression_at_point(end);
-        let start_class = classify_real(&start_value)?;
-        let end_class = classify_real(&end_value)?;
+        let start_class = start_prepared.classify(&polygon.support)?;
+        let end_class = end_prepared.classify(&polygon.support)?;
         if start_class == Classification::On {
             match classify_point_in_polygon(start, polygon)? {
                 PolygonPointLocation::Outside => {}
@@ -276,9 +320,10 @@ pub fn trace_axis_segment(
             continue;
         }
 
-        let Some(crossing) = segment_plane_crossing(start, end, &polygon.support)? else {
-            continue;
-        };
+        let start_value = polygon.support.expression_at_point(start);
+        let end_value = polygon.support.expression_at_point(end);
+        let crossing =
+            segment_plane_crossing_from_opposite_values(start, end, start_value, end_value)?;
 
         if !point_strictly_between_axis(&crossing, start, end, axis)? {
             continue;
@@ -328,6 +373,33 @@ pub fn trace_axis_segment(
         winding,
         valid: true,
     })
+}
+
+fn axis_segment_overlaps_bounds(
+    start: &Point3,
+    end: &Point3,
+    axis: usize,
+    bounds: &crate::polygon::ApproxBounds,
+) -> HypermeshResult<bool> {
+    for fixed_axis in other_axes(axis) {
+        let coordinate = axis_ref(start, fixed_axis);
+        if compare_real(coordinate, axis_ref(&bounds.min, fixed_axis))?.is_lt()
+            || compare_real(coordinate, axis_ref(&bounds.max, fixed_axis))?.is_gt()
+        {
+            return Ok(false);
+        }
+    }
+
+    let (segment_min, segment_max) =
+        if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
+            (axis_ref(start, axis), axis_ref(end, axis))
+        } else {
+            (axis_ref(end, axis), axis_ref(start, axis))
+        };
+    Ok(
+        !compare_real(segment_max, axis_ref(&bounds.min, axis))?.is_lt()
+            && !compare_real(segment_min, axis_ref(&bounds.max, axis))?.is_gt(),
+    )
 }
 
 pub(super) const AXIS_ORDERINGS: [[usize; 3]; 6] = [
@@ -442,7 +514,7 @@ fn trace_segment_from_definitions_with_caches_and_surface_query(
          winding: &[i32],
          start_definitions: &[[Plane; 3]],
          end_definitions: &[[Plane; 3]]| {
-            if points_share_open_arrangement_cell(start, end, &arrangement_planes)? {
+            if points_share_open_traced_cell(start, end, polygons)? {
                 return Ok(Some(winding.to_vec()));
             }
             cached_definition_no_detour_trace_with(
@@ -558,6 +630,7 @@ pub(super) fn adapt_plane_replacement_vertex_to_trace_bounds(
     Ok((adapted, definitions))
 }
 
+#[cfg(test)]
 pub(super) fn points_share_open_arrangement_cell(
     start: &Point3,
     end: &Point3,
@@ -572,8 +645,57 @@ pub(super) fn points_share_open_arrangement_cell(
     Ok(start_cell == end_cell && start_cell.iter().all(|side| *side != Classification::On))
 }
 
+pub(super) fn points_share_open_traced_cell(
+    start: &Point3,
+    end: &Point3,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<bool> {
+    let mut min = Point3::origin();
+    let mut max = Point3::origin();
+    for axis in 0..3 {
+        let (lower, upper) = if compare_real(axis_ref(start, axis), axis_ref(end, axis))?.is_le() {
+            (axis_ref(start, axis), axis_ref(end, axis))
+        } else {
+            (axis_ref(end, axis), axis_ref(start, axis))
+        };
+        *axis_mut(&mut min, axis) = lower.clone();
+        *axis_mut(&mut max, axis) = upper.clone();
+    }
+    let segment_bounds = ApproxBounds::new(min, max);
+    let start = PreparedPoint3::new(start);
+    let end = PreparedPoint3::new(end);
+
+    for polygon in polygons {
+        if polygon.mesh_index < 0 {
+            continue;
+        }
+        if let Some(polygon_bounds) = &polygon.approx_bounds
+            && !bounds_overlap(&segment_bounds, polygon_bounds)?
+        {
+            continue;
+        }
+
+        let start_side = match start.classify(&polygon.support) {
+            Ok(side) => side,
+            Err(HypermeshError::UnknownClassification) => return Ok(false),
+            Err(error) => return Err(error),
+        };
+        let end_side = match end.classify(&polygon.support) {
+            Ok(side) => side,
+            Err(HypermeshError::UnknownClassification) => return Ok(false),
+            Err(error) => return Err(error),
+        };
+        if start_side == Classification::On
+            || end_side == Classification::On
+            || start_side != end_side
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
 #[cfg(test)]
-#[allow(dead_code)]
 pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl(
     start: &Point3,
     end: &Point3,
@@ -652,47 +774,6 @@ pub(super) fn trace_segment_from_definitions_with_cycle_guard_impl_with_surface_
     }
 
     Err(HypermeshError::UnknownClassification)
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-fn trace_segment_from_definitions_with_budget(
-    start: &Point3,
-    end: &Point3,
-    winding: &[i32],
-    polygons: &[ConvexPolygon],
-    start_definitions: &[[Plane; 3]],
-    end_definitions: &[[Plane; 3]],
-    remaining_detours: usize,
-) -> HypermeshResult<WindingNumberVector> {
-    let mut trace_without_detours =
-        |start: &Point3,
-         end: &Point3,
-         winding: &[i32],
-         start_definitions: &[[Plane; 3]],
-         end_definitions: &[[Plane; 3]]| {
-            trace_segment_with_definitions_no_detours(
-                start,
-                end,
-                winding,
-                polygons,
-                start_definitions,
-                end_definitions,
-            )
-        };
-    let mut detours_for =
-        |start: &Point3, end: &Point3| interior_box_detour_targets(start, end, polygons);
-    trace_segment_from_definitions_with_budget_impl(
-        start,
-        end,
-        winding,
-        polygons,
-        start_definitions,
-        end_definitions,
-        remaining_detours,
-        &mut trace_without_detours,
-        &mut detours_for,
-    )
 }
 
 #[cfg(test)]
@@ -1492,26 +1573,6 @@ pub(crate) fn trace_plane_replacement_path(
         |current, next, _current_planes, _next_planes, attempt, polygons| {
             retryable_trace(trace_segment(current, next, attempt, polygons))
         },
-        &mut affine_cache,
-        &mut step_cache,
-    )
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-fn trace_plane_replacement_path_without_detours(
-    start_planes: &[Plane; 3],
-    end_planes: &[Plane; 3],
-    winding: &[i32],
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<WindingNumberVector> {
-    let mut affine_cache = PlaneReplacementAffineCache::default();
-    let mut step_cache = Vec::new();
-    trace_plane_replacement_path_without_detours_with_caches(
-        start_planes,
-        end_planes,
-        winding,
-        polygons,
         &mut affine_cache,
         &mut step_cache,
     )
@@ -2373,27 +2434,6 @@ pub(super) fn strict_aabb_targets(bounds: &Aabb) -> HypermeshResult<Vec<DetourTa
     detour_target_family_result_from_targets(targets, cursor.saw_unknown)
 }
 
-#[allow(dead_code)]
-fn search_strict_aabb_targets_progressively_with_direct_ranking<K: Ord>(
-    bounds: &Aabb,
-    rank_direct: &mut impl FnMut(&DetourTarget) -> HypermeshResult<K>,
-    evaluate: &mut impl FnMut(DetourTarget) -> HypermeshResult<bool>,
-) -> HypermeshResult<bool> {
-    search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking(
-        bounds,
-        |bounds, halfspaces, report, saw_unknown| {
-            halfspace_cell_seed_families_from_optional_report(
-                bounds,
-                halfspaces,
-                report,
-                saw_unknown,
-            )
-        },
-        rank_direct,
-        evaluate,
-    )
-}
-
 pub(super) struct ProgressiveStrictAabbSearchOutcome {
     pub(super) result: HypermeshResult<bool>,
     pub(super) exhausted_families: Option<StrictAabbTargetFamilies>,
@@ -2851,6 +2891,7 @@ pub(super) fn search_strict_aabb_targets_progressively_with_seed_families(
     )
 }
 
+#[cfg(test)]
 fn search_strict_aabb_targets_progressively_with_seed_families_and_direct_ranking<K: Ord>(
     bounds: &Aabb,
     mut seed_families_for: impl FnMut(
@@ -3754,20 +3795,26 @@ pub(super) fn point_lies_on_traced_surface(
     point: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let point = PreparedPoint3::new(point);
+    let prepared_point = PreparedPoint3::new(point);
     for polygon in polygons {
         if polygon.mesh_index < 0 {
             continue;
         }
 
-        if point.classify(&polygon.support)? != Classification::On {
+        if let Some(bounds) = &polygon.approx_bounds
+            && !point_lies_in_bounds(point, bounds)?
+        {
+            continue;
+        }
+
+        if prepared_point.classify(&polygon.support)? != Classification::On {
             continue;
         }
 
         let mut inside_polygon = true;
         let mut on_edge = false;
         for edge in polygon.edges.iter() {
-            match point.classify(edge)? {
+            match prepared_point.classify(edge)? {
                 Classification::Positive => {
                     inside_polygon = false;
                     break;
@@ -3784,6 +3831,20 @@ pub(super) fn point_lies_on_traced_surface(
         }
     }
     Ok(false)
+}
+
+fn point_lies_in_bounds(
+    point: &Point3,
+    bounds: &crate::polygon::ApproxBounds,
+) -> HypermeshResult<bool> {
+    for axis in 0..3 {
+        if compare_real(axis_ref(point, axis), axis_ref(&bounds.min, axis))?.is_lt()
+            || compare_real(axis_ref(point, axis), axis_ref(&bounds.max, axis))?.is_gt()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 #[cfg(test)]
@@ -3989,62 +4050,6 @@ fn trace_from_definition_sets_with_step_detoured_plane_replacement_with_query_ca
     }
 
     Err(HypermeshError::UnknownClassification)
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-fn trace_plane_replacement_path_with_step_detours(
-    start_planes: &[Plane; 3],
-    end_planes: &[Plane; 3],
-    winding: &[i32],
-    polygons: &[ConvexPolygon],
-) -> HypermeshResult<WindingNumberVector> {
-    let mut affine_cache = PlaneReplacementAffineCache::default();
-    let mut step_cache = Vec::new();
-    trace_plane_replacement_path_with_step_detours_with_caches(
-        start_planes,
-        end_planes,
-        winding,
-        polygons,
-        &mut affine_cache,
-        &mut step_cache,
-    )
-}
-
-#[cfg(test)]
-fn trace_plane_replacement_path_with_step_detours_with_caches(
-    start_planes: &[Plane; 3],
-    end_planes: &[Plane; 3],
-    winding: &[i32],
-    polygons: &[ConvexPolygon],
-    affine_cache: &mut PlaneReplacementAffineCache,
-    step_cache: &mut Vec<PlaneReplacementStepCacheEntry>,
-) -> HypermeshResult<WindingNumberVector> {
-    trace_plane_replacement_path_with_step_detours_impl(
-        start_planes,
-        end_planes,
-        winding,
-        polygons,
-        affine_cache,
-        step_cache,
-        None,
-        |current, next, attempt, polygons, current_definitions, next_definitions| {
-            match trace_segment_from_definitions(
-                current,
-                next,
-                attempt,
-                polygons,
-                current_definitions,
-                next_definitions,
-            ) {
-                Ok(winding) => Ok(Some(winding)),
-                Err(HypermeshError::UnknownClassification) => {
-                    Err(HypermeshError::UnknownClassification)
-                }
-                Err(err) => Err(err),
-            }
-        },
-    )
 }
 
 fn trace_plane_replacement_path_with_step_detours_with_query_caches(
@@ -4312,7 +4317,6 @@ pub(super) fn detour_recursion_limit(polygons: &[ConvexPolygon]) -> usize {
 }
 
 #[cfg(test)]
-#[allow(dead_code)]
 pub(super) fn plane_replacement_step_detour_limit(polygons: &[ConvexPolygon]) -> usize {
     MIN_PLANE_REPLACEMENT_STEP_DETOUR_LIMIT.max(
         polygons

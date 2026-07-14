@@ -83,24 +83,52 @@ pub fn intersect_polygons(
     other: &ConvexPolygon,
     other_polygon_idx: usize,
 ) -> HypermeshResult<PairwiseIntersection> {
+    let polygon_vertices = polygon.vertices()?;
+    let other_vertices = other.vertices()?;
+    intersect_polygons_with_vertices(
+        polygon,
+        &polygon_vertices,
+        other,
+        &other_vertices,
+        other_polygon_idx,
+    )
+}
+
+/// Computes a pairwise intersection from affine vertices already materialized
+/// for both polygons. Subdivision compares each polygon with many candidates,
+/// so retaining these exact points at that boundary avoids repeatedly solving
+/// the same adjacent plane triples.
+pub(crate) fn intersect_polygons_with_vertices(
+    polygon: &ConvexPolygon,
+    polygon_vertices: &[Point3],
+    other: &ConvexPolygon,
+    other_vertices: &[Point3],
+    other_polygon_idx: usize,
+) -> HypermeshResult<PairwiseIntersection> {
     if polygon.vertex_count() == 0 || other.vertex_count() == 0 {
         return Ok(PairwiseIntersection::none());
     }
 
-    let other_vertex = other.vertex_point(0)?;
-    if classify_point(&other_vertex, &polygon.support)? == Classification::On
-        && supports_are_parallel(&polygon.support, &other.support)?
-    {
-        return intersect_coplanar(polygon, other, other_polygon_idx);
-    }
-
     if supports_are_parallel(&polygon.support, &other.support)? {
-        return Ok(PairwiseIntersection::none());
+        let other_vertex = other_vertices
+            .first()
+            .ok_or(HypermeshError::UnknownClassification)?;
+        return if classify_point(other_vertex, &polygon.support)? == Classification::On {
+            intersect_coplanar(
+                polygon,
+                polygon_vertices,
+                other,
+                other_vertices,
+                other_polygon_idx,
+            )
+        } else {
+            Ok(PairwiseIntersection::none())
+        };
     }
 
     let mut points = Vec::new();
-    collect_edge_plane_crossings(polygon, other, &mut points)?;
-    collect_edge_plane_crossings(other, polygon, &mut points)?;
+    collect_edge_plane_crossings(polygon, polygon_vertices, other, &mut points)?;
+    collect_edge_plane_crossings(other, other_vertices, polygon, &mut points)?;
     dedup_points(&mut points);
 
     match points.len() {
@@ -121,10 +149,12 @@ pub fn intersect_polygons(
 
 fn intersect_coplanar(
     polygon: &ConvexPolygon,
+    polygon_vertices: &[Point3],
     other: &ConvexPolygon,
+    other_vertices: &[Point3],
     other_polygon_idx: usize,
 ) -> HypermeshResult<PairwiseIntersection> {
-    if polygons_share_area(polygon, other)? {
+    if polygons_share_area(polygon, polygon_vertices, other, other_vertices)? {
         Ok(PairwiseIntersection {
             kind: PairwiseIntersectionType::Overlap,
             segment: None,
@@ -139,10 +169,12 @@ fn intersect_coplanar(
     }
 }
 
-fn polygons_share_area(polygon: &ConvexPolygon, other: &ConvexPolygon) -> HypermeshResult<bool> {
-    let polygon_vertices = polygon.vertices()?;
-    let other_vertices = other.vertices()?;
-
+fn polygons_share_area(
+    polygon: &ConvexPolygon,
+    polygon_vertices: &[Point3],
+    other: &ConvexPolygon,
+    other_vertices: &[Point3],
+) -> HypermeshResult<bool> {
     if polygon_has_certified_interior_witness_in_other(polygon, other)? {
         return Ok(true);
     }
@@ -150,19 +182,19 @@ fn polygons_share_area(polygon: &ConvexPolygon, other: &ConvexPolygon) -> Hyperm
         return Ok(true);
     }
 
-    for point in &polygon_vertices {
+    for point in polygon_vertices {
         if affine_point_strictly_in_polygon(point, other)? {
             return Ok(true);
         }
     }
-    for point in &other_vertices {
+    for point in other_vertices {
         if affine_point_strictly_in_polygon(point, polygon)? {
             return Ok(true);
         }
     }
 
-    for edge in segment_edges(&polygon_vertices) {
-        for other_edge in segment_edges(&other_vertices) {
+    for edge in segment_edges(polygon_vertices) {
+        for other_edge in segment_edges(other_vertices) {
             if segments_properly_cross(
                 edge.0,
                 edge.1,
@@ -192,10 +224,10 @@ fn polygon_has_certified_interior_witness_in_other(
 
 fn collect_edge_plane_crossings(
     edge_polygon: &ConvexPolygon,
+    vertices: &[Point3],
     plane_polygon: &ConvexPolygon,
     points: &mut Vec<Point3>,
 ) -> HypermeshResult<()> {
-    let vertices = edge_polygon.vertices()?;
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];

@@ -101,13 +101,27 @@ pub(super) fn segment_plane_crossing(
         return Ok(None);
     }
 
+    Ok(Some(segment_plane_crossing_from_opposite_values(
+        start,
+        end,
+        start_value,
+        end_value,
+    )?))
+}
+
+pub(super) fn segment_plane_crossing_from_opposite_values(
+    start: &Point3,
+    end: &Point3,
+    start_value: Real,
+    end_value: Real,
+) -> HypermeshResult<Point3> {
     let denom = &start_value - &end_value;
     let t = (start_value / denom).map_err(|_| HypermeshError::UnknownClassification)?;
-    Ok(Some(Point3::new(
+    Ok(Point3::new(
         &start.x + &(t.clone() * (&end.x - &start.x)),
         &start.y + &(t.clone() * (&end.y - &start.y)),
         &start.z + &(t * (&end.z - &start.z)),
-    )))
+    ))
 }
 
 pub(super) fn point_strictly_between_axis(
