@@ -9,15 +9,11 @@ use hyperlattice::{Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::Cursor;
 
-fn triangle_normal(triangle: &[Vertex; 3]) -> Result<Vector3, IoError> {
-    let first = &triangle[1].position - &triangle[0].position;
-    let second = &triangle[2].position - &triangle[0].position;
-    first
-        .unit_cross_checked(&second)
-        .map_err(|error| IoError::Geometry {
-            format: "STL",
-            detail: format!("degenerate triangle: {error}"),
-        })
+fn require_triangle_normal(normal: Option<Vector3>) -> Result<Vector3, IoError> {
+    normal.ok_or_else(|| IoError::Geometry {
+        format: "STL",
+        detail: "degenerate triangle: no certified facet normal".to_owned(),
+    })
 }
 
 fn validate_binary_triangle_count(count: usize) -> Result<(), IoError> {
@@ -34,12 +30,12 @@ pub fn to_stl_ascii<T: Triangulated3D>(shape: &T, name: &str) -> Result<String, 
     let name = single_line_metadata(name, "STL", "solid name")?;
     let mut out = format!("solid {name}\n");
     let mut failure = None;
-    shape.visit_triangles(|triangle| {
+    shape.visit_triangle_facets(|triangle, normal| {
         if failure.is_some() {
             return;
         }
         let result = (|| {
-            let normal = triangle_normal(&triangle)?;
+            let normal = require_triangle_normal(normal)?;
             out.push_str(&format!(
                 "  facet normal {:.17} {:.17} {:.17}\n",
                 finite_f64(&normal.0[0], "STL", "normal x")?,
@@ -76,12 +72,12 @@ pub fn to_stl_binary<T: Triangulated3D>(shape: &T, name: &str) -> Result<Vec<u8>
     single_line_metadata(name, "STL", "solid name")?;
     let mut triangles = Vec::<Triangle>::new();
     let mut failure = None;
-    shape.visit_triangles(|triangle| {
+    shape.visit_triangle_facets(|triangle, normal| {
         if failure.is_some() {
             return;
         }
         let result = (|| {
-            let normal = triangle_normal(&triangle)?;
+            let normal = require_triangle_normal(normal)?;
             Ok::<_, IoError>(Triangle {
                 normal: Normal::new([
                     finite_f32(&normal.0[0], "STL", "normal x")?,

@@ -62,6 +62,12 @@ pub struct HypermeshBuffers {
     pub indices: Vec<usize>,
 }
 
+pub(super) struct HypermeshAdapterInput {
+    pub(super) buffers: HypermeshBuffers,
+    source_polygons: Vec<usize>,
+    position_ids: HashMap<u64, usize>,
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct PositionKey([Option<u64>; 3]);
 
@@ -75,6 +81,33 @@ impl PositionKey {
     }
 }
 
+enum PositionIndices {
+    One(usize),
+    Collisions(Vec<usize>),
+}
+
+impl PositionIndices {
+    fn find(&self, positions: &[Point3], position: &Point3) -> Option<usize> {
+        match self {
+            Self::One(index) => (positions[*index] == *position).then_some(*index),
+            Self::Collisions(indices) => indices
+                .iter()
+                .copied()
+                .find(|index| positions[*index] == *position),
+        }
+    }
+
+    fn insert_collision(&mut self, index: usize) {
+        match self {
+            Self::One(first) => {
+                let first = *first;
+                *self = Self::Collisions(vec![first, index]);
+            },
+            Self::Collisions(indices) => indices.push(index),
+        }
+    }
+}
+
 impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Build deduplicated flat triangle buffers for `hypermesh`.
     ///
@@ -83,10 +116,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// topology-bearing vertex identity, so equal finite coordinates are
     /// canonicalized to shared indices before import into `hypermesh`.
     pub fn to_hypermesh_buffers(&self) -> HypermeshBuffers {
-        self.build_hypermesh_buffers(false).0
+        self.build_hypermesh_input(false).buffers
     }
 
-    fn build_hypermesh_buffers(&self, retain_metadata: bool) -> (HypermeshBuffers, Vec<M>) {
+    pub(super) fn build_hypermesh_input(&self, retain_sources: bool) -> HypermeshAdapterInput {
         let triangle_capacity = self
             .polygons
             .iter()
@@ -94,44 +127,51 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .sum::<usize>();
         let mut canonical_positions = Vec::<Point3>::with_capacity(triangle_capacity * 3);
         let mut indices = Vec::with_capacity(triangle_capacity * 3);
-        let mut vertex_indices = HashMap::<PositionKey, Vec<usize>>::new();
-        let mut metadata = Vec::with_capacity(if retain_metadata {
-            triangle_capacity
-        } else {
-            0
-        });
+        let mut vertex_indices = HashMap::<PositionKey, PositionIndices>::new();
+        let mut position_ids = HashMap::<u64, usize>::new();
+        let mut source_polygons =
+            Vec::with_capacity(if retain_sources { triangle_capacity } else { 0 });
 
         let mut push_triangle = |vertices: &[Vertex]| {
             for vertex in vertices {
                 let position = canonical_position(&vertex.position);
                 let key = PositionKey::new(&position);
-                let candidates = vertex_indices.entry(key).or_default();
-                let index = candidates
-                    .iter()
-                    .copied()
-                    .find(|index| canonical_positions[*index] == position)
-                    .unwrap_or_else(|| {
+                let index = match vertex_indices.entry(key) {
+                    hashbrown::hash_map::Entry::Vacant(entry) => {
                         let index = canonical_positions.len();
                         canonical_positions.push(position);
-                        candidates.push(index);
+                        entry.insert(PositionIndices::One(index));
                         index
-                    });
+                    },
+                    hashbrown::hash_map::Entry::Occupied(mut entry) => {
+                        if let Some(index) = entry.get().find(&canonical_positions, &position)
+                        {
+                            index
+                        } else {
+                            let index = canonical_positions.len();
+                            canonical_positions.push(position);
+                            entry.get_mut().insert_collision(index);
+                            index
+                        }
+                    },
+                };
+                position_ids.insert(vertex.position_id, index);
                 indices.push(index);
             }
         };
 
-        for polygon in &self.polygons {
+        for (polygon_index, polygon) in self.polygons.iter().enumerate() {
             if polygon.vertices.len() == 3 {
                 push_triangle(&polygon.vertices);
-                if retain_metadata {
-                    metadata.push(polygon.metadata.clone());
+                if retain_sources {
+                    source_polygons.push(polygon_index);
                 }
                 continue;
             }
             for triangle in polygon.triangulate() {
                 push_triangle(&triangle);
-                if retain_metadata {
-                    metadata.push(polygon.metadata.clone());
+                if retain_sources {
+                    source_polygons.push(polygon_index);
                 }
             }
         }
@@ -141,7 +181,11 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .flat_map(|point| [point.x, point.y, point.z])
             .collect();
 
-        (HypermeshBuffers { positions, indices }, metadata)
+        HypermeshAdapterInput {
+            buffers: HypermeshBuffers { positions, indices },
+            source_polygons,
+            position_ids,
+        }
     }
 
     /// Convert this `csgrs` mesh into an exact `hypermesh` input mesh.
@@ -171,6 +215,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         Ok(mesh)
     }
 
+    pub(super) fn to_hypermesh_connectivity_mesh(
+        &self,
+    ) -> ::hypermesh::HypermeshResult<(InputMesh, HashMap<u64, usize>)> {
+        let input = self.build_hypermesh_input(false);
+        let mesh = input_mesh_from_buffers(&input.buffers);
+        if !mesh.positions.is_empty() {
+            validate_surface_input(&mesh)?;
+        }
+        Ok((mesh, input.position_ids))
+    }
+
     /// Compute a mesh boolean through exact `hypermesh`.
     ///
     /// The finite `csgrs` polygons are imported as audited exact meshes and the
@@ -179,15 +234,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// preserved as required by Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7.1-2 (1997), and
     /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
-    pub(crate) fn boolean_via_hypermesh(
+    pub(super) fn boolean_via_hypermesh(
         &self,
         other: &Self,
         operation: HypermeshBooleanOp,
+        left_input: HypermeshAdapterInput,
+        right_input: HypermeshAdapterInput,
     ) -> Result<Self, HypermeshError> {
-        let (left_buffers, left_metadata) = self.build_hypermesh_buffers(true);
-        let (right_buffers, right_metadata) = other.build_hypermesh_buffers(true);
-        let left = input_mesh_from_buffers(&left_buffers);
-        let right = input_mesh_from_buffers(&right_buffers);
+        let left = input_mesh_from_buffers(&left_input.buffers);
+        let right = input_mesh_from_buffers(&right_input.buffers);
         let op = match operation {
             HypermeshBooleanOp::Union => BooleanOp::Union,
             HypermeshBooleanOp::Difference => BooleanOp::Difference,
@@ -199,13 +254,20 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             .map_err(HypermeshError::Boolean)?;
         let soup = ::hypermesh::triangulate_and_resolve_certified(&result)
             .map_err(HypermeshError::Materialize)?;
-        Self::from_hypermesh_soup(&soup, &left_metadata, &right_metadata)
+        self.materialize_hypermesh_soup(
+            other,
+            &soup,
+            &left_input.source_polygons,
+            &right_input.source_polygons,
+        )
     }
 
-    fn from_hypermesh_soup(
+    fn materialize_hypermesh_soup(
+        &self,
+        other: &Self,
         soup: &TriangleSoup,
-        left_metadata: &[M],
-        right_metadata: &[M],
+        left_source_polygons: &[usize],
+        right_source_polygons: &[usize],
     ) -> Result<Self, HypermeshError> {
         let mut polygons = Vec::with_capacity(soup.triangles.len());
 
@@ -216,11 +278,14 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     triangle: source.triangle,
                 }
             })?;
-            let metadata = match source.mesh {
-                0 => left_metadata.get(source_index),
+            let polygon = match source.mesh {
+                0 => left_source_polygons
+                    .get(source_index)
+                    .and_then(|index| self.polygons.get(*index)),
                 1 => source_index
-                    .checked_sub(left_metadata.len())
-                    .and_then(|index| right_metadata.get(index)),
+                    .checked_sub(left_source_polygons.len())
+                    .and_then(|index| right_source_polygons.get(index))
+                    .and_then(|index| other.polygons.get(*index)),
                 _ => None,
             }
             .ok_or(HypermeshError::InvalidSource {
@@ -243,7 +308,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     Vertex::new(b, normal.clone()),
                     Vertex::new(c, normal),
                 ],
-                metadata.clone(),
+                polygon.metadata.clone(),
             ));
         }
 

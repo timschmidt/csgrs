@@ -2,6 +2,20 @@
 
 use super::support::*;
 
+#[derive(Debug)]
+struct CloneCountedMetadata {
+    clones: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+}
+
+impl Clone for CloneCountedMetadata {
+    fn clone(&self) -> Self {
+        self.clones.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        Self {
+            clones: self.clones.clone(),
+        }
+    }
+}
+
 #[test]
 fn test_polygon_metadata_string() {
     let verts = vec![
@@ -86,6 +100,26 @@ fn test_union_metadata() {
         .map(|polygon| polygon.metadata().as_str())
         .collect::<std::collections::BTreeSet<_>>();
     assert_eq!(metadata, std::collections::BTreeSet::from(["Cube1", "Cube2"]));
+}
+
+#[test]
+fn test_boolean_clones_metadata_only_for_output_faces() {
+    let clones = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let metadata = CloneCountedMetadata {
+        clones: clones.clone(),
+    };
+    let left = Mesh::cube(r(2.0), metadata.clone());
+    let right = Mesh::cube(r(2.0), metadata).translate(r(0.5), r(0.5), r(0.5));
+    clones.store(0, std::sync::atomic::Ordering::Relaxed);
+
+    let result = left
+        .try_union(&right)
+        .expect("overlapping cubes remain a certified union");
+
+    assert_eq!(
+        clones.load(std::sync::atomic::Ordering::Relaxed),
+        result.polygons.len()
+    );
 }
 
 #[test]

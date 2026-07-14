@@ -2,6 +2,7 @@
 
 use crate::mesh::Mesh;
 use crate::mesh::hypermesh::hypermesh_edges;
+use crate::vertex::Vertex;
 use hashbrown::HashMap;
 use hyperlattice::Point3;
 use std::fmt::Debug;
@@ -25,6 +26,7 @@ pub struct VertexIndexMap {
     pub position_to_index: Vec<(Point3, usize)>,
     /// Maps global indices to representative positions.
     pub index_to_position: HashMap<usize, Point3>,
+    position_id_to_index: HashMap<u64, usize>,
 }
 
 impl VertexIndexMap {
@@ -38,6 +40,7 @@ impl VertexIndexMap {
         Self {
             position_to_index: Vec::new(),
             index_to_position: HashMap::new(),
+            position_id_to_index: HashMap::new(),
         }
     }
 
@@ -62,6 +65,13 @@ impl VertexIndexMap {
                 )
                 .then_some(*existing_index)
             })
+    }
+
+    pub(crate) fn find_vertex_index(&self, vertex: &Vertex) -> Option<usize> {
+        self.position_id_to_index
+            .get(&vertex.position_id)
+            .copied()
+            .or_else(|| self.find_index(&vertex.position))
     }
 
     /// Get or create an index for a vertex position
@@ -121,9 +131,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
-        let Ok(mesh) = self.to_hypermesh_triangle_mesh() else {
+        let Ok((mesh, position_id_to_index)) = self.to_hypermesh_connectivity_mesh() else {
             return (vertex_map, adjacency);
         };
+        vertex_map.position_id_to_index = position_id_to_index;
         for (index, point) in mesh.positions.iter().enumerate() {
             vertex_map.position_to_index.push((point.clone(), index));
             vertex_map.index_to_position.insert(index, point.clone());

@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use hyperlattice::{Point3, Real, Vector3};
+use hypermesh::{ExactPointBvh, InputMesh};
 
 use crate::mesh::{Mesh, Polygon};
 use crate::vertex::Vertex;
@@ -99,10 +100,73 @@ fn unique_mesh_positions<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) -> Vec<
     positions
 }
 
+fn certified_convex_triangle_surface(mesh: &InputMesh) -> bool {
+    let mut edge_directions = HashMap::<(usize, usize), [usize; 2]>::new();
+    for triangle in &mesh.triangles {
+        let [a, b, c] = triangle.indices();
+        for [start, end] in [[a, b], [b, c], [c, a]] {
+            let (edge, direction) = if start < end {
+                ((start, end), 0)
+            } else {
+                ((end, start), 1)
+            };
+            edge_directions.entry(edge).or_default()[direction] += 1;
+        }
+    }
+    if edge_directions.is_empty()
+        || edge_directions
+            .values()
+            .any(|directions| *directions != [1, 1])
+    {
+        return false;
+    }
+
+    let Ok(point_bvh) = ExactPointBvh::build(&mesh.positions) else {
+        return false;
+    };
+    for triangle in &mesh.triangles {
+        let [a, b, c] = triangle.indices();
+        let mut outside = false;
+        if point_bvh
+            .query_negative_oriented_plane(
+                &mesh.positions,
+                &mesh.positions[a],
+                &mesh.positions[b],
+                &mesh.positions[c],
+                |_| outside = true,
+            )
+            .is_err()
+            || outside
+        {
+            return false;
+        }
+    }
+    true
+}
+
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
+    pub(super) fn is_certified_convex_triangle_surface(&self) -> bool {
+        self.polygons
+            .iter()
+            .all(|polygon| polygon.vertices.len() == 3)
+            && self
+                .to_hypermesh_triangle_mesh()
+                .is_ok_and(|input| certified_convex_triangle_surface(&input))
+    }
+
     /// Computes the exact convex hull of all mesh vertices through Hypermesh's
     /// hierarchical point broad phase and certified hull predicates.
     pub fn convex_hull(&self, metadata: M) -> Mesh<M> {
+        if self.is_certified_convex_triangle_surface() {
+            return Mesh::from_polygons(
+                self.polygons
+                    .iter()
+                    .cloned()
+                    .map(|polygon| polygon.map_metadata(|_| metadata.clone()))
+                    .collect(),
+            );
+        }
+
         let mut points = Vec::new();
         let mut coordinate_ids = Vec::new();
         let mut point_indices = HashMap::new();
@@ -192,6 +256,21 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 mod tests {
     use super::*;
     use hyperlattice::Real;
+
+    #[test]
+    fn convex_surface_certificate_requires_a_closed_consistently_wound_mesh() {
+        let points = vec![
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(Real::from(2), Real::zero(), Real::zero()),
+            Point3::new(Real::zero(), Real::from(2), Real::zero()),
+            Point3::new(Real::zero(), Real::zero(), Real::from(2)),
+        ];
+        let hull = hypermesh::convex_hull(&points).unwrap();
+        assert!(certified_convex_triangle_surface(&hull));
+
+        let open = InputMesh::new(points, hull.triangles[..3].to_vec());
+        assert!(!certified_convex_triangle_surface(&open));
+    }
 
     #[test]
     fn hull_retains_unit_offsets_beyond_f64_resolution() {

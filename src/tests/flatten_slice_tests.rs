@@ -44,6 +44,17 @@ fn flatten_promotes_union_projection_to_hypercurve_region() {
 }
 
 #[test]
+fn flatten_certified_convex_surface_builds_exact_projected_hull() {
+    let sphere = Mesh::sphere(r(2.0), 16, 8, ());
+
+    let flat = sphere.flatten();
+
+    assert_eq!(flat.material_contour_count(), 1);
+    assert!(flat.contains_xy(hr(0.0), hr(0.0)).unwrap());
+    assert!(!flat.contains_xy(hr(3.0), hr(0.0)).unwrap());
+}
+
+#[test]
 #[cfg(feature = "mesh")]
 fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
     let square_poly =

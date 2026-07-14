@@ -38,6 +38,7 @@ fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
 mod retained_topology_tests {
     use super::*;
     use crate::csg::CSG;
+    use hyperlattice::Matrix4;
     use std::collections::BTreeSet;
 
     #[test]
@@ -97,6 +98,49 @@ mod retained_topology_tests {
             .collect::<BTreeSet<_>>();
 
         assert_eq!(position_ids.len(), 2 + segments * (stacks - 1));
+    }
+
+    #[test]
+    fn affine_transform_preserves_distinct_normals_at_shared_positions() {
+        let mesh = Mesh::cuboid(Real::from(2), Real::from(3), Real::from(5), ());
+        let quarter = (Real::one() / Real::from(4_u8)).unwrap();
+        let fifth = (Real::one() / Real::from(5_u8)).unwrap();
+        let matrix = Matrix4::from_row_major([
+            Real::one(),
+            quarter,
+            Real::zero(),
+            Real::from(2_u8),
+            Real::zero(),
+            Real::one(),
+            fifth,
+            Real::from(-3_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::from(4_u8),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let inverse_transpose = matrix.clone().inverse().unwrap().transpose();
+        let transformed = mesh.transform(&matrix);
+
+        for (source_polygon, transformed_polygon) in
+            mesh.polygons.iter().zip(&transformed.polygons)
+        {
+            for (source, transformed) in source_polygon
+                .vertices
+                .iter()
+                .zip(&transformed_polygon.vertices)
+            {
+                let expected = inverse_transpose
+                    .transform_direction3(&source.normal)
+                    .normalize_checked()
+                    .unwrap();
+                assert_eq!(transformed.normal, expected);
+            }
+        }
     }
 }
 

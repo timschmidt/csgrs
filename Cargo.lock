@@ -1742,6 +1742,7 @@ dependencies = [
  "hyperreal",
  "hypersolve",
  "hypertri",
+ "num",
 ]
 
 [[package]]

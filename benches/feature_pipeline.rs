@@ -1,0 +1,578 @@
+//! Broad csgrs/Hyper-stack coverage for end-to-end optimization anchors.
+
+mod support;
+
+use std::hint::black_box;
+use std::io::Cursor;
+use std::num::NonZeroU32;
+
+use csgrs::io::gerber::{FromGerber, ToGerber};
+use csgrs::io::svg::{FromSVG, ToSVG};
+use csgrs::mesh::metaballs::MetaBall;
+use csgrs::mesh::plane::Plane;
+use csgrs::parts::{
+    BlueprintProjection, CsgPartInterface, PartMetadata, PartSource, blueprint_from_aabb_parts,
+};
+use csgrs::{
+    Real,
+    csg::CSG,
+    mesh::{Mesh, Polygon},
+    sketch::Profile,
+    vertex::Vertex,
+};
+use hypercurve::Point2;
+use hyperlattice::{Matrix4, Point3, Vector3};
+use hypersdf::SdfExpr;
+use image::{GrayImage, Luma};
+use support::{Config, Measurement};
+
+fn mesh_measurement(mesh: &Mesh<()>, work_units: usize) -> Measurement {
+    let corners = mesh
+        .polygons
+        .iter()
+        .map(|polygon| polygon.vertices().len())
+        .sum::<usize>();
+    Measurement::new(
+        work_units as u64,
+        mesh.polygons.len() as u64,
+        (mesh.polygons.len() as u64).rotate_left(17) ^ corners as u64,
+    )
+}
+
+fn profile_measurement(profile: &Profile, work_units: usize) -> Measurement {
+    let contours = profile.material_contour_count() + profile.hole_contour_count();
+    let wires = profile.wires().len();
+    Measurement::new(
+        work_units as u64,
+        (contours + wires) as u64,
+        ((contours as u64) << 32) ^ wires as u64,
+    )
+}
+
+fn square_section(z: i64, half_width: i64) -> Polygon<()> {
+    let vertices = [
+        (-half_width, -half_width),
+        (half_width, -half_width),
+        (half_width, half_width),
+        (-half_width, half_width),
+    ]
+    .into_iter()
+    .map(|(x, y)| {
+        Vertex::new(
+            Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+            Vector3::z(),
+        )
+    })
+    .collect();
+    Polygon::new(vertices, ())
+}
+
+fn main() {
+    support::print_header();
+    let config = Config::from_env();
+
+    config.run("feature", "exact_scalar", "hyperreal_expression", 64, || {
+        let value = (Real::from(7_u8) / Real::from(3_u8))
+            .expect("nonzero denominator")
+            .sqrt()
+            .expect("positive radicand")
+            .sin();
+        Measurement::new(4, 1, value.to_f64_lossy().unwrap_or_default().to_bits())
+    });
+
+    config.run("feature", "mesh_primitives", "catalog", 4, || {
+        let meshes = [
+            Mesh::cuboid(Real::from(2_u8), Real::from(3_u8), Real::from(5_u8), ()),
+            Mesh::cylinder(Real::from(3_u8), Real::from(8_u8), 32, ()),
+            Mesh::torus(Real::from(8_u8), Real::from(2_u8), 32, 12, ()),
+            Mesh::ellipsoid(
+                Real::from(3_u8),
+                Real::from(5_u8),
+                Real::from(7_u8),
+                24,
+                12,
+                (),
+            ),
+            Mesh::icosahedron(Real::from(4_u8), ()),
+        ];
+        let polygons = meshes.iter().map(|mesh| mesh.polygons.len()).sum::<usize>();
+        Measurement::new(5, polygons as u64, polygons as u64)
+    });
+
+    config.run("feature", "profile_primitives", "catalog", 8, || {
+        let profiles = [
+            Profile::rounded_rectangle(
+                Real::from(12_u8),
+                Real::from(8_u8),
+                Real::from(2_u8),
+                8,
+            ),
+            Profile::star(12, Real::from(8_u8), Real::from(4_u8)),
+            Profile::involute_gear(
+                Real::from(2_u8),
+                20,
+                Real::from(20_u8),
+                Real::zero(),
+                Real::zero(),
+                4,
+            ),
+            Profile::airfoil_naca4(
+                Real::from(2_u8),
+                Real::from(4_u8),
+                Real::from(12_u8),
+                Real::from(20_u8),
+                80,
+            ),
+        ];
+        let contours = profiles
+            .iter()
+            .map(|profile| profile.material_contour_count())
+            .sum::<usize>();
+        Measurement::new(4, contours as u64, contours as u64)
+    });
+
+    let profile_left = Profile::circle(Real::from(10_u8), 64);
+    let profile_right = Profile::square(Real::from(12_u8)).translate(
+        Real::from(4_u8),
+        Real::zero(),
+        Real::zero(),
+    );
+    config.run("feature", "profile_boolean", "all_operations", 2, || {
+        let results = [
+            profile_left
+                .try_union(&profile_right)
+                .expect("profile union remains certified"),
+            profile_left
+                .try_difference(&profile_right)
+                .expect("profile difference remains certified"),
+            profile_left
+                .try_intersection(&profile_right)
+                .expect("profile intersection remains certified"),
+            profile_left
+                .try_xor(&profile_right)
+                .expect("profile xor remains certified"),
+        ];
+        let contours = results
+            .iter()
+            .map(|result| result.material_contour_count() + result.hole_contour_count())
+            .sum::<usize>();
+        Measurement::new(128, contours as u64, contours as u64)
+    });
+    config.run("feature", "profile_triangulate", "circle_64", 8, || {
+        let triangles = black_box(&profile_left).triangulate();
+        Measurement::new(64, triangles.len() as u64, triangles.len() as u64)
+    });
+    config.run("feature", "profile_offset", "sharp_and_round", 2, || {
+        let sharp = black_box(&profile_left).offset(Real::one());
+        let rounded = black_box(&profile_left).offset_rounded(Real::one());
+        let size = sharp.material_contour_count() + rounded.material_contour_count();
+        Measurement::new(128, size as u64, size as u64)
+    });
+
+    let profile_transform_source = Profile::rectangle(Real::from(8_u8), Real::from(5_u8))
+        .translate(Real::from(7_u8), Real::from(-4_i8), Real::zero());
+    let profile_affine = Matrix4::from_row_major([
+        Real::one(),
+        Real::one(),
+        Real::zero(),
+        Real::from(2_u8),
+        Real::zero(),
+        Real::one(),
+        Real::zero(),
+        Real::from(-3_i8),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+    ]);
+    config.run("feature", "profile_transform", "all_csg_helpers", 4, || {
+        let outputs = black_box([
+            profile_transform_source.translate_vector(Vector3::new([
+                Real::from(3_u8),
+                Real::from(-2_i8),
+                Real::zero(),
+            ])),
+            profile_transform_source.rotate(Real::zero(), Real::zero(), Real::from(37_u8)),
+            profile_transform_source.scale(Real::from(2_u8), Real::from(3_u8), Real::one()),
+            profile_transform_source.mirror(Plane::from_normal(Vector3::x(), Real::one())),
+            profile_transform_source.center(),
+            profile_transform_source.float(),
+            profile_transform_source.transform(&profile_affine),
+            profile_transform_source.inverse(),
+        ]);
+        let contours = outputs
+            .iter()
+            .map(|profile| profile.material_contour_count() + profile.hole_contour_count())
+            .sum::<usize>();
+        let wires = outputs
+            .iter()
+            .map(|profile| profile.wires().len())
+            .sum::<usize>();
+        Measurement::new(
+            8,
+            (contours + wires) as u64,
+            ((contours as u64) << 32) ^ wires as u64,
+        )
+    });
+    let profile_distribution_source = Profile::square(Real::one());
+    config.run(
+        "feature",
+        "profile_distribution",
+        "arc_linear_grid",
+        1,
+        || {
+            let outputs = black_box([
+                profile_distribution_source.distribute_arc(
+                    4,
+                    Real::from(5_u8),
+                    Real::zero(),
+                    Real::from(270_u16),
+                ),
+                profile_distribution_source.distribute_linear(
+                    4,
+                    Vector3::x(),
+                    Real::from(3_u8),
+                ),
+                profile_distribution_source.distribute_grid(
+                    2,
+                    3,
+                    Real::from(3_u8),
+                    Real::from(3_u8),
+                ),
+            ]);
+            let contours = outputs
+                .iter()
+                .map(|profile| profile.material_contour_count() + profile.hole_contour_count())
+                .sum::<usize>();
+            let wires = outputs
+                .iter()
+                .map(|profile| profile.wires().len())
+                .sum::<usize>();
+            Measurement::new(
+                14,
+                (contours + wires) as u64,
+                ((contours as u64) << 32) ^ wires as u64,
+            )
+        },
+    );
+
+    config.run(
+        "feature",
+        "profile_to_mesh",
+        "extrude_revolve_twist_sweep_loft",
+        1,
+        || {
+            let extrusion = profile_left.extrude(Real::from(10_u8), ());
+            let radial_profile = Profile::rectangle(Real::from(3_u8), Real::from(8_u8))
+                .translate(Real::from(5_u8), Real::zero(), Real::zero());
+            let revolution = radial_profile
+                .revolve(Real::from(360_u16), 32, ())
+                .expect("valid full revolution");
+            let twist = profile_right
+                .extrude_twisted(
+                    Real::from(12_u8),
+                    Real::from(90_u8),
+                    [Real::one(), Real::one()],
+                    16,
+                    (),
+                )
+                .expect("valid twisted extrusion");
+            let sweep = Profile::circle(Real::one(), 24).sweep(
+                &[
+                    Point3::origin(),
+                    Point3::new(Real::zero(), Real::zero(), Real::from(4_u8)),
+                    Point3::new(Real::from(3_u8), Real::zero(), Real::from(8_u8)),
+                ],
+                (),
+            );
+            let loft = Profile::loft(&[square_section(0, 2), square_section(8, 4)])
+                .expect("valid corresponding loft sections");
+            let polygons = extrusion.polygons.len()
+                + revolution.polygons.len()
+                + twist.polygons.len()
+                + sweep.polygons.len()
+                + loft.polygons.len();
+            Measurement::new(5, polygons as u64, polygons as u64)
+        },
+    );
+
+    let mesh = Mesh::sphere(Real::from(8_u8), 24, 12, ());
+    let positioned_mesh =
+        Mesh::cuboid(Real::from(2_u8), Real::from(3_u8), Real::from(5_u8), ()).translate(
+            Real::from(7_u8),
+            Real::from(-4_i8),
+            Real::from(-9_i8),
+        );
+    config.run(
+        "feature",
+        "mesh_positioning",
+        "center_float_vector",
+        8,
+        || {
+            let outputs = black_box([
+                positioned_mesh.center(),
+                positioned_mesh.float(),
+                positioned_mesh.translate_vector(Vector3::new([
+                    Real::from(3_u8),
+                    Real::from(-2_i8),
+                    Real::from(5_u8),
+                ])),
+            ]);
+            let polygons = outputs
+                .iter()
+                .map(|output| output.polygons.len())
+                .sum::<usize>();
+            Measurement::new(
+                3 * positioned_mesh.polygons.len() as u64,
+                polygons as u64,
+                polygons as u64,
+            )
+        },
+    );
+    let distribution_source = Mesh::cube(Real::one(), ());
+    config.run("feature", "mesh_distribution", "arc_linear_grid", 1, || {
+        let arc = distribution_source.distribute_arc(
+            4,
+            Real::from(5_u8),
+            Real::zero(),
+            Real::from(270_u16),
+        );
+        let linear = distribution_source.distribute_linear(4, Vector3::x(), Real::from(3_u8));
+        let grid =
+            distribution_source.distribute_grid(2, 3, Real::from(3_u8), Real::from(3_u8));
+        let polygons = arc.polygons.len() + linear.polygons.len() + grid.polygons.len();
+        Measurement::new(14, polygons as u64, polygons as u64)
+    });
+    config.run(
+        "feature",
+        "mesh_refinement",
+        "subdivide_and_smooth",
+        1,
+        || {
+            let subdivided = black_box(&mesh).subdivide_triangles(NonZeroU32::new(1).unwrap());
+            let smoothed = subdivided.taubin_smooth(
+                Real::try_from(0.4_f64).unwrap(),
+                Real::try_from(-0.41_f64).unwrap(),
+                2,
+                false,
+            );
+            mesh_measurement(&smoothed, mesh.polygons.len())
+        },
+    );
+    config.run("feature", "mesh_topology", "connectivity_manifold", 4, || {
+        let (vertices, adjacency) = black_box(&mesh).build_connectivity();
+        let manifold = mesh.is_manifold();
+        Measurement::new(
+            mesh.polygons.len() as u64,
+            adjacency.len() as u64,
+            vertices.index_to_position.len() as u64 ^ u64::from(manifold),
+        )
+    });
+    config.run("feature", "mesh_queries", "ray_mass_graphics", 2, || {
+        let hits = mesh.ray_intersections(
+            &Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
+            &Vector3::x(),
+        );
+        let mass = mesh
+            .exact_mass_properties(Real::one())
+            .expect("closed sphere has mass properties");
+        let graphics = mesh.build_graphics_mesh();
+        Measurement::new(
+            mesh.polygons.len() as u64,
+            graphics.indices.len() as u64,
+            hits.len() as u64 ^ mass.mass.to_f64_lossy().unwrap_or_default().to_bits(),
+        )
+    });
+    config.run(
+        "feature",
+        "mesh_profile_projection",
+        "slice_and_flatten",
+        1,
+        || {
+            let slice = mesh.slice(Plane::from_normal(Vector3::z(), Real::zero()));
+            let flattened = mesh.flatten();
+            let output = slice.wires().len() + flattened.material_contour_count();
+            Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+        },
+    );
+    config.run("feature", "mesh_profile_projection", "slice", 1, || {
+        let slice = mesh.slice(Plane::from_normal(Vector3::z(), Real::zero()));
+        let output = slice.wires().len() + slice.material_contour_count();
+        Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+    });
+    config.run("feature", "mesh_profile_projection", "flatten", 1, || {
+        let flattened = mesh.flatten();
+        let output = flattened.material_contour_count();
+        Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+    });
+    config.run("feature", "hypermesh", "buffers_hull_minkowski", 1, || {
+        let buffers = mesh.to_hypermesh_buffers();
+        let hull = mesh.convex_hull(());
+        let sum = Mesh::cube(Real::from(2_u8), ())
+            .minkowski_sum(&Mesh::cube(Real::from(3_u8), ()), ());
+        let output = buffers.indices.len() + hull.polygons.len() + sum.polygons.len();
+        Measurement::new(mesh.polygons.len() as u64, output as u64, output as u64)
+    });
+    config.run("feature", "hypermesh", "adapter_buffers", 1, || {
+        let buffers = mesh.to_hypermesh_buffers();
+        Measurement::new(
+            mesh.polygons.len() as u64,
+            buffers.indices.len() as u64,
+            buffers.positions.len() as u64,
+        )
+    });
+    config.run("feature", "hypermesh", "convex_hull", 1, || {
+        let hull = mesh.convex_hull(());
+        mesh_measurement(&hull, mesh.polygons.len())
+    });
+    config.run("feature", "hypermesh", "cube_minkowski", 1, || {
+        let sum = Mesh::cube(Real::from(2_u8), ())
+            .minkowski_sum(&Mesh::cube(Real::from(3_u8), ()), ());
+        mesh_measurement(&sum, 16)
+    });
+
+    let sdf_min = Point3::new(Real::from(-3_i8), Real::from(-3_i8), Real::from(-3_i8));
+    let sdf_max = Point3::new(Real::from(3_u8), Real::from(3_u8), Real::from(3_u8));
+    config.run("feature", "implicit", "hypersdf_surface_nets", 1, || {
+        let expr = SdfExpr::sphere(
+            hyperlimit::Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Real::from(4_u8),
+        );
+        let output = Mesh::sdf_expr(
+            expr,
+            (20, 20, 20),
+            sdf_min.clone(),
+            sdf_max.clone(),
+            Real::zero(),
+            (),
+        );
+        mesh_measurement(&output, 20 * 20 * 20)
+    });
+    config.run("feature", "implicit", "metaballs_3d", 1, || {
+        let balls = [
+            MetaBall::new(Point3::origin(), Real::from(2_u8)),
+            MetaBall::new(
+                Point3::new(Real::from(2_u8), Real::zero(), Real::zero()),
+                Real::from(2_u8),
+            ),
+        ];
+        let output = Mesh::metaballs(&balls, (20, 20, 20), Real::one(), Real::one(), ());
+        mesh_measurement(&output, 20 * 20 * 20)
+    });
+    config.run("feature", "implicit", "metaballs_2d", 1, || {
+        let balls = [
+            (Point2::new(Real::zero(), Real::zero()), Real::from(2_u8)),
+            (Point2::new(Real::from(2_u8), Real::zero()), Real::from(2_u8)),
+        ];
+        let output = Profile::metaballs(&balls, (48, 48), Real::one(), Real::one());
+        profile_measurement(&output, 48 * 48)
+    });
+    let tpms_bounds = Mesh::cube(Real::from(12_u8), ());
+    config.run("feature", "implicit", "tpms_catalog", 1, || {
+        let gyroid = tpms_bounds.gyroid(18, Real::from(6_u8), Real::zero(), ());
+        let schwarz = tpms_bounds.schwarz_p(18, Real::from(6_u8), Real::zero(), ());
+        let polygons = gyroid.polygons.len() + schwarz.polygons.len();
+        Measurement::new(2 * 18 * 18 * 18, polygons as u64, polygons as u64)
+    });
+
+    config.run("feature", "raster_vector", "image_contours", 2, || {
+        let image = GrayImage::from_fn(64, 64, |x, y| {
+            let dx = i64::from(x) - 32;
+            let dy = i64::from(y) - 32;
+            Luma([u8::from(dx * dx + dy * dy < 24 * 24) * 255])
+        });
+        let output = Profile::from_image(&image, 128, true);
+        profile_measurement(&output, 64 * 64)
+    });
+    config.run("feature", "text", "truetype_outline", 2, || {
+        let output = Profile::text(
+            "csgrs benchmark",
+            include_bytes!("../asar.ttf"),
+            Real::from(24_u8),
+        );
+        profile_measurement(&output, 15)
+    });
+    config.run("feature", "text", "hershey_strokes", 8, || {
+        static GLYPHS: [&str; 1] = ["MWRMNV RRMVV"];
+        let font = hershey::Font::new(&GLYPHS, 'A');
+        let output = Profile::from_hershey("AAAA", &font, Real::from(2_u8));
+        profile_measurement(&output, 4)
+    });
+
+    config.run("feature", "adapter", "bevy_mesh", 4, || {
+        let output = black_box(&mesh).to_bevy_mesh();
+        black_box(output);
+        Measurement::new(mesh.polygons.len() as u64, 1, 1)
+    });
+
+    let parts = (0..32)
+        .map(|index| {
+            let handle = format!("part-{index}");
+            let metadata = PartMetadata::new(
+                &handle,
+                CsgPartInterface::exact_csg(
+                    "benchmark",
+                    &handle,
+                    PartSource {
+                        family: "benchmark".into(),
+                        revision: "local".into(),
+                    },
+                ),
+            );
+            Mesh::cube(Real::from(2_u8), metadata).translate(
+                Real::from(index % 8) * Real::from(3_u8),
+                Real::from(index / 8) * Real::from(3_u8),
+                Real::from(index % 3),
+            )
+        })
+        .collect::<Vec<_>>();
+    config.run("feature", "parts", "blueprint_aabb", 4, || {
+        let report = blueprint_from_aabb_parts(&parts, BlueprintProjection::Front, false);
+        let edges = report.assembled.edges.len() + report.exploded.edges.len();
+        Measurement::new(parts.len() as u64, edges as u64, edges as u64)
+    });
+
+    let io_mesh = Mesh::sphere(Real::from(4_u8), 20, 10, ());
+    config.run("feature", "mesh_io", "all_exporters", 1, || {
+        let stl = io_mesh.to_stl_binary("benchmark").expect("STL export");
+        let dxf = io_mesh.to_dxf().expect("DXF export");
+        let obj = io_mesh.to_obj("benchmark").expect("OBJ export");
+        let ply = io_mesh.to_ply("benchmark").expect("PLY export");
+        let amf = io_mesh.to_amf("benchmark", "millimeter").expect("AMF export");
+        let gltf = io_mesh.to_gltf("benchmark").expect("glTF export");
+        let size = stl.len() + dxf.len() + obj.len() + ply.len() + amf.len() + gltf.len();
+        Measurement::new(io_mesh.polygons.len() as u64, size as u64, size as u64)
+    });
+    let stl = io_mesh.to_stl_binary("benchmark").expect("STL fixture");
+    let obj = io_mesh.to_obj("benchmark").expect("OBJ fixture");
+    config.run("feature", "mesh_io", "roundtrip_importers", 1, || {
+        let from_stl = Mesh::from_stl(&stl, ()).expect("STL import");
+        let from_obj = Mesh::from_obj(Cursor::new(obj.as_bytes()), ()).expect("OBJ import");
+        let polygons = from_stl.polygons.len() + from_obj.polygons.len();
+        Measurement::new(
+            (stl.len() + obj.len()) as u64,
+            polygons as u64,
+            polygons as u64,
+        )
+    });
+
+    let io_profile = Profile::ring(Real::from(8_u8), Real::from(2_u8), 48);
+    config.run("feature", "profile_io", "svg_gerber_roundtrip", 1, || {
+        let svg = io_profile.to_svg().expect("SVG export");
+        let gerber = io_profile.to_gerber().expect("Gerber export");
+        let svg_profile = Profile::from_svg(&svg).expect("SVG import");
+        let gerber_profile = Profile::from_gerber(&gerber).expect("Gerber import");
+        let output = svg_profile.material_contour_count()
+            + gerber_profile.material_contour_count()
+            + gerber_profile.hole_contour_count();
+        Measurement::new(
+            (svg.len() + gerber.len()) as u64,
+            output as u64,
+            output as u64,
+        )
+    });
+}

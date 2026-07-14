@@ -8,6 +8,8 @@ use crate::vertex::Vertex;
 use hypercurve::{
     BooleanOp, Classification, Contour2, CurvePolicy, CurveString2, FillRule, Region2,
 };
+use hyperlattice::Real;
+use std::cmp::Ordering;
 use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
@@ -26,6 +28,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///   (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
     pub fn flatten(&self) -> Profile {
         let policy = CurvePolicy::certified();
+        if self.is_certified_convex_triangle_surface()
+            && let Some(flattened_region) = convex_projected_region(self)
+        {
+            return Profile::from_region_and_wires_with_origin(
+                flattened_region,
+                Vec::new(),
+                Vertex::default(),
+                Profile::prepare_origin_transform(Vertex::default()),
+            );
+        }
         let mut flattened_region = Region2::empty();
         let mut material_contours = Vec::new();
 
@@ -196,6 +208,103 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             Vertex::default(),
             Profile::prepare_origin_transform(Vertex::default()),
         )
+    }
+}
+
+fn convex_projected_region<M: Clone + Debug + Send + Sync>(mesh: &Mesh<M>) -> Option<Region2> {
+    let mut points = mesh
+        .polygons
+        .iter()
+        .flat_map(|polygon| &polygon.vertices)
+        .enumerate()
+        .map(|(index, vertex)| (index, [vertex.position.x.clone(), vertex.position.y.clone()]))
+        .collect::<Vec<_>>();
+    points.sort_by(|(left_index, left), (right_index, right)| {
+        exact_point_order(left, right)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| left_index.cmp(right_index))
+    });
+    if points.windows(2).any(|pair| {
+        !matches!(
+            exact_point_order(&pair[0].1, &pair[1].1),
+            Some(Ordering::Less | Ordering::Equal)
+        )
+    }) {
+        return None;
+    }
+
+    let mut unique = Vec::<[Real; 2]>::with_capacity(points.len());
+    for (_, point) in points {
+        match unique
+            .last()
+            .map(|previous| exact_point_order(previous, &point))
+        {
+            Some(Some(Ordering::Equal)) => {},
+            Some(Some(Ordering::Less)) | None => unique.push(point),
+            Some(Some(Ordering::Greater) | None) => return None,
+        }
+    }
+    if unique.len() < 3 {
+        return None;
+    }
+
+    let mut lower = Vec::with_capacity(unique.len());
+    for point in &unique {
+        push_convex_hull_point(&mut lower, point.clone())?;
+    }
+    let mut upper = Vec::with_capacity(unique.len());
+    for point in unique.iter().rev() {
+        push_convex_hull_point(&mut upper, point.clone())?;
+    }
+    lower.pop();
+    upper.pop();
+    lower.extend(upper);
+    if lower.len() < 3 {
+        return None;
+    }
+    lower.push(lower[0].clone());
+    let contour = Contour2::from_real_ring(&lower).ok()?;
+    Some(Region2::from_material_contours(vec![contour]))
+}
+
+fn exact_point_order(left: &[Real; 2], right: &[Real; 2]) -> Option<Ordering> {
+    match hyperlimit::compare_reals(&left[0], &right[0]).value()? {
+        Ordering::Equal => hyperlimit::compare_reals(&left[1], &right[1]).value(),
+        order => Some(order),
+    }
+}
+
+fn push_convex_hull_point(hull: &mut Vec<[Real; 2]>, point: [Real; 2]) -> Option<()> {
+    while hull.len() >= 2 {
+        let origin = hyperlimit::Point2::new(
+            hull[hull.len() - 2][0].clone(),
+            hull[hull.len() - 2][1].clone(),
+        );
+        let middle = hyperlimit::Point2::new(
+            hull[hull.len() - 1][0].clone(),
+            hull[hull.len() - 1][1].clone(),
+        );
+        let end = hyperlimit::Point2::new(point[0].clone(), point[1].clone());
+        match hyperlimit::orient2d(&origin, &middle, &end).value()? {
+            hyperlimit::Sign::Positive => break,
+            hyperlimit::Sign::Negative | hyperlimit::Sign::Zero => {
+                hull.pop();
+            },
+        }
+    }
+    hull.push(point);
+    Some(())
+}
+
+#[cfg(test)]
+mod convex_projection_tests {
+    use super::*;
+
+    #[test]
+    fn sampled_sphere_certifies_convex_projection_hull() {
+        let sphere = Mesh::sphere(Real::from(8_u8), 24, 12, ());
+        assert!(sphere.is_certified_convex_triangle_surface());
+        assert!(convex_projected_region(&sphere).is_some());
     }
 }
 

@@ -10,6 +10,8 @@ use super::support::*;
 use crate::io::gerber::ToGerber;
 #[cfg(feature = "svg-io")]
 use crate::io::svg::ToSVG;
+#[cfg(feature = "offset")]
+use hypercurve::{BooleanOp, CurvePolicy, FillRule};
 use hypercurve::{
     Classification, Contour2, CurveString2, FiniteProjectionOptions, Region2,
     finite_ring_signed_area,
@@ -236,6 +238,27 @@ fn offsets_return_native_region_topology() {
     assert!(first_profile_area(&shrunk) < first_profile_area(&square));
     assert!(grown.wires().is_empty());
     assert!(shrunk.wires().is_empty());
+}
+
+#[test]
+#[cfg(feature = "offset")]
+fn concentric_exact_circle_offsets_form_an_outline() {
+    let circle = Profile::circle(r(15.0), 40);
+    let outer = circle.offset_rounded(r(1.0));
+    let inner = circle.offset_rounded(r(-1.0));
+    let result = outer.as_region().boolean_region_with_report(
+        inner.as_region(),
+        BooleanOp::Difference,
+        FillRule::NonZero,
+        &CurvePolicy::certified(),
+    );
+
+    let result = result.unwrap();
+    assert!(
+        result.region().is_some(),
+        "concentric offset difference was blocked: {:?}",
+        result.report()
+    );
 }
 
 #[test]
