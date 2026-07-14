@@ -54,6 +54,33 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
+    // This is (B(t)-P) dot B'(t) for the cubic with controls
+    // (0,0), (6,10), (-8,-8), (-4,10) and query point (-3,3), using the
+    // stationary-distance quintic for point-to-cubic distance minimization.
+    // It has five irrational roots inside (0,1), so every possible stationary
+    // distance candidate is exercised without an exact-midpoint shortcut.
+    let quintic = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-36), r(1368), r(-11034), r(31728), r(-38280), r(16620)],
+        &policy,
+    )?);
+    let quintic_trace = decided(quintic.isolate_unit_interval_roots_with_trace(&policy)?);
+    let isolation_iterations = 2_000_u32;
+    let started = Instant::now();
+    let mut isolated = 0_usize;
+    for _ in 0..isolation_iterations {
+        isolated += black_box(decided(quintic.isolate_unit_interval_roots(&policy)?).len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parameter_quintic_unit_isolation: {isolation_iterations} iterations in {elapsed:?} ({:?}/iter), isolated={isolated}, sturm_builds={}, interval_counts={}, bisections={}, rational_refinements={}, max_depth={}",
+        elapsed / isolation_iterations,
+        quintic_trace.trace().sturm_sequence_builds(),
+        quintic_trace.trace().interval_root_counts(),
+        quintic_trace.trace().bisections(),
+        quintic_trace.trace().rational_reconstruction_refinements(),
+        quintic_trace.trace().maximum_depth(),
+    );
+
     let rational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         vec![r(-1), r(3), r(-1), r(3)],
         &policy,

@@ -41,6 +41,26 @@ pub struct BezierParameterPolynomial {
     coefficients: Vec<Real>,
 }
 
+/// Operation counts for certified root isolation in the Bezier unit interval.
+///
+/// These counters expose algorithmic work without introducing timing or a
+/// primitive-float observation boundary.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct BezierRootIsolationTrace2 {
+    sturm_sequence_builds: usize,
+    interval_root_counts: usize,
+    bisections: usize,
+    rational_reconstruction_refinements: usize,
+    maximum_depth: usize,
+}
+
+/// Certified unit-interval roots together with their isolation trace.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierRootIsolationResult2 {
+    roots: Vec<BezierParameter2>,
+    trace: BezierRootIsolationTrace2,
+}
+
 /// Closed isolating interval for a Bezier parameter root.
 ///
 /// The interval is always certified to lie inside `[0, 1]` and to satisfy
@@ -155,6 +175,19 @@ impl BezierParameterPolynomial {
         interval: &BezierParameterInterval,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<usize>> {
+        let sequence = match sturm_sequence(&self.coefficients, policy)? {
+            Classification::Decided(sequence) => sequence,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        self.root_count_in_interval_with_sequence(interval, &sequence, policy)
+    }
+
+    fn root_count_in_interval_with_sequence(
+        &self,
+        interval: &BezierParameterInterval,
+        sequence: &[Vec<Real>],
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<usize>> {
         let start_value = self.evaluate(interval.start());
         let end_value = self.evaluate(interval.end());
         match (
@@ -168,12 +201,8 @@ impl BezierParameterPolynomial {
             _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
 
-        let sequence = match sturm_sequence(&self.coefficients, policy)? {
-            Classification::Decided(sequence) => sequence,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let start_variations = sign_variations_at(&sequence, interval.start(), policy)?;
-        let end_variations = sign_variations_at(&sequence, interval.end(), policy)?;
+        let start_variations = sign_variations_at(sequence, interval.start(), policy)?;
+        let end_variations = sign_variations_at(sequence, interval.end(), policy)?;
         match (start_variations, end_variations) {
             (Classification::Decided(start), Classification::Decided(end)) => {
                 Ok(Classification::Decided(start.saturating_sub(end)))
@@ -228,6 +257,16 @@ impl BezierParameterPolynomial {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+        Ok(self
+            .isolate_unit_interval_roots_with_trace(policy)?
+            .map(BezierRootIsolationResult2::into_roots))
+    }
+
+    /// Isolates every distinct root in `[0, 1]` and reports exact work counts.
+    pub fn isolate_unit_interval_roots_with_trace(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierRootIsolationResult2>> {
         isolate_unit_roots(self.coefficients.clone(), policy)
     }
 
@@ -295,6 +334,50 @@ impl BezierParameterPolynomial {
     }
 }
 
+impl BezierRootIsolationTrace2 {
+    /// Number of Sturm sequences constructed during the complete query.
+    pub const fn sturm_sequence_builds(&self) -> usize {
+        self.sturm_sequence_builds
+    }
+
+    /// Number of certified interval root-count queries.
+    pub const fn interval_root_counts(&self) -> usize {
+        self.interval_root_counts
+    }
+
+    /// Number of interval bisections performed by root isolation.
+    pub const fn bisections(&self) -> usize {
+        self.bisections
+    }
+
+    /// Number of refinements used while testing rational reconstruction.
+    pub const fn rational_reconstruction_refinements(&self) -> usize {
+        self.rational_reconstruction_refinements
+    }
+
+    /// Deepest pending unit-interval subdivision visited.
+    pub const fn maximum_depth(&self) -> usize {
+        self.maximum_depth
+    }
+}
+
+impl BezierRootIsolationResult2 {
+    /// Returns the ordered distinct roots in `[0, 1]`.
+    pub fn roots(&self) -> &[BezierParameter2] {
+        &self.roots
+    }
+
+    /// Consumes the result and returns its ordered roots.
+    pub fn into_roots(self) -> Vec<BezierParameter2> {
+        self.roots
+    }
+
+    /// Returns the algorithmic work trace.
+    pub const fn trace(&self) -> &BezierRootIsolationTrace2 {
+        &self.trace
+    }
+}
+
 impl BezierParameterInterval {
     /// Constructs a closed interval in Bezier parameter space.
     pub fn try_new(
@@ -358,6 +441,17 @@ impl BezierAlgebraicParameter2 {
         }))
     }
 
+    fn from_certified_singleton(
+        polynomial: BezierParameterPolynomial,
+        interval: BezierParameterInterval,
+    ) -> Self {
+        Self {
+            polynomial,
+            interval,
+            root_count: 1,
+        }
+    }
+
     /// Returns the defining polynomial.
     pub const fn polynomial(&self) -> &BezierParameterPolynomial {
         &self.polynomial
@@ -393,6 +487,20 @@ impl BezierAlgebraicParameter2 {
         let Some(denominator_bound) = rational_root_denominator_bound(&self.polynomial) else {
             return Ok(Classification::Decided(None));
         };
+        let sequence = match sturm_sequence(self.polynomial.coefficients(), policy)? {
+            Classification::Decided(sequence) => sequence,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        self.represented_rational_root_with_sequence(policy, denominator_bound, &sequence, None)
+    }
+
+    fn represented_rational_root_with_sequence(
+        &self,
+        policy: &CurvePolicy,
+        denominator_bound: BigUint,
+        sequence: &[Vec<Real>],
+        mut trace: Option<&mut BezierRootIsolationTrace2>,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let two = BigInt::from(2_u8);
         let bound = BigInt::from(denominator_bound);
         let target_width = BigRational::new(BigInt::one(), &two * &bound * &bound);
@@ -433,12 +541,19 @@ impl BezierAlgebraicParameter2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let left_count = match self.polynomial.root_count_in_interval(&left, policy)? {
+            let left_count = match self
+                .polynomial
+                .root_count_in_interval_with_sequence(&left, sequence, policy)?
+            {
                 Classification::Decided(count) => count,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+            if let Some(trace) = trace.as_deref_mut() {
+                trace.interval_root_counts += 1;
+                trace.rational_reconstruction_refinements += 1;
+            }
             if left_count == 1 {
                 interval = left;
                 continue;
@@ -457,6 +572,21 @@ impl BezierAlgebraicParameter2 {
                 }
             };
         }
+    }
+
+    fn represented_rational_root_with_cached_sequence(
+        &self,
+        policy: &CurvePolicy,
+        sequence: &[Vec<Real>],
+        trace: Option<&mut BezierRootIsolationTrace2>,
+    ) -> CurveResult<Classification<Option<Real>>> {
+        if self.polynomial.degree() == 1 {
+            return self.represented_linear_root(policy);
+        }
+        let Some(denominator_bound) = rational_root_denominator_bound(&self.polynomial) else {
+            return Ok(Classification::Decided(None));
+        };
+        self.represented_rational_root_with_sequence(policy, denominator_bound, sequence, trace)
     }
 
     fn represented_linear_root(
@@ -1313,7 +1443,8 @@ enum UnitRootSearch {
 fn isolate_unit_roots(
     mut coefficients: Vec<Real>,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+) -> CurveResult<Classification<BezierRootIsolationResult2>> {
+    let mut trace = BezierRootIsolationTrace2::default();
     let mut represented = Vec::new();
     for endpoint in [Real::zero(), Real::one()] {
         let mut found = false;
@@ -1350,7 +1481,7 @@ fn isolate_unit_roots(
             .filter_map(BezierParameter2::as_exact)
             .cloned()
             .collect::<Vec<_>>();
-        match search_unit_roots(&polynomial, &represented_boundaries, policy)? {
+        match search_unit_roots(&polynomial, &represented_boundaries, policy, &mut trace)? {
             Classification::Decided(UnitRootSearch::Isolated(mut algebraic)) => {
                 represented.append(&mut algebraic);
                 break;
@@ -1377,14 +1508,23 @@ fn isolate_unit_roots(
     for parameter in represented {
         insert_parameter_ordered(&mut ordered, parameter, policy)?;
     }
-    Ok(Classification::Decided(ordered))
+    Ok(Classification::Decided(BezierRootIsolationResult2 {
+        roots: ordered,
+        trace,
+    }))
 }
 
 fn search_unit_roots(
     polynomial: &BezierParameterPolynomial,
     represented_roots: &[Real],
     policy: &CurvePolicy,
+    trace: &mut BezierRootIsolationTrace2,
 ) -> CurveResult<Classification<UnitRootSearch>> {
+    let sequence = match sturm_sequence(polynomial.coefficients(), policy)? {
+        Classification::Decided(sequence) => sequence,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    trace.sturm_sequence_builds += 1;
     let mut boundaries = vec![Real::zero()];
     for root in represented_roots {
         if compare_reals(root, &Real::zero(), policy) == Some(Ordering::Greater)
@@ -1411,18 +1551,21 @@ fn search_unit_roots(
         .collect::<Vec<_>>();
     let mut isolated = Vec::new();
     while let Some((start, end, depth)) = pending.pop() {
+        trace.maximum_depth = trace.maximum_depth.max(depth);
         let interval = match BezierParameterInterval::try_new(start.clone(), end.clone(), policy)? {
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let count = match polynomial.root_count_in_interval(&interval, policy)? {
-            Classification::Decided(count) => count,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let count =
+            match polynomial.root_count_in_interval_with_sequence(&interval, &sequence, policy)? {
+                Classification::Decided(count) => count,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        trace.interval_root_counts += 1;
         if count == 0 {
             continue;
         }
@@ -1444,15 +1587,16 @@ fn search_unit_roots(
             == Some(Ordering::Equal)
             || compare_reals(&end, &Real::one(), policy) == Some(Ordering::Equal);
         if count == 1 && !touches_represented_root && !touches_domain_endpoint {
+            // `count == 1` above was proved with the cached Sturm sequence.
+            // Reusing that certificate avoids rebuilding the identical
+            // sequence solely to construct the carrier.
             let parameter =
-                match BezierAlgebraicParameter2::try_isolate(polynomial.clone(), interval, policy)?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            match parameter.represented_rational_root(policy)? {
+                BezierAlgebraicParameter2::from_certified_singleton(polynomial.clone(), interval);
+            match parameter.represented_rational_root_with_cached_sequence(
+                policy,
+                &sequence,
+                Some(trace),
+            )? {
                 Classification::Decided(Some(root)) => {
                     return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
                         root,
@@ -1470,6 +1614,7 @@ fn search_unit_roots(
         if depth >= 256 {
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
         }
+        trace.bisections += 1;
         pending.push((midpoint.clone(), end, depth + 1));
         pending.push((start, midpoint, depth + 1));
     }

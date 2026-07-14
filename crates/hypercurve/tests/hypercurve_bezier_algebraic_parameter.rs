@@ -62,6 +62,73 @@ fn unit_root_isolation_orders_represented_and_algebraic_roots() {
     );
 }
 
+#[test]
+fn quintic_root_isolation_trace_reuses_sturm_certificates() {
+    // (7t-1)(7t-2)(7t-3)(7t-5)(7t-6)
+    let polynomial = polynomial(vec![
+        r(-180),
+        r(2772),
+        r(-15043),
+        r(36701),
+        r(-40817),
+        r(16807),
+    ]);
+    let result = decided(
+        polynomial
+            .isolate_unit_interval_roots_with_trace(&policy())
+            .unwrap(),
+    );
+
+    assert_eq!(
+        result.roots(),
+        &[
+            BezierParameter2::Exact(q(1, 7)),
+            BezierParameter2::Exact(q(2, 7)),
+            BezierParameter2::Exact(q(3, 7)),
+            BezierParameter2::Exact(q(5, 7)),
+            BezierParameter2::Exact(q(6, 7)),
+        ]
+    );
+    assert!(result.trace().interval_root_counts() > 5);
+    assert!(
+        result.trace().sturm_sequence_builds() < result.trace().interval_root_counts(),
+        "one Sturm certificate should serve multiple interval counts: {:?}",
+        result.trace()
+    );
+    assert!(result.trace().rational_reconstruction_refinements() > 0);
+    assert!(result.trace().bisections() > 0);
+    assert!(result.trace().maximum_depth() > 0);
+}
+
+#[test]
+fn cubic_distance_stationary_quintic_isolates_all_five_candidates() {
+    // (B(t)-P) dot B'(t) for controls (0,0), (6,10), (-8,-8),
+    // (-4,10) and query point (-3,3). All five roots lie in (0,1).
+    let polynomial = polynomial(vec![
+        r(-36),
+        r(1368),
+        r(-11034),
+        r(31728),
+        r(-38280),
+        r(16620),
+    ]);
+    let result = decided(
+        polynomial
+            .isolate_unit_interval_roots_with_trace(&policy())
+            .unwrap(),
+    );
+
+    assert_eq!(result.roots().len(), 5);
+    assert!(
+        result
+            .roots()
+            .iter()
+            .all(|root| matches!(root, BezierParameter2::Algebraic(_)))
+    );
+    assert_eq!(result.trace().sturm_sequence_builds(), 1);
+    assert!(result.trace().interval_root_counts() > result.trace().sturm_sequence_builds());
+}
+
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
     match BezierParameterInterval::try_new(start, end, &policy()).unwrap() {
         Classification::Decided(value) => value,

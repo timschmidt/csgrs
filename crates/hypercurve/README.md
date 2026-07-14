@@ -136,6 +136,9 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
 - `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
   relation, metric, zero-error fitting, staged offset, and flattening APIs represent polynomial and
   rational curve work.
+- `BezierParameterPolynomial` isolates represented and algebraic roots in `[0, 1]`;
+  `BezierRootIsolationResult2` and `BezierRootIsolationTrace2` expose the ordered
+  exact carriers and certificate-work counts for profiling root-heavy operations.
 - `PolynomialSplineCurve2` and `NurbsCurve2` retain exact spline geometry, source
   provenance, exact active-domain point and one-sided/certified arbitrary-order
   derivative evaluation, exact knot insertion, splitting, subcurve extraction,

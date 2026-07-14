@@ -109,7 +109,8 @@ pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierA
 pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk};
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierRootIsolationResult2,
+    BezierRootIsolationTrace2,
 };
 pub use bezier_region::{
     BezierBoundaryLoop2, BezierRegion2, CurveRegion2, CurveRegionBoundaryLoop2,
