@@ -145,6 +145,19 @@ mod tests {
         }
     }
 
+    fn exact_linear_form3_sign(coefficients: [&Real; 4], point: [&Real; 3]) -> RealSign {
+        let [a, b, c, d] = coefficients.map(|value| value.exact_rational().unwrap());
+        let [x, y, z] = point.map(|value| value.exact_rational().unwrap());
+        let value = a * x + b * y + c * z + d;
+        if value.is_positive() {
+            RealSign::Positive
+        } else if value.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
     fn exact_affine_det3_sign(
         a: [&Real; 3],
         b: [&Real; 3],
@@ -326,6 +339,169 @@ mod tests {
     }
 
     #[test]
+    fn prepared_linear_form3_filter_only_returns_exact_signs() {
+        let coefficients = [
+            Real::from(2_i32),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let positive = [Real::from(4_i32), Real::zero(), Real::zero()];
+        let negative = [Real::zero(), Real::zero(), Real::zero()];
+        let boundary = [Real::one(), Real::zero(), Real::one()];
+        let coefficient_refs = [
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ];
+        let prepared = Real::prepare_linear_form3_filter(coefficient_refs)
+            .expect("dyadic coefficients should prepare");
+        for point in [&positive, &negative] {
+            let point_refs = [&point[0], &point[1], &point[2]];
+            assert_eq!(
+                prepared.sign(point_refs),
+                Some(exact_linear_form3_sign(coefficient_refs, point_refs)),
+            );
+        }
+        assert_eq!(
+            prepared.sign([&boundary[0], &boundary[1], &boundary[2]]),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert!(
+            Real::prepare_linear_form3_filter([
+                &third,
+                &coefficients[1],
+                &coefficients[2],
+                &coefficients[3],
+            ])
+            .is_none(),
+        );
+        assert_eq!(
+            prepared.sign([&Real::pi(), &positive[1], &positive[2]]),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        let huge_filter = Real::prepare_linear_form3_filter([
+            &huge,
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ])
+        .expect("finite dyadic coefficients should prepare");
+        assert_eq!(
+            huge_filter.sign([&huge, &positive[1], &positive[2]]),
+            None,
+        );
+    }
+
+    #[test]
+    fn certified_linear_form3_filter_only_returns_exact_signs() {
+        let coefficients = [
+            Real::from(2_i32),
+            Real::from(-3_i32),
+            Real::from(5_i32),
+            Real::from(-7_i32),
+        ];
+        let positive = [Real::from(4_i32), Real::zero(), Real::zero()];
+        let negative = [Real::zero(), Real::zero(), Real::zero()];
+        let boundary = [Real::one(), Real::zero(), Real::one()];
+        let coefficient_refs = [
+            &coefficients[0],
+            &coefficients[1],
+            &coefficients[2],
+            &coefficients[3],
+        ];
+
+        for point in [&positive, &negative] {
+            let point_refs = [&point[0], &point[1], &point[2]];
+            assert_eq!(
+                Real::certified_linear_form3_sign(coefficient_refs, point_refs),
+                Some(exact_linear_form3_sign(coefficient_refs, point_refs)),
+            );
+        }
+        assert_eq!(
+            Real::certified_linear_form3_sign(
+                coefficient_refs,
+                [&boundary[0], &boundary[1], &boundary[2]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_linear_form3_sign(
+                [
+                    &third,
+                    &coefficients[1],
+                    &coefficients[2],
+                    &coefficients[3],
+                ],
+                [&positive[0], &positive[1], &positive[2]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn prepared_linear_form3_filter_matches_exact_randomized_values() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..20_000 {
+            let mut coordinates = [0.0_f64; 7];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 201 + 923) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let coefficients = [&values[0], &values[1], &values[2], &values[3]];
+            let point = [&values[4], &values[5], &values[6]];
+            let prepared = Real::prepare_linear_form3_filter(coefficients)
+                .expect("finite dyadic coefficients should prepare");
+            if let Some(filtered) = prepared.sign(point) {
+                assert_eq!(
+                    filtered,
+                    exact_linear_form3_sign(coefficients, point),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 10_000, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn prepared_affine_det2_filter_matches_one_shot_filter() {
+        let a = [Real::try_from(-1.0_f64).unwrap(), Real::try_from(-1.0_f64).unwrap()];
+        let b = [Real::try_from(1.0_f64).unwrap(), Real::try_from(1.0_f64).unwrap()];
+        let prepared = Real::prepare_affine_det2_filter([&a[0], &a[1]], [&b[0], &b[1]])
+            .expect("dyadic fixed points should prepare");
+
+        for c in [
+            [Real::try_from(0.25_f64).unwrap(), Real::try_from(0.5_f64).unwrap()],
+            [Real::try_from(0.25_f64).unwrap(), Real::try_from(0.25_f64).unwrap()],
+            [Real::try_from(0.5_f64).unwrap(), Real::try_from(0.25_f64).unwrap()],
+        ] {
+            assert_eq!(
+                prepared.sign([&c[0], &c[1]]),
+                Real::certified_affine_det2_sign(
+                    [&a[0], &a[1]],
+                    [&b[0], &b[1]],
+                    [&c[0], &c[1]],
+                )
+            );
+        }
+    }
+
+    #[test]
     fn certified_affine_det2_sign_matches_exact_randomized_determinants() {
         let mut state = 0x6a09_e667_f3bc_c909_u64;
         let mut certified = 0_u32;
@@ -447,6 +623,35 @@ mod tests {
     }
 
     #[test]
+    fn prepared_affine_det3_filter_matches_one_shot_filter() {
+        let a = [Real::zero(), Real::zero(), Real::zero()];
+        let b = [Real::one(), Real::zero(), Real::zero()];
+        let c = [Real::zero(), Real::one(), Real::zero()];
+        let prepared = Real::prepare_affine_det3_filter(
+            [&a[0], &a[1], &a[2]],
+            [&b[0], &b[1], &b[2]],
+            [&c[0], &c[1], &c[2]],
+        )
+        .expect("dyadic fixed points should prepare");
+
+        for d in [
+            [Real::zero(), Real::zero(), Real::one()],
+            [Real::zero(), Real::zero(), Real::zero()],
+            [Real::zero(), Real::zero(), Real::from(-1_i32)],
+        ] {
+            assert_eq!(
+                prepared.sign([&d[0], &d[1], &d[2]]),
+                Real::certified_affine_det3_sign(
+                    [&a[0], &a[1], &a[2]],
+                    [&b[0], &b[1], &b[2]],
+                    [&c[0], &c[1], &c[2]],
+                    [&d[0], &d[1], &d[2]],
+                )
+            );
+        }
+    }
+
+    #[test]
     fn certified_affine_det3_sign_matches_exact_randomized_determinants() {
         let mut state = 0x3c6e_f372_fe94_f82b_u64;
         let mut certified = 0_u32;
@@ -546,6 +751,35 @@ mod tests {
     }
 
     #[test]
+    fn prepared_incircle2d_filter_matches_one_shot_filter() {
+        let a = [Real::one(), Real::zero()];
+        let b = [Real::zero(), Real::one()];
+        let c = [Real::from(-1_i32), Real::zero()];
+        let prepared = Real::prepare_incircle2d_filter(
+            [&a[0], &a[1]],
+            [&b[0], &b[1]],
+            [&c[0], &c[1]],
+        )
+        .expect("dyadic fixed points should prepare");
+
+        for d in [
+            [Real::zero(), Real::zero()],
+            [Real::zero(), Real::from(-2_i32)],
+            [Real::one(), Real::zero()],
+        ] {
+            assert_eq!(
+                prepared.sign([&d[0], &d[1]]),
+                Real::certified_incircle2d_sign(
+                    [&a[0], &a[1]],
+                    [&b[0], &b[1]],
+                    [&c[0], &c[1]],
+                    [&d[0], &d[1]],
+                )
+            );
+        }
+    }
+
+    #[test]
     fn certified_incircle2d_sign_matches_exact_randomized_determinants() {
         let mut state = 0xa54f_f53a_5f1d_36f1_u64;
         let mut certified = 0_u32;
@@ -630,6 +864,38 @@ mod tests {
             ),
             None,
         );
+    }
+
+    #[test]
+    fn prepared_insphere3d_filter_matches_one_shot_filter() {
+        let a = [Real::one(), Real::zero(), Real::zero()];
+        let b = [Real::zero(), Real::one(), Real::zero()];
+        let c = [Real::zero(), Real::zero(), Real::one()];
+        let d = [Real::from(-1_i32), Real::zero(), Real::zero()];
+        let prepared = Real::prepare_insphere3d_filter(
+            [&a[0], &a[1], &a[2]],
+            [&b[0], &b[1], &b[2]],
+            [&c[0], &c[1], &c[2]],
+            [&d[0], &d[1], &d[2]],
+        )
+        .expect("dyadic fixed points should prepare");
+
+        for e in [
+            [Real::zero(), Real::zero(), Real::zero()],
+            [Real::zero(), Real::from(-2_i32), Real::zero()],
+            [Real::one(), Real::zero(), Real::zero()],
+        ] {
+            assert_eq!(
+                prepared.sign([&e[0], &e[1], &e[2]]),
+                Real::certified_insphere3d_sign(
+                    [&a[0], &a[1], &a[2]],
+                    [&b[0], &b[1], &b[2]],
+                    [&c[0], &c[1], &c[2]],
+                    [&d[0], &d[1], &d[2]],
+                    [&e[0], &e[1], &e[2]],
+                )
+            );
+        }
     }
 
     #[test]

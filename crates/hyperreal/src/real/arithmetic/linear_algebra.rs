@@ -1,4 +1,256 @@
+/// Certified floating filter for repeated affine 2D determinant signs.
+///
+/// Construction succeeds only when the fixed points have exact dyadic `f64`
+/// views. Each query is independently range checked and certified against the
+/// same conservative roundoff bound as [`Real::certified_affine_det2_sign`].
+/// An inconclusive query returns `None`, preserving the caller's exact fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedAffineDet2Filter {
+    a: [f64; 2],
+    b: [f64; 2],
+}
+
+impl PreparedAffineDet2Filter {
+    /// Try to certify the determinant sign for query point `c`.
+    #[inline]
+    pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
+        let [cx, cy] = Real::exact_dyadic_f64(c)?;
+        Real::certified_affine_det2_sign_f64(self.a, self.b, [cx, cy])
+    }
+}
+
+/// Certified floating filter for repeated affine 3D determinant signs.
+///
+/// The three fixed points are converted once from exact dyadic `Real` values.
+/// Query points remain range checked, and uncertain determinants still return
+/// `None` for exact fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedAffineDet3Filter {
+    a: [f64; 3],
+    b: [f64; 3],
+    c: [f64; 3],
+}
+
+impl PreparedAffineDet3Filter {
+    /// Try to certify the determinant sign for query point `d`.
+    #[inline]
+    pub fn sign(&self, d: [&Real; 3]) -> Option<RealSign> {
+        let [dx, dy, dz] = Real::exact_dyadic_f64(d)?;
+        Real::certified_affine_det3_sign_f64(self.a, self.b, self.c, [dx, dy, dz])
+    }
+}
+
+/// Certified floating filter for repeated signs of a three-variable linear
+/// form with one constant coefficient.
+///
+/// Fixed coefficients are converted once from exact dyadic `Real` values.
+/// Query coordinates remain independently range checked, and uncertain
+/// results return `None` for the caller's exact fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedLinearForm3Filter {
+    coefficients: [f64; 4],
+}
+
+impl PreparedLinearForm3Filter {
+    /// Try to certify the linear-form sign for a query point.
+    #[inline]
+    pub fn sign(&self, point: [&Real; 3]) -> Option<RealSign> {
+        let point = Real::exact_dyadic_f64(point)?;
+        Real::certified_linear_form3_sign_f64(self.coefficients, point)
+    }
+}
+
+/// Certified floating filter for repeated 2D in-circle predicates.
+///
+/// The three defining points are converted once. Query conversion, range
+/// checks, and the conservative in-circle error bound remain per call.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedIncircle2dFilter {
+    a: [f64; 2],
+    b: [f64; 2],
+    c: [f64; 2],
+}
+
+impl PreparedIncircle2dFilter {
+    /// Try to certify the in-circle sign for query point `d`.
+    #[inline]
+    pub fn sign(&self, d: [&Real; 2]) -> Option<RealSign> {
+        let [dx, dy] = Real::exact_dyadic_f64(d)?;
+        Real::certified_incircle2d_sign_f64(self.a, self.b, self.c, [dx, dy])
+    }
+}
+
+/// Certified floating filter for repeated 3D in-sphere predicates.
+///
+/// The four defining points are converted once. Each query still passes the
+/// full range checks and conservative in-sphere error bound before a sign can
+/// be returned.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedInsphere3dFilter {
+    a: [f64; 3],
+    b: [f64; 3],
+    c: [f64; 3],
+    d: [f64; 3],
+}
+
+impl PreparedInsphere3dFilter {
+    /// Try to certify the in-sphere sign for query point `e`.
+    #[inline]
+    pub fn sign(&self, e: [&Real; 3]) -> Option<RealSign> {
+        let [ex, ey, ez] = Real::exact_dyadic_f64(e)?;
+        Real::certified_insphere3d_sign_f64(self.a, self.b, self.c, self.d, [ex, ey, ez])
+    }
+}
+
 impl Real {
+    /// Try to certify the sign of `a*x + b*y + c*z + d` without constructing
+    /// an exact expression tree.
+    ///
+    /// This one-shot counterpart to [`Self::prepare_linear_form3_filter`]
+    /// succeeds only when every coefficient and point coordinate has an exact
+    /// dyadic `f64` view and the conservative floating error bound separates
+    /// the result from zero. All other cases return `None` for exact fallback.
+    #[inline]
+    pub fn certified_linear_form3_sign(
+        coefficients: [&Real; 4],
+        point: [&Real; 3],
+    ) -> Option<RealSign> {
+        // Reject an ineligible query before rechecking the fixed plane. This
+        // is the common fallback case for exact constructions that generate
+        // rational points with non-dyadic denominators.
+        let [x, y, z] = Self::exact_dyadic_f64(point)?;
+        let [a, b, c, d] = Self::exact_dyadic_f64(coefficients)?;
+        Self::certified_linear_form3_sign_f64([a, b, c, d], [x, y, z])
+    }
+
+    /// Prepare a certified three-variable linear-form filter with one constant
+    /// coefficient.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_linear_form3_filter(
+        coefficients: [&Real; 4],
+    ) -> Option<PreparedLinearForm3Filter> {
+        Some(PreparedLinearForm3Filter {
+            coefficients: Self::exact_dyadic_f64(coefficients)?,
+        })
+    }
+
+    /// Prepare a certified affine 2D determinant filter for fixed points `a`
+    /// and `b`.
+    ///
+    /// This is the reusable counterpart of [`Self::certified_affine_det2_sign`].
+    /// It caches only exact dyadic primitive views; it never caches or returns
+    /// an approximate topology decision.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det2_filter(
+        a: [&Real; 2],
+        b: [&Real; 2],
+    ) -> Option<PreparedAffineDet2Filter> {
+        let [ax, ay, bx, by] = Self::exact_dyadic_f64([a[0], a[1], b[0], b[1]])?;
+        Some(PreparedAffineDet2Filter {
+            a: [ax, ay],
+            b: [bx, by],
+        })
+    }
+
+    /// Prepare a certified affine 3D determinant filter for fixed points `a`,
+    /// `b`, and `c`.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det3_filter(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+    ) -> Option<PreparedAffineDet3Filter> {
+        let [ax, ay, az, bx, by, bz, cx, cy, cz] = Self::exact_dyadic_f64([
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2],
+        ])?;
+        Some(PreparedAffineDet3Filter {
+            a: [ax, ay, az],
+            b: [bx, by, bz],
+            c: [cx, cy, cz],
+        })
+    }
+
+    /// Prepare a certified 2D in-circle filter for fixed points `a`, `b`, and
+    /// `c`.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_incircle2d_filter(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+    ) -> Option<PreparedIncircle2dFilter> {
+        let [ax, ay, bx, by, cx, cy] =
+            Self::exact_dyadic_f64([a[0], a[1], b[0], b[1], c[0], c[1]])?;
+        Some(PreparedIncircle2dFilter {
+            a: [ax, ay],
+            b: [bx, by],
+            c: [cx, cy],
+        })
+    }
+
+    /// Prepare a certified 3D in-sphere filter for fixed points `a`, `b`, `c`,
+    /// and `d`.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_insphere3d_filter(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+    ) -> Option<PreparedInsphere3dFilter> {
+        let [ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz] = Self::exact_dyadic_f64([
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ])?;
+        Some(PreparedInsphere3dFilter {
+            a: [ax, ay, az],
+            b: [bx, by, bz],
+            c: [cx, cy, cz],
+            d: [dx, dy, dz],
+        })
+    }
+
+    #[inline]
+    fn certified_linear_form3_sign_f64(
+        coefficients: [f64; 4],
+        point: [f64; 3],
+    ) -> Option<RealSign> {
+        let [a, b, c, d] = coefficients;
+        let [x, y, z] = point;
+        let ax = Self::normal_product_f64(a, x)?;
+        let by = Self::normal_product_f64(b, y)?;
+        let cz = Self::normal_product_f64(c, z)?;
+        let ab = Self::normal_add_f64(ax, by)?;
+        let abc = Self::normal_add_f64(ab, cz)?;
+        let value = Self::normal_add_f64(abc, d)?;
+
+        let magnitude_sum = Self::normal_add_f64(
+            Self::normal_add_f64(Self::normal_add_f64(ax.abs(), by.abs())?, cz.abs())?,
+            d.abs(),
+        )?;
+
+        // Four rounded products (the constant is multiplication by one) and
+        // three rounded additions are bounded by a gamma_7-style absolute
+        // term sum. Eight machine epsilons deliberately cover conversion from
+        // the computed product magnitudes to the exact magnitudes as well.
+        const ERROR_FACTOR: f64 = 8.0 * f64::EPSILON;
+        let error_bound = Self::normal_product_f64(ERROR_FACTOR, magnitude_sum)?;
+        if value > error_bound {
+            Some(RealSign::Positive)
+        } else if -value > error_bound {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
     /// Try to certify the sign of the affine 2x2 determinant
     /// `(b - a) x (c - a)` without constructing an exact determinant.
     ///
@@ -41,6 +293,14 @@ impl Real {
         else {
             return None;
         };
+        Self::certified_affine_det2_sign_f64([ax, ay], [bx, by], [cx, cy])
+    }
+
+    #[inline]
+    fn certified_affine_det2_sign_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> Option<RealSign> {
+        let [ax, ay] = a;
+        let [bx, by] = b;
+        let [cx, cy] = c;
 
         let abx = bx - ax;
         let aby = by - ay;
@@ -97,6 +357,25 @@ impl Real {
         let [dx, dy, dz, cx, cy, cz, bx, by, bz, ax, ay, az] = Self::exact_dyadic_f64([
             d[0], d[1], d[2], c[0], c[1], c[2], b[0], b[1], b[2], a[0], a[1], a[2],
         ])?;
+        Self::certified_affine_det3_sign_f64(
+            [ax, ay, az],
+            [bx, by, bz],
+            [cx, cy, cz],
+            [dx, dy, dz],
+        )
+    }
+
+    #[inline]
+    fn certified_affine_det3_sign_f64(
+        a: [f64; 3],
+        b: [f64; 3],
+        c: [f64; 3],
+        d: [f64; 3],
+    ) -> Option<RealSign> {
+        let [ax, ay, az] = a;
+        let [bx, by, bz] = b;
+        let [cx, cy, cz] = c;
+        let [dx, dy, dz] = d;
 
         let adx = ax - dx;
         let bdx = bx - dx;
@@ -195,6 +474,20 @@ impl Real {
         let [dx, dy, cx, cy, bx, by, ax, ay] = Self::exact_dyadic_f64([
             d[0], d[1], c[0], c[1], b[0], b[1], a[0], a[1],
         ])?;
+        Self::certified_incircle2d_sign_f64([ax, ay], [bx, by], [cx, cy], [dx, dy])
+    }
+
+    #[inline]
+    fn certified_incircle2d_sign_f64(
+        a: [f64; 2],
+        b: [f64; 2],
+        c: [f64; 2],
+        d: [f64; 2],
+    ) -> Option<RealSign> {
+        let [ax, ay] = a;
+        let [bx, by] = b;
+        let [cx, cy] = c;
+        let [dx, dy] = d;
 
         let adx = ax - dx;
         let bdx = bx - dx;
@@ -295,6 +588,28 @@ impl Real {
                 e[0], e[1], e[2], d[0], d[1], d[2], c[0], c[1], c[2], b[0], b[1], b[2],
                 a[0], a[1], a[2],
             ])?;
+        Self::certified_insphere3d_sign_f64(
+            [ax, ay, az],
+            [bx, by, bz],
+            [cx, cy, cz],
+            [dx, dy, dz],
+            [ex, ey, ez],
+        )
+    }
+
+    #[inline]
+    fn certified_insphere3d_sign_f64(
+        a: [f64; 3],
+        b: [f64; 3],
+        c: [f64; 3],
+        d: [f64; 3],
+        e: [f64; 3],
+    ) -> Option<RealSign> {
+        let [ax, ay, az] = a;
+        let [bx, by, bz] = b;
+        let [cx, cy, cz] = c;
+        let [dx, dy, dz] = d;
+        let [ex, ey, ez] = e;
 
         let aex = ax - ex;
         let bex = bx - ex;

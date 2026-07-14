@@ -4,17 +4,12 @@
 //! symbolic forms such as `pi`, `e`, logarithms, and trigonometric special
 //! forms, and lazily evaluated computable expressions. The public structural
 //! query APIs expose cheap conservative facts for callers that need to avoid
-//! forcing high-precision evaluation. The lazy approximation layer follows the
-//! exact-real arithmetic model described by Boehm et al.,
-//! <https://doi.org/10.1145/319838.319860>.
+//! forcing high-precision evaluation.
 //!
 //! Exactness here is a certified-data contract, not a promise that every value
-//! is eagerly reduced to one canonical scalar form. Following Yap's exact
-//! geometric computation model, `Real` preserves rational, symbolic,
+//! is eagerly reduced to one canonical scalar form. `Real` preserves rational, symbolic,
 //! structural, and refinement facts so higher layers can make exact decisions
 //! or return explicit uncertainty without hiding primitive-float fallbacks.
-//! See Yap, "Towards Exact Geometric Computation," *Computational Geometry*,
-//! 1997, pp. 3-23.
 
 mod rational;
 pub use crate::rational::Rational;
@@ -40,8 +35,9 @@ pub use crate::computable::Computable;
 
 mod real;
 pub use crate::real::{
-    Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,
-    RealExactSetSignPattern,
+    PreparedAffineDet2Filter, PreparedAffineDet3Filter, PreparedIncircle2dFilter,
+    PreparedInsphere3dFilter, PreparedLinearForm3Filter, Real, RealExactSetDenominatorKind,
+    RealExactSetDyadicExponentClass, RealExactSetFacts, RealExactSetSignPattern,
 };
 
 #[cfg(feature = "simple")]
