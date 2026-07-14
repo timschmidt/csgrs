@@ -3,17 +3,8 @@
 //! Base feasibility replay allows exact edge/face/corner contact because
 //! non-overlap and clearance are different policies. This module adds replay
 //! layers for callers that require a positive gap, kerf allowance, or access
-//! margin. It follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): separation is decided by
-//! exact interval comparisons, and uncertified comparisons become explicit
-//! unknowns rather than tolerance decisions. Cutting/stock-layout work treats
-//! kerf as a geometric side constraint; container-loading and layout literature
-//! similarly treats clearance/access as side constraints. See Dyckhoff,
-//! "A typology of cutting and packing problems," *European Journal of
-//! Operational Research* 44(2), 1990, and Bortfeldt and Wascher, "Constraints
-//! in container loading," *European Journal of Operational Research* 229(1),
-//! 2013.
+//! margin. Separation uses exact interval comparisons, and uncertified
+//! comparisons become explicit unknowns rather than tolerance decisions.
 
 use std::collections::BTreeMap;
 

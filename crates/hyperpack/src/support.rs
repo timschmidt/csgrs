@@ -2,13 +2,10 @@
 //!
 //! Support checks are a second replay layer over proposed cuboid placements:
 //! geometry decides containment and overlap, while support replay records
-//! whether non-floor items have enough exact base contact. This follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): the support policy
-//! is expressed through certified predicates or explicit unknowns, not rounded
-//! floating contact tests. The full-base and support-ratio policies are common
-//! stability surrogates in container loading and three-dimensional packing
-//! literature; they are necessary evidence hooks, not full physical proofs.
+//! whether non-floor items have enough exact base contact. The support policy
+//! uses certified predicates or explicit unknowns, not rounded contact tests.
+//! Full-base and support-ratio policies are stability surrogates, not physical
+//! proofs.
 //! Direct stack-load checks follow the same report discipline: exact weights
 //! and exact limits can be compared here, while richer load transfer, friction,
 //! deformation, and dynamics remain `hyperphysics` responsibilities.
@@ -227,7 +224,7 @@ pub fn verify_support_3d(
                     center_projected = Some(true);
                 }
                 if positive(&patch.area).unwrap_or(false) {
-                    supported_area = supported_area + patch.area;
+                    supported_area += patch.area;
                     supporters.push(support.item.clone());
                 }
             }
@@ -284,10 +281,9 @@ pub fn verify_support_3d(
 
 /// Replays direct stack-load limits for proposed 3D cuboid placements.
 ///
-/// This is a deliberately simple report hook for container-loading constraints
-/// discussed in Bortfeldt and Wascher, "Constraints in container loading,"
-/// *European Journal of Operational Research* 229(1), 2013. Only direct top-face
-/// contact is accumulated: if item `B` rests on item `A`, `B`'s supplied exact
+/// This is a deliberately simple report hook for container-loading constraints.
+/// Only direct top-face contact is accumulated: if item `B` rests on item `A`,
+/// `B`'s supplied exact
 /// weight contributes to `A`'s direct supported load. Missing weights or limits
 /// are explicit evidence; this function does not infer material strength or
 /// physical load transfer beyond the exact contact relation.

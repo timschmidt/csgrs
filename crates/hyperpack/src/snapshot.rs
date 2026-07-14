@@ -2,11 +2,9 @@
 //!
 //! Fixture formats are part of the exact-computing boundary: if exact values
 //! are lowered to primitive floats while writing tests, later replay may certify
-//! a different combinatorial layout. Following Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>), these helpers serialize
-//! scalars as text fields that preserve exact rational values or full
-//! `hyperreal` structural JSON, never as display-rounded floats. The binary
+//! a different combinatorial layout. These helpers serialize scalars as text
+//! fields that preserve exact rational values or full `hyperreal` structural
+//! JSON, never as display-rounded floats. The binary
 //! helpers use length-prefixed UTF-8 fields for the same exact scalar strings;
 //! binary framing improves fixture robustness without changing scalar meaning.
 
@@ -103,9 +101,8 @@ pub fn snapshot_packing_3d_text(bin: &Bin3, items: &[Item3], placements: &[Place
 /// Deterministic binary fixture for one 1D stock-packing instance.
 ///
 /// Fields are length-prefixed UTF-8 strings. Exact scalar payloads are the same
-/// rational or structural strings used by [`snapshot_stock_1d_text`], following
-/// Yap's requirement that fixture serialization not introduce primitive-float
-/// decisions into later geometric replay.
+/// rational or structural strings used by [`snapshot_stock_1d_text`] so fixture
+/// serialization cannot introduce primitive-float decisions into later replay.
 pub fn snapshot_stock_1d_binary(
     bin: &StockBin1,
     items: &[StockItem1],

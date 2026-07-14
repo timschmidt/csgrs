@@ -2,14 +2,9 @@
 //!
 //! Objective calculations are separate from geometric acceptance. A heuristic
 //! may optimize height, cost, waste, or balance, but the resulting layout still
-//! needs exact containment/no-overlap replay. This separation follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): combinatorial
-//! decisions and scalar objective comparisons should expose certified evidence
-//! or explicit uncertainty instead of relying on primitive-float tolerances.
-//! Height objectives are common in strip/container packing variants; see Lodi,
-//! Martello, and Vigo, "Heuristic algorithms for the three-dimensional bin
-//! packing problem," *European Journal of Operational Research* 141(2), 2002.
+//! needs exact containment/no-overlap replay. Combinatorial decisions and scalar
+//! comparisons expose certified evidence or explicit uncertainty instead of
+//! relying on primitive-float tolerances.
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -126,16 +121,10 @@ pub fn height_objective_3d(
 
 /// Compares two exact replayed 3D packing objectives lexicographically.
 ///
-/// The comparison policy is explicit because packing papers use different
-/// objective stacks: bin count, unplaced demand, utilization, height, load, and
-/// cost can all be primary depending on the problem variant. Following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-/// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>), scalar comparisons
-/// here return certified order/equality or explicit unknowns. The
-/// lexicographic use of utilization and height is common in 3D bin and strip
-/// packing heuristics; see Lodi, Martello, and Vigo, "Heuristic algorithms for
-/// the three-dimensional bin packing problem," *European Journal of Operational
-/// Research* 141(2), 2002.
+/// The comparison policy is explicit because bin count, unplaced demand,
+/// utilization, height, load, and cost can each be primary for different
+/// problem variants. Scalar comparisons return certified order/equality or
+/// explicit unknowns.
 pub fn compare_objectives_3d(
     left: &PackingVerification3,
     left_height: Option<&HeightObjective3>,

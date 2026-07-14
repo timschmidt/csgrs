@@ -3,11 +3,9 @@
 //! `hyperpack` should not silently own facts that belong to `hyperparts`,
 //! `hyperphysics`, `hyperpath`, `hypervoxel`, `hypercurve`, `hypermesh`,
 //! `csgrs`, `hyperdrc`, or `hypercircuit`. This module provides small adapter
-//! records with provenance and explicit unknowns. That follows Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): exact facts can cross the
-//! boundary as exact values, while uncertified or lossy facts must be reported
-//! as such instead of being folded into geometric acceptance.
+//! records with provenance and explicit unknowns. Exact facts cross the boundary
+//! as exact values; uncertified or lossy facts remain visible instead of being
+//! folded into geometric acceptance.
 
 use crate::{AxisBox3, Bin3, Item3, ItemId, PackError, PackResult};
 use hyperreal::{Real, RealSign};

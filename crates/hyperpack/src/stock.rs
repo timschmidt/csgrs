@@ -1,11 +1,9 @@
 //! Exact 1D stock-packing carriers and replay.
 //!
 //! One-dimensional stock cutting is the smallest useful packing model: items
-//! occupy exact intervals on an exact stock length. The replay boundary follows
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): containment,
-//! no-overlap, and item accounting are certified by exact sign queries, with
-//! uncertified comparisons represented as unknown instead of rounded decisions.
+//! occupy exact intervals on an exact stock length. Containment, no-overlap,
+//! and item accounting use exact sign queries, with uncertified comparisons
+//! represented as unknown instead of rounded decisions.
 
 use std::collections::BTreeMap;
 
@@ -172,12 +170,12 @@ pub fn verify_packing_1d(
             0 => unplaced.push(item.id.clone()),
             1 => {
                 placed_items += 1;
-                used_length = used_length + item.length.clone();
+                used_length += item.length.clone();
             }
             count => {
                 duplicates.push(item.id.clone());
                 placed_items += 1;
-                used_length = used_length + item.length.clone() * Real::from(count as i64);
+                used_length += item.length.clone() * Real::from(count as i64);
             }
         }
     }

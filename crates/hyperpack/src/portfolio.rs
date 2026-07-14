@@ -2,14 +2,9 @@
 //!
 //! A portfolio runner is a scheduler, not a new geometric predicate. It tries
 //! several proposal engines under an explicit deterministic budget and then
-//! ranks their exact replay reports. This follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): approximate or heuristic
-//! search can propose combinatorial states, but acceptance and comparison use
-//! exact/certified reports. The no-free-lunch motivation for a small portfolio
-//! is the same one formalized by Wolpert and Macready, "No Free Lunch Theorems
-//! for Optimization," *IEEE Transactions on Evolutionary Computation* 1(1),
-//! 1997: no single packing heuristic should be treated as universally best.
+//! ranks their exact replay reports. Heuristic search can propose combinatorial
+//! states, but acceptance and comparison use exact reports. No single packing
+//! heuristic is treated as universally best.
 
 use hyperreal::{Real, RealSign};
 

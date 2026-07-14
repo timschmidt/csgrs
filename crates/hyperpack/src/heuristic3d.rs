@@ -1,18 +1,10 @@
 //! Exact-aware 3D cuboid heuristic proposal reports.
 //!
-//! The first 3D proposal baselines here use deterministic corner points and
-//! free boxes derived from already placed cuboids, common rectangular-packing
-//! ideas in bottom-left/back/front, extreme-point, and maximal-space
-//! heuristics. The proposal/replay split follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): candidate enumeration may
-//! be heuristic, but containment and no-overlap acceptance are exact. The
-//! decreasing-volume order is a simple analogue of volume-oriented bin-packing
-//! baselines discussed in Martello, Pisinger, and Vigo, "The Three-Dimensional
-//! Bin Packing Problem," *Operations Research* 48(2), 2000. The free-box split
-//! route is intentionally conservative and cites maximal-space/difference
-//! process packing ideas near the implementation rather than pretending the
-//! heuristic state is an optimality proof.
+//! The 3D proposal baselines use deterministic corner points and free boxes
+//! derived from placed cuboids, including bottom-left/back/front, extreme-point,
+//! and maximal-space ideas. Candidate enumeration may be heuristic, but
+//! containment and no-overlap acceptance are exact. Free-box state is
+//! intentionally conservative and is not an optimality proof.
 
 use hyperreal::{Real, RealSign};
 
@@ -211,14 +203,8 @@ pub fn cuboid_extreme_point_decreasing_volume_3d(
 
 /// Proposes a 3D layout with conservative exact free-box splitting.
 ///
-/// This is a maximal-space/difference-process inspired proposal path in the
-/// sense of Crainic, Perboli, and Tadei, "Extreme Point-based Heuristics for
-/// Three-Dimensional Bin Packing," *INFORMS Journal on Computing* 20(3),
-/// 2008, and the heuristic families surveyed by Lodi, Martello, and Vigo,
-/// "Heuristic algorithms for the three-dimensional bin packing problem,"
-/// *European Journal of Operational Research* 141(2), 2002. It keeps exact
-/// origin-bearing free boxes, places each decreasing-volume item at the origin
-/// of the best exact residual-volume box, and partitions that selected box into
+/// Keeps exact origin-bearing free boxes, places each decreasing-volume item at
+/// the origin of the best exact residual-volume box, and partitions that box into
 /// right/front/top residual boxes. Those residual boxes are scheduling state;
 /// the returned placements are trusted only after [`verify_packing_3d`] replay.
 pub fn cuboid_maximal_space_decreasing_volume_3d(
@@ -230,15 +216,11 @@ pub fn cuboid_maximal_space_decreasing_volume_3d(
 
 /// Proposes a 3D layout with exact guillotine-style residual splits.
 ///
-/// Following the guillotine-cut restrictions discussed by Lodi, Martello, and
-/// Vigo, "Heuristic algorithms for the three-dimensional bin packing problem,"
-/// *European Journal of Operational Research* 141(2), 2002, this proposal
-/// treats the retained free boxes as a cut-feasible scheduling state. It places
+/// Treats retained free boxes as a cut-feasible scheduling state. It places
 /// each decreasing-volume cuboid in the best exact residual-volume free box and
 /// emits the right/front/top residual boxes induced by sequential orthogonal
-/// cuts. As required by Yap's exact-computation discipline, this cut tree is
-/// evidence for proposal generation only; exact 3D containment and no-overlap
-/// replay still decides acceptance.
+/// cuts. The cut tree is proposal evidence only; exact 3D containment and
+/// no-overlap replay still decides acceptance.
 pub fn cuboid_guillotine_best_volume_fit_3d(
     bin: &Bin3,
     items: &[Item3],
@@ -249,11 +231,8 @@ pub fn cuboid_guillotine_best_volume_fit_3d(
 /// Proposes a 3D cuboid layout with a LAFF-style largest-area-first order.
 ///
 /// LAFF/largest-area-fit-first container packers prioritize broad base
-/// footprints before smaller pieces, then build from low layers. See Lodi,
-/// Martello, and Vigo, "Heuristic algorithms for the three-dimensional bin
-/// packing problem," *European Journal of Operational Research* 141(2), 2002,
-/// for the layer/area-oriented heuristic family. This implementation keeps the
-/// Hyper boundary conservative: it sorts by exact `x * y` footprint area, scans
+/// footprints before smaller pieces, then build from low layers. This
+/// implementation sorts by exact `x * y` footprint area, scans
 /// exact face-induced candidate points, chooses the certified lowest `z`, then
 /// `y`, then `x`, and accepts only through [`verify_packing_3d`].
 pub fn cuboid_laff_largest_area_fit_first_3d(

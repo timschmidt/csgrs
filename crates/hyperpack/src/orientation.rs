@@ -1,11 +1,8 @@
 //! Exact 3D cuboid orientation policies.
 //!
 //! Axis-aligned cuboid rotations are represented as the six permutations of
-//! `(x, y, z)`. This avoids approximate rotation matrices and keeps orientation
-//! legality inside the exact replay discipline from Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): geometric state changes
-//! are accepted only after exact/certified predicates or explicit validation
+//! `(x, y, z)`. This avoids approximate rotation matrices. Geometric state
+//! changes are accepted only after exact predicates or explicit validation
 //! reports.
 
 use std::collections::BTreeMap;

@@ -2,10 +2,8 @@
 //!
 //! Sheet packing lifts the same proposal/replay discipline to exact rectangles:
 //! a heuristic may propose coordinates, but containment, no-overlap, and item
-//! accounting are replayed with exact sign predicates. This follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): topology-changing
-//! geometric decisions use certified signs or remain explicitly unknown.
+//! accounting are replayed with exact sign predicates. Topology-changing
+//! decisions use certified signs or remain explicitly unknown.
 
 use std::collections::BTreeMap;
 
@@ -52,10 +50,7 @@ pub struct SheetPlacement2 {
 /// Allowed fixed-orientation choices for rectangular 2D packing.
 ///
 /// Cardinal 90-degree rotations preserve exact rectangle dimensions by
-/// permutation only; no trigonometric approximation is introduced. This keeps
-/// the orientation model inside the exact-geometric-computation boundary
-/// described by Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997.
+/// permutation only; no trigonometric approximation is introduced.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Orientation2 {
     /// Use the source width/height as stored.
@@ -210,9 +205,9 @@ impl Orientation2 {
 
 /// Verifies one-sheet 2D packing geometry and item accounting.
 ///
-/// The current model uses fixed-orientation, quantity-one rectangles. Rotation
-/// legality and kerf/trim are future constraints and should remain separate
-/// report fields when added.
+/// This entry point uses fixed-orientation, quantity-one rectangles. Use
+/// [`verify_oriented_packing_2d`] for cardinal rotations and
+/// [`crate::verify_clearance_2d`] for kerf or trim clearance.
 pub fn verify_packing_2d(
     bin: &SheetBin2,
     items: &[SheetItem2],
@@ -287,12 +282,12 @@ pub fn verify_packing_2d(
             0 => unplaced.push(item.id.clone()),
             1 => {
                 placed_items += 1;
-                used_area = used_area + item.size.area();
+                used_area += item.size.area();
             }
             count => {
                 duplicates.push(item.id.clone());
                 placed_items += 1;
-                used_area = used_area + item.size.area() * Real::from(count as i64);
+                used_area += item.size.area() * Real::from(count as i64);
             }
         }
     }

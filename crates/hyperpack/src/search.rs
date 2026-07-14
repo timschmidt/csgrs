@@ -1,16 +1,10 @@
 //! Replay-gated local search schedulers for packing proposals.
 //!
 //! Local search changes combinatorial decisions such as item order; it does not
-//! certify geometry by itself. Following Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>), every candidate order here
-//! is converted to exact placements and then replayed before objective
-//! comparison. The move neighborhood follows standard local-search operations
-//! used in bin-packing metaheuristics such as tabu/guided local search; see
-//! Glover, "Tabu Search - Part I," *ORSA Journal on Computing* 1(3), 1989 for
-//! the search-neighborhood framing. Seeded multistart uses deterministic
-//! randomized order proposals in the spirit of multi-start metaheuristics; the
-//! seed affects only proposal order, never feasibility certification.
+//! certify geometry by itself. Every candidate order is converted to exact
+//! placements and replayed before objective comparison. Seeded multistart uses
+//! deterministic randomized order proposals; the seed affects only proposal
+//! order, never feasibility certification.
 
 use hyperreal::{Real, RealSign};
 
@@ -333,10 +327,7 @@ pub fn local_search_order_3d(
 /// Each neighbor order is converted into exact corner first-fit placements and
 /// replayed before ranking. The tabu memory stores accepted order moves for a
 /// bounded tenure. A tabu move is admissible only by aspiration: its exact
-/// replayed objective must improve the best certified candidate. This follows
-/// Yap's requirement that approximate or heuristic stages produce candidates
-/// rather than truth, and Glover, "Tabu Search - Part I," *ORSA Journal on
-/// Computing* 1(3), 1989, for the short-term-memory search mechanism.
+/// replayed objective must improve the best certified candidate.
 pub fn tabu_search_order_3d(
     bin: &Bin3,
     items: &[Item3],
@@ -418,10 +409,9 @@ pub fn tabu_search_order_3d(
 /// Each start shuffles the input item order with a deterministic xorshift
 /// generator derived from `config.seed + start_index`, proposes placements with
 /// the same exact corner first-fit evaluator as [`local_search_order_3d`], and
-/// ranks candidates by exact replayed objective values. This follows Yap's
-/// exact-geometric-computation boundary: randomized or seeded proposal
-/// generation is allowed, but accepted results remain replay reports rather
-/// than unchecked coordinates.
+/// ranks candidates by exact replayed objective values. Randomized or seeded
+/// proposal generation is allowed, but accepted results remain replay reports
+/// rather than unchecked coordinates.
 pub fn multistart_order_3d(
     bin: &Bin3,
     items: &[Item3],
@@ -462,12 +452,8 @@ pub fn multistart_order_3d(
 ///
 /// This is a deterministic proposal stage for the common packing repair move
 /// "take an unplaced item and try it earlier/later in the construction order."
-/// Like the other search helpers, it follows Yap's exact-geometric-computation
-/// boundary: a reinsertion is accepted only after rebuilding placements and
-/// comparing exact replay reports. The move type is one of the repair
-/// neighborhoods discussed for metaheuristic bin packing; see Glover,
-/// "Tabu Search - Part I," *ORSA Journal on Computing* 1(3), 1989, for the
-/// neighborhood-search framing.
+/// A reinsertion is accepted only after rebuilding placements and comparing
+/// exact replay reports.
 pub fn reinsert_unplaced_order_3d(
     bin: &Bin3,
     items: &[Item3],
@@ -580,10 +566,8 @@ pub fn reinsert_unplaced_order_3d(
 /// A bin-emptying move removes every placement assigned to one source bin and
 /// tries to reinsert those items into the remaining bins using the same exact
 /// face-induced corner candidates as the one-bin order search. This is a repair
-/// proposal, not a proof. Following Yap's exact-geometric-computation boundary,
-/// and the bin-reduction neighborhoods used in bin-packing local search (see
-/// Glover, "Tabu Search - Part I," *ORSA Journal on Computing* 1(3), 1989),
-/// a candidate is accepted only after exact [`verify_multi_bin_packing_3d`]
+/// proposal, not a proof. A candidate is accepted only after exact
+/// [`verify_multi_bin_packing_3d`]
 /// replay improves bin count, cost, assignment accounting, and used volume.
 pub fn empty_bins_3d(
     bins: &[BinInstance3],

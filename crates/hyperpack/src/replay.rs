@@ -2,13 +2,10 @@
 //!
 //! Packing heuristics are proposal engines. This module turns proposed
 //! placements into exact reports: containment, no-overlap, one-placement-per-
-//! item accounting, and exact objective summaries. That follows Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997: a
-//! heuristic layout is accepted only after exact/certified replay, otherwise
-//! the result remains infeasible or explicitly unknown. The volume accounting
-//! is also the first simple lower-bound/objective surface common in
-//! Martello/Vigo-style rectangular packing work: total occupied volume and bin
-//! waste are evidence, not a proof of global optimality.
+//! item accounting, and exact objective summaries. A heuristic layout is
+//! accepted only after exact replay; otherwise it remains infeasible or
+//! explicitly unknown. Total occupied volume and bin waste are objective
+//! evidence, not proof of global optimality.
 
 use std::collections::BTreeMap;
 
@@ -177,12 +174,12 @@ pub fn verify_packing_3d(
             0 => unplaced.push(item.id.clone()),
             1 => {
                 placed_items += 1;
-                used_volume = used_volume + item.size.volume();
+                used_volume += item.size.volume();
             }
             count => {
                 duplicates.push(item.id.clone());
                 placed_items += 1;
-                used_volume = used_volume + item.size.volume() * Real::from(count as i64);
+                used_volume += item.size.volume() * Real::from(count as i64);
             }
         }
     }

@@ -80,7 +80,7 @@ pub enum HeuristicFamily {
     Laff3,
 }
 
-/// Free-space report placeholder retained after replay.
+/// Retained free-space summary after proposal or replay.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FreeSpaceReport3 {
     /// Free boxes retained by a heuristic or exact replay.

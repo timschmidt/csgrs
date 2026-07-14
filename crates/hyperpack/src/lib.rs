@@ -1,15 +1,13 @@
 //! Exact-aware packing carriers and feasibility replay.
 //!
 //! `hyperpack` owns item/bin/sheet/container models, placements, free-space
-//! reports, heuristic proposal metadata, exact lower-bound placeholders, and
+//! reports, heuristic proposal metadata, exact lower-bound evidence, and
 //! feasibility replay. Heuristics such as shelf, skyline, MaxRects, guillotine,
 //! extreme-point, DBLF, layer, and LAFF are proposal surfaces until their output
 //! is replayed exactly.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): combinatorial acceptance
-//! is based on exact containment/no-overlap/support checks or explicit unknowns.
+//! Combinatorial acceptance is based on exact containment, no-overlap, and
+//! support checks or explicit unknowns.
 
 pub mod bounds;
 pub mod clearance;

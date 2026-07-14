@@ -3,16 +3,9 @@
 //! This module does not call an external optimizer. It lowers one-sheet
 //! rectangle and one-bin cuboid instances into exact coordinate domains and
 //! pairwise no-overlap disjunctions that a CP-SAT, MIP, or future `hypersolve`
-//! adapter can consume. Following
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>), this export
-//! preserves exact bounds and explicit infeasibility evidence instead of
-//! normalizing the model to primitive floats. The disjunctive rectangular
-//! packing form is the standard finite-bin/sheet model discussed by Martello,
-//! Vigo, and Iori et al. for 2D cutting/packing and by Martello,
-//! Pisinger, and Vigo, "The Three-Dimensional Bin Packing Problem,"
-//! *Operations Research* 48(2), 2000: every item pair must be separated along
-//! at least one axis.
+//! adapter can consume. The export preserves exact bounds and explicit
+//! infeasibility evidence instead of normalizing the model to primitive floats.
+//! Every item pair must be separated along at least one axis.
 
 use hyperreal::{Real, RealSign};
 

@@ -1,14 +1,8 @@
 //! Bounded exact search backends for small 3D packing instances.
 //!
 //! This module is deliberately small and explicit about limits. It uses exact
-//! candidate points and exact replay, following Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): the search may enumerate
-//! combinatorial proposals, but accepted placements are certified by exact
-//! predicates. The volume/dimension prefilter and decreasing-volume branching
-//! are standard rectangular-packing ingredients related to Martello, Pisinger,
-//! and Vigo, "The Three-Dimensional Bin Packing Problem," *Operations
-//! Research* 48(2), 2000.
+//! candidate points and exact replay: the search may enumerate combinatorial
+//! proposals, but accepted placements are certified by exact predicates.
 
 use hyperreal::{Real, RealSign};
 

@@ -2,13 +2,9 @@
 //!
 //! These checks are intentionally necessary, not sufficient: they reject
 //! impossible instances before search, but they do not prove that the remaining
-//! instances admit a placement. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): decisions that affect the
-//! combinatorial search state are made from exact signs, and uncertain signs
-//! stay explicit rather than being rounded into a Boolean. The volume and
-//! maximum-dimension filters are the classical first packing bounds used around
-//! Martello/Vigo-style exact and heuristic bin-packing methods.
+//! instances admit a placement. Decisions that affect the combinatorial search
+//! state use exact signs; uncertain signs stay explicit rather than being
+//! rounded into a Boolean.
 
 use hyperreal::{Real, RealSign};
 
@@ -158,7 +154,7 @@ pub fn capacity_bounds_3d(bin: &Bin3, items: &[Item3]) -> CapacityBoundReport3 {
     let mut max_dimension_ok = Some(true);
 
     for item in items {
-        total_item_volume = total_item_volume + item.size.volume();
+        total_item_volume += item.size.volume();
         for (axis, item_extent, bin_extent) in [
             ("x", &item.size.x, &bin.size.x),
             ("y", &item.size.y, &bin.size.y),
@@ -207,15 +203,14 @@ pub fn capacity_bounds_3d(bin: &Bin3, items: &[Item3]) -> CapacityBoundReport3 {
 /// Passing these checks does not prove that a layout exists. Failing either
 /// total-area capacity or per-axis maximum item dimensions proves that no
 /// fixed-orientation one-sheet rectangular packing can satisfy the current
-/// model. This is the 2D counterpart of the classical lower-bound filters used
-/// around Martello/Vigo and Iori et al. exact cutting-and-packing methods.
+/// model.
 pub fn capacity_bounds_2d(bin: &SheetBin2, items: &[SheetItem2]) -> CapacityBoundReport2 {
     let mut total_item_area = Real::zero();
     let mut facts = Vec::new();
     let mut max_dimension_ok = Some(true);
 
     for item in items {
-        total_item_area = total_item_area + item.size.area();
+        total_item_area += item.size.area();
         for (axis, item_extent, bin_extent) in [
             ("x", &item.size.x, &bin.size.x),
             ("y", &item.size.y, &bin.size.y),

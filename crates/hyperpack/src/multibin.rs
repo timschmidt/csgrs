@@ -2,14 +2,9 @@
 //!
 //! Multi-bin packing separates assignment policy from geometric validity. This
 //! module groups proposed placements by bin, delegates each used bin to exact
-//! one-bin replay, and aggregates exact objective evidence. That follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): bin assignment and
-//! heuristic routing are proposal decisions, while containment/no-overlap and
-//! objective arithmetic stay exact. Multi-bin cost and bin-count objectives are
-//! standard bin-packing surfaces; see Martello and Toth, "Bin-packing problem,"
-//! *Knapsack Problems*, 1990, and Martello, Pisinger, and Vigo, "The
-//! Three-Dimensional Bin Packing Problem," *Operations Research* 48(2), 2000.
+//! one-bin replay, and aggregates exact objective evidence. Bin assignment and
+//! heuristic routing are proposal decisions, while containment, no-overlap, and
+//! objective arithmetic stay exact.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -175,12 +170,12 @@ pub fn verify_multi_bin_packing_3d(
             0 => unplaced.push(item.id.clone()),
             1 => {
                 placed_items += 1;
-                used_volume = used_volume + item.size.volume();
+                used_volume += item.size.volume();
             }
             count => {
                 duplicates.push(item.id.clone());
                 placed_items += 1;
-                used_volume = used_volume + item.size.volume() * Real::from(count as i64);
+                used_volume += item.size.volume() * Real::from(count as i64);
             }
         }
     }
@@ -215,8 +210,8 @@ pub fn verify_multi_bin_packing_3d(
             facts.push(format!("{}: {fact}", bin_id.as_str()));
         }
         used_bin_ids.insert(bin_id.clone());
-        total_cost = total_cost + bin.cost.clone();
-        total_bin_volume = total_bin_volume + bin.bin.size.volume();
+        total_cost += bin.cost.clone();
+        total_bin_volume += bin.bin.size.volume();
         bin_reports.push(BinReplay3 {
             bin: bin_id.clone(),
             replay,

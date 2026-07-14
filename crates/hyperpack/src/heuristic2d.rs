@@ -3,10 +3,7 @@
 //! Shelf algorithms such as NFDH/FFDH/BFDH are classical fast rectangular
 //! packing heuristics. `hyperpack` treats them as proposal engines: they may
 //! produce coordinates cheaply, but the result is accepted only after exact
-//! replay. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): heuristic combinatorics
-//! are separated from exact geometric predicates.
+//! replay. Heuristic combinatorics remain separate from exact predicates.
 
 use hyperreal::{Real, RealSign};
 
@@ -355,11 +352,9 @@ pub fn skyline_minimum_waste_2d(
 
 /// Proposes a fixed-orientation 2D layout with a MaxRects best-short-side-fit scan.
 ///
-/// This follows the MaxRects scoring terminology from Jylanki, "A Thousand
-/// Ways to Pack the Bin - A Practical Approach to Two-Dimensional Rectangle
-/// Bin Packing" (2010): choose a free rectangle minimizing the shorter leftover
-/// side, then the longer leftover side. The free-rectangle split is intentionally
-/// conservative and report-bearing; exact replay remains the acceptance gate.
+/// Chooses a free rectangle minimizing the shorter leftover side, then the
+/// longer leftover side. The free-rectangle split is intentionally conservative
+/// and report-bearing; exact replay remains the acceptance gate.
 pub fn maxrects_best_short_side_fit_2d(
     bin: &SheetBin2,
     items: &[SheetItem2],
@@ -406,12 +401,9 @@ pub fn maxrects_bottom_left_2d(
 
 /// Proposes a fixed-orientation 2D layout with MaxRects contact-point scoring.
 ///
-/// This uses the contact-point score described by Jylanki, "A Thousand Ways to
-/// Pack the Bin - A Practical Approach to Two-Dimensional Rectangle Bin
-/// Packing" (2010): maximize exact edge contact against the bin boundary and
-/// already placed rectangles, then use exact short/long-side residuals as
-/// deterministic tie-breakers. Following Yap's exact-geometric-computing
-/// boundary, the contact score is still proposal evidence; exact replay decides
+/// Maximizes exact edge contact against the bin boundary and already placed
+/// rectangles, then uses exact short/long-side residuals as deterministic
+/// tie-breakers. The contact score is proposal evidence; exact replay decides
 /// whether the emitted placement set is accepted.
 pub fn maxrects_contact_point_2d(
     bin: &SheetBin2,
@@ -426,9 +418,7 @@ pub fn maxrects_contact_point_2d(
 /// full-height cuts, a classical restriction in cutting and packing. This
 /// proposal chooses the feasible free rectangle with least exact area waste,
 /// then splits the used rectangle into exact right and top residual rectangles.
-/// As in Iori et al., "Exact Solution Techniques for Two-dimensional Cutting
-/// and Packing" (2020), guillotine structure is a combinatorial restriction;
-/// following Yap's exact-geometric-computing boundary, feasibility is still
+/// Guillotine structure is a combinatorial restriction; feasibility is still
 /// accepted only after exact replay.
 pub fn guillotine_best_area_fit_2d(
     bin: &SheetBin2,
@@ -441,10 +431,8 @@ pub fn guillotine_best_area_fit_2d(
 ///
 /// This uses the same exact full-cut residual state as
 /// [`guillotine_best_area_fit_2d`], but selects the feasible free rectangle
-/// minimizing the shorter exact leftover side before area waste. Jylanki's
-/// "A Thousand Ways to Pack the Bin" (2010) treats short-side and long-side
-/// fit as practical rectangle-packing scoring families; here the score only
-/// chooses a proposal, while exact replay remains authoritative.
+/// minimizing the shorter exact leftover side before area waste. The score only
+/// chooses a proposal; exact replay remains authoritative.
 pub fn guillotine_best_short_side_fit_2d(
     bin: &SheetBin2,
     items: &[SheetItem2],
@@ -456,8 +444,8 @@ pub fn guillotine_best_short_side_fit_2d(
 ///
 /// This selects the feasible free rectangle minimizing the longer exact
 /// leftover side before area waste. The retained free rectangles are
-/// guillotine scheduling evidence, not proof; following Yap's exact geometric
-/// computation boundary, acceptance still comes from [`verify_packing_2d`].
+/// guillotine scheduling evidence, not proof; acceptance still comes from
+/// [`verify_packing_2d`].
 pub fn guillotine_best_long_side_fit_2d(
     bin: &SheetBin2,
     items: &[SheetItem2],
@@ -737,7 +725,7 @@ fn shelf_decreasing_height_2d(
                     height: item.size.y.clone(),
                     index,
                 });
-                next_shelf_y = next_shelf_y + item.size.y.clone();
+                next_shelf_y += item.size.y.clone();
                 trace.opened_shelves += 1;
                 index
             }
@@ -1064,16 +1052,16 @@ fn maxrects_contact_score(
 
     trace.exact_comparisons += 4;
     if exact_eq_zero(&x0) {
-        score = score + item.size.y.clone();
+        score += item.size.y.clone();
     }
     if exact_eq_zero(&y0) {
-        score = score + item.size.x.clone();
+        score += item.size.x.clone();
     }
     if exact_eq(&x1, &bin.size.x) {
-        score = score + item.size.y.clone();
+        score += item.size.y.clone();
     }
     if exact_eq(&y1, &bin.size.y) {
-        score = score + item.size.x.clone();
+        score += item.size.x.clone();
     }
 
     for candidate in candidates {
@@ -1084,11 +1072,11 @@ fn maxrects_contact_score(
 
         trace.exact_comparisons += 2;
         if exact_eq(&x1, &placed_x0) || exact_eq(&placed_x1, &x0) {
-            score = score + exact_interval_overlap_length(&y0, &y1, &placed_y0, &placed_y1, trace);
+            score += exact_interval_overlap_length(&y0, &y1, &placed_y0, &placed_y1, trace);
         }
         trace.exact_comparisons += 2;
         if exact_eq(&y1, &placed_y0) || exact_eq(&placed_y1, &y0) {
-            score = score + exact_interval_overlap_length(&x0, &x1, &placed_x0, &placed_x1, trace);
+            score += exact_interval_overlap_length(&x0, &x1, &placed_x0, &placed_x1, trace);
         }
     }
 

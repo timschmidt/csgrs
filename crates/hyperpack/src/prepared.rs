@@ -2,9 +2,7 @@
 //!
 //! Prepared layouts are a normalization layer, not a new feasibility checker.
 //! They canonicalize placement record order and preserve evidence about any
-//! uncertified ordering comparisons. Acceptance still comes from exact replay.
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>):
+//! uncertified ordering comparisons. Acceptance still comes from exact replay:
 //! preprocessing may organize combinatorial data, but geometric decisions stay
 //! certified or explicitly reported as unknown.
 
@@ -87,10 +85,7 @@ pub struct PreparedCacheMetadata3 {
 /// This is the problem-side counterpart to [`PreparedPlacements3`]. It stores
 /// exact demand classes, common-scale facts, lower-bound reports, and initial
 /// free-space cache state so proposal engines do not repeatedly rediscover the
-/// same structure. The cached data remains advisory: as in Yap's exact
-/// geometric computation model, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>), every accepted layout must
+/// same structure. The cached data remains advisory: every accepted layout must
 /// still pass exact replay instead of trusting preprocessing.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedPacking3 {
@@ -313,7 +308,7 @@ fn dimension_facts_3d(items: &[Item3]) -> PreparedDimensionFacts3 {
     let mut unknown_max_comparisons = 0_usize;
 
     for item in items {
-        total_item_volume = total_item_volume + item.size.volume();
+        total_item_volume += item.size.volume();
         update_max(
             &mut max_item_x,
             &item.size.x,
