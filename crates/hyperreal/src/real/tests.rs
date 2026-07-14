@@ -769,6 +769,26 @@ mod tests {
     }
 
     #[test]
+    fn certified_dyadic_interval_is_exact_for_rationals_and_bounds_symbolic_values() {
+        let exact = Rational::fraction(7, 3).unwrap();
+        assert_eq!(
+            Real::new(exact.clone()).certified_dyadic_interval(-32),
+            Some([exact.clone(), exact]),
+        );
+
+        let [pi_lower, pi_upper] = Real::pi().certified_dyadic_interval(-32).unwrap();
+        assert!(pi_lower < pi_upper);
+        assert!(pi_lower > Rational::new(3));
+        assert!(pi_upper < Rational::new(4));
+
+        let negative = -(Real::from(3) * Real::pi());
+        let [lower, upper] = negative.certified_dyadic_interval(-32).unwrap();
+        assert!(lower <= upper);
+        assert!(lower > Rational::new(-10));
+        assert!(upper < Rational::new(-9));
+    }
+
+    #[test]
     fn certified_sign_until_reports_proof_source_without_lossy_approximation() {
         let exact = Real::from(-7);
         assert_eq!(

@@ -58,6 +58,7 @@ impl Rational {
             denominator,
         ))
     }
+
 }
 
 impl<T: AsRef<Rational>> Add<T> for &Rational {

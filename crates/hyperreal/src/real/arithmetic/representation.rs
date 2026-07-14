@@ -148,7 +148,6 @@ impl Real {
             .and_then(|computable| computable.signal.as_ref())
     }
 
-    #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
     pub(super) fn is_aborted(&self) -> bool {
         use std::sync::atomic::Ordering::Relaxed;
 

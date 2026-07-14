@@ -341,6 +341,51 @@ impl Rational {
         ))
     }
 
+    fn signed_product_sum_dyadic_ordering<const TERMS: usize, const FACTORS: usize>(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+    ) -> Option<Ordering> {
+        let mut max_shift = 0_u64;
+        let mut denominator_shifts = [0_u64; TERMS];
+        let mut any_nonzero = false;
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            let mut shift = 0_u64;
+            for factor in terms[i] {
+                shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
+            }
+            denominator_shifts[i] = shift;
+            max_shift = max_shift.max(shift);
+            any_nonzero = true;
+        }
+        if !any_nonzero {
+            return Some(Ordering::Equal);
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..TERMS {
+            let sign = signs[i];
+            if sign == NoSign {
+                continue;
+            }
+            let scale_shift = usize::try_from(max_shift - denominator_shifts[i])
+                .expect("dyadic product-sum scale should fit in usize");
+            let mut magnitude = Self::product_term_magnitude(terms[i]);
+            if scale_shift != 0 {
+                magnitude <<= scale_shift;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        Some(positive.cmp(&negative))
+    }
+
     /// Evaluate a signed product sum when every live factor shares one
     /// reduced denominator.
     ///
@@ -585,7 +630,7 @@ impl Rational {
     }
 
     /// Compare a fixed signed sum of products with zero without materializing
-    /// the resulting rational when the complete expression fits in `u128`.
+    /// or reducing the resulting rational.
     pub fn signed_product_sum_ordering<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -596,12 +641,87 @@ impl Rational {
             crate::trace_dispatch!("rational", "product_sum_ordering", "word-sized");
             return positive.cmp(&negative);
         }
-        crate::trace_dispatch!("rational", "product_sum_ordering", "arbitrary-precision");
-        match Self::signed_product_sum(positive_terms, terms).sign() {
-            Minus => Ordering::Less,
-            NoSign => Ordering::Equal,
-            Plus => Ordering::Greater,
+
+        if let Some(ordering) = Self::signed_product_sum_dyadic_ordering(terms, signs) {
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum_ordering",
+                "arbitrary-precision-dyadic"
+            );
+            return ordering;
         }
+
+        let mut denominators: [BigUint; TERMS] = std::array::from_fn(|_| BigUint::ZERO);
+        let mut shared_denominator = None::<BigUint>;
+        let mut equal_denominator = true;
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            let denominator = Self::product_term_denominator(terms[i]);
+            match &shared_denominator {
+                None => shared_denominator = Some(denominator.clone()),
+                Some(shared) if *shared == denominator => {}
+                Some(_) => equal_denominator = false,
+            }
+            denominators[i] = denominator;
+        }
+
+        if equal_denominator {
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for i in 0..TERMS {
+                match signs[i] {
+                    Plus => positive += Self::product_term_magnitude(terms[i]),
+                    Minus => negative += Self::product_term_magnitude(terms[i]),
+                    NoSign => {}
+                }
+            }
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum_ordering",
+                "arbitrary-precision-equal-denominator"
+            );
+            return positive.cmp(&negative);
+        }
+
+        let mut common_denominator = BigUint::one();
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            let denominator = &denominators[i];
+            if denominator != ONE.deref() {
+                let divisor = num::Integer::gcd(&common_denominator, denominator);
+                trace_rational_gcd!(&common_denominator, denominator, &divisor);
+                common_denominator *= denominator / &divisor;
+            }
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..TERMS {
+            let sign = signs[i];
+            if sign == NoSign {
+                continue;
+            }
+            let denominator = &denominators[i];
+            let mut magnitude = Self::product_term_magnitude(terms[i]);
+            if denominator != &common_denominator {
+                magnitude *= &common_denominator / denominator;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        crate::trace_dispatch!(
+            "rational",
+            "product_sum_ordering",
+            "arbitrary-precision-lcm"
+        );
+        positive.cmp(&negative)
     }
 
     pub(crate) fn dot_products<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Self {

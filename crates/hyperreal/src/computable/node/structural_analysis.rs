@@ -193,6 +193,16 @@ impl Computable {
         if should_stop(signal) {
             return;
         }
+        let approximation_bound = Self::bound_from_approx(p, &value);
+        if approximation_bound != BoundInfo::Unknown {
+            // A separated approximation is a stronger certificate than a
+            // previously cached conservative Unknown result. Publish that
+            // upgrade beside the approximation so structural queries do not
+            // need to rediscover it by walking the expression graph.
+            self.internal
+                .facts
+                .set_bound(BoundCache::Valid(approximation_bound));
+        }
         if let Some(constant) = self.shared_constant_kind() {
             Self::store_shared_constant_cache_value(constant, p, value);
         } else {
@@ -208,9 +218,15 @@ impl Computable {
     }
 
     fn store_bound(&self, info: &BoundInfo) {
-        // Unknown facts are intentionally not cached; a later approximation may
-        // discover a real sign/MSD and should be allowed to populate the cache.
-        if *info != BoundInfo::Unknown {
+        if *info == BoundInfo::Unknown {
+            // The expression is immutable, so repeating the same conservative
+            // structural walk cannot improve this result. Cache Unknown only
+            // while the slot is invalid; a concurrent or later separated
+            // approximation atomically upgrades it through `set_bound`.
+            self.internal
+                .facts
+                .set_bound_if_invalid(BoundCache::Valid(BoundInfo::Unknown));
+        } else {
             self.internal.facts.set_bound(BoundCache::Valid(*info));
         }
     }

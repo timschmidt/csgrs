@@ -66,12 +66,12 @@ struct CachedApproximation {
     value: BigInt,
 }
 
-/// Guarded atomic single-value cache. Reads are lock-free and replaced values
-/// stay alive until every concurrent guard has been released. The swap cell is
-/// allocated lazily so constructing and dropping a cold expression performs no
-/// hazard-slot bookkeeping.
+/// Lazily allocated synchronized single-value cache. Keeping the value directly
+/// inside the lock avoids a second allocation and atomic reference-count update
+/// for every published approximation. The short read-side critical section only
+/// clones the integer before releasing the lock.
 struct ApproximationCache(
-    std::sync::atomic::AtomicPtr<arc_swap::ArcSwapOption<CachedApproximation>>,
+    std::sync::atomic::AtomicPtr<std::sync::RwLock<Option<CachedApproximation>>>,
 );
 
 impl ApproximationCache {
@@ -79,7 +79,7 @@ impl ApproximationCache {
         Self(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()))
     }
 
-    fn cell(&self) -> Option<&arc_swap::ArcSwapOption<CachedApproximation>> {
+    fn cell(&self) -> Option<&std::sync::RwLock<Option<CachedApproximation>>> {
         let pointer = self.0.load(std::sync::atomic::Ordering::Acquire);
         if pointer.is_null() {
             None
@@ -90,12 +90,12 @@ impl ApproximationCache {
         }
     }
 
-    fn cell_or_init(&self) -> &arc_swap::ArcSwapOption<CachedApproximation> {
+    fn cell_or_init(&self) -> &std::sync::RwLock<Option<CachedApproximation>> {
         if let Some(cell) = self.cell() {
             return cell;
         }
 
-        let allocated = Box::into_raw(Box::new(arc_swap::ArcSwapOption::empty()));
+        let allocated = Box::into_raw(Box::new(std::sync::RwLock::new(None)));
         let pointer = match self.0.compare_exchange(
             std::ptr::null_mut(),
             allocated,
@@ -115,17 +115,14 @@ impl ApproximationCache {
     }
 
     fn get(&self) -> Option<(Precision, BigInt)> {
-        let cached = self.load_arc()?;
+        let guard = self.cell()?.read().unwrap_or_else(|error| error.into_inner());
+        let cached = guard.as_ref()?;
         Some((cached.precision, cached.value.clone()))
     }
 
     fn at_precision(&self, p: Precision) -> Option<BigInt> {
-        let cached = self.load_arc()?;
-        Self::value_at_precision(&cached, p)
-    }
-
-    fn load_arc(&self) -> Option<Arc<CachedApproximation>> {
-        self.cell()?.load_full()
+        let guard = self.cell()?.read().unwrap_or_else(|error| error.into_inner());
+        Self::value_at_precision(guard.as_ref()?, p)
     }
 
     #[inline(always)]
@@ -140,29 +137,26 @@ impl ApproximationCache {
     }
 
     fn sign(&self) -> Option<Sign> {
-        self.cell()?
-            .load()
-            .as_deref()
-            .map(|cached| cached.value.sign())
+        let guard = self.cell()?.read().unwrap_or_else(|error| error.into_inner());
+        guard.as_ref().map(|cached| cached.value.sign())
     }
 
     fn store(&self, p: Precision, value: BigInt) {
-        let replacement = Arc::new(CachedApproximation {
-            precision: p,
-            value,
-        });
-        self.cell_or_init().rcu(|current| {
-            // Concurrent evaluations may finish out of order. Never let a
-            // coarser result evict a finer result already published.
-            if current
-                .as_deref()
-                .is_some_and(|cached| cached.precision <= p)
-            {
-                current.clone()
-            } else {
-                Some(replacement.clone())
-            }
-        });
+        let mut guard = self
+            .cell_or_init()
+            .write()
+            .unwrap_or_else(|error| error.into_inner());
+        // Concurrent evaluations may finish out of order. Never let a coarser
+        // result evict a finer result already published.
+        if guard
+            .as_ref()
+            .is_none_or(|cached| p < cached.precision)
+        {
+            *guard = Some(CachedApproximation {
+                precision: p,
+                value,
+            });
+        }
     }
 }
 
@@ -296,6 +290,26 @@ impl AtomicFacts {
         let encoded = Self::encode_bound(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
         loop {
+            let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
+            match self.0.compare_exchange_weak(
+                current,
+                updated,
+                std::sync::atomic::Ordering::Relaxed,
+                std::sync::atomic::Ordering::Relaxed,
+            ) {
+                Ok(_) => return,
+                Err(observed) => current = observed,
+            }
+        }
+    }
+
+    fn set_bound_if_invalid(&self, value: BoundCache) {
+        let encoded = Self::encode_bound(value);
+        let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        loop {
+            if current & 0b11 != Self::TAG_INVALID {
+                return;
+            }
             let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
             match self.0.compare_exchange_weak(
                 current,

@@ -721,4 +721,51 @@ impl Real {
             }
         }
     }
+
+    /// Returns a closed dyadic-rational interval certified to contain this
+    /// value at the requested computable precision.
+    ///
+    /// A computable approximation at precision `p` is within one integer unit
+    /// of `value * 2^-p`. Expanding that integer by one on both sides, restoring
+    /// the dyadic scale, and multiplying by this real's exact rational scale
+    /// therefore yields conservative exact bounds. This is useful for broad
+    /// phases that need a cheap separation certificate but do not need the
+    /// exact ordering of overlapping values.
+    ///
+    /// Returns `None` if evaluation was aborted; aborted approximations are not
+    /// certificates.
+    pub fn certified_dyadic_interval(&self, precision: i32) -> Option<[Rational; 2]> {
+        fn scaled_integer(value: BigInt, precision: i32) -> Rational {
+            if precision < 0 {
+                let shift = usize::try_from(precision.unsigned_abs())
+                    .expect("u32 precision magnitude should fit usize");
+                Rational::from_bigint_fraction(value, BigUint::from(1_u8) << shift)
+                    .expect("a power-of-two denominator is nonzero")
+            } else {
+                let shift = usize::try_from(precision as u32)
+                    .expect("u32 precision should fit usize");
+                Rational::from_bigint(value << shift)
+            }
+        }
+
+        if let Some(exact) = self.exact_rational_ref() {
+            return Some([exact.clone(), exact.clone()]);
+        }
+        if self.is_aborted() {
+            return None;
+        }
+        let approximation = self.computable_clone().approx(precision);
+        if self.is_aborted() {
+            return None;
+        }
+        let lower = scaled_integer(&approximation - BigInt::from(1_u8), precision);
+        let upper = scaled_integer(approximation + BigInt::from(1_u8), precision);
+        let scaled_lower = &self.rational * &lower;
+        let scaled_upper = &self.rational * &upper;
+        Some(if self.rational.sign() == Sign::Minus {
+            [scaled_upper, scaled_lower]
+        } else {
+            [scaled_lower, scaled_upper]
+        })
+    }
 }

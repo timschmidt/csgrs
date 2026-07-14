@@ -644,6 +644,52 @@ mod tests {
             ),
             Ordering::Less,
         );
+
+        let wide_a = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 220_usize) + BigUint::from(7_u8)),
+            BigUint::from(15_u8),
+        )
+        .unwrap();
+        let wide_b = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 180_usize) + BigUint::from(11_u8)),
+            BigUint::from(77_u8),
+        )
+        .unwrap();
+        let wide_c = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 160_usize) + BigUint::from(13_u8)),
+            BigUint::from(143_u16),
+        )
+        .unwrap();
+        let wide_d = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 140_usize) + BigUint::from(17_u8)),
+            BigUint::from(221_u16),
+        )
+        .unwrap();
+        let terms = [[&wide_a, &wide_b], [&wide_c, &wide_d], [&wide_b, &wide_d]];
+        let signs = [true, false, true];
+        let materialized = Rational::signed_product_sum(signs, terms);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(signs, terms),
+            materialized.partial_cmp(&Rational::zero()).unwrap(),
+        );
+
+        let dyadic_a = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 200_usize) + BigUint::one()),
+            BigUint::one() << 127_usize,
+        )
+        .unwrap();
+        let dyadic_b = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 170_usize) + BigUint::one()),
+            BigUint::one() << 93_usize,
+        )
+        .unwrap();
+        let dyadic_terms = [[&dyadic_a, &dyadic_b], [&dyadic_b, &dyadic_b]];
+        let dyadic_signs = [false, true];
+        let materialized = Rational::signed_product_sum(dyadic_signs, dyadic_terms);
+        assert_eq!(
+            Rational::signed_product_sum_ordering(dyadic_signs, dyadic_terms),
+            materialized.partial_cmp(&Rational::zero()).unwrap(),
+        );
     }
 
     #[test]
