@@ -77,14 +77,10 @@ impl BrepFaceTessellationManifest {
     /// Construct an exact planar manifest by replaying retained face loops
     /// through the BREP surface frame and `hypertri`'s exact earcut route.
     ///
-    /// This is the manifest-producing side of the Yap-style evidence boundary:
-    /// the derived triangle counts are accepted only after the source loops
-    /// project through the exact retained frame and `hypertri` returns a
-    /// topology index stream. The manifest still remains derived mesh
-    /// evidence; retained BREP topology stays authoritative. See Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997),
-    /// and Meisters, "Polygons Have Ears," *American Mathematical Monthly*
-    /// 82(6), 1975.
+    /// Derived triangle counts are accepted only after source loops project
+    /// through the exact retained frame and `hypertri` returns an index stream.
+    /// The manifest remains derived mesh evidence; retained BREP topology stays
+    /// authoritative.
     pub fn from_exact_planar_shell_face(shell: &BrepShell, face: BrepFaceId) -> Option<Self> {
         let source_face = shell.faces.iter().find(|candidate| candidate.id == face)?;
         let surface = shell
@@ -270,12 +266,9 @@ impl BrepFaceTessellationReport {
     /// Build a face tessellation report from retained BREP evidence and an
     /// optional producer manifest.
     ///
-    /// This is the report-bearing gate that future planar tessellation will
-    /// pass through before handing triangles to `hypermesh`. It follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): the derived mesh may be consumed only when exact source-face,
-    /// trim-boundary, UV triangulation, and lifted-surface incidence evidence
-    /// are retained together.
+    /// The derived mesh is consumable only when source-face, trim-boundary, UV
+    /// triangulation, and lifted-surface incidence evidence are retained
+    /// together.
     pub fn from_shell_face(
         shell: &BrepShell,
         face: BrepFaceId,
@@ -438,12 +431,9 @@ impl BrepFaceTessellationReport {
 impl BrepShellTessellationReport {
     /// Build a shell tessellation readiness report from per-face manifests.
     ///
-    /// This is the reusable shell-level tessellation gate requested by the
-    /// exact-computation plan. It follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): a shell-level mesh
-    /// proposal is exact-ready only when retained shell evidence and every
-    /// source-face tessellation report replay exactly. The triangles remain a
-    /// derived artifact and never replace the retained BREP topology.
+    /// A shell-level mesh proposal is exact-ready only when retained shell
+    /// evidence and every source-face tessellation report replay exactly. The
+    /// triangles remain derived and never replace retained BREP topology.
     pub fn from_shell_manifests(
         shell: &BrepShell,
         manifests: &[BrepFaceTessellationManifest],

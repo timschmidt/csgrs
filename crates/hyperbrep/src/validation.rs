@@ -177,14 +177,10 @@ pub struct BrepShellValidationReport {
 impl BrepShellValidationReport {
     /// Validate retained shell evidence without promoting it to a solid.
     ///
-    /// This report is the shared shell-level validation envelope for downstream
-    /// crates that need exact BREP evidence but do not necessarily need a solid
-    /// volume. It follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): topology, closure, bounds, and
-    /// face geometry are replayed as explicit evidence, while open boundaries
-    /// or invalid faces remain blockers instead of being repaired by sewing or
-    /// tolerance merging. Classical BREP graph roles follow Mäntylä, *An
-    /// Introduction to Solid Modeling* (1988).
+    /// This shared shell-level envelope serves consumers that need exact BREP
+    /// evidence but not necessarily a solid volume. It replays topology,
+    /// closure, bounds, and face geometry explicitly; open boundaries and
+    /// invalid faces remain blockers instead of being sewn or tolerance-merged.
     pub fn from_shell(shell: &BrepShell) -> Self {
         let topology = shell.validate_topology();
         let closure = shell.audit_closure();
@@ -253,12 +249,10 @@ impl BrepShellValidationReport {
 impl BrepFaceValidationReport {
     /// Validate one face from retained shell evidence.
     ///
-    /// This report is the face-level aggregation point for the shared BREP
-    /// layer. Following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), it keeps surface preparation,
-    /// trim topology, and optional derived-mesh evidence as explicit replayed
-    /// facts. A caller can consume `exact_face_ready` only after the component
-    /// reports agree; unsupported or lossy sources remain named blockers.
+    /// This face-level aggregation keeps surface preparation, trim topology,
+    /// and optional derived-mesh evidence as explicit replayed facts. A caller
+    /// can consume `exact_face_ready` only after the component reports agree;
+    /// unsupported or lossy sources remain named blockers.
     pub fn from_shell_face(
         shell: &BrepShell,
         face: BrepFaceId,
@@ -365,11 +359,9 @@ impl BrepGeometryValidationReport {
     /// This is a first exact planar consistency report. It checks retained edge
     /// and vertex references, reuses trim-loop readiness, and certifies every
     /// boundary vertex against the face's support plane through
-    /// `hyperlimit::PreparedPlane3`. Following Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), unsupported
-    /// surfaces and unknown point/plane relations remain explicit blockers
-    /// rather than being hidden behind primitive-float tolerances. Full pcurve
-    /// image equality and adjacent-face curve agreement remain future reports.
+    /// `hyperlimit::PreparedPlane3`. Unsupported surfaces and unknown
+    /// point/plane relations remain explicit blockers. Full pcurve image
+    /// equality and adjacent-face curve agreement remain future reports.
     pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
         let Some(face_record) = shell.faces.iter().find(|candidate| candidate.id == face) else {
             return Self::blocked(

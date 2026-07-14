@@ -147,9 +147,8 @@ impl BrepTopologySnapshot {
 /// This fingerprint is intentionally an audit token, not a geometric hash API.
 /// It records ordered retained object identity, incidence, surface records, and
 /// exact vertex payloads so count-preserving mutations cannot reuse an old
-/// construction manifest. The gate follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997): exact combinatorial
-/// decisions are valid only for the object representation that was replayed.
+/// construction manifest. Combinatorial decisions remain valid only for the
+/// object representation that was replayed.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct BrepTopologyFingerprint {
     /// Deterministic FNV-1a-style digest over retained BREP evidence.
@@ -269,12 +268,9 @@ pub struct BrepConstructionProvenanceReport {
 impl BrepConstructionProvenanceReport {
     /// Validate a construction manifest against the current shell.
     ///
-    /// This is a Yap-style source-replay gate: exact decisions stay attached to
-    /// the source object versions and topology snapshot that justified them.
-    /// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997). The feature-history shape is intentionally similar to
-    /// product CAD kernels and BREP.io-style authoring records, but this layer
-    /// stores evidence only; editing policy belongs above `hyperbrep`.
+    /// Exact decisions stay attached to the source versions and topology
+    /// snapshot that justified them. This layer stores evidence only; editing
+    /// policy belongs above `hyperbrep`.
     pub fn from_manifest(manifest: &BrepConstructionManifest, shell: &BrepShell) -> Self {
         let mut blockers = BTreeSet::new();
         if manifest.feature.is_none() {

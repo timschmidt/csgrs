@@ -115,13 +115,10 @@ pub struct BrepPlanarExtrusionConstruction {
 impl BrepPlanarRegionConstruction {
     /// Construct a single planar BREP face from a line-only `Region2`.
     ///
-    /// This is the minimal shared bridge from `hypercurve` into `hyperbrep`.
-    /// It follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997): the exact curve object is retained until an
-    /// exact surface-frame evaluation constructs model-space vertices, and
-    /// unsupported segments block construction instead of falling back to a
-    /// display polyline. The face/loop/edge vocabulary follows Mäntylä, *An
-    /// Introduction to Solid Modeling* (1988).
+    /// This minimal bridge from `hypercurve` retains the exact curve object
+    /// until surface-frame evaluation constructs model-space vertices.
+    /// Unsupported segments block construction instead of falling back to a
+    /// display polyline.
     pub fn from_region_on_surface(
         region: &Region2,
         surface: BrepSurface,
@@ -232,16 +229,10 @@ impl BrepPlanarExtrusionConstruction {
     /// Construct a closed vertical prism shell from a line-only `Region2`.
     ///
     /// This is the first solid construction bridge from `hypercurve` into
-    /// `hyperbrep`. It preserves material and hole source contours as BREP
-    /// edges and emits analytic side planes instead of triangulating or
-    /// sampling. The
-    /// construction follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): exact object data stays retained
-    /// through the topology construction, and unsupported source families or
-    /// unresolved signs block the shell before downstream physics/voxel
-    /// handoffs can trust it. The oriented face construction follows the
-    /// classical BREP edge-use and inner-loop model described by Mäntylä, *An
-    /// Introduction to Solid Modeling* (1988).
+    /// `hyperbrep`. It preserves material and hole contours as BREP edges and
+    /// emits analytic side planes instead of triangulating or sampling.
+    /// Unsupported source families and unresolved signs block the shell before
+    /// downstream physics or voxel handoffs can trust it.
     pub fn vertical_prism_from_region(
         region: &Region2,
         base_z: Real,

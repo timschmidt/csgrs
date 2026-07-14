@@ -105,13 +105,9 @@ pub struct BrepShellEdgeAgreementReport {
 impl BrepShellEdgeAgreementReport {
     /// Validate adjacent face agreement for every retained edge.
     ///
-    /// This is a first report-bearing edge-image handoff. It follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): adjacent topology can be consumed only when the retained edge
-    /// uses and support-surface predicates replay exactly. Classical coedge and
-    /// manifold-pair semantics follow Mäntylä, *An Introduction to Solid
-    /// Modeling* (1988). Full pcurve image equality remains a future report
-    /// surface once curve-on-surface carriers exist.
+    /// Adjacent topology is ready only when retained edge uses and
+    /// support-surface predicates replay exactly. Full pcurve image equality
+    /// remains future work.
     pub fn from_shell(shell: &BrepShell) -> Self {
         let edge_by_id = shell
             .edges

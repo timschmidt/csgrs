@@ -133,13 +133,9 @@ pub struct BrepFaceUvBoundsReport {
 impl BrepSurfaceFrameReport {
     /// Prepare an exact axis planar frame for a retained surface.
     ///
-    /// This is a conservative first surface-frame boundary. It follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): the frame is accepted only when the retained object facts
-    /// certify a simple algebraic map, otherwise the uncertainty is reported
-    /// instead of constructing an arbitrary floating basis. The retained
-    /// surface/parameter distinction follows classical BREP practice as in
-    /// Mäntylä, *An Introduction to Solid Modeling* (1988).
+    /// The frame is accepted only when retained object facts certify a simple
+    /// algebraic map. Otherwise the uncertainty is reported instead of
+    /// constructing an arbitrary floating basis.
     pub fn from_surface(surface: &BrepSurface) -> Self {
         let facts = surface.facts();
         let surface_blockers = surface_blockers(surface);
@@ -232,13 +228,9 @@ impl BrepSurface {
 impl BrepFaceUvBoundsReport {
     /// Derive exact UV bounds by projecting retained face boundary vertices.
     ///
-    /// This report is the face-level consumer of the conservative surface
-    /// frame. It follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): the UV box is accepted only when
-    /// the frame and every coordinate ordering replay exactly; otherwise the
-    /// blockers remain visible to tessellation and construction callers. The
-    /// BREP edge-use traversal follows Mäntylä, *An Introduction to Solid
-    /// Modeling* (1988).
+    /// The UV box is accepted only when the frame and every coordinate ordering
+    /// replay exactly; otherwise blockers remain visible to tessellation and
+    /// construction callers.
     pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
         let Some(source_face) = shell.faces.iter().find(|candidate| candidate.id == face) else {
             return Self::blocked(

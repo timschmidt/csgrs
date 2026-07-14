@@ -160,12 +160,10 @@ pub struct BrepPreparedFaceQueryBatchReport {
 impl BrepFacePlanePreflightReport {
     /// Classify a face's exact AABB against a plane.
     ///
-    /// The implementation directly reuses `hyperlimit::PreparedPlane3` and its
-    /// exact plane/AABB classifier. Following Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), a `Below` or
-    /// `Above` AABB result is only a certified broad-phase rejection for plane
-    /// crossing; an `Intersecting` AABB is a candidate that still needs exact
-    /// surface/trim predicates before any topology changes.
+    /// The implementation reuses `hyperlimit::PreparedPlane3` and its exact
+    /// plane/AABB classifier. A `Below` or `Above` result certifies broad-phase
+    /// rejection; `Intersecting` still requires exact surface and trim
+    /// predicates before any topology change.
     pub fn from_shell_face_plane(shell: &BrepShell, face: BrepFaceId, plane: &Plane3) -> Self {
         let bounds = shell.face_bounds_report(face);
         let mut blockers = Vec::new();
@@ -210,13 +208,9 @@ impl BrepFacePlanePreflightReport {
 impl<'a> PreparedBrepFaceQuery<'a> {
     /// Prepare retained face evidence for repeated exact support-plane queries.
     ///
-    /// This is the reusable query-context boundary described by Yap's exact
-    /// geometric computation model: object facts and prepared predicate state
-    /// are cached, but each point, segment, or AABB relation still returns a
-    /// report-bearing exact/certified/unknown result. See Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    /// retained BREP face/surface lookup follows Mäntylä, *An Introduction to
-    /// Solid Modeling* (1988).
+    /// Object facts and prepared predicate state are cached, but every point,
+    /// segment, or AABB query still returns an exact, certified, or unknown
+    /// report.
     pub fn from_shell_face(shell: &'a BrepShell, face: BrepFaceId) -> Self {
         let bounds = shell.face_bounds_report(face);
         let mut blockers = Vec::new();
@@ -391,12 +385,9 @@ impl BrepSegmentFacePlaneReport {
     /// Classify a segment against the retained support plane of a face.
     ///
     /// This uses `hyperlimit::PreparedPlane3::classify_segment` over the exact
-    /// planar surface stored by `hyperbrep`. Following Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), this
-    /// report may reject segment/face interaction only when the segment is
-    /// strictly on one side of the support plane. Crossings, endpoint touches,
-    /// and coplanar segments remain narrow-phase candidates requiring exact
-    /// face-domain and trim-boundary replay.
+    /// retained plane. It rejects interaction only when the segment is strictly
+    /// on one side; crossings, endpoint touches, and coplanar segments remain
+    /// narrow-phase candidates requiring exact domain and trim replay.
     pub fn from_shell_face_segment(
         shell: &BrepShell,
         face: BrepFaceId,
@@ -481,12 +472,10 @@ impl BrepSegmentFacePlaneReport {
 impl BrepPointFacePlaneReport {
     /// Classify a point against the retained support plane of a face.
     ///
-    /// This report uses `hyperlimit::PreparedPlane3::classify_point` over the
-    /// face's exact planar surface. Per Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), an off-plane point
-    /// is a certified rejection for point-on-face queries, while an on-plane
-    /// point remains only a candidate until exact UV/domain and trim-boundary
-    /// predicates replay.
+    /// This uses `hyperlimit::PreparedPlane3::classify_point` over the face's
+    /// exact plane. An off-plane point is a certified rejection; an on-plane
+    /// point remains a candidate until exact UV-domain and trim predicates
+    /// replay.
     pub fn from_shell_face_point(shell: &BrepShell, face: BrepFaceId, point: &Point3) -> Self {
         let mut blockers = Vec::new();
         let mut side = None;

@@ -19,7 +19,7 @@ hyperreal = { path = "../../hyperreal" }
 hypervoxel = { path = "../../hypervoxel" }
 # hyperbrep = "0.2.0"
 # hypercurve = "0.3.0"
-# hyperreal = "0.13.0"
+# hyperreal = "0.13.1"
 # hypervoxel = "0.3.0"
 
 [patch.crates-io]

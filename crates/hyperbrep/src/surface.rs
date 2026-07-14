@@ -210,11 +210,8 @@ impl BrepSurface {
     /// Prepare this surface for repeated exact point classification.
     ///
     /// This wraps `hyperlimit::PreparedPlane3` for planes and returns explicit
-    /// blockers for unsupported or lossy surfaces. It mirrors Yap's exact
-    /// geometric computation split: retain object-level facts and prepared
-    /// predicate state near the surface, but do not infer face topology or trim
-    /// validity from a point-plane query alone. See Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// blockers for unsupported or lossy surfaces. Prepared predicate state
+    /// does not imply face-topology or trim validity.
     pub fn prepare(&self) -> PreparedBrepSurface<'_> {
         let facts = self.facts();
         let blockers = self.blockers_from_facts(&facts);

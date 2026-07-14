@@ -198,14 +198,10 @@ pub struct BrepShellClosureReport {
 impl BrepTopologyValidationReport {
     /// Validate retained topology graph facts without repairing them.
     ///
-    /// This report provides the reusable graph-level substrate described in
-    /// classical BREP validity models such as Mäntylä, *An Introduction to
-    /// Solid Modeling* (1988): vertices, edges, coedges, loops, and faces must
-    /// have consistent identity and incidence before geometric validation or
-    /// tessellation is meaningful. Following Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), missing incidence
-    /// and nonmanifold cases are explicit blockers rather than opportunities
-    /// for tolerance-based sewing or identity inference.
+    /// Vertices, edges, coedges, loops, and faces must have consistent identity
+    /// and incidence before geometric validation or tessellation is meaningful.
+    /// Missing incidence and nonmanifold cases are explicit blockers rather
+    /// than opportunities for tolerance-based sewing or identity inference.
     pub fn from_shell(shell: &BrepShell) -> Self {
         let counts = count_topology(shell);
         let mut blockers = BTreeSet::new();

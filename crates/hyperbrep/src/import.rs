@@ -120,10 +120,8 @@ impl BrepLossyFloatImportReport {
     /// Finite IEEE-754 values can be represented exactly as dyadic rationals in
     /// `hyperreal::Real`, so the coordinate lift itself is exact. The imported
     /// geometry is still a lossy adapter artifact because the source topology,
-    /// tolerances, and surface semantics came from an external system. This is
-    /// the same separation required by Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): exact scalar
-    /// encodings do not by themselves certify BREP combinatorics.
+    /// tolerances, and surface semantics came from an external system. Exact
+    /// scalar encodings do not by themselves certify BREP combinatorics.
     pub fn inspect_f64(
         source: impl Into<String>,
         coordinates: &[f64],

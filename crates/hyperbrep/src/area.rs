@@ -85,14 +85,9 @@ pub struct BrepFaceAreaReport {
 impl BrepFaceAreaReport {
     /// Derive exact projected twice-area for an axis-aligned planar face.
     ///
-    /// This report uses the polygon area-vector identity popularized in
-    /// graphics and computational geometry texts: for an ordered loop, the
-    /// component-wise sum of `p_i x p_{i+1}` gives twice the projected signed
-    /// area. In Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997), this is the kind of algebraic certificate that
-    /// should be replayed exactly instead of normalized through floating
-    /// tolerances. Retained BREP loop traversal follows Mäntylä, *An
-    /// Introduction to Solid Modeling* (1988).
+    /// For each ordered loop, the selected component of
+    /// `sum(p_i × p_{i+1})` gives twice the projected signed area. The sum is
+    /// replayed exactly instead of normalized through floating tolerances.
     pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
         let Some(source_face) = shell.faces.iter().find(|candidate| candidate.id == face) else {
             return Self::blocked(
@@ -279,7 +274,7 @@ fn axis_from_index(index: usize) -> BrepAreaProjectionAxis {
         0 => BrepAreaProjectionAxis::X,
         1 => BrepAreaProjectionAxis::Y,
         2 => BrepAreaProjectionAxis::Z,
-        _ => unreachable!("Point3 one-hot axis index must be in 0..3"),
+        _ => unreachable!("plane-normal axis index must be in 0..3"),
     }
 }
 

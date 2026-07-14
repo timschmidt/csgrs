@@ -134,11 +134,9 @@ pub struct BrepExportReport {
 impl BrepExportReport {
     /// Build an export report from manifest facts and optional mesh handoff.
     ///
-    /// This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): file/export artifacts remain
-    /// adapter products unless exact object evidence and replay certificates
-    /// are retained beside them. A ready OBJ or glTF route can be a useful
-    /// derived mesh view, but source BREP topology remains in `BrepShell`.
+    /// File artifacts remain adapter products even when exact object evidence
+    /// and replay certificates accompany them. A ready OBJ or glTF route is a
+    /// derived mesh view; source BREP topology remains in `BrepShell`.
     pub fn from_manifest(
         manifest: &BrepExportManifest,
         mesh_handoff: Option<&BrepMeshHandoffReport>,

@@ -173,13 +173,8 @@ impl BrepShell {
     ///
     /// The audit reports topological closure, nonmanifold edge use, invalid
     /// references, and supported-surface readiness. It does not infer missing
-    /// geometry or merge nearby vertices; those would be topology-changing
-    /// decisions and must be replayed through exact/certified predicates, per
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997). The topological vocabulary follows classical BREP
-    /// validity models such as Mäntylä, *An Introduction to Solid Modeling*
-    /// (1988): oriented edge uses assemble loops, loops bound faces, and closed
-    /// shells require paired manifold edge uses.
+    /// geometry or merge nearby vertices. Oriented edge uses assemble loops,
+    /// loops bound faces, and closed shells require paired manifold edge uses.
     pub fn audit_closure(&self) -> BrepShellClosureReport {
         BrepShellClosureReport::from_shell(self)
     }

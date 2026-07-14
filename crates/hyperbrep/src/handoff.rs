@@ -85,13 +85,10 @@ pub struct BrepExactSolidHandoffReport {
 impl BrepExactSurfaceHandoffReport {
     /// Build an exact retained-surface handoff from current shell evidence.
     ///
-    /// This report follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): downstream crates receive a
-    /// replayed object-evidence package, not a naked boolean. Open surfaces are
-    /// acceptable here when their retained face boundaries, support surfaces,
-    /// and bounds are exact-ready; closed-solid interpretation belongs to
-    /// [`BrepExactSolidHandoffReport`]. The retained topology vocabulary
-    /// follows Mäntylä, *An Introduction to Solid Modeling* (1988).
+    /// Downstream crates receive a replayed object-evidence package, not a
+    /// naked boolean. Open surfaces are acceptable when their retained face
+    /// boundaries, support surfaces, and bounds are exact-ready; closed-solid
+    /// interpretation belongs to [`BrepExactSolidHandoffReport`].
     pub fn from_shell(shell: &BrepShell) -> Self {
         let validation = shell.shell_validation_report();
         let bounds = validation.bounds.clone();
@@ -132,10 +129,8 @@ impl BrepExactSolidHandoffReport {
     /// This is the retained-BREP counterpart to `hypermesh`'s exact solid
     /// handoff: it requires a ready retained surface handoff, closed-shell solid
     /// readiness, optional construction freshness, and exact signed-volume
-    /// replay. Per Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), derived triangulations are not
-    /// promoted to trusted solid topology here; they remain separate mesh
-    /// handoffs.
+    /// replay. Derived triangulations remain separate mesh handoffs and are not
+    /// promoted to trusted solid topology.
     pub fn from_shell(shell: &BrepShell, construction: Option<&BrepConstructionManifest>) -> Self {
         let surface = BrepExactSurfaceHandoffReport::from_shell(shell);
         let solid = shell.solid_readiness_report(construction);

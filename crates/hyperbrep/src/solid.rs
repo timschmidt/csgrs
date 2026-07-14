@@ -27,7 +27,7 @@ pub enum BrepSolidReadinessBlocker {
     ConstructionNotFresh,
     /// The shell has no faces.
     EmptyShell,
-    /// Exact volume or orientation proof is not implemented yet.
+    /// Exact volume or orientation replay is not ready.
     VolumeReplayUnavailable,
 }
 
@@ -74,16 +74,11 @@ pub struct BrepSolidReadinessReport {
 impl BrepSolidReadinessReport {
     /// Build a solid-readiness report from retained BREP shell evidence.
     ///
-    /// This is intentionally stricter than a mesh/export gate and intentionally
-    /// narrower than a full CAD kernel. It follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): solid
-    /// consumers may use the shell only when closure, face evidence, bounds,
-    /// source freshness, and exact signed volume replay as exact/certified
-    /// facts. The volume component uses the determinant-based algebraic
-    /// certificate described by Mirtich, "Fast and Accurate Computation of
-    /// Polyhedral Mass Properties," *Journal of Graphics Tools* 1.2 (1996),
-    /// but blocks instead of guessing whenever the retained BREP evidence is
-    /// not exact-ready.
+    /// This is stricter than a mesh/export gate and narrower than a full CAD
+    /// kernel. Consumers may use the shell only when closure, face evidence,
+    /// bounds, source freshness, and signed volume replay as exact or certified
+    /// facts. The determinant-based volume certificate blocks instead of
+    /// guessing when retained BREP evidence is not exact-ready.
     pub fn from_shell(shell: &BrepShell, construction: Option<&BrepConstructionManifest>) -> Self {
         let shell_closure = shell.audit_closure();
         let shell_bounds = shell.shell_bounds_report();

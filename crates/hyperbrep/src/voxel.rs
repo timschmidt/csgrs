@@ -53,8 +53,7 @@ pub struct BrepVoxelHandoffReport {
     pub prepared_triangle_solid_report: Option<PreparedExactTriangleSolidMeshReport>,
     /// Whether the AABB broad-phase fixture is ready for `hypervoxel`.
     pub exact_aabb_handoff_ready: bool,
-    /// Whether exact retained triangles are available for a future
-    /// triangle-voxelization owner.
+    /// Whether exact retained triangles are available to voxelization consumers.
     pub exact_triangle_source_ready: bool,
     /// Whether exact retained triangle-solid voxelization is available now.
     pub exact_triangle_voxelization_ready: bool,
@@ -65,16 +64,12 @@ pub struct BrepVoxelHandoffReport {
 impl BrepVoxelHandoffReport {
     /// Build a BREP-to-voxel preflight report from retained shell evidence.
     ///
-    /// This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): the voxel owner receives exact
-    /// object evidence and named blockers rather than an approximate triangle
-    /// rasterization. The AABB fixture uses `hypervoxel::ExactBox`; exact
+    /// The voxel owner receives exact object evidence and named blockers rather
+    /// than an approximate triangle rasterization. The AABB fixture uses
+    /// `hypervoxel::ExactBox`; exact
     /// triangle-solid voxelization is exposed only after the retained BREP
     /// triangle handoff lowers into [`ExactTriangleSolidMesh`] and replays
-    /// through [`PreparedExactTriangleSolidMesh`]. The handoff follows the
-    /// BREP topology model of Mäntylä, *An Introduction to Solid Modeling*
-    /// (1988), while the prepared voxel schedule follows the exact
-    /// broad/narrow-phase separation used by Yap (1997).
+    /// through [`PreparedExactTriangleSolidMesh`].
     pub fn from_shell_frame(
         shell: &BrepShell,
         frame: GridFrame,

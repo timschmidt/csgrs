@@ -142,13 +142,9 @@ pub struct BrepFaceAabbPreflightReport {
 impl BrepFaceBoundsReport {
     /// Derive exact face bounds from retained topology and vertex coordinates.
     ///
-    /// The report follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): AABB coordinates are accepted
-    /// only when coordinate orderings are certified by `hyperreal::Real`.
-    /// Unknown orderings remain explicit blockers instead of becoming
-    /// primitive-float min/max tolerances. The topology source is the retained
-    /// BREP edge-use graph described by Mäntylä, *An Introduction to Solid
-    /// Modeling* (1988).
+    /// AABB coordinates are accepted only when `hyperreal::Real` certifies
+    /// their ordering. Unknown orderings remain explicit blockers instead of
+    /// becoming primitive-float min/max tolerances.
     pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
         let Some(source_face) = shell.faces.iter().find(|candidate| candidate.id == face) else {
             return Self::blocked(
@@ -260,11 +256,9 @@ impl BrepFaceBoundsReport {
 impl BrepShellBoundsReport {
     /// Derive exact shell bounds from retained vertex coordinates.
     ///
-    /// This is a broad-phase scheduling artifact. Per Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), the box
-    /// is exact only when all coordinate orderings are certified; otherwise the
-    /// report remains explicitly blocked instead of falling back to a lossy
-    /// primitive-float box.
+    /// This broad-phase artifact is exact only when every coordinate ordering
+    /// is certified. Otherwise it remains blocked instead of falling back to a
+    /// lossy primitive-float box.
     pub fn from_shell(shell: &BrepShell) -> Self {
         if shell.vertices.is_empty() {
             return Self {
@@ -343,10 +337,7 @@ impl BrepShell {
     ///
     /// A disjoint result can reject expensive downstream work. Touching or
     /// overlapping boxes remain only a candidate signal and must replay through
-    /// face/trim/surface predicates before changing topology. This follows
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997): approximate or broad-phase filters may accelerate the
-    /// stack, but they do not replace exact combinatorial decisions.
+    /// face, trim, and surface predicates before changing topology.
     pub fn face_aabb_preflight(
         &self,
         first: BrepFaceId,

@@ -4,9 +4,7 @@
 //! surface. For planar faces, the first exact question is not a sampled 3D
 //! proximity test: it is whether two pcurves lie on the same retained planar
 //! surface and replay the same UV image. This module keeps that evidence
-//! explicit, following Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 3-23 (1997), and the pcurve-on-surface
-//! representation used in Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
+//! explicit.
 
 use std::cell::OnceCell;
 use std::fmt;
@@ -194,10 +192,7 @@ pub struct BrepPlanarFaceRegion {
 /// The prepared object keeps the retained BREP support identity beside a
 /// prepared borrowed UV region. Cached boxes and prepared segment predicates
 /// are only broad-phase evidence: support-surface mismatch, boundary hits, and
-/// inside/outside status still replay through the exact classifiers. That
-/// separation follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 3-23 (1997), and the pcurve-on-surface
-/// face model in Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
+/// inside/outside status still replay through exact classifiers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedBrepPlanarFaceRegion<'a> {
     face: &'a BrepPlanarFaceRegion,
@@ -348,9 +343,9 @@ impl BrepPcurve {
     /// This is a structural exact predicate over authored top-level curves:
     /// equal images must have identical curve boundaries in UV, either in the
     /// same order or in exact reverse order. It supports every top-level
-    /// Hypercurve family, including arbitrary rational Beziers and NURBS, but does not
-    /// sample or merge unsplit overlaps; those remain later trim-splitting
-    /// work under Yap's construction/predicate boundary.
+    /// Hypercurve family, including arbitrary rational Beziers and NURBS, but
+    /// does not sample or merge unsplit overlaps; those remain later
+    /// trim-splitting work.
     pub fn image_equality_report(
         &self,
         other: &Self,
@@ -464,11 +459,8 @@ impl BrepPlanarFaceRegion {
     /// Constructs a retained planar face from material and hole trim loops.
     ///
     /// Every trim loop must reference the same retained planar support surface.
-    /// This validates the support-surface part of the BREP face before any
-    /// point-in-face predicate is allowed to consume UV topology. That is the
-    /// construction/predicate boundary from Yap, "Towards Exact Geometric
-    /// Computation" (1997), applied to planar pcurves as described by Piegl
-    /// and Tiller, *The NURBS Book* (2nd ed., 1997).
+    /// This validates support identity before any point-in-face predicate can
+    /// consume UV topology.
     pub fn try_new(
         surface: BrepSurfaceId,
         material_loops: Vec<BrepPlanarTrimLoop>,
@@ -599,10 +591,8 @@ impl BrepPlanarFaceRegion {
     /// This predicate is structural over retained UV segments: the pcurve must
     /// be an exact contiguous subchain of a material or hole trim loop, either
     /// directed or reversed. It deliberately does not project, sample, or
-    /// overlap-split arbitrary curves. That mirrors Yap's EGC requirement that
-    /// combinatorial topology be accepted only after replaying exact
-    /// construction evidence, and it follows the BREP pcurve edge-use model
-    /// described by Piegl and Tiller, *The NURBS Book* (2nd ed., 1997).
+    /// overlap-split arbitrary curves. Combinatorial topology is accepted only
+    /// after exact construction evidence replays.
     pub fn edge_use_report(
         &self,
         pcurve: &BrepPcurve,
@@ -660,10 +650,9 @@ impl<'a> PreparedBrepPlanarFaceRegion<'a> {
 
     /// Classifies a UV point against this prepared retained planar face.
     ///
-    /// The support-surface identity check intentionally stays outside the
-    /// prepared UV region. In Yap's EGC terms, preparation only retains
-    /// reusable object structure; it does not turn a query against the wrong
-    /// supporting surface into a geometric predicate.
+    /// The support-surface identity check stays outside the prepared UV region.
+    /// Preparation retains reusable object structure; it cannot turn a query
+    /// against the wrong surface into a valid geometric predicate.
     pub fn classify_uv_point(
         &self,
         query_surface: BrepSurfaceId,

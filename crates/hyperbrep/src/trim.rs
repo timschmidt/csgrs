@@ -100,13 +100,9 @@ pub struct BrepFaceTrimSetReport {
 impl BrepTrimLoopReport {
     /// Audit one loop as topology-only trim evidence.
     ///
-    /// The checks follow the retained BREP object model described by Mäntylä,
-    /// *An Introduction to Solid Modeling* (1988): ordered oriented edge uses
-    /// form loops which bound faces. The exactness boundary follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): this report records certified object facts and explicit
-    /// blockers instead of repairing gaps with tolerances or silently treating
-    /// an approximate chain as a valid trim.
+    /// Ordered oriented edge uses must form a closed loop that can bound a
+    /// face. This records certified object facts and explicit blockers instead
+    /// of repairing gaps or treating an approximate chain as a valid trim.
     pub fn from_shell_loop(
         shell: &BrepShell,
         face: BrepFaceId,

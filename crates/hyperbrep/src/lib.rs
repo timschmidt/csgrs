@@ -2,11 +2,9 @@
 //!
 //! `hyperbrep` owns retained BREP topology: vertices, edges, loops, faces,
 //! surfaces, and shell validation reports. It deliberately does not perform
-//! hidden healing, tolerance merging, or mesh-derived topology promotion. That
-//! follows Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997): topology-changing decisions must be backed by exact or
-//! certified predicates, while uncertain or adapter-derived evidence stays
-//! explicit.
+//! hidden healing, tolerance merging, or mesh-derived topology promotion.
+//! Topology-changing decisions require exact or certified predicates, while
+//! uncertain or adapter-derived evidence stays explicit.
 
 mod adjacency;
 mod area;

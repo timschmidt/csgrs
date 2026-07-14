@@ -79,15 +79,9 @@ impl BrepShellVolumeReport {
     /// Derive exact signed-volume evidence from retained oriented face loops.
     ///
     /// The computation fans each loop into triangles and accumulates
-    /// `det(a, b, c)`, yielding six times the oriented volume. This is the same
-    /// determinant-based volume identity used by Mirtich, "Fast and Accurate
-    /// Computation of Polyhedral Mass Properties," *Journal of Graphics Tools*
-    /// 1.2 (1996), but replayed over `hyperreal::Real` instead of primitive
-    /// floating point. Following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), the report does not repair open
-    /// shells, broken loop chains, or undecidable signs; they remain explicit
-    /// blockers. BREP loop traversal follows Mäntylä, *An Introduction to
-    /// Solid Modeling* (1988).
+    /// `det(a, b, c)`, yielding six times the oriented volume over
+    /// `hyperreal::Real`. Open shells, broken loop chains, and undecidable signs
+    /// remain explicit blockers.
     pub fn from_shell(shell: &BrepShell) -> Self {
         let closure = shell.audit_closure();
         let face_reports = shell

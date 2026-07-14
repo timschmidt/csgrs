@@ -27,9 +27,7 @@ pub struct BrepVoxelPackageRequest {
     ///
     /// The BREP package can provide exact AABB evidence and, for exact-ready
     /// retained solids, a prepared `hypervoxel` triangle-solid schedule.
-    /// Keeping this as an explicit request flag follows Yap's
-    /// exact-computation boundary: a blocked voxel route remains named
-    /// evidence, not a silent fallback.
+    /// A blocked requested route remains named evidence, not a silent fallback.
     pub require_triangle_voxelization: bool,
 }
 
@@ -115,11 +113,10 @@ impl BrepHandoffPackageManifest {
 impl BrepHandoffPackageReport {
     /// Build a consolidated package from current retained BREP evidence.
     ///
-    /// The package follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): every domain handoff is replayed
-    /// from the current object and every missing or unavailable route remains a
-    /// named blocker. It is a convenience envelope over the lower reports, not
-    /// a substitute for the detailed evidence those reports carry.
+    /// Every domain handoff is replayed from the current object, and every
+    /// missing or unavailable route remains a named blocker. This convenience
+    /// envelope does not replace the detailed evidence in its component
+    /// reports.
     pub fn from_shell_manifest(
         shell: &BrepShell,
         construction: Option<&BrepConstructionManifest>,
