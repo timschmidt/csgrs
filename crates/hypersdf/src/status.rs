@@ -1,10 +1,8 @@
 //! Public status and report types for exact-aware SDF classification.
 //!
 //! These types intentionally separate *sign classification* from *metric
-//! distance*. Yap's exact-geometric-computation model treats topology decisions
-//! as certified predicates over retained geometric objects, not as accidental
-//! consequences of approximate scalar samples. See Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! distance*. Topology decisions are certified predicates over retained
+//! geometric objects, not accidental consequences of approximate samples.
 
 use hyperlimit::{Certainty, Escalation, PredicateOutcome, RefinementNeed};
 

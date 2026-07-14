@@ -2,10 +2,8 @@
 //!
 //! A handoff package is an evidence envelope, not an inference engine. It keeps
 //! continuous-field facts beside optional adapter reports and forces consumers
-//! to ask for a named domain before using any payload. This mirrors Yap's
-//! geometric-computation separation: exact decisions live in predicate reports,
-//! while adapter payloads remain explicitly scoped evidence. See Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! to ask for a named domain before using any payload. Exact decisions live in
+//! predicate reports, while adapter payloads remain explicitly scoped evidence.
 
 use crate::facts::SdfFacts;
 use crate::handoff::SdfVoxelHandoffReport;

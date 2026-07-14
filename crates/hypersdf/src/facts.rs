@@ -2,9 +2,8 @@
 //!
 //! Facts are scheduling metadata, not topology certificates. They preserve
 //! exact-set/common-scale opportunities for later kernels while classification
-//! continues to return predicate reports. This follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997), especially
-//! the separation between geometric object packages and arithmetic packages.
+//! continues to return predicate reports, keeping geometric object packages
+//! separate from arithmetic packages.
 
 use hyperreal::{Real, RealExactSetFacts};
 

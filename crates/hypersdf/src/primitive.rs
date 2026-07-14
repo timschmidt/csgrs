@@ -1,8 +1,8 @@
 //! Analytic SDF primitives with retained exact geometry.
 //!
 //! The primitive carriers keep their authored structure instead of lowering
-//! immediately into a generic scalar expression. This follows Yap's EGC
-//! guidance and lets `hypersdf` replay topology decisions through `hyperlimit`
+//! immediately into a generic scalar expression. This lets `hypersdf` replay
+//! topology decisions through `hyperlimit`
 //! predicates such as point-plane, point-sphere, and AABB/sphere classifiers.
 
 use hyperlimit::{
@@ -38,7 +38,7 @@ pub enum SdfPrimitive {
     /// `radius_squared`; points on or inside the core use the AABB support
     /// value minus `radius_squared`. This preserves the boundary of the
     /// Minkowski sum without introducing a square root into topology
-    /// predicates, following Yap (1997).
+    /// predicates.
     RoundedAabb {
         /// Minimum corner of the core box.
         min: Point3,
@@ -52,8 +52,7 @@ pub enum SdfPrimitive {
     /// The retained sign-equivalent field is
     /// `max(radial_squared - radius_squared, abs(axis_delta) - half_height)`.
     /// This preserves the authored cylinder object and keeps classification
-    /// square-root-free, following Yap's exact-geometric-computation principle
-    /// of answering topology predicates over retained geometric packages.
+    /// square-root-free so topology predicates operate on retained packages.
     Cylinder {
         /// Cylinder axis.
         axis: SdfCoordinate,
@@ -69,7 +68,7 @@ pub enum SdfPrimitive {
     /// The retained field is squared distance to the axis segment minus the
     /// squared radius. Like the sphere and cylinder routes, this avoids square
     /// roots in topology predicates and keeps the authored segment-tube object
-    /// visible before scalar expansion, following Yap (1997).
+    /// visible before scalar expansion.
     Capsule {
         /// Capsule segment axis.
         axis: SdfCoordinate,
@@ -86,7 +85,7 @@ pub enum SdfPrimitive {
     /// radius `R2`, and minor squared radius `r2`, the retained field is
     /// `(rho2 + z*z + R2 - r2)^2 - 4*R2*rho2`. This is the standard implicit
     /// torus equation in square-root-free form, kept as an exact object package
-    /// before scalar expansion in the sense of Yap (1997).
+    /// before scalar expansion.
     Torus {
         /// Torus symmetry axis.
         axis: SdfCoordinate,
@@ -102,8 +101,7 @@ pub enum SdfPrimitive {
     /// This is a sign-equivalent implicit field for the closed region between
     /// two parallel planes. The half-width is retained and validated exactly,
     /// keeping the slab as a geometric object package rather than immediately
-    /// lowering it into arithmetic nodes; see Yap, "Towards Exact Geometric
-    /// Computation" (1997).
+    /// lowering it into arithmetic nodes.
     Slab { plane: Plane3, half_width: Real },
 }
 

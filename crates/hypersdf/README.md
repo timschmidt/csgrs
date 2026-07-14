@@ -11,49 +11,9 @@ inside/boundary/outside questions through exact or certified predicates where
 available, and it keeps preview sampling, meshing, shader export, and external
 solver proposals explicitly separate from certified geometry.
 
-## Hyper Ecosystem
-
-`hypersdf` is the implicit-field counterpart to retained BREP, mesh, and voxel
-geometry in the Hyper ecosystem.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar arithmetic,
-  rational facts, dyadic schedules, exact trigonometric shortcuts, and lossy
-  preview lowering.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): exact vectors,
-  matrices, affine transforms, and point carriers used by linear fields,
-  gradients, normals, and transforms.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): point, AABB, sphere,
-  plane, segment, sign, and ordering predicates used for exact classification.
-- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and
-  iterative candidate generation that can feed `hypersdf` projection replay.
-- [hypercurve](https://github.com/timschmidt/hypercurve): exact planar curve and
-  region evidence for future 2D implicit/curve handoffs.
-- [hypertri](https://github.com/timschmidt/hypertri): exact triangulation target
-  for future certified level-set meshing.
-- [hyperpath](https://github.com/timschmidt/hyperpath): routing, offset, and
-  toolpath carriers that can consume implicit boundaries after replay.
-- [hypermesh](https://github.com/timschmidt/hypermesh): exact mesh validation
-  consumer for replayed level-set or preview mesh handoffs.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): sparse-grid storage and
-  continuous-field intake target for exact SDF cell classifications.
-- [hyperparts](https://github.com/timschmidt/hyperparts): part and package evidence
-  that can reference implicit geometry and source-version freshness.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): design-readiness review that
-  can carry SDF-based mechanical or manufacturing evidence.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit evidence for
-  future electro-mechanical field coupling.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): material, contact,
-  thermal, and electromagnetic consumers for implicit shapes.
-- [hyperpack](https://github.com/timschmidt/hyperpack): exact packing and placement
-  verification that can use SDF bounds and voxel handoffs.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): search and
-  optimization loops for generated implicit fields and replayed candidates.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): retained BREP topology and
-  analytic-surface evidence complementary to implicit SDF fields.
-
 ## Current Status
 
-`hypersdf` is version `0.1.0`. Implemented today:
+`hypersdf` is version `0.2.0`. Implemented today:
 
 - retained `SdfExpr` expression trees for constants, coordinates, linear fields,
   primitives, CSG union/intersection/complement, arithmetic, absolute value,
@@ -164,7 +124,7 @@ trusting cached classifications after a generator changes.
 
 Build primitives and CSG with exact parameters:
 
-```rust,ignore
+```rust,no_run
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{prepare, SdfCoordinate, SdfExpr, SdfPointLocation};
@@ -296,19 +256,36 @@ can lower a ready `SdfHypervoxelHandoffReport` into a `hypervoxel`
 
 ## Development
 
-Useful local checks:
-
 ```sh
-cargo test
+cargo fmt --all -- --check
+cargo test --locked
+cargo check --benches --locked
+cargo clippy --all-targets --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
 cargo bench --bench classification
-cargo test --features hypervoxel-adapter
+cargo test --locked --features hypervoxel-adapter
 ```
 
 ## References
 
+Implementation comments describe local invariants and evidence boundaries; the
+algorithmic and numerical background is consolidated here.
+
 - Gibson, Sarah F. F. "Constrained Elastic Surface Nets: Generating Smooth Surfaces from Binary Segmented Data." *Medical Image Computing and Computer-Assisted Intervention*, 1998, pp. 888-898, https://doi.org/10.1007/BFb0056308.
+- Arvo, James. "Transforming Axis-Aligned Bounding Boxes." *Graphics Gems*, Academic Press, 1990, pp. 548-550.
 - Hart, John C. "Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces." *The Visual Computer*, vol. 12, no. 10, 1996, pp. 527-545, https://doi.org/10.1007/s003710050084.
+- Ju, Tao, et al. "Dual Contouring of Hermite Data." *Proceedings of SIGGRAPH 2002*, 2002, pp. 339-346, https://doi.org/10.1145/566570.566586.
 - Lorensen, William E., and Harvey E. Cline. "Marching Cubes: A High Resolution 3D Surface Construction Algorithm." *Computer Graphics*, vol. 21, no. 4, 1987, pp. 163-169, https://doi.org/10.1145/37402.37422.
 - Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
 - Frisken, Sarah F., et al. "Adaptively Sampled Distance Fields: A General Representation of Shape for Computer Graphics." *Proceedings of SIGGRAPH 2000*, 2000, pp. 249-254, https://doi.org/10.1145/344779.344899.
 - Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*, vol. 7, nos. 1-2, 1997, pp. 3-23, https://doi.org/10.1016/0925-7721(95)00040-2.
+
+## Hyper Ecosystem
+
+`hypersdf` builds exact fields over [hyperreal](https://github.com/timschmidt/hyperreal),
+[hyperlattice](https://github.com/timschmidt/hyperlattice), and
+[hyperlimit](https://github.com/timschmidt/hyperlimit). It exchanges solver,
+mesh, and grid evidence with [hypersolve](https://github.com/timschmidt/hypersolve),
+[hypermesh](https://github.com/timschmidt/hypermesh), and
+[hypervoxel](https://github.com/timschmidt/hypervoxel); complementary analytic
+topology lives in [hyperbrep](https://github.com/timschmidt/hyperbrep).

@@ -1,13 +1,11 @@
 //! Exact field transforms.
 //!
 //! `hypersdf` keeps transform nodes factored instead of baking coordinates
-//! into expanded scalar expressions. This mirrors Yap's object-level exactness
-//! boundary: a translation or affine frame can be replayed by transforming the
+//! into expanded scalar expressions. A translation or affine frame can be
+//! replayed by transforming the
 //! exact query point or cell before invoking the child predicate, preserving
 //! the child's certified topology route. General affine AABB replay maps all
-//! eight corners through the inverse frame, the standard interval-box
-//! transform used by Arvo, "Transforming Axis-Aligned Bounding Boxes,"
-//! *Graphics Gems* (1990), but with exact `Real` endpoints.
+//! eight corners through the inverse frame with exact `Real` endpoints.
 
 use core::cmp::Ordering;
 
@@ -52,8 +50,7 @@ impl SdfTransform {
     /// Only homogeneous matrices with last row `[0, 0, 0, 1]` are accepted.
     /// Projective transforms are deliberately rejected until the SDF model has
     /// explicit denominator-domain reports. The inverse is computed once using
-    /// `hyperlattice` exact matrix inversion, following Yap's recommendation
-    /// to preprocess stable geometric objects before repeated predicates.
+    /// `hyperlattice` exact matrix inversion so stable objects are prepared once.
     pub fn affine(matrix: Matrix4) -> Result<Self, SdfTransformError> {
         if !is_affine_matrix(&matrix) {
             return Err(SdfTransformError::NonAffineMatrix);

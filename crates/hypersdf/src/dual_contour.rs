@@ -1,13 +1,10 @@
 //! Dual-contouring proposal reports over regular signed grids.
 //!
 //! This module is deliberately a report layer, not an accepted mesh builder.
-//! Dual Contouring, after Ju, Losasso, Schaefer, and Warren, "Dual Contouring
-//! of Hermite Data" (SIGGRAPH 2002), places one vertex per active grid cell by
+//! Dual Contouring places one vertex per active grid cell by
 //! solving a quadratic error function (QEF) built from edge intersections and
 //! normals. In Hyper terms those edge roots, normals, and QEF rows are proposal
-//! evidence until they replay against retained exact objects. That boundary is
-//! the EGC split described by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): primitive samples can guide an
+//! evidence until they replay against retained exact objects. Primitive samples can guide an
 //! adapter, but topology is accepted only by exact or proof-bearing replay.
 
 use core::cmp::Ordering;

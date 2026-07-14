@@ -4,8 +4,7 @@
 //! predicates: they retain object shape and report exact evidence instead of
 //! collapsing a query to primitive floats. The cell routines deliberately use
 //! stronger primitive predicates when available, including the exact AABB/plane
-//! and AABB/sphere tests inspired by classical box culling and by Yap's
-//! exact-computation separation.
+//! and AABB/sphere tests from classical box culling.
 
 use hyperlimit::{
     Aabb3Intersection, AabbSphereIntersection, Certainty, Escalation, PlaneAabbRelation, Point3,
@@ -73,8 +72,7 @@ impl PreparedSdf {
     ///
     /// The version is metadata, not predicate evidence. It lets reports expose
     /// whether prepared facts are current relative to an external source object
-    /// without changing the exact classification route; this mirrors Yap's
-    /// separation between geometric-object packages and arithmetic decisions.
+    /// without changing the exact classification route.
     pub fn new_versioned(expr: SdfExpr, source_version: u64) -> Self {
         let facts = SdfFacts::from_expr(&expr);
         Self {
@@ -360,8 +358,8 @@ impl PreparedSdf {
 
     /// Build a dual-contouring proposal report from a regular exact grid.
     ///
-    /// The report follows Ju, Losasso, Schaefer, and Warren's Dual Contouring
-    /// Hermite/QEF shape, but keeps Yap's exact-computation boundary explicit:
+    /// The report follows the Dual Contouring Hermite/QEF shape, but keeps the
+    /// exact-computation boundary explicit:
     /// sampled scalar values are retained as adapter data, while endpoint
     /// signs, affine edge roots, and normals replay through the retained SDF
     /// where the current expression can certify them. The output is a mesh
@@ -381,8 +379,8 @@ impl PreparedSdf {
     /// surface candidates, primitive filters, and sampled face connectivity.
     /// The data is useful to downstream meshing algorithms, but it is not exact
     /// topology evidence. The report therefore keeps lossy-gradient and
-    /// connectivity blockers visible, following Yap's EGC requirement that
-    /// sampled views do not silently become accepted geometry.
+    /// connectivity blockers visible so sampled views do not silently become
+    /// accepted geometry.
     pub fn gradient_contouring_report_from_grid(
         &self,
         grid: SdfPreviewGrid,

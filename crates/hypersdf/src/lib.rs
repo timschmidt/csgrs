@@ -6,9 +6,8 @@
 //! not turn primitive-float samples, ray marching, or preview meshes into
 //! topology truth. Instead, retained field structure is classified through
 //! `hyperlimit` predicates and reported with metric status, exact evidence, and
-//! explicit unknowns. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): exactness is a property of the
-//! geometric system and its decisions, not only of individual scalar values.
+//! explicit unknowns. Exactness belongs to the geometric system and its
+//! decisions, not only to individual scalar values.
 
 mod batch;
 mod dual_contour;

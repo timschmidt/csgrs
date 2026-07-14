@@ -3,11 +3,8 @@
 //! Shader export is an adapter, not exact geometry. The generated GLSL-like
 //! source lowers exact `Real` constants into primitive floats and preserves
 //! only preview/evaluation intent. Sphere tracing and shader SDF practice are
-//! useful display routes; see Hart, "Sphere Tracing: A Geometric Method for
-//! the Antialiased Ray Tracing of Implicit Surfaces," *The Visual Computer*
-//! 12.10 (1996). Topology still has to replay through exact Hyper predicates,
-//! following Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997).
+//! useful display routes, but topology still replays through exact Hyper
+//! predicates.
 
 use hyperreal::Real;
 

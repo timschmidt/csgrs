@@ -4,11 +4,7 @@
 //! signed samples, finite-difference gradients, projected surface candidates,
 //! simple filters, and face-adjacent connectivity proposals. It deliberately
 //! does **not** accept topology. Central/one-sided finite differences are the
-//! standard sampled-gradient tool used by volume contouring pipelines; the
-//! Hermite-data role follows Ju, Losasso, Schaefer, and Warren, "Dual
-//! Contouring of Hermite Data" (SIGGRAPH 2002), while the sampled connectivity
-//! lineage is the same family as Lorensen and Cline, "Marching Cubes" (1987).
-//! Under Yap's "Towards Exact Geometric Computation" (1997), these primitive
+//! standard sampled-gradient tool used by volume contouring pipelines. These primitive
 //! gradients and projected points remain proposal evidence until replayed by
 //! exact or proof-producing geometry.
 

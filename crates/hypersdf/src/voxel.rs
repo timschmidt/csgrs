@@ -4,9 +4,8 @@
 //! storage. This module bridges the two without allocating voxel storage or
 //! importing `hypervoxel` types: it constructs exact cell AABBs from a retained
 //! grid frame, replays SDF cell predicates, and reports whether the frame shape
-//! is ready for `hypervoxel`-style octree indexing. This follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): sampled artifacts must carry the exact object/provenance package
+//! is ready for `hypervoxel`-style octree indexing. Sampled artifacts carry the
+//! exact object and provenance package
 //! that made their combinatorial labels meaningful.
 
 use core::cmp::Ordering;
@@ -217,9 +216,8 @@ pub enum SdfVoxelRowOrder {
 ///
 /// This is the producer-side counterpart to `hypervoxel`'s continuous-field
 /// intake manifest. It intentionally contains only stable scalar metadata and
-/// provenance, not consumer storage types. Following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), the exact
-/// predicate evidence and the sampled artifact metadata are kept together so
+/// provenance, not consumer storage types. Exact predicate evidence and sampled
+/// artifact metadata stay together so
 /// downstream crates do not infer combinatorial meaning from a row vector alone.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SdfHypervoxelInterchangeManifest {

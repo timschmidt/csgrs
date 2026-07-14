@@ -4,9 +4,7 @@
 //! This module makes that boundary explicit: values are lowered through
 //! `Real::to_f32_lossy`/`Real::to_f64_lossy`, reports count failed lowerings,
 //! records exact sign buckets before lowering, and keeps topology status
-//! preview-only. This is the same EGC boundary described by Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
-//! approximate values can be useful views, but they do not certify
+//! preview-only. Approximate values can be useful views, but they do not certify
 //! combinatorial decisions.
 
 use core::cmp::Ordering;

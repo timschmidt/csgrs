@@ -4,11 +4,8 @@
 //! representations. This module therefore records the sampled grid, scalar
 //! lowering status, crossing-edge diagnostics, and explicit preview-only
 //! topology status. Surface Nets and related contouring methods are useful
-//! preview algorithms, but their primitive-float samples must not become exact
-//! geometry without replay; see Gibson, "Constrained Elastic Surface Nets:
-//! Generating Smooth Surfaces from Binary Segmented Data," MICCAI (1998), and
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! preview algorithms, but their primitive-float samples do not become exact
+//! geometry without replay.
 
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 
@@ -85,9 +82,8 @@ impl SdfMeshPreviewReport {
     ///
     /// The implementation uses `fast_surface_nets` as a numerical proposal
     /// engine. Generated vertices, normals, and triangles are retained as
-    /// primitive-float preview data and the report remains `PreviewOnly`; this
-    /// follows Gibson's Surface Nets contouring idea while preserving Yap's
-    /// requirement that topology decisions replay through exact predicates.
+    /// primitive-float preview data and the report remains `PreviewOnly`;
+    /// topology decisions still replay through exact predicates.
     pub fn surface_nets_diagnostic(grid_samples: SdfGridSamplingReport) -> Self {
         let crossing_edge_count = count_crossing_edges(&grid_samples);
         let (vertices, triangles, normal_status, non_finite_output_count) =

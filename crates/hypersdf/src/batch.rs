@@ -3,9 +3,8 @@
 //! Batch APIs in this crate are scheduling surfaces, not alternate geometry
 //! semantics. They therefore carry explicit dispatch and cache-payoff metadata
 //! while every topology decision remains the same exact predicate replay used
-//! by scalar classification. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): performance packages
-//! may organize arithmetic work, but certified decisions remain report facts.
+//! by scalar classification. Performance packages may organize arithmetic work,
+//! but certified decisions remain report facts.
 
 use crate::status::{SdfCellClassificationReport, SdfFreshness, SdfPointClassificationReport};
 

@@ -5,8 +5,7 @@
 //! follow classical Lipschitz arithmetic rules over interval enclosures: sums
 //! add bounds, products use `|f| L_g + |g| L_f`, and min/max CSG composition
 //! takes the larger active-family bound. Unsupported expressions return
-//! explicit unknown evidence, preserving Yap's exact-geometric-computation
-//! separation between certified facts and missing optimizations.
+//! explicit unknown evidence, separating certified facts from missing optimizations.
 
 use core::cmp::Ordering;
 

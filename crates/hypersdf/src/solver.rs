@@ -3,9 +3,8 @@
 //! Iterative closest-point projection, ray/level-set intersection, fitting, and
 //! calibration are proposal mechanisms. `hypersdf` records those proposals and
 //! replays their candidates through exact/certified field classification
-//! instead of hiding numeric iteration inside topology decisions. This follows
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997), and matches the Hyper stack split where `hypersolve` owns residual
+//! instead of hiding numeric iteration inside topology decisions. This matches
+//! the Hyper stack split where `hypersolve` owns residual
 //! construction and nonlinear iteration while geometry crates own replayable
 //! evidence.
 

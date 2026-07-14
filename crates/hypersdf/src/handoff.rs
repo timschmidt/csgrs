@@ -4,7 +4,7 @@
 //! supplies continuous-field evidence. This module keeps that boundary narrow:
 //! it packages exact/certified cell classifications and summary counts, but it
 //! does not allocate a voxel tree or turn preview samples into occupancy. The
-//! design follows Yap's EGC rule that uncertain cells remain explicit unknowns.
+//! design keeps uncertain cells as explicit unknowns.
 
 use crate::status::{SdfCellClassificationReport, SdfCellLocation, SdfFreshness, SdfMetricStatus};
 

@@ -5,11 +5,10 @@
 //! sign-equivalent squared-distance-minus-radius expression, preserving the
 //! square-root-free decision route used by `hyperlimit`. Arithmetic nodes use
 //! classical outward-rounded interval arithmetic formulas, but over exact
-//! `Real` endpoints; see Moore, *Interval Analysis* (1966). Monotone `sqrt`
+//! `Real` endpoints. Monotone `sqrt`
 //! intervals are certified only when the whole child interval is nonnegative.
 //! The resulting interval is only accepted as predicate evidence when the sign
-//! decision is certified, following Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997).
+//! decision is certified.
 
 use core::cmp::Ordering;
 
@@ -384,8 +383,7 @@ fn rounded_aabb_interval(
 ) -> PredicateOutcome<SdfInterval> {
     // Conservative union of the two retained branches used for point
     // classification: core-AABB support inside the core, and squared distance
-    // outside the core. This follows Moore-style interval enclosure while
-    // keeping Yap's square-root-free predicate package intact.
+    // outside the core. This keeps the square-root-free predicate package intact.
     let aabb = match aabb_interval(shape_min, shape_max, cell_min, cell_max) {
         PredicateOutcome::Decided { value, .. } => SdfInterval {
             lower: &value.lower - radius_squared,

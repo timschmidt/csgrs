@@ -3,8 +3,8 @@
 //! This first expression core keeps the CSG operators that preserve zero-set
 //! sign semantics: `min` for union, `max` for intersection, and negation for
 //! complement. True metric-distance status is weakened unless a proof is
-//! available, which follows the metric/status split in Yap-style exact
-//! geometric computation rather than treating every formula as an SDF.
+//! available, preserving the metric/status split rather than treating every
+//! formula as an SDF.
 
 use crate::primitive::SdfPrimitive;
 use crate::status::SdfMetricStatus;
@@ -21,7 +21,7 @@ pub enum SdfExpr {
     ///
     /// The coefficient vector is retained as a `hyperlattice::Vector3` so
     /// vector structural facts remain available to downstream exact kernels
-    /// before scalar expansion, matching Yap's object-package guidance.
+    /// before scalar expansion.
     Linear {
         /// Exact vector coefficients in `[x, y, z]` order.
         coefficients: hyperlattice::Vector3,

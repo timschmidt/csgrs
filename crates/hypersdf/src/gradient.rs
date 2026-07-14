@@ -4,9 +4,8 @@
 //! module only returns a vector when the retained expression has a certified
 //! symbolic route at the query point. Branching constructs such as CSG min/max
 //! are rejected at ties, and piecewise primitives are rejected at unresolved
-//! branches. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): differential data may guide
-//! adapters and solvers, but topology still replays through predicates.
+//! branches. Differential data may guide adapters and solvers, but topology
+//! still replays through predicates.
 
 use core::cmp::Ordering;
 
@@ -54,8 +53,8 @@ impl SdfGradientReport {
 /// The normal is intentionally unnormalized. Normalizing would require a
 /// square root and possible division by an undecidable zero; for topology and
 /// solver replay, the exact nonzero direction is the useful certificate. This
-/// keeps the differential package aligned with Yap's exact-geometric-
-/// computation model: a missing or zero normal is an explicit report state,
+/// keeps the differential package aligned with the exactness model: a missing
+/// or zero normal is an explicit report state,
 /// not a tolerance fallback.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SdfNormalReport {
