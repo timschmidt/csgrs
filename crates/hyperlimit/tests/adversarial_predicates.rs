@@ -32,7 +32,15 @@ fn rational(numerator: i64, denominator: u64) -> Real {
 
 fn unknown_zero() -> Real {
     let one = Real::from(1);
-    one.clone().sin() - one.sin()
+    let sine = one.clone().sin();
+    let cosine = one.cos();
+    let value = sine.clone() * sine + cosine.clone() * cosine - Real::from(1);
+    assert_eq!(
+        value.zero_status(),
+        hyperreal::ZeroKnowledge::Unknown,
+        "the unknown-zero fixture must remain structurally undecided",
+    );
+    value
 }
 
 #[test]

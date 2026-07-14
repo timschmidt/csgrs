@@ -21,13 +21,12 @@ use crate::classify::{
     ConvexPointLocation, HalfspaceFeasibility, SupportDopPlaneRelation, SupportDopRelation,
 };
 use crate::geometry::{Plane3, Point3};
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome};
 use crate::predicates::halfspace::{
     HalfspaceFeasibilityReport, classify_halfspace_feasibility3_with_policy,
 };
 use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign;
 
 /// Exact integer direction used by a witnessed support slab.
 ///
@@ -1844,15 +1843,4 @@ fn stage_rank(stage: Escalation) -> u8 {
         Escalation::Refined => 3,
         Escalation::Undecided => 4,
     }
-}
-
-#[allow(dead_code)]
-fn projection_sign(value: &Real, policy: PredicatePolicy) -> PredicateOutcome<Sign> {
-    resolve_real_sign(
-        value,
-        policy,
-        || None,
-        || None,
-        RefinementNeed::RealRefinement,
-    )
 }
