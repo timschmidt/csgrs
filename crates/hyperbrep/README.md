@@ -23,8 +23,9 @@ evidence.
   point-plane classification, AABB relations, and predicate policy.
 - [hypersolve](https://github.com/timschmidt/hypersolve): exact residual replay for
   future solver-backed BREP construction and fitting checks.
-- [hypercurve](https://github.com/timschmidt/hypercurve): exact planar curve and
-  region evidence for future curve-on-surface and trim-domain work.
+- [hypercurve](https://github.com/timschmidt/hypercurve): exact 2D curve and region
+  geometry consumed by pcurves and planar trim domains; spatial curves remain owned
+  by `hyperbrep`.
 - [hypertri](https://github.com/timschmidt/hypertri): constrained triangulation and
   simplex handoff target for exact planar face tessellation.
 - [hyperpath](https://github.com/timschmidt/hyperpath): exact routing, offsetting,
@@ -50,11 +51,19 @@ evidence.
 
 ## Current Status
 
-`hyperbrep` is version `0.1.0` and is currently an exact-evidence carrier, not a
+`hyperbrep` is version `0.2.0` and is currently an exact-evidence carrier, not a
 general-purpose modeler. Implemented today:
 
 - retained topology records for vertices, edges, oriented coedges, loops, faces,
   surfaces, and shells;
+- top-level exact model-space curves with stable source/version provenance for
+  line segments, arbitrary-degree rational Beziers, and finite-domain NURBS;
+  homogeneous de Casteljau/de Boor evaluation never round-trips through planar or
+  primitive-float coordinates, and clones share weighted control nets;
+- retained planar pcurves over Hypercurve's top-level paths, including rational
+  Bezier and NURBS carriers, with exact structural image equality, clone-shared
+  reversal/native-segment facts, face-region trim domains, point classification,
+  edge-use reports, and typed failures for malformed trim topology;
 - exact planar surface support backed by `hyperlimit::Plane3`;
 - explicit unsupported and lossy surface-family records for adapter boundaries;
 - shell closure, topology validation, surface inventory, face bounds, trim-loop,
@@ -69,10 +78,12 @@ general-purpose modeler. Implemented today:
   not replacements for, retained BREP topology;
 - export manifests for OBJ, glTF, polyline, STEP-style, and external BREP routes.
 
-Non-planar analytic surfaces, NURBS/pcurve equality, boolean topology edits, sewing,
-exact volume/orientation proof, and full STEP/IGES import are intentionally not hidden
-behind tolerance heuristics yet. They must arrive as new exact reports or explicit
-adapter evidence.
+Non-planar analytic surfaces, geometric equality across differently partitioned
+pcurves, non-native curved face-trim edge-use, boolean topology edits, sewing, exact
+spatial-curve derivatives/intersections/editing and periodic NURBS, exact
+volume/orientation proof, and full STEP/IGES import are intentionally not hidden behind
+tolerance heuristics yet. They must arrive as new exact reports or explicit adapter
+evidence.
 
 ## Main Types
 
@@ -80,11 +91,23 @@ adapter evidence.
   are the retained topology carriers. Edges have stable ids and canonical
   directions; coedges record oriented uses; loops bound faces; shells aggregate
   vertices, edges, surfaces, and faces.
+- `BrepCurve3` is the top-level spatial curve carrier. `BrepLineSegment3`,
+  `BrepRationalBezier3`, and `BrepNurbsCurve3` own exact 3D geometry;
+  `BrepCurveSource3` and contextual `BrepCurveError3` preserve source version,
+  operation, family, and failure reason.
 - `BrepSurface`, `BrepSurfaceId`, `BrepSurfaceKind`, and `BrepSurfaceSource` retain
   support-surface evidence. `Plane` is the current exact-core family; unsupported
   and lossy imports stay named instead of being promoted.
 - `BrepSurfaceFacts`, `PreparedBrepSurface`, and `BrepSurfacePointReport` cache
   exact plane facts and replay point/surface predicates.
+- `BrepPcurve`, `BrepPlanarTrimLoop`, and `BrepPlanarFaceRegion` bind exact
+  `hypercurve` UV geometry to `BrepSurfaceId`. `BrepPcurve` owns a top-level
+  `CurvePath2`, so every planar curve family is retained without demotion. Their image,
+  point, and edge-use reports preserve support-surface identity before classifying trim
+  topology; `PreparedBrepPlanarFaceRegion` reuses prepared planar-region facts.
+- `BrepPlanarError` distinguishes missing material, support mismatch, duplicate,
+  self-contacting or intersecting trims, unowned holes, unresolved predicates, and
+  contradictory report evidence.
 - `BrepTopologyValidationReport`, `BrepShellClosureReport`, and
   `BrepSurfaceInventoryReport` summarize identity, incidence, closure, manifold
   edge use, and supported-surface readiness.
@@ -121,6 +144,10 @@ and `Plane3`. Plane preparation, point-plane classification, AABB relations, and
 segment-plane classification are delegated to `hyperlimit` instead of local epsilon
 tests.
 
+Spatial rational curves remain homogeneous through evaluation. Affine `Point3`
+coordinates are formed only once at the requested parameter, so projective poles are
+typed failures rather than silently sampled or demoted values.
+
 The crate improves precision by separating representation from certification. A finite
 `f64` import can be lifted exactly as a dyadic rational, but the import remains a lossy
 adapter report until topology evidence, tolerance metadata, and surface-family support
@@ -137,8 +164,8 @@ signal until exact trim and surface predicates replay.
 
 The crate avoids doing all work eagerly. Most APIs produce per-face or per-route
 reports, and shell-level reports aggregate those facts only when requested. Criterion
-coverage in `benches/shell_audit.rs` tracks closure, trim, bounds, preflight,
-validation, tessellation, import, export, and prepared-surface paths.
+coverage in `benches/shell_audit.rs` tracks closure, pcurve/face-region queries, trim,
+bounds, preflight, validation, tessellation, import, export, and prepared-surface paths.
 
 ## Numerical Explosion
 

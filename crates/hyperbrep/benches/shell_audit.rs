@@ -3,12 +3,13 @@ use hyperbrep::{
     BrepCoedge, BrepConstructionKind, BrepConstructionManifest, BrepEdge, BrepEdgeId,
     BrepEdgeOrientation, BrepExportFormat, BrepExportManifest, BrepExportScalarPolicy, BrepFace,
     BrepFaceId, BrepFaceTessellationManifest, BrepFeatureId, BrepImportedSurfaceFamily, BrepLoop,
-    BrepLoopId, BrepLossyFloatImportReport, BrepMeshHandoffReport, BrepPlanarExtrusionConstruction,
-    BrepPlanarRegionConstruction, BrepShell, BrepShellTessellationReport, BrepSourceVersion,
-    BrepSurface, BrepSurfaceId, BrepSurfaceSource, BrepTopologyFingerprint, BrepVertex,
-    BrepVertexId,
+    BrepLoopId, BrepLossyFloatImportReport, BrepMeshHandoffReport, BrepNurbsCurve3, BrepPcurve,
+    BrepPlanarExtrusionConstruction, BrepPlanarFaceRegion, BrepPlanarRegionConstruction,
+    BrepPlanarTrimLoop, BrepRationalBezier3, BrepShell, BrepShellTessellationReport,
+    BrepSourceVersion, BrepSurface, BrepSurfaceId, BrepSurfaceSource, BrepTopologyFingerprint,
+    BrepVertex, BrepVertexId,
 };
-use hypercurve::{Contour2, LineSeg2, Region2, Segment2};
+use hypercurve::{Contour2, Curve2, CurvePath2, CurvePolicy, LineSeg2, Region2, Segment2};
 use hyperlimit::{Plane3, Point2, Point3};
 use hyperreal::Real;
 
@@ -39,6 +40,20 @@ fn rectangle_contour(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2
         line2(uv(max_x, max_y), uv(min_x, max_y)),
         line2(uv(min_x, max_y), uv(min_x, min_y)),
     ])
+    .unwrap()
+}
+
+fn curve_path(points: &[(i32, i32)]) -> CurvePath2 {
+    CurvePath2::try_new(
+        points
+            .windows(2)
+            .map(|pair| {
+                Curve2::from(
+                    LineSeg2::try_new(uv(pair[0].0, pair[0].1), uv(pair[1].0, pair[1].1)).unwrap(),
+                )
+            })
+            .collect(),
+    )
     .unwrap()
 }
 
@@ -307,9 +322,7 @@ fn bench_shell_audit(c: &mut Criterion) {
         b.iter(|| trim_shell.point_face_plane_preflight(BrepFaceId(0), &query_point))
     });
     let prepared_query = trim_shell.prepare_face_query(BrepFaceId(0));
-    let query_points = (0..1024)
-        .map(|i| p((i % 17) as i32, (i % 31) as i32, 0))
-        .collect::<Vec<_>>();
+    let query_points = (0..1024).map(|i| p(i % 17, i % 31, 0)).collect::<Vec<_>>();
     let query_segments = query_points
         .iter()
         .take(128)
@@ -497,11 +510,9 @@ fn bench_shell_audit(c: &mut Criterion) {
         BrepSurfaceSource::ExactConstruction,
     );
     let prepared_surface = plane_surface.prepare();
-    let surface_query_points = (0..1024)
-        .map(|i| p((i % 17) as i32, (i % 31) as i32, i as i32))
-        .collect::<Vec<_>>();
+    let surface_query_points = (0..1024).map(|i| p(i % 17, i % 31, i)).collect::<Vec<_>>();
     let surface_uvs = (0..1024)
-        .map(|i| Point2::new(r((i % 17) as i32), r((i % 31) as i32)))
+        .map(|i| Point2::new(r(i % 17), r(i % 31)))
         .collect::<Vec<_>>();
     c.bench_function("hyperbrep planar surface frame uv evaluation", |b| {
         b.iter(|| {
@@ -519,6 +530,72 @@ fn bench_shell_audit(c: &mut Criterion) {
                 .map(|point| prepared_surface.classify_point(point))
                 .collect::<Vec<_>>()
         })
+    });
+
+    let pcurve_surface = BrepSurfaceId::new(103);
+    let trim = BrepPlanarTrimLoop::new(pcurve_surface, rectangle_contour(0, 0, 100, 100));
+    let rotated_trim = BrepPlanarTrimLoop::new(
+        pcurve_surface,
+        Contour2::try_new(vec![
+            line2(uv(100, 100), uv(0, 100)),
+            line2(uv(0, 100), uv(0, 0)),
+            line2(uv(0, 0), uv(100, 0)),
+            line2(uv(100, 0), uv(100, 100)),
+        ])
+        .unwrap(),
+    );
+    c.bench_function("hyperbrep planar trim image equality", |b| {
+        b.iter(|| trim.image_equality_report(&rotated_trim).unwrap())
+    });
+
+    let face_region = BrepPlanarFaceRegion::try_new(
+        pcurve_surface,
+        vec![trim],
+        vec![BrepPlanarTrimLoop::new(
+            pcurve_surface,
+            rectangle_contour(40, 40, 60, 60),
+        )],
+    )
+    .unwrap();
+    let query = uv(10, 10);
+    let curve_policy = CurvePolicy::certified();
+    c.bench_function("hyperbrep planar face point query", |b| {
+        b.iter(|| {
+            face_region
+                .classify_uv_point(pcurve_surface, &query, &curve_policy)
+                .unwrap()
+        })
+    });
+    let prepared_face = face_region.prepare_topology_queries(&curve_policy);
+    c.bench_function("hyperbrep prepared planar face point query", |b| {
+        b.iter(|| {
+            prepared_face
+                .classify_uv_point(pcurve_surface, &query, &curve_policy)
+                .unwrap()
+        })
+    });
+    let pcurve = BrepPcurve::new(pcurve_surface, curve_path(&[(0, 100), (0, 0), (100, 0)]));
+    c.bench_function("hyperbrep prepared planar face edge-use query", |b| {
+        b.iter(|| prepared_face.edge_use_report(&pcurve).unwrap())
+    });
+
+    let spatial_controls = vec![p(0, 0, 0), p(1, 2, 0), p(2, 0, 2)];
+    let spatial_weights = vec![r(1), r(2), r(1)];
+    let spatial_bezier =
+        BrepRationalBezier3::try_new(spatial_controls.clone(), spatial_weights.clone()).unwrap();
+    let spatial_nurbs = BrepNurbsCurve3::try_new(
+        2,
+        spatial_controls,
+        spatial_weights,
+        vec![r(0), r(0), r(0), r(1), r(1), r(1)],
+    )
+    .unwrap();
+    let half = (r(1) / r(2)).unwrap();
+    c.bench_function("hyperbrep spatial rational Bezier point", |b| {
+        b.iter(|| spatial_bezier.point_at(&half).unwrap())
+    });
+    c.bench_function("hyperbrep spatial NURBS point", |b| {
+        b.iter(|| spatial_nurbs.point_at(&half).unwrap())
     });
 }
 

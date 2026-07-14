@@ -148,11 +148,10 @@ impl BrepLossyFloatImportReport {
         let unsupported_surfaces = surfaces
             .iter()
             .enumerate()
-            .filter_map(|(surface_index, family)| {
-                (!family.is_supported_now()).then(|| BrepUnsupportedSurfaceRecord {
-                    surface_index,
-                    family: family.clone(),
-                })
+            .filter(|(_, family)| !family.is_supported_now())
+            .map(|(surface_index, family)| BrepUnsupportedSurfaceRecord {
+                surface_index,
+                family: family.clone(),
             })
             .collect::<Vec<_>>();
         let unknown_surface_count = surfaces
@@ -161,7 +160,7 @@ impl BrepLossyFloatImportReport {
             .count();
 
         let mut blockers = BTreeSet::new();
-        if coordinates.len() % 3 != 0 {
+        if !coordinates.len().is_multiple_of(3) {
             blockers.insert(BrepLossyImportBlocker::InvalidCoordinateArity);
         }
         if !non_finite_coordinate_indexes.is_empty() {

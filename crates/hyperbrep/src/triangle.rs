@@ -269,9 +269,12 @@ pub(crate) fn collect_loop_vertices(
     if starts.len() != coedges.len() {
         return None;
     }
-    for index in 0..starts.len() {
-        let next_index = (index + 1) % starts.len();
-        if ends[index] != starts[next_index] {
+    for (end, next_start) in ends
+        .iter()
+        .zip(starts.iter().cycle().skip(1))
+        .take(starts.len())
+    {
+        if end != next_start {
             blockers.push(BrepTriangleMeshBlocker::BrokenLoopChain);
         }
     }

@@ -12,11 +12,13 @@ mod adjacency;
 mod area;
 mod bounds;
 mod construction;
+mod curve;
 mod export;
 mod frame;
 mod handoff;
 mod import;
 mod package;
+mod pcurve;
 mod physics;
 mod provenance;
 mod query;
@@ -45,6 +47,11 @@ pub use construction::{
     BrepPlanarExtrusionConstruction, BrepPlanarExtrusionConstructionBlocker,
     BrepPlanarRegionConstruction, BrepPlanarRegionConstructionBlocker,
 };
+pub use curve::{
+    BrepCurve3, BrepCurveError3, BrepCurveErrorKind3, BrepCurveFamily3, BrepCurveGeometry3,
+    BrepCurveOperation3, BrepCurveParameterDomain3, BrepCurveResult3, BrepCurveSource3,
+    BrepLineSegment3, BrepNurbsCurve3, BrepRationalBezier3,
+};
 pub use export::{
     BrepExportBlocker, BrepExportFormat, BrepExportManifest, BrepExportReport,
     BrepExportScalarPolicy,
@@ -64,6 +71,12 @@ pub use import::{
 pub use package::{
     BrepHandoffPackageBlocker, BrepHandoffPackageManifest, BrepHandoffPackageReport,
     BrepVoxelPackageRequest,
+};
+pub use pcurve::{
+    BrepPcurve, BrepPcurveImageEqualityReport, BrepPcurveImageRelation, BrepPlanarError,
+    BrepPlanarFaceEdgeUseRelation, BrepPlanarFaceEdgeUseReport, BrepPlanarFacePointLocation,
+    BrepPlanarFacePointReport, BrepPlanarFaceRegion, BrepPlanarResult, BrepPlanarTrimLoop,
+    BrepPlanarTrimLoopRole, PreparedBrepPlanarFaceRegion,
 };
 pub use physics::{
     BrepPhysicsFixtureHandoffReport, BrepPhysicsMassBlocker, BrepPhysicsMassHandoffReport,

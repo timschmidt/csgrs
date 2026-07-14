@@ -148,9 +148,12 @@ impl BrepShellVolumeReport {
                     loop_ends.push(end);
                 }
 
-                for index in 0..loop_vertices.len() {
-                    let next_index = (index + 1) % loop_vertices.len();
-                    if loop_ends[index] != loop_vertices[next_index] {
+                for (end, next_start) in loop_ends
+                    .iter()
+                    .zip(loop_vertices.iter().cycle().skip(1))
+                    .take(loop_vertices.len())
+                {
+                    if end != next_start {
                         blockers.push(BrepShellVolumeBlocker::BrokenLoopChain);
                     }
                 }

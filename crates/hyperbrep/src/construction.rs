@@ -148,34 +148,29 @@ impl BrepPlanarRegionConstruction {
         let mut next_edge_id = 0_u64;
         let mut next_loop_id = 0_u64;
 
-        let outer = region.material_contours().first().and_then(|contour| {
-            build_loop_from_contour(
-                contour,
-                &surface,
-                &mut vertices,
-                &mut edges,
-                &mut next_vertex_id,
-                &mut next_edge_id,
-                &mut next_loop_id,
-                &mut blockers,
-            )
-        });
+        let (outer, inner) = {
+            let mut loop_builder = PlanarLoopBuilder {
+                surface: &surface,
+                vertices: &mut vertices,
+                edges: &mut edges,
+                next_vertex_id: &mut next_vertex_id,
+                next_edge_id: &mut next_edge_id,
+                next_loop_id: &mut next_loop_id,
+                blockers: &mut blockers,
+            };
+            let outer = region
+                .material_contours()
+                .first()
+                .and_then(|contour| loop_builder.build(contour));
 
-        let mut inner = Vec::new();
-        for contour in region.hole_contours() {
-            if let Some(face_loop) = build_loop_from_contour(
-                contour,
-                &surface,
-                &mut vertices,
-                &mut edges,
-                &mut next_vertex_id,
-                &mut next_edge_id,
-                &mut next_loop_id,
-                &mut blockers,
-            ) {
-                inner.push(face_loop);
+            let mut inner = Vec::new();
+            for contour in region.hole_contours() {
+                if let Some(face_loop) = loop_builder.build(contour) {
+                    inner.push(face_loop);
+                }
             }
-        }
+            (outer, inner)
+        };
 
         let shell = if blockers.is_empty() {
             outer.map(|outer| BrepShell {
@@ -616,51 +611,69 @@ fn build_vertical_prism_shell(
     }
 }
 
-fn build_loop_from_contour(
-    contour: &Contour2,
-    surface: &BrepSurface,
-    vertices: &mut Vec<BrepVertex>,
-    edges: &mut Vec<BrepEdge>,
-    next_vertex_id: &mut u64,
-    next_edge_id: &mut u64,
-    next_loop_id: &mut u64,
-    blockers: &mut BTreeSet<BrepPlanarRegionConstructionBlocker>,
-) -> Option<BrepLoop> {
-    if contour.is_empty() {
-        blockers.insert(BrepPlanarRegionConstructionBlocker::EmptyContour);
-        return None;
-    }
+struct PlanarLoopBuilder<'a> {
+    surface: &'a BrepSurface,
+    vertices: &'a mut Vec<BrepVertex>,
+    edges: &'a mut Vec<BrepEdge>,
+    next_vertex_id: &'a mut u64,
+    next_edge_id: &'a mut u64,
+    next_loop_id: &'a mut u64,
+    blockers: &'a mut BTreeSet<BrepPlanarRegionConstructionBlocker>,
+}
 
-    let mut coedges = Vec::with_capacity(contour.len());
-    let mut previous_end = None;
-    let mut first_start = None;
-
-    for segment in contour.segments() {
-        let Segment2::Line(line) = segment else {
-            blockers.insert(BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment);
+impl PlanarLoopBuilder<'_> {
+    fn build(&mut self, contour: &Contour2) -> Option<BrepLoop> {
+        if contour.is_empty() {
+            self.blockers
+                .insert(BrepPlanarRegionConstructionBlocker::EmptyContour);
             return None;
-        };
-        if previous_end.as_ref().is_some_and(|end| end != line.start()) {
-            blockers.insert(BrepPlanarRegionConstructionBlocker::BrokenContourChain);
         }
-        first_start.get_or_insert_with(|| line.start().clone());
-        previous_end = Some(line.end().clone());
 
-        let start =
-            lift_or_insert_vertex(surface, line.start(), vertices, next_vertex_id, blockers)?;
-        let end = lift_or_insert_vertex(surface, line.end(), vertices, next_vertex_id, blockers)?;
-        let edge = BrepEdgeId(*next_edge_id);
-        *next_edge_id += 1;
-        edges.push(BrepEdge::new(edge, start, end));
-        coedges.push(BrepCoedge::new(edge, BrepEdgeOrientation::Forward));
-    }
+        let mut coedges = Vec::with_capacity(contour.len());
+        let mut previous_end = None;
+        let mut first_start = None;
 
-    if first_start.as_ref() != previous_end.as_ref() {
-        blockers.insert(BrepPlanarRegionConstructionBlocker::BrokenContourChain);
+        for segment in contour.segments() {
+            let Segment2::Line(line) = segment else {
+                self.blockers
+                    .insert(BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment);
+                return None;
+            };
+            if previous_end.as_ref().is_some_and(|end| end != line.start()) {
+                self.blockers
+                    .insert(BrepPlanarRegionConstructionBlocker::BrokenContourChain);
+            }
+            first_start.get_or_insert_with(|| line.start().clone());
+            previous_end = Some(line.end().clone());
+
+            let start = lift_or_insert_vertex(
+                self.surface,
+                line.start(),
+                self.vertices,
+                self.next_vertex_id,
+                self.blockers,
+            )?;
+            let end = lift_or_insert_vertex(
+                self.surface,
+                line.end(),
+                self.vertices,
+                self.next_vertex_id,
+                self.blockers,
+            )?;
+            let edge = BrepEdgeId(*self.next_edge_id);
+            *self.next_edge_id += 1;
+            self.edges.push(BrepEdge::new(edge, start, end));
+            coedges.push(BrepCoedge::new(edge, BrepEdgeOrientation::Forward));
+        }
+
+        if first_start.as_ref() != previous_end.as_ref() {
+            self.blockers
+                .insert(BrepPlanarRegionConstructionBlocker::BrokenContourChain);
+        }
+        let face_loop = BrepLoop::new(BrepLoopId(*self.next_loop_id), coedges);
+        *self.next_loop_id += 1;
+        Some(face_loop)
     }
-    let face_loop = BrepLoop::new(BrepLoopId(*next_loop_id), coedges);
-    *next_loop_id += 1;
-    Some(face_loop)
 }
 
 fn lift_or_insert_vertex(

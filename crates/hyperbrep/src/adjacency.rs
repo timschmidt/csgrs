@@ -362,7 +362,10 @@ fn classify_endpoint(
     blockers: &mut BTreeSet<BrepEdgeAgreementBlocker>,
 ) -> bool {
     match plane.classify_point(point) {
-        PredicateOutcome::Decided { value, .. } if value == PlaneSide::On => true,
+        PredicateOutcome::Decided {
+            value: PlaneSide::On,
+            ..
+        } => true,
         PredicateOutcome::Decided { .. } => {
             blockers.insert(BrepEdgeAgreementBlocker::EndpointOffSurface);
             false

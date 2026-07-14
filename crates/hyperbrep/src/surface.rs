@@ -4,13 +4,23 @@
 //! adapter. Unsupported and lossy imports remain named surface kinds so callers
 //! cannot accidentally treat them as exact BREP topology.
 
-use hyperlimit::{
-    Plane3, PlaneSide, Point3, PredicateOutcome, PreparedPlane3, predicate::Escalation,
-};
+use hyperlimit::{Escalation, Plane3, PlaneSide, Point3, PredicateOutcome, PreparedPlane3};
 
 /// Stable identifier for a retained surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct BrepSurfaceId(pub u64);
+
+impl BrepSurfaceId {
+    /// Construct a stable retained surface identifier.
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    /// Return the stored identifier value.
+    pub const fn get(self) -> u64 {
+        self.0
+    }
+}
 
 /// Provenance class for a retained surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
@@ -29,7 +39,7 @@ pub enum BrepSurfaceSource {
 #[derive(Clone, Debug, PartialEq)]
 pub enum BrepSurfaceKind {
     /// Exact plane represented by `normal . point + offset = 0`.
-    Plane(Plane3),
+    Plane(Box<Plane3>),
     /// Named unsupported surface family retained for adapter diagnostics.
     Unsupported {
         /// Source family name, for example `"nurbs-surface"`.
@@ -96,7 +106,7 @@ pub enum PreparedBrepSurface<'a> {
         /// Cached surface facts.
         facts: BrepSurfaceFacts,
         /// Prepared `hyperlimit` plane classifier.
-        prepared: PreparedPlane3<'a>,
+        prepared: Box<PreparedPlane3<'a>>,
     },
     /// Unsupported or blocked surface.
     Blocked {
@@ -131,7 +141,7 @@ impl BrepSurface {
     pub fn plane(id: BrepSurfaceId, plane: Plane3, source: BrepSurfaceSource) -> Self {
         Self {
             id,
-            kind: BrepSurfaceKind::Plane(plane),
+            kind: BrepSurfaceKind::Plane(Box::new(plane)),
             source,
         }
     }
@@ -214,7 +224,7 @@ impl BrepSurface {
             return PreparedBrepSurface::Plane {
                 surface: self.id,
                 facts,
-                prepared: plane.prepare(),
+                prepared: Box::new(plane.prepare()),
             };
         }
         PreparedBrepSurface::Blocked {

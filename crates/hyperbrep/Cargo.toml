@@ -28,3 +28,6 @@ proptest = "1.7.0"
 [[bench]]
 name = "shell_audit"
 harness = false
+
+[patch.crates-io]
+hyperreal = { path = "../hyperreal" }

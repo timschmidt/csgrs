@@ -22,9 +22,19 @@ hypervoxel = { path = "../../hypervoxel" }
 # hyperreal = "0.13.0"
 # hypervoxel = "0.3.0"
 
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+
 [[bin]]
 name = "voxel_handoff"
 path = "fuzz_targets/voxel_handoff.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "planar_pcurve"
+path = "fuzz_targets/planar_pcurve.rs"
 test = false
 doc = false
 bench = false
