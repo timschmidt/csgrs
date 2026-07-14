@@ -9,6 +9,8 @@
 //! normalized into exact objects first, then predicates and validators decide
 //! whether the object can be trusted.
 
+use std::borrow::Cow;
+
 use crate::specctra::SpecctraParseError;
 
 /// Tokenize a DSN/SES-style S-expression subset.
@@ -18,7 +20,7 @@ use crate::specctra::SpecctraParseError;
 /// strings, and quoted strings may contain spaces plus `\\`, `\"`, `\n`, `\r`,
 /// and `\t` escapes. Unterminated strings or dangling escapes are syntax
 /// errors, because accepting partial source atoms would weaken provenance.
-pub(crate) fn tokenize(input: &str) -> Result<Vec<String>, SpecctraParseError> {
+pub(crate) fn tokenize(input: &str) -> Result<Vec<Cow<'_, str>>, SpecctraParseError> {
     let mut lexer = Lexer::new(input);
     lexer.tokenize()
 }
@@ -56,65 +58,83 @@ pub(crate) fn write_atom(output: &mut String, atom: &str) {
 }
 
 struct Lexer<'a> {
-    chars: std::str::Chars<'a>,
-    tokens: Vec<String>,
-    current: String,
+    input: &'a str,
+    chars: std::str::CharIndices<'a>,
+    tokens: Vec<Cow<'a, str>>,
+    atom_start: Option<usize>,
 }
 
 impl<'a> Lexer<'a> {
     fn new(input: &'a str) -> Self {
         Self {
-            chars: input.chars(),
+            input,
+            chars: input.char_indices(),
             tokens: Vec::new(),
-            current: String::new(),
+            atom_start: None,
         }
     }
 
-    fn tokenize(&mut self) -> Result<Vec<String>, SpecctraParseError> {
-        while let Some(character) = self.chars.next() {
+    fn tokenize(&mut self) -> Result<Vec<Cow<'a, str>>, SpecctraParseError> {
+        while let Some((index, character)) = self.chars.next() {
             match character {
                 '(' | ')' => {
-                    self.flush_atom();
-                    self.tokens.push(character.to_string());
+                    self.flush_atom(index);
+                    self.tokens
+                        .push(Cow::Borrowed(&self.input[index..index + 1]));
                 }
                 ';' => {
-                    self.flush_atom();
+                    self.flush_atom(index);
                     self.skip_comment();
                 }
                 '"' => {
-                    self.flush_atom();
-                    let string = self.parse_quoted_string()?;
+                    self.flush_atom(index);
+                    let string = self.parse_quoted_string(index + 1)?;
                     self.tokens.push(string);
                 }
-                c if c.is_whitespace() => self.flush_atom(),
-                c => self.current.push(c),
+                c if c.is_whitespace() => self.flush_atom(index),
+                _ => {
+                    self.atom_start.get_or_insert(index);
+                }
             }
         }
-        self.flush_atom();
+        self.flush_atom(self.input.len());
         Ok(std::mem::take(&mut self.tokens))
     }
 
-    fn flush_atom(&mut self) {
-        if !self.current.is_empty() {
-            self.tokens.push(std::mem::take(&mut self.current));
+    fn flush_atom(&mut self, end: usize) {
+        if let Some(start) = self.atom_start.take() {
+            self.tokens.push(Cow::Borrowed(&self.input[start..end]));
         }
     }
 
     fn skip_comment(&mut self) {
-        for character in self.chars.by_ref() {
+        for (_, character) in self.chars.by_ref() {
             if character == '\n' {
                 break;
             }
         }
     }
 
-    fn parse_quoted_string(&mut self) -> Result<String, SpecctraParseError> {
-        let mut value = String::new();
-        while let Some(character) = self.chars.next() {
+    fn parse_quoted_string(
+        &mut self,
+        content_start: usize,
+    ) -> Result<Cow<'a, str>, SpecctraParseError> {
+        let mut value = None::<String>;
+        let mut segment_start = content_start;
+        while let Some((index, character)) = self.chars.next() {
             match character {
-                '"' => return Ok(value),
+                '"' => {
+                    if let Some(mut value) = value {
+                        value.push_str(&self.input[segment_start..index]);
+                        return Ok(Cow::Owned(value));
+                    }
+                    return Ok(Cow::Borrowed(&self.input[content_start..index]));
+                }
                 '\\' => {
-                    let escaped = self.chars.next().ok_or(SpecctraParseError::InvalidSyntax)?;
+                    let value = value.get_or_insert_with(String::new);
+                    value.push_str(&self.input[segment_start..index]);
+                    let (escaped_index, escaped) =
+                        self.chars.next().ok_or(SpecctraParseError::InvalidSyntax)?;
                     match escaped {
                         '\\' => value.push('\\'),
                         '"' => value.push('"'),
@@ -123,10 +143,32 @@ impl<'a> Lexer<'a> {
                         't' => value.push('\t'),
                         _ => return Err(SpecctraParseError::InvalidSyntax),
                     }
+                    segment_start = escaped_index + escaped.len_utf8();
                 }
-                c => value.push(c),
+                _ => {}
             }
         }
         Err(SpecctraParseError::InvalidSyntax)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tokenizer_borrows_unescaped_source_atoms() {
+        let tokens = tokenize("(wire 12 \"named net\" \"escaped\\nname\")").unwrap();
+        assert_eq!(
+            tokens.iter().map(Cow::as_ref).collect::<Vec<_>>(),
+            ["(", "wire", "12", "named net", "escaped\nname", ")"]
+        );
+        assert!(
+            tokens[..4]
+                .iter()
+                .all(|token| matches!(token, Cow::Borrowed(_)))
+        );
+        assert!(matches!(tokens[4], Cow::Owned(_)));
+        assert!(matches!(tokens[5], Cow::Borrowed(_)));
     }
 }

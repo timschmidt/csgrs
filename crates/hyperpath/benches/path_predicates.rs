@@ -1999,6 +1999,22 @@ fn path_predicates(c: &mut Criterion) {
     c.bench_function("specctra_grid_route_text_parse", |b| {
         b.iter(|| parse_specctra_grid_trace_records(&route_text))
     });
+    let route_batch = (0..256)
+        .map(|index| SpecctraGridTraceRecord {
+            net: NetId(index % 16),
+            layer: TraceLayer((index % 4) as u16),
+            start_x: i64::from(index) * 10,
+            start_y: i64::from(index % 8) * 10,
+            end_x: i64::from(index + 1) * 10,
+            end_y: i64::from(index % 8) * 10,
+            width: 8,
+            grid_denominator: 10,
+        })
+        .collect::<Vec<_>>();
+    let route_batch_text = serialize_specctra_grid_trace_records(&route_batch);
+    c.bench_function("specctra_grid_route_text_parse_256", |b| {
+        b.iter(|| parse_specctra_grid_trace_records(&route_batch_text))
+    });
     let via_record_text = SpecctraGridViaRecord {
         net: NetId(3),
         start_layer: TraceLayer(0),

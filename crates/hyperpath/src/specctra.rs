@@ -12,6 +12,7 @@
 
 use hyperlimit::Point2;
 use hyperreal::{Rational, Real};
+use std::borrow::Cow;
 use std::fmt::Write;
 
 use crate::arc::{ArcDirection, ExplicitCircularArc};
@@ -1115,13 +1116,13 @@ fn drill_intent_atom(intent: ViaDrillIntent) -> &'static str {
     }
 }
 
-struct Parser<'a> {
-    tokens: &'a [String],
+struct Parser<'tokens, 'input> {
+    tokens: &'tokens [Cow<'input, str>],
     index: usize,
 }
 
-impl<'a> Parser<'a> {
-    fn new(tokens: &'a [String]) -> Self {
+impl<'tokens, 'input> Parser<'tokens, 'input> {
+    fn new(tokens: &'tokens [Cow<'input, str>]) -> Self {
         Self { tokens, index: 0 }
     }
 
@@ -1211,16 +1212,16 @@ impl<'a> Parser<'a> {
     }
 
     fn peek(&self) -> Option<&str> {
-        self.tokens.get(self.index).map(String::as_str)
+        self.tokens.get(self.index).map(Cow::as_ref)
     }
 
-    fn next(&mut self) -> Result<&'a str, SpecctraParseError> {
+    fn next(&mut self) -> Result<&'tokens str, SpecctraParseError> {
         let token = self
             .tokens
             .get(self.index)
             .ok_or(SpecctraParseError::InvalidSyntax)?;
         self.index += 1;
-        Ok(token)
+        Ok(token.as_ref())
     }
 
     fn expect(&mut self, expected: &str) -> Result<(), SpecctraParseError> {
@@ -1237,7 +1238,7 @@ impl<'a> Parser<'a> {
         }
         self.tokens
             .get(self.index + 1)
-            .map(String::as_str)
+            .map(Cow::as_ref)
             .ok_or(SpecctraParseError::InvalidSyntax)
     }
 
@@ -1459,7 +1460,7 @@ impl<'a> Parser<'a> {
 
     fn peek_field_name(&self) -> Option<&str> {
         if self.peek() == Some("(") {
-            self.tokens.get(self.index + 1).map(String::as_str)
+            self.tokens.get(self.index + 1).map(Cow::as_ref)
         } else {
             None
         }
