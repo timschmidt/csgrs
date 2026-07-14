@@ -62,7 +62,7 @@ pub struct ScreenPoint {
     pub y: f64,
 }
 
-/// F64 render projection matrix.
+/// `f64` render projection matrix.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Projection64 {
     matrix: Matrix4<f64>,
@@ -144,7 +144,7 @@ impl ExactCamera {
         Ok(())
     }
 
-    /// Reset to CopperForge's tilted top-down orientation.
+    /// Reset to the default tilted top-down orientation.
     pub fn reset_top_down(&mut self) {
         self.yaw = Real::zero();
         self.pitch = degrees(-55);

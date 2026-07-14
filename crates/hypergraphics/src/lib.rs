@@ -1,14 +1,13 @@
-//! Hyperreal-owned 3D graphics geometry and a small glow renderer.
+//! Exact 3D scene geometry with an explicit primitive-float rendering boundary.
 //!
-//! This crate extracts the low-level desktop 3D renderer shape from
-//! CopperForge's `render3d` module: colored meshes, an orbit camera, grid and
-//! axis helpers, and an unlit OpenGL shader. The adaptation point is ownership:
-//! scene geometry stays in [`Real`] / [`Point3`] form until an explicit render
-//! export projects it to finite primitive values.
+//! Scene geometry stays in [`Real`] and [`Point3`] form until an explicit render
+//! export projects it to finite `f64` values. The crate also provides colored
+//! meshes, an orbit camera, grid and axis helpers, and an unlit OpenGL/WebGL
+//! backend.
 //!
-//! `hyperlimit` remains responsible for exact geometric predicates and
-//! `hypertri` remains responsible for triangulation. Rendering APIs expose only
-//! lossy f64/f32 views and must not be used as topology certificates.
+//! `hyperlimit` supplies robust geometric predicates and `hypertri` supplies
+//! triangulation. Rendering APIs expose lossy `f64`/`f32` views and must not be
+//! used as topology certificates.
 
 #![warn(missing_docs)]
 

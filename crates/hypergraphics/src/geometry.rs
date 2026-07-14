@@ -72,7 +72,7 @@ pub struct RenderVertex64 {
 }
 
 impl RenderVertex64 {
-    /// Return the CopperForge-compatible `xyz rgb` stride as f64.
+    /// Return the interleaved `xyz rgb` values as `f64`.
     pub fn to_xyz_rgb(self) -> [f64; 6] {
         [
             self.position[0],

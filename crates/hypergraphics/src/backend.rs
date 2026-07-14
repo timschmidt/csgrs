@@ -1,4 +1,4 @@
-//! CopperForge-style glow backend for exact meshes.
+//! `glow` backend for exact meshes.
 //!
 //! The backend receives f64 render exports from hyperreal-owned scene data and
 //! narrows them to OpenGL f32 attributes only at upload/uniform time.
@@ -57,7 +57,7 @@ varying vec3 v_col;
 void main() { gl_FragColor = vec4(v_col, u_alpha); }
 "#;
 
-/// GPU-side colored mesh with CopperForge's `xyz rgb` stride.
+/// GPU-side colored mesh with an interleaved `xyz rgb` stride.
 pub struct GpuColoredMesh {
     vao: glow::VertexArray,
     vbo: glow::Buffer,
@@ -146,8 +146,9 @@ impl GpuColoredMesh {
     }
 }
 
-// The egui_glow paint callback closure must be Send + Sync. glow handles are
-// used on the UI thread in the extracted CopperForge pattern.
+// SAFETY: This type stores only GL object names and CPU metadata, not a context.
+// Each unsafe method requires the caller to use the owning context and obey its
+// thread-affinity rules.
 unsafe impl Send for GpuColoredMesh {}
 unsafe impl Sync for GpuColoredMesh {}
 
@@ -213,6 +214,8 @@ impl UnlitProgram {
     }
 }
 
+// SAFETY: As above, the program stores object names and uniform locations but
+// not a context; callers must enforce context ownership and thread affinity.
 unsafe impl Send for UnlitProgram {}
 unsafe impl Sync for UnlitProgram {}
 

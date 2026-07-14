@@ -2,7 +2,7 @@
 name = "hypergraphics"
 version = "0.1.0"
 edition = "2024"
-description = "Hyperreal-owned 3D graphics geometry with a CopperForge-derived glow renderer."
+description = "Exact 3D scene geometry with explicit f64/f32 rendering boundaries."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/hypergraphics"
@@ -20,7 +20,7 @@ hypertri = { path = "../hypertri", default-features = false, features = ["earcut
 # hyperreal = { version = "0.13.0" }
 # hyperlattice = { version = "0.6.0" }
 # hyperlimit = { version = "0.4.0", default-features = false, features = ["std"] }
-# hypertri = { version = "0.3.0", default-features = false, features = ["earcut"] }
+# hypertri = { version = "0.4.0", default-features = false, features = ["earcut"] }
 
 bytemuck = "1.23"
 glow = "0.16"
