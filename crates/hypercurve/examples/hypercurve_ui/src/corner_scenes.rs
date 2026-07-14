@@ -13,6 +13,7 @@ use crate::theme::Theme;
 const DISPLAY_STEPS: usize = 48;
 const FAMILY_COUNT: usize = 8;
 const HOLE_COUNT: usize = 4;
+const HOLE_SCALE: i32 = 3;
 #[cfg(test)]
 const OUTER_CURVE_COUNT: usize = FAMILY_COUNT * 2;
 const HOLE_CURVE_COUNT: usize = FAMILY_COUNT;
@@ -52,8 +53,8 @@ impl CornerOperation {
 
     const fn amount_bounds(self) -> (f64, f64) {
         match self {
-            Self::Fillet => (0.25, 0.7),
-            Self::Chamfer => (0.25, 1.5),
+            Self::Fillet => (0.25, 3.0),
+            Self::Chamfer => (0.25, 4.0),
         }
     }
 }
@@ -71,7 +72,7 @@ fn hole_templates() -> [HoleTemplate; HOLE_COUNT] {
     // its neighbors tangentially. That keeps every corner decision exact.
     [
         HoleTemplate {
-            origin: (-48, -9),
+            origin: (-45, -20),
             points: [
                 (-13, -2),
                 (-8, -7),
@@ -94,7 +95,7 @@ fn hole_templates() -> [HoleTemplate; HOLE_COUNT] {
             ],
         },
         HoleTemplate {
-            origin: (24, -8),
+            origin: (45, -20),
             points: [
                 (-13, -4),
                 (-7, -10),
@@ -117,7 +118,7 @@ fn hole_templates() -> [HoleTemplate; HOLE_COUNT] {
             ],
         },
         HoleTemplate {
-            origin: (-45, 43),
+            origin: (-15, 40),
             points: [
                 (-14, -1),
                 (-10, -5),
@@ -140,7 +141,7 @@ fn hole_templates() -> [HoleTemplate; HOLE_COUNT] {
             ],
         },
         HoleTemplate {
-            origin: (37, 39),
+            origin: (50, 40),
             points: [
                 (-10, -6),
                 (-5, -11),
@@ -227,19 +228,10 @@ impl CornerScene {
             ScrollArea::vertical().show(ui, |ui| {
                 ui.heading(self.operation.heading());
                 let (minimum, maximum) = self.operation.amount_bounds();
-                let mut slider = Slider::new(&mut self.amount, minimum..=maximum)
-                    .text(self.operation.amount_label());
-                if self.operation == CornerOperation::Fillet {
-                    slider = slider
-                        .custom_formatter(|q, _| format!("{:.3}", 2.0 * q * q))
-                        .custom_parser(|text| {
-                            text.parse::<f64>()
-                                .ok()
-                                .filter(|radius| *radius >= 0.0)
-                                .map(|radius| (radius / 2.0).sqrt())
-                        });
-                }
-                ui.add(slider);
+                ui.add(
+                    Slider::new(&mut self.amount, minimum..=maximum)
+                        .text(self.operation.amount_label()),
+                );
                 ui.separator();
                 ui.label(format!(
                     "CurveRegion2: {} boundaries · 1 irregular material + {HOLE_COUNT} unique eight-family holes",
@@ -488,11 +480,7 @@ fn corner_witness_for(
     operation: CornerOperation,
     amount: &Real,
 ) -> Result<CornerWitness, String> {
-    let amount = match operation {
-        CornerOperation::Fillet => Real::from(2_i32) * (amount * amount),
-        CornerOperation::Chamfer => amount.clone(),
-    };
-    linear_image_corner_witness(source, vertex_index, operation, &amount)
+    linear_image_corner_witness(source, vertex_index, operation, amount)
 }
 
 fn linear_image_corner_witness(
@@ -760,7 +748,7 @@ fn point(x: i32, y: i32) -> Point2 {
 }
 
 fn local_point(origin: (i32, i32), x: i32, y: i32) -> Point2 {
-    point(origin.0 + x, origin.1 + y)
+    point(origin.0 + HOLE_SCALE * x, origin.1 + HOLE_SCALE * y)
 }
 
 fn rational(numerator: i32, denominator: i32) -> Real {
@@ -921,6 +909,18 @@ mod tests {
                         source.curves().len() + corner_counts[boundary_index],
                         "{operation:?} should add one curve at every non-smooth corner"
                     );
+                    for vertex_index in 0..source.curves().len() {
+                        if corner_orientation(source, vertex_index).unwrap().is_none() {
+                            continue;
+                        }
+                        let original_vertex = source.curves()[vertex_index].start();
+                        assert!(
+                            edited.curves().iter().all(|curve| {
+                                curve.start() != original_vertex && curve.end() != original_vertex
+                            }),
+                            "{operation:?} left boundary {boundary_index} vertex {vertex_index} untrimmed"
+                        );
+                    }
                 }
             }
         }

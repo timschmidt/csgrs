@@ -35,10 +35,17 @@ impl Default for DemoScenes {
 impl DemoScenes {
     /// No-query startup state decoded from the requested shared demo URL.
     fn shared_url_default() -> Self {
-        match crate::share::decode_state::<DemoScenesState>(DEFAULT_SHARE_STATE)
-            .and_then(Self::from_state)
-        {
-            Ok(scenes) => return scenes,
+        match crate::share::decode_state::<DemoScenesState>(DEFAULT_SHARE_STATE) {
+            Ok(mut state) => {
+                state.fillet_radius = default_fillet_radius();
+                state.chamfer_setback = default_chamfer_setback();
+                match Self::from_state(state) {
+                    Ok(scenes) => return scenes,
+                    Err(error) => {
+                        log::warn!("falling back after invalid baked hypercurve state: {error}")
+                    }
+                }
+            }
             Err(error) => log::warn!("falling back after invalid baked hypercurve state: {error}"),
         }
 
@@ -173,11 +180,11 @@ struct DemoScenesState {
 }
 
 const fn default_fillet_radius() -> f64 {
-    0.5
+    2.0
 }
 
 const fn default_chamfer_setback() -> f64 {
-    1.0
+    2.0
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
