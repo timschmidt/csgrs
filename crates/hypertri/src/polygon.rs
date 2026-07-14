@@ -2,7 +2,8 @@
 //!
 //! Polygon triangulation algorithms should consume this module rather than
 //! reading hole indices independently. The separation keeps region semantics
-//! explicit, following the exact-topology boundary discipline advocated by Yap.
+//! explicit and prevents algorithms from interpreting the same flat input
+//! differently.
 
 use crate::error::{Error, Result};
 use crate::types::ExactPoint;

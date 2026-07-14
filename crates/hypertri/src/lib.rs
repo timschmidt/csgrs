@@ -1,7 +1,7 @@
 //! Infinite-precision triangulation algorithms built on hyperreal.
 //!
-//! This crate owns source ports of earcut-style polygon triangulation and
-//! spade-style Delaunay/CDT topology. Algorithm modules are individually
+//! This crate owns earcut-style polygon triangulation and incremental
+//! Delaunay/CDT topology. Algorithm modules are individually
 //! feature-gated (`earcut`, `cdt`, and `nd`) so applications only compile the
 //! triangulators they use. The exact API uses [`Real`] directly, while the
 //! optional `f64` module exposes boundary entry points that lift finite `f64`

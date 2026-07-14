@@ -637,33 +637,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ciborium"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
-dependencies = [
- "ciborium-io",
- "ciborium-ll",
- "serde",
-]
-
-[[package]]
-name = "ciborium-io"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
-
-[[package]]
-name = "ciborium-ll"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
-dependencies = [
- "ciborium-io",
- "half",
-]
-
-[[package]]
 name = "clipboard-win"
 version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1495,6 +1468,8 @@ dependencies = [
 [[package]]
 name = "hyperlattice"
 version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b65eff926d97a7fafc3985d1faba167e0e67b7870f90af494fa1269ac64d45a9"
 dependencies = [
  "hyperreal",
 ]
@@ -1502,6 +1477,8 @@ dependencies = [
 [[package]]
 name = "hyperlimit"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fdb6de18515d37cdb973dffe5e6ba994b7fd27bfcbef3d4d1b23780946f5bef"
 dependencies = [
  "hyperlattice",
  "hyperreal",
@@ -1510,16 +1487,15 @@ dependencies = [
 [[package]]
 name = "hyperreal"
 version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "158f5ff74eddb87664f7a574cc059e619ea5b27eb96d6121e58f9f866f45feba"
 dependencies = [
- "ciborium",
  "num",
- "serde",
- "serde_json",
 ]
 
 [[package]]
 name = "hypertri"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "hyperlimit",
  "hyperreal",
@@ -2016,7 +1992,6 @@ checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
 dependencies = [
  "num-integer",
  "num-traits",
- "serde",
 ]
 
 [[package]]
@@ -2026,7 +2001,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
 dependencies = [
  "num-traits",
- "serde",
 ]
 
 [[package]]
@@ -2058,7 +2032,6 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits",
- "serde",
 ]
 
 [[package]]

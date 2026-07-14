@@ -56,10 +56,7 @@ fn bench_exact_triangulation(c: &mut Criterion) {
             // This row intentionally measures the exact ear loop before adding
             // z-order candidate pruning or unsafe indexing. The report counts
             // predicate-stage pressure while topology still routes through
-            // exact `hyperlimit` predicates, following Yap's advice to retain
-            // and measure object-level structure first; see Yap, "Towards
-            // Exact Geometric Computation," Computational Geometry 7.1-2
-            // (1997).
+            // exact `hyperlimit` predicates.
             let report = hypertri::earcut_report(&sawtooth, &[]).unwrap();
             (
                 report.triangles.len(),
@@ -111,8 +108,7 @@ fn bench_exact_triangulation(c: &mut Criterion) {
             // This is not a polygon-with-holes shortcut. It measures the exact
             // PSLG path that starts from an exact Delaunay triangulation,
             // recovers protected cycle edges, then re-legalizes unprotected
-            // edges using Lee-Lin constrained-Delaunay local legality under
-            // Yap-style exact predicates.
+            // edges with exact local Delaunay predicates.
             hypertri::cdt::constrained_delaunay(&separated_cycles, &separated_constraints).unwrap()
         })
     });

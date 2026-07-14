@@ -1,3 +1,7 @@
+// URL sharing is active in the browser build and compiled on the host for unit
+// tests of the codec and URL manipulation.
+#![cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+
 use std::io::{Read, Write};
 
 use base64::Engine;

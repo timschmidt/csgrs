@@ -50,11 +50,9 @@ impl Default for TriangulationOptions {
 /// The plan is intentionally a lightweight value rather than a prepared
 /// triangulation cache. It records the selected algorithm together with the
 /// structural polygon facts that justified selection, giving callers and future
-/// dispatch code a stable place to retain cheap exact information. Following
-/// Yap's exact-geometric-computation model, these facts are advisory scheduling
-/// metadata only; exact predicates inside the selected algorithm remain the
-/// topology certificates. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// dispatch code a stable place to retain cheap exact information. These facts
+/// are advisory scheduling metadata only; exact predicates inside the selected
+/// algorithm remain the topology certificates.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PolygonTriangulationPlan {
     algorithm: PolygonTriangulationAlgorithm,
@@ -218,10 +216,9 @@ fn resolve_auto_algorithm(
     // orientation, and unknown local turn consistency are conservative reasons
     // to keep the boundary-preserving earcut path when it is available, because
     // the CDT route has to materialize every ring edge as a constraint before
-    // legalization. This is advisory scheduling in Yap's sense, not a
-    // correctness certificate; the selected algorithm still owns exact
-    // orientation and containment predicates. See Yap, "Towards Exact
-    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    // legalization. This is advisory scheduling, not a correctness
+    // certificate; the selected algorithm still owns exact orientation and
+    // containment predicates.
     let boundary_cleanup_preferred = facts.is_some_and(|facts| {
         facts.known_degenerate_edge_count() > 0
             || facts.unknown_edge_zero_status_count() > 0

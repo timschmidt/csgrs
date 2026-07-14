@@ -43,9 +43,7 @@ where
 pub(crate) fn point_on_segment(a: &Point2, b: &Point2, point: &Point2) -> Result<bool> {
     // This is a direct boundary predicate, not triangulation topology. Route it
     // through hyperlimit's segment classifier so the exact interval and
-    // degenerate-segment rules have a single owner, matching Yap's
-    // object/predicate separation; see Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997).
+    // degenerate-segment rules have a single owner.
     decide_hyperlimit_bool(
         hyperlimit::point_on_segment(
             &predicate_point(a),
@@ -62,8 +60,8 @@ pub(crate) fn point_in_ring_even_odd(
     ring: &[usize],
     point: &Point2,
 ) -> Result<bool> {
-    // Hyperlimit owns the Hormann-Agathos crossing-number predicate and the
-    // Yap-style exact boundary checks. Hypertri supplies only index topology.
+    // Hyperlimit owns the exact crossing-number and boundary predicates;
+    // hypertri supplies only index topology.
     let predicate_vertices: Vec<_> = vertices.iter().map(predicate_point).collect();
     decide_hyperlimit_bool(
         hyperlimit::point_in_indexed_ring_even_odd(
@@ -84,9 +82,8 @@ pub(crate) fn segment_intersection(
 ) -> Result<SegmentIntersection> {
     // Segment intersection is the canonical topological predicate for CDT edge
     // recovery and ear visibility. Keep the four-orientation classifier in
-    // hyperlimit, where the de Berg et al. classifier and Shewchuk/Yap exact
-    // predicate discipline are documented near the determinant and interval
-    // decisions. Hypertri consumes the decided combinatorial relation only.
+    // hyperlimit, where determinant and interval decisions are implemented.
+    // Hypertri consumes only the decided combinatorial relation.
     match hyperlimit::classify_segment_intersection(
         &predicate_point(a),
         &predicate_point(b),

@@ -4,9 +4,7 @@
 //! useful in tests and downstream debug checks, and they document the invariants
 //! maintained by the current port: protected PSLG edges are present in the
 //! output triangulation, and every unprotected interior edge can be checked with
-//! the same empty-circle predicate used by Delaunay insertion. The latter is the
-//! local criterion behind Lee and Lin's Constrained Delaunay Lemma and the
-//! incremental CDT construction described by Shewchuk and Brown.
+//! the same empty-circle predicate used by Delaunay insertion.
 
 use crate::error::{Error, Result};
 use crate::kernel::{ExactKernel, Kernel};

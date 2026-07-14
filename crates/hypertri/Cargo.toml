@@ -37,6 +37,18 @@ earcutr = "0.5.0"
 proptest = "1.7.0"
 serde_json = "1.0.149"
 
+[[example]]
+name = "basic"
+required-features = ["earcut"]
+
+[[example]]
+name = "cdt"
+required-features = ["cdt"]
+
+[[example]]
+name = "nd"
+required-features = ["nd"]
+
 [[bench]]
 name = "earcut"
 harness = false

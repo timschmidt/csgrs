@@ -16,44 +16,6 @@ the triangulation surfaces they use while keeping exact predicate semantics cons
 
 The deployed WASM app is available at <https://timschmidt.github.io/hypertri/>.
 
-## Hyper Ecosystem
-
-`hypertri` is the straight-edge topology layer.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact coordinate and scalar
-  values.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact orientation,
-  in-circle, in-sphere, D-dimensional determinant, segment, ring, and
-  classification predicates.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): point, vector,
-  shared-scale, and projective carriers used by predicates.
-- [hypercurve](https://github.com/timschmidt/hypercurve): curved-region owner that can
-  hand off straight-edge regions after certified projection or flattening.
-- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh layer that uses planar
-  triangulation for exact face-region and cell assembly.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): BREP tessellation and planar
-  face handoff reports.
-- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field preview and mesh
-  handoff surfaces that may consume triangulated boundaries.
-- [hypersolve](https://github.com/timschmidt/hypersolve): residual certification for
-  future constrained topology proposals.
-- [hyperpath](https://github.com/timschmidt/hyperpath): routing, CAM, PCB, and swept
-  path carriers that consume exact triangulation facts.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): voxel and mesh export
-  consumers of exact triangle topology.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): mass, contact, and shape
-  handoffs over exact triangle meshes.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit-domain context for
-  PCB/routing workflows that may consume path and triangulation evidence.
-- [hyperparts](https://github.com/timschmidt/hyperparts): part and package geometry
-  handles.
-- [hyperpack](https://github.com/timschmidt/hyperpack): packing domains that can use
-  exact planar and surface triangulation evidence.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal/search layer
-  for topology candidates that still require exact replay.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB readiness checks and CAM
-  review workflows that need exact planar topology.
-
 ## Typical Triangulation Problems
 
 Triangulation is dominated by irreversible local choices: convex/reflex tests,
@@ -68,51 +30,40 @@ happen: retained polygon facts, local convex/reflex caches, triangle-AABB reject
 source-ring metadata, runtime algorithm selection, diagnostics counters, and validation
 APIs.
 
-## Main Types
+## API Overview
 
 - `Point2`, `PolygonInput`, `PolygonInputFacts`, `PolygonRings`, `RingRange`, and
   `Constraint` describe exact polygon and PSLG inputs.
 - `EarcutReport` and `EarcutDiagnostics` expose polygon triangulation diagnostics.
 - `DelaunayTriangulation` and `ConstrainedDelaunayTriangulation` describe 2D Delaunay
   outputs and protected constraint edges.
-- `PointD`, `VertexHandle`, `CellHandle`, `FacetKey`, `Facet`, `Face`, `Cell`,
-  `TriangulationDataStructureD`, `TriangulationD`, `DelaunayTriangulationD`,
-  `TdsCombinatorialValidationReportD`, `TdsManifoldValidationReportD`,
-  `TdsGeometricValidationReportD`, `Simplex`, `DelaunayComplex`,
-  `DelaunayInsertionReportD`, `BistellarFlipD`, `BistellarFlipReportD`, and
-  `BistellarFlipApplyReportD` provide the D-dimensional model, TDS,
-  validation, flip precondition/rewrite, and small exact oracle surfaces.
+- `PointD`, `Simplex`, and `DelaunayComplex` provide the small exhaustive
+  D-dimensional semantic oracle; insertion and bistellar-flip report types retain the
+  exact facts behind each proposed rewrite.
+- `TriangulationDataStructureD`, its stable vertex/cell/facet handles, and the
+  combinatorial, manifold, and geometric validation reports provide the dynamic
+  D-dimensional storage layer.
 - `TriangulationOptions`, `PolygonTriangulationAlgorithm`, `QualityPolicy`, and
   `PolygonTriangulationPlan` describe runtime selection when enabled.
 - Optional `f64` entry points are boundary adapters that reject non-finite coordinates
   and exact-lift finite values.
 
-## Precision Model
+## Precision and Performance Model
 
 Native inputs use `Real`. Optional `f64` APIs are for IO, rendering, tests, and
 compatibility; they exact-lift finite floats before topology branches execute. Exact
 orientation, ring-area, segment, in-circle, in-sphere, and D-dimensional determinant
 signs flow through `hyperlimit`.
 
-Topology validation is part of the precision story. Results expose validation helpers,
-and constrained output distinguishes caller constraints from planarized protected
-subsegments that are actually present as triangulation edges.
+Topology validation is part of the precision contract. Results expose validation
+helpers, and constrained output distinguishes caller constraints from the planarized
+protected subsegments actually present as triangulation edges.
 
-## Numerical Explosion
-
-`hypertri` combats numerical explosion by keeping triangulation facts local: ring
-ranges, signed area, convex/reflex state, duplicate and collinear facts, AABBs,
-constraint-subsegment provenance, and validation counters reduce candidate sets before
-orientation, in-circle, or D-dimensional determinant predicates need full exact replay.
-
-## Performance Model
-
-`hypertri` avoids paying for exact predicates by preserving cheap structure: ring
-ranges, signed area, local turn consistency, coordinate summaries, duplicate and
-collinear facts, bounding boxes, convex/reflex caches, triangle-AABB rejects,
-constraint-subsegment provenance, and diagnostics counters. These facts reduce
-candidate sets and guide runtime algorithm selection without permitting float topology
-decisions.
+To contain expression growth, the algorithms retain ring ranges, signed areas, local
+turn consistency, exact-rational summaries, duplicate/collinear facts, bounding boxes,
+convex/reflex caches, constraint-subsegment provenance, and diagnostics counters. These
+facts reject candidates and guide runtime selection, but never substitute a floating
+point branch for an exact topology decision.
 
 ## Current Status
 
@@ -133,7 +84,7 @@ Implemented today:
   rebuilt exact complex while the production TDS cavity-stitcher remains future
   work;
 - non-mutating D-dimensional bistellar flip reports that validate local
-  Lawson/Pachner circuit arity, removed-cell presence, inserted-cell affine
+  circuit arity, removed-cell presence, inserted-cell affine
   independence, and exact Delaunay legality before any future TDS mutation
   scheduler exists;
 - functional D-dimensional flip rewrites on the exact complex oracle, replacing
@@ -155,7 +106,7 @@ Enable only the algorithms you use:
 
 ```toml
 [dependencies]
-hypertri = { version = "0.2.0", default-features = false, features = ["earcut"] }
+hypertri = { version = "0.4.0", default-features = false, features = ["earcut"] }
 ```
 
 Feature summary:
@@ -184,51 +135,74 @@ fn main() -> hypertri::Result<()> {
 }
 ```
 
+This program is available as the compiling [`examples/basic.rs`](examples/basic.rs)
+example and can be run with `cargo run --example basic --features earcut`.
+
 With `cdt`, use exact Delaunay or constrained Delaunay topology:
 
-```rust,ignore
+```rust
 use hypertri::{cdt, Constraint, Point2, Real};
 
-let points = vec![
-    Point2::new(Real::from(0), Real::from(0)),
-    Point2::new(Real::from(2), Real::from(0)),
-    Point2::new(Real::from(2), Real::from(2)),
-    Point2::new(Real::from(0), Real::from(2)),
-];
+fn main() -> hypertri::Result<()> {
+    let points = vec![
+        Point2::new(Real::from(0), Real::from(0)),
+        Point2::new(Real::from(2), Real::from(0)),
+        Point2::new(Real::from(2), Real::from(2)),
+        Point2::new(Real::from(0), Real::from(2)),
+    ];
 
-let delaunay = cdt::delaunay(&points)?;
-let constrained = cdt::constrained_delaunay(
-    &points,
-    &[Constraint::new(0, 1), Constraint::new(1, 2)],
-)?;
-assert!(delaunay.validate().is_ok());
-assert!(constrained.validate().is_ok());
+    let delaunay = cdt::delaunay(&points)?;
+    let constrained = cdt::constrained_delaunay(
+        &points,
+        &[Constraint::new(0, 1), Constraint::new(1, 2)],
+    )?;
+    delaunay.validate()?;
+    constrained.validate()?;
+    Ok(())
+}
 ```
 
-With `nd`, build D-dimensional exact oracle complexes and non-mutating flip reports:
+See [`examples/cdt.rs`](examples/cdt.rs) for the compiling example.
 
-```rust,ignore
-use hypertri::{nd, BistellarFlipD, PointD, Real};
+With `nd`, build and validate a small D-dimensional exact oracle complex:
 
-let points = vec![
-    PointD::new(vec![Real::from(0), Real::from(0)]),
-    PointD::new(vec![Real::from(1), Real::from(0)]),
-    PointD::new(vec![Real::from(0), Real::from(1)]),
-];
+```rust
+use hypertri::{nd, PointD, Real};
 
-let complex = nd::delaunay_complex(&points)?;
-let report = complex.validate_bistellar_flip(&BistellarFlipD::new(vec![0, 1, 2], vec![]));
-assert!(report.reason().is_some() || report.is_valid());
+fn main() -> hypertri::Result<()> {
+    let points = vec![
+        PointD::new(vec![Real::from(0), Real::from(0)]),
+        PointD::new(vec![Real::from(1), Real::from(0)]),
+        PointD::new(vec![Real::from(0), Real::from(1)]),
+    ];
+
+    let complex = nd::delaunay_complex(&points)?;
+    complex.validate()?;
+    assert_eq!(complex.cells().len(), 1);
+    Ok(())
+}
 ```
+
+See [`examples/nd.rs`](examples/nd.rs) for the compiling example.
+
+For mutable combinatorial storage, construct a `TriangulationDataStructureD`, add
+finite or infinite vertices and full cells, inspect its validation reports, and wrap a
+valid structure in `TriangulationD`.
 
 ## Development
 
 Useful local checks:
 
 ```text
-cargo test
-cargo test --features all-algorithms
+cargo fmt --all -- --check
+cargo test --all-features
+cargo clippy --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+cargo check --examples --benches --all-features
 cargo test --features earcut,f64-interop
+cargo run --example basic --features earcut
+cargo run --example cdt --features cdt
+cargo run --example nd --features nd
 cargo bench --bench earcut --features earcut,f64-interop
 cargo bench --bench delaunay --features cdt,f64-interop
 cargo bench --bench exact --features all-algorithms
@@ -236,59 +210,63 @@ cargo bench --bench exact --features all-algorithms
 
 ## References
 
-Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
-Gaussian Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
-pp. 565-578.
+- Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
+  Gaussian Elimination." *Mathematics of Computation* 22.103 (1968): 565-578.
+  [doi:10.1090/S0025-5718-1968-0226829-0](https://doi.org/10.1090/S0025-5718-1968-0226829-0)
+- Boehm, Hans-J., Robert Cartwright, Mark Riggle, and Michael J. O'Donnell.
+  "Exact Real Arithmetic: A Case Study in Higher Order Programming." *LFP '86*
+  (1986): 162-173.
+  [doi:10.1145/319838.319860](https://doi.org/10.1145/319838.319860)
+- Boissonnat, Jean-Daniel, Olivier Devillers, Sylvain Pion, Monique Teillaud,
+  and Mariette Yvinec. "Triangulations in CGAL." *Computational Geometry*
+  22.1-3 (2002): 5-19.
+  [doi:10.1016/S0925-7721(01)00054-2](https://doi.org/10.1016/S0925-7721%2801%2900054-2)
+- Bowyer, Adrian. "Computing Dirichlet Tessellations." *The Computer Journal*
+  24.2 (1981): 162-166.
+  [doi:10.1093/comjnl/24.2.162](https://doi.org/10.1093/comjnl/24.2.162)
+- de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
+  *Computational Geometry: Algorithms and Applications*. 3rd ed. Springer,
+  2008. [doi:10.1007/978-3-540-77974-2](https://doi.org/10.1007/978-3-540-77974-2)
+- Delaunay, Boris. "Sur la sphère vide." *Bulletin de l'Académie des Sciences
+  de l'URSS*, no. 6 (1934): 793-800.
+- Ericson, Christer. *Real-Time Collision Detection*. Morgan Kaufmann, 2005.
+- Lawson, Charles L. "Software for C1 Surface Interpolation." *Mathematical
+  Software III* (1977): 161-194.
+  [doi:10.1016/B978-0-12-587260-7.50011-X](https://doi.org/10.1016/B978-0-12-587260-7.50011-X)
+- Lee, Der-Tsai, and Arthur K. Lin. "Generalized Delaunay Triangulation for
+  Planar Graphs." *Discrete & Computational Geometry* 1 (1986): 201-217.
+  [doi:10.1007/BF02187695](https://doi.org/10.1007/BF02187695)
+- Meisters, Gary H. "Polygons Have Ears." *The American Mathematical Monthly*
+  82.6 (1975): 648-651.
+  [doi:10.2307/2319703](https://doi.org/10.2307/2319703)
+- Pachner, Udo. "P.L. Homeomorphic Manifolds Are Equivalent by Elementary
+  Shellings." *European Journal of Combinatorics* 12.2 (1991): 129-145.
+  [doi:10.1016/S0195-6698(13)80080-7](https://doi.org/10.1016/S0195-6698%2813%2980080-7)
+- Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
+  Fast Robust Geometric Predicates." *Discrete & Computational Geometry* 18.3
+  (1997): 305-363.
+  [doi:10.1007/PL00009321](https://doi.org/10.1007/PL00009321)
+- Shewchuk, Jonathan Richard, and Brielin C. Brown. "Fast Segment Insertion and
+  Incremental Construction of Constrained Delaunay Triangulations."
+  *Computational Geometry* 48.8 (2015): 554-574.
+  [doi:10.1016/j.comgeo.2015.04.006](https://doi.org/10.1016/j.comgeo.2015.04.006)
+- Watson, David F. "Computing the n-Dimensional Delaunay Tessellation with
+  Application to Voronoi Polytopes." *The Computer Journal* 24.2 (1981):
+  167-172. [doi:10.1093/comjnl/24.2.167](https://doi.org/10.1093/comjnl/24.2.167)
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*
+  7.1-2 (1997): 3-23.
+  [doi:10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721%2895%2900040-2)
+- Implementation lineage and comparison projects:
+  [Mapbox Earcut](https://github.com/mapbox/earcut),
+  [earcutr](https://github.com/donbright/earcutr),
+  [Spade](https://github.com/Stoeoef/spade), and the
+  [CGAL triangulation packages](https://doc.cgal.org/latest/Manual/packages.html#PkgTriangulations).
 
-Boehm, Hans-J., Robert Cartwright, Mark Riggle, and Michael J. O'Donnell.
-"Exact Real Arithmetic: A Case Study in Higher Order Programming." *Proceedings
-of the 1986 ACM Conference on LISP and Functional Programming*, 1986, pp.
-162-173.
+## Hyper Ecosystem
 
-de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
-*Computational Geometry: Algorithms and Applications*. 3rd ed., Springer, 2008.
-
-Delaunay, Boris. "Sur la sphère vide." *Bulletin de l'Académie des Sciences de
-l'URSS. Classe des sciences mathématiques et naturelles*, no. 6, 1934, pp.
-793-800.
-
-Boissonnat, Jean-Daniel, Olivier Devillers, Sylvain Pion, Monique Teillaud,
-and Mariette Yvinec. "Triangulations in CGAL." *Computational Geometry*, vol.
-22, nos. 1-3, 2002, pp. 5-19.
-
-Bowyer, Adrian. "Computing Dirichlet Tessellations." *The Computer Journal*,
-vol. 24, no. 2, 1981, pp. 162-166.
-
-Ericson, Christer. *Real-Time Collision Detection*. Morgan Kaufmann, 2005.
-
-Lawson, Charles L. "Software for C1 Surface Interpolation." *Mathematical
-Software III*, edited by John R. Rice, Academic Press, 1977, pp. 161-194.
-
-Lee, Der-Tsai, and Arthur K. Lin. "Generalized Delaunay Triangulation for
-Planar Graphs." *Discrete & Computational Geometry*, vol. 1, 1986, pp.
-201-217.
-
-Mapbox. "Earcut." GitHub, https://github.com/mapbox/earcut.
-
-Meisters, Gary H. "Polygons Have Ears." *The American Mathematical Monthly*,
-vol. 82, no. 6, 1975, pp. 648-651.
-
-Pachner, Udo. "P.L. Homeomorphic Manifolds Are Equivalent by Elementary
-Shellings." *European Journal of Combinatorics*, vol. 12, no. 2, 1991,
-pp. 129-145.
-
-Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
-Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.
-18, no. 3, 1997, pp. 305-363.
-
-Shewchuk, Jonathan Richard, and Brielin C. Brown. "Fast Segment Insertion and
-Incremental Construction of Constrained Delaunay Triangulations."
-*Computational Geometry*, vol. 48, no. 8, 2015, pp. 554-574,
-doi:10.1016/j.comgeo.2015.04.006.
-
-Watson, David F. "Computing the n-Dimensional Delaunay Tessellation with
-Application to Voronoi Polytopes." *The Computer Journal*, vol. 24, no. 2,
-1981, pp. 167-172.
-
-Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
-vol. 7, nos. 1-2, 1997, pp. 3-23.
+`hypertri` builds on [hyperreal](https://github.com/timschmidt/hyperreal) and
+[hyperlimit](https://github.com/timschmidt/hyperlimit), and supplies exact
+straight-edge topology to [hypermesh](https://github.com/timschmidt/hypermesh),
+[hyperbrep](https://github.com/timschmidt/hyperbrep),
+[hyperpath](https://github.com/timschmidt/hyperpath), and the other
+[Hyper geometry crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).

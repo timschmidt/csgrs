@@ -1,10 +1,9 @@
 //! Constrained Delaunay triangulation API foundation.
 //!
-//! This module is the landing zone for the wholesale spade CDT port. The
-//! implementation below handles exact incremental Delaunay point sets and
-//! closed-ring constraints while preserving the public topology records that
-//! the constrained-edge DCEL port will fill out. The production path does not
-//! depend on `spade`.
+//! The implementation handles exact incremental Delaunay point sets, planarizes
+//! crossing constraints with exact Steiner points, recovers protected edges,
+//! and re-legalizes unprotected edges. The production path owns its topology
+//! implementation and has no external triangulation dependency.
 
 use crate::cdt_constraints;
 use crate::error::{Error, Result};
@@ -203,11 +202,8 @@ pub fn delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
 /// Closed polygon-with-hole inputs are routed through the boundary-preserving
 /// polygon path when `earcut` is enabled. Other planar straight-line graphs are
 /// triangulated over their convex hull, with protected subsegments excluded
-/// from local Delaunay flips. This is the edge-recovery form of incremental CDT
-/// construction described by Shewchuk and Brown, while the local legality check
-/// follows Lee and Lin's Constrained Delaunay Lemma. The exact predicates and
-/// object/predicate split follow Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// from local Delaunay flips. Local legality requires every unprotected
+/// interior edge to satisfy the exact empty-circle test.
 pub fn constrained_delaunay(
     points: &[ExactPoint],
     constraints: &[Constraint],
@@ -272,10 +268,10 @@ pub fn constrained_delaunay(
             // Without the boundary-preserving polygon module, a closed ring is
             // still a valid PSLG. Fall through to exact edge recovery over the
             // convex hull instead of rejecting the input. This keeps the
-            // feature matrix faithful to Yap's exact-computation contract:
-            // a missing fast object-level algorithm must not force an
-            // approximate or absent topology decision when the exact predicate
-            // path can still decide it.
+            // feature matrix faithful to the exact-computation contract: a
+            // missing fast object-level algorithm must not force an approximate
+            // or absent topology decision when the exact predicate path can
+            // still decide it.
             let _ = polygon;
         }
     }
@@ -494,8 +490,8 @@ where
 
     // This is the Bowyer-Watson empty-circumcircle update: remove every
     // triangle whose circumcircle contains the inserted point, then stitch the
-    // boundary cavity back to the point. The empty-circle test is the Delaunay
-    // criterion; see Delaunay's 1934 paper and Shewchuk's predicate treatment.
+    // boundary cavity back to the point. The empty-circle test is evaluated by
+    // the exact predicate kernel.
     let mut triangles = vec![make_oriented::<K>(
         &work_points,
         [first_super, first_super + 1, first_super + 2],
@@ -819,9 +815,8 @@ fn validate_constraint_geometry(points: &[Point2], constraints: &[Constraint]) -
 
             // Public constraints are planarized before this check, so any
             // proper crossing or overlap here indicates a remaining PSLG
-            // normalization bug. The classification is exact and
-            // predicate-backed, following the same exact-geometric-computation
-            // discipline as Shewchuk's orientation predicates.
+            // normalization bug. The classification remains exact and
+            // predicate-backed.
             let intersection = predicates::segment_intersection(
                 &points[a.from],
                 &points[a.to],
@@ -862,8 +857,7 @@ fn constrained_edges_already_delaunay(
     // insertion is ported: if every requested constrained segment already
     // exists as an edge in the unconstrained Delaunay triangulation, no DCEL
     // mutation or legalization is required. The empty-circumcircle property is
-    // inherited from the Delaunay triangulation itself; see Delaunay (1934) and
-    // Shewchuk's exact predicate treatment.
+    // inherited from the Delaunay triangulation itself.
     if constraints
         .iter()
         .all(|constraint| triangulation_has_edge(triangulation.triangles(), *constraint))

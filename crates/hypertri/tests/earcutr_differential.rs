@@ -7,10 +7,7 @@ use proptest::prelude::*;
 ///
 /// This keeps the comparison at the intended abstraction boundary: `earcutr`
 /// remains a dev-only reference for non-degenerate runtime-shaped inputs, while
-/// `hypertri` makes topology decisions through exact `Real` predicates. This
-/// mirrors Yap's separation between numeric representation and geometric
-/// decision procedures. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// `hypertri` makes topology decisions through exact `Real` predicates.
 fn lift_vertices(vertices: &[[f64; 2]]) -> Vec<ExactPoint> {
     vertices
         .iter()

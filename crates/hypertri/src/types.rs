@@ -76,10 +76,8 @@ pub type TriangleIndices = Vec<usize>;
 /// This is advisory scheduling metadata for exact triangulation algorithms. It
 /// summarizes certified signs of adjacent edge turns, but it is not a polygon
 /// simplicity proof and must not replace exact containment, visibility, or
-/// constraint predicates. The separation follows Yap's object-fact layer: cheap
-/// certified structure can select algorithms, while predicates still certify
-/// topology. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// constraint predicates. Certified structure may select algorithms, while
+/// exact predicates still certify topology.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum RingConvexity {
@@ -153,10 +151,8 @@ pub struct PolygonInputFacts {
     ///
     /// This storage-free summary is owned by `hyperreal`; `hypertri` only
     /// carries it to select exact triangulation schedules such as integer-grid,
-    /// dyadic, or shared-denominator paths. That preserves Yap's boundary
-    /// between geometric object facts and scalar representation internals. See
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// dyadic, or shared-denominator paths. Geometric code therefore does not
+    /// need to inspect scalar representation internals.
     pub coordinate_exact: RealExactSetFacts,
     /// Coarse symbolic dependency families present in polygon coordinates.
     ///
@@ -189,10 +185,7 @@ impl PolygonInputFacts {
     /// This is an algorithm-selection hint, not a validity proof. Runtime
     /// planners can use it to prefer boundary-preserving normalization before
     /// constructing constrained edges, while final topology still belongs to
-    /// exact predicates inside the selected algorithm. This follows Yap's
-    /// object-structure-first rule for exact geometric computation; see Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// exact predicates inside the selected algorithm.
     pub fn known_degenerate_edge_count(&self) -> usize {
         self.rings
             .iter()
@@ -247,9 +240,7 @@ impl Serialize for PolygonInput {
         ///
         /// Cached structural facts are intentionally excluded. Deserialization
         /// rebuilds them from exact coordinates so the serialized form cannot
-        /// smuggle stale scheduling metadata across an API boundary. That keeps
-        /// with Yap's object-fact discipline: facts are useful only when they
-        /// remain tied to the exact object that produced them.
+        /// carry stale scheduling metadata across an API boundary.
         #[derive(Serialize)]
         struct Wire<'a> {
             vertices: &'a [ExactPoint],

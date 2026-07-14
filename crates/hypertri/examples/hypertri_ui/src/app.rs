@@ -1,3 +1,7 @@
+// Shared-state helpers are active in the browser build and compiled on the host
+// so their serialization code remains testable.
+#![cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+
 use egui::{CentralPanel, Color32, RichText, ScrollArea, SidePanel, Stroke, TopBottomPanel};
 use egui_plot::{Line, Plot, PlotPoint, PlotPoints, PlotUi, Points, Text};
 use hypertri::{Constraint, QualityPolicy, Triangle};
@@ -44,9 +48,11 @@ impl MainApp {
         if state.version != 1 {
             return Err(format!("unsupported state version {}", state.version));
         }
-        let mut app = Self::default();
-        app.active = state.active;
-        app.view = state.view;
+        let mut app = Self {
+            active: state.active,
+            view: state.view,
+            ..Self::default()
+        };
         app.polygon.apply_state(state.polygon)?;
         app.points.apply_state(state.points)?;
         app.constraints.apply_state(state.constraints)?;
@@ -987,7 +993,7 @@ fn draw_triangle(
     plot_ui.line(
         Line::new(name, PlotPoints::from(series))
             .color(color)
-            .stroke(Stroke::new(1.5, color)),
+            .stroke(Stroke::new(1.5_f32, color)),
     );
 }
 
@@ -1008,7 +1014,7 @@ fn draw_constraints(
                 PlotPoints::from(vec![points[constraint.from], points[constraint.to]]),
             )
             .color(color)
-            .stroke(Stroke::new(3.0, color)),
+            .stroke(Stroke::new(3.0_f32, color)),
         );
     }
 }
@@ -1016,7 +1022,7 @@ fn draw_constraints(
 fn draw_points(plot_ui: &mut PlotUi<'_>, name: &str, points: &[[f64; 2]], color: Color32) {
     plot_ui.points(
         Points::new(name, PlotPoints::from(points.to_vec()))
-            .radius(4.5)
+            .radius(4.5_f32)
             .color(color),
     );
 }

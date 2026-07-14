@@ -4,7 +4,7 @@
 //! polygon-with-holes subset of constrained triangulation while the full DCEL
 //! port is still in progress. Keeping this recognition outside `cdt.rs`
 //! preserves the public CDT abstraction boundary and keeps exact ring semantics
-//! close to the polygon normalization policy described by Yap.
+//! close to polygon normalization.
 
 use std::cmp::Ordering;
 
@@ -50,9 +50,8 @@ impl ConstraintPolygon {
 ///
 /// The accepted subset is one exterior cycle plus zero or more hole cycles.
 /// Ring ordering is decided by exact even-odd containment rather than by input
-/// order. This is the same containment model used in standard polygon
-/// algorithms; see de Berg et al., *Computational Geometry: Algorithms and
-/// Applications*, and Yap's exact-geometric-computation discipline.
+/// order. This is the same containment model used by the other polygon
+/// algorithms in this crate.
 pub(crate) fn polygon_from_closed_constraints(
     points: &[Point2],
     constraints: &[Constraint],
@@ -242,8 +241,8 @@ fn leftmost_position(points: &[Point2], ring: &[usize]) -> Result<usize> {
 
 fn compare_points(points: &[Point2], left: usize, right: usize) -> Result<Ordering> {
     // Ring ordering is not CDT topology; it is a reusable exact point-order
-    // predicate. Keep it in hyperlimit with the other Yap-style scalar
-    // decisions so hypertri only chooses how ordered rings are consumed.
+    // predicate. Keep it in hyperlimit so hypertri only chooses how ordered
+    // rings are consumed.
     match hyperlimit::compare_point2_lexicographic(
         &predicate_point(&points[left]),
         &predicate_point(&points[right]),

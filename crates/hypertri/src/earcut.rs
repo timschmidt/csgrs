@@ -1,9 +1,8 @@
-//! Ear clipping triangulation port foundation.
+//! Exact ear-clipping polygon triangulation.
 //!
-//! This module starts the `earcutr` port with a predicate-backed polygon
-//! triangulator. It deliberately keeps the public return shape compatible with
-//! earcut-style flat triangle indices while replacing numeric decisions with
-//! the crate kernel.
+//! The implementation returns earcut-style flat triangle indices while routing
+//! numeric decisions through the crate's exact predicate kernel. `earcutr` is
+//! used only as a development-time differential oracle.
 
 use std::cmp::Ordering;
 
@@ -19,12 +18,6 @@ use crate::types::{ExactPoint, Point2, TriangleIndices};
 /// These counters make candidate pressure visible before introducing optional
 /// z-order pruning, unsafe indexing, or additional 2D-specialized kernels.
 /// They are scheduling metadata only: exact predicates still certify topology.
-/// This mirrors Yap's object-layer discipline of measuring and carrying
-/// geometric structure before changing the arithmetic package; see Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). The ear candidate loop itself follows the two-ears theorem; see
-/// Meisters, "Polygons Have Ears," *The American Mathematical Monthly* 82.6
-/// (1975).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct EarcutDiagnostics {
@@ -242,8 +235,7 @@ where
     for hole in holes {
         // A visible diagonal from an exterior boundary to a hole converts a
         // polygon-with-holes into one simple boundary walk without changing the
-        // represented region. This is the standard reduction described in
-        // de Berg et al., Computational Geometry: Algorithms and Applications.
+        // represented region.
         let bridge = find_visible_bridge::<K>(vertices, &boundary, hole, holes)?;
         boundary = splice_hole(boundary, hole, bridge.boundary_pos, bridge.hole_pos);
     }
@@ -652,9 +644,8 @@ where
 
             // This is earcut's local-intersection cure: when two nearby
             // boundary edges cross, emit the triangle that bridges around the
-            // twist and remove the two offending vertices. The exact segment
-            // and orientation tests keep the fallback in Yap/Shewchuk-style
-            // predicate territory instead of inheriting earcutr's float tests.
+            // twist and remove the two offending vertices. Exact segment and
+            // orientation tests replace earcutr's floating-point tests.
             remove_adjacent_positions(&mut cured_ring, p_pos, q_pos);
 
             let sign = predicates::orient2d::<K>(&vertices[a], &vertices[p], &vertices[b])?;
@@ -775,9 +766,7 @@ where
     // Earcut's final fallback splits a difficult polygon by a valid internal
     // diagonal and resumes ear clipping on each side. The validity tests here
     // are exact: the diagonal must not cross the boundary, and its midpoint
-    // must lie inside the represented region. See de Berg et al.,
-    // Computational Geometry: Algorithms and Applications, for the diagonal
-    // decomposition model.
+    // must lie inside the represented region.
     let (mut left, mut right) = split_ring(&ring, first, second);
     left = filter_ring::<K>(vertices, left)?;
     right = filter_ring::<K>(vertices, right)?;
@@ -887,18 +876,14 @@ where
     let curr = ring[cursor];
     let next = ring[(cursor + 1) % len];
 
-    // Meisters proved every simple polygon with more than three vertices has
-    // at least two ears. The exact predicate here is the convexity gate for
-    // that theorem; containment below rejects ears that would cover another
-    // vertex. See Meisters, "Polygons Have Ears" (1975).
+    // Every simple polygon with more than three vertices has at least two ears.
+    // The exact predicate here is the convexity gate; containment below rejects
+    // ears that would cover another vertex.
     //
     // Structural-dispatch note: the loop uses two exact object facts before
     // the full containment predicate: the local reflex/convex turn and the
-    // candidate triangle AABB. Keeping these as facts, rather than as
-    // floating-point heuristics, mirrors Yap's EGC advice to preserve useful
-    // geometric structure before changing arithmetic packages; see Yap,
-    // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    // (1997).
+    // candidate triangle AABB. Both are certified facts rather than
+    // floating-point heuristics.
     debug_assert_eq!(ring.len(), prepared_convex.len());
     if !prepared_convex[cursor] {
         return Ok(false);
@@ -993,13 +978,9 @@ where
     // Standard ear-clipping implementations only need to test reflex vertices
     // for containment in a candidate ear. Hypertri prepares that local
     // convex/reflex bit once per active ring state, then updates only the two
-    // vertices whose neighborhoods changed after clipping. This is the
-    // object-fact reuse pattern Yap recommends in "Towards Exact Geometric
-    // Computation," *Computational Geometry* 7.1-2 (1997), applied to the
-    // exact orientation predicate used by Meisters' two-ears theorem; see
-    // Meisters, "Polygons Have Ears," *The American Mathematical Monthly*
-    // 82.6 (1975). Collinear vertices remain non-convex here so degeneracies
-    // still flow to AABB and containment predicates.
+    // vertices whose neighborhoods changed after clipping. Collinear vertices
+    // remain non-convex here so degeneracies still flow to AABB and containment
+    // predicates.
     let len = ring.len();
     let prev = ring[(cursor + len - 1) % len];
     let curr = ring[cursor];
@@ -1011,10 +992,8 @@ fn point_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) ->
     // This is only a rejection filter. Exact coordinate comparisons prove that
     // a point outside the triangle's axis-aligned bounding box cannot be inside
     // the triangle, while points inside the box still go through the exact
-    // orientation-based containment predicate. The filter is the
-    // axis-aligned-box stage described in broad-phase geometry texts such as
-    // Ericson, *Real-Time Collision Detection* (2005), but it is evaluated with
-    // the crate's exact kernel rather than primitive floats.
+    // orientation-based containment predicate. The box is evaluated with the
+    // crate's exact kernel rather than primitive floats.
     decide_hyperlimit_bool(
         hyperlimit::point_in_triangle2_aabb(
             &predicate_point(a),

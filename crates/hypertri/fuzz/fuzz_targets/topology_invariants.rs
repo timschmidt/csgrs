@@ -2,13 +2,8 @@
 //!
 //! The harness stays on `hyperreal::Real` coordinates through `hypertri`'s
 //! public APIs. It checks topology invariants and CDT validators rather than
-//! comparing against a primitive-float implementation. That is the fuzzing
-//! analogue of Yap's exact-geometric-computation model: generated data may be
+//! comparing against a primitive-float implementation: generated data may be
 //! adversarial, but irreversible decisions still belong to exact predicates.
-//! See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997). The CDT checks exercise the local legality criterion from
-//! Lee and Lin's Constrained Delaunay Lemma and the incremental segment
-//! insertion family described by Shewchuk and Brown.
 
 #![no_main]
 

@@ -1,16 +1,13 @@
-//! Constraint recovery and local legalization for the CDT port.
+//! Constraint recovery and local legalization for exact CDT.
 //!
 //! The public [`crate::cdt`] module owns API shape and result records; this
 //! module keeps the incremental segment-insertion machinery local. The
 //! implementation starts from the exact Delaunay triangulation, planarizes
 //! crossing constraints into exact Steiner vertices, recovers each protected
 //! subsegment by flipping crossed unconstrained edges, then re-legalizes only
-//! unconstrained edges. This follows the incremental CDT construction family
-//! described by Shewchuk and Brown, where segment insertion deletes or mutates
-//! crossed structure, and the Constrained Delaunay Lemma of Lee and Lin reduces
-//! correctness to local Delaunay checks on non-segment edges. Exact predicate
-//! ownership stays in the kernel/predicate layer in the sense of Yap's
-//! exact-geometric-computation architecture.
+//! unconstrained edges. Correctness reduces to local Delaunay checks on
+//! unprotected edges; exact predicate ownership stays in the kernel/predicate
+//! layer.
 
 use crate::error::{Error, Result};
 use crate::kernel::Kernel;
@@ -47,8 +44,8 @@ where
     // keep intersection vertices and split subsegments explicit; richer
     // prepared objects can add axis-alignment, endpoint order, and
     // exact-rational denominator classes without changing the topology
-    // contract. This is Yap's "beyond BigNumber" object layer: preserve useful
-    // structure beside exact arithmetic rather than leaking scalar internals.
+    // contract. Useful structure stays beside exact arithmetic rather than
+    // leaking scalar internals into topology code.
     let mut constrained_edges = Vec::new();
     for &constraint in constraints {
         let edge = EdgeKey::new(constraint.from, constraint.to);
@@ -71,9 +68,8 @@ where
 /// Segment insertion algorithms normally work on a planar straight-line graph.
 /// When constraints properly cross or pass through existing vertices, the
 /// intersection becomes a graph vertex and each original segment is normalized
-/// into subsegments. This is the PSLG view used by Lee and Lin's generalized
-/// Delaunay triangulation and by Shewchuk and Brown's incremental
-/// segment-insertion formulation.
+/// into subsegments. Constraint recovery then operates only on a valid planar
+/// straight-line graph.
 pub(crate) fn planarize_constraints(
     points: &[Point2],
     constraints: &[Constraint],
@@ -225,8 +221,7 @@ fn compare_segment_axis_reals(
 ) -> Result<Ordering> {
     // Points have already been certified to lie on this segment. The remaining
     // subsegment split order is therefore a scalar exact-ordering predicate,
-    // which belongs with hyperlimit's Yap-style predicate pipeline rather than
-    // with CDT topology.
+    // which belongs in hyperlimit rather than CDT topology.
     match hyperlimit::compare_reals(left, right) {
         hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
         hyperlimit::PredicateOutcome::Unknown { .. } => {

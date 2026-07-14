@@ -1,20 +1,13 @@
-//! Exact D-dimensional Delaunay complex construction.
+//! Exact D-dimensional triangulation storage and semantic oracles.
 //!
-//! This module is the `hypertri` bridge toward dimension-generic Delaunay
-//! workflows like the external `delaunay` crate, but it keeps the arithmetic
-//! contract local: inputs are [`Real`], predicates are exact
-//! determinants, and validation is explicit. The implementation intentionally
-//! returns a Delaunay **complex** rather than claiming a full triangulation data
-//! structure: cospherical degeneracies can produce multiple empty-sphere
-//! simplices, and this baseline does not yet own a CGAL-style TDS or bistellar
-//! flip scheduler.
-//!
-//! The empty-circumsphere test is the D-dimensional Delaunay criterion from
-//! Delaunay's "Sur la sphère vide" (1934). The determinant predicates follow
-//! Shewchuk's robust-predicate discipline, while the separation between exact
-//! scalar arithmetic, determinant predicates, and geometric object records
-//! follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997).
+//! The module provides two complementary layers. [`TriangulationDataStructureD`]
+//! stores stable vertex and cell handles with explicit finite/infinite hull
+//! semantics and report-bearing validation. [`DelaunayComplex`] is a small,
+//! exhaustive exact oracle for validation, regression tests, insertion-cavity
+//! reports, and functional bistellar flips. It preserves all certified
+//! empty-sphere simplices in cospherical cases rather than imposing an
+//! arbitrary tie break. A production mutable TDS insertion/flip scheduler is
+//! still future work.
 //!
 //! # Examples
 //!
@@ -63,7 +56,7 @@
 //! # Ok::<(), hypertri::Error>(())
 //! ```
 //!
-//! Validate and apply a Lawson/Pachner-style flip on a cospherical square. The
+//! Validate and apply a bistellar flip on a cospherical square. The
 //! exact oracle preserves the degeneracy instead of choosing a primitive-float
 //! tie break:
 //!
@@ -118,13 +111,9 @@ use std::collections::BTreeMap;
 /// Opaque stable handle for a D-dimensional TDS vertex.
 ///
 /// Handles are indices into a [`TriangulationDataStructureD`] vertex table, but
-/// callers cannot construct invalid incidence by mutating cells directly. This
-/// follows the CGAL `Triangulation_data_structure_d` handle style while keeping
-/// the exact-computation boundary explicit: handles identify combinatorial
-/// objects, and predicates in `hyperlimit`/`hypertri` certify geometry before
-/// topology is mutated. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and CGAL's
-/// `Triangulation_data_structure_d` interface model.
+/// callers cannot construct invalid incidence by mutating cells directly.
+/// Handles identify combinatorial objects; exact predicates certify geometry
+/// before topology is mutated.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct VertexHandle(usize);
@@ -161,11 +150,8 @@ impl CellHandle {
 /// Canonical key for a D-dimensional TDS facet.
 ///
 /// A facet key is the sorted set of vertex handles incident to the facet,
-/// independent of which adjacent cell names it. This gives validation an
-/// object-level incidence fact before any geometric predicate is evaluated,
-/// matching Yap's requirement that geometric systems preserve structure rather
-/// than repeatedly rediscover it from scalar coordinates; see Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// independent of which adjacent cell names it. Validation can therefore reuse
+/// incidence without reconstructing it from coordinates.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct FacetKey(Vec<VertexHandle>);
@@ -299,7 +285,7 @@ impl Face {
 /// Full D-dimensional cell with `dimension + 1` vertex slots.
 ///
 /// Neighbor slot `i` is the cell across the facet opposite vertex slot `i`.
-/// This convention is the same incidence layout used by CGAL-style TDS cells.
+/// The layout gives each neighbor slot a stable opposite-facet meaning.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Cell {
@@ -389,8 +375,7 @@ impl TdsCombinatorialViolationD {
 
 /// Report produced by combinatorial TDS validation.
 ///
-/// This is the first validation layer in the CGAL-style D-dimensional plan:
-/// arity, handle bounds, distinct vertices, finite/infinite status, reciprocal
+/// Arity, handle bounds, distinct vertices, finite/infinite status, reciprocal
 /// neighbor links, and canonical facet-key incidence are checked before later
 /// manifold or Delaunay predicate validation is allowed to mutate topology.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -605,8 +590,7 @@ impl TdsGeometricViolationD {
 ///
 /// This report is the predicate-bearing counterpart to the combinatorial and
 /// manifold reports. It validates finite cells with shared D-dimensional
-/// predicates in `hyperlimit`, following Yap's split between object topology
-/// and exact predicate ownership.
+/// predicates in `hyperlimit`.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TdsGeometricValidationReportD {
@@ -669,9 +653,8 @@ impl TdsGeometricValidationReportD {
 /// This is a combinatorial TDS, not yet an insertion/flip algorithm. It owns
 /// stable vertex/cell handles, finite/infinite hull semantics, and validation
 /// of cell arity, dangling handles, distinct vertices, and reciprocal neighbor
-/// links. Geometric predicates are intentionally separate, matching Yap's
-/// object/predicate layering and the CGAL split between the TDS and
-/// `Triangulation_d`.
+/// links. Geometric predicates are intentionally separate from combinatorial
+/// storage and validation.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct TriangulationDataStructureD {
@@ -1298,9 +1281,9 @@ fn permutation_parity_to_key(vertices: &[VertexHandle], key: &FacetKey) -> bool 
 /// The cells are all affinely independent `dimension + 1` point subsets whose
 /// circumsphere has no other input point strictly inside. Boundary and
 /// cospherical degeneracies are preserved as explicit cells instead of being
-/// hidden behind floating-point perturbation. That is a conservative Yap-style
-/// API: the object reports exactly what the predicates certify, and callers can
-/// run [`Self::validate`] before consuming the complex.
+/// hidden behind floating-point perturbation. The object reports exactly what
+/// the predicates certify, and callers can run [`Self::validate`] before
+/// consuming the complex.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct DelaunayComplex {
@@ -1314,10 +1297,8 @@ pub struct DelaunayComplex {
 /// This is not yet the production TDS cavity-rebuild algorithm. It is a
 /// certified construction report for the semantic oracle: conflicts are
 /// identified with exact `insphere_d` predicates, then the complex is rebuilt
-/// through [`delaunay_complex`]. The shape follows the incremental Delaunay
-/// pipeline described by Delaunay (1934) and the exact predicate discipline of
-/// Shewchuk (1997), while preserving Yap's separation between object records
-/// and predicate decisions.
+/// through [`delaunay_complex`]. Conflict and boundary records remain available
+/// to a future mutable TDS cavity stitcher.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct DelaunayInsertionReportD {
@@ -1335,12 +1316,8 @@ pub struct DelaunayInsertionReportD {
 /// triangulations. If `removed_opposite_vertices` has size `p`, the removed
 /// side contains the `p` cells formed by deleting each of those vertices from
 /// the circuit; the inserted side contains the `q` cells formed by deleting
-/// each remaining vertex, with `p + q = d + 2`. This is the Lawson/Pachner
-/// bistellar move model used by flip-based Delaunay algorithms, while this
-/// type remains non-mutating until the TDS scheduler exists. See Lawson,
-/// "Software for C1 Surface Interpolation" (1977), Pachner, "P.L.
-/// Homeomorphic Manifolds are Equivalent by Elementary Shellings" (1991), and
-/// Yap, "Towards Exact Geometric Computation" (1997).
+/// each remaining vertex, with `p + q = d + 2`. The value describes the two
+/// sides of a bistellar move but does not mutate a TDS.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BistellarFlipD {
@@ -1386,7 +1363,7 @@ pub struct BistellarFlipReportD {
 /// The mutation is functional: the original complex is left untouched, the
 /// removed cells are replaced with inserted cells, and the result is validated
 /// before it is returned. This is the smallest safe topology rewrite layer
-/// before a mutable CGAL-style TDS scheduler exists.
+/// before a mutable TDS scheduler exists.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct BistellarFlipApplyReportD {
@@ -1503,10 +1480,8 @@ impl DelaunayComplex {
     /// Validate cell arity, index bounds, affine independence, and empty spheres.
     ///
     /// This is intentionally a geometric validation pass, not a PL-manifold or
-    /// coverage proof. The validation hierarchy mirrors the external
-    /// D-dimensional `delaunay` crate's documented separation between element,
-    /// structure, topology, and Delaunay checks, while keeping `hypertri`'s
-    /// exact predicate ownership local.
+    /// coverage proof. Combinatorial, manifold, and geometric validation remain
+    /// distinct so each report states exactly which invariants it certifies.
     pub fn validate(&self) -> Result<()> {
         validate_points(&self.points, self.dimension)?;
         for cell in &self.cells {
@@ -1558,7 +1533,7 @@ impl DelaunayComplex {
 
     /// Validates a raw bistellar flip without mutating the complex.
     ///
-    /// The report checks the Lawson/Pachner circuit arity, verifies that the
+    /// The report checks the bistellar circuit arity, verifies that the
     /// removed cells are present, rejects affinely dependent replacement cells,
     /// and runs the exact Delaunay empty-sphere predicate on the inserted side.
     /// This gives algorithms a proof-bearing precondition surface before a
@@ -1582,10 +1557,9 @@ impl DelaunayComplex {
     ///
     /// The rewrite uses exact cell-set comparison, rejects Delaunay-blocked
     /// candidates, replaces the removed side with the inserted side, and
-    /// validates the resulting complex before returning it. This keeps the
-    /// first mutating semantics audit-friendly and follows Yap's rule that
-    /// topology-changing decisions consume certified predicate facts rather
-    /// than primitive-float tie breaks.
+    /// validates the resulting complex before returning it. Topology-changing
+    /// decisions consume certified predicate facts rather than primitive-float
+    /// tie breaks.
     pub fn flip_oracle(&self, flip: &BistellarFlipD) -> Result<BistellarFlipApplyReportD> {
         let validation =
             self.validate_bistellar_flip_inner(flip)
@@ -1715,9 +1689,9 @@ impl DelaunayComplex {
 /// `dimension + 1` point subsets, rejects affinely dependent subsets with an
 /// exact orientation determinant, then applies the Delaunay empty-sphere test
 /// with an exact lifted determinant. It is appropriate for validation,
-/// regression tests, and small scientific inputs; large production D-dimensional
-/// workloads should use a TDS/flip pipeline like CGAL or the external
-/// `delaunay` crate and treat this exact path as a semantic oracle.
+/// regression tests, and small scientific inputs. Large production
+/// D-dimensional workloads should use a mutable TDS/flip pipeline and treat
+/// this exhaustive path as a semantic oracle.
 pub fn delaunay_complex(points: &[PointD]) -> Result<DelaunayComplex> {
     let dimension = infer_dimension(points)?;
     validate_points(points, dimension)?;
@@ -1837,8 +1811,7 @@ fn insphere_inside_sign(dimension: usize, orientation: Sign) -> Sign {
     // row layout `[x_0, ..., x_d, ||x||^2, 1]`. The 2D case matches the usual
     // in-circle orientation, while 3D reverses it. Keeping that convention
     // explicit here prevents higher-dimensional code from inheriting an
-    // accidental 2D-only sign rule; see Shewchuk's predicate treatment and
-    // Yap's exact predicate/object separation.
+    // accidental 2D-only sign rule.
     if dimension.is_multiple_of(2) {
         orientation
     } else {

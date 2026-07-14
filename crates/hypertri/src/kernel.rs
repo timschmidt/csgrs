@@ -1,10 +1,8 @@
 //! Numeric kernels used by triangulation algorithms.
 //!
 //! All irreversible topology decisions in exact code should pass through this
-//! layer. The predicate pipeline follows the exact-geometric-computation model
-//! described by Yap and the adaptive predicate discipline described by Shewchuk:
-//! cheap structural facts and filters are used only when they certify a sign;
-//! otherwise the exact/refinement path must decide or report uncertainty.
+//! layer. Cheap structural facts and filters are used only when they certify a
+//! sign; otherwise the exact/refinement path must decide or report uncertainty.
 
 use crate::error::{Error, Result};
 use crate::types::{Point2, Real, Sign, TriangleLocation};
@@ -129,12 +127,10 @@ impl Kernel for ExactKernel {
     fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign> {
         // Triangulation topology consumes `hyperlimit`'s certified predicate
         // pipeline rather than rebuilding a private determinant expression.
-        // Keeping the determinant owner in the predicate crate follows Yap's
-        // exact-geometric-computation separation between application topology
-        // and arithmetic packages; see Yap, "Towards Exact Geometric
-        // Computation," *Computational Geometry* 7.1-2 (1997). The predicate
-        // implementation carries Shewchuk-style robust-orientation discipline
-        // and exact rational/common-scale schedules near their use.
+        // Keeping the determinant owner in the predicate crate separates
+        // application topology from arithmetic policy. The predicate
+        // implementation keeps robust-orientation logic and exact
+        // rational/common-scale schedules near their use.
         decide_hyperlimit_sign(
             hyperlimit::orient2d(
                 &predicate_point(a),
@@ -148,8 +144,8 @@ impl Kernel for ExactKernel {
     fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign> {
         // In-circle legality is the CDT edge-flip predicate. Route it through
         // `hyperlimit` so exact lifted-determinant certificates and future
-        // prepared incircle facts remain centralized, matching Delaunay's empty
-        // circle test while preserving Yap's object/predicate boundary.
+        // prepared in-circle facts remain centralized. Hypertri consumes only
+        // the certified empty-circle result.
         decide_hyperlimit_sign(
             hyperlimit::incircle2d(
                 &predicate_point(a),
