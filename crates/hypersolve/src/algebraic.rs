@@ -4,11 +4,9 @@
 //! approximation layer and not a complete algebraic-number field package. A
 //! represented root carries the exact univariate polynomial row and the
 //! certified isolating interval produced by [`crate::root_isolation`]. This is
-//! the Yap boundary in a small form: construction keeps exact object evidence,
-//! while later predicates or candidate replay decide how that evidence may be
-//! consumed. See Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997), and Collins and Loos, "Real Zeros of Polynomials,"
-//! in *Computer Algebra: Symbolic and Algebraic Computation* (1982).
+//! a small exactness boundary: construction keeps exact object evidence, while
+//! later predicates or candidate replay decide how that evidence may be
+//! consumed.
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -102,7 +100,7 @@ pub struct AlgebraicRootRefinementComparisonConfig {
 impl Default for AlgebraicRootRefinementComparisonConfig {
     fn default() -> Self {
         Self {
-            policy: PredicatePolicy::default(),
+            policy: PredicatePolicy,
             max_refinement_rounds: 16,
             steps_per_round: 1,
         }
@@ -466,7 +464,7 @@ pub fn validate_algebraic_root_representation(
 /// package. It certifies order when exact rational witnesses compare directly
 /// or when isolating intervals are disjoint. If intervals overlap, the report
 /// returns [`AlgebraicRootComparisonStatus::OverlappingIntervals`] instead of
-/// sampling a primitive approximation. This follows Yap's construction/
+/// sampling a primitive approximation. This follows the exact construction/
 /// decision separation and the Collins-Loos isolating-interval model cited in
 /// the module docs.
 pub fn compare_algebraic_root_representations(
@@ -554,13 +552,10 @@ pub fn compare_algebraic_root_representations(
 /// This is still not a full algebraic-number field package: it performs only
 /// the exact predicate work needed for ordering. When ordinary comparison
 /// stops at overlapping isolating intervals, each root is refined with a
-/// Sturm sequence package (C. Sturm, "Mémoire sur la résolution des équations
-/// numériques", 1835) in the Collins-Loos real-root isolation style (G. E.
-/// Collins and R. Loos, "Real Zeros of Polynomials", 1982) until the
+/// Sturm sequence package in the standard real-root isolation style until the
 /// intervals become disjoint, an exact rational witness appears, or the
-/// configured work budget is exhausted. The function follows Yap's EGC
-/// pattern (Chee K. Yap, "Towards Exact Geometric Computation", 1997):
-/// refinement is a proof-producing operation, and failure remains an explicit
+/// configured work budget is exhausted. Refinement is a proof-producing
+/// operation, and failure remains an explicit
 /// undecided report rather than a sampled approximation.
 pub fn compare_algebraic_root_representations_with_refinement(
     left: &AlgebraicRootRepresentation,
@@ -642,10 +637,9 @@ pub fn compare_algebraic_root_representations_with_refinement(
 /// package. It first tries ordinary interval comparison plus exact Sturm
 /// refinement. If source intervals still overlap, it constructs the algebraic
 /// difference and decides the sign of that constructed value from its
-/// certified isolating interval. This is the Yap construction/decision split:
+/// certified isolating interval. This is the exactness boundary construction/decision split:
 /// the value is built as exact evidence, then the sign predicate reads only
-/// certified interval data. See Yap, "Towards Exact Geometric Computation"
-/// (1997), Sturm (1835), and Collins-Loos (1982), matching the arithmetic and
+/// certified interval data., Sturm's theorem, and the standard real-root isolation model, matching the arithmetic and
 /// refinement modules cited at the point of use.
 pub fn compare_algebraic_root_representations_by_difference(
     left: &AlgebraicRootRepresentation,
@@ -743,8 +737,8 @@ pub fn compare_algebraic_root_representations_by_difference(
 /// is the same structural operation specialized to `scale = -1`.
 /// These operations transform retained algebraic evidence rather than sampling
 /// approximations. Binary non-rational/non-rational arithmetic remains explicit
-/// [`AlgebraicRootArithmeticStatus::NonRationalInput`]. This follows Yap's
-/// exact-object rule from "Towards Exact Geometric Computation" (1997):
+/// [`AlgebraicRootArithmeticStatus::NonRationalInput`]. This follows the exact
+/// exact-object rule from the exact-geometric-computation model:
 /// unsupported algebraic arithmetic remains explicit until a true
 /// algebraic-number package exists.
 pub fn arithmetic_algebraic_root_representations(
@@ -762,21 +756,18 @@ pub fn arithmetic_algebraic_root_representations(
         );
     }
     if let Some(report) =
-        arithmetic_with_one_rational_scalar(left, right, operation, PredicatePolicy::default())
+        arithmetic_with_one_rational_scalar(left, right, operation, PredicatePolicy)
     {
         return report;
     }
     if let Some(report) =
-        arithmetic_with_same_representation(left, right, operation, PredicatePolicy::default())
+        arithmetic_with_same_representation(left, right, operation, PredicatePolicy)
     {
         return report;
     }
-    if let Some(report) = arithmetic_with_independent_representations(
-        left,
-        right,
-        operation,
-        PredicatePolicy::default(),
-    ) {
+    if let Some(report) =
+        arithmetic_with_independent_representations(left, right, operation, PredicatePolicy)
+    {
         return report;
     }
     let Some(left_value) = left.exact_rational_witness() else {
@@ -860,9 +851,8 @@ pub fn arithmetic_algebraic_root_representations(
 
 /// Lower a supported mixed rational/non-rational operation to an affine image.
 ///
-/// Yap's exact-geometric-computation model separates construction of exact
-/// algebraic objects from later predicate decisions. See Yap, "Towards Exact
-/// Geometric Computation" (1997). A scalar affine image of one represented
+/// the exact-geometric-computation model separates construction of exact
+/// algebraic objects from later predicate decisions. A scalar affine image of one represented
 /// root is a safe construction because `scale^n * P((y - offset) / scale)`
 /// gives exact polynomial evidence for the image and preserves interval
 /// evidence by exact endpoint transforms. A rational scalar divided by a
@@ -1028,7 +1018,7 @@ fn divide_by_rational_scalar_report(
 /// general two-root algebraic-number field. They are respectively the exact
 /// polynomial images `2*x`, `0`, `x^2`, and the constant `1` on the same
 /// source evidence. This uses the resultant-backed image package and keeps the
-/// Yap construction boundary explicit: independent non-rational operands still
+/// the exactness boundary construction boundary explicit: independent non-rational operands still
 /// return [`AlgebraicRootArithmeticStatus::NonRationalInput`].
 fn arithmetic_with_same_representation(
     left: &AlgebraicRootRepresentation,
@@ -1110,9 +1100,8 @@ fn arithmetic_with_same_representation(
 ///
 /// This is the first bounded algebraic-number arithmetic slice for two
 /// non-rational operands.  The helper delegates to
-/// [`crate::transform_algebraic_roots_binary`], which cites Sylvester
-/// resultants, Sturm isolation, Collins-Loos real-root isolation, and Yap's
-/// exact geometric computation boundary near the actual elimination code.
+/// [`crate::transform_algebraic_roots_binary`], which uses Sylvester
+/// resultants, Sturm isolation, and standard real-root isolation.
 /// Division is accepted only when the binary construction package certifies
 /// the divisor interval away from zero without a primitive-float shortcut.
 fn arithmetic_with_independent_representations(
@@ -1269,8 +1258,8 @@ fn mobius_transform_arithmetic_report(
 /// If `alpha` is represented by `P(x)` of degree `n` and `scale != 0`, then
 /// `beta` is represented by `scale^n * P((y - offset) / scale)`. This keeps
 /// all coefficients exact and preserves the isolating interval by transforming
-/// endpoints, rather than sampling a midpoint. The operation follows Yap's
-/// exact-object boundary from "Towards Exact Geometric Computation" (1997):
+/// endpoints, rather than sampling a midpoint. The operation follows the exact
+/// exact-object boundary from the exact-geometric-computation model:
 /// construction returns retained algebraic evidence, and later callers still
 /// use comparison/evaluation reports for certified decisions.
 pub fn transform_algebraic_root_affine(
@@ -1385,9 +1374,7 @@ pub fn transform_algebraic_root_affine(
 /// polynomial is evaluated over the isolating interval with conservative
 /// interval arithmetic and the sign is certified only when the whole enclosure
 /// lies on one side of zero. This follows the exact-object/certified-decision
-/// split in Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), and the isolating-interval model of Collins and
-/// Loos, "Real Zeros of Polynomials" (1982).
+/// split in the exact-geometric-computation model, and the isolating-interval model of the standard real-root isolation model.
 pub fn evaluate_polynomial_at_algebraic_root(
     root: &AlgebraicRootRepresentation,
     polynomial_coefficients: &[Real],
@@ -1524,9 +1511,8 @@ pub fn evaluate_polynomial_at_algebraic_root(
 /// domain uncertainty; certified positive or negative denominator intervals
 /// are inverted conservatively and multiplied by the numerator interval. This
 /// is the rational-expression companion to
-/// [`evaluate_polynomial_at_algebraic_root`] and follows Yap's exact
-/// construction/certified-decision split (Yap, "Towards Exact Geometric
-/// Computation," 1997) without approximating the represented root.
+/// [`evaluate_polynomial_at_algebraic_root`] and follows the exact
+/// construction/certified-decision split the exact-geometric-computation model without approximating the represented root.
 pub fn evaluate_rational_expression_at_algebraic_root(
     root: &AlgebraicRootRepresentation,
     numerator_coefficients: &[Real],
@@ -1695,7 +1681,7 @@ fn negate_algebraic_root_representation(
 ) -> AlgebraicRootRepresentation {
     // If p(r)=0, then q(x)=p(-x) has root -r. Reflecting the isolating
     // interval avoids a numeric midpoint estimate and preserves the exact
-    // evidence object that Yap's EGC model requires.
+    // evidence object that the exact EGC model requires.
     let polynomial_coefficients = root
         .polynomial_coefficients
         .iter()
@@ -1733,7 +1719,7 @@ fn negate_algebraic_root_representation(
         validation: AlgebraicRootValidationReport::valid(),
     };
     representation.validation =
-        validate_algebraic_root_representation(&representation, PredicatePolicy::default());
+        validate_algebraic_root_representation(&representation, PredicatePolicy);
     representation
 }
 
@@ -2511,7 +2497,7 @@ mod tests {
                 && root.exact_rational_witness() == Some(&real(1))
         }));
         assert!(reports[0].roots.iter().all(|root| {
-            validate_algebraic_root_representation(root, PredicatePolicy::default()).status
+            validate_algebraic_root_representation(root, PredicatePolicy).status
                 == AlgebraicRootValidationStatus::Valid
         }));
     }
@@ -2533,8 +2519,7 @@ mod tests {
             validation: AlgebraicRootValidationReport::valid(),
         };
         assert_eq!(
-            validate_algebraic_root_representation(&invalid_count, PredicatePolicy::default())
-                .status,
+            validate_algebraic_root_representation(&invalid_count, PredicatePolicy).status,
             AlgebraicRootValidationStatus::NonUnitIsolation
         );
 
@@ -2549,7 +2534,7 @@ mod tests {
             ..invalid_count
         };
         assert_eq!(
-            validate_algebraic_root_representation(&bad_witness, PredicatePolicy::default()).status,
+            validate_algebraic_root_representation(&bad_witness, PredicatePolicy).status,
             AlgebraicRootValidationStatus::WitnessDoesNotSatisfyPolynomial
         );
     }
@@ -2582,12 +2567,11 @@ mod tests {
             ..left.clone()
         };
 
-        let comparison =
-            compare_algebraic_root_representations(&left, &right, PredicatePolicy::default());
+        let comparison = compare_algebraic_root_representations(&left, &right, PredicatePolicy);
         assert_eq!(comparison.status, AlgebraicRootComparisonStatus::Compared);
         assert_eq!(comparison.ordering, Some(Ordering::Less));
 
-        let same = compare_algebraic_root_representations(&left, &left, PredicatePolicy::default());
+        let same = compare_algebraic_root_representations(&left, &left, PredicatePolicy);
         assert_eq!(
             same.status,
             AlgebraicRootComparisonStatus::SameRepresentation
@@ -2621,11 +2605,8 @@ mod tests {
             distinct_root_count: 1,
         };
 
-        let comparison = compare_algebraic_root_representations(
-            &valid,
-            &overlapping,
-            PredicatePolicy::default(),
-        );
+        let comparison =
+            compare_algebraic_root_representations(&valid, &overlapping, PredicatePolicy);
         assert_eq!(
             comparison.status,
             AlgebraicRootComparisonStatus::OverlappingIntervals
@@ -2638,8 +2619,7 @@ mod tests {
             "test invalid",
         );
         assert_eq!(
-            compare_algebraic_root_representations(&invalid, &valid, PredicatePolicy::default())
-                .status,
+            compare_algebraic_root_representations(&invalid, &valid, PredicatePolicy).status,
             AlgebraicRootComparisonStatus::InvalidEvidence
         );
     }
@@ -2673,12 +2653,7 @@ mod tests {
         };
 
         assert_eq!(
-            compare_algebraic_root_representations(
-                &sqrt_two,
-                &sqrt_three,
-                PredicatePolicy::default()
-            )
-            .status,
+            compare_algebraic_root_representations(&sqrt_two, &sqrt_three, PredicatePolicy).status,
             AlgebraicRootComparisonStatus::OverlappingIntervals
         );
 
@@ -3120,7 +3095,7 @@ mod tests {
         let rational = evaluate_polynomial_at_algebraic_root(
             &rational_root,
             &[real(-9), Real::zero(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             rational.status,
@@ -3146,7 +3121,7 @@ mod tests {
         let positive = evaluate_polynomial_at_algebraic_root(
             &sqrt_two,
             &[Real::one(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             positive.status,
@@ -3157,7 +3132,7 @@ mod tests {
         let crossing = evaluate_polynomial_at_algebraic_root(
             &sqrt_two,
             &[real(-2), Real::zero(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             crossing.status,
@@ -3186,7 +3161,7 @@ mod tests {
             &rational_root,
             &[real(1), Real::one()],
             &[real(-1), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             exact.status,
@@ -3199,7 +3174,7 @@ mod tests {
             &rational_root,
             &[Real::one()],
             &[real(-3), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             zero_denominator.status,
@@ -3224,7 +3199,7 @@ mod tests {
             &sqrt_two,
             &[Real::one()],
             &[Real::one(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             interval.status,
@@ -3237,7 +3212,7 @@ mod tests {
             &sqrt_two,
             &[Real::one()],
             &[real(-1), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             may_contain_zero.status,
@@ -3261,12 +3236,8 @@ mod tests {
             kind: AlgebraicRootKind::IsolatingInterval,
             validation: AlgebraicRootValidationReport::valid(),
         };
-        let transformed = transform_algebraic_root_affine(
-            &sqrt_two,
-            real(2),
-            real(3),
-            PredicatePolicy::default(),
-        );
+        let transformed =
+            transform_algebraic_root_affine(&sqrt_two, real(2), real(3), PredicatePolicy);
         assert_eq!(
             transformed.status,
             AlgebraicRootAffineTransformStatus::Transformed
@@ -3281,12 +3252,8 @@ mod tests {
         assert_eq!(representation.kind, AlgebraicRootKind::IsolatingInterval);
         assert!(representation.is_valid());
 
-        let reflected = transform_algebraic_root_affine(
-            &sqrt_two,
-            real(-1),
-            Real::zero(),
-            PredicatePolicy::default(),
-        );
+        let reflected =
+            transform_algebraic_root_affine(&sqrt_two, real(-1), Real::zero(), PredicatePolicy);
         assert_eq!(
             reflected.status,
             AlgebraicRootAffineTransformStatus::Transformed
@@ -3295,12 +3262,8 @@ mod tests {
         assert_eq!(reflected.interval.lower, real(-2));
         assert_eq!(reflected.interval.upper, real(-1));
 
-        let zero_scale = transform_algebraic_root_affine(
-            &sqrt_two,
-            Real::zero(),
-            real(4),
-            PredicatePolicy::default(),
-        );
+        let zero_scale =
+            transform_algebraic_root_affine(&sqrt_two, Real::zero(), real(4), PredicatePolicy);
         assert_eq!(
             zero_scale.status,
             AlgebraicRootAffineTransformStatus::ZeroScale
@@ -3374,7 +3337,7 @@ mod tests {
             let report = compare_algebraic_root_representations(
                 &left_root,
                 &right_root,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootComparisonStatus::Compared);
@@ -3592,7 +3555,7 @@ mod tests {
                 &root,
                 Real::one(),
                 real(offset),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(
@@ -3632,7 +3595,7 @@ mod tests {
             let report = evaluate_polynomial_at_algebraic_root(
                 &represented,
                 &[real(constant), real(linear), real(quadratic)],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(
@@ -3679,7 +3642,7 @@ mod tests {
                 &represented,
                 &[real(numerator_constant), real(numerator_linear)],
                 &[real(denominator_constant), real(denominator_linear)],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(
@@ -3720,7 +3683,7 @@ mod tests {
                 &represented,
                 real(scale),
                 real(offset),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootAffineTransformStatus::Transformed);

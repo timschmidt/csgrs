@@ -3,10 +3,9 @@
 //! Dense and sparse numerical solvers and external domain crates may propose a
 //! vector for a small linear system, but the proposal is not proof. This module
 //! replays `A*x - b` with `hyperreal::Real` and reports exact residual signs
-//! before an adapter result can be accepted. That follows Yap's
+//! before an adapter result can be accepted. That follows the exact
 //! exact-computation rule: represent the mathematical object exactly and make
-//! only error-free decisions. See Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The residual formula is deliberately
+//! only error-free decisions. The residual formula is deliberately
 //! plain linear algebra; exact Gaussian/Bareiss solving belongs to
 //! [`crate::direct`], while these helpers are only replay boundaries.
 
@@ -54,7 +53,7 @@ pub struct DenseResidualReplayRow {
 ///
 /// Terms encode `A[row, column] += coefficient`. Repeated `(row, column)`
 /// entries are valid and are accumulated exactly during replay, which matches
-/// sparse assembly workflows such as MNA stamping while preserving Yap's
+/// sparse assembly workflows such as MNA stamping while preserving the exact
 /// construction/proof split at the final residual sign decision.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SparseResidualTerm {
@@ -104,8 +103,7 @@ pub struct SparseResidualReplayReport {
 /// This object is the first sparse batch-assembly boundary for large-sketch and
 /// domain-stamp callers. It validates the declared sparse matrix shape once,
 /// accumulates duplicate `(row, column)` terms exactly, and then reuses that
-/// assembled row structure for one or more candidate vectors. Following Yap,
-/// "Towards Exact Geometric Computation" (1997), the prepared object is only a
+/// assembled row structure for one or more candidate vectors. Following the exact-geometric-computation model, the prepared object is only a
 /// retained exact construction; each replay still certifies `A*x-b` before a
 /// candidate can be accepted.
 #[derive(Clone, Debug, PartialEq)]
@@ -271,8 +269,7 @@ pub fn replay_dense_linear_residuals(
 /// reducers, and domain-specific stamp assemblers outside the proof boundary:
 /// they may propose `x`, but this replay report decides whether `A*x-b` is
 /// actually zero. This is the same construction/proof separation emphasized by
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
+/// the exact-geometric-computation model.
 pub fn replay_sparse_linear_residuals(
     row_count: usize,
     column_count: usize,
@@ -290,7 +287,7 @@ pub fn replay_sparse_linear_residuals(
 /// Terms are validated against the declared shape and duplicate entries are
 /// accumulated exactly into row-local sparse lists. This mirrors sparse matrix
 /// assembly in network and constraint systems while keeping the proof boundary
-/// at residual certification, as required by Yap's exact-geometric-computation
+/// at residual certification, as required by the exact-geometric-computation
 /// model.
 pub fn prepare_sparse_linear_residual_system(
     row_count: usize,

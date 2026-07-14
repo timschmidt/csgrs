@@ -5,13 +5,10 @@
 //! need a source-row diagnostic list for failed-constraint displays and
 //! SolveSpace-style status reporting. This module builds that list without
 //! introducing tolerances: it combines exact residual replay with exact affine
-//! rank checks. That follows Yap's exact-geometric-computation boundary:
+//! rank checks. That follows the exact-geometric-computation boundary:
 //! numerical iteration may propose a candidate, but failure explanations must
-//! be certified or explicitly undecided. See C. K. Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997). The rank
-//! redundancy test uses Bareiss-backed affine rank reports; see Bareiss,
-//! "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-//! Elimination" (1968).
+//! be certified or explicitly undecided. The rank
+//! redundancy test uses Bareiss-backed affine rank reports; see fraction-free elimination.
 
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CertifiedCandidateRow,
@@ -108,11 +105,10 @@ pub struct FailedConstraintReport {
 /// This is the first exact removal-search layer for SolveSpace-like failed
 /// constraint diagnostics. It does not claim a globally minimal unsat core;
 /// it only answers the cheap and deterministic question "does removing this
-/// one blocking row clear the current candidate under exact replay?" Yap's
+/// one blocking row clear the current candidate under exact replay?" the exact
 /// exact-geometric-computation boundary still applies: every probe reruns
 /// exact residual diagnostics instead of trusting numerical convergence
-/// labels. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// labels.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum FailedConstraintRemovalStatus {
     /// Removing this single row clears every blocking diagnostic row.
@@ -192,8 +188,7 @@ pub struct FailedConstraintSetRemovalProbe {
 /// unsatisfiable cores. It gives callers a report-bearing way to ask whether
 /// removing any blocking set up to `max_cardinality` clears the current
 /// candidate. Every probe reruns exact failed-constraint diagnostics, following
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), rather than trusting numerical failed-solve labels.
+/// the exact-geometric-computation model, rather than trusting numerical failed-solve labels.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FailedConstraintSetRemovalSearchReport {
     /// Original exact failed-constraint diagnostics.
@@ -213,8 +208,7 @@ pub struct FailedConstraintSetRemovalSearchReport {
 /// and stops after the first cardinality with at least one clearing set. That
 /// makes the result minimal within `max_cardinality`, without claiming an
 /// unbounded global unsatisfiable core. Every probe reruns exact diagnostics,
-/// following Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997), so the minimizer never trusts proposal labels.
+/// following the exact-geometric-computation model, so the minimizer never trusts proposal labels.
 #[derive(Clone, Debug, PartialEq)]
 pub struct FailedConstraintMinimalRemovalSearchReport {
     /// Original exact failed-constraint diagnostics.
@@ -307,9 +301,7 @@ pub fn search_failed_constraint_single_removals(
 /// This is the first bounded multi-row search layer. It is useful when no
 /// single removal clears the candidate but a pair does. It remains deliberately
 /// finite and report-bearing rather than a general minimal unsat-core
-/// extractor; each pair is replayed through exact diagnostics following Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// extractor; each pair is replayed through exact diagnostics following the exact-geometric-computation model.
 pub fn search_failed_constraint_pair_removals(
     prepared: &PreparedProblem<'_>,
     context: &EvaluationContext,

@@ -2,15 +2,12 @@
 //!
 //! Circular arc length is not a polynomial predicate in the general retained
 //! endpoint model: it is `r * theta`, and `theta` is recovered from the
-//! endpoint radius vectors. Following Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997), this module keeps that
+//! endpoint radius vectors. Following the exact-geometric-computation model, this module keeps that
 //! semantic boundary explicit instead of disguising the relation as an
 //! algebraic row. The endpoint-on-radius equations remain polynomial proof
 //! obligations, while the line/arc length equality is retained as an exact
 //! symbolic transcendental residual. The decomposition matches the
-//! constraint-solver modeling split surveyed by Bouma, Fudos, Hoffmann, Cai,
-//! and Paige, "A Geometric Constraint Solver," *Computer-Aided Design* 27.6
-//! (1995): construction objects are retained, and replay checks the exact rows
+//! constraint-solver modeling split used by geometric constraint solvers: construction objects are retained, and replay checks the exact rows
 //! appropriate to each object.
 
 use hyperreal::Real;
@@ -102,7 +99,7 @@ pub(crate) fn line_arc_length_exprs(
 /// - clockwise major: `s x e >= 0`, angle `2*pi - theta`.
 ///
 /// The signed branch row is not redundant metadata. It is the exact replay
-/// evidence for the semantic branch, following Yap's requirement that branch
+/// evidence for the semantic branch, following the exact requirement that branch
 /// decisions stay reportable instead of being folded into a numerical solver
 /// proposal. The transcendental row stays explicit because circular sweep
 /// length is not generally an algebraic predicate.

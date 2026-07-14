@@ -2,13 +2,10 @@
 //!
 //! A point lying on the parent circle is not enough to prove point-on-arc
 //! incidence: the retained sweep branch also has to be replayed. Following
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997), this module keeps those branch predicates as explicit proof rows
+//! the exact-geometric-computation model, this module keeps those branch predicates as explicit proof rows
 //! instead of recovering arc membership from sampled angles or primitive
 //! tolerances. The split between retained construction objects and exact
-//! replay is also the modeling boundary used by Bouma, Fudos, Hoffmann, Cai,
-//! and Paige, "A Geometric Constraint Solver," *Computer-Aided Design* 27.6
-//! (1995).
+//! replay is also the modeling boundary used by the geometric-constraint-solver model.
 
 use crate::sketch::SketchArcPointSweep;
 use crate::symbolic::Expr;
@@ -44,7 +41,7 @@ pub(crate) struct ArcPointIncidenceExprs {
 /// union of two half-plane regions, so [`SketchArcPointSweep`] deliberately
 /// carries an additional half-branch (`AfterStart` or `BeforeEnd`) that makes
 /// replay conjunctive and reportable. This is the exact-geometric-computation
-/// policy from Yap (1997): branch choices are retained evidence, not solver
+/// policy from the exact-decision discipline: branch choices are retained evidence, not solver
 /// side effects.
 pub(crate) fn arc_point_incidence_exprs(
     center: &[Expr; 2],

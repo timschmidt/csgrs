@@ -5,14 +5,10 @@
 //! or arc-arc tangent package contains endpoint incidence, arc
 //! endpoint-on-radius validation, radius/tangent perpendicularity or radius
 //! collinearity, and a signed branch. This is the exact-computation boundary
-//! advocated by Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): construction objects and endpoint flags stay
+//! advocated by the exact-geometric-computation model: construction objects and endpoint flags stay
 //! explicit, and exact replay decides acceptance. The endpoint/orientation
-//! split follows the geometric-constraint-solver practice surveyed by Bouma,
-//! Fudos, Hoffmann, Cai, and Paige, "A Geometric Constraint Solver,"
-//! *Computer-Aided Design* 27.6 (1995). Cubic tangent vectors are supplied by
-//! the Bernstein derivative package described by Farin, *Curves and Surfaces
-//! for CAGD*, 5th ed. (2002).
+//! split follows the geometric-constraint-solver practice used by geometric constraint solvers. Cubic tangent vectors are supplied by
+//! the Bernstein derivative package described by the Bernstein/de Casteljau construction.
 
 use crate::symbolic::Expr;
 
@@ -145,7 +141,7 @@ pub(crate) fn arc_line_tangent_exprs(
 /// This is the arc/cubic analogue of [`arc_line_tangent_exprs`]. It does not
 /// divide by radius, curve speed, or curvature. Zero-radius arcs and stationary
 /// curve parameters therefore remain explicit retained-domain obligations
-/// instead of hidden tolerance cases, following Yap's exact replay boundary.
+/// instead of hidden tolerance cases, following the exact replay boundary.
 pub(crate) fn arc_cubic_tangent_exprs(
     center: &[Expr; 2],
     arc_endpoint: &[Expr; 2],
@@ -189,9 +185,9 @@ pub(crate) fn arc_cubic_tangent_exprs(
 /// This polynomial identity certifies that the cubic has second-order contact
 /// with the retained circle at the selected point without dividing by speed,
 /// radius, or curvature. Stationary parameters and zero-radius arcs therefore
-/// remain explicit domain/preflight obligations. This is the Yap exact
+/// remain explicit domain/preflight obligations. This is the exactness boundary exact
 /// geometric computation split applied to curvature-sensitive evidence, with
-/// `B'` and `B''` supplied by Farin's Bernstein/de Casteljau derivative
+/// `B'` and `B''` supplied by the Bernstein/de Casteljau derivative
 /// control nets.
 pub(crate) fn arc_cubic_second_order_contact_exprs(
     center: &[Expr; 2],
@@ -239,7 +235,7 @@ pub(crate) fn arc_cubic_second_order_contact_exprs(
 ///   `-(r_a . r_b) >= 0` for the opposite-radius branch.
 ///
 /// The same/opposite choice is a retained source branch, not something derived
-/// from a floating contact classifier. This follows Yap's exact-computation
+/// from a floating contact classifier. This follows the exact-computation
 /// model: topology-relevant branch evidence is replayed from symbolic rows,
 /// while zero-radius arcs and coincident centers remain explicit domain
 /// obligations.

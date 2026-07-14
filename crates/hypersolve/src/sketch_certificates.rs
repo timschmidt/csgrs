@@ -4,11 +4,10 @@
 //! solved sketch is trustworthy from primitive coordinates alone. This module
 //! bundles the current exact proof surfaces for a retained sketch: semantic
 //! preflight checks, residual lowering provenance, exact residual replay, and
-//! round-trip metadata/proposal traces. The design follows Yap's
+//! round-trip metadata/proposal traces. The design follows the exact
 //! construction/proof boundary: a construction record is useful only when the
 //! attached certificates say what was proved and what remains unsupported. See
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! the exact-geometric-computation model.
 
 use crate::certification::{CandidateCertificationReport, certify_candidate};
 use crate::eval::context_from_problem;

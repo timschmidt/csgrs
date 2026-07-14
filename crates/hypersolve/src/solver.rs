@@ -36,14 +36,10 @@ pub struct SolverConfig {
     /// uses a retained dense inverse-Hessian approximation, and SQP uses the
     /// current equality least-squares QP relaxation. These routes follow the
     /// least-squares damping family of
-    /// Levenberg, "A Method for the Solution of Certain Non-Linear Problems in
-    /// Least Squares" (1944), and Marquardt, "An Algorithm for Least-Squares
-    /// Estimation of Nonlinear Parameters" (1963), plus Powell's dogleg hybrid
-    /// method (M. J. D. Powell, "A Hybrid Method for Nonlinear Equations",
-    /// 1970), and the BFGS quasi-Newton family of Broyden/Fletcher/Goldfarb/
-    /// Shanno (1970). SQP here means the local equality-constrained quadratic
-    /// least-squares proposal described in Nocedal and Wright, *Numerical
-    /// Optimization*, 2nd ed. (2006), not a proof of constrained optimality.
+    /// the Levenberg damped least-squares method, and the Levenberg-Marquardt method, plus Powell's dogleg hybrid
+    /// method and the BFGS quasi-Newton family. SQP here means the local
+    /// equality-constrained quadratic
+    /// least-squares proposal described in standard nonlinear-optimization methods, not a proof of constrained optimality.
     pub proposal_engine: ProposalEngineKind,
     /// Dragged-parameter proposal weights for
     /// [`ProposalEngineKind::ModifiedNewtonLeastSquares`].
@@ -51,8 +47,7 @@ pub struct SolverConfig {
     /// These rows model the SolveSpace-style "prefer this edited parameter
     /// target" behavior as lossy proposal-only soft rows. They never become
     /// exact proof obligations; final acceptance still requires exact residual
-    /// replay. See Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), for the proof boundary.
+    /// replay. for the proof boundary.
     pub dragged_parameters: Vec<DraggedParameterWeight>,
 }
 
@@ -74,9 +69,8 @@ impl Default for SolverConfig {
 /// The row added to the dense modified-Newton proposal is
 /// `weight * (variable - target)`. It is intentionally not inserted into the
 /// exact [`Problem`]: this mirrors SolveSpace-style interactive dragging while
-/// preserving Yap's rule that approximate proposal aids are not topology or
-/// feasibility evidence. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// preserving the exact-decision rule that approximate proposal aids are not topology or
+/// feasibility evidence.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DraggedParameterWeight {
     /// Variable to bias during proposal generation.
@@ -218,7 +212,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
         // and the equality-SQP relaxation use a damped normal step;
         // PowellHybrid and Dogleg use a trust-region step; BFGS uses the
         // retained inverse-Hessian direction.
-        // Per Yap (1997), exact/certified replay, not this lossy proposal,
+        // under the exact-decision discipline, exact/certified replay, not this lossy proposal,
         // decides acceptance.
         let step_result = match state.config.proposal_engine {
             ProposalEngineKind::PowellHybrid | ProposalEngineKind::Dogleg => {
@@ -475,15 +469,14 @@ fn apply_modified_newton_quadratic_seeds(
 /// Select an exact quadratic soluble-alone seed only when bounds choose a branch.
 ///
 /// SolveSpace-style preprocessing can use "soluble alone" equations to improve
-/// the starting point before Newton iteration, but Yap's EGC boundary still
+/// the starting point before Newton iteration, but the exact EGC boundary still
 /// treats this as proposal construction rather than proof. A univariate
 /// quadratic with two real roots is branch-ambiguous unless the retained exact
 /// variable bounds admit exactly one root. This helper therefore accepts the
 /// unique admissible root, rejects fixed variables, and rejects both
 /// zero-admissible and multi-admissible cases without consulting primitive
 /// floating order. Candidate acceptance remains exact residual replay after the
-/// proposal step. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// proposal step.
 fn branch_safe_quadratic_seed_root(roots: &[Real], variable: &Variable) -> Option<Real> {
     if variable.fixed {
         return None;
@@ -572,8 +565,7 @@ fn apply_modified_newton_substitution_seeds(
 /// Pick the exact representative value used to seed one substitution class.
 ///
 /// SolveSpace-style substitution treats rows like `x = y + c` as symbolic
-/// pre-Newton construction. Following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), this helper only
+/// pre-Newton construction. Following the exact-geometric-computation model, this helper only
 /// constructs a proposal state; exact residual replay remains the proof of
 /// feasibility. Already exact-seeded or fixed members are preferred anchors so
 /// direct affine/quadratic evidence is not overwritten by arbitrary initial
@@ -628,8 +620,7 @@ fn substitution_representative_seed(
 ///
 /// An unanchored substitution class such as `x = y + c` is still branch-free,
 /// but arbitrary initial coordinates can put every member outside its retained
-/// bounds. Following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), this helper constructs only a
+/// bounds. Following the exact-geometric-computation model, this helper constructs only a
 /// proposal seed: it intersects the exact representative-space bounds induced
 /// by every class member and returns an exact endpoint when the intersection
 /// is nonempty. The later residual replay remains the proof boundary.
@@ -666,7 +657,7 @@ fn substitution_representative_bound_seed(
     }
     if let (Some(lower), Some(upper)) = (&lower, &upper)
         && matches!(
-            compare_reals_with_policy(lower, upper, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(lower, upper, PredicatePolicy).value(),
             Some(Ordering::Greater) | None
         )
     {
@@ -697,14 +688,14 @@ fn substitution_class_candidate_feasible(
 }
 
 fn max_exact_bound(left: Real, right: Real) -> Option<Real> {
-    match compare_reals_with_policy(&left, &right, PredicatePolicy::default()).value()? {
+    match compare_reals_with_policy(&left, &right, PredicatePolicy).value()? {
         Ordering::Less => Some(right),
         Ordering::Equal | Ordering::Greater => Some(left),
     }
 }
 
 fn min_exact_bound(left: Real, right: Real) -> Option<Real> {
-    match compare_reals_with_policy(&left, &right, PredicatePolicy::default()).value()? {
+    match compare_reals_with_policy(&left, &right, PredicatePolicy).value()? {
         Ordering::Greater => Some(right),
         Ordering::Equal | Ordering::Less => Some(left),
     }
@@ -713,7 +704,7 @@ fn min_exact_bound(left: Real, right: Real) -> Option<Real> {
 fn value_within_bounds(value: &Real, lower: Option<&Real>, upper: Option<&Real>) -> bool {
     if let Some(lower) = lower
         && matches!(
-            compare_reals_with_policy(value, lower, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(value, lower, PredicatePolicy).value(),
             Some(Ordering::Less) | None
         )
     {
@@ -721,7 +712,7 @@ fn value_within_bounds(value: &Real, lower: Option<&Real>, upper: Option<&Real>)
     }
     if let Some(upper) = upper
         && matches!(
-            compare_reals_with_policy(value, upper, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(value, upper, PredicatePolicy).value(),
             Some(Ordering::Greater) | None
         )
     {
@@ -755,8 +746,7 @@ fn dragged_parameter_dense_rows(
             rows.invalid_count += 1;
             continue;
         }
-        if compare_reals_with_policy(&dragged.weight, &Real::zero(), PredicatePolicy::default())
-            .value()
+        if compare_reals_with_policy(&dragged.weight, &Real::zero(), PredicatePolicy).value()
             != Some(Ordering::Greater)
         {
             rows.invalid_count += 1;

@@ -6,11 +6,9 @@
 //! the derivative control net `3(P1-P0), 3(P2-P1), 3(P3-P2)`, and second
 //! derivative evaluation uses the quadratic derivative control net
 //! `6(P2-2P1+P0), 6(P3-2P2+P1)`. Keeping these expressions symbolic follows
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997): curve construction and parameter choice remain retained
+//! the exact-geometric-computation model: curve construction and parameter choice remain retained
 //! objects, while exact replay certifies the incidence and tangent rows. The
-//! Bernstein/de Casteljau model follows Farin, *Curves and Surfaces for CAGD*,
-//! 5th ed. (2002).
+//! Bernstein/de Casteljau model follows the Bernstein/de Casteljau construction.
 
 use crate::symbolic::Expr;
 

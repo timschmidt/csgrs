@@ -12,9 +12,8 @@
 //! root. The univariate resultant is sampled at exact integer image values and
 //! then interpolated exactly, avoiding primitive approximations while reusing
 //! the crate's certified resultant machinery.
-//! See Sylvester, "On a Theory of the Syzygetic Relations..." (1853), Collins
-//! and Loos, "Real Zeros of Polynomials" (1982), and Chee K. Yap, "Towards
-//! Exact Geometric Computation" (1997).
+//! It combines a Sylvester resultant with the standard real-root isolation
+//! model and exact replay.
 
 use std::cmp::Ordering;
 
@@ -71,7 +70,7 @@ pub struct AlgebraicRootPolynomialImageReport {
 /// the image polynomial `q` must have exact-rational coefficients. The function
 /// first certifies that `q'` has one nonzero sign on the source interval; then
 /// it builds `Res_x(P(x), q(x)-y)` as the defining polynomial for the image.
-/// This follows Yap's EGC separation: constructed algebraic values carry
+/// This follows the exact EGC separation: constructed algebraic values carry
 /// exact replay evidence, and unsupported topology remains reportable.
 pub fn transform_algebraic_root_polynomial_image(
     root: &AlgebraicRootRepresentation,
@@ -510,7 +509,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &sqrt_two_positive(),
             &[Real::zero(), Real::zero(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -532,7 +531,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &sqrt_two_positive(),
             &[Real::zero(), Real::one(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -554,7 +553,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &sqrt_two_positive(),
             &[Real::zero(), real(-3), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -580,7 +579,7 @@ mod tests {
         let report = transform_algebraic_root_polynomial_image(
             &rational,
             &[real(1), real(2), real(3)],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -619,7 +618,7 @@ mod tests {
             let report = transform_algebraic_root_polynomial_image(
                 &represented,
                 &[real(constant), real(linear), real(quadratic)],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootPolynomialImageStatus::Transformed);

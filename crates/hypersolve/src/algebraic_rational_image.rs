@@ -4,8 +4,7 @@
 //! where `alpha` is a represented real algebraic root and `p`, `q` are
 //! exact-rational polynomials.  The result is another
 //! [`crate::AlgebraicRootRepresentation`], not a primitive approximation.
-//! That distinction is the EGC boundary from Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): construction retains
+//! That distinction is the EGC boundary from the exact-geometric-computation model: construction retains
 //! exact replayable objects, and later predicates decide signs/topology from
 //! certificates.
 //!
@@ -820,7 +819,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::zero(), Real::one()],
             &[Real::one(), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -848,7 +847,7 @@ mod tests {
             &rational,
             &[real(1), real(2), real(3)],
             &[real(1), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -866,7 +865,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::one()],
             &[real(-1), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -883,7 +882,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::one(), Real::one()],
             &[real(10), real(-3), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);
@@ -898,7 +897,7 @@ mod tests {
             &sqrt_two_positive(),
             &[Real::one()],
             &[real(10), real(-3), Real::one()],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -940,7 +939,7 @@ mod tests {
                 &represented,
                 &[real(nc), real(nl)],
                 &[real(dc), real(dl)],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootRationalImageStatus::Transformed);

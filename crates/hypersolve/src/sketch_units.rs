@@ -5,9 +5,8 @@
 //! declared tolerance as a residual acceptance threshold. Exact comparisons
 //! certify whether a declared tolerance is nonnegative; later design-rule
 //! constraints can consume the same value as an ordinary exact bound. This is
-//! Yap's exact-computation boundary applied to units and tolerances: decisions
-//! consume certified facts, not hidden epsilons. See Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! the exact-computation boundary applied to units and tolerances: decisions
+//! consume certified facts, not hidden epsilons.
 
 use std::cmp::Ordering;
 
@@ -102,7 +101,7 @@ impl SketchUnitToleranceReport {
 
 /// Audit retained unit/tolerance metadata with the default predicate policy.
 pub fn audit_sketch_unit_tolerances(sketch: &SketchSolveProblem) -> SketchUnitToleranceReport {
-    audit_sketch_unit_tolerances_with_policy(sketch, PredicatePolicy::default())
+    audit_sketch_unit_tolerances_with_policy(sketch, PredicatePolicy)
 }
 
 /// Audit retained unit/tolerance metadata with an explicit predicate policy.

@@ -6,8 +6,7 @@
 //! proof-bearing domain checks for division, negative powers, square roots,
 //! logarithms, inverse circular functions, and inverse hyperbolic functions.
 //! The checks use exact `Real` comparisons through `hyperlimit`, preserving
-//! Yap's "Towards Exact Geometric Computation" (*Computational Geometry*
-//! 7.1-2, 1997) rule that decisions should consume certified facts or return
+//! the rule that decisions consume certified facts or return
 //! explicit uncertainty. The interval/domain separation also follows Moore's
 //! interval-analysis discipline: domain validity is a precondition
 //! certificate, not a residual tolerance.

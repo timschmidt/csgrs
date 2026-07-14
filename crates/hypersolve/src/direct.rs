@@ -5,7 +5,7 @@
 //! equality rows with one active variable and square affine equality systems.
 //! The result is a candidate assignment produced by exact `hyperreal::Real`
 //! arithmetic; callers still replay and certify the full problem before
-//! trusting it. This keeps the optimization in Yap's expression/object layer
+//! trusting it. This keeps the optimization in the exact expression/object layer
 //! instead of making a lossy nonlinear backend responsible for obvious exact
 //! algebra.
 
@@ -36,10 +36,9 @@ pub struct DirectAffineSolution {
 /// This is the report-bearing version of SolveSpace's pre-Newton affine
 /// reduction for the Hyper stack. It solves only active equality systems whose
 /// rows are already prepared affine blocks, using exact Gaussian elimination
-/// over [`Real`]. The output remains a candidate assignment: Yap's
+/// over [`Real`]. The output remains a candidate assignment: the exact
 /// construction/proof boundary still requires ordinary residual replay before
-/// accepting it. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and SolveSpace's documented
+/// accepting it. SolveSpace's documented
 /// symbolic/direct solving pipeline.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DirectAffineSystemStatus {
@@ -118,10 +117,9 @@ pub struct DirectQuadraticSolution {
 
 /// Replay status for one direct univariate quadratic root candidate.
 ///
-/// Direct quadratic solving is still proposal machinery. Yap's exact
+/// Direct quadratic solving is still proposal machinery. The exact
 /// computation model requires the candidate object to be replayed through the
-/// full residual set before it becomes a decision; see Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// full residual set before it becomes a decision; see the exact-geometric-computation model.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DirectQuadraticCandidateStatus {
     /// The source quadratic row has no real roots.
@@ -212,7 +210,7 @@ pub struct EqualitySubstitutionClassMember {
 /// the model. Components preserve exact offsets to a stable representative, so
 /// later affine elimination can rewrite symbols without re-solving the same
 /// small graph. The construction follows the same pre-Newton symbolic
-/// reduction boundary as SolveSpace, while keeping Yap's exact replay boundary
+/// reduction boundary as SolveSpace, while keeping the exact replay boundary
 /// intact.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EqualitySubstitutionClass {
@@ -226,10 +224,9 @@ pub struct EqualitySubstitutionClass {
 ///
 /// Applying a class is a construction step, not a proof step: it propagates
 /// exact representative offsets into an [`EvaluationContext`] so the ordinary
-/// residual replay can check the candidate. This is the same boundary Yap
+/// residual replay can check the candidate. This is the same boundary the exactness boundary
 /// draws between exact object construction and certified geometric decisions;
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
+/// see the exact-geometric-computation model.
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum EqualitySubstitutionClassApplicationStatus {
@@ -269,7 +266,7 @@ pub struct EqualitySubstitutionClassApplicationRow {
 /// The report is intentionally explicit about skipped and inconsistent
 /// classes because substitution classes are proposal machinery. A caller that
 /// accepts a rewritten candidate without the later exact residual report would
-/// violate the Yap exact-computation discipline that this crate follows.
+/// violate this crate's exact-computation discipline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EqualitySubstitutionClassApplicationReport {
     /// Per-class application rows.
@@ -295,7 +292,7 @@ impl EqualitySubstitutionClassApplicationReport {
 /// elimination and reduced dense blocks, but it does not replace exact
 /// residual replay. Coefficients are keyed by solver symbol after substituting
 /// every class member as `symbol = representative + offset`. This follows
-/// SolveSpace's pre-Newton substitution pattern while preserving Yap's
+/// SolveSpace's pre-Newton substitution pattern while preserving the exact
 /// construction-versus-certification boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EliminatedAffineRow {
@@ -313,7 +310,7 @@ pub struct EliminatedAffineRow {
 /// be represented in class representatives and exact offset-carrying
 /// constants, leaving problem mutation and candidate certification to later
 /// stages. Silent primitive-float elimination would violate the exact replay
-/// discipline described by Yap, "Towards Exact Geometric Computation" (1997).
+/// discipline described by the exact-geometric-computation model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EqualitySubstitutionEliminationReport {
     /// Number of active affine rows considered.
@@ -680,7 +677,7 @@ pub fn solve_direct_univariate_quadratic_equalities(
 /// [`solve_direct_univariate_quadratic_equalities`] is bound into a cloned
 /// [`EvaluationContext`] and replayed against the full prepared problem. The
 /// helper follows SolveSpace's direct-solve-before-Newton pattern while making
-/// Yap's construction/proof split explicit: exact roots are still only
+/// the exact construction/proof split explicit: exact roots are still only
 /// proposals until residual replay certifies them.
 pub fn certify_direct_univariate_quadratic_roots(
     prepared: &PreparedProblem<'_>,
@@ -802,7 +799,7 @@ pub fn find_equality_substitutions(
 /// This is a candidate-update helper, not a proof. It is useful after
 /// `find_equality_substitutions` has identified `x = y + c` rows and the
 /// caller wants a candidate that satisfies those rows before exact replay. The
-/// full residual certification step remains mandatory, preserving Yap's
+/// full residual certification step remains mandatory, preserving the exact
 /// distinction between construction/proposal and certified decision.
 pub fn apply_equality_substitutions(
     context: &mut EvaluationContext,
@@ -822,7 +819,7 @@ pub fn apply_equality_substitutions(
 /// Validate exact equality substitutions before using them as rewrites.
 ///
 /// SolveSpace-style substitution relies on orienting simple equations before
-/// nonlinear iteration. Yap's exact-computation discipline makes the proof
+/// nonlinear iteration. The exact-computation discipline makes the proof
 /// obligation explicit: symbolic reduction may propose cheaper topology, but
 /// contradictions and cycles must be represented exactly instead of hidden in
 /// floating-point iteration. This function checks self-rewrites, duplicate
@@ -988,7 +985,7 @@ pub fn build_equality_substitution_classes(
 /// value because members store `symbol = representative + offset`. The helper
 /// then writes every member's exact value into the context, unless another
 /// already-bound member contradicts the anchor. This mirrors SolveSpace's
-/// symbolic equality-class propagation while keeping Yap's construction versus
+/// symbolic equality-class propagation while keeping the exact construction versus
 /// certification boundary intact: callers still replay residuals with
 /// [`crate::certify_candidate`] before trusting the candidate.
 pub fn apply_equality_substitution_classes(

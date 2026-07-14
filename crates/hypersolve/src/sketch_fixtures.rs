@@ -5,9 +5,9 @@
 //! SolveSpaceLib implementation code or fixture files. Instead, each fixture
 //! builds a [`SketchSolveProblem`] through the public Hyper API, lowers it to a
 //! generic residual [`crate::Problem`], and certifies the candidate through
-//! exact replay. That keeps Yap's proof boundary intact: external solvers may
+//! exact replay. That keeps the exact proof boundary intact: external solvers may
 //! later be compared as proposal engines, but exact Hyper replay is the oracle.
-//! See Yap, "Towards Exact Geometric Computation" (1997), and the public
+//! and the public
 //! SolveSpaceLib `slvs.h` vocabulary for the behavioral coverage target.
 
 use crate::certification::{CandidateCertificationReport, certify_candidate};

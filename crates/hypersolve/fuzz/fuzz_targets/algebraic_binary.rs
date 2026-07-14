@@ -46,7 +46,7 @@ fuzz_target!(|data: [u8; 3]| {
         &sqrt_root(left_square),
         &sqrt_root(right_square),
         operation,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     );
     if report.status == AlgebraicRootBinaryTransformStatus::Transformed {
         let representation = report.representation.as_ref().unwrap();

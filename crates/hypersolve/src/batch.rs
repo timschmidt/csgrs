@@ -4,11 +4,10 @@
 //! dragged positions, branch choices, direct algebraic proposals, or lossy
 //! iteration snapshots. This module batches exact residual replay while keeping
 //! the final report order deterministic. It does not introduce a primitive
-//! floating acceptance threshold or hide failed rows. That follows Yap's
+//! floating acceptance threshold or hide failed rows. That follows the exact
 //! Exact Geometric Computation boundary: proposal generation may be batched or
-//! parallelized, but certified residual facts decide acceptance. See Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! parallelized, but certified residual facts decide acceptance.
+//! the exact-geometric-computation model.
 
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CertifiedCandidateStatus,
@@ -44,7 +43,7 @@ impl Default for BatchPredicateScheduleConfig {
 /// This is a scheduling report, not proof evidence. It describes independent
 /// exact replay work that may be executed sequentially or in parallel, but the
 /// final candidate acceptance still comes from row certification. That
-/// separation follows Yap, "Towards Exact Geometric Computation" (1997):
+/// separation follows the exact-geometric-computation model:
 /// scheduling is implementation detail, exact predicates decide truth.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BatchPredicateWorkItem {

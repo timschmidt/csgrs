@@ -45,7 +45,7 @@ fuzz_target!(|data: [i16; 5]| {
         real(b),
         real(c),
         real(d),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     );
     if a * d - b * c == 0 {
         assert_ne!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);

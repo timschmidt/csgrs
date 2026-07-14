@@ -2,12 +2,11 @@
 //!
 //! The sketch layer resolves circle handles, radius handles, and branch flags;
 //! this module owns only the symbolic proof rows. This is the retained-object
-//! split advocated by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): a caller chooses the topological
+//! split advocated by the exact-geometric-computation model: a caller chooses the topological
 //! tangency branch, and exact replay accepts or rejects the polynomial
 //! evidence. The branch vocabulary mirrors the explicit geometric-constraint
-//! solver objects described by Bouma, Fudos, Hoffmann, Cai, and Paige,
-//! "A Geometric Constraint Solver," *Computer-Aided Design* 27.6 (1995).
+//! solver objects described by the geometric-constraint literature,
+//! the geometric-constraint-solver model.
 
 use crate::symbolic::Expr;
 
@@ -27,7 +26,7 @@ pub(crate) struct CircleCircleTangentExprs {
 /// `|d|^2 == (r_a - r_b)^2`. The row deliberately avoids square roots,
 /// normalization, and absolute values. Radius positivity, noncoincident
 /// centers, and containment policy are retained domain/preflight obligations
-/// rather than hidden tolerance checks, following Yap's exact replay boundary.
+/// rather than hidden tolerance checks, following the exact replay boundary.
 pub(crate) fn circle_circle_tangent_exprs(
     first_center: &[Expr; 2],
     first_radius: Expr,

@@ -6,11 +6,9 @@
 //! status before accepting the mask. Equality and soft rows are expected to be
 //! active. Inequalities are expected to be active exactly when binding and
 //! inactive exactly when strictly satisfied. Violations are reported regardless
-//! of the mask. This keeps active-set decisions inside Yap's exact decision
-//! boundary; see Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The active-set terminology follows
-//! the standard nonlinear-programming/KKT convention; see Nocedal and Wright,
-//! *Numerical Optimization*, 2nd ed. (2006).
+//! of the mask. This keeps active-set decisions inside the exact decision
+//! boundary; see the exact-geometric-computation model. The active-set terminology follows
+//! the standard nonlinear-programming/KKT convention; see standard nonlinear-optimization methods.
 
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
@@ -287,9 +285,8 @@ pub enum ActiveSetAffineRegenerationStatus {
 /// the resulting active affine equality system through
 /// [`crate::solve_direct_affine_system`], then audits the regenerated candidate
 /// against the original problem and mask. This is intentionally affine-only:
-/// Nocedal and Wright, *Numerical Optimization*, describe active-set iteration
-/// as a mask-driven candidate-generation process; Yap, *Towards Exact
-/// Geometric Computing*, requires the regenerated candidate and mask to be
+/// standard nonlinear-optimization methods, describe active-set iteration
+/// as a mask-driven candidate-generation process; the exactness boundary requires the regenerated candidate and mask to be
 /// replayed at an exact-computation boundary before trust.
 #[derive(Clone, Debug)]
 pub struct ActiveSetAffineRegenerationReport {
@@ -429,8 +426,7 @@ impl ActiveSetAuditReport {
 /// missed binding inequalities activate, superfluous active inequalities
 /// deactivate, consistent rows keep their current flag, and certified
 /// violations reject the candidate. That mirrors the active-set/KKT
-/// terminology in Nocedal and Wright, *Numerical Optimization*, 2nd ed.
-/// (2006), while following Yap's "Towards Exact Geometric Computation" (1997)
+/// terminology in standard nonlinear-optimization methods, while following the exact-geometric-computation model
 /// rule that only certified residual signs may drive branching.
 pub fn propose_active_set_update(
     prepared: &PreparedProblem<'_>,
@@ -448,9 +444,7 @@ pub fn propose_active_set_update(
 /// Certified missed bindings activate, certified superfluous inequalities
 /// deactivate, and certified violations stop the loop as infeasible evidence.
 /// This is the smallest solver-loop layer over the exact mask policy: it
-/// follows the active-set/KKT iteration idea described by Nocedal and Wright,
-/// *Numerical Optimization*, 2nd ed. (2006), while preserving Yap's "Towards
-/// Exact Geometric Computation" (1997) boundary that exact reports, not
+/// follows the active-set/KKT iteration idea described by standard nonlinear-optimization methods, while preserving the exact-geometric-computation model boundary that exact reports, not
 /// floating tolerances, drive every branch.
 pub fn run_active_set_update_loop(
     prepared: &PreparedProblem<'_>,
@@ -530,8 +524,8 @@ pub fn run_active_set_update_loop(
 /// under/overdetermined affine systems, singular pivots, and non-affine rows
 /// remain explicit direct-solve failures. When solving succeeds, the candidate
 /// is audited against every source constraint under the supplied mask before it
-/// can be reported as certified. This follows Yap, *Towards Exact Geometric
-/// Computing*, by separating proposal mechanics from exact predicate replay.
+/// can be reported as certified. Proposal mechanics remain separate from exact
+/// predicate replay.
 pub fn regenerate_active_set_affine_candidate(
     prepared: &PreparedProblem<'_>,
     active_mask: &[bool],
@@ -598,10 +592,9 @@ pub fn regenerate_active_set_affine_candidate(
 /// enumerates exact root assignments into `base_context`. Every generated
 /// candidate is audited against the original problem and supplied mask before
 /// it can be reported as certified. The method follows the SolveSpace-style
-/// soluble-alone preprocessing idea while preserving Yap's EGC rule: exact
-/// construction is only proposal evidence until replay certifies it. See Yap,
-/// "Towards Exact Geometric Computation" (1997), and Nocedal-Wright,
-/// *Numerical Optimization* (2006), for the active-set/proposal boundary.
+/// soluble-alone preprocessing idea while preserving the exact EGC rule: exact
+/// construction is only proposal evidence until replay certifies it.
+/// the exact-geometric-computation model, and standard nonlinear-optimization methods, for the active-set/proposal boundary.
 pub fn regenerate_active_set_quadratic_candidates(
     prepared: &PreparedProblem<'_>,
     base_context: &EvaluationContext,

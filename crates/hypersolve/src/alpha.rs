@@ -4,12 +4,10 @@
 //! a computer algebra system; it consumes the retained
 //! [`PreparedUnivariateQuadraticResidual`](crate::PreparedUnivariateQuadraticResidual)
 //! package and proves a conservative Newton basin condition with exact
-//! `Real` arithmetic. The trust boundary follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): numerical iteration may
+//! `Real` arithmetic. The trust boundary follows the exact-geometric-computation model: numerical iteration may
 //! propose a point, while exact replay and proof-producing filters decide what
 //! is accepted. The Newton-basin shape follows Smale's alpha theory; see
-//! S. Smale, "Newton's Method Estimates from Data at One Point," in *The
-//! Merging of Disciplines: New Directions in Pure, Applied, and Computational
+//! alpha theory of Disciplines: New Directions in Pure, Applied, and Computational
 //! Mathematics*, Springer, 1986.
 
 use std::cmp::Ordering;

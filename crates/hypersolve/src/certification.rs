@@ -3,9 +3,8 @@
 //! Numeric nonlinear methods are useful proposal engines, but in an exact
 //! geometry stack the proposed coordinates are not a proof. This module replays
 //! residuals through prepared exact solver structure and asks `hyperreal` for
-//! certified signs before accepting or rejecting each row. That follows Yap's
-//! "Towards Exact Geometric Computation" (*Computational Geometry* 7.1-2,
-//! 1997): combinatorial decisions should consume exact/certified information
+//! certified signs before accepting or rejecting each row. Combinatorial
+//! decisions should consume exact or certified information
 //! or return explicit uncertainty, not primitive-float tolerances. The
 //! candidate/proof split mirrors the architecture of SolveSpace's symbolic
 //! residual/Jacobian layer with numerical Newton iteration, but makes the
@@ -80,10 +79,8 @@ pub enum CertifiedCandidateStatus {
     ///
     /// This is an explicit non-certificate. It records the selected numerical
     /// adapter boundary so callers cannot accidentally treat primitive-float
-    /// convergence as exact residual truth. That separation is Yap's core
-    /// exact-geometric-computation rule applied to solver outputs; see Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// convergence as exact residual truth. That separation is the exact core
+    /// exact-geometric-computation rule applied to solver outputs; see the exact-geometric-computation model.
     LossyAdapterOnly {
         /// Proposal engine requested by the caller.
         requested: ProposalEngineKind,
@@ -311,7 +308,7 @@ pub fn report_lossy_adapter_only_candidate(
 ///
 /// Ball enclosures are a standard interval-analysis shape; here they are only
 /// accepted when `hyperlimit` can certify the sign of the whole ball. This is
-/// the proof-producing filter layer described by Yap, not a tolerance test.
+/// the proof-producing filter layer required at the exactness boundary, not a tolerance test.
 pub fn certify_candidate_with_residual_balls(
     prepared: &PreparedProblem<'_>,
     context: &EvaluationContext,

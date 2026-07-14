@@ -4,10 +4,9 @@
 //! domains. They certify conditions such as unit normals, positive radii, and
 //! nonzero tangent carriers before numerical proposal engines run. The checks
 //! return explicit proof rows instead of normalizing data or applying epsilon
-//! repairs, following Yap's Exact Geometric Computation boundary: construction
-//! inputs must be certified or carried forward as uncertainty. See Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997). The unit-normal and tangent-carrier obligations also mirror the
+//! repairs, following the exact-geometric-computation boundary: construction
+//! inputs must be certified or carried forward as uncertainty.
+//! the exact-geometric-computation model. The unit-normal and tangent-carrier obligations also mirror the
 //! retained normal and endpoint/orientation data exposed by SolveSpace's
 //! public sketch entity/constraint model.
 
@@ -147,7 +146,7 @@ impl SketchEntityDomainReport {
 /// Certify retained sketch entity-domain obligations with the default
 /// predicate policy.
 pub fn preflight_sketch_entity_domains(sketch: &SketchSolveProblem) -> SketchEntityDomainReport {
-    preflight_sketch_entity_domains_with_policy(sketch, PredicatePolicy::default())
+    preflight_sketch_entity_domains_with_policy(sketch, PredicatePolicy)
 }
 
 /// Certify retained sketch entity-domain obligations with an explicit

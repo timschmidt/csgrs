@@ -3,10 +3,9 @@
 //! Degeneracy explanations belong to retained sketch objects, not only to the
 //! residual rows they later lower into. This module checks simple entity-level
 //! degeneracies with exact arithmetic and returns report rows instead of
-//! applying epsilon repairs. That follows Yap's Exact Geometric Computation
+//! applying epsilon repairs. That follows the exact-geometric-computation
 //! boundary: topology/validity decisions consume certified facts or remain
-//! explicit uncertainty. See Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997).
+//! explicit uncertainty.
 
 use std::cmp::Ordering;
 
@@ -117,7 +116,7 @@ impl SketchDegeneracyReport {
 /// Certify simple retained sketch entity degeneracies with the default
 /// predicate policy.
 pub fn preflight_sketch_degeneracies(sketch: &SketchSolveProblem) -> SketchDegeneracyReport {
-    preflight_sketch_degeneracies_with_policy(sketch, PredicatePolicy::default())
+    preflight_sketch_degeneracies_with_policy(sketch, PredicatePolicy)
 }
 
 /// Certify simple retained sketch entity degeneracies with an explicit

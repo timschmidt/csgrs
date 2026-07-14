@@ -2,11 +2,10 @@
 //!
 //! Direct algebraic construction is useful for sketches with symmetric or
 //! ambiguous solutions, but it is not by itself a proof of a solver decision.
-//! This module keeps Yap's construction/proof split explicit: every direct
+//! This module keeps the exact construction/proof split explicit: every direct
 //! branch generated from a retained univariate quadratic row is replayed
 //! through exact residual certification before it can be treated as certified.
-//! See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997).
+//!
 
 use hyperreal::{Real, RealSign};
 
@@ -85,7 +84,7 @@ impl ExactBranchEnumerationReport {
 /// replayed through [`crate::certify_candidate`]. The root construction follows
 /// the same retained-row discipline as
 /// [`crate::solve_direct_univariate_quadratic_equalities`], while the replay
-/// boundary follows Yap's Exact Geometric Computation model rather than a
+/// boundary follows the exact-geometric-computation model rather than a
 /// primitive floating acceptance threshold.
 pub fn enumerate_direct_univariate_quadratic_branches(
     prepared: &PreparedProblem<'_>,

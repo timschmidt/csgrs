@@ -67,9 +67,8 @@ pub fn symbolic_jacobian(
 /// current normal-equation backend. The difference is semantic ownership:
 /// structural zero columns are selected from [`PreparedProblem`] facts instead
 /// of rediscovered by differentiating every variable in every row. That follows
-/// Yap's exact-geometric-computation split between preserved object structure
-/// and approximate arithmetic adapters; see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// the exact-geometric-computation split between preserved object structure
+/// and approximate arithmetic adapters; see the exact-geometric-computation model.
 pub fn symbolic_jacobian_prepared(
     prepared: &PreparedProblem<'_>,
     context: &EvaluationContext,

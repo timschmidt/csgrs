@@ -3,13 +3,9 @@
 //! This module is a proof package, not a numerical proposal engine. It extracts
 //! exact-rational univariate polynomial residuals, reduces repeated factors,
 //! and isolates distinct real roots with Sturm sign-variation counts over
-//! rational intervals. That keeps the Yap boundary explicit: algebraic
-//! isolation constructs certified exact intervals, while ordinary candidate
-//! replay still decides whether a solver assignment is acceptable. See Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997); Sturm, "Mémoire sur la résolution des équations numériques" (1835);
-//! and Collins and Loos, "Real Zeros of Polynomials," in *Computer Algebra:
-//! Symbolic and Algebraic Computation* (1982).
+//! rational intervals. The boundary remains explicit: algebraic isolation
+//! constructs certified exact intervals, while ordinary candidate replay
+//! decides whether a solver assignment is acceptable.
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -90,7 +86,7 @@ pub struct UnivariateRootIsolationReport {
 /// These controls do not introduce a tolerance acceptance rule. They only tell
 /// the exact Sturm isolator how far to subdivide intervals that already have a
 /// certified distinct-root count. Acceptance still belongs to exact candidate
-/// replay or to a future algebraic-number package, preserving Yap's
+/// replay or to a future algebraic-number package, preserving the exact
 /// construction/proof boundary.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct RootIsolationConfig {
@@ -125,8 +121,8 @@ pub enum IsolatedRootRefinementStatus {
 /// The input interval is treated as exact evidence, not as a floating estimate.
 /// The implementation recomputes the square-free Sturm count inside the
 /// interval, then bisects only into the subinterval that still contains exactly
-/// one distinct root. This follows Sturm's theorem (1835), the Collins-Loos
-/// isolation model (1982), and Yap's exact-object refinement boundary (1997).
+/// one distinct root. This follows Sturm's theorem, the Collins-Loos
+/// isolation model, and the exact-object refinement boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct IsolatedRootRefinementReport {
     /// Final refinement status.
@@ -188,8 +184,8 @@ pub enum DescartesRootCountStatus {
 /// and the parity of the gap to the true count. Applying the same rule to
 /// `p(-x)` gives the negative-root bound. This is not full isolation, but it
 /// is a cheap proof-producing algebraic filter that can reject impossible
-/// root topologies before Sturm subdivision. See Descartes, *La Géométrie*
-/// (1637), Collins and Loos (1982), and Yap (1997).
+/// root topologies before Sturm subdivision, using Descartes' rule of signs and
+/// the standard real-root isolation model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DescartesRootCountReport {
     /// Source constraint index.
@@ -234,9 +230,8 @@ pub enum BernsteinRootCountStatus {
 /// Bernstein form and Descartes sign variation is applied to the Bernstein
 /// control coefficients. This gives a proof-producing bound for roots inside a
 /// finite interval and is the standard subdivision-facing sibling of the
-/// global Descartes count. See Farouki and Rajan, "Algorithms for Polynomials
-/// in Bernstein Form," *Computer Aided Geometric Design* 5.1 (1988), Collins
-/// and Loos (1982), and Yap (1997).
+/// global Descartes count, using Bernstein-form root counting and the standard
+/// real-root isolation model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BernsteinRootCountReport {
     /// Source constraint index.
@@ -323,7 +318,7 @@ pub struct BernsteinSubdivisionConfig {
 impl Default for BernsteinSubdivisionConfig {
     fn default() -> Self {
         Self {
-            policy: PredicatePolicy::default(),
+            policy: PredicatePolicy,
             max_depth: 32,
         }
     }
@@ -336,7 +331,7 @@ impl Default for BernsteinSubdivisionConfig {
 /// Bernstein sign variation is greater than one and stops only when intervals
 /// are empty, have an exact endpoint root, have variation one, or reach the
 /// configured depth limit. It follows the Bernstein subdivision literature of
-/// Farouki and Rajan (1988) while preserving Yap's exact proof boundary.
+/// the Bernstein-form construction while preserving the exact proof boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BernsteinSubdivisionReport {
     /// Source constraint index.
@@ -597,9 +592,8 @@ pub fn isolate_univariate_polynomial_expr_with_config(
 /// removes repeated factors with a polynomial gcd, verifies by Sturm counts
 /// that the supplied interval contains one distinct real root, and then
 /// repeatedly bisects toward the subinterval whose Sturm count remains one.
-/// The algorithm cites Sturm (1835), Collins and Loos (1982), and Yap (1997)
-/// because their exact root-isolation/refinement boundary is the design rule
-/// used here.
+/// The algorithm uses Sturm's theorem and the standard real-root isolation
+/// model; exact refinement remains the design rule used here.
 pub fn refine_isolated_univariate_polynomial_interval(
     polynomial: &[Real],
     interval: &IsolatedRootInterval,
@@ -812,8 +806,8 @@ pub fn refine_isolated_univariate_polynomial_interval(
 /// When subdivision lands on a rational root exactly, this helper binds that
 /// witness into a cloned candidate context and replays the full prepared
 /// problem. Non-rational intervals are reported as explicit non-witnesses
-/// rather than approximated. This follows the Collins/Loos isolation model and
-/// Yap's rule that constructed algebraic evidence still needs exact replay
+/// rather than approximated. This follows the standard real-root isolation model and
+/// the exact-decision rule that constructed algebraic evidence still needs exact replay
 /// before becoming a solver decision.
 pub fn certify_isolated_rational_root_witnesses(
     prepared: &PreparedProblem<'_>,
@@ -2191,10 +2185,8 @@ mod tests {
             x.powi(2) + Expr::int(1),
         ));
 
-        let reports = isolate_univariate_polynomial_roots(
-            &PreparedProblem::new(&problem),
-            PredicatePolicy::default(),
-        );
+        let reports =
+            isolate_univariate_polynomial_roots(&PreparedProblem::new(&problem), PredicatePolicy);
 
         assert_eq!(reports.len(), 3);
         assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
@@ -2222,10 +2214,8 @@ mod tests {
         problem.add_variable("y", real(0));
         problem.add_constraint(Constraint::equality("xy", x * y));
 
-        let reports = isolate_univariate_polynomial_roots(
-            &PreparedProblem::new(&problem),
-            PredicatePolicy::default(),
-        );
+        let reports =
+            isolate_univariate_polynomial_roots(&PreparedProblem::new(&problem), PredicatePolicy);
 
         assert_eq!(reports.len(), 1);
         assert_eq!(
@@ -2249,7 +2239,7 @@ mod tests {
         let reports = isolate_univariate_polynomial_roots_with_config(
             &prepared,
             RootIsolationConfig {
-                policy: PredicatePolicy::default(),
+                policy: PredicatePolicy,
                 max_interval_width: Some(Real::one()),
                 max_refinement_steps: 8,
             },
@@ -2355,7 +2345,7 @@ mod tests {
 
         let reports = count_descartes_univariate_polynomial_roots(
             &PreparedProblem::new(&problem),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(reports.len(), 3);
@@ -2399,7 +2389,7 @@ mod tests {
             &PreparedProblem::new(&problem),
             real(0),
             real(2),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(reports.len(), 3);
@@ -2441,7 +2431,7 @@ mod tests {
             real(0),
             real(4),
             BernsteinSubdivisionConfig {
-                policy: PredicatePolicy::default(),
+                policy: PredicatePolicy,
                 max_depth: 8,
             },
         );
@@ -2470,7 +2460,7 @@ mod tests {
             real(0),
             real(4),
             BernsteinSubdivisionConfig {
-                policy: PredicatePolicy::default(),
+                policy: PredicatePolicy,
                 max_depth: 0,
             },
         );
@@ -2505,7 +2495,7 @@ mod tests {
                 &PreparedProblem::new(&problem),
                 real(root - 1),
                 real(root + 1),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(reports.len(), 1);

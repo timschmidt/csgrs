@@ -9,17 +9,13 @@ use crate::linalg::LinearSolveReport;
 /// solver families exposed by SolveSpace/PlaneGCS and MINPACK: damped
 /// least-squares/Levenberg-Marquardt, SolveSpace-style modified Newton least
 /// squares, Powell hybrid, dogleg, BFGS, and SQP.
-/// Yap's exact-geometric-computation boundary still applies: numerical
+/// the exact-geometric-computation boundary still applies: numerical
 /// engines propose, exact/certified replay decides.
 ///
-/// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), for the exact/approximate boundary; Levenberg, "A Method for
-/// the Solution of Certain Non-Linear Problems in Least Squares" (1944), and
-/// Marquardt, "An Algorithm for Least-Squares Estimation of Nonlinear
-/// Parameters" (1963), for the damped least-squares proposal family; and
-/// Powell, "A Hybrid Method for Nonlinear Equations" (1970), for dogleg-style
-/// trust-region proposals; Broyden/Fletcher/Goldfarb/Shanno (1970) for BFGS;
-/// and Nocedal and Wright, *Numerical Optimization*, 2nd ed. (2006), for SQP.
+/// for the exact/approximate boundary; the Levenberg damped least-squares method, and
+/// the Levenberg-Marquardt method, for the damped least-squares proposal family; and
+/// the Powell hybrid method, for dogleg-style
+/// trust-region proposals, BFGS quasi-Newton updates, and equality-SQP.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProposalEngineKind {
     /// Current dense damped least-squares implementation.
@@ -100,10 +96,9 @@ pub struct ProposalEngineReport {
 ///
 /// SolveSpace-style solvers perform substitution and "soluble alone" passes
 /// before Newton iteration. In Hyper these passes are exact proposal
-/// diagnostics: they may explain or seed a candidate route, but Yap's
+/// diagnostics: they may explain or seed a candidate route, but the exact
 /// construction/proof boundary still requires ordinary exact residual replay
-/// before any candidate is accepted. See Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// before any candidate is accepted.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProposalPreprocessingReport {
     /// Whether the requested proposal route asked for this preprocessing.
@@ -189,8 +184,7 @@ pub struct SolveReport {
     /// Levenberg-Marquardt and modified-Newton least-squares routes, dense
     /// Powell-hybrid/dogleg routes, BFGS, and an equality-SQP relaxation.
     /// Accepted coordinates still require exact candidate certification; see
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// the exact-geometric-computation model.
     pub proposal_engine: ProposalEngineReport,
     pub residuals: Vec<ResidualEvaluation>,
     /// Linear-solver adapter reports collected during iteration.
@@ -198,9 +192,8 @@ pub struct SolveReport {
     /// These reports are deliberately surfaced at the solver boundary so lossy
     /// dense f64 iteration remains visible to callers. They are diagnostics for
     /// selected numerical adapters, not exact certificates for residual
-    /// feasibility or symbolic rank. This matches Yap's separation between
-    /// exact object facts and approximate numerical stages; see Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// feasibility or symbolic rank. This matches the exact separation between
+    /// exact object facts and approximate numerical stages; see the exact-geometric-computation model.
     pub linear_reports: Vec<LinearSolveReport>,
     /// Exact proposal preprocessing found before lossy iteration.
     ///

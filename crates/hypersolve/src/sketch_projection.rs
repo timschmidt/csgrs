@@ -4,12 +4,10 @@
 //! the retained sketch handle layer. The caller resolves workplane/point
 //! handles, then this module builds the exact proof expressions: a unit
 //! quaternion guard and a squared `U/V` projected distance. That separation is
-//! the point of Yap's exact geometric computation paradigm: retain geometric
+//! the point of the exact geometric computation paradigm: retain geometric
 //! objects, lower only to explicit proof obligations, and leave lossy
-//! projection coordinates to proposal adapters. See C. K. Yap, "Towards Exact
-//! Geometric Computation" (1997). The `U/V/N` axes use the standard unit
-//! quaternion rotation matrix from K. Shoemake, "Animating Rotation with
-//! Quaternion Curves" (1985).
+//! projection coordinates to proposal adapters. The `U/V/N` axes use the standard unit
+//! quaternion rotation matrix from the unit-quaternion construction.
 
 use crate::symbolic::Expr;
 
@@ -37,7 +35,7 @@ pub(crate) fn projected_distance_squared(delta: &[Expr; 3], quaternion: &[Expr; 
 /// same polynomial unit-quaternion frame as projected-distance rows. This
 /// helper intentionally does not normalize the direction; zero projected
 /// length remains a report-bearing domain obligation for callers. The
-/// construction follows Yap's exact replay boundary and Shoemake's
+/// construction follows the exact replay boundary and the unit-quaternion construction's
 /// unit-quaternion frame formula cited in the module docs.
 pub(crate) fn projected_direction2(direction: &[Expr; 3], quaternion: &[Expr; 4]) -> [Expr; 2] {
     let (u_axis, v_axis, _) = quaternion_frame_axes_expr(quaternion);
@@ -50,8 +48,8 @@ pub(crate) fn projected_direction2(direction: &[Expr; 3], quaternion: &[Expr; 4]
 /// retained unit-quaternion frame as projected distance rows.  This is the
 /// exact proof form for SolveSpace-style projected line-length equality: the
 /// true projected length and its square root stay out of topology/proof
-/// decisions, following Yap, "Towards Exact Geometric Computation" (1997),
-/// while the axes follow Shoemake's unit-quaternion frame formula.
+/// decisions, following the exact-geometric-computation model,
+/// while the axes follow the unit-quaternion frame formula.
 pub(crate) fn projected_direction_squared_length(
     direction: &[Expr; 3],
     quaternion: &[Expr; 4],
@@ -66,9 +64,8 @@ pub(crate) fn projected_direction_squared_length(
 /// 2D cross product after projecting both vectors to the workplane `U/V`
 /// basis. Callers can compare `cross_uv^2` with `distance^2 * |dir_uv|^2`
 /// without normalizing the line direction. This is the same denominator-
-/// clearing proof style advocated by Yap, "Towards Exact Geometric
-/// Computation" (1997), with the retained unit-quaternion frame from
-/// Shoemake, "Animating Rotation with Quaternion Curves" (1985).
+/// clearing proof style advocated by the exact-geometric-computation model, with the retained unit-quaternion frame from
+/// the unit-quaternion construction.
 pub(crate) fn projected_point_line_distance_squared_parts(
     point_delta: &[Expr; 3],
     line_direction: &[Expr; 3],

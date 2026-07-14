@@ -5,14 +5,8 @@
 //! classical Sylvester-matrix determinant: the determinant is computed by
 //! [`crate::determinant_bareiss`], so coefficient arithmetic remains exact and
 //! pivot decisions remain certified. It also exposes a fraction-free
-//! pseudo-remainder chain for the subresultant scheduling boundary. See
-//! Sylvester, "On a Theory of the Syzygetic Relations of Two Rational Integral
-//! Functions" (1853), G. E. Collins, "Subresultants and Reduced Polynomial
-//! Remainder Sequences," *Journal of the ACM* 14.1 (1967), Bareiss,
-//! "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-//! Elimination," *Mathematics of Computation* 22.103 (1968), and Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! pseudo-remainder chain for the subresultant scheduling boundary. Both
+//! constructions remain exact and report uncertain pivot decisions.
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
@@ -229,11 +223,10 @@ pub fn resultant_univariate_polynomials(
 /// Builds an exact fraction-free pseudo-remainder chain.
 ///
 /// The chain uses pseudo-division instead of field division, matching the
-/// subresultant-PRS tradition of Collins, "Subresultants and Reduced
-/// Polynomial Remainder Sequences," *Journal of the ACM* 14.1 (1967). This is
+/// subresultant polynomial remainder sequence. This is
 /// intentionally a report-bearing scheduling API: it gives curve and solver
 /// callers exact elimination evidence without claiming to be a full
-/// multivariate algebraic solver. Yap's exact-computation boundary is
+/// multivariate algebraic solver. The exact-computation boundary is
 /// preserved by requiring certified coefficient trimming before any degree
 /// decision is made.
 pub fn subresultant_chain_univariate_polynomials(
@@ -317,13 +310,8 @@ pub fn subresultant_chain_univariate_polynomials(
 /// curve crates own span construction and topology, then pass univariate
 /// coefficient pairs here for exact algebraic filtering. Each pair first runs
 /// the Sylvester resultant; zero resultants then run the fraction-free
-/// pseudo-remainder chain. The staged filter follows Sylvester's determinant
-/// resultant (J. J. Sylvester, "On a Theory of the Syzygetic Relations of Two
-/// Rational Integral Functions", 1853) and Collins' subresultant PRS
-/// construction (G. E. Collins, "Subresultants and Reduced Polynomial Remainder
-/// Sequences", 1967), while preserving Yap's Exact Geometric Computation rule
-/// that exact reports, not sampled approximations, drive branching decisions
-/// (Chee K. Yap, "Towards Exact Geometric Computation", 1997).
+/// pseudo-remainder chain. Exact reports, rather than sampled approximations,
+/// drive every branching decision.
 pub fn schedule_univariate_resultant_pairs(
     pairs: &[UnivariateResultantPairInput],
     min_precision: i32,

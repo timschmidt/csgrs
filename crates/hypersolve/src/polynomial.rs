@@ -5,8 +5,7 @@
 //! deliberately narrow family: active univariate quadratic residuals. The row
 //! is still a nonlinear proposal row, but its bounded polynomial structure is
 //! preserved for exact replay, future interval/Krawczyk certificates, and
-//! solver dispatch. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): retain object/expression structure
+//! solver dispatch. This follows the exact-geometric-computation model: retain object/expression structure
 //! and choose an arithmetic package before scalar evaluation.
 
 use std::collections::{BTreeMap, HashMap};
@@ -42,7 +41,7 @@ pub struct PreparedQuadraticTerm {
 /// It preserves the bounded polynomial package
 /// `c + sum_i l_i*x_i + sum_ij q_ij*x_i*x_j` without expanding into a generic
 /// CAS. SolveSpace-style nonlinear dispatch can inspect the row before Newton
-/// iteration, while Yap's exact-computation discipline is preserved because
+/// iteration, while the exact-computation discipline is preserved because
 /// the original expression remains authoritative and exact replay is still
 /// required before accepting a candidate.
 #[derive(Clone, Debug, PartialEq)]

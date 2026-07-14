@@ -3,10 +3,10 @@
 //! These builders are a semantic layer over [`SketchSolveProblem`]. They record
 //! whether a relation is incidence, distance, or orientation before lowering to
 //! generic residuals, so exact replay can later choose the correct proof
-//! package. This follows Yap's "Towards Exact Geometric Computation" (1997):
+//! package. This follows the exact-geometric-computation model:
 //! the builder creates proof obligations, but certification remains the trust
 //! boundary. The family split mirrors geometric-constraint-solver practice as
-//! surveyed by Bouma et al., "Geometric Constraint Solver" (1995), while the
+//! used by geometric constraint solvers, while the
 //! public entity names are SolveSpaceLib-compatible reference vocabulary.
 
 use hyperreal::Real;
@@ -62,8 +62,7 @@ pub mod angle {
     /// `dot(a,b)^2*|c|^2*|d|^2 - dot(c,d)^2*|a|^2*|b|^2 == 0`.
     /// This is the algebraic proof package for equal unsigned angles; any
     /// oriented-angle or trigonometric proposal form should be retained
-    /// separately. The split follows Yap's "Towards Exact Geometric
-    /// Computation" (1997): exact replay, not a floating angle computation,
+    /// separately. The split follows the exact-geometric-computation model: exact replay, not a floating angle computation,
     /// decides acceptance.
     pub fn equal_angle_lines2(
         sketch: &mut SketchSolveProblem,
@@ -89,8 +88,7 @@ pub mod angle {
     /// and `(c,d)`, then adds a same-branch predicate. This is the proof row
     /// package for branch-sensitive `ANGLE` behavior: unsigned angle equality
     /// is not enough when a sketch distinguishes clockwise from
-    /// counterclockwise turns. The package follows Yap's "Towards Exact
-    /// Geometric Computation" (1997) by proving the branch with exact
+    /// counterclockwise turns. The package follows the exact-geometric-computation model by proving the branch with exact
     /// polynomials rather than by trusting an `atan2` proposal.
     pub fn equal_oriented_angle_lines2(
         sketch: &mut SketchSolveProblem,
@@ -116,9 +114,8 @@ pub mod angle {
     /// 3D line directions into exact `U/V` coordinates, and compares the
     /// resulting oriented angle vectors `(dot, cross)` plus same-branch
     /// predicate. This is the exact 3D/workplane counterpart of
-    /// [`equal_oriented_angle_lines2`]: Yap's "Towards Exact Geometric
-    /// Computation" (1997) keeps trigonometric proposal values out of the
-    /// proof path, and Shoemake's unit-quaternion frame supplies the
+    /// [`equal_oriented_angle_lines2`]: the exact-geometric-computation model keeps trigonometric proposal values out of the
+    /// proof path, and the unit-quaternion frame supplies the
     /// projection polynomial.
     pub fn projected_equal_oriented_angle_lines3(
         sketch: &mut SketchSolveProblem,
@@ -155,8 +152,7 @@ pub mod tangency {
     /// Lowering emits exact unnormalized G1 tangent predicates: a cross-product
     /// equality for common tangent support and a dot-product inequality for the
     /// same orientation branch. Degenerate tangent carriers remain explicit
-    /// entity-domain obligations. This follows Yap's "Towards Exact Geometric
-    /// Computation" (1997): tangent construction may be a proposal step, but
+    /// entity-domain obligations. This follows the exact-geometric-computation model: tangent construction may be a proposal step, but
     /// candidate acceptance is exact predicate replay.
     pub fn tangent_same_direction_lines2(
         sketch: &mut SketchSolveProblem,
@@ -180,9 +176,8 @@ pub mod tangency {
     /// Lowering emits exact endpoint incidence, arc endpoint-on-radius,
     /// radius/tangent perpendicularity, and signed cross-product rows. This
     /// covers the first `ARC_LINE_TANGENT` slice while keeping curve ownership
-    /// and degeneracy decisions report-bearing, matching Yap's "Towards Exact
-    /// Geometric Computation" (1997) and the endpoint-aware constraint
-    /// vocabulary in Bouma et al., "A Geometric Constraint Solver" (1995).
+    /// and degeneracy decisions report-bearing, matching the exact-geometric-computation model and the endpoint-aware constraint
+    /// vocabulary in the geometric-constraint-solver model.
     pub fn arc_line_tangent2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -214,9 +209,9 @@ pub mod tangency {
     /// endpoints are replayed against their retained radii, and the two radius
     /// vectors are constrained collinear with an explicit same/opposite branch.
     /// The branch is source evidence, not a floating contact classifier. This
-    /// follows Yap's "Towards Exact Geometric Computation" (1997) and the
-    /// endpoint-aware geometric-constraint vocabulary surveyed by Bouma et al.,
-    /// "A Geometric Constraint Solver" (1995).
+    /// follows the exact-geometric-computation model and the
+    /// endpoint-aware geometric-constraint vocabulary used by geometric constraint solvers,
+    /// the geometric-constraint-solver model.
     pub fn arc_arc_tangent2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -249,9 +244,8 @@ pub mod tangency {
     /// exact cubic derivative `B'(t)` with a retained orientation branch. This
     /// is the mixed conic/polynomial differential package: it preserves the
     /// arc endpoint, cubic parameter, and branch as source evidence, then uses
-    /// exact replay for acceptance. The construction follows Yap's "Towards
-    /// Exact Geometric Computation" (1997), with the cubic derivative supplied
-    /// by Farin's Bernstein/de Casteljau control-net formula.
+    /// exact replay for acceptance. The construction follows the exact-geometric-computation model, with the cubic derivative supplied
+    /// by the Bernstein/de Casteljau control-net formula.
     pub fn arc_cubic_tangent2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -284,8 +278,7 @@ pub mod tangency {
     /// `B'(t).B'(t) + (B(t)-C).B''(t) == 0`. It is a curvature-sensitive
     /// proof package expressed without square roots or curvature division.
     /// Degenerate arcs and stationary parameters remain explicit retained
-    /// domain obligations, following Yap's "Towards Exact Geometric
-    /// Computation" (1997), while Farin's Bernstein/de Casteljau derivative
+    /// domain obligations, while the Bernstein/de Casteljau derivative
     /// control nets supply `B'` and `B''`.
     pub fn arc_cubic_second_order_contact2(
         sketch: &mut SketchSolveProblem,
@@ -318,9 +311,8 @@ pub mod tangency {
     /// 3D line endpoint projects to the selected arc endpoint, while the
     /// projected outgoing line tangent certifies radius-perpendicularity and
     /// the signed orientation branch. The unit workplane guard is part of the
-    /// proof package, following Yap, "Towards Exact Geometric Computation"
-    /// (1997); endpoint/branch data follows Bouma et al. (1995), and the
-    /// retained frame uses Shoemake's quaternion construction (1985).
+    /// proof package, following the exact-geometric-computation model; endpoint/branch data follows the geometric-constraint vocabulary, and the
+    /// retained frame uses the unit-quaternion construction's quaternion construction.
     #[allow(clippy::too_many_arguments)]
     pub fn projected_arc_line_tangent3(
         sketch: &mut SketchSolveProblem,
@@ -354,10 +346,10 @@ pub mod tangency {
     /// Lowering projects the 3D line into the retained workplane and replays
     /// the exact denominator-cleared circle-center-to-line distance equation
     /// `cross_uv^2 - radius^2*|line_uv|^2 == 0` beside the workplane unit
-    /// guard. This follows Yap, "Towards Exact Geometric Computation" (1997),
+    /// guard. This follows the exact-geometric-computation model,
     /// by keeping the projected tangent proof polynomial explicit and never
     /// normalizing the projected line through primitive floats. The workplane
-    /// frame is Shoemake's unit-quaternion construction (1985).
+    /// frame is the retained unit-quaternion construction.
     pub fn projected_line_circle_tangent3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -384,9 +376,7 @@ pub mod tangency {
     /// External tangency replays `|center_b-center_a|^2 == (r_a+r_b)^2`;
     /// internal tangency replays `|center_b-center_a|^2 == (r_a-r_b)^2`.
     /// The branch is retained by the caller instead of inferred from rounded
-    /// center distances. This follows Yap, "Towards Exact Geometric
-    /// Computation" (1997), and the explicit branch object mirrors Bouma et
-    /// al.'s geometric-constraint-solver vocabulary (1995).
+    /// center distances. Accordingly, the explicit branch object mirrors the geometric-constraint literature's geometric-constraint-solver vocabulary.
     pub fn circle_circle_tangent2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -414,7 +404,7 @@ pub mod tangency {
     /// 2D arc endpoint, and the projected cubic derivative is checked with
     /// exact radius-perpendicularity and a signed orientation predicate. The
     /// workplane guard, endpoint-on-radius, incidence, perpendicularity, and
-    /// branch rows follow Yap (1997), Shoemake's quaternion frame, and Farin's
+    /// branch rows follow the exact-decision discipline, the unit-quaternion frame, and the Bernstein/de Casteljau construction's
     /// Bernstein/de Casteljau derivative construction.
     #[allow(clippy::too_many_arguments)]
     pub fn projected_arc_cubic_curve_tangent3(
@@ -451,8 +441,8 @@ pub mod tangency {
     /// package extends projected arc/cubic tangency with the differentiated
     /// circle-incidence row `B'(t).B'(t) + (B(t)-C).B''(t) == 0`, keeping
     /// curvature-sensitive evidence polynomial and denominator-free. This
-    /// follows Yap (1997), Shoemake's quaternion frame (1985), and Farin's
-    /// Bernstein/de Casteljau derivative construction (2002).
+    /// follows the exact-decision discipline, the unit-quaternion frame, and the Bernstein/de Casteljau construction's
+    /// Bernstein/de Casteljau derivative construction.
     #[allow(clippy::too_many_arguments)]
     pub fn projected_arc_cubic_curve_second_order_contact3(
         sketch: &mut SketchSolveProblem,
@@ -488,9 +478,8 @@ pub mod tangency {
     /// direction as the exact cubic derivative `B'(t)`. The proof package uses
     /// unnormalized cross and dot predicates, so degenerate curve derivatives,
     /// degenerate line tangents, and segment-domain policy remain explicit
-    /// report-bearing obligations. This follows Yap's "Towards Exact
-    /// Geometric Computation" (1997), while the derivative control-net formula
-    /// follows Farin's Bernstein/de Casteljau curve model.
+    /// report-bearing obligations. Accordingly, the derivative control-net formula
+    /// follows the Bernstein/de Casteljau curve model.
     pub fn cubic_line_tangent2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -521,8 +510,8 @@ pub mod tangency {
     /// line direction is constrained to share support and orientation with the
     /// exact cubic derivative `B'(t)`. The workplane unit guard, endpoint
     /// incidence, tangent cross product, and same-direction branch are all
-    /// exact replay rows, following Yap (1997); the frame uses Shoemake's
-    /// unit-quaternion rotation matrix and the curve derivative uses Farin's
+    /// exact replay rows, under the exact-decision discipline; the frame uses the unit-quaternion construction's
+    /// unit-quaternion rotation matrix and the curve derivative uses the Bernstein/de Casteljau construction's
     /// Bernstein/de Casteljau construction.
     pub fn projected_cubic_line_tangent3(
         sketch: &mut SketchSolveProblem,
@@ -555,8 +544,8 @@ pub mod tangency {
     /// 3D cubic control net are projected into the workplane before exact
     /// Bernstein point/derivative replay. The package keeps the unit-frame
     /// guard, endpoint incidence, tangent cross product, and same-direction
-    /// branch as exact proof rows, following Yap (1997), Shoemake's
-    /// quaternion frame, and Farin's Bernstein/de Casteljau construction.
+    /// branch as exact proof rows, under the exact-decision discipline, the unit-quaternion construction's
+    /// quaternion frame, and the Bernstein/de Casteljau construction.
     pub fn projected_cubic_curve_line_tangent3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -587,8 +576,8 @@ pub mod tangency {
     /// Both retained 3D control nets are projected into the workplane before
     /// exact Bernstein point/derivative replay. The package keeps the
     /// unit-frame guard, point incidence, derivative cross product, and
-    /// same-direction branch as exact proof rows, following Yap (1997),
-    /// Shoemake's quaternion frame, and Farin's Bernstein/de Casteljau
+    /// same-direction branch as exact proof rows, under the exact-decision discipline,
+    /// the unit-quaternion frame, and the Bernstein/de Casteljau
     /// construction.
     pub fn projected_cubic_curve_cubic_curve_tangent3(
         sketch: &mut SketchSolveProblem,
@@ -620,8 +609,8 @@ pub mod tangency {
     /// The retained 3D control nets are projected into the workplane before
     /// exact Bernstein point, first-derivative, and second-derivative replay.
     /// This is a strict parameterization-preserving package, not a geometric
-    /// curvature-normalized G2 test. It follows Yap (1997), Shoemake's
-    /// quaternion frame, and Farin's Bernstein/de Casteljau derivative
+    /// curvature-normalized G2 test. It follows the exact-decision discipline, the unit-quaternion construction's
+    /// quaternion frame, and the Bernstein/de Casteljau derivative
     /// construction.
     pub fn projected_cubic_curve_cubic_curve_c2_continuity3(
         sketch: &mut SketchSolveProblem,
@@ -652,8 +641,7 @@ pub mod tangency {
     ///
     /// The retained 3D control nets are projected into the workplane before
     /// exact Bernstein point, tangent, and second-derivative replay. Signed
-    /// curvature is compared after clearing speed denominators, following Yap
-    /// (1997), Shoemake's quaternion frame, and Farin's Bernstein/de Casteljau
+    /// curvature is compared after clearing speed denominators, following the exactness boundary, the unit-quaternion frame, and the Bernstein/de Casteljau
     /// derivative construction.
     pub fn projected_cubic_curve_cubic_curve_g2_continuity3(
         sketch: &mut SketchSolveProblem,
@@ -687,8 +675,8 @@ pub mod tangency {
     /// support and the same orientation branch. This is the curve/curve
     /// analogue of G1 tangency: no sampled nearest point, derivative
     /// normalization, or primitive-float angle is trusted as evidence. The
-    /// package follows Yap's "Towards Exact Geometric Computation" (1997) and
-    /// Farin's Bernstein derivative construction.
+    /// package follows the exact-geometric-computation model and
+    /// the Bernstein derivative construction.
     pub fn cubic_cubic_tangent2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -718,9 +706,8 @@ pub mod tangency {
     /// then compares signed curvature without dividing by speed:
     /// `cross(Ba',Ba'')^2 * |Bb'|^6 - cross(Bb',Bb'')^2 * |Ba'|^6 == 0`
     /// plus a same-sign branch predicate. This is geometric G2, not
-    /// parametric C2. The proof split follows Yap's "Towards Exact Geometric
-    /// Computation" (1997), and the first/second derivative vectors follow
-    /// Farin's Bernstein/de Casteljau control-net formulas.
+    /// parametric C2. The proof split follows the exact-geometric-computation model, and the first/second derivative vectors follow
+    /// the Bernstein/de Casteljau control-net formulas.
     pub fn cubic_cubic_g2_continuity2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -750,8 +737,7 @@ pub mod tangency {
     /// derivative, and second derivative vectors at retained parameters. This
     /// is deliberately stronger than geometric G2 continuity: it preserves the
     /// parameterization as source evidence instead of normalizing speed or
-    /// curvature through primitive floats. The package follows Yap's "Towards
-    /// Exact Geometric Computation" (1997) and Farin's Bernstein derivative
+    /// curvature through primitive floats. The package follows the exact-geometric-computation model and the Bernstein derivative
     /// control-net formulas.
     pub fn cubic_cubic_c2_continuity2(
         sketch: &mut SketchSolveProblem,
@@ -784,8 +770,7 @@ pub mod incidence {
     /// Add a point coincidence relation.
     ///
     /// The residual builder keeps each coordinate equality as a separate exact
-    /// row. This is the same construction/proof separation emphasized by Yap
-    /// (1997): generated equations are not trusted until ordinary exact
+    /// row. This is the same construction/proof separation emphasized by the exactness boundary: generated equations are not trusted until ordinary exact
     /// residual replay certifies them.
     pub fn points_coincident(
         sketch: &mut SketchSolveProblem,
@@ -829,7 +814,7 @@ pub mod incidence {
     /// This is stronger than point-on-circle: the point must satisfy the
     /// retained radius equation and the selected arc-sector branch. Major arcs
     /// carry an explicit point half-branch so exact replay stays conjunctive
-    /// and reportable, following Yap's exact-geometric-computation boundary.
+    /// and reportable, following the exact-geometric-computation boundary.
     pub fn point_on_arc2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -852,8 +837,8 @@ pub mod incidence {
     /// The 3D point is projected through the retained workplane origin and
     /// unit frame before replaying the exact 2D circle incidence row. This is
     /// a 3D/workplane incidence package, not a sampled projection: the
-    /// workplane unit guard is part of the proof boundary in Yap's sense, and
-    /// the axes follow Shoemake's unit-quaternion rotation matrix.
+    /// workplane unit guard is part of the proof boundary in the exact sense, and
+    /// the axes follow the unit-quaternion rotation matrix.
     pub fn projected_point_on_circle3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -880,8 +865,7 @@ pub mod incidence {
     /// This is the retained arc counterpart of projected point-on-circle: the
     /// projected point must lie on the parent circle and on the selected arc
     /// sweep branch. Major arcs carry an explicit point half-branch so exact
-    /// replay remains a conjunction of reportable predicates, following Yap
-    /// (1997). The workplane axes use Shoemake's unit-quaternion frame.
+    /// replay remains a conjunction of reportable predicates, following the exactness boundary. The workplane axes use the unit-quaternion frame.
     pub fn projected_point_on_arc3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -910,10 +894,9 @@ pub mod incidence {
     /// Lowering emits the unnormalized exact row
     /// `cross(point - line_start, line_end - line_start) == 0`. Segment
     /// containment and nondegenerate-line policy remain explicit domain or
-    /// range obligations. This follows Yap, "Towards Exact Geometric
-    /// Computation" (1997), by keeping collinearity as exact replay evidence
-    /// rather than a rounded projection tolerance, and follows Bouma et al.
-    /// (1995) by retaining the point/line incidence relation semantically.
+    /// range obligations. This does so by keeping collinearity as exact replay evidence
+    /// rather than a rounded projection tolerance, and follows the geometric-constraint literature
+    /// by retaining the point/line incidence relation semantically.
     pub fn point_on_line2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -934,10 +917,8 @@ pub mod incidence {
     ///
     /// The 3D point and 3D line direction are projected through a retained
     /// workplane and replayed by exact `U/V` collinearity. The workplane unit
-    /// guard is part of the proof package, following Yap, "Towards Exact
-    /// Geometric Computation" (1997); the retained frame uses Shoemake's
-    /// unit-quaternion rotation matrix from "Animating Rotation with
-    /// Quaternion Curves" (1985).
+    /// guard is part of the proof package, following the exact-geometric-computation model; the retained frame uses the unit-quaternion construction's
+    /// unit-quaternion rotation matrix.
     pub fn projected_point_on_line3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -965,8 +946,7 @@ pub mod incidence {
     /// `point - ((1-t)^3*p0 + 3(1-t)^2*t*p1 + 3(1-t)*t^2*p2 + t^3*p3)`.
     /// The builder deliberately does not clamp or sample `t`; callers express
     /// segment-domain policy with explicit parameter domains or range
-    /// constraints. That separation follows Yap's "Towards Exact Geometric
-    /// Computation" (1997) and de Casteljau/Farin's Bernstein curve model:
+    /// constraints. That separation follows the exact-geometric-computation model and the Bernstein curve model:
     /// retain the curve/parameter object, then certify the polynomial rows.
     pub fn point_on_cubic2(
         sketch: &mut SketchSolveProblem,
@@ -994,8 +974,8 @@ pub mod incidence {
     /// Lowering proves the workplane unit frame, projects the 3D point into
     /// exact `U/V` coordinates, and replays the retained 2D cubic's Bernstein
     /// point equations at the exact sketch parameter. This keeps projection
-    /// and curve evaluation as explicit proof rows in Yap's sense; the frame
-    /// follows Shoemake (1985), and the cubic basis follows de Casteljau/Farin.
+    /// and curve evaluation as explicit proof rows in the exact sense; the frame
+    /// follows the unit-quaternion construction, and the cubic basis follows the Bernstein/de Casteljau construction.
     pub fn projected_point_on_cubic3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1024,8 +1004,8 @@ pub mod incidence {
     /// The point and retained 3D cubic control net are projected through the
     /// workplane frame before exact Bernstein-coordinate replay. This keeps
     /// the 3D curve, point, parameter, and projection frame as retained source
-    /// objects, following Yap (1997); Shoemake's unit-quaternion frame and
-    /// Farin's Bernstein/de Casteljau curve construction supply the exact
+    /// objects, under the exact-decision discipline; the unit-quaternion frame and
+    /// the Bernstein/de Casteljau curve construction supply the exact
     /// polynomial rows.
     pub fn projected_point_on_cubic_curve3(
         sketch: &mut SketchSolveProblem,
@@ -1083,7 +1063,7 @@ pub mod distance {
     /// nonnegative-bound validation. This covers clearance and bounded-distance
     /// use cases while avoiding the classic error of squaring an invalid
     /// negative distance. The proof boundary remains exact residual replay; see
-    /// Yap, "Towards Exact Geometric Computation" (1997).
+    /// the exact-geometric-computation model.
     pub fn point_point_distance_range(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1107,9 +1087,9 @@ pub mod distance {
     /// Bounds are exact distances measured in the retained workplane metric.
     /// Lowering validates nonnegative ordered bounds before replaying the
     /// unit-quaternion guard and squared projected-distance inequalities.
-    /// This follows Yap, "Towards Exact Geometric Computation" (1997), by
+    /// This does so by
     /// rejecting invalid semantic bounds before squaring; the workplane frame
-    /// is Shoemake's unit-quaternion rotation matrix (1985).
+    /// is the unit-quaternion rotation matrix.
     pub fn projected_point_point_distance_range(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1141,9 +1121,9 @@ pub mod distance {
     /// proof boundary: the workplane remains a retained object, lowering emits
     /// a unit-quaternion guard plus a squared projected-distance polynomial,
     /// and any square-root projected-distance form is only proposal/UI data.
-    /// The split follows Yap, "Towards Exact Geometric Computation" (1997);
+    /// The split follows the exact-geometric-computation model;
     /// the frame polynomial uses the unit-quaternion rotation matrix described
-    /// by Shoemake, "Animating Rotation with Quaternion Curves" (1985).
+    /// by the unit-quaternion construction.
     pub fn projected_point_point_distance(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1171,9 +1151,9 @@ pub mod distance {
     ///
     /// Lowering emits the workplane unit guard and
     /// `|a-b|_uv^2 - radius^2 == 0`. This preserves the point-pair source
-    /// relation instead of requiring helper line geometry. Yap (1997) defines
-    /// the exact replay boundary, Shoemake (1985) supplies the quaternion
-    /// frame, and Bouma et al. (1995) motivates retaining the radius equality
+    /// relation instead of requiring helper line geometry. The exact-decision discipline defines
+    /// the exact replay boundary, the unit-quaternion construction supplies the quaternion
+    /// frame, and the geometric-constraint vocabulary motivates retaining the radius equality
     /// vocabulary in the sketch layer.
     pub fn projected_point_radius_equality3(
         sketch: &mut SketchSolveProblem,
@@ -1203,9 +1183,9 @@ pub mod distance {
     /// Lowering emits the workplane unit guard and the denominator-cleared row
     /// `cross_uv^2 - radius^2*|line_uv|^2 == 0`. This keeps the point-line
     /// clearance relation tied to retained circle/arc radius evidence instead
-    /// of normalizing a projected line with primitive floats. Yap (1997)
-    /// defines the exact replay boundary, Shoemake (1985) supplies the
-    /// quaternion frame, and Bouma et al. (1995) motivates retaining the
+    /// of normalizing a projected line with primitive floats. The exact-decision discipline
+    /// defines the exact replay boundary, the unit-quaternion construction supplies the
+    /// quaternion frame, and the geometric-constraint vocabulary motivates retaining the
     /// geometric radius-equality vocabulary in the sketch layer.
     pub fn projected_point_line_radius_equality3(
         sketch: &mut SketchSolveProblem,
@@ -1235,9 +1215,8 @@ pub mod distance {
     /// Lowering emits the retained workplane unit guard plus
     /// `|a-b|_uv^2 - |c-d|_uv^2 == 0`. This is deliberately a point-pair
     /// relation, not an implicit line conversion: callers keep their source
-    /// objects, and exact replay proves the projected metric under Yap,
-    /// "Towards Exact Geometric Computation" (1997). The frame polynomial is
-    /// Shoemake's retained unit-quaternion construction (1985).
+    /// objects, and exact replay proves the projected metric under the exact-geometric-computation model. The frame polynomial is
+    /// the retained unit-quaternion construction.
     pub fn projected_equal_point_point_distances3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1269,9 +1248,8 @@ pub mod distance {
     /// retained workplane frame, emits a unit-quaternion guard, and replays
     /// `cross_uv^2 - distance^2 * |line_uv|^2 == 0` exactly. The row clears
     /// the line-length denominator rather than normalizing the line with
-    /// primitive floats, following Yap, "Towards Exact Geometric Computation"
-    /// (1997). The workplane axes are the unit-quaternion frame of Shoemake,
-    /// "Animating Rotation with Quaternion Curves" (1985).
+    /// primitive floats, following the exact-geometric-computation model. The workplane axes are the unit-quaternion frame of the unit-quaternion construction,
+    /// the unit-quaternion construction.
     pub fn projected_point_line_distance(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1300,9 +1278,9 @@ pub mod distance {
     /// Bounds are exact projected point-line distances. Lowering validates
     /// nonnegative ordered bounds and replays denominator-cleared inequalities
     /// over `cross_uv^2` and `|line_uv|^2`, plus the workplane unit guard.
-    /// This follows Yap, "Towards Exact Geometric Computation" (1997), by
+    /// This does so by
     /// certifying semantic bounds before squaring; the retained frame is the
-    /// unit-quaternion construction of Shoemake (1985).
+    /// unit-quaternion construction of the unit-quaternion construction.
     pub fn projected_point_line_distance_range(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1331,8 +1309,7 @@ pub mod distance {
     /// Add a 2D line equal-length relation.
     ///
     /// Lowering compares squared segment lengths exactly. This is the
-    /// polynomial proof form preferred by Yap's "Towards Exact Geometric
-    /// Computation" (1997); true-length proposal forms can be retained
+    /// polynomial proof form preferred by the exact-geometric-computation model; true-length proposal forms can be retained
     /// separately when a caller needs SolveSpace-style UI behavior.
     pub fn equal_length_lines2(
         sketch: &mut SketchSolveProblem,
@@ -1354,8 +1331,7 @@ pub mod distance {
     ///
     /// The relation retains the exact ratio `numerator / denominator` and
     /// lowers to a squared polynomial equality only after exact sign
-    /// validation. This follows Yap's "Towards Exact Geometric Computation"
-    /// (1997): invalid semantic inputs become diagnostics, not silently
+    /// validation. This follows the exact-geometric-computation model: invalid semantic inputs become diagnostics, not silently
     /// accepted squared rows.
     pub fn length_ratio_lines2(
         sketch: &mut SketchSolveProblem,
@@ -1385,8 +1361,7 @@ pub mod distance {
     /// The retained relation is `length(longer) = length(shorter) +
     /// difference`. Lowering uses the exact squared polynomial
     /// `(A + B - d^2)^2 - 4AB == 0` plus the exact branch inequality
-    /// `A - B - d^2 >= 0`. This directly follows Yap's "Towards Exact
-    /// Geometric Computation" (1997): the algebraic predicate and its branch
+    /// `A - B - d^2 >= 0`. This directly follows the exact-geometric-computation model: the algebraic predicate and its branch
     /// assumptions are explicit proof rows.
     pub fn length_difference_lines2(
         sketch: &mut SketchSolveProblem,
@@ -1415,8 +1390,7 @@ pub mod distance {
     /// an exact symbolic squared row
     /// `|line|^2 - (radius * acos(cos(theta)))^2 == 0`, where `theta` is the
     /// principal unsigned angle between the retained arc endpoints. This is
-    /// deliberately not advertised as a polynomial package: Yap's "Towards
-    /// Exact Geometric Computation" (1997) requires the non-algebraic
+    /// deliberately not advertised as a polynomial package: the exact-geometric-computation model requires the non-algebraic
     /// arc-length boundary to remain visible. Major or oriented sweeps need an
     /// explicit branch carrier instead of a hidden UI angle.
     pub fn equal_line_arc_length2(
@@ -1441,7 +1415,7 @@ pub mod distance {
     /// intent explicitly. Lowering emits endpoint-on-radius rows, a signed
     /// branch predicate, and the exact symbolic row
     /// `|line|^2 - (radius * sweep_angle)^2 == 0`, where `sweep_angle` is
-    /// either `theta` or `2*pi-theta`. This is the Yap exact-replay boundary
+    /// either `theta` or `2*pi-theta`. This is the exact-replay boundary
     /// for arc-length branch decisions: no primitive sweep angle or UI
     /// direction flag is trusted unless this retained branch replays.
     pub fn equal_line_arc_sweep_length2(
@@ -1466,8 +1440,7 @@ pub mod distance {
     /// Lowering certifies the retained workplane unit frame, projects the 3D
     /// line direction into exact `U/V` coordinates, then reuses the branch
     /// aware retained arc sweep package. The generated proof rows make both
-    /// the projection and the sweep branch explicit, following Yap's "Towards
-    /// Exact Geometric Computation" (1997); the workplane axes use Shoemake's
+    /// the projection and the sweep branch explicit, following the exact-geometric-computation model; the workplane axes use the unit-quaternion construction's
     /// unit-quaternion frame formula.
     pub fn projected_equal_line_arc_sweep_length3(
         sketch: &mut SketchSolveProblem,
@@ -1523,7 +1496,7 @@ pub mod distance {
     ///
     /// The lowered row uses the exact cross-multiplied squared form
     /// `|dir(length_line)|^2*|dir(distance_line)|^2 - cross^2 == 0`.
-    /// This follows Yap's "Towards Exact Geometric Computation" (1997) by
+    /// This does so by
     /// retaining the semantic relation while making exact replay the trust
     /// boundary.
     pub fn equal_length_point_line_distance2(
@@ -1600,9 +1573,9 @@ pub mod distance {
     ///
     /// Lowering replays equality between retained center coordinates. It does
     /// not imply equal radii and it does not derive topology from a rounded
-    /// center-distance tolerance. This is the Yap (1997) retained-object
+    /// center-distance tolerance. This retained-object
     /// boundary applied to the SolveSpace-style concentric constraint
-    /// vocabulary described by Bouma et al. (1995).
+    /// vocabulary remains visible in diagnostics.
     pub fn concentric2(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1624,10 +1597,10 @@ pub mod distance {
     /// The 3D point is projected through a retained workplane and replayed
     /// against the exact retained center coordinates of a circle or circular
     /// arc. The workplane unit guard is part of the generated proof package,
-    /// following Yap (1997), and the U/V frame uses Shoemake's quaternion
+    /// under the exact-decision discipline, and the U/V frame uses the unit-quaternion construction's quaternion
     /// rotation matrix. The relation is kept distinct from point-on-circle and
     /// radius equality so the SolveSpace-style concentric intent described by
-    /// Bouma et al. (1995) remains visible in diagnostics.
+    /// the geometric-constraint vocabulary remains visible in diagnostics.
     pub fn projected_point_concentric3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1655,9 +1628,7 @@ pub mod distance {
     /// `U/V` frame and replays `|a_uv|^2 - |b_uv|^2 == 0` beside the
     /// unit-quaternion guard. This is the exact workplane counterpart of
     /// SolveSpace-style line length equality: no projected coordinates are
-    /// rounded and no square root participates in proof. See Yap, "Towards
-    /// Exact Geometric Computation" (1997), and Shoemake, "Animating Rotation
-    /// with Quaternion Curves" (1985), for the retained frame polynomial.
+    /// rounded and no square root participates in proof. and the unit-quaternion construction, for the retained frame polynomial.
     pub fn projected_equal_length_lines3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1679,9 +1650,9 @@ pub mod distance {
     ///
     /// Lowering projects the retained 3D line direction into the workplane
     /// `U/V` frame and replays `|dir_uv|^2 - radius^2 == 0` beside the
-    /// unit-quaternion guard. Yap (1997) keeps both the workplane proof and
-    /// the radius carrier explicit; Shoemake (1985) supplies the quaternion
-    /// frame, and Bouma et al. (1995) motivates preserving line/radius
+    /// unit-quaternion guard. The exact-decision discipline keeps both the workplane proof and
+    /// the radius carrier explicit; the unit-quaternion construction supplies the quaternion
+    /// frame, and the geometric-constraint vocabulary motivates preserving line/radius
     /// equality as a source relation instead of hiding it behind helper
     /// geometry.
     pub fn projected_line_radius_equality3(
@@ -1709,10 +1680,9 @@ pub mod distance {
     ///
     /// Bounds are exact projected line lengths. Lowering validates
     /// nonnegative ordered bounds before replaying `|dir_uv|^2 - bound^2`
-    /// inequalities beside the workplane unit guard. This follows Yap,
-    /// "Towards Exact Geometric Computation" (1997), by keeping semantic
+    /// inequalities beside the workplane unit guard. This follows the exact-geometric-computation model by keeping semantic
     /// range validation outside the squared polynomial rows; the retained
-    /// workplane frame uses Shoemake's unit-quaternion construction (1985).
+    /// workplane frame uses the retained unit-quaternion construction.
     pub fn projected_line_length_range3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1742,8 +1712,8 @@ pub mod distance {
     /// lowering to the squared projected-length polynomial. Negative
     /// numerators and nonpositive denominators therefore become diagnostics
     /// rather than false successes introduced by squaring. The proof boundary
-    /// follows Yap, "Towards Exact Geometric Computation" (1997), with the
-    /// workplane frame polynomial from Shoemake (1985).
+    /// follows the exact-geometric-computation model, with the
+    /// workplane frame polynomial from the unit-quaternion construction.
     pub fn projected_length_ratio_lines3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1774,8 +1744,8 @@ pub mod distance {
     /// Lowering preserves the retained point pairs and replays
     /// `|a-b|_uv^2*den^2 - |c-d|_uv^2*num^2 == 0` after validating
     /// nonnegative numerator and positive denominator semantics. This is the
-    /// point-pair counterpart of projected line-length ratios. Yap (1997)
-    /// supplies the exact replay boundary and Shoemake (1985) supplies the
+    /// point-pair counterpart of projected line-length ratios. The exact-decision discipline
+    /// supplies the exact replay boundary and the unit-quaternion construction supplies the
     /// retained unit-quaternion workplane frame.
     pub fn projected_point_distance_ratio3(
         sketch: &mut SketchSolveProblem,
@@ -1810,7 +1780,7 @@ pub mod distance {
     /// difference`. Lowering emits the exact square-root-free polynomial and
     /// branch inequality used by the 2D length-difference package, but with
     /// both squared lengths computed in the certified workplane frame. This
-    /// follows Yap, "Towards Exact Geometric Computation" (1997), by making
+    /// follows the exact-geometric-computation model by making
     /// the ordering branch explicit proof data.
     pub fn projected_length_difference_lines3(
         sketch: &mut SketchSolveProblem,
@@ -1840,8 +1810,8 @@ pub mod distance {
     /// Lowering preserves the retained point pairs and replays
     /// `(L+S-d^2)^2 - 4LS == 0` plus `L-S-d^2 >= 0`, where `L` and `S` are
     /// projected squared point-pair distances. This is the point-pair
-    /// counterpart of projected line-length differences. Yap (1997) supplies
-    /// the exact replay boundary and Shoemake (1985) supplies the retained
+    /// counterpart of projected line-length differences. The exact-decision discipline supplies
+    /// the exact replay boundary and the unit-quaternion construction supplies the retained
     /// unit-quaternion workplane frame.
     pub fn projected_point_distance_difference3(
         sketch: &mut SketchSolveProblem,
@@ -1875,9 +1845,9 @@ pub mod distance {
     /// Lowering clears the point-line distance denominator exactly:
     /// `|length_line_uv|^2 * |distance_line_uv|^2 - cross_uv^2 == 0`. This is
     /// the workplane counterpart of the 2D length/distance relation, and
-    /// follows Yap, "Towards Exact Geometric Computation" (1997), by keeping
+    /// follows the exact-geometric-computation model by keeping
     /// the projected proof polynomial explicit. The `U/V` frame is the
-    /// retained unit-quaternion frame described by Shoemake (1985).
+    /// retained unit-quaternion frame using the unit-quaternion construction.
     pub fn projected_equal_length_point_line_distance3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1907,8 +1877,8 @@ pub mod distance {
     /// replays `|a-b|_uv^2*|line_uv|^2 - cross_uv^2 == 0`. This is the
     /// point-pair counterpart of projected line-length/point-line equality:
     /// callers keep authored point pairs instead of manufacturing helper
-    /// line geometry. Yap (1997) supplies the exact replay boundary, and
-    /// Shoemake (1985) supplies the unit-quaternion workplane frame.
+    /// line geometry. The exact-decision discipline supplies the exact replay boundary, and
+    /// the unit-quaternion construction supplies the unit-quaternion workplane frame.
     pub fn projected_equal_point_distance_point_line_distance3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -1940,10 +1910,10 @@ pub mod distance {
     /// workplane frame and replays
     /// `cross(a)^2 * |line_b_uv|^2 - cross(b)^2 * |line_a_uv|^2 == 0`.
     /// Cross-multiplication keeps denominator evidence explicit and follows
-    /// Yap, "Towards Exact Geometric Computation" (1997): candidate
+    /// the exact-geometric-computation model: candidate
     /// acceptance rests on exact polynomial replay, while degenerate projected
     /// line carriers remain separate domain obligations. The frame is the
-    /// unit-quaternion construction described by Shoemake (1985).
+    /// retained unit-quaternion construction.
     pub fn projected_equal_point_line_distances3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -2009,8 +1979,7 @@ pub mod orientation {
     /// Add a 2D line parallelism relation.
     ///
     /// The lowered row is the exact direction cross product. This is the same
-    /// algebraic predicate package used for G1 tangent parallelism; see Yap,
-    /// "Towards Exact Geometric Computation" (1997), for the separation
+    /// algebraic predicate package used for G1 tangent parallelism; see the exact-geometric-computation model, for the separation
     /// between constructing this proof obligation and certifying a candidate.
     pub fn parallel_lines2(
         sketch: &mut SketchSolveProblem,
@@ -2054,9 +2023,7 @@ pub mod orientation {
     /// Lowering projects both 3D line directions into the certified workplane
     /// frame and replays the exact 2D direction cross product beside the
     /// unit-quaternion guard. This is the projected analogue of
-    /// [`parallel_lines2`], following Yap, "Towards Exact Geometric
-    /// Computation" (1997), with the retained frame polynomial from Shoemake
-    /// (1985).
+    /// [`parallel_lines2`], following the exact-geometric-computation model, with the retained frame polynomial from the unit-quaternion construction.
     pub fn projected_parallel_lines3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -2079,8 +2046,8 @@ pub mod orientation {
     /// Lowering projects both 3D line directions into the certified workplane
     /// frame and replays the exact 2D direction dot product beside the
     /// unit-quaternion guard. This avoids normalizing projected directions or
-    /// evaluating primitive-float angles, following Yap's exact predicate
-    /// boundary and Shoemake's unit-quaternion frame.
+    /// evaluating primitive-float angles, following the exact predicate
+    /// boundary and the unit-quaternion frame.
     pub fn projected_perpendicular_lines3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -2103,7 +2070,7 @@ pub mod orientation {
     /// Lowering projects both 3D line directions into the certified workplane
     /// frame and replays exact unnormalized predicates: cross product equality
     /// for common support and dot product nonnegativity for the same branch.
-    /// This follows Yap's exact-geometric-computation boundary; Shoemake's
+    /// This follows the exact-geometric-computation boundary; the unit-quaternion construction's
     /// unit-quaternion frame supplies the projection polynomial.
     pub fn projected_same_direction_lines3(
         sketch: &mut SketchSolveProblem,
@@ -2127,7 +2094,7 @@ pub mod orientation {
     /// The lowered package uses exact unnormalized predicates: cross product
     /// equality for parallel support and dot product nonnegativity for shared
     /// orientation. This keeps the orientation decision report-bearing, as
-    /// required by Yap's "Towards Exact Geometric Computation" (1997), and
+    /// required by the exact-geometric-computation model, and
     /// avoids importing any SolveSpace implementation code.
     pub fn same_direction_lines2(
         sketch: &mut SketchSolveProblem,
@@ -2155,8 +2122,7 @@ pub mod symmetry {
     /// Lowering emits the two exact linear rows `2*point.x - a.x - b.x == 0`
     /// and `2*point.y - a.y - b.y == 0`. Keeping midpoint as a retained
     /// semantic object, rather than only as anonymous coordinate equations,
-    /// follows Yap's construction/proof split in "Towards Exact Geometric
-    /// Computation" (1997) and preserves SolveSpace-style constraint
+    /// follows the exact construction/proof split in the exact-geometric-computation model and preserves SolveSpace-style constraint
     /// provenance for diagnostics.
     pub fn at_midpoint2(
         sketch: &mut SketchSolveProblem,
@@ -2179,7 +2145,7 @@ pub mod symmetry {
     ///
     /// Lowering emits exact affine rows for `a.x == b.x` and
     /// `a.y + b.y == 2*axis_y`. The mirror axis is retained as exact data,
-    /// matching Yap's "Towards Exact Geometric Computation" (1997): the
+    /// matching the exact-geometric-computation model: the
     /// builder records a proof obligation, and exact replay decides whether a
     /// candidate satisfies it.
     pub fn symmetric_horizontal2(
@@ -2226,8 +2192,7 @@ pub mod symmetry {
     /// Lowering emits exact midpoint-on-axis and perpendicular-offset rows
     /// using the retained axis direction without normalization. This records
     /// the SolveSpace-style mirror relation as semantic source data while
-    /// preserving Yap's proof boundary from "Towards Exact Geometric
-    /// Computation" (1997): exact predicates, not rounded construction
+    /// preserving the exact proof boundary from the exact-geometric-computation model: exact predicates, not rounded construction
     /// coordinates, decide candidate acceptance.
     pub fn symmetric_line2(
         sketch: &mut SketchSolveProblem,
@@ -2250,11 +2215,10 @@ pub mod symmetry {
     ///
     /// Lowering proves the retained workplane unit frame and then replays the
     /// ordinary line-symmetry predicates after exact projection: doubled
-    /// midpoint-on-axis and point-offset perpendicularity. This follows Yap,
-    /// "Towards Exact Geometric Computation" (1997), by keeping reflection as
+    /// midpoint-on-axis and point-offset perpendicularity. This follows the exact-geometric-computation model by keeping reflection as
     /// retained source structure and accepting candidates only through exact
-    /// replay. The retained frame uses Shoemake's unit-quaternion rotation
-    /// matrix from "Animating Rotation with Quaternion Curves" (1985).
+    /// replay. The retained frame uses the unit-quaternion rotation
+    /// matrix from the unit-quaternion construction.
     pub fn projected_symmetric_line3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -2284,9 +2248,9 @@ pub mod symmetry {
     /// and normal-offset cross-product rows. This is the retained 3D
     /// plane-symmetry package requested by the SolveSpace coverage plan:
     /// reflection is proved by exact predicates over the retained workplane,
-    /// not by constructing a rounded mirror point. The boundary follows Yap's
-    /// "Towards Exact Geometric Computation" (1997); the workplane frame uses
-    /// Shoemake's unit-quaternion rotation matrix.
+    /// not by constructing a rounded mirror point. The boundary follows the exact
+    /// the exact-geometric-computation model; the workplane frame uses
+    /// the unit-quaternion rotation matrix.
     pub fn symmetric_workplane3(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,
@@ -2313,7 +2277,7 @@ pub mod ranges {
     ///
     /// The lower bound lowers to `parameter - lower >= 0`; the upper bound
     /// lowers to `parameter - upper <= 0`. Bounds are exact `Real` values, not
-    /// solver-private tolerances, preserving Yap's report-bearing decision
+    /// solver-private tolerances, preserving the exact report-bearing decision
     /// boundary.
     pub fn parameter_range(
         sketch: &mut SketchSolveProblem,
@@ -2340,7 +2304,7 @@ pub mod ranges {
     ///
     /// The relation lowers to `upper - lower >= 0`, giving generic
     /// monotonicity checks a retained sketch object while preserving the
-    /// Yap-style exact replay boundary for the actual sign decision.
+    /// the exactness boundary-style exact replay boundary for the actual sign decision.
     pub fn parameter_ordering(
         sketch: &mut SketchSolveProblem,
         name: impl Into<String>,

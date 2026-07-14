@@ -7,13 +7,10 @@
 //! field: unsupported denominator and invertibility cases remain reportable
 //! blockers.
 //!
-//! The construction follows the exact-object boundary advocated by Yap:
+//! The construction follows the exact-object boundary advocated by the exactness boundary:
 //! coordinates are represented by replayable algebraic evidence, and later
 //! predicates decide topology from certified reports rather than primitive
-//! approximations. See Chee K. Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The isolating-interval model follows
-//! Collins and Loos, "Real Zeros of Polynomials," in *Computer Algebra:
-//! Symbolic and Algebraic Computation* (1982).
+//! approximations. Isolating intervals follow the standard real-root model.
 
 use std::cmp::Ordering;
 
@@ -80,7 +77,7 @@ pub struct AlgebraicRootMobiusTransformReport {
 ///
 /// The transform is accepted only when the source evidence is valid,
 /// `a*d - b*c != 0`, and `c*x + d` is certified nonzero over the full source
-/// isolating interval. These checks keep the function within Yap's EGC
+/// isolating interval. These checks keep the function within the exact EGC
 /// paradigm: algebraic construction is exact and report-bearing, while
 /// non-invertible or domain-uncertain cases are explicit blockers.
 pub fn transform_algebraic_root_mobius(
@@ -479,7 +476,7 @@ mod tests {
             Real::zero(),
             Real::zero(),
             real(2),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -504,7 +501,7 @@ mod tests {
             real(1),
             Real::one(),
             real(3),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -529,7 +526,7 @@ mod tests {
             Real::zero(),
             Real::one(),
             real(-1),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             pole.status,
@@ -542,7 +539,7 @@ mod tests {
             real(4),
             Real::one(),
             real(2),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         assert_eq!(
             constant.status,
@@ -570,7 +567,7 @@ mod tests {
             real(1),
             Real::one(),
             real(1),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -621,7 +618,7 @@ mod tests {
                 real(b),
                 real(c),
                 real(d),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);
@@ -663,7 +660,7 @@ mod tests {
                 real(b),
                 real(c),
                 real(d),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootMobiusTransformStatus::Transformed);

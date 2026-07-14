@@ -64,7 +64,7 @@ fuzz_target!(|data: [i16; 5]| {
         &represented_rational_root(root),
         &[real(numerator_constant), real(numerator_linear)],
         &[real(denominator_constant), real(denominator_linear)],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     );
 
     if denominator == 0 {
@@ -85,7 +85,7 @@ fuzz_target!(|data: [i16; 5]| {
         &sqrt_two_positive(),
         &[Real::one(), Real::one()],
         &[real(positive_constant), real(-3), Real::one()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     );
     if direct.status == AlgebraicRootRationalImageStatus::Transformed {
         assert!(direct.numerator_image.is_none());

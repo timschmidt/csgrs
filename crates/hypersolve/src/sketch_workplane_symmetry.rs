@@ -4,12 +4,10 @@
 //! workplane. It consumes already-resolved symbolic coordinates and a retained
 //! quaternion-like workplane normal, then emits explicit proof rows: a
 //! unit-quaternion guard, a midpoint-on-plane equation, and normal-offset
-//! cross-product equations. The split follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997): the workplane remains a
+//! cross-product equations. The split follows the exact-geometric-computation model: the workplane remains a
 //! source object, while candidate acceptance is decided by exact polynomial
 //! replay. The normal axis is derived from the standard unit-quaternion frame
-//! matrix described by Shoemake, "Animating Rotation with Quaternion Curves,"
-//! *SIGGRAPH Computer Graphics* 19.3 (1985).
+//! matrix described by the standard unit-quaternion construction.
 
 use crate::sketch_projection::{quaternion_frame_axes_expr, unit_quaternion_residual};
 use crate::symbolic::Expr;

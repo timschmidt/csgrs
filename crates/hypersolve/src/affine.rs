@@ -19,11 +19,9 @@ use crate::symbolic::{Expr, ExprEvalError, SymbolId, SymbolRef};
 /// it is not a general symbolic optimizer, and it does not decide feasibility.
 /// It preserves the bounded affine product-sum shape so exact or lossy solver
 /// adapters can choose an arithmetic package before scalar expansion. This is
-/// the expression-layer separation advocated by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The exact rational
-/// product-sum route follows the same delayed-normalization idea as Bareiss,
-/// "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-/// Elimination," *Mathematics of Computation* 22.103 (1968).
+/// the expression-layer separation of the exact-computation model. The exact
+/// rational product-sum route uses delayed normalization like fraction-free
+/// elimination.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedAffineResidual {
     constant: Real,

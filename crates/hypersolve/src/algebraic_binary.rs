@@ -6,15 +6,13 @@
 //! algebraic roots.  It uses exact
 //! resultants to eliminate one source variable, then asks the existing Sturm
 //! refinement package to certify that the exact image interval contains one
-//! distinct real root of the resultant.  That last step is the important Yap
+//! distinct real root of the resultant. That last step is the important
 //! boundary: the resultant defines candidate algebraic values, while the
 //! isolating interval is accepted only after exact replay, not after primitive
 //! sampling.
 //!
-//! The construction follows the classical elimination package of Sylvester,
-//! "On a Theory of the Syzygetic Relations..." (1853), Sturm's exact root
-//! counting theorem (1835), Collins and Loos, "Real Zeros of Polynomials"
-//! (1982), and Chee K. Yap, "Towards Exact Geometric Computation" (1997).
+//! The construction combines a Sylvester resultant, Sturm root counting, the
+//! standard real-root isolation model, and exact replay.
 
 use std::cmp::Ordering;
 
@@ -550,7 +548,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Add,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -577,7 +575,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Multiply,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -607,7 +605,7 @@ mod tests {
             &wide,
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Add,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -623,7 +621,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &sqrt_root(3, 1, 2),
             AlgebraicRootArithmeticOp::Divide,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -653,7 +651,7 @@ mod tests {
             &sqrt_root(2, 1, 2),
             &denominator,
             AlgebraicRootArithmeticOp::Divide,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         assert_eq!(
@@ -675,7 +673,7 @@ mod tests {
                 &sqrt_root(left, 1, 5),
                 &sqrt_root(right, 1, 5),
                 AlgebraicRootArithmeticOp::Multiply,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             );
 
             prop_assert_eq!(report.status, AlgebraicRootBinaryTransformStatus::Transformed);

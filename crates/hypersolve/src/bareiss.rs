@@ -3,13 +3,9 @@
 //! This module is a small exact counterpart to the primitive-float linear
 //! adapter in [`crate::linalg`]. It uses the Bareiss fraction-free elimination
 //! recurrence to keep intermediate values exact while delaying normalization:
-//! `a'ij = (pivot * aij - aik * akj) / previous_pivot`. See E. H. Bareiss,
-//! "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-//! Elimination," *Mathematics of Computation* 22.103 (1968). In Yap's terms,
-//! this remains in the exact object layer: numerical solvers may propose, but
-//! exact arithmetic and certified sign decisions own the proof boundary. See
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997).
+//! `a'ij = (pivot * aij - aik * akj) / previous_pivot`. This remains in the
+//! exact object layer: numerical solvers may propose, but exact arithmetic and
+//! certified sign decisions own the proof boundary.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -164,8 +160,8 @@ pub struct SparseBareissSolveReport {
 /// triangular system exactly, and replays the solution against the original
 /// sparse terms. The symbolic pattern audit is retained so callers can inspect
 /// the structural schedule that bounded the numeric updates. This follows the
-/// Tinney-Walker sparse elimination pattern model while keeping the numerical
-/// recurrence in Bareiss's exact fraction-free form and Yap's exact proof
+/// sparse elimination pattern model while keeping the numerical
+/// recurrence in Bareiss's exact fraction-free form and the exact proof
 /// boundary.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SparsePatternPreservingBareissSolveReport {
@@ -192,7 +188,7 @@ pub struct SparsePatternPreservingBareissSolveReport {
 /// Pivot choices are certified through [`Real::certified_sign_until`]. A
 /// certified zero determinant is returned as a successful report with
 /// `determinant == 0`; undecidable pivot signs and unsupported exact divisions
-/// are explicit errors because they would otherwise blur Yap's exact decision
+/// are explicit errors because they would otherwise blur the exact decision
 /// boundary.
 pub fn determinant_bareiss(
     matrix: &[Vec<Real>],
@@ -337,7 +333,7 @@ pub fn solve_dense_linear_system_bareiss(
 /// square matrix and delegates construction to
 /// [`solve_dense_linear_system_bareiss`]. The returned solution is then replayed
 /// through [`crate::replay_sparse_linear_residuals`] against the original sparse
-/// terms. This is a Yap-aligned proof surface for sparse caller input; a true
+/// terms. This is a the exactness boundary-aligned proof surface for sparse caller input; a true
 /// pattern-preserving exact sparse factorization remains a separate backend.
 pub fn solve_sparse_linear_system_bareiss(
     row_count: usize,
@@ -390,7 +386,7 @@ pub fn solve_sparse_linear_system_bareiss(
 /// rows. Before numeric elimination, the same input is audited by
 /// [`crate::analyze_sparse_bareiss_elimination_pattern`]. Unknown structural
 /// signs or structural singularity are refused because accepting a sparse
-/// pattern after an undecided sign would violate Yap's exact decision
+/// pattern after an undecided sign would violate the exact decision
 /// boundary. The numeric phase then applies Bareiss's recurrence only over row
 /// map unions that can become nonzero, preserving fill as explicit report
 /// evidence rather than hiding it inside a dense matrix.

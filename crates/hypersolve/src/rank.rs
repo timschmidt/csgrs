@@ -3,10 +3,9 @@
 //! This module is deliberately diagnostic, not a nonlinear solver. It consumes
 //! retained affine residual rows and computes exact coefficient and augmented
 //! matrix ranks through Bareiss determinants. That keeps rank/DOF claims out of
-//! the lossy dense adapter path, following Yap's exact/approximate boundary;
-//! see C. K. Yap, "Towards Exact Geometric Computation" (1997). The
-//! determinant kernel follows Bareiss, "Sylvester's Identity and Multistep
-//! Integer-Preserving Gaussian Elimination" (1968).
+//! the lossy dense adapter path, following the exact/approximate boundary;
+//! see the exact-geometric-computation model. The
+//! determinant kernel follows fraction-free elimination.
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 

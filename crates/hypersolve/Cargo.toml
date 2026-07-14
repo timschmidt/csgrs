@@ -16,7 +16,7 @@ categories = ["mathematics", "science", "algorithms"]
 hyperreal = { path = "../hyperreal", default-features = false }
 hyperlattice = { path = "../hyperlattice", default-features = false }
 hyperlimit = { path = "../hyperlimit", default-features = false }
-# hyperreal = { version = "0.13.0", default-features = false }
+# hyperreal = { version = "0.13.1", default-features = false }
 # hyperlattice = { version = "0.6.0", default-features = false }
 # hyperlimit = { version = "0.4.0", default-features = false }
 [dev-dependencies]

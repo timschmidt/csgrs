@@ -6,12 +6,11 @@
 //! the same proof stage uses exact Taylor enclosures: univariate
 //! `|(2*a*x0 + b)|*r + |a|*r^2`, and multivariate
 //! `sum_i |grad_i(x0)|*r_i + sum_ij |q_ij|*r_i*r_j`. The final sign proof is
-//! delegated to `hyperlimit`'s certified ball filter, keeping this layer inside Yap's
+//! delegated to `hyperlimit`'s certified ball filter, keeping this layer inside the exact
 //! proof-producing filter model rather than turning solver tolerances into
 //! topology. The interval-box shape follows Moore's interval-analysis
 //! tradition and the Taylor-model/Krawczyk validation lineage, while the
-//! exact/candidate separation follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997).
+//! exact/candidate separation follows the exact-geometric-computation model.
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -71,8 +70,8 @@ pub enum IntervalBoxCertificationStatus {
 /// physics, circuit, path, and packing crates can pass local candidate boxes
 /// through `hypersolve` without losing the proof payload that bounded the
 /// candidate. The interval shape follows Moore's interval arithmetic
-/// formulation, while the retained report/evidence boundary follows Yap's
-/// exact-object model; see Moore, *Interval Analysis* (1966), and Yap (1997).
+/// formulation, while the retained report/evidence boundary follows the exact
+/// exact-object model; see classical interval analysis, and the exact-decision discipline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct IntervalBoxCertificationReport {
     /// Retained residual package used for the proof attempt.
@@ -134,8 +133,7 @@ pub enum QuadraticIntervalError {
 /// certificate proves that the unique affine root lies inside the supplied
 /// variable box; it does not accept nonlinear rows or inequality activation by
 /// approximation. This follows Krawczyk's interval-operator criterion
-/// (R. Krawczyk, "Newton-Algorithmen zur Bestimmung von Nullstellen mit
-/// Fehlerschranken", Computing 4, 1969) while keeping Yap's exact replay
+/// the Krawczyk operator while keeping the exact replay
 /// boundary explicit.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AffineKrawczykStatus {
@@ -229,8 +227,7 @@ pub struct AffineKrawczykReport {
 /// deliberately scoped to prepared rows `a*x^2 + b*x + c = 0`, where the
 /// interval derivative is exact and the Krawczyk image has a simple closed
 /// form. The criterion follows Krawczyk's interval operator
-/// (R. Krawczyk, "Newton-Algorithmen zur Bestimmung von Nullstellen mit
-/// Fehlerschranken", Computing 4, 1969) while preserving Yap's exact replay
+/// the Krawczyk operator while preserving the exact replay
 /// boundary: no primitive-float Newton step is accepted as proof.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum QuadraticKrawczykStatus {
@@ -335,10 +332,9 @@ impl QuadraticKrawczykReport {
 /// `x0 - C*f(x0) + (I - C*J(X))*(X - x0)`.
 ///
 /// The construction follows Krawczyk's interval-operator criterion
-/// (R. Krawczyk, "Newton-Algorithmen zur Bestimmung von Nullstellen mit
-/// Fehlerschranken", Computing 4, 1969). The implementation deliberately
+/// the Krawczyk operator. The implementation deliberately
 /// keeps all arithmetic in `Real` and treats the result as a proof-stage
-/// certificate, matching Yap's exact-geometric-computation boundary:
+/// certificate, matching the exact-geometric-computation boundary:
 /// proposal iteration may suggest `x0`, but this report decides only from
 /// exact retained residual structure and certified comparisons.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -881,9 +877,9 @@ pub fn certify_univariate_quadratic_krawczyk_box(
 /// where `R_m = sum_ij |q_mij|*r_i*r_j` bounds the quadratic Taylor remainder
 /// over the caller's variable box. A separate derivative-variation bound
 /// checks that `I - C*J(X)` is contractive in each coordinate. These are the
-/// Krawczyk-style sufficient conditions described by Krawczyk (1969), applied
+/// Krawczyk-style sufficient conditions defined by the Krawczyk operator, applied
 /// only to retained quadratic packages and certified through exact `Real`
-/// comparisons as required by Yap (1997).
+/// comparisons under the exact-decision discipline.
 pub fn certify_multivariate_quadratic_krawczyk_box(
     prepared: &PreparedProblem<'_>,
     context: &EvaluationContext,
@@ -1884,7 +1880,7 @@ fn multivariate_quadratic_krawczyk_report(
 }
 
 fn abs_real(value: &Real) -> Option<Real> {
-    match compare_reals_with_policy(value, &Real::zero(), PredicatePolicy::default()).value()? {
+    match compare_reals_with_policy(value, &Real::zero(), PredicatePolicy).value()? {
         std::cmp::Ordering::Less => Some(-value.clone()),
         std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => Some(value.clone()),
     }

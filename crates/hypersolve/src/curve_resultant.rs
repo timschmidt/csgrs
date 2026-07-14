@@ -5,9 +5,8 @@
 //! two polynomial parametric curves in power basis are substituted into
 //! `x1(t) - x2(u)` and `y1(t) - y2(u)`, the second parameter is eliminated by
 //! Sylvester resultants, and the retained-parameter polynomial is reconstructed
-//! by exact interpolation. This follows the elimination view of Sederberg and
-//! Nishita, "Curve intersection using Bezier clipping" (1990), while keeping
-//! Yap's exact-computation boundary explicit: the resultant is candidate
+//! by exact interpolation. This follows the elimination view of Bezier clipping, while keeping
+//! the exact-computation boundary explicit: the resultant is candidate
 //! algebraic evidence, not an accepted topology event, until a downstream
 //! curve package replays it against retained geometry.
 
@@ -122,7 +121,7 @@ pub struct CurveIntersectionResultantReport {
 /// `deg_u(g)*deg_t(f) + deg_u(f)*deg_t(g)`, evaluated after certified trimming.
 /// The implementation samples that many plus one exact integer parameter
 /// values and interpolates with exact Lagrange basis polynomials. Sylvester's
-/// determinant resultant supplies elimination evidence; Yap (1997) requires
+/// determinant resultant supplies elimination evidence; the exact-decision discipline requires
 /// downstream exact replay before topology accepts a candidate root.
 pub fn resultant_parametric_curve_intersection(
     first: &PolynomialParametricCurve2,
@@ -259,8 +258,8 @@ pub fn resultant_parametric_curve_intersection(
 /// `X1(t) * W2(u) - X2(u) * W1(t)` and
 /// `Y1(t) * W2(u) - Y2(u) * W1(t)`, then eliminates the other parameter by
 /// exact Sylvester resultants. The cross-multiplied form follows the standard
-/// rational Bezier model in Farin, *Curves and Surfaces for CAGD* (2002), and
-/// keeps Sederberg-Nishita style curve elimination (1990) inside Yap's EGC
+/// rational Bezier model in the Bernstein/de Casteljau construction, and
+/// keeps Bezier clipping inside the exact EGC
 /// rule: denominator validity and topology are not inferred from this helper;
 /// downstream curve code must replay candidates against retained geometry.
 pub fn resultant_rational_parametric_curve_intersection(

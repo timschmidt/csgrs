@@ -26,11 +26,10 @@ impl SymbolRef {
 /// current expression tree, meant to select solver strategies before lowering
 /// variables into [`Real`]. Polynomial degrees are reported only when the tree
 /// shape proves them directly; division by a variable expression and
-/// transcendental operations are marked non-polynomial. This follows Yap's
+/// transcendental operations are marked non-polynomial. This follows the exact
 /// exact-geometric-computation guidance to preserve expression structure and
 /// choose arithmetic/solver packages before forcing scalar evaluation. See
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// the exact-geometric-computation model.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExprDegree {
     /// The expression has no solver-variable dependency.
@@ -447,10 +446,9 @@ pub enum ExprEvalError {
     /// derived from.
     ///
     /// Exact-computation metadata is only valid while its structural
-    /// assumptions still hold. Yap frames this as choosing an arithmetic and
+    /// assumptions still hold. The exactness boundary frames this as choosing an arithmetic and
     /// representation package for the current problem formulation, not as
-    /// creating a model-independent scalar cache. See Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// creating a model-independent scalar cache.
     PreparedShapeMismatch {
         expected_coefficients: usize,
         actual_variables: usize,
@@ -563,13 +561,12 @@ fn simplify_powi(value: Expr, exponent: i64) -> Expr {
 
 /// Simplify a square-root endpoint without hiding invalid domains.
 ///
-/// Yap's exact-geometric-computation model favors retaining expression
+/// the exact-geometric-computation model favors retaining expression
 /// structure until a certified arithmetic package can decide a fact. For
 /// square roots, only exact in-domain constants are folded here; invalid or
 /// unsupported constants remain as `sqrt` nodes so
 /// `certify_candidate_domains` can report the domain failure explicitly. See
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// the exact-geometric-computation model.
 fn simplify_sqrt(value: Expr) -> Expr {
     match value {
         Expr::Constant(value) => match value.clone().sqrt() {
@@ -585,7 +582,7 @@ fn simplify_sqrt(value: Expr) -> Expr {
 /// Constants are folded through `Real::sin`, which preserves `hyperreal`'s
 /// symbolic/computable representation instead of lowering through primitive
 /// floats. This keeps trigonometric endpoint reduction inside the exact scalar
-/// package described by Yap rather than in a solver-local approximation.
+/// package required at the exactness boundary rather than in a solver-local approximation.
 fn simplify_sin(value: Expr) -> Expr {
     match value {
         Expr::Constant(value) => Expr::Constant(value.sin()),

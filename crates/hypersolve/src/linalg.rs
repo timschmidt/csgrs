@@ -3,11 +3,10 @@
 //! The problem model, residual expressions, and structural sparsity facts live
 //! in exact `hyperreal::Real` space. This module is the named dense `f64`
 //! adapter used by the current iterative solver. Keeping that boundary explicit
-//! follows Yap's exact-geometric-computation separation: approximate numerical
+//! follows the exact-geometric-computation separation: approximate numerical
 //! methods may be selected as adapters, but exact structure and combinatorial
-//! facts must not be silently replaced by primitive-float predicates. See Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! facts must not be silently replaced by primitive-float predicates.
+//! the exact-geometric-computation model.
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum LinearSolveError {
@@ -34,10 +33,9 @@ pub enum LinearAdapterKind {
 ///
 /// Solver iterations may use approximate numerical adapters, but that adapter
 /// status must remain visible to callers rather than becoming an implicit
-/// backend mode. This mirrors Yap's exact-geometric-computation separation
+/// backend mode. This mirrors the exact-geometric-computation separation
 /// between exact symbolic/geometric structure and approximate numerical stages;
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
+/// see the exact-geometric-computation model.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LinearAdapterPrecision {
     /// The adapter lowered exact residual/Jacobian data to primitive `f64`.
@@ -63,10 +61,9 @@ impl LinearAdapterKind {
 /// Diagnostics returned by a linear-solver adapter.
 ///
 /// These values describe the approximate adapter route, not a proof of exact
-/// rank or feasibility. The pivot metadata follows the standard Gaussian
-/// elimination diagnostic practice described by Higham, *Accuracy and
-/// Stability of Numerical Algorithms*, 2nd ed., SIAM, 2002. Future exact or
-/// mixed backends should add their own adapter variants rather than hiding
+/// rank or feasibility. The pivot metadata exposes the Gaussian-elimination
+/// choices needed to diagnose numerical stability. Exact or mixed backends
+/// should add their own adapter variants rather than hiding
 /// exact/approximate status behind the same report.
 #[derive(Clone, Debug)]
 pub struct LinearSolveReport {
@@ -121,9 +118,7 @@ pub trait LinearBackend {
     /// Solve one dense trust-region dogleg proposal step through `f64`.
     ///
     /// This is a proposal adapter following Powell's dogleg trust-region
-    /// construction; see M. J. D. Powell, "A Hybrid Method for Nonlinear
-    /// Equations" (1970), and Nocedal and Wright, *Numerical Optimization*,
-    /// 2nd ed. (2006). The returned step is not a proof: exact candidate
+    /// construction; see the Powell hybrid method, and standard nonlinear-optimization methods. The returned step is not a proof: exact candidate
     /// replay must still certify any accepted coordinates.
     fn solve_dogleg(
         &self,
@@ -135,8 +130,7 @@ pub trait LinearBackend {
     /// Compute one dense BFGS proposal direction through `f64`.
     ///
     /// The inverse-Hessian approximation is supplied by the nonlinear solver
-    /// loop. This follows the quasi-Newton BFGS update family of Broyden,
-    /// Fletcher, Goldfarb, and Shanno (1970), but remains only a lossy
+    /// loop. This uses a quasi-Newton BFGS update, but remains only a lossy
     /// candidate-generation route; exact replay still decides acceptance.
     fn solve_bfgs_direction(
         &self,

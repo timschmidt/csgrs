@@ -2,11 +2,10 @@
 //!
 //! This module keeps curve-specific algebraic rewrites explicit before a
 //! resultant is built. Bernstein control nets are converted to power basis by
-//! the exact Bernstein expansion used in CAGD texts such as Farin, *Curves and
-//! Surfaces for CAGD* (2002). Rational parametric curves retain homogeneous
+//! the exact Bernstein expansion used in CAGD texts such as the Bernstein/de Casteljau construction. Rational parametric curves retain homogeneous
 //! numerator/weight polynomials so intersection code can cross-multiply
 //! equations instead of dividing by a possibly vanishing weight. This is the
-//! Yap EGC boundary: preserve structure and report the algebraic transform,
+//! the exactness boundary EGC boundary: preserve structure and report the algebraic transform,
 //! then let downstream geometry replay decide topology.
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
@@ -308,7 +307,7 @@ pub fn substitute_bezier_power_basis(
 /// three Bernstein polynomials `w_i*x_i`, `w_i*y_i`, and `w_i` into power
 /// basis and returns a [`RationalParametricCurve2`] without ever dividing by
 /// the weight. This is the homogeneous rational Bezier construction described
-/// by Farin, *Curves and Surfaces for CAGD* (2002), used here as a Yap-style
+/// by the Bernstein/de Casteljau construction, used here as a the exactness boundary-style
 /// exact proposal package: denominator/domain validity remains a replay
 /// obligation for downstream curve code.
 pub fn substitute_rational_bezier_power_basis(
@@ -369,8 +368,7 @@ pub fn substitute_rational_bezier_power_basis(
 /// Control extraction evaluates the B-spline blossom at
 /// `a^(p-j), b^j`, where `a` and `b` are the span endpoints and `p` is the
 /// degree. This is the standard de Boor/blossom relationship for B-splines;
-/// see de Boor, *A Practical Guide to Splines* (1978), and Piegl and Tiller,
-/// *The NURBS Book* (1997). The function is report-bearing because Yap's EGC
+/// using the standard B-spline construction. The function is report-bearing because the exact EGC
 /// discipline requires knot ordering, span length, and exact divisions to be
 /// explicit evidence, not hidden preconditions.
 pub fn substitute_bspline_knot_span_power_basis(
@@ -549,8 +547,7 @@ pub fn substitute_bspline_knot_span_power_basis(
 /// [`substitute_bspline_knot_span_power_basis`]. The returned curve is a
 /// [`RationalParametricCurve2`] over the normalized local span parameter; it
 /// intentionally does not divide by the extracted weight polynomial. This is
-/// the standard NURBS homogeneous construction from Piegl and Tiller,
-/// *The NURBS Book* (1997), kept at Yap's exact-computation boundary so
+/// the standard NURBS homogeneous construction from the standard homogeneous NURBS construction, kept at the exact-computation boundary so
 /// denominator/domain validity is replay evidence owned by downstream curve
 /// code, not an implicit side effect of substitution.
 pub fn substitute_nurbs_knot_span_power_basis(

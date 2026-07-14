@@ -5,10 +5,9 @@
 //! primitive floats. They are advisory scheduling data: a dense f64 linear
 //! adapter may consume the sparsity map, while a future exact/hyperlattice
 //! backend can consume the same facts to choose symbolic, affine, sparse, or
-//! non-polynomial rows. The design follows Yap's exact-geometric-computation
+//! non-polynomial rows. The design follows the exact-geometric-computation
 //! separation between object structure and arithmetic-package selection; see
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! the exact-geometric-computation model.
 
 use crate::affine::{PreparedAffineResidual, prepare_affine_residual};
 use crate::eval::{EvalError, EvaluationContext, ResidualEvaluation, positive_part};
@@ -36,11 +35,10 @@ pub struct PreparedConstraintFacts {
     ///
     /// `None` means either the row depends on solver variables or the constant
     /// sign is not structurally known. This is advisory solver metadata, not a
-    /// feasibility proof for variable-dependent constraints. It follows Yap's
+    /// feasibility proof for variable-dependent constraints. It follows the exact
     /// object-fact discipline: keep cheap exact facts near the residual block
     /// so solver strategies can avoid unnecessary dense numerical work; see
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// the exact-geometric-computation model.
     pub residual_constant_sign: Option<RealSign>,
     /// Variable columns whose symbolic IDs occur in the residual expression.
     pub dependent_columns: Vec<usize>,
@@ -325,10 +323,9 @@ impl<'a> PreparedProblem<'a> {
     /// Prepared affine rows use fixed product-sum coefficient blocks; prepared
     /// quadratic rows use retained constant, linear, square, and cross terms;
     /// all other rows fall back to the original expression tree. This is the
-    /// solver analogue of Yap's recommendation to choose an arithmetic package
-    /// from object structure before expanding into scalar questions. See Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// solver analogue of the exact recommendation to choose an arithmetic package
+    /// from object structure before expanding into scalar questions.
+    /// the exact-geometric-computation model.
     pub fn evaluate_constraint_residual(
         &self,
         constraint_index: usize,

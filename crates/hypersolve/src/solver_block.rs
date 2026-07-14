@@ -4,7 +4,7 @@
 //! is the next scheduling layer: it partitions active rows into the categories
 //! a nonlinear backend needs before it decides whether to run substitution,
 //! affine elimination, polynomial handling, or an external numeric proposal
-//! engine. This follows Yap's guidance that exact geometry needs packages above
+//! engine. This follows the exact guidance that exact geometry needs packages above
 //! BigNumber for expressions and geometric objects, and mirrors SolveSpace's
 //! explicit substitution/soluble-equation/Jacobian passes while keeping
 //! primitive numeric iteration outside the proof boundary.

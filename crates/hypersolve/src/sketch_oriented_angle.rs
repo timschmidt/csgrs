@@ -5,11 +5,8 @@
 //! vector is a positive scale of `(cos(theta), sin(theta))`, so equality of two
 //! oriented angles can be certified without `atan2`, inverse trigonometry, or
 //! primitive-float normalization. That keeps the decision boundary at exact
-//! replay, as required by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The explicit angle-vector and branch
-//! split follows the retained-constraint vocabulary surveyed by Bouma, Fudos,
-//! Hoffmann, Cai, and Paige, "A Geometric Constraint Solver,"
-//! *Computer-Aided Design* 27.6 (1995).
+//! replay, as required by the exact-geometric-computation model. The explicit angle-vector and branch
+//! split follows the retained-constraint vocabulary used by geometric constraint solvers.
 
 use crate::symbolic::Expr;
 

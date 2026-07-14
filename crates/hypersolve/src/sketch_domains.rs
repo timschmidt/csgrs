@@ -2,10 +2,9 @@
 //!
 //! This module checks retained sketch parameter domains before residual
 //! lowering or numerical iteration. The checks deliberately return report rows
-//! instead of mutating values or applying epsilon repairs: Yap's Exact
+//! instead of mutating values or applying epsilon repairs: the exact Exact
 //! Geometric Computation model requires certified decisions or explicit
-//! uncertainty; see Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The separation between domain
+//! uncertainty; see the exact-geometric-computation model. The separation between domain
 //! preconditions and residual certificates is also consistent with Moore's
 //! interval-analysis discipline for validated numerical computation.
 
@@ -109,7 +108,7 @@ impl SketchParameterDomainReport {
 pub fn preflight_sketch_parameter_domains(
     sketch: &SketchSolveProblem,
 ) -> SketchParameterDomainReport {
-    preflight_sketch_parameter_domains_with_policy(sketch, PredicatePolicy::default())
+    preflight_sketch_parameter_domains_with_policy(sketch, PredicatePolicy)
 }
 
 /// Certify retained sketch parameter-domain obligations with an explicit

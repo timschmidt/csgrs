@@ -3,13 +3,9 @@
 //! This module does not solve a sparse system. It preserves the sparse caller
 //! shape and reports the symbolic elimination pattern that a future sparse
 //! fraction-free backend would have to honor. The symbolic fill rule follows
-//! sparse Gaussian-elimination graph ideas from Tinney and Walker, "Direct
-//! Solutions of Sparse Network Equations by Optimally Ordered Triangular
-//! Factorization" (1967), while keeping Bareiss-style exact solving and Yap's
+//! sparse Gaussian-elimination graph ideas from fill-reducing sparse elimination, while keeping Bareiss-style exact solving and the exact
 //! proof boundary separate: structural scheduling is evidence, not a numeric
-//! certificate. See E. H. Bareiss, "Sylvester's Identity and Multistep
-//! Integer-Preserving Gaussian Elimination" (1968), and Chee K. Yap, "Towards
-//! Exact Geometric Computation" (1997).
+//! certificate. See fraction-free elimination, and the exact-geometric-computation model.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -117,8 +113,8 @@ impl SymbolicSparseFactorizationReport {
 /// conservatively because dropping them would be an approximate decision. The
 /// fill simulation uses the standard sparse-elimination pattern rule: when a
 /// row is eliminated by a pivot row, the row's trailing structure is unioned
-/// with the pivot row's trailing structure. This directly cites Tinney-Walker
-/// sparse triangular factorization scheduling while leaving numeric Bareiss
+/// with the pivot row's trailing structure. This uses sparse triangular
+/// factorization scheduling while leaving numeric fraction-free
 /// updates to [`crate::solve_sparse_linear_system_bareiss`].
 pub fn analyze_sparse_bareiss_elimination_pattern(
     row_count: usize,

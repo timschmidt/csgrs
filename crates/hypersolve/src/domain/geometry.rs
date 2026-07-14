@@ -4,8 +4,7 @@
 //! geometry kernel. Domain crates such as `hyperpath` should continue to ask
 //! `hyperlimit` for topological predicates, while `hypersolve` receives only
 //! continuous residuals that a numerical proposal engine may adjust and exact
-//! replay may certify. This follows Yap, "Towards Exact Geometric Computation"
-//! (1997): proposed numeric values are separate from certified geometric
+//! replay may certify. This follows the exact-geometric-computation model: proposed numeric values are separate from certified geometric
 //! decisions. The tangent residuals also mirror the vector cross/dot tests used
 //! by exact curve arrangement kernels such as CGAL's arrangement traits.
 

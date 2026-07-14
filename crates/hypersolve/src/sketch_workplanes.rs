@@ -3,15 +3,13 @@
 //! SolveSpace-style workplanes are retained objects: an origin point plus a
 //! quaternion-like normal carrier. This module keeps that object structure
 //! visible and emits report-bearing frame facts instead of silently normalizing
-//! with primitive floats. That follows Yap's Exact Geometric Computation
+//! with primitive floats. That follows the exact-geometric-computation
 //! boundary: geometric decisions consume certified facts or return explicit
-//! uncertainty. See Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997).
+//! uncertainty.
 //!
 //! The `U/V/N` frame below uses the standard unit-quaternion rotation matrix;
 //! the exact polynomial form is evaluated only after the retained quaternion's
-//! squared norm is certified to be one. See Shoemake, "Animating Rotation with
-//! Quaternion Curves," *SIGGRAPH Computer Graphics* 19.3 (1985).
+//! squared norm is certified to be one. See the unit-quaternion construction.
 
 use std::cmp::Ordering;
 
@@ -127,7 +125,7 @@ pub fn build_sketch_workplane_frame(
     sketch: &SketchSolveProblem,
     workplane: SketchEntityHandle,
 ) -> SketchWorkplaneFrameReport {
-    build_sketch_workplane_frame_with_policy(sketch, workplane, PredicatePolicy::default())
+    build_sketch_workplane_frame_with_policy(sketch, workplane, PredicatePolicy)
 }
 
 /// Build exact frame facts for a retained workplane using an explicit
@@ -194,12 +192,7 @@ pub fn lift_sketch_point2_to_workplane3(
     workplane: SketchEntityHandle,
     point: SketchEntityHandle,
 ) -> SketchWorkplanePointLiftReport {
-    lift_sketch_point2_to_workplane3_with_policy(
-        sketch,
-        workplane,
-        point,
-        PredicatePolicy::default(),
-    )
+    lift_sketch_point2_to_workplane3_with_policy(sketch, workplane, point, PredicatePolicy)
 }
 
 /// Lift a retained 2D point through a certified retained workplane frame using
@@ -266,12 +259,7 @@ pub fn project_sketch_point3_to_workplane2(
     workplane: SketchEntityHandle,
     point: SketchEntityHandle,
 ) -> SketchWorkplanePointProjectionReport {
-    project_sketch_point3_to_workplane2_with_policy(
-        sketch,
-        workplane,
-        point,
-        PredicatePolicy::default(),
-    )
+    project_sketch_point3_to_workplane2_with_policy(sketch, workplane, point, PredicatePolicy)
 }
 
 /// Project a retained 3D point into a certified retained workplane frame using

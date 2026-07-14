@@ -5,13 +5,12 @@
 //! constraints and generated-row provenance. This module performs that join
 //! without introducing tolerances: it lowers the sketch, runs exact candidate
 //! diagnostics, then replays the residual-index mapping carried by
-//! [`crate::sketch::SketchGeneratedRow`]. The design follows Yap's Exact
+//! [`crate::sketch::SketchGeneratedRow`]. The design follows the exact Exact
 //! Geometric Computation boundary: numerical state may be a proposal, but
 //! failed-constraint evidence is accepted only as exact/certified diagnostics
-//! or explicit lowering failure. See C. K. Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7.1-2 (1997). The source-facing
+//! or explicit lowering failure. The source-facing
 //! grouping mirrors the user-visible failed-constraint reporting described in
-//! Bouma et al., "A Geometric Constraint Solver" (1995).
+//! the geometric-constraint-solver model.
 
 use crate::certification::{CandidateCertificationConfig, certify_candidate_with_config};
 use crate::eval::context_from_problem;
