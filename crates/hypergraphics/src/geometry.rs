@@ -198,10 +198,17 @@ impl ExactMesh {
 
     /// Lossily export a flat `xyz rgb` f64 buffer.
     pub fn to_xyz_rgb_f64(&self) -> Result<Vec<f64>> {
-        let render_vertices = self.to_render_vertices64()?;
-        let mut out = Vec::with_capacity(render_vertices.len() * 6);
-        for vertex in render_vertices {
-            out.extend_from_slice(&vertex.to_xyz_rgb());
+        let mut out = Vec::with_capacity(self.vertices.len() * 6);
+        for vertex in &self.vertices {
+            let position =
+                vertex
+                    .position
+                    .to_f64_array_lossy()
+                    .ok_or(Error::NonFiniteProjection {
+                        value: "vertex position",
+                    })?;
+            out.extend_from_slice(&position);
+            out.extend(vertex.color.to_array().map(f64::from));
         }
         Ok(out)
     }

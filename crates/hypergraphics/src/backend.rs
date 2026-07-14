@@ -126,8 +126,31 @@ impl GpuColoredMesh {
     ///
     /// `gl` must be the context that owns this mesh's objects.
     pub unsafe fn upload_exact_mesh(&mut self, gl: &Context, mesh: &ExactMesh) -> Result<()> {
+        let mut packed = Vec::with_capacity(mesh.vertex_count() * 6);
+        for vertex in mesh.vertices() {
+            let position =
+                vertex
+                    .position
+                    .to_f64_array_lossy()
+                    .ok_or(Error::NonFiniteProjection {
+                        value: "vertex position",
+                    })?;
+            for value in position {
+                packed.push(f64_to_f32(value, "vertex position")?);
+            }
+            packed.extend_from_slice(&vertex.color.to_array());
+        }
         self.primitive = mesh.primitive();
-        unsafe { self.upload_render_vertices64(gl, &mesh.to_render_vertices64()?) }
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.vbo));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(&packed),
+                glow::STATIC_DRAW,
+            );
+        }
+        self.vertex_count = mesh.vertex_count() as i32;
+        Ok(())
     }
 
     /// Draw the mesh.
