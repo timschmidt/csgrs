@@ -280,17 +280,10 @@ where
     let z_coordinates = grid.axis_coordinates(&grid.origin.z, &grid.step.z, nz);
 
     // Store `f(p) - iso` in x-major order, matching `GridShape::linearize`.
-    for iz in 0..nz as usize {
-        for iy in 0..ny as usize {
-            for ix in 0..nx as usize {
-                let sdf_val = sdf(
-                    ix,
-                    iy,
-                    iz,
-                    &x_coordinates[ix],
-                    &y_coordinates[iy],
-                    &z_coordinates[iz],
-                );
+    for (iz, z) in z_coordinates.iter().enumerate() {
+        for (iy, y) in y_coordinates.iter().enumerate() {
+            for (ix, x) in x_coordinates.iter().enumerate() {
+                let sdf_val = sdf(ix, iy, iz, x, y, z);
                 let value = hreal_from_f64(sdf_val).ok();
                 if collect_diagnostics {
                     push_sdf_sample(&mut diagnostics, &mut field_values, value, &grid.iso);

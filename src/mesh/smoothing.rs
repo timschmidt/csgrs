@@ -139,9 +139,9 @@ fn smoothing_pass(
                 let Some(position) = positions.get(*neighbor) else {
                     continue;
                 };
-                neighbor_sum.x = neighbor_sum.x + position.x.clone();
-                neighbor_sum.y = neighbor_sum.y + position.y.clone();
-                neighbor_sum.z = neighbor_sum.z + position.z.clone();
+                neighbor_sum.x += position.x.clone();
+                neighbor_sum.y += position.y.clone();
+                neighbor_sum.z += position.z.clone();
                 neighbor_count += 1;
             }
             if neighbor_count == 0 {
