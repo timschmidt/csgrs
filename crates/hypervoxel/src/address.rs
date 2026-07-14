@@ -71,26 +71,26 @@ impl VoxelAddress {
     /// coordinates in [`Real`] cell bounds instead of conflating them with this
     /// layout code.
     pub fn morton_code(self) -> u64 {
-        let mut code = 0_u64;
-        for bit in 0..self.depth {
-            let shift = u32::from(bit);
-            code |= ((self.xyz[0] >> shift) & 1) << (3 * shift);
-            code |= ((self.xyz[1] >> shift) & 1) << (3 * shift + 1);
-            code |= ((self.xyz[2] >> shift) & 1) << (3 * shift + 2);
-        }
-        code
+        spread_morton_bits(self.xyz[0])
+            | (spread_morton_bits(self.xyz[1]) << 1)
+            | (spread_morton_bits(self.xyz[2]) << 2)
     }
 
     /// Reconstructs an address from a Morton/Z-order code and depth.
     pub fn from_morton_code(depth: u8, code: u64) -> HypervoxelResult<Self> {
-        let mut xyz = [0_u64; 3];
-        for bit in 0..depth {
-            let shift = u32::from(bit);
-            xyz[0] |= ((code >> (3 * shift)) & 1) << shift;
-            xyz[1] |= ((code >> (3 * shift + 1)) & 1) << shift;
-            xyz[2] |= ((code >> (3 * shift + 2)) & 1) << shift;
+        if depth > crate::frame::MAX_ADDRESS_DEPTH {
+            return Self::new(depth, [0; 3]);
         }
-        Self::new(depth, xyz)
+        let used_bits = u32::from(depth) * 3;
+        let code = code & ((1_u64 << used_bits) - 1);
+        Self::new(
+            depth,
+            [
+                compact_morton_bits(code),
+                compact_morton_bits(code >> 1),
+                compact_morton_bits(code >> 2),
+            ],
+        )
     }
 
     /// Returns the octree child-index path from the root to this address.
@@ -147,6 +147,26 @@ impl VoxelAddress {
 
         Ok(CellBounds { min, max })
     }
+}
+
+#[inline]
+fn spread_morton_bits(mut value: u64) -> u64 {
+    value &= 0x1f_ffff;
+    value = (value | value << 32) & 0x001f_0000_0000_ffff;
+    value = (value | value << 16) & 0x001f_0000_ff00_00ff;
+    value = (value | value << 8) & 0x100f_00f0_0f00_f00f;
+    value = (value | value << 4) & 0x10c3_0c30_c30c_30c3;
+    (value | value << 2) & 0x1249_2492_4924_9249
+}
+
+#[inline]
+fn compact_morton_bits(mut value: u64) -> u64 {
+    value &= 0x1249_2492_4924_9249;
+    value = (value ^ value >> 2) & 0x10c3_0c30_c30c_30c3;
+    value = (value ^ value >> 4) & 0x100f_00f0_0f00_f00f;
+    value = (value ^ value >> 8) & 0x001f_0000_ff00_00ff;
+    value = (value ^ value >> 16) & 0x001f_0000_0000_ffff;
+    (value ^ value >> 32) & 0x1f_ffff
 }
 
 /// Exact axis-aligned bounds of a voxel cell.

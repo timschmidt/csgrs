@@ -7,7 +7,7 @@ use bevy::{
     },
     diagnostic::FrameTimeDiagnosticsPlugin,
     pbr::{
-        CascadeShadowConfigBuilder, DirectionalLightShadowMap, ScreenSpaceAmbientOcclusion,
+        DirectionalLightShadowMap, ScreenSpaceAmbientOcclusion,
         ScreenSpaceAmbientOcclusionQualityLevel, VolumetricFog,
         wireframe::{WireframeConfig, WireframePlugin},
     },
@@ -33,7 +33,6 @@ use voxelis::{
 };
 
 const MAX_DEPTH: MaxDepth = MaxDepth::new(6);
-const VOXELS_PER_AXIS: usize = 1 << MAX_DEPTH.max();
 const CHUNK_SIZE: f32 = 1.28;
 
 #[derive(Resource, Default)]
@@ -157,11 +156,6 @@ fn setup_world(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut world: ResMut<World>,
 ) {
-    let mut cascade_shadow_config_builder = CascadeShadowConfigBuilder::default();
-    cascade_shadow_config_builder.first_cascade_far_bound = 50.0;
-    cascade_shadow_config_builder.minimum_distance = 0.1;
-    cascade_shadow_config_builder.maximum_distance = 100_000.0;
-
     commands.spawn((
         DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),

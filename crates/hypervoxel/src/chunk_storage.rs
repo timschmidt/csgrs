@@ -443,7 +443,7 @@ impl ChunkPagedSparseGrid {
                 PredicateOutcome::Unknown { .. } => unknown_pages += 1,
             }
 
-            for (address, _) in &page.cells {
+            for address in page.cells.keys() {
                 tested_cells += 1;
                 let bounds = ExactAabb3::from(address.bounds(&self.frame)?);
                 match classify_aabb3_intersection(

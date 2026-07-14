@@ -3353,14 +3353,15 @@ fn classify_component_by_retry_ray_consensus(
             }
         }
 
-        if direction_unknowns == 0 && direction_conflicts == 0 {
-            if let Some(classifier) = component_vote {
-                component_report.retry_successful_direction_attempts += 1;
-                component_report.retry_successful_direction_cells += component.len();
-                component_report.retry_certified_cells += direction_certified;
-                component_report.retry_successful_cells += component.len();
-                return Ok(Some(classifier));
-            }
+        if direction_unknowns == 0
+            && direction_conflicts == 0
+            && let Some(classifier) = component_vote
+        {
+            component_report.retry_successful_direction_attempts += 1;
+            component_report.retry_successful_direction_cells += component.len();
+            component_report.retry_certified_cells += direction_certified;
+            component_report.retry_successful_cells += component.len();
+            return Ok(Some(classifier));
         }
         component_report.retry_failed_direction_attempts += 1;
         component_report.retry_failed_direction_cells += component.len();
@@ -3389,7 +3390,7 @@ fn classify_axis_sweep_center(
             }
         }
     }
-    Ok(Some(if crossings_after_center % 2 == 0 {
+    Ok(Some(if crossings_after_center.is_multiple_of(2) {
         VoxelTriangleSolidClassifier::Outside
     } else {
         VoxelTriangleSolidClassifier::Inside
@@ -3801,7 +3802,7 @@ fn classify_point_against_prepared_triangle_solid_by_single_ray(
     }
 
     attempt.certified = true;
-    let classifier = if parameters.len() % 2 == 0 {
+    let classifier = if parameters.len().is_multiple_of(2) {
         VoxelTriangleSolidClassifier::Outside
     } else {
         VoxelTriangleSolidClassifier::Inside

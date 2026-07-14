@@ -621,7 +621,7 @@ fn classify_point_against_triangle_solid_by_single_ray(
         }
     }
 
-    if parameters.len() % 2 == 0 {
+    if parameters.len().is_multiple_of(2) {
         Ok(RayParityPointClassification::Outside)
     } else {
         Ok(RayParityPointClassification::Inside)
@@ -691,14 +691,14 @@ pub(crate) fn triangle_intersects_cell(
     let triangle_bounds = triangle_bounds(triangle)?;
     let cell_min = point3(&bounds.min);
     let cell_max = point3(&bounds.max);
-    match decide_aabb(classify_aabb3_intersection(
+    if decide_aabb(classify_aabb3_intersection(
         &point3(&triangle_bounds.min),
         &point3(&triangle_bounds.max),
         &cell_min,
         &cell_max,
-    ))? {
-        Aabb3Intersection::Disjoint => return Ok(TriangleCellIntersection::Disjoint),
-        _ => {}
+    ))? == Aabb3Intersection::Disjoint
+    {
+        return Ok(TriangleCellIntersection::Disjoint);
     }
 
     for point in &triangle_points {
@@ -735,7 +735,7 @@ pub(crate) fn triangle_intersects_cell(
                 &triangle_points[2],
             ],
             [face_triangle[0], face_triangle[1], face_triangle[2]],
-            hyperlimit::PredicatePolicy::default(),
+            hyperlimit::PredicatePolicy,
         ))? {
             TriangleTriangleIntersection::Degenerate => {}
             relation if relation.intersects() => return Ok(TriangleCellIntersection::Intersects),

@@ -61,7 +61,7 @@ impl<T> PoolAllocatorLite<T> {
         };
 
         debug_assert!(
-            (memory as usize) % block_align == 0,
+            (memory as usize).is_multiple_of(block_align),
             "Memory not properly aligned"
         );
 

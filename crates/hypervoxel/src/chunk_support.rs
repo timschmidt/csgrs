@@ -73,10 +73,7 @@ pub fn classify_chunk_paged_support_mask(
     };
     let mut target_pages = 0_usize;
     let mut target_cells = 0_usize;
-    let mut support_plane_probes = 0_usize;
-    let mut support_page_hits = 0_usize;
-    let mut support_page_misses = 0_usize;
-    let mut cross_page_support_probes = 0_usize;
+    let mut counters = PagedSupportCounters::default();
 
     for (_, page) in target.pages() {
         target_pages += 1;
@@ -89,16 +86,9 @@ pub fn classify_chunk_paged_support_mask(
             let status = match cell.occupancy {
                 OccupancyState::Unknown => SupportCellStatus::Unknown,
                 OccupancyState::LossyAdapterValue => SupportCellStatus::Lossy,
-                _ => classify_one_paged(
-                    *address,
-                    target.shape(),
-                    support,
-                    direction,
-                    &mut support_plane_probes,
-                    &mut support_page_hits,
-                    &mut support_page_misses,
-                    &mut cross_page_support_probes,
-                )?,
+                _ => {
+                    classify_one_paged(*address, target.shape(), support, direction, &mut counters)?
+                }
             };
             match status {
                 SupportCellStatus::Supported => report.supported_cells += 1,
@@ -127,12 +117,20 @@ pub fn classify_chunk_paged_support_mask(
         support: report,
         target_pages,
         target_cells,
-        support_plane_probes,
-        support_page_hits,
-        support_page_misses,
-        cross_page_support_probes,
+        support_plane_probes: counters.support_plane_probes,
+        support_page_hits: counters.support_page_hits,
+        support_page_misses: counters.support_page_misses,
+        cross_page_support_probes: counters.cross_page_support_probes,
         exact_paged_support_ready,
     })
+}
+
+#[derive(Default)]
+struct PagedSupportCounters {
+    support_plane_probes: usize,
+    support_page_hits: usize,
+    support_page_misses: usize,
+    cross_page_support_probes: usize,
 }
 
 fn classify_one_paged(
@@ -140,22 +138,19 @@ fn classify_one_paged(
     target_shape: crate::ChunkShape,
     support: &ChunkPagedSparseGrid,
     direction: SupportDirection,
-    support_plane_probes: &mut usize,
-    support_page_hits: &mut usize,
-    support_page_misses: &mut usize,
-    cross_page_support_probes: &mut usize,
+    counters: &mut PagedSupportCounters,
 ) -> HypervoxelResult<SupportCellStatus> {
     let mut below = address.xyz;
     if direction.sign < 0 {
         if below[direction.axis] == 0 {
-            *support_plane_probes += 1;
+            counters.support_plane_probes += 1;
             return Ok(SupportCellStatus::OnSupportPlane);
         }
         below[direction.axis] -= 1;
     } else {
         let cells = 1_u64 << address.depth;
         if below[direction.axis] + 1 >= cells {
-            *support_plane_probes += 1;
+            counters.support_plane_probes += 1;
             return Ok(SupportCellStatus::OnSupportPlane);
         }
         below[direction.axis] += 1;
@@ -165,12 +160,12 @@ fn classify_one_paged(
     let source_page = ChunkAddress::containing(address, target_shape);
     let support_page = ChunkAddress::containing(support_address, support.shape());
     if support_page != source_page {
-        *cross_page_support_probes += 1;
+        counters.cross_page_support_probes += 1;
     }
     if support.page(support_page).is_some() {
-        *support_page_hits += 1;
+        counters.support_page_hits += 1;
     } else {
-        *support_page_misses += 1;
+        counters.support_page_misses += 1;
     }
 
     Ok(match support.get(support_address)?.occupancy {

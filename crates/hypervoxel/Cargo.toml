@@ -38,6 +38,7 @@ hypermesh = { path = "../hypermesh", optional = true }
 voxelis = { path = "voxelis", optional = true }
 # voxelis = { version = "25.5.0", optional = true }
 glam = { workspace = true, optional = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 criterion = "0.5"

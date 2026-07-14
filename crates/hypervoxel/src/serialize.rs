@@ -212,7 +212,7 @@ impl DeterministicSnapshot {
         write_u8(&mut out, grid.frame().depth());
 
         let mut cells = grid.iter().collect::<Vec<_>>();
-        cells.sort_by_key(|(address, cell)| (address.depth, address.morton_code(), **cell));
+        cells.sort_by_cached_key(|(address, cell)| (address.depth, address.morton_code(), **cell));
 
         let mut runs = Vec::<Run<'_>>::new();
         for (address, cell) in cells {

@@ -135,6 +135,21 @@ fn fractional_exact_box_keeps_conservative_boundary_cells() {
 
 proptest! {
     #[test]
+    fn generated_addresses_round_trip_through_morton_codes(
+        depth in 0_u8..=21,
+        x in any::<u64>(),
+        y in any::<u64>(),
+        z in any::<u64>(),
+    ) {
+        let mask = (1_u64 << depth) - 1;
+        let address = VoxelAddress::new(depth, [x & mask, y & mask, z & mask]).unwrap();
+        prop_assert_eq!(
+            VoxelAddress::from_morton_code(depth, address.morton_code()).unwrap(),
+            address,
+        );
+    }
+
+    #[test]
     fn generated_addresses_round_trip_through_parent_child(depth in 1_u8..10, x in 0_u64..1024, y in 0_u64..1024, z in 0_u64..1024) {
         let cells = 1_u64 << depth;
         let address = VoxelAddress::new(depth, [x % cells, y % cells, z % cells]).unwrap();

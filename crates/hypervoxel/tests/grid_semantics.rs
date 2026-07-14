@@ -49,8 +49,8 @@ fn exact_cell_bounds_use_grid_depth_not_float_chunk_size() {
     let address = VoxelAddress::new(2, [1, 2, 3]).unwrap();
     let bounds = address.bounds(&frame).unwrap();
 
-    assert_eq!(bounds.min[0], rf(-1 * 8 + 4, 8));
-    assert_eq!(bounds.max[0], rf(-1 * 8 + 8, 8));
+    assert_eq!(bounds.min[0], rf(-8 + 4, 8));
+    assert_eq!(bounds.max[0], rf(-8 + 8, 8));
     assert_eq!(bounds.min[1], rf(2 * 4 + 8, 4));
     assert_eq!(bounds.max[1], rf(2 * 4 + 12, 4));
     assert_eq!(bounds.extent(2), r(2));

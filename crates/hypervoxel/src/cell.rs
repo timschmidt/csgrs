@@ -139,21 +139,37 @@ impl VoxelCell {
 
     /// Reports whether this cell's payload and occupancy are exact-ready.
     pub fn report(&self) -> VoxelCellReport {
-        let payload_matches_occupancy = match (self.occupancy, self.payload) {
-            (OccupancyState::Empty, VoxelPayload::Occupancy(OccupancyState::Empty)) => true,
-            (OccupancyState::Filled, VoxelPayload::Occupancy(OccupancyState::Filled))
-            | (OccupancyState::Filled, VoxelPayload::MaterialRegion(_))
-            | (OccupancyState::Filled, VoxelPayload::FieldSample(_))
-            | (OccupancyState::Filled, VoxelPayload::ProcessState(_)) => true,
-            (OccupancyState::Boundary, VoxelPayload::Occupancy(OccupancyState::Boundary))
-            | (OccupancyState::Boundary, VoxelPayload::MaterialRegion(_))
-            | (OccupancyState::Boundary, VoxelPayload::FieldSample(_))
-            | (OccupancyState::Boundary, VoxelPayload::ProcessState(_)) => true,
-            (OccupancyState::Mixed, VoxelPayload::Occupancy(OccupancyState::Mixed)) => true,
-            (OccupancyState::Unknown, VoxelPayload::Occupancy(OccupancyState::Unknown)) => true,
-            (OccupancyState::LossyAdapterValue, VoxelPayload::LossyAdapterValue(_)) => true,
-            _ => false,
-        };
+        let payload_matches_occupancy = matches!(
+            (self.occupancy, self.payload),
+            (
+                OccupancyState::Empty,
+                VoxelPayload::Occupancy(OccupancyState::Empty)
+            ) | (
+                OccupancyState::Filled,
+                VoxelPayload::Occupancy(OccupancyState::Filled)
+            ) | (OccupancyState::Filled, VoxelPayload::MaterialRegion(_))
+                | (OccupancyState::Filled, VoxelPayload::FieldSample(_))
+                | (OccupancyState::Filled, VoxelPayload::ProcessState(_))
+                | (
+                    OccupancyState::Boundary,
+                    VoxelPayload::Occupancy(OccupancyState::Boundary)
+                )
+                | (OccupancyState::Boundary, VoxelPayload::MaterialRegion(_))
+                | (OccupancyState::Boundary, VoxelPayload::FieldSample(_))
+                | (OccupancyState::Boundary, VoxelPayload::ProcessState(_))
+                | (
+                    OccupancyState::Mixed,
+                    VoxelPayload::Occupancy(OccupancyState::Mixed)
+                )
+                | (
+                    OccupancyState::Unknown,
+                    VoxelPayload::Occupancy(OccupancyState::Unknown)
+                )
+                | (
+                    OccupancyState::LossyAdapterValue,
+                    VoxelPayload::LossyAdapterValue(_)
+                )
+        );
         let has_unknown = self.occupancy == OccupancyState::Unknown
             || matches!(
                 self.payload,

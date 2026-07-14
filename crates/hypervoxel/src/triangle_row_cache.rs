@@ -72,10 +72,10 @@ impl ComponentAxisRowCache {
     where
         F: FnOnce() -> HypervoxelResult<AxisRowParity>,
     {
-        if let Some(row) = self.rows.get(&key) {
-            if row.min_axis_coord <= min_axis_coord {
-                return Ok((row.row.clone(), true, false));
-            }
+        if let Some(row) = self.rows.get(&key)
+            && row.min_axis_coord <= min_axis_coord
+        {
+            return Ok((row.row.clone(), true, false));
         }
 
         let broadened = self.rows.contains_key(&key);

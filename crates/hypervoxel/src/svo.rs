@@ -8,7 +8,7 @@
 //! geometric objects should preserve facts instead of reducing every decision
 //! to scalar approximation.
 
-use std::collections::BTreeMap;
+use rustc_hash::FxHashMap;
 
 use crate::{
     GridFrame, HypervoxelError, HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress,
@@ -19,7 +19,7 @@ use crate::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SvoNodeId(pub u32);
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum SvoNodeKey {
     Leaf {
         cell: VoxelCell,
@@ -233,7 +233,7 @@ pub struct SvoCompactionReport {
 pub struct SvoVoxelGrid {
     frame: GridFrame,
     nodes: Vec<SvoNode>,
-    interned: BTreeMap<SvoNodeKey, SvoNodeId>,
+    interned: FxHashMap<SvoNodeKey, SvoNodeId>,
     root: SvoNodeId,
 }
 
@@ -244,7 +244,7 @@ impl SvoVoxelGrid {
         let mut grid = Self {
             frame,
             nodes: Vec::new(),
-            interned: BTreeMap::new(),
+            interned: FxHashMap::default(),
             root: SvoNodeId(0),
         };
         let root = grid.intern_leaf(VoxelCell::empty(), frame_depth);
@@ -395,7 +395,6 @@ impl SvoVoxelGrid {
         let mut counters = SvoSparseReplayCounters::default();
         self.replay_node_to_sparse(
             self.root,
-            0,
             [0, 0, 0],
             self.frame.depth(),
             &mut sparse,
@@ -442,7 +441,25 @@ impl SvoVoxelGrid {
     /// subtrees.
     pub fn get(&self, address: VoxelAddress) -> HypervoxelResult<VoxelCell> {
         self.validate_address(address)?;
-        self.get_recursive(self.root, address, 0)
+        let mut node_id = self.root;
+        let mut current_depth = 0;
+        loop {
+            match self.node(node_id) {
+                SvoNode::Leaf { cell, .. } => return Ok(*cell),
+                SvoNode::Branch { children, .. } => {
+                    if current_depth == address.depth {
+                        let occupancy = self.node(node_id).aggregate().conservative_occupancy();
+                        return Ok(VoxelCell {
+                            occupancy,
+                            payload: crate::VoxelPayload::Occupancy(occupancy),
+                        });
+                    }
+                    let child = child_index(address, current_depth);
+                    node_id = children[child as usize];
+                    current_depth += 1;
+                }
+            }
+        }
     }
 
     /// Sets a cell by path-copying and interning changed nodes.
@@ -525,40 +542,15 @@ impl SvoVoxelGrid {
             return *id;
         }
         let id = SvoNodeId(self.nodes.len() as u32);
-        let child_facts = children
-            .iter()
-            .map(|child| self.node(*child).aggregate())
-            .collect::<Vec<_>>();
-        let aggregate = VoxelAggregateFacts::from_aggregates(child_facts);
+        let aggregate = VoxelAggregateFacts::from_aggregates(
+            children.iter().map(|child| self.node(*child).aggregate()),
+        );
         self.nodes.push(SvoNode::Branch {
             children,
             aggregate,
         });
         self.interned.insert(key, id);
         id
-    }
-
-    fn get_recursive(
-        &self,
-        node_id: SvoNodeId,
-        address: VoxelAddress,
-        current_depth: u8,
-    ) -> HypervoxelResult<VoxelCell> {
-        match self.node(node_id) {
-            SvoNode::Leaf { cell, .. } => Ok(*cell),
-            SvoNode::Branch { children, .. } => {
-                if current_depth == address.depth {
-                    return Ok(VoxelCell {
-                        occupancy: self.node(node_id).aggregate().conservative_occupancy(),
-                        payload: crate::VoxelPayload::Occupancy(
-                            self.node(node_id).aggregate().conservative_occupancy(),
-                        ),
-                    });
-                }
-                let child = child_index(address, current_depth);
-                self.get_recursive(children[child as usize], address, current_depth + 1)
-            }
-        }
     }
 
     fn set_recursive(
@@ -573,9 +565,12 @@ impl SvoVoxelGrid {
         }
 
         let remaining_child_depth = self.frame.depth() - current_depth - 1;
-        let mut children = match self.node(node_id).clone() {
-            SvoNode::Leaf { cell, .. } => [self.intern_leaf(cell, remaining_child_depth); 8],
-            SvoNode::Branch { children, .. } => children,
+        let mut children = match self.node(node_id) {
+            SvoNode::Leaf { cell, .. } => {
+                let cell = *cell;
+                [self.intern_leaf(cell, remaining_child_depth); 8]
+            }
+            SvoNode::Branch { children, .. } => *children,
         };
         let child = child_index(address, current_depth);
         children[child as usize] =
@@ -586,7 +581,6 @@ impl SvoVoxelGrid {
     fn replay_node_to_sparse(
         &self,
         node_id: SvoNodeId,
-        current_depth: u8,
         origin: [u64; 3],
         remaining_depth: u8,
         sparse: &mut SparseVoxelGrid,
@@ -631,7 +625,6 @@ impl SvoVoxelGrid {
                     ];
                     self.replay_node_to_sparse(
                         children[child as usize],
-                        current_depth + 1,
                         child_origin,
                         child_remaining,
                         sparse,

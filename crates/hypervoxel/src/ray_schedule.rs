@@ -77,10 +77,10 @@ pub(crate) fn classify_ray_aabb_intersection_from_lower(
     match classify_ray_aabb_parameter_interval(origin, direction, aabb)? {
         RayAabbParameterInterval::Disjoint => Ok(RayAabbWindowIntersection::Disjoint),
         RayAabbParameterInterval::Intersects { upper } => {
-            if let Some(exit) = upper {
-                if compare(&exit, lower_parameter, 0)? == Ordering::Less {
-                    return Ok(RayAabbWindowIntersection::BeforeLower);
-                }
+            if let Some(exit) = upper
+                && compare(&exit, lower_parameter, 0)? == Ordering::Less
+            {
+                return Ok(RayAabbWindowIntersection::BeforeLower);
             }
             Ok(RayAabbWindowIntersection::Intersects)
         }
@@ -146,17 +146,17 @@ fn classify_ray_aabb_parameter_interval(
             }
         }
 
-        if let (Some(entry), Some(exit)) = (&lower, &upper) {
-            if compare(exit, entry, axis)? == Ordering::Less {
-                return Ok(RayAabbParameterInterval::Disjoint);
-            }
+        if let (Some(entry), Some(exit)) = (&lower, &upper)
+            && compare(exit, entry, axis)? == Ordering::Less
+        {
+            return Ok(RayAabbParameterInterval::Disjoint);
         }
     }
 
-    if let Some(exit) = &upper {
-        if compare(exit, &zero, 0)? == Ordering::Less {
-            return Ok(RayAabbParameterInterval::Disjoint);
-        }
+    if let Some(exit) = &upper
+        && compare(exit, &zero, 0)? == Ordering::Less
+    {
+        return Ok(RayAabbParameterInterval::Disjoint);
     }
 
     Ok(RayAabbParameterInterval::Intersects { upper })
