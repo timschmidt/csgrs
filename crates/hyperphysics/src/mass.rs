@@ -115,23 +115,40 @@ impl ClosedTriangleMesh3 {
     ) -> PhysicsResult<MassPropertyReport3> {
         require_positive_density(&density)?;
 
-        let mut signed_volume = Real::zero();
-        let mut first_moment = Vector3::zero();
-        let mut second_moments = from_fn(|_| from_fn(|_| Real::zero()));
+        let mut signed_volume_numerator = Real::zero();
+        let mut first_moment_numerator = Vector3::zero();
+        let mut second_moment_numerators: [[Real; 3]; 3] = from_fn(|_| from_fn(|_| Real::zero()));
 
         for triangle in self.triangles() {
             let [a, b, c] = triangle.vertices();
             let det = determinant3(a, b, c);
-            signed_volume = signed_volume + div_exact(&det, 6)?;
+            signed_volume_numerator = signed_volume_numerator + det.clone();
 
             let vertex_sum = a + b + c;
-            let tetra_first = vertex_sum * div_exact(&det, 24)?;
-            first_moment = first_moment + tetra_first;
+            first_moment_numerator = first_moment_numerator + vertex_sum.clone() * det.clone();
 
-            for (row_index, row) in second_moments.iter_mut().enumerate() {
-                for (col_index, value) in row.iter_mut().enumerate() {
-                    *value = value.clone() + tetra_second_moment(a, b, c, row_index, col_index)?;
+            for (row_index, row) in second_moment_numerators.iter_mut().enumerate() {
+                for (col_index, value) in row.iter_mut().enumerate().skip(row_index) {
+                    let numerator =
+                        tetra_second_moment_numerator(a, b, c, &vertex_sum, row_index, col_index);
+                    *value = value.clone() + &det * &numerator;
                 }
+            }
+        }
+
+        // All tetrahedra share these fixed integration denominators. Accumulate
+        // their exact numerators first so the rational kernel performs ten
+        // divisions per mesh rather than ten divisions per triangle.
+        let signed_volume = div_exact(&signed_volume_numerator, 6)?;
+        let first_moment = div_vector_by_real(first_moment_numerator, &Real::from(24))?;
+        let second_moment_denominator = Real::from(120);
+        let mut second_moments = from_fn(|_| from_fn(|_| Real::zero()));
+        for (row_index, row) in second_moments.iter_mut().enumerate() {
+            for (col_index, value) in row.iter_mut().enumerate().skip(row_index) {
+                *value = div_real(
+                    &second_moment_numerators[row_index][col_index],
+                    &second_moment_denominator,
+                )?;
             }
         }
 
@@ -206,23 +223,23 @@ fn determinant3(a: &Vector3, b: &Vector3, c: &Vector3) -> Real {
     &a[0] * &(bxcy - bzcy) + (&a[1] * &(bzcx - bxcz)) + (&a[2] * &(bxcy_z - bycx))
 }
 
-fn tetra_second_moment(
+fn tetra_second_moment_numerator(
     a: &Vector3,
     b: &Vector3,
     c: &Vector3,
+    vertex_sum: &Vector3,
     row: usize,
     col: usize,
-) -> PhysicsResult<Real> {
-    let columns = [a, b, c];
-    let det = determinant3(a, b, c);
-    let mut numerator = Real::zero();
-    for p in 0..3 {
-        for q in 0..3 {
-            let weight = if p == q { Real::from(2) } else { Real::one() };
-            numerator = numerator + (&columns[p][row] * &columns[q][col]) * weight;
-        }
-    }
-    div_exact(&(det * numerator), 120)
+) -> Real {
+    // sum(p_row * q_col, p,q) + sum(p_row * p_col, p)
+    // is the original tetrahedral integral numerator with diagonal terms
+    // weighted twice. Factoring the first sum as vertex_sum[row] *
+    // vertex_sum[col] cuts nine products to four while preserving the exact
+    // polynomial.
+    &vertex_sum[row] * &vertex_sum[col]
+        + (&a[row] * &a[col])
+        + (&b[row] * &b[col])
+        + (&c[row] * &c[col])
 }
 
 fn inertia_from_second_moments(second: &[[Real; 3]; 3]) -> SymmetricInertia3 {
