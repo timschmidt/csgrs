@@ -83,12 +83,12 @@ impl BoundsBvh {
             return Ok(node_index);
         };
 
-        self.order[start..end].sort_by(|&left, &right| {
+        let middle = start + (end - start) / 2;
+        self.order[start..end].select_nth_unstable_by(middle - start, |&left, &right| {
             approximate_center(&item_bounds[left], axis)
                 .total_cmp(&approximate_center(&item_bounds[right], axis))
                 .then_with(|| left.cmp(&right))
         });
-        let middle = start + (end - start) / 2;
         let left = self.build_node(item_bounds, start, middle)?;
         let right = self.build_node(item_bounds, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
@@ -115,12 +115,12 @@ impl BoundsBvh {
             return Ok(node_index);
         };
 
-        self.order[start..end].sort_by(|&left, &right| {
+        let middle = start + (end - start) / 2;
+        self.order[start..end].select_nth_unstable_by(middle - start, |&left, &right| {
             approximate_coordinate(&points[left], axis)
                 .total_cmp(&approximate_coordinate(&points[right], axis))
                 .then_with(|| left.cmp(&right))
         });
-        let middle = start + (end - start) / 2;
         let left = self.build_point_node(points, start, middle)?;
         let right = self.build_point_node(points, middle, end)?;
         self.nodes[node_index].children = Some([left, right]);
