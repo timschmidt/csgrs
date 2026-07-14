@@ -2,7 +2,7 @@
 
 This file is generated from Criterion output under `target/criterion`.
 
-Generated at Unix timestamp `1784046908`.
+Generated at Unix timestamp `1784047647`.
 
 ## Commands
 
@@ -52,7 +52,7 @@ Open Criterion's detailed HTML report at `target/criterion/report/index.html`.
 | `insphere3d` | `hyperreal` | `near_degenerate` | 193.22 us | 192.34 us - 194.29 us | 192.32 us | -6.87% |
 | `insphere3d` | `hyperreal_prepared` | `easy` | 202.07 us | 201.15 us - 203.24 us | 200.85 us | -97.99% |
 | `insphere3d` | `hyperreal_prepared` | `near_degenerate` | 214.85 us | 207.01 us - 224.35 us | 202.98 us | -97.81% |
-| `orient2d` | `hyperreal` | `easy` | 137.57 us | 131.99 us - 143.64 us | 123.17 us | +12.28% |
-| `orient2d` | `hyperreal` | `near_degenerate` | 115.65 us | 115.11 us - 116.30 us | 114.77 us | +0.43% |
+| `orient2d` | `hyperreal` | `easy` | 121.13 us | 120.77 us - 121.58 us | 120.81 us | -11.95% |
+| `orient2d` | `hyperreal` | `near_degenerate` | 111.50 us | 111.30 us - 111.73 us | 111.61 us | -3.59% |
 | `orient3d` | `hyperreal` | `easy` | 258.51 us | 257.41 us - 260.11 us | 257.38 us | -3.51% |
 | `orient3d` | `hyperreal` | `near_degenerate` | 138.25 us | 131.70 us - 146.05 us | 129.45 us | -1.23% |
