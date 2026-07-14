@@ -5,11 +5,8 @@
 //! claimed to work and leaves geometric toolpath validation to downstream
 //! crates such as `hyperpath` and `hyperdrc`.
 //!
-//! The explicit envelope and unknown fields follow Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): process claims should
-//! expose source conditions and uncertainty rather than silently treating a
-//! catalog note as a certified fabrication recipe.
+//! Process claims expose source conditions and uncertainty rather than treating
+//! a catalog note as a certified fabrication recipe.
 
 use crate::{AssertionCondition, AssertionValue, PartId, PartQueryEvidence};
 

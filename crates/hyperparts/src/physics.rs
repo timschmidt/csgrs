@@ -6,14 +6,10 @@
 //! source-attributed handles and query reports that say whether a fact is exact,
 //! certified, conditional, lossy, or unknown.
 //!
-//! The boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): imported part metadata is
-//! retained as exact/certified facts or explicit uncertainty instead of being
-//! collapsed into primitive numeric defaults. Material and transport facts are
-//! intentionally handoff records because constitutive interpretation belongs to
-//! a physical model, as in Landau and Lifshitz, *Theory of Elasticity*, 3rd ed.,
-//! 1986, and Carslaw and Jaeger, *Conduction of Heat in Solids*, 2nd ed., 1959.
+//! Imported metadata remains exact or certified facts, or explicit uncertainty,
+//! instead of collapsing into numeric defaults. Material and transport facts
+//! are handoff records because constitutive interpretation belongs to a
+//! physical model.
 
 use crate::{
     AssertionCondition, AssertionValue, PartId, PartQueryEvidence, PartsError, PartsResult,

@@ -482,9 +482,7 @@ impl PartGraph {
     /// connections are unsafe, matching power terminals require overlapping
     /// exact voltage envelopes when both are known, and missing polarity or
     /// voltage facts return [`ConnectionDecision::Unknown`]. This keeps source
-    /// gaps visible instead of fabricating compatibility from defaults, which
-    /// is the data-graph analogue of Yap's "certified decision or explicit
-    /// uncertainty" rule.
+    /// gaps visible instead of fabricating compatibility from defaults.
     pub fn safe_connection(
         &self,
         left: (&PartId, &VariantId, &TerminalId),

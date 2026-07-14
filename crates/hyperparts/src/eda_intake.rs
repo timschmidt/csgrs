@@ -3,14 +3,9 @@
 //! This module is the source boundary for tscircuit-like authoring bundles:
 //! Circuit JSON records, footprint strings, generated model references, package
 //! metadata, and autorouter/fabrication artifacts enter as attributed records
-//! and leave as explicit handoff reports. The staged authoring shape follows
-//! the tscircuit React-to-Circuit-JSON architecture note
-//! (<https://blog.tscircuit.com/p/how-tscircuit-works-compiling-functional>),
-//! but the trust boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): exact strings are parsed
-//! into symbolic [`Real`] values, while missing, lossy, or unresolved fields are
-//! preserved as report entries instead of being guessed into primitive floats.
+//! and leave as explicit handoff reports. Exact strings are parsed into
+//! symbolic [`Real`] values, while missing, lossy, or unresolved fields remain
+//! report entries instead of being guessed into primitive floats.
 
 use hyperreal::Real;
 
@@ -94,9 +89,9 @@ pub enum EdaFabricationReadiness {
 
 /// Exact source field represented as text, never as a primitive float.
 ///
-/// Numeric strings are parsed with [`Real::from_str`] by the intake pass. This
-/// is the important Yap boundary: JavaScript/JSON decimal spelling is retained
-/// as source text and converted to exact arithmetic only after validation.
+/// Numeric strings are parsed into [`Real`] by the intake pass.
+/// JavaScript/JSON decimal spelling is retained as source text and converted to
+/// exact arithmetic only after validation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct EdaExactField {
     /// Field path relative to the source record.
@@ -251,11 +246,9 @@ pub struct CircuitResidualParameter {
 
 /// Circuit residual-fact handoff to `hypercircuit`.
 ///
-/// The handoff follows Nagel and Pederson, "SPICE (Simulation Program with
-/// Integrated Circuit Emphasis)," ERL-M382, 1973: topology/model records and
-/// exact parameter facts are separated from numerical solution. `hyperparts`
-/// records the source evidence and leaves stamping/residual semantics to
-/// `hypercircuit`.
+/// Topology/model records and exact parameter facts remain separate from
+/// numerical solution. `hyperparts` records the source evidence and leaves
+/// stamping and residual semantics to `hypercircuit`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CircuitResidualFactHandoff {
     /// Downstream owner.

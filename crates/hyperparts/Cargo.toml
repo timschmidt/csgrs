@@ -16,7 +16,7 @@ categories = ["data-structures", "science", "development-tools"]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
 hyperreal = { path = "../hyperreal" }
-# hyperreal = { version = "0.13.0" }
+# hyperreal = { version = "0.13.1" }
 [dev-dependencies]
 proptest = "1.7.0"
 

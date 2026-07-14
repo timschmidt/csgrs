@@ -6,14 +6,9 @@
 //! owned by `hypercircuit`; this module only records catalog/interface facts and
 //! reports the evidence and unknowns used to construct electrical handoffs.
 //!
-//! This mirrors Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>) at the EDA boundary:
-//! exact voltage/current envelopes are carried when sources provide them, and
-//! missing internal die nets or pin semantics remain explicit unknowns. Circuit
-//! model interpretation is deliberately delegated, following the separation of
-//! topology/model data from numerical solution in Nagel and Pederson, "SPICE
-//! (Simulation Program with Integrated Circuit Emphasis)," ERL-M382, 1973.
+//! Exact voltage and current envelopes are carried when sources provide them;
+//! missing internal die nets or pin semantics remain explicit unknowns.
+//! Circuit-model interpretation and numerical solution stay delegated.
 
 use std::cmp::Ordering;
 

@@ -1,11 +1,8 @@
 //! Query carriers for source-attributed part discovery.
 //!
 //! Query results rank candidates with explicit evidence, match status, and
-//! unknowns. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>) at the data-query layer:
-//! a query either returns source-backed facts or reports the missing/conflicting
-//! evidence that prevents certification.
+//! unknowns. A query either returns source-backed facts or reports the missing
+//! or conflicting evidence that prevents certification.
 
 use crate::{PartId, PartQueryEvidence, TerminalId};
 

@@ -6,10 +6,7 @@
 //! own downstream geometry, physics, circuit solving, routing, or fabrication
 //! kernels; it indexes and hands off to those crates.
 //!
-//! The crate follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>) at the system boundary:
-//! source data is retained as attributed facts, exact values, or explicit
+//! Source data is retained as attributed facts, exact values, or explicit
 //! unknowns. Missing catalog, EDA, or manufacturing fields are not guessed into
 //! primitive floats or silent defaults.
 

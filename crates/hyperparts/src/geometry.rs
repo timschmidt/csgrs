@@ -2,12 +2,9 @@
 //!
 //! `hyperparts` indexes geometry provenance but does not own CAD, CSG, curve,
 //! mesh, voxel, or footprint kernels. Geometry handoff reports name the owning
-//! crate/artifact and whether the geometry is exact, certified, lossy, display
-//! only, or missing. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): exact downstream code
-//! should receive explicit provenance and uncertainty rather than unreviewed
-//! mesh/display artifacts posing as certified geometry.
+//! crate or artifact and whether the geometry is exact, certified, lossy,
+//! display-only, or missing. Unreviewed mesh and display artifacts cannot pose
+//! as certified geometry.
 
 use crate::{PartId, PartQueryEvidence};
 
@@ -42,7 +39,7 @@ pub struct GeometryHandle {
 pub enum ShapeSource {
     /// `csgrs` or CSG solid.
     Csg,
-    /// Future `hypercad` solid/model.
+    /// Hyper-owned CAD solid or model.
     HyperCad,
     /// `hypercurve` 2D profile.
     HyperCurve,

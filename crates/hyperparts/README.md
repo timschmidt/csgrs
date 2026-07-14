@@ -1,145 +1,29 @@
-<h1>
-  hyperparts
-</h1>
+# hyperparts
 
-`hyperparts` is a source-attributed part knowledge graph for the Hyper ecosystem. It
-records part families, variants, revisions, assertions, terminals, interfaces,
-compatibility relations, process capabilities, import reports, and query evidence.
+`hyperparts` is a source-attributed part knowledge graph for the Hyper stack.
+It records part families and variants, assertions, terminals, interfaces,
+compatibility, geometry and physics handles, EDA intake, procurement facts, and
+manufacturing capabilities without erasing provenance or uncertainty.
 
-The crate is not a CAD kernel, physics engine, circuit simulator, router, DRC engine, or
-fabrication planner. It indexes facts and external handles for those crates while
-preserving source, confidence, and uncertainty.
+The crate is not a CAD kernel, circuit simulator, physics engine, router, DRC
+engine, or process planner. It indexes facts and explicit handoff records for
+those domains.
 
-## Hyper Ecosystem
-
-`hyperparts` is the evidence layer for part and process knowledge.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values in
-  source-attributed metadata.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
-  carriers used by geometry and physics siblings.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy used by
-  downstream geometry and readiness crates.
-- [hypertri](https://github.com/timschmidt/hypertri): triangulation evidence for
-  geometry and footprint handoffs.
-- [hypercurve](https://github.com/timschmidt/hypercurve),
-  [hypermesh](https://github.com/timschmidt/hypermesh), and
-  [hypervoxel](https://github.com/timschmidt/hypervoxel): geometry or grid artifact
-  handles referenced by shape assertions.
-- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and solver
-  evidence referenced by circuit, physics, and process handoffs.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): material, mass, thermal,
-  load, and environmental property handoffs.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit): electrical models,
-  packages, pins, ratings, and safe-connection reports.
-- [hyperpath](https://github.com/timschmidt/hyperpath) and
-  [hyperdrc](https://github.com/timschmidt/hyperdrc): routing, manufacturability, and
-  release-package checks that consume part/interface facts.
-- [hyperpack](https://github.com/timschmidt/hyperpack): package, bin, and process
-  placement consumers of part evidence.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): search layer for
-  candidate part, process, and package selections.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): boundary-representation geometry
-  handles for future package/body handoffs.
-- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field and clearance
-  evidence for future package, fixture, and process queries.
-
-## Typical Part-Library Problems
-
-Part libraries frequently mix verified datasheet values, guessed package metadata, CAD
-handles, supplier lifecycle fields, and manufacturing assumptions in one table. Missing
-data becomes ambiguous: it may mean safe default, not applicable, proprietary, or simply
-not stated by the source. Downstream tools then inherit guesses that look authoritative.
-
-`hyperparts` treats part knowledge as evidence. Assertions carry source references,
-confidence, status, and explicit unknowns. Compatibility, safe-connection, geometry,
-physics, electronics, and process handoffs report whether a fact is exact, certified,
-conditional, lossy, unsupported, or missing.
-
-## Main Types
-
-- `PartFamily`, `PartVariant`, `PartGraph`, and stable ID types describe the knowledge
-  graph.
-- `SourceRef`, `SourceRevision`, `Assertion<T>`, `AssertionValue`, and `PartAssertion`
-  preserve provenance and known/unknown status.
-- `GeneralPartAssertion`, `AssertionCondition`, `AssertionConfidence`,
-  `ComplianceClaim`, `ProcurementOffer`, and `PartKnowledgeReport` preserve scalar,
-  text, range, compliance, sourcing, conflict, and unknown evidence.
-- `Terminal`, `Interface`, `Port`, `Pin`, `Pad`, `Lead`, `Hole`, and
-  `ReferenceDesignatorClass` describe external connection and assembly surfaces.
-- `GeometryHandoffReport`, `PhysicsHandoffReport`, `ElectricalCompatibilityReport`,
-  and `SafeConnectionReport` preserve downstream handoff evidence.
-- `ToolPart`, `Process`, `Operation`, `Capability`, `ManufacturingRoute`, and related
-  process types describe manufacturing capability without becoming a scheduler.
-- `ImportReport`, `PartQueryEvidence`, and `PartQueryResult<T>` make importer and query
-  uncertainty explicit.
-- `PartQuery`, `GeometryQuery`, `ElectricalQuery`, `PhysicsQuery`, `CapabilityQuery`,
-  `ProcurementQuery`, `QueryResult<T>`, and `QueryMatchStatus` make discovery and
-  selection evidence report-bearing rather than implicit.
-
-## Precision Model
-
-Numeric metadata uses `Real` where exact values or ranges are known. Unknown,
-conditional, lossy, external, and conflicting facts are represented as data rather than
-collapsed into defaults. Source references and assertion status stay attached to values
-so downstream crates can choose whether a fact is suitable for exact geometry,
-simulation, routing, or readiness checks.
-
-Numerical explosion is controlled by storing handles, source references, exact scalars,
-exact intervals, and explicit unknowns instead of copying downstream geometry, circuit,
-physics, or process state into the part graph. A part assertion points to the owning
-crate and evidence; it does not become a second unsynchronized model of that domain.
-
-## Performance Model
-
-The crate favors typed records and query evidence over a heavyweight database engine.
-Stable IDs make graph edges cheap to compare and serialize. Compatibility and
-safe-connection queries return compact reports that can be cached by callers. Import
-reports count unknowns and issues at ingestion time so downstream workflows do not have
-to rediscover missing evidence repeatedly.
-
-Performance should come from indexing and caching over stable IDs, not from erasing
-provenance. Missing fields remain compact unknown records, while large CAD, EDA,
-physics, routing, or manufacturing artifacts stay in their owning crates.
-
-## Current Status
-
-Implemented today:
-
-- stable part, variant, revision, terminal, manufacturer, supplier, and internal IDs;
-- source-attributed assertions, values, ranges, lifecycle, compliance, procurement, and
-  confidence carriers;
-- part graphs with subparts, terminals, interfaces, aspects, and relationships;
-- geometry, physics, electronics, EDA, process, tool, operation, fixture, and route
-  handoff records;
-- compatibility, import, query, and conservative safe-connection reports.
-
-Known limits: `hyperparts` records and connects evidence; it deliberately leaves exact
-geometry, circuit solving, physics simulation, routing, and manufacturability decisions
-to sibling crates.
-
-## Installation
+## Quick start
 
 ```toml
 [dependencies]
-hyperparts = "0.2.0"
+hyperparts = "0.3"
+hyperreal = "0.13.1"
 ```
 
-For sibling checkouts:
-
-```toml
-[dependencies]
-hyperparts = { path = "../hyperparts" }
-```
-
-## Usage
-
-Represent catalog facts as source-attributed evidence, not anonymous table cells:
+Store a datasheet claim, insert a variant, and query the graph:
 
 ```rust,ignore
 use hyperparts::{
-    AssertionConfidence, AssertionValue, GeneralPartAssertion, PartAssertion, PartFamily,
-    PartGraph, PartId, PartQueryEvidence, SourceRef, VariantId, PartVariant,
+    AssertionConfidence, AssertionValue, GeneralPartAssertion, PartAssertion,
+    PartConstraint, PartFamily, PartGraph, PartId, PartQuery, PartVariant,
+    SourceRef, VariantId,
 };
 use hyperreal::Real;
 
@@ -150,7 +34,7 @@ let voltage = GeneralPartAssertion {
     unit: Some("V".into()),
     conditions: Vec::new(),
     confidence: AssertionConfidence::Reviewed,
-    source: source.clone(),
+    source,
     revision: None,
 };
 
@@ -163,32 +47,92 @@ family.insert_variant(variant);
 let mut graph = PartGraph::default();
 graph.insert_family(family);
 
-let evidence = PartQueryEvidence::from_fact(source, "datasheet voltage stated");
-assert_eq!(evidence.facts.len(), 1);
+let result = graph.query_parts(&PartQuery {
+    constraints: vec![PartConstraint::PartIdContains("regulator".into())],
+});
+assert_eq!(result.candidates.len(), 1);
+
+# Ok::<(), hyperparts::PartsError>(())
 ```
 
-Compatibility queries, safe-connection reports, geometry handoffs, physics handoffs,
-and manufacturing-route records use the same source/status pattern so downstream crates
-can distinguish certified facts, missing evidence, and lossy imports.
+## Core API
 
-## References
+- `PartFamily`, `PartVariant`, and `PartGraph` form the queryable graph. Typed
+  IDs such as `PartId`, `VariantId`, and `TerminalId` reject empty values.
+- `SourceRef`, `SourceRevision`, `Assertion<T>`, `AssertionValue`, and
+  `PartAssertion` retain source identity, exact values, intervals, review state,
+  explicit unknowns, and conflicts.
+- `Terminal`, `Interface`, `Port`, `Pin`, `Pad`, `Lead`, and `Hole` describe
+  electrical, mechanical, fluidic, optical, and assembly surfaces.
+- `GeometryHandoffReport`, `PhysicsHandoffReport`,
+  `ElectricalCompatibilityReport`, and `SafeConnectionReport` keep downstream
+  ownership and readiness visible.
+- `Process`, `Operation`, `Capability`, `ToolPart`, and `ManufacturingRoute`
+  describe process evidence without claiming to schedule or validate toolpaths.
+- `PartQuery`, `GeometryQuery`, `ElectricalQuery`, `PhysicsQuery`,
+  `CapabilityQuery`, and `ProcurementQuery` describe discovery requests;
+  `QueryResult<T>` returns ranked candidates, evidence, conflicts, and unknowns.
 
-- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
-  (1997): 3-23.
-- Nagel, Laurence W., and Donald O. Pederson. *SPICE (Simulation Program with Integrated
-  Circuit Emphasis)*. ERL-M382, University of California, Berkeley, 1973.
-- European Union. Directive 2011/65/EU on the restriction of hazardous substances in
-  electrical and electronic equipment (RoHS).
-- European Union. Regulation (EC) No 1907/2006 concerning Registration, Evaluation,
-  Authorisation and Restriction of Chemicals (REACH).
-- KiCad Project. *KiCad PCB File Format / S-expression Board Format*.
-- LibrePCB Project. *LibrePCB File Format Documentation*.
+`PartGraph::safe_connection` is conservative: a power-to-ground connection is
+unsafe, two known power envelopes must overlap, and missing polarity or voltage
+facts produce `ConnectionDecision::Unknown` rather than a guessed answer.
+
+## EDA intake
+
+`import_eda_authoring_bundle` ingests Circuit-JSON-like records, exact numeric
+strings, footprint expressions, package pins, generated model references,
+autorouter output, and fabrication output. It returns both a populated
+`PartGraph` and report-bearing handoffs.
+
+`EdaExactField` preserves the original decimal spelling and parses it into
+`hyperreal::Real` only after validation. Missing, rejected, lossy, and
+review-only fields remain visible in `EdaAuthoringImportResult`; generated
+models and routes cannot silently become exact geometry.
+
+## Precision and scaling
+
+Exact numeric metadata uses `Real`; exact ranges validate their ordering.
+Unknown, conditional, lossy, external, and conflicting claims are distinct
+data states rather than defaults. Large geometry, circuit, physics, routing,
+and fabrication artifacts stay in their owning crates and are referenced by
+stable handles, limiting duplication and numerical growth.
+
+The in-memory graph favors typed records and stable IDs over a database engine.
+Callers can index IDs and cache compact query or compatibility reports without
+discarding source evidence.
+
+Current limits are intentional: `hyperparts` connects evidence but delegates
+geometric evaluation, circuit solution, physical simulation, routing, and
+manufacturability decisions to their domain owners.
 
 ## Development
 
-Useful local checks:
-
 ```sh
-cargo test
+cargo fmt --all --check
+cargo test --all-targets
+cargo clippy --all-targets -- -D warnings
 cargo bench --bench queries
 ```
+
+The `fuzz/` package contains an `eda_authoring_intake` target for `cargo fuzz`.
+
+## References
+
+- Chee K. Yap, [“Towards Exact Geometric Computation”](https://doi.org/10.1016/0925-7721(95)00040-2), *Computational Geometry* 7(1–2), 1997.
+- Laurence W. Nagel and Donald O. Pederson, [*SPICE (Simulation Program with Integrated Circuit Emphasis)*](https://www2.eecs.berkeley.edu/Pubs/TechRpts/1973/22871.html), UCB/ERL M382, 1973.
+- tscircuit, [“How tscircuit Works: Compiling Functional React Code to Circuit JSON”](https://blog.tscircuit.com/p/how-tscircuit-works-compiling-functional).
+- KiCad, [S-expression file-format documentation](https://dev-docs.kicad.org/en/file-formats/sexpr-intro/index.html).
+- LibrePCB, [developer and file-format documentation](https://developers.librepcb.org/).
+- European Union, [Directive 2011/65/EU (RoHS)](https://eur-lex.europa.eu/eli/dir/2011/65/oj) and [Regulation (EC) No 1907/2006 (REACH)](https://eur-lex.europa.eu/eli/reg/2006/1907/oj).
+
+Direct numeric dependency: [hyperreal](https://github.com/timschmidt/hyperreal).
+Related domain owners: [hypercurve](https://github.com/timschmidt/hypercurve) ·
+[hyperbrep](https://github.com/timschmidt/hyperbrep) ·
+[hyperphysics](https://github.com/timschmidt/hyperphysics) ·
+[hypercircuit](https://github.com/timschmidt/hypercircuit) ·
+[hyperpath](https://github.com/timschmidt/hyperpath) ·
+[hyperdrc](https://github.com/timschmidt/hyperdrc).
+
+## License
+
+Apache-2.0.
