@@ -62,7 +62,7 @@ impl<'a> PreparedSegment2<'a> {
 
     /// Classify a point relative to this segment using the default policy.
     pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<PointSegmentLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point relative to this segment using an explicit policy.
@@ -78,7 +78,7 @@ impl<'a> PreparedSegment2<'a> {
 
     /// Return whether a point lies on this segment using the default policy.
     pub fn point_on_segment(&self, point: &Point2) -> PredicateOutcome<bool> {
-        self.point_on_segment_with_policy(point, PredicatePolicy::default())
+        self.point_on_segment_with_policy(point, PredicatePolicy)
     }
 
     /// Return whether a point lies on this segment using an explicit policy.
@@ -96,7 +96,7 @@ impl<'a> PreparedSegment2<'a> {
         &self,
         other: &PreparedSegment2,
     ) -> PredicateOutcome<SegmentIntersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy::default())
+        self.classify_intersection_with_policy(other, PredicatePolicy)
     }
 
     /// Classify this segment's intersection with another prepared segment using
@@ -150,7 +150,7 @@ impl<'a> PreparedSegment3<'a> {
 
     /// Classify a point relative to this segment using the default policy.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PointSegmentLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point relative to this segment using an explicit policy.
@@ -164,7 +164,7 @@ impl<'a> PreparedSegment3<'a> {
 
     /// Return whether a point lies on this segment using the default policy.
     pub fn point_on_segment(&self, point: &Point3) -> PredicateOutcome<bool> {
-        self.point_on_segment_with_policy(point, PredicatePolicy::default())
+        self.point_on_segment_with_policy(point, PredicatePolicy)
     }
 
     /// Return whether a point lies on this segment using an explicit policy.
@@ -181,7 +181,7 @@ impl<'a> PreparedSegment3<'a> {
         &self,
         other: &PreparedSegment3,
     ) -> PredicateOutcome<Segment3Intersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy::default())
+        self.classify_intersection_with_policy(other, PredicatePolicy)
     }
 
     /// Classify this segment's intersection with another prepared 3D segment
@@ -207,7 +207,7 @@ pub fn classify_point_segment(
     b: &Point2,
     point: &Point2,
 ) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_with_policy(a, b, point, PredicatePolicy::default())
+    classify_point_segment_with_policy(a, b, point, PredicatePolicy)
 }
 
 /// Classify `point` relative to the closed 3D segment `ab`.
@@ -216,7 +216,7 @@ pub fn classify_point_segment3(
     b: &Point3,
     point: &Point3,
 ) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment3_with_policy(a, b, point, PredicatePolicy::default())
+    classify_point_segment3_with_policy(a, b, point, PredicatePolicy)
 }
 
 /// Classify `point` relative to the closed 3D segment `ab` with an explicit
@@ -281,13 +281,7 @@ pub fn classify_point_segment_with_facts(
     point: &Point2,
     segment_facts: Segment2Facts,
 ) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_with_policy_and_facts(
-        a,
-        b,
-        point,
-        PredicatePolicy::default(),
-        segment_facts,
-    )
+    classify_point_segment_with_policy_and_facts(a, b, point, PredicatePolicy, segment_facts)
 }
 
 /// Classify `point` relative to the closed segment `ab` with both an explicit
@@ -348,12 +342,12 @@ fn classify_point_segment_impl(
 
 /// Return whether `point` lies on the closed segment `ab`.
 pub fn point_on_segment(a: &Point2, b: &Point2, point: &Point2) -> PredicateOutcome<bool> {
-    point_on_segment_with_policy(a, b, point, PredicatePolicy::default())
+    point_on_segment_with_policy(a, b, point, PredicatePolicy)
 }
 
 /// Return whether `point` lies on the closed 3D segment `ab`.
 pub fn point_on_segment3(a: &Point3, b: &Point3, point: &Point3) -> PredicateOutcome<bool> {
-    point_on_segment3_with_policy(a, b, point, PredicatePolicy::default())
+    point_on_segment3_with_policy(a, b, point, PredicatePolicy)
 }
 
 /// Return whether `point` lies on the closed 3D segment `ab` with an explicit
@@ -400,7 +394,7 @@ pub fn point_on_segment_with_facts(
     point: &Point2,
     segment_facts: Segment2Facts,
 ) -> PredicateOutcome<bool> {
-    point_on_segment_with_policy_and_facts(a, b, point, PredicatePolicy::default(), segment_facts)
+    point_on_segment_with_policy_and_facts(a, b, point, PredicatePolicy, segment_facts)
 }
 
 /// Return whether `point` lies on the closed segment `ab` with both an explicit
@@ -429,7 +423,7 @@ pub fn classify_segment_intersection(
     c: &Point2,
     d: &Point2,
 ) -> PredicateOutcome<SegmentIntersection> {
-    classify_segment_intersection_with_policy(a, b, c, d, PredicatePolicy::default())
+    classify_segment_intersection_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// Construct the exact point where two closed 2D segments cross properly.
@@ -439,7 +433,7 @@ pub fn proper_segment_intersection_point(
     c: &Point2,
     d: &Point2,
 ) -> PredicateOutcome<Option<Point2>> {
-    proper_segment_intersection_point_with_policy(a, b, c, d, PredicatePolicy::default())
+    proper_segment_intersection_point_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// Construct the exact point where two closed 2D segments cross properly with
@@ -508,7 +502,7 @@ pub fn classify_segment3_intersection(
     c: &Point3,
     d: &Point3,
 ) -> PredicateOutcome<Segment3Intersection> {
-    classify_segment3_intersection_with_policy(a, b, c, d, PredicatePolicy::default())
+    classify_segment3_intersection_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// Classify the intersection of closed 3D segments `ab` and `cd` with an
@@ -676,7 +670,7 @@ pub fn classify_segment_intersection_with_facts(
         b,
         c,
         d,
-        PredicatePolicy::default(),
+        PredicatePolicy,
         first_facts,
         second_facts,
     )

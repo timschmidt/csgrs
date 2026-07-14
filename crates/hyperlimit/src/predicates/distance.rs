@@ -44,7 +44,7 @@ impl<'a> PreparedExplicitSphere3<'a> {
 
     /// Classify a point using the default predicate policy.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<SpherePointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point using an explicit predicate policy.
@@ -63,7 +63,7 @@ pub fn compare_point2_distance_squared(
     left: &Point2,
     right: &Point2,
 ) -> PredicateOutcome<Ordering> {
-    compare_point2_distance_squared_with_policy(anchor, left, right, PredicatePolicy::default())
+    compare_point2_distance_squared_with_policy(anchor, left, right, PredicatePolicy)
 }
 
 /// Compare squared distances from `anchor` to `left` and `right` with an
@@ -96,7 +96,7 @@ pub fn compare_point3_distance_squared(
     left: &Point3,
     right: &Point3,
 ) -> PredicateOutcome<Ordering> {
-    compare_point3_distance_squared_with_policy(anchor, left, right, PredicatePolicy::default())
+    compare_point3_distance_squared_with_policy(anchor, left, right, PredicatePolicy)
 }
 
 /// Compare squared 3D distances from `anchor` to `left` and `right` with an
@@ -123,7 +123,7 @@ pub fn classify_circle_line2(
     a: &Point2,
     b: &Point2,
 ) -> PredicateOutcome<CircleLineRelation> {
-    classify_circle_line2_with_policy(center, radius_squared, a, b, PredicatePolicy::default())
+    classify_circle_line2_with_policy(center, radius_squared, a, b, PredicatePolicy)
 }
 
 /// Classify the relation between a 2D circle boundary and an infinite line
@@ -189,7 +189,7 @@ pub fn classify_circle_segment2(
     a: &Point2,
     b: &Point2,
 ) -> PredicateOutcome<CircleSegmentRelation> {
-    classify_circle_segment2_with_policy(center, radius_squared, a, b, PredicatePolicy::default())
+    classify_circle_segment2_with_policy(center, radius_squared, a, b, PredicatePolicy)
 }
 
 /// Classify the relation between a 2D circle boundary and a closed segment
@@ -328,7 +328,7 @@ pub fn compare_point_line3_distance_squared(
         a,
         b,
         threshold_squared,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -388,7 +388,7 @@ pub fn compare_point_segment3_distance_squared(
         a,
         b,
         threshold_squared,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -476,7 +476,7 @@ pub fn compare_point_plane_distance_squared(
         point,
         plane,
         threshold_squared,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -523,7 +523,7 @@ pub fn classify_sphere3_intersection(
         first_radius,
         second_center,
         second_radius,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -586,7 +586,7 @@ pub fn classify_aabb3_sphere_intersection(
         max,
         center,
         radius_squared,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -632,7 +632,7 @@ pub fn classify_point_sphere3(
     radius_squared: &Real,
     point: &Point3,
 ) -> PredicateOutcome<SpherePointLocation> {
-    classify_point_sphere3_with_policy(center, radius_squared, point, PredicatePolicy::default())
+    classify_point_sphere3_with_policy(center, radius_squared, point, PredicatePolicy)
 }
 
 /// Classify a point relative to an explicit 3D sphere with squared radius and

@@ -17,7 +17,7 @@ pub fn classify_point_convex_polygon2(
     vertices: &[Point2],
     point: &Point2,
 ) -> PredicateOutcome<ConvexPointLocation> {
-    classify_point_convex_polygon2_with_policy(vertices, point, PredicatePolicy::default())
+    classify_point_convex_polygon2_with_policy(vertices, point, PredicatePolicy)
 }
 
 /// Classify a point relative to a closed ordered convex 2D polygon with an
@@ -104,7 +104,7 @@ pub fn classify_point_convex_planes3(
     planes: &[Plane3],
     point: &Point3,
 ) -> PredicateOutcome<ConvexPointLocation> {
-    classify_point_convex_planes3_with_policy(planes, point, PredicatePolicy::default())
+    classify_point_convex_planes3_with_policy(planes, point, PredicatePolicy)
 }
 
 /// Classify a point relative to a closed convex 3D polyhedron represented as

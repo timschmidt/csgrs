@@ -2,7 +2,7 @@
 
 This file is generated from Criterion output under `target/criterion`.
 
-Generated at Unix timestamp `1784033982`.
+Generated at Unix timestamp `1784046908`.
 
 ## Commands
 
@@ -44,15 +44,15 @@ Open Criterion's detailed HTML report at `target/criterion/report/index.html`.
 | `classify_point_plane` | `hyperreal` | `near_degenerate` | 148.62 us | 148.28 us - 148.98 us | 148.62 us | -42.03% |
 | `classify_point_plane` | `hyperreal_prepared` | `easy` | 342.16 us | 341.05 us - 343.40 us | 340.70 us | -34.07% |
 | `classify_point_plane` | `hyperreal_prepared` | `near_degenerate` | 234.61 us | 232.84 us - 236.85 us | 232.43 us | -29.00% |
-| `incircle2d` | `hyperreal` | `easy` | 3.75 ms | 3.74 ms - 3.76 ms | 3.75 ms | +129.44% |
-| `incircle2d` | `hyperreal` | `near_degenerate` | 3.83 ms | 3.82 ms - 3.84 ms | 3.82 ms | +139.86% |
-| `incircle2d` | `hyperreal_prepared` | `easy` | 4.06 ms | 3.98 ms - 4.14 ms | 3.94 ms | +154.01% |
-| `incircle2d` | `hyperreal_prepared` | `near_degenerate` | 3.78 ms | 3.77 ms - 3.80 ms | 3.76 ms | +136.40% |
-| `insphere3d` | `hyperreal` | `easy` | 9.94 ms | 9.91 ms - 9.99 ms | 9.88 ms | +130.29% |
-| `insphere3d` | `hyperreal` | `near_degenerate` | 9.83 ms | 9.81 ms - 9.85 ms | 9.82 ms | +125.27% |
-| `insphere3d` | `hyperreal_prepared` | `easy` | 10.04 ms | 9.98 ms - 10.11 ms | 9.92 ms | +131.13% |
-| `insphere3d` | `hyperreal_prepared` | `near_degenerate` | 9.83 ms | 9.82 ms - 9.84 ms | 9.83 ms | +129.51% |
-| `orient2d` | `hyperreal` | `easy` | 767.95 us | 763.22 us - 773.59 us | 760.25 us | +1.98% |
-| `orient2d` | `hyperreal` | `near_degenerate` | 530.41 us | 528.24 us - 532.92 us | 526.73 us | -20.22% |
-| `orient3d` | `hyperreal` | `easy` | 1.92 ms | 1.91 ms - 1.93 ms | 1.91 ms | +10.22% |
-| `orient3d` | `hyperreal` | `near_degenerate` | 1.41 ms | 1.41 ms - 1.42 ms | 1.40 ms | +39.13% |
+| `incircle2d` | `hyperreal` | `easy` | 119.44 us | 116.45 us - 124.02 us | 116.42 us | -5.69% |
+| `incircle2d` | `hyperreal` | `near_degenerate` | 121.61 us | 118.55 us - 126.32 us | 118.61 us | -4.63% |
+| `incircle2d` | `hyperreal_prepared` | `easy` | 128.48 us | 124.68 us - 133.15 us | 122.43 us | -96.60% |
+| `incircle2d` | `hyperreal_prepared` | `near_degenerate` | 121.54 us | 121.12 us - 121.99 us | 121.22 us | -96.84% |
+| `insphere3d` | `hyperreal` | `easy` | 195.40 us | 193.89 us - 197.07 us | 194.19 us | -11.16% |
+| `insphere3d` | `hyperreal` | `near_degenerate` | 193.22 us | 192.34 us - 194.29 us | 192.32 us | -6.87% |
+| `insphere3d` | `hyperreal_prepared` | `easy` | 202.07 us | 201.15 us - 203.24 us | 200.85 us | -97.99% |
+| `insphere3d` | `hyperreal_prepared` | `near_degenerate` | 214.85 us | 207.01 us - 224.35 us | 202.98 us | -97.81% |
+| `orient2d` | `hyperreal` | `easy` | 137.57 us | 131.99 us - 143.64 us | 123.17 us | +12.28% |
+| `orient2d` | `hyperreal` | `near_degenerate` | 115.65 us | 115.11 us - 116.30 us | 114.77 us | +0.43% |
+| `orient3d` | `hyperreal` | `easy` | 258.51 us | 257.41 us - 260.11 us | 257.38 us | -3.51% |
+| `orient3d` | `hyperreal` | `near_degenerate` | 138.25 us | 131.70 us - 146.05 us | 129.45 us | -1.23% |

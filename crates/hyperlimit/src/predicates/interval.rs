@@ -20,7 +20,7 @@ pub fn classify_real_closed_interval(
     first: &Real,
     second: &Real,
 ) -> PredicateOutcome<RealIntervalLocation> {
-    classify_real_closed_interval_with_policy(value, first, second, PredicatePolicy::default())
+    classify_real_closed_interval_with_policy(value, first, second, PredicatePolicy)
 }
 
 /// Classify `value` relative to a closed interval with an explicit predicate
@@ -88,7 +88,7 @@ pub fn real_in_closed_interval(
     first: &Real,
     second: &Real,
 ) -> PredicateOutcome<bool> {
-    real_in_closed_interval_with_policy(value, first, second, PredicatePolicy::default())
+    real_in_closed_interval_with_policy(value, first, second, PredicatePolicy)
 }
 
 /// Return whether `value` lies in a closed interval with an explicit predicate
@@ -121,7 +121,7 @@ pub fn classify_closed_interval_intersection(
         first_end,
         second_start,
         second_end,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -207,7 +207,7 @@ pub fn closed_intervals_intersect(
         first_end,
         second_start,
         second_end,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 

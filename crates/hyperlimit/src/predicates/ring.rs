@@ -152,10 +152,8 @@ impl RingEvenOddReport {
                 return Err(RingEvenOddValidationError::EdgeCountMismatch);
             }
             validate_even_odd_edge_report(edge)?;
-            if edge.is_boundary() {
-                if boundary.replace(edge.edge_index).is_some() {
-                    return Err(RingEvenOddValidationError::BoundaryMismatch);
-                }
+            if edge.is_boundary() && boundary.replace(edge.edge_index).is_some() {
+                return Err(RingEvenOddValidationError::BoundaryMismatch);
             }
             if edge.crosses_right {
                 crossings += 1;
@@ -200,7 +198,7 @@ impl RingEvenOddReport {
 
 /// Build structural facts for a closed polygonal ring.
 pub fn ring2_facts(points: &[Point2]) -> Ring2Facts {
-    ring2_facts_with_policy(points, PredicatePolicy::default())
+    ring2_facts_with_policy(points, PredicatePolicy)
 }
 
 /// Build structural facts for a closed polygonal ring with an explicit policy.
@@ -211,7 +209,7 @@ pub(crate) fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy
 
 /// Build structural facts for a closed polygonal ring stored as indices.
 pub fn indexed_ring2_facts(points: &[Point2], ring: &[usize]) -> Option<Ring2Facts> {
-    indexed_ring2_facts_with_policy(points, ring, PredicatePolicy::default())
+    indexed_ring2_facts_with_policy(points, ring, PredicatePolicy)
 }
 
 /// Build structural facts for an indexed closed polygonal ring with an explicit
@@ -263,7 +261,7 @@ fn ring2_facts_refs(points: &[&Point2], policy: PredicatePolicy) -> Ring2Facts {
 
 /// Classify local turn consistency for a closed polygonal ring.
 pub fn ring_convexity(points: &[Point2]) -> RingConvexity {
-    ring_convexity_with_policy(points, PredicatePolicy::default())
+    ring_convexity_with_policy(points, PredicatePolicy)
 }
 
 /// Classify local turn consistency for a closed polygonal ring with a policy.
@@ -277,7 +275,7 @@ pub(crate) fn ring_convexity_with_policy(
 
 /// Classify local turn consistency for an indexed closed polygonal ring.
 pub fn indexed_ring_convexity(points: &[Point2], ring: &[usize]) -> Option<RingConvexity> {
-    indexed_ring_convexity_with_policy(points, ring, PredicatePolicy::default())
+    indexed_ring_convexity_with_policy(points, ring, PredicatePolicy)
 }
 
 /// Classify local turn consistency for an indexed closed polygonal ring with a
@@ -302,7 +300,7 @@ pub(crate) fn indexed_ring_convexity_with_policy(
 /// in `hyperlimit` because orientation/winding is a predicate-level decision;
 /// ring storage and material/hole roles belong in `hypercurve` or `hypertri`.
 pub fn ring_area_sign(points: &[Point2]) -> PredicateOutcome<Sign> {
-    ring_area_sign_with_policy(points, PredicatePolicy::default())
+    ring_area_sign_with_policy(points, PredicatePolicy)
 }
 
 /// Return the sign of twice the signed area of a closed polygonal ring with an
@@ -317,7 +315,7 @@ pub(crate) fn ring_area_sign_with_policy(
 
 /// Return the sign of twice the signed area of an indexed closed polygonal ring.
 pub fn indexed_ring_area_sign(points: &[Point2], ring: &[usize]) -> PredicateOutcome<Sign> {
-    indexed_ring_area_sign_with_policy(points, ring, PredicatePolicy::default())
+    indexed_ring_area_sign_with_policy(points, ring, PredicatePolicy)
 }
 
 /// Return the sign of twice the signed area of an indexed closed polygonal ring
@@ -376,7 +374,7 @@ pub fn classify_point_ring_even_odd(
     ring: &[Point2],
     point: &Point2,
 ) -> PredicateOutcome<RingPointLocation> {
-    classify_point_ring_even_odd_with_policy(ring, point, PredicatePolicy::default())
+    classify_point_ring_even_odd_with_policy(ring, point, PredicatePolicy)
 }
 
 /// Classify a point against a closed polygonal ring and retain exact
@@ -385,7 +383,7 @@ pub fn classify_point_ring_even_odd_report(
     ring: &[Point2],
     point: &Point2,
 ) -> PredicateOutcome<RingEvenOddReport> {
-    classify_point_ring_even_odd_report_with_policy(ring, point, PredicatePolicy::default())
+    classify_point_ring_even_odd_report_with_policy(ring, point, PredicatePolicy)
 }
 
 /// Classify a point against a closed polygonal ring by the even-odd rule with an
@@ -432,12 +430,7 @@ pub fn classify_point_indexed_ring_even_odd(
     ring: &[usize],
     point: &Point2,
 ) -> PredicateOutcome<RingPointLocation> {
-    classify_point_indexed_ring_even_odd_with_policy(
-        points,
-        ring,
-        point,
-        PredicatePolicy::default(),
-    )
+    classify_point_indexed_ring_even_odd_with_policy(points, ring, point, PredicatePolicy)
 }
 
 /// Classify a point against an indexed closed polygonal ring and retain exact
@@ -447,12 +440,7 @@ pub fn classify_point_indexed_ring_even_odd_report(
     ring: &[usize],
     point: &Point2,
 ) -> PredicateOutcome<RingEvenOddReport> {
-    classify_point_indexed_ring_even_odd_report_with_policy(
-        points,
-        ring,
-        point,
-        PredicatePolicy::default(),
-    )
+    classify_point_indexed_ring_even_odd_report_with_policy(points, ring, point, PredicatePolicy)
 }
 
 /// Classify a point against an indexed closed polygonal ring by the even-odd
@@ -614,7 +602,7 @@ fn classify_point_ring_even_odd_report_refs(
 /// Return whether `point` is inside or on the boundary of `ring` by the
 /// even-odd rule.
 pub fn point_in_ring_even_odd(ring: &[Point2], point: &Point2) -> PredicateOutcome<bool> {
-    point_in_ring_even_odd_with_policy(ring, point, PredicatePolicy::default())
+    point_in_ring_even_odd_with_policy(ring, point, PredicatePolicy)
 }
 
 /// Return whether `point` is inside or on the boundary of `ring` by the
@@ -641,7 +629,7 @@ pub fn point_in_indexed_ring_even_odd(
     ring: &[usize],
     point: &Point2,
 ) -> PredicateOutcome<bool> {
-    point_in_indexed_ring_even_odd_with_policy(points, ring, point, PredicatePolicy::default())
+    point_in_indexed_ring_even_odd_with_policy(points, ring, point, PredicatePolicy)
 }
 
 /// Return whether `point` is inside or on the boundary of an indexed ring by
@@ -896,7 +884,7 @@ mod tests {
         );
         assert_eq!(report.validate(), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&ring, &point, PredicatePolicy::default()),
+            report.validate_against_sources(&ring, &point, PredicatePolicy),
             Ok(())
         );
     }

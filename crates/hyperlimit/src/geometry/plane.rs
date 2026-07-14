@@ -209,11 +209,7 @@ pub struct PlaneAabbReport {
 impl PlaneAabbReport {
     /// Validate retained extrema ordering, signs, and derived relation.
     pub fn validate(&self) -> Result<(), PlaneAabbReportValidationError> {
-        match compare_reals_with_policy(
-            &self.lower_value,
-            &self.upper_value,
-            PredicatePolicy::default(),
-        ) {
+        match compare_reals_with_policy(&self.lower_value, &self.upper_value, PredicatePolicy) {
             PredicateOutcome::Decided {
                 value: Ordering::Greater,
                 ..
@@ -340,7 +336,7 @@ impl<'a> PreparedPlane3<'a> {
 
     /// Classify a point using the default predicate policy.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PlaneSide> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point using an explicit predicate policy.
@@ -359,7 +355,7 @@ impl<'a> PreparedPlane3<'a> {
         start: &Point3,
         end: &Point3,
     ) -> PredicateOutcome<PlaneSegmentRelation> {
-        self.classify_segment_with_policy(start, end, PredicatePolicy::default())
+        self.classify_segment_with_policy(start, end, PredicatePolicy)
     }
 
     /// Classify a closed segment relative to this plane using an explicit
@@ -381,7 +377,7 @@ impl<'a> PreparedPlane3<'a> {
         b: &Point3,
         c: &Point3,
     ) -> PredicateOutcome<PlaneTriangleRelation> {
-        self.classify_triangle_with_policy(a, b, c, PredicatePolicy::default())
+        self.classify_triangle_with_policy(a, b, c, PredicatePolicy)
     }
 
     /// Classify a triangle relative to this plane using an explicit predicate
@@ -403,7 +399,7 @@ impl<'a> PreparedPlane3<'a> {
         min: &Point3,
         max: &Point3,
     ) -> PredicateOutcome<PlaneAabbRelation> {
-        self.classify_aabb3_with_policy(min, max, PredicatePolicy::default())
+        self.classify_aabb3_with_policy(min, max, PredicatePolicy)
     }
 
     /// Classify a closed 3D AABB relative to this plane using an explicit
@@ -423,7 +419,7 @@ impl<'a> PreparedPlane3<'a> {
         min: &Point3,
         max: &Point3,
     ) -> PredicateOutcome<PlaneAabbReport> {
-        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy::default())
+        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy)
     }
 
     /// Classify a closed 3D AABB with an explicit policy and retain exact
@@ -491,7 +487,7 @@ impl PreparedOrientedPlane3 {
 
     /// Classify a point using the default predicate policy.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PlaneSide> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point using an explicit predicate policy.
@@ -516,7 +512,7 @@ fn classify_point_plane_prepared(
 
 /// Classify a point relative to a plane.
 pub fn classify_point_plane(point: &Point3, plane: &Plane3) -> PredicateOutcome<PlaneSide> {
-    classify_point_plane_with_policy(point, plane, PredicatePolicy::default())
+    classify_point_plane_with_policy(point, plane, PredicatePolicy)
 }
 
 /// Classify a point relative to a plane with an explicit escalation policy.
@@ -534,7 +530,7 @@ pub fn classify_plane_segment(
     start: &Point3,
     end: &Point3,
 ) -> PredicateOutcome<PlaneSegmentRelation> {
-    classify_plane_segment_with_policy(plane, start, end, PredicatePolicy::default())
+    classify_plane_segment_with_policy(plane, start, end, PredicatePolicy)
 }
 
 /// Classify a closed segment relative to a plane with an explicit escalation
@@ -592,7 +588,7 @@ pub fn classify_plane_triangle(
     b: &Point3,
     c: &Point3,
 ) -> PredicateOutcome<PlaneTriangleRelation> {
-    classify_plane_triangle_with_policy(plane, a, b, c, PredicatePolicy::default())
+    classify_plane_triangle_with_policy(plane, a, b, c, PredicatePolicy)
 }
 
 /// Classify a triangle relative to a plane with an explicit escalation policy.
@@ -655,7 +651,7 @@ pub fn classify_triangle_against_oriented_plane(
     plane: [&Point3; 3],
     query: [&Point3; 3],
 ) -> TrianglePlaneClassification {
-    classify_triangle_against_oriented_plane_with_policy(plane, query, PredicatePolicy::default())
+    classify_triangle_against_oriented_plane_with_policy(plane, query, PredicatePolicy)
 }
 
 /// Classify a query triangle against an oriented plane triangle with an
@@ -725,7 +721,7 @@ pub fn classify_plane_aabb3(
     min: &Point3,
     max: &Point3,
 ) -> PredicateOutcome<PlaneAabbRelation> {
-    classify_plane_aabb3_with_policy(plane, min, max, PredicatePolicy::default())
+    classify_plane_aabb3_with_policy(plane, min, max, PredicatePolicy)
 }
 
 /// Classify a closed 3D AABB relative to a plane and retain exact
@@ -735,7 +731,7 @@ pub fn classify_plane_aabb3_report(
     min: &Point3,
     max: &Point3,
 ) -> PredicateOutcome<PlaneAabbReport> {
-    classify_plane_aabb3_report_with_policy(plane, min, max, PredicatePolicy::default())
+    classify_plane_aabb3_report_with_policy(plane, min, max, PredicatePolicy)
 }
 
 /// Classify a closed 3D AABB relative to a plane with an explicit escalation
@@ -920,7 +916,7 @@ fn plane_aabb_relation_from_extrema(lower_sign: Sign, upper_sign: Sign) -> Plane
 fn sign_real_default(value: &Real) -> Option<Sign> {
     resolve_real_sign(
         value,
-        PredicatePolicy::default(),
+        PredicatePolicy,
         || None,
         || None,
         RefinementNeed::RealRefinement,
@@ -1083,7 +1079,7 @@ pub fn classify_point_oriented_plane(
     c: &Point3,
     point: &Point3,
 ) -> PredicateOutcome<PlaneSide> {
-    classify_point_oriented_plane_with_policy(a, b, c, point, PredicatePolicy::default())
+    classify_point_oriented_plane_with_policy(a, b, c, point, PredicatePolicy)
 }
 
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`
@@ -1275,7 +1271,7 @@ mod tests {
         );
         assert_eq!(report.validate(), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&plane, &min, &max, PredicatePolicy::default()),
+            report.validate_against_sources(&plane, &min, &max, PredicatePolicy),
             Ok(())
         );
     }
@@ -1331,7 +1327,7 @@ mod tests {
             Some(report.relation)
         );
         assert_eq!(
-            report.validate_against_sources(&plane, &min, &max, PredicatePolicy::default()),
+            report.validate_against_sources(&plane, &min, &max, PredicatePolicy),
             Ok(())
         );
     }

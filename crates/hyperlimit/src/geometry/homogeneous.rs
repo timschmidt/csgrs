@@ -40,7 +40,7 @@ pub fn classify_homogeneous_point_plane(
     point: &HomogeneousPoint3,
     plane: &Plane3,
 ) -> PredicateOutcome<bool> {
-    classify_homogeneous_point_plane_with_policy(point, plane, PredicatePolicy::default())
+    classify_homogeneous_point_plane_with_policy(point, plane, PredicatePolicy)
 }
 
 /// Classifies homogeneous point/plane incidence with an explicit predicate

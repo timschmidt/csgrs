@@ -33,7 +33,7 @@ use crate::predicates::order::compare_reals_report_with_policy;
 /// sign certificate. That boundary follows Yap, "Towards Exact Geometric
 /// Computation," *Computational Geometry* 7.1-2 (1997).
 pub fn certified_interval_sign_report(first: &Real, second: &Real) -> PredicateReport<Sign> {
-    certified_interval_sign_report_with_policy(first, second, PredicatePolicy::default())
+    certified_interval_sign_report_with_policy(first, second, PredicatePolicy)
 }
 
 /// Try to certify a sign from an exact closed interval enclosure with policy.
@@ -67,7 +67,7 @@ pub(crate) fn certified_interval_sign_report_with_policy(
 /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). For
 /// the interval-arithmetic enclosure model, see Moore, *Interval Analysis*.
 pub fn certified_ball_sign_report(center: &Real, radius: &Real) -> PredicateReport<Sign> {
-    certified_ball_sign_report_with_policy(center, radius, PredicatePolicy::default())
+    certified_ball_sign_report_with_policy(center, radius, PredicatePolicy)
 }
 
 /// Try to certify a sign from an exact closed ball enclosure with policy.
@@ -97,7 +97,7 @@ pub fn certified_ball_sign_report_with_policy(
 /// [`certified_ball_sign_report`] when callers need to distinguish an invalid
 /// negative radius from an otherwise inconclusive enclosure.
 pub fn certified_ball_sign(center: &Real, radius: &Real) -> Option<PredicateOutcome<Sign>> {
-    certified_ball_sign_with_policy(center, radius, PredicatePolicy::default())
+    certified_ball_sign_with_policy(center, radius, PredicatePolicy)
 }
 
 /// Try to certify a sign from an exact closed ball enclosure with policy.
@@ -118,7 +118,7 @@ pub(crate) fn certified_ball_sign_with_policy(
 /// for predicate filter callbacks such as `resolve_real_sign(..., || {
 /// certified_interval_sign_with_policy(...) }, ...)`.
 pub fn certified_interval_sign(first: &Real, second: &Real) -> Option<PredicateOutcome<Sign>> {
-    certified_interval_sign_with_policy(first, second, PredicatePolicy::default())
+    certified_interval_sign_with_policy(first, second, PredicatePolicy)
 }
 
 /// Try to certify a sign from an exact closed interval enclosure with policy.

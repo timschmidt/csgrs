@@ -163,7 +163,7 @@ pub fn classify_triangle_triangle3(
     b1: &Point3,
     b2: &Point3,
 ) -> PredicateOutcome<TriangleTriangleClassification> {
-    classify_triangle_triangle3_with_policy(a0, a1, a2, b0, b1, b2, PredicatePolicy::default())
+    classify_triangle_triangle3_with_policy(a0, a1, a2, b0, b1, b2, PredicatePolicy)
 }
 
 /// Classify two closed 3D triangles using an explicit predicate policy.
@@ -515,7 +515,7 @@ mod tests {
     }
 
     fn classify(left: [&Point3; 3], right: [&Point3; 3]) -> TriangleTriangleClassification {
-        classify_triangle_triangle3_points_with_policy(left, right, PredicatePolicy::default())
+        classify_triangle_triangle3_points_with_policy(left, right, PredicatePolicy)
             .value()
             .expect("integer triangle pair should decide")
     }
@@ -551,7 +551,7 @@ mod tests {
             report.validate_against_triangles(
                 [&a[0], &a[1], &a[2]],
                 [&b[0], &b[1], &b[2]],
-                PredicatePolicy::default()
+                PredicatePolicy
             ),
             Ok(())
         );

@@ -23,7 +23,7 @@ use crate::resolve::resolve_real_sign;
 /// function returns [`PredicateOutcome::Unknown`] when dimensions/arity are
 /// invalid or when the active policy cannot decide the exact sign.
 pub fn orient_d(points: &[Vec<Real>]) -> PredicateOutcome<Sign> {
-    orient_d_with_policy(points, PredicatePolicy::default())
+    orient_d_with_policy(points, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`orient_d`].
@@ -51,7 +51,7 @@ pub(crate) fn orient_d_with_policy(
 /// layout `[x_0, ..., x_d, ||x||^2, 1]`; triangulation code remains responsible
 /// for applying its orientation convention.
 pub fn insphere_d(simplex: &[Vec<Real>], query: &[Real]) -> PredicateOutcome<Sign> {
-    insphere_d_with_policy(simplex, query, PredicatePolicy::default())
+    insphere_d_with_policy(simplex, query, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`insphere_d`].
@@ -75,7 +75,7 @@ pub(crate) fn insphere_d_with_policy(
 
 /// Returns whether a `dimension + 1` point set is affinely independent.
 pub fn affine_independent_d(points: &[Vec<Real>]) -> PredicateOutcome<bool> {
-    affine_independent_d_with_policy(points, PredicatePolicy::default())
+    affine_independent_d_with_policy(points, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`affine_independent_d`].
@@ -156,9 +156,9 @@ fn determinant(matrix: &[Vec<Real>]) -> Real {
                 let minor = determinant_minor(matrix, 0, column);
                 let term = &matrix[0][column] * &determinant(&minor);
                 if column % 2 == 0 {
-                    total = total + term;
+                    total += term;
                 } else {
-                    total = total - term;
+                    total -= term;
                 }
             }
             total

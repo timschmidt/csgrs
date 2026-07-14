@@ -68,7 +68,7 @@ impl<'a> PreparedAabb2<'a> {
 
     /// Classify a point relative to this box using the default policy.
     pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<Aabb2PointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point relative to this box using an explicit policy.
@@ -82,7 +82,7 @@ impl<'a> PreparedAabb2<'a> {
 
     /// Return whether a point lies in this box using the default policy.
     pub fn contains_point(&self, point: &Point2) -> PredicateOutcome<bool> {
-        self.contains_point_with_policy(point, PredicatePolicy::default())
+        self.contains_point_with_policy(point, PredicatePolicy)
     }
 
     /// Return whether a point lies in this box using an explicit policy.
@@ -100,7 +100,7 @@ impl<'a> PreparedAabb2<'a> {
         &self,
         other: &PreparedAabb2,
     ) -> PredicateOutcome<Aabb2Intersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy::default())
+        self.classify_intersection_with_policy(other, PredicatePolicy)
     }
 
     /// Classify this box's intersection with another prepared box.
@@ -131,7 +131,7 @@ impl<'a> PreparedAabb2<'a> {
 
     /// Return whether this box intersects another prepared box.
     pub fn intersects(&self, other: &PreparedAabb2) -> PredicateOutcome<bool> {
-        self.intersects_with_policy(other, PredicatePolicy::default())
+        self.intersects_with_policy(other, PredicatePolicy)
     }
 
     /// Return whether this box intersects another prepared box with an explicit
@@ -178,7 +178,7 @@ impl<'a> PreparedAabb3<'a> {
 
     /// Classify a point relative to this box using the default policy.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<Aabb3PointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point relative to this box using an explicit policy.
@@ -192,7 +192,7 @@ impl<'a> PreparedAabb3<'a> {
 
     /// Return whether a point lies in this box using the default policy.
     pub fn contains_point(&self, point: &Point3) -> PredicateOutcome<bool> {
-        self.contains_point_with_policy(point, PredicatePolicy::default())
+        self.contains_point_with_policy(point, PredicatePolicy)
     }
 
     /// Return whether a point lies in this box using an explicit policy.
@@ -209,7 +209,7 @@ impl<'a> PreparedAabb3<'a> {
         &self,
         other: &PreparedAabb3,
     ) -> PredicateOutcome<Aabb3Intersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy::default())
+        self.classify_intersection_with_policy(other, PredicatePolicy)
     }
 
     /// Classify this box's intersection with another prepared 3D box with an
@@ -224,7 +224,7 @@ impl<'a> PreparedAabb3<'a> {
 
     /// Return whether this box intersects another prepared 3D box.
     pub fn intersects(&self, other: &PreparedAabb3) -> PredicateOutcome<bool> {
-        self.intersects_with_policy(other, PredicatePolicy::default())
+        self.intersects_with_policy(other, PredicatePolicy)
     }
 
     /// Return whether this box intersects another prepared 3D box with an
@@ -251,7 +251,7 @@ pub fn classify_point_aabb2(
     max: &Point2,
     point: &Point2,
 ) -> PredicateOutcome<Aabb2PointLocation> {
-    classify_point_aabb2_with_policy(min, max, point, PredicatePolicy::default())
+    classify_point_aabb2_with_policy(min, max, point, PredicatePolicy)
 }
 
 /// Classify a point relative to a closed 2D axis-aligned box with an explicit
@@ -315,7 +315,7 @@ pub(crate) fn classify_point_aabb2_with_policy(
 
 /// Return whether a point lies in a closed 2D axis-aligned box.
 pub fn point_in_aabb2(min: &Point2, max: &Point2, point: &Point2) -> PredicateOutcome<bool> {
-    point_in_aabb2_with_policy(min, max, point, PredicatePolicy::default())
+    point_in_aabb2_with_policy(min, max, point, PredicatePolicy)
 }
 
 /// Return whether a point lies in a closed 2D axis-aligned box with an explicit
@@ -344,7 +344,7 @@ pub fn point_in_triangle2_aabb(
     c: &Point2,
     point: &Point2,
 ) -> PredicateOutcome<bool> {
-    point_in_triangle2_aabb_with_policy(a, b, c, point, PredicatePolicy::default())
+    point_in_triangle2_aabb_with_policy(a, b, c, point, PredicatePolicy)
 }
 
 /// Return whether a point lies in the closed axis-aligned bounding box of a
@@ -400,7 +400,7 @@ pub fn classify_point_aabb3(
     max: &Point3,
     point: &Point3,
 ) -> PredicateOutcome<Aabb3PointLocation> {
-    classify_point_aabb3_with_policy(min, max, point, PredicatePolicy::default())
+    classify_point_aabb3_with_policy(min, max, point, PredicatePolicy)
 }
 
 /// Classify a point relative to a closed 3D axis-aligned box with an explicit
@@ -472,7 +472,7 @@ pub(crate) fn classify_point_aabb3_with_policy(
 
 /// Return whether a point lies in a closed 3D axis-aligned box.
 pub fn point_in_aabb3(min: &Point3, max: &Point3, point: &Point3) -> PredicateOutcome<bool> {
-    point_in_aabb3_with_policy(min, max, point, PredicatePolicy::default())
+    point_in_aabb3_with_policy(min, max, point, PredicatePolicy)
 }
 
 /// Return whether a point lies in a closed 3D axis-aligned box with an explicit
@@ -505,7 +505,7 @@ pub fn classify_aabb2_intersection(
         first_max,
         second_min,
         second_max,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -555,7 +555,7 @@ pub fn classify_aabb2_intersection_with_facts(
         first_max,
         second_min,
         second_max,
-        PredicatePolicy::default(),
+        PredicatePolicy,
         first_facts,
         second_facts,
     )
@@ -641,7 +641,7 @@ pub fn aabb2s_intersect(
         first_max,
         second_min,
         second_max,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -678,7 +678,7 @@ pub fn classify_aabb3_intersection(
         first_max,
         second_min,
         second_max,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -795,7 +795,7 @@ pub fn aabb3s_intersect(
         first_max,
         second_min,
         second_max,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 

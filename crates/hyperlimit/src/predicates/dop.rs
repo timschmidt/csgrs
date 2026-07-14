@@ -576,11 +576,9 @@ impl SupportDopAabb3Report {
                 return Err(SupportDopAabb3ValidationError::SlabIndexMismatch);
             }
 
-            let slab_bounds_valid = decided_bool(validate_slab_bounds(
-                &slab_report.slab,
-                PredicatePolicy::default(),
-            ))
-            .ok_or(SupportDopAabb3ValidationError::SlabBoundsInvalid)?;
+            let slab_bounds_valid =
+                decided_bool(validate_slab_bounds(&slab_report.slab, PredicatePolicy))
+                    .ok_or(SupportDopAabb3ValidationError::SlabBoundsInvalid)?;
 
             if !slab_bounds_valid {
                 if slab_report.relation != SupportDopRelation::Degenerate {
@@ -605,7 +603,7 @@ impl SupportDopAabb3Report {
                 .as_ref()
                 .ok_or(SupportDopAabb3ValidationError::MissingQueryInterval)?;
             let query_interval_valid =
-                match compare_reals_with_policy(query_min, query_max, PredicatePolicy::default()) {
+                match compare_reals_with_policy(query_min, query_max, PredicatePolicy) {
                     PredicateOutcome::Decided { value, .. } => value != Ordering::Greater,
                     PredicateOutcome::Unknown { .. } => false,
                 };
@@ -618,7 +616,7 @@ impl SupportDopAabb3Report {
                 query_max,
                 &slab_report.slab.min,
                 &slab_report.slab.max,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ) {
                 PredicateOutcome::Decided { value, .. } => value,
                 PredicateOutcome::Unknown { .. } => {
@@ -854,7 +852,7 @@ impl SupportDop3 {
     /// witness index. Empty axis or point lists produce a structurally
     /// degenerate empty carrier instead of guessing a topology result.
     pub fn from_points(axes: &[Point3], points: &[Point3]) -> PredicateOutcome<Self> {
-        Self::from_points_with_policy(axes, points, PredicatePolicy::default())
+        Self::from_points_with_policy(axes, points, PredicatePolicy)
     }
 
     /// Build exact support slabs from axes and source points with an explicit
@@ -925,7 +923,7 @@ impl SupportDop3 {
 
     /// Classify a point against every retained slab.
     pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<ConvexPointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point against every retained slab with an explicit policy.
@@ -1018,7 +1016,7 @@ impl SupportDop3 {
         min: &Point3,
         max: &Point3,
     ) -> PredicateOutcome<SupportDopRelation> {
-        self.classify_aabb3_with_policy(min, max, PredicatePolicy::default())
+        self.classify_aabb3_with_policy(min, max, PredicatePolicy)
     }
 
     /// Classify an AABB by exact projection intervals with an explicit policy.
@@ -1050,7 +1048,7 @@ impl SupportDop3 {
         min: &Point3,
         max: &Point3,
     ) -> PredicateOutcome<SupportDopAabb3Report> {
-        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy::default())
+        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy)
     }
 
     /// Classify an AABB with an explicit policy and retain replayable evidence.
@@ -1203,7 +1201,7 @@ impl SupportDop3 {
 
     /// Classify this retained DOP relative to an oriented plane.
     pub fn classify_plane3(&self, plane: &Plane3) -> PredicateOutcome<SupportDopPlaneRelation> {
-        self.classify_plane3_with_policy(plane, PredicatePolicy::default())
+        self.classify_plane3_with_policy(plane, PredicatePolicy)
     }
 
     /// Classify this retained DOP relative to an oriented plane with a policy.
@@ -1228,7 +1226,7 @@ impl SupportDop3 {
         &self,
         plane: &Plane3,
     ) -> PredicateOutcome<SupportDopPlane3Report> {
-        self.classify_plane3_report_with_policy(plane, PredicatePolicy::default())
+        self.classify_plane3_report_with_policy(plane, PredicatePolicy)
     }
 
     /// Classify this retained DOP relative to an oriented plane with an
@@ -1481,7 +1479,7 @@ fn support_distance_on_integer_axis(point: &Point3, axis: SupportDopAxis3) -> Re
 }
 
 fn compare_real_default(left: &Real, right: &Real) -> Option<Ordering> {
-    compare_reals_with_policy(left, right, PredicatePolicy::default()).value()
+    compare_reals_with_policy(left, right, PredicatePolicy).value()
 }
 
 fn validate_slab_bounds(slab: &SupportSlab3, policy: PredicatePolicy) -> PredicateOutcome<bool> {

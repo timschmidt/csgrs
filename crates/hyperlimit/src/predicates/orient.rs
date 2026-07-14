@@ -14,7 +14,7 @@ use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
 
 /// Orientation of three 2D points.
 pub fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> PredicateOutcome<Sign> {
-    orient2d_with_policy(a, b, c, PredicatePolicy::default())
+    orient2d_with_policy(a, b, c, PredicatePolicy)
 }
 
 /// Orientation of three 2D points with an explicit escalation policy.
@@ -29,7 +29,7 @@ pub fn orient2d_with_policy(
 
 /// Orientation of three 2D points with a provenance certificate.
 pub fn orient2d_report(a: &Point2, b: &Point2, c: &Point2) -> PredicateReport<Sign> {
-    orient2d_report_with_policy(a, b, c, PredicatePolicy::default())
+    orient2d_report_with_policy(a, b, c, PredicatePolicy)
 }
 
 /// Orientation of three finite primitive 2D points.
@@ -38,7 +38,7 @@ pub fn orient2d_report(a: &Point2, b: &Point2, c: &Point2) -> PredicateReport<Si
 /// `hyperlattice::Point2` and the orientation decision then follows the ordinary
 /// hyperlimit predicate pipeline.
 pub fn orient2d_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateOutcome<Sign> {
-    orient2d_f64_with_policy(a, b, c, PredicatePolicy::default())
+    orient2d_f64_with_policy(a, b, c, PredicatePolicy)
 }
 
 /// Orientation of three finite primitive 2D points with an explicit policy.
@@ -53,7 +53,7 @@ pub(crate) fn orient2d_f64_with_policy(
 
 /// Orientation of three finite primitive 2D points with provenance.
 pub fn orient2d_f64_report(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateReport<Sign> {
-    orient2d_f64_report_with_policy(a, b, c, PredicatePolicy::default())
+    orient2d_f64_report_with_policy(a, b, c, PredicatePolicy)
 }
 
 /// Orientation of three finite primitive 2D points with policy and provenance.
@@ -84,6 +84,24 @@ pub(crate) fn orient2d_report_with_policy(
     c: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateReport<Sign> {
+    if let Some(sign) = Real::certified_affine_det2_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]) {
+        crate::trace_dispatch!("hyperlimit", "orient2d", "certified-real-det2-filter");
+        // The primitive operations are only a conservative proof shortcut over
+        // exact dyadic Real values. Preserve the existing public exact-rational
+        // semantics and kernel certificate; dispatch tracing still identifies
+        // the faster internal route for profiling.
+        return PredicateReport::new(
+            PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Orient2dRationalDet2,
+            },
+        );
+    }
+
     // Structural-dispatch note: when callers carry integer-grid scale,
     // affine-transform conditioning, or dyadic denominator facts, this
     // predicate can choose a faster exact determinant expansion before building
@@ -126,7 +144,7 @@ fn orient2d_real_expr(
 /// Orientation of four 3D points. Positive means `d` is on the positive side
 /// of the oriented plane through `a`, `b`, and `c`.
 pub fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> PredicateOutcome<Sign> {
-    orient3d_with_policy(a, b, c, d, PredicatePolicy::default())
+    orient3d_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// Orientation of four 3D points with an explicit escalation policy.
@@ -142,7 +160,7 @@ pub(crate) fn orient3d_with_policy(
 
 /// Orientation of four 3D points with a provenance certificate.
 pub fn orient3d_report(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> PredicateReport<Sign> {
-    orient3d_report_with_policy(a, b, c, d, PredicatePolicy::default())
+    orient3d_report_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// Orientation of four 3D points with an explicit escalation policy and
@@ -154,6 +172,25 @@ pub(crate) fn orient3d_report_with_policy(
     d: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateReport<Sign> {
+    if let Some(sign) = Real::certified_affine_det3_sign(
+        [&a.x, &a.y, &a.z],
+        [&b.x, &b.y, &b.z],
+        [&c.x, &c.y, &c.z],
+        [&d.x, &d.y, &d.z],
+    ) {
+        crate::trace_dispatch!("hyperlimit", "orient3d", "certified-real-det3-filter");
+        return PredicateReport::new(
+            PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Orient3dRationalDet3,
+            },
+        );
+    }
+
     if let Some(report) = exact_report(policy, ExactPredicateKernel::Orient3dRationalDet3, || {
         super::exact::orient3d_shared_scale(a, b, c, d)
             .or_else(|| super::exact::orient3d(a, b, c, d))
@@ -208,7 +245,7 @@ pub fn classify_point_line(
     to: &Point2,
     point: &Point2,
 ) -> PredicateOutcome<LineSide> {
-    classify_point_line_with_policy(from, to, point, PredicatePolicy::default())
+    classify_point_line_with_policy(from, to, point, PredicatePolicy)
 }
 
 /// Classify `point` relative to the oriented line from `from` to `to` with an
@@ -524,7 +561,7 @@ impl<'a> PreparedLine2<'a> {
 
     /// Classify a point using the default predicate policy.
     pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<LineSide> {
-        self.classify_point_with_policy(point, PredicatePolicy::default())
+        self.classify_point_with_policy(point, PredicatePolicy)
     }
 
     /// Classify a point using an explicit predicate policy.
@@ -554,7 +591,7 @@ impl<'a> PreparedLine2<'a> {
 /// and `c` when those three points are counter-clockwise. Reversing the
 /// orientation of `a`, `b`, and `c` reverses the sign.
 pub fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> PredicateOutcome<Sign> {
-    incircle2d_with_policy(a, b, c, d, PredicatePolicy::default())
+    incircle2d_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// In-circle predicate for four 2D points with an explicit escalation policy.
@@ -570,7 +607,7 @@ pub(crate) fn incircle2d_with_policy(
 
 /// In-circle predicate with a provenance certificate.
 pub fn incircle2d_report(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> PredicateReport<Sign> {
-    incircle2d_report_with_policy(a, b, c, d, PredicatePolicy::default())
+    incircle2d_report_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// In-circle predicate with an explicit escalation policy and certificate.
@@ -581,6 +618,26 @@ pub(crate) fn incircle2d_report_with_policy(
     d: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateReport<Sign> {
+    if let Some(sign) =
+        Real::certified_incircle2d_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], [&d.x, &d.y])
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "incircle2d",
+            "certified-real-incircle2d-filter"
+        );
+        return PredicateReport::new(
+            PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Incircle2dRationalLiftedDet3,
+            },
+        );
+    }
+
     if let Some(report) = exact_report(
         policy,
         ExactPredicateKernel::Incircle2dRationalLiftedDet3,
@@ -698,7 +755,7 @@ impl<'a> PreparedIncircle2<'a> {
 
     /// Test a point using the default predicate policy.
     pub fn test_point(&self, point: &Point2) -> PredicateOutcome<Sign> {
-        self.test_point_with_policy(point, PredicatePolicy::default())
+        self.test_point_with_policy(point, PredicatePolicy)
     }
 
     /// Return cheap fixed-coordinate facts collected at preparation time.
@@ -727,6 +784,24 @@ impl<'a> PreparedIncircle2<'a> {
         point: &Point2,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<Sign> {
+        if let Some(sign) = Real::certified_incircle2d_sign(
+            [&self.a.x, &self.a.y],
+            [&self.b.x, &self.b.y],
+            [&self.c.x, &self.c.y],
+            [&point.x, &point.y],
+        ) {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "prepared_incircle2",
+                "certified-real-incircle2d-filter"
+            );
+            return PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
+
         if let Some(report) = exact_report(
             policy,
             ExactPredicateKernel::Incircle2dRationalLiftedDet3,
@@ -772,7 +847,7 @@ pub fn insphere3d(
     d: &Point3,
     e: &Point3,
 ) -> PredicateOutcome<Sign> {
-    insphere3d_with_policy(a, b, c, d, e, PredicatePolicy::default())
+    insphere3d_with_policy(a, b, c, d, e, PredicatePolicy)
 }
 
 /// In-sphere predicate for five 3D points with an explicit escalation policy.
@@ -795,7 +870,7 @@ pub fn insphere3d_report(
     d: &Point3,
     e: &Point3,
 ) -> PredicateReport<Sign> {
-    insphere3d_report_with_policy(a, b, c, d, e, PredicatePolicy::default())
+    insphere3d_report_with_policy(a, b, c, d, e, PredicatePolicy)
 }
 
 /// In-sphere predicate with an explicit escalation policy and certificate.
@@ -807,6 +882,30 @@ pub(crate) fn insphere3d_report_with_policy(
     e: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateReport<Sign> {
+    if let Some(sign) = Real::certified_insphere3d_sign(
+        [&a.x, &a.y, &a.z],
+        [&b.x, &b.y, &b.z],
+        [&c.x, &c.y, &c.z],
+        [&d.x, &d.y, &d.z],
+        [&e.x, &e.y, &e.z],
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "insphere3d",
+            "certified-real-insphere3d-filter"
+        );
+        return PredicateReport::new(
+            PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            ),
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Insphere3dRationalLiftedDet4,
+            },
+        );
+    }
+
     if let Some(report) = exact_report(
         policy,
         ExactPredicateKernel::Insphere3dRationalLiftedDet4,
@@ -1015,7 +1114,7 @@ impl<'a> PreparedInsphere3<'a> {
 
     /// Test a point using the default predicate policy.
     pub fn test_point(&self, point: &Point3) -> PredicateOutcome<Sign> {
-        self.test_point_with_policy(point, PredicatePolicy::default())
+        self.test_point_with_policy(point, PredicatePolicy)
     }
 
     /// Return cheap fixed-coordinate facts collected at preparation time.
@@ -1045,6 +1144,25 @@ impl<'a> PreparedInsphere3<'a> {
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<Sign> {
+        if let Some(sign) = Real::certified_insphere3d_sign(
+            [&self.a.x, &self.a.y, &self.a.z],
+            [&self.b.x, &self.b.y, &self.b.z],
+            [&self.c.x, &self.c.y, &self.c.z],
+            [&self.d.x, &self.d.y, &self.d.z],
+            [&point.x, &point.y, &point.z],
+        ) {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "prepared_insphere3",
+                "certified-real-insphere3d-filter"
+            );
+            return PredicateOutcome::decided(
+                crate::real::map_real_sign(sign),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
+
         if let Some(report) = exact_report(
             policy,
             ExactPredicateKernel::Insphere3dRationalLiftedDet4,

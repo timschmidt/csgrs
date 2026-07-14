@@ -463,7 +463,7 @@ pub fn classify_point_triangle(
     c: &Point2,
     point: &Point2,
 ) -> PredicateOutcome<TriangleLocation> {
-    classify_point_triangle_with_policy(a, b, c, point, PredicatePolicy::default())
+    classify_point_triangle_with_policy(a, b, c, point, PredicatePolicy)
 }
 
 /// Classify `point` relative to triangle `abc` with an explicit escalation
@@ -485,7 +485,7 @@ pub fn classify_point_triangle3(
     c: &Point3,
     point: &Point3,
 ) -> PredicateOutcome<Triangle3Location> {
-    classify_point_triangle3_with_policy(a, b, c, point, PredicatePolicy::default())
+    classify_point_triangle3_with_policy(a, b, c, point, PredicatePolicy)
 }
 
 /// Classify `point` relative to the 3D triangle `abc` with an explicit
@@ -518,7 +518,7 @@ pub fn triangle3_winding_normal_sign(
     c: &Point3,
     reference_normal: &Point3,
 ) -> PredicateOutcome<Sign> {
-    triangle3_winding_normal_sign_with_policy(a, b, c, reference_normal, PredicatePolicy::default())
+    triangle3_winding_normal_sign_with_policy(a, b, c, reference_normal, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`triangle3_winding_normal_sign`].
@@ -556,7 +556,7 @@ pub fn classify_segment_triangle3_intersection(
     b: &Point3,
     c: &Point3,
 ) -> PredicateOutcome<SegmentTriangleIntersection> {
-    classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, PredicatePolicy::default())
+    classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, PredicatePolicy)
 }
 
 /// Classify a closed 3D segment against a triangle and retain exact
@@ -568,14 +568,7 @@ pub fn classify_segment_triangle3_intersection_report(
     b: &Point3,
     c: &Point3,
 ) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
-    classify_segment_triangle3_intersection_report_with_policy(
-        p,
-        q,
-        a,
-        b,
-        c,
-        PredicatePolicy::default(),
-    )
+    classify_segment_triangle3_intersection_report_with_policy(p, q, a, b, c, PredicatePolicy)
 }
 
 /// Policy-controlled report-bearing variant of
@@ -769,14 +762,7 @@ pub fn classify_ray_triangle3_intersection(
     b: &Point3,
     c: &Point3,
 ) -> PredicateOutcome<RayTriangleIntersection> {
-    classify_ray_triangle3_intersection_with_policy(
-        origin,
-        direction,
-        a,
-        b,
-        c,
-        PredicatePolicy::default(),
-    )
+    classify_ray_triangle3_intersection_with_policy(origin, direction, a, b, c, PredicatePolicy)
 }
 
 /// Classify a 3D ray against a triangle and retain exact construction
@@ -794,7 +780,7 @@ pub fn classify_ray_triangle3_intersection_report(
         a,
         b,
         c,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
 }
 
@@ -1033,7 +1019,7 @@ pub fn classify_point_tetrahedron(
     d: &Point3,
     point: &Point3,
 ) -> PredicateOutcome<TetrahedronLocation> {
-    classify_point_tetrahedron_with_policy(a, b, c, d, point, PredicatePolicy::default())
+    classify_point_tetrahedron_with_policy(a, b, c, d, point, PredicatePolicy)
 }
 
 /// Classify `point` relative to tetrahedron `abcd` with an explicit predicate
@@ -1116,7 +1102,7 @@ pub fn classify_point_triangle_with_facts(
     point: &Point2,
     facts: Triangle2Facts,
 ) -> PredicateOutcome<TriangleLocation> {
-    classify_point_triangle_with_policy_and_facts(a, b, c, point, PredicatePolicy::default(), facts)
+    classify_point_triangle_with_policy_and_facts(a, b, c, point, PredicatePolicy, facts)
 }
 
 /// Classify `point` relative to triangle `abc` with both an explicit policy and
@@ -1526,7 +1512,7 @@ fn relation_from_constructed_ray_triangle_point(
 }
 
 fn assert_ray_parameter_nonnegative(parameter: &Real) -> Result<(), RayTriangleValidationError> {
-    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy::default()) {
+    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy) {
         PredicateOutcome::Decided {
             value: Ordering::Less,
             ..
@@ -1542,7 +1528,7 @@ fn validate_ray_parameter_ratio(
 ) -> Result<(), RayTriangleValidationError> {
     let quotient = (&ratio.numerator / &ratio.denominator)
         .map_err(|_| RayTriangleValidationError::InvalidParameterRatio)?;
-    match compare_reals_with_policy(&quotient, parameter, PredicatePolicy::default()) {
+    match compare_reals_with_policy(&quotient, parameter, PredicatePolicy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             ..
@@ -1559,7 +1545,7 @@ fn validate_ray_origin_parameter(
     if origin_side != Some(PlaneSide::On) {
         return Err(RayTriangleValidationError::InvalidParameter);
     }
-    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy::default()) {
+    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             ..
@@ -1989,7 +1975,7 @@ mod tests {
         assert!(report.plane_event.parameter_ratio.is_some());
         assert_eq!(report.validate(), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&p, &q, &a, &b, &c, PredicatePolicy::default()),
+            report.validate_against_sources(&p, &q, &a, &b, &c, PredicatePolicy),
             Ok(())
         );
     }
@@ -2113,14 +2099,7 @@ mod tests {
         assert!(report.has_candidate_point());
         assert_eq!(report.validate(), Ok(()));
         assert_eq!(
-            report.validate_against_sources(
-                &origin,
-                &direction,
-                &a,
-                &b,
-                &c,
-                PredicatePolicy::default()
-            ),
+            report.validate_against_sources(&origin, &direction, &a, &b, &c, PredicatePolicy),
             Ok(())
         );
     }

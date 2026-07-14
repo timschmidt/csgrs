@@ -69,7 +69,7 @@ impl<'a> PreparedHalfspaceSystem3<'a> {
 
     /// Classify feasibility using the default predicate policy.
     pub fn classify_feasibility(&self) -> PredicateOutcome<HalfspaceFeasibilityReport> {
-        self.classify_feasibility_with_policy(PredicatePolicy::default())
+        self.classify_feasibility_with_policy(PredicatePolicy)
     }
 
     /// Classify feasibility using an explicit predicate policy.
@@ -141,7 +141,7 @@ impl HalfspaceFeasibilityReport {
     /// older or deliberately compact infeasible report without a certificate is
     /// structurally valid but not proof-producing.
     pub fn validate_against_planes(&self, planes: &[Plane3]) -> PredicateOutcome<bool> {
-        let policy = PredicatePolicy::default();
+        let policy = PredicatePolicy;
         match (&self.status, &self.witness) {
             (HalfspaceFeasibility::Feasible, Some(witness)) => {
                 point_satisfies_halfspaces(witness, planes, policy)
@@ -177,7 +177,7 @@ pub struct HalfspaceInfeasibilityCertificate {
 impl HalfspaceInfeasibilityCertificate {
     /// Replay the Farkas certificate against a source plane list.
     pub fn validate_against_planes(&self, planes: &[Plane3]) -> PredicateOutcome<bool> {
-        let policy = PredicatePolicy::default();
+        let policy = PredicatePolicy;
         let mut normal_sum = Point3::new(Real::from(0), Real::from(0), Real::from(0));
         let mut offset_sum = Real::from(0);
         let mut saw_positive_multiplier = false;
@@ -248,7 +248,7 @@ impl HalfspaceInfeasibilityCertificate {
 pub fn classify_halfspace_feasibility3(
     planes: &[Plane3],
 ) -> PredicateOutcome<HalfspaceFeasibilityReport> {
-    classify_halfspace_feasibility3_with_policy(planes, PredicatePolicy::default())
+    classify_halfspace_feasibility3_with_policy(planes, PredicatePolicy)
 }
 
 /// Decide feasibility of 3D halfspaces with an explicit predicate policy.
@@ -327,7 +327,7 @@ pub(crate) fn classify_halfspace_feasibility3_with_policy(
     }
 
     let certificate = match find_farkas_certificate(planes, policy) {
-        CertificateSearch::Found(certificate) => Some(certificate),
+        CertificateSearch::Found(certificate) => Some(*certificate),
         CertificateSearch::NotFound => None,
         CertificateSearch::Unknown { needed, stage } => {
             return PredicateOutcome::unknown(needed, stage);
@@ -342,7 +342,7 @@ pub(crate) fn classify_halfspace_feasibility3_with_policy(
 }
 
 enum CertificateSearch {
-    Found(HalfspaceInfeasibilityCertificate),
+    Found(Box<HalfspaceInfeasibilityCertificate>),
     NotFound,
     Unknown {
         needed: RefinementNeed,
@@ -564,10 +564,10 @@ fn four_plane_dependency(
     fourth: &Point3,
 ) -> [Real; 4] {
     [
-        det3(&second, &third, &fourth),
-        neg(&det3(&first, &third, &fourth)),
-        det3(&first, &second, &fourth),
-        neg(&det3(&first, &second, &third)),
+        det3(second, third, fourth),
+        neg(&det3(first, third, fourth)),
+        det3(first, second, fourth),
+        neg(&det3(first, second, third)),
     ]
 }
 
@@ -611,11 +611,11 @@ fn accept_farkas_dependency(
         PredicateOutcome::Decided {
             value: Sign::Positive,
             ..
-        } => CertificateSearch::Found(HalfspaceInfeasibilityCertificate {
+        } => CertificateSearch::Found(Box::new(HalfspaceInfeasibilityCertificate {
             active_planes,
             multipliers,
             offset_sum,
-        }),
+        })),
         PredicateOutcome::Decided { .. } => CertificateSearch::NotFound,
         PredicateOutcome::Unknown { needed, stage } => CertificateSearch::Unknown { needed, stage },
     }

@@ -17,12 +17,12 @@ use hyperreal::Real;
 
 /// Decide the sign of one Real value through the predicate pipeline.
 pub fn classify_real_sign(value: &Real) -> PredicateOutcome<Sign> {
-    classify_real_sign_with_policy(value, PredicatePolicy::default())
+    classify_real_sign_with_policy(value, PredicatePolicy)
 }
 
 /// Decide the sign of one Real value and return predicate provenance.
 pub fn classify_real_sign_report(value: &Real) -> PredicateReport<Sign> {
-    classify_real_sign_report_with_policy(value, PredicatePolicy::default())
+    classify_real_sign_report_with_policy(value, PredicatePolicy)
 }
 
 /// Decide the sign of one Real value with an explicit predicate policy.
@@ -50,12 +50,12 @@ pub(crate) fn classify_real_sign_report_with_policy(
 
 /// Compare two Real values by deciding the sign of `left - right`.
 pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
-    compare_reals_with_policy(left, right, PredicatePolicy::default())
+    compare_reals_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two Real values and return predicate provenance.
 pub fn compare_reals_report(left: &Real, right: &Real) -> PredicateReport<Ordering> {
-    compare_reals_report_with_policy(left, right, PredicatePolicy::default())
+    compare_reals_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two Real values with an explicit predicate escalation policy.
@@ -117,7 +117,7 @@ pub(crate) fn compare_reals_report_with_policy(
 
 /// Return whether `left <= right` under the exact Real ordering predicate.
 pub fn real_le(left: &Real, right: &Real) -> PredicateOutcome<bool> {
-    real_le_with_policy(left, right, PredicatePolicy::default())
+    real_le_with_policy(left, right, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`real_le`].
@@ -133,7 +133,7 @@ pub(crate) fn real_le_with_policy(
 
 /// Return whether `left >= right` under the exact Real ordering predicate.
 pub fn real_ge(left: &Real, right: &Real) -> PredicateOutcome<bool> {
-    real_ge_with_policy(left, right, PredicatePolicy::default())
+    real_ge_with_policy(left, right, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`real_ge`].
@@ -149,7 +149,7 @@ pub(crate) fn real_ge_with_policy(
 
 /// Return the smaller of two Real references using the exact ordering predicate.
 pub fn real_min<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Real> {
-    real_min_with_policy(left, right, PredicatePolicy::default())
+    real_min_with_policy(left, right, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`real_min`].
@@ -169,7 +169,7 @@ pub(crate) fn real_min_with_policy<'a>(
 
 /// Return the larger of two Real references using the exact ordering predicate.
 pub fn real_max<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Real> {
-    real_max_with_policy(left, right, PredicatePolicy::default())
+    real_max_with_policy(left, right, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`real_max`].
@@ -189,7 +189,7 @@ pub(crate) fn real_max_with_policy<'a>(
 
 /// Clamp a Real value to an exact Real interval.
 pub fn real_clamp(value: Real, min: &Real, max: &Real) -> PredicateOutcome<Real> {
-    real_clamp_with_policy(value, min, max, PredicatePolicy::default())
+    real_clamp_with_policy(value, min, max, PredicatePolicy)
 }
 
 /// Policy-controlled variant of [`real_clamp`].
@@ -268,7 +268,7 @@ pub(crate) fn real_clamp_with_policy(
 
 /// Compare two 2D points lexicographically by `(x, y)`.
 pub fn compare_point2_lexicographic(left: &Point2, right: &Point2) -> PredicateOutcome<Ordering> {
-    compare_point2_lexicographic_with_policy(left, right, PredicatePolicy::default())
+    compare_point2_lexicographic_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two 2D points lexicographically with predicate provenance.
@@ -276,7 +276,7 @@ pub fn compare_point2_lexicographic_report(
     left: &Point2,
     right: &Point2,
 ) -> PredicateReport<Ordering> {
-    compare_point2_lexicographic_report_with_policy(left, right, PredicatePolicy::default())
+    compare_point2_lexicographic_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two 2D points lexicographically by `(x, y)` with an explicit policy.
@@ -323,12 +323,12 @@ pub(crate) fn compare_point2_lexicographic_report_with_policy(
 
 /// Return whether two 2D points have equal coordinates.
 pub fn point2_equal(left: &Point2, right: &Point2) -> PredicateOutcome<bool> {
-    point2_equal_with_policy(left, right, PredicatePolicy::default())
+    point2_equal_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 2D points have equal coordinates with provenance.
 pub fn point2_equal_report(left: &Point2, right: &Point2) -> PredicateReport<bool> {
-    point2_equal_report_with_policy(left, right, PredicatePolicy::default())
+    point2_equal_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 2D points have equal coordinates with an explicit
@@ -363,7 +363,7 @@ pub(crate) fn point2_equal_report_with_policy(
 
 /// Compare two 3D points lexicographically by `(x, y, z)`.
 pub fn compare_point3_lexicographic(left: &Point3, right: &Point3) -> PredicateOutcome<Ordering> {
-    compare_point3_lexicographic_with_policy(left, right, PredicatePolicy::default())
+    compare_point3_lexicographic_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two 3D points lexicographically with predicate provenance.
@@ -371,7 +371,7 @@ pub fn compare_point3_lexicographic_report(
     left: &Point3,
     right: &Point3,
 ) -> PredicateReport<Ordering> {
-    compare_point3_lexicographic_report_with_policy(left, right, PredicatePolicy::default())
+    compare_point3_lexicographic_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two 3D points lexicographically by `(x, y, z)` with an explicit
@@ -438,12 +438,12 @@ pub(crate) fn compare_point3_lexicographic_report_with_policy(
 
 /// Return whether two 3D points have equal coordinates.
 pub fn point3_equal(left: &Point3, right: &Point3) -> PredicateOutcome<bool> {
-    point3_equal_with_policy(left, right, PredicatePolicy::default())
+    point3_equal_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 3D points have equal coordinates with provenance.
 pub fn point3_equal_report(left: &Point3, right: &Point3) -> PredicateReport<bool> {
-    point3_equal_report_with_policy(left, right, PredicatePolicy::default())
+    point3_equal_report_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 3D points have equal coordinates with an explicit

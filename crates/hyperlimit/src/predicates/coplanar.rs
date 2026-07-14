@@ -434,7 +434,7 @@ pub fn projected_polygon_area2_value(points: &[Point3], projection: CoplanarProj
     for index in 0..points.len() {
         let current = project_point3(&points[index], projection);
         let next = project_point3(&points[(index + 1) % points.len()], projection);
-        sum = sum + (current.x * next.y.clone() - current.y * next.x);
+        sum += current.x * next.y.clone() - current.y * next.x;
     }
     sum
 }
