@@ -10,15 +10,11 @@
 //! tangent evidence is present, while still refusing unresolved fragments,
 //! overlaps, coincident tangents, zero tangents, and mixed unsupported evidence.
 //!
-//! That boundary is the exact-computation discipline described by Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 3-23 (1997): topology code may retain unresolved exact objects, but it must
+//! That boundary is exact-computation discipline: topology code may retain unresolved exact objects, but it must
 //! not invent a floating successor. The branch-free chain walk mirrors the
-//! regularized graph assumption in Greiner and Hormann, "Efficient clipping of
-//! arbitrary polygons," *ACM Transactions on Graphics* 17(2), 71-83 (1998),
-//! while multi-successor handling follows the degeneracy split emphasized by
-//! Foster, Hormann, and Popa, "Clipping simple polygons with degenerate
-//! intersections," *Computers & Graphics: X* 2, 100007 (2019): when local
+//! regularized graph assumption in polygon clipping traversal
+//! while multi-successor handling follows the degenerate-intersection clipping
+//! model: when local
 //! order is not certified, traversal stops instead of guessing.
 
 use hyperreal::{Real, RealSign};
@@ -217,7 +213,7 @@ impl BezierArrangementGraph2 {
     /// finite angles. This is the local-order step needed before full
     /// higher-order arrangement traversal can emit regions. Ties, zero
     /// tangents, unresolved split boundaries, and uncertain signs remain
-    /// explicit uncertainty in Yap's sense.
+    /// explicit uncertainty in the exactness model's sense.
     pub fn traverse_with_tangent_order(
         &self,
         policy: &CurvePolicy,
@@ -280,10 +276,9 @@ impl BezierArrangementGraph2 {
     ///
     /// The method deliberately does not materialize concrete Bezier regions
     /// from algebraic fragments. It only proves traversal order over retained
-    /// evidence, preserving Yap's construction/decision boundary from
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-    /// 3-23 (1997), and matching the arrangement local-order discipline in de
-    /// Berg et al., *Computational Geometry* (3rd ed., 2008).
+    /// evidence, preserving the exactness model's construction/decision boundary from
+    /// exact-computation discipline, and matching the arrangement local-order discipline in de
+    /// standard arrangement algorithms.
     pub fn traverse_retained_with_tangent_order(
         &self,
         policy: &CurvePolicy,
@@ -1583,8 +1578,7 @@ fn compare_same_tangent_second_order(
     // the sign gives the side of departure and the squared, speed-scaled
     // magnitude orders arcs departing on the same side.  This is the
     // expression underlying standard parametric curvature, used here only as
-    // an exact predicate in Yap's EGC sense; see Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7(1-2), 3-23 (1997).
+    // an exact predicate in the exactness model's EGC sense.
     let first_cross = cross_vectors(first_tangent, first_second_derivative);
     let second_cross = cross_vectors(second_tangent, second_second_derivative);
     let first_sign = match real_sign(&first_cross, policy) {
@@ -1644,10 +1638,7 @@ fn compare_same_tangent_third_order(
     // `cross(B'(0), B'''(0))` as an exact Taylor witness and scale same-side
     // magnitudes by speed to avoid treating a parameter-speed change as a
     // topology decision.  The derivative identities are the polynomial Bezier
-    // endpoint formulas from Farin, *Curves and Surfaces for CAGD* (5th ed.,
-    // 2002); using them only after exact sign certification follows Yap,
-    // "Towards Exact Geometric Computation," Computational Geometry 7(1-2),
-    // 3-23 (1997).
+    // endpoint formulas from the Bernstein and de Casteljau curve model; using them only after exact sign certification follows exact-computation discipline.
     let first_cross = cross_vectors(first_tangent, first_third_derivative);
     let second_cross = cross_vectors(second_tangent, second_third_derivative);
     let first_sign = match real_sign(&first_cross, policy) {

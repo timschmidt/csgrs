@@ -3,10 +3,8 @@
 //! Event collection is deliberately a candidate-filtered pair scan today, not
 //! a sweep-line implementation. Bounding boxes only remove pairs whose
 //! disjointness is decided; every remaining candidate goes through the exact
-//! segment kernels. Bentley and Ottmann, "Algorithms for Reporting and Counting
-//! Geometric Intersections" (*IEEE Transactions on Computers* C-28(9),
-//! 643-647, 1979), is the reference point for replacing this flat scan with an
-//! output-sensitive sweep once the crate needs larger arrangements.
+//! segment kernels. An output-sensitive sweep can replace this flat scan when
+//! the crate needs larger arrangements.
 
 use hyperreal::Real;
 
@@ -373,10 +371,8 @@ pub(crate) fn intersect_contours(
     b: &Contour2,
     policy: &CurvePolicy,
 ) -> CurveResult<ContourIntersectionSet> {
-    // The bounding-box broad phase is only a candidate filter. Bentley and
-    // Ottmann's sweep-line algorithm uses ordering structures to reduce
-    // candidate pairs asymptotically; this crate currently keeps the simpler
-    // pair scan but skips pairs whose boxes are decidably disjoint.
+    // The bounding-box broad phase is only a candidate filter. This crate keeps
+    // the simple pair scan but skips pairs whose boxes are decidably disjoint.
     let a_box = decided_contour_aabb(a, policy);
     let b_box = decided_contour_aabb(b, policy);
     let a_boxes: Vec<_> = a

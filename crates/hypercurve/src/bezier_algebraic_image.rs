@@ -6,11 +6,10 @@
 //! Instead it converts the parameter into a
 //! [`hypersolve::AlgebraicRootRepresentation`] and evaluates Bezier coordinate
 //! polynomials with `hypersolve`'s resultant-backed polynomial-image package.
-//! That follows Yap, "Towards Exact Geometric Computation" (1997): constructed
+//! That follows exact-computation discipline: constructed
 //! coordinates remain exact objects with replayable evidence, while callers
 //! branch only on certified predicates.  The coordinate polynomials are the
-//! standard Bernstein-to-power identities for Bezier curves; see Farin,
-//! *Curves and Surfaces for Computer-Aided Geometric Design* (5th ed., 2002).
+//! standard Bernstein-to-power identities for Bezier curves; see the Bernstein and de Casteljau curve model.
 
 use hyperreal::Real;
 use hypersolve::{
@@ -370,7 +369,7 @@ impl QuadraticBezier2 {
     /// The second derivative of a polynomial quadratic Bezier is constant, but
     /// it is still returned as a represented coordinate image so arrangement
     /// predicates can combine it with represented endpoint tangents without
-    /// crossing Yap's construction/decision boundary.
+    /// crossing the exactness model's construction/decision boundary.
     pub fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
@@ -415,7 +414,7 @@ impl CubicBezier2 {
     /// The coordinate polynomials are derived by differentiating the cubic
     /// tangent polynomial. Keeping the image represented lets local branch
     /// order compare signed curvature exactly instead of sampling the
-    /// isolating interval; see Yap (1997) and Farin (2002).
+    /// isolating interval; see the exactness model and the Bernstein curve model.
     pub fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
@@ -458,8 +457,8 @@ impl RationalQuadraticBezier2 {
     /// certification is delegated to `hypersolve`'s rational-image package, so
     /// projective boundary uncertainty stays report-bearing instead of being
     /// sampled into affine space.  This is the rational Bezier analogue of the
-    /// polynomial image construction above; see Yap (1997) for the exact-object
-    /// boundary and Farin (2002) for the homogeneous conic equations.
+    /// polynomial image construction above; see the exactness model for the exact-object
+    /// boundary and the Bernstein curve model for the homogeneous conic equations.
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
@@ -488,10 +487,9 @@ impl RationalQuadraticBezier2 {
     /// For one coordinate `R(t) = N(t)/D(t)`, the retained numerator is
     /// `(A'(t)D(t) - 2A(t)D'(t))` over `D(t)^3`, where
     /// `A(t) = N'(t)D(t) - N(t)D'(t)`.  This is the differentiated quotient
-    /// identity for homogeneous rational Beziers described by Farin, *Curves
-    /// and Surfaces for CAGD* (5th ed., 2002).  The result remains a
+    /// identity for homogeneous rational Beziers described by the Bernstein and de Casteljau curve model.  The result remains a
     /// represented rational image of the algebraic parameter, preserving
-    /// Yap's construction/decision boundary instead of sampling the conic.
+    /// the exactness model's construction/decision boundary instead of sampling the conic.
     pub fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,

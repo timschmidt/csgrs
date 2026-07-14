@@ -4,17 +4,15 @@
 //! closed [`CurvePath2`] boundaries directly and materializes decided Boolean
 //! traversals without flattening their native or algebraic carriers. It
 //! deliberately does not force curved boundaries into line strings or into
-//! [`Region2`](crate::Region2), because Yap's exact geometric-computation
+//! [`Region2`](crate::Region2), because the exactness model's exact geometric-computation
 //! model requires the exact curve objects to remain visible until a certified
-//! adapter exists; see Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 3-23 (1997).
+//! adapter exists.
 //!
 //! Exact area is exposed for polynomial Bezier loops and rational quadratic
 //! conic loops whose homogeneous denominator is certified away from projective
 //! zero on `[0, 1]`. Both use Green's-theorem boundary integrals, the same
-//! identities used by [`crate::BezierAreaMoments2`]. That follows Farin's
-//! Bernstein and rational Bezier identities in *Curves and Surfaces for CAGD*
-//! (5th ed., 2002). Unsupported conic denominator cases still return `None`
+//! identities used by [`crate::BezierAreaMoments2`]. Unsupported conic
+//! denominator cases still return `None`
 //! rather than silently sampling.
 
 use std::cell::OnceCell;
@@ -52,7 +50,7 @@ pub struct BezierRegion2 {
 ///
 /// Unlike [`BezierBoundaryLoop2`], this carrier may contain
 /// [`BezierSplitFragment2::AlgebraicEndpointImages`] fragments.  It is a
-/// concrete exact-object region boundary in Yap's sense: the algebraic pieces
+/// concrete exact-object region boundary in the exactness model's sense: the algebraic pieces
 /// remain replayable construction evidence, not sampled coordinates.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionBoundaryLoop2 {
@@ -103,9 +101,8 @@ impl CurveRegionFragmentSource2 {
 /// This is the first region object for decided retained traversals containing
 /// algebraic endpoint-image fragments. It intentionally does not flatten or
 /// approximate those fragments and it does not claim a finite area integral for
-/// them. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7(1-2), 3-23 (1997), for the construction/decision separation;
-/// native polynomial subloops reuse the Green-integral path described above.
+/// them. Construction and decision remain separate; native polynomial subloops
+/// reuse the Green-integral path described above.
 #[derive(Clone, Default)]
 pub struct CurveRegion2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
@@ -246,13 +243,12 @@ pub enum CurveRegionLoopRole {
 /// certified exact line-image fit, accepts algebraic endpoint-image fragments
 /// only when they provide exact endpoint witnesses, lowers those loops to
 /// native [`Contour2`] line loops, and then runs exact nesting.  This follows
-/// Yap's exact-geometric-computation boundary: unsupported curve families
+/// the exact-geometric-computation boundary: unsupported curve families
 /// remain explicit evidence gaps rather than being sampled into polygon
 /// surrogates.  The source counters retain whether role assignment consumed
 /// native fit certificates or algebraic endpoint evidence.  The containment
 /// step uses boundary-first point-in-contour classification as surveyed by
-/// Hormann and Agathos, "The Point in Polygon Problem for Arbitrary Polygons,"
-/// *Computational Geometry* 20(3), 131-144 (2001).
+/// boundary-first winding classification.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionLineRoleReport2 {
     roles: Vec<CurveRegionLoopRole>,
@@ -271,11 +267,9 @@ pub struct CurveRegionLineRoleReport2 {
 /// intentionally narrower than full curved-loop nesting: it assigns roles from
 /// the authored loop orientation only, returns the signed areas as evidence,
 /// and rejects algebraic, unresolved, zero-area, or unsupported-area loops.
-/// That keeps the construction/decision boundary explicit in Yap's sense; see
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 3-23 (1997).  The signed-area evidence comes from Green's theorem
-/// and Bernstein/rational Bezier identities as described by Farin, *Curves and
-/// Surfaces for CAGD* (5th ed., 2002).
+/// That keeps the construction/decision boundary explicit in the exactness model's sense; see
+/// exact-computation discipline.  The signed-area evidence comes from Green's theorem
+/// and Bernstein/rational Bezier identities as described by the Bernstein and de Casteljau curve model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionSignedAreaRoleReport2 {
     roles: Vec<CurveRegionLoopRole>,
@@ -295,10 +289,8 @@ pub struct CurveRegionSignedAreaRoleReport2 {
 /// hits, tangent-only ray contacts, algebraic carriers, unresolved line-contact
 /// predicates, and unsupported area/zero-area loops remain explicit
 /// uncertainty. The crossing rule is the exact-object analogue of the
-/// point-in-polygon method surveyed by Hormann and Agathos, "The Point in
-/// Polygon Problem for Arbitrary Polygons," *Computational Geometry* 20(3),
-/// 131-144 (2001); all branch decisions follow Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+/// point-in-polygon method surveyed by boundary-first winding classification
+/// 131-144; all branch decisions follow exact-computation discipline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionNestingRoleReport2 {
     roles: Vec<CurveRegionLoopRole>,
@@ -694,10 +686,8 @@ impl BezierRegion2 {
     /// native-region constructor: if any accepted refined fragment is only an
     /// algebraic endpoint-image carrier, the result is explicit boundary
     /// uncertainty.  The split/refine/traverse evidence stays separate from
-    /// region materialization in Yap's exact-computation sense; see Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 3-23 (1997).  The positive-dimensional overlap is consumed
-    /// only after the Foster, Hormann, and Popa (2019) degeneracy is recorded
+    /// region materialization in the exactness model's exact-computation sense.  The positive-dimensional overlap is consumed
+    /// only after the degenerate-intersection clipping model degeneracy is recorded
     /// as a resolved span on the refinement report.
     pub fn from_retained_linear_overlap_traversal(
         traversal: &BezierRetainedLinearOverlapTraversal2,
@@ -2244,11 +2234,11 @@ enum RetainedLineFragmentSource {
 /// fit. Algebraic endpoint-image fragments are accepted
 /// only when the endpoint point evidence has exact rational witnesses, or when
 /// an exact boundary parameter can be replayed against the retained source
-/// curve. This follows Yap's retained-object discipline: algebraic endpoints
+/// curve. This follows the exactness model's retained-object discipline: algebraic endpoints
 /// become line-contour topology only through exact construction evidence, not
 /// by sampling isolating intervals. The native fit certificate proves every
 /// control point lies on the endpoint segment, preserving the exact
-/// object/predicate split described by Yap while allowing non-affine
+/// object/predicate split described by the exactness model while allowing non-affine
 /// parameterizations whose image is still exactly one line segment.
 fn retained_line_fragment_endpoints(
     fragment: &BezierSplitFragment2,

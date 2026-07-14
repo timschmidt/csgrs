@@ -5,17 +5,14 @@
 //! represented [`Real`](hyperreal::Real) values. For algebraic boundaries it
 //! now consumes the boundary into exact endpoint point/tangent images when
 //! that construction is certified, otherwise it carries the interval forward
-//! as an unresolved fragment. That is intentional: Yap's exact
+//! as an unresolved fragment. That is intentional: the exactness model's exact
 //! geometric-computation model requires exact objects to survive until the
 //! kernel has a certified operation for them, rather than converting algebraic
-//! roots to finite approximations; see Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+//! roots to finite approximations.
 //!
 //! Exact materialization uses de Casteljau subdivision. The construction is
 //! affine for polynomial Beziers and homogeneous for rational Beziers, matching
-//! de Casteljau, "Outillage methodes calcul," Andre Citroen Automobiles SA
-//! (1959), and the rational Bezier treatment in Farin, *Curves and Surfaces
-//! for Computer-Aided Geometric Design* (5th ed., 2002). Algebraic parameters
+//! de Casteljau subdivision, and the rational Bezier treatment in the Bernstein and de Casteljau curve model. Algebraic parameters
 //! whose defining equation is certified linear are first promoted to their
 //! represented [`Real`] root, so the same exact subdivision path handles that
 //! materializable algebraic subset without approximating nonlinear roots.

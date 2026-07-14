@@ -9,10 +9,8 @@
 //!
 //! This crate starts with a line/circular-arc core using [`hyperreal::Real`]
 //! coordinates and the `hyperlimit` predicate policy model. The core topology
-//! follows the robust-computation principle of deciding predicates before branching; see
-//! Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust
-//! Geometric Predicates" (*Discrete & Computational Geometry* 18(3), 305-363,
-//! 1997).
+//! follows the robust-computation principle of deciding predicates before
+//! branching.
 
 mod arc_bezier;
 mod bbox;

@@ -112,9 +112,7 @@ impl Region2 {
     /// This keeps the region role model explicit and avoids treating winding as
     /// hidden topology state. The area is accumulated from exact
     /// Green's-theorem contour facts and branches only after the sign of each
-    /// contour contribution is certified, following Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// contour contribution is certified, following exact-computation discipline.
     ///
     /// Returns `Decided(None)` when a contour contains a segment whose exact
     /// area contribution is not implemented by the current object model.
@@ -125,13 +123,8 @@ impl Region2 {
     /// Groups material contours with the hole contours they contain.
     ///
     /// Ownership is decided with exact contour point classification before any
-    /// finite export projection exists. This follows the boundary-first
-    /// point-in-polygon structure surveyed by Hormann and Agathos, "The Point
-    /// in Polygon Problem for Arbitrary Polygons," *Computational Geometry*
-    /// 20(3), 2001 (<https://doi.org/10.1016/S0925-7721(01)00012-8>), and the
-    /// exact-object/API-boundary split advocated by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// finite export projection exists. This follows boundary-first winding
+    /// classification and keeps finite export outside the topology decision.
     pub fn contour_profiles(
         &self,
         policy: &CurvePolicy,
@@ -220,8 +213,7 @@ impl<'a> RegionView2<'a> {
     /// [`RegionView2::classify_point`] and as `Uncertain(Boundary)` here through
     /// contour-level classification propagation. Decided bounding-box misses
     /// skip exact contour classification; this keeps the standard
-    /// boundary-first winding structure from Hormann and Agathos, "The Point in
-    /// Polygon Problem for Arbitrary Polygons" (2001), while avoiding work for
+    /// boundary-first winding structure from boundary-first winding classification, while avoiding work for
     /// sparse material/hole bins.
     pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         if let Ok(Classification::Decided(region_bbox)) = Aabb2::from_region_view(self, policy)

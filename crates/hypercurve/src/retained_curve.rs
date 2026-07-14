@@ -3,10 +3,9 @@
 //! CAD curve imports need a way to carry source identity and parameter-domain
 //! facts before a topology kernel is allowed to consume the curve.  The types
 //! in this module are intentionally small evidence records: they do not sample
-//! curves, and they do not imply native topology.  That follows Yap's exact
+//! curves, and they do not imply native topology.  That follows the exactness model's exact
 //! geometric computation model, where exact objects and predicates remain
-//! replayable until a certified operation consumes them; see Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+//! replayable until a certified operation consumes them.
 
 use hyperreal::Real;
 

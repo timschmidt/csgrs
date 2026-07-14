@@ -3,10 +3,8 @@
 //! Flattening is an output adapter, not a topology kernel. The code below only
 //! emits a polyline after exact predicates certify that each Bezier sub-curve's
 //! control hull is within the requested distance of its chord. This keeps the
-//! branch boundary aligned with Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997). The recursive hull-to-chord test is
-//! the standard Bezier flatness criterion discussed by Raph Levien,
-//! "Flattening quadratic Beziers" (2019), with exact signs replacing floating
+//! branch boundary aligned with exact-computation discipline. The recursive hull-to-chord test is
+//! the standard Bezier flatness criterion discussed by Raph Bezier approximation analysis, with exact signs replacing floating
 //! tolerances.
 
 use std::cmp::Ordering;

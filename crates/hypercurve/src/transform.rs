@@ -4,12 +4,9 @@
 //! affine entries at the API boundary, certifies that the linear part is a
 //! nonsingular similarity, promotes coefficients to [`Real`](hyperreal::Real),
 //! and applies the transform to native line/circular-arc objects without
-//! flattening. Keeping exact curve objects authoritative follows Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>). The line/circle
+//! flattening. Keeping exact curve objects authoritative follows exact-computation discipline. The line/circle
 //! preservation property is the standard Euclidean similarity model described
-//! in Schneider and Eberly, *Geometric Tools for Computer Graphics* (Morgan
-//! Kaufmann, 2002).
+//! in standard geometric constructions.
 
 use hyperreal::{Real, RealSign};
 

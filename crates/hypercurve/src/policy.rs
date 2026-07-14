@@ -1,10 +1,9 @@
 //! Runtime numeric policy for curve operations.
 //!
 //! `Certified` and `ExactSymbolic` modes are for topology decisions that should
-//! follow robust-predicate practice as in Shewchuk, "Adaptive Precision
-//! Floating-Point Arithmetic and Fast Robust Geometric Predicates" (1997).
+//! follow robust-predicate practice as in adaptive robust predicates.
 //! `EdgePreview` is reserved for rendering, diagnostics, and compatibility
-//! boundaries where Hobby's finite-output concerns are accepted explicitly.
+//! boundaries where finite-output segment intersection finite-output concerns are accepted explicitly.
 
 /// Runtime numeric mode for whole curve operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

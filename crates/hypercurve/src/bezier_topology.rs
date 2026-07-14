@@ -1,11 +1,9 @@
 //! Exactness-aware topology helpers for polynomial Bezier segments.
 //!
 //! This module keeps Bezier topology predicates separate from the object
-//! carriers in `bezier.rs`. The split follows Yap's exact geometric
+//! carriers in `bezier.rs`. The split follows the exactness model's exact geometric
 //! computation model: preserve exact curve structure, then expose certified
-//! predicates and explicit uncertainty at the branch boundary; see Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997).
+//! predicates and explicit uncertainty at the branch boundary.
 
 use std::cmp::Ordering;
 
@@ -59,12 +57,9 @@ pub struct BezierCurveIntersectionRegion {
 /// coordinate on `shared_axis` and that this coordinate is strictly monotone,
 /// then classify the remaining coordinate difference. That follows the
 /// monotone range ordering model discussed in Raph Levien's path operations
-/// notes (GitHub issue 79, 2019), while keeping every branch at Yap's exact
-/// predicate boundary; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The degree-normalized Bernstein
-/// controls and derivative monotonicity test are standard Farin identities,
-/// *Curves and Surfaces for CAGD* (5th ed., 2002), and crossing brackets use
-/// Sederberg and Nishita, "Curve intersection using Bezier clipping" (1990).
+/// notes, while keeping every branch at the exact predicate boundary. The
+/// degree-normalized Bernstein controls and derivative monotonicity test use
+/// standard Bernstein identities, and crossing brackets use Bezier clipping.
 #[derive(Clone, Debug, PartialEq)]
 pub enum BezierMonotoneGraphOrder {
     /// The requested coordinate is not certified as one shared strictly monotone graph axis.
@@ -89,12 +84,10 @@ pub enum BezierMonotoneGraphOrder {
 /// The contact kind is decided from the exact derivative sign of the
 /// remaining-coordinate Bernstein difference at a represented same-parameter
 /// root. A nonzero derivative is a graph crossing; a zero derivative is a
-/// tangential touch. Keeping this as an exact predicate payload follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). The derivative test uses the standard Bernstein derivative identity
-/// from Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), after the graph
-/// root has been isolated by the Sederberg-Nishita Bezier clipping
-/// sign-subdivision argument (1990).
+/// tangential touch. Keeping this as an exact predicate payload follows exact-computation discipline. The derivative test uses the standard Bernstein derivative identity
+/// from the Bernstein and de Casteljau curve model, after the graph
+/// root has been isolated by the Bezier clipping
+/// sign-subdivision argument.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierGraphContact {
     parameter: Real,
@@ -154,12 +147,10 @@ pub enum BezierMonotoneGraphContactOrder {
 /// from a lower-dimensional solve lies on both finite curve images. For the
 /// current line-image dispatch that means a supporting-line root on the curved
 /// Bezier plus exact containment on the certified endpoint line segment. This
-/// follows Yap's exact geometric-computation boundary: algebraic candidates
+/// follows the exactness model's exact geometric-computation boundary: algebraic candidates
 /// are retained as exact objects and only promoted after certified predicates;
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997). The supporting-line Bezier root solve uses the Bezier
-/// clipping/sign-variation idea of Sederberg and Nishita, "Curve intersection
-/// using Bezier clipping" (1990).
+/// The supporting-line Bezier root solve uses the Bezier
+/// clipping/sign-variation idea of Bezier clipping.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierCurveIntersectionPoint {
     point: Point2,
@@ -255,10 +246,9 @@ pub enum BezierLineContactKind {
 /// is decided from exact root-multiplicity parity, which correctly handles
 /// higher-order crossings as well as ordinary tangencies. This keeps
 /// contact classification in the algebraic predicate layer, following
-/// Yap's exact geometric computation boundary; see Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
+/// the exactness model's exact geometric computation boundary. The
 /// signed-distance Bernstein polynomial identities are the standard Bezier
-/// formulas in Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), while
+/// formulas in the Bernstein and de Casteljau curve model, while
 /// Sturm isolators retain irrational roots without sampling.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierLineContact {
@@ -323,7 +313,7 @@ pub enum BezierCurveRelation {
     /// exact quadratic/cubic polynomial identity by elevating lower-degree
     /// Bernstein controls and comparing the resulting coordinate polynomials.
     /// The degree-elevation identity is the standard Bernstein basis relation
-    /// in Farin, *Curves and Surfaces for CAGD* (5th ed., 2002); per Yap's
+    /// in the Bernstein and de Casteljau curve model; per the exactness model's
     /// exact geometric computation model, it is exposed only after exact
     /// coordinate comparisons decide equality.
     SameCurveImage,
@@ -398,9 +388,7 @@ impl QuadraticBezier2 {
     ///
     /// For a degree-`n` Bezier, coordinate extrema can occur only where the
     /// corresponding derivative Bezier has a zero. This is the standard
-    /// derivative-control-polygon fact used for Bezier bounds; see Farin,
-    /// *Curves and Surfaces for Computer-Aided Geometric Design* (5th ed.,
-    /// 2002). Roots are retained as exact [`Real`] parameters and filtered by
+    /// derivative-control-polygon fact used for Bezier bounds; see the Bernstein and de Casteljau curve model. Roots are retained as exact [`Real`] parameters and filtered by
     /// certified closed-unit-interval comparisons.
     pub fn axis_monotone_parameters(
         &self,
@@ -454,11 +442,9 @@ impl QuadraticBezier2 {
     /// quadratics. It solves the x/y Bernstein coordinate equations as exact
     /// low-degree scalar polynomials, then re-evaluates candidate parameters
     /// before exposing them. Keeping algebraic candidates exact until a
-    /// certified predicate accepts them follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997). The
+    /// certified predicate accepts them follows exact-computation discipline. The
     /// Bernstein-to-power conversion is the standard Bezier identity described
-    /// by Farin, *Curves and Surfaces for Computer-Aided Geometric Design*
-    /// (5th ed., 2002).
+    /// by the Bernstein and de Casteljau curve model.
     pub fn parameters_for_point(
         &self,
         point: &Point2,
@@ -491,7 +477,7 @@ impl QuadraticBezier2 {
     /// This uses exact endpoint equality and certified Bezier bounds before
     /// returning [`BezierCurveRelation::Unresolved`] for overlapping boxes. It
     /// keeps mixed-family curve topology behind explicit predicates, following
-    /// Yap's exact geometric computation boundary between structural filters
+    /// the exactness model's exact geometric computation boundary between structural filters
     /// and complete root solvers.
     pub fn relation_to_cubic(
         &self,
@@ -651,11 +637,9 @@ impl CubicBezier2 {
     /// the non-endpoint dyadic bisection parameters through
     /// five-hundred-twelfths, so it remains a certified finite shortcut
     /// rather than a premature cubic resultant solver. That
-    /// keeps the branch boundary in Yap's exact-geometric-computation sense;
-    /// see Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997). The exact de Casteljau evaluation and dyadic
-    /// subdivision identities follow Farin, *Curves and Surfaces for
-    /// Computer-Aided Geometric Design* (5th ed., 2002).
+    /// keeps the branch boundary in the exact-geometric-computation sense;
+    /// The exact de Casteljau evaluation and dyadic
+    /// subdivision identities follow the Bernstein and de Casteljau curve model.
     pub fn dyadic_parameters_for_point(
         &self,
         point: &Point2,
@@ -923,10 +907,9 @@ fn same_polynomial_image_by_degree_elevation(
     // controls represents the same image with parameter `1 - t`. Comparing
     // those exact coordinate controls certifies polynomial-image equality
     // without sampling or tolerance. This follows the Bernstein basis
-    // identities in Farin, Curves and Surfaces for CAGD, 5th ed. (2002), and
-    // keeps the branch decision at an exact predicate boundary in Yap's EGC
-    // sense; see Yap, "Towards Exact Geometric Computation," Computational
-    // Geometry 7.1-2 (1997).
+    // identities in the Bernstein and de Casteljau curve model, and
+    // keeps the branch decision at an exact predicate boundary in the exactness model's EGC
+    // sense.
     let mut forward_equal = true;
     let mut reversed_equal = true;
     for axis in [Axis2::X, Axis2::Y] {
@@ -1145,8 +1128,7 @@ where
     // scalar quadratics and a certified re-evaluation. Running this before
     // derivative-refined bounds avoids making an endpoint certificate depend
     // on unrelated cubic extrema. This is the exact-object/decidable-predicate
-    // separation advocated by Yap, "Towards Exact Geometric Computation,"
-    // Computational Geometry 7.1-2 (1997).
+    // separation advocated by exact-computation discipline.
     let endpoint_points =
         match endpoint_intersections(first, second, &first_endpoints, &second_endpoints, policy) {
             Classification::Decided(points) => points,
@@ -1301,7 +1283,7 @@ fn merge_endpoint_points_into_relation(
             // Endpoint facts are exact lower-degree predicates. If a later
             // same-parameter algebraic solve finds additional points, keep
             // both evidence sets rather than letting the earlier endpoint
-            // shortcut hide interior roots. This follows Yap's exact
+            // shortcut hide interior roots. This follows the exactness model's exact
             // geometric-computation boundary: certified facts accumulate until
             // a branch has the evidence it needs, instead of being replaced by
             // the first convenient classification.
@@ -1357,10 +1339,8 @@ where
     // subdivision solver already exposes exactly, and only then emit certified
     // shared points. This promotes useful algebraic candidates while remaining
     // explicit that it is not a complete resultant solve. The
-    // Bernstein/de Casteljau identities are the standard ones in Farin, Curves
-    // and Surfaces for CAGD, 5th ed. (2002), and the exact candidate boundary
-    // follows Yap, "Towards Exact Geometric Computation," Computational
-    // Geometry 7.1-2 (1997).
+    // Bernstein/de Casteljau identities are the standard ones in the Bernstein and de Casteljau curve model, and the exact candidate boundary
+    // follows exact-computation discipline.
     let mut points = Vec::new();
     let mut undecided_candidate = false;
     let axis_plan = dyadic_candidate_axis_plan(first_controls, second_controls, policy);
@@ -1478,11 +1458,10 @@ where
         // Bernstein polynomial after degree normalization; exact
         // sign-subdivision isolates all of its roots without inventing a
         // primitive-float tolerance. This is the Bezier clipping
-        // convex-hull/sign-variation argument of Sederberg and Nishita,
-        // "Curve intersection using Bezier clipping" (1990), used under
-        // Yap's exact geometric computation model, and the degree-normalized
-        // Bernstein identities are Farin, Curves and Surfaces for CAGD, 5th
-        // ed. (2002).
+        // convex-hull/sign-variation argument of Bezier clipping, used under
+        // the exactness model's exact geometric computation model, and the degree-normalized
+        // Bernstein identities are the Bernstein and de Casteljau curve model, 5th
+        // ed..
         let mut exact_parameters = Vec::new();
         let mut spans = Vec::new();
         if let Err(reason) = isolate_scalar_cubic_roots(
@@ -1569,12 +1548,10 @@ where
     // isolates algebraic candidates of the degree-normalized same-parameter
     // vector difference and returns exact points only when both coordinate roots
     // are represented exactly; otherwise it returns conservative same-parameter
-    // brackets. Keeping candidates as exact spans follows Yap's exact
+    // brackets. Keeping candidates as exact spans follows the exactness model's exact
     // geometric-computation boundary, while the cubic Bernstein
-    // sign-subdivision is the Bezier clipping idea of Sederberg and Nishita,
-    // "Curve intersection using Bezier clipping" (1990), using the
-    // degree-normalized Bernstein identities from Farin, Curves and Surfaces
-    // for CAGD, 5th ed. (2002).
+    // sign-subdivision is the Bezier clipping idea of Bezier clipping, using the
+    // degree-normalized Bernstein identities from the Bernstein and de Casteljau curve model.
     let x_cover = match cubic_root_cover(x_difference, policy) {
         Ok(cover) => cover,
         Err(reason) => return Classification::Uncertain(reason),
@@ -1776,11 +1753,9 @@ fn dyadic_candidate_axis_plan(
     // same-parameter candidates are equal on that axis for every t. Test only
     // the other coordinate instead of spending every dyadic candidate on a
     // tautological predicate. This is the same retained-object principle used
-    // throughout Yap, "Towards Exact Geometric Computation," Computational
-    // Geometry 7.1-2 (1997), applied to a Bernstein coordinate polynomial
+    // throughout exact-computation discipline, applied to a Bernstein coordinate polynomial
     // rather than to an expanded scalar expression; the degree-normalized
-    // Bernstein identities are the standard Farin, Curves and Surfaces for
-    // CAGD, 5th ed. (2002), formulas.
+    // Bernstein identities are the standard Bernstein and de Casteljau curve model, formulas.
     if shared_axis_controls_equal(first_controls, second_controls, Axis2::X, policy) {
         return DyadicAxisPlan {
             primary: Axis2::Y,
@@ -1899,9 +1874,8 @@ fn collect_sign_pruned_dyadic_numerators(
 ) -> Option<()> {
     // A Bernstein control polygon with one strict sign cannot contain a zero
     // value by the convex-hull property. Recursively bisecting only mixed-sign
-    // or zero-touching cells is the Bezier clipping principle of Sederberg and
-    // Nishita, "Curve intersection using Bezier clipping" (1990), kept here as
-    // an exact candidate scheduler under Yap's EGC model rather than as a
+    // or zero-touching cells is the Bezier clipping principle of Bezier clipping, kept here as
+    // an exact candidate scheduler under the exactness model's EGC model rather than as a
     // floating filter.
     if controls_have_common_strict_sign(&controls, policy)? {
         return Some(());
@@ -2033,10 +2007,8 @@ fn bezier_axis_scaled_numerator_at_dyadic_parameter(
     // and per-curve division is intentional: it preserves the object-level
     // polynomial shape until
     // `Real::signed_product_sum` can consume the exact factors, following
-    // Yap's exact-computation separation of representation from predicate
-    // decisions; see Yap, "Towards Exact Geometric Computation,"
-    // Computational Geometry 7.1-2 (1997), and Farin, Curves and Surfaces for
-    // CAGD, 5th ed. (2002), for the Bernstein basis identities used here.
+    // the exactness model's exact-computation separation of representation from predicate
+    // decisions, and the Bernstein and de Casteljau curve model, for the Bernstein basis identities used here.
     match controls.len() {
         3 => Some(Real::signed_product_sum(
             [true; 3],
@@ -2086,10 +2058,8 @@ fn same_parameter_quadratic_relation(
     // intersections are absent. The one complete subcase below is when both
     // curves share an exact coordinate Bezier and that coordinate is strictly
     // monotone; then an image intersection must have the same parameter. This
-    // follows Yap's exact-object predicate boundary and Farin's Bernstein
-    // derivative identities; see Yap, "Towards Exact Geometric Computation,"
-    // Computational Geometry 7.1-2 (1997), and Farin, Curves and Surfaces for
-    // CAGD, 5th ed. (2002).
+    // follows the exactness model's exact-object predicate boundary and Bernstein
+    // derivative identities, and the Bernstein and de Casteljau curve model.
     if certifies_shared_axis_control_separation(first_controls, second_controls, policy) {
         return Classification::Decided(Some(BezierCurveRelation::NoIntersection));
     }
@@ -2173,9 +2143,8 @@ fn certifies_shared_axis_control_separation(
     // Once a shared coordinate is proven injective, any geometric hit must
     // occur at a common parameter. A same-sign Bernstein control polygon for
     // the remaining coordinate difference then excludes zero by the convex-hull
-    // property. This is the Bezier clipping sign-variation idea of Sederberg
-    // and Nishita, "Curve intersection using Bezier clipping" (1990), guarded
-    // by exact signs as required by Yap's EGC model.
+    // property. This is the Bezier clipping sign-variation idea of Bezier clipping, guarded
+    // by exact signs as required by the exactness model's EGC model.
     [Axis2::X, Axis2::Y].into_iter().any(|axis| {
         let Classification::Decided(true) =
             shared_strictly_monotone_axis(first_controls, second_controls, axis, policy)
@@ -2235,9 +2204,9 @@ fn graph_order_over_shared_axis(
     // that scalar cubic in Bernstein form and isolate roots by exact
     // sign-subdivision, so contacts are reported as exact parameters or
     // brackets instead of as sampled y-range events. This is the
-    // Sederberg-Nishita Bezier-clipping argument (1990) used inside Yap's
+    // Bezier clipping argument used inside the exactness model's
     // exact geometric computation discipline, with Bernstein elevation from
-    // Farin, Curves and Surfaces for CAGD, 5th ed. (2002).
+    // the Bernstein and de Casteljau curve model.
     match cubic_root_cover(difference_controls.clone(), policy) {
         Ok(CubicRootCover::All) => Classification::Decided(BezierMonotoneGraphOrder::Coincident),
         Ok(CubicRootCover::Isolated { exact, spans }) => {
@@ -2305,8 +2274,8 @@ fn graph_contact_order_over_shared_axis(
     // This is the contact-bearing version of `graph_order_over_shared_axis`.
     // Exact represented roots can be differentiated in Bernstein form and
     // classified as crossings or tangencies; bracket-only roots stay as spans.
-    // That keeps the contact decision at Yap's exact predicate boundary and
-    // uses only Farin's Bernstein derivative identity near the represented
+    // That keeps the contact decision at the exactness model's exact predicate boundary and
+    // uses only Bernstein derivative identity near the represented
     // root, not samples along the curve.
     match cubic_root_cover(difference_controls.clone(), policy) {
         Ok(CubicRootCover::All) => {
@@ -2444,8 +2413,8 @@ fn shared_strictly_monotone_axis(
     // 3(P1-P0), 3(P2-P1), and 3(P3-P2). If all endpoint differences have the
     // same strict sign, every convex combination has that sign, so the shared
     // coordinate is injective on [0, 1]. This is the Bernstein derivative
-    // criterion from Farin, Curves and Surfaces for CAGD, 5th ed. (2002),
-    // used here only after exact sign predicates per Yap's EGC model.
+    // criterion from the Bernstein and de Casteljau curve model,
+    // used here only after exact sign predicates per the exactness model's EGC model.
     let mut common_sign = None;
     for pair in first_values.windows(2) {
         let difference = &pair[1] - &pair[0];
@@ -2505,8 +2474,8 @@ where
     // represented only as Bernstein brackets are still useful curve/curve
     // certificates, so retain them with a full `[0, 1]` span on the line-image
     // side instead of dropping into generic subdivision. This is the
-    // Sederberg-Nishita Bezier-clipping root-bracket idea (1990) applied at
-    // Yap's exact predicate boundary: a bracket is reported as a bracket, not
+    // Bezier clipping root-bracket idea applied at
+    // the exactness model's exact predicate boundary: a bracket is reported as a bracket, not
     // converted to a floating sample.
     let controls = curve.control_points_vec();
     match relation_to_line(&controls, line, policy) {
@@ -2571,14 +2540,11 @@ where
     C: BezierCurveLike,
 {
     // A collapsed Bezier control polygon is a zero-dimensional curve image.
-    // Yap's exact-geometric-computation model treats that as a structural
+    // The exact-geometric-computation model treats that as a structural
     // predicate boundary: once the point image is certified, topology reduces
     // to the other curve's exact point-parameter predicate. For cubics the
     // current predicate is explicitly a finite dyadic promotion pass, so an
-    // empty answer cannot certify non-intersection yet; see Yap, "Towards
-    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997), and
-    // Farin's Bernstein/de Casteljau identities in *Curves and Surfaces for
-    // CAGD* (5th ed., 2002).
+    // empty answer cannot certify non-intersection yet.
     match curve.exact_parameters_for_point(point, policy) {
         Some(Classification::Decided(parameters)) if !parameters.is_empty() => {
             Classification::Decided(Some(vec![BezierCurveIntersectionPoint::new(point.clone())]))
@@ -2682,9 +2648,8 @@ fn isolate_curve_intersection_regions_recursive(
     // This is the subdivision half of Bezier clipping: exact control-hull boxes
     // that are disjoint certify absence of curve intersections in that
     // parameter product cell. Remaining cells are recursively bisected and kept
-    // as dyadic parameter regions. Sederberg and Nishita, "Curve intersection
-    // using Bezier clipping" (1990), use this convex-hull exclusion principle;
-    // per Yap (1997), this implementation returns bounded regions rather than
+    // as dyadic parameter regions. Bezier clipping, use this convex-hull exclusion principle;
+    // per the exactness model, this implementation returns bounded regions rather than
     // choosing topology from floating tolerances.
     let first_box = match first.control_box(policy) {
         Classification::Decided(bbox) => bbox,
@@ -3026,10 +2991,9 @@ fn quadratic_parameters_for_point(
     // A point lies on a polynomial quadratic Bezier exactly when the x and y
     // coordinate Bernstein equations share a parameter in `[0, 1]`. Solving
     // those low-degree equations as exact `Real` roots and intersecting the
-    // parameter sets follows Yap's EGC requirement to keep algebraic candidates
+    // parameter sets follows the exactness model's EGC requirement to keep algebraic candidates
     // explicit until certified. The coordinate polynomial identities are the
-    // standard Bernstein-to-power conversion described by Farin, *Curves and
-    // Surfaces for Computer-Aided Geometric Design* (5th ed., 2002).
+    // standard Bernstein-to-power conversion described by the Bernstein and de Casteljau curve model.
     let x_roots = match quadratic_axis_point_root_set(
         [
             controls[0].x() - point.x(),
@@ -3161,8 +3125,7 @@ fn isolate_cubic_line_roots(
     // intervals whose control values have one strict sign are certified misses,
     // exact zero endpoints are retained as exact parameters, and remaining
     // mixed-sign cells are recursively bisected into certified dyadic brackets.
-    // This is the Bezier clipping/sign-variation view used by Sederberg and
-    // Nishita, "Curve intersection using Bezier clipping" (1990), with Yap's
+    // This is the Bezier clipping/sign-variation view used by Bezier clipping, with the exactness model's
     // exact-predicate boundary replacing floating tolerance decisions.
     let mut exact_parameters = Vec::new();
     let mut spans = Vec::new();
@@ -3200,9 +3163,8 @@ fn merge_exact_parameters_into_spans(
     // When a scalar cubic has both represented roots and non-represented
     // algebraic roots, expose one uniform isolating-span shape by embedding
     // represented roots as zero-width spans. This preserves all candidates as
-    // exact objects, matching Yap's separation between algebraic construction
-    // and later topology decisions; see Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997).
+    // exact objects, matching the exactness model's separation between algebraic construction
+    // and later topology decisions.
     for parameter in exact_parameters {
         push_unique_span(spans, zero_width_span(parameter)?, policy)?;
     }
@@ -3384,9 +3346,7 @@ fn classify_cubic_inflections(
     // The curvature numerator is `cross(B'(t), B''(t))`. With cubic derivative
     // control edges `a = P1-P0`, `b = P2-P1`, `c = P3-P2`, the irrelevant
     // positive scalar factors can be dropped, leaving a quadratic in `t`.
-    // This is the standard cubic Bezier inflection predicate; see Farin,
-    // *Curves and Surfaces for Computer-Aided Geometric Design* (5th ed.,
-    // 2002). Roots are retained exactly and only become branch parameters
+    // This is the standard cubic Bezier inflection predicate; see the Bernstein and de Casteljau curve model. Roots are retained exactly and only become branch parameters
     // after certified ordering against `[0, 1]`.
     let (ax, ay) = controls[1].delta_from(controls[0]);
     let (bx, by) = controls[2].delta_from(controls[1]);

@@ -71,10 +71,8 @@ impl CurveString2 {
     /// open sequence.
     ///
     /// This is an exactness-aware `O(n^2)` pair enumeration with an
-    /// axis-aligned bounding-box broad phase. Bentley and Ottmann, "Algorithms
-    /// for Reporting and Counting Geometric Intersections" (1979), is the
-    /// standard reference for replacing the pair enumeration with a sweep-line
-    /// candidate generator once offset trimming needs larger inputs.
+    /// axis-aligned bounding-box broad phase. A sweep-line candidate generator
+    /// can replace the flat enumeration when larger inputs warrant it.
     pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
         self.has_self_contacts_with_report(policy)
             .map(|result| result.has_self_contacts)
@@ -110,8 +108,7 @@ impl Contour2 {
     /// This is an exactness-aware `O(n^2)` pair enumeration with an
     /// axis-aligned bounding-box broad phase. Later arrangement and offset
     /// trimming work can replace it with a sweep-line candidate generator;
-    /// Bentley and Ottmann, "Algorithms for Reporting and Counting Geometric
-    /// Intersections" (1979), is the standard reference for that
+    /// a sweep-line candidate generator is the standard replacement for that
     /// asymptotically better reporting pattern.
     pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
         self.has_self_contacts_with_report(policy)

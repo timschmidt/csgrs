@@ -80,43 +80,6 @@ repeat exact geometric calculations.
 
 The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>.
 
-## Hyper Ecosystem
-
-`hypercurve` is the 2D curved-geometry layer.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values for curve
-  coordinates and parameters.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy for
-  sidedness, incidence, and sign decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
-  facts used by higher geometry and domain crates.
-- [hypertri](https://github.com/timschmidt/hypertri): line-only triangulation target for
-  polygonalized or straight-edge regions.
-- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh topology that consumes
-  planar arrangements and triangulated face regions.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): BREP trims and planar face
-  boundaries that should preserve curve evidence before tessellation.
-- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field consumers and
-  preview extraction boundaries.
-- [hypersolve](https://github.com/timschmidt/hypersolve): Bernstein, interval, and root
-  isolation support for algebraic subproblems.
-- [hyperpath](https://github.com/timschmidt/hyperpath): routing, CAM, offset, tangent,
-  and swept-path carriers.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): voxel/process consumers for
-  flattened or certified region evidence.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): physical shape and
-  support consumers.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit context for PCB
-  paths and geometry-derived fixtures.
-- [hyperparts](https://github.com/timschmidt/hyperparts): part, package, and footprint
-  geometry handles.
-- [hyperpack](https://github.com/timschmidt/hyperpack): exact packing and clearance
-  consumers.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal/search layer
-  for curve or layout candidates that still require exact validation.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB checks that use native curve,
-  contour, and region objects instead of resolving topology with local float tolerances.
-
 ## Typical Curve Problems
 
 Curved planar geometry combines robust-predicate failures with representation failures:
@@ -419,65 +382,35 @@ fn main() -> hypercurve::CurveResult<()> {
 Use native curve objects for Bezier facts, contours, regions, and downstream
 geometry work:
 
-```rust,ignore
+```rust
 use hypercurve::{
     Contour2, CurvePolicy, LineSeg2, Point2, QuadraticBezier2, Region2, Segment2,
 };
 use hyperreal::Real;
 
-let p = |x, y| Point2::new(Real::from(x), Real::from(y));
-let bezier = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
-let facts = bezier.structural_facts();
-assert_eq!(facts.degree, hypercurve::BezierDegree::Quadratic);
+fn main() -> hypercurve::CurveResult<()> {
+    let p = |x, y| Point2::new(Real::from(x), Real::from(y));
+    let bezier = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
+    let facts = bezier.structural_facts();
+    assert_eq!(facts.degree, hypercurve::BezierDegree::Quadratic);
 
-let bottom = Segment2::Line(LineSeg2::try_new(p(0, 0), p(2, 0))?);
-let right = Segment2::Line(LineSeg2::try_new(p(2, 0), p(2, 2))?);
-let top = Segment2::Line(LineSeg2::try_new(p(2, 2), p(0, 2))?);
-let left = Segment2::Line(LineSeg2::try_new(p(0, 2), p(0, 0))?);
-let contour = Contour2::try_new(vec![bottom, right, top, left])?;
-let region = Region2::from_material_contours(vec![contour]);
+    let bottom = Segment2::Line(LineSeg2::try_new(p(0, 0), p(2, 0))?);
+    let right = Segment2::Line(LineSeg2::try_new(p(2, 0), p(2, 2))?);
+    let top = Segment2::Line(LineSeg2::try_new(p(2, 2), p(0, 2))?);
+    let left = Segment2::Line(LineSeg2::try_new(p(0, 2), p(0, 0))?);
+    let contour = Contour2::try_new(vec![bottom, right, top, left])?;
+    let region = Region2::from_material_contours(vec![contour]);
 
-let location = region.classify_point(&p(1, 1), &CurvePolicy::certified())?;
-assert!(matches!(location, hypercurve::Classification::Decided(_)));
+    let location = region.classify_point(&p(1, 1), &CurvePolicy::certified());
+    assert!(matches!(location, hypercurve::Classification::Decided(_)));
+    Ok(())
+}
 ```
 
 For unordered exact line/arc input, arrange through `Region2` and read output and
-blockers from the retained result. Derive an arrangement report only when a
-reporting view is needed:
-
-```rust,ignore
-use hypercurve::{
-    Classification, CurvePolicy, FillRule, LineSeg2, Point2, Region2,
-};
-use hyperreal::Real;
-
-let p = |x, y| Point2::new(Real::from(x), Real::from(y));
-let lines = vec![
-    LineSeg2::try_new(p(0, 0), p(4, 0))?,
-    LineSeg2::try_new(p(4, 0), p(4, 4))?,
-    LineSeg2::try_new(p(4, 4), p(0, 4))?,
-    LineSeg2::try_new(p(0, 4), p(0, 0))?,
-];
-
-let result = Region2::arrange_unordered_line_segments(
-    lines,
-    FillRule::NonZero,
-    &CurvePolicy::certified(),
-)?;
-
-assert!(result.status().unwrap().is_native_exact());
-let region = match result.region_classification() {
-    Classification::Decided(region) => region,
-    Classification::Uncertain(reason) => panic!("arrangement blocked: {reason:?}"),
-};
-assert!(matches!(
-    region.classify_point(&p(2, 2), &CurvePolicy::certified())?,
-    Classification::Decided(_)
-));
-
-let report = result.report();
-assert_eq!(report.summary(), result.summary());
-```
+blockers from the retained result. The runnable
+[`arrangement_report`](examples/arrangement_report.rs) example demonstrates the
+arrangement, classification, and reporting workflow.
 
 `RegionArrangement2` retains one canonical evaluation and optional materialized
 region without duplicating report-shaped state.
@@ -486,18 +419,16 @@ region without duplicating report-shaped state.
 
 Useful local checks:
 
-```text
-RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
+```sh
+cargo fmt --all -- --check
+cargo test --all-features
+cargo clippy --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
+cargo check --benches --all-features
+cargo run --example basic
 cargo run --example arrangement_report
 cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
 cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
-cargo bench --bench containment
-cargo bench --bench intersection
-cargo bench --bench arc
-cargo bench --bench curve_path
-cargo bench --bench offset
-cargo bench --bench reconstruction
-cargo bench --bench svg_io --features svg
 ```
 
 ## References
@@ -505,6 +436,7 @@ cargo bench --bench svg_io --features svg
 Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
 no. 9, 1979, pp. 643-647.
+https://doi.org/10.1109/TC.1979.1675432.
 
 de Casteljau, Paul. "Outillage methodes calcul." Andre Citroen Automobiles SA,
 1959.
@@ -512,14 +444,24 @@ de Casteljau, Paul. "Outillage methodes calcul." Andre Citroen Automobiles SA,
 de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*. 3rd
 ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.
 
+Boehm, Wolfgang. "Inserting New Knots into B-Spline Curves." *Computer-Aided
+Design*, vol. 12, no. 4, 1980, pp. 199-201.
+https://doi.org/10.1016/0010-4485(80)90154-2.
+
+de Boor, Carl. *A Practical Guide to Splines*. Springer, 1978.
+https://doi.org/10.1007/978-1-4612-6333-3.
+
 Farouki, Rida T., and C. Andrew Neff. "Analytic Properties of Plane Offset
 Curves." *Computer Aided Geometric Design*, vol. 7, nos. 1-4, 1990, pp. 83-99.
+https://doi.org/10.1016/0167-8396(90)90002-N.
 
 Farouki, Rida T., and V. T. Rajan. "Algorithms for Polynomials in Bernstein
 Form." *Computer Aided Geometric Design*, vol. 5, no. 1, 1988, pp. 1-26.
+https://doi.org/10.1016/0167-8396(88)90016-7.
 
 Farin, Gerald. *Curves and Surfaces for Computer-Aided Geometric Design: A
 Practical Guide*. 5th ed., Morgan Kaufmann, 2002.
+https://doi.org/10.1016/B978-1-55860-737-8.X5000-5.
 
 Foster, Erich L., Kai Hormann, and Romeo Traian Popa. "Clipping Simple Polygons
 with Degenerate Intersections." *Computers & Graphics: X*, vol. 2, 2019,
@@ -547,13 +489,14 @@ vol. 35, no. 6, 2009, pp. 1177-1185.
 https://doi.org/10.1016/j.cageo.2008.08.009.
 
 Menger, K. "Untersuchungen über allgemeine Metrik." *Mathematische Annalen*,
-vol. 100, 1928, pp. 75-163. http://eudml.org/doc/159284.
+vol. 100, 1928, pp. 75-163. https://eudml.org/doc/159284.
 
 Schneider, Philip J., and David H. Eberly. *Geometric Tools for Computer
 Graphics*. Morgan Kaufmann, 2002.
 
 Sederberg, Thomas W., and Tomoyuki Nishita. "Curve Intersection Using Bezier
 Clipping." *Computer-Aided Design*, vol. 22, no. 9, 1990, pp. 538-549.
+https://doi.org/10.1016/0010-4485(90)90039-F.
 
 Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
 Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.
@@ -570,3 +513,12 @@ https://doi.org/10.1145/129902.129906.
 Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
 vol. 7, nos. 1-2, 1997, pp. 3-23.
 https://doi.org/10.1016/0925-7721(95)00040-2.
+
+## Hyper Ecosystem
+
+`hypercurve` uses [hyperreal](https://github.com/timschmidt/hyperreal),
+[hyperlimit](https://github.com/timschmidt/hyperlimit),
+[hypersolve](https://github.com/timschmidt/hypersolve), and optionally
+[hypertri](https://github.com/timschmidt/hypertri). It provides planar curve and
+region topology to the other [Hyper geometry and engineering
+crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).

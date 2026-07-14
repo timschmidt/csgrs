@@ -2,14 +2,9 @@
 //!
 //! This module is the first retained B-spline carrier in `hypercurve`.  It
 //! keeps the authored control net, weights, and knot vector as exact [`Real`]
-//! data, then extracts Bezier spans by exact Boehm knot insertion.  That
-//! matches Yap's exact-geometric-computation rule from "Towards Exact
-//! Geometric Computation" (1997): preserve the source object and move to
-//! another representation only through replayable exact construction evidence.
-//! Knot insertion follows Boehm, "Inserting new knots into B-spline curves"
-//! (Computer-Aided Design, 1980), and the B-spline/Bezier span identities
-//! follow de Boor, *A Practical Guide to Splines* (1978), and Farin, *Curves
-//! and Surfaces for CAGD* (5th ed., 2002).
+//! data, then extracts Bezier spans by exact Boehm knot insertion. This follows
+//! the exact-geometric-computation rule: preserve the source object and change
+//! representation only through replayable exact construction evidence.
 
 use std::cmp::Ordering;
 
@@ -85,9 +80,7 @@ pub struct RationalQuadraticBSplineBezierExtraction2 {
 /// [`RationalQuadraticBSplineCurve2`].  It stores affine controls, homogeneous
 /// weights, and knots exactly, then extracts rational Bezier spans as retained
 /// control nets instead of pretending that unsupported rational cubic and
-/// higher-degree spans are native topology fragments.  This follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-/// 3-23 (1997): the exact object is preserved and any representational change
+/// higher-degree spans are native topology fragments.  This follows exact-computation discipline: the exact object is preserved and any representational change
 /// is report-bearing construction evidence.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalBSplineCurve2 {
@@ -122,9 +115,9 @@ pub struct RationalBSplineBezierExtraction2 {
 /// with [`RetainedTopologyStatus::NativeExact`] contribute a native subcurve.
 /// Nonuniform rational cubics and higher-degree rational Beziers remain exact
 /// native objects rather than disappearing behind a generic unsupported
-/// return. This follows Yap's retained-object discipline, while the
+/// return. This follows the exactness model's retained-object discipline, while the
 /// degree/equal-weight promotion rules are the homogeneous Bezier identities
-/// described by Farin, *Curves and Surfaces for CAGD* (5th ed., 2002).
+/// described by the Bernstein and de Casteljau curve model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalBSplineNativeTopologyReport2 {
     span_reports: Vec<RationalBezierSpanTopologyReport2>,
@@ -185,8 +178,8 @@ pub struct RetainedSpanWeightDomainReport2 {
 /// bounds and monotone predicates. Retained rational spans without native
 /// topology expose conservative control-hull bounds plus explicit unsupported
 /// monotone status. This follows the construction/predicate separation in
-/// Chee Yap, "Towards Exact Geometric Computation", and keeps the span-local
-/// Bernstein evidence required by Gerald Farin, "Curves and Surfaces for CAGD",
+/// exact-computation discipline, and keeps the span-local
+/// Bernstein evidence required by the Bernstein and de Casteljau curve model,
 /// visible to callers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RetainedBSplineSpanFacts2 {
@@ -524,8 +517,8 @@ impl RationalQuadraticBSplineCurve2 {
     /// Knot insertion is performed on homogeneous triples `(w*x, w*y, w)`.
     /// Only after every interior knot reaches multiplicity two does the method
     /// divide by each refined weight to produce affine rational Bezier controls.
-    /// This is the rational Boehm/de Boor construction described by Farin
-    /// (2002), kept as exact object replay in Yap's EGC sense.
+    /// This is the rational Boehm/de Boor construction described by the Bernstein curve model
+    ///, kept as exact object replay in the exactness model's EGC sense.
     pub fn extract_bezier_spans(
         &self,
         policy: &CurvePolicy,
@@ -941,9 +934,7 @@ impl RationalBSplineCurve2 {
     /// the degree.  The resulting homogeneous control net is converted back to
     /// affine controls only after every refined weight is certified nonzero.
     /// This is Boehm knot insertion on homogeneous coordinates, following
-    /// Boehm, "Inserting new knots into B-spline curves" (1980), de Boor,
-    /// *A Practical Guide to Splines* (1978), and Farin, *Curves and Surfaces
-    /// for CAGD* (5th ed., 2002).
+    /// B-spline knot insertion, the standard B-spline construction, and the Bernstein and de Casteljau curve model.
     pub fn extract_bezier_spans(
         &self,
         policy: &CurvePolicy,
@@ -986,7 +977,7 @@ impl RationalBSplineCurve2 {
     /// periodicity, exact extracted endpoint evidence, and a span cache summary.
     /// Unequal-weight cubics and higher-degree spans promote to exact general
     /// rational Beziers rather than being degree-reduced or tessellated. This
-    /// is the same retained-object boundary described by Yap (1997), applied
+    /// is the same retained-object boundary described by the exactness model, applied
     /// to NURBS carrier admission.
     pub fn retained_curve_profile(
         &self,
@@ -1105,12 +1096,10 @@ impl RationalBSplineBezierExtraction2 {
     /// homogeneously, degree-two spans are native rational quadratics,
     /// equal-weight cubics collapse to polynomial cubics, and every remaining
     /// span stays an exact general rational Bezier without sampling or degree
-    /// reduction. This is the Yap EGC boundary applied to NURBS consumption:
+    /// reduction. This is the exact-computation boundary applied to NURBS consumption:
     /// branch into topology only after an exact representation-preserving
-    /// construction; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 3-23 (1997).  The homogeneous Bezier
-    /// interpretation follows Farin, *Curves and Surfaces for CAGD* (5th ed.,
-    /// 2002).
+    /// construction.  The homogeneous Bezier
+    /// interpretation follows the Bernstein and de Casteljau curve model.
     pub fn native_subcurves(
         &self,
         policy: &CurvePolicy,

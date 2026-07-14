@@ -2,10 +2,9 @@
 //!
 //! The types in this module are exact object carriers: control points are stored
 //! as [`Real`](hyperreal::Real), evaluation is algebraic, and topology-sensitive
-//! predicates are intentionally added separately. This follows Yap's exact
+//! predicates are intentionally added separately. This follows the exactness model's exact
 //! geometric computation split between exact representations, certified
-//! predicates, and explicit approximate output adapters; see Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! predicates, and explicit approximate output adapters.
 
 use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 
@@ -32,8 +31,7 @@ pub enum BezierEndpoint {
 /// (P1 - P0)` at the start or `degree * (Pn - Pn-1)` at the end. When this
 /// vector is structurally zero, callers that need a geometric tangent should
 /// continue to higher derivatives before making topology decisions. This
-/// mirrors the endpoint-derivative treatment in Farin, *Curves and Surfaces
-/// for Computer-Aided Geometric Design* (5th ed., 2002).
+/// mirrors the endpoint-derivative treatment in the Bernstein and de Casteljau curve model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EndpointTangent2 {
     dx: Real,
@@ -536,8 +534,7 @@ impl CubicBezierHermiteInterpolationResult2 {
 /// The segment is represented by `(start, control, end)` and evaluated with
 /// de Casteljau subdivision. De Casteljau's algorithm preserves affine
 /// structure and is the standard numerically stable geometric construction for
-/// Bezier curves; see de Casteljau, "Outillage methodes calcul," Andre
-/// Citroen Automobiles SA, 1959.
+/// Bezier curves using de Casteljau subdivision.
 #[derive(Clone, Debug, PartialEq)]
 pub struct QuadraticBezier2 {
     start: Point2,
@@ -732,7 +729,7 @@ impl QuadraticBezier2 {
     /// root solve. It is useful when another exact kernel has already produced
     /// a candidate parameter and the curve layer must certify the point before
     /// branching. The zero test is delegated to the same policy boundary as
-    /// the rest of `hypercurve`, following Yap's exact predicate model.
+    /// the rest of `hypercurve`, following the exactness model's exact predicate model.
     pub fn contains_point_at_parameter(
         &self,
         point: &Point2,

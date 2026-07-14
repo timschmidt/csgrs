@@ -3,11 +3,10 @@
 //! These fact packages are not topology certificates. They are conservative
 //! summaries that let higher curve algorithms choose cheaper exact kernels,
 //! broad-phase layouts, or prepared predicate batches without probing each
-//! [`Real`](hyperreal::Real) repeatedly. This follows Yap's exact-geometric-
+//! [`Real`](hyperreal::Real) repeatedly. This follows the exact-geometric-
 //! computation model: carry object-level numerical structure forward and select
 //! arithmetic packages from that structure, while certified predicates still
-//! decide topology. See Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997).
+//! decide topology.
 
 use hyperreal::{Real, RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
 
@@ -112,11 +111,9 @@ impl BezierDegree {
 /// coordinate scale, symbolic dependencies, endpoint equality, derivative
 /// control-vector zero status, second differences, and curvature witnesses.
 /// They are scheduling facts only. Curve topology must still be decided by
-/// certified predicates in Yap's sense; see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The derivative and
+/// certified predicates in the exactness model's sense. The derivative and
 /// curvature witnesses correspond to the standard Bezier derivative control
-/// polygon used by Farin, *Curves and Surfaces for Computer-Aided Geometric
-/// Design* (5th ed., 2002).
+/// polygon used by the Bernstein and de Casteljau curve model.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Bezier2Facts {
     /// Polynomial degree family.
@@ -196,11 +193,10 @@ impl Bezier2Facts {
 ///
 /// The facts retain affine control coordinates and homogeneous weights so
 /// conic predicates can dispatch on exact-rational/common-scale schedules
-/// without normalizing away projective structure. This follows Yap's
+/// without normalizing away projective structure. This follows the exactness model's
 /// object-layer guidance for exact geometric computation, while the weight
 /// discriminant is the standard rational-quadratic conic classifier described
-/// by Farin, *Curves and Surfaces for Computer-Aided Geometric Design* (5th
-/// ed., 2002).
+/// by the Bernstein and de Casteljau curve model.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RationalQuadraticBezier2Facts {
     /// Exact-rational facts for all control coordinates and weights.

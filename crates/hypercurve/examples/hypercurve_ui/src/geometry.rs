@@ -902,9 +902,7 @@ pub fn policy() -> CurvePolicy {
     // `EdgePreview` for curve-local display tolerances. Hypercurve's
     // predicate policy inside this value remains strict, and the UI must not
     // treat sampled `f64`/Geo fallback output as exact topology provenance.
-    // Hobby, "Practical Segment Intersection with Finite Precision Output"
-    // (Computational Geometry 13(4), 199-214, 1999), is the relevant warning:
-    // finite output is useful, but it needs explicit boundary handling.
+    // Finite output remains useful only with explicit boundary handling.
     CurvePolicy::edge_preview(Tolerance::new(1e-7, 1e-7))
 }
 
@@ -988,9 +986,8 @@ fn split_contour_for_slices(
     // Slice mode is a visualization tool: it should expose every displayable
     // split but remain drawable when preview ordering cannot be certified. The
     // fallback to source fragments is intentionally local to the UI boundary;
-    // exact library booleans still propagate uncertainty. This follows the
-    // finite-output separation described by Hobby (1999) and avoids presenting
-    // a broken branch graph as if it were exact topology.
+    // exact library booleans still propagate uncertainty. Keeping finite output
+    // separate avoids presenting a broken branch graph as exact topology.
     let policy = policy();
     let self_events = contour
         .intersect_self(&policy)

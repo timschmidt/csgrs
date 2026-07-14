@@ -2,11 +2,9 @@
 //!
 //! After intersections are inserted, fragment construction rebuilds the
 //! source geometry between adjacent split markers so boolean selection can work
-//! on atomic boundary pieces. This mirrors the split-then-classify structure in
-//! Greiner and Hormann, "Efficient Clipping of Arbitrary Polygons" (*ACM
-//! Transactions on Graphics* 17(2), 71-83, 1998), with explicit uncertainty for
-//! ordering or finite-preview cases that would otherwise create invalid graph
-//! topology.
+//! on atomic boundary pieces. This mirrors polygon clipping's
+//! split-then-classify structure, with explicit uncertainty for ordering or
+//! finite-preview cases that would otherwise create invalid graph topology.
 
 use std::cmp::Ordering;
 

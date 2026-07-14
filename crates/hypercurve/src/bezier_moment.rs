@@ -8,12 +8,10 @@
 //! `x dy - y dx = (Nx dNy - Ny dNx) / W^2`. The resulting rational integral is
 //! evaluated symbolically with exact `atan`/`ln`/`sqrt` branches after the
 //! Bernstein weights certify that `W` has no projective zero on `[0, 1]`.
-//! This preserves the exact object structure required by Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997), and supplies
+//! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
-//! Levien, "Simplifying Bezier paths" (2021). The polynomial and rational
-//! Bezier identities follow Farin, *Curves and Surfaces for Computer-Aided
-//! Geometric Design* (5th ed., 2002).
+//! Bezier approximation analysis. The polynomial and rational
+//! Bezier identities follow the Bernstein and de Casteljau curve model.
 
 use std::ops::Range;
 
@@ -36,11 +34,9 @@ use crate::{
 ///
 /// The formulas are the standard Green's-theorem moment identities used by
 /// exact geometric-computation pipelines; retaining them as symbolic
-/// polynomial integrals follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The Bezier polynomial conversion
-/// follows Farin, *Curves and Surfaces for Computer-Aided Geometric Design*
-/// (5th ed., 2002), and the path simplification motivation follows Raph
-/// Levien, "Simplifying Bezier paths" (2021).
+/// polynomial integrals follows exact-computation discipline. The Bezier polynomial conversion
+/// follows the Bernstein and de Casteljau curve model, and the path simplification motivation follows Raph
+/// Bezier approximation analysis.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAreaMoments2 {
     signed_area: Real,
@@ -235,7 +231,7 @@ impl QuadraticBezier2 {
     /// Returns this quadratic's exact signed area and first moment contributions.
     ///
     /// The moment formulas are evaluated as exact polynomial integrals after
-    /// Bernstein-to-power conversion, preserving the Yap-style object fact
+    /// Bernstein-to-power conversion, preserving exactness- object fact
     /// rather than sampling or flattening the curve.
     pub fn area_moments_contribution(&self) -> CurveResult<BezierAreaMoments2> {
         area_moments_for_controls(&self.control_points())
@@ -245,7 +241,7 @@ impl QuadraticBezier2 {
     ///
     /// The parameter is certified against `[0, 1]` through `policy` before the
     /// prefix curve is produced by exact de Casteljau subdivision. Ambiguous
-    /// parameter ordering remains explicit uncertainty, following Yap's EGC
+    /// parameter ordering remains explicit uncertainty, following the exactness model's EGC
     /// predicate boundary.
     pub fn prefix_signed_area_contribution(
         &self,
@@ -318,10 +314,9 @@ impl RationalQuadraticBezier2 {
     /// `1/2 * integral((Nx dNy - Ny dNx) / W^2)`, where `Nx`, `Ny`, and `W`
     /// are the weighted Bernstein numerator and denominator polynomials.  The
     /// implementation keeps the conic in homogeneous form until the final exact
-    /// rational integral, following Yap's exact-geometric-computation boundary
-    /// from "Towards Exact Geometric Computation" (1997).  The homogeneous
-    /// rational Bezier identities follow Farin, *Curves and Surfaces for
-    /// Computer-Aided Geometric Design* (5th ed., 2002).
+    /// rational integral, following the exact-geometric-computation boundary
+    /// from exact-computation discipline.  The homogeneous
+    /// rational Bezier identities follow the Bernstein and de Casteljau curve model.
     ///
     /// `None` means the current exact object model cannot certify a finite
     /// affine integral: this happens when the weights do not have one proven

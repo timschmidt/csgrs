@@ -12925,11 +12925,9 @@ fn contour_nesting_depths(
     for (candidate_index, candidate) in contours.iter().enumerate() {
         // A point on the candidate boundary is sufficient for nesting against
         // every *other* non-touching contour. This reduces role assignment to
-        // repeated point-in-polygon classification, the degeneracy-sensitive
-        // problem surveyed by K. Hormann and A. Agathos, "The point in polygon
-        // problem for arbitrary polygons," Computational Geometry 20(3),
-        // 131-144, 2001. If that sample lies on another contour boundary, we
-        // return uncertainty instead of inventing a role.
+        // repeated point-in-polygon classification. If that sample lies on
+        // another contour boundary, return uncertainty instead of inventing a
+        // role.
         let first_sample = candidate
             .segments()
             .first()

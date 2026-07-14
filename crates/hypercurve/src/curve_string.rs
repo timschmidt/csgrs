@@ -3629,8 +3629,7 @@ impl CurveString2 {
     /// the pair; any box uncertainty falls back to exact topology. This keeps
     /// the exact segment relation authoritative while following the
     /// candidate-pruning role used by sweep-line intersection methods such as
-    /// Bentley and Ottmann, "Algorithms for Reporting and Counting Geometric
-    /// Intersections" (1979).
+    /// sweep-line scheduling.
     pub fn intersect_curve_string(
         &self,
         other: &Self,
@@ -8966,12 +8965,9 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
 
     for (a_segment_index, a_segment) in first.segments.iter().enumerate() {
         for (b_segment_index, b_segment) in second.segments.iter().enumerate() {
-            // This is the same conservative broad-phase used by the public
-            // curve-string query. Bentley and Ottmann, "Algorithms for
-            // Reporting and Counting Geometric Intersections" (1979), use
-            // ordered sweep candidates for asymptotically better pruning; this
-            // helper keeps the flat pair scan but lets prepared callers reuse
-            // segment boxes across repeated queries.
+            // This is the same conservative broad phase used by the public
+            // curve-string query. An ordered sweep could prune more candidates;
+            // this flat scan instead lets prepared callers reuse segment boxes.
             if let (Some(Some(a_box)), Some(Some(b_box))) = (
                 first_segment_boxes.get(a_segment_index),
                 second_segment_boxes.get(b_segment_index),

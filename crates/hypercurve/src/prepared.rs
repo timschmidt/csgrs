@@ -4,8 +4,8 @@
 //! topology. They skip only decided bounding-box misses and then delegate to the
 //! same segment-intersection and boundary-first contour classification used by
 //! ordinary contours and regions. This keeps preparation in the candidate
-//! generation role of Bentley and Ottmann's intersection-reporting framework,
-//! while preserving Shewchuk-style certified predicates for topology branches.
+//! generation role of sweep-line scheduling intersection-reporting framework,
+//! while preserving certified predicates for topology branches.
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::curve_string::{curve_string_intersection_relation_counts, decided_segment_box_count};
@@ -30,10 +30,9 @@ use crate::{
 /// feature is enabled, the converted `hyperlimit` endpoints used by repeated
 /// orientation tests. It deliberately does not own finite-segment containment
 /// semantics: those remain on [`LineSeg2`], while this type accelerates the
-/// exact supporting-line predicate. That split follows Yap's EGC model of
+/// exact supporting-line predicate. That split follows the exactness model's EGC model of
 /// carrying object structure forward without moving combinatorial decisions
-/// out of the predicate layer; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// out of the predicate layer.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedLineSeg2<'a> {
     line: &'a LineSeg2,
@@ -92,8 +91,8 @@ impl<'a> PreparedLineSeg2<'a> {
         if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
             // Reuse the fixed endpoint conversion and prepared facts, then let
             // hyperlimit select the exact determinant schedule. This is the
-            // Shewchuk-style orientation predicate at the curve-object
-            // boundary, with Yap's exact/approximate split preserved by
+            // certified orientation predicate at the curve-object
+            // boundary, with the exactness model's exact/approximate split preserved by
             // keeping EdgePreview outside the certified path.
             let query = predicate_point(point);
             return classify_prepared_line(
@@ -114,11 +113,9 @@ impl<'a> PreparedLineSeg2<'a> {
 /// The prepared arc stores the two radial oriented lines that bound the arc
 /// sweep. Point-on-arc checks still compare exact squared radius first, then
 /// use those prepared radial predicates for angular containment. This mirrors
-/// Schneider and Eberly's circle/arc primitive decomposition while preserving
-/// Yap's EGC split between exact topology predicates and approximate output
-/// adapters. See Schneider and Eberly, *Geometric Tools for Computer Graphics*
-/// (Morgan Kaufmann, 2002), and Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// the standard circle/arc primitive decomposition while preserving
+/// the exactness model's EGC split between exact topology predicates and approximate output
+/// adapters. See standard geometric constructions, and exact-computation discipline.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedCircularArc2<'a> {
     arc: &'a CircularArc2,
@@ -305,9 +302,8 @@ impl<'a> PreparedSegment2<'a> {
     /// [`SegmentIntersection`] shape as [`Segment2::intersect_segment`]: cached
     /// line and arc facts can select faster exact kernels, but finite segment
     /// topology and uncertainty remain represented by `hypercurve`'s public
-    /// intersection enums. This follows Yap's EGC separation between carried
-    /// object facts and certified predicate decisions; see Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// intersection enums. This follows the exactness model's EGC separation between carried
+    /// object facts and certified predicate decisions.
     pub fn intersect_prepared_segment(
         &self,
         other: &PreparedSegment2<'a>,
@@ -343,8 +339,7 @@ impl<'a> PreparedSegment2<'a> {
 /// Prepared curve strings avoid rebuilding broad-phase boxes for repeated
 /// topology queries. The cache never decides a contact on its own: it skips only
 /// decided disjoint boxes and keeps exact line/arc intersections authoritative.
-/// This mirrors the candidate-pruning role described by Bentley and Ottmann,
-/// "Algorithms for Reporting and Counting Geometric Intersections" (1979),
+/// This mirrors the candidate-pruning role described by sweep-line scheduling,
 /// while retaining the current flat pair enumeration.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedCurveStringView2<'a> {
@@ -571,9 +566,8 @@ impl<'a> PreparedCurveStringView2<'a> {
 /// topology queries. The cached boxes are conservative candidate filters only:
 /// decided disjoint boxes skip a pair, while hits and uncertain boxes still run
 /// the exact line/arc intersection code. This is the same broad-phase role that
-/// Bentley and Ottmann assign to ordered geometric candidates in "Algorithms for
-/// Reporting and Counting Geometric Intersections" (1979), kept here as a flat
-/// pair scan until the crate grows a sweep-line index.
+/// sweep-line algorithms assign to ordered geometric candidates, kept here as a
+/// flat pair scan until the crate grows a sweep-line index.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedContourView2<'a> {
     contour: &'a Contour2,
@@ -654,7 +648,7 @@ impl<'a> PreparedContourView2<'a> {
 
     /// Returns conservative structural facts collected while preparing.
     ///
-    /// These facts are advisory scheduling metadata in Yap's object layer:
+    /// These facts are advisory scheduling metadata in the exactness model's object layer:
     /// Boolean and containment code can select specialized exact paths from
     /// them, but they are not a geometric decision by themselves.
     pub const fn facts(&self) -> &CurveStringFacts {
@@ -967,8 +961,7 @@ impl<'a> PreparedRegionView2<'a> {
     /// This follows the same signed material-minus-hole convention as
     /// [`RegionView2::signed_depth`]. Decided cached-box misses are skipped, then
     /// candidate contours are classified with the boundary-first winding
-    /// structure described by Hormann and Agathos, "The Point in Polygon Problem
-    /// for Arbitrary Polygons" (2001), with this crate's circular-arc extension.
+    /// structure described by boundary-first winding classification, with this crate's circular-arc extension.
     pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         if self
             .region_box
@@ -1071,13 +1064,8 @@ impl<'a> PreparedRegionView2<'a> {
     /// This prepared path runs the same split, classify, and boundary-chain
     /// traversal as [`RegionView2::boolean_boundary_loops`], but reuses cached
     /// region/contour boxes during event collection and fragment midpoint
-    /// classification. Greiner and Hormann describe closed boundary traversal
-    /// after intersection insertion and entry/exit classification (G. Greiner
-    /// and K. Hormann, "Efficient clipping of arbitrary polygons," 1998);
-    /// Martinez, Rueda, and Feito describe boolean selection from classified
-    /// segments (F. Martinez, A. J. Rueda, and F. R. Feito, "A new algorithm
-    /// for computing Boolean operations on polygons," 2009). Cached boxes only
-    /// prune decided misses, so boundary and overlap uncertainty is preserved.
+    /// classification. Cached boxes only prune decided misses, so boundary and
+    /// overlap uncertainty is preserved.
     pub fn boolean_boundary_loops(
         &self,
         other: &PreparedRegionView2<'_>,
@@ -1094,9 +1082,9 @@ impl<'a> PreparedRegionView2<'a> {
     /// prepared-prepared traversal described in
     /// [`PreparedRegionView2::boolean_boundary_loops`] remains authoritative.
     /// The transient right-side cache follows the same candidate-pruning role
-    /// as Bentley and Ottmann's broad-phase intersection reporting setup, while
-    /// the final boundary traversal still follows the Greiner-Hormann and
-    /// Martinez-Rueda-Feito split/classify/assemble model cited above.
+    /// as sweep-line scheduling broad-phase intersection reporting setup, while
+    /// the final boundary traversal still follows the polygon-clipping and
+    /// split/classify/assemble model described above.
     pub fn boolean_boundary_loops_against_region(
         &self,
         other: &RegionView2<'_>,
@@ -1113,7 +1101,7 @@ impl<'a> PreparedRegionView2<'a> {
     /// This extends [`PreparedRegionView2::boolean_boundary_loops`] through the
     /// same checked-contour conversion and regularized contact fast paths used
     /// by [`RegionView2::boolean_boundary_contours`]. The prepared parts remain
-    /// candidate filters only: Foster, Hormann, and Popa's degenerate
+    /// candidate filters only: the degenerate-intersection clipping model degenerate
     /// clipping cases still surface as explicit boundary handling rather than
     /// as tolerance-based inside/outside choices.
     pub fn boolean_boundary_contours(
@@ -1134,8 +1122,7 @@ impl<'a> PreparedRegionView2<'a> {
     /// This prepares the right operand only for the duration of the call and
     /// then uses [`PreparedRegionView2::boolean_boundary_contours`]. Keeping the
     /// wrapper explicit makes one-prepared/many-unprepared workloads ergonomic
-    /// without weakening the degenerate clipping behavior described by Foster,
-    /// Hormann, and Popa for boundary contacts.
+    /// without weakening the degenerate clipping behavior described by the degenerate-intersection clipping model for boundary contacts.
     pub fn boolean_boundary_contours_against_region(
         &self,
         other: &RegionView2<'_>,
@@ -1152,7 +1139,7 @@ impl<'a> PreparedRegionView2<'a> {
     /// This is the prepared analogue of [`RegionView2::boolean_region`]. It
     /// reuses cached event and point-classification broad phases before
     /// returning to the ordinary contour-nesting pass for final material/hole
-    /// assignment, preserving the Vatti-style fill-state semantics already used
+    /// assignment, preserving the fill-state semantics already used
     /// by the non-prepared region pipeline.
     pub fn boolean_region(
         &self,
@@ -1186,7 +1173,7 @@ impl<'a> PreparedRegionView2<'a> {
     ///
     /// The right operand is prepared transiently, after which the same prepared
     /// boolean-region path assigns resolved contours to material and hole bins.
-    /// The nesting step remains the Hormann-Agathos boundary-first point
+    /// The nesting step remains the boundary-first winding boundary-first point
     /// classification used by [`RegionView2::boolean_region`].
     pub fn boolean_region_against_region(
         &self,
@@ -1268,8 +1255,8 @@ impl<'a> RegionView2<'a> {
     ///
     /// Use this when the right operand is reused across many ordinary region
     /// views, especially for non-commutative operations such as difference. The
-    /// transient left cache only prunes decided misses; Greiner-Hormann style
-    /// boundary traversal and Martinez-Rueda-Feito fragment selection remain
+    /// transient left cache only prunes decided misses; polygon-clipping style
+    /// boundary traversal and fragment selection remain
     /// unchanged from [`RegionView2::boolean_boundary_loops`].
     pub fn boolean_boundary_loops_against_prepared_region(
         &self,
@@ -1286,7 +1273,7 @@ impl<'a> RegionView2<'a> {
     ///
     /// The operation order is `self op other`; the prepared right operand is not
     /// swapped to the left. Degenerate shared-boundary cases keep the same
-    /// explicit Foster-Hormann-Popa style uncertainty/regularization behavior
+    /// explicit degenerate-intersection clipping style uncertainty/regularization behavior
     /// as the ordinary checked-contour API.
     pub fn boolean_boundary_contours_against_prepared_region(
         &self,
@@ -1303,7 +1290,7 @@ impl<'a> RegionView2<'a> {
     /// operand.
     ///
     /// The prepared path still returns to the ordinary nesting classifier for
-    /// material/hole assignment, so Hormann-Agathos boundary-first point
+    /// material/hole assignment, so boundary-first winding boundary-first point
     /// classification remains the final arbiter for resolved output contours.
     pub fn boolean_region_against_prepared_region(
         &self,
@@ -1394,10 +1381,9 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     for (a_segment_index, a_segment) in first_prepared_segments.iter().enumerate() {
         for (b_segment_index, b_segment) in second_prepared_segments.iter().enumerate() {
             // Prepared pair batches use the same conservative broad phase as
-            // ordinary curve strings. Bentley and Ottmann's sweep-line paper
-            // motivates candidate pruning, but the prepared flat scan keeps
-            // exact segment relations authoritative until a later index can
-            // consume retained all-line/axis/monotone facts.
+            // ordinary curve strings. The flat scan keeps exact segment
+            // relations authoritative until a later index can consume retained
+            // all-line, axis, and monotonicity facts.
             if let (Some(Some(a_box)), Some(Some(b_box))) = (
                 first_segment_boxes.get(a_segment_index),
                 second_segment_boxes.get(b_segment_index),

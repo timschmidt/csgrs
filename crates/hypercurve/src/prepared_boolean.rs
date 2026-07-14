@@ -79,13 +79,9 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
         // Shared-boundary topology is resolved to explicit closed contours above the
         // traversal graph, matching the plain-path contract from
         // `boundary_contact_boundary_contours_prepared`.
-        // This follows Greiner and Hormann's split-and-classify stage for polygon
-        // clipping and preserves `Boundary` uncertainty as a pre-loop signal.
-        // G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
-        // ACM Transactions on Graphics 17(2), 71-83, 1998.
-        // The containment branch mirrors the selection decomposition from
-        // Martinez et al., "A new algorithm for computing Boolean operations on
-        // polygons," Computers & Geosciences 35(6), 1177-1185, 2009.
+        // This follows polygon clipping's split-and-classify stage and preserves
+        // `Boundary` uncertainty as a pre-loop signal. The containment branch
+        // mirrors the same selection decomposition.
         Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_boundary_contours_prepared(
                 first,
@@ -156,7 +152,7 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
     };
 
     // The prepared path keeps the same split/classify/traverse structure as the
-    // ordinary Greiner-Hormann/Martinez-Rueda-Feito pipeline, but routes
+    // ordinary polygon-clipping pipeline, but routes
     // fragment representative-point classification through prepared region
     // caches so repeated boolean-boundary queries do not rebuild contour boxes.
     let selection =
@@ -634,8 +630,8 @@ fn boundary_contact_resolution_prepared(
     };
 
     // Prepared boundary-contact certification follows the same degeneracy split
-    // described by Foster, Hormann, and Popa, "Clipping simple polygons with
-    // degenerate intersections" (2019), but reuses cached region classifiers
+    // described by the degenerate-intersection clipping model "Clipping simple polygons with
+    // degenerate intersections", but reuses cached region classifiers
     // for the interior-disjointness samples.
     let disjoint_interiors = if saw_overlap {
         split_contact_interiors_are_disjoint_prepared(first, second, &intersections, policy)?

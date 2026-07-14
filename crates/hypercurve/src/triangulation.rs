@@ -3,11 +3,8 @@
 //! Triangulation consumes projected boundary vertices, but the ownership of
 //! material and hole rings is decided before projection by [`Region2`] and
 //! [`RegionView2`](crate::RegionView2). Keeping the profile grouping in
-//! hypercurve and delegating exact earcut predicates to hypertri follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>). The ear-removal
-//! basis is Meisters, "Polygons Have Ears," *American Mathematical Monthly*
-//! 82(6), 1975 (<https://doi.org/10.2307/2319703>).
+//! hypercurve and delegating exact earcut predicates to hypertri follows exact-computation discipline. The ear-removal
+//! basis is ear clipping.
 
 use crate::finite_projection::normalize_finite_ring_vertices;
 use crate::{CurveError, CurveResult, FiniteRegionProfile2, Real};
@@ -98,7 +95,7 @@ impl FiniteRegionProfile2 {
     /// built. The triangulation stage therefore receives a topology-preserving
     /// profile record rather than a bag of rings whose roles must be recovered
     /// from winding. Earcut-style triangulation is handled by hypertri using
-    /// exact hyperreal predicates; see Meisters (1975) and Yap (1997), cited in
+    /// exact hyperreal predicates; see ear clipping and the exactness model, cited in
     /// the module documentation.
     pub fn triangulate(&self) -> CurveResult<Vec<FiniteTriangle2>> {
         let hole_refs = self

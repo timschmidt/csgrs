@@ -6,12 +6,10 @@
 //! the cross/dot scalars as exact represented algebraic roots with
 //! `hypersolve` arithmetic, then reads their signs only from exact rational
 //! witnesses or isolating intervals certified away from zero.  This follows
-//! Yap's exact-geometric-computation boundary between construction and
-//! decision; see Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 3-23 (1997).  The local angular ordering
+//! the exact-geometric-computation boundary between construction and
+//! decision.  The local angular ordering
 //! is the standard orientation/dot half-plane ordering used by arrangement
-//! kernels; see de Berg, van Kreveld, Overmars, and Schwarzkopf,
-//! *Computational Geometry: Algorithms and Applications* (3rd ed., 2008).
+//! kernels.
 
 use std::cmp::Ordering;
 
@@ -397,9 +395,9 @@ pub fn compare_algebraic_tangent_turn_from_base(
 /// `cross(B'(t), B''(t))`; branches departing on opposite sides are ordered by
 /// that sign. When both depart on the same side it compares
 /// `cross^2 / |B'|^6` by clearing positive speed denominators. Every scalar is
-/// built through `hypersolve` algebraic arithmetic, following Yap's exact
+/// built through `hypersolve` algebraic arithmetic, following the exactness model's exact
 /// geometric computation discipline, and the derivative identities are the
-/// standard Bezier endpoint/Taylor formulas described by Farin (2002).
+/// standard Bezier endpoint/Taylor formulas described by the Bernstein curve model.
 pub fn compare_algebraic_same_tangent_second_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_second_derivative: &BezierAlgebraicTangentVector2,
@@ -526,11 +524,9 @@ pub fn compare_algebraic_same_tangent_second_order(
 /// witness is `cross(B'(t), B'''(t))`; opposite signs identify the side of
 /// departure, and same-side magnitudes are compared as `cross^2 / |B'|^4` by
 /// clearing positive speed denominators.  The derivative witness is the
-/// standard polynomial Bezier endpoint formula from Farin, *Curves and
-/// Surfaces for CAGD* (5th ed., 2002), and the predicate follows Yap's
+/// standard polynomial Bezier endpoint formula from the Bernstein and de Casteljau curve model, and the predicate follows the exactness model's
 /// exact-geometric-computation rule: construct represented algebraic scalars
-/// first, then branch only on certified signs; see Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+/// first, then branch only on certified signs.
 pub fn compare_algebraic_same_tangent_third_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_third_derivative: &BezierAlgebraicTangentVector2,

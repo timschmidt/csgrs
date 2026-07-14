@@ -4,13 +4,10 @@
 //! in this module preserve line segments exactly, approximate circular arcs by
 //! a chord-error budget, and return primitive `f64` coordinates only after the
 //! source [`Real`](hyperreal::Real) coordinates can be exported finitely. This
-//! follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>):
+//! follows exact-computation discipline:
 //! exact objects own CAD/topology; finite samples are boundary products.
 //! Boundary and containment decisions should continue to use the exact
-//! contour/region APIs surveyed by Hormann and Agathos, "The Point in Polygon
-//! Problem for Arbitrary Polygons," *Computational Geometry* 20(3), 2001
-//! (<https://doi.org/10.1016/S0925-7721(01)00012-8>).
+//! contour/region APIs surveyed by boundary-first winding classification.
 
 use std::f64::consts::PI;
 
@@ -120,9 +117,7 @@ impl FinitePolyline2 {
     /// an exact centroid of the native curve or filled area. A repeated closing
     /// vertex is ignored. Keeping this helper on the projected polyline type
     /// prevents downstream crates from reimplementing small finite adapters
-    /// around hypercurve output. The exact-object/boundary split follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// around hypercurve output. The exact-object/boundary split follows exact-computation discipline.
     pub fn vertex_centroid(&self) -> Option<[f64; 2]> {
         finite_polyline_vertex_centroid(&self.points)
     }
@@ -205,9 +200,7 @@ impl FiniteRegionProfile2 {
 /// The closing edge is included even when the caller did not repeat the first
 /// vertex. This is the familiar Green's-theorem polygon formula applied only
 /// to finite boundary data; exact CAD area should use native contour/region
-/// area APIs instead. The boundary split follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+/// area APIs instead. The boundary split follows exact-computation discipline.
 pub fn finite_ring_signed_area(ring: &[[f64; 2]]) -> f64 {
     if ring.len() < 3 {
         return 0.0;
@@ -377,9 +370,9 @@ impl Region2 {
     /// [`Region2::contour_profiles`], so this method does not recover holes
     /// from sampled centroids or winding heuristics. The returned rings are
     /// still finite API-boundary products; exact topology remains in the
-    /// region. This follows Yap's exact-object/API-boundary split and the
-    /// boundary-first point-in-polygon structure surveyed by Hormann and
-    /// Agathos, both cited on [`Region2::contour_profiles`].
+    /// region. This follows the exact-object/API-boundary split and the
+    /// boundary-first point-in-polygon structure used by
+    /// [`Region2::contour_profiles`].
     pub fn project_to_finite_profiles(
         &self,
         options: &FiniteProjectionOptions,

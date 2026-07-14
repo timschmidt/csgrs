@@ -8,14 +8,11 @@
 //! curve predicates and emits only certified whole-image, line-image, or
 //! rational parameter-range overlap pairs.
 //!
-//! The boundary is intentionally conservative in Yap's exact-geometric-
-//! computation sense: see Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 3-23 (1997).  Same polynomial images are
-//! certified with Bernstein degree-normalization identities from Farin,
-//! *Curves and Surfaces for CAGD* (5th ed., 2002).  Separating overlap
-//! reporting from traversal follows the degeneracy discipline emphasized by
-//! Foster, Hormann, and Popa, "Clipping simple polygons with degenerate
-//! intersections," *Computers & Graphics: X* 2, 100007 (2019): an overlap is a
+//! The boundary is intentionally conservative in the exact-geometric-
+//! computation sense:  Same polynomial images are
+//! certified with Bernstein degree-normalization identities from the Bernstein and de Casteljau curve model.  Separating overlap
+//! reporting from traversal follows the degenerate-intersection clipping
+//! model: an overlap is a
 //! first-class event, not an arbitrary successor choice.
 
 use hyperreal::Real;
@@ -249,10 +246,10 @@ pub enum BezierRetainedOverlapOrientation2 {
 /// ownership artifact after pair reporting: future graph splitting can consume
 /// the overlap segment endpoints and exact affine ranges while still refusing
 /// to conflate them with curve parameters for non-affine line-image Beziers.
-/// That distinction is the Yap exact-object boundary in practice; see Yap
-/// (1997).  The positive-dimensional segment itself is the ordinary collinear
+/// That distinction is the exactness model exact-object boundary in practice; see the exactness model
+///.  The positive-dimensional segment itself is the ordinary collinear
 /// overlap from exact line-line intersection, a standard clipping degeneracy
-/// discussed by Foster, Hormann, and Popa (2019).
+/// discussed by the degenerate-intersection clipping model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedLineOverlapSplit2 {
     first_fragment_index: usize,
@@ -271,7 +268,7 @@ pub struct BezierRetainedLineOverlapSplit2 {
 /// Bezier control nets that are exact degree elevations of a line segment:
 /// quadratic controls `(P0, (P0 + P2)/2, P2)` or cubic controls
 /// `(P0, (2P0 + P3)/3, (P0 + 2P3)/3, P3)`.  These are the standard Bernstein
-/// degree-elevation identities in Farin (2002).  Per Yap (1997), general
+/// degree-elevation identities in the Bernstein curve model.  Per the exactness model, general
 /// collinear-but-nonlinear line images stay exact line-image evidence until a
 /// separate inverse-parameter construction exists.
 #[derive(Clone, Debug, PartialEq)]
@@ -302,11 +299,11 @@ pub struct BezierRetainedOverlapRefinedFragment2 {
 /// This is an ownership-preparation artifact.  It does not decide which side
 /// owns an overlap and it does not traverse through positive-dimensional
 /// degeneracies.  It only turns exact split evidence into a new retained graph
-/// whose fragment boundaries include the overlap endpoints.  Per Yap (1997),
+/// whose fragment boundaries include the overlap endpoints.  Per the exactness model,
 /// that keeps the constructed subcurves exact and report-bearing before any
 /// topology consumer chooses ownership.  The subcurves are materialized by de
-/// Casteljau subdivision, de Casteljau (1959), using the Bernstein identities
-/// summarized by Farin (2002).
+/// Casteljau subdivision, de Casteljau subdivision, using the Bernstein identities
+/// summarized by the Bernstein curve model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedLinearOverlapSplitGraph2 {
     graph: BezierArrangementGraph2,
@@ -322,7 +319,7 @@ pub struct BezierRetainedLinearOverlapSplitGraph2 {
 /// two refined graph-fragment indices that cover the same positive-dimensional
 /// image, keeps their original graph provenance and exact local parameter
 /// ranges, and records same/opposite orientation.  It is intentionally a
-/// report object rather than an ownership decision.  Yap (1997) requires this
+/// report object rather than an ownership decision. The exactness model requires this
 /// sort of constructed evidence to remain explicit before a later topological
 /// consumer decides which boundary copy, if any, owns the shared span.
 #[derive(Clone, Debug, PartialEq)]
@@ -346,9 +343,8 @@ pub struct BezierRetainedResolvedLinearOverlap2 {
 /// subfragments at overlap endpoints, then
 /// [`BezierArrangementGraph2::traverse_retained_deduplicating_materialized_overlaps`]
 /// shadows the now-identical overlap subfragment before ordinary retained
-/// tangent traversal.  The composition follows Yap's (1997) requirement that
-/// each construction and decision stay replayable, and Foster, Hormann, and
-/// Popa's (2019) treatment of overlaps as first-class degeneracy events.
+/// tangent traversal.  The composition follows the exactness model's requirement that
+/// each construction and decision stay replayable, and the degenerate-intersection clipping model treatment of overlaps as first-class degeneracy events.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierRetainedLinearOverlapTraversal2 {
     refinement: BezierRetainedLinearOverlapSplitGraph2,
@@ -1444,8 +1440,8 @@ impl BezierArrangementGraph2 {
     /// they represent the same positive-dimensional boundary traversed in
     /// opposite directions.  The cancellation is applied only to
     /// [`BezierRetainedResolvedLinearOverlap2`] records produced by exact
-    /// refinement, preserving Yap's object/predicate separation and the
-    /// overlap-degeneracy discipline of Foster, Hormann, and Popa (2019).
+    /// refinement, preserving the exactness model's object/predicate separation and the
+    /// overlap-degeneracy discipline of the degenerate-intersection clipping model.
     /// Nonlinear line images, algebraic endpoint-image fragments without native
     /// subcurves, and remaining branch ambiguities still return explicit
     /// uncertainty.

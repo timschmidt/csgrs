@@ -4,9 +4,7 @@
 //! exact segment topology. A decided non-overlap lets callers skip an exact
 //! segment relation; uncertain ordering falls back to the exact relation. This
 //! mirrors the candidate-pruning role of bounding intervals in sweep-line
-//! intersection algorithms such as Bentley and Ottmann, "Algorithms for
-//! Reporting and Counting Geometric Intersections" (*IEEE Transactions on
-//! Computers* C-28(9), 643-647, 1979).
+//! intersection algorithms such as sweep-line scheduling.
 
 use std::cmp::Ordering;
 

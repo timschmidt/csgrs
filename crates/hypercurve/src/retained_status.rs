@@ -4,8 +4,7 @@
 //! admissible as topology in the current kernel. The status values here keep
 //! that distinction visible to callers instead of collapsing every non-native
 //! case into an approximation or a boolean failure. This is the object/predicate
-//! separation advocated by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 3-23 (1997): preserve exact objects, then
+//! separation advocated by exact-computation discipline: preserve exact objects, then
 //! branch only on certified predicates and explicitly named capability
 //! boundaries.
 

@@ -6,12 +6,10 @@
 //! exact objects once the boundary parameter is represented as a root.  This
 //! module keeps those endpoint images as first-class evidence so later
 //! arrangement code can consume certified predicates without sampling the
-//! isolating interval.  That follows Yap's exact-geometric-computation
+//! isolating interval.  That follows the exact-geometric-computation
 //! separation between exact object construction and certified branching; see
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 3-23 (1997).  The point/tangent formulas are the standard
-//! polynomial and homogeneous rational Bezier identities from Farin, *Curves
-//! and Surfaces for Computer-Aided Geometric Design* (5th ed., 2002).
+//! exact-computation discipline.  The point/tangent formulas are the standard
+//! polynomial and homogeneous rational Bezier identities from the Bernstein and de Casteljau curve model.
 
 use crate::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicPointImage2,

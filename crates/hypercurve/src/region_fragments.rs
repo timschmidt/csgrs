@@ -3,11 +3,7 @@
 //! Region booleans operate on all material and hole contours from both
 //! operands. This module applies the contour-level intersection-insertion pass
 //! to each keyed contour, matching the split-boundary preparation used before
-//! entry/exit or fill-state classification in Greiner and Hormann, "Efficient
-//! Clipping of Arbitrary Polygons" (*ACM Transactions on Graphics* 17(2),
-//! 71-83, 1998), and Martinez, Rueda, and Feito, "A New Algorithm for
-//! Computing Boolean Operations on Polygons" (*Computers & Geosciences* 35(6),
-//! 1177-1185, 2009).
+//! entry/exit or fill-state classification in polygon clipping traversal.
 
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurveError,

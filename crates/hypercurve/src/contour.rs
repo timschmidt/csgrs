@@ -963,9 +963,7 @@ impl Contour2 {
     ///
     /// This is the line/arc counterpart to Green's-theorem area accumulation
     /// used for Bezier moments in this crate. Keeping area facts on exact
-    /// curve objects follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// curve objects follows exact-computation discipline.
     /// The exact result is computed lazily once and shared by contour clones.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
         self.signed_area_cache
@@ -987,11 +985,8 @@ impl Contour2 {
     ///
     /// Boundary points return `Uncertain(Boundary)` because a Real winding
     /// number is not well-defined there. A decided bounding-box miss returns
-    /// zero before boundary and winding scans; otherwise this follows the
-    /// boundary-first point-in-contour structure discussed by Hormann and
-    /// Agathos, "The Point in Polygon Problem for Arbitrary Polygons"
-    /// (*Computational Geometry* 20(3), 131-144, 2001), extended here to
-    /// native circular-arc segments.
+    /// zero before boundary and winding scans; otherwise this follows
+    /// boundary-first winding classification, extended to native circular arcs.
     pub fn winding_number(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         let contour_box = decided_contour_aabb(self, policy);
         let segment_boxes = decided_segment_boxes(self.segments(), policy);
@@ -1008,10 +1003,8 @@ impl Contour2 {
     ///
     /// The query first uses the contour bounding box as a conservative rejection
     /// test, then checks the boundary explicitly before applying the fill rule
-    /// to the winding number. Hormann and Agathos, "The Point in Polygon
-    /// Problem for Arbitrary Polygons" (*Computational Geometry* 20(3),
-    /// 131-144, 2001), survey the boundary and winding issues that motivate
-    /// keeping those stages separate.
+    /// to the winding number. Keeping those stages separate makes boundary
+    /// handling explicit.
     pub fn classify_point(
         &self,
         point: &Point2,
@@ -1060,9 +1053,7 @@ impl Contour2 {
     /// are filtered out. Crossings, tangencies, endpoint contacts, and overlaps
     /// that are not just the connected vertex remain in the result. This keeps
     /// the same exact pair enumeration used for contour-pair intersections,
-    /// with the bounding-box candidate pruning pattern described by Bentley
-    /// and Ottmann, "Algorithms for Reporting and Counting Geometric
-    /// Intersections" (1979).
+    /// with the bounding-box candidate pruning pattern described by sweep-line scheduling.
     pub fn intersect_self(
         &self,
         policy: &CurvePolicy,
@@ -1698,10 +1689,9 @@ pub(crate) fn classify_contour_point_with_cached_aabbs(
     segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> Classification<ContourPointLocation> {
-    // Keep the boundary-first structure from Hormann and Agathos, "The Point
-    // in Polygon Problem for Arbitrary Polygons" (Computational Geometry
-    // 20(3), 131-144, 2001). Cached boxes only reject decided misses; they
-    // never replace exact segment-boundary checks or the winding pass.
+    // Keep the boundary-first point-in-polygon structure. Cached boxes only
+    // reject decided misses; they never replace exact segment-boundary checks
+    // or the winding pass.
     if contour_box_misses_point(contour_box, point, policy) {
         return Classification::Decided(ContourPointLocation::Outside);
     }
@@ -2175,8 +2165,7 @@ fn process_minor_arc_winding(
     // classifier used for polygon point containment. The tests below split the
     // arc by its endpoint chord and circle interior so the horizontal-ray count
     // changes exactly when the directed arc crosses the query ray. The
-    // boundary and degeneracy discipline follows Hormann and Agathos,
-    // "The Point in Polygon Problem for Arbitrary Polygons" (2001).
+    // boundary and degeneracy discipline follows boundary-first winding classification.
     let is_ccw = !clockwise;
     let point_is_left = if is_ccw {
         is_left(start, end, point, policy)?

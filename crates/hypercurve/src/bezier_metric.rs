@@ -5,9 +5,7 @@
 //! polygon length; exact de Casteljau subdivision tightens that interval by
 //! summing the same enclosure over subcurves. This is the classical
 //! variation-diminishing/control-polygon bound for Bezier curves described by
-//! Farin, *Curves and Surfaces for Computer-Aided Geometric Design* (5th ed.,
-//! 2002). Following Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997), this module returns explicit
+//! the Bernstein and de Casteljau curve model. Following exact-computation discipline, this module returns explicit
 //! certified intervals instead of converting them into floating approximations.
 
 use hyperreal::Real;
@@ -104,7 +102,7 @@ impl QuadraticBezier2 {
     ///
     /// The lower bound is the endpoint chord. The upper bound is the length of
     /// the two-edge control polygon. Those bounds are structural Bezier facts,
-    /// not sampled estimates; see Farin (2002). Yap's EGC model is respected by
+    /// not sampled estimates; see the Bernstein curve model. The exactness model's EGC model is respected by
     /// returning exact `Real` endpoints for the interval and by surfacing any
     /// square-root construction failure through [`CurveResult`].
     pub fn length_bounds(&self) -> CurveResult<BezierLengthBounds2> {
@@ -115,9 +113,9 @@ impl QuadraticBezier2 {
     ///
     /// `max_depth = 0` is identical to [`QuadraticBezier2::length_bounds`].
     /// Larger depths split by exact de Casteljau bisection and add the
-    /// chord/control-polygon intervals over each leaf. Farin's Bezier
+    /// chord/control-polygon intervals over each leaf. The Bezier
     /// subdivision length enclosure is used only as a metric certificate; per
-    /// Yap (1997), callers must not turn these intervals into topology events
+    /// the exactness model, callers must not turn these intervals into topology events
     /// without a separate certified predicate.
     pub fn refined_length_bounds(&self, max_depth: usize) -> CurveResult<BezierLengthBounds2> {
         refined_length_bounds_for_controls(
@@ -131,8 +129,8 @@ impl QuadraticBezier2 {
     /// The parameter is first certified against `[0, 1]` through the active
     /// policy. The prefix curve is then built by exact de Casteljau subdivision
     /// at `t`, and its chord/control-polygon length interval is returned. This
-    /// is the exact-object prerequisite for inverse arc-length queries; as Yap
-    /// (1997) requires, ambiguous parameter ordering is reported as
+    /// is the exact-object prerequisite for inverse arc-length queries; as the exactness model
+    /// requires, ambiguous parameter ordering is reported as
     /// uncertainty instead of becoming an approximate branch.
     pub fn prefix_length_bounds(
         &self,
@@ -173,7 +171,7 @@ impl QuadraticBezier2 {
     /// compare `target_length` with certified prefix length intervals. If exact
     /// signs prove the target is before or after the midpoint, the bracket is
     /// reduced; if the prefix interval straddles the target, the remaining
-    /// parameter span is returned. This follows Yap's exact-computation
+    /// parameter span is returned. This follows the exactness model's exact-computation
     /// boundary: metric approximants may guide refinement, but only certified
     /// comparisons decide branches.
     pub fn inverse_length_parameter_region(
@@ -198,8 +196,8 @@ impl CubicBezier2 {
     ///
     /// The lower bound is the endpoint chord. The upper bound is the length of
     /// the three-edge control polygon. This is the certified interval form of
-    /// the standard Bezier control-polygon length enclosure; see Farin (2002)
-    /// and Yap (1997).
+    /// the standard Bezier control-polygon length enclosure; see the Bernstein curve model
+    /// and the exactness model.
     pub fn length_bounds(&self) -> CurveResult<BezierLengthBounds2> {
         length_bounds_for_controls(&self.control_points())
     }
@@ -454,8 +452,8 @@ fn controls_are_degree_elevated_linear_parameterization(
     // traces a line image with nonlinear speed. The exact inverse-length
     // shortcut is valid only for the degree-elevated linear Bezier controls
     // `P_i = lerp(P0, P_n, i/n)`. This is the standard Bernstein
-    // degree-elevation identity in Farin (2002), used as a certified metric
-    // fact under Yap's exact-computation boundary (1997).
+    // degree-elevation identity in the Bernstein curve model, used as a certified metric
+    // fact under the exactness model's exact-computation boundary.
     let degree = match positive_usize_as_real(controls.len() - 1) {
         Ok(degree) => degree,
         Err(reason) => return Classification::Uncertain(reason),

@@ -11,18 +11,15 @@
 //! A curve envelope is stronger: it consumes materialized native Bezier/conic
 //! carriers and includes exact coordinate extrema from derivative roots.
 //! Polynomial Bezier extrema use the Bernstein derivative identities described
-//! by Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), and the
+//! by the Bernstein and de Casteljau curve model, and the
 //! rational-quadratic path reuses the crate's quotient-derivative conic bounds.
 //! Algebraic endpoint-image fragments can also contribute when they retain the
 //! source curve that generated the algebraic split: the envelope materializes
 //! the source subcurve over the certified parameter-interval hull and then
 //! includes that exact native bound as a conservative overbound of the true
 //! algebraic subrange.  Fragments without source-curve evidence remain
-//! unsupported. This is the construction/decision split advocated by Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 3-23 (1997).  The broad-phase role mirrors Bentley and Ottmann's sweep-line
-//! candidate filters, "Algorithms for Reporting and Counting Geometric
-//! Intersections," *IEEE Transactions on Computers* C-28(9), 643-647 (1979).
+//! unsupported. This preserves the construction/decision split. The
+//! broad-phase role mirrors sweep-line candidate filtering.
 
 use hyperreal::Real;
 use hypersolve::AlgebraicRootRepresentation;
@@ -354,9 +351,9 @@ fn retained_algebraic_source_bounds(
 /// This is stronger than the interval-hull fallback because it keeps the
 /// algebraic endpoint coordinates as constructed exact objects and admits only
 /// derivative roots whose exact parameter is certified inside the retained
-/// range.  That is Yap's object/predicate boundary: construct endpoint and
+/// range.  That is the exactness model's object/predicate boundary: construct endpoint and
 /// extremum evidence first, then branch only on certified ordering.  The
-/// derivative-root extrema are the standard Bezier bounds from Farin (2002).
+/// derivative-root extrema are the standard Bezier bounds from the Bernstein curve model.
 fn retained_algebraic_source_extrema_bounds(
     source_curve: &BezierSubcurve2,
     start: &BezierParameter2,
@@ -776,8 +773,8 @@ fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<Endp
 /// parameter's defining polynomial, the endpoint coordinate is that exact
 /// rational constant.  This is the elementary quotient-ring identity
 /// `p(alpha) = c` whenever `p(t) - c` is a multiple of the minimal replay
-/// polynomial for `alpha`; the construction stays symbolic in the sense of Yap
-/// (1997) and avoids widening to the parameter isolating interval.  Otherwise
+/// polynomial for `alpha`; the construction stays symbolic in the sense of the exactness model
+/// and avoids widening to the parameter isolating interval.  Otherwise
 /// the represented-root isolating interval remains the conservative evidence.
 fn polynomial_coordinate_interval(
     coordinate: &crate::BezierAlgebraicCoordinateImage,

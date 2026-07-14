@@ -2,13 +2,10 @@
 //!
 //! These helpers centralize the "branch only after the sign/order relation is
 //! known" rule that keeps geometry algorithms robust. The exact-predicate
-//! discipline follows Shewchuk, "Adaptive Precision Floating-Point Arithmetic
-//! and Fast Robust Geometric Predicates" (*Discrete & Computational Geometry*
-//! 18(3), 305-363, 1997). `EdgePreview` is the named exception for UI and IO
+//! discipline follows adaptive robust predicates. `EdgePreview` is the named exception for UI and IO
 //! boundaries where lossy finite-precision output is already part of the
 //! contract; finite-precision intersection output and degeneracy issues are
-//! discussed by Hobby, "Practical Segment Intersection with Finite Precision
-//! Output" (*Computational Geometry* 13(4), 199-214, 1999).
+//! handled by the finite-output segment-intersection adapter.
 
 use std::cmp::Ordering;
 
@@ -117,7 +114,7 @@ pub(crate) fn classify_oriented_line(
         // This is the orientation determinant used throughout planar
         // computational geometry. When available, route it through hyperlimit's
         // certified predicate path rather than comparing approximate floats,
-        // matching Shewchuk's robust-predicate recommendation for topology
+        // matching robust-predicate practice for topology
         // branches.
         let predicate_outcome = hyperlimit::orient2d_with_policy(
             &predicate_point(from),
@@ -202,9 +199,8 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
         // coincide, and how degenerate overlaps are classified. Route the sign
         // of `left - right` through hyperlimit's predicate pipeline so scalar
         // ordering has the same certified/unknown boundary as orientation.
-        // This follows Yap's exact geometric computation split between exact
-        // predicate decisions and approximate edge views; see Yap, "Towards
-        // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
+        // This follows the exactness model's exact geometric computation split between exact
+        // predicate decisions and approximate edge views.
         if let Some(ordering) =
             hyperlimit::compare_reals_with_policy(left, right, policy.predicate_policy).value()
         {
@@ -234,7 +230,7 @@ pub(crate) fn compare_reals_for_split_ordering(
         // certified topology decision, in `EdgePreview`. Comparing the same
         // finite values that will be rendered avoids artificial branch
         // vertices from unsimplified radical expressions; this is the same
-        // finite-output boundary Hobby treats as separate from exact segment
+        // finite-output boundary finite-output segment intersection treats as separate from exact segment
         // intersection predicates.
         return left.partial_cmp(&right);
     }

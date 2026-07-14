@@ -580,8 +580,7 @@ impl CircularArc2 {
     /// semantics should also compare squared distance to
     /// [`CircularArc2::radius_squared`].
     /// The half-plane tests are the finite-arc containment counterpart to the
-    /// circle and arc primitive tests catalogued by Schneider and Eberly,
-    /// *Geometric Tools for Computer Graphics* (Morgan Kaufmann, 2002).
+    /// circle and arc primitive tests catalogued by standard geometric constructions.
     pub fn contains_sweep_point(
         &self,
         point: &Point2,
@@ -1154,10 +1153,9 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
 
     // Bulge sign chooses the arc sweep orientation, so it is a topology
     // decision rather than an IO/display choice. Use bounded exact-real
-    // refinement here instead of a primitive-float fallback, matching Yap's
+    // refinement here instead of a primitive-float fallback, matching the exactness model's
     // requirement that combinatorial decisions be separated from approximate
-    // views. See Yap, "Towards Exact Geometric Computation," *Computational
-    // Geometry* 7.1-2 (1997).
+    // views.
     match bulge.refine_sign_until(-4096) {
         Some(RealSign::Negative) => Ok(true),
         Some(RealSign::Positive) => Ok(false),

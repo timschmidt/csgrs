@@ -1,12 +1,8 @@
 //! Primitive parallel offsets for line and circular-arc segments.
 //!
 //! Offsetting is split into primitive parallel curves, joins/caps, and later
-//! trimming/rebuild work. The staged construction follows Tiller and Hanson,
-//! "Offsets of Two-Dimensional Profiles" (*IEEE Computer Graphics and
-//! Applications* 4(9), 36-46, 1984). The reason checked offsets reject raw
-//! self-intersections instead of accepting them is the offset-curve topology
-//! described by Farouki and Neff, "Analytic Properties of Plane Offset Curves"
-//! (*Computer Aided Geometric Design* 7(1-4), 83-99, 1990), where offsets may
+//! trimming/rebuild work. Checked offsets reject raw self-intersections because
+//! plane offsets may
 //! form cusps and extraneous loops that require trimming.
 
 use hyperreal::{Real, RealSign};
@@ -172,8 +168,7 @@ impl LineSeg2 {
     /// The offset direction is the normalized left normal `(-dy, dx) / length`.
     /// This is the primitive line-profile case used by profile offset
     /// algorithms; higher-level curve-string offsetting must still add joins,
-    /// trim self-intersections, and rebuild topology. See Tiller and Hanson,
-    /// "Offsets of Two-Dimensional Profiles" (1984), for the line/arc
+    /// trim self-intersections, and rebuild topology. See profile-offset construction, for the line/arc
     /// primitive plus trim-and-join framing used by many CAD offset pipelines.
     pub fn offset_left(&self, distance: Real) -> CurveResult<Self> {
         let length = self.length_squared().sqrt()?;
@@ -199,9 +194,8 @@ impl CircularArc2 {
     /// on the exterior, so a positive offset increases radius. Radius collapse
     /// and radius sign reversal are returned as explicit uncertainty because
     /// the primitive arc no longer has a valid circular-arc image at that
-    /// distance. Tiller and Hanson, "Offsets of Two-Dimensional Profiles"
-    /// (1984), describe this concentric-arc primitive as one step in a complete
-    /// profile offset pipeline.
+    /// distance. This concentric-arc primitive is one step in a complete profile
+    /// offset pipeline.
     pub fn offset_left(
         &self,
         distance: Real,
@@ -267,7 +261,7 @@ impl CurveString2 {
     /// that cannot be mitered are connected by a circular arc centered at the
     /// original shared vertex. A complete profile offset pipeline still has to
     /// classify join style, trim self-intersections, and cap open endpoints.
-    /// Tiller and Hanson, "Offsets of Two-Dimensional Profiles" (1984),
+    /// profile-offset construction,
     /// describe this staged primitive, join, and trim structure for
     /// two-dimensional profile offsets.
     pub fn offset_left_with_line_joins(
@@ -296,10 +290,9 @@ impl CurveString2 {
     /// runs the joined open offset construction and then classifies the result
     /// with [`CurveString2::has_self_contacts`]. A detected self contact is
     /// reported as explicit uncertainty so callers can choose a future trimming
-    /// path instead of consuming invalid raw linework. Farouki and Neff,
-    /// "Analytic Properties of Plane Offset Curves" (1990), describe exactly
-    /// these self-intersections and extraneous loops as offset topology that
-    /// must be trimmed before the curve can represent the intended profile.
+    /// path instead of consuming invalid raw linework. Such self-intersections
+    /// and extraneous loops must be trimmed before the curve can represent the
+    /// intended profile.
     pub fn offset_left_checked(
         &self,
         distance: Real,
@@ -400,8 +393,7 @@ impl CurveString2 {
     /// offset, and applies the matching cap at the start point. The `distance`
     /// is the half-width of the outline and must be strictly positive under
     /// the active policy. As with [`CurveString2::offset_left_checked`], this
-    /// is still the raw offset-construction stage described by Tiller and
-    /// Hanson, "Offsets of Two-Dimensional Profiles" (1984): self-contacting
+    /// is still the raw offset-construction stage described by profile-offset construction: self-contacting
     /// input or output is rejected as explicit uncertainty until the
     /// trim/rebuild stage exists.
     pub fn offset_outline(
@@ -476,9 +468,7 @@ impl CurveString2 {
     /// and must be strictly positive under the active policy. As with
     /// [`CurveString2::offset_left_checked`], this is still a raw offset
     /// construction: if the input or resulting closed outline self-contacts,
-    /// the method returns explicit uncertainty instead of trimming. Tiller and
-    /// Hanson, "Offsets of Two-Dimensional Profiles" (1984), describe this
-    /// primitive offset, cap, and trim decomposition for open profile offsets.
+    /// the method returns explicit uncertainty instead of trimming.
     pub fn offset_outline_round_caps(
         &self,
         distance: Real,
@@ -493,8 +483,7 @@ impl CurveString2 {
     /// This variant connects the left and right offset traces with straight
     /// endpoint caps. Those cap lines are the radial/perpendicular endpoint
     /// connectors in the same primitive-offset, cap, and trim decomposition
-    /// used for open profiles by Tiller and Hanson, "Offsets of
-    /// Two-Dimensional Profiles" (1984). The distance is the half-width and
+    /// used for open profiles by profile-offset construction. The distance is the half-width and
     /// must be strictly positive. As with round caps, this constructor rejects
     /// self-contacting input or output instead of trimming the raw outline.
     pub fn offset_outline_butt_caps(
@@ -513,8 +502,7 @@ impl CurveString2 {
     /// line endpoints this can be folded into the endpoint offset segment; for
     /// arc endpoints it becomes an explicit tangent extension line so the
     /// circular offset arc remains exact. This is still the primitive
-    /// offset/cap construction stage described by Tiller and Hanson, "Offsets
-    /// of Two-Dimensional Profiles" (1984): self-contacting input or output is
+    /// offset/cap construction stage described by profile-offset construction: self-contacting input or output is
     /// rejected as uncertainty until the trim/rebuild stage exists.
     pub fn offset_outline_square_caps(
         &self,
@@ -534,8 +522,7 @@ impl Contour2 {
     /// are connected by a circular arc centered at the original shared vertex.
     /// The returned contour is checked for closure, but this method deliberately
     /// does not trim self-intersections or resolve collapsed regions; those
-    /// operations belong to the later full offset pipeline described by Tiller
-    /// and Hanson, "Offsets of Two-Dimensional Profiles" (1984).
+    /// operations belong to the later full offset pipeline described by profile-offset construction.
     pub fn offset_left_with_line_joins(
         &self,
         distance: Real,
@@ -563,7 +550,7 @@ impl Contour2 {
     /// construction and then classifies the result with
     /// [`Contour2::has_self_contacts`]. A detected self contact is reported as
     /// explicit uncertainty so callers do not mistake an untrimmed raw offset
-    /// for a regularized contour. This matches Farouki and Neff's offset-curve
+    /// for a regularized contour. This matches the standard offset-curve
     /// treatment of self-intersections and extraneous loops as a separate
     /// trimming stage, not a property of the primitive parallel curve itself.
     pub fn offset_left_checked(
@@ -1599,7 +1586,7 @@ struct CheckedOutlineContour {
 
 // Contour closure and self-contact checks are deliberately centralized so every
 // open-outline cap style preserves the same "raw construction, no trimming"
-// contract described by Tiller and Hanson (1984).
+// contract described by profile-offset construction.
 fn checked_outline_contour_with_report(
     segments: Vec<Segment2>,
     policy: &CurvePolicy,
@@ -1989,7 +1976,7 @@ fn round_join_arc(
         // A round join is only valid when both offset endpoints are certified
         // to lie on the circle around the source vertex. If exact radii differ,
         // the primitive join stage has reached the unsupported trim/rebuild
-        // boundary described by Tiller-Hanson and Farouki-Neff above.
+        // boundary required by the profile-offset construction above.
         Err(CurveError::ZeroRadiusArc | CurveError::RadiusMismatch) => {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         }

@@ -243,14 +243,10 @@ impl BooleanBoundaryFragmentSet {
     /// This is the first graph-traversal scaffold, not final loop extraction.
     /// It requires every directed fragment endpoint to have at most one outgoing
     /// and one incoming neighbor. That mirrors the regularized traversal graph
-    /// assumed after polygon clipping has inserted and classified intersections
-    /// (G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
-    /// ACM Transactions on Graphics 17(2), 71-83, 1998). Branch points and
-    /// unresolved overlaps are intentionally returned as uncertainty here
-    /// because Vatti-style scanline algorithms resolve those cases with fill
-    /// state and event ordering, not by choosing an arbitrary local successor
-    /// (B. R. Vatti, "A generic solution to polygon clipping," Communications
-    /// of the ACM 35(7), 56-63, 1992).
+    /// assumed after polygon clipping has inserted and classified intersections.
+    /// Branch points and unresolved overlaps intentionally remain uncertainty;
+    /// they require fill state and event ordering rather than an arbitrary
+    /// local successor.
     pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
         self.assemble_chains_with_report(policy)
             .into_chains_classification()
@@ -587,13 +583,7 @@ impl BooleanBoundaryChainSet {
     ///
     /// This is intentionally only loop extraction. It does not decide which
     /// loops are material contours or holes; that nesting/role pass needs
-    /// signed containment and overlap-aware traversal. Greiner and Hormann
-    /// treat closed result polygons as the product of classified traversal
-    /// (G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
-    /// ACM Transactions on Graphics 17(2), 71-83, 1998), while Vatti's
-    /// scanline algorithm determines output contours from fill-state
-    /// transitions (B. R. Vatti, "A generic solution to polygon clipping,"
-    /// Communications of the ACM 35(7), 56-63, 1992). Keeping this conversion
+    /// signed containment and overlap-aware traversal. Keeping this conversion
     /// separate avoids assigning hole/material roles before the graph is fully
     /// resolved.
     pub fn closed_loops(&self) -> Classification<BooleanBoundaryLoopSet> {
@@ -935,12 +925,9 @@ impl BooleanBoundaryLoop {
     /// Clones loop geometry into a checked closed contour.
     ///
     /// The checked constructor validates connectivity again instead of trusting
-    /// the boolean graph. Foster, Hormann, and Popa emphasize that degenerate
-    /// polygon clipping needs explicit validation around boundary coincidences
-    /// (E. L. Foster, K. Hormann, and R. T. Popa, "Clipping simple polygons
-    /// with degenerate intersections," Computers & Graphics: X 2, 100007,
-    /// 2019), so this API keeps geometric validation visible at the conversion
-    /// point.
+    /// the boolean graph. Degenerate clipping needs explicit validation around
+    /// boundary coincidences, so this API keeps validation visible at the
+    /// conversion point.
     pub fn to_contour(&self, fill_rule: FillRule) -> CurveResult<Contour2> {
         Contour2::try_new_with_fill_rule(
             self.fragments
@@ -983,12 +970,9 @@ impl BooleanBoundaryLoopSet {
     /// boundaries share an edge that is a known full-seam overlap), the
     /// remaining work is structural transfer, not graph reconstruction. This
     /// conversion keeps the topological decision external to contour construction,
-    /// matching the graph extraction model used by G. Greiner and K. Hormann while
+    /// matching the graph-extraction model used by polygon clipping while
     /// preserving the contour-only assumptions in `Contour2` as boundary facts
     /// rather than topology claims.
-    ///
-    /// Greiner and Hormann, "Efficient clipping of arbitrary polygons," ACM TOG 17(2),
-    /// 71-83, 1998.
     pub fn from_contours(contours: Vec<Contour2>) -> CurveResult<Self> {
         Self::from_contours_with_report(contours)?
             .into_loops()

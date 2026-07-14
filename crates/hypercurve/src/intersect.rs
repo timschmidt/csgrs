@@ -1,13 +1,9 @@
 //! Intersection result types and early segment topology.
 //!
 //! The primitive line-line, line-circle, and circle-circle formulas are the
-//! standard parametric constructions collected in Schneider and Eberly,
-//! *Geometric Tools for Computer Graphics* (Morgan Kaufmann, 2002). This module
+//! standard parametric constructions. This module
 //! keeps their algebraic branch points explicit so sign/order uncertainty can
-//! propagate instead of being hidden behind a global epsilon; that robustness
-//! policy follows Shewchuk, "Adaptive Precision Floating-Point Arithmetic and
-//! Fast Robust Geometric Predicates" (*Discrete & Computational Geometry*
-//! 18(3), 305-363, 1997).
+//! propagate instead of being hidden behind a global epsilon.
 
 use std::cmp::Ordering;
 
@@ -182,12 +178,10 @@ impl LineLineIntersection {
 /// intentionally about the infinite supporting line. The returned parameters
 /// are affine coordinates on that segment's support, so downstream segment and
 /// arc filters can reuse the same roots without recomputing the quadratic. This
-/// is the line-circle primitive described in Schneider and Eberly, *Geometric
-/// Tools for Computer Graphics* (Morgan Kaufmann, 2002), exposed as a separate
-/// exact predicate boundary in Yap's sense: derive the algebraic relation once,
+/// is the line-circle primitive described in standard geometric constructions, exposed as a separate
+/// exact predicate boundary in the exactness model's sense: derive the algebraic relation once,
 /// then let higher-level objects decide which roots lie on their finite
-/// topology. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// topology.
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum LineCircleRelation {
@@ -287,9 +281,8 @@ impl LineArcIntersection {
 /// disjoint, tangent, and secant outcomes are classified before either arc's
 /// angular sweep is considered. Arc-arc intersection then filters the returned
 /// point witnesses through finite sweep predicates. The radical-axis
-/// construction is the standard circle-circle primitive in Schneider and
-/// Eberly, *Geometric Tools for Computer Graphics* (Morgan Kaufmann, 2002);
-/// exposing it separately follows Yap's recommendation to keep exact algebraic
+/// construction is the standard circle-circle primitive in standard geometric constructions;
+/// exposing it separately follows the exactness model's recommendation to keep exact algebraic
 /// predicates at explicit object boundaries.
 #[derive(Clone, Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
@@ -701,9 +694,7 @@ impl CircularArc2 {
     /// Distinct centers use the usual radical-axis construction; coincident
     /// centers split into same-radius overlap handling and disjoint concentric
     /// circles. Keeping same-circle overlaps out of the ordinary point path is
-    /// essential for the degenerate-boundary cases discussed by Foster,
-    /// Hormann, and Popa, "Clipping Simple Polygons with Degenerate
-    /// Intersections" (*Computers & Graphics: X* 2, article 100007, 2019).
+    /// essential for the degenerate-boundary cases discussed by the degenerate-intersection clipping model.
     pub fn intersect_arc(
         &self,
         other: &Self,
@@ -989,11 +980,8 @@ fn intersect_same_circle_arcs(
     policy: &CurvePolicy,
 ) -> CurveResult<ArcArcIntersection> {
     // Same-circle arc overlaps are degenerate intersections, not ordinary
-    // circle-circle points. Foster, Hormann, and Popa separate coincident
-    // boundary handling from entry/exit traversal (E. L. Foster, K. Hormann,
-    // and R. T. Popa, "Clipping simple polygons with degenerate
-    // intersections," Computers & Graphics: X 2, 100007, 2019). For the MVP
-    // minor/semicircle arc model, the common sweep is bounded by source arc
+    // circle-circle points. For the minor/semicircle arc model, the common
+    // sweep is bounded by source arc
     // endpoints, so endpoint candidates plus an interior sweep test certify
     // whether the common set is empty, point-only, or one finite arc interval.
     let mut candidates = Vec::new();
@@ -1208,7 +1196,7 @@ fn circle_relation_for_distinct_centers(
     let radius_b_squared = b.radius_squared();
     // Radical-axis circle intersection: project from `a.center` toward
     // `b.center`, then step perpendicular by the solved height. This is the
-    // closed-form circle-circle construction in Schneider and Eberly's
+    // standard closed-form circle-circle construction
     // primitive-intersection catalogue; exact sign classification of
     // `height_squared` decides disjoint/tangent/two-point topology.
     let along_numerator = (&radius_a_squared - &radius_b_squared) + &center_distance_squared;
@@ -1470,9 +1458,9 @@ fn line_point_at_for_policy(
         // Edge-preview mode is intentionally approximate. Re-lifting the
         // interpolated point keeps line/arc sweep tests from depending on
         // unsimplified radical expressions in the preview expression. This is
-        // a display-side finite-output choice, the category Hobby isolates from
+        // a display-side finite-output choice, the category finite-output segment intersection isolates from
         // exact segment-intersection predicates in "Practical Segment
-        // Intersection with Finite Precision Output" (1999).
+        // Intersection with Finite Precision Output".
         let x = start_x.mul_add(1.0 - t, end_x * t);
         let y = start_y.mul_add(1.0 - t, end_y * t);
         if x.is_finite() && y.is_finite() {

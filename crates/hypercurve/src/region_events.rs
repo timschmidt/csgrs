@@ -2,7 +2,7 @@
 //!
 //! Region event collection lifts contour-pair events into material/hole keyed
 //! operands. It keeps broad-phase pruning conservative for the same reason as
-//! Bentley and Ottmann's intersection reporting work: candidate generation may
+//! sweep-line scheduling intersection reporting work: candidate generation may
 //! be optimized, but topology still depends on the exact segment relation.
 
 use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
@@ -395,13 +395,9 @@ fn collect_role_pairs(
     for (first_index, first_contour) in first_contours.iter().enumerate() {
         for (second_index, second_contour) in second_contours.iter().enumerate() {
             workload.candidate_pair_count += 1;
-            // Region event collection is still contour-pair based. As in
-            // Bentley and Ottmann's intersection-reporting work, bounding
-            // intervals are only candidate filters here: decided disjoint boxes
-            // skip the pair, while uncertain boxes fall through to exact
-            // contour events. Reference: Bentley and Ottmann, "Algorithms for
-            // Reporting and Counting Geometric Intersections," IEEE
-            // Transactions on Computers C-28(9), 643-647, 1979.
+            // Region event collection is still contour-pair based. Bounding
+            // intervals are only candidate filters: decided disjoint boxes skip
+            // the pair, while uncertain boxes fall through to exact events.
             if let (Some(first_box), Some(second_box)) =
                 (&first_boxes[first_index], &second_boxes[second_index])
                 && aabbs_decided_disjoint(first_box, second_box, policy)

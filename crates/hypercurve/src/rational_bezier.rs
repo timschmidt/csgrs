@@ -3,12 +3,10 @@
 //! Rational quadratics are the lowest-degree Bezier representation that can
 //! carry non-parabolic conics exactly. The homogeneous evaluation below keeps
 //! the polynomial numerator and weight denominator visible instead of
-//! flattening to sampled chords, matching Yap's exact geometric computation
+//! flattening to sampled chords, matching the exactness model's exact geometric computation
 //! advice to preserve object structure until a certified predicate boundary;
-//! see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997). The conic weight classifier follows the rational quadratic
-//! treatment in Farin, *Curves and Surfaces for Computer-Aided Geometric
-//! Design* (5th ed., 2002).
+//! The conic weight classifier follows the rational quadratic
+//! treatment in the Bernstein and de Casteljau curve model.
 
 use std::cmp::Ordering;
 
@@ -262,7 +260,7 @@ impl RationalQuadraticBezier2 {
     /// solve. It first evaluates the homogeneous rational point, then certifies
     /// affine equality through the active curve policy. Returning uncertainty
     /// at denominator boundaries keeps projective singularities explicit in
-    /// the style advocated by Yap's exact geometric computation model.
+    /// the style advocated by the exactness model's exact geometric computation model.
     pub fn contains_point_at_parameter(
         &self,
         point: &Point2,
@@ -284,12 +282,9 @@ impl RationalQuadraticBezier2 {
     /// Each coordinate equation is kept in homogeneous form as
     /// `N_axis(t) - point_axis * D(t) = 0`, so the rational structure is
     /// preserved until exact candidate parameters are certified by
-    /// re-evaluating the conic. That follows Yap's requirement to keep exact
-    /// geometric objects explicit until a predicate boundary; see Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997). The weighted Bernstein numerator/denominator identities follow
-    /// the rational Bezier treatment in Farin, *Curves and Surfaces for
-    /// Computer-Aided Geometric Design* (5th ed., 2002).
+    /// re-evaluating the conic. That follows the exactness model's requirement to keep exact
+    /// geometric objects explicit until a predicate boundary. The weighted Bernstein numerator/denominator identities follow
+    /// the rational Bezier treatment in the Bernstein and de Casteljau curve model.
     pub fn parameters_for_point(
         &self,
         point: &Point2,
@@ -314,8 +309,8 @@ impl RationalQuadraticBezier2 {
     /// polynomial Bezier with control values `w_i * orient(line, P_i)`.
     /// Solving that numerator preserves the homogeneous conic structure instead
     /// of sampling or flattening the curve. This is the rational Bezier form of
-    /// the line-incidence predicates described by Farin (2002), with branch
-    /// decisions routed through exact scalar signs per Yap (1997).
+    /// the line-incidence predicates described by the Bernstein curve model, with branch
+    /// decisions routed through exact scalar signs per the exactness model.
     pub fn relation_to_line(
         &self,
         line: &LineSeg2,
@@ -405,10 +400,8 @@ impl RationalQuadraticBezier2 {
     /// explicit projective-boundary uncertainty. Contacts retain represented or
     /// algebraically isolated parameters and are labelled from exact root
     /// multiplicity parity. This follows
-    /// Yap's exact geometric computation boundary; see Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    /// rational Bezier numerator/denominator identities are from Farin,
-    /// *Curves and Surfaces for CAGD* (5th ed., 2002).
+    /// the exactness model's exact geometric computation boundary. The
+    /// rational Bezier numerator/denominator identities are from the Bernstein and de Casteljau curve model.
     pub fn relation_to_line_with_contacts(
         &self,
         line: &LineSeg2,
@@ -446,9 +439,9 @@ impl RationalQuadraticBezier2 {
     /// For a rational coordinate `N(t) / D(t)`, extrema occur where
     /// `N'(t)D(t) - N(t)D'(t) = 0` and `D(t) != 0`. The cubic terms cancel for
     /// rational quadratics, leaving an exact quadratic root problem. This keeps
-    /// the homogeneous numerator/denominator visible as recommended by Yap
-    /// (1997), and follows the rational Bezier derivative identity in Farin
-    /// (2002).
+    /// the homogeneous numerator/denominator visible as recommended by the exactness model
+    ///, and follows the rational Bezier derivative identity in the Bernstein curve model
+    ///.
     pub fn axis_monotone_parameters(
         &self,
         axis: Axis2,
@@ -528,7 +521,7 @@ impl RationalQuadraticBezier2 {
     /// homogeneous-control identity, same-sign convex-hull disjointness,
     /// certified point and endpoint line-segment images, and shared endpoints, then
     /// leaves overlapping boxes unresolved for a later resultant or subdivision
-    /// predicate. Keeping that boundary explicit follows Yap's
+    /// predicate. Keeping that boundary explicit follows the exactness model's
     /// exact-computation separation between cheap structural facts and complete
     /// topology solvers.
     pub fn relation_to_rational_quadratic(
@@ -713,12 +706,10 @@ impl RationalQuadraticBezier2 {
     /// weighted Bernstein numerator over the common denominator. Strict order
     /// is sign-normalized by the denominator sign, so uniformly negative
     /// homogeneous weights report the same Euclidean order as their positive
-    /// projective image. This follows Yap's exact geometric computation
-    /// boundary; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997). The rational homogeneous Bezier
-    /// model is Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), and
-    /// retained crossing brackets use Sederberg and Nishita, "Curve
-    /// intersection using Bezier clipping" (1990).
+    /// projective image. This follows the exactness model's exact geometric computation
+    /// boundary. The rational homogeneous Bezier
+    /// model is the Bernstein and de Casteljau curve model, and
+    /// retained crossing brackets use Bezier clipping.
     pub fn graph_order_to_rational_quadratic_over_axis(
         &self,
         other: &RationalQuadraticBezier2,
@@ -738,12 +729,10 @@ impl RationalQuadraticBezier2 {
     /// coordinate is exactly shared and the degree-4 homogeneous Bernstein
     /// numerator for the remaining coordinate has one strict sign. Non-strict
     /// mixed quartic roots are retained as represented parameters or isolating
-    /// spans instead of being sampled. This preserves Yap's
-    /// exact geometric computation boundary; see Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    /// rational Bezier identities are from Farin, *Curves and Surfaces for
-    /// CAGD* (5th ed., 2002), and the Bernstein sign argument is the
-    /// Sederberg-Nishita Bezier clipping criterion (1990).
+    /// spans instead of being sampled. This preserves the exactness model's
+    /// exact geometric computation boundary. The
+    /// rational Bezier identities are from the Bernstein and de Casteljau curve model, and the Bernstein sign argument is the
+    /// Bezier clipping criterion.
     pub fn graph_order_to_quadratic_over_axis(
         &self,
         other: &QuadraticBezier2,
@@ -771,11 +760,9 @@ impl RationalQuadraticBezier2 {
     /// degree-5 homogeneous Bernstein numerator for the remaining coordinate
     /// has one strict sign. Non-strict mixed quintic roots are retained as
     /// represented parameters or isolating spans. The branch boundary follows
-    /// Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997);
-    /// the rational identities follow Farin, *Curves and Surfaces for CAGD*
-    /// (5th ed., 2002), and strict Bernstein sign exclusion follows
-    /// Sederberg-Nishita Bezier clipping (1990).
+    /// exact-computation discipline;
+    /// the rational identities follow the Bernstein and de Casteljau curve model, and strict Bernstein sign exclusion follows
+    /// Bezier clipping.
     pub fn graph_order_to_cubic_over_axis(
         &self,
         other: &CubicBezier2,
@@ -798,9 +785,9 @@ impl RationalQuadraticBezier2 {
     /// A same-sign rational Bezier segment sign-normalizes to the positive
     /// case and lies in the convex hull of its Euclidean control points, so a
     /// disjoint hull box is a certified miss. This is the convex-hull predicate
-    /// for rational Beziers described by Farin (2002), used only when exact
-    /// signs prove the weights share one nonzero sign in the EGC sense of Yap
-    /// (1997). Equal weights collapse the homogeneous conic to the polynomial
+    /// for rational Beziers described by the Bernstein curve model, used only when exact
+    /// signs prove the weights share one nonzero sign in the EGC sense of the exactness model
+    ///. Equal weights collapse the homogeneous conic to the polynomial
     /// quadratic with the same control polygon.
     pub fn relation_to_quadratic(
         &self,
@@ -948,9 +935,8 @@ impl RationalQuadraticBezier2 {
         // weights by one nonzero scalar multiplies both numerator and
         // denominator by that scalar and leaves the represented conic segment
         // unchanged. We test proportionality by exact cross-products instead
-        // of division, preserving Yap's exact predicate boundary; the
-        // homogeneous rational Bezier model is the one described by Farin,
-        // Curves and Surfaces for CAGD, 5th ed. (2002).
+        // of division, preserving the exactness model's exact predicate boundary; the
+        // homogeneous rational Bezier model is the one described by the Bernstein and de Casteljau curve model.
         let first = self.weights();
         let second = other.weights();
         [
@@ -980,10 +966,9 @@ impl RationalQuadraticBezier2 {
         // Reversing Bernstein controls represents the same rational image with
         // parameter `1 - t`; multiplying every homogeneous weight by one common
         // nonzero scalar is projectively invisible. Exact cross-products test
-        // that reversed proportionality without division, preserving Yap's
+        // that reversed proportionality without division, preserving the exactness model's
         // certified predicate boundary. The rational Bernstein and reversal
-        // identities are the standard homogeneous Bezier identities in Farin,
-        // *Curves and Surfaces for CAGD* (5th ed., 2002).
+        // identities are the standard homogeneous Bezier identities in the Bernstein and de Casteljau curve model.
         let first = self.weights();
         let second = other.weights();
         [
@@ -1188,9 +1173,9 @@ fn rational_quadratic_graph_order_to_quadratic(
     // the sign of `(N_rational - P_polynomial * D_rational) / D_rational`.
     // The numerator is a degree-4 Bernstein polynomial. A common strict sign
     // certifies order; otherwise exact Bernstein sign subdivision retains the
-    // graph roots as represented parameters or isolating spans. This is Yap's
-    // EGC boundary applied to Farin's homogeneous rational Bezier model, using
-    // Bernstein convex-hull signs as in Sederberg-Nishita Bezier clipping.
+    // graph roots as represented parameters or isolating spans. This is the exactness model's
+    // EGC boundary applied to the Bernstein curve model's homogeneous rational Bezier model, using
+    // Bernstein convex-hull signs as in Bezier clipping.
     match rational.weights_known_same_nonzero_sign(policy) {
         Some(true) => {}
         Some(false) => {
@@ -1626,9 +1611,9 @@ pub(crate) fn isolate_scalar_bernstein_roots(
 ) -> Result<(), UncertaintyReason> {
     // This is the scalar sign-subdivision kernel used for mixed quartic and
     // quintic graph numerators. The control-polygon sign exclusion is the
-    // Bezier clipping certificate of Sederberg and Nishita (1990), the
-    // midpoint split is de Casteljau/Farin Bernstein subdivision, and the API
-    // follows Yap (1997) by returning exact parameters or explicit brackets.
+    // Bezier clipping certificate of Bezier clipping, the
+    // midpoint split is de Casteljau/the Bernstein curve model Bernstein subdivision, and the API
+    // follows the exactness model by returning exact parameters or explicit brackets.
     debug_assert!(controls.len() >= 2);
     let signs = controls
         .iter()
@@ -1781,7 +1766,7 @@ impl QuadraticBezier2 {
     /// includes the equal-weight polynomial collapse and the non-equal
     /// homogeneous numerator shortcut, then inverts the order so callers see
     /// the polynomial curve as `self`. Non-strict mixed quartic roots are
-    /// retained as represented parameters or isolating spans following Yap's
+    /// retained as represented parameters or isolating spans following the exactness model's
     /// exact-predicate boundary.
     pub fn graph_order_to_rational_quadratic_over_axis(
         &self,
@@ -1818,10 +1803,8 @@ impl CubicBezier2 {
     /// homogeneous Bernstein root/sign shortcut when one coordinate is exactly
     /// shared, then invert the result so `self` is the first curve. Non-strict
     /// mixed quintic roots are retained as represented parameters or isolating
-    /// spans rather than sampled topology, preserving Yap's EGC boundary; see
-    /// Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), Farin, *Curves and
-    /// Surfaces for CAGD* (5th ed., 2002), and Sederberg-Nishita (1990).
+    /// spans rather than sampled topology, preserving the exactness model's EGC boundary; see
+    /// exact-computation discipline, the Bernstein and de Casteljau curve model, and Bezier clipping.
     pub fn graph_order_to_rational_quadratic_over_axis(
         &self,
         other: &RationalQuadraticBezier2,
@@ -2085,13 +2068,9 @@ fn same_parameter_dyadic_rational_polynomial_relation(
     } else {
         // This finite same-parameter grid is the conic/polynomial analogue of
         // the low-degree dyadic promotions used for polynomial Beziers. It
-        // follows Yap's exact-geometric-computation boundary by promoting only
+        // follows the exact-geometric-computation boundary by promoting only
         // points that survive exact homogeneous rational evaluation and exact
-        // de Casteljau polynomial evaluation; see Yap, "Towards Exact Geometric
-        // Computation," Computational Geometry 7.1-2 (1997). The homogeneous
-        // rational evaluation is Farin's rational Bezier form, *Curves and
-        // Surfaces for CAGD* (5th ed., 2002), while the subdivision/evaluation
-        // model is de Casteljau's algorithm (1959).
+        // de Casteljau polynomial evaluation.
         Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points }))
     }
 }
@@ -2108,12 +2087,10 @@ fn polynomial_relation_for_equal_weight_rationals(
             // Equal Bernstein weights cancel from `sum B_i(t) w P_i /
             // sum B_i(t) w`, so the rational segment is exactly the
             // polynomial Bezier with the same Euclidean controls. This is the
-            // homogeneous-to-affine reduction described by Farin, *Curves and
-            // Surfaces for CAGD* (5th ed., 2002). Per Yap's EGC model, we
+            // homogeneous-to-affine reduction described by the Bernstein and de Casteljau curve model. Per the exactness model's EGC model, we
             // preserve that object identity and delegate to the polynomial
             // predicate surface instead of pushing an already-polynomial curve
-            // through conservative conic subdivision; see Yap, "Towards Exact
-            // Geometric Computation," Computational Geometry 7.1-2 (1997).
+            // through conservative conic subdivision.
             first_polynomial
                 .relation_to_quadratic(&second_polynomial, policy)
                 .map(Some)
@@ -2163,8 +2140,8 @@ fn polynomial_relation_for_strict_mixed_graph_order(
     // homogeneous numerator is a complete same-parameter graph predicate:
     // strict signs prove no intersection, represented roots promote exact
     // points, and non-represented roots stay as retained parameter regions.
-    // This is the Sederberg-Nishita Bezier clipping exclusion/retention idea
-    // used under Yap's exact branch boundary; Farin gives the homogeneous
+    // This is the Bezier clipping exclusion/retention idea
+    // used under the exactness model's exact branch boundary; the Bernstein curve model gives the homogeneous
     // rational Bernstein identities that produce the degree-4/5 numerators.
     for axis in [Axis2::X, Axis2::Y] {
         let order = match polynomial_controls {
@@ -2293,11 +2270,11 @@ fn line_segment_image_from_controls(
     // Same-sign rational Bezier weights can be homogeneous-sign-normalized to
     // the positive case, preserving the Euclidean convex-hull property, while
     // collinear Bernstein controls keep the image on the supporting line; see
-    // Farin, Curves and Surfaces for CAGD (2002). When every interior control
+    // the Bernstein and de Casteljau curve model. When every interior control
     // is also inside the endpoint box, the segment image is exactly the
-    // endpoint line segment, so Yap's EGC boundary lets us dispatch to the
+    // endpoint line segment, so the exactness model's EGC boundary lets us dispatch to the
     // native exact line-line predicate instead of subdividing an already
-    // linear object; see Yap, "Towards Exact Geometric Computation" (1997).
+    // linear object.
     if controls.len() < 2 {
         return Classification::Decided(None);
     }
@@ -2386,9 +2363,9 @@ fn merge_endpoint_points_into_relation(
             // Rational/conic endpoints are exact lower-degree point predicates.
             // When a later same-parameter conic solve finds additional roots,
             // keep both evidence sets instead of letting an endpoint shortcut
-            // mask interior topology. This follows Yap's exact-geometric-
+            // mask interior topology. This follows the exact-geometric-
             // computation boundary, and the rational homogeneous model is the
-            // standard Farin representation retained by this module.
+            // standard Bernstein curve model representation retained by this module.
             for endpoint in endpoint_points {
                 push_unique_intersection_point(&mut points, endpoint.point().clone(), policy);
             }
@@ -2599,12 +2576,11 @@ fn matching_weight_rational_same_parameter_is_complete(
     // strictly monotone, that coordinate is injective, so every geometric
     // intersection has the same parameter on both curves. The remaining
     // coordinate is then a single exact quadratic Bernstein root problem. This
-    // is the rational analogue of the polynomial graph shortcut above: Farin's
+    // is the rational analogue of the polynomial graph shortcut above: the Bernstein curve model's
     // homogeneous rational Bezier model supplies the shared denominator, and
-    // Yap's EGC model keeps the no-hit conclusion behind exact sign and root
-    // certificates; see Farin, *Curves and Surfaces for CAGD* (5th ed., 2002),
-    // and Yap, "Towards Exact Geometric Computation," Computational Geometry
-    // 7.1-2 (1997).
+    // the exactness model's EGC model keeps the no-hit conclusion behind exact sign and root
+    // certificates; see the Bernstein and de Casteljau curve model,
+    // and exact-computation discipline.
     if first.weights_known_same_nonzero_sign(policy) != Some(true) {
         return Classification::Decided(false);
     }
@@ -2744,12 +2720,11 @@ fn matching_weight_axis_difference_root_set(
 
     // Matching rational weights give both curves the same Bernstein denominator,
     // so same-parameter equality reduces to zeros of the weighted homogeneous
-    // numerator difference. This is Farin's rational Bezier model kept at Yap's
+    // numerator difference. This is the Bernstein curve model's rational Bezier model kept at the exactness model's
     // certified predicate boundary: exact scalar roots are promoted, while roots
     // outside the current scalar proof surface fall back to conservative
-    // subdivision regions; see Farin, *Curves and Surfaces for CAGD* (2002), and
-    // Yap, "Towards Exact Geometric Computation," Computational Geometry 7.1-2
-    // (1997).
+    // subdivision regions; see the Bernstein and de Casteljau curve model, and
+    // exact-computation discipline.
     let (c0, c1, c2) = quadratic_bernstein_to_power(values);
     match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
         Classification::Decided(roots) => {
@@ -2788,8 +2763,8 @@ fn matching_weight_axis_difference_root_cover(
     // quadratic root cannot be represented by the scalar API: the Bernstein
     // convex-hull sign test either discards a subspan or keeps it as a bounded
     // parameter region. This mirrors the Bezier clipping exclusion of
-    // Sederberg and Nishita, "Curve intersection using Bezier clipping" (1990),
-    // while preserving Yap's exact-predicate boundary instead of converting the
+    // Bezier clipping,
+    // while preserving the exactness model's exact-predicate boundary instead of converting the
     // undecidable root into an approximate point.
     let mut exact = Vec::new();
     let mut spans = Vec::new();
@@ -2832,10 +2807,8 @@ fn isolate_rational_quadratic_line_roots(
     // numerator. When the closed-form scalar solver cannot represent a root,
     // retain a certified dyadic Bernstein bracket instead of collapsing the
     // topology decision into an approximate sample. This is the same
-    // convex-hull sign isolation used by Bezier clipping; see Sederberg and
-    // Nishita, "Curve intersection using Bezier clipping" (1990), with the
-    // rational homogeneous numerator/denominator model from Farin, *Curves and
-    // Surfaces for CAGD* (5th ed., 2002), and Yap's exact predicate boundary.
+    // convex-hull sign isolation used by Bezier clipping; see Bezier clipping, with the
+    // rational homogeneous numerator/denominator model from the Bernstein and de Casteljau curve model, and the exactness model's exact predicate boundary.
     let mut exact_parameters = Vec::new();
     let mut spans = Vec::new();
     if let Err(reason) = isolate_scalar_quadratic_roots(
@@ -3114,12 +3087,9 @@ fn point_image_rational_intersections(
 ) -> Classification<Vec<BezierCurveIntersectionPoint>> {
     // Once a rational conic is certified to collapse to one affine point, the
     // curve/curve predicate reduces to the other conic's homogeneous
-    // point-parameter equations. This keeps Yap's exact branch boundary: no
+    // point-parameter equations. This keeps the exactness model's exact branch boundary: no
     // sampled epsilon is introduced, and projective denominator uncertainty is
-    // still surfaced by the rational point solver. See Yap, "Towards Exact
-    // Geometric Computation," Computational Geometry 7.1-2 (1997), and
-    // Farin's rational Bezier equations in *Curves and Surfaces for CAGD*
-    // (5th ed., 2002).
+    // still surfaced by the rational point solver.
     match rational.parameters_for_point(point, policy) {
         Classification::Decided(parameters) if parameters.is_empty() => {
             Classification::Decided(Vec::new())
@@ -3139,7 +3109,7 @@ fn point_image_polynomial_intersections(
     // Polynomial quadratic point queries are complete low-degree Bernstein
     // solves; cubic point queries currently remain a finite dyadic promotion
     // pass, so a miss for cubic controls is not a no-intersection proof. This
-    // mirrors the polynomial Bezier dispatcher and follows Yap's distinction
+    // mirrors the polynomial Bezier dispatcher and follows the exactness model's distinction
     // between certified decisions and conservative unresolved cases.
     match controls {
         [start, control, end] => {
@@ -3187,10 +3157,10 @@ fn line_image_rational_relation(
 ) -> Classification<Option<BezierCurveRelation>> {
     // A line-image curve turns one side of the curve/curve problem into a
     // finite segment containment predicate. The rational side still uses its
-    // homogeneous supporting-line numerator, following Farin's rational Bezier
+    // homogeneous supporting-line numerator, following the Bernstein curve model's rational Bezier
     // incidence formulas. Isolated line roots become curve/curve regions with a
-    // full span on the line-image side, preserving the Sederberg-Nishita
-    // Bezier-clipping bracket (1990) at Yap's exact predicate boundary instead
+    // full span on the line-image side, preserving the Bezier clipping
+    // Bezier-clipping bracket at the exactness model's exact predicate boundary instead
     // of using sampled distances.
     match rational.relation_to_line(line, policy) {
         Classification::Decided(BezierLineRelation::ControlHullDisjoint { .. }) => {
@@ -3235,8 +3205,8 @@ fn line_image_polynomial_relation(
 ) -> Classification<Option<BezierCurveRelation>> {
     // For polynomial quadratics, the supporting-line distance is an exact
     // quadratic Bernstein polynomial. Solving it before falling back to
-    // subdivision is the low-degree slice of the Sederberg-Nishita Bezier
-    // clipping strategy, kept exact by Yap-style certified containment checks.
+    // subdivision is the low-degree slice of the Bezier
+    // clipping strategy, kept exact by exactness- certified containment checks.
     let relation = match polynomial_relation_to_line(controls, line, policy) {
         Classification::Decided(relation) => relation,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -3459,7 +3429,7 @@ fn isolate_curve_regions_recursive(
     // Positive-weight rational Beziers preserve the convex-hull property in
     // Euclidean control space. Subdividing in homogeneous coordinates preserves
     // that rational structure while allowing the same certified hull pruning
-    // used by Bezier clipping; see Sederberg and Nishita (1990). Yap's EGC
+    // used by Bezier clipping; see Bezier clipping. The exactness model's EGC
     // boundary is kept by returning parameter regions instead of toleranced
     // intersection points.
     let first_box = match first.control_box(policy) {

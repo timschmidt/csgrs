@@ -7,12 +7,8 @@
 //!
 //! Arc promotion uses local finite-difference curvature witnesses. The
 //! three-point circle behind that witness is the reciprocal-radius idea of
-//! Menger curvature; see Menger, "Untersuchungen über allgemeine Metrik"
-//! (*Mathematische Annalen* 100, 75-163, 1928). The code chooses a deterministic
-//! streaming circumcircle instead of a multi-point least-squares fit; Kåsa,
-//! "A Circle Fitting Procedure and Its Error Analysis" (*IEEE Transactions on
-//! Instrumentation and Measurement* IM-25(1), 8-14, 1976), is cited near the
-//! circumcircle construction as the relevant least-squares alternative.
+//! Menger curvature. The code chooses a deterministic streaming circumcircle
+//! instead of a multi-point least-squares fit.
 
 use std::f64::consts::PI;
 
@@ -448,8 +444,7 @@ impl CurveString2 {
     /// This is an API-boundary import adapter: primitive floats are accepted at
     /// the boundary, immediately promoted to [`Real`], and stored as native
     /// line geometry before any topology-sensitive operation runs. That follows
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// exact-computation discipline.
     /// Unlike [`CurveString2::reconstruct_from_polyline`], this constructor
     /// makes no attempt to infer arcs from samples.
     pub fn from_finite_line_string(points: &[[f64; 2]]) -> CurveResult<Self> {
@@ -463,9 +458,7 @@ impl CurveString2 {
     /// [`CurveString2::from_finite_line_string`] for callers that generate
     /// finite boundary samples lazily. The samples are still a boundary import:
     /// they are collected, promoted to [`Real`], and stored as native line
-    /// geometry before topology-sensitive work proceeds. This follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// geometry before topology-sensitive work proceeds. This follows exact-computation discipline.
     pub fn from_finite_point_iter<I>(points: I) -> CurveResult<Self>
     where
         I: IntoIterator<Item = [f64; 2]>,
@@ -740,7 +733,7 @@ impl Contour2 {
     /// Repeated finite source points, including a repeated closing point, are
     /// counted as discarded source-edge metadata in the retained record. They
     /// are not allowed to become zero-length native edges, matching the
-    /// exact-object boundary described by Yap.
+    /// exact-object boundary described by the exactness model.
     pub fn import_finite_ring_with_source(
         points: &[[f64; 2]],
         fill_rule: FillRule,
@@ -1248,8 +1241,7 @@ fn arc_run(
 
         // The local signed area is the finite-difference curvature witness.
         // Requiring a stable sign follows Menger's point-triple curvature idea:
-        // Menger, "Untersuchungen über allgemeine Metrik" (Mathematische
-        // Annalen 100, 75-163, 1928).
+        // Menger curvature.
         let local_turn = signed_area2(&samples[candidate - 2], &samples[candidate - 1], point);
         if local_turn.signum() != circle.sign
             && local_turn.abs()
@@ -1302,9 +1294,7 @@ fn circumcircle(
     // This is the three-point circumcircle behind the finite curvature test.
     // Algebraic multi-point fits such as Kåsa's method are better for noisy
     // whole-run least squares, but this local formula keeps reconstruction
-    // streaming and deterministic. See Kåsa, "A Circle Fitting Procedure and
-    // Its Error Analysis" (IEEE Transactions on Instrumentation and
-    // Measurement IM-25(1), 8-14, 1976).
+    // streaming and deterministic.
     let ab2 = abx * abx + aby * aby;
     let ac2 = acx * acx + acy * acy;
     let denom = 2.0 * cross;

@@ -244,16 +244,10 @@ impl BooleanFragmentSelection {
     /// Converts selected classifications into directed boundary fragments.
     ///
     /// This performs the "emit in source direction or reverse direction" step
-    /// after local boolean classification. Greiner-Hormann style traversal
-    /// follows selected directed polygon chains after entry/exit classification
-    /// (G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
-    /// ACM Transactions on Graphics 17(2), 71-83, 1998). We keep shared
-    /// boundaries in `unresolved_boundaries` instead of applying a local
-    /// tie-breaker because degenerate polygon clipping papers, including
-    /// Foster, Hormann, and Popa, "Clipping simple polygons with degenerate
-    /// intersections," Computers & Graphics: X 2, 100007, 2019, show that
-    /// boundary coincidences need explicit handling separate from ordinary
-    /// enter/exit classification.
+    /// after local boolean classification. Polygon-clipping traversal follows
+    /// selected directed chains after entry/exit classification. Shared
+    /// boundaries remain in `unresolved_boundaries` because coincident edges
+    /// require handling distinct from ordinary enter/exit classification.
     pub fn emit_boundary_fragments(
         &self,
         fragments: &RegionFragmentSet,
@@ -676,9 +670,7 @@ fn reverse_emitted_action(action: BooleanFragmentAction) -> BooleanFragmentActio
     // Region contour bins carry signed fill roles independently of storage
     // direction. Whenever the source region is filled right of traversal, the
     // output direction is the opposite of the canonical filled-left action.
-    // Vatti frames clipping output as fill-state transitions
-    // (B. R. Vatti, "A generic solution to polygon clipping," Communications
-    // of the ACM 35(7), 56-63, 1992); this is the signed-contour equivalent of
+    // In fill-state clipping terms, this is the signed-contour equivalent of
     // flipping the transition direction for a right-filled edge.
     match action {
         KeepSourceDirection => KeepReversed,
@@ -783,20 +775,10 @@ pub(crate) fn validate_boolean_fragment_classification_boundary_action(
 impl RegionFragmentSet {
     /// Classifies fragments against the opposite region for a boolean operation.
     ///
-    /// Algorithm note: this is the local selection stage used by many planar
-    /// clipping algorithms after intersection insertion. Greiner and Hormann
-    /// mark split polygon chains as entry/exit after intersections are inserted
-    /// (G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
-    /// ACM Transactions on Graphics 17(2), 71-83, 1998). Vatti's sweep-line
-    /// algorithm also reduces result construction to sorted edge events and
-    /// fill-state transitions (B. R. Vatti, "A generic solution to polygon
-    /// clipping," Communications of the ACM 35(7), 56-63, 1992). Martinez,
-    /// Rueda, and Feito formalize boolean selection from segment classifications
-    /// for general polygons (F. Martinez, A. J. Rueda, and F. R. Feito, "A new
-    /// algorithm for computing Boolean operations on polygons," Computers &
-    /// Geosciences 35(6), 1177-1185, 2009). `hypercurve` keeps this stage
-    /// explicit and returns `BoundaryNeedsResolution` instead of folding shared
-    /// boundaries into an epsilon-based inside/outside decision.
+    /// This is the local selection stage used by planar clipping algorithms
+    /// after intersection insertion. `hypercurve` keeps the stage explicit and
+    /// returns `BoundaryNeedsResolution` instead of folding shared boundaries
+    /// into an epsilon-based inside/outside decision.
     pub fn classify_for_boolean(
         &self,
         first: &RegionView2<'_>,

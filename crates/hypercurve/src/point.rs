@@ -87,8 +87,7 @@ impl Point2 {
     ///
     /// The facts expose exact-rational schedule eligibility and symbolic
     /// dependency families without exposing scalar internals. They are intended
-    /// for object-level dispatch in the style described by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// for object-level dispatch in the style described by exact-computation discipline.
     pub fn structural_facts(&self) -> crate::Point2Facts {
         crate::facts::point2_facts(self)
     }

@@ -5,21 +5,18 @@
 //! a first-class exact carrier instead of forcing an approximate collapse: an
 //! exact parameter is either a represented [`Real`] or an algebraic root
 //! described by a power-basis polynomial and an isolating interval in `[0, 1]`.
-//! That is the representation boundary Yap prescribes for exact geometric
+//! That is the representation boundary the exactness model prescribes for exact geometric
 //! computation: construct exact objects first, then branch only through exact
-//! predicates or explicit uncertainty; see Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
+//! predicates or explicit uncertainty.
 //!
-//! The root-count validation below uses Sturm sequences. The sign-variation
-//! theorem used here is the classical one from Sturm, "Memoire sur la
-//! resolution des equations numeriques," *Bulletin des Sciences de Ferussac*
-//! 11 (1829). Hypercurve intentionally stores the validated interval with the
+//! The root-count validation below uses Sturm sequences. Hypercurve stores the
+//! validated interval with the
 //! parameter so later Bezier boolean and offset APIs can carry a certificate
 //! rather than re-solving the root from scratch.
 //! Linear defining polynomials are additionally recoverable as represented
 //! [`Real`] values when the exact quotient is certified to be the singleton
 //! root. That is the first narrow "true algebraic root materialization" bridge:
-//! it keeps Yap's construction/decision separation, but it avoids retaining an
+//! it keeps the exactness model's construction/decision separation, but it avoids retaining an
 //! algebraic wrapper when the exact root already lives in the scalar tower.
 
 use std::cmp::Ordering;

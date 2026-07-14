@@ -1,12 +1,11 @@
 //! Retained source records for lossy file-format curve imports.
 //!
-//! Import adapters sit on Yap's exact-computation boundary: finite file data
+//! Import adapters sit on the exactness model's exact-computation boundary: finite file data
 //! may be admitted, but its provenance and tolerance must remain visible until
 //! certified predicates replace it.  The records here are deliberately small
 //! evidence objects for STEP/DXF/application import layers. They do not parse
 //! those formats, and they do not make imported finite samples native topology.
-//! See Chee Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 3-23 (1997).
+//!
 
 use crate::{CurveError, CurveResult, RetainedTopologyStatus};
 

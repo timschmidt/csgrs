@@ -286,9 +286,7 @@ fn rect_from_bounds(min_x: Real, min_y: Real, max_x: Real, max_y: Real) -> Optio
 
 // Regularizes the degenerate strip case where both input boundaries share a
 // full collinear span. That case is the canonical failure mode highlighted by
-// Foster, Hormann, and Popa, "Clipping simple polygons with degenerate
-// intersections," Computers & Graphics: X 2, 100007, 2019,
-// https://doi.org/10.1016/j.cagx.2019.100007, and it must be resolved in the
+// the degenerate-intersection clipping model, and it must be resolved in the
 // geometry kernel so CAD callers receive ordinary Region2 values rather than
 // crate-local workarounds.
 pub(crate) fn coextensive_axis_rect_region_boolean(
@@ -381,9 +379,8 @@ fn strip_boolean_region(
         if touches && matches!(op, BooleanOp::Union | BooleanOp::Xor) {
             // A zero-width overlap here means two same-width strips share an
             // entire edge. Regularized polygon clipping removes that internal
-            // edge for union and symmetric difference; see Foster, Hormann,
-            // and Popa, "Clipping simple polygons with degenerate
-            // intersections" (2019). Keeping this in the rectangle fast path
+            // edge for union and symmetric difference; see the degenerate-intersection clipping model "Clipping simple polygons with degenerate
+            // intersections". Keeping this in the rectangle fast path
             // makes it agree with the general shared-boundary resolver instead
             // of leaking two touching material contours.
             let min = real_min(&first_min, &second_min, policy).ok_or(UncertaintyReason::Ordering);
@@ -645,16 +642,10 @@ impl RegionView2<'_> {
     /// Algorithm note: this method wires together the standard polygon clipping
     /// stages: collect intersection events, split input boundaries at those
     /// events, classify each fragment against the opposite operand, and traverse
-    /// selected directed fragments into closed loops. Greiner and Hormann
-    /// describe split-boundary traversal after entry/exit classification
-    /// (G. Greiner and K. Hormann, "Efficient clipping of arbitrary polygons,"
-    /// ACM Transactions on Graphics 17(2), 71-83, 1998). Martinez, Rueda, and
-    /// Feito describe boolean selection from segment classifications for
-    /// general polygons (F. Martinez, A. J. Rueda, and F. R. Feito, "A new
-    /// algorithm for computing Boolean operations on polygons," Computers &
-    /// Geosciences 35(6), 1177-1185, 2009). `hypercurve` keeps each stage
-    /// explicit so uncertain tangencies, shared boundaries, and branch vertices
-    /// can stop the pipeline instead of being resolved by a global epsilon.
+    /// selected directed fragments into closed loops. `hypercurve` keeps each
+    /// stage explicit so uncertain tangencies, shared boundaries, and branch
+    /// vertices can stop the pipeline instead of being resolved by a global
+    /// epsilon.
     pub fn boolean_boundary_loops(
         &self,
         other: &RegionView2<'_>,
@@ -681,13 +672,9 @@ impl RegionView2<'_> {
     /// Computes a role-assigned boolean region against another region view.
     ///
     /// After boundary traversal, closed output contours are assigned to material
-    /// and hole bins by containment depth. Hormann and Agathos discuss the
-    /// point-in-polygon classification problem that underlies this nesting test
-    /// (K. Hormann and A. Agathos, "The point in polygon problem for arbitrary
-    /// polygons," Computational Geometry 20(3), 131-144, 2001). `hypercurve`
-    /// treats any boundary result during nesting as explicit uncertainty,
-    /// because a boundary touch means the output contour graph still needs a
-    /// degeneracy-specific resolver.
+    /// and hole bins by containment depth. Any boundary result during nesting
+    /// remains explicit uncertainty because a boundary touch means the output
+    /// contour graph still needs a degeneracy-specific resolver.
     pub fn boolean_region(
         &self,
         other: &RegionView2<'_>,
@@ -1503,12 +1490,8 @@ pub(crate) fn boolean_boundary_loops_between(
             relation,
             contact,
         })) => {
-            // This follows Martinez et al.'s selection decomposition for
-            // containments and then converts the contour-level closed-result
-            // set directly to role-less loops.
-            // F. Martinez, A. J. Rueda, and F. R. Feito, "A new algorithm
-            // for computing Boolean operations on polygons," Computers &
-            // Geosciences 35(6), 1177-1185, 2009.
+            // Apply the containment selection decomposition, then convert the
+            // contour-level closed result directly to role-less loops.
             if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
                 return Ok(Classification::Decided(
                     BooleanBoundaryLoopSet::from_contours(contours)?,
@@ -1648,12 +1631,9 @@ fn xor_boundary_contours_by_region(
     // The checked-contour API can express the boundary loops of a symmetric
     // difference, but it cannot attach material/hole roles to them. Build the
     // role-aware region first, then expose its checked boundary contours.
-    // This follows the set identity used in Martinez, Rueda, and Feito's
-    // segment-selection view of polygon booleans (F. Martinez, A. J. Rueda,
-    // and F. R. Feito, "A new algorithm for computing Boolean operations on
-    // polygons," Computers & Geosciences 35(6), 1177-1185, 2009) while keeping
-    // remaining ambiguous shared boundaries out of the direct traversal graph
-    // until the general overlap/branch resolver lands.
+    // This follows the segment-selection set identity for polygon booleans
+    // while keeping ambiguous shared boundaries out of the direct traversal
+    // graph until the general overlap/branch resolver lands.
     match xor_region_by_difference_union(first, second, fill_rule, policy)? {
         Classification::Decided(region) => Ok(Classification::Decided(clone_boundary_contours(
             &region.as_view(),
@@ -2401,9 +2381,8 @@ pub(crate) fn boundary_contact_overlap_flag(
 /// are sensitive to shared edges (for example Union and Difference special cases)
 /// can avoid entering the full fragment traversal.
 ///
-/// This follows the shared-boundary split analysis in Foster, Hormann, and Popa,
-/// *Clipping simple polygons with degenerate intersections*, Computers & Graphics:
-/// X 2, 100007, 2019.
+/// This follows the shared-boundary split analysis in the
+/// degenerate-intersection clipping model.
 pub(crate) fn region_boundary_has_overlap(
     first: &RegionView2<'_>,
     second: &RegionView2<'_>,
@@ -2618,8 +2597,7 @@ where
             // cases with no crossing events. Sampling vertices plus each
             // fragment representative keeps the decision tied to the
             // boundary-first point-in-region classification described by
-            // Hormann and Agathos, "The Point in Polygon Problem for Arbitrary
-            // Polygons" (2001), rather than an epsilon-based bounding rule.
+            // boundary-first winding classification, rather than an epsilon-based bounding rule.
             match point_is_inside_or_boundary(segment.start(), &mut classify_point) {
                 Classification::Decided(true) => {}
                 Classification::Decided(false) => return Ok(Classification::Decided(false)),
@@ -2666,9 +2644,9 @@ fn containment_boundary_contours(
     relation: BoundaryContainmentRelation,
 ) -> Option<Vec<Contour2>> {
     // These containment identities are regularized set identities, not graph
-    // traversal guesses. They cover the subset cases Foster, Hormann, and Popa
+    // traversal guesses. They cover the subset cases the degenerate-intersection clipping model
     // separate from ordinary entry/exit traversal for degenerate polygon
-    // clipping (2019). Difference is decided immediately when the left operand
+    // clipping. Difference is decided immediately when the left operand
     // is contained by the right. The opposite `container - touching subset`
     // case is handled by the certified overlap rebuild below, where coincident
     // zero-area edges are dropped before the remaining boundary is assembled.
@@ -2732,11 +2710,9 @@ fn boundary_contact_boundary_contours(
     policy: &CurvePolicy,
     kind: BoundaryContactKind,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
-    // Boundary-only contacts carry no filled area. Foster, Hormann, and Popa
-    // identify these contact degeneracies as cases that should be handled
-    // separately from ordinary traversal (E. L. Foster, K. Hormann, and R. T.
-    // Popa, "Clipping simple polygons with degenerate intersections,"
-    // Computers & Graphics: X 2, 100007, 2019). Point-only contacts keep their
+    // Boundary-only contacts carry no filled area. The degenerate-intersection
+    // clipping model treats them separately from ordinary traversal.
+    // Point-only contacts keep their
     // separate loops; shared-edge contacts must remove the coincident edge for
     // union/xor so the result does not expose an internal seam as boundary.
     Ok(Classification::Decided(match op {
@@ -2789,10 +2765,8 @@ pub(crate) fn boundary_contours_resolving_shared_boundaries(
 
     let emitted = selection.emit_boundary_fragments(fragments)?;
 
-    // Exact local fill-side ownership has resolved every coincident pair before
-    // traversal. This is the regularized fill-state treatment described by
-    // Vatti's scanline formulation (B. R. Vatti, "A generic solution to polygon
-    // clipping," Communications of the ACM 35(7), 56-63, 1992).
+    // Exact local fill-side ownership resolves every coincident pair before
+    // traversal, following regularized fill-state clipping.
     let chains = match emitted.assemble_chains(policy) {
         Classification::Decided(chains) => chains,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2978,12 +2952,8 @@ fn xor_region_by_difference_union(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Region2>> {
-    // Region XOR is the symmetric difference `(A - B) union (B - A)`. Martinez,
-    // Rueda, and Feito describe polygon boolean operations as combinations of
-    // selected classified segments (F. Martinez, A. J. Rueda, and F. R. Feito,
-    // "A new algorithm for computing Boolean operations on polygons,"
-    // Computers & Geosciences 35(6), 1177-1185, 2009); using the set identity
-    // here lets the region-level API reuse the better-tested difference and
+    // Region XOR is the symmetric difference `(A - B) union (B - A)`. Using
+    // the set identity lets the region-level API reuse the better-tested difference and
     // union role-assignment paths while the lower boundary graph still grows a
     // dedicated overlap/branch resolver for direct XOR traversal.
     let first_only =
@@ -3007,11 +2977,9 @@ pub(crate) fn merge_disjoint_region_bins(first: Region2, second: Region2) -> Reg
     // The two symmetric-difference halves are interior-disjoint by set
     // definition. Directly merging their signed contour bins preserves
     // boundary-only contacts that a contour-only nesting pass would reject as
-    // ambiguous. This mirrors Vatti's fill-state view of clipping output
-    // (B. R. Vatti, "A generic solution to polygon clipping," Communications
-    // of the ACM 35(7), 56-63, 1992): after the two difference regions have
-    // already crossed the fill-state boundary, their explicit material/hole
-    // bins can be concatenated without inventing a new traversal graph.
+    // ambiguous. After both difference regions have crossed the fill-state
+    // boundary, their explicit material/hole bins can be concatenated without
+    // inventing a new traversal graph.
     let mut material_contours = first.material_contours().to_vec();
     material_contours.extend(second.material_contours().iter().cloned());
     let mut hole_contours = first.hole_contours().to_vec();
@@ -3049,11 +3017,9 @@ fn same_contour_multiset(first: &[&Contour2], second: &[&Contour2]) -> bool {
 
 pub(crate) fn clone_boundary_contours(region: &RegionView2<'_>) -> Vec<Contour2> {
     // Exact contour-bin identity fast paths keep coincident boundaries out of
-    // the general traversal graph. Foster, Hormann, and Popa show that
-    // degenerate polygon clipping benefits from separating coincident-boundary
-    // cases from ordinary entry/exit traversal (E. L. Foster, K. Hormann, and
-    // R. T. Popa, "Clipping simple polygons with degenerate intersections,"
-    // Computers & Graphics: X 2, 100007, 2019). This fast path handles exact
+    // the general traversal graph. Degenerate polygon clipping benefits from
+    // separating coincident boundaries from ordinary entry/exit traversal.
+    // This fast path handles exact
     // reordered contours, cyclic start-index changes, and reversed traversal
     // within each role bin; split or otherwise equivalent-but-nonidentical
     // boundaries still belong to the future overlap resolver.
@@ -3071,11 +3037,8 @@ pub(crate) fn empty_operand_boundary_contours(
     op: BooleanOp,
 ) -> Vec<Contour2> {
     // Empty-set identities are regularized boolean identities, so they should
-    // not enter the clipping graph at all. Vatti's scanline formulation
-    // describes boolean construction in terms of fill-state transitions
-    // (B. R. Vatti, "A generic solution to polygon clipping," Communications
-    // of the ACM 35(7), 56-63, 1992); with one empty operand, those transitions
-    // reduce to the nonempty operand or to the empty set.
+    // not enter the clipping graph at all. With one empty operand, fill-state
+    // transitions reduce to the nonempty operand or to the empty set.
     match (first.is_empty(), second.is_empty(), op) {
         (true, _, BooleanOp::Union | BooleanOp::Xor) => clone_boundary_contours(second),
         (_, true, BooleanOp::Union | BooleanOp::Xor | BooleanOp::Difference) => {

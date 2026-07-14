@@ -2,13 +2,9 @@
 //!
 //! This is the intersection-insertion stage used by later boolean selection:
 //! every event becomes an ordered marker on each affected source segment before
-//! fragments are rebuilt. Greiner and Hormann's clipping pipeline uses the same
-//! "insert intersections, then traverse classified pieces" shape in "Efficient
-//! Clipping of Arbitrary Polygons" (*ACM Transactions on Graphics* 17(2),
-//! 71-83, 1998). Finite display output can disturb marker order, so the
-//! preview-only comparator is intentionally isolated here; see Hobby,
-//! "Practical Segment Intersection with Finite Precision Output"
-//! (*Computational Geometry* 13(4), 199-214, 1999).
+//! fragments are rebuilt. Polygon clipping uses the same "insert intersections,
+//! then traverse classified pieces" shape. Finite display output can disturb
+//! marker order, so the preview-only comparator is intentionally isolated here.
 
 use std::cmp::Ordering;
 
@@ -428,7 +424,7 @@ fn insert_unique_sorted_marker(
                 let distance = marker.point.distance_squared(&markers[index].point);
                 // Equal parameters must also be the same geometric marker. Two
                 // different points at one parameter would represent a broken
-                // split graph, the kind of degeneracy Greiner-Hormann style
+                // split graph, the kind of degeneracy polygon-clipping style
                 // traversal cannot resolve by local ordering alone.
                 return match is_zero(&distance, policy) {
                     Some(true) => Ok(()),
