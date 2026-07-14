@@ -21,15 +21,9 @@ use crate::{PcbSketch, PcbSketchExt, Scalar};
 /// The check treats a high-current pad as supported when nearby same-net copper
 /// includes a zone/pour, enough parallel vias, or a segment whose approximate
 /// width meets the preferred entry width. IPC-2221B and IPC-2152 frame copper
-/// width, copper area, and thermal rise as design constraints. Black,
-/// "Electromigration--A brief survey and some recent results", IEEE
-/// Transactions on Electron Devices, 1969, is a foundational current-density
-/// reliability reference; Bhargava et al., "DC-DC Buck Converter EMI Reduction
-/// Using PCB Layout Modification", IEEE Transactions on Electromagnetic
-/// Compatibility, 2011, motivates local loop and copper-entry review around
-/// power-conversion layouts. Same-layer support candidates use the deterministic
-/// broad-phase grid pattern from Ericson, *Real-Time Collision Detection*
-/// (2005), before exact boundary-distance review.
+/// width, copper area, and thermal rise as design constraints. Same-layer
+/// support candidates use a deterministic grid before exact boundary-distance
+/// review.
 pub fn power_pad_entry_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -113,15 +107,10 @@ pub fn power_pad_entry_readiness(
 /// This check complements `power-via-array-readiness`: via arrays address
 /// current sharing, while this readiness proxy checks local return geometry near
 /// each high-current via. IPC-2221B and IPC-2152 frame conductor geometry and
-/// current capacity as layout constraints; Black, "Electromigration--A brief
-/// survey and some recent results", IEEE Transactions on Electron Devices,
-/// 1969, gives the current-density reliability context. Bhargava et al.,
-/// "DC-DC Buck Converter EMI Reduction Using PCB Layout Modification", IEEE
-/// Transactions on Electromagnetic Compatibility, 2011, motivates local
-/// loop-area review around power-conversion copper.
+/// current capacity as layout constraints.
 ///
 /// Ground-return candidates use `CopperSpatialIndex` as a conservative broad
-/// phase in the Ericson, *Real-Time Collision Detection* (2005) sense; the
+/// phase; the
 /// return decision still uses exact polygon boundary distance.
 pub fn power_via_return_readiness(
     board: &BoardModel,

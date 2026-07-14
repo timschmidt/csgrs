@@ -11,42 +11,6 @@ The project is a readiness reviewer, not a fabricator-certified CAM engine. Its 
 to make release-package risk visible before upload and to preserve the evidence behind
 each finding.
 
-## Hyper Ecosystem
-
-`hyperdrc` is a domain crate that bridges current CAM/parser tooling and the exact
-Hyper stack.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar, source-grid,
-  coordinate, stackup, and rule values where checks can preserve them.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): exact vector, point,
-  transform, and projective carriers used at geometry handoff boundaries.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy,
-  sign/ordering decisions, segment classification, and lattice re-exports.
-- [hypersolve](https://github.com/timschmidt/hypersolve): exact residual replay and
-  solver-certification surfaces for future electrical, routing, and fit checks.
-- [hypercurve](https://github.com/timschmidt/hypercurve): exact-aware planar curves,
-  Bezier contours, regions, and boolean/root-isolation readiness.
-- [hypertri](https://github.com/timschmidt/hypertri): triangulation, CDT, and
-  D-dimensional simplex carriers for CAM meshing and validation pipelines.
-- [hyperpath](https://github.com/timschmidt/hyperpath): routing, clearance, tangent,
-  via, board-outline, toolpath, and path provenance carriers.
-- [hypermesh](https://github.com/timschmidt/hypermesh) and
-  [hypervoxel](https://github.com/timschmidt/hypervoxel): exact mesh and sparse-grid
-  volumetric handoff targets for package, enclosure, and manufacturing evidence.
-- [hyperparts](https://github.com/timschmidt/hyperparts): part, package, interface,
-  process, BOM, and compatibility evidence.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit) and
-  [hyperphysics](https://github.com/timschmidt/hyperphysics): future electrical,
-  thermal, material, and coupled readiness checks.
-- [hyperpack](https://github.com/timschmidt/hyperpack) and
-  [hyperevolution](https://github.com/timschmidt/hyperevolution): exact verification,
-  portfolio search, and optimization loops for placement and package review.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep) and
-  [hypersdf](https://github.com/timschmidt/hypersdf): exact BREP and signed-distance
-  evidence models for future mechanical/manufacturing handoffs.
-- [csgrs](https://github.com/timschmidt/csgrs): current Gerber parsing, polygon offset,
-  and boolean interop target used by the prototype.
-
 ## Typical PCB Readiness Problems
 
 PCB release packages are not just copper polygons. Boards fail review because layer
@@ -201,6 +165,26 @@ cargo run -- \
 Useful converter entry points include `--converter kicad-cli`, `--convert-input`,
 `--conversion-output-dir`, and sidecar export flags for handoff/review artifacts.
 
+The library entry point accepts the same `Cli` model and returns a `RunOutcome`
+instead of exiting the process:
+
+```rust,no_run
+use clap::Parser;
+use hyperdrc::{Cli, run};
+
+fn main() -> anyhow::Result<()> {
+    let cli = Cli::try_parse_from([
+        "hyperdrc",
+        "release-package.zip",
+        "--format",
+        "json",
+    ])?;
+    let outcome = run(cli)?;
+    println!("{} active finding(s)", outcome.report.violation_count);
+    Ok(())
+}
+```
+
 ## Readiness Coverage
 
 The default suite covers five broad surfaces:
@@ -237,35 +221,6 @@ roadmap remains in [docs/design-readiness-plan.md](docs/design-readiness-plan.md
 - [benches](benches/README.md): benchmark and smoke-performance entry points.
 - [proptest-regressions](proptest-regressions/README.md): persisted property-test
   regression seeds.
-
-## Usage
-
-Use the CLI for release-package checks and the library API when integrating into a
-larger workflow:
-
-```sh
-hyperdrc board.zip --format json --config hyperdrc.json
-hyperdrc board.kicad_pcb --check package --check stackup --format sarif
-```
-
-```rust,ignore
-use clap::Parser;
-use hyperdrc::{Cli, run};
-
-let cli = Cli::try_parse_from([
-    "hyperdrc",
-    "release-package.zip",
-    "--format",
-    "json",
-])?;
-let outcome = run(cli)?;
-assert!(outcome.report.summary.active_count <= outcome.report.summary.total_count);
-```
-
-Major surfaces include parser diagnostics, rule/profile resolution, waivers, baselines,
-package and generated-output freshness checks, geometry/readiness findings, and report
-sinks for text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit,
-SQLite, Arrow IPC, Parquet, and review overlays.
 
 ## Exact Path Rule Handoff
 
@@ -306,19 +261,21 @@ source provenance.
 
 ## Development
 
-Useful local checks:
-
 ```sh
-cargo test
+cargo fmt --all -- --check
+cargo test --locked
+cargo check --benches --locked
+cargo clippy --all-targets --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
 cargo bench --bench parser_geometry_smoke
 cargo bench --bench fixture_smoke
 ```
 
 ## References
 
-hyperdrc comments and readiness heuristics cite these design and manufacturing
-references where the code implements related checks. Entries are kept in MLA
-style so they can be copied into engineering review notes.
+These standards and research sources inform the parser, geometry, reporting,
+and readiness models. They are consolidated here so implementation comments can
+stay focused on local behavior and evidence boundaries.
 
 - Areny, F. A., et al. "A Study of SnAgCu Solder Paste Transfer Efficiency and Effects of Optimal Reflow Profile on Solder Deposits." *Microelectronic Engineering*, 2011, https://doi.org/10.1016/j.mee.2011.02.104.
 - Andrew, A. M. "Another Efficient Algorithm for Convex Hulls in Two Dimensions." *Information Processing Letters*, vol. 9, no. 5, 1979, pp. 216-219, https://doi.org/10.1016/0020-0190(79)90072-3.
@@ -379,3 +336,14 @@ style so they can be copied into engineering review notes.
 - Wong, Hang, et al. "Small Antennas in Wireless Communications." *Proceedings of the IEEE*, vol. 100, no. 7, 2012, pp. 2109-2121, https://doi.org/10.1109/JPROC.2012.2188089.
 - Xu, Jun, and Shuo Wang. "Investigating a Guard Trace Ring to Suppress the Crosstalk Due to a Clock Trace on a Power Electronics DSP Control Board." *IEEE Transactions on Electromagnetic Compatibility*, vol. 57, no. 3, 2015, pp. 546-554, https://doi.org/10.1109/TEMC.2015.2403289.
 - Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*, vol. 7, nos. 1-2, 1997, pp. 3-23, https://doi.org/10.1016/0925-7721(95)00040-2.
+
+## Hyper Ecosystem
+
+`hyperdrc` uses [csgrs](https://github.com/timschmidt/csgrs) for current CAM
+polygon adapters and [hyperreal](https://github.com/timschmidt/hyperreal),
+[hyperlimit](https://github.com/timschmidt/hyperlimit), and
+[hyperpath](https://github.com/timschmidt/hyperpath) for exact-aware rule
+handoffs. Related domain integrations include
+[hyperparts](https://github.com/timschmidt/hyperparts),
+[hypercircuit](https://github.com/timschmidt/hypercircuit), and
+[hyperphysics](https://github.com/timschmidt/hyperphysics).

@@ -197,9 +197,8 @@ fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
     // Outline stitching changes imported topology before board-level checks
     // run, so endpoint equality must be exact after lifting finite parser
     // coordinates. Decimal KiCad tokens carry exact `Real` values and
-    // shared-denominator facts. Route equality through `hyperlimit` rather than a local
-    // tolerance, in the exact-geometric-computation style of Yap, "Towards
-    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
+    // shared-denominator facts. Route equality through `hyperlimit` rather than
+    // a local tolerance.
     let left = exact_point(left);
     let right = exact_point(right);
     point2_equal(&left, &right).value().unwrap_or(false)

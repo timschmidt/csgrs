@@ -20,10 +20,9 @@ use csgrs::csg::CSG;
 ///
 /// This is an EMI/layout-readiness heuristic, not a loop-area solver. It uses
 /// net-name intent plus same-layer geometry to flag copper that should be
-/// reviewed against regulator or motor-drive layout guidance. The broad/narrow
-/// geometry pass follows Lin and Canny, "A Fast Algorithm for Incremental
-/// Distance Calculation", IEEE ICRA, 1991: spatial candidates first, exact
-/// offset/intersection or boundary distance second.
+/// reviewed against regulator or motor-drive layout guidance. Spatial
+/// candidates are selected first; exact offset/intersection or boundary
+/// distance decides the finding.
 pub fn switch_node_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -118,13 +117,7 @@ pub fn switch_node_keepout_readiness(
 /// This intentionally reports ground copper too. Whether a plane belongs under
 /// an inductor or switch node depends on the converter topology, field
 /// containment, shielded-inductor construction, and EMI strategy; HyperDRC only
-/// makes the layout choice visible for review. Bhargava, Pommerenke, Kam,
-/// Centola, and Lam, "DC-DC buck converter EMI reduction using PCB layout
-/// modification," *IEEE Transactions on Electromagnetic Compatibility* 53.3
-/// (2011), pp. 806-813, <https://doi.org/10.1109/TEMC.2011.2145421>, shows
-/// that buck-converter PCB layout changes affect loop inductance, dipole
-/// moments, and far-field radiation, motivating geometry-based readiness review
-/// around switching power stages.
+/// makes the layout choice visible for review.
 pub fn inductor_copper_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -241,9 +234,7 @@ fn sketches_within_clearance(
     let left_bounds = left.bounding_box();
     let right_bounds = right.bounding_box();
 
-    // Broad-phase culling before exact offset/intersection, following the
-    // broad/narrow collision pattern from Lin and Canny, "A Fast Algorithm for
-    // Incremental Distance Calculation", IEEE ICRA, 1991.
+    // Broad-phase culling before exact offset/intersection.
     &left_bounds.mins.x - clearance <= right_bounds.maxs.x
         && &left_bounds.maxs.x + clearance >= right_bounds.mins.x
         && &left_bounds.mins.y - clearance <= right_bounds.maxs.y

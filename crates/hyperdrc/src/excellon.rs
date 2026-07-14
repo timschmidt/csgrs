@@ -156,11 +156,9 @@ pub struct ExcellonDrillSummary {
     pub max_diameter: Option<Scalar>,
     /// Combined source-grid facts for parsed drill hit coordinates.
     ///
-    /// This field preserves Excellon token-grid
-    /// structure for future exact clearance checks, following Yap's exact
-    /// geometric computation guidance to carry representation facts until an
-    /// arithmetic package is deliberately selected. See Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// This field preserves Excellon token-grid structure so exact clearance
+    /// checks can select an arithmetic package without reconstructing source
+    /// precision.
     pub coordinate_grid: SourceGridFacts,
 }
 

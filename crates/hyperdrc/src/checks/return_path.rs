@@ -21,15 +21,8 @@ use crate::{LayerMetadata, PcbSketchExt, Scalar};
 ///
 /// A trace crossing a reference-plane split forces return current to detour and
 /// increases loop area. IPC-2221B treats return-path control as part of high-
-/// speed routing practice, and Bhargava et al., "DC-DC Buck Converter EMI
-/// Reduction Using PCB Layout Modification", IEEE Transactions on
-/// Electromagnetic Compatibility, 2011, demonstrates how PCB loop geometry
-/// changes radiated emissions. The implementation keeps the geometry exact only
-/// after an indexed broad phase; Ericson, *Real-Time Collision Detection*
-/// (2005), gives the broad-phase grid pattern, while Lin and Canny, "A Fast
-/// Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991, is the
-/// collision/distance-processing context for doing inexpensive spatial
-/// rejection before exact work.
+/// speed routing practice. An indexed broad phase rejects distant candidates
+/// before exact geometry work.
 pub fn split_plane_crossing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -160,15 +153,8 @@ pub fn split_plane_crossing_readiness(
 /// This is a loop-area readiness proxy rather than a field solve: it looks for
 /// high-speed segment or pad copper whose nearest parsed same-layer ground
 /// copper exceeds the review distance. IPC-2221B frames high-speed return-path
-/// control as layout intent, while Bhargava et al., "DC-DC Buck Converter EMI
-/// Reduction Using PCB Layout Modification", IEEE Transactions on
-/// Electromagnetic Compatibility, 2011, shows that small PCB loop-geometry
-/// changes can materially change emissions. As with split-plane detection, the
-/// check uses AABB rejection before exact polygon distance; Lin and Canny,
-/// "A Fast Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991,
-/// is the distance-processing context for that staged approach. Sparse ground
-/// lookup uses the deterministic grid broad phase described by Ericson,
-/// *Real-Time Collision Detection* (2005), before exact distance review.
+/// control as layout intent. This is a readiness proxy: AABB and grid culling
+/// reject distant ground candidates before exact polygon-distance review.
 pub fn return_path_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],

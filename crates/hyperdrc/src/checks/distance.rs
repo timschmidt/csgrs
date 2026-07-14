@@ -339,10 +339,8 @@ pub(super) fn polygon_boundary_distance_with_grid(
 ) -> f64 {
     // Boundary-distance fallbacks still return an approximate metric, but
     // topology gates inside the segment walk should see the parser's retained
-    // source grid whenever the caller has one. This is the object-layer
-    // scheduling discipline from Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997): preserve source structure at the
-    // geometric boundary before expanding to scalar arithmetic.
+    // source grid whenever the caller has one, preserving source structure at
+    // the geometric boundary before expanding to scalar arithmetic.
     let mut minimum = f64::INFINITY;
     for left_polygon in &left.0 {
         for right_polygon in &right.0 {
@@ -515,13 +513,9 @@ fn segments_intersect_with_grid(
     // coordinates, but f64 must remain an I/O compatibility boundary rather
     // than a topology kernel. IEEE-754 coordinates are lifted to exact dyadic
     // `Real`s, then the closed-segment classifier routes orientation and
-    // interval tests through `hyperlimit`. This follows Yap's exact geometric
-    // computation boundary: combinatorial decisions are made by exact
-    // predicates, while approximate coordinates may be used only to describe
-    // inputs or report metric magnitudes. See Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997), and Shewchuk,
-    // "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
-    // Predicates," Discrete & Computational Geometry 18.3 (1997).
+    // interval tests through `hyperlimit`. Combinatorial decisions use exact
+    // predicates; approximate coordinates only describe inputs or report
+    // metric magnitudes.
     match hyperlimit::classify_segment_intersection(&a, &b, &c, &d).value() {
         Some(SegmentIntersection::Disjoint) => false,
         Some(_) => true,
@@ -567,9 +561,7 @@ fn exact_coords_equal_with_grid(
     // and ask `hyperlimit` for exact point equality instead of using
     // `length_squared == 0.0`, which can conflate a very small nonzero segment
     // with a point after primitive-float underflow. This keeps the clearance
-    // fallback aligned with Yap's exact-geometric-computation boundary; see
-    // Yap, "Towards Exact Geometric Computation," Computational Geometry 7.1-2
-    // (1997).
+    // fallback aligned with the exact-predicate boundary.
     //
     let provenance = RuleGeometryProvenance::new("clearance-degenerate-segment", grid);
     let Some(left) = lift_coord(left, provenance) else {

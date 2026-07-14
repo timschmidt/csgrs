@@ -108,9 +108,9 @@ use std::ops::{Deref, DerefMut};
 
 /// PCB geometry sketch tagged with layer/source metadata.
 ///
-/// This is the current `csgrs` compatibility boundary. Keep application checks
-/// from learning more about the `csgrs` numeric model so the future hyperreal
-/// sketch port can replace this alias without changing parser/report APIs.
+/// This is the current `csgrs` compatibility boundary. Application checks stay
+/// independent of its numeric model so a native exact sketch implementation can
+/// replace this wrapper without changing parser or report APIs.
 #[derive(Clone, Debug)]
 pub struct PcbSketch {
     profile: Profile,

@@ -455,10 +455,8 @@ fn drill_diameter_scalar(drill: &Sexp) -> Option<Scalar> {
 /// the parser applies the same affine rotation and translation used for pad
 /// copper. This keeps annular-ring and drill-spacing readiness checks aligned
 /// with the physical drill hit instead of the pad anchor. The affine transform
-/// convention follows the planar geometry framing surveyed by Lee and
-/// Preparata, "Computational Geometry - A Survey", IEEE Transactions on
-/// Computers, 1984, <https://doi.org/10.1109/TC.1984.1676388>; the source
-/// field is defined in the KiCad S-expression pad drill grammar.
+/// convention matches the source field defined by the KiCad S-expression pad
+/// drill grammar.
 fn drill_location_from_pad_scalar(
     drill: &Sexp,
     pad_location: &[Scalar; 2],
@@ -548,10 +546,8 @@ pub(super) fn xy_from_child(parent: &Sexp, child_name: &str) -> Option<[f64; 2]>
 ///
 /// Existing parser outputs remain `f64` compatibility geometry, but exact
 /// predicates can consume the retained [`Real`] values and source-grid facts.
-/// This follows Yap's parser-boundary discipline: keep representation
-/// information until a predicate or adapter deliberately chooses an arithmetic
-/// package. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// Representation information is retained until a predicate or adapter
+/// deliberately chooses an arithmetic package.
 pub(super) fn xy_from_child_source(parent: &Sexp, child_name: &str) -> Option<ParsedPoint2> {
     let child = parent.named_child(child_name)?;
     parsed_xy(child)

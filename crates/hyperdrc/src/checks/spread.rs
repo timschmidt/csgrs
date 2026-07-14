@@ -1,10 +1,8 @@
 //! Point-spread helpers for readiness checks.
 //!
 //! The helpers in this module keep exact point-set diameter calculations out of
-//! individual checks. They use Andrew's monotone-chain convex hull followed by a
-//! rotating-calipers diameter pass, following Andrew, "Another Efficient
-//! Algorithm for Convex Hulls in Two Dimensions" (1979), and Toussaint,
-//! "Solving Geometric Problems with the Rotating Calipers" (1983).
+//! individual checks. They use a monotone-chain convex hull followed by a
+//! rotating-calipers diameter pass.
 
 use crate::Scalar;
 

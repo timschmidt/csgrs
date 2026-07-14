@@ -27,8 +27,7 @@ use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margi
 /// net-name intent and the parsed board outline to make edge creepage and
 /// clearance review visible before release documentation is assembled. On the
 /// common rectangular-board path, it first applies the shared strict edge-band
-/// bounds predicate from Ericson's broad/narrow-phase pattern in *Real-Time
-/// Collision Detection* (2005), then keeps exact CSG as the reporting decision.
+/// bounds predicate, then keeps exact CSG as the reporting decision.
 pub fn high_voltage_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -209,10 +208,8 @@ pub fn voltage_clearance_readiness(
 /// General voltage spacing already reports high-voltage proximity to unrelated
 /// copper. This companion gives PE/chassis boundaries their own review item so
 /// safety intent does not get lost among ordinary spacing findings. IPC-2221B
-/// frames electrical clearance as a board-design constraint, and Lin and Canny,
-/// "A Fast Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991,
-/// motivates the broad/narrow geometry pattern used here: cheap bounding-box
-/// rejection first, exact offset/intersection or boundary distance second.
+/// frames electrical clearance as a board-design constraint. Cheap bounding-
+/// box rejection precedes exact offset/intersection or boundary distance.
 pub fn protective_earth_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -312,9 +309,7 @@ pub fn protective_earth_spacing_readiness(
 /// so this check does not flag high-voltage, ground, PE/chassis, same-net, or
 /// other surge-protection copper. It reports unrelated ordinary copper inside
 /// the local keepout band around likely MOV, GDT, spark-gap, TVS, or fuse nets.
-/// IEC 61000-4-5 defines the surge-immunity context behind this review, while
-/// Lin and Canny, "A Fast Algorithm for Incremental Distance Calculation", IEEE
-/// ICRA, 1991, motivates the broad/narrow geometry pattern used below.
+/// IEC 61000-4-5 defines the surge-immunity context behind this review.
 pub fn surge_protection_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -426,9 +421,7 @@ fn sketches_within_clearance(
         return true;
     };
 
-    // Cheap AABB broad-phase before exact offset/intersection work. This is the
-    // same two-phase collision pattern described by Lin and Canny, "A Fast
-    // Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991.
+    // Cheap AABB broad phase before exact offset/intersection work.
     left_bounds.min().x - clearance <= right_bounds.max().x
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
@@ -555,11 +548,9 @@ pub fn esd_protection_readiness(
 /// System-level ESD pulses are fast enough that parasitic inductance in the
 /// clamp path can dominate protection behavior. This check reports likely
 /// ESD/TVS/protection nets that do not have nearby same-layer ground or chassis
-/// copper. It follows the layout model described in STMicroelectronics AN576,
-/// "Influence of the PCB layout on the ESD protection," which explains that
-/// ESD surge `di/dt` across PCB parasitic inductance can add substantial voltage
-/// at the protected device. See also IEC 61000-4-2 for the standardized ESD
-/// current waveform that makes clamp-path inductance relevant.
+/// copper. ESD surge `di/dt` across PCB parasitic inductance can add substantial
+/// voltage at the protected device; IEC 61000-4-2 defines the standardized ESD
+/// waveform that makes clamp-path inductance relevant.
 pub fn esd_return_path_readiness(
     board: &BoardModel,
     selected_layers: &[String],

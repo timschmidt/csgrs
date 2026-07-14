@@ -1995,10 +1995,7 @@ fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
         // The longest exterior edge recovers the centerline length for those
         // envelopes, including diagonal segments where an axis-aligned bounding
         // box underestimates length. This is still readiness metadata, not
-        // routed-path reconstruction or a transmission-line delay model; for
-        // the underlying planar geometry assumptions see Lee and Preparata,
-        // "Computational Geometry - A Survey", IEEE Transactions on Computers,
-        // 1984, doi:10.1109/TC.1984.1676388.
+        // routed-path reconstruction or a transmission-line delay model.
         CopperKind::Segment => {
             let edge_length = maximum_exterior_edge_length(&feature.sketch);
             if edge_length > Scalar::zero() {

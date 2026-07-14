@@ -187,15 +187,10 @@ pub fn dense_pad_escape_readiness(
 /// soldermask web limits against each other. This check is intentionally a
 /// geometry readiness gate: it finds dense pad clusters, then reports nearby
 /// vias whose copper boundary is closer than the configured clearance to any
-/// pad in the cluster. Jonnalagadda, "Reliability of via-in-pad structures in
-/// mechanical cycling fatigue," *Microelectronics Reliability* 42.2 (2002),
-/// pp. 253-258, <https://doi.org/10.1016/S0026-2714(01)00136-6>, treats
-/// via-in-pad as an HDI enabler for high-I/O BGA/CSP products while still
-/// requiring reliability review of the surrounding structure. HyperDRC reports
+/// pad in the cluster. HyperDRC reports
 /// close pad/via geometry for that review instead of assuming a specific
-/// filled, capped, dogbone, or open-via fabrication process. Per-cluster pad
-/// candidates use the shared broad-phase grid pattern from Ericson, *Real-Time
-/// Collision Detection* (2005), before exact pad/via boundary-distance review.
+/// filled, capped, dogbone, or open-via fabrication process. A per-cluster grid
+/// proposes pad candidates before exact pad/via boundary-distance review.
 pub fn dense_pad_via_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -303,11 +298,8 @@ pub fn dense_pad_via_spacing_readiness(
 /// This is a copper-derived proxy for BGA mask manufacturability when a mask
 /// layer is not available. It does not replace the layer-level
 /// `solder-mask-opening-spacing` check, which should be preferred when actual
-/// mask openings are parsed. The check exists because escape geometry can turn
-/// nominal NSMD BGA pads into partial SMD exposure and change solder-joint
-/// behavior; see Chin and Ramakrishna, "Impact of BGA Escape Trace Design on
-/// Performance of Solder Joint," *SMTA International* (Cisco Systems), for a
-/// thermal-cycling study of BGA escape trace design choices. HyperDRC therefore
+/// mask openings are parsed. Escape geometry can turn nominal NSMD BGA pads
+/// into partial SMD exposure and change solder-joint behavior. HyperDRC therefore
 /// reports low pad-to-pad mask-web margin as a release-review item rather than
 /// inferring the final solder-mask artwork.
 pub fn dense_pad_mask_bridge_readiness(
@@ -528,8 +520,7 @@ fn nearest_feature_pair_within<'a>(
         }
     }
 
-    // The broad phase intentionally mirrors Ericson's grid partition from
-    // *Real-Time Collision Detection* (2005); exact boundary distance remains
+    // The grid is only a broad phase; exact boundary distance remains
     // the readiness predicate so false positives from large cells are harmless.
     log::trace!(
         "nearest dense-pad mask-web pair: pads={} buckets={} candidate_pairs={} exact_pairs={} threshold={threshold:#.6}",

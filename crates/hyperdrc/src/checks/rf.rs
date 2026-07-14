@@ -26,9 +26,7 @@ use crate::report::{Severity, Violation};
 ///
 /// RF layout review is strongly geometry-dependent. This check uses the shared
 /// spatial index as a broad phase and only reports after exact offset/CSG or
-/// boundary-distance confirmation, following the broad/narrow pattern in Lin
-/// and Canny, "A Fast Algorithm for Incremental Distance Calculation", IEEE
-/// ICRA, 1991. Findings should still be checked against the RF layout plan.
+/// boundary-distance confirmation. Verify findings against the RF layout plan.
 pub fn rf_keepout_readiness(
     board: &BoardModel,
     clearance: &Scalar,
@@ -141,11 +139,8 @@ pub fn rf_keepout_readiness(
 /// including ground copper, because the board ground plane and clearance around
 /// the radiator are part of the radiating structure. The readiness heuristic is
 /// deliberately conservative and reports geometry for human review rather than
-/// trying to solve an antenna. See Wong, Luk, Chan, Xue, So, and Lai, "Small
-/// antennas in wireless communications," *Proceedings of the IEEE* 100.7 (2012),
-/// pp. 2109-2121, <https://doi.org/10.1109/JPROC.2012.2188089>, for the
-/// coupling and ground-plane dependence that motivates treating nearby PCB
-/// copper as an RF design-readiness concern.
+/// trying to solve an antenna. Nearby copper remains an RF design-readiness
+/// concern because coupling and ground-plane geometry affect the radiator.
 pub fn antenna_copper_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],

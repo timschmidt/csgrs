@@ -88,11 +88,8 @@ pub fn apply_waivers(
 
 /// Validates waiver governance metadata before review acceptance.
 ///
-/// Waiver entries are operational exceptions and should remain auditable in CI:
-/// IEEE 828-2012, "IEEE Standard for Configuration Management in Systems and
-/// Software Engineering," frames baselines, change control, and status
-/// accounting as configuration-management activities. This check applies that
-/// model to DRC suppressions by requiring scope, reason, ownership, review date,
+/// Waiver entries are operational exceptions and should remain auditable in CI.
+/// This check requires scope, reason, ownership, review date,
 /// source, and geometry-hash evidence before a waiver becomes a durable release
 /// artifact.
 pub fn governance_violations(waivers: &[Waiver]) -> Vec<Violation> {

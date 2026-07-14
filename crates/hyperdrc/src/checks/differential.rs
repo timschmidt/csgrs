@@ -23,12 +23,8 @@ use crate::{PcbSketchExt, Scalar};
 /// This check complements generic copper-width checks by keeping differential
 /// pair impedance symmetry visible in the default suite. It estimates segment
 /// width from the minimum bounding dimension of parsed segment envelopes, so it
-/// is a readiness proxy rather than a controlled-impedance calculation. IPC-2221B
-/// treats trace width and spacing as board-design constraints; Kirschning and
-/// Jansen, "Accurate Wide-Range Design Equations for the Frequency-Dependent
-/// Characteristic of Parallel Coupled Microstrip Lines", IEEE Transactions on
-/// Microwave Theory and Techniques, 1984, provides the coupled-line context for
-/// why positive/negative side width balance matters.
+/// is a readiness proxy rather than a controlled-impedance calculation.
+/// IPC-2221B treats trace width and spacing as board-design constraints.
 pub fn differential_pair_width_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -117,12 +113,8 @@ pub fn differential_pair_width_readiness(
 /// companion focuses on the subset most likely to disturb impedance over a
 /// meaningful distance: parsed segment envelopes whose estimated width is below
 /// the pair-width threshold and whose estimated length exceeds the allowed
-/// neck-down length. IPC-2221B treats conductor geometry as a design constraint;
-/// Kirschning and Jansen, "Accurate Wide-Range Design Equations for the
-/// Frequency-Dependent Characteristic of Parallel Coupled Microstrip Lines",
-/// IEEE Transactions on Microwave Theory and Techniques, 1984, gives the
-/// coupled-line context for treating long narrow sections as a separate review
-/// item. This is envelope-based readiness metadata, not impedance solving.
+/// neck-down length. IPC-2221B treats conductor geometry as a design constraint.
+/// This is envelope-based readiness metadata, not impedance solving.
 pub fn differential_pair_neckdown_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -183,11 +175,7 @@ pub fn differential_pair_neckdown_readiness(
 /// This is a default-suite companion to explicit `net_classes.max_pair_skew`.
 /// It uses the maximum bounding dimension of parsed segment envelopes as a
 /// conservative length proxy rather than reconstructing full routed topology.
-/// IPC-2221B frames impedance and high-speed routing as design constraints, and
-/// Kirschning and Jansen, "Accurate Wide-Range Design Equations for the
-/// Frequency-Dependent Characteristic of Parallel Coupled Microstrip Lines",
-/// IEEE Transactions on Microwave Theory and Techniques, 1984, is a useful
-/// reminder that coupled-line timing and impedance depend on physical geometry.
+/// IPC-2221B frames impedance and high-speed routing as design constraints.
 pub fn differential_pair_skew_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -256,14 +244,9 @@ pub fn differential_pair_skew_readiness(
 ///
 /// Via count symmetry alone can miss a bad layer transition when both pair
 /// sides have vias but those vias are far apart. IPC-2221B treats via placement
-/// and high-speed routing geometry as board-design constraints; Kirschning and
-/// Jansen, "Accurate Wide-Range Design Equations for the Frequency-Dependent
-/// Characteristic of Parallel Coupled Microstrip Lines", IEEE Transactions on
-/// Microwave Theory and Techniques, 1984, gives the coupled-line context for
-/// keeping pair-side transitions physically symmetric. This check uses parsed
+/// and high-speed routing geometry as board-design constraints. This check uses parsed
 /// via centers only; it is a readiness proxy, not delay extraction. Opposite
-/// side via centers are queried through the shared point-grid broad phase
-/// described by Ericson, *Real-Time Collision Detection* (2005), so dense
+/// side via centers are queried through a shared point-grid broad phase, so dense
 /// package escape fields do not require every positive-side via to scan every
 /// negative-side via.
 pub fn differential_pair_via_proximity_readiness(
@@ -393,15 +376,10 @@ pub fn differential_pair_via_proximity_readiness(
 ///
 /// This is a pair-specific return-path companion to the generic high-speed via
 /// stitching check. IPC-2221B treats return-path and via placement as design
-/// constraints, and Kirschning and Jansen, "Accurate Wide-Range Design
-/// Equations for the Frequency-Dependent Characteristic of Parallel Coupled
-/// Microstrip Lines", IEEE Transactions on Microwave Theory and Techniques,
-/// 1984, motivates preserving coupled-line geometry through transitions. This
+/// constraints. This
 /// check uses parsed via centers and inferred ground-net names; verify
 /// release-blocking findings against stackup, plane, and field-solver data.
-/// Ground-stitching lookup uses the Ericson-style point-grid broad phase from
-/// *Real-Time Collision Detection* (2005) before the exact center-distance
-/// predicate.
+/// A point-grid broad phase precedes the exact center-distance predicate.
 pub fn differential_pair_via_return_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -498,17 +476,12 @@ pub fn differential_pair_via_return_readiness(
 
 /// Warn when two likely differential pairs run too close on the same layer.
 ///
-/// IPC-2221B treats conductor spacing as a board-level design constraint, while
-/// coupled-transmission-line work such as Kirschning and Jansen, "Accurate
-/// Wide-Range Design Equations for the Frequency-Dependent Characteristic of
-/// Parallel Coupled Microstrip Lines", IEEE Transactions on Microwave Theory
-/// and Techniques, 1984, shows why pair-to-pair coupling deserves separate
-/// review from simple same-net clearance. This readiness check is deliberately
+/// IPC-2221B treats conductor spacing as a board-level design constraint.
+/// Pair-to-pair coupling deserves separate review from simple same-net
+/// clearance. This readiness check is deliberately
 /// conservative: it infers pair membership from common suffixes, performs a
 /// shared copper spatial broad phase, then measures exact polygon boundary
-/// distance for nearby features. The broad/narrow phase follows the
-/// collision-query pattern described by Lin and Canny, "A Fast Algorithm for
-/// Incremental Distance Calculation", IEEE ICRA, 1991, and keeps sparse
+/// distance for nearby features, keeping sparse
 /// differential-pair fields from devolving into all-pairs comparisons.
 pub fn differential_pair_to_pair_spacing_readiness(
     board: &BoardModel,

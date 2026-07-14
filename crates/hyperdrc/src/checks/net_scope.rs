@@ -84,13 +84,9 @@ fn class_matches_feature_region(class: &NetClassConfig, feature: &CopperFeature)
         return true;
     }
 
-    // This is an orthogonal range query over parsed feature anchors. Bentley's
-    // k-d tree paper is the classic reference for multidimensional associative
-    // searching: Bentley, "Multidimensional Binary Search Trees Used for
-    // Associative Searching," Communications of the ACM, 1975,
-    // doi:10.1145/361002.361007. hyperdrc uses a tiny linear scan here because
-    // rule decks usually contain only a handful of class regions; the comment
-    // documents the geometric query being modeled, not a claim of k-d indexing.
+    // This is an orthogonal range query over parsed feature anchors. A linear
+    // scan is appropriate because rule decks usually contain only a handful of
+    // class regions; this is not a k-d-tree index.
     class.regions.iter().any(|region| {
         let Some(bounds) = region_bounds(region) else {
             return false;

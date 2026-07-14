@@ -24,10 +24,7 @@ pub(super) fn fill_enabled(item: &Sexp, default_filled: bool) -> bool {
 /// Build filled or stroked rectangle graphics.
 ///
 /// Explicitly unfilled KiCad graphics are converted to four stroked edge
-/// polygons instead of a solid rectangle. The edge construction follows the
-/// same planar polygon model surveyed by Lee and Preparata, "Computational
-/// Geometry - A Survey", IEEE Transactions on Computers, 1984,
-/// <https://doi.org/10.1109/TC.1984.1676388>.
+/// polygons instead of a solid rectangle.
 pub(super) fn rect_polygons(
     start: [f64; 2],
     end: [f64; 2],

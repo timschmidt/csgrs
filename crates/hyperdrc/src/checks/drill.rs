@@ -133,9 +133,8 @@ pub fn annular_ring_tolerance(
 
 /// Run the `plating_intent` design-readiness check or report helper.
 ///
-/// Copper candidates use the shared Ericson-style broad/narrow phase from
-/// *Real-Time Collision Detection* (2005): a deterministic grid proposes
-/// nearby copper by parsed location, then exact center distance, net, and
+/// A deterministic grid proposes nearby copper by parsed location, then exact
+/// center distance, net, and
 /// pad/via kind remain the readiness decision.
 pub fn plating_intent(
     board: &BoardModel,
@@ -255,7 +254,7 @@ pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: &Scalar) -
 ///
 /// Drill openings are modeled as circular keepouts with the configured
 /// clearance, then checked against KiCad copper. The copper grid is a broad
-/// phase in the sense of Ericson, *Real-Time Collision Detection* (2005); exact
+/// phase; exact
 /// CSG intersection still decides violations. Slot-like drill records remain
 /// conservative circular proxies until exact routed-slot geometry is preserved.
 pub fn drill_to_copper_clearance(
@@ -318,8 +317,7 @@ pub fn drill_to_copper_clearance_with_grid(
         })
         .map_or(0.0, |radius| scalar_broad_phase_radius(&radius));
     // Clearance is still decided by exact geometry below. This grid is only the
-    // broad phase described by Ericson, Real-Time Collision Detection, 2005,
-    // reducing sparse drill/copper fields before CSG intersection.
+    // broad phase, reducing sparse drill/copper fields before CSG intersection.
     let copper_index = CopperSpatialIndex::new(&copper_features, maximum_keepout_radius);
     log::trace!(
         "drill-to-copper clearance: source={} drills={} copper_features={} spatial_buckets={} clearance={clearance:.6}",
@@ -410,11 +408,9 @@ fn copper_may_touch_drill_keepout_with_grid(
     // surviving candidates; the box test only rejects impossible contacts.
     //
     // This is a broad-phase rejection that can skip CSG, so the comparisons
-    // are exact lifted predicates with source-grid provenance. This follows
-    // Yap's instruction to carry object/source representation into geometric
-    // decisions; see Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997). The grid is non-certifying
-    // metadata: CSG overlap remains the clearance certificate for candidates.
+    // are exact lifted predicates with source-grid provenance. The grid is
+    // non-certifying metadata: CSG overlap remains the clearance certificate
+    // for candidates.
     exact_le_with_grid(drill_location[0] - keepout_radius, bounds.max().x, grid)
         && exact_ge_with_grid(drill_location[0] + keepout_radius, bounds.min().x, grid)
         && exact_le_with_grid(drill_location[1] - keepout_radius, bounds.max().y, grid)
@@ -441,8 +437,7 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
 /// Review edge-to-edge spacing between KiCad and sidecar drills.
 ///
 /// Drill centers use the shared grid broad phase before exact center and
-/// edge-gap math, following the broad/narrow query split described by Ericson,
-/// *Real-Time Collision Detection* (2005). This keeps sparse drill tables and
+/// edge-gap math. This keeps sparse drill tables and
 /// Excellon sidecars bounded while still reporting exact edge-spacing values.
 pub fn drill_spacing(
     board_drills: &[DrillFeature],

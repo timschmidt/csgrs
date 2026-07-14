@@ -88,9 +88,7 @@ pub(super) fn feature_bounds_inside_rect_with_grid(
     let feature_max = bounds.max();
 
     // This rectangular containment gate can skip expensive CSG for clearly
-    // interior copper. Keep the decision certified with source-grid facts as
-    // Yap recommends in "Towards Exact Geometric Computation,"
-    // Computational Geometry 7.1-2 (1997).
+    // interior copper. Keep the decision certified with source-grid facts.
     exact_ge_with_grid(feature_min.x, min.x, grid)
         && exact_le_with_grid(feature_max.x, max.x, grid)
         && exact_ge_with_grid(feature_min.y, min.y, grid)
@@ -127,15 +125,12 @@ pub(super) fn feature_bounds_inside_rect_margin_with_grid(
     let feature_max = bounds.max();
 
     // Strict comparisons preserve existing edge-band behavior at the exact
-    // review threshold while skipping obvious interior features. This mirrors
-    // the broad/narrow-phase structure in Ericson, *Real-Time Collision
-    // Detection* (2005): rectangle predicates reject safe interior candidates,
-    // and exact CSG/boundary-distance logic remains authoritative near edges.
+    // review threshold while skipping obvious interior features. Rectangle
+    // predicates reject safe interior candidates; exact CSG and boundary
+    // distance remain authoritative near edges.
     //
-    // Retaining source-grid facts at this gate follows Yap's object-level EGC
-    // boundary: do not discard exact input structure before a predicate chooses
-    // its arithmetic. See Yap, "Towards Exact Geometric Computation,"
-    // Computational Geometry 7.1-2 (1997).
+    // Retain source-grid facts so exact input structure survives until the
+    // predicate chooses its arithmetic.
     exact_gt_with_grid(feature_min.x, min.x + margin, grid)
         && exact_lt_with_grid(feature_max.x, max.x - margin, grid)
         && exact_gt_with_grid(feature_min.y, min.y + margin, grid)
@@ -152,11 +147,8 @@ fn circle_inside_rect_with_grid(
     let min = rect.min();
     let max = rect.max();
     // This predicate can skip later CSG work for clearly interior drill
-    // keepouts, so its comparisons must remain certified. Carrying parser
-    // source-grid facts to this boundary follows Yap's object-level exactness
-    // discipline: keep representation structure with geometric objects until a
-    // predicate deliberately selects arithmetic. See Yap, "Towards Exact
-    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    // keepouts, so its comparisons must remain certified. Keep parser source-
+    // grid facts with geometric objects until the predicate selects arithmetic.
     exact_ge_with_grid(center[0] - radius, min.x, grid)
         && exact_le_with_grid(center[0] + radius, max.x, grid)
         && exact_ge_with_grid(center[1] - radius, min.y, grid)
@@ -191,10 +183,8 @@ fn exact_lt_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
 fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<std::cmp::Ordering> {
     // These outline helpers are broad/narrow phase gates: accepting a rectangle
     // or an interior feature may bypass a slower CSG check, so the comparison
-    // itself must be a certified predicate. Finite parser coordinates are
-    // lifted to exact dyadic `Real`s and ordered through `hyperlimit`, following
-    // Yap's exact geometric computation boundary. See Yap, "Towards Exact
-    // Geometric Computation," Computational Geometry 7.1-2 (1997).
+    // itself must be certified. Finite parser coordinates are lifted to exact
+    // dyadic `Real`s and ordered through `hyperlimit`.
     //
     let provenance = RuleGeometryProvenance::new("axis-aligned-outline-rect", grid);
     let left = provenance.lift_f64(left)?;

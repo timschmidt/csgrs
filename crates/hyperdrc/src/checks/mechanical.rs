@@ -432,8 +432,7 @@ pub fn mounting_hole_distribution_readiness(
 ///
 /// Hardware holes are filtered first, then the shared drill spatial index
 /// provides broad-phase candidates before exact center and edge-spacing math.
-/// This follows the broad/narrow geometric-query pattern in Ericson,
-/// *Real-Time Collision Detection* (2005), while the finding itself remains a
+/// The finding remains a
 /// mechanical review prompt for screw heads, washers, standoffs, and breakout.
 pub fn mounting_hole_spacing_readiness(
     board: &BoardModel,
@@ -694,8 +693,7 @@ pub fn edge_plating_intent_readiness(
 /// IPC-6012D and IPC-2221B frame plated through-hole and edge features as
 /// fabrication capability/intent data. This check first classifies plated holes
 /// near the board outline, then applies the shared drill spatial index before
-/// exact center and edge-spacing math, matching the broad/narrow collision-query
-/// pattern described by Ericson, *Real-Time Collision Detection* (2005).
+/// exact center and edge-spacing math.
 pub fn castellation_pitch_readiness(
     board: &BoardModel,
     minimum_edge_spacing: &Scalar,
@@ -914,8 +912,7 @@ fn drill_near_rect_outline_scalar(
     // This is an analytic narrow phase for the common rectangular board
     // outline. It avoids constructing drill CSG for every plated hole while
     // preserving the same circle-to-outline distance predicate used by the
-    // general fallback. The broad/narrow split follows Ericson, Real-Time
-    // Collision Detection (2005), applied here to fabrication edge-hole review.
+    // general fallback.
     &boundary_gap <= edge_distance
 }
 
@@ -961,7 +958,7 @@ fn feature_near_rect_outline(
 
     // IPC-2221B treats board-edge copper and plated-edge intent as mechanical
     // release data. For rectangular outlines this AABB-vs-edge classifier is a
-    // conservative broad phase in Ericson's broad/narrow sense: it may report
+    // conservative broad phase: it may report
     // a feature near the edge, but it avoids expensive CSG distance checks for
     // ordinary interior copper and still lets the existing difference geometry
     // catch actual outline crossings.

@@ -3,8 +3,7 @@
 //! IPC-D-356B describes a bare-substrate electrical test data format rather
 //! than an artwork format. hyperdrc therefore treats records as net/test access
 //! evidence and records malformed recognized test records as parser diagnostics
-//! instead of guessing geometry. See IPC-D-356B, *Bare Substrate Electrical Test
-//! Data Format* (IPC, 2002).
+//! instead of guessing geometry.
 
 use std::collections::HashSet;
 use std::path::Path;
@@ -68,8 +67,7 @@ pub struct Ipc356RecordStats {
 /// IPC-D-356B is primarily an electrical-test netlist. Common CAD/CAM
 /// exporters add sidecar tokens for probe side, feature class, and soldermask
 /// exposure; this summary keeps those pragmatic DFT hints visible at the report
-/// boundary. The underlying standard reference is IPC-D-356B, *Bare Substrate
-/// Electrical Test Data Format* (IPC, 2002).
+/// boundary.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Ipc356MetadataStats {
     /// Records with any parsed access-side hint.
@@ -204,8 +202,7 @@ impl Ipc356Point {
 /// IPC-D-356B files are often produced by CAM/test tooling that may preserve
 /// usable records beside malformed or dialect-specific records. HyperDRC keeps
 /// diagnostic counters at report scope so release checks can fail on parser
-/// confidence without re-walking every diagnostic. See IPC-D-356B, *Bare
-/// Substrate Electrical Test Data Format* (IPC, 2002).
+/// confidence without re-walking every diagnostic.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Ipc356IssueStats {
     /// Total parser diagnostics emitted for recognized IPC-D-356 records.

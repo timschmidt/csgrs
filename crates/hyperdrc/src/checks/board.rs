@@ -33,11 +33,9 @@ use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 
 /// Warn when parsed KiCad copper is narrower than the configured width.
 ///
-/// IPC-2221B treats conductor geometry as a board-level design constraint, and
-/// Tang et al., "Study on Wet Chemical Etching of Flexible Printed Circuit
-/// Board with 16-um Line Pitch", *Journal of Electronic Materials*, 2023,
-/// motivates keeping etch-sensitive narrow copper visible during readiness
-/// review. This check uses the parsed feature bounding box as a conservative
+/// IPC-2221B treats conductor geometry as a board-level design constraint.
+/// This check keeps etch-sensitive narrow copper visible during readiness
+/// review and uses the parsed feature bounding box as a conservative
 /// proxy, so suspect findings should be verified against the native CAD rule
 /// deck and fabrication limits.
 pub fn copper_width_readiness(
@@ -127,12 +125,9 @@ pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<
 
 /// Run the `via_in_pad_readiness` design-readiness check or report helper.
 ///
-/// This is a broad/narrow-phase geometry review in the sense of Ericson,
-/// *Real-Time Collision Detection* (2005): the spatial index only proposes
-/// nearby same-layer pads, then exact CSG overlap decides the finding. The
-/// manufacturing risk being made visible here is the via-in-pad fill/tent/paste
-/// handoff discussed by Jonnalagadda, "Reliability of Via-in-Pad Structures in
-/// Mechanical Cycling Fatigue" (2002).
+/// The spatial index only proposes nearby same-layer pads; exact CSG overlap
+/// decides the finding. This makes via-in-pad fill, tent, and paste handoff risk
+/// visible for review.
 pub fn via_in_pad_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -286,9 +281,8 @@ pub fn teardrop_readiness(
 
 /// Run the `plane_clearance_readiness` design-readiness check or report helper.
 ///
-/// Non-plated drill keepouts are matched to candidate copper zones with the
-/// deterministic grid broad phase described by Ericson, *Real-Time Collision
-/// Detection* (2005), before exact CSG overlap review. This preserves the
+/// Non-plated drill keepouts are matched to candidate copper zones with a
+/// deterministic grid broad phase before exact CSG overlap review. This preserves the
 /// conservative antipad-readiness predicate while avoiding every drill scanning
 /// every zone on sparse mechanical-heavy boards.
 pub fn plane_clearance_readiness(
@@ -388,9 +382,8 @@ pub fn board_edge_exposure(
 /// Run board-edge exposure with retained source-grid facts.
 ///
 /// The rectangular fast path is a certified broad-phase decision using exact
-/// lifted comparisons. This follows Yap's EGC boundary from "Towards Exact
-/// Geometric Computation," Computational Geometry 7.1-2 (1997): retain source
-/// representation facts until a predicate chooses arithmetic.
+/// lifted comparisons. Source representation facts remain available until the
+/// predicate chooses arithmetic.
 pub fn board_edge_exposure_with_grid(
     board: &BoardModel,
     selected_layers: &[String],
@@ -467,9 +460,7 @@ pub fn high_speed_edge_readiness(
 /// Run high-speed edge readiness with retained source-grid facts.
 ///
 /// The rectangular edge-band predicate uses exact lifted comparisons with
-/// source-unit provenance before allowing an interior feature to skip CSG,
-/// matching Yap, "Towards Exact Geometric Computation," Computational Geometry
-/// 7.1-2 (1997).
+/// source-unit provenance before allowing an interior feature to skip CSG.
 pub fn high_speed_edge_readiness_with_grid(
     board: &BoardModel,
     selected_layers: &[String],
@@ -553,10 +544,8 @@ pub fn edge_copper_pullback_readiness(
 /// Run edge-copper pullback readiness with retained source-grid facts.
 ///
 /// Both the rectangular edge-band fast path and the boundary-distance fallback
-/// consume exact lifted predicates with rule/source provenance. This keeps the
-/// topology gate aligned with Yap's exact-geometric-computation discipline; the
-/// final CSG shapes remain report geometry at HyperDRC's current compatibility
-/// boundary.
+/// consume exact lifted predicates with rule/source provenance. Final CSG
+/// shapes remain report geometry at HyperDRC's current compatibility boundary.
 pub fn edge_copper_pullback_readiness_with_grid(
     board: &BoardModel,
     selected_layers: &[String],
@@ -631,9 +620,8 @@ pub fn edge_copper_pullback_readiness_with_grid(
 /// Warn when high-speed or RF/antenna nets near the edge have no nearby ground
 /// stitching via for intended return-path reinforcement.
 ///
-/// Ground-stitch centers use the point-grid broad phase from Ericson,
-/// *Real-Time Collision Detection* (2005), before the exact center-radius
-/// predicate. The result remains a readiness proxy: board-edge return-current
+/// Ground-stitch centers use a point-grid broad phase before the exact center-
+/// radius predicate. The result remains a readiness proxy: board-edge return-current
 /// quality still needs stackup, chassis, and enclosure review.
 pub fn edge_stitching_readiness(
     board: &BoardModel,
@@ -655,12 +643,8 @@ pub fn edge_stitching_readiness(
 /// Run edge-stitching readiness with retained source-grid facts.
 ///
 /// The edge-band fast path and boundary-distance fallback use exact lifted
-/// predicates before allowing any candidate to skip slower geometry. This is
-/// the same "geometric object carries representation facts to the predicate"
-/// discipline Yap argues for in "Towards Exact Geometric Computation,"
-/// Computational Geometry 7.1-2 (1997), applied at HyperDRC's current
-/// compatibility boundary where parsed board geometry is still stored as
-/// `f64`.
+/// predicates before allowing any candidate to skip slower geometry. Parsed
+/// board geometry remains stored as `f64` at the current compatibility boundary.
 pub fn edge_stitching_readiness_with_grid(
     board: &BoardModel,
     selected_layers: &[String],
@@ -772,15 +756,11 @@ pub fn edge_stitching_readiness_with_grid(
 /// Layer-level acid-trap checks find acute polygon vertices after all copper is
 /// flattened. This board-level helper keeps KiCad segment identity long enough
 /// to identify same-net traces that join at an acute angle. The check is a DFM
-/// review heuristic, not a wet-etch process simulator: Tang et al., "Study on
-/// Wet Chemical Etching of Flexible Printed Circuit Board with 16-um Line
-/// Pitch," *Journal of Electronic Materials* 52 (2023), pp. 4030-4036,
-/// <https://doi.org/10.1007/s11664-023-10368-z>, shows that copper wet etch
-/// profiles depend on process transport conditions. HyperDRC therefore reports
+/// review heuristic, not a wet-etch process simulator. Copper wet-etch profiles
+/// depend on process transport conditions, so HyperDRC reports
 /// suspect junction geometry for review instead of claiming a specific
-/// corrosion or over-etch failure. Segment-pair candidate generation uses the
-/// deterministic grid broad phase described by Ericson, *Real-Time Collision
-/// Detection* (2005), before exact CSG overlap and junction-angle review.
+/// corrosion or over-etch failure. A deterministic grid proposes segment pairs
+/// before exact CSG overlap and junction-angle review.
 pub fn trace_junction_acid_trap_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -942,11 +922,8 @@ pub fn controlled_impedance_readiness(
 /// Warn when inferred differential-pair sides are missing or split by layer.
 ///
 /// Pair membership is inferred from common suffixes, so the result is a
-/// readiness prompt rather than a formal constraint proof. Kirschning and
-/// Jansen, "Accurate Wide-Range Design Equations for the Frequency-Dependent
-/// Characteristic of Parallel Coupled Microstrip Lines", IEEE Transactions on
-/// Microwave Theory and Techniques, 1984, motivates treating coupled pair
-/// structure as explicit design intent; this check makes missing or
+/// readiness prompt rather than a formal constraint proof. Coupled pair
+/// structure is treated as explicit design intent; this check makes missing or
 /// layer-divergent inferred sides visible before release.
 pub fn differential_pair_readiness(
     board: &BoardModel,
@@ -1040,12 +1017,9 @@ pub fn differential_pair_readiness(
 /// Warn when inferred differential-pair sides are farther apart than expected.
 ///
 /// This is a readiness heuristic over parsed copper, not a coupled-line field
-/// solver. Kirschning and Jansen, "Accurate Wide-Range Design Equations for the
-/// Frequency-Dependent Characteristic of Parallel Coupled Microstrip Lines",
-/// IEEE Transactions on Microwave Theory and Techniques, 1984, motivates
-/// treating pair spacing as explicit routing intent. Candidate positive/negative
-/// side matches use the shared copper spatial broad phase from Ericson,
-/// *Real-Time Collision Detection* (2005), before exact boundary-distance
+/// solver. Pair spacing is treated as explicit routing intent. Candidate
+/// positive/negative side matches use the shared copper spatial broad phase
+/// before exact boundary-distance
 /// checks. If no close candidate exists, the check falls back to exact nearest
 /// distance so true "too far apart" findings still include a measured gap.
 pub fn differential_pair_spacing_readiness(
@@ -1256,8 +1230,7 @@ pub fn differential_pair_via_symmetry_readiness(
 /// treats conductor spacing and return-path planning as board-design concerns;
 /// here we simply require some parsed ground copper near each differential side
 /// so missing guard/coplanar/reference intent is visible before release.
-/// Ground candidates use the deterministic grid broad phase described by
-/// Ericson, *Real-Time Collision Detection* (2005), before exact geometry
+/// Ground candidates use a deterministic grid broad phase before exact geometry
 /// distance/overlap review.
 pub fn differential_pair_return_readiness(
     board: &BoardModel,
@@ -1394,9 +1367,7 @@ pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String])
 /// Run the `reference_plane_void_readiness` design-readiness check or report helper.
 ///
 /// Ground-zone candidates use the shared copper spatial index before exact
-/// feature-minus-reference-plane CSG subtraction. This keeps reference-plane
-/// review on the same deterministic broad-phase/narrow-phase footing described
-/// by Ericson, *Real-Time Collision Detection* (2005), while preserving exact
+/// feature-minus-reference-plane CSG subtraction. This preserves exact
 /// geometry for the final void decision.
 pub fn reference_plane_void_readiness(
     board: &BoardModel,
@@ -1480,8 +1451,7 @@ pub fn reference_plane_void_readiness(
 ///
 /// Parsed pad, via, and segment anchors are indexed once, then each zone only
 /// reviews same-layer nearby anchor candidates before exact CSG or boundary
-/// distance confirmation. This follows Ericson, *Real-Time Collision
-/// Detection* (2005): the grid is a conservative broad phase, while zone
+/// distance confirmation. The grid is a conservative broad phase, while zone
 /// connectivity remains an exact geometry decision.
 pub fn orphaned_zone_readiness(
     board: &BoardModel,
@@ -1549,8 +1519,7 @@ pub fn orphaned_zone_readiness(
 /// Run the `same_net_island_readiness` design-readiness check or report helper.
 ///
 /// Same-net connectivity is still decided by exact overlap/distance predicates,
-/// but candidate edges are selected with the deterministic grid broad phase from
-/// Ericson, *Real-Time Collision Detection* (2005). That keeps sparse same-net
+/// but a deterministic grid proposes candidate edges. That keeps sparse same-net
 /// copper fields from requiring an all-pairs connectivity walk.
 pub fn same_net_island_readiness(
     board: &BoardModel,
@@ -1616,10 +1585,7 @@ pub fn same_net_island_readiness(
 /// Warn when likely high-current nets change layers with too few parsed vias.
 ///
 /// IPC-2152 frames current carrying capacity as a design-specific board
-/// constraint, while Black's electromigration survey, "Electromigration--A
-/// Brief Survey and Some Recent Results", IEEE Transactions on Electron
-/// Devices, 1969, motivates reviewing current density bottlenecks before
-/// release. This check is intentionally conservative: it only flags
+/// constraint. This check conservatively flags
 /// layer-changing likely power nets whose parsed same-net via count is below the
 /// redundancy threshold used by this readiness profile.
 pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
@@ -1681,8 +1647,7 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
 /// Run the `power_via_array_readiness` design-readiness check or report helper.
 ///
 /// Same-net via neighbors are queried with a point-grid broad phase before the
-/// exact pitch predicate, following Ericson, *Real-Time Collision Detection*
-/// (2005). This keeps sparse high-current via fields from degenerating into
+/// exact pitch predicate. This keeps sparse high-current via fields from degenerating into
 /// all-pairs center-distance scans.
 pub fn power_via_array_readiness(
     board: &BoardModel,
@@ -1832,10 +1797,8 @@ pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> 
 
 /// Warn when likely high-current copper has a narrow local neck.
 ///
-/// IPC-2152 covers board-level current-carrying capacity, and Black's
-/// "Electromigration--A Brief Survey and Some Recent Results", IEEE
-/// Transactions on Electron Devices, 1969, motivates reviewing local current
-/// density constrictions. This check uses parsed copper bounds as a conservative
+/// IPC-2152 covers board-level current-carrying capacity. This check reviews
+/// local current-density constrictions using parsed copper bounds as a conservative
 /// neck proxy, so suspect findings should be verified against native geometry,
 /// stackup, copper weight, temperature rise, and current requirements.
 pub fn high_current_neck_readiness(
@@ -1897,8 +1860,7 @@ pub fn high_current_neck_readiness(
 /// stitching or bonding intent.
 ///
 /// The parsed ground via centers are indexed with the same deterministic point
-/// grid used by drill-table matching. Following Ericson, *Real-Time Collision
-/// Detection* (2005), the grid is only a broad phase; the readiness rule remains
+/// grid used by drill-table matching. The grid is only a broad phase; the rule remains
 /// a center-distance bonding proxy that should be verified against the chassis
 /// and enclosure design.
 pub fn chassis_stitching_readiness(
@@ -1918,11 +1880,7 @@ pub fn chassis_stitching_readiness(
 ///
 /// The point index is only a broad phase. The final center-radius decision
 /// compares squared exact `Real` distances after lifting coordinates with
-/// source-unit provenance, matching Yap's exact-geometric-computation boundary
-/// from "Towards Exact Geometric Computation," Computational Geometry 7.1-2
-/// (1997). The squared-distance reduction avoids a square root, as in
-/// de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed., Springer, 2008.
+/// source-unit provenance. Squared distance avoids an unnecessary square root.
 pub fn chassis_stitching_readiness_with_grid(
     board: &BoardModel,
     selected_layers: &[String],
@@ -2123,9 +2081,7 @@ pub fn gold_finger_edge_readiness(
 /// Run the `gold_finger_spacing_readiness` design-readiness check or report helper.
 ///
 /// Candidate contact pairs are selected with the shared spatial broad phase and
-/// then checked with the exact offset/intersection predicate. This follows the
-/// broad/narrow collision-query pattern described by Ericson, *Real-Time
-/// Collision Detection* (2005), and keeps sparse card-edge connector fields from
+/// then checked with the exact offset/intersection predicate. This keeps sparse card-edge connector fields from
 /// degrading into all-pairs CSG work.
 pub fn gold_finger_spacing_readiness(
     board: &BoardModel,
@@ -2200,9 +2156,7 @@ pub fn gold_finger_spacing_readiness(
 ///
 /// Drill keepouts are circular mechanical blockers and gold-finger copper can
 /// be sparse on large panels, so the check uses the shared spatial broad phase
-/// before exact keepout/copper CSG intersection. This follows the
-/// broad/narrow-phase collision pattern in Ericson, *Real-Time Collision
-/// Detection* (2005).
+/// before exact keepout/copper CSG intersection.
 pub fn gold_finger_drill_keepout_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -2292,8 +2246,7 @@ pub fn gold_finger_drill_keepout_readiness(
 ///
 /// This is a center-proximity readiness proxy for edge connector return intent.
 /// Same-layer ground candidates use the shared copper spatial index before the
-/// exact center-distance predicate, following Ericson, *Real-Time Collision
-/// Detection* (2005). The finding still needs schematic, stackup, and field
+/// exact center-distance predicate. The finding still needs schematic, stackup, and field
 /// review before it becomes release-blocking.
 pub fn connector_return_path_readiness(
     board: &BoardModel,
@@ -2377,8 +2330,8 @@ pub fn connector_return_path_readiness(
 /// Run the `decoupling_proximity_readiness` design-readiness check or report helper.
 ///
 /// This is a loop-area readiness proxy, not a placement optimizer. Same-layer
-/// ground candidates are selected through the Ericson-style grid broad phase in
-/// `CopperSpatialIndex` before exact center-distance review.
+/// ground candidates are selected through `CopperSpatialIndex` before exact
+/// center-distance review.
 pub fn decoupling_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -2450,9 +2403,8 @@ pub fn decoupling_proximity_readiness(
 /// Run the `return_path_readiness` design-readiness check or report helper.
 ///
 /// High-speed via transitions are matched to nearby ground stitching via centers
-/// with a point-grid broad phase before exact center-radius review. This follows
-/// the broad/narrow phase pattern from Ericson, *Real-Time Collision Detection*
-/// (2005), and keeps sparse ground-stitch fields bounded while retaining the
+/// with a point-grid broad phase before exact center-radius review. This keeps
+/// sparse ground-stitch fields bounded while retaining the
 /// documented return-path heuristic.
 pub fn return_path_readiness(
     board: &BoardModel,
@@ -2710,11 +2662,8 @@ fn looks_edge_intent_net(net: &str) -> bool {
 
 /// Review selected same-layer KiCad copper for different-net spacing.
 ///
-/// Candidate generation uses the shared broad/narrow-phase grid described by
-/// Ericson, *Real-Time Collision Detection* (2005), and every surviving pair
-/// still runs the exact offset/intersection predicate below. The exact
-/// clearance test models the Minkowski-style offset region discussed in Lee and
-/// Preparata, "Computational Geometry - A Survey", IEEE TC, 1984.
+/// A shared grid proposes candidates, and every surviving pair still runs the
+/// exact offset/intersection predicate below.
 pub fn net_spacing(
     board: &BoardModel,
     clearance: &Scalar,
@@ -2842,12 +2791,8 @@ fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearan
 
 /// Review cross-layer copper proximity under fabrication registration tolerance.
 ///
-/// Like [`net_spacing`], this uses Ericson's broad/narrow-phase pattern from
-/// *Real-Time Collision Detection* (2005): a layer-aware spatial grid proposes
-/// cross-layer feature pairs, and the exact offset/intersection predicate makes
-/// the finding decision. The exact test is the same Minkowski-style offset
-/// region described by Lee and Preparata, "Computational Geometry - A Survey",
-/// IEEE TC, 1984.
+/// Like [`net_spacing`], a layer-aware spatial grid proposes cross-layer feature
+/// pairs, and the exact offset/intersection predicate makes the finding decision.
 pub fn registration_tolerance(
     board: &BoardModel,
     tolerance: &Scalar,
@@ -2985,8 +2930,7 @@ fn collect_registration_tolerance_violation(
 /// Run the `panelization_clearance` design-readiness check or report helper.
 ///
 /// Panel tabs, V-scores, route graphics, and stamp-hole drills are treated as
-/// blocker geometry. Copper/blocker pairs first pass an AABB broad phase in the
-/// Ericson, *Real-Time Collision Detection* (2005) sense; exact intersection
+/// blocker geometry. Copper/blocker pairs first pass an AABB broad phase; exact intersection
 /// and boundary-distance checks still decide every reported clearance finding.
 pub fn panelization_clearance(
     board: &BoardModel,
@@ -3115,9 +3059,8 @@ pub fn panelization_clearance(
 
 /// Run the `apply_ipc356_nets` design-readiness check or report helper.
 ///
-/// IPC-D-356 records are point-like electrical-test observations. Matching them
-/// against parsed KiCad feature centers uses the same grid broad phase described
-/// by Ericson, *Real-Time Collision Detection* (2005), before the exact
+/// IPC-D-356 records are point-like electrical-test observations. A grid matches
+/// them against parsed KiCad feature centers before the exact
 /// center-distance predicate. This keeps sidecar annotation linear-ish on large
 /// fixture files and avoids assigning drill diameter metadata from unrelated
 /// distant records.
@@ -3197,9 +3140,8 @@ pub fn apply_ipc356_nets(board: &mut BoardModel, points: &[Ipc356Point], toleran
 /// Run the `ipc356_coverage` design-readiness check or report helper.
 ///
 /// Coverage is a point-to-center proximity query, so the check uses a
-/// deterministic point spatial index as a broad phase before exact distance.
-/// This follows Ericson's broad/narrow collision-detection pattern and keeps
-/// large ICT/netlist sidecars bounded.
+/// deterministic point spatial index as a broad phase before exact distance,
+/// keeping large ICT/netlist sidecars bounded.
 pub fn ipc356_coverage(
     board: &BoardModel,
     points: &[Ipc356Point],
@@ -3454,10 +3396,8 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
     };
 
     // Axis-aligned bounding boxes are used only as a broad-phase rejection
-    // before exact polygon predicates. This is the standard two-phase collision
-    // pattern described by Lin and Canny, "A Fast Algorithm for Incremental
-    // Distance Calculation", IEEE ICRA, 1991: cheap conservative culling first,
-    // exact distance/intersection only for surviving candidates.
+    // before exact polygon predicates: cheap conservative culling first, exact
+    // distance or intersection only for surviving candidates.
     left_bounds.min().x - clearance <= right_bounds.max().x
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
@@ -3489,10 +3429,8 @@ fn point_within_radius_with_grid(
 ) -> bool {
     // The bucket lookup is only a broad phase. This predicate compares
     // `dx*dx + dy*dy <= r*r` after lifting all finite compatibility values into
-    // exact `Real`s with source-unit facts. That keeps the center-radius
-    // decision inside Yap's EGC model while using the standard squared-distance
-    // reduction from de Berg et al., *Computational Geometry: Algorithms and
-    // Applications*, 3rd ed., Springer, 2008.
+    // exact `Real`s with source-unit facts. Squared distance avoids an
+    // unnecessary square root.
     let provenance = RuleGeometryProvenance::new(rule_name, grid);
     let Some(point_x) = provenance.lift_f64(point[0]) else {
         return false;

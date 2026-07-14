@@ -69,9 +69,8 @@ fn is_leap_year(year: i64) -> bool {
 }
 
 fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
-    // Howard Hinnant's civil-calendar algorithm converts Gregorian Y-M-D dates
-    // to days since the Unix epoch without a date crate. See Hinnant,
-    // "chrono-Compatible Low-Level Date Algorithms."
+    // Convert Gregorian Y-M-D dates to days since the Unix epoch without a
+    // date crate.
     let year = year - i64::from(month <= 2);
     let era = if year >= 0 { year } else { year - 399 } / 400;
     let year_of_era = year - era * 400;

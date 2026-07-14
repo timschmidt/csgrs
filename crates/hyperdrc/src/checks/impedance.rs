@@ -42,18 +42,9 @@ pub(super) enum ImpedanceModel {
 /// Estimate single-ended impedance for supported stackup/layer combinations.
 ///
 /// Returns `None` when the inputs do not describe a supported single-ended
-/// transmission-line geometry with positive dielectric data. The outer-layer
-/// formulas use the quasi-static microstrip closed forms popularized by
-/// Hammerstad and Jensen, "Accurate Models for Microstrip Computer-Aided
-/// Design," 1980 IEEE MTT-S International Microwave Symposium Digest, pp.
-/// 407-409, doi:10.1109/MWSYM.1980.1124303. Centered stripline uses the
-/// zero-thickness first-pass approximation associated with Cohn, "Characteristic
-/// Impedance of the Shielded-Strip Transmission Line," IRE Transactions on
-/// Microwave Theory and Techniques, vol. MTT-2, no. 2, 1954, pp. 52-57,
-/// doi:10.1109/TMTT.1954.1124875, and Wheeler, "Transmission-Line Properties
-/// of a Stripline Between Parallel Planes," IEEE Transactions on Microwave
-/// Theory and Techniques, vol. 26, no. 11, 1978, pp. 866-876,
-/// doi:10.1109/TMTT.1978.1129505. IPC-2221B is also relevant because it frames
+/// transmission-line geometry with positive dielectric data. Outer-layer
+/// estimates use the Hammerstad-Jensen quasi-static microstrip forms. Centered
+/// stripline uses a zero-thickness first-pass approximation. IPC-2221B frames
 /// impedance as a fabrication stackup and conductor-geometry constraint rather
 /// than a geometry-only universal rule.
 pub(super) fn estimate_single_ended_impedance(

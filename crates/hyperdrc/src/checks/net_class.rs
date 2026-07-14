@@ -2,11 +2,8 @@
 //!
 //! The checks operate on flat `NetClassConfig` records, but rule decks benefit
 //! from named base classes for repeated electrical and manufacturing policy.
-//! Keeping inheritance resolution here follows Parnas' information-hiding
-//! guidance from "On the Criteria To Be Used in Decomposing Systems into
-//! Modules," Communications of the ACM, 1972, doi:10.1145/361598.361623: the
-//! check implementations consume resolved policy without each one knowing how
-//! inheritance is represented in JSON.
+//! Check implementations consume resolved policy without knowing how JSON
+//! inheritance is represented.
 
 use std::collections::{BTreeMap, BTreeSet};
 

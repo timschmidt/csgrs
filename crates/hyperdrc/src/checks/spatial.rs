@@ -18,11 +18,9 @@ const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
 ///
 /// The index stores each feature by its parsed location and inflates queries by
 /// both the queried feature span and the maximum indexed feature span. That is
-/// a conservative broad-phase rule, not a proof of geometric contact. It follows
-/// the standard two-stage collision-detection pattern described by Ericson,
-/// *Real-Time Collision Detection* (2005): a cheap spatial partition proposes
-/// candidate pairs, then exact geometry rejects false positives. HyperDRC uses
-/// the same pattern for PCB readiness so large sparse boards do not require a
+/// a conservative broad-phase rule, not a proof of geometric contact. A cheap
+/// spatial partition proposes candidate pairs, then exact geometry rejects
+/// false positives. This keeps large sparse boards from requiring a
 /// full all-pairs CSG pass. Buckets are grouped by layer so same-layer queries
 /// borrow the layer key once instead of allocating one key per bucket probe.
 pub(super) struct CopperSpatialIndex<'a> {
@@ -92,9 +90,8 @@ impl<'a> CopperSpatialIndex<'a> {
     ///
     /// This supports checks such as reference-plane review, where signal copper
     /// on one layer is intentionally compared with ground copper on another
-    /// layer. It is still only a conservative broad phase in the Ericson,
-    /// *Real-Time Collision Detection* (2005) sense; callers must run exact CSG
-    /// or distance predicates on returned candidates.
+    /// layer. It is still only a conservative broad phase; callers must run
+    /// exact CSG or distance predicates on returned candidates.
     pub(super) fn all_layers_near_feature(
         &self,
         feature: &CopperFeature,
@@ -169,9 +166,8 @@ impl<'a> CopperSpatialIndex<'a> {
         let mut candidates = Vec::new();
 
         // Keep a second layerless bucket map for source geometry such as NPTH
-        // drills that can interact with copper on any selected layer. This is
-        // still Ericson's broad/narrow-phase grid from *Real-Time Collision
-        // Detection* (2005), but avoids scanning every layer-qualified bucket
+        // drills that can interact with copper on any selected layer. This
+        // avoids scanning every layer-qualified bucket
         // for every mechanical feature on sparse, multi-layer boards.
         for x in min_x..=max_x {
             for y in min_y..=max_y {
@@ -214,8 +210,7 @@ impl<'a> CopperSpatialIndex<'a> {
 ///
 /// The index stores polygon bounding-box centers and inflates each query by the
 /// queried polygon span plus the largest indexed span. This is intentionally a
-/// conservative broad phase in the style of Ericson, *Real-Time Collision
-/// Detection* (2005): every returned candidate still goes through the exact
+/// conservative broad phase: every returned candidate still goes through the exact
 /// offset/intersection predicate in the caller. Keeping this helper
 /// `pub(super)` avoids exposing bbox-center approximations as public geometry
 /// semantics while letting layer checks share tested spatial infrastructure.
@@ -311,9 +306,8 @@ impl LayerPolygonSpatialIndex {
 ///
 /// Drill spacing is a center-distance predicate adjusted by both drill radii,
 /// so a center-only broad phase is sufficient as long as each query is inflated
-/// by the largest indexed radius plus the requested spacing. This follows the
-/// same broad/narrow-phase structure described by Ericson, *Real-Time Collision
-/// Detection* (2005): the index only proposes candidate pairs, while the caller
+/// by the largest indexed radius plus the requested spacing. The index only
+/// proposes candidate pairs, while the caller
 /// remains responsible for exact edge-gap comparison.
 pub(super) struct DrillSpatialIndex<'a> {
     drills: &'a [DrillFeature],
@@ -476,9 +470,8 @@ impl PointSpatialIndex {
 
     /// Return point indexes from buckets intersecting the query square.
     ///
-    /// This is an Ericson-style broad phase from *Real-Time Collision
-    /// Detection* (2005): it deliberately does not decide the circular
-    /// center-radius predicate. Callers that need certified topology or
+    /// This broad phase deliberately does not decide the circular center-radius
+    /// predicate. Callers that need certified topology or
     /// source-unit-aware distance comparisons must refine every returned
     /// candidate with their exact predicate.
     pub(super) fn candidate_centers_near(&self, center: [f64; 2], radius: f64) -> Vec<usize> {

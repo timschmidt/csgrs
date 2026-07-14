@@ -228,10 +228,8 @@ fn parse_arc_graphics(
         let width = stroke_width(arc, 0.01);
         // Footprint arcs are still converted to compatibility polygons for the
         // current DRC model, but their degenerate/nondegenerate decision uses
-        // retained decimal-token `Real` coordinates. This follows Yap's EGC
-        // boundary: exact predicates decide topology before approximation
-        // adapters sample geometry. See Yap, "Towards Exact Geometric
-        // Computation," *Computational Geometry* 7.1-2 (1997).
+        // retained decimal-token `Real` coordinates. Exact predicates decide
+        // topology before approximation adapters sample geometry.
         let Some((arc_center, arc_start, angle)) =
             arc_center_start_angle_source(&start, &mid, &end)
         else {

@@ -502,11 +502,9 @@ pub fn production_artifact_readiness(
         ));
     }
     if !reflow_sensitive_refs.is_empty() && !mentions_reflow_profile_handoff(&release_notes) {
-        // IPC J-STD-001H treats soldering as a controlled production process.
-        // Areny et al. (2011) show that the selected reflow profile affects
-        // SnAgCu paste transfer and solder-deposit outcomes, so dense
-        // array/fine-pitch rows get a release-package handoff warning when no
-        // profile or thermal-recipe language is present.
+        // IPC J-STD-001H treats soldering as a controlled production process,
+        // so dense array/fine-pitch rows get a handoff warning when no profile
+        // or thermal-recipe language is present.
         violations.push(artifact_violation(
             "bom-readme-reflow-profile-handoff",
             Some(format!(
@@ -539,10 +537,9 @@ pub fn production_artifact_readiness(
         ));
     }
     if !thermal_validation_refs.is_empty() && !mentions_thermal_validation_handoff(&release_notes) {
-        // Hollstein, Yang, and Weide-Zaage (2021) show that QFN thermal
-        // behavior depends on board-level design parameters such as thermal
-        // pad, via, and heat-spreading choices. BOM rows that explicitly name
-        // heat sinks, high-power parts, or power modules are therefore promoted
+        // QFN thermal behavior depends on board-level parameters such as pad,
+        // via, and heat-spreading choices. BOM rows that explicitly name heat
+        // sinks, high-power parts, or power modules are therefore promoted
         // into a release-package warning when no thermal validation, derating,
         // temperature-rise, airflow, or thermal-interface handoff is present.
         violations.push(artifact_violation(

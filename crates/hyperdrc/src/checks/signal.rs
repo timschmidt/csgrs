@@ -211,14 +211,9 @@ pub fn sensitive_return_readiness(
 ///
 /// This extends `sensitive-net-spacing-readiness` to quieter digital nets such
 /// as GPIO, SPI, I2C, UART, and MCU control lines that may not be classified as
-/// high-speed or power-noisy. Chesser and Porley's mixed-signal layout article
-/// describes this as physical floor planning: keep analog and digital signals
-/// separated and provide a low-impedance ground reference instead of relying on
-/// net names alone. Xu and Wang, "Investigating a guard trace ring to suppress
-/// the crosstalk due to a clock trace on a power electronics DSP control board,"
-/// *IEEE Transactions on Electromagnetic Compatibility* 57.3 (2015),
-/// <https://doi.org/10.1109/TEMC.2015.2403289>, shows that grounded guard
-/// geometry can materially change PCB crosstalk behavior.
+/// high-speed or power-noisy. Keep analog and digital signals separated and
+/// provide a low-impedance ground reference instead of relying on net names
+/// alone; grounded guard geometry can materially change PCB crosstalk.
 pub fn mixed_signal_partition_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -480,9 +475,7 @@ fn sketches_within_clearance(
 
     // Broad-phase bounding boxes conservatively reject only pairs that cannot
     // be within the clearance. Exact polygon offset/distance checks still
-    // decide every candidate that survives, following the collision-detection
-    // split in Lin and Canny, "A Fast Algorithm for Incremental Distance
-    // Calculation", IEEE ICRA, 1991.
+    // decide every candidate that survives.
     left_bounds.min().x - clearance <= right_bounds.max().x
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y

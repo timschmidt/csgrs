@@ -33,8 +33,8 @@ const FEATURE_GRID_EPSILON: f64 = 1.0e-9;
 /// IPC-7351B treats component placement courtyard and fabrication/assembly
 /// tolerances as process constraints. Until parsed package courtyards are
 /// available, this check uses non-fiducial KiCad pads as conservative body
-/// proxies, then applies an Ericson-style rectangular broad phase before exact
-/// outline distance review on simple board rectangles.
+/// proxies, then applies a rectangular broad phase before exact outline-distance
+/// review on simple board rectangles.
 pub fn component_edge_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -105,8 +105,7 @@ pub fn component_edge_clearance_readiness(
 /// board-edge/process keepouts as assembly constraints. Because the current
 /// model does not carry full package bodies, this check uses parsed pads as
 /// conservative component proxies and applies a spatial broad phase before
-/// exact circular keepout intersection, following the broad/narrow query
-/// pattern in Ericson, *Real-Time Collision Detection* (2005).
+/// exact circular keepout intersection.
 pub fn component_hole_clearance_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -508,9 +507,8 @@ pub fn pad_pair_asymmetry_readiness(
 
 /// Compare likely critical KiCad nets against IPC-D-356 test records.
 ///
-/// IPC-9252-style fixture planning and practical DFT guidance such as the
-/// FixturFab bed-of-nails notes both reduce to the same early-readiness signal:
-/// every critical production net needs parsed, repeatable probe evidence before
+/// IPC-9252-style fixture planning reduces to an early-readiness signal: every
+/// critical production net needs parsed, repeatable probe evidence before
 /// the board is ready for fixture build. This check treats normalized IPC-D-356
 /// net records as that evidence and reports missing critical KiCad nets.
 pub fn testpoint_coverage_readiness(
@@ -572,8 +570,8 @@ pub fn testpoint_coverage_readiness(
 
 /// Check fixture-probe diameter, edge clearance, and nearest-neighbor spacing.
 ///
-/// Bed-of-nails fixture guidance from FixturFab and IPC-9252-oriented electrical
-/// test practices describe the same mechanical idea this check encodes: test
+/// IPC-9252-oriented electrical test practices require the same mechanical
+/// condition this check encodes: test
 /// probes need reliable pad size, spacing, and fixture clearance so the probe
 /// plate can contact every required net repeatably.
 pub fn testpoint_accessibility_readiness(
@@ -840,9 +838,7 @@ fn testpoint_spacing_violations(
         }
     }
 
-    // The grid is a broad phase in the sense of Lin and Canny, "A Fast
-    // Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991: nearby
-    // candidates are found cheaply, then exact Euclidean edge spacing remains
+    // The grid finds nearby candidates cheaply; exact Euclidean edge spacing remains
     // the narrow-phase decision used for the fixture-readiness finding.
     log::trace!(
         "testpoint spacing readiness: points={} buckets={} comparisons={} violations={} cell_size={cell_size:.6}",
@@ -865,8 +861,7 @@ fn testpoint_bucket(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 /// Review IPC-D-356 probe keepouts against unrelated parsed copper.
 ///
 /// The probe keepout is a circular fixture envelope around each IPC-D-356 test
-/// access point. Candidate copper is found with the shared broad-phase grid
-/// described by Ericson, *Real-Time Collision Detection* (2005), then exact CSG
+/// access point. A shared grid proposes candidate copper, then exact CSG
 /// intersection remains the narrow-phase decision. IPC-9252B-style DFT practice
 /// treats probe access as both electrical and mechanical evidence; unrelated
 /// nearby copper can create fixture shorts even when the IPC-D-356 record is
@@ -990,8 +985,7 @@ fn testpoint_side_parity_violation(
     // IPC-D-356B carries electrical-test access evidence, while DFT fixture
     // guidance treats probe side as a production constraint; cross-checking the
     // sidecar against nearby KiCad copper catches common top/bottom export
-    // mistakes before fixture build. See IPC-D-356B (IPC, 2002) and FixturFab,
-    // "Design for Test: How to Design Test Points for PCB Testing."
+    // mistakes before fixture build.
     let expected_side = match point.access_side? {
         Ipc356AccessSide::Top => Ipc356AccessSide::Top,
         Ipc356AccessSide::Bottom => Ipc356AccessSide::Bottom,
@@ -1185,9 +1179,7 @@ pub fn tooling_hole_readiness(
 
 /// Run the `mouse_bite_readiness` design-readiness check or report helper.
 ///
-/// Mouse-bite rows are center-spacing patterns, so candidate selection uses the
-/// same Ericson-style broad/narrow phase as other readiness checks: a point grid
-/// from *Real-Time Collision Detection* (2005) finds nearby drill centers, then
+/// Mouse-bite rows are center-spacing patterns. A point grid finds nearby drill centers, then
 /// exact Euclidean spacing decides whether the drill pitch is too tight,
 /// acceptable, or isolated beyond the maximum expected row pitch.
 pub fn mouse_bite_readiness(
@@ -1307,8 +1299,7 @@ pub fn mouse_bite_readiness(
 ///
 /// IPC-7351B treats fiducials as assembly registration targets with optical
 /// keepout needs. This readiness check infers likely unnetted pad targets and,
-/// on rectangular boards, uses the same broad/narrow phase from Ericson,
-/// *Real-Time Collision Detection* (2005) to reject clearly interior candidates
+/// on rectangular boards, rejects clearly interior candidates
 /// before exact outline-distance review.
 pub fn fiducial_readiness(
     board: &BoardModel,
@@ -1513,8 +1504,7 @@ pub fn fiducial_keepout_readiness(
 /// profiling guidance reinforces that solder process windows are not captured
 /// by copper spacing alone. This check uses plated, solder-process-like drill
 /// nets as conservative anchors so reviewers can confirm pallet, solder-thief,
-/// and masking intent. It applies Ericson-style broad/narrow filtering before
-/// exact circular keepout intersection.
+/// and masking intent. A broad phase precedes exact circular keepout intersection.
 pub fn selective_wave_solder_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1617,10 +1607,8 @@ pub fn selective_wave_solder_keepout_readiness(
 /// Review press-fit insertion clearance around likely connector holes.
 ///
 /// Press-fit hardware needs insertion-tool and deformation clearance that is not
-/// represented by copper clearance alone. IEC 60352-5 press-in connection
-/// guidance and the broad/narrow collision-query pattern in Ericson, *Real-Time
-/// Collision Detection* (2005), motivate the conservative net-name filter plus
-/// exact keepout/pad intersection used here.
+/// represented by copper clearance alone. IEC 60352-5 press-in guidance
+/// motivates the conservative net-name filter and exact keepout intersection.
 pub fn press_fit_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1642,9 +1630,8 @@ pub fn press_fit_keepout_readiness(
 ///
 /// IPC J-STD-001H treats conformal coating as a workmanship/process control
 /// item. Geometry cannot prove a coating mask exists, but nearby copper around
-/// likely no-coat features is a useful release-review prompt. Neighboring pad
-/// candidates use the lightweight assembly feature grid, following Ericson,
-/// *Real-Time Collision Detection* (2005), before exact keepout/pad CSG
+/// likely no-coat features is a useful release-review prompt. A lightweight
+/// grid selects neighboring pads before exact keepout/pad CSG
 /// intersection.
 pub fn conformal_coating_keepout_readiness(
     board: &BoardModel,
@@ -1842,9 +1829,7 @@ impl<'a> FeatureGridIndex<'a> {
             }
         }
 
-        // Broad-phase bucket lookup follows the same collision-query structure
-        // as Lin and Canny, "A Fast Algorithm for Incremental Distance
-        // Calculation", IEEE ICRA, 1991. The caller still checks bounding boxes
+        // Broad-phase bucket lookup proposes candidates. The caller still checks bounding boxes
         // and exact polygon overlap before reporting a readiness finding.
         log::trace!(
             "feature grid circle query: center=({:.6},{:.6}) radius={radius:.6} query_radius={query_radius:.6} candidates={} cell_size={:.6}",
@@ -1901,10 +1886,8 @@ fn same_layer_feature_candidate_pairs(
         }
     }
 
-    // This is the same broad/narrow phase structure used for fixture spacing:
-    // candidate generation follows Lin and Canny, "A Fast Algorithm for
-    // Incremental Distance Calculation", IEEE ICRA, 1991, while the caller
-    // still performs exact geometry distance checks before reporting.
+    // This is the same broad/narrow phase used for fixture spacing; the caller
+    // still performs exact geometry-distance checks before reporting.
     log::trace!(
         "same-layer feature candidate grid: features={} buckets={} pairs={} cell_size={cell_size:.6}",
         features.len(),
@@ -1930,9 +1913,7 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
         return true;
     };
 
-    // AABB broad-phase before exact segment/polygon distance. This follows the
-    // broad/narrow phase collision structure from Lin and Canny, "A Fast
-    // Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991.
+    // AABB broad phase before exact segment/polygon distance.
     left_bounds.min().x - clearance <= right_bounds.max().x
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y

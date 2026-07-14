@@ -34,8 +34,7 @@ const DUPLICATE_LAYER_SIGNATURE_SCALE: f64 = 1_000_000.0;
 /// Run the `mask_island_keepout` design-readiness check or report helper.
 ///
 /// Mask-island neighbors use `LayerPolygonSpatialIndex` before exact expanded
-/// island intersection. As in Ericson, *Real-Time Collision Detection* (2005),
-/// the grid is only a broad phase: bbox-center candidates are never reported
+/// island intersection. The grid is only a broad phase: bbox-center candidates are never reported
 /// until the offset CSG predicate produces non-trivial shapes.
 pub fn mask_island_keepout(
     layer_name: &str,
@@ -397,9 +396,8 @@ pub fn solder_mask_board_edge_clearance(
 /// Run the `paste_overhang` design-readiness check or report helper.
 ///
 /// Paste apertures are differenced against only nearby copper candidates before
-/// the exact CSG subtraction. The candidate search follows Ericson,
-/// *Real-Time Collision Detection* (2005): conservative spatial partition first,
-/// exact geometry second. This keeps sparse copper/paste layers bounded without
+/// exact CSG subtraction. Conservative spatial partitioning keeps sparse
+/// copper/paste layers bounded without
 /// reporting bbox-only approximations.
 pub fn paste_overhang(
     paste_name: &str,
@@ -430,8 +428,7 @@ pub fn paste_overhang(
 /// Run the `paste_aperture_coverage` design-readiness check or report helper.
 ///
 /// Coverage is checked per copper island against indexed nearby paste apertures.
-/// The private layer-polygon index is a broad phase in the sense of Ericson,
-/// *Real-Time Collision Detection* (2005); exact CSG subtraction still decides
+/// The private layer-polygon index is a broad phase; exact CSG subtraction decides
 /// whether uncovered copper exists.
 pub fn paste_aperture_coverage(
     paste_name: &str,
@@ -461,9 +458,8 @@ pub fn paste_aperture_coverage(
 /// Run the `solder_mask_overlap_clearance` design-readiness check or report helper.
 ///
 /// Mask opening clearance bands are built from indexed nearby openings before
-/// exact intersection with copper. The broad/narrow split follows Ericson,
-/// *Real-Time Collision Detection* (2005): bbox candidates only bound the CSG
-/// workload, while the offset-ring intersection decides the warning geometry.
+/// exact intersection with copper. Bounding-box candidates limit CSG workload;
+/// offset-ring intersection decides the warning geometry.
 pub fn solder_mask_overlap_clearance(
     copper_name: &str,
     copper: &PcbSketch,
@@ -493,9 +489,7 @@ pub fn solder_mask_overlap_clearance(
 /// Run the `paste_aperture_ratio` design-readiness check or report helper.
 ///
 /// Paste candidates for each copper island are selected with the private
-/// layer-polygon spatial index before exact copper/paste intersection. This
-/// follows the same Ericson, *Real-Time Collision Detection* (2005),
-/// broad-phase pattern used by the spacing checks and keeps sparse stencil
+/// layer-polygon spatial index before exact copper/paste intersection, keeping sparse stencil
 /// layers from scanning every aperture for every pad.
 pub fn paste_aperture_ratio(
     paste_name: &str,
@@ -617,7 +611,7 @@ pub fn minimum_paste_aperture(
 ///
 /// Candidate aperture neighbors are selected through `LayerPolygonSpatialIndex`
 /// before exact offset/intersection review. The index is only a conservative
-/// broad phase, following Ericson, *Real-Time Collision Detection* (2005), so
+/// broad phase, so
 /// sparse paste layers avoid repeated whole-layer CSG unions without changing
 /// the exact violation predicate.
 pub fn paste_aperture_spacing(
@@ -686,9 +680,8 @@ pub fn paste_aperture_spacing(
 /// Run the `paste_mask_alignment` design-readiness check or report helper.
 ///
 /// Paste islands are differenced against only indexed nearby solder-mask
-/// openings before exact CSG subtraction. This uses the conservative
-/// broad-phase approach described by Ericson, *Real-Time Collision Detection*
-/// (2005), without treating bbox proximity as a finding by itself.
+/// openings before exact CSG subtraction. Bounding-box proximity is never a
+/// finding by itself.
 pub fn paste_mask_alignment(
     paste_name: &str,
     paste: &PcbSketch,
@@ -717,8 +710,7 @@ pub fn paste_mask_alignment(
 /// Run the `exposed_copper` design-readiness check or report helper.
 ///
 /// Copper islands are intersected only with indexed nearby mask openings before
-/// exact CSG. This is the same conservative broad/narrow split described by
-/// Ericson, *Real-Time Collision Detection* (2005): the index only bounds
+/// exact CSG. The index only bounds
 /// candidate generation, while polygon intersection decides the finding.
 pub fn exposed_copper(
     copper_name: &str,
@@ -779,11 +771,8 @@ pub fn solder_mask_opening_coverage(
 /// reports the ratio for release review instead of inferring the intended mask
 /// definition.
 ///
-/// The manufacturing motivation follows Chin and Ramakrishna, "Impact of BGA
-/// Escape Trace Design on Performance of Solder Joint," *SMTA International*
-/// (Cisco Systems), where BGA escape geometry and pad definition choices affect
-/// solder-joint performance. Candidate selection uses Ericson,
-/// *Real-Time Collision Detection* (2005), as a broad phase before exact CSG.
+/// BGA escape geometry and pad definition choices affect solder-joint
+/// performance. Candidate selection is only a broad phase before exact CSG.
 pub fn solder_mask_opening_ratio_readiness(
     copper_name: &str,
     copper: &PcbSketch,
@@ -867,13 +856,8 @@ pub fn solder_mask_opening_ratio_readiness(
 /// manufacturability proxy for mask registration tolerance and avoids claiming
 /// exact soldermask-process capability from Gerber polygons alone.
 ///
-/// The per-island candidate lookup follows the broad/narrow-phase pattern from
-/// Ericson, *Real-Time Collision Detection* (2005). The fabrication motivation
-/// is the same mask-registration problem studied by Tang et al., "Study on Wet
-/// Chemical Etching of Flexible Printed Circuit Board with 16-um Line Pitch,"
-/// *Journal of Electronic Materials* 52 (2023),
-/// <https://doi.org/10.1007/s11664-023-10368-z>, for fine PCB features near
-/// process limits: lateral process variation must be budgeted before release.
+/// Per-island lookup only proposes candidates. Lateral process variation for
+/// fine features near manufacturing limits must be budgeted before release.
 pub fn solder_mask_annular_ring_readiness(
     copper_name: &str,
     copper: &PcbSketch,
@@ -950,9 +934,8 @@ pub fn solder_mask_annular_ring_readiness(
 /// Run the `solder_mask_expansion` design-readiness check or report helper.
 ///
 /// Mask openings are compared to indexed nearby copper, expanded only for exact
-/// candidate subtraction. The spatial index is conservative and cites the
-/// broad/narrow-phase pattern from Ericson, *Real-Time Collision Detection*
-/// (2005), so large sparse mask-opening fields avoid global copper offsets.
+/// candidate subtraction. The conservative index lets large sparse fields avoid
+/// global copper offsets.
 pub fn solder_mask_expansion(
     copper_name: &str,
     copper: &PcbSketch,
@@ -982,8 +965,7 @@ pub fn solder_mask_expansion(
 /// Run the `silkscreen_overlap` design-readiness check or report helper.
 ///
 /// Silkscreen geometry is intersected only with indexed nearby blocker
-/// candidates before exact CSG. This broad/narrow split follows Ericson,
-/// *Real-Time Collision Detection* (2005), and keeps sparse legend/blocker
+/// candidates before exact CSG, keeping sparse legend/blocker
 /// exports bounded without changing the reported geometry predicate.
 pub fn silkscreen_overlap(
     silk_name: &str,
@@ -1013,8 +995,7 @@ pub fn silkscreen_overlap(
 /// Run the `silkscreen_clearance` design-readiness check or report helper.
 ///
 /// Blocker candidates are selected through `LayerPolygonSpatialIndex`, then
-/// expanded and intersected exactly. The index is only a broad phase, following
-/// Ericson, *Real-Time Collision Detection* (2005), so clearance findings remain
+/// expanded and intersected exactly. The index is only a broad phase, so clearance findings remain
 /// CSG-derived.
 pub fn silkscreen_clearance(
     silk_name: &str,
@@ -1106,12 +1087,8 @@ pub fn silkscreen_min_width(
 /// readability proxy for tiny glyphs, pin-1 dots, polarity marks, and small
 /// reference-designator fragments.
 ///
-/// The readability motivation comes from classic typography experiments such
-/// as Paterson and Tinker, "Studies of Typographical Factors Influencing Speed
-/// of Reading. II. Size of Type," *Journal of Applied Psychology* 13.2 (1929),
-/// <https://doi.org/10.1037/h0074167>, and later legibility work: small
-/// physical character size should be a release-review parameter instead of an
-/// implicit artifact of the CAD font.
+/// Small physical character size is an explicit release-review parameter rather
+/// than an implicit artifact of the CAD font.
 pub fn silkscreen_text_height_readiness(
     silk_name: &str,
     silk: &PcbSketch,
@@ -1635,8 +1612,7 @@ pub fn layer_sanity(
 /// This is a lightweight Gerber-sanity check for tiny aperture flashes,
 /// fractured slivers, and parser artifacts. It intentionally uses the existing
 /// `min_area` threshold so projects can decide when a small object is relevant
-/// to the process. Tang et al. (2023) discuss wet-etch limits for very fine
-/// flexible PCB features; HyperDRC uses this as a review trigger rather than a
+/// to the process. HyperDRC uses tiny features as a review trigger rather than a
 /// claim that the specific island cannot be fabricated.
 pub fn tiny_layer_feature_readiness(
     layer_name: &str,
@@ -2090,9 +2066,7 @@ fn convex_polygon_width_at_least(polygon: &Polygon<f64>, min_width: &Scalar) -> 
 /// geometry is usually harmless after boolean union, but it is still a release
 /// readiness signal because duplicate primitives can confuse downstream CAM,
 /// quoting, or review tools. The pairwise filter uses the same conservative
-/// set-overlap idea as [`duplicate_layer_geometry_readiness`], following the
-/// computational-geometry set-intersection framing surveyed by Lee and
-/// Preparata (1984).
+/// set-overlap idea as [`duplicate_layer_geometry_readiness`].
 pub fn duplicate_layer_island_readiness(
     layer_name: &str,
     sketch: &PcbSketch,
@@ -2191,9 +2165,8 @@ fn quantize_layer_signature_value(value: f64) -> i64 {
 /// proof of electrical failure: panel rails, mirrored sides, or intentional
 /// copper symmetry can look similar. The check therefore lives under
 /// `layer-sanity` as a warning and should be reviewed against the fabrication
-/// file manifest. The overlap test follows the broad computational-geometry
-/// set-intersection framing surveyed by Lee and Preparata (1984) while keeping
-/// the final predicate intentionally conservative for CAM handoff use.
+/// file manifest. The overlap test remains intentionally conservative for CAM
+/// handoff use.
 pub fn duplicate_layer_geometry_readiness(
     layers: &[(String, PcbSketch)],
     min_area: &Scalar,
@@ -2401,13 +2374,8 @@ pub fn copper_balance(
 /// compensation model; the review signal is useful because copper pattern
 /// density influences etch and copper plating uniformity in PCB production.
 ///
-/// The implementation intentionally uses rectangular windows so the result is
-/// deterministic, inexpensive, and friendly to docs.rs examples/tests. For the
-/// manufacturing motivation, see Sun et al., "Multi-physics coupling aid
-/// uniformity improvement in pattern plating," *Applied Thermal Engineering*
-/// 108 (2016), and Lee et al., "Effect of pulse-reverse plating on copper:
-/// Thermal mechanical properties and microstructure relationship,"
-/// *Microelectronics Reliability* 100-101 (2019).
+/// The implementation uses rectangular windows so the result is deterministic,
+/// inexpensive, and friendly to examples and tests.
 pub fn local_copper_density_readiness(
     copper_layers: &[(String, PcbSketch)],
     window_size: &Scalar,
@@ -2629,8 +2597,7 @@ fn approximate_window_polygon_area(
     // raster-like area accumulator instead of exact CSG window clipping. This
     // mirrors the gridded density maps used for copper CMP/plating review while
     // avoiding a pathological "number of windows times number of layers" boolean
-    // workload on large pours. See Kahng et al., "Filling Algorithms and
-    // Analyses for Layout Density Control", IEEE TCAD, 1999.
+    // workload on large pours.
     (polygon.area.clone() * overlap_width * overlap_height / bounds_area).ok()
 }
 
@@ -2799,9 +2766,8 @@ pub fn board_outline_notch_readiness(layer_name: &str, outline: &PcbSketch) -> V
 /// The inside-corner/reflex decision is a topology predicate and is classified
 /// through `hyperlimit::orient2d` after lifting source coordinates. The final
 /// notch angle remains a compatibility metric for reporting and thresholding at
-/// the current `geo`/`csgrs` boundary. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
-/// predicates decide topology; approximate quantities stay named adapters.
+/// the current `geo`/`csgrs` boundary. Exact predicates decide topology;
+/// approximate quantities stay named adapters.
 pub fn board_outline_notch_readiness_with_grid(
     layer_name: &str,
     outline: &PcbSketch,
@@ -2845,9 +2811,7 @@ pub fn board_outline_duplicate_readiness(layer_name: &str, outline: &PcbSketch) 
 /// Warn about duplicated outline contours using retained source-grid facts.
 ///
 /// Exact lifted bounding-box predicates reject impossible contour pairs before
-/// the existing CSG overlap-area report path. This keeps the broad phase within
-/// Yap's exact-geometric-computation boundary while preserving current report
-/// geometry semantics.
+/// the existing CSG overlap-area report path, preserving report semantics.
 pub fn board_outline_duplicate_readiness_with_grid(
     layer_name: &str,
     outline: &PcbSketch,
@@ -2892,8 +2856,8 @@ pub fn board_outline_nesting_readiness(layer_name: &str, outline: &PcbSketch) ->
 /// Warn about nested outline contours using retained source-grid facts.
 ///
 /// The pair broad phase uses exact lifted bounding-box predicates before
-/// falling through to the compatibility CSG overlap calculation, preserving
-/// source-grid provenance at the decision boundary described by Yap.
+/// falling through to compatibility CSG overlap, preserving source-grid
+/// provenance at the decision boundary.
 pub fn board_outline_nesting_readiness_with_grid(
     layer_name: &str,
     outline: &PcbSketch,
@@ -3298,11 +3262,9 @@ fn polygon_bounding_rects_overlap_with_grid(
         return true;
     };
 
-    // This is an Ericson-style broad-phase rejection before CSG overlap work,
-    // but the separating-axis comparisons are exact lifted predicates with
-    // source-grid provenance. Possible contacts are never rejected here. See
-    // Ericson, *Real-Time Collision Detection* (2005), and Yap, "Towards Exact
-    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    // This broad phase rejects impossible CSG overlap, but its separating-axis
+    // comparisons are exact lifted predicates with source-grid provenance.
+    // Possible contacts are never rejected here.
     !exact_lt_with_grid(left.max().x, right.min().x, grid)
         && !exact_lt_with_grid(right.max().x, left.min().x, grid)
         && !exact_lt_with_grid(left.max().y, right.min().y, grid)
@@ -3335,11 +3297,10 @@ fn segment_bounding_boxes_overlap(
     start_b: Coord<f64>,
     end_b: Coord<f64>,
 ) -> bool {
-    // Ericson, *Real-Time Collision Detection* (2005), describes bounding
-    // volumes as broad-phase rejection before exact narrow predicates. This
+    // Bounding volumes reject candidates before exact narrow predicates. This
     // f64 test only rejects pairs whose axis-aligned boxes are strictly
-    // separated in the already-imported compatibility geometry; all possible
-    // contacts still flow to the Yap-style exact segment classifier below.
+    // separated in the imported compatibility geometry; all possible contacts
+    // still flow to the exact segment classifier below.
     let min_ax = start_a.x.min(end_a.x);
     let max_ax = start_a.x.max(end_a.x);
     let min_ay = start_a.y.min(end_a.y);
@@ -3361,11 +3322,9 @@ fn ring_segment_intersection_with_grid(
 ) -> Option<[f64; 2]> {
     // Outline self-intersection is a topology readiness decision, not a visual
     // nicety. Classify the closed segments through `hyperlimit` before asking
-    // `geo` for a marker coordinate. Carrying source-grid provenance to this
-    // gate follows Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997): preserve object/source structure
-    // until the exact predicate selects arithmetic. The marker coordinate below
-    // remains a non-certifying report aid.
+    // `geo` for a marker coordinate. Preserve object/source structure until the
+    // exact predicate selects arithmetic. The marker remains a non-certifying
+    // report aid.
     let provenance = RuleGeometryProvenance::new("board-outline-self-intersection", grid);
     let a = lift_coord_with_provenance(start_a, provenance)?;
     let b = lift_coord_with_provenance(end_a, provenance)?;

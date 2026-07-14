@@ -4054,10 +4054,7 @@ fn layer_coordinate_grid(operations: &[GerberCoordinateOperation]) -> SourceGrid
     // checks can share. Collapsing their retained `%FS...%` grids into one
     // layer fact keeps source-denominator provenance beside the loaded layer,
     // rather than forcing every outline or clearance rule to rediscover it
-    // from raw operation strings or rounded `f64` geometry. This follows
-    // Yap's representation-preservation principle for exact geometric
-    // computation; see Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997).
+    // from raw operation strings or rounded `f64` geometry.
     operations
         .iter()
         .map(|operation| operation.grid)

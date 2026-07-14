@@ -41,11 +41,6 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
 
     let half_x = size[0] / 2.0;
     let half_y = size[1] / 2.0;
-    // Structural-dispatch note: parsed PCB primitives often carry exact grid,
-    // rotation, axis-alignment, and pad-shape facts. Preserve those alongside
-    // the future hyperreal geometry so downstream clearance and boolean checks
-    // can select rectangle, rounded-rectangle, or affine-specialized kernels
-    // instead of rediscovering the shape from sampled f64 vertices.
     let points = [
         [-half_x, -half_y],
         [half_x, -half_y],
@@ -70,9 +65,7 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
 /// simple so downstream checks can use the same boolean path as rectangular
 /// pads.
 ///
-/// The affine corner construction follows the same polygonal geometry model
-/// surveyed by Lee and Preparata, "Computational Geometry - A Survey",
-/// IEEE Transactions on Computers, 1984, <https://doi.org/10.1109/TC.1984.1676388>.
+/// Uses affine corner construction in the common polygonal geometry model.
 pub fn trapezoid_polygon(
     center: [f64; 2],
     size: [f64; 2],
@@ -117,9 +110,7 @@ pub fn trapezoid_polygon(
 /// deterministic polygonal approximation; downstream checks can then use the
 /// same `geo`/`csgrs` boolean pipeline as rectangular and circular pads.
 ///
-/// The offset-region construction follows the computational-geometry framing
-/// surveyed by Lee and Preparata, "Computational Geometry - A Survey",
-/// IEEE Transactions on Computers, 1984, <https://doi.org/10.1109/TC.1984.1676388>.
+/// Uses an offset-region construction in the common polygonal geometry model.
 pub fn rounded_rect_polygon(
     center: [f64; 2],
     size: [f64; 2],
@@ -179,9 +170,7 @@ pub fn rounded_rect_polygon(
 /// returned polygon uses straight chamfer segments and falls back to a plain
 /// rectangle when no corner is selected.
 ///
-/// This is a polygon clipping specialization of the planar geometry operations
-/// surveyed by Lee and Preparata, "Computational Geometry - A Survey",
-/// IEEE Transactions on Computers, 1984, <https://doi.org/10.1109/TC.1984.1676388>.
+/// This is a polygon-clipping specialization for the selected corners.
 pub fn chamfered_rect_polygon(
     center: [f64; 2],
     size: [f64; 2],

@@ -107,10 +107,8 @@ pub(super) fn custom_pad_polygons(
                 // Custom-pad arc polygons remain a compatibility approximation
                 // for current `geo`/`csgrs` consumers, but the arc degeneracy
                 // predicate now consumes retained decimal-token `Real`
-                // coordinates before sampling. This mirrors Yap's exact
-                // geometric computation split between certified decisions and
-                // approximation edges. See Yap, "Towards Exact Geometric
-                // Computation," *Computational Geometry* 7.1-2 (1997).
+                // coordinates before sampling, separating certified topology
+                // decisions from approximation edges.
                 let Some((arc_center, arc_start, angle)) =
                     arc_center_start_angle_source(&start, &mid, &end)
                 else {

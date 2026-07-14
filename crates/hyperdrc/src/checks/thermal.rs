@@ -22,9 +22,8 @@ use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
 /// Run the `thermal_relief_readiness` design-readiness check or report helper.
 ///
 /// Same-net zone candidates use the shared copper spatial index before exact
-/// pad/via-to-zone CSG intersection. This follows Ericson, *Real-Time Collision
-/// Detection* (2005): deterministic broad-phase culling first, exact geometry
-/// second, so sparse power/ground pours do not devolve into all-zone scans.
+/// pad/via-to-zone CSG intersection, so sparse power/ground pours do not
+/// devolve into all-zone scans.
 pub fn thermal_relief_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -96,8 +95,7 @@ pub fn thermal_relief_readiness(
 /// Run the `thermal_via_readiness` design-readiness check or report helper.
 ///
 /// Same-layer via candidates use the shared copper spatial index before exact
-/// zone/via touch review. This keeps the check in the broad-phase/narrow-phase
-/// pattern from Ericson, *Real-Time Collision Detection* (2005), while still
+/// zone/via touch review. This is only a broad phase, still
 /// requiring exact CSG or boundary-distance confirmation before a via counts.
 pub fn thermal_via_readiness(
     board: &BoardModel,
@@ -172,12 +170,8 @@ pub fn thermal_via_readiness(
 ///
 /// This is a geometry readiness check, not a thermal solver. It reports cases
 /// where a power/thermal zone has the requested number of same-net vias, but the
-/// via field has a small maximum span. Thermal-via and heat-spreader geometry is
-/// strongly tied to heat distribution; see Hollstein, Yang, and Weide-Zaage,
-/// "Thermal analysis of the design parameters of a QFN package soldered on a
-/// PCB using a simulation approach," *Microelectronics Reliability* 120 (2021),
-/// article 114118, <https://doi.org/10.1016/j.microrel.2021.114118>, which
-/// varies thermal via count and distribution among influential PCB parameters.
+/// via field has a small maximum span. Thermal-via count and distribution are
+/// retained as influential PCB heat-distribution parameters.
 pub fn thermal_via_distribution_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -272,13 +266,9 @@ pub fn thermal_via_distribution_readiness(
 /// Review large thermal/power pads for same-net via-in-pad evidence.
 ///
 /// Same-layer via candidates use `CopperSpatialIndex` before exact via/pad CSG
-/// intersection. The index is only a conservative broad phase, matching the
-/// Ericson, *Real-Time Collision Detection* (2005) pattern used across the
-/// readiness suite. Hollstein, Yang, and Weide-Zaage, "Thermal analysis of the
-/// design parameters of a QFN package soldered on a PCB using a simulation
-/// approach," *Microelectronics Reliability* 120 (2021), article 114118,
-/// motivates treating exposed-pad and via geometry as package-level thermal
-/// review data rather than a simple copper DRC.
+/// intersection. The index is only a conservative broad phase. Exposed-pad and
+/// via geometry remain package-level thermal review data rather than a simple
+/// copper DRC.
 pub fn thermal_pad_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -365,9 +355,8 @@ pub fn thermal_pad_via_readiness(
 
 /// Review likely hot or high-current features for nearby same-net copper area.
 ///
-/// IPC-2152 treats current capacity as a board-level design decision, and
-/// package thermal studies such as Hollstein, Yang, and Weide-Zaage (2021) show
-/// that local copper area changes heat spreading. This check verifies parsed
+/// IPC-2152 treats current capacity as a board-level design decision. This
+/// check verifies parsed
 /// same-net zone evidence near likely thermal/power features; it does not prove
 /// a temperature-rise target.
 pub fn thermal_copper_area_readiness(
@@ -453,10 +442,9 @@ pub fn thermal_copper_area_readiness(
 
 /// Review spacing from likely hot features to neighboring non-ground copper.
 ///
-/// This is not thermal simulation. It follows an Ericson-style broad/narrow
-/// geometry pass, then reports exact offset intersections that should be
-/// reviewed against derating, airflow, enclosure, and package thermal data such
-/// as Hollstein, Yang, and Weide-Zaage (2021).
+/// This is not thermal simulation. A broad phase precedes exact offset
+/// intersections that should be reviewed against derating, airflow, enclosure,
+/// and package thermal data.
 pub fn hot_component_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],

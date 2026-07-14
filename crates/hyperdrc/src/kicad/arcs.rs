@@ -19,10 +19,7 @@ use super::ParsedPoint2;
 /// non-finite triples return `None` so callers can skip malformed graphics
 /// without synthesizing fallback geometry.
 ///
-/// This helper follows the computational-geometry treatment of circular arcs
-/// and orientation predicates surveyed by Lee and Preparata, "Computational
-/// Geometry - A Survey", IEEE Transactions on Computers, 1984,
-/// <https://doi.org/10.1109/TC.1984.1676388>.
+/// Uses the common circular-arc construction and orientation predicate.
 #[cfg(test)]
 pub(super) fn arc_center_start_angle(
     start: [f64; 2],
@@ -40,10 +37,8 @@ pub(super) fn arc_center_start_angle(
 /// This is the parser-aware companion to [`arc_center_start_angle`]. The
 /// returned center and sweep are still `f64` compatibility geometry for the
 /// existing polygon stroker, but the collinearity decision consumes retained
-/// decimal-token [`Real`](hyperreal::Real) values whenever possible. Yap's EGC
-/// model treats this kind of representation preservation as part of choosing
-/// the right arithmetic package for a geometric predicate; see Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// decimal-token [`Real`](hyperreal::Real) values whenever possible so the
+/// topology predicate retains source precision.
 pub(super) fn arc_center_start_angle_source(
     start: &ParsedPoint2,
     mid: &ParsedPoint2,
@@ -132,12 +127,8 @@ fn exact_arc_orientation(start: [f64; 2], mid: [f64; 2], end: [f64; 2]) -> Optio
     // The circumcircle denominator is twice the orientation determinant of the
     // three arc points. Its zero/nonzero status controls whether a KiCad arc is
     // geometrically well-defined, so the degeneracy decision belongs to the
-    // exact predicate layer rather than an f64 epsilon. This follows Yap's
-    // exact geometric computation boundary; the subsequent center and angle are
-    // still parser/rendering-edge approximations. See Yap, "Towards Exact
-    // Geometric Computation," Computational Geometry 7.1-2 (1997), and Lee and
-    // Preparata, "Computational Geometry - A Survey," IEEE Transactions on
-    // Computers 33.12 (1984).
+    // exact predicate layer rather than an f64 epsilon. The subsequent center
+    // and angle are still parser/rendering-edge approximations.
     //
     let provenance = RuleGeometryProvenance::new(
         "kicad-arc-orientation",

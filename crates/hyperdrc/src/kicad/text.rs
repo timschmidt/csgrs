@@ -63,11 +63,7 @@ pub(super) fn text_bbox_polygon(
     let local_center = justified_text_center(primitive, text_at, [bbox_width, bbox_height]);
     let local = rect_polygon(local_center, [bbox_width, bbox_height], text_angle);
     // This intentionally models a readability/coverage envelope rather than
-    // glyph strokes. The conservative bounding-box treatment follows the
-    // typographic measurement framing in Paterson and Tinker, "Studies of
-    // Typographical Factors Influencing Speed of Reading. II. Size of Type",
-    // Journal of Applied Psychology 13.2 (1929),
-    // <https://doi.org/10.1037/h0074167>.
+    // glyph strokes.
     let transformed = transform_polygon(&local, origin, origin_angle_degrees);
     log::trace!(
         "parsed KiCad text primitive: location=({:.3},{:.3}) chars={} bbox=({:.3},{:.3})",

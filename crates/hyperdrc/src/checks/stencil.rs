@@ -21,13 +21,10 @@ use super::spatial::{LayerPolygonSpatialIndex, PointSpatialIndex};
 ///
 /// IPC-7525B frames stencil aperture design around paste release and volume
 /// control; for bottom-termination thermal pads that usually means reduced or
-/// split apertures rather than full pad coverage. QFN voiding studies also tie
-/// thermal pad solder geometry and vias to voiding risk; see Wilcoxon, Pearson,
-/// and Hillman, "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack
-/// No-lead (QFN) Components," Journal of SMT, 2023, doi:10.37665/smt.v36i2.37.
-/// Paste apertures are selected through the shared layer-polygon broad phase
-/// before exact copper/paste intersection, following Ericson, *Real-Time
-/// Collision Detection* (2005), so sparse stencil exports do not force every
+/// split apertures rather than full pad coverage. Thermal pad solder geometry
+/// and vias also affect QFN voiding risk. A layer-polygon broad phase selects
+/// paste candidates before exact copper/paste intersection, so sparse exports
+/// do not force every
 /// thermal pad candidate to scan every aperture.
 pub fn thermal_pad_paste_windowpane_readiness(
     paste_name: &str,
@@ -109,10 +106,8 @@ pub fn thermal_pad_paste_windowpane_readiness(
 /// Warn on apertures whose opening area is too small for their wall area.
 ///
 /// IPC-7525B defines area ratio as aperture opening area divided by aperture
-/// wall area and uses it as a paste-transfer metric. Harter et al., "The Effect
-/// of Area Shape and Area Ratio on Solder Paste Printing Performance," SMTAI
-/// 2016, experimentally studied how area ratio and aperture shape affect print
-/// transfer efficiency. HyperDRC estimates the wall area from each aperture's
+/// wall area and uses it as a paste-transfer metric. HyperDRC estimates wall
+/// area from each aperture's
 /// bounding rectangle until exact stencil thickness and aperture side-wall
 /// models become available.
 pub fn stencil_area_ratio_readiness(
@@ -233,8 +228,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
 /// chip-component tombstoning literature, that unbalanced wetting and thermal
 /// conditions across the two terminations increase tombstoning risk. Candidate
 /// pad pairs are selected with a deterministic point-grid broad phase before
-/// area-ratio and paste-ratio checks, following Ericson, *Real-Time Collision
-/// Detection* (2005). Paste coverage for each pad uses the same broad-phase
+/// area-ratio and paste-ratio checks. Paste coverage uses the same broad-phase
 /// idea over aperture polygons before exact copper/paste intersection, so large
 /// sparse stencil exports do not force every pad to intersect every aperture.
 pub fn tombstone_paste_imbalance_readiness(

@@ -17,10 +17,8 @@ pub type PathSourceLengthUnit = hyperpath::SourceLengthUnit;
 /// The value is advisory scheduling metadata. It lets repeated DRC predicates
 /// distinguish KiCad millimeter grids, Gerber coordinate grids, Excellon drill
 /// coordinates, and primitive-float compatibility inputs without exposing a
-/// topology decision. This follows Yap's exact geometric computation
-/// discipline: preserve source structure so exact arithmetic packages can be
-/// selected later. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// topology decision. Source structure is preserved so an exact arithmetic
+/// package can be selected later.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SourceUnit {
     /// The parser has not retained a unit family.
@@ -108,12 +106,9 @@ impl SourceGridFacts {
     ///
     /// This helper is meant for EDA text formats such as KiCad S-expressions,
     /// whose coordinates are usually decimal millimeters before they become
-    /// compatibility `f64` geometry. Retaining the token denominator follows
-    /// Yap's exact-geometric-computation advice to preserve representation
-    /// information near the parser boundary; later predicates can select
-    /// shared-denominator integer arithmetic instead of rediscovering it from
-    /// rounded floats. See Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// compatibility `f64` geometry. Retaining the token denominator lets later
+    /// predicates select shared-denominator integer arithmetic instead of
+    /// rediscovering it from rounded floats.
     pub fn decimal_token(unit: SourceUnit, token: &str) -> Option<Self> {
         decimal_denominator_per_unit(token).map(|denominator| Self::source_grid(unit, denominator))
     }

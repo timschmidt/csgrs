@@ -27,9 +27,7 @@ use super::spatial::CopperSpatialIndex;
 /// isolation proof. This readiness check implements the isolation side as a
 /// direct geometry predicate: after cheap axis-aligned bounding-box culling, it
 /// intersects same-layer copper features with different net names and reports
-/// any non-trivial overlap. The broad/narrow phase follows the collision-query
-/// pattern described by Lin and Canny, "A Fast Algorithm for Incremental
-/// Distance Calculation", IEEE ICRA, 1991.
+/// any non-trivial overlap.
 pub fn different_net_short_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -144,9 +142,8 @@ pub fn same_net_drill_break_readiness(
         .map(|diameter| diameter / 2.0)
         .fold(0.0_f64, f64::max);
     // Drill-break review is a conservative continuity proxy for IPC-9252B
-    // electrical-test risk. The grid broad phase follows Ericson, Real-Time
-    // Collision Detection, 2005: it only proposes possible drill/copper
-    // contacts, while exact CSG intersection below remains authoritative.
+    // electrical-test risk. The grid only proposes possible drill/copper
+    // contacts; exact CSG intersection below remains authoritative.
     let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);
     let mut violations = Vec::new();
     let mut candidate_pairs = 0_usize;

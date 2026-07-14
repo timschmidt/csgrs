@@ -146,10 +146,8 @@ pub struct GerberCoordinateOperation {
     /// fixed-coordinate notation represents integer ticks on the `%FS...%`
     /// grid; retaining that denominator lets later exact predicates choose
     /// shared-denominator arithmetic without rediscovering the grid from
-    /// rounded compatibility coordinates. That follows Yap's exact geometric
-    /// computation rule to preserve representation structure before scalar
-    /// expansion; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// rounded compatibility coordinates. Representation structure is
+    /// preserved before scalar expansion.
     pub grid: SourceGridFacts,
 }
 
