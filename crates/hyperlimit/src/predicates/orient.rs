@@ -10,7 +10,10 @@ use crate::predicate::{
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
-use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
+use hyperreal::{
+    PreparedAffineDet2Filter, PreparedIncircle2dFilter, PreparedInsphere3dFilter, Real,
+    RealExactSetFacts, ZeroKnowledge,
+};
 
 /// Orientation of three 2D points.
 pub fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> PredicateOutcome<Sign> {
@@ -63,7 +66,7 @@ pub(crate) fn orient2d_report_with_policy(
     // predicate can choose a faster exact determinant expansion before building
     // the generic Real expression tree.
     if let Some(report) = exact_report(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
-        super::exact::orient2d_shared_scale(a, b, c).or_else(|| super::exact::orient2d(a, b, c))
+        super::exact::orient2d(a, b, c)
     }) {
         return report;
     }
@@ -92,7 +95,7 @@ fn orient2d_real_expr(
             let _ = (&abx, &aby, &acx, &acy);
             signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)])
         },
-        || super::exact::orient2d_shared_scale(a, b, c).or_else(|| super::exact::orient2d(a, b, c)),
+        || super::exact::orient2d(a, b, c),
         RefinementNeed::RealRefinement,
     )
 }
@@ -148,8 +151,7 @@ pub(crate) fn orient3d_report_with_policy(
     }
 
     if let Some(report) = exact_report(policy, ExactPredicateKernel::Orient3dRationalDet3, || {
-        super::exact::orient3d_shared_scale(a, b, c, d)
-            .or_else(|| super::exact::orient3d(a, b, c, d))
+        super::exact::orient3d(a, b, c, d)
     }) {
         return report;
     }
@@ -165,12 +167,8 @@ pub(crate) fn orient3d_report_with_policy(
     let cdy = sub(&c.y, &d.y);
     let cdz = sub(&c.z, &d.z);
 
-    // Keep the translated determinant as a six-term product-sum until the
-    // `Real` layer has a chance to route exact rationals through one
-    // shared-denominator reducer. This mirrors the exact-predicate schedule of
-    // Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust
-    // Geometric Predicates," *Discrete & Computational Geometry* 18.3 (1997),
-    // but remains exact-real and policy-visible in Yap's EGC sense.
+    // Keep the translated determinant as a six-term product-sum so the `Real`
+    // layer can route exact rationals through one shared-denominator reducer.
     let det = Real::signed_product_sum(
         [true, false, true, false, true, false],
         [
@@ -187,10 +185,7 @@ pub(crate) fn orient3d_report_with_policy(
         &det,
         policy,
         || None,
-        || {
-            super::exact::orient3d_shared_scale(a, b, c, d)
-                .or_else(|| super::exact::orient3d(a, b, c, d))
-        },
+        || super::exact::orient3d(a, b, c, d),
         RefinementNeed::RealRefinement,
     ))
 }
@@ -221,11 +216,9 @@ pub(crate) fn classify_point_line_with_policy(
 /// Cheap facts cached by prepared orientation and lifted-circle handles.
 ///
 /// These facts are intentionally about the fixed part of a prepared predicate,
-/// not about the query point. They reserve the object-level dispatch boundary
-/// requested by Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): repeated predicates can select exact rational,
-/// dyadic, or future shared-scale schedules before building scalar expression
-/// trees for every query.
+/// not about the query point. Repeated predicates can use them to select exact
+/// rational, dyadic, or future shared-scale schedules before building scalar
+/// expression trees for every query.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedPredicateFacts {
     /// Every fixed coordinate is represented as an exact rational `Real`.
@@ -234,10 +227,8 @@ pub struct PreparedPredicateFacts {
     pub fixed_coordinates_dyadic: bool,
     /// All fixed exact-rational coordinates have the same reduced denominator.
     ///
-    /// This is a borrowed common-scale fact in the sense of Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997):
-    /// the prepared object records that a shared-denominator schedule is
-    /// eligible without owning a new coordinate representation yet.
+    /// The prepared object records that a shared-denominator schedule is
+    /// eligible without owning a new coordinate representation.
     pub fixed_coordinates_shared_denominator: bool,
     /// Bit mask of fixed points whose own coordinates share one reduced
     /// denominator.
@@ -248,16 +239,12 @@ pub struct PreparedPredicateFacts {
     /// structure even when different fixed points use different grids. Carrying
     /// that object-local fact preserves the information needed for future
     /// homogeneous determinant schedules without exposing rational storage.
-    /// This is the object-structure preservation principle from Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
     pub fixed_point_shared_scale_mask: u128,
     /// Bit mask of fixed points structurally known to be the coordinate origin.
     ///
     /// This point-level sparse fact is cached on the prepared predicate rather
-    /// than rediscovered in each query. It follows Yap's object-structure-first
-    /// exact computation model: prepare reusable geometric objects with cheap
-    /// facts, then select arithmetic packages from those facts.
+    /// than rediscovered in each query, allowing arithmetic schedules to be
+    /// selected from reusable object facts.
     pub fixed_point_origin_mask: u128,
     /// Bit mask of fixed points structurally known to have exactly one nonzero
     /// coordinate and all remaining coordinates zero.
@@ -278,11 +265,8 @@ pub struct PreparedPredicateFacts {
     /// This is a prepared-object scheduling fact, not an exact predicate
     /// certificate. It lets repeated line, circle, plane, and sphere queries
     /// retain the same symbolic-family summary as their fixed point objects
-    /// without exposing `Real` internals. The boundary follows Yap's
-    /// object-package guidance: carry reusable expression structure to the
-    /// arithmetic package selection point, then certify signs separately; see
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// without exposing `Real` internals. Reusable expression structure reaches
+    /// arithmetic selection, while predicate signs remain separately certified.
     pub fixed_symbolic_dependencies: RealSymbolicDependencyMask,
     /// Exact kernel that can be attempted when the query coordinates match.
     pub exact_kernel_hint: Option<ExactPredicateKernel>,
@@ -313,10 +297,8 @@ impl PreparedPredicateFacts {
 
     /// Returns whether any fixed point carries coordinate zero uncertainty.
     ///
-    /// This keeps future sparse determinant dispatch honest: unknown-zero facts
-    /// must block sparse schedules that require certified support. Carrying the
-    /// uncertainty at the prepared-object layer follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// Unknown-zero facts must block sparse schedules that require certified
+    /// support, so the uncertainty stays at the prepared-object layer.
     pub fn has_fixed_point_unknown_zero(self) -> bool {
         self.fixed_point_unknown_zero_mask != 0
     }
@@ -335,10 +317,8 @@ impl PreparedPredicateFacts {
     /// The returned value is deliberately a hint. It is useful for choosing
     /// prepared arithmetic packages, trace labels, and higher-level cache
     /// payoff estimates, but it is not a predicate certificate. Exact predicate
-    /// reports still certify topology. This preserves Yap's exact-geometric-
-    /// computation split: prepare geometric objects with reusable structure,
-    /// then let certified arithmetic decide signs; see Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// reports still certify topology after reusable object structure selects a
+    /// candidate arithmetic schedule.
     pub fn determinant_schedule_hint(self) -> DeterminantScheduleHint {
         let Some(kernel) = self.exact_kernel_hint else {
             return DeterminantScheduleHint::GenericRealFallback;
@@ -385,10 +365,8 @@ impl PreparedPredicateFacts {
 /// query point's coordinates. This fact package summarizes those fixed
 /// coefficients so downstream caches can retain exact-set, dyadic,
 /// shared-scale, and sparse-support opportunities without exposing internal
-/// coefficient storage. The split follows Yap's exact-geometric-computation
-/// model: preserve geometric object structure first, then choose certified
-/// arithmetic near the predicate call. See Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// coefficient storage. Predicate calls use those retained object facts to
+/// select certified arithmetic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PreparedLiftedPolynomialFacts {
     /// Exact-rational representation facts for the fixed polynomial coefficients.
@@ -432,9 +410,7 @@ impl PreparedLiftedPolynomialFacts {
     /// This is only a schedule hint: unknown-zero coefficients prevent a
     /// certified sparse path, and predicate signs still come from exact
     /// evaluation. Sparse schedule selection belongs here rather than in
-    /// topology crates for the same retained-structure reason discussed by
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// topology crates because this type owns the retained coefficient facts.
     pub fn has_sparse_coefficient_support(self) -> bool {
         self.coefficient_zero_count() > 0 && self.coefficient_unknown_zero_mask == 0
     }
@@ -481,33 +457,33 @@ pub struct PreparedLine2<'a> {
     from: &'a Point2,
     to: &'a Point2,
     facts: PreparedPredicateFacts,
+    filter: Option<PreparedAffineDet2Filter>,
 }
 
 impl<'a> PreparedLine2<'a> {
     /// Prepare the oriented line from `from` to `to`.
+    ///
+    /// Exact dyadic inputs automatically receive a cached certified filter;
+    /// callers use [`Self::classify_point`] normally in every case.
     pub fn new(from: &'a Point2, to: &'a Point2) -> Self {
         crate::trace_dispatch!("hyperlimit", "prepared_line2", "new");
-        Self {
-            from,
-            to,
-            facts: PreparedPredicateFacts::line2(from, to),
-        }
+        Self::from_facts(from, to, PreparedPredicateFacts::line2(from, to))
     }
 
     /// Prepare the oriented line from already-collected fixed-coordinate facts.
     ///
     /// Higher-level geometry objects often collect structural facts while
-    /// preparing their own topology caches. Reusing those facts preserves
-    /// Yap's object-level EGC boundary: the owning curve layer can remember
-    /// common-scale or dyadic eligibility, while `hyperlimit` remains the
-    /// predicate layer that decides sidedness. See Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-    pub const fn from_facts(
-        from: &'a Point2,
-        to: &'a Point2,
-        facts: PreparedPredicateFacts,
-    ) -> Self {
-        Self { from, to, facts }
+    /// preparing their own topology caches. The owning geometry layer can
+    /// remember common-scale or dyadic eligibility, while `hyperlimit` remains
+    /// the predicate layer that decides sidedness.
+    pub fn from_facts(from: &'a Point2, to: &'a Point2, facts: PreparedPredicateFacts) -> Self {
+        let filter = Real::prepare_affine_det2_filter([&from.x, &from.y], [&to.x, &to.y]);
+        Self {
+            from,
+            to,
+            facts,
+            filter,
+        }
     }
 
     /// Return cheap fixed-coordinate facts collected at preparation time.
@@ -526,10 +502,24 @@ impl<'a> PreparedLine2<'a> {
         point: &Point2,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<LineSide> {
+        // Match the ordinary orientation ladder: retain the prepared object
+        // facts, attempt the cheap certified filter, then fall back to the
+        // exact predicate when the error bound cannot separate the sign.
+        if let Some(sign) = self
+            .filter
+            .and_then(|filter| filter.sign([&point.x, &point.y]))
+        {
+            crate::trace_dispatch!("hyperlimit", "prepared_line2", "certified-real-det2-filter");
+            return PredicateOutcome::decided(
+                LineSide::from(crate::real::map_real_sign(sign)),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
+
         if let Some(report) =
             exact_report(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
-                super::exact::orient2d_shared_scale(self.from, self.to, point)
-                    .or_else(|| super::exact::orient2d(self.from, self.to, point))
+                super::exact::orient2d(self.from, self.to, point)
             })
         {
             return map_outcome(report.outcome, LineSide::from);
@@ -597,10 +587,7 @@ pub(crate) fn incircle2d_report_with_policy(
     if let Some(report) = exact_report(
         policy,
         ExactPredicateKernel::Incircle2dRationalLiftedDet3,
-        || {
-            super::exact::incircle2d_shared_scale(a, b, c, d)
-                .or_else(|| super::exact::incircle2d(a, b, c, d))
-        },
+        || super::exact::incircle2d(a, b, c, d),
     ) {
         return report;
     }
@@ -632,9 +619,8 @@ fn incircle2d_real_expr(
     let blift = add(&bdx2, &bdy2);
     let clift = add(&cdx2, &cdy2);
 
-    // The lifted determinant is a six-term polynomial. Passing it as a whole
-    // product-sum preserves Yap's object-shape boundary for symbolic fallback
-    // and gives exact rational inputs one fraction-delayed reducer.
+    // Pass the six-term lifted determinant as one product-sum so symbolic
+    // fallback preserves its shape and exact rationals use one delayed reducer.
     let det = Real::signed_product_sum(
         [true, false, true, false, true, false],
         [
@@ -651,10 +637,7 @@ fn incircle2d_real_expr(
         &det,
         policy,
         || None,
-        || {
-            super::exact::incircle2d_shared_scale(a, b, c, d)
-                .or_else(|| super::exact::incircle2d(a, b, c, d))
-        },
+        || super::exact::incircle2d(a, b, c, d),
         RefinementNeed::RealRefinement,
     )
 }
@@ -666,6 +649,7 @@ pub struct PreparedIncircle2<'a> {
     b: &'a Point2,
     c: &'a Point2,
     facts: PreparedPredicateFacts,
+    filter: Option<PreparedIncircle2dFilter>,
     coefficient_facts: PreparedLiftedPolynomialFacts,
     x_coeff: Real,
     y_coeff: Real,
@@ -675,6 +659,9 @@ pub struct PreparedIncircle2<'a> {
 
 impl<'a> PreparedIncircle2<'a> {
     /// Prepare the oriented circumcircle through `a`, `b`, and `c`.
+    ///
+    /// Exact dyadic inputs automatically receive a cached certified filter;
+    /// callers use [`Self::test_point`] normally in every case.
     pub fn new(a: &'a Point2, b: &'a Point2, c: &'a Point2) -> Self {
         crate::trace_dispatch!("hyperlimit", "prepared_incircle2", "new");
         let a_lift = point2_lift(a);
@@ -695,12 +682,14 @@ impl<'a> PreparedIncircle2<'a> {
         let constant = x_y_lift;
         let coefficient_facts =
             lifted_polynomial_facts([&x_coeff, &y_coeff, &lift_coeff, &constant]);
+        let filter = Real::prepare_incircle2d_filter([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
 
         Self {
             a,
             b,
             c,
             facts: PreparedPredicateFacts::incircle2(a, b, c),
+            filter,
             coefficient_facts,
             x_coeff,
             y_coeff,
@@ -740,12 +729,10 @@ impl<'a> PreparedIncircle2<'a> {
         point: &Point2,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<Sign> {
-        if let Some(sign) = Real::certified_incircle2d_sign(
-            [&self.a.x, &self.a.y],
-            [&self.b.x, &self.b.y],
-            [&self.c.x, &self.c.y],
-            [&point.x, &point.y],
-        ) {
+        if let Some(sign) = self
+            .filter
+            .and_then(|filter| filter.sign([&point.x, &point.y]))
+        {
             crate::trace_dispatch!(
                 "hyperlimit",
                 "prepared_incircle2",
@@ -761,10 +748,7 @@ impl<'a> PreparedIncircle2<'a> {
         if let Some(report) = exact_report(
             policy,
             ExactPredicateKernel::Incircle2dRationalLiftedDet3,
-            || {
-                super::exact::incircle2d_shared_scale(self.a, self.b, self.c, point)
-                    .or_else(|| super::exact::incircle2d(self.a, self.b, self.c, point))
-            },
+            || super::exact::incircle2d(self.a, self.b, self.c, point),
         ) {
             return report.outcome;
         }
@@ -782,10 +766,7 @@ impl<'a> PreparedIncircle2<'a> {
             &det,
             policy,
             || None,
-            || {
-                super::exact::incircle2d_shared_scale(self.a, self.b, self.c, point)
-                    .or_else(|| super::exact::incircle2d(self.a, self.b, self.c, point))
-            },
+            || super::exact::incircle2d(self.a, self.b, self.c, point),
             RefinementNeed::RealRefinement,
         )
     }
@@ -865,10 +846,7 @@ pub(crate) fn insphere3d_report_with_policy(
     if let Some(report) = exact_report(
         policy,
         ExactPredicateKernel::Insphere3dRationalLiftedDet4,
-        || {
-            super::exact::insphere3d_shared_scale(a, b, c, d, e)
-                .or_else(|| super::exact::insphere3d(a, b, c, d, e))
-        },
+        || super::exact::insphere3d(a, b, c, d, e),
     ) {
         return report;
     }
@@ -982,10 +960,7 @@ fn insphere3d_real_expr(
         &det,
         policy,
         || signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)]),
-        || {
-            super::exact::insphere3d_shared_scale(a, b, c, d, e)
-                .or_else(|| super::exact::insphere3d(a, b, c, d, e))
-        },
+        || super::exact::insphere3d(a, b, c, d, e),
         RefinementNeed::RealRefinement,
     )
 }
@@ -997,6 +972,7 @@ pub struct PreparedInsphere3<'a> {
     b: &'a Point3,
     c: &'a Point3,
     d: &'a Point3,
+    filter: Option<PreparedInsphere3dFilter>,
     facts: PreparedPredicateFacts,
     coefficient_facts: PreparedLiftedPolynomialFacts,
     x_coeff: Real,
@@ -1008,6 +984,9 @@ pub struct PreparedInsphere3<'a> {
 
 impl<'a> PreparedInsphere3<'a> {
     /// Prepare the oriented circumsphere through `a`, `b`, `c`, and `d`.
+    ///
+    /// Exact dyadic inputs automatically receive a cached certified filter;
+    /// callers use [`Self::test_point`] normally in every case.
     pub fn new(a: &'a Point3, b: &'a Point3, c: &'a Point3, d: &'a Point3) -> Self {
         crate::trace_dispatch!("hyperlimit", "prepared_insphere3", "new");
         let a_lift = point3_lift(a);
@@ -1052,12 +1031,19 @@ impl<'a> PreparedInsphere3<'a> {
         let constant = x_y_z_lift;
         let coefficient_facts =
             lifted_polynomial_facts([&x_coeff, &y_coeff, &z_coeff, &lift_coeff, &constant]);
+        let filter = Real::prepare_insphere3d_filter(
+            [&a.x, &a.y, &a.z],
+            [&b.x, &b.y, &b.z],
+            [&c.x, &c.y, &c.z],
+            [&d.x, &d.y, &d.z],
+        );
 
         Self {
             a,
             b,
             c,
             d,
+            filter,
             facts: PreparedPredicateFacts::insphere3(a, b, c, d),
             coefficient_facts,
             x_coeff,
@@ -1100,13 +1086,10 @@ impl<'a> PreparedInsphere3<'a> {
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<Sign> {
-        if let Some(sign) = Real::certified_insphere3d_sign(
-            [&self.a.x, &self.a.y, &self.a.z],
-            [&self.b.x, &self.b.y, &self.b.z],
-            [&self.c.x, &self.c.y, &self.c.z],
-            [&self.d.x, &self.d.y, &self.d.z],
-            [&point.x, &point.y, &point.z],
-        ) {
+        if let Some(sign) = self
+            .filter
+            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+        {
             crate::trace_dispatch!(
                 "hyperlimit",
                 "prepared_insphere3",
@@ -1122,10 +1105,7 @@ impl<'a> PreparedInsphere3<'a> {
         if let Some(report) = exact_report(
             policy,
             ExactPredicateKernel::Insphere3dRationalLiftedDet4,
-            || {
-                super::exact::insphere3d_shared_scale(self.a, self.b, self.c, self.d, point)
-                    .or_else(|| super::exact::insphere3d(self.a, self.b, self.c, self.d, point))
-            },
+            || super::exact::insphere3d(self.a, self.b, self.c, self.d, point),
         ) {
             return report.outcome;
         }
@@ -1145,10 +1125,7 @@ impl<'a> PreparedInsphere3<'a> {
             &det,
             policy,
             || None,
-            || {
-                super::exact::insphere3d_shared_scale(self.a, self.b, self.c, self.d, point)
-                    .or_else(|| super::exact::insphere3d(self.a, self.b, self.c, self.d, point))
-            },
+            || super::exact::insphere3d(self.a, self.b, self.c, self.d, point),
             RefinementNeed::RealRefinement,
         )
     }
@@ -1178,12 +1155,8 @@ fn point3_lift(point: &Point3) -> Real {
 }
 
 fn det3_refs(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3]) -> Real {
-    // Prepared circle/sphere coefficients repeatedly build 3x3 determinants.
-    // Preserve the determinant as a fixed six-term product-sum so exact
-    // rational coordinates use one fraction-delayed reduction, following
-    // Bareiss, "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-    // Elimination," *Mathematics of Computation* 22.103 (1968), and Yap's
-    // instruction to delay scalar expansion until after object-shape dispatch.
+    // Preserve this frequently rebuilt 3x3 determinant as a fixed six-term
+    // product-sum so exact rationals use one delayed reduction.
     Real::signed_product_sum(
         [true, false, false, true, true, false],
         [
@@ -1210,12 +1183,9 @@ fn det4_refs(a: [&Real; 4], b: [&Real; 4], c: [&Real; 4], d: [&Real; 4]) -> Real
     let minor2 = det3_refs([b[0], b[1], b[3]], [c[0], c[1], c[3]], [d[0], d[1], d[3]]);
     let minor3 = det3_refs([b[0], b[1], b[2]], [c[0], c[1], c[2]], [d[0], d[1], d[2]]);
 
-    // The Laplace expansion is still only a fallback for prepared symbolic
-    // coefficients, but keep the cofactor combination as a fixed product-sum
-    // instead of immediately materializing four products. This carries Yap's
-    // determinant object shape one layer deeper and gives exact-rational
-    // prepared coefficients the same Bareiss-style delayed normalization route
-    // cited in `det3_refs`.
+    // Keep the fallback Laplace cofactor combination as one fixed product-sum
+    // instead of materializing four products. Exact-rational prepared
+    // coefficients then use the same delayed normalization as `det3_refs`.
     Real::signed_product_sum(
         [true, false, true, false],
         [
@@ -1262,9 +1232,8 @@ fn fixed_point_facts_2<const N: usize>(
     kernel: ExactPredicateKernel,
 ) -> PreparedPredicateFacts {
     // Delegate scalar representation classification to `hyperreal` and retain
-    // only the predicate-level summary here. This keeps denominator identity
-    // opaque while still carrying the common-scale fact Yap asks geometric
-    // objects to preserve before exact kernel selection.
+    // only the predicate-level summary, keeping denominator identity opaque
+    // while carrying common-scale eligibility to exact-kernel selection.
     let facts = Real::exact_set_facts(points.iter().flat_map(|point| [&point.x, &point.y]));
     let point_masks = fixed_point_structure_masks_2(points);
 
@@ -1285,10 +1254,9 @@ fn lifted_polynomial_facts<const N: usize>(
     coefficients: [&Real; N],
 ) -> PreparedLiftedPolynomialFacts {
     debug_assert!(N <= u128::BITS as usize);
-    // Coefficient facts are kept at the prepared-object boundary rather than
-    // recomputed by triangulation or CSG code. This is a direct application of
-    // Yap's EGC discipline: preserve useful numerical structure on the
-    // geometric object, then use it to select faster exact arithmetic packages.
+    // Keep coefficient facts at the prepared-object boundary rather than
+    // recomputing them in triangulation or CSG code; they select faster exact
+    // arithmetic schedules without becoming topology certificates.
     let coefficient_exact = Real::exact_set_facts(coefficients);
     let (coefficient_zero_mask, coefficient_nonzero_mask, coefficient_unknown_zero_mask) =
         real_zero_masks(coefficients);
@@ -1553,7 +1521,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient2d_consumes_global_common_denominator_before_generic_shared_scale() {
+    fn orient2d_uses_compact_rational_kernel_for_common_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1582,26 +1550,14 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient2d", "common-denominator-det2"),
-            1
-        );
-        assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient2d", "shared-scale-view-det2"),
-            0
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
-            0
-        );
-        assert_eq!(
-            trace.path_count("real", "product_sum", "exact-rational-known-common-scale"),
             1
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient2d_keeps_point_local_shared_scale_when_global_denominator_differs() {
+    fn orient2d_uses_compact_rational_kernel_for_mixed_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1630,22 +1586,14 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient2d", "common-denominator-det2"),
-            0
-        );
-        assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient2d", "shared-scale-view-det2"),
-            1
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
-            0
+            1
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient3d_consumes_global_common_denominator_before_generic_shared_scale() {
+    fn orient3d_uses_compact_rational_kernel_for_common_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1676,26 +1624,14 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient3d", "common-denominator-det4"),
-            1
-        );
-        assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient3d", "shared-scale-view-det3"),
-            0
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
-            0
-        );
-        assert_eq!(
-            trace.path_count("real", "product_sum", "exact-rational-known-common-scale"),
             1
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient3d_keeps_point_local_shared_scale_when_global_denominator_differs() {
+    fn orient3d_uses_compact_rational_kernel_for_mixed_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1726,22 +1662,14 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient3d", "common-denominator-det4"),
-            0
-        );
-        assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient3d", "shared-scale-view-det3"),
-            1
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
-            0
+            1
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn incircle2d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+    fn incircle2d_uses_compact_rational_kernel_for_exact_inputs() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1771,20 +1699,8 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count(
-                "hyperlimit",
-                "exact_incircle2d",
-                "shared-scale-view-lifted-det3"
-            ),
-            1
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_incircle2d", "rational-det3-lifted"),
-            0
-        );
-        assert_eq!(
-            trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
-            4
+            1
         );
 
         let prepared = PreparedIncircle2::new(&a, &b, &c);
@@ -1795,22 +1711,14 @@ mod tests {
         assert_eq!(prepared_outcome.value(), Some(Sign::Positive));
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count(
-                "hyperlimit",
-                "exact_incircle2d",
-                "shared-scale-view-lifted-det3"
-            ),
-            1
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_incircle2d", "rational-det3-lifted"),
-            0
+            1
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn insphere3d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+    fn insphere3d_uses_compact_rational_kernel_for_exact_inputs() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1842,16 +1750,8 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count(
-                "hyperlimit",
-                "exact_insphere3d",
-                "shared-scale-view-lifted-det4"
-            ),
-            1
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_insphere3d", "rational-det4-lifted"),
-            0
+            1
         );
 
         let prepared = PreparedInsphere3::new(&a, &b, &c, &d);
@@ -1862,16 +1762,8 @@ mod tests {
         assert_eq!(prepared_outcome.value(), Some(Sign::Negative));
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count(
-                "hyperlimit",
-                "exact_insphere3d",
-                "shared-scale-view-lifted-det4"
-            ),
-            1
-        );
-        assert_eq!(
             trace.path_count("hyperlimit", "exact_insphere3d", "rational-det4-lifted"),
-            0
+            1
         );
     }
 

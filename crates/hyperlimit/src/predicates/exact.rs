@@ -2,84 +2,12 @@
 //!
 //! This module is deliberately private to `hyperlimit`: callers should consume
 //! predicate outcomes, not determinant implementation details. Keeping the
-//! exact schedules here leaves room for future integer-grid, dyadic, and
-//! shared-scale kernels without leaking those representations across crate
-//! boundaries.
+//! exact schedules here leaves room for integer-grid and dyadic kernels without
+//! leaking those representations across crate boundaries.
 
 use crate::geometry::{Point2, Point3};
 use crate::predicate::Sign;
-use hyperreal::{Rational, Real, RealSign};
-
-/// Try the exact 2D orientation kernel when the whole predicate input shares
-/// one reduced denominator.
-///
-/// This is narrower than [`orient2d_shared_scale`]: it requires a single
-/// common scale across all six point coordinates, not just point-local common
-/// scales. In return, the scalar layer can skip the generic denominator
-/// discovery used by arbitrary exact rationals and evaluate the determinant
-/// through a validated shared-denominator product-sum schedule. This is the
-/// common-scale rational-vector case called out by Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The delayed
-/// final reduction follows Bareiss, "Sylvester's Identity and Multistep
-/// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
-/// 22.103 (1968).
-pub(super) fn orient2d_common_denominator(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
-    let coordinates = [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y];
-    if !Real::exact_set_facts(coordinates).has_shared_denominator_schedule() {
-        return None;
-    }
-
-    crate::trace_dispatch!("hyperlimit", "exact_orient2d", "common-denominator-det2");
-
-    let determinant = Real::exact_rational_signed_product_sum_known_shared_denominator(
-        [true, true, true, false, false, false],
-        [
-            [&a.x, &b.y],
-            [&b.x, &c.y],
-            [&c.x, &a.y],
-            [&a.y, &b.x],
-            [&b.y, &c.x],
-            [&c.y, &a.x],
-        ],
-    );
-    sign_from_real(&determinant)
-}
-
-/// Try the exact 2D orientation kernel through borrowed point-local
-/// shared-scale views.
-///
-/// This route consumes [`PointSharedScaleView`](crate::geometry::PointSharedScaleView)
-/// certificates before falling back to coordinate-by-coordinate rational
-/// extraction. The determinant is evaluated as one six-term known-exact
-/// product-sum in `hyperreal`, so the scalar layer still owns denominator
-/// storage and final reduction. This is the first predicate family wired
-/// through borrowed common-scale object facts, following Yap's rule to
-/// preserve geometric object structure before scalar expansion; see Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). The fused exact product-sum follows Bareiss-style delayed
-/// normalization; see Bareiss, "Sylvester's Identity and Multistep
-/// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
-/// 22.103 (1968).
-pub(super) fn orient2d_shared_scale(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
-    if let Some(sign) = orient2d_common_denominator(a, b, c) {
-        return Some(sign);
-    }
-
-    let a = a.shared_scale_view()?;
-    let b = b.shared_scale_view()?;
-    let c = c.shared_scale_view()?;
-    let [ax, ay] = a.coordinates();
-    let [bx, by] = b.coordinates();
-    let [cx, cy] = c.coordinates();
-
-    crate::trace_dispatch!("hyperlimit", "exact_orient2d", "shared-scale-view-det2");
-
-    let determinant = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true, true, false, false, false],
-        [[ax, by], [bx, cy], [cx, ay], [ay, bx], [by, cx], [cy, ax]],
-    );
-    sign_from_real(&determinant)
-}
+use hyperreal::{Rational, Real};
 
 /// Try the exact rational 2D orientation kernel.
 pub(super) fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
@@ -92,146 +20,16 @@ pub(super) fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
 
     crate::trace_dispatch!("hyperlimit", "exact_orient2d", "rational-det2");
 
-    // Exact determinant shortcut: evaluate the fixed 2x2 orientation
-    // polynomial as a signed product-sum before constructing a generic `Real`
-    // expression tree. Yap's EGC model explicitly separates geometric object
-    // structure from scalar expansion; see Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997). The scalar reducer
-    // uses Bareiss-style delayed reduction and shared-denominator/dyadic
-    // schedules; see Bareiss, "Sylvester's Identity and Multistep Integer-
-    // Preserving Gaussian Elimination," Mathematics of Computation 22.103
-    // (1968). Keeping that reducer in `hyperreal` preserves the predicate
-    // abstraction boundary while still giving this determinant a common-scale
-    // route.
+    // Evaluate the fixed 2x2 orientation polynomial as a signed product-sum
+    // before constructing a generic `Real` expression tree. The scalar reducer
+    // can then use delayed reduction and shared-denominator or dyadic schedules
+    // without leaking scalar representation into the predicate layer.
     let abx = bx - ax;
     let aby = by - ay;
     let acx = cx - ax;
     let acy = cy - ay;
     let det = Rational::signed_product_sum([true, false], [[&abx, &acy], [&aby, &acx]]);
     Some(sign_from_rational(&det))
-}
-
-/// Try the exact 3D orientation kernel when all input coordinates share one
-/// reduced denominator.
-///
-/// Unlike the translated 3x3 formula, this route evaluates the equivalent
-/// homogeneous 4x4 determinant with the final column fixed to one. Expanding
-/// along that column yields twenty-four three-coordinate products, and when
-/// every coordinate shares one reduced denominator each live product has the
-/// same denominator. That lets `hyperreal` use its validated common-scale
-/// product-sum reducer directly, preserving the rational-vector structure
-/// emphasized by Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997). The final normalization is still delayed in the
-/// Bareiss fraction-free spirit; see Bareiss, "Sylvester's Identity and
-/// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
-/// Computation* 22.103 (1968).
-pub(super) fn orient3d_common_denominator(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-) -> Option<Sign> {
-    let coordinates = [
-        &a.x, &a.y, &a.z, &b.x, &b.y, &b.z, &c.x, &c.y, &c.z, &d.x, &d.y, &d.z,
-    ];
-    if !Real::exact_set_facts(coordinates).has_shared_denominator_schedule() {
-        return None;
-    }
-
-    crate::trace_dispatch!("hyperlimit", "exact_orient3d", "common-denominator-det4");
-
-    let determinant = Real::exact_rational_signed_product_sum_known_shared_denominator(
-        [
-            false, false, false, true, true, true, true, true, true, false, false, false, false,
-            false, false, true, true, true, true, true, true, false, false, false,
-        ],
-        [
-            [&b.x, &c.y, &d.z],
-            [&b.y, &c.z, &d.x],
-            [&b.z, &c.x, &d.y],
-            [&b.z, &c.y, &d.x],
-            [&b.y, &c.x, &d.z],
-            [&b.x, &c.z, &d.y],
-            [&a.x, &c.y, &d.z],
-            [&a.y, &c.z, &d.x],
-            [&a.z, &c.x, &d.y],
-            [&a.z, &c.y, &d.x],
-            [&a.y, &c.x, &d.z],
-            [&a.x, &c.z, &d.y],
-            [&a.x, &b.y, &d.z],
-            [&a.y, &b.z, &d.x],
-            [&a.z, &b.x, &d.y],
-            [&a.z, &b.y, &d.x],
-            [&a.y, &b.x, &d.z],
-            [&a.x, &b.z, &d.y],
-            [&a.x, &b.y, &c.z],
-            [&a.y, &b.z, &c.x],
-            [&a.z, &b.x, &c.y],
-            [&a.z, &b.y, &c.x],
-            [&a.y, &b.x, &c.z],
-            [&a.x, &b.z, &c.y],
-        ],
-    );
-    sign_from_real(&determinant)
-}
-
-/// Try the exact 3D orientation kernel through borrowed point-local
-/// shared-scale views.
-///
-/// This mirrors [`orient2d_shared_scale`] for tetrahedron orientation: each
-/// point proves that its own coordinates are exact rationals with retained
-/// shared-scale metadata, then the translated 3x3 determinant is passed to the
-/// scalar layer as one known-exact product sum. Yap's EGC discipline is the
-/// reason this lives here rather than in callers: geometric object facts select
-/// the arithmetic package, while predicate reports remain the topology
-/// certificate. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The fused reduction follows the
-/// same delayed-normalization idea used by Bareiss, "Sylvester's Identity and
-/// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
-/// Computation* 22.103 (1968).
-pub(super) fn orient3d_shared_scale(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-) -> Option<Sign> {
-    if let Some(sign) = orient3d_common_denominator(a, b, c, d) {
-        return Some(sign);
-    }
-
-    let a = a.shared_scale_view()?;
-    let b = b.shared_scale_view()?;
-    let c = c.shared_scale_view()?;
-    let d = d.shared_scale_view()?;
-    let [ax, ay, az] = a.coordinates();
-    let [bx, by, bz] = b.coordinates();
-    let [cx, cy, cz] = c.coordinates();
-    let [dx, dy, dz] = d.coordinates();
-
-    crate::trace_dispatch!("hyperlimit", "exact_orient3d", "shared-scale-view-det3");
-
-    let adx = ax - dx;
-    let ady = ay - dy;
-    let adz = az - dz;
-    let bdx = bx - dx;
-    let bdy = by - dy;
-    let bdz = bz - dz;
-    let cdx = cx - dx;
-    let cdy = cy - dy;
-    let cdz = cz - dz;
-
-    let determinant = Real::exact_rational_signed_product_sum_known_exact(
-        [true, false, true, false, true, false],
-        [
-            [&adx, &bdy, &cdz],
-            [&adx, &bdz, &cdy],
-            [&ady, &bdz, &cdx],
-            [&ady, &bdx, &cdz],
-            [&adz, &bdx, &cdy],
-            [&adz, &bdy, &cdx],
-        ],
-    );
-    sign_from_real(&determinant)
 }
 
 /// Try the exact rational 3D orientation kernel.
@@ -251,15 +49,10 @@ pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option
 
     crate::trace_dispatch!("hyperlimit", "exact_orient3d", "rational-det3");
 
-    // The translated 3D orientation determinant is evaluated as a fixed
-    // six-term signed product-sum. This keeps the determinant as a known
-    // geometric object until the final sign decision, rather than expanding it
-    // through generic symbolic `Real` nodes. See Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997). The scalar reducer
-    // then chooses dyadic, equal-denominator, or LCM schedules following the
-    // delayed-reduction strategy of Bareiss, "Sylvester's Identity and
-    // Multistep Integer-Preserving Gaussian Elimination," Mathematics of
-    // Computation 22.103 (1968).
+    // Keep the translated 3D determinant as one six-term signed product-sum
+    // until the final sign decision. The scalar reducer can select dyadic,
+    // equal-denominator, or LCM schedules without first building generic
+    // symbolic `Real` nodes.
     let adx = ax - dx;
     let ady = ay - dy;
     let adz = az - dz;
@@ -285,70 +78,6 @@ pub(super) fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Option
 }
 
 /// Try the exact rational in-circle kernel.
-pub(super) fn incircle2d_shared_scale(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    d: &Point2,
-) -> Option<Sign> {
-    let a = a.shared_scale_view()?;
-    let b = b.shared_scale_view()?;
-    let c = c.shared_scale_view()?;
-    let d = d.shared_scale_view()?;
-    let [ax, ay] = a.coordinates();
-    let [bx, by] = b.coordinates();
-    let [cx, cy] = c.coordinates();
-    let [dx, dy] = d.coordinates();
-
-    crate::trace_dispatch!(
-        "hyperlimit",
-        "exact_incircle2d",
-        "shared-scale-view-lifted-det3"
-    );
-
-    let adx = ax - dx;
-    let ady = ay - dy;
-    let bdx = bx - dx;
-    let bdy = by - dy;
-    let cdx = cx - dx;
-    let cdy = cy - dy;
-
-    // The lifted in-circle determinant is a fixed 3x3 determinant over
-    // translated coordinates. Keeping the squared lifts and final determinant
-    // as known-exact product sums lets the scalar layer use one fused rational
-    // reducer instead of hiding denominator structure in already-expanded Real
-    // trees. This follows Yap's EGC package boundary; see Yap, "Towards Exact
-    // Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    // lifted determinant is the exact-rational counterpart of Shewchuk,
-    // "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
-    // Predicates," *Discrete & Computational Geometry* 18.3 (1997).
-    let alift = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true],
-        [[&adx, &adx], [&ady, &ady]],
-    );
-    let blift = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true],
-        [[&bdx, &bdx], [&bdy, &bdy]],
-    );
-    let clift = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true],
-        [[&cdx, &cdx], [&cdy, &cdy]],
-    );
-    let determinant = Real::exact_rational_signed_product_sum_known_exact(
-        [true, false, true, false, true, false],
-        [
-            [&alift, &bdx, &cdy],
-            [&alift, &cdx, &bdy],
-            [&blift, &cdx, &ady],
-            [&blift, &adx, &cdy],
-            [&clift, &adx, &bdy],
-            [&clift, &bdx, &ady],
-        ],
-    );
-    sign_from_real(&determinant)
-}
-
-/// Try the exact rational in-circle kernel.
 pub(super) fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Option<Sign> {
     let ax = exact_rational_ref(&a.x)?;
     let ay = exact_rational_ref(&a.y)?;
@@ -361,15 +90,9 @@ pub(super) fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Opti
 
     crate::trace_dispatch!("hyperlimit", "exact_incircle2d", "rational-det3-lifted");
 
-    // Exact in-circle determinant over translated rational coordinates. The
-    // six product terms match the robust-predicate schedule in Shewchuk,
-    // "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
-    // Predicates," Discrete & Computational Geometry 18.3 (1997), but the
-    // implementation is exact-rational and policy-visible rather than an
-    // implicit primitive-float filter. Passing the full signed product-sum to
-    // `hyperreal::Rational` preserves Yap's object-shape boundary and lets the
-    // scalar layer apply Bareiss-style delayed reduction when denominators
-    // share structure.
+    // Evaluate the translated in-circle determinant as one six-term exact
+    // rational product-sum. Keeping the schedule intact lets the scalar layer
+    // delay reduction when denominators share structure.
     let adx = ax - dx;
     let ady = ay - dy;
     let bdx = bx - dx;
@@ -392,93 +115,6 @@ pub(super) fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Opti
         ],
     );
     Some(sign_from_rational(&det))
-}
-
-/// Try the exact rational in-sphere kernel.
-pub(super) fn insphere3d_shared_scale(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-    e: &Point3,
-) -> Option<Sign> {
-    let a = a.shared_scale_view()?;
-    let b = b.shared_scale_view()?;
-    let c = c.shared_scale_view()?;
-    let d = d.shared_scale_view()?;
-    let e = e.shared_scale_view()?;
-    let [ax, ay, az] = a.coordinates();
-    let [bx, by, bz] = b.coordinates();
-    let [cx, cy, cz] = c.coordinates();
-    let [dx, dy, dz] = d.coordinates();
-    let [ex, ey, ez] = e.coordinates();
-
-    crate::trace_dispatch!(
-        "hyperlimit",
-        "exact_insphere3d",
-        "shared-scale-view-lifted-det4"
-    );
-
-    let aex = ax - ex;
-    let aey = ay - ey;
-    let aez = az - ez;
-    let bex = bx - ex;
-    let bey = by - ey;
-    let bez = bz - ez;
-    let cex = cx - ex;
-    let cey = cy - ey;
-    let cez = cz - ez;
-    let dex = dx - ex;
-    let dey = dy - ey;
-    let dez = dz - ez;
-
-    // These cofactors are Shewchuk's lifted in-sphere schedule evaluated as
-    // exact `Real` product sums rather than primitive floating expansions. The
-    // borrowed shared-scale views satisfy Yap's object-package rule by carrying
-    // common rational structure to this predicate boundary before scalar
-    // expansion. See Shewchuk, "Adaptive Precision Floating-Point Arithmetic
-    // and Fast Robust Geometric Predicates," *Discrete & Computational
-    // Geometry* 18.3 (1997), and Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997).
-    let ab = real_det2(&aex, &bey, &bex, &aey);
-    let bc = real_det2(&bex, &cey, &cex, &bey);
-    let cd = real_det2(&cex, &dey, &dex, &cey);
-    let da = real_det2(&dex, &aey, &aex, &dey);
-    let ac = real_det2(&aex, &cey, &cex, &aey);
-    let bd = real_det2(&bex, &dey, &dex, &bey);
-
-    let abc = Real::exact_rational_signed_product_sum_known_exact(
-        [true, false, true],
-        [[&aez, &bc], [&bez, &ac], [&cez, &ab]],
-    );
-    let bcd = Real::exact_rational_signed_product_sum_known_exact(
-        [true, false, true],
-        [[&bez, &cd], [&cez, &bd], [&dez, &bc]],
-    );
-    let cda = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true, true],
-        [[&cez, &da], [&dez, &ac], [&aez, &cd]],
-    );
-    let dab = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true, true],
-        [[&dez, &ab], [&aez, &bd], [&bez, &da]],
-    );
-
-    let alift = real_lift3(&aex, &aey, &aez);
-    let blift = real_lift3(&bex, &bey, &bez);
-    let clift = real_lift3(&cex, &cey, &cez);
-    let dlift = real_lift3(&dex, &dey, &dez);
-
-    let determinant = Real::exact_rational_signed_product_sum_known_exact(
-        [true, true, false, false],
-        [
-            [&dlift, &abc],
-            [&blift, &cda],
-            [&clift, &dab],
-            [&alift, &bcd],
-        ],
-    );
-    sign_from_real(&determinant)
 }
 
 /// Try the exact rational in-sphere kernel.
@@ -507,13 +143,8 @@ pub(super) fn insphere3d(
 
     crate::trace_dispatch!("hyperlimit", "exact_insphere3d", "rational-det4-lifted");
 
-    // The lifted in-sphere determinant is the rational analogue of the
-    // adaptive robust predicate described by Shewchuk, "Adaptive Precision
-    // Floating-Point Arithmetic and Fast Robust Geometric Predicates,"
-    // Discrete & Computational Geometry 18.3 (1997). We use exact rational
-    // arithmetic instead of floating expansions, preserving Yap's EGC boundary:
-    // the determinant schedule is selected from object facts before generic
-    // `Real` expression construction.
+    // Select the lifted in-sphere determinant schedule from object facts and
+    // evaluate it with exact rationals before generic `Real` construction.
     let aex = ax - ex;
     let aey = ay - ey;
     let aez = az - ez;
@@ -527,12 +158,9 @@ pub(super) fn insphere3d(
     let dey = dy - ey;
     let dez = dz - ez;
 
-    // These 2x2 and 3x3 minors are the lifted in-sphere cofactors used by
-    // Shewchuk's robust predicate schedule. Evaluating each minor through the
-    // fixed product-sum reducer keeps denominator sharing visible to
-    // `hyperreal::Rational`, instead of hiding it behind already-reduced
-    // pairwise products. The reduction policy remains scalar-owned, preserving
-    // Yap's EGC abstraction split.
+    // Evaluate the lifted in-sphere cofactors through fixed product sums so
+    // denominator sharing remains visible to `hyperreal::Rational` instead of
+    // being hidden behind already-reduced pairwise products.
     let ab = rational_det2(&aex, &bey, &bex, &aey);
     let bc = rational_det2(&bex, &cey, &cex, &bey);
     let cd = rational_det2(&cex, &dey, &dex, &cey);
@@ -570,17 +198,6 @@ fn exact_rational_ref(value: &Real) -> Option<&Rational> {
     value.exact_rational_ref()
 }
 
-fn real_det2(ax: &Real, by: &Real, bx: &Real, ay: &Real) -> Real {
-    Real::exact_rational_signed_product_sum_known_exact([true, false], [[ax, by], [bx, ay]])
-}
-
-fn real_lift3(x: &Real, y: &Real, z: &Real) -> Real {
-    Real::exact_rational_signed_product_sum_known_exact(
-        [true, true, true],
-        [[x, x], [y, y], [z, z]],
-    )
-}
-
 fn rational_lift2(x: &Rational, y: &Rational) -> Rational {
     &(x * x) + &(y * y)
 }
@@ -601,13 +218,5 @@ fn sign_from_rational(value: &Rational) -> Sign {
         Sign::Positive
     } else {
         Sign::Zero
-    }
-}
-
-fn sign_from_real(value: &Real) -> Option<Sign> {
-    match value.structural_facts().sign? {
-        RealSign::Negative => Some(Sign::Negative),
-        RealSign::Zero => Some(Sign::Zero),
-        RealSign::Positive => Some(Sign::Positive),
     }
 }

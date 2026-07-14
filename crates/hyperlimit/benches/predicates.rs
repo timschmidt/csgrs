@@ -54,7 +54,9 @@ impl Workload {
 fn bench_predicates(c: &mut Criterion) {
     bench_representation(c, "hyperreal", hyperreal_real);
     bench_certified_filters(c);
+    bench_prepared_construction(c);
     bench_exact_rational_kernels(c);
+    bench_nd_symbolic_scale(c);
     bench_shared_scale_views(c);
     bench_transformed_predicates(c);
     bench_versioned_prepared(c);
@@ -64,6 +66,18 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_nd_symbolic_scale(c: &mut Criterion) {
+    let mut group = c.benchmark_group("nd_symbolic_scale");
+    let (simplex, center) = symbolic_orthogonal_simplex4();
+    group.bench_function("orient_d/4d_dense_pi", |bench| {
+        bench.iter(|| black_box(orient_d(black_box(&simplex))))
+    });
+    group.bench_function("insphere_d/4d_dense_pi_center", |bench| {
+        bench.iter(|| black_box(insphere_d(black_box(&simplex), black_box(&center))))
+    });
+    group.finish();
 }
 
 fn bench_hypermesh_port_helpers(c: &mut Criterion) {
@@ -79,11 +93,9 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
     let segment_start = rational_point3(0, 1, 0, 1, -1, 1);
     let segment_end = rational_point3(0, 1, 0, 1, 1, 1);
 
-    // These rows track the construction and coplanar helpers lifted from
-    // hypermesh into hyperlimit. The benchmark keeps Yap's exact object model
-    // visible at the reusable predicate layer: topology is classified by
-    // retained exact predicates, and split parameters remain exact
-    // determinant-ratio constructions.
+    // These rows track construction and coplanar helpers lifted from hypermesh.
+    // Topology is classified by retained exact predicates, and split parameters
+    // remain exact determinant-ratio constructions.
     group.bench_function("triangle3_degeneracy/projected_orientations", |bench| {
         bench.iter(|| {
             let report = classify_triangle3_degeneracy(
@@ -293,6 +305,143 @@ fn bench_certified_filters(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_prepared_construction(c: &mut Criterion) {
+    let mut group = c.benchmark_group("prepared_construction");
+    let line_a = point2(-1.0, -1.0, hyperreal_real);
+    let line_b = point2(1.0, 1.0, hyperreal_real);
+    group.bench_function("affine_det2_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_affine_det2_filter(
+                [black_box(&line_a.x), black_box(&line_a.y)],
+                [black_box(&line_b.x), black_box(&line_b.y)],
+            )
+        })
+    });
+    group.bench_function("line2/dyadic_filter", |bench| {
+        bench.iter(|| PreparedLine2::new(black_box(&line_a), black_box(&line_b)))
+    });
+
+    let plane_a = point3(-0.85, -0.7, -0.25, hyperreal_real);
+    let plane_b = point3(0.9, -0.35, 0.35, hyperreal_real);
+    let plane_c = point3(-0.35, 0.85, 0.05, hyperreal_real);
+    group.bench_function("affine_det3_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_affine_det3_filter(
+                [
+                    black_box(&plane_a.x),
+                    black_box(&plane_a.y),
+                    black_box(&plane_a.z),
+                ],
+                [
+                    black_box(&plane_b.x),
+                    black_box(&plane_b.y),
+                    black_box(&plane_b.z),
+                ],
+                [
+                    black_box(&plane_c.x),
+                    black_box(&plane_c.y),
+                    black_box(&plane_c.z),
+                ],
+            )
+        })
+    });
+    group.bench_function("oriented_plane3/dyadic_filter", |bench| {
+        bench.iter(|| {
+            PreparedOrientedPlane3::new(
+                black_box(&plane_a),
+                black_box(&plane_b),
+                black_box(&plane_c),
+            )
+        })
+    });
+
+    let explicit_plane = Plane3::new(
+        Point3::new(
+            hyperreal_real(0.5),
+            hyperreal_real(-0.75),
+            hyperreal_real(1.25),
+        ),
+        hyperreal_real(-0.25),
+    );
+    group.bench_function("linear_form3_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_linear_form3_filter([
+                black_box(&explicit_plane.normal.x),
+                black_box(&explicit_plane.normal.y),
+                black_box(&explicit_plane.normal.z),
+                black_box(&explicit_plane.offset),
+            ])
+        })
+    });
+    group.bench_function("plane3/dyadic_filter", |bench| {
+        bench.iter(|| black_box(&explicit_plane).prepare())
+    });
+
+    let circle_a = point2(1.0, 0.0, hyperreal_real);
+    let circle_b = point2(0.0, 1.0, hyperreal_real);
+    let circle_c = point2(-1.0, 0.0, hyperreal_real);
+    group.bench_function("incircle2d_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_incircle2d_filter(
+                [black_box(&circle_a.x), black_box(&circle_a.y)],
+                [black_box(&circle_b.x), black_box(&circle_b.y)],
+                [black_box(&circle_c.x), black_box(&circle_c.y)],
+            )
+        })
+    });
+    group.bench_function("incircle2/dyadic_filter", |bench| {
+        bench.iter(|| {
+            PreparedIncircle2::new(
+                black_box(&circle_a),
+                black_box(&circle_b),
+                black_box(&circle_c),
+            )
+        })
+    });
+
+    let sphere_a = point3(1.0, 0.0, 0.0, hyperreal_real);
+    let sphere_b = point3(0.0, 1.0, 0.0, hyperreal_real);
+    let sphere_c = point3(0.0, 0.0, 1.0, hyperreal_real);
+    let sphere_d = point3(-1.0, 0.0, 0.0, hyperreal_real);
+    group.bench_function("insphere3d_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_insphere3d_filter(
+                [
+                    black_box(&sphere_a.x),
+                    black_box(&sphere_a.y),
+                    black_box(&sphere_a.z),
+                ],
+                [
+                    black_box(&sphere_b.x),
+                    black_box(&sphere_b.y),
+                    black_box(&sphere_b.z),
+                ],
+                [
+                    black_box(&sphere_c.x),
+                    black_box(&sphere_c.y),
+                    black_box(&sphere_c.z),
+                ],
+                [
+                    black_box(&sphere_d.x),
+                    black_box(&sphere_d.y),
+                    black_box(&sphere_d.z),
+                ],
+            )
+        })
+    });
+    group.bench_function("insphere3/dyadic_filter", |bench| {
+        bench.iter(|| {
+            PreparedInsphere3::new(
+                black_box(&sphere_a),
+                black_box(&sphere_b),
+                black_box(&sphere_c),
+                black_box(&sphere_d),
+            )
+        })
+    });
+    group.finish();
+}
+
 fn bench_versioned_prepared(c: &mut Criterion) {
     let mut group = c.benchmark_group("versioned_prepared");
     let session = ExactGeometrySession::default();
@@ -302,9 +451,7 @@ fn bench_versioned_prepared(c: &mut Criterion) {
 
     // This row keeps construction-version cache diagnostics visible beside
     // predicate rows. It measures metadata checks only; stale prepared facts are
-    // scheduling data, not topology certificates, following Yap's object-cache
-    // boundary in "Towards Exact Geometric Computation," Computational
-    // Geometry 7.1-2 (1997).
+    // scheduling data, not topology certificates.
     group.bench_function("line2/freshness_current", |bench| {
         bench.iter(|| black_box(line.freshness_for(black_box(session)).is_current()))
     });
@@ -346,11 +493,8 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         });
     });
 
-    // Larger near-degenerate exact rationals keep the benchmark surface aligned
-    // with Yap's warning that exact geometric computation must preserve the
-    // algebraic decision, not a nearby primitive-float surrogate; see Yap,
-    // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    // (1997).
+    // Larger near-degenerate exact rationals ensure the benchmark preserves the
+    // algebraic decision rather than a nearby primitive-float surrogate.
     let orient2_large = large_rational_near_degenerate_orient2d_cases();
     group.bench_function("orient2d/larger_rational_near_degenerate", |b| {
         b.iter(|| {
@@ -463,10 +607,8 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
     });
 
     // This mixed relation row keeps the exact 3D segment classifier visible for
-    // mesh-kernel-style edge/topology workloads. The implementation follows
-    // Yap's exact-decision contract and de Berg et al.'s orientation/interval
-    // decomposition without replacing skew or coplanar cases by primitive-float
-    // tolerances.
+    // mesh-kernel edge and topology workloads without replacing skew or
+    // coplanar cases by primitive-float tolerances.
     let segment3 = exact_rational_segment3_cases();
     group.bench_function("segment3_intersection/mixed_exact_rational", |b| {
         b.iter(|| {
@@ -735,11 +877,9 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         });
     });
 
-    // These rows keep the D-dimensional predicate boundary visible while it is
-    // still intentionally generic. They measure exact determinant ownership in
-    // `hyperlimit` before `hypertri` or mesh crates add prepared common-scale
-    // schedules, following Yap's object/predicate layering in "Towards Exact
-    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    // These rows keep the intentionally generic D-dimensional predicate
+    // boundary visible before `hypertri` or mesh crates add prepared
+    // common-scale schedules.
     let orient_d_cases = exact_rational_orient_d_cases();
     group.bench_function("orient_d/4d_common_denominator", |b| {
         b.iter(|| {
@@ -787,11 +927,11 @@ fn bench_shared_scale_views(c: &mut Criterion) {
         bench.iter(|| black_box(point3.shared_scale_view()))
     });
 
-    // Shared-scale predicate rows use nonzero rational coordinates so each
-    // point can prove a point-local common denominator. This gives Criterion
-    // and dispatch traces a direct view of Yap's "preserve object structure
-    // before scalar expansion" route; see Yap, "Towards Exact Geometric
-    // Computation," *Computational Geometry* 7.1-2 (1997).
+    // These predicate rows retain nonzero common-denominator coordinates while
+    // the point-view rows measure metadata collection itself. Predicate timing
+    // guards the compact translated rational kernels selected after benchmarks
+    // showed that expanding homogeneous shared-scale schedules costs more than
+    // direct exact arithmetic for these low-dimensional determinants.
     let incircle_cases = shared_scale_incircle2d_cases();
     group.bench_function("incircle2d/common_denominator_predicate", |bench| {
         bench.iter(|| {
@@ -854,11 +994,8 @@ fn bench_shared_scale_views(c: &mut Criterion) {
 fn bench_transformed_predicates(c: &mut Criterion) {
     let mut group = c.benchmark_group("transformed_predicates");
 
-    // Yap treats exact geometric computation as an object-level discipline, not
-    // only a scalar one. These rows keep transformed exact-rational workloads
-    // visible as first-class benchmark cases so future affine/common-scale
-    // carriers can be measured before scalar expansion; see Yap, "Towards
-    // Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    // Keep transformed exact-rational workloads visible as first-class cases so
+    // future affine or common-scale carriers can be measured before expansion.
     let orient_cases = transformed_orient2d_cases();
     trace_dispatch_cases(
         "transformed_predicates/orient2d/exact_rational_affine",
@@ -906,12 +1043,8 @@ fn bench_transformed_predicates(c: &mut Criterion) {
     }
 
     // The in-circle determinant is especially sensitive to expansion strategy.
-    // Keeping both cold and prepared transformed rows beside the shared-scale
-    // rows lets us check whether future lifted-circle coefficient reuse follows
-    // Shewchuk's determinant orientation of the predicate while preserving
-    // exact signs; see Shewchuk, "Adaptive Precision Floating-Point Arithmetic
-    // and Fast Robust Geometric Predicates," *Discrete & Computational
-    // Geometry* 18.3 (1997).
+    // Cold and prepared transformed rows reveal whether lifted-circle
+    // coefficient reuse preserves the exact determinant sign.
     let incircle_cases = transformed_incircle2d_cases();
     trace_dispatch_cases(
         "transformed_predicates/incircle2d/exact_rational_affine",
@@ -1743,6 +1876,31 @@ fn exact_rational_orient_d_cases() -> Vec<Vec<Vec<hyperreal::Real>>> {
         ]);
     }
     cases
+}
+
+fn symbolic_orthogonal_simplex4() -> (Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>) {
+    let half = hyperreal::Real::from(hyperreal::Rational::fraction(1, 2).unwrap());
+    let half_pi = half * hyperreal::Real::pi();
+    let signs = [
+        [1_i32, 1, 1, 1],
+        [1_i32, -1, 1, -1],
+        [1_i32, 1, -1, -1],
+        [1_i32, -1, -1, 1],
+    ];
+    let mut simplex = vec![vec![hyperreal::Real::zero(); 4]];
+    simplex.extend(signs.map(|column| {
+        column
+            .map(|sign| if sign > 0 { half_pi.clone() } else { -&half_pi })
+            .into_iter()
+            .collect()
+    }));
+    let center = vec![
+        hyperreal::Real::pi(),
+        hyperreal::Real::zero(),
+        hyperreal::Real::zero(),
+        hyperreal::Real::zero(),
+    ];
+    (simplex, center)
 }
 
 fn exact_rational_insphere_d_cases() -> Vec<(Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>)> {

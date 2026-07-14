@@ -10,31 +10,6 @@ The crate is not a polygon, mesh, BSP, CSG, or intersection engine. It owns reus
 predicate semantics and strict escalation; object topology belongs in the higher crate
 that owns the geometry.
 
-## Hyper Ecosystem
-
-`hyperlimit` is the shared exact decision layer. It owns predicate semantics, strict
-escalation, classification enums, prepared predicate views, and construction-session
-provenance; object storage stays in the crate that owns the geometry.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): scalar values, structural facts,
-  and bounded refinement.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector/matrix facts that
-  own vector, point, matrix, shared-scale, and homogeneous projective carriers.
-- [hypercurve](https://github.com/timschmidt/hypercurve),
-  [hypertri](https://github.com/timschmidt/hypertri), and
-  [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology crates that
-  should use shared strict predicates rather than local epsilon rules.
-- [hypersolve](https://github.com/timschmidt/hypersolve),
-  [hyperpath](https://github.com/timschmidt/hyperpath),
-  [hyperdrc](https://github.com/timschmidt/hyperdrc), and
-  [hyperphysics](https://github.com/timschmidt/hyperphysics): domain crates that need
-  reusable exact decisions and auditable unknowns.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep), [hypersdf](https://github.com/timschmidt/hypersdf),
-  [hypervoxel](https://github.com/timschmidt/hypervoxel), [hypercircuit](https://github.com/timschmidt/hypercircuit),
-  [hyperparts](https://github.com/timschmidt/hyperparts), [hyperpack](https://github.com/timschmidt/hyperpack),
-  and [hyperevolution](https://github.com/timschmidt/hyperevolution): sibling crates
-  that should keep exact decisions report-bearing instead of local tolerance-based.
-
 ## Typical Predicate Problems
 
 Geometry algorithms usually fail at branch points: a determinant near zero, a point
@@ -197,12 +172,23 @@ cargo bench --bench predicates
 
 ## References
 
+Arvo, James. "Transforming Axis-Aligned Bounding Boxes." *Graphics Gems*,
+Academic Press, 1990, pp. 548-550.
+
+Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
+Gaussian Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
+pp. 565-578.
+
 Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
 no. 9, 1979, pp. 643-647.
 
 de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
 *Computational Geometry: Algorithms and Applications*. 3rd ed., Springer, 2008.
+
+Gustavson, Fred G. "Two Fast Algorithms for Sparse Matrices: Multiplication
+and Permuted Transposition." *ACM Transactions on Mathematical Software*, vol.
+4, no. 3, 1978, pp. 250-269.
 
 Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for
 Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
@@ -262,3 +248,11 @@ The generated trace summary is in [`dispatch_trace.md`](dispatch_trace.md).
 ## License
 
 MIT OR Apache-2.0.
+
+Related Hyper crates: [hyperreal](https://github.com/timschmidt/hyperreal) provides
+scalars, [hyperlattice](https://github.com/timschmidt/hyperlattice) provides linear
+algebra carriers, and [hypercurve](https://github.com/timschmidt/hypercurve),
+[hypertri](https://github.com/timschmidt/hypertri), and
+[hypermesh](https://github.com/timschmidt/hypermesh) consume these predicates. The
+[remaining Hyper repositories](https://github.com/timschmidt?tab=repositories&q=hyper)
+build higher-level geometry and application layers.

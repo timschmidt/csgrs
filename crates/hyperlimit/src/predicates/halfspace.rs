@@ -10,23 +10,18 @@
 //! a nonempty closed convex polyhedron exists, the Euclidean projection of the
 //! origin onto it is characterized by active constraints, and in 3D a basis of
 //! at most three active planes is enough to recover a candidate. This is the
-//! same fixed-dimension LP viewpoint used by Seidel, "Small-Dimensional Linear
-//! Programming and Convex Hulls Made Easy," *Discrete & Computational
-//! Geometry* 6 (1991). Infeasible outcomes can carry a Farkas certificate: a
+//! fixed-dimension LP viewpoint. Infeasible outcomes can carry a Farkas
+//! certificate: a
 //! nonnegative linear combination of halfspace inequalities whose normal sum is
-//! zero and whose offset sum is strictly positive. That is the standard theorem
-//! of alternatives for linear inequalities; see Schrijver, *Theory of Linear
-//! and Integer Programming*, Wiley, 1986. Both routes preserve Yap's
-//! exact-geometric-computation boundary: candidates and certificates are built
-//! over `Real` and then replayed by exact predicates; see Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! zero and whose offset sum is strictly positive. Candidates and certificates
+//! are built over `Real` and replayed by exact predicates.
 
 use crate::predicate::PredicatePolicy;
 use hyperreal::Real;
 
 use crate::classify::{HalfspaceFeasibility, PlaneSide};
 use crate::geometry::{Plane3, Plane3Facts, Point3, intersect_three_planes};
-use crate::plane::classify_point_plane_with_policy;
+use crate::plane::classify_point_plane_without_filter_with_policy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
@@ -36,10 +31,8 @@ use crate::resolve::resolve_real_sign;
 /// A prepared halfspace system stores the source plane slice and cached
 /// [`Plane3Facts`] for diagnostics and scheduling. Feasibility still replays
 /// through exact predicates; cached facts are not themselves feasibility
-/// certificates. This mirrors Yap's geometric-object layer: retain object
-/// structure and preparation metadata, but let exact predicates decide
-/// combinatorial truth. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// certificates. They retain object structure and preparation metadata while
+/// exact predicates decide combinatorial truth.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedHalfspaceSystem3<'a> {
     planes: &'a [Plane3],
@@ -707,7 +700,7 @@ fn point_satisfies_halfspaces(
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;
     for plane in planes {
-        match classify_point_plane_with_policy(point, plane, policy) {
+        match classify_point_plane_without_filter_with_policy(point, plane, policy) {
             PredicateOutcome::Decided {
                 value,
                 certainty: value_certainty,

@@ -6,7 +6,7 @@
 
 use crate::classify::{ConvexPointLocation, PlaneSide};
 use crate::geometry::{Plane3, Point2, Point3};
-use crate::plane::classify_point_plane_with_policy;
+use crate::plane::classify_point_plane_without_filter_with_policy;
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, Sign};
 use crate::predicates::orient::orient2d_with_policy;
@@ -26,10 +26,8 @@ pub fn classify_point_convex_polygon2(
 /// The polygon must be supplied as a consistently ordered convex boundary. The
 /// classifier first certifies the ring orientation, then composes exact edge
 /// orientation signs. This is the classical halfspace characterization of
-/// convex polygons; using exact orientation signs for every edge follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). Invalid nonconvex ordering is not guessed here because topology
-/// ownership belongs to `hypercurve`, `hypertri`, or mesh crates.
+/// convex polygons. Invalid nonconvex ordering is not guessed here because
+/// topology ownership belongs to `hypercurve`, `hypertri`, or mesh crates.
 pub(crate) fn classify_point_convex_polygon2_with_policy(
     vertices: &[Point2],
     point: &Point2,
@@ -113,9 +111,8 @@ pub fn classify_point_convex_planes3(
 /// The inside convention is `PlaneSide::Below` or `PlaneSide::On` for every
 /// plane. This keeps the predicate as an exact halfspace composer instead of a
 /// topology owner: callers that store faces with the opposite normal must flip
-/// their planes before calling. The composition follows Yap's object-layer
-/// guidance by reusing exact point-plane predicates rather than converting
-/// planes to primitive approximations.
+/// their planes before calling. The composition reuses exact point-plane
+/// predicates rather than converting planes to primitive approximations.
 pub(crate) fn classify_point_convex_planes3_with_policy(
     planes: &[Plane3],
     point: &Point3,
@@ -133,7 +130,7 @@ pub(crate) fn classify_point_convex_planes3_with_policy(
     let mut stage = Escalation::Structural;
     let mut boundary = false;
     for plane in planes {
-        match classify_point_plane_with_policy(point, plane, policy) {
+        match classify_point_plane_without_filter_with_policy(point, plane, policy) {
             PredicateOutcome::Decided {
                 value,
                 certainty: plane_certainty,

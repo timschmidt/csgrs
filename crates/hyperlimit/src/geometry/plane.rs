@@ -3,7 +3,9 @@
 use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
-use hyperreal::{Real, RealExactSetFacts, ZeroKnowledge};
+use hyperreal::{
+    PreparedAffineDet3Filter, PreparedLinearForm3Filter, Real, RealExactSetFacts, ZeroKnowledge,
+};
 
 use crate::RealSymbolicDependencyMask;
 use crate::classify::{PlaneAabbRelation, PlaneSegmentRelation, PlaneSide, PlaneTriangleRelation};
@@ -30,14 +32,9 @@ pub struct Plane3 {
 /// The facts are conservative scheduling metadata for repeated point-plane
 /// classification. They record exact-set and sparse-support signals for the
 /// coefficients of `normal . point + offset = 0`, but they do not decide which
-/// side a query point lies on. That boundary follows Yap's exact geometric
-/// computation model: preserve object structure at the geometric-object layer,
-/// then use certified predicates for topology. See Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). Sparse
-/// coefficient support is the same retained-structure idea used by classical
-/// sparse linear algebra schedules such as Gustavson, "Two Fast Algorithms for
-/// Sparse Matrices: Multiplication and Permuted Transposition," *ACM
-/// Transactions on Mathematical Software* 4.3 (1978).
+/// side a query point lies on. Object structure remains at the geometry layer,
+/// while certified predicates decide topology. Sparse coefficient support
+/// carries the same structure into linear-form scheduling.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Plane3Facts {
     /// Exact-rational representation facts for normal coordinates plus offset.
@@ -47,8 +44,7 @@ pub struct Plane3Facts {
     /// Prepared plane queries can carry this scheduling fact next to exact-set
     /// and sparse coefficient facts without inspecting `Real` internals. It is
     /// not a side classification certificate; point-plane sidedness still comes
-    /// from exact sign resolution. This follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    /// from exact sign resolution.
     pub coefficient_symbolic_dependencies: RealSymbolicDependencyMask,
     /// Structural facts for the normal vector.
     pub normal: crate::geometry::Point3Facts,
@@ -68,11 +64,8 @@ pub struct Plane3Facts {
 /// The report validates the support-extrema reduction used to classify a box
 /// against an oriented plane. This keeps the mesh-kernel style broad-phase
 /// shortcut inside the exact predicate layer: extrema may be cached and replayed
-/// as object evidence, but the relation is still certified by exact signs. That
-/// is the object/predicate split advocated by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The extrema selection
-/// is the interval AABB transform idea from Arvo, "Transforming Axis-Aligned
-/// Bounding Boxes," *Graphics Gems* (1990), specialized to one plane
+/// as object evidence, but the relation is still certified by exact signs. The
+/// extrema selection specializes the interval AABB transform to one plane
 /// expression.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaneAabbReportValidationError {
@@ -312,15 +305,26 @@ impl Plane3 {
 pub struct PreparedPlane3<'a> {
     plane: &'a Plane3,
     facts: Plane3Facts,
+    filter: Option<PreparedLinearForm3Filter>,
 }
 
 impl<'a> PreparedPlane3<'a> {
     /// Prepare a plane for repeated point classification.
+    ///
+    /// Exact dyadic coefficients automatically receive a cached certified
+    /// linear-form filter; callers use [`Self::classify_point`] normally.
     pub fn new(plane: &'a Plane3) -> Self {
         crate::trace_dispatch!("hyperlimit", "prepared_plane3", "new");
+        let filter = Real::prepare_linear_form3_filter([
+            &plane.normal.x,
+            &plane.normal.y,
+            &plane.normal.z,
+            &plane.offset,
+        ]);
         Self {
             plane,
             facts: plane.structural_facts(),
+            filter,
         }
     }
 
@@ -345,6 +349,21 @@ impl<'a> PreparedPlane3<'a> {
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<PlaneSide> {
+        if let Some(sign) = self
+            .filter
+            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+        {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "classify_point_plane",
+                "prepared-certified-linear-form3-filter"
+            );
+            return PredicateOutcome::decided(
+                PlaneSide::from(crate::real::map_real_sign(sign)),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
         classify_point_plane_prepared(point, self.plane, self.facts, policy)
     }
 
@@ -441,12 +460,16 @@ impl<'a> PreparedPlane3<'a> {
 /// point-plane path instead of rebuilding the `orient3d` determinant.
 #[derive(Clone, Debug)]
 pub struct PreparedOrientedPlane3 {
+    filter: Option<PreparedAffineDet3Filter>,
     plane: Plane3,
     facts: Plane3Facts,
 }
 
 impl PreparedOrientedPlane3 {
     /// Prepare the oriented plane through `a`, `b`, and `c`.
+    ///
+    /// Exact dyadic inputs automatically receive a cached certified filter;
+    /// callers use [`Self::classify_point`] normally in every case.
     pub fn new(a: &Point3, b: &Point3, c: &Point3) -> Self {
         crate::trace_dispatch!("hyperlimit", "prepared_oriented_plane3", "new");
         let abx = sub(&b.x, &a.x);
@@ -472,7 +495,16 @@ impl PreparedOrientedPlane3 {
 
         let plane = Plane3::new(Point3::new(nx, ny, nz), dot_a);
         let facts = plane.structural_facts();
-        Self { plane, facts }
+        let filter = Real::prepare_affine_det3_filter(
+            [&a.x, &a.y, &a.z],
+            [&b.x, &b.y, &b.z],
+            [&c.x, &c.y, &c.z],
+        );
+        Self {
+            filter,
+            plane,
+            facts,
+        }
     }
 
     /// Return the explicit plane built from the oriented point triple.
@@ -496,6 +528,22 @@ impl PreparedOrientedPlane3 {
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<PlaneSide> {
+        if let Some(sign) = self
+            .filter
+            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+        {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "prepared_oriented_plane3",
+                "certified-real-det3-filter"
+            );
+            return PredicateOutcome::decided(
+                PlaneSide::from(crate::real::map_real_sign(sign)),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
+
         classify_point_plane_prepared(point, &self.plane, self.facts, policy)
     }
 }
@@ -521,6 +569,40 @@ pub(crate) fn classify_point_plane_with_policy(
     plane: &Plane3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
+    if let Some(sign) = Real::certified_linear_form3_sign(
+        [
+            &plane.normal.x,
+            &plane.normal.y,
+            &plane.normal.z,
+            &plane.offset,
+        ],
+        [&point.x, &point.y, &point.z],
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "classify_point_plane",
+            "certified-linear-form3-filter"
+        );
+        return PredicateOutcome::decided(
+            PlaneSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    classify_point_plane_real(point, plane, None, policy)
+}
+
+/// Classify a point/plane pair without attempting the primitive dyadic filter.
+///
+/// Use this internal route when the caller already knows the pair is ineligible
+/// or when constructing a filter for a single comparison would cost more than
+/// it saves. The exact fallback ladder is identical to the public classifier.
+#[inline(always)]
+pub(crate) fn classify_point_plane_without_filter_with_policy(
+    point: &Point3,
+    plane: &Plane3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSide> {
     classify_point_plane_real(point, plane, None, policy)
 }
 
@@ -541,7 +623,7 @@ pub(crate) fn classify_plane_segment_with_policy(
     end: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSegmentRelation> {
-    let start_outcome = classify_point_plane_with_policy(start, plane, policy);
+    let start_outcome = classify_point_plane_without_filter_with_policy(start, plane, policy);
     let (start_side, start_certainty, start_stage) = match start_outcome {
         PredicateOutcome::Decided {
             value,
@@ -553,7 +635,7 @@ pub(crate) fn classify_plane_segment_with_policy(
         }
     };
 
-    let end_outcome = classify_point_plane_with_policy(end, plane, policy);
+    let end_outcome = classify_point_plane_without_filter_with_policy(end, plane, policy);
     let (end_side, end_certainty, end_stage) = match end_outcome {
         PredicateOutcome::Decided {
             value,
@@ -600,9 +682,9 @@ pub(crate) fn classify_plane_triangle_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneTriangleRelation> {
     let outcomes = [
-        classify_point_plane_with_policy(a, plane, policy),
-        classify_point_plane_with_policy(b, plane, policy),
-        classify_point_plane_with_policy(c, plane, policy),
+        classify_point_plane_without_filter_with_policy(a, plane, policy),
+        classify_point_plane_without_filter_with_policy(b, plane, policy),
+        classify_point_plane_without_filter_with_policy(c, plane, policy),
     ];
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;
@@ -762,7 +844,7 @@ pub(crate) fn classify_plane_aabb3_with_policy(
 ///
 /// This evaluates the plane expression only at the selected minimum and maximum
 /// support corners. The retained `axis_term_orderings` document which bound was
-/// chosen on each axis, so callers can audit the Arvo-style interval reduction
+/// chosen on each axis, so callers can audit the interval reduction
 /// without enumerating all eight corners.
 pub(crate) fn classify_plane_aabb3_report_with_policy(
     plane: &Plane3,
@@ -938,13 +1020,8 @@ fn point3_from_coords(coordinates: [&Real; 3]) -> Point3 {
 /// Prepared planes carry coefficient exactness and sparse-support facts beside
 /// the plane rather than forcing every query to rediscover them. This helper
 /// consumes those facts at the predicate-object boundary and passes the whole
-/// point-plane polynomial to `hyperreal` before scalar expansion. That is the
-/// representation separation advocated by Yap's exact geometric computation
-/// model; see Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997). The exact-rational path uses the same
-/// delayed-normalization idea as Bareiss, "Sylvester's Identity and Multistep
-/// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
-/// 22.103 (1968).
+/// point-plane polynomial to `hyperreal` before scalar expansion. The
+/// exact-rational path can then delay normalization across the complete form.
 fn point_plane_expression(
     point: &Point3,
     plane: &Plane3,
@@ -1367,9 +1444,10 @@ mod tests {
         let prepared = plane.prepare();
         assert_eq!(prepared.plane(), &plane);
         assert_eq!(prepared.facts(), facts);
+        let point = Point3::new(0.into(), 3.into(), 0.into());
         assert_eq!(
-            prepared.classify_point(&Point3::new(0.into(), 3.into(), 0.into())),
-            classify_point_plane(&Point3::new(0.into(), 3.into(), 0.into()), &plane)
+            prepared.classify_point(&point).value(),
+            classify_point_plane(&point, &plane).value()
         );
     }
 

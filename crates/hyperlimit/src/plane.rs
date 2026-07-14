@@ -10,4 +10,5 @@ pub use crate::geometry::plane::{
 };
 pub(crate) use crate::geometry::plane::{
     classify_point_oriented_plane_with_policy, classify_point_plane_with_policy,
+    classify_point_plane_without_filter_with_policy,
 };
