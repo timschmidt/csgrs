@@ -38,31 +38,11 @@ pub fn orient2d_report(a: &Point2, b: &Point2, c: &Point2) -> PredicateReport<Si
 /// `hyperlattice::Point2` and the orientation decision then follows the ordinary
 /// hyperlimit predicate pipeline.
 pub fn orient2d_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateOutcome<Sign> {
-    orient2d_f64_with_policy(a, b, c, PredicatePolicy)
-}
-
-/// Orientation of three finite primitive 2D points with an explicit policy.
-pub(crate) fn orient2d_f64_with_policy(
-    a: [f64; 2],
-    b: [f64; 2],
-    c: [f64; 2],
-    policy: PredicatePolicy,
-) -> PredicateOutcome<Sign> {
-    orient2d_f64_report_with_policy(a, b, c, policy).outcome
+    orient2d_f64_report(a, b, c).outcome
 }
 
 /// Orientation of three finite primitive 2D points with provenance.
 pub fn orient2d_f64_report(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateReport<Sign> {
-    orient2d_f64_report_with_policy(a, b, c, PredicatePolicy)
-}
-
-/// Orientation of three finite primitive 2D points with policy and provenance.
-pub(crate) fn orient2d_f64_report_with_policy(
-    a: [f64; 2],
-    b: [f64; 2],
-    c: [f64; 2],
-    policy: PredicatePolicy,
-) -> PredicateReport<Sign> {
     let (Ok(a), Ok(b), Ok(c)) = (
         Point2::try_from_f64_array(a),
         Point2::try_from_f64_array(b),
@@ -73,7 +53,7 @@ pub(crate) fn orient2d_f64_report_with_policy(
             Escalation::Undecided,
         ));
     };
-    orient2d_report_with_policy(&a, &b, &c, policy)
+    orient2d_report(&a, &b, &c)
 }
 
 /// Orientation of three 2D points with an explicit escalation policy and
