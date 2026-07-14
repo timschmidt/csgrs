@@ -3,6 +3,45 @@ mod tests {
     use super::*;
 
     #[test]
+    fn exact_dyadic_f64_view_round_trips_finite_binary64_values() {
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        let mut recovered_count = 0_u32;
+        for _ in 0..20_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            let value = f64::from_bits(state);
+            if !value.is_finite() {
+                continue;
+            }
+            let rational = Rational::try_from(value).unwrap();
+            if let Some(recovered) = rational.dyadic_to_f64_exact() {
+                assert_eq!(Rational::try_from(recovered).unwrap(), rational);
+                recovered_count += 1;
+            }
+        }
+        assert!(recovered_count > 19_000);
+    }
+
+    #[test]
+    fn exact_dyadic_f64_view_rejects_unrepresentable_values() {
+        let too_precise = Rational::new((1_i64 << 54) + 1);
+        let exactly_representable = Rational::new((1_i64 << 54) + 4);
+        let too_small = Rational::from_bigint_fraction(
+            BigInt::from(1_u8),
+            BigUint::from(1_u8) << 1075,
+        )
+        .unwrap();
+
+        assert_eq!(too_precise.dyadic_to_f64_exact(), None);
+        assert_eq!(
+            exactly_representable.dyadic_to_f64_exact(),
+            Some((1_u64 << 54) as f64 + 4.0),
+        );
+        assert_eq!(too_small.dyadic_to_f64_exact(), None);
+    }
+
+    #[test]
     fn display() {
         let many: Rational = "12345".parse().unwrap();
         let s = format!("{many}");

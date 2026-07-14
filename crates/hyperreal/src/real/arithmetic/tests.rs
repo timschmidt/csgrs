@@ -131,6 +131,540 @@ mod tests {
         );
     }
 
+    fn exact_affine_det2_sign(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> RealSign {
+        let [ax, ay] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy] = c.map(|value| value.exact_rational().unwrap());
+        let determinant = (bx - &ax) * (cy - &ay) - (by - ay) * (cx - ax);
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    fn exact_affine_det3_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+    ) -> RealSign {
+        let [ax, ay, az] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by, bz] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy, cz] = c.map(|value| value.exact_rational().unwrap());
+        let [dx, dy, dz] = d.map(|value| value.exact_rational().unwrap());
+        let adx = ax - &dx;
+        let bdx = bx - &dx;
+        let cdx = cx - dx;
+        let ady = ay - &dy;
+        let bdy = by - &dy;
+        let cdy = cy - dy;
+        let adz = az - &dz;
+        let bdz = bz - &dz;
+        let cdz = cz - dz;
+        let determinant = adz * (&bdx * &cdy - &cdx * &bdy)
+            + bdz * (&cdx * &ady - &adx * &cdy)
+            + cdz * (adx * bdy - bdx * ady);
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    fn exact_incircle2d_sign(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+        d: [&Real; 2],
+    ) -> RealSign {
+        let [ax, ay] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy] = c.map(|value| value.exact_rational().unwrap());
+        let [dx, dy] = d.map(|value| value.exact_rational().unwrap());
+        let adx = ax - &dx;
+        let bdx = bx - &dx;
+        let cdx = cx - dx;
+        let ady = ay - &dy;
+        let bdy = by - &dy;
+        let cdy = cy - dy;
+        let alift = &adx * &adx + &ady * &ady;
+        let blift = &bdx * &bdx + &bdy * &bdy;
+        let clift = &cdx * &cdx + &cdy * &cdy;
+        let determinant = alift * (&bdx * &cdy - &cdx * &bdy)
+            + blift * (&cdx * &ady - &adx * &cdy)
+            + clift * (adx * bdy - bdx * ady);
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    fn exact_insphere3d_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+        e: [&Real; 3],
+    ) -> RealSign {
+        let [ax, ay, az] = a.map(|value| value.exact_rational().unwrap());
+        let [bx, by, bz] = b.map(|value| value.exact_rational().unwrap());
+        let [cx, cy, cz] = c.map(|value| value.exact_rational().unwrap());
+        let [dx, dy, dz] = d.map(|value| value.exact_rational().unwrap());
+        let [ex, ey, ez] = e.map(|value| value.exact_rational().unwrap());
+        let aex = ax - &ex;
+        let bex = bx - &ex;
+        let cex = cx - &ex;
+        let dex = dx - ex;
+        let aey = ay - &ey;
+        let bey = by - &ey;
+        let cey = cy - &ey;
+        let dey = dy - ey;
+        let aez = az - &ez;
+        let bez = bz - &ez;
+        let cez = cz - &ez;
+        let dez = dz - ez;
+        let ab = &aex * &bey - &bex * &aey;
+        let bc = &bex * &cey - &cex * &bey;
+        let cd = &cex * &dey - &dex * &cey;
+        let da = &dex * &aey - &aex * &dey;
+        let ac = &aex * &cey - &cex * &aey;
+        let bd = &bex * &dey - &dex * &bey;
+        let abc = &aez * &bc - &bez * &ac + &cez * &ab;
+        let bcd = &bez * &cd - &cez * &bd + &dez * &bc;
+        let cda = &cez * &da + &dez * &ac + &aez * &cd;
+        let dab = &dez * &ab + &aez * &bd + &bez * &da;
+        let alift = &aex * &aex + &aey * &aey + &aez * &aez;
+        let blift = &bex * &bex + &bey * &bey + &bez * &bez;
+        let clift = &cex * &cex + &cey * &cey + &cez * &cez;
+        let dlift = &dex * &dex + &dey * &dey + &dez * &dez;
+        let determinant = dlift * abc - clift * dab + blift * cda - alift * bcd;
+        if determinant.is_positive() {
+            RealSign::Positive
+        } else if determinant.is_negative() {
+            RealSign::Negative
+        } else {
+            RealSign::Zero
+        }
+    }
+
+    #[test]
+    fn certified_affine_det2_sign_only_returns_exact_signs() {
+        let positive = [
+            Real::try_from(0.25_f64).unwrap(),
+            Real::try_from(-0.5_f64).unwrap(),
+        ];
+        let right = [
+            Real::try_from(2.0_f64).unwrap(),
+            Real::try_from(-0.5_f64).unwrap(),
+        ];
+        let above = [
+            Real::try_from(0.25_f64).unwrap(),
+            Real::try_from(1.5_f64).unwrap(),
+        ];
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&positive[0], &positive[1]],
+                [&right[0], &right[1]],
+                [&above[0], &above[1]],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&positive[0], &positive[1]],
+                [&above[0], &above[1]],
+                [&right[0], &right[1]],
+            ),
+            Some(RealSign::Negative),
+        );
+
+        let collinear = [Real::from(3_i32), Real::from(3_i32)];
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&positive[0], &positive[1]],
+                [&collinear[0], &collinear[1]],
+                [&collinear[0], &collinear[1]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&third, &positive[1]],
+                [&right[0], &right[1]],
+                [&above[0], &above[1]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&Real::pi(), &positive[1]],
+                [&right[0], &right[1]],
+                [&above[0], &above[1]],
+            ),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        assert_eq!(
+            Real::certified_affine_det2_sign(
+                [&Real::zero(), &Real::zero()],
+                [&huge, &Real::zero()],
+                [&Real::zero(), &huge],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn certified_affine_det2_sign_matches_exact_randomized_determinants() {
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..20_000 {
+            let mut coordinates = [0.0_f64; 6];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 1_801 + 100) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1]];
+            let b = [&values[2], &values[3]];
+            let c = [&values[4], &values[5]];
+            if let Some(filtered) = Real::certified_affine_det2_sign(a, b, c) {
+                assert_eq!(filtered, exact_affine_det2_sign(a, b, c));
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 1_000, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_affine_det3_sign_only_returns_exact_signs() {
+        let a = [Real::zero(), Real::zero(), Real::zero()];
+        let b = [Real::one(), Real::zero(), Real::zero()];
+        let c = [Real::zero(), Real::one(), Real::zero()];
+        let d = [Real::zero(), Real::zero(), Real::one()];
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&c[0], &c[1], &c[2]],
+                [&b[0], &b[1], &b[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&a[0], &a[1], &a[2]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&third, &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&Real::pi(), &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+            ),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&a[0], &a[1], &a[2]],
+                [&huge, &b[1], &b[2]],
+                [&c[0], &huge, &c[2]],
+                [&d[0], &d[1], &huge],
+            ),
+            None,
+        );
+
+        // Products in this determinant underflow in a primitive view. The
+        // exact determinant is positive, so the filter must defer rather than
+        // report the negative sign produced by unchecked primitive arithmetic.
+        let underflowing = [
+            0.293_308_562_306_798_3,
+            0.000_117_695_530_075_658_08,
+            5.014_598_122_862_727e236,
+            -1.707_596_861_323_451_8e-218,
+            2.549_579_668_395_940_3e-273,
+            5.756_438_810_906_876e-276,
+            -9.235_605_227_468_39e-106,
+            6.262_889_985_948_481e-131,
+            -7.969_424_444_885_476e131,
+            -2.619_996_137_683_515e-251,
+            -4.296_141_750_179_595_6e-221,
+            -1.775_889_244_141_220_4e-69,
+        ]
+        .map(|value| Real::try_from(value).unwrap());
+        assert_eq!(
+            Real::certified_affine_det3_sign(
+                [&underflowing[0], &underflowing[1], &underflowing[2]],
+                [&underflowing[3], &underflowing[4], &underflowing[5]],
+                [&underflowing[6], &underflowing[7], &underflowing[8]],
+                [&underflowing[9], &underflowing[10], &underflowing[11]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn certified_affine_det3_sign_matches_exact_randomized_determinants() {
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..10_000 {
+            let mut coordinates = [0.0_f64; 12];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 1_801 + 100) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            let d = [&values[9], &values[10], &values[11]];
+            if let Some(filtered) = Real::certified_affine_det3_sign(a, b, c, d) {
+                assert_eq!(
+                    filtered,
+                    exact_affine_det3_sign(a, b, c, d),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 500, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_incircle2d_sign_only_returns_exact_signs() {
+        let a = [Real::one(), Real::zero()];
+        let b = [Real::zero(), Real::one()];
+        let c = [Real::from(-1_i32), Real::zero()];
+        let inside = [Real::zero(), Real::zero()];
+        let outside = [Real::zero(), Real::from(-2_i32)];
+        assert_eq!(
+            Real::certified_incircle2d_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_incircle2d_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&outside[0], &outside[1]],
+            ),
+            Some(RealSign::Negative),
+        );
+        assert_eq!(
+            Real::certified_incircle2d_sign(
+                [&a[0], &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&a[0], &a[1]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_incircle2d_sign(
+                [&third, &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_incircle2d_sign(
+                [&Real::pi(), &a[1]],
+                [&b[0], &b[1]],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            None,
+        );
+
+        let huge = Real::try_from(f64::MAX).unwrap();
+        assert_eq!(
+            Real::certified_incircle2d_sign(
+                [&huge, &a[1]],
+                [&b[0], &huge],
+                [&c[0], &c[1]],
+                [&inside[0], &inside[1]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn certified_incircle2d_sign_matches_exact_randomized_determinants() {
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..20_000 {
+            let mut coordinates = [0.0_f64; 8];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 1_201 + 400) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1]];
+            let b = [&values[2], &values[3]];
+            let c = [&values[4], &values[5]];
+            let d = [&values[6], &values[7]];
+            if let Some(filtered) = Real::certified_incircle2d_sign(a, b, c, d) {
+                assert_eq!(
+                    filtered,
+                    exact_incircle2d_sign(a, b, c, d),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 500, "filter certified only {certified} cases");
+    }
+
+    #[test]
+    fn certified_insphere3d_sign_only_returns_exact_signs() {
+        let a = [Real::one(), Real::zero(), Real::zero()];
+        let b = [Real::zero(), Real::one(), Real::zero()];
+        let c = [Real::zero(), Real::zero(), Real::one()];
+        let d = [Real::from(-1_i32), Real::zero(), Real::zero()];
+        let inside = [Real::zero(), Real::zero(), Real::zero()];
+        let outside = [Real::zero(), Real::from(-2_i32), Real::zero()];
+        for point in [&inside, &outside] {
+            let a_refs = [&a[0], &a[1], &a[2]];
+            let b_refs = [&b[0], &b[1], &b[2]];
+            let c_refs = [&c[0], &c[1], &c[2]];
+            let d_refs = [&d[0], &d[1], &d[2]];
+            let point_refs = [&point[0], &point[1], &point[2]];
+            assert_eq!(
+                Real::certified_insphere3d_sign(a_refs, b_refs, c_refs, d_refs, point_refs),
+                Some(exact_insphere3d_sign(
+                    a_refs, b_refs, c_refs, d_refs, point_refs,
+                )),
+            );
+        }
+        assert_eq!(
+            Real::certified_insphere3d_sign(
+                [&a[0], &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+                [&a[0], &a[1], &a[2]],
+            ),
+            None,
+        );
+
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(
+            Real::certified_insphere3d_sign(
+                [&third, &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+                [&inside[0], &inside[1], &inside[2]],
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_insphere3d_sign(
+                [&Real::pi(), &a[1], &a[2]],
+                [&b[0], &b[1], &b[2]],
+                [&c[0], &c[1], &c[2]],
+                [&d[0], &d[1], &d[2]],
+                [&inside[0], &inside[1], &inside[2]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
+    fn certified_insphere3d_sign_matches_exact_randomized_determinants() {
+        let mut state = 0x510e_527f_ade6_82d1_u64;
+        let mut certified = 0_u32;
+
+        for _ in 0..10_000 {
+            let mut coordinates = [0.0_f64; 15];
+            for coordinate in &mut coordinates {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let exponent = ((state >> 52) % 801 + 600) << 52;
+                *coordinate = f64::from_bits((state & 0x800f_ffff_ffff_ffff) | exponent);
+            }
+            let values = coordinates.map(|value| Real::try_from(value).unwrap());
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            let d = [&values[9], &values[10], &values[11]];
+            let e = [&values[12], &values[13], &values[14]];
+            if let Some(filtered) = Real::certified_insphere3d_sign(a, b, c, d, e) {
+                assert_eq!(
+                    filtered,
+                    exact_insphere3d_sign(a, b, c, d, e),
+                    "coordinates={coordinates:?}",
+                );
+                certified += 1;
+            }
+        }
+
+        assert!(certified > 250, "filter certified only {certified} cases");
+    }
+
     #[test]
     fn polynomial_helpers_preserve_evaluation_forms() {
         let coeffs = [Real::from(1_i32), Real::from(2_i32), Real::from(3_i32)];

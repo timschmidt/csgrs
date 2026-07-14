@@ -1,4 +1,539 @@
 impl Real {
+    /// Try to certify the sign of the affine 2x2 determinant
+    /// `(b - a) x (c - a)` without constructing an exact determinant.
+    ///
+    /// This filter accepts `Real` coordinates and succeeds only when every
+    /// coordinate has an exactly representable primitive view and a
+    /// conservative floating error bound separates the determinant from zero.
+    /// Every other case returns `None` so callers can retain their existing
+    /// exact or bounded-refinement path.
+    #[inline]
+    pub fn certified_affine_det2_sign(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+    ) -> Option<RealSign> {
+        let rationals = [
+            a[0].exact_rational_ref()?,
+            a[1].exact_rational_ref()?,
+            b[0].exact_rational_ref()?,
+            b[1].exact_rational_ref()?,
+            c[0].exact_rational_ref()?,
+            c[1].exact_rational_ref()?,
+        ];
+        // Query-point coordinates are the most likely lanes to carry a
+        // different rational scale, so reject them before anchor coordinates.
+        if ![
+            rationals[4],
+            rationals[5],
+            rationals[2],
+            rationals[3],
+            rationals[0],
+            rationals[1],
+        ]
+        .into_iter()
+        .all(Rational::is_dyadic)
+        {
+            return None;
+        }
+        let [Some(ax), Some(ay), Some(bx), Some(by), Some(cx), Some(cy)] =
+            rationals.map(Rational::dyadic_to_f64_exact)
+        else {
+            return None;
+        };
+
+        let abx = bx - ax;
+        let aby = by - ay;
+        let acx = cx - ax;
+        let acy = cy - ay;
+        if ![abx, aby, acx, acy]
+            .into_iter()
+            .all(Self::normal_or_zero_f64)
+        {
+            return None;
+        }
+
+        let left = abx * acy;
+        let right = aby * acx;
+        let det = left - right;
+        let magnitude_sum = left.abs() + right.abs();
+        if ![left, right, det, magnitude_sum]
+            .into_iter()
+            .all(Self::normal_or_zero_f64)
+        {
+            return None;
+        }
+
+        // Three rounded operations contribute to each product-difference
+        // decision. This is the conservative one-branch determinant bound used
+        // by adaptive robust-predicate filters, with an absolute product sum.
+        const THETA: f64 = 3.330_669_062_177_372_2e-16;
+        let error_bound = THETA * magnitude_sum;
+        if magnitude_sum != 0.0 && !error_bound.is_normal() {
+            return None;
+        }
+        if det > error_bound {
+            Some(RealSign::Positive)
+        } else if -det > error_bound {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    /// Try to certify the sign of the affine 3x3 determinant formed by four
+    /// exact `Real` points without constructing the exact determinant.
+    ///
+    /// As with [`Self::certified_affine_det2_sign`], success requires exact
+    /// primitive views and a conservative error bound. `None` leaves the
+    /// caller's exact or bounded-refinement path fully intact.
+    #[inline]
+    pub fn certified_affine_det3_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+    ) -> Option<RealSign> {
+        let [dx, dy, dz, cx, cy, cz, bx, by, bz, ax, ay, az] = Self::exact_dyadic_f64([
+            d[0], d[1], d[2], c[0], c[1], c[2], b[0], b[1], b[2], a[0], a[1], a[2],
+        ])?;
+
+        let adx = ax - dx;
+        let bdx = bx - dx;
+        let cdx = cx - dx;
+        let ady = ay - dy;
+        let bdy = by - dy;
+        let cdy = cy - dy;
+        let adz = az - dz;
+        let bdz = bz - dz;
+        let cdz = cz - dz;
+        if ![adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz]
+            .into_iter()
+            .all(Self::normal_or_zero_f64)
+        {
+            return None;
+        }
+
+        let bdxcdy = Self::normal_product_f64(bdx, cdy)?;
+        let cdxbdy = Self::normal_product_f64(cdx, bdy)?;
+        let cdxady = Self::normal_product_f64(cdx, ady)?;
+        let adxcdy = Self::normal_product_f64(adx, cdy)?;
+        let adxbdy = Self::normal_product_f64(adx, bdy)?;
+        let bdxady = Self::normal_product_f64(bdx, ady)?;
+        let bc = bdxcdy - cdxbdy;
+        let ca = cdxady - adxcdy;
+        let ab = adxbdy - bdxady;
+        let adet = Self::normal_product_f64(adz, bc)?;
+        let bdet = Self::normal_product_f64(bdz, ca)?;
+        let cdet = Self::normal_product_f64(cdz, ab)?;
+        let det_ab = adet + bdet;
+        let det = det_ab + cdet;
+        let permanent_a =
+            Self::normal_product_f64(bdxcdy.abs() + cdxbdy.abs(), adz.abs())?;
+        let permanent_b =
+            Self::normal_product_f64(cdxady.abs() + adxcdy.abs(), bdz.abs())?;
+        let permanent_c =
+            Self::normal_product_f64(adxbdy.abs() + bdxady.abs(), cdz.abs())?;
+        let permanent_ab = permanent_a + permanent_b;
+        let permanent = permanent_ab + permanent_c;
+        if [
+            bdxcdy,
+            cdxbdy,
+            cdxady,
+            adxcdy,
+            adxbdy,
+            bdxady,
+            bc,
+            ca,
+            ab,
+            adet,
+            bdet,
+            cdet,
+            det_ab,
+            det,
+            permanent_a,
+            permanent_b,
+            permanent_c,
+            permanent_ab,
+            permanent,
+        ]
+        .into_iter()
+        .any(|value| !Self::normal_or_zero_f64(value))
+        {
+            return None;
+        }
+
+        const EPSILON: f64 = 1.110_223_024_625_156_5e-16;
+        const ERROR_FACTOR: f64 = (7.0 + 56.0 * EPSILON) * EPSILON;
+        let error_bound = ERROR_FACTOR * permanent;
+        if permanent != 0.0 && !error_bound.is_normal() {
+            return None;
+        }
+        if det > error_bound {
+            Some(RealSign::Positive)
+        } else if -det > error_bound {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    /// Try to certify the sign of the translated in-circle determinant for
+    /// four exact `Real` points without constructing its lifted polynomial.
+    ///
+    /// This is a proof shortcut only: coordinates must have exact primitive
+    /// views, every intermediate must avoid overflow and underflow, and the
+    /// determinant must clear a conservative rounding-error bound. All other
+    /// inputs return `None` for the caller's exact fallback.
+    #[inline]
+    pub fn certified_incircle2d_sign(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+        d: [&Real; 2],
+    ) -> Option<RealSign> {
+        let [dx, dy, cx, cy, bx, by, ax, ay] = Self::exact_dyadic_f64([
+            d[0], d[1], c[0], c[1], b[0], b[1], a[0], a[1],
+        ])?;
+
+        let adx = ax - dx;
+        let bdx = bx - dx;
+        let cdx = cx - dx;
+        let ady = ay - dy;
+        let bdy = by - dy;
+        let cdy = cy - dy;
+        if [adx, bdx, cdx, ady, bdy, cdy]
+            .into_iter()
+            .any(|value| !Self::normal_or_zero_f64(value))
+        {
+            return None;
+        }
+
+        let bdxcdy = Self::normal_product_f64(bdx, cdy)?;
+        let cdxbdy = Self::normal_product_f64(cdx, bdy)?;
+        let cdxady = Self::normal_product_f64(cdx, ady)?;
+        let adxcdy = Self::normal_product_f64(adx, cdy)?;
+        let adxbdy = Self::normal_product_f64(adx, bdy)?;
+        let bdxady = Self::normal_product_f64(bdx, ady)?;
+
+        let adx2 = Self::normal_product_f64(adx, adx)?;
+        let ady2 = Self::normal_product_f64(ady, ady)?;
+        let bdx2 = Self::normal_product_f64(bdx, bdx)?;
+        let bdy2 = Self::normal_product_f64(bdy, bdy)?;
+        let cdx2 = Self::normal_product_f64(cdx, cdx)?;
+        let cdy2 = Self::normal_product_f64(cdy, cdy)?;
+        let alift = adx2 + ady2;
+        let blift = bdx2 + bdy2;
+        let clift = cdx2 + cdy2;
+
+        let bc = bdxcdy - cdxbdy;
+        let ca = cdxady - adxcdy;
+        let ab = adxbdy - bdxady;
+        let adet = Self::normal_product_f64(alift, bc)?;
+        let bdet = Self::normal_product_f64(blift, ca)?;
+        let cdet = Self::normal_product_f64(clift, ab)?;
+        let det_ab = adet + bdet;
+        let det = det_ab + cdet;
+
+        let permanent_a =
+            Self::normal_product_f64(bdxcdy.abs() + cdxbdy.abs(), alift)?;
+        let permanent_b =
+            Self::normal_product_f64(cdxady.abs() + adxcdy.abs(), blift)?;
+        let permanent_c =
+            Self::normal_product_f64(adxbdy.abs() + bdxady.abs(), clift)?;
+        let permanent_ab = permanent_a + permanent_b;
+        let permanent = permanent_ab + permanent_c;
+        if [
+            alift,
+            blift,
+            clift,
+            bc,
+            ca,
+            ab,
+            det_ab,
+            det,
+            permanent_ab,
+            permanent,
+        ]
+        .into_iter()
+        .any(|value| !Self::normal_or_zero_f64(value))
+        {
+            return None;
+        }
+
+        const EPSILON: f64 = 1.110_223_024_625_156_5e-16;
+        const ERROR_FACTOR: f64 = (10.0 + 96.0 * EPSILON) * EPSILON;
+        let error_bound = ERROR_FACTOR * permanent;
+        if permanent != 0.0 && !error_bound.is_normal() {
+            return None;
+        }
+        if det > error_bound {
+            Some(RealSign::Positive)
+        } else if -det > error_bound {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    /// Try to certify the sign of the translated in-sphere determinant for
+    /// five exact `Real` points without constructing its lifted polynomial.
+    ///
+    /// Primitive arithmetic is used only when it is an exact-input,
+    /// range-checked proof shortcut with a conservative rounding-error bound.
+    /// Uncertain, non-dyadic, overflowing, and underflowing cases return `None`.
+    #[inline]
+    pub fn certified_insphere3d_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+        e: [&Real; 3],
+    ) -> Option<RealSign> {
+        let [ex, ey, ez, dx, dy, dz, cx, cy, cz, bx, by, bz, ax, ay, az] =
+            Self::exact_dyadic_f64([
+                e[0], e[1], e[2], d[0], d[1], d[2], c[0], c[1], c[2], b[0], b[1], b[2],
+                a[0], a[1], a[2],
+            ])?;
+
+        let aex = ax - ex;
+        let bex = bx - ex;
+        let cex = cx - ex;
+        let dex = dx - ex;
+        let aey = ay - ey;
+        let bey = by - ey;
+        let cey = cy - ey;
+        let dey = dy - ey;
+        let aez = az - ez;
+        let bez = bz - ez;
+        let cez = cz - ez;
+        let dez = dz - ez;
+        if [aex, bex, cex, dex, aey, bey, cey, dey, aez, bez, cez, dez]
+            .into_iter()
+            .any(|value| !Self::normal_or_zero_f64(value))
+        {
+            return None;
+        }
+
+        let aexbey = Self::normal_product_f64(aex, bey)?;
+        let bexaey = Self::normal_product_f64(bex, aey)?;
+        let bexcey = Self::normal_product_f64(bex, cey)?;
+        let cexbey = Self::normal_product_f64(cex, bey)?;
+        let cexdey = Self::normal_product_f64(cex, dey)?;
+        let dexcey = Self::normal_product_f64(dex, cey)?;
+        let dexaey = Self::normal_product_f64(dex, aey)?;
+        let aexdey = Self::normal_product_f64(aex, dey)?;
+        let aexcey = Self::normal_product_f64(aex, cey)?;
+        let cexaey = Self::normal_product_f64(cex, aey)?;
+        let bexdey = Self::normal_product_f64(bex, dey)?;
+        let dexbey = Self::normal_product_f64(dex, bey)?;
+        let ab = Self::normal_add_f64(aexbey, -bexaey)?;
+        let bc = Self::normal_add_f64(bexcey, -cexbey)?;
+        let cd = Self::normal_add_f64(cexdey, -dexcey)?;
+        let da = Self::normal_add_f64(dexaey, -aexdey)?;
+        let ac = Self::normal_add_f64(aexcey, -cexaey)?;
+        let bd = Self::normal_add_f64(bexdey, -dexbey)?;
+
+        let abc = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(aez, bc)?,
+                -Self::normal_product_f64(bez, ac)?,
+            )?,
+            Self::normal_product_f64(cez, ab)?,
+        )?;
+        let bcd = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(bez, cd)?,
+                -Self::normal_product_f64(cez, bd)?,
+            )?,
+            Self::normal_product_f64(dez, bc)?,
+        )?;
+        let cda = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(cez, da)?,
+                Self::normal_product_f64(dez, ac)?,
+            )?,
+            Self::normal_product_f64(aez, cd)?,
+        )?;
+        let dab = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(dez, ab)?,
+                Self::normal_product_f64(aez, bd)?,
+            )?,
+            Self::normal_product_f64(bez, da)?,
+        )?;
+
+        let alift = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(aex, aex)?,
+                Self::normal_product_f64(aey, aey)?,
+            )?,
+            Self::normal_product_f64(aez, aez)?,
+        )?;
+        let blift = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(bex, bex)?,
+                Self::normal_product_f64(bey, bey)?,
+            )?,
+            Self::normal_product_f64(bez, bez)?,
+        )?;
+        let clift = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(cex, cex)?,
+                Self::normal_product_f64(cey, cey)?,
+            )?,
+            Self::normal_product_f64(cez, cez)?,
+        )?;
+        let dlift = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(dex, dex)?,
+                Self::normal_product_f64(dey, dey)?,
+            )?,
+            Self::normal_product_f64(dez, dez)?,
+        )?;
+
+        let det = Self::normal_add_f64(
+            Self::normal_add_f64(
+                Self::normal_product_f64(dlift, abc)?,
+                -Self::normal_product_f64(clift, dab)?,
+            )?,
+            Self::normal_add_f64(
+                Self::normal_product_f64(blift, cda)?,
+                -Self::normal_product_f64(alift, bcd)?,
+            )?,
+        )?;
+
+        let permanent_a = Self::normal_product_f64(
+            Self::normal_add_f64(
+                Self::normal_add_f64(
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(cexdey.abs(), dexcey.abs())?,
+                        bez.abs(),
+                    )?,
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(dexbey.abs(), bexdey.abs())?,
+                        cez.abs(),
+                    )?,
+                )?,
+                Self::normal_product_f64(
+                    Self::normal_add_f64(bexcey.abs(), cexbey.abs())?,
+                    dez.abs(),
+                )?,
+            )?,
+            alift,
+        )?;
+        let permanent_b = Self::normal_product_f64(
+            Self::normal_add_f64(
+                Self::normal_add_f64(
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(dexaey.abs(), aexdey.abs())?,
+                        cez.abs(),
+                    )?,
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(aexcey.abs(), cexaey.abs())?,
+                        dez.abs(),
+                    )?,
+                )?,
+                Self::normal_product_f64(
+                    Self::normal_add_f64(cexdey.abs(), dexcey.abs())?,
+                    aez.abs(),
+                )?,
+            )?,
+            blift,
+        )?;
+        let permanent_c = Self::normal_product_f64(
+            Self::normal_add_f64(
+                Self::normal_add_f64(
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(aexbey.abs(), bexaey.abs())?,
+                        dez.abs(),
+                    )?,
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(bexdey.abs(), dexbey.abs())?,
+                        aez.abs(),
+                    )?,
+                )?,
+                Self::normal_product_f64(
+                    Self::normal_add_f64(dexaey.abs(), aexdey.abs())?,
+                    bez.abs(),
+                )?,
+            )?,
+            clift,
+        )?;
+        let permanent_d = Self::normal_product_f64(
+            Self::normal_add_f64(
+                Self::normal_add_f64(
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(bexcey.abs(), cexbey.abs())?,
+                        aez.abs(),
+                    )?,
+                    Self::normal_product_f64(
+                        Self::normal_add_f64(cexaey.abs(), aexcey.abs())?,
+                        bez.abs(),
+                    )?,
+                )?,
+                Self::normal_product_f64(
+                    Self::normal_add_f64(aexbey.abs(), bexaey.abs())?,
+                    cez.abs(),
+                )?,
+            )?,
+            dlift,
+        )?;
+        let permanent = Self::normal_add_f64(
+            Self::normal_add_f64(permanent_a, permanent_b)?,
+            Self::normal_add_f64(permanent_c, permanent_d)?,
+        )?;
+
+        const EPSILON: f64 = 1.110_223_024_625_156_5e-16;
+        const ERROR_FACTOR: f64 = (16.0 + 224.0 * EPSILON) * EPSILON;
+        let error_bound = ERROR_FACTOR * permanent;
+        if permanent != 0.0 && !error_bound.is_normal() {
+            return None;
+        }
+        if det > error_bound {
+            Some(RealSign::Positive)
+        } else if -det > error_bound {
+            Some(RealSign::Negative)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn exact_dyadic_f64<const N: usize>(values: [&Real; N]) -> Option<[f64; N]> {
+        let mut result = [0.0; N];
+        for (index, value) in values.into_iter().enumerate() {
+            let rational = value.exact_rational_ref()?;
+            if !rational.is_dyadic() {
+                return None;
+            }
+            result[index] = rational.dyadic_to_f64_exact()?;
+        }
+        Some(result)
+    }
+
+    #[inline]
+    fn normal_or_zero_f64(value: f64) -> bool {
+        value == 0.0 || value.is_normal()
+    }
+
+    #[inline]
+    fn normal_product_f64(left: f64, right: f64) -> Option<f64> {
+        let product = left * right;
+        if !Self::normal_or_zero_f64(product)
+            || (product == 0.0 && left != 0.0 && right != 0.0)
+        {
+            return None;
+        }
+        Some(product)
+    }
+
+    #[inline]
+    fn normal_add_f64(left: f64, right: f64) -> Option<f64> {
+        let sum = left + right;
+        Self::normal_or_zero_f64(sum).then_some(sum)
+    }
+
     /// Return `a * b + c`, preserving zero products before building the sum.
     pub fn mul_add(a: &Real, b: &Real, c: &Real) -> Real {
         let Some(product) = Self::product_term([a, b]) else {

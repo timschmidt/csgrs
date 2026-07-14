@@ -308,6 +308,38 @@ impl Rational {
         })
     }
 
+    /// Return an `f64` only when conversion preserves this dyadic rational exactly.
+    ///
+    /// The caller has already selected a dyadic schedule for the whole fixed
+    /// kernel, avoiding a repeated denominator scan in every lane.
+    #[inline]
+    pub(crate) fn dyadic_to_f64_exact(&self) -> Option<f64> {
+        debug_assert!(self.is_dyadic());
+        if self.is_zero() {
+            return Some(0.0);
+        }
+
+        let denominator_shift = self.dyadic_denominator_shift()?;
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("non-zero numerator has a trailing-zero count");
+        let significand_bits = self.numerator.bits() - numerator_shift;
+        let least_exponent = i128::from(numerator_shift) - i128::from(denominator_shift);
+        let greatest_exponent = least_exponent + i128::from(significand_bits - 1);
+
+        // A binary64 value carries at most 53 significant bits, its greatest
+        // set bit cannot exceed 2^1023, and its least set bit cannot fall below
+        // the subnormal quantum 2^-1074. These structural checks prove exact
+        // representability without allocating a round-trip Rational.
+        if significand_bits > 53 || greatest_exponent > 1023 || least_exponent < -1074 {
+            return None;
+        }
+
+        let value = self.to_f64_lossy()?;
+        (value != 0.0).then_some(value)
+    }
+
     /// Is this Rational better understood as a fraction?
     ///
     /// If a decimal expansion of this fraction would never end this is true.
