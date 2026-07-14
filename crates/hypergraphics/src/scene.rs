@@ -49,7 +49,13 @@ pub fn axes_mesh(length: Real, z_base: Real) -> Result<ExactMesh> {
 /// `half_steps` controls loop cardinality, while `step` remains an exact
 /// hyperreal spacing. This avoids deriving iteration counts from lossy floats.
 pub fn grid_mesh(half_steps: i32, step: Real, color: Color3) -> ExactMesh {
-    let mut mesh = ExactMesh::empty(Primitive::Lines);
+    let vertex_capacity = usize::try_from(half_steps)
+        .ok()
+        .and_then(|count| count.checked_mul(2))
+        .and_then(|count| count.checked_add(1))
+        .and_then(|count| count.checked_mul(4))
+        .unwrap_or(0);
+    let mut mesh = ExactMesh::new(Primitive::Lines, Vec::with_capacity(vertex_capacity));
     let z = Real::zero();
     let extent = Real::from(half_steps) * step.clone();
 
@@ -88,7 +94,7 @@ pub fn polygon_surface_mesh(
     color: Color3,
 ) -> Result<ExactMesh> {
     let indices = hypertri::earcut(vertices, hole_indices)?;
-    let mut out = ExactMesh::empty(Primitive::Triangles);
+    let mut out = ExactMesh::new(Primitive::Triangles, Vec::with_capacity(indices.len()));
     for index in indices {
         let point = &vertices[index];
         out.push(ExactVertex::new(
