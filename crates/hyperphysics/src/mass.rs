@@ -103,12 +103,9 @@ impl ClosedTriangleMesh3 {
     ///
     /// The mesh is decomposed into oriented tetrahedra with one vertex at the
     /// origin. Volume, first moments, and second moments are accumulated over
-    /// those tetrahedra using exact [`Real`] arithmetic. This is the same
-    /// divergence/integral strategy used by Mirtich, "Fast and Accurate
-    /// Computation of Polyhedral Mass Properties," *Journal of Graphics Tools*
-    /// 1(2), 1996 (<https://doi.org/10.1080/10867651.1996.10487458>), but kept
-    /// at the exact object layer in Yap's EGC sense instead of evaluating the
-    /// integrals through primitive floating point.
+    /// those tetrahedra using exact [`Real`] arithmetic. The divergence and
+    /// integral strategy stays at the exact object layer instead of evaluating
+    /// the integrals through primitive floating point.
     pub fn uniform_density_mass_properties(
         &self,
         density: Real,
@@ -122,7 +119,7 @@ impl ClosedTriangleMesh3 {
         for triangle in self.triangles() {
             let [a, b, c] = triangle.vertices();
             let det = determinant3(a, b, c);
-            signed_volume_numerator = signed_volume_numerator + det.clone();
+            signed_volume_numerator += det.clone();
 
             let vertex_sum = a + b + c;
             first_moment_numerator = first_moment_numerator + vertex_sum.clone() * det.clone();

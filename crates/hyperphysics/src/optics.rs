@@ -4,19 +4,13 @@
 //! data, and lossy ray/field solvers. This module keeps the first boundary
 //! exact: media, rays, planar interfaces, Beer-Lambert optical depth, and
 //! normal-incidence Snell/Fresnel reports are expressed with [`Real`] values
-//! and explicit status. That follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): approximate optics
-//! adapters may propose samples, but boundary classification and closed-form
-//! reports should retain exact provenance or return explicit uncertainty.
+//! and explicit status. Approximate optics adapters may propose samples, but
+//! boundary classification and closed-form reports retain exact provenance or
+//! return explicit uncertainty.
 //!
-//! The report formulas cite the physical laws at their use sites:
-//! Beer-Lambert attenuation uses the optical-depth law associated with Beer,
-//! "Bestimmung der Absorption des rothen Lichts..." (1852) and Lambert,
-//! "Photometria" (1760); normal-incidence refraction records Snell's law
-//! (`n_1 sin(theta_1) = n_2 sin(theta_2)`), historically described by
-//! Willebrord Snellius and commonly formalized as Descartes' law; normal
-//! reflectance uses Fresnel's amplitude-coefficient result.
+//! Beer-Lambert attenuation uses optical depth, normal-incidence refraction
+//! records Snell's law (`n_1 sin(theta_1) = n_2 sin(theta_2)`), and normal
+//! reflectance uses Fresnel amplitude coefficients.
 
 use hyperlattice::Vector3;
 use hyperreal::{Real, RealSign};

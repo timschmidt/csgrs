@@ -12,38 +12,6 @@ The crate is not a replacement runtime physics engine. It is an adapter and
 certification layer where authored physical facts stay visible before approximate
 simulation, field, or engine exports are trusted.
 
-## Hyper Ecosystem
-
-`hyperphysics` connects exact geometry facts to physical interpretation.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal) and
-  [hyperlattice](https://github.com/timschmidt/hyperlattice): scalar and vector values
-  for material, shape, mass, and field reports.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact contact, sidedness, and
-  incidence predicate policy.
-- [hypercurve](https://github.com/timschmidt/hypercurve),
-  [hypertri](https://github.com/timschmidt/hypertri), and
-  [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology owners for
-  shapes and mesh facts.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): sparse-grid, support, field,
-  and process evidence for sampled physical handoffs.
-- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and future
-  coupled solver certification.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit),
-  [hyperpath](https://github.com/timschmidt/hyperpath), and
-  [hyperdrc](https://github.com/timschmidt/hyperdrc): circuit, routing, and
-  manufacturing context for coupled physical fixtures.
-- [hyperpack](https://github.com/timschmidt/hyperpack): placement, load, support, and
-  mass-property consumers.
-- [hyperparts](https://github.com/timschmidt/hyperparts): source-attributed material,
-  package, and lifecycle evidence.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): proposal-search layer
-  for physical design candidates.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): exact boundary-representation
-  evidence for future physical shape adapters.
-- [hypersdf](https://github.com/timschmidt/hypersdf): implicit fields and signed-distance
-  evidence for future collision and clearance previews.
-
 ## Typical Physics Problems
 
 Physics engines optimize throughput and stability under finite time steps. Contact
@@ -126,7 +94,7 @@ adapter work.
 
 ```toml
 [dependencies]
-hyperphysics = "0.2.1"
+hyperphysics = "0.3.0"
 ```
 
 For sibling checkouts:
@@ -140,7 +108,7 @@ hyperphysics = { path = "../hyperphysics" }
 
 Create exact setup facts, then hand simulation or field work to explicit adapters:
 
-```rust,ignore
+```rust,no_run
 use hyperlattice::Vector3;
 use hyperphysics::{
     AxisAlignedBox3, BodyId, BodyKind, ExactBody3, ExactFixture3, ExactMaterial,
@@ -148,25 +116,28 @@ use hyperphysics::{
 };
 use hyperreal::Real;
 
-let material = ExactMaterial::new(
-    MaterialId::new("aluminum")?,
-    "aluminum",
-    Real::from(2700),
-)?;
+fn main() -> hyperphysics::PhysicsResult<()> {
+    let material = ExactMaterial::new(
+        MaterialId::new("aluminum")?,
+        "aluminum",
+        Real::from(2700),
+    )?;
 
-let shape = PhysicsShape3::AxisAlignedBox(AxisAlignedBox3::new(
-    Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
-    Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
-)?);
+    let shape = PhysicsShape3::AxisAlignedBox(Box::new(AxisAlignedBox3::new(
+        Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
+        Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
+    )?));
 
-let fixture = ExactFixture3::new(FixtureId::new("fixture-0")?, shape, material.clone());
-let body = ExactBody3::new(BodyId::new("body-0")?, BodyKind::Dynamic, vec![fixture]);
-assert_eq!(body.fixtures().len(), 1);
+    let fixture = ExactFixture3::new(FixtureId::new("fixture-0")?, shape, material);
+    let body = ExactBody3::new(BodyId::new("body-0")?, BodyKind::Dynamic, vec![fixture]);
+    assert_eq!(body.fixtures().len(), 1);
+    Ok(())
+}
 ```
 
 Exact contact and replay reports keep runtime proposals auditable:
 
-```rust,ignore
+```rust,no_run
 use hyperlattice::Vector3;
 use hyperphysics::{
     AabbContactReport3, AxisAlignedBox3, ContactClassification, ForceAccumulator3,
@@ -174,30 +145,33 @@ use hyperphysics::{
 };
 use hyperreal::Real;
 
-let left = AxisAlignedBox3::new(
-    Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
-    Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
-)?;
-let right = AxisAlignedBox3::new(
-    Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
-    Vector3::new([Real::from(2), Real::from(1), Real::from(1)]),
-)?;
-let contact = AabbContactReport3::classify(&left, &right)?;
-assert_eq!(contact.classification, ContactClassification::Touching);
+fn main() -> hyperphysics::PhysicsResult<()> {
+    let left = AxisAlignedBox3::new(
+        Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
+        Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
+    )?;
+    let right = AxisAlignedBox3::new(
+        Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
+        Vector3::new([Real::from(2), Real::from(1), Real::from(1)]),
+    )?;
+    let contact = AabbContactReport3::classify(&left, &right)?;
+    assert_eq!(contact.classification, ContactClassification::Touching);
 
-let mut forces = ForceAccumulator3::default();
-forces.push(ForceContribution3 {
-    source: "test force".into(),
-    force: Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
-});
-let step = StepReplayReport3::explicit_euler_replay(
-    Real::from(2),
-    Real::from(1),
-    Vector3::zero(),
-    Vector3::zero(),
-    &forces,
-)?;
-assert!(step.exact_replay);
+    let mut forces = ForceAccumulator3::default();
+    forces.push(ForceContribution3 {
+        source: "test force".into(),
+        force: Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
+    });
+    let step = StepReplayReport3::explicit_euler_replay(
+        Real::from(2),
+        Real::from(1),
+        Vector3::zero(),
+        Vector3::zero(),
+        &forces,
+    )?;
+    assert!(step.exact_replay);
+    Ok(())
+}
 ```
 
 Mass properties, contact reports, thermal/optical/electromagnetic/photochemical/fluid
@@ -206,30 +180,68 @@ physical facts separate from runtime engine proposals.
 
 ## References
 
-- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
-  (1997): 3-23.
-- Mirtich, Brian. "Fast and Accurate Computation of Polyhedral Mass Properties."
-  *Journal of Graphics Tools* 1.2 (1996): 31-50.
-- Landau, L. D., and E. M. Lifshitz. *Theory of Elasticity*. 3rd ed., 1986.
-- Marsden, Jerrold E., and Matthew West. "Discrete Mechanics and Variational
-  Integrators." *Acta Numerica* 10 (2001): 357-514.
-- Stewart, David E., and Jeffrey C. Trinkle. "An Implicit Time-Stepping Scheme for Rigid
-  Body Dynamics with Inelastic Collisions and Coulomb Friction." *International Journal
-  for Numerical Methods in Engineering* 39.15 (1996): 2673-2691.
-- Maxwell, James Clerk. "A Dynamical Theory of the Electromagnetic Field." 1865.
-- Stratton, Julius Adams. *Electromagnetic Theory*. McGraw-Hill, 1941.
-- Beer, August. "Bestimmung der Absorption des rothen Lichts in farbigen Flussigkeiten."
-  1852.
-- Lambert, Johann Heinrich. *Photometria*. 1760.
+The implementation comments describe local invariants; the scientific and numerical
+background is consolidated here.
+
+- Bender, Jan, and Dan Koschier. "Divergence-Free Smoothed Particle Hydrodynamics."
+  *Proceedings of SCA*, 2015, https://doi.org/10.1145/2786784.2786796.
+- Beer, August. "Bestimmung der Absorption des rothen Lichts in farbigen
+  Flüssigkeiten." *Annalen der Physik und Chemie*, 1852,
+  https://doi.org/10.1002/andp.18521620505.
+- Carslaw, H. S., and J. C. Jaeger. *Conduction of Heat in Solids*. 2nd ed., Oxford
+  University Press, 1959.
+- Fick, Adolf. "Ueber Diffusion." *Annalen der Physik*, vol. 170, no. 1, 1855,
+  https://doi.org/10.1002/andp.18551700105.
+- Fourier, Joseph. *The Analytical Theory of Heat*. Cambridge University Press, 1878.
+- Gilbert, Elmer G., Daniel W. Johnson, and S. Sathiya Keerthi. "A Fast Procedure for
+  Computing the Distance Between Complex Objects in Three-Dimensional Space."
+  *IEEE Journal on Robotics and Automation*, vol. 4, no. 2, 1988,
+  https://doi.org/10.1109/56.2083.
+- Ihmsen, Markus, et al. "Implicit Incompressible SPH." *IEEE Transactions on
+  Visualization and Computer Graphics*, vol. 20, no. 3, 2014,
+  https://doi.org/10.1109/TVCG.2013.105.
 - Jacobs, Paul F. *Rapid Prototyping & Manufacturing: Fundamentals of
-  Stereolithography*. 1992.
-- Fick, Adolf. "Ueber Diffusion." *Annalen der Physik* 94 (1855).
+  Stereolithography*. Society of Manufacturing Engineers, 1992.
+- Lambert, Johann Heinrich. *Photometria*. 1760.
+- Landau, L. D., and E. M. Lifshitz. *Theory of Elasticity*. 3rd ed., Butterworth-
+  Heinemann, 1986.
+- Marsden, Jerrold E., and Matthew West. "Discrete Mechanics and Variational
+  Integrators." *Acta Numerica*, vol. 10, 2001,
+  https://doi.org/10.1017/S096249290100006X.
+- Maxwell, James Clerk. "A Dynamical Theory of the Electromagnetic Field."
+  *Philosophical Transactions of the Royal Society of London*, 1865,
+  https://doi.org/10.1098/rstl.1865.0008.
+- Mirtich, Brian. "Fast and Accurate Computation of Polyhedral Mass Properties."
+  *Journal of Graphics Tools*, vol. 1, no. 2, 1996,
+  https://doi.org/10.1080/10867651.1996.10487458.
+- Monaghan, J. J. "Smoothed Particle Hydrodynamics." *Annual Review of Astronomy and
+  Astrophysics*, vol. 30, 1992, https://doi.org/10.1146/annurev.aa.30.090192.002551.
+- Stewart, David E., and Jeffrey C. Trinkle. "An Implicit Time-Stepping Scheme for
+  Rigid Body Dynamics with Inelastic Collisions and Coulomb Friction."
+  *International Journal for Numerical Methods in Engineering*, vol. 39, no. 15,
+  1996, https://doi.org/10.1002/(SICI)1097-0207(19960815)39:15%3C2673::AID-NME972%3E3.0.CO;2-I.
+- Stratton, Julius Adams. *Electromagnetic Theory*. McGraw-Hill, 1941.
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
+  vol. 7, nos. 1-2, 1997, https://doi.org/10.1016/0925-7721(95)00040-2.
 
 ## Development
 
-Useful local checks:
-
 ```sh
-cargo test
+cargo fmt --all -- --check
+cargo test --locked
+cargo check --benches --locked
+cargo clippy --all-targets --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
 cargo bench --bench mass_properties
 ```
+
+## Hyper Ecosystem
+
+`hyperphysics` builds on [hyperreal](https://github.com/timschmidt/hyperreal),
+[hyperlattice](https://github.com/timschmidt/hyperlattice), and
+[hyperlimit](https://github.com/timschmidt/hyperlimit), consumes shape facts from
+[hypermesh](https://github.com/timschmidt/hypermesh), and replays coupled residuals
+through [hypersolve](https://github.com/timschmidt/hypersolve). Related physical
+contexts live in [hypercircuit](https://github.com/timschmidt/hypercircuit),
+[hyperpath](https://github.com/timschmidt/hyperpath), and
+[hyperparts](https://github.com/timschmidt/hyperparts).

@@ -5,23 +5,16 @@
 //! exact and report-bearing: material/source provenance is retained, simple
 //! closed-form slab/contact/Joule reports are replayed with [`Real`], and
 //! richer FEM/FVM/transient adapters must report lossy or bounded status.
-//! This mirrors Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): approximate field solvers
-//! may propose values, but accepted boundary decisions and scalar balances
-//! should be certified or explicitly unknown.
+//! Approximate field solvers may propose values, but accepted boundary
+//! decisions and scalar balances must be certified or explicitly unknown.
 //!
-//! The steady slab relation implemented here is Fourier conduction,
-//! `q = k A (T_hot - T_cold) / L`, after Fourier, "The Analytical Theory of
-//! Heat" (1822). Contact resistance is represented as a series thermal
-//! resistance term; the report surface follows the standard thermal-resistance
-//! network model used in Carslaw and Jaeger, "Conduction of Heat in Solids,"
-//! 2nd ed., 1959.
+//! The steady slab relation is Fourier conduction,
+//! `q = k A (T_hot - T_cold) / L`. Contact resistance is represented as a
+//! series thermal-resistance term.
 //!
 //! The transient lumped report uses an explicit energy balance,
 //! `C dT/dt = P - (T - T_ambient) / R`, which is the standard first-order RC
-//! thermal network analogue of electrical RC circuits; see Carslaw and Jaeger
-//! for thermal resistance/capacitance network modeling. The report exposes the
+//! thermal network analogue of electrical RC circuits. The report exposes the
 //! residual terms instead of hiding them inside a time-stepper.
 
 use hyperlattice::Vector3;

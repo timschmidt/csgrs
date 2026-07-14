@@ -2,20 +2,14 @@
 //!
 //! This module keeps shape classification at the object layer before any
 //! runtime collision engine is chosen. Exact boxes and support maps are carried
-//! as Hyper-native facts, while mesh closure/manifold proof remains delegated to
-//! future exact mesh reports. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): geometric decisions should
-//! use certified object facts and exact predicates instead of hidden
-//! primitive-float tolerances.
+//! as Hyper-native facts, while mesh closure and manifold proof remain delegated
+//! to exact mesh reports. Geometric decisions use certified object facts and
+//! exact predicates instead of hidden primitive-float tolerances.
 //!
 //! The support-map surface is the first dependency-removal hook for collision
-//! algorithms such as GJK. See Gilbert, Johnson, and Keerthi, "A fast procedure
-//! for computing the distance between complex objects in three-dimensional
-//! space," *IEEE Journal of Robotics and Automation* 4(2), 1988. The code here
-//! only reports exact support points for boxes; broader collision algorithms
-//! must replay their decisions through certified Hyper reports before replacing
-//! Parry/Rapier query paths.
+//! algorithms such as GJK. The code here only reports exact support points for
+//! boxes; broader collision algorithms must replay their decisions through
+//! certified Hyper reports before replacing external query paths.
 //!
 //! Plane/ray/segment classification uses exact oriented signed distances, the
 //! primitive required by many collision pipelines before interval or continuous

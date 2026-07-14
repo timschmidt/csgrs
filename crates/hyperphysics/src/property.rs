@@ -3,18 +3,14 @@
 //! This module is the crate-model layer before solvers. Material properties are
 //! represented as exact scalars, exact intervals, explicit unknowns, or
 //! temporary external proposals with replacement status. Resolution reports keep
-//! provenance and conflicts visible. That is the data-model analogue of Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): downstream physics
-//! should consume certified facts or explicit uncertainty, not hidden defaults.
+//! provenance and conflicts visible so downstream physics consumes certified
+//! facts or explicit uncertainty, not hidden defaults.
 //!
 //! The first exact relationship is isotropic elasticity. For an isotropic
 //! linear elastic material, shear modulus is `G = E / (2(1 + nu))` when Young's
-//! modulus `E` and Poisson ratio `nu` are the stated assumptions. This is the
-//! classical Hooke-law relationship for isotropic solids; see Landau and
-//! Lifshitz, *Theory of Elasticity*, 3rd ed., 1986. The derivation function
-//! records that assumption and source values instead of silently inventing a
-//! missing property.
+//! modulus `E` and Poisson ratio `nu` are the stated assumptions. The derivation
+//! function records the isotropic Hooke-law assumption and source values
+//! instead of silently inventing a missing property.
 
 use std::cmp::Ordering;
 

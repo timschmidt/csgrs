@@ -3,12 +3,9 @@
 //! This module is the small bridge required before `hyperphysics` trusts
 //! numerical engines for coupled mechanics, thermal, EM, circuit, or fluid
 //! systems. `hypersolve` owns symbolic residuals and candidate certification;
-//! `hyperphysics` records the replay result as exact/certified/unknown/lossy
-//! diagnostics. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): a numerical candidate is
-//! only useful once exact residuals can be evaluated or their uncertainty is
-//! made explicit.
+//! `hyperphysics` records the replay result as exact, certified, unknown, or
+//! lossy diagnostics. A numerical candidate is only useful once exact residuals
+//! can be evaluated or their uncertainty is explicit.
 //!
 //! The residual formulation is the same separation used by SPICE/MNA and DAE
 //! solvers: assemble equations first, then let a numeric backend propose a

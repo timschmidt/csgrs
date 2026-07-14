@@ -4,16 +4,12 @@
 //! and iterative solvers. This module keeps the first contact boundary exact:
 //! material coefficients are validated as exact values and AABB/AABB contact
 //! state is classified as separated, touching, or intersecting without an
-//! epsilon. That follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): approximate manifold
-//! proposals may be useful, but accepted topological contact decisions need
-//! exact/certified replay.
+//! epsilon. Approximate manifold proposals may be useful, but accepted
+//! topological contact decisions need exact or certified replay.
 //!
 //! The report surface is intentionally pre-solver. Complementarity and impulse
-//! policies are named in the integration module after Stewart and Trinkle
-//! (1996), while this module only provides the exact geometric/material facts
-//! those solvers would consume.
+//! policies are named in the integration module, while this module only
+//! provides the exact geometric and material facts those solvers consume.
 
 use hyperlattice::Vector3;
 use hyperlimit::{Aabb3Intersection, PredicateOutcome};
@@ -91,10 +87,10 @@ impl AabbContactReport3 {
                 minimum_overlap_axis: None,
             });
         }
-        for axis in 0..3 {
+        for (axis, overlap) in overlaps.iter_mut().enumerate() {
             let left_before_right = left.max[axis].clone() - right.min[axis].clone();
             let right_before_left = right.max[axis].clone() - left.min[axis].clone();
-            overlaps[axis] = min_real(left_before_right, right_before_left)?;
+            *overlap = min_real(left_before_right, right_before_left)?;
         }
 
         if relation == Aabb3Intersection::Touching {

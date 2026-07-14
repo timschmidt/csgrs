@@ -6,12 +6,9 @@
 //! [`hyperlattice::Vector3`] directly and keeps primitive floats out of the
 //! core API.
 //!
-//! The boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): runtime engines may use
-//! lossy proposal data, but physical properties derived from authored geometry
-//! should retain exact object facts and return explicit uncertainty or errors
-//! instead of silently accepting tolerance-based topology.
+//! Runtime engines may use lossy proposal data, but physical properties derived
+//! from authored geometry retain exact object facts and return explicit
+//! uncertainty or errors instead of silently accepting tolerance-based topology.
 
 pub mod body;
 pub mod contact;

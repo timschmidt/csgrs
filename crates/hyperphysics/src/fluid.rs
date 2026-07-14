@@ -2,18 +2,14 @@
 //!
 //! Fluid solvers are usually approximate particle or grid engines, but their
 //! material data, boundary handoff, particle masses, and conservation checks
-//! can still be represented exactly. This follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): approximate SPH/DFSPH/
-//! IISPH solvers may propose states, while exact setup and replay diagnostics
-//! remain explicit Hyper-owned facts.
+//! can still be represented exactly. Approximate SPH, DFSPH, and IISPH solvers
+//! may propose states, while exact setup and replay diagnostics remain explicit
+//! Hyper-owned facts.
 //!
-//! The policy names are the standard SPH family boundary: Monaghan's SPH
-//! formulation ("Smoothed particle hydrodynamics," *Annual Review of Astronomy
-//! and Astrophysics*, 1992), IISPH (Ihmsen et al., 2014), and DFSPH (Bender and
-//! Koschier, 2015). This module does not advance those solvers; it records the
-//! exact material/boundary state and mass/momentum diagnostics they must
-//! preserve or report as approximate.
+//! The policy names identify standard SPH-family adapter boundaries. This
+//! module does not advance those solvers; it records the exact material and
+//! boundary state plus the mass and momentum diagnostics they must preserve or
+//! report as approximate.
 
 use hyperlattice::Vector3;
 use hyperreal::{Real, RealSign};
@@ -230,7 +226,7 @@ impl FluidFixture3 {
         let mut total_mass = Real::zero();
         let mut total_momentum = Vector3::zero();
         for particle in &self.particles {
-            total_mass = total_mass + particle.mass.clone();
+            total_mass += particle.mass.clone();
             total_momentum = total_momentum + particle.velocity.clone() * &particle.mass;
         }
         FluidConservationReport3 {

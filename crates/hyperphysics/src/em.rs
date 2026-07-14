@@ -5,18 +5,14 @@
 //! updates. This module keeps the Hyper boundary exact: materials, field
 //! regions, boundary conditions, and simple linear isotropic constitutive
 //! reports use [`Real`] values and explicit status before any FDTD/FEM/BEM/MoM
-//! adapter is trusted. That follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): topological and material
-//! facts should be retained exactly, while approximate solver outputs remain
-//! proposals until certified or replayed.
+//! adapter is trusted. Topological and material facts remain exact, while
+//! approximate solver outputs remain proposals until certified or replayed.
 //!
 //! The implemented fixture is the local linear isotropic constitutive boundary:
 //! `D = epsilon E` and `J = sigma E`. These are the standard macroscopic
-//! Maxwell-material relation and Ohmic conduction relation; see Maxwell,
-//! "A Dynamical Theory of the Electromagnetic Field" (1865), and Stratton,
-//! *Electromagnetic Theory* (1941). The report records the material and field
-//! assumptions instead of folding them into an opaque mesh-solver input.
+//! Maxwell-material and Ohmic conduction relations. The report records the
+//! material and field assumptions instead of folding them into an opaque
+//! mesh-solver input.
 
 use hyperlattice::Vector3;
 use hyperreal::{Real, RealSign};

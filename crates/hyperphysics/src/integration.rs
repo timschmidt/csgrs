@@ -2,21 +2,12 @@
 //!
 //! This module does not implement a production dynamics solver. It defines the
 //! report surface needed before runtime adapters are trusted: exact force
-//! accumulation, explicit step proposals, and energy/momentum diagnostics. The
-//! policy split follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): an external or lossy
-//! integrator can propose a state, but exact quantities must replay through
-//! exact data or remain explicitly unknown.
+//! accumulation, explicit step proposals, and energy/momentum diagnostics. An
+//! external or lossy integrator can propose a state, but exact quantities must
+//! replay through exact data or remain explicitly unknown.
 //!
-//! Symplectic and variational policies are represented by name because the
-//! next exact kernels should follow the geometric-integration framing of
-//! Marsden and West, "Discrete mechanics and variational integrators," *Acta
-//! Numerica* 10, 2001. Complementarity policies are likewise named before a
-//! full contact solver is ported; Stewart and Trinkle, "An Implicit
-//! Time-Stepping Scheme for Rigid Body Dynamics with Inelastic Collisions and
-//! Coulomb Friction," *International Journal for Numerical Methods in
-//! Engineering* 39(15), 1996, is the intended contact/impulse reference.
+//! Symplectic, variational, and complementarity policies are represented by
+//! name before their corresponding exact kernels and contact solvers exist.
 
 use hyperlattice::Vector3;
 use hyperreal::{Real, RealSign};

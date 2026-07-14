@@ -4,22 +4,19 @@
 //! stereolithography process planning. It keeps exposure, critical exposure,
 //! penetration depth, layer thickness, and chemistry provenance as exact
 //! [`Real`] values. Decisions are certified from exact signs; no primitive
-//! float threshold is used to decide whether a layer clears. This follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): process adapters may
-//! be approximate, but acceptance decisions should replay through exact data or
+//! float threshold is used to decide whether a layer clears. Process adapters
+//! may be approximate, but acceptance decisions replay through exact data or
 //! return explicit uncertainty.
 //!
 //! The working-curve formula `C_d = D_p ln(E / E_c)` is the standard SLA cure
-//! depth model described by Jacobs, "Rapid Prototyping & Manufacturing:
-//! Fundamentals of Stereolithography," 1992. This module computes that
-//! expression symbolically through `hyperreal::Real::ln` and records the
-//! exposure ratio and cure-depth expression in the report.
+//! depth model. This module computes that expression symbolically through
+//! `hyperreal::Real::ln` and records the exposure ratio and cure-depth
+//! expression in the report.
 //!
 //! Reaction-diffusion carriers use exact concentration, conversion, and
 //! transport coefficients while leaving full state evolution to a certified
 //! solver surface. Diffusive Courant diagnostics use the Fickian form
-//! `D dt / h^2`; see Fick, "Ueber Diffusion," *Annalen der Physik* 94, 1855.
+//! `D dt / h^2`.
 
 use std::cmp::Ordering;
 
