@@ -20,13 +20,14 @@ macro_rules! override_or {
     };
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 /// Assembly process profile used to select default readiness thresholds.
 pub enum AssemblyProfile {
     /// Early prototype assembly with relaxed production assumptions.
     Prototype,
     /// Standard production SMT assembly.
+    #[default]
     ProductionSmt,
     /// SMT assembly with populated top and bottom sides.
     DoubleSidedSmt,
@@ -42,12 +43,6 @@ pub enum AssemblyProfile {
     PressFit,
     /// Assembly requiring conformal coating clearance.
     ConformalCoating,
-}
-
-impl Default for AssemblyProfile {
-    fn default() -> Self {
-        Self::ProductionSmt
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]

@@ -608,10 +608,10 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                 }
             }
 
-            if let Some(previous_tool) = current_tool.clone() {
-                if previous_tool == line_tool {
-                    continue;
-                }
+            if let Some(previous_tool) = current_tool.clone()
+                && previous_tool == line_tool
+            {
+                continue;
             }
 
             if !tool_diameter.contains_key(&line_tool) {

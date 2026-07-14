@@ -10,8 +10,10 @@ use serde::Deserialize;
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 /// Public enumeration for `PackageProfile`.
+#[derive(Default)]
 pub enum PackageProfile {
     /// Variant `FullProduction`.
+    #[default]
     FullProduction,
     /// Variant `FabricationOnly`.
     FabricationOnly,
@@ -19,12 +21,6 @@ pub enum PackageProfile {
     AssemblyOnly,
     /// Variant `ElectricalTest`.
     ElectricalTest,
-}
-
-impl Default for PackageProfile {
-    fn default() -> Self {
-        Self::FullProduction
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]

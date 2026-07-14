@@ -3135,10 +3135,10 @@ fn load_text_artifact_with_sheets(
             Err(_) => {}
         }
     }
-    if is_json_path(path) {
-        if let Ok(text) = load_json_table_text(&bytes) {
-            return Ok(text);
-        }
+    if is_json_path(path)
+        && let Ok(text) = load_json_table_text(&bytes)
+    {
+        return Ok(text);
     }
     Ok(match String::from_utf8(bytes) {
         Ok(text) => text,
@@ -4816,10 +4816,10 @@ fn odb_tree_summary(entries: &[String]) -> OdbTreeSummary {
         if normalized == "matrix/matrix" || normalized.ends_with("/matrix/matrix") {
             summary.matrix_present = true;
         }
-        if let Some(index) = parts.iter().position(|part| *part == "steps") {
-            if let Some(step) = parts.get(index + 1).filter(|step| !step.is_empty()) {
-                steps.insert((*step).to_string());
-            }
+        if let Some(index) = parts.iter().position(|part| *part == "steps")
+            && let Some(step) = parts.get(index + 1).filter(|step| !step.is_empty())
+        {
+            steps.insert((*step).to_string());
         }
         if normalized.contains("/layers/") || normalized.starts_with("layers/") {
             summary.layer_file_count += 1;

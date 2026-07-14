@@ -575,13 +575,12 @@ pub fn edge_copper_pullback_readiness_with_grid(
     let mut exact_difference_count = 0_usize;
 
     for feature in selected_copper_features(board, selected_layers) {
-        if let Some(net) = &feature.net {
-            if looks_high_speed_net(net)
+        if let Some(net) = &feature.net
+            && (looks_high_speed_net(net)
                 || looks_high_voltage_net(net)
-                || looks_edge_intent_net(net)
-            {
-                continue;
-            }
+                || looks_edge_intent_net(net))
+        {
+            continue;
         }
         if outline_rect.as_ref().is_some_and(|rect| {
             feature_bounds_inside_rect_margin_with_grid(feature, rect, broad_phase_clearance, grid)

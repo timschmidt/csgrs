@@ -778,7 +778,8 @@ fn testpoint_spacing_violations(
         .fold(0.0_f64, f64::max);
     let cell_size =
         (scalar_broad_phase_radius(minimum_spacing) + maximum_diameter).max(TESTPOINT_GRID_EPSILON);
-    let mut buckets: BTreeMap<(i64, i64), Vec<(usize, &Ipc356Point, f64)>> = BTreeMap::new();
+    type IndexedTestpoint<'a> = (usize, &'a Ipc356Point, f64);
+    let mut buckets: BTreeMap<(i64, i64), Vec<IndexedTestpoint<'_>>> = BTreeMap::new();
     for (index, point, diameter) in indexed_points {
         buckets
             .entry(testpoint_bucket(ipc_location(point), cell_size))
@@ -1022,7 +1023,7 @@ fn testpoint_side_parity_violation(
             continue;
         }
         if !exact_point_distance_scalar(&feature.location, &point.location)
-            .is_some_and(|distance| &distance <= &search_radius)
+            .is_some_and(|distance| distance <= search_radius)
         {
             continue;
         }

@@ -264,56 +264,50 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(finished_thickness), Some(minimum)) = (
         stackup.finished_thickness.as_ref(),
         capability.min_finished_thickness.as_ref(),
-    ) {
-        if finished_thickness < minimum {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && finished_thickness < minimum
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}",
                 capability.label
             )));
-        }
     }
     if let (Some(finished_thickness), Some(maximum)) = (
         stackup.finished_thickness.as_ref(),
         capability.max_finished_thickness.as_ref(),
-    ) {
-        if finished_thickness > maximum {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && finished_thickness > maximum
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}",
                 capability.label
             )));
-        }
     }
     if let (Some(finished_thickness), Some(preferred_minimum)) = (
         stackup.finished_thickness.as_ref(),
         capability.preferred_min_finished_thickness.as_ref(),
-    ) {
-        if finished_thickness < preferred_minimum
-            && capability
-                .min_finished_thickness
-                .as_ref()
-                .is_none_or(|minimum| finished_thickness >= minimum)
-        {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && finished_thickness < preferred_minimum
+        && capability
+            .min_finished_thickness
+            .as_ref()
+            .is_none_or(|minimum| finished_thickness >= minimum)
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
                 capability.label
             )));
-        }
     }
     if let (Some(finished_thickness), Some(preferred_maximum)) = (
         stackup.finished_thickness.as_ref(),
         capability.preferred_max_finished_thickness.as_ref(),
-    ) {
-        if finished_thickness > preferred_maximum
-            && capability
-                .max_finished_thickness
-                .as_ref()
-                .is_none_or(|maximum| finished_thickness <= maximum)
-        {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && finished_thickness > preferred_maximum
+        && capability
+            .max_finished_thickness
+            .as_ref()
+            .is_none_or(|maximum| finished_thickness <= maximum)
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
                 capability.label
             )));
-        }
     }
     if let Some(max_copper_layers) = capability.max_copper_layers {
         let configured_count = configured_copper_layers.len();
@@ -325,101 +319,91 @@ fn stackup_fabrication_capability_readiness(
         }
     }
     let configured_count = configured_copper_layers.len();
-    if let Some(preferred_max_copper_layers) = capability.preferred_max_copper_layers {
-        if configured_count > preferred_max_copper_layers
-            && capability
-                .max_copper_layers
-                .is_none_or(|maximum| configured_count <= maximum)
-        {
-            violations.push(stackup_metadata_violation(&format!(
+    if let Some(preferred_max_copper_layers) = capability.preferred_max_copper_layers
+        && configured_count > preferred_max_copper_layers
+        && capability
+            .max_copper_layers
+            .is_none_or(|maximum| configured_count <= maximum)
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "fabricator profile {} preferred service supports up to {preferred_max_copper_layers} copper layer(s), but stackup lists {configured_count}; review cost-escalation or advanced-service selection",
                 capability.label
             )));
-        }
     }
-    if let Some(cost_escalation_copper_layers) = capability.cost_escalation_copper_layers {
-        if configured_count > cost_escalation_copper_layers
-            && capability
-                .max_copper_layers
-                .is_none_or(|maximum| configured_count <= maximum)
-        {
-            violations.push(stackup_metadata_violation(&format!(
+    if let Some(cost_escalation_copper_layers) = capability.cost_escalation_copper_layers
+        && configured_count > cost_escalation_copper_layers
+        && capability
+            .max_copper_layers
+            .is_none_or(|maximum| configured_count <= maximum)
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "fabricator profile {} cost-escalation threshold is {cost_escalation_copper_layers} copper layer(s), but stackup lists {configured_count}; review quote class and fabrication lead time",
                 capability.label
             )));
-        }
     }
 
     for layer in configured_copper_layers {
         if let (Some(weight), Some(minimum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.min_copper_weight_oz.as_ref(),
-        ) {
-            if weight < minimum {
-                violations.push(stackup_metadata_violation(&format!(
+        ) && weight < minimum
+        {
+            violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}",
                     layer.name, capability.label
                 )));
-            }
         }
         if let (Some(weight), Some(maximum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.max_copper_weight_oz.as_ref(),
-        ) {
-            if weight > maximum {
-                violations.push(stackup_metadata_violation(&format!(
+        ) && weight > maximum
+        {
+            violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}",
                     layer.name, capability.label
                 )));
-            }
         }
         if let (Some(weight), Some(preferred_minimum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.preferred_min_copper_weight_oz.as_ref(),
-        ) {
-            if weight < preferred_minimum
-                && capability
-                    .min_copper_weight_oz
-                    .as_ref()
-                    .is_none_or(|minimum| weight >= minimum)
-            {
-                violations.push(stackup_metadata_violation(&format!(
+        ) && weight < preferred_minimum
+            && capability
+                .min_copper_weight_oz
+                .as_ref()
+                .is_none_or(|minimum| weight >= minimum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
                     layer.name, capability.label
                 )));
-            }
         }
         if let (Some(weight), Some(preferred_maximum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.preferred_max_copper_weight_oz.as_ref(),
-        ) {
-            if weight > preferred_maximum
-                && capability
-                    .max_copper_weight_oz
-                    .as_ref()
-                    .is_none_or(|maximum| weight <= maximum)
-            {
-                violations.push(stackup_metadata_violation(&format!(
+        ) && weight > preferred_maximum
+            && capability
+                .max_copper_weight_oz
+                .as_ref()
+                .is_none_or(|maximum| weight <= maximum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
                     layer.name, capability.label
                 )));
-            }
         }
         if let (Some(weight), Some(cost_threshold)) = (
             layer.copper_weight_oz.as_ref(),
             capability.cost_escalation_copper_weight_oz.as_ref(),
-        ) {
-            if weight > cost_threshold
-                && capability
-                    .max_copper_weight_oz
-                    .as_ref()
-                    .is_none_or(|maximum| weight <= maximum)
-            {
-                violations.push(stackup_metadata_violation(&format!(
+        ) && weight > cost_threshold
+            && capability
+                .max_copper_weight_oz
+                .as_ref()
+                .is_none_or(|maximum| weight <= maximum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
                     layer.name, capability.label
                 )));
-            }
         }
     }
 
@@ -430,13 +414,13 @@ fn stackup_fabrication_capability_readiness(
                 StackupLayerKind::Dielectric | StackupLayerKind::Core | StackupLayerKind::Prepreg
             )
         }) {
-            if let Some(thickness) = layer.dielectric_thickness.as_ref() {
-                if thickness < minimum {
-                    violations.push(stackup_metadata_violation(&format!(
+            if let Some(thickness) = layer.dielectric_thickness.as_ref()
+                && thickness < minimum
+            {
+                violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}",
                         layer.name, capability.label
                     )));
-                }
             }
         }
     }
@@ -447,18 +431,17 @@ fn stackup_fabrication_capability_readiness(
                 StackupLayerKind::Dielectric | StackupLayerKind::Core | StackupLayerKind::Prepreg
             )
         }) {
-            if let Some(thickness) = layer.dielectric_thickness.as_ref() {
-                if thickness < preferred_minimum
-                    && capability
-                        .min_dielectric_thickness
-                        .as_ref()
-                        .is_none_or(|minimum| thickness >= minimum)
-                {
-                    violations.push(stackup_metadata_violation(&format!(
+            if let Some(thickness) = layer.dielectric_thickness.as_ref()
+                && thickness < preferred_minimum
+                && capability
+                    .min_dielectric_thickness
+                    .as_ref()
+                    .is_none_or(|minimum| thickness >= minimum)
+            {
+                violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
                         layer.name, capability.label
                     )));
-                }
             }
         }
     }
@@ -469,18 +452,17 @@ fn stackup_fabrication_capability_readiness(
                 StackupLayerKind::Dielectric | StackupLayerKind::Core | StackupLayerKind::Prepreg
             )
         }) {
-            if let Some(thickness) = layer.dielectric_thickness.as_ref() {
-                if thickness < cost_threshold
-                    && capability
-                        .min_dielectric_thickness
-                        .as_ref()
-                        .is_none_or(|minimum| thickness >= minimum)
-                {
-                    violations.push(stackup_metadata_violation(&format!(
+            if let Some(thickness) = layer.dielectric_thickness.as_ref()
+                && thickness < cost_threshold
+                && capability
+                    .min_dielectric_thickness
+                    .as_ref()
+                    .is_none_or(|minimum| thickness >= minimum)
+            {
+                violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
                         layer.name, capability.label
                     )));
-                }
             }
         }
     }
@@ -491,45 +473,41 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(value), Some(minimum)) = (
         stackup.material_dielectric_constant.as_ref(),
         capability.min_dielectric_constant.as_ref(),
-    ) {
-        if value < minimum {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && value < minimum
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
                 capability.label
             )));
-        }
     }
     if let (Some(value), Some(maximum)) = (
         stackup.material_dielectric_constant.as_ref(),
         capability.max_dielectric_constant.as_ref(),
-    ) {
-        if value > maximum {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && value > maximum
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
                 capability.label
             )));
-        }
     }
     if let (Some(value), Some(maximum)) = (
         stackup.material_loss_tangent.as_ref(),
         capability.max_loss_tangent.as_ref(),
-    ) {
-        if value > maximum {
-            violations.push(stackup_metadata_violation(&format!(
+    ) && value > maximum
+    {
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
                 capability.label
             )));
-        }
     }
     if let (Some(value), Some(minimum)) =
         (stackup.material_tg_c.as_ref(), capability.min_tg_c.as_ref())
+        && value < minimum
     {
-        if value < minimum {
-            violations.push(stackup_metadata_violation(&format!(
+        violations.push(stackup_metadata_violation(&format!(
                 "stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
                 capability.label
             )));
-        }
     }
 
     violations
@@ -632,6 +610,14 @@ fn builtin_fabrication_capability(profile: &str) -> Option<FabricationCapability
             scalar(stringify!($value))
         };
     }
+    macro_rules! optional_exact {
+        () => {
+            None
+        };
+        ($value:literal) => {
+            Some(exact!($value))
+        };
+    }
     macro_rules! capability {
         (
             $label:literal,
@@ -658,13 +644,10 @@ fn builtin_fabrication_capability(profile: &str) -> Option<FabricationCapability
                 min_dielectric_thickness: Some(exact!($min_dielectric)),
                 preferred_min_dielectric_thickness: Some(exact!($preferred_min_dielectric)),
                 cost_escalation_min_dielectric_thickness: Some(exact!($cost_dielectric)),
-                $(
-                    min_dielectric_constant: Some(exact!($min_dk)),
-                    max_dielectric_constant: Some(exact!($max_dk)),
-                    max_loss_tangent: Some(exact!($max_df)),
-                    min_tg_c: Some(exact!($min_tg)),
-                )?
-                ..FabricationCapability::default()
+                min_dielectric_constant: optional_exact!($($min_dk)?),
+                max_dielectric_constant: optional_exact!($($max_dk)?),
+                max_loss_tangent: optional_exact!($($max_df)?),
+                min_tg_c: optional_exact!($($min_tg)?),
             }
         };
     }

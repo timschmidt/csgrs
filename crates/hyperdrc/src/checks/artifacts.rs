@@ -1789,36 +1789,37 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                 mpn_packages.entry(part).or_default().insert(package);
             }
         }
-        if !not_populated && let Some(part_column) = part_col {
-            if let Some(part) = released_bom_key(cell(row, part_column)) {
-                if let Some(column) = manufacturer_col {
-                    if let Some(manufacturer) = released_bom_key(cell(row, column)) {
-                        mpn_manufacturers
-                            .entry(part.clone())
-                            .or_default()
-                            .insert(manufacturer);
-                    }
-                }
-                if let Some(column) = supplier_col {
-                    if let Some(supplier) = released_bom_key(cell(row, column)) {
-                        mpn_suppliers
-                            .entry(part.clone())
-                            .or_default()
-                            .insert(supplier.clone());
-                        supplier_parts
-                            .entry(supplier)
-                            .or_default()
-                            .insert(part.clone());
-                    }
-                }
-                if let Some(column) = lifecycle_col {
-                    if let Some(lifecycle) = released_bom_key(cell(row, column)) {
-                        mpn_lifecycle
-                            .entry(part.clone())
-                            .or_default()
-                            .insert(lifecycle);
-                    }
-                }
+        if !not_populated
+            && let Some(part_column) = part_col
+            && let Some(part) = released_bom_key(cell(row, part_column))
+        {
+            if let Some(column) = manufacturer_col
+                && let Some(manufacturer) = released_bom_key(cell(row, column))
+            {
+                mpn_manufacturers
+                    .entry(part.clone())
+                    .or_default()
+                    .insert(manufacturer);
+            }
+            if let Some(column) = supplier_col
+                && let Some(supplier) = released_bom_key(cell(row, column))
+            {
+                mpn_suppliers
+                    .entry(part.clone())
+                    .or_default()
+                    .insert(supplier.clone());
+                supplier_parts
+                    .entry(supplier)
+                    .or_default()
+                    .insert(part.clone());
+            }
+            if let Some(column) = lifecycle_col
+                && let Some(lifecycle) = released_bom_key(cell(row, column))
+            {
+                mpn_lifecycle
+                    .entry(part.clone())
+                    .or_default()
+                    .insert(lifecycle);
             }
         }
         if !not_populated {
@@ -2434,23 +2435,23 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         }
 
         if let Some(reference) = &row_reference {
-            if let Some(column) = value_col {
-                if let Some(value) = released_bom_key(cell(row, column)) {
-                    analysis
-                        .values
-                        .entry(reference.clone())
-                        .or_default()
-                        .insert(value);
-                }
+            if let Some(column) = value_col
+                && let Some(value) = released_bom_key(cell(row, column))
+            {
+                analysis
+                    .values
+                    .entry(reference.clone())
+                    .or_default()
+                    .insert(value);
             }
-            if let Some(column) = package_col {
-                if let Some(package) = released_bom_key(cell(row, column)) {
-                    analysis
-                        .packages
-                        .entry(reference.clone())
-                        .or_default()
-                        .insert(package);
-                }
+            if let Some(column) = package_col
+                && let Some(package) = released_bom_key(cell(row, column))
+            {
+                analysis
+                    .packages
+                    .entry(reference.clone())
+                    .or_default()
+                    .insert(package);
             }
         }
     }

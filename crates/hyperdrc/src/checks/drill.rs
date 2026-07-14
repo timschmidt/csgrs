@@ -542,6 +542,7 @@ pub fn board_outline_drill_clearance(
 /// The grid facts are advisory scheduling metadata for exact rectangle
 /// predicates. They do not certify the clearance outcome by themselves: CSG
 /// difference still handles boundary candidates and non-rectangular outlines.
+#[allow(clippy::too_many_arguments)] // Preserve the public check API's named input channels.
 pub fn board_outline_drill_clearance_with_grid(
     drill_source: &str,
     outline_name: &str,

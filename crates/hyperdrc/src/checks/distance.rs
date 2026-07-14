@@ -288,7 +288,7 @@ fn point_segment_distance_from_scalars(
     let dy = &end[1] - &start[1];
     let length_squared = &dx * &dx + &dy * &dy;
     if length_squared == Scalar::zero() {
-        return scalar_point_distance(&point, &start);
+        return scalar_point_distance(point, start);
     }
 
     let point_dx = &point[0] - &start[0];
@@ -302,7 +302,7 @@ fn point_segment_distance_from_scalars(
         (numerator / &length_squared).ok()?
     };
     let projection = [&start[0] + &t * &dx, &start[1] + &t * &dy];
-    scalar_point_distance(&point, &projection)
+    scalar_point_distance(point, &projection)
 }
 
 fn lift_scalar_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<[Scalar; 2]> {

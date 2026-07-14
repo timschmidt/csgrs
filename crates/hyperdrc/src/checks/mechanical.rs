@@ -386,9 +386,7 @@ pub fn mounting_hole_distribution_readiness(
             None,
             Vec::new(),
             vec![holes[0].location_f64_compatibility_required()],
-            Some(format!(
-                "only one likely mounting hole was parsed; review enclosure support, board retention, or intentional single-fastener design"
-            )),
+            Some("only one likely mounting hole was parsed; review enclosure support, board retention, or intentional single-fastener design".to_string()),
         )];
     }
 

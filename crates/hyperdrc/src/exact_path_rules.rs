@@ -108,7 +108,7 @@ pub fn classify_via_drill_policy(
 }
 
 fn real_sign(value: &Real) -> Option<RealSign> {
-    match compare_reals_with_policy(value, &Real::zero(), PredicatePolicy::default()).value()? {
+    match compare_reals_with_policy(value, &Real::zero(), PredicatePolicy).value()? {
         Ordering::Less => Some(RealSign::Negative),
         Ordering::Equal => Some(RealSign::Zero),
         Ordering::Greater => Some(RealSign::Positive),

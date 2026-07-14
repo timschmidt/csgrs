@@ -1088,7 +1088,7 @@ fn main() {
         source: "bench".to_string(),
         copper: (0..1_000)
             .map(|index| bench_fiducial([100.0 + index as f64 * 4.0, 100.0], 0.8))
-            .chain(bench_dense_pad_cluster().into_iter())
+            .chain(bench_dense_pad_cluster())
             .chain([
                 bench_fiducial([-1.0, -1.0], 0.8),
                 bench_fiducial([2.5, -1.0], 0.8),
@@ -1112,7 +1112,7 @@ fn main() {
         source: "bench".to_string(),
         copper: (0..1_000)
             .map(|index| bench_via("ESC", [100.0 + index as f64 * 4.0, 100.0], 0.20))
-            .chain(bench_dense_pad_cluster().into_iter())
+            .chain(bench_dense_pad_cluster())
             .collect(),
         drills: Vec::new(),
         board_outline: None,

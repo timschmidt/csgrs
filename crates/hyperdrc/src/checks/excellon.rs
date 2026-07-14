@@ -3,6 +3,9 @@ use crate::excellon::{
 };
 use crate::report::{Severity, Violation};
 
+type DrillGeometryEntry = (i64, i64, i64, bool);
+type DrillGeometrySignature = (u8, Vec<DrillGeometryEntry>);
+
 /// Run the `excellon_readiness` design-readiness check or report helper.
 pub fn excellon_readiness(report: &ExcellonReport) -> Vec<Violation> {
     let mut violations = Vec::new();
@@ -50,9 +53,8 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     let mut expected_unit: Option<(String, crate::excellon::ExcellonUnits)> = None;
     let mut has_missing_unit_declaration = false;
     let mut drill_signatures =
-        std::collections::BTreeMap::<(u8, Vec<(i64, i64, i64, bool)>), Vec<String>>::new();
-    let mut plating_split_holes =
-        std::collections::BTreeMap::<(i64, i64, i64), Vec<(DrillFilePlatingIntent, String)>>::new();
+        std::collections::BTreeMap::<DrillGeometrySignature, Vec<String>>::new();
+    let mut plating_split_holes = PlatingSplitHoles::new();
 
     for report in reports {
         violations.extend(excellon_readiness(report));
@@ -95,8 +97,9 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
         }
     }
 
-    if expected_unit.is_some() && has_missing_unit_declaration {
-        let (source, unit) = expected_unit.unwrap();
+    if let Some((source, unit)) = expected_unit
+        && has_missing_unit_declaration
+    {
         violations.push(Violation::new(
             "excellon-readiness",
             Severity::Warning,
@@ -147,7 +150,7 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     violations
 }
 
-fn drill_geometry_signature(report: &ExcellonReport) -> Option<(u8, Vec<(i64, i64, i64, bool)>)> {
+fn drill_geometry_signature(report: &ExcellonReport) -> Option<DrillGeometrySignature> {
     let unit_code = match report.declared_unit? {
         crate::excellon::ExcellonUnits::Metric => 1,
         crate::excellon::ExcellonUnits::Inch => 2,
@@ -182,10 +185,11 @@ enum DrillFilePlatingIntent {
     NonPlated,
 }
 
-fn collect_plating_split_holes(
-    report: &ExcellonReport,
-    holes: &mut std::collections::BTreeMap<(i64, i64, i64), Vec<(DrillFilePlatingIntent, String)>>,
-) {
+type PlatingHoleKey = (i64, i64, i64);
+type PlatingHoleSource = (DrillFilePlatingIntent, String);
+type PlatingSplitHoles = std::collections::BTreeMap<PlatingHoleKey, Vec<PlatingHoleSource>>;
+
+fn collect_plating_split_holes(report: &ExcellonReport, holes: &mut PlatingSplitHoles) {
     let Some(intent) = drill_file_plating_intent(&report.source) else {
         return;
     };

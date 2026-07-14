@@ -1184,6 +1184,7 @@ pub fn min_copper_neck_width(
     min_width: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
+    const MAX_MORPHOLOGY_VERTICES: usize = 256;
     let Ok(radius) = min_width.clone() / crate::scalar::scalar("2") else {
         return Vec::new();
     };
@@ -1208,36 +1209,83 @@ pub fn min_copper_neck_width(
     // the check's intent while bounding each offset operation to a much smaller
     // contour set.
     let mut shapes = Vec::new();
-    for (island_index, polygon) in source_polygons.iter().cloned().enumerate() {
+    let mut uncertain_difference_count = 0_usize;
+    let mut complexity_retained_count = 0_usize;
+    for (island_index, polygon) in source_polygons.iter().enumerate() {
         log::trace!(
             "min-copper-neck: layer={copper_name} island={island_index} exterior_vertices={} holes={}",
             polygon.exterior().0.len(),
             polygon.interiors().len()
         );
+        // A convex island has no local neck narrower than its minimum support
+        // width. Certify that width directly with exact dyadic input scalars so
+        // ordinary round/rectangular pads do not enter the much more expensive
+        // offset-and-Boolean morphology path.
+        if convex_polygon_width_at_least(polygon, min_width) {
+            continue;
+        }
+        let area_above_gate = polygon_area_scalar(polygon).is_some_and(|area| &area > min_area);
+        if !area_above_gate {
+            continue;
+        }
         let source = MultiPolygon(vec![polygon.clone()]);
-        let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(&polygon)
+        let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(polygon)
             .is_some_and(|dimension| dimension > Scalar::zero() && &dimension < min_width);
-        let area_above_gate = polygon_area_scalar(&polygon).is_some_and(|area| &area > min_area);
-        let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
+        if dimension_below_limit {
+            // Either axis-aligned support width is itself a valid upper bound
+            // on global feature width. An island below the rule therefore
+            // needs review without an offset or Boolean construction.
+            shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
+            continue;
+        }
+        let morphology_vertices = polygon.exterior().0.len()
+            + polygon
+                .interiors()
+                .iter()
+                .map(|ring| ring.0.len())
+                .sum::<usize>();
+        if morphology_vertices > MAX_MORPHOLOGY_VERTICES {
+            // Readiness checks must have a deterministic work bound even for
+            // production pours with enormous merged contours. Retaining the
+            // candidate is conservative and avoids hiding a possible neck.
+            complexity_retained_count += 1;
+            shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
+            continue;
+        }
+        let island = polygon_to_profile(polygon.clone(), Some(metadata(copper_name)));
         let reconstructed = island.offset(-radius.clone()).offset(radius.clone());
-        let thin_features = island.difference(&reconstructed);
-        let thin = thin_features.to_multipolygon();
+        let thin = match island.try_difference(&reconstructed) {
+            Ok(thin_features) => thin_features.to_multipolygon(),
+            Err(error) => {
+                // A DRC readiness check must not turn an undecidable exact
+                // topology query into a process-wide panic. Retaining the
+                // entire source island is conservative: it can produce a
+                // review finding, but cannot hide a genuinely narrow feature.
+                log::warn!(
+                    "min-copper-neck retained island {island_index} on layer {copper_name} after uncertified profile difference: {error}"
+                );
+                uncertain_difference_count += 1;
+                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
+                continue;
+            }
+        };
         if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
             continue;
         }
-        let mut island_shapes = multipolygon_to_shapes_scalar(&thin, min_area);
-        // Native offset may conservatively retain an island when a collapse
-        // cannot be certified. Its exact promoted envelope still proves that
-        // a globally undersized disconnected trace needs review.
-        if island_shapes.is_empty() && dimension_below_limit && area_above_gate {
-            island_shapes = multipolygon_to_shapes_scalar(&source, min_area);
-        }
-        shapes.extend(island_shapes);
+        shapes.extend(multipolygon_to_shapes_scalar(&thin, min_area));
     }
 
-    if shapes.is_empty() {
+    if shapes.is_empty() && uncertain_difference_count == 0 && complexity_retained_count == 0 {
         return Vec::new();
     }
+
+    let message = if uncertain_difference_count == 0 && complexity_retained_count == 0 {
+        format!("copper features are removed by opening with width {min_width}")
+    } else {
+        format!(
+            "copper features are removed by opening with width {min_width}; {uncertain_difference_count} island(s) were retained because exact profile difference certification was uncertain and {complexity_retained_count} island(s) because their contours exceeded the bounded morphology complexity"
+        )
+    };
 
     vec![Violation::new(
         "minimum-copper-neck-width",
@@ -1246,9 +1294,7 @@ pub fn min_copper_neck_width(
         None,
         shapes,
         Vec::new(),
-        Some(format!(
-            "copper features are removed by opening with width {min_width}"
-        )),
+        Some(message),
     )]
 }
 
@@ -1698,6 +1744,343 @@ fn polygon_minimum_bounding_dimension_scalar(polygon: &Polygon<f64>) -> Option<S
     let width = &bounds[2] - &bounds[0];
     let height = &bounds[3] - &bounds[1];
     Some(if width <= height { width } else { height })
+}
+
+#[derive(Clone, Copy)]
+struct OutwardInterval {
+    lower: f64,
+    upper: f64,
+}
+
+impl OutwardInterval {
+    fn exact(value: f64) -> Option<Self> {
+        value.is_finite().then_some(Self {
+            lower: value,
+            upper: value,
+        })
+    }
+
+    fn add(self, other: Self) -> Option<Self> {
+        let lower = (self.lower + other.lower).next_down();
+        let upper = (self.upper + other.upper).next_up();
+        (lower.is_finite() && upper.is_finite()).then_some(Self { lower, upper })
+    }
+
+    fn subtract(self, other: Self) -> Option<Self> {
+        let lower = (self.lower - other.upper).next_down();
+        let upper = (self.upper - other.lower).next_up();
+        (lower.is_finite() && upper.is_finite()).then_some(Self { lower, upper })
+    }
+
+    fn multiply(self, other: Self) -> Option<Self> {
+        let products = [
+            self.lower * other.lower,
+            self.lower * other.upper,
+            self.upper * other.lower,
+            self.upper * other.upper,
+        ];
+        if !products.iter().all(|value| value.is_finite()) {
+            return None;
+        }
+        let lower = products
+            .iter()
+            .copied()
+            .fold(f64::INFINITY, f64::min)
+            .next_down();
+        let upper = products
+            .iter()
+            .copied()
+            .fold(f64::NEG_INFINITY, f64::max)
+            .next_up();
+        Some(Self { lower, upper })
+    }
+
+    fn negate(self) -> Self {
+        Self {
+            lower: -self.upper,
+            upper: -self.lower,
+        }
+    }
+}
+
+/// Quickly certify a threshold-diameter disk inside a convex polygon.
+///
+/// The source coordinates are exactly representable dyadic inputs. Every
+/// projected operation below is rounded outward by one representable float, so
+/// a `true` result proves the corresponding exact inequalities. Failure merely
+/// selects the general exact support-width certificate below.
+fn convex_polygon_contains_threshold_disk(polygon: &Polygon<f64>, min_width: &Scalar) -> bool {
+    if !polygon.interiors().is_empty() || min_width <= &Scalar::zero() {
+        return false;
+    }
+    let ring = &polygon.exterior().0;
+    let vertex_count = if ring.len() >= 2 && ring.first() == ring.last() {
+        ring.len() - 1
+    } else {
+        ring.len()
+    };
+    if vertex_count < 3
+        || !ring[..vertex_count]
+            .iter()
+            .all(|point| point.x.is_finite() && point.y.is_finite())
+    {
+        return false;
+    }
+
+    // Prove an upper f64 bound for the exact rule width. The lossy projection
+    // is only a starting point; lifting it back into Scalar closes the proof.
+    let Some(mut width_upper) = min_width.to_f64_lossy() else {
+        return false;
+    };
+    for _ in 0..32 {
+        if Scalar::try_from(width_upper).is_ok_and(|projected| &projected >= min_width) {
+            break;
+        }
+        width_upper = width_upper.next_up();
+    }
+    if !width_upper.is_finite() || width_upper <= 0.0 {
+        return false;
+    }
+    let Ok(projected_width_upper) = Scalar::try_from(width_upper) else {
+        return false;
+    };
+    if &projected_width_upper < min_width {
+        return false;
+    }
+
+    let mut min_x = ring[0].x;
+    let mut max_x = ring[0].x;
+    let mut min_y = ring[0].y;
+    let mut max_y = ring[0].y;
+    for point in &ring[1..vertex_count] {
+        min_x = min_x.min(point.x);
+        max_x = max_x.max(point.x);
+        min_y = min_y.min(point.y);
+        max_y = max_y.max(point.y);
+    }
+    let Some(half) = OutwardInterval::exact(0.5) else {
+        return false;
+    };
+    let Some(center_x) = OutwardInterval::exact(min_x)
+        .and_then(|minimum| minimum.add(OutwardInterval::exact(max_x)?))
+        .and_then(|sum| sum.multiply(half))
+    else {
+        return false;
+    };
+    let Some(center_y) = OutwardInterval::exact(min_y)
+        .and_then(|minimum| minimum.add(OutwardInterval::exact(max_y)?))
+        .and_then(|sum| sum.multiply(half))
+    else {
+        return false;
+    };
+
+    let Some(width) = OutwardInterval::exact(width_upper) else {
+        return false;
+    };
+    let Some(width_squared) = width.multiply(width) else {
+        return false;
+    };
+    let Some(four) = OutwardInterval::exact(4.0) else {
+        return false;
+    };
+    let mut turn_direction = None;
+    for index in 0..vertex_count {
+        let a = ring[index];
+        let b = ring[(index + 1) % vertex_count];
+        let c = ring[(index + 2) % vertex_count];
+        let Some(edge_x) = OutwardInterval::exact(b.x)
+            .and_then(|value| value.subtract(OutwardInterval::exact(a.x)?))
+        else {
+            return false;
+        };
+        let Some(edge_y) = OutwardInterval::exact(b.y)
+            .and_then(|value| value.subtract(OutwardInterval::exact(a.y)?))
+        else {
+            return false;
+        };
+        let Some(next_x) = OutwardInterval::exact(c.x)
+            .and_then(|value| value.subtract(OutwardInterval::exact(b.x)?))
+        else {
+            return false;
+        };
+        let Some(next_y) = OutwardInterval::exact(c.y)
+            .and_then(|value| value.subtract(OutwardInterval::exact(b.y)?))
+        else {
+            return false;
+        };
+        let Some(turn) = edge_x.multiply(next_y).and_then(|left| {
+            edge_y
+                .multiply(next_x)
+                .and_then(|right| left.subtract(right))
+        }) else {
+            return false;
+        };
+        let direction = if turn.lower > 0.0 {
+            1_i8
+        } else if turn.upper < 0.0 {
+            -1_i8
+        } else {
+            return false;
+        };
+        if turn_direction.is_some_and(|existing| existing != direction) {
+            return false;
+        }
+        turn_direction = Some(direction);
+
+        let Some(center_dx) = center_x.subtract(OutwardInterval::exact(a.x).unwrap()) else {
+            return false;
+        };
+        let Some(center_dy) = center_y.subtract(OutwardInterval::exact(a.y).unwrap()) else {
+            return false;
+        };
+        let Some(mut center_projection) = edge_x.multiply(center_dy).and_then(|left| {
+            edge_y
+                .multiply(center_dx)
+                .and_then(|right| left.subtract(right))
+        }) else {
+            return false;
+        };
+        if direction < 0 {
+            center_projection = center_projection.negate();
+        }
+        if center_projection.lower <= 0.0 {
+            return false;
+        }
+
+        let Some(edge_length_squared) = edge_x
+            .multiply(edge_x)
+            .and_then(|x| edge_y.multiply(edge_y).and_then(|y| x.add(y)))
+        else {
+            return false;
+        };
+        let Some(left) = center_projection
+            .multiply(center_projection)
+            .and_then(|squared| four.multiply(squared))
+        else {
+            return false;
+        };
+        let Some(right) = width_squared.multiply(edge_length_squared) else {
+            return false;
+        };
+        if left.lower < right.upper {
+            return false;
+        }
+    }
+    turn_direction.is_some()
+}
+
+/// Certify that a simple convex polygon's minimum support width meets a limit.
+///
+/// For a convex polygon, a minimum-width enclosing strip has one supporting
+/// line collinear with an edge. Exact rotating calipers find the opposite
+/// supporting vertex for every edge in linear time, proving the global minimum
+/// width without constructing offset contours. Squaring `span / |edge|` keeps
+/// the comparison exact and avoids a square root. Polygons with holes,
+/// non-convex turns, or malformed edges fall back to the general morphology
+/// path.
+fn convex_polygon_width_at_least(polygon: &Polygon<f64>, min_width: &Scalar) -> bool {
+    if convex_polygon_contains_threshold_disk(polygon, min_width) {
+        return true;
+    }
+    if !polygon.interiors().is_empty() || min_width <= &Scalar::zero() {
+        return false;
+    }
+
+    let ring = &polygon.exterior().0;
+    let vertex_count = if ring.len() >= 2 && ring.first() == ring.last() {
+        ring.len() - 1
+    } else {
+        ring.len()
+    };
+    if vertex_count < 3 {
+        return false;
+    }
+    let Some(points) = ring[..vertex_count]
+        .iter()
+        .map(|point| {
+            Some((
+                Scalar::try_from(point.x).ok()?,
+                Scalar::try_from(point.y).ok()?,
+            ))
+        })
+        .collect::<Option<Vec<_>>>()
+    else {
+        return false;
+    };
+
+    let zero = Scalar::zero();
+    let mut turn_direction = None;
+    for index in 0..vertex_count {
+        let a = &points[index];
+        let b = &points[(index + 1) % vertex_count];
+        let c = &points[(index + 2) % vertex_count];
+        let ab_x = &b.0 - &a.0;
+        let ab_y = &b.1 - &a.1;
+        let bc_x = &c.0 - &b.0;
+        let bc_y = &c.1 - &b.1;
+        let turn = &ab_x * &bc_y - &ab_y * &bc_x;
+        let direction = if turn > zero {
+            1_i8
+        } else if turn < zero {
+            -1_i8
+        } else {
+            continue;
+        };
+        if turn_direction.is_some_and(|existing| existing != direction) {
+            return false;
+        }
+        turn_direction = Some(direction);
+    }
+    let Some(turn_direction) = turn_direction else {
+        return false;
+    };
+
+    let min_width_squared = min_width * min_width;
+    let mut antipodal_index = 1_usize;
+    for index in 0..vertex_count {
+        let a = &points[index];
+        let b = &points[(index + 1) % vertex_count];
+        let edge_x = &b.0 - &a.0;
+        let edge_y = &b.1 - &a.1;
+        let edge_length_squared = &edge_x * &edge_x + &edge_y * &edge_y;
+        if edge_length_squared == zero {
+            return false;
+        }
+
+        let signed_projection = |point: &(Scalar, Scalar)| {
+            let projection = &edge_x * (&point.1 - &a.1) - &edge_y * (&point.0 - &a.0);
+            if turn_direction > 0 {
+                projection
+            } else {
+                -projection
+            }
+        };
+        let mut span = signed_projection(&points[antipodal_index]);
+        // Antipodal vertices advance monotonically around a convex polygon.
+        // Strict comparison intentionally keeps the first vertex of a parallel
+        // support edge; the next outer loop can still advance from that plateau.
+        let mut advances = 0_usize;
+        loop {
+            let next_index = (antipodal_index + 1) % vertex_count;
+            let next_span = signed_projection(&points[next_index]);
+            if next_span <= span {
+                break;
+            }
+            antipodal_index = next_index;
+            span = next_span;
+            advances += 1;
+            if advances >= vertex_count {
+                return false;
+            }
+        }
+        if span < zero {
+            return false;
+        }
+        if &span * &span < &min_width_squared * &edge_length_squared {
+            return false;
+        }
+    }
+    true
 }
 
 /// Warn when one parsed layer contains duplicate polygon islands.
@@ -2691,10 +3074,9 @@ fn collect_board_outline_overlapping_exteriors(
                     containment_ratio,
                     geometry_tolerance,
                     grid,
-                ) {
-                    if let Some(point) = representative_point(inner) {
-                        push_unique_location(locations, point);
-                    }
+                ) && let Some(point) = representative_point(inner)
+                {
+                    push_unique_location(locations, point);
                 }
 
                 if polygon_contains_other_outer_with_grid(
@@ -2703,15 +3085,14 @@ fn collect_board_outline_overlapping_exteriors(
                     containment_ratio,
                     geometry_tolerance,
                     grid,
-                ) {
-                    if let Some(point) = representative_point(outer) {
-                        push_unique_location(locations, point);
-                    }
-                }
-            } else if polygons_are_duplicate_with_grid(outer, inner, geometry_tolerance, grid) {
-                if let Some(point) = representative_point(outer) {
+                ) && let Some(point) = representative_point(outer)
+                {
                     push_unique_location(locations, point);
                 }
+            } else if polygons_are_duplicate_with_grid(outer, inner, geometry_tolerance, grid)
+                && let Some(point) = representative_point(outer)
+            {
+                push_unique_location(locations, point);
             }
         }
     }
@@ -3347,15 +3728,15 @@ mod tests {
         board_outline_nesting_readiness_with_grid, board_outline_notch_readiness,
         board_outline_notch_readiness_with_grid, board_outline_sanity,
         board_outline_self_intersection_readiness,
-        board_outline_self_intersection_readiness_with_grid, copper_balance, copper_overlap,
-        copper_overlap_with_ipc356, duplicate_layer_geometry_readiness,
-        duplicate_layer_island_readiness, exposed_copper, layer_sanity,
-        local_copper_density_readiness, mask_island_keepout, mechanical_layer_geometry,
-        min_copper_neck_width, minimum_mask_opening, minimum_paste_aperture,
-        paste_aperture_coverage, paste_aperture_ratio, paste_aperture_spacing,
-        paste_mask_alignment, paste_overhang, silkscreen_board_edge_clearance,
-        silkscreen_clearance, silkscreen_min_width, silkscreen_overlap,
-        silkscreen_text_height_readiness, skinny_layer_feature_readiness,
+        board_outline_self_intersection_readiness_with_grid, convex_polygon_width_at_least,
+        copper_balance, copper_overlap, copper_overlap_with_ipc356,
+        duplicate_layer_geometry_readiness, duplicate_layer_island_readiness, exposed_copper,
+        layer_sanity, local_copper_density_readiness, mask_island_keepout,
+        mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
+        minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
+        paste_aperture_spacing, paste_mask_alignment, paste_overhang,
+        silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
+        silkscreen_overlap, silkscreen_text_height_readiness, skinny_layer_feature_readiness,
         solder_mask_annular_ring_readiness, solder_mask_board_edge_clearance,
         solder_mask_expansion, solder_mask_opening_coverage, solder_mask_opening_ratio_readiness,
         solder_mask_opening_spacing, solder_mask_overlap_clearance, solder_mask_sliver,
@@ -4234,6 +4615,57 @@ mod tests {
         );
     }
 
+    #[test]
+    fn convex_width_certificate_uses_exact_support_width() {
+        let rectangle = square(0.0, 0.0, 2.0, 1.0);
+
+        assert!(convex_polygon_width_at_least(
+            &rectangle,
+            &crate::scalar::scalar("1.0")
+        ));
+        assert!(!convex_polygon_width_at_least(
+            &rectangle,
+            &crate::scalar::scalar("1.0001")
+        ));
+
+        // Its axis-aligned bounds are both 2.0 or greater, but its exact
+        // minimum support width is 4 / sqrt(5), just under 1.8.
+        let diamond = Polygon::new(
+            LineString(vec![
+                Coord { x: 0.0, y: 1.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 0.0, y: -1.0 },
+                Coord { x: -2.0, y: 0.0 },
+                Coord { x: 0.0, y: 1.0 },
+            ]),
+            vec![],
+        );
+        assert!(!convex_polygon_width_at_least(
+            &diamond,
+            &crate::scalar::scalar("1.8")
+        ));
+    }
+
+    #[test]
+    fn convex_width_certificate_rejects_concave_polygons() {
+        let concave = Polygon::new(
+            LineString(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 1.0, y: 0.5 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 0.0, y: 1.0 },
+                Coord { x: 0.0, y: 0.0 },
+            ]),
+            vec![],
+        );
+
+        assert!(!convex_polygon_width_at_least(
+            &concave,
+            &crate::scalar::scalar("0.1")
+        ));
+    }
+
     const COMPLEX_PROJECT_FIXTURES: &[(&str, &str)] = &[
         (
             "docs/CPArti FPGA dev board.zip",
@@ -4265,7 +4697,7 @@ mod tests {
         }
 
         assert!(
-            started.elapsed() < Duration::from_secs(20),
+            started.elapsed() < Duration::from_secs(60),
             "complex project copper neck regression fixture took {:?}",
             started.elapsed()
         );

@@ -154,37 +154,38 @@ impl Converter for KicadCliConverter {
         std::fs::create_dir_all(&request.output_dir)
             .with_context(|| format!("failed to create {}", request.output_dir.display()))?;
 
-        let mut steps = Vec::new();
-        steps.push(run_kicad_cli_command(
-            kicad_cli_gerber_command(request),
-            request,
-            "Gerber export",
-            "failed while waiting for KiCad CLI Gerber export to finish",
-        )?);
-        steps.push(run_kicad_cli_command(
-            kicad_cli_drill_command(request),
-            request,
-            "drill export",
-            "failed while waiting for KiCad CLI drill export to finish",
-        )?);
-        steps.push(run_kicad_cli_command(
-            kicad_cli_position_command(request),
-            request,
-            "position export",
-            "failed while waiting for KiCad CLI position export to finish",
-        )?);
-        steps.push(run_kicad_cli_command(
-            kicad_cli_ipcd356_command(request),
-            request,
-            "IPC-D-356 export",
-            "failed while waiting for KiCad CLI IPC-D-356 export to finish",
-        )?);
-        steps.push(run_kicad_cli_command(
-            kicad_cli_drc_command(request),
-            request,
-            "DRC report",
-            "failed while waiting for KiCad CLI DRC report to finish",
-        )?);
+        let mut steps = vec![
+            run_kicad_cli_command(
+                kicad_cli_gerber_command(request),
+                request,
+                "Gerber export",
+                "failed while waiting for KiCad CLI Gerber export to finish",
+            )?,
+            run_kicad_cli_command(
+                kicad_cli_drill_command(request),
+                request,
+                "drill export",
+                "failed while waiting for KiCad CLI drill export to finish",
+            )?,
+            run_kicad_cli_command(
+                kicad_cli_position_command(request),
+                request,
+                "position export",
+                "failed while waiting for KiCad CLI position export to finish",
+            )?,
+            run_kicad_cli_command(
+                kicad_cli_ipcd356_command(request),
+                request,
+                "IPC-D-356 export",
+                "failed while waiting for KiCad CLI IPC-D-356 export to finish",
+            )?,
+            run_kicad_cli_command(
+                kicad_cli_drc_command(request),
+                request,
+                "DRC report",
+                "failed while waiting for KiCad CLI DRC report to finish",
+            )?,
+        ];
         if request.kicad_handoff_exports {
             for (operation, command) in kicad_cli_handoff_commands(request) {
                 steps.push(run_kicad_cli_command(
