@@ -147,10 +147,18 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
     let mut candidate_pair_count = 0_usize;
     let mut skipped_aabb_pair_count = 0_usize;
     let mut tested_pair_count = 0_usize;
+    let x_overlap_schedule = self_contact_x_overlap_schedule(boxes, policy);
 
     for first_index in 0..segments.len() {
         for second_index in (first_index + 1)..segments.len() {
             candidate_pair_count += 1;
+            if x_overlap_schedule
+                .as_ref()
+                .is_some_and(|schedule| !schedule.overlaps(first_index, second_index))
+            {
+                skipped_aabb_pair_count += 1;
+                continue;
+            }
             // The broad phase is allowed to skip only when non-overlap is
             // decided. If a box or coordinate ordering is uncertain, exact
             // segment topology below remains authoritative.
@@ -250,6 +258,83 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs_and_report(
             blocker: None,
         },
     })
+}
+
+fn self_contact_x_overlap_schedule(
+    boxes: &[Option<Aabb2>],
+    _policy: &CurvePolicy,
+) -> Option<SelfContactXSchedule> {
+    const ENCLOSURE_PRECISION: i32 = -32;
+
+    let count = boxes.len();
+    let decided_boxes = boxes
+        .iter()
+        .map(Option::as_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let x_intervals = decided_boxes
+        .iter()
+        .map(|bbox| {
+            Some([
+                bbox.min_x()
+                    .certified_dyadic_interval(ENCLOSURE_PRECISION)?,
+                bbox.max_x()
+                    .certified_dyadic_interval(ENCLOSURE_PRECISION)?,
+            ])
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let mut order = (0..count).collect::<Vec<_>>();
+
+    // Sort conservative lower endpoints. This need not recover the exact total
+    // order of overlapping coordinates: a pair is pruned only when the later
+    // lower bound is strictly above the earlier segment's certified upper
+    // bound.
+    order.sort_by(|left, right| {
+        x_intervals[*left][0][0]
+            .partial_cmp(&x_intervals[*right][0][0])
+            .expect("rational interval endpoints are totally ordered")
+            .then_with(|| left.cmp(right))
+    });
+
+    let mut ranks = vec![0; count];
+    for (rank, &segment_index) in order.iter().enumerate() {
+        ranks[segment_index] = rank;
+    }
+    let mut overlap_ends = Vec::with_capacity(count);
+    for (position, &first_index) in order.iter().enumerate() {
+        let first_maximum_upper = &x_intervals[first_index][1][1];
+        let mut overlap_end = position;
+        for (second_position, &second_index) in order[position + 1..].iter().enumerate() {
+            let second_minimum_lower = &x_intervals[second_index][0][0];
+            if second_minimum_lower > first_maximum_upper {
+                break;
+            }
+            overlap_end = position + second_position + 1;
+        }
+        overlap_ends.push(overlap_end);
+    }
+    Some(SelfContactXSchedule {
+        ranks,
+        overlap_ends,
+    })
+}
+
+struct SelfContactXSchedule {
+    ranks: Vec<usize>,
+    overlap_ends: Vec<usize>,
+}
+
+impl SelfContactXSchedule {
+    #[inline]
+    fn overlaps(&self, first_index: usize, second_index: usize) -> bool {
+        let first_rank = self.ranks[first_index];
+        let second_rank = self.ranks[second_index];
+        let (earlier, later) = if first_rank <= second_rank {
+            (first_rank, second_rank)
+        } else {
+            (second_rank, first_rank)
+        };
+        later <= self.overlap_ends[earlier]
+    }
 }
 
 impl SelfContactReport2 {
