@@ -15,28 +15,6 @@ crates such as [`csgrs`](https://github.com/timschmidt/csgrs).
 The WASM demo is configured for <https://timschmidt.github.io/hypermesh/>. Its source
 and Trunk configuration live in [`examples/hypermesh_ui`](./examples/hypermesh_ui).
 
-## Hyper Ecosystem
-
-`hypermesh` is the exact triangle-mesh Boolean layer.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): strict exact predicates and
-  bounded refinement policy.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): exact points, vectors,
-  planes, and homogeneous projective carriers.
-- [hypertri](https://github.com/timschmidt/hypertri): planar and D-dimensional
-  triangulation used by geometry consumers.
-- [hypercurve](https://github.com/timschmidt/hypercurve): exact-aware planar curves,
-  contours, and regions.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): retained boundary
-  representation and mesh handoff surfaces.
-- [hypersdf](https://github.com/timschmidt/hypersdf): implicit-field and mesh handoff
-  surfaces.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): voxel consumers and mesh
-  export adapters.
-- [csgrs](https://github.com/timschmidt/csgrs): higher-level CSG types and file-format
-  adapters over `hypermesh`.
-
 ## Typical Mesh Problems
 
 Mesh Booleans make topology depend on exact geometric branch decisions: sidedness,
@@ -214,6 +192,9 @@ Run the crate checks from this directory:
 cargo fmt --check
 cargo test --all-targets
 cargo clippy --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+cargo check --examples --benches
+cargo run --example basic
 ```
 
 Build the browser demo with Trunk and the WebAssembly target installed:
@@ -234,3 +215,19 @@ GitHub Actions as its source.
   Booleans via Efficient & Robust Local
   Arrangements](https://doi.org/10.1145/3528223.3530181). ACM Transactions on
   Graphics 41(4), 2022.
+- Qingnan Zhou, Eitan Grinspun, Denis Zorin, and Alec Jacobson. [Mesh
+  Arrangements for Solid Geometry](https://doi.org/10.1145/2897824.2925901).
+  ACM Transactions on Graphics 35(4), 2016.
+- Alec Jacobson, Ladislav Kavan, and Olga Sorkine-Hornung. [Robust
+  Inside-Outside Segmentation Using Generalized Winding
+  Numbers](https://doi.org/10.1145/2461912.2461916). ACM Transactions on
+  Graphics 32(4), 2013.
+
+## Hyper Ecosystem
+
+`hypermesh` builds on [hyperreal](https://github.com/timschmidt/hyperreal),
+[hyperlimit](https://github.com/timschmidt/hyperlimit), and
+[hyperlattice](https://github.com/timschmidt/hyperlattice). It supplies exact
+triangle-mesh Booleans to [hyperbrep](https://github.com/timschmidt/hyperbrep),
+[csgrs](https://github.com/timschmidt/csgrs), and the other [Hyper geometry
+crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).
