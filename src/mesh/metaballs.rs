@@ -552,8 +552,10 @@ mod tests {
 }
 
 fn surface_nets_scalar(value: &Real) -> Option<f32> {
-    let sign = hreal_sign(value)?;
     let boundary = hreal_to_f64(value)?;
+    // Conversion refines the expression and warms its certified approximation;
+    // the exact sign query can then reuse that work for the topology decision.
+    let sign = hreal_sign(value)?;
     let value = boundary as f32;
     let value = if value == 0.0 {
         match sign {

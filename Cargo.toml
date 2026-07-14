@@ -47,6 +47,32 @@ harness = false
 name = "mesh_pipeline"
 harness = false
 
+[[bench]]
+name = "kernel_comparison"
+harness = false
+
+[[bench]]
+name = "feature_pipeline"
+harness = false
+required-features = [
+  "mesh",
+  "sketch",
+  "stl-io",
+  "dxf-io",
+  "obj-io",
+  "ply-io",
+  "amf-io",
+  "gltf-io",
+  "svg-io",
+  "image-io",
+  "metaballs",
+  "sdf",
+  "offset",
+  "truetype-text",
+  "hershey-text",
+  "bevymesh",
+]
+
 [profile.release]
 opt-level = 3
 lto = true

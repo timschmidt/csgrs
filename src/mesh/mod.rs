@@ -117,6 +117,34 @@ fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
     ))
 }
 
+fn aabbs_decided_disjoint(left: &Aabb, right: &Aabb) -> bool {
+    [
+        (&left.maxs.x, &right.mins.x),
+        (&right.maxs.x, &left.mins.x),
+        (&left.maxs.y, &right.mins.y),
+        (&right.maxs.y, &left.mins.y),
+        (&left.maxs.z, &right.mins.z),
+        (&right.maxs.z, &left.mins.z),
+    ]
+    .into_iter()
+    .any(|(maximum, minimum)| {
+        matches!(
+            hyperlimit::compare_reals(maximum, minimum).value(),
+            Some(std::cmp::Ordering::Less)
+        )
+    })
+}
+
+fn concatenate_disjoint_meshes<M: Clone + Send + Sync + Debug>(
+    left: &Mesh<M>,
+    right: &Mesh<M>,
+) -> Mesh<M> {
+    let mut polygons = Vec::with_capacity(left.polygons.len() + right.polygons.len());
+    polygons.extend(left.polygons.iter().cloned());
+    polygons.extend(right.polygons.iter().cloned());
+    Mesh::from_polygons(polygons)
+}
+
 fn hyperphysics_vector3_from_point3(point: &Point3) -> Result<HyperVector3, ValidationError> {
     Ok(HyperVector3::new([
         point.x.clone(),
@@ -203,6 +231,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     fn rigid_transform_owned(mut self, matrix: &Matrix4) -> Self {
         let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
+        let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
         let matrix_facts = matrix.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
@@ -213,6 +242,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 .entry(polygon.plane_id)
                 .or_insert_with(fresh_plane_id);
             for vertex in &mut polygon.vertices {
+                let source_position_id = vertex.position_id;
                 let source_coordinate_ids = vertex.coordinate_ids;
                 for (row, ids) in transformed_coordinates.iter_mut().enumerate() {
                     let key = std::array::from_fn(|column| {
@@ -223,21 +253,39 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                         *ids.entry(key).or_insert_with(fresh_position_id);
                 }
                 if let Some((position, position_id)) =
-                    transformed_positions.get(&vertex.position_id)
+                    transformed_positions.get(&source_position_id)
                 {
                     vertex.position = position.clone();
                     vertex.position_id = *position_id;
                 } else {
-                    let source_id = vertex.position_id;
                     let position = matrix
                         .transform_point3(&vertex.position)
                         .expect("rigid transforms preserve affine points");
                     let position_id = fresh_position_id();
-                    transformed_positions.insert(source_id, (position.clone(), position_id));
+                    transformed_positions
+                        .insert(source_position_id, (position.clone(), position_id));
                     vertex.position = position;
                     vertex.position_id = position_id;
                 }
-                vertex.normal = matrix.transform_direction3(&vertex.normal);
+                let cached_normal = transformed_normals
+                    .get(&source_position_id)
+                    .and_then(|entries| {
+                        entries
+                            .iter()
+                            .find(|(source, _)| source == &vertex.normal)
+                            .map(|(_, transformed)| transformed.clone())
+                    });
+                if let Some(normal) = cached_normal {
+                    vertex.normal = normal;
+                } else {
+                    let source_normal = vertex.normal.clone();
+                    let transformed_normal = matrix.transform_direction3(&source_normal);
+                    transformed_normals
+                        .entry(source_position_id)
+                        .or_default()
+                        .push((source_normal, transformed_normal.clone()));
+                    vertex.normal = transformed_normal;
+                }
             }
             assert!(
                 polygon.plane.transform_affine_in_place(matrix),
@@ -820,70 +868,119 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh union, or the reason
     /// hypermesh could not import, validate, or materialize the result.
     pub fn try_union(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        let self_buffers = self.to_hypermesh_buffers();
-        let other_buffers = other.to_hypermesh_buffers();
-        if self.polygons.is_empty() || self_buffers.indices.is_empty() {
+        if self.polygons.is_empty() {
             return Ok(other.clone());
         }
-        if other.polygons.is_empty() || other_buffers.indices.is_empty() {
+        if other.polygons.is_empty() {
             return Ok(self.clone());
         }
-        if self_buffers == other_buffers {
+        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
+            return Ok(concatenate_disjoint_meshes(self, other));
+        }
+        let self_input = self.build_hypermesh_input(true);
+        let other_input = other.build_hypermesh_input(true);
+        if self_input.buffers.indices.is_empty() {
+            return Ok(other.clone());
+        }
+        if other_input.buffers.indices.is_empty() {
             return Ok(self.clone());
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Union)
+        if self_input.buffers == other_input.buffers {
+            return Ok(self.clone());
+        }
+        self.boolean_via_hypermesh(
+            other,
+            hypermesh::HypermeshBooleanOp::Union,
+            self_input,
+            other_input,
+        )
     }
 
     /// Return a new mesh representing the exact hypermesh difference, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_difference(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        let self_buffers = self.to_hypermesh_buffers();
-        let other_buffers = other.to_hypermesh_buffers();
-        if self.polygons.is_empty() || self_buffers.indices.is_empty() {
+        if self.polygons.is_empty() {
             return Ok(Mesh::empty());
         }
-        if other.polygons.is_empty() || other_buffers.indices.is_empty() {
+        if other.polygons.is_empty() {
             return Ok(self.clone());
         }
-        if self_buffers == other_buffers {
+        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
+            return Ok(self.clone());
+        }
+        let self_input = self.build_hypermesh_input(true);
+        let other_input = other.build_hypermesh_input(true);
+        if self_input.buffers.indices.is_empty() {
             return Ok(Mesh::empty());
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Difference)
+        if other_input.buffers.indices.is_empty() {
+            return Ok(self.clone());
+        }
+        if self_input.buffers == other_input.buffers {
+            return Ok(Mesh::empty());
+        }
+        self.boolean_via_hypermesh(
+            other,
+            hypermesh::HypermeshBooleanOp::Difference,
+            self_input,
+            other_input,
+        )
     }
 
     /// Return a new mesh representing the exact hypermesh intersection, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_intersection(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        let self_buffers = self.to_hypermesh_buffers();
-        let other_buffers = other.to_hypermesh_buffers();
-        if self.polygons.is_empty()
-            || other.polygons.is_empty()
-            || self_buffers.indices.is_empty()
-            || other_buffers.indices.is_empty()
-        {
+        if self.polygons.is_empty() || other.polygons.is_empty() {
             return Ok(Mesh::empty());
         }
-        if self_buffers == other_buffers {
+        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
+            return Ok(Mesh::empty());
+        }
+        let self_input = self.build_hypermesh_input(true);
+        let other_input = other.build_hypermesh_input(true);
+        if self_input.buffers.indices.is_empty() || other_input.buffers.indices.is_empty() {
+            return Ok(Mesh::empty());
+        }
+        if self_input.buffers == other_input.buffers {
             return Ok(self.clone());
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Intersection)
+        self.boolean_via_hypermesh(
+            other,
+            hypermesh::HypermeshBooleanOp::Intersection,
+            self_input,
+            other_input,
+        )
     }
 
     /// Return a new mesh representing the exact hypermesh symmetric
     /// difference, or the typed reason hypermesh could not produce it.
     pub fn try_xor(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        let self_buffers = self.to_hypermesh_buffers();
-        let other_buffers = other.to_hypermesh_buffers();
-        if self.polygons.is_empty() || self_buffers.indices.is_empty() {
+        if self.polygons.is_empty() {
             return Ok(other.clone());
         }
-        if other.polygons.is_empty() || other_buffers.indices.is_empty() {
+        if other.polygons.is_empty() {
             return Ok(self.clone());
         }
-        if self_buffers == other_buffers {
+        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
+            return Ok(concatenate_disjoint_meshes(self, other));
+        }
+        let self_input = self.build_hypermesh_input(true);
+        let other_input = other.build_hypermesh_input(true);
+        if self_input.buffers.indices.is_empty() {
+            return Ok(other.clone());
+        }
+        if other_input.buffers.indices.is_empty() {
+            return Ok(self.clone());
+        }
+        if self_input.buffers == other_input.buffers {
             return Ok(Mesh::empty());
         }
-        self.boolean_via_hypermesh(other, hypermesh::HypermeshBooleanOp::Xor)
+        self.boolean_via_hypermesh(
+            other,
+            hypermesh::HypermeshBooleanOp::Xor,
+            self_input,
+            other_input,
+        )
     }
 }
 
@@ -1045,6 +1142,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 
         let mut mesh = self.clone();
         let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
+        let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
         let matrix_facts = mat.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
@@ -1056,6 +1154,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 .or_insert_with(fresh_plane_id);
             let mut vertices = poly.vertices_mut();
             for vert in vertices.iter_mut() {
+                let source_position_id = vert.position_id;
                 let source_coordinate_ids = vert.coordinate_ids;
                 for (row, ids) in transformed_coordinates.iter_mut().enumerate() {
                     let key = std::array::from_fn(|column| {
@@ -1066,17 +1165,16 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                         *ids.entry(key).or_insert_with(fresh_position_id);
                 }
                 if let Some((position, position_id)) =
-                    transformed_positions.get(&vert.position_id)
+                    transformed_positions.get(&source_position_id)
                 {
                     vert.position = position.clone();
                     vert.position_id = *position_id;
                 } else {
-                    let source_id = vert.position_id;
                     match mat.transform_point3(&vert.position) {
                         Ok(position) => {
                             let position_id = fresh_position_id();
                             transformed_positions
-                                .insert(source_id, (position.clone(), position_id));
+                                .insert(source_position_id, (position.clone(), position_id));
                             vert.position = position;
                             vert.position_id = position_id;
                         },
@@ -1090,9 +1188,28 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 }
 
                 // Transform normal using inverse transpose rule
-                let transformed_normal = mat_inv_transpose.transform_direction3(&vert.normal);
-                if let Ok(normal) = transformed_normal.normalize_checked() {
+                let cached_normal =
+                    transformed_normals
+                        .get(&source_position_id)
+                        .and_then(|entries| {
+                            entries
+                                .iter()
+                                .find(|(source, _)| source == &vert.normal)
+                                .map(|(_, transformed)| transformed.clone())
+                        });
+                if let Some(normal) = cached_normal {
                     vert.normal = normal;
+                } else {
+                    let source_normal = vert.normal.clone();
+                    let transformed_normal =
+                        mat_inv_transpose.transform_direction3(&source_normal);
+                    if let Ok(normal) = transformed_normal.normalize_checked() {
+                        transformed_normals
+                            .entry(source_position_id)
+                            .or_default()
+                            .push((source_normal, normal.clone()));
+                        vert.normal = normal;
+                    }
                 }
             }
             drop(vertices);
@@ -1226,6 +1343,27 @@ mod tests {
 
     fn p3(x: f64, y: f64, z: f64) -> Point3 {
         Point3::new(r(x), r(y), r(z))
+    }
+
+    #[test]
+    fn decided_disjoint_mesh_booleans_use_exact_set_identities() {
+        let left = Mesh::cube(r(2.0), ());
+        let right = Mesh::cube(r(2.0), ()).translate(r(10.0), Real::zero(), Real::zero());
+
+        assert!(aabbs_decided_disjoint(
+            &left.bounding_box(),
+            &right.bounding_box()
+        ));
+        assert_eq!(left.try_union(&right).unwrap().polygons.len(), 12);
+        assert_eq!(left.try_difference(&right).unwrap().polygons.len(), 6);
+        assert!(left.try_intersection(&right).unwrap().polygons.is_empty());
+        assert_eq!(left.try_xor(&right).unwrap().polygons.len(), 12);
+
+        let touching = Mesh::cube(r(2.0), ()).translate(r(2.0), Real::zero(), Real::zero());
+        assert!(!aabbs_decided_disjoint(
+            &left.bounding_box(),
+            &touching.bounding_box()
+        ));
     }
 
     #[test]

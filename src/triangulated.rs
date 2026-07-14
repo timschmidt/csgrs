@@ -13,6 +13,24 @@ pub trait Triangulated3D {
     fn visit_triangles<F>(&self, f: F)
     where
         F: FnMut([Vertex; 3]);
+
+    /// Visit triangles together with their exact checked facet normal.
+    ///
+    /// Implementations with retained support planes can override this to
+    /// reuse one certified normal across every triangle of a polygon. The
+    /// default keeps triangle-soup implementations correct by deriving the
+    /// normal from each triangle's positions.
+    fn visit_triangle_facets<F>(&self, mut f: F)
+    where
+        F: FnMut([Vertex; 3], Option<Vector3>),
+    {
+        self.visit_triangles(|triangle| {
+            let first = &triangle[1].position - &triangle[0].position;
+            let second = &triangle[2].position - &triangle[0].position;
+            let normal = first.unit_cross_checked(&second).ok();
+            f(triangle, normal);
+        });
+    }
 }
 
 /// Indexed triangle view with position rows, normal rows, and face rows.

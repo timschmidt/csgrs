@@ -534,6 +534,14 @@ if let Some(data_mut) = poly.metadata_mut() {
 - [csgrs-egui-wasm-example](https://github.com/timschmidt/csgrs-egui-wasm-example)
 - [csgrs-druid-example](https://github.com/timschmidt/csgrs-druid-example)
 
+## Benchmarks
+
+The [`benchmarks/`](benchmarks/) suite provides shared end-to-end comparisons
+against CGAL and OpenCascade plus broad csgrs/Hyper-stack feature coverage.
+It emits validated CSV samples and a Markdown comparison report; see the
+[benchmark guide](benchmarks/README.md) for dependencies, workload definitions,
+and quick/full run commands.
+
 ## Project Status
 
 `csgrs` is usable today as a Rust-first CSG and geometry toolkit. The stable

@@ -389,7 +389,7 @@ impl Plane {
         Some((&b - &a).cross(&(&c - &a)))
     }
 
-    fn unit_hreal_normal(&self) -> Option<Vector3> {
+    pub(crate) fn unit_hreal_normal(&self) -> Option<Vector3> {
         self.unscaled_hreal_normal()?.normalize_checked().ok()
     }
 

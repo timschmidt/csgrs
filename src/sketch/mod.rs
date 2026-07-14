@@ -581,10 +581,9 @@ impl Profile {
         } else if let Some(region) = self.disjoint_region_boolean_with(other, op, &policy) {
             region
         } else {
-            match self
-                .region
-                .boolean_region(&other.region, op, FillRule::NonZero, &policy)
-            {
+            let first = self.region.prepare_topology_queries(&policy);
+            let second = other.region.prepare_topology_queries(&policy);
+            match first.boolean_region(&second, op, FillRule::NonZero, &policy) {
                 Ok(Classification::Decided(region)) => region,
                 Ok(Classification::Uncertain(reason)) => {
                     return Err(ProfileBooleanError::Uncertain(reason));

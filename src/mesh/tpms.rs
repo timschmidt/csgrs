@@ -9,23 +9,15 @@ use crate::hyper_math::{
 use crate::mesh::Mesh;
 use hyperlattice::{Point3, Vector3};
 use std::fmt::Debug;
+use std::sync::OnceLock;
 
 fn invalid_sdf_value() -> Real {
     hreal_from_f64(1.0e10).expect("finite SDF sentinel")
 }
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
-    /// **Generic helper** – build a TPMS inside `self` from the provided SDF.
-    ///
-    /// * `sdf_fn`     – smooth signed‑distance field _f(p)_; 0‑level set is the surface
-    /// * `resolution` – voxel grid sampling resolution `(nx, ny, nz)`
-    /// * `iso_value`  – iso‑contour value (normally 0.0)
-    ///
-    /// The result is sampled inside `self`'s bounding box. The TPMS output is an
-    /// open implicit surface, so it is not boolean-intersected with `self`;
-    /// solid booleans assume closed volumes and can delete valid sheet triangles.
     #[inline]
-    fn tpms_from_sdf<F>(
+    fn tpms_from_indexed_sdf<F>(
         &self,
         sdf_fn: F,
         resolution: (usize, usize, usize),
@@ -33,13 +25,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M>
     where
-        F: Fn(&Point3) -> Real,
+        F: FnMut(usize, usize, usize, &Real, &Real, &Real) -> Real,
     {
         let aabb = self.bounding_box();
-        let min_pt = aabb.mins;
-        let max_pt = aabb.maxs;
-        // Mesh the implicit surface with the generic surface‑nets backend
-        Mesh::sdf(sdf_fn, resolution, min_pt, max_pt, iso_value, metadata)
+        Mesh::sdf_indexed(sdf_fn, resolution, aabb.mins, aabb.maxs, iso_value, metadata)
     }
 
     /// Build a capped, finite-thickness TPMS solid inside `self`'s bounding box.
@@ -128,9 +117,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(scale) = tpms_scale(period) else {
             return Mesh::empty();
         };
-        self.tpms_from_sdf(
-            move |p: &Point3| {
-                tpms_gyroid_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+        let x_trig = empty_axis_cache(res.0);
+        let y_trig = empty_axis_cache(res.1);
+        let z_trig = empty_axis_cache(res.2);
+        self.tpms_from_indexed_sdf(
+            move |ix, iy, iz, x, y, z| {
+                let (sin_x, cos_x) = cached_scaled_sin_cos(&x_trig, ix, x, &scale);
+                let (sin_y, cos_y) = cached_scaled_sin_cos(&y_trig, iy, y, &scale);
+                let (sin_z, cos_z) = cached_scaled_sin_cos(&z_trig, iz, z, &scale);
+                sin_x * cos_y + sin_y * cos_z + sin_z * cos_x
             },
             res,
             iso_value,
@@ -178,9 +173,14 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(scale) = tpms_scale(period) else {
             return Mesh::empty();
         };
-        self.tpms_from_sdf(
-            move |p: &Point3| {
-                tpms_schwarz_p_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+        let x_cos = empty_axis_cache(res.0);
+        let y_cos = empty_axis_cache(res.1);
+        let z_cos = empty_axis_cache(res.2);
+        self.tpms_from_indexed_sdf(
+            move |ix, iy, iz, x, y, z| {
+                cached_scaled_cos(&x_cos, ix, x, &scale)
+                    + cached_scaled_cos(&y_cos, iy, y, &scale)
+                    + cached_scaled_cos(&z_cos, iz, z, &scale)
             },
             res,
             iso_value,
@@ -228,9 +228,18 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let Some(scale) = tpms_scale(period) else {
             return Mesh::empty();
         };
-        self.tpms_from_sdf(
-            move |p: &Point3| {
-                tpms_schwarz_d_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
+        let x_trig = empty_axis_cache(res.0);
+        let y_trig = empty_axis_cache(res.1);
+        let z_trig = empty_axis_cache(res.2);
+        self.tpms_from_indexed_sdf(
+            move |ix, iy, iz, x, y, z| {
+                let (sin_x, cos_x) = cached_scaled_sin_cos(&x_trig, ix, x, &scale);
+                let (sin_y, cos_y) = cached_scaled_sin_cos(&y_trig, iy, y, &scale);
+                let (sin_z, cos_z) = cached_scaled_sin_cos(&z_trig, iz, z, &scale);
+                sin_x.clone() * sin_y.clone() * sin_z.clone()
+                    + sin_x * cos_y.clone() * cos_z.clone()
+                    + cos_x.clone() * sin_y * cos_z
+                    + cos_x * cos_y * sin_z
             },
             res,
             iso_value,
@@ -287,6 +296,35 @@ fn tpms_scaled_axes(point: &Point3, scale: Real) -> Option<(Real, Real, Real)> {
         point.y.clone() * scale.clone(),
         point.z.clone() * scale,
     ))
+}
+
+fn empty_axis_cache<T>(length: usize) -> Vec<OnceLock<T>> {
+    std::iter::repeat_with(OnceLock::new).take(length).collect()
+}
+
+fn cached_scaled_sin_cos(
+    cache: &[OnceLock<(Real, Real)>],
+    index: usize,
+    coordinate: &Real,
+    scale: &Real,
+) -> (Real, Real) {
+    cache[index]
+        .get_or_init(|| {
+            let scaled = coordinate.clone() * scale.clone();
+            (scaled.clone().sin(), scaled.cos())
+        })
+        .clone()
+}
+
+fn cached_scaled_cos(
+    cache: &[OnceLock<Real>],
+    index: usize,
+    coordinate: &Real,
+    scale: &Real,
+) -> Real {
+    cache[index]
+        .get_or_init(|| (coordinate.clone() * scale.clone()).cos())
+        .clone()
 }
 
 /// Evaluate Schoen's gyroid approximation in hyperreal space.
