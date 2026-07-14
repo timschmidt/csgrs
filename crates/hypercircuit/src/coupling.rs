@@ -4,18 +4,14 @@
 //! unknowns, thermal states, mechanical states, and field states are tied
 //! together by equations whose numerical solution may be approximate. This
 //! module keeps the coupling boundary exact and report-bearing before any DAE
-//! or field solver adapter is selected. That follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): proposed coupled states
-//! need exact residual replay or explicit uncertainty.
+//! or field solver adapter is selected, so proposed coupled states require
+//! exact residual replay or explicit uncertainty.
 //!
 //! The first exact fixture is electrothermal RC coupling. It records the
 //! Joule-heating relation `P = I^2 R(T)` and the linear temperature coefficient
-//! `R(T) = R0 * (1 + alpha * (T - T_ref))`. Field/circuit coupling is framed
-//! after Cortes Garcia, De Gersem, and Schoeps, "A Structural Analysis of
-//! Field/Circuit Coupled Problems Based on a Generalised Circuit Element,"
-//! 2018; this module supplies the circuit-owned port and residual payload, not
-//! a full field solver.
+//! `R(T) = R0 * (1 + alpha * (T - T_ref))`. It supplies circuit-owned ports and
+//! residual payloads, not a full field solver. The README lists the underlying
+//! circuit, exact-computation, and field-coupling references.
 
 use hyperreal::{Real, RealSign};
 use hypersolve::{Constraint, Expr, Problem};

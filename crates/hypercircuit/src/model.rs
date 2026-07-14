@@ -4,17 +4,11 @@
 //! crate also needs explicit identities for circuits, instances, devices,
 //! pins, nets, states, stamps, policies, and certification. This module keeps
 //! those facts in circuit-owned structures before any sparse or transient
-//! adapter is selected. The boundary follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): primitive floats are not
-//! circuit truth, and numeric engines produce proposals that need exact
-//! residual replay.
-//!
-//! The carrier split mirrors SPICE/MNA practice: netlist topology, device
-//! models, stamps, state, and transient policy are separate concerns. See Ho,
-//! Ruehli, and Brennan, "The Modified Nodal Approach to Network Analysis,"
-//! 1975, and Nagel, "SPICE2: A Computer Program to Simulate Semiconductor
-//! Circuits," 1975.
+//! adapter is selected. Primitive floats are not circuit truth, and numeric
+//! engines produce proposals that need exact residual replay. Netlist topology,
+//! device models, stamps, state, and transient policy remain separate concerns.
+//! The crate README collects the supporting SPICE, MNA, and exact-computation
+//! references.
 
 use hyperreal::Real;
 

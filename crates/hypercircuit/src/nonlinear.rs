@@ -3,15 +3,10 @@
 //! Nonlinear circuit devices need numeric Newton proposals in practical
 //! simulators, but their model domains, monotonicity/slope facts, parameters,
 //! and event decisions should be explicit before a solver is trusted. This
-//! follows Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): candidate
-//! states may be numeric, while accepted device facts and residual replay need
-//! exact/certified reports.
-//!
-//! The separation mirrors SPICE2: device evaluation, Newton iteration, and
-//! time/event policy are separate concerns. This module only records exact
-//! model/evaluation metadata for diodes, MOSFET placeholders, piecewise-linear
-//! devices, switches, and protection devices.
+//! module therefore records exact model/evaluation metadata for diodes, MOSFET
+//! placeholders, piecewise-linear devices, switches, and protection devices;
+//! it does not perform Newton iteration. The README collects the supporting
+//! circuit-simulation and exact-computation references.
 
 use hyperreal::Real;
 

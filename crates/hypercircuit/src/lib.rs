@@ -5,14 +5,9 @@
 //! transient/DAE engines. It does not own part catalogs, geometry, routing, or
 //! physics; those facts enter through explicit ids or report payloads.
 //!
-//! Linear stamping follows the Modified Nodal Analysis formulation of Ho,
-//! Ruehli, and Brennan, "The Modified Nodal Approach to Network Analysis,"
-//! *IEEE Transactions on Circuits and Systems* 22(6), 1975
-//! (<https://doi.org/10.1109/TCS.1975.1084079>). Exact replay follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): numeric solvers may
-//! propose states, but accepted circuit facts must replay through exact
-//! residual definitions or return explicit uncertainty.
+//! Numeric solvers may propose states, but accepted circuit facts must replay
+//! through exact residual definitions or return explicit uncertainty. See the
+//! crate README for the MNA, circuit-simulation, and exact-computation sources.
 
 pub mod adapter;
 pub mod coupling;
