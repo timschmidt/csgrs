@@ -396,7 +396,7 @@ pub fn build_rectangular_pocket_plan(
             min: min.unwrap(),
             max: max.unwrap(),
         });
-        inset = inset + stepover.clone();
+        inset += stepover.clone();
     };
 
     Ok(RectangularPocketPlan {
@@ -482,7 +482,7 @@ pub fn build_rectangular_bead_plan(
             segment,
             pitch_position: pitch_position.clone(),
         });
-        pitch_position = pitch_position + spacing.clone();
+        pitch_position += spacing.clone();
     };
 
     Ok(RectangularBeadPlan {
@@ -815,7 +815,7 @@ fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> boo
 
 fn ordered_closed(min: &Real, max: &Real) -> bool {
     matches!(
-        compare_reals_with_policy(min, max, PredicatePolicy::default()).value(),
+        compare_reals_with_policy(min, max, PredicatePolicy).value(),
         Some(Ordering::Less | Ordering::Equal)
     )
 }

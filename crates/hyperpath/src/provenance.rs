@@ -175,9 +175,7 @@ impl PathProvenance {
 
     /// Lift an integer source token through this provenance grid.
     pub fn real_from_units(self, units: i64) -> Option<Real> {
-        let Some(grid) = self.grid else {
-            return None;
-        };
+        let grid = self.grid?;
         grid.real_from_units(units)
     }
 }

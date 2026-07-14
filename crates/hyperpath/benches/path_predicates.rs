@@ -108,17 +108,11 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| tangent_segment.start_tangent())
     });
     c.bench_function("tangent_alignment_exact_predicate", |b| {
-        b.iter(|| classify_tangent_alignment(&p(3, 4), &p(6, 8), PredicatePolicy::default()))
+        b.iter(|| classify_tangent_alignment(&p(3, 4), &p(6, 8), PredicatePolicy))
     });
     c.bench_function("tangent_join_exact_predicate", |b| {
         b.iter(|| {
-            classify_tangent_join(
-                &p(10, 20),
-                &p(3, 4),
-                &p(10, 20),
-                &p(6, 8),
-                PredicatePolicy::default(),
-            )
+            classify_tangent_join(&p(10, 20), &p(3, 4), &p(10, 20), &p(6, 8), PredicatePolicy)
         })
     });
     let tangent_chain = vec![
@@ -136,7 +130,7 @@ fn path_predicates(c: &mut Criterion) {
         },
     ];
     c.bench_function("tangent_chain_exact_predicate", |b| {
-        b.iter(|| classify_tangent_chain(&tangent_chain, PredicatePolicy::default()))
+        b.iter(|| classify_tangent_chain(&tangent_chain, PredicatePolicy))
     });
     c.bench_function("g1_chain_hypersolve_certification", |b| {
         b.iter(|| certify_g1_chain(&tangent_chain))
@@ -148,7 +142,7 @@ fn path_predicates(c: &mut Criterion) {
         LinePathSegment::new(p(1000, 0), p(1200, 200)),
     ];
     c.bench_function("line_arrangement_exact_cleanup", |b| {
-        b.iter(|| arrange_line_segments(&line_arrangement_segments, PredicatePolicy::default()))
+        b.iter(|| arrange_line_segments(&line_arrangement_segments, PredicatePolicy))
     });
     let line_cell_square = vec![
         LinePathSegment::new(p(0, 0), p(1000, 0)),
@@ -158,7 +152,7 @@ fn path_predicates(c: &mut Criterion) {
         LinePathSegment::new(p(0, 0), p(1000, 1000)),
     ];
     c.bench_function("line_arrangement_exact_cell_graph", |b| {
-        b.iter(|| arrange_line_segments(&line_cell_square, PredicatePolicy::default()))
+        b.iter(|| arrange_line_segments(&line_cell_square, PredicatePolicy))
     });
     let line_arc_lines = vec![
         LinePathSegment::new(p(-600, 0), p(600, 0)),
@@ -173,7 +167,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_explicit_arcs(
                 &line_arc_lines,
                 &line_arc_arcs,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -183,7 +177,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_explicit_arcs(
                 &line_arc_general_lines,
                 &line_arc_arcs,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -197,7 +191,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_explicit_arcs(
                 &line_arc_cell_lines,
                 &line_arc_cell_arcs,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -222,7 +216,7 @@ fn path_predicates(c: &mut Criterion) {
             .unwrap(),
     ];
     c.bench_function("explicit_arc_arrangement_split_cleanup", |b| {
-        b.iter(|| arrange_explicit_arcs(&arc_arrangement_arcs, PredicatePolicy::default()))
+        b.iter(|| arrange_explicit_arcs(&arc_arrangement_arcs, PredicatePolicy))
     });
     let arc_cell_arcs = vec![
         ExplicitCircularArc::new(p(0, 0), r(500), p(500, 0), p(-500, 0), ArcDirection::Ccw)
@@ -231,7 +225,7 @@ fn path_predicates(c: &mut Criterion) {
             .unwrap(),
     ];
     c.bench_function("explicit_arc_arrangement_exact_cell_graph", |b| {
-        b.iter(|| arrange_explicit_arcs(&arc_cell_arcs, PredicatePolicy::default()))
+        b.iter(|| arrange_explicit_arcs(&arc_cell_arcs, PredicatePolicy))
     });
     let tangent_span_arc =
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
@@ -277,7 +271,7 @@ fn path_predicates(c: &mut Criterion) {
             intersect_axis_aligned_line_quadratic_bezier(
                 &line_quadratic_line,
                 &bezier,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -286,7 +280,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_line),
                 std::slice::from_ref(&bezier),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -297,7 +291,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_cell_line),
                 std::slice::from_ref(&line_quadratic_cell_curve),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -308,7 +302,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_diagonal_line),
                 std::slice::from_ref(&line_quadratic_diagonal_curve),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -319,7 +313,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_overlap_line),
                 std::slice::from_ref(&line_quadratic_overlap_curve),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -331,7 +325,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_quadratic_beziers(
                 std::slice::from_ref(&line_quadratic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_quadratic_nonlinear_overlap_curve),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -346,7 +340,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_quadratic_beziers(
                     std::slice::from_ref(&line_quadratic_general_nonlinear_overlap_line),
                     std::slice::from_ref(&line_quadratic_general_nonlinear_overlap_curve),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -361,7 +355,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_quadratic_beziers(
                 std::slice::from_ref(&bezier),
                 &bezier_events,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -372,7 +366,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_quadratic_beziers(
                 &[quadratic_loop_upper.clone(), quadratic_loop_lower.clone()],
                 &[vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
@@ -395,7 +389,7 @@ fn path_predicates(c: &mut Criterion) {
                     true_cubic_loop_inner_lower.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -410,7 +404,7 @@ fn path_predicates(c: &mut Criterion) {
                     duplicate_cubic_reverse.clone(),
                 ],
                 &[vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.edges)
         })
@@ -430,7 +424,7 @@ fn path_predicates(c: &mut Criterion) {
                     tangent_quadratic_right_lower.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -459,7 +453,7 @@ fn path_predicates(c: &mut Criterion) {
                     triple_root_cubic_return.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -479,7 +473,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_rational_quadratic_beziers(
                 std::slice::from_ref(&conic),
                 &bezier_events,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -501,7 +495,7 @@ fn path_predicates(c: &mut Criterion) {
                     nested_conic_loop_lower.clone(),
                 ],
                 &[vec![], vec![], vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -513,7 +507,7 @@ fn path_predicates(c: &mut Criterion) {
             intersect_axis_aligned_line_rational_quadratic_bezier(
                 &line_conic_line,
                 &line_conic,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -527,7 +521,7 @@ fn path_predicates(c: &mut Criterion) {
                 intersect_line_rational_quadratic_bezier(
                     &line_conic_diagonal_line,
                     &line_conic_diagonal,
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -542,7 +536,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_general_overlap_line),
                     std::slice::from_ref(&line_conic_general_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -552,7 +546,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_line),
                 std::slice::from_ref(&line_conic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -561,7 +555,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_line),
                 std::slice::from_ref(&line_conic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| (report.cell_graph.faces, report.cell_graph.loop_roles))
         })
@@ -574,7 +568,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_atan_chord),
                 std::slice::from_ref(&line_conic_atan_area),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.faces)
         })
@@ -586,7 +580,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_atan_chord),
                 std::slice::from_ref(&line_conic_log_area),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.faces)
         })
@@ -599,7 +593,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_rational_quadratic_beziers(
                 std::slice::from_ref(&line_conic_overlap_line),
                 std::slice::from_ref(&line_conic_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -613,7 +607,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -625,7 +619,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -637,7 +631,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -649,7 +643,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -661,7 +655,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_nonmonotone_line),
                     std::slice::from_ref(&line_conic_nonmonotone_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -676,7 +670,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_rational_quadratic_beziers(
                     std::slice::from_ref(&line_conic_exact_root_line),
                     std::slice::from_ref(&line_conic_exact_root_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -694,7 +688,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_cubic_beziers(
                 std::slice::from_ref(&cubic),
                 &bezier_events,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -705,7 +699,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_cubic_beziers(
                 &[cubic_loop_upper.clone(), cubic_loop_lower.clone()],
                 &[vec![], vec![]],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph)
         })
@@ -722,7 +716,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_family_quadratic),
                 std::slice::from_ref(&mixed_family_cubic),
                 std::slice::from_ref(&mixed_family_conic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph)
         })
@@ -742,7 +736,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_curve_quadratic),
                 std::slice::from_ref(&mixed_curve_cubic),
                 std::slice::from_ref(&mixed_curve_conic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph)
         })
@@ -759,7 +753,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&sweep_box_quadratic),
                 &[],
                 &[],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph)
         })
@@ -779,7 +773,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&bezier_extrema_box_quadratic),
                 std::slice::from_ref(&bezier_extrema_box_cubic),
                 &[],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| (report.fragment_envelopes, report.fragment_separations))
         })
@@ -793,7 +787,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&bezier_extrema_box_quadratic),
                 &[],
                 std::slice::from_ref(&conic_extrema_box_conic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| (report.fragment_envelopes, report.fragment_separations))
         })
@@ -813,7 +807,7 @@ fn path_predicates(c: &mut Criterion) {
                 &[],
                 std::slice::from_ref(&mixed_evidence_cubic),
                 std::slice::from_ref(&mixed_evidence_conic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| {
                 (
@@ -839,7 +833,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&mixed_endpoint_contact_quadratic),
                 std::slice::from_ref(&mixed_endpoint_contact_cubic),
                 &[],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.fragment_separations)
         })
@@ -853,21 +847,13 @@ fn path_predicates(c: &mut Criterion) {
     let line_cubic_line = LinePathSegment::new(pq(0, 1, 375, 1), pq(1000, 1, 375, 1));
     c.bench_function("line_cubic_bezier_exact_events", |b| {
         b.iter(|| {
-            intersect_axis_aligned_line_cubic_bezier(
-                &line_cubic_line,
-                &line_cubic,
-                PredicatePolicy::default(),
-            )
+            intersect_axis_aligned_line_cubic_bezier(&line_cubic_line, &line_cubic, PredicatePolicy)
         })
     });
     let line_cubic_diagonal_line = LinePathSegment::new(p(0, 100), p(400, 300));
     c.bench_function("line_cubic_bezier_general_line_exact_events", |b| {
         b.iter(|| {
-            intersect_line_cubic_bezier(
-                &line_cubic_diagonal_line,
-                &line_cubic,
-                PredicatePolicy::default(),
-            )
+            intersect_line_cubic_bezier(&line_cubic_diagonal_line, &line_cubic, PredicatePolicy)
         })
     });
     c.bench_function("line_cubic_bezier_arrangement_cleanup", |b| {
@@ -875,7 +861,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_line),
                 std::slice::from_ref(&line_cubic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -886,7 +872,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_cell_line),
                 std::slice::from_ref(&line_cubic_cell),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -898,7 +884,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_overlap_line),
                 std::slice::from_ref(&line_cubic_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -910,7 +896,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_general_overlap_line),
                 std::slice::from_ref(&line_cubic_general_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -921,7 +907,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_exact_overlap_line),
                 std::slice::from_ref(&line_cubic_exact_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -932,7 +918,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_cubic_beziers(
                     std::slice::from_ref(&line_cubic_exact_overlap_line),
                     std::slice::from_ref(&line_cubic_exact_overlap),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -944,7 +930,7 @@ fn path_predicates(c: &mut Criterion) {
             intersect_axis_aligned_line_cubic_bezier(
                 &line_cubic_nonlinear_overlap_line,
                 &line_cubic_nonlinear_overlap,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -953,7 +939,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_cubic_nonlinear_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -962,7 +948,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_cubic_nonlinear_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -971,7 +957,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_nonlinear_overlap_line),
                 std::slice::from_ref(&line_cubic_nonlinear_overlap),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -983,7 +969,7 @@ fn path_predicates(c: &mut Criterion) {
             intersect_axis_aligned_line_cubic_bezier(
                 &line_cubic_algebraic_line,
                 &line_cubic_algebraic,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -994,7 +980,7 @@ fn path_predicates(c: &mut Criterion) {
                 intersect_line_cubic_bezier(
                     &line_cubic_general_algebraic_line,
                     &line_cubic_algebraic,
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -1004,7 +990,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_algebraic_line),
                 std::slice::from_ref(&line_cubic_algebraic),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1015,7 +1001,7 @@ fn path_predicates(c: &mut Criterion) {
                 arrange_line_segments_with_cubic_beziers(
                     std::slice::from_ref(&line_cubic_algebraic_line),
                     std::slice::from_ref(&line_cubic_algebraic),
-                    PredicatePolicy::default(),
+                    PredicatePolicy,
                 )
             })
         },
@@ -1032,7 +1018,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1041,7 +1027,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1050,7 +1036,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1059,7 +1045,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1068,7 +1054,7 @@ fn path_predicates(c: &mut Criterion) {
             arrange_line_segments_with_cubic_beziers(
                 std::slice::from_ref(&line_cubic_three_root_line),
                 std::slice::from_ref(&line_cubic_three_root),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1107,24 +1093,12 @@ fn path_predicates(c: &mut Criterion) {
     });
     c.bench_function("quadratic_bezier_offset_sample", |b| {
         b.iter(|| {
-            offset_quadratic_bezier_sample(
-                &bezier,
-                half,
-                r(25),
-                OffsetSide::Left,
-                PredicatePolicy::default(),
-            )
+            offset_quadratic_bezier_sample(&bezier, half, r(25), OffsetSide::Left, PredicatePolicy)
         })
     });
     c.bench_function("cubic_bezier_offset_sample", |b| {
         b.iter(|| {
-            offset_cubic_bezier_sample(
-                &cubic,
-                half,
-                r(25),
-                OffsetSide::Left,
-                PredicatePolicy::default(),
-            )
+            offset_cubic_bezier_sample(&cubic, half, r(25), OffsetSide::Left, PredicatePolicy)
         })
     });
     c.bench_function("higher_order_bezier_offset_sample", |b| {
@@ -1134,7 +1108,7 @@ fn path_predicates(c: &mut Criterion) {
                 half,
                 r(25),
                 OffsetSide::Left,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1147,35 +1121,25 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| explicit_arc.facts().sweep_class)
     });
     c.bench_function("explicit_circular_arc_point_membership", |b| {
-        b.iter(|| explicit_arc.classify_point(&p(0, 5), PredicatePolicy::default()))
+        b.iter(|| explicit_arc.classify_point(&p(0, 5), PredicatePolicy))
     });
     let explicit_arc_line = LinePathSegment::new(p(-10, 4), p(10, 4));
     c.bench_function("explicit_circular_arc_axis_line_intersection", |b| {
-        b.iter(|| {
-            explicit_arc
-                .intersect_axis_aligned_segment(&explicit_arc_line, PredicatePolicy::default())
-        })
+        b.iter(|| explicit_arc.intersect_axis_aligned_segment(&explicit_arc_line, PredicatePolicy))
     });
     let explicit_arc_general_line = LinePathSegment::new(p(-6, -8), p(6, 8));
     c.bench_function("explicit_circular_arc_general_line_intersection", |b| {
-        b.iter(|| {
-            explicit_arc.intersect_segment(&explicit_arc_general_line, PredicatePolicy::default())
-        })
+        b.iter(|| explicit_arc.intersect_segment(&explicit_arc_general_line, PredicatePolicy))
     });
     let explicit_arc_subset =
         ExplicitCircularArc::new(p(0, 0), r(5), p(0, 5), p(-3, 4), ArcDirection::Ccw).unwrap();
     c.bench_function("explicit_circular_arc_same_circle_overlap", |b| {
-        b.iter(|| {
-            explicit_arc
-                .classify_same_circle_overlap(&explicit_arc_subset, PredicatePolicy::default())
-        })
+        b.iter(|| explicit_arc.classify_same_circle_overlap(&explicit_arc_subset, PredicatePolicy))
     });
     let external_tangent_arc =
         ExplicitCircularArc::new(p(10, 0), r(5), p(15, 0), p(10, 5), ArcDirection::Ccw).unwrap();
     c.bench_function("explicit_circular_arc_circle_relation", |b| {
-        b.iter(|| {
-            explicit_arc.classify_circle_relation(&external_tangent_arc, PredicatePolicy::default())
-        })
+        b.iter(|| explicit_arc.classify_circle_relation(&external_tangent_arc, PredicatePolicy))
     });
     let tangent_membership_arc =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw).unwrap();
@@ -1183,10 +1147,8 @@ fn path_predicates(c: &mut Criterion) {
         ExplicitCircularArc::new(p(10, 0), r(5), p(5, 0), p(10, 5), ArcDirection::Ccw).unwrap();
     c.bench_function("explicit_circular_arc_tangent_intersection", |b| {
         b.iter(|| {
-            tangent_membership_arc.classify_tangent_intersection(
-                &tangent_membership_other,
-                PredicatePolicy::default(),
-            )
+            tangent_membership_arc
+                .classify_tangent_intersection(&tangent_membership_other, PredicatePolicy)
         })
     });
     let secant_intersection_arc =
@@ -1195,15 +1157,11 @@ fn path_predicates(c: &mut Criterion) {
         ExplicitCircularArc::new(p(6, 0), r(5), p(11, 0), p(11, 0), ArcDirection::Ccw).unwrap();
     c.bench_function("explicit_circular_arc_secant_intersection", |b| {
         b.iter(|| {
-            secant_intersection_arc
-                .intersect_arc(&secant_intersection_other, PredicatePolicy::default())
+            secant_intersection_arc.intersect_arc(&secant_intersection_other, PredicatePolicy)
         })
     });
     c.bench_function("explicit_circular_arc_arrangement_dispatch", |b| {
-        b.iter(|| {
-            secant_intersection_arc
-                .arrange_with(&secant_intersection_other, PredicatePolicy::default())
-        })
+        b.iter(|| secant_intersection_arc.arrange_with(&secant_intersection_other, PredicatePolicy))
     });
     let arc_loop_outer_upper =
         ExplicitCircularArc::new(p(400, 0), r(400), p(0, 0), p(800, 0), ArcDirection::Cw).unwrap();
@@ -1224,7 +1182,7 @@ fn path_predicates(c: &mut Criterion) {
                     arc_loop_inner_upper.clone(),
                     arc_loop_inner_lower.clone(),
                 ],
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .map(|report| report.cell_graph.loop_roles)
         })
@@ -1241,35 +1199,28 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| explicit_arc.certified_sweep_length())
     });
     c.bench_function("explicit_circular_arc_offset_exact", |b| {
-        b.iter(|| {
-            offset_explicit_arc(
-                &explicit_arc,
-                r(5),
-                OffsetSide::Left,
-                PredicatePolicy::default(),
-            )
-        })
+        b.iter(|| offset_explicit_arc(&explicit_arc, r(5), OffsetSide::Left, PredicatePolicy))
     });
 
     let first = trace(1, p(0, 0), p(1000, 0));
     let second = trace(2, p(0, 6), p(1000, 6));
     c.bench_function("axis_aligned_trace_clearance_exact", |b| {
-        b.iter(|| check_trace_clearance(&first, &second, &r(3), PredicatePolicy::default()))
+        b.iter(|| check_trace_clearance(&first, &second, &r(3), PredicatePolicy))
     });
 
     let crossing = trace(2, p(500, -100), p(500, 100));
     c.bench_function("trace_no_short_exact_segment_predicate", |b| {
-        b.iter(|| check_trace_clearance(&first, &crossing, &r(1), PredicatePolicy::default()))
+        b.iter(|| check_trace_clearance(&first, &crossing, &r(1), PredicatePolicy))
     });
 
     let pad = PcbCircularPad::new(NetId(2), TraceLayer(0), p(500, 6), r(2)).unwrap();
     c.bench_function("trace_pad_clearance_exact", |b| {
-        b.iter(|| check_trace_pad_clearance(&first, &pad, &r(3), PredicatePolicy::default()))
+        b.iter(|| check_trace_pad_clearance(&first, &pad, &r(3), PredicatePolicy))
     });
 
     let via = PcbViaStack::new(NetId(2), TraceLayer(0), TraceLayer(2), p(500, 6), r(2)).unwrap();
     c.bench_function("trace_via_clearance_exact", |b| {
-        b.iter(|| check_trace_via_clearance(&first, &via, &r(3), PredicatePolicy::default()))
+        b.iter(|| check_trace_via_clearance(&first, &via, &r(3), PredicatePolicy))
     });
     c.bench_function("via_layer_transition_classification", |b| {
         b.iter(|| via.classify_layer_transition(4))
@@ -1289,27 +1240,21 @@ fn path_predicates(c: &mut Criterion) {
     )
     .unwrap();
     c.bench_function("trace_via_drill_clearance_exact", |b| {
-        b.iter(|| {
-            check_trace_via_drill_clearance(&first, &drilled_via, &r(3), PredicatePolicy::default())
-        })
+        b.iter(|| check_trace_via_drill_clearance(&first, &drilled_via, &r(3), PredicatePolicy))
     });
     c.bench_function("via_drill_policy_classification", |b| {
-        b.iter(|| drilled_via.classify_drill_policy(&r(3), PredicatePolicy::default()))
+        b.iter(|| drilled_via.classify_drill_policy(&r(3), PredicatePolicy))
     });
     let via_fabrication_policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
     c.bench_function("via_fabrication_policy_certification", |b| {
         b.iter(|| {
-            certify_via_fabrication_policy(
-                &drilled_via,
-                &via_fabrication_policy,
-                PredicatePolicy::default(),
-            )
+            certify_via_fabrication_policy(&drilled_via, &via_fabrication_policy, PredicatePolicy)
         })
     });
 
     let rect = PcbRectPad::new(NetId(2), TraceLayer(0), p(500, 6), r(10), r(2)).unwrap();
     c.bench_function("trace_rect_pad_clearance_exact", |b| {
-        b.iter(|| check_trace_rect_pad_clearance(&first, &rect, &r(3), PredicatePolicy::default()))
+        b.iter(|| check_trace_rect_pad_clearance(&first, &rect, &r(3), PredicatePolicy))
     });
 
     let cardinal_rect = PcbCardinalRectPad::new(
@@ -1323,24 +1268,14 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_cardinal_rect_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_cardinal_rect_pad_clearance(
-                &first,
-                &cardinal_rect,
-                &r(3),
-                PredicatePolicy::default(),
-            )
+            check_trace_cardinal_rect_pad_clearance(&first, &cardinal_rect, &r(3), PredicatePolicy)
         })
     });
     let rounded_rect =
         PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(500, 8), r(10), r(4), r(2)).unwrap();
     c.bench_function("trace_rounded_rect_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_rounded_rect_pad_clearance(
-                &first,
-                &rounded_rect,
-                &r(3),
-                PredicatePolicy::default(),
-            )
+            check_trace_rounded_rect_pad_clearance(&first, &rounded_rect, &r(3), PredicatePolicy)
         })
     });
     let oriented_rect = PcbOrientedRectPad::new(
@@ -1350,7 +1285,7 @@ fn path_predicates(c: &mut Criterion) {
         r(10),
         r(4),
         Point2::new(rq(3, 5), rq(4, 5)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     let oriented_trace = PcbTrace::new(
@@ -1368,7 +1303,7 @@ fn path_predicates(c: &mut Criterion) {
                 &oriented_trace,
                 &oriented_rect,
                 &r(3),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1381,12 +1316,7 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_obround_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_obround_pad_clearance(
-                &oriented_trace,
-                &obround_pad,
-                &r(3),
-                PredicatePolicy::default(),
-            )
+            check_trace_obround_pad_clearance(&oriented_trace, &obround_pad, &r(3), PredicatePolicy)
         })
     });
     let convex_pad = PcbConvexPad::new(
@@ -1397,12 +1327,7 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_convex_pad_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_convex_pad_clearance(
-                &oriented_trace,
-                &convex_pad,
-                &r(3),
-                PredicatePolicy::default(),
-            )
+            check_trace_convex_pad_clearance(&oriented_trace, &convex_pad, &r(3), PredicatePolicy)
         })
     });
     let orthogonal_pad = PcbOrthogonalPad::new(
@@ -1424,13 +1349,13 @@ fn path_predicates(c: &mut Criterion) {
                 &oriented_trace,
                 &orthogonal_pad,
                 &r(3),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
     let board = PcbBoardOutline::new(p(-100, -100), p(1100, 100)).unwrap();
     c.bench_function("trace_board_edge_clearance_exact", |b| {
-        b.iter(|| check_trace_board_clearance(&first, &board, &r(25), PredicatePolicy::default()))
+        b.iter(|| check_trace_board_clearance(&first, &board, &r(25), PredicatePolicy))
     });
     let convex_board = PcbConvexBoardOutline::new(vec![
         p(-100, -100),
@@ -1441,12 +1366,7 @@ fn path_predicates(c: &mut Criterion) {
     .unwrap();
     c.bench_function("trace_convex_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_trace_convex_board_clearance(
-                &first,
-                &convex_board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
+            check_trace_convex_board_clearance(&first, &convex_board, &r(25), PredicatePolicy)
         })
     });
     let orthogonal_board = PcbOrthogonalBoardOutline::new(vec![
@@ -1466,7 +1386,7 @@ fn path_predicates(c: &mut Criterion) {
                 &first,
                 &orthogonal_board,
                 &r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1477,24 +1397,15 @@ fn path_predicates(c: &mut Criterion) {
                 &oriented_trace,
                 &circular_board,
                 &r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
     c.bench_function("via_drill_board_edge_clearance_exact", |b| {
-        b.iter(|| {
-            check_via_drill_board_clearance(
-                &drilled_via,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
-        })
+        b.iter(|| check_via_drill_board_clearance(&drilled_via, &board, &r(25), PredicatePolicy))
     });
     c.bench_function("circular_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| {
-            check_circular_pad_board_clearance(&pad, &board, &r(25), PredicatePolicy::default())
-        })
+        b.iter(|| check_circular_pad_board_clearance(&pad, &board, &r(25), PredicatePolicy))
     });
     c.bench_function("circular_pad_circular_board_edge_clearance_exact", |b| {
         b.iter(|| {
@@ -1502,7 +1413,7 @@ fn path_predicates(c: &mut Criterion) {
                 &pad,
                 &circular_board,
                 &r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1514,7 +1425,7 @@ fn path_predicates(c: &mut Criterion) {
                 &oriented_trace,
                 &obround_board,
                 &r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1524,71 +1435,37 @@ fn path_predicates(c: &mut Criterion) {
                 &pad,
                 &obround_board,
                 &r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
     c.bench_function("rect_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| check_rect_pad_board_clearance(&rect, &board, &r(25), PredicatePolicy::default()))
+        b.iter(|| check_rect_pad_board_clearance(&rect, &board, &r(25), PredicatePolicy))
     });
     c.bench_function("cardinal_rect_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_cardinal_rect_pad_board_clearance(
-                &cardinal_rect,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
+            check_cardinal_rect_pad_board_clearance(&cardinal_rect, &board, &r(25), PredicatePolicy)
         })
     });
     c.bench_function("rounded_rect_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_rounded_rect_pad_board_clearance(
-                &rounded_rect,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
+            check_rounded_rect_pad_board_clearance(&rounded_rect, &board, &r(25), PredicatePolicy)
         })
     });
     c.bench_function("oriented_rect_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_oriented_rect_pad_board_clearance(
-                &oriented_rect,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
+            check_oriented_rect_pad_board_clearance(&oriented_rect, &board, &r(25), PredicatePolicy)
         })
     });
     c.bench_function("obround_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| {
-            check_obround_pad_board_clearance(
-                &obround_pad,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
-        })
+        b.iter(|| check_obround_pad_board_clearance(&obround_pad, &board, &r(25), PredicatePolicy))
     });
     c.bench_function("convex_pad_board_edge_clearance_exact", |b| {
-        b.iter(|| {
-            check_convex_pad_board_clearance(
-                &convex_pad,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
-        })
+        b.iter(|| check_convex_pad_board_clearance(&convex_pad, &board, &r(25), PredicatePolicy))
     });
     c.bench_function("orthogonal_pad_board_edge_clearance_exact", |b| {
         b.iter(|| {
-            check_orthogonal_pad_board_clearance(
-                &orthogonal_pad,
-                &board,
-                &r(25),
-                PredicatePolicy::default(),
-            )
+            check_orthogonal_pad_board_clearance(&orthogonal_pad, &board, &r(25), PredicatePolicy)
         })
     });
 
@@ -1609,7 +1486,7 @@ fn path_predicates(c: &mut Criterion) {
                 &first_pair_route,
                 &second_pair_route,
                 r(20),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1618,7 +1495,7 @@ fn path_predicates(c: &mut Criterion) {
         LinePathSegment::new(p(500, 0), p(500, 250)),
     ];
     c.bench_function("constant_feed_time_certification", |b| {
-        b.iter(|| certify_constant_feed_time(&feed_route, r(250), r(3), PredicatePolicy::default()))
+        b.iter(|| certify_constant_feed_time(&feed_route, r(250), r(3), PredicatePolicy))
     });
     let mixed_radius = (r(10) / Real::pi()).unwrap();
     let mixed_feed_route = vec![
@@ -1636,12 +1513,7 @@ fn path_predicates(c: &mut Criterion) {
     ];
     c.bench_function("mixed_path_constant_feed_time_certification", |b| {
         b.iter(|| {
-            certify_constant_feed_time_for_path(
-                &mixed_feed_route,
-                r(250),
-                r(3),
-                PredicatePolicy::default(),
-            )
+            certify_constant_feed_time_for_path(&mixed_feed_route, r(250), r(3), PredicatePolicy)
         })
     });
     let acceleration_triangular_route = vec![LinePathSegment::new(p(0, 0), p(9, 0))];
@@ -1652,7 +1524,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(10),
                 r(4),
                 r(3),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1677,7 +1549,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(10),
                 r(4),
                 r(3),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1689,7 +1561,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(10),
                 r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1702,7 +1574,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(16),
                 r(20),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1728,7 +1600,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(16),
                 r(20),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1745,7 +1617,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(20),
                 r(25),
                 r(4),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1768,7 +1640,7 @@ fn path_predicates(c: &mut Criterion) {
                 &lookahead_schedule,
                 r(20),
                 r(25),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1791,7 +1663,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(100),
                 r(1),
                 r(1),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1829,29 +1701,18 @@ fn path_predicates(c: &mut Criterion) {
                 r(20),
                 r(2),
                 r(1),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
     c.bench_function("single_detour_meander_exact_build", |b| {
         b.iter(|| {
-            build_single_detour_meander(
-                &tune_source,
-                r(250),
-                OffsetSide::Left,
-                PredicatePolicy::default(),
-            )
+            build_single_detour_meander(&tune_source, r(250), OffsetSide::Left, PredicatePolicy)
         })
     });
     c.bench_function("multi_detour_meander_exact_build", |b| {
         b.iter(|| {
-            build_multi_detour_meander(
-                &tune_source,
-                r(250),
-                4,
-                OffsetSide::Left,
-                PredicatePolicy::default(),
-            )
+            build_multi_detour_meander(&tune_source, r(250), 4, OffsetSide::Left, PredicatePolicy)
         })
     });
     c.bench_function("alternating_detour_meander_exact_build", |b| {
@@ -1861,7 +1722,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(250),
                 4,
                 OffsetSide::Left,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1871,7 +1732,7 @@ fn path_predicates(c: &mut Criterion) {
                 &tune_source,
                 vec![r(25), r(75), r(50)],
                 OffsetSide::Left,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1887,7 +1748,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_obstacles.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1899,7 +1760,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_obstacles.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1915,7 +1776,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_keepouts.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1927,7 +1788,7 @@ fn path_predicates(c: &mut Criterion) {
                 4,
                 OffsetSide::Left,
                 meander_keepouts.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -1951,7 +1812,7 @@ fn path_predicates(c: &mut Criterion) {
                 arbitrary_meander_candidates.clone(),
                 OffsetSide::Left,
                 meander_obstacles.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2162,7 +2023,7 @@ fn path_predicates(c: &mut Criterion) {
                 std::slice::from_ref(&audited_trace),
                 &[],
                 std::slice::from_ref(&audited_rule),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2191,7 +2052,7 @@ fn path_predicates(c: &mut Criterion) {
             hyperpath::audit_specctra_trace_rule_clearances(
                 &[audited_trace.clone(), audited_second_trace.clone()],
                 std::slice::from_ref(&audited_clearance_rule),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2221,38 +2082,19 @@ fn path_predicates(c: &mut Criterion) {
     let offset_source = LinePathSegment::new(p(0, 0), p(1000, 0));
     c.bench_function("axis_aligned_line_offset_exact", |b| {
         b.iter(|| {
-            offset_axis_aligned_segment(
-                &offset_source,
-                r(25),
-                OffsetSide::Left,
-                PredicatePolicy::default(),
-            )
+            offset_axis_aligned_segment(&offset_source, r(25), OffsetSide::Left, PredicatePolicy)
         })
     });
     let pocket = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_pocket_offset_ring_schedule", |b| {
         b.iter(|| {
-            build_rectangular_pocket_plan(
-                pocket.clone(),
-                r(125),
-                r(250),
-                128,
-                PredicatePolicy::default(),
-            )
+            build_rectangular_pocket_plan(pocket.clone(), r(125), r(250), 128, PredicatePolicy)
         })
     });
-    let pocket_plan = build_rectangular_pocket_plan(
-        pocket.clone(),
-        r(125),
-        r(250),
-        24,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let pocket_plan =
+        build_rectangular_pocket_plan(pocket.clone(), r(125), r(250), 24, PredicatePolicy).unwrap();
     c.bench_function("rectangular_pocket_link_graph", |b| {
-        b.iter(|| {
-            build_rectangular_pocket_link_graph(pocket_plan.clone(), PredicatePolicy::default())
-        })
+        b.iter(|| build_rectangular_pocket_link_graph(pocket_plan.clone(), PredicatePolicy))
     });
     c.bench_function("rectangular_additive_bead_schedule", |b| {
         b.iter(|| {
@@ -2262,7 +2104,7 @@ fn path_predicates(c: &mut Criterion) {
                 r(400),
                 r(350),
                 256,
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2272,13 +2114,11 @@ fn path_predicates(c: &mut Criterion) {
         r(400),
         r(350),
         256,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     c.bench_function("rectangular_serpentine_infill_graph", |b| {
-        b.iter(|| {
-            build_rectangular_serpentine_infill_graph(bead_plan.clone(), PredicatePolicy::default())
-        })
+        b.iter(|| build_rectangular_serpentine_infill_graph(bead_plan.clone(), PredicatePolicy))
     });
     let support_overhang = RectangularPocket::new(p(1_000, 1_000), p(3_000, 2_000)).unwrap();
     let support_base = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
@@ -2288,7 +2128,7 @@ fn path_predicates(c: &mut Criterion) {
                 support_overhang.clone(),
                 support_base.clone(),
                 r(125),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2297,7 +2137,7 @@ fn path_predicates(c: &mut Criterion) {
             intersect_rectangular_regions(
                 support_base.clone(),
                 support_overhang.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2306,7 +2146,7 @@ fn path_predicates(c: &mut Criterion) {
             subtract_rectangular_region(
                 support_base.clone(),
                 support_overhang.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2320,7 +2160,7 @@ fn path_predicates(c: &mut Criterion) {
             build_rectangular_rest_material_graph(
                 pocket.clone(),
                 rest_cutters.clone(),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
         })
     });
@@ -2337,7 +2177,7 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| (arc.start_tangent(), arc.end_tangent()))
     });
     c.bench_function("cardinal_arc_offset_exact", |b| {
-        b.iter(|| offset_cardinal_arc(&arc, r(10), OffsetSide::Left, PredicatePolicy::default()))
+        b.iter(|| offset_cardinal_arc(&arc, r(10), OffsetSide::Left, PredicatePolicy))
     });
 }
 

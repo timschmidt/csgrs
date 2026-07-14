@@ -386,13 +386,13 @@ impl PcbBoardOutline {
         provenance: PathProvenance,
     ) -> Result<Self, &'static str> {
         if !matches!(
-            compare_reals_with_policy(&min.x, &max.x, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(&min.x, &max.x, PredicatePolicy).value(),
             Some(Ordering::Less | Ordering::Equal)
         ) {
             return Err("board outline x bounds must be ordered");
         }
         if !matches!(
-            compare_reals_with_policy(&min.y, &max.y, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(&min.y, &max.y, PredicatePolicy).value(),
             Some(Ordering::Less | Ordering::Equal)
         ) {
             return Err("board outline y bounds must be ordered");
@@ -442,18 +442,15 @@ impl PcbConvexBoardOutline {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation = match compare_reals_with_policy(
-            &signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default(),
-        )
-        .value()
-        {
-            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-            None => return Err(BoardContourError::UnknownOrientation),
-        };
+        let orientation =
+            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
+                .value()
+            {
+                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+                None => return Err(BoardContourError::UnknownOrientation),
+            };
         validate_strict_convexity(&vertices, orientation)?;
         let refs = vertices
             .iter()
@@ -511,18 +508,15 @@ impl PcbOrthogonalBoardOutline {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation = match compare_reals_with_policy(
-            &signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default(),
-        )
-        .value()
-        {
-            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-            None => return Err(BoardContourError::UnknownOrientation),
-        };
+        let orientation =
+            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
+                .value()
+            {
+                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+                None => return Err(BoardContourError::UnknownOrientation),
+            };
         validate_orthogonal_edges(&vertices)?;
         validate_simple_polygon_edges(&vertices)?;
         let refs = vertices
@@ -685,9 +679,9 @@ impl PcbRoundedRectPad {
         };
         let doubled_radius = corner_radius.clone() * Real::from(2);
         let radius_within_width =
-            compare_reals_with_policy(&doubled_radius, &width, PredicatePolicy::default()).value();
+            compare_reals_with_policy(&doubled_radius, &width, PredicatePolicy).value();
         let radius_within_height =
-            compare_reals_with_policy(&doubled_radius, &height, PredicatePolicy::default()).value();
+            compare_reals_with_policy(&doubled_radius, &height, PredicatePolicy).value();
         if !matches!(radius_within_width, Some(Ordering::Less | Ordering::Equal))
             || !matches!(radius_within_height, Some(Ordering::Less | Ordering::Equal))
         {
@@ -2162,7 +2156,7 @@ fn validate_strict_convexity(
             BoardContourOrientation::CounterClockwise => Ordering::Greater,
             BoardContourOrientation::Clockwise => Ordering::Less,
         };
-        match compare_reals_with_policy(&cross, &Real::zero(), PredicatePolicy::default()).value() {
+        match compare_reals_with_policy(&cross, &Real::zero(), PredicatePolicy).value() {
             Some(Ordering::Equal) => return Err(BoardContourError::CollinearEdge),
             Some(ordering) if ordering == expected => {}
             Some(_) => return Err(BoardContourError::NonConvex),
@@ -2176,11 +2170,11 @@ fn validate_orthogonal_edges(vertices: &[Point2]) -> Result<(), BoardContourErro
     for index in 0..vertices.len() {
         let start = &vertices[index];
         let end = &vertices[(index + 1) % vertices.len()];
-        let same_x = compare_reals_with_policy(&start.x, &end.x, PredicatePolicy::default())
+        let same_x = compare_reals_with_policy(&start.x, &end.x, PredicatePolicy)
             .value()
             .ok_or(BoardContourError::UnknownOrientation)?
             == Ordering::Equal;
-        let same_y = compare_reals_with_policy(&start.y, &end.y, PredicatePolicy::default())
+        let same_y = compare_reals_with_policy(&start.y, &end.y, PredicatePolicy)
             .value()
             .ok_or(BoardContourError::UnknownOrientation)?
             == Ordering::Equal;

@@ -74,18 +74,15 @@ impl PcbOrthogonalPad {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation = match compare_reals_with_policy(
-            &signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default(),
-        )
-        .value()
-        {
-            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-            None => return Err(BoardContourError::UnknownOrientation),
-        };
+        let orientation =
+            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
+                .value()
+            {
+                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+                None => return Err(BoardContourError::UnknownOrientation),
+            };
         validate_orthogonal_edges(&vertices)?;
         validate_simple_polygon(&vertices)?;
         let refs = vertices

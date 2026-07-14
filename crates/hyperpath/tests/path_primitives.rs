@@ -129,14 +129,14 @@ fn pq(x_num: i64, x_den: i64, y_num: i64, y_den: i64) -> Point2 {
 fn assert_interval_contains(value: Real, lower: &Real, upper: &Real) {
     assert!(
         matches!(
-            compare_reals_with_policy(lower, &value, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(lower, &value, PredicatePolicy).value(),
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
         ),
         "lower bound should be <= expected value"
     );
     assert!(
         matches!(
-            compare_reals_with_policy(&value, upper, PredicatePolicy::default()).value(),
+            compare_reals_with_policy(&value, upper, PredicatePolicy).value(),
             Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
         ),
         "expected value should be <= upper bound"
@@ -158,7 +158,7 @@ fn line_segment_caches_axis_and_exact_length_facts() {
     assert_eq!(segment.facts().axis_aligned, Some(Axis::X));
     assert_eq!(segment.facts().known_degenerate, Some(false));
     assert!(segment.facts().endpoint_exact.all_exact_rational);
-    assert_eq!(segment.axis_length(PredicatePolicy::default()), Some(r(9)));
+    assert_eq!(segment.axis_length(PredicatePolicy), Some(r(9)));
     assert_eq!(segment.length_squared(), r(81));
     assert_eq!(segment.direction_vector(), p(9, 0));
     assert_eq!(segment.start_tangent(), p(9, 0));
@@ -236,11 +236,11 @@ fn segment_parameter_order_respects_reversed_direction() {
     let segment = LinePathSegment::new(p(10, 0), p(0, 0));
 
     assert_eq!(
-        segment.compare_points_along(&p(8, 0), &p(2, 0), PredicatePolicy::default()),
+        segment.compare_points_along(&p(8, 0), &p(2, 0), PredicatePolicy),
         SegmentParameterOrder::Before
     );
     assert_eq!(
-        segment.compare_points_along(&p(2, 0), &p(8, 0), PredicatePolicy::default()),
+        segment.compare_points_along(&p(2, 0), &p(8, 0), PredicatePolicy),
         SegmentParameterOrder::After
     );
 }
@@ -254,7 +254,7 @@ fn line_arrangement_splits_crossings_touches_and_overlaps() {
 
     let report = arrange_line_segments(
         &[horizontal, vertical, endpoint_touch, overlap],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -311,8 +311,7 @@ fn line_arrangement_cell_graph_schedules_square_faces() {
     let top = LinePathSegment::new(p(4, 4), p(0, 4));
     let left = LinePathSegment::new(p(0, 4), p(0, 0));
 
-    let report =
-        arrange_line_segments(&[bottom, right, top, left], PredicatePolicy::default()).unwrap();
+    let report = arrange_line_segments(&[bottom, right, top, left], PredicatePolicy).unwrap();
 
     assert_eq!(report.fragments.len(), 4);
     assert_eq!(report.cell_graph.vertices.len(), 4);
@@ -342,11 +341,8 @@ fn line_arrangement_cell_graph_splits_square_by_diagonal() {
     let left = LinePathSegment::new(p(0, 4), p(0, 0));
     let diagonal = LinePathSegment::new(p(0, 0), p(4, 4));
 
-    let report = arrange_line_segments(
-        &[bottom, right, top, left, diagonal],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments(&[bottom, right, top, left, diagonal], PredicatePolicy).unwrap();
 
     let bounded_faces = report
         .cell_graph
@@ -371,11 +367,8 @@ fn line_arrangement_cell_graph_splits_square_by_diagonal() {
 #[test]
 fn line_arrangement_rejects_degenerate_segment() {
     assert_eq!(
-        arrange_line_segments(
-            &[LinePathSegment::new(p(1, 1), p(1, 1))],
-            PredicatePolicy::default(),
-        )
-        .unwrap_err(),
+        arrange_line_segments(&[LinePathSegment::new(p(1, 1), p(1, 1))], PredicatePolicy,)
+            .unwrap_err(),
         LineArrangementError::DegenerateSegment { segment: 0 }
     );
 }
@@ -385,7 +378,7 @@ fn line_arrangement_handles_rational_proper_crossing() {
     let shallow = LinePathSegment::new(p(0, 0), p(6, 2));
     let steep = LinePathSegment::new(p(0, 2), p(6, 0));
 
-    let report = arrange_line_segments(&[shallow, steep], PredicatePolicy::default()).unwrap();
+    let report = arrange_line_segments(&[shallow, steep], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -404,12 +397,9 @@ fn line_arc_arrangement_splits_axis_lines_at_arc_events() {
     let tangent = LinePathSegment::new(p(-5, 5), p(5, 5));
     let arc = ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_line_segments_with_explicit_arcs(
-        &[line, tangent],
-        &[arc],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_explicit_arcs(&[line, tangent], &[arc], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(report.events.len(), 2);
     assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
@@ -462,8 +452,7 @@ fn line_arc_cell_graph_schedules_semicircle_face_with_exact_green_area() {
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
 
     let report =
-        arrange_line_segments_with_explicit_arcs(&[diameter], &[upper], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_explicit_arcs(&[diameter], &[upper], PredicatePolicy).unwrap();
 
     assert_eq!(report.line_fragments.len(), 1);
     assert_eq!(report.arc_fragments.len(), 1);
@@ -486,9 +475,7 @@ fn line_arc_cell_graph_keeps_full_circle_branch_cut_faces() {
     let circle =
         ExplicitCircularArc::new(p(2, -3), r(4), p(6, -3), p(6, -3), ArcDirection::Ccw).unwrap();
 
-    let report =
-        arrange_line_segments_with_explicit_arcs(&[], &[circle], PredicatePolicy::default())
-            .unwrap();
+    let report = arrange_line_segments_with_explicit_arcs(&[], &[circle], PredicatePolicy).unwrap();
 
     assert_eq!(report.line_fragments.len(), 0);
     assert_eq!(report.arc_fragments.len(), 1);
@@ -512,8 +499,7 @@ fn line_arc_arrangement_splits_general_lines_at_arc_events() {
     let arc = ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
 
     let report =
-        arrange_line_segments_with_explicit_arcs(&[diagonal], &[arc], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_explicit_arcs(&[diagonal], &[arc], PredicatePolicy).unwrap();
 
     assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
     assert_eq!(report.events[0].points, vec![p(-3, -4), p(3, 4)]);
@@ -540,7 +526,7 @@ fn explicit_arc_arrangement_splits_different_circle_secants() {
     let right =
         ExplicitCircularArc::new(p(3, 0), r(5), p(3, 5), p(3, -5), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_explicit_arcs(&[left, right], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[left, right], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -570,7 +556,7 @@ fn explicit_arc_arrangement_promotes_same_circle_overlap_boundaries() {
     let top_left =
         ExplicitCircularArc::new(p(0, 0), r(5), p(0, 5), p(-5, 0), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_explicit_arcs(&[top_half, top_left], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[top_half, top_left], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -603,7 +589,7 @@ fn explicit_arc_arrangement_uses_full_circle_start_as_branch_cut() {
     let top_half =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_explicit_arcs(&[full, top_half], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[full, top_half], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -631,7 +617,7 @@ fn explicit_arc_cell_graph_schedules_two_semicircle_closed_curve() {
     let lower =
         ExplicitCircularArc::new(p(0, 0), r(5), p(-5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_explicit_arcs(&[upper, lower], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[upper, lower], PredicatePolicy).unwrap();
 
     assert!(matches!(
         report.events[0].class,
@@ -659,7 +645,7 @@ fn explicit_arc_cell_graph_schedules_single_full_circle() {
     let full =
         ExplicitCircularArc::new(p(-7, 2), r(3), p(-4, 2), p(-4, 2), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_explicit_arcs(&[full], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[full], PredicatePolicy).unwrap();
 
     assert_eq!(report.fragments.len(), 1);
     assert_eq!(report.cell_graph.vertices.len(), 1);
@@ -683,7 +669,7 @@ fn explicit_arc_arrangement_orders_full_circle_secant_points_from_branch() {
     let right =
         ExplicitCircularArc::new(p(3, 0), r(5), p(3, 5), p(3, -5), ArcDirection::Ccw).unwrap();
 
-    let report = arrange_explicit_arcs(&[full_left, right], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[full_left, right], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -704,8 +690,7 @@ fn quadratic_bezier_arrangement_splits_at_rational_events() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
     let half = BezierParameter::new(1, 2).unwrap();
 
-    let report =
-        arrange_quadratic_beziers(&[curve], &[vec![half]], PredicatePolicy::default()).unwrap();
+    let report = arrange_quadratic_beziers(&[curve], &[vec![half]], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.breakpoints[0]
@@ -740,9 +725,9 @@ fn cubic_bezier_arrangement_sorts_and_dedups_parameters() {
     let two_thirds = BezierParameter::new(2, 3).unwrap();
 
     let report = arrange_cubic_beziers(
-        &[curve.clone()],
+        std::slice::from_ref(&curve),
         &[vec![two_thirds, one_third, one_third]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -767,12 +752,8 @@ fn quadratic_bezier_arrangement_cell_graph_schedules_closed_loop() {
     let upper = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
     let lower = QuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0));
 
-    let report = arrange_quadratic_beziers(
-        &[upper, lower],
-        &[vec![], vec![]],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_quadratic_beziers(&[upper, lower], &[vec![], vec![]], PredicatePolicy).unwrap();
 
     assert_eq!(report.fragments.len(), 2);
     assert_eq!(report.cell_graph.vertices.len(), 2);
@@ -784,7 +765,7 @@ fn quadratic_bezier_arrangement_cell_graph_schedules_closed_loop() {
             && compare_reals_with_policy(
                 &face.signed_area_twice,
                 &Real::new(Rational::new(128) / Rational::new(3)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal)
@@ -794,7 +775,7 @@ fn quadratic_bezier_arrangement_cell_graph_schedules_closed_loop() {
             && compare_reals_with_policy(
                 &face.signed_area_twice,
                 &Real::new(-(Rational::new(128) / Rational::new(3))),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal)
@@ -823,7 +804,7 @@ fn quadratic_bezier_arrangement_reports_nested_same_orientation_hole_role() {
     let report = arrange_quadratic_beziers(
         &[outer_upper, outer_lower, inner_upper, inner_lower],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -854,12 +835,8 @@ fn cubic_bezier_arrangement_cell_graph_schedules_closed_loop() {
     let upper = CubicBezier::new(p(0, 0), p(0, 4), p(8, 4), p(8, 0));
     let lower = CubicBezier::new(p(8, 0), p(8, -4), p(0, -4), p(0, 0));
 
-    let report = arrange_cubic_beziers(
-        &[upper, lower],
-        &[vec![], vec![]],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_cubic_beziers(&[upper, lower], &[vec![], vec![]], PredicatePolicy).unwrap();
 
     assert_eq!(report.fragments.len(), 2);
     assert_eq!(report.cell_graph.vertices.len(), 2);
@@ -871,7 +848,7 @@ fn cubic_bezier_arrangement_cell_graph_schedules_closed_loop() {
             && compare_reals_with_policy(
                 &face.signed_area_twice,
                 &Real::new(Rational::new(384) / Rational::new(5)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal)
@@ -881,7 +858,7 @@ fn cubic_bezier_arrangement_cell_graph_schedules_closed_loop() {
             && compare_reals_with_policy(
                 &face.signed_area_twice,
                 &Real::new(-(Rational::new(384) / Rational::new(5))),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal)
@@ -898,7 +875,7 @@ fn cubic_bezier_arrangement_reports_nested_true_cubic_hole_role() {
     let report = arrange_cubic_beziers(
         &[outer_upper, outer_lower, inner_upper, inner_lower],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -916,8 +893,7 @@ fn rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
     let half = BezierParameter::new(1, 2).unwrap();
 
     let report =
-        arrange_rational_quadratic_beziers(&[curve], &[vec![half]], PredicatePolicy::default())
-            .unwrap();
+        arrange_rational_quadratic_beziers(&[curve], &[vec![half]], PredicatePolicy).unwrap();
 
     assert_eq!(report.breakpoints[0].len(), 3);
     assert_eq!(report.fragments.len(), 2);
@@ -952,7 +928,7 @@ fn rational_quadratic_bezier_arrangement_open_split_chain_has_no_bridge_faces() 
             BezierParameter::new(1, 2).unwrap(),
             BezierParameter::new(3, 4).unwrap(),
         ]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -968,12 +944,9 @@ fn rational_quadratic_bezier_arrangement_cell_graph_schedules_closed_conic_loop(
     let upper = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
     let lower = RationalQuadraticBezier::new(p(8, 0), p(4, -8), p(0, 0), r(2)).unwrap();
 
-    let report = arrange_rational_quadratic_beziers(
-        &[upper, lower],
-        &[vec![], vec![]],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_rational_quadratic_beziers(&[upper, lower], &[vec![], vec![]], PredicatePolicy)
+            .unwrap();
 
     assert!(
         report
@@ -993,22 +966,14 @@ fn rational_quadratic_bezier_arrangement_cell_graph_schedules_closed_conic_loop(
     assert_eq!(report.cell_graph.faces.len(), 2);
     assert!(report.cell_graph.faces.iter().any(|face| {
         face.class == CurveArrangementCellFaceClass::Bounded
-            && compare_reals_with_policy(
-                &face.signed_area_twice,
-                &Real::zero(),
-                PredicatePolicy::default(),
-            )
-            .value()
+            && compare_reals_with_policy(&face.signed_area_twice, &Real::zero(), PredicatePolicy)
+                .value()
                 == Some(std::cmp::Ordering::Greater)
     }));
     assert!(report.cell_graph.faces.iter().any(|face| {
         face.class == CurveArrangementCellFaceClass::Exterior
-            && compare_reals_with_policy(
-                &face.signed_area_twice,
-                &Real::zero(),
-                PredicatePolicy::default(),
-            )
-            .value()
+            && compare_reals_with_policy(&face.signed_area_twice, &Real::zero(), PredicatePolicy)
+                .value()
                 == Some(std::cmp::Ordering::Less)
     }));
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
@@ -1028,7 +993,7 @@ fn rational_quadratic_bezier_arrangement_reports_nested_same_orientation_hole_ro
     let report = arrange_rational_quadratic_beziers(
         &[outer_upper, outer_lower, inner_upper, inner_lower],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -1047,7 +1012,7 @@ fn explicit_arc_loop_role_reports_isolated_material_role() {
     let lower =
         ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(0, 0), ArcDirection::Cw).unwrap();
 
-    let report = arrange_explicit_arcs(&[upper, lower], PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&[upper, lower], PredicatePolicy).unwrap();
 
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
         role.class == CurveArrangementLoopRoleClass::Material
@@ -1069,7 +1034,7 @@ fn explicit_arc_loop_role_reports_nested_same_orientation_hole_role() {
 
     let report = arrange_explicit_arcs(
         &[outer_upper, outer_lower, inner_upper, inner_lower],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -1106,7 +1071,7 @@ fn explicit_arc_loop_role_reports_non_cardinal_representative_hole_role() {
         inner[3].clone(),
     ];
 
-    let report = arrange_explicit_arcs(&arcs, PredicatePolicy::default()).unwrap();
+    let report = arrange_explicit_arcs(&arcs, PredicatePolicy).unwrap();
 
     assert!(report.cell_graph.loop_roles.iter().any(|role| {
         role.class == CurveArrangementLoopRoleClass::Hole
@@ -1141,7 +1106,7 @@ fn explicit_arc_loop_role_ignores_disjoint_tangent_ray_contact() {
 
     let report = arrange_explicit_arcs(
         &[left_upper, left_lower, right_upper, right_lower],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(
@@ -1173,7 +1138,7 @@ fn bezier_loop_roles_ignore_disjoint_tangent_ray_contacts() {
             QuadraticBezier::new(p(5, 1), p(4, -1), p(3, 1)),
         ],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(
@@ -1195,7 +1160,7 @@ fn bezier_loop_roles_ignore_disjoint_tangent_ray_contacts() {
             CubicBezier::new(p(5, 1), pq(13, 3, -1, 3), pq(11, 3, -1, 3), p(3, 1)),
         ],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(
@@ -1217,7 +1182,7 @@ fn bezier_loop_roles_ignore_disjoint_tangent_ray_contacts() {
             RationalQuadraticBezier::new(p(5, 1), pq(4, 1, -1, 2), p(3, 1), r(2)).unwrap(),
         ],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(
@@ -1252,7 +1217,7 @@ fn cubic_loop_roles_count_triple_ray_roots_as_crossings() {
     let report = arrange_cubic_beziers(
         &[left_upper, left_lower, triple_crossing, right_return],
         &[vec![], vec![], vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -1276,8 +1241,7 @@ fn curve_cell_graph_merges_exact_duplicate_curved_spans() {
         ExplicitCircularArc::new(p(4, 0), r(4), p(0, 0), p(8, 0), ArcDirection::Ccw).unwrap();
     let arc_reverse =
         ExplicitCircularArc::new(p(4, 0), r(4), p(8, 0), p(0, 0), ArcDirection::Cw).unwrap();
-    let arc_report =
-        arrange_explicit_arcs(&[arc_forward, arc_reverse], PredicatePolicy::default()).unwrap();
+    let arc_report = arrange_explicit_arcs(&[arc_forward, arc_reverse], PredicatePolicy).unwrap();
     assert_eq!(arc_report.cell_graph.edges.len(), 1);
     assert_eq!(arc_report.cell_graph.edges[0].fragments.len(), 2);
 
@@ -1286,7 +1250,7 @@ fn curve_cell_graph_merges_exact_duplicate_curved_spans() {
     let quadratic_report = arrange_quadratic_beziers(
         &[quadratic_forward, quadratic_reverse],
         &[vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(quadratic_report.cell_graph.edges.len(), 1);
@@ -1297,7 +1261,7 @@ fn curve_cell_graph_merges_exact_duplicate_curved_spans() {
     let cubic_report = arrange_cubic_beziers(
         &[cubic_forward, cubic_reverse],
         &[vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(cubic_report.cell_graph.edges.len(), 1);
@@ -1308,7 +1272,7 @@ fn curve_cell_graph_merges_exact_duplicate_curved_spans() {
     let conic_report = arrange_rational_quadratic_beziers(
         &[conic_forward, conic_reverse],
         &[vec![], vec![]],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(conic_report.cell_graph.edges.len(), 1);
@@ -1320,8 +1284,7 @@ fn line_quadratic_bezier_intersection_finds_endpoint_events() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
     let line = LinePathSegment::new(p(0, 0), p(8, 0));
 
-    let report =
-        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -1339,8 +1302,7 @@ fn line_quadratic_bezier_intersection_classifies_tangent_event() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
     let line = LinePathSegment::new(p(0, 2), p(8, 2));
 
-    let report =
-        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Tangent);
     assert_eq!(report.intersections.len(), 1);
@@ -1353,8 +1315,7 @@ fn line_quadratic_bezier_intersection_clips_to_segment_bounds() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
     let line = LinePathSegment::new(p(-1, 0), p(1, 0));
 
-    let report =
-        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineQuadraticBezierIntersectionClass::OnePoint);
     assert_eq!(report.intersections.len(), 1);
@@ -1367,8 +1328,7 @@ fn line_quadratic_bezier_intersection_promotes_degree_elevated_overlap() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
-    let report =
-        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Overlap);
     assert_eq!(report.intersections.len(), 2);
@@ -1384,13 +1344,13 @@ fn line_quadratic_bezier_intersection_solves_general_diagonal_secant() {
     let line = LinePathSegment::new(p(0, 1), p(8, 5));
 
     let legacy_report =
-        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+        intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy);
     assert_eq!(
         legacy_report.class,
         LineQuadraticBezierIntersectionClass::Unknown
     );
 
-    let report = intersect_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -1408,7 +1368,7 @@ fn line_quadratic_bezier_intersection_solves_general_diagonal_tangent() {
     let curve = QuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0));
     let line = LinePathSegment::new(pq(0, 1, 1, 2), pq(3, 1, 7, 2));
 
-    let report = intersect_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Tangent);
     assert_eq!(report.intersections.len(), 1);
@@ -1421,7 +1381,7 @@ fn line_quadratic_bezier_intersection_promotes_general_nonlinear_overlap() {
     let curve = QuadraticBezier::new(p(0, 0), p(1, 1), p(3, 3));
     let line = LinePathSegment::new(pq(9, 16, 9, 16), pq(33, 16, 33, 16));
 
-    let report = intersect_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineQuadraticBezierIntersectionClass::Overlap);
     assert_eq!(report.intersections.len(), 2);
@@ -1437,8 +1397,7 @@ fn line_quadratic_bezier_arrangement_splits_certified_secant_roots() {
     let line = LinePathSegment::new(p(0, 3), p(8, 3));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1471,8 +1430,7 @@ fn line_quadratic_bezier_arrangement_splits_general_diagonal_secant_roots() {
     let line = LinePathSegment::new(p(0, 1), p(8, 5));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1497,12 +1455,8 @@ fn line_quadratic_bezier_cell_graph_schedules_parabolic_face() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
     let chord = LinePathSegment::new(p(0, 0), p(8, 0));
 
-    let report = arrange_line_segments_with_quadratic_beziers(
-        &[chord],
-        &[curve],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_quadratic_beziers(&[chord], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1529,8 +1483,7 @@ fn line_quadratic_bezier_arrangement_records_unrepresented_secant_unknown() {
     let line = LinePathSegment::new(p(0, 1), p(8, 1));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1546,8 +1499,7 @@ fn line_quadratic_bezier_arrangement_splits_tangent_curve_once() {
     let line = LinePathSegment::new(p(0, 2), p(8, 2));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1567,8 +1519,7 @@ fn line_quadratic_bezier_arrangement_splits_degree_elevated_overlap() {
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1588,8 +1539,7 @@ fn line_quadratic_bezier_arrangement_promotes_monotone_nonlinear_overlap() {
     let line = LinePathSegment::new(pq(9, 16, 0, 1), pq(33, 16, 0, 1));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1616,8 +1566,7 @@ fn line_quadratic_bezier_arrangement_promotes_general_nonlinear_overlap() {
     let line = LinePathSegment::new(pq(9, 16, 9, 16), pq(33, 16, 33, 16));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1646,8 +1595,7 @@ fn line_quadratic_bezier_arrangement_keeps_unordered_algebraic_overlap_unknown()
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1663,8 +1611,7 @@ fn line_quadratic_bezier_arrangement_keeps_nonmonotone_line_image_overlap_unknow
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1680,8 +1627,7 @@ fn line_quadratic_bezier_arrangement_keeps_general_nonmonotone_overlap_unknown()
     let line = LinePathSegment::new(p(1, 1), p(3, 3));
 
     let report =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -1697,9 +1643,8 @@ fn line_quadratic_bezier_arrangement_rejects_degenerate_line_order() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0));
     let line = LinePathSegment::new(p(2, 3), p(2, 3));
 
-    let err =
-        arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap_err();
+    let err = arrange_line_segments_with_quadratic_beziers(&[line], &[curve], PredicatePolicy)
+        .unwrap_err();
 
     assert_eq!(
         err,
@@ -1712,8 +1657,7 @@ fn line_cubic_bezier_intersection_finds_quadratic_secant_events() {
     let curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
     let line = LinePathSegment::new(pq(0, 1, 9, 4), pq(8, 1, 9, 4));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::TwoPoints);
     assert_eq!(report.intersections.len(), 2);
@@ -1728,11 +1672,8 @@ fn line_cubic_bezier_intersection_classifies_quadratic_tangent() {
     let tangent_curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
     let tangent_line = LinePathSegment::new(p(0, 3), p(8, 3));
 
-    let report = intersect_axis_aligned_line_cubic_bezier(
-        &tangent_line,
-        &tangent_curve,
-        PredicatePolicy::default(),
-    );
+    let report =
+        intersect_axis_aligned_line_cubic_bezier(&tangent_line, &tangent_curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Tangent);
     assert_eq!(report.intersections.len(), 1);
@@ -1745,14 +1686,13 @@ fn line_cubic_bezier_intersection_solves_general_diagonal_quadratic_secant() {
     let curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
     let line = LinePathSegment::new(p(0, 1), p(8, 5));
 
-    let legacy_report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let legacy_report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
     assert_eq!(
         legacy_report.class,
         LineCubicBezierIntersectionClass::Unknown
     );
 
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::TwoPoints);
     assert_eq!(report.intersections.len(), 2);
@@ -1767,7 +1707,7 @@ fn line_cubic_bezier_intersection_solves_general_diagonal_quadratic_tangent() {
     let curve = CubicBezier::new(p(0, 0), pq(8, 3, 4, 1), pq(16, 3, 4, 1), p(8, 0));
     let line = LinePathSegment::new(pq(0, 1, 1, 3), pq(3, 1, 10, 3));
 
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Tangent);
     assert_eq!(report.intersections.len(), 1);
@@ -1780,7 +1720,7 @@ fn line_cubic_bezier_intersection_keeps_general_collinear_overlap_unknown() {
     let curve = CubicBezier::new(p(0, 0), p(1, 1), p(7, 7), p(8, 8));
     let line = LinePathSegment::new(p(2, 2), p(6, 6));
 
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
@@ -1793,7 +1733,7 @@ fn line_cubic_bezier_intersection_promotes_general_degree_elevated_overlap() {
     let curve = CubicBezier::new(p(0, 0), pq(8, 3, 8, 3), pq(16, 3, 16, 3), p(8, 8));
     let line = LinePathSegment::new(p(2, 2), p(6, 6));
 
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Overlap);
     assert_eq!(report.intersections.len(), 2);
@@ -1810,7 +1750,7 @@ fn line_cubic_bezier_intersection_promotes_general_nonlinear_endpoint_overlap() 
     let curve = CubicBezier::new(p(0, 0), p(1, 1), p(7, 7), p(8, 8));
     let line = LinePathSegment::new(p(-1, -1), p(9, 9));
 
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Overlap);
     assert_eq!(report.intersections.len(), 2);
@@ -1827,7 +1767,7 @@ fn line_cubic_bezier_intersection_keeps_general_nonmonotone_overlap_unknown() {
     let curve = CubicBezier::new(p(0, 0), p(8, 8), p(0, 0), p(0, 0));
     let line = LinePathSegment::new(p(1, 1), p(3, 3));
 
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
@@ -1840,8 +1780,7 @@ fn line_cubic_bezier_intersection_promotes_degree_elevated_overlap() {
     let curve = CubicBezier::new(p(0, 0), pq(8, 3, 0, 1), pq(16, 3, 0, 1), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Overlap);
     assert_eq!(report.intersections.len(), 2);
@@ -1856,8 +1795,7 @@ fn line_cubic_bezier_intersection_promotes_nonlinear_same_support_endpoint_overl
     let curve = CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
     let line = LinePathSegment::new(p(-1, 0), p(9, 0));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Overlap);
     assert_eq!(report.intersections.len(), 2);
@@ -1885,8 +1823,7 @@ fn line_cubic_bezier_intersection_retains_nonlinear_same_support_inverse_roots()
     let curve = CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
@@ -1930,8 +1867,7 @@ fn line_cubic_bezier_arrangement_retains_same_support_overlap_boundaries() {
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2051,17 +1987,13 @@ fn line_cubic_bezier_arrangement_retains_same_support_overlap_boundaries() {
             .algebraic_overlap_endpoint_envelopes
             .iter()
             .all(|envelope| {
-                compare_reals_with_policy(
-                    &envelope.x_lower,
-                    &envelope.x_upper,
-                    PredicatePolicy::default(),
-                )
-                .value()
-                .is_some()
+                compare_reals_with_policy(&envelope.x_lower, &envelope.x_upper, PredicatePolicy)
+                    .value()
+                    .is_some()
                     && compare_reals_with_policy(
                         &envelope.y_lower,
                         &envelope.y_upper,
-                        PredicatePolicy::default(),
+                        PredicatePolicy,
                     )
                     .value()
                     .is_some()
@@ -2095,8 +2027,7 @@ fn line_cubic_bezier_arrangement_splits_general_degree_elevated_overlap() {
     let line = LinePathSegment::new(p(2, 2), p(6, 6));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2118,8 +2049,7 @@ fn line_cubic_bezier_arrangement_promotes_exact_overlap_roots() {
     let line = LinePathSegment::new(p(0, 0), pq(9, 2, 0, 1));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(report.support_overlaps.len(), 1);
     assert!(
@@ -2181,8 +2111,7 @@ fn line_cubic_bezier_arrangement_splits_certified_quadratic_events() {
     let line = LinePathSegment::new(pq(0, 1, 9, 4), pq(8, 1, 9, 4));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2208,8 +2137,7 @@ fn line_cubic_bezier_arrangement_splits_general_diagonal_quadratic_events() {
     let line = LinePathSegment::new(p(0, 1), p(8, 5));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2235,8 +2163,7 @@ fn line_cubic_bezier_cell_graph_schedules_cubic_arch_face() {
     let chord = LinePathSegment::new(p(0, 0), p(8, 0));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[chord], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[chord], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2263,8 +2190,7 @@ fn line_cubic_bezier_arrangement_promotes_exact_true_cubic_roots() {
     let line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2347,8 +2273,7 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
     let line = LinePathSegment::new(p(0, 0), p(1, 0));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2428,7 +2353,7 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
             compare_reals_with_policy(
                 &span[0].parameter_upper,
                 &span[1].parameter_lower,
-                PredicatePolicy::default()
+                PredicatePolicy
             )
             .value()
             .is_some()
@@ -2443,20 +2368,12 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
             .all(|(index, envelope)| envelope.span == index)
     );
     assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
-        compare_reals_with_policy(
-            &envelope.x_lower,
-            &envelope.x_upper,
-            PredicatePolicy::default(),
-        )
-        .value()
-        .is_some()
-            && compare_reals_with_policy(
-                &envelope.y_lower,
-                &envelope.y_upper,
-                PredicatePolicy::default(),
-            )
+        compare_reals_with_policy(&envelope.x_lower, &envelope.x_upper, PredicatePolicy)
             .value()
             .is_some()
+            && compare_reals_with_policy(&envelope.y_lower, &envelope.y_upper, PredicatePolicy)
+                .value()
+                .is_some()
     }));
     let positive_arch_span = report
         .algebraic_source_spans
@@ -2476,7 +2393,7 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
         compare_reals_with_policy(
             &positive_arch_envelope.y_upper,
             &rq(1, 200),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .value(),
         Some(std::cmp::Ordering::Greater)
@@ -2499,7 +2416,7 @@ fn line_cubic_bezier_arrangement_orders_multiple_algebraic_breakpoints() {
         compare_reals_with_policy(
             &negative_arch_envelope.y_lower,
             &rq(-1, 200),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .value(),
         Some(std::cmp::Ordering::Less)
@@ -2535,12 +2452,9 @@ fn line_cubic_bezier_arrangement_blocks_duplicate_algebraic_curve_sequence() {
     let line0 = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
     let line1 = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
 
-    let report = arrange_line_segments_with_cubic_beziers(
-        &[line0, line1],
-        &[curve],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_cubic_beziers(&[line0, line1], &[curve], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(report.algebraic_breakpoints.len(), 2);
     assert_eq!(report.algebraic_breakpoint_orders.len(), 1);
@@ -2579,13 +2493,9 @@ fn line_cubic_bezier_arrangement_blocks_duplicate_algebraic_curve_sequence() {
     );
     assert_eq!(report.algebraic_endpoint_envelopes.len(), 4);
     assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
-        compare_reals_with_policy(
-            &envelope.x_lower,
-            &envelope.x_upper,
-            PredicatePolicy::default(),
-        )
-        .value()
-        .is_some()
+        compare_reals_with_policy(&envelope.x_lower, &envelope.x_upper, PredicatePolicy)
+            .value()
+            .is_some()
     }));
     assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
         report
@@ -2606,8 +2516,7 @@ fn line_cubic_bezier_arrangement_rejects_algebraic_breakpoint_outside_line_span(
     let line = LinePathSegment::new(pq(3, 4, 1, 8), pq(1, 1, 1, 8));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2632,8 +2541,7 @@ fn line_cubic_bezier_intersection_retains_true_cubic_algebraic_support_roots() {
     let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line = LinePathSegment::new(pq(0, 1, 1, 8), pq(1, 1, 1, 8));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
@@ -2673,8 +2581,7 @@ fn line_cubic_bezier_intersection_marks_outside_algebraic_support_roots() {
     let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line = LinePathSegment::new(p(0, 8), p(1, 8));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
@@ -2694,8 +2601,7 @@ fn line_cubic_bezier_intersection_keeps_algebraic_point_image_without_topology_p
     let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line = LinePathSegment::new(pq(0, 1, 1, 2), pq(1, 1, 1, 2));
 
-    let report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(report.intersections.is_empty());
@@ -2727,9 +2633,8 @@ fn line_cubic_bezier_intersection_retains_general_true_cubic_algebraic_support_r
     let curve = CubicBezier::new(p(0, 0), pq(1, 3, 0, 1), pq(2, 3, 0, 1), p(1, 1));
     let line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
 
-    let axis_report =
-        intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
-    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy::default());
+    let axis_report = intersect_axis_aligned_line_cubic_bezier(&line, &curve, PredicatePolicy);
+    let report = intersect_line_cubic_bezier(&line, &curve, PredicatePolicy);
 
     assert_eq!(axis_report.class, LineCubicBezierIntersectionClass::Unknown);
     assert!(axis_report.algebraic_support_roots.is_empty());
@@ -2755,8 +2660,7 @@ fn line_cubic_bezier_arrangement_retains_general_algebraic_breakpoints() {
     let line = LinePathSegment::new(pq(0, 1, -3, 8), pq(1, 1, 5, 8));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2783,8 +2687,7 @@ fn line_cubic_bezier_arrangement_splits_degree_elevated_overlap() {
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
     let report =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2802,8 +2705,7 @@ fn line_cubic_bezier_arrangement_rejects_degenerate_line_order() {
     let line = LinePathSegment::new(p(2, 3), p(2, 3));
 
     let err =
-        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy::default())
-            .unwrap_err();
+        arrange_line_segments_with_cubic_beziers(&[line], &[curve], PredicatePolicy).unwrap_err();
 
     assert_eq!(
         err,
@@ -2816,11 +2718,8 @@ fn line_rational_quadratic_bezier_intersection_finds_exact_conic_secants() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 3), p(8, 3));
 
-    let report = intersect_axis_aligned_line_rational_quadratic_bezier(
-        &line,
-        &conic,
-        PredicatePolicy::default(),
-    );
+    let report =
+        intersect_axis_aligned_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -2838,11 +2737,8 @@ fn line_rational_quadratic_bezier_intersection_classifies_tangent() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 2), p(8, 2));
 
-    let report = intersect_axis_aligned_line_rational_quadratic_bezier(
-        &line,
-        &conic,
-        PredicatePolicy::default(),
-    );
+    let report =
+        intersect_axis_aligned_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -2858,18 +2754,14 @@ fn line_rational_quadratic_bezier_intersection_solves_general_diagonal_secant() 
     let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 1), p(8, 5));
 
-    let legacy_report = intersect_axis_aligned_line_rational_quadratic_bezier(
-        &line,
-        &conic,
-        PredicatePolicy::default(),
-    );
+    let legacy_report =
+        intersect_axis_aligned_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
     assert_eq!(
         legacy_report.class,
         LineRationalQuadraticBezierIntersectionClass::Unknown
     );
 
-    let report =
-        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+    let report = intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -2887,8 +2779,7 @@ fn line_rational_quadratic_bezier_intersection_solves_general_diagonal_tangent()
     let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
     let line = LinePathSegment::new(pq(0, 1, 1, 2), pq(3, 1, 7, 2));
 
-    let report =
-        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+    let report = intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -2904,8 +2795,7 @@ fn line_rational_quadratic_bezier_intersection_promotes_general_collinear_overla
     let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 2), p(4, 4), r(1)).unwrap();
     let line = LinePathSegment::new(p(1, 1), p(3, 3));
 
-    let report =
-        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+    let report = intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -2924,12 +2814,9 @@ fn line_rational_quadratic_bezier_arrangement_splits_general_collinear_overlap()
     let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 2), p(4, 4), r(1)).unwrap();
     let line = LinePathSegment::new(p(1, 1), p(3, 3));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -2947,8 +2834,7 @@ fn line_rational_quadratic_bezier_intersection_keeps_general_nonmonotone_overlap
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 4), p(0, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(1, 1), p(3, 3));
 
-    let report =
-        intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy::default());
+    let report = intersect_line_rational_quadratic_bezier(&line, &conic, PredicatePolicy);
 
     assert_eq!(
         report.class,
@@ -2963,12 +2849,9 @@ fn line_rational_quadratic_bezier_arrangement_emits_homogeneous_fragments() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 3), p(8, 3));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -3037,12 +2920,9 @@ fn line_rational_quadratic_bezier_arrangement_splits_general_diagonal_secant() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(2, 4), p(4, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 1), p(8, 5));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -3067,12 +2947,9 @@ fn line_rational_quadratic_bezier_cell_graph_integrates_polynomial_weight_conic_
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(1)).unwrap();
     let chord = LinePathSegment::new(p(0, 0), p(8, 0));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[chord],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[chord], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -3102,12 +2979,9 @@ fn line_rational_quadratic_bezier_cell_graph_integrates_atan_branch_conic_area()
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), rq(1, 2)).unwrap();
     let chord = LinePathSegment::new(p(0, 0), p(8, 0));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[chord],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[chord], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -3132,21 +3006,13 @@ fn line_rational_quadratic_bezier_cell_graph_integrates_atan_branch_conic_area()
         .find(|face| face.class == CurveArrangementCellFaceClass::Exterior)
         .unwrap();
     assert_eq!(
-        compare_reals_with_policy(
-            &bounded.signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default()
-        )
-        .value(),
+        compare_reals_with_policy(&bounded.signed_area_twice, &Real::zero(), PredicatePolicy)
+            .value(),
         Some(std::cmp::Ordering::Greater)
     );
     assert_eq!(
-        compare_reals_with_policy(
-            &exterior.signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default()
-        )
-        .value(),
+        compare_reals_with_policy(&exterior.signed_area_twice, &Real::zero(), PredicatePolicy)
+            .value(),
         Some(std::cmp::Ordering::Less)
     );
 }
@@ -3156,12 +3022,9 @@ fn line_rational_quadratic_bezier_cell_graph_integrates_log_branch_conic_area() 
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 8), p(8, 0), r(2)).unwrap();
     let chord = LinePathSegment::new(p(0, 0), p(8, 0));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[chord],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[chord], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -3186,21 +3049,13 @@ fn line_rational_quadratic_bezier_cell_graph_integrates_log_branch_conic_area() 
         .find(|face| face.class == CurveArrangementCellFaceClass::Exterior)
         .unwrap();
     assert_eq!(
-        compare_reals_with_policy(
-            &bounded.signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default()
-        )
-        .value(),
+        compare_reals_with_policy(&bounded.signed_area_twice, &Real::zero(), PredicatePolicy)
+            .value(),
         Some(std::cmp::Ordering::Greater)
     );
     assert_eq!(
-        compare_reals_with_policy(
-            &exterior.signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default()
-        )
-        .value(),
+        compare_reals_with_policy(&exterior.signed_area_twice, &Real::zero(), PredicatePolicy)
+            .value(),
         Some(std::cmp::Ordering::Less)
     );
 }
@@ -3217,7 +3072,7 @@ fn line_mixed_bezier_arrangement_merges_line_breakpoints_across_curve_families()
         &[quadratic],
         &[cubic],
         &[conic],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3278,7 +3133,7 @@ fn line_mixed_bezier_arrangement_rejects_uncertified_curve_curve_overlap() {
         &[quadratic],
         &[cubic],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap_err();
 
@@ -3302,7 +3157,7 @@ fn line_mixed_bezier_arrangement_accepts_exact_bezier_extrema_box_separation() {
         &[quadratic],
         &[cubic],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3343,7 +3198,7 @@ fn line_mixed_bezier_arrangement_accepts_exact_conic_extrema_box_separation() {
         &[quadratic],
         &[],
         &[conic],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3387,7 +3242,7 @@ fn line_mixed_bezier_arrangement_accepts_certified_endpoint_corner_contact() {
         &[quadratic],
         &[cubic],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3416,7 +3271,7 @@ fn line_mixed_bezier_arrangement_accepts_certified_endpoint_corner_contact() {
         &[noncollinear_quadratic],
         &[noncollinear_cubic],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3442,7 +3297,7 @@ fn line_mixed_bezier_arrangement_rejects_endpoint_edge_box_contact() {
         &[quadratic],
         &[cubic],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap_err();
 
@@ -3460,14 +3315,9 @@ fn line_mixed_bezier_arrangement_retains_cubic_algebraic_overlap_evidence() {
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
     let cubic = CubicBezier::new(p(0, 0), p(1, 0), p(7, 0), p(8, 0));
 
-    let report = arrange_line_segments_with_mixed_beziers(
-        &[line],
-        &[],
-        &[cubic],
-        &[],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_mixed_beziers(&[line], &[], &[cubic], &[], PredicatePolicy)
+            .unwrap();
     let evidence = &report.cubic_algebraic_evidence;
 
     assert_eq!(
@@ -3527,14 +3377,9 @@ fn line_mixed_bezier_arrangement_retains_conic_algebraic_overlap_evidence() {
     let line = LinePathSegment::new(p(1, 0), p(2, 0));
     let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
 
-    let report = arrange_line_segments_with_mixed_beziers(
-        &[line],
-        &[],
-        &[],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_mixed_beziers(&[line], &[], &[], &[conic], PredicatePolicy)
+            .unwrap();
     let evidence = &report.rational_quadratic_algebraic_evidence;
 
     assert_eq!(
@@ -3583,14 +3428,9 @@ fn line_mixed_bezier_arrangement_accepts_same_source_promoted_conic_siblings() {
     let line = LinePathSegment::new(p(1, 0), p(3, 0));
     let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
 
-    let report = arrange_line_segments_with_mixed_beziers(
-        &[line],
-        &[],
-        &[],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_mixed_beziers(&[line], &[], &[], &[conic], PredicatePolicy)
+            .unwrap();
     let evidence = &report.rational_quadratic_algebraic_evidence;
 
     assert_eq!(
@@ -3648,7 +3488,7 @@ fn line_mixed_curve_arrangement_merges_arc_and_bezier_family_breakpoints() {
         &[quadratic],
         &[cubic],
         &[conic],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3686,7 +3526,7 @@ fn line_mixed_curve_arrangement_rejects_uncertified_arc_curve_overlap() {
         &[quadratic],
         &[],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap_err();
 
@@ -3706,11 +3546,11 @@ fn line_mixed_curve_arrangement_uses_arc_sweep_box_not_full_circle_box() {
     let quadratic = QuadraticBezier::new(p(2, -1), p(4, -3), p(6, -1));
 
     assert_eq!(
-        arc.classify_point(&p(4, 4), PredicatePolicy::default()),
+        arc.classify_point(&p(4, 4), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
     assert_eq!(
-        arc.classify_point(&p(4, -4), PredicatePolicy::default()),
+        arc.classify_point(&p(4, -4), PredicatePolicy),
         ExplicitArcPointClassification::OnCircleOutsideSweep
     );
 
@@ -3720,7 +3560,7 @@ fn line_mixed_curve_arrangement_uses_arc_sweep_box_not_full_circle_box() {
         &[quadratic],
         &[],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -3750,7 +3590,7 @@ fn line_mixed_curve_arrangement_keeps_full_circle_arc_box_conservative() {
         &[quadratic],
         &[],
         &[],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap_err();
 
@@ -3768,12 +3608,9 @@ fn line_rational_quadratic_bezier_arrangement_splits_monotone_support_overlap() 
     let conic = RationalQuadraticBezier::new(p(0, 0), p(4, 0), p(8, 0), r(2)).unwrap();
     let line = LinePathSegment::new(Point2::new(rq(28, 11), r(0)), Point2::new(rq(60, 11), r(0)));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -3810,12 +3647,9 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
     let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(1, 0), p(3, 0));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -4002,20 +3836,12 @@ fn line_rational_quadratic_bezier_arrangement_keeps_nonmonotone_support_overlap_
             .all(|(index, envelope)| envelope.span == index)
     );
     assert!(report.algebraic_endpoint_envelopes.iter().all(|envelope| {
-        compare_reals_with_policy(
-            &envelope.x_lower,
-            &envelope.x_upper,
-            PredicatePolicy::default(),
-        )
-        .value()
-        .is_some()
-            && compare_reals_with_policy(
-                &envelope.y_lower,
-                &envelope.y_upper,
-                PredicatePolicy::default(),
-            )
+        compare_reals_with_policy(&envelope.x_lower, &envelope.x_upper, PredicatePolicy)
             .value()
             .is_some()
+            && compare_reals_with_policy(&envelope.y_lower, &envelope.y_upper, PredicatePolicy)
+                .value()
+                .is_some()
     }));
     assert!(
         report
@@ -4065,12 +3891,9 @@ fn line_rational_quadratic_bezier_overlap_retains_empty_inverse_boundary_evidenc
     let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(5, 0), p(6, 0));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
     let support_overlap = report.events[0]
         .intersection
         .support_overlap
@@ -4097,12 +3920,9 @@ fn line_rational_quadratic_bezier_arrangement_promotes_exact_algebraic_roots() {
     let conic = RationalQuadraticBezier::new(p(0, 0), p(8, 0), p(0, 0), r(1)).unwrap();
     let line = LinePathSegment::new(p(0, 0), p(3, 0));
 
-    let report = arrange_line_segments_with_rational_quadratic_beziers(
-        &[line],
-        &[conic],
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        arrange_line_segments_with_rational_quadratic_beziers(&[line], &[conic], PredicatePolicy)
+            .unwrap();
 
     assert_eq!(
         report.events[0].class,
@@ -4157,19 +3977,19 @@ fn tangent_alignment_classifies_exact_vector_relations() {
     assert_eq!(tangent_dot(&east, &west), r(-8));
     assert_eq!(tangent_norm_squared(&north), r(9));
     assert_eq!(
-        classify_tangent_alignment(&east, &east_scaled, PredicatePolicy::default()),
+        classify_tangent_alignment(&east, &east_scaled, PredicatePolicy),
         TangentAlignment::SameDirection
     );
     assert_eq!(
-        classify_tangent_alignment(&east, &west, PredicatePolicy::default()),
+        classify_tangent_alignment(&east, &west, PredicatePolicy),
         TangentAlignment::OppositeDirection
     );
     assert_eq!(
-        classify_tangent_alignment(&east, &north, PredicatePolicy::default()),
+        classify_tangent_alignment(&east, &north, PredicatePolicy),
         TangentAlignment::NotParallel
     );
     assert_eq!(
-        classify_tangent_alignment(&east, &zero, PredicatePolicy::default()),
+        classify_tangent_alignment(&east, &zero, PredicatePolicy),
         TangentAlignment::Degenerate
     );
 }
@@ -4184,7 +4004,7 @@ fn tangent_alignment_accepts_arc_and_bezier_hodographs() {
         classify_tangent_alignment(
             &arc.start_tangent(),
             &bezier.derivative(BezierParameter::new(0, 1).unwrap()),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ),
         TangentAlignment::SameDirection
     );
@@ -4192,7 +4012,7 @@ fn tangent_alignment_accepts_arc_and_bezier_hodographs() {
         classify_tangent_alignment(
             &arc.end_tangent(),
             &bezier.derivative(BezierParameter::new(1, 1).unwrap()),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ),
         TangentAlignment::SameDirection
     );
@@ -4210,7 +4030,7 @@ fn tangent_join_classifies_endpoint_and_g1_continuity() {
             &arc.end_tangent(),
             bezier.start(),
             &bezier.derivative(BezierParameter::new(0, 1).unwrap()),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ),
         TangentJoinReport {
             class: TangentJoinClass::G1Continuous,
@@ -4232,7 +4052,7 @@ fn tangent_join_accepts_line_to_arc_continuity() {
             &line.end_tangent(),
             arc.start(),
             &arc.start_tangent(),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ),
         TangentJoinReport {
             class: TangentJoinClass::G1Continuous,
@@ -4245,36 +4065,15 @@ fn tangent_join_accepts_line_to_arc_continuity() {
 #[test]
 fn tangent_join_reports_mismatch_corner_and_degenerate_cases() {
     assert_eq!(
-        classify_tangent_join(
-            &p(0, 0),
-            &p(1, 0),
-            &p(1, 0),
-            &p(1, 0),
-            PredicatePolicy::default(),
-        )
-        .class,
+        classify_tangent_join(&p(0, 0), &p(1, 0), &p(1, 0), &p(1, 0), PredicatePolicy,).class,
         TangentJoinClass::EndpointMismatch
     );
     assert_eq!(
-        classify_tangent_join(
-            &p(0, 0),
-            &p(1, 0),
-            &p(0, 0),
-            &p(0, 1),
-            PredicatePolicy::default(),
-        )
-        .class,
+        classify_tangent_join(&p(0, 0), &p(1, 0), &p(0, 0), &p(0, 1), PredicatePolicy,).class,
         TangentJoinClass::Corner
     );
     assert_eq!(
-        classify_tangent_join(
-            &p(0, 0),
-            &p(0, 0),
-            &p(0, 0),
-            &p(1, 0),
-            PredicatePolicy::default(),
-        )
-        .class,
+        classify_tangent_join(&p(0, 0), &p(0, 0), &p(0, 0), &p(1, 0), PredicatePolicy,).class,
         TangentJoinClass::DegenerateTangent
     );
 }
@@ -4326,14 +4125,14 @@ fn tangent_chain_reports_all_g1_and_first_bad_join() {
         TangentSpan::from_cubic_bezier(&cubic),
     ];
 
-    let report = classify_tangent_chain(&spans, PredicatePolicy::default());
+    let report = classify_tangent_chain(&spans, PredicatePolicy);
     assert_eq!(report.joins.len(), 2);
     assert!(report.all_g1_continuous());
     assert_eq!(report.first_non_g1_join(), None);
 
     let mut broken = spans;
     broken[2].start_tangent = p(0, 1);
-    let broken_report = classify_tangent_chain(&broken, PredicatePolicy::default());
+    let broken_report = classify_tangent_chain(&broken, PredicatePolicy);
     assert!(!broken_report.all_g1_continuous());
     assert_eq!(broken_report.first_non_g1_join(), Some(1));
     assert_eq!(broken_report.joins[1].class, TangentJoinClass::Corner);
@@ -4661,9 +4460,7 @@ fn mixed_path_feed_replay_accepts_native_cubic_ph_length() {
         )),
     ];
 
-    let report =
-        certify_constant_feed_time_for_path(&route, r(1), r(1), PredicatePolicy::default())
-            .unwrap();
+    let report = certify_constant_feed_time_for_path(&route, r(1), r(1), PredicatePolicy).unwrap();
     assert_eq!(report.path_length, r(1));
     assert!(report.certification.all_satisfied());
 }
@@ -4794,9 +4591,7 @@ fn mixed_path_feed_replay_accepts_native_quintic_ph_length() {
         )),
     ];
 
-    let report =
-        certify_constant_feed_time_for_path(&route, r(1), r(3), PredicatePolicy::default())
-            .unwrap();
+    let report = certify_constant_feed_time_for_path(&route, r(1), r(3), PredicatePolicy).unwrap();
     assert_eq!(report.path_length, r(3));
     assert!(report.certification.all_satisfied());
 }
@@ -4953,63 +4748,63 @@ fn explicit_circular_arc_classifies_point_membership_without_angles() {
     let minor =
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
     assert_eq!(
-        minor.classify_point(&p(0, 5), PredicatePolicy::default()),
+        minor.classify_point(&p(0, 5), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
     assert_eq!(
-        minor.classify_point(&p(0, -5), PredicatePolicy::default()),
+        minor.classify_point(&p(0, -5), PredicatePolicy),
         ExplicitArcPointClassification::OnCircleOutsideSweep
     );
     assert_eq!(
-        minor.classify_point(&p(5, 0), PredicatePolicy::default()),
+        minor.classify_point(&p(5, 0), PredicatePolicy),
         ExplicitArcPointClassification::OnCircleOutsideSweep
     );
     assert_eq!(
-        minor.classify_point(&p(2, 2), PredicatePolicy::default()),
+        minor.classify_point(&p(2, 2), PredicatePolicy),
         ExplicitArcPointClassification::OffCircle
     );
     assert_eq!(
-        minor.classify_point(minor.start(), PredicatePolicy::default()),
+        minor.classify_point(minor.start(), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
     assert_eq!(
-        minor.classify_point(minor.end(), PredicatePolicy::default()),
+        minor.classify_point(minor.end(), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
 
     let half =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(-5, 0), ArcDirection::Ccw).unwrap();
     assert_eq!(
-        half.classify_point(&p(0, 5), PredicatePolicy::default()),
+        half.classify_point(&p(0, 5), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
     assert_eq!(
-        half.classify_point(&p(0, -5), PredicatePolicy::default()),
+        half.classify_point(&p(0, -5), PredicatePolicy),
         ExplicitArcPointClassification::OnCircleOutsideSweep
     );
 
     let major =
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Cw).unwrap();
     assert_eq!(
-        major.classify_point(&p(0, 5), PredicatePolicy::default()),
+        major.classify_point(&p(0, 5), PredicatePolicy),
         ExplicitArcPointClassification::OnCircleOutsideSweep
     );
     assert_eq!(
-        major.classify_point(&p(0, -5), PredicatePolicy::default()),
+        major.classify_point(&p(0, -5), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
     assert_eq!(
-        major.classify_point(major.start(), PredicatePolicy::default()),
+        major.classify_point(major.start(), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
     assert_eq!(
-        major.classify_point(major.end(), PredicatePolicy::default()),
+        major.classify_point(major.end(), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
 
     let full = ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(3, 4), ArcDirection::Cw).unwrap();
     assert_eq!(
-        full.classify_point(&p(0, 5), PredicatePolicy::default()),
+        full.classify_point(&p(0, 5), PredicatePolicy),
         ExplicitArcPointClassification::OnArc
     );
 }
@@ -5020,12 +4815,12 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
 
     let chord = LinePathSegment::new(p(-10, 4), p(10, 4));
-    let chord_report = minor.intersect_axis_aligned_segment(&chord, PredicatePolicy::default());
+    let chord_report = minor.intersect_axis_aligned_segment(&chord, PredicatePolicy);
     assert_eq!(chord_report.class, LineExplicitArcIntersectionClass::Secant);
     assert_eq!(chord_report.points, vec![p(3, 4), p(-3, 4)]);
 
     let tangent = LinePathSegment::new(p(-10, 5), p(10, 5));
-    let tangent_report = minor.intersect_axis_aligned_segment(&tangent, PredicatePolicy::default());
+    let tangent_report = minor.intersect_axis_aligned_segment(&tangent, PredicatePolicy);
     assert_eq!(
         tangent_report.class,
         LineExplicitArcIntersectionClass::Tangent
@@ -5033,8 +4828,7 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
     assert_eq!(tangent_report.points, vec![p(0, 5)]);
 
     let off_sweep = LinePathSegment::new(p(-10, -5), p(10, -5));
-    let off_sweep_report =
-        minor.intersect_axis_aligned_segment(&off_sweep, PredicatePolicy::default());
+    let off_sweep_report = minor.intersect_axis_aligned_segment(&off_sweep, PredicatePolicy);
     assert_eq!(
         off_sweep_report.class,
         LineExplicitArcIntersectionClass::Disjoint
@@ -5042,8 +4836,7 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
     assert!(off_sweep_report.points.is_empty());
 
     let outside_circle = LinePathSegment::new(p(-10, 6), p(10, 6));
-    let outside_report =
-        minor.intersect_axis_aligned_segment(&outside_circle, PredicatePolicy::default());
+    let outside_report = minor.intersect_axis_aligned_segment(&outside_circle, PredicatePolicy);
     assert_eq!(
         outside_report.class,
         LineExplicitArcIntersectionClass::Disjoint
@@ -5051,7 +4844,7 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
     assert!(outside_report.points.is_empty());
 
     let clipped = LinePathSegment::new(p(2, 4), p(10, 4));
-    let clipped_report = minor.intersect_axis_aligned_segment(&clipped, PredicatePolicy::default());
+    let clipped_report = minor.intersect_axis_aligned_segment(&clipped, PredicatePolicy);
     assert_eq!(
         clipped_report.class,
         LineExplicitArcIntersectionClass::Tangent
@@ -5059,14 +4852,13 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
     assert_eq!(clipped_report.points, vec![p(3, 4)]);
 
     let diagonal = LinePathSegment::new(p(-10, -10), p(10, 10));
-    let diagonal_report =
-        minor.intersect_axis_aligned_segment(&diagonal, PredicatePolicy::default());
+    let diagonal_report = minor.intersect_axis_aligned_segment(&diagonal, PredicatePolicy);
     assert_eq!(
         diagonal_report.class,
         LineExplicitArcIntersectionClass::Unknown
     );
     let general_diagonal = LinePathSegment::new(p(-6, -8), p(6, 8));
-    let general_report = minor.intersect_segment(&general_diagonal, PredicatePolicy::default());
+    let general_report = minor.intersect_segment(&general_diagonal, PredicatePolicy);
     assert_eq!(
         general_report.class,
         LineExplicitArcIntersectionClass::Tangent
@@ -5075,12 +4867,12 @@ fn explicit_circular_arc_intersects_axis_aligned_segments_exactly() {
 
     let full_circle =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
-    let full_report = full_circle.intersect_segment(&general_diagonal, PredicatePolicy::default());
+    let full_report = full_circle.intersect_segment(&general_diagonal, PredicatePolicy);
     assert_eq!(full_report.class, LineExplicitArcIntersectionClass::Secant);
     assert_eq!(full_report.points, vec![p(-3, -4), p(3, 4)]);
 
     let general_tangent = LinePathSegment::new(p(-1, 7), p(7, 1));
-    let tangent_report = minor.intersect_segment(&general_tangent, PredicatePolicy::default());
+    let tangent_report = minor.intersect_segment(&general_tangent, PredicatePolicy);
     assert_eq!(
         tangent_report.class,
         LineExplicitArcIntersectionClass::Tangent
@@ -5109,38 +4901,37 @@ fn explicit_circular_arc_classifies_same_circle_overlap() {
     let other_circle =
         ExplicitCircularArc::new(p(10, 0), r(5), p(13, 4), p(7, 4), ArcDirection::Ccw).unwrap();
 
-    let equal = top_half.classify_same_circle_overlap(&same, PredicatePolicy::default());
+    let equal = top_half.classify_same_circle_overlap(&same, PredicatePolicy);
     assert_eq!(equal.class, ExplicitArcOverlapClass::Equal);
     assert_eq!(equal.shared_endpoints, vec![p(5, 0), p(-5, 0)]);
 
-    let covers = top_half.classify_same_circle_overlap(&subset, PredicatePolicy::default());
+    let covers = top_half.classify_same_circle_overlap(&subset, PredicatePolicy);
     assert_eq!(covers.class, ExplicitArcOverlapClass::FirstCoversSecond);
     assert!(covers.shared_endpoints.is_empty());
 
-    let covered = subset.classify_same_circle_overlap(&top_half, PredicatePolicy::default());
+    let covered = subset.classify_same_circle_overlap(&top_half, PredicatePolicy);
     assert_eq!(covered.class, ExplicitArcOverlapClass::SecondCoversFirst);
 
-    let overlap = top_half.classify_same_circle_overlap(&left_half, PredicatePolicy::default());
+    let overlap = top_half.classify_same_circle_overlap(&left_half, PredicatePolicy);
     assert_eq!(overlap.class, ExplicitArcOverlapClass::Overlap);
     assert!(overlap.shared_endpoints.is_empty());
 
-    let touch = top_half.classify_same_circle_overlap(&lower_left, PredicatePolicy::default());
+    let touch = top_half.classify_same_circle_overlap(&lower_left, PredicatePolicy);
     assert_eq!(touch.class, ExplicitArcOverlapClass::EndpointTouch);
     assert_eq!(touch.shared_endpoints, vec![p(-5, 0)]);
 
-    let disjoint = top_half.classify_same_circle_overlap(&lower_right, PredicatePolicy::default());
+    let disjoint = top_half.classify_same_circle_overlap(&lower_right, PredicatePolicy);
     assert_eq!(disjoint.class, ExplicitArcOverlapClass::EndpointTouch);
     assert_eq!(disjoint.shared_endpoints, vec![p(5, 0)]);
 
-    let disjoint = top_half.classify_same_circle_overlap(&bottom_minor, PredicatePolicy::default());
+    let disjoint = top_half.classify_same_circle_overlap(&bottom_minor, PredicatePolicy);
     assert_eq!(disjoint.class, ExplicitArcOverlapClass::Disjoint);
     assert!(disjoint.shared_endpoints.is_empty());
 
-    let full_cover = full.classify_same_circle_overlap(&top_half, PredicatePolicy::default());
+    let full_cover = full.classify_same_circle_overlap(&top_half, PredicatePolicy);
     assert_eq!(full_cover.class, ExplicitArcOverlapClass::FirstCoversSecond);
 
-    let different =
-        top_half.classify_same_circle_overlap(&other_circle, PredicatePolicy::default());
+    let different = top_half.classify_same_circle_overlap(&other_circle, PredicatePolicy);
     assert_eq!(different.class, ExplicitArcOverlapClass::DifferentCircle);
 }
 
@@ -5161,36 +4952,36 @@ fn explicit_circular_arc_classifies_retained_circle_relation() {
     let contained =
         ExplicitCircularArc::new(p(1, 0), r(2), p(3, 0), p(1, 2), ArcDirection::Ccw).unwrap();
 
-    let same_report = base.classify_circle_relation(&same, PredicatePolicy::default());
+    let same_report = base.classify_circle_relation(&same, PredicatePolicy);
     assert_eq!(same_report.class, ExplicitCircleRelationClass::SameCircle);
     assert_eq!(same_report.center_distance_squared, r(0));
     assert_eq!(same_report.radius_sum_squared, r(100));
     assert_eq!(same_report.radius_difference_squared, r(0));
 
     assert_eq!(
-        base.classify_circle_relation(&separate, PredicatePolicy::default())
+        base.classify_circle_relation(&separate, PredicatePolicy)
             .class,
         ExplicitCircleRelationClass::Separate
     );
-    let external_report = base.classify_circle_relation(&external, PredicatePolicy::default());
+    let external_report = base.classify_circle_relation(&external, PredicatePolicy);
     assert_eq!(
         external_report.class,
         ExplicitCircleRelationClass::ExternallyTangent
     );
     assert_eq!(external_report.tangent_point, Some(p(5, 0)));
     assert_eq!(
-        base.classify_circle_relation(&secant, PredicatePolicy::default())
+        base.classify_circle_relation(&secant, PredicatePolicy)
             .class,
         ExplicitCircleRelationClass::Secant
     );
-    let internal_report = base.classify_circle_relation(&internal, PredicatePolicy::default());
+    let internal_report = base.classify_circle_relation(&internal, PredicatePolicy);
     assert_eq!(
         internal_report.class,
         ExplicitCircleRelationClass::InternallyTangent
     );
     assert_eq!(internal_report.tangent_point, Some(p(5, 0)));
     assert_eq!(
-        base.classify_circle_relation(&contained, PredicatePolicy::default())
+        base.classify_circle_relation(&contained, PredicatePolicy)
             .class,
         ExplicitCircleRelationClass::Contained
     );
@@ -5209,7 +5000,7 @@ fn explicit_circular_arc_classifies_tangent_intersections_by_sweep_membership() 
     let same =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw).unwrap();
 
-    let on_both = base.classify_tangent_intersection(&tangent_on_both, PredicatePolicy::default());
+    let on_both = base.classify_tangent_intersection(&tangent_on_both, PredicatePolicy);
     assert_eq!(on_both.class, ExplicitArcTangentClass::TangentOnBoth);
     assert_eq!(
         on_both.circle_relation,
@@ -5217,15 +5008,14 @@ fn explicit_circular_arc_classifies_tangent_intersections_by_sweep_membership() 
     );
     assert_eq!(on_both.tangent_point, Some(p(5, 0)));
 
-    let outside =
-        base.classify_tangent_intersection(&tangent_outside_sweep, PredicatePolicy::default());
+    let outside = base.classify_tangent_intersection(&tangent_outside_sweep, PredicatePolicy);
     assert_eq!(
         outside.class,
         ExplicitArcTangentClass::CircleTangentOutsideArcSweep
     );
     assert_eq!(outside.tangent_point, Some(p(5, 0)));
 
-    let secant_report = base.classify_tangent_intersection(&secant, PredicatePolicy::default());
+    let secant_report = base.classify_tangent_intersection(&secant, PredicatePolicy);
     assert_eq!(
         secant_report.class,
         ExplicitArcTangentClass::NotCircleTangent
@@ -5235,7 +5025,7 @@ fn explicit_circular_arc_classifies_tangent_intersections_by_sweep_membership() 
         ExplicitCircleRelationClass::Secant
     );
 
-    let same_report = base.classify_tangent_intersection(&same, PredicatePolicy::default());
+    let same_report = base.classify_tangent_intersection(&same, PredicatePolicy);
     assert_eq!(same_report.class, ExplicitArcTangentClass::NotCircleTangent);
     assert_eq!(
         same_report.circle_relation,
@@ -5249,7 +5039,7 @@ fn explicit_circular_arc_intersects_different_circle_arcs_exactly() {
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
     let full_right =
         ExplicitCircularArc::new(p(6, 0), r(5), p(11, 0), p(11, 0), ArcDirection::Ccw).unwrap();
-    let two_points = full_left.intersect_arc(&full_right, PredicatePolicy::default());
+    let two_points = full_left.intersect_arc(&full_right, PredicatePolicy);
     assert_eq!(two_points.class, ExplicitArcIntersectionClass::TwoPoints);
     assert_eq!(
         two_points.circle_relation,
@@ -5259,13 +5049,13 @@ fn explicit_circular_arc_intersects_different_circle_arcs_exactly() {
 
     let top_quarter =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw).unwrap();
-    let one_point = top_quarter.intersect_arc(&full_right, PredicatePolicy::default());
+    let one_point = top_quarter.intersect_arc(&full_right, PredicatePolicy);
     assert_eq!(one_point.class, ExplicitArcIntersectionClass::OnePoint);
     assert_eq!(one_point.points, vec![p(3, 4)]);
 
     let external_tangent =
         ExplicitCircularArc::new(p(10, 0), r(5), p(5, 0), p(10, 5), ArcDirection::Ccw).unwrap();
-    let tangent = top_quarter.intersect_arc(&external_tangent, PredicatePolicy::default());
+    let tangent = top_quarter.intersect_arc(&external_tangent, PredicatePolicy);
     assert_eq!(tangent.class, ExplicitArcIntersectionClass::OnePoint);
     assert_eq!(
         tangent.circle_relation,
@@ -5275,7 +5065,7 @@ fn explicit_circular_arc_intersects_different_circle_arcs_exactly() {
 
     let tangent_outside =
         ExplicitCircularArc::new(p(10, 0), r(5), p(15, 0), p(10, 5), ArcDirection::Ccw).unwrap();
-    let outside = top_quarter.intersect_arc(&tangent_outside, PredicatePolicy::default());
+    let outside = top_quarter.intersect_arc(&tangent_outside, PredicatePolicy);
     assert_eq!(
         outside.class,
         ExplicitArcIntersectionClass::CircleIntersectionsOutsideArcSweeps
@@ -5284,10 +5074,10 @@ fn explicit_circular_arc_intersects_different_circle_arcs_exactly() {
 
     let separate =
         ExplicitCircularArc::new(p(20, 0), r(5), p(25, 0), p(25, 0), ArcDirection::Ccw).unwrap();
-    let disjoint = full_left.intersect_arc(&separate, PredicatePolicy::default());
+    let disjoint = full_left.intersect_arc(&separate, PredicatePolicy);
     assert_eq!(disjoint.class, ExplicitArcIntersectionClass::Disjoint);
 
-    let same = full_left.intersect_arc(&top_quarter, PredicatePolicy::default());
+    let same = full_left.intersect_arc(&top_quarter, PredicatePolicy);
     assert_eq!(same.class, ExplicitArcIntersectionClass::SameCircle);
 }
 
@@ -5297,7 +5087,7 @@ fn explicit_circular_arc_schedules_arrangement_predicates() {
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(5, 0), ArcDirection::Ccw).unwrap();
     let full_right =
         ExplicitCircularArc::new(p(6, 0), r(5), p(11, 0), p(11, 0), ArcDirection::Ccw).unwrap();
-    let two_points = full_left.arrange_with(&full_right, PredicatePolicy::default());
+    let two_points = full_left.arrange_with(&full_right, PredicatePolicy);
     assert_eq!(
         two_points.class,
         ExplicitArcArrangementClass::DifferentCircleTwoPoints
@@ -5310,7 +5100,7 @@ fn explicit_circular_arc_schedules_arrangement_predicates() {
 
     let top_quarter =
         ExplicitCircularArc::new(p(0, 0), r(5), p(5, 0), p(0, 5), ArcDirection::Ccw).unwrap();
-    let same_circle = full_left.arrange_with(&top_quarter, PredicatePolicy::default());
+    let same_circle = full_left.arrange_with(&top_quarter, PredicatePolicy);
     assert_eq!(
         same_circle.class,
         ExplicitArcArrangementClass::SameCircleFirstCoversSecond
@@ -5323,7 +5113,7 @@ fn explicit_circular_arc_schedules_arrangement_predicates() {
 
     let disjoint_same_circle =
         ExplicitCircularArc::new(p(0, 0), r(5), p(0, -5), p(-5, 0), ArcDirection::Cw).unwrap();
-    let disjoint = top_quarter.arrange_with(&disjoint_same_circle, PredicatePolicy::default());
+    let disjoint = top_quarter.arrange_with(&disjoint_same_circle, PredicatePolicy);
     assert_eq!(
         disjoint.class,
         ExplicitArcArrangementClass::SameCircleDisjoint
@@ -5331,7 +5121,7 @@ fn explicit_circular_arc_schedules_arrangement_predicates() {
 
     let tangent_outside =
         ExplicitCircularArc::new(p(10, 0), r(5), p(15, 0), p(10, 5), ArcDirection::Ccw).unwrap();
-    let outside = top_quarter.arrange_with(&tangent_outside, PredicatePolicy::default());
+    let outside = top_quarter.arrange_with(&tangent_outside, PredicatePolicy);
     assert_eq!(
         outside.class,
         ExplicitArcArrangementClass::DifferentCircleOutsideArcSweeps
@@ -5367,10 +5157,8 @@ fn cardinal_arc_offset_updates_radius_exactly() {
     )
     .unwrap();
 
-    let outward =
-        offset_cardinal_arc(&arc, r(3), OffsetSide::Left, PredicatePolicy::default()).unwrap();
-    let inward =
-        offset_cardinal_arc(&arc, r(3), OffsetSide::Right, PredicatePolicy::default()).unwrap();
+    let outward = offset_cardinal_arc(&arc, r(3), OffsetSide::Left, PredicatePolicy).unwrap();
+    let inward = offset_cardinal_arc(&arc, r(3), OffsetSide::Right, PredicatePolicy).unwrap();
 
     assert_eq!(outward.arc.radius(), &r(13));
     assert_eq!(outward.arc.start(), p(13, 0));
@@ -5392,10 +5180,8 @@ fn explicit_circular_arc_offset_scales_endpoints_exactly() {
     )
     .unwrap();
 
-    let outward =
-        offset_explicit_arc(&arc, r(5), OffsetSide::Left, PredicatePolicy::default()).unwrap();
-    let inward =
-        offset_explicit_arc(&arc, r(2), OffsetSide::Right, PredicatePolicy::default()).unwrap();
+    let outward = offset_explicit_arc(&arc, r(5), OffsetSide::Left, PredicatePolicy).unwrap();
+    let inward = offset_explicit_arc(&arc, r(2), OffsetSide::Right, PredicatePolicy).unwrap();
 
     assert_eq!(outward.arc.radius(), &r(10));
     assert_eq!(outward.arc.start(), &p(6, 8));
@@ -5424,15 +5210,15 @@ fn cardinal_arc_offset_rejects_negative_distance_and_radius_collapse() {
     .unwrap();
 
     assert_eq!(
-        offset_cardinal_arc(&arc, r(-1), OffsetSide::Left, PredicatePolicy::default()).unwrap_err(),
+        offset_cardinal_arc(&arc, r(-1), OffsetSide::Left, PredicatePolicy).unwrap_err(),
         ArcOffsetError::NegativeDistance
     );
     assert_eq!(
-        offset_cardinal_arc(&arc, r(5), OffsetSide::Right, PredicatePolicy::default()).unwrap_err(),
+        offset_cardinal_arc(&arc, r(5), OffsetSide::Right, PredicatePolicy).unwrap_err(),
         ArcOffsetError::RadiusWouldCollapse
     );
     assert_eq!(
-        offset_cardinal_arc(&arc, r(6), OffsetSide::Right, PredicatePolicy::default()).unwrap_err(),
+        offset_cardinal_arc(&arc, r(6), OffsetSide::Right, PredicatePolicy).unwrap_err(),
         ArcOffsetError::RadiusWouldCollapse
     );
 }
@@ -5443,11 +5229,11 @@ fn explicit_circular_arc_offset_rejects_negative_distance_and_radius_collapse() 
         ExplicitCircularArc::new(p(0, 0), r(5), p(3, 4), p(-3, 4), ArcDirection::Ccw).unwrap();
 
     assert_eq!(
-        offset_explicit_arc(&arc, r(-1), OffsetSide::Left, PredicatePolicy::default()).unwrap_err(),
+        offset_explicit_arc(&arc, r(-1), OffsetSide::Left, PredicatePolicy).unwrap_err(),
         ArcOffsetError::NegativeDistance
     );
     assert_eq!(
-        offset_explicit_arc(&arc, r(5), OffsetSide::Right, PredicatePolicy::default()).unwrap_err(),
+        offset_explicit_arc(&arc, r(5), OffsetSide::Right, PredicatePolicy).unwrap_err(),
         ArcOffsetError::RadiusWouldCollapse
     );
 }
@@ -5457,11 +5243,11 @@ fn pcb_clearance_certifies_same_layer_parallel_gap() {
     let first = trace(1, 0, p(0, 0), p(10, 0), 2);
     let second = trace(2, 0, p(0, 5), p(10, 5), 2);
 
-    let clear = check_trace_clearance(&first, &second, &r(3), PredicatePolicy::default());
+    let clear = check_trace_clearance(&first, &second, &r(3), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.axis_gap, Some(r(5)));
 
-    let violation = check_trace_clearance(&first, &second, &r(4), PredicatePolicy::default());
+    let violation = check_trace_clearance(&first, &second, &r(4), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -5470,7 +5256,7 @@ fn pcb_clearance_reports_no_short_before_spacing() {
     let first = trace(1, 0, p(0, 0), p(10, 0), 1);
     let second = trace(2, 0, p(5, -5), p(5, 5), 1);
 
-    let report = check_trace_clearance(&first, &second, &r(1), PredicatePolicy::default());
+    let report = check_trace_clearance(&first, &second, &r(1), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 }
 
@@ -5481,11 +5267,11 @@ fn pcb_clearance_ignores_same_net_and_different_layer_pairs() {
     let other_layer = trace(2, 1, p(5, -5), p(5, 5), 1);
 
     assert_eq!(
-        check_trace_clearance(&first, &same_net, &r(1), PredicatePolicy::default()).status,
+        check_trace_clearance(&first, &same_net, &r(1), PredicatePolicy).status,
         ClearanceStatus::NotApplicable
     );
     assert_eq!(
-        check_trace_clearance(&first, &other_layer, &r(1), PredicatePolicy::default()).status,
+        check_trace_clearance(&first, &other_layer, &r(1), PredicatePolicy).status,
         ClearanceStatus::NotApplicable
     );
 }
@@ -5495,10 +5281,10 @@ fn pcb_trace_pad_clearance_certifies_round_pad_gap() {
     let trace = trace(1, 0, p(0, 0), p(10, 0), 2);
     let pad = PcbCircularPad::new(NetId(2), TraceLayer(0), p(5, 5), r(2)).unwrap();
 
-    let clear = check_trace_pad_clearance(&trace, &pad, &r(3), PredicatePolicy::default());
+    let clear = check_trace_pad_clearance(&trace, &pad, &r(3), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
 
-    let violation = check_trace_pad_clearance(&trace, &pad, &r(4), PredicatePolicy::default());
+    let violation = check_trace_pad_clearance(&trace, &pad, &r(4), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -5507,7 +5293,7 @@ fn pcb_trace_pad_clearance_reports_copper_overlap() {
     let trace = trace(1, 0, p(0, 0), p(10, 0), 2);
     let pad = PcbCircularPad::new(NetId(2), TraceLayer(0), p(5, 1), r(2)).unwrap();
 
-    let report = check_trace_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+    let report = check_trace_pad_clearance(&trace, &pad, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 }
 
@@ -5526,11 +5312,11 @@ fn pcb_trace_via_clearance_respects_layer_span() {
         PcbViaStack::new(NetId(2), TraceLayer(2), TraceLayer(3), p(5, 5), r(2)).unwrap();
 
     assert_eq!(
-        check_trace_via_clearance(&trace, &via, &r(3), PredicatePolicy::default()).status,
+        check_trace_via_clearance(&trace, &via, &r(3), PredicatePolicy).status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_trace_via_clearance(&trace, &off_layer, &r(3), PredicatePolicy::default()).status,
+        check_trace_via_clearance(&trace, &off_layer, &r(3), PredicatePolicy).status,
         ClearanceStatus::NotApplicable
     );
 }
@@ -5547,21 +5333,19 @@ fn pcb_trace_via_drill_clearance_uses_exact_hole_keepout() {
             .unwrap();
 
     assert_eq!(
-        check_trace_via_drill_clearance(&trace, &via, &r(4), PredicatePolicy::default()).status,
+        check_trace_via_drill_clearance(&trace, &via, &r(4), PredicatePolicy).status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_trace_via_drill_clearance(&trace, &via, &r(5), PredicatePolicy::default()).status,
+        check_trace_via_drill_clearance(&trace, &via, &r(5), PredicatePolicy).status,
         ClearanceStatus::ClearanceViolation
     );
     assert_eq!(
-        check_trace_via_drill_clearance(&trace, &no_drill, &r(1), PredicatePolicy::default())
-            .status,
+        check_trace_via_drill_clearance(&trace, &no_drill, &r(1), PredicatePolicy).status,
         ClearanceStatus::Unknown
     );
     assert_eq!(
-        check_trace_via_drill_clearance(&trace, &off_layer, &r(1), PredicatePolicy::default())
-            .status,
+        check_trace_via_drill_clearance(&trace, &off_layer, &r(1), PredicatePolicy).status,
         ClearanceStatus::NotApplicable
     );
 }
@@ -5573,7 +5357,7 @@ fn pcb_trace_via_drill_clearance_reports_drill_cutting_copper() {
         .unwrap();
 
     assert_eq!(
-        check_trace_via_drill_clearance(&trace, &via, &r(0), PredicatePolicy::default()).status,
+        check_trace_via_drill_clearance(&trace, &via, &r(0), PredicatePolicy).status,
         ClearanceStatus::NoShortViolation
     );
 }
@@ -5676,11 +5460,11 @@ fn pcb_via_annular_ring_certifies_fabrication_requirement() {
         .unwrap();
 
     assert_eq!(
-        via.certify_annular_ring(&r(3), PredicatePolicy::default()),
+        via.certify_annular_ring(&r(3), PredicatePolicy),
         ViaAnnularRingReport::Certified
     );
     assert_eq!(
-        via.certify_annular_ring(&r(4), PredicatePolicy::default()),
+        via.certify_annular_ring(&r(4), PredicatePolicy),
         ViaAnnularRingReport::Violation
     );
 }
@@ -5700,11 +5484,11 @@ fn pcb_via_annular_ring_reports_missing_and_invalid_inputs() {
     .expect_err("negative drill diameter must be rejected");
 
     assert_eq!(
-        without_drill.certify_annular_ring(&r(1), PredicatePolicy::default()),
+        without_drill.certify_annular_ring(&r(1), PredicatePolicy),
         ViaAnnularRingReport::UnknownNoDrill
     );
     assert_eq!(
-        without_drill.certify_annular_ring(&r(-1), PredicatePolicy::default()),
+        without_drill.certify_annular_ring(&r(-1), PredicatePolicy),
         ViaAnnularRingReport::UnknownNoDrill
     );
     assert_eq!(negative_drill, "via drill diameter must be nonnegative");
@@ -5737,12 +5521,12 @@ fn pcb_via_drill_policy_separates_plated_nonplated_and_missing_intent() {
     )
     .unwrap();
 
-    let missing_report = missing.classify_drill_policy(&r(3), PredicatePolicy::default());
+    let missing_report = missing.classify_drill_policy(&r(3), PredicatePolicy);
     assert_eq!(missing_report.class, ViaDrillPolicyClass::MissingDrill);
     assert_eq!(missing_report.drill_diameter, None);
     assert_eq!(missing_report.annular_ring, None);
 
-    let plated_report = plated.classify_drill_policy(&r(3), PredicatePolicy::default());
+    let plated_report = plated.classify_drill_policy(&r(3), PredicatePolicy);
     assert_eq!(plated_report.class, ViaDrillPolicyClass::PlatedCopperVia);
     assert_eq!(plated_report.intent, ViaDrillIntent::Plated);
     assert_eq!(plated_report.drill_diameter, Some(r(4)));
@@ -5751,7 +5535,7 @@ fn pcb_via_drill_policy_separates_plated_nonplated_and_missing_intent() {
         Some(ViaAnnularRingReport::Certified)
     );
 
-    let non_plated_report = non_plated.classify_drill_policy(&r(3), PredicatePolicy::default());
+    let non_plated_report = non_plated.classify_drill_policy(&r(3), PredicatePolicy);
     assert_eq!(
         non_plated_report.class,
         ViaDrillPolicyClass::NonPlatedMechanicalHole
@@ -5759,7 +5543,7 @@ fn pcb_via_drill_policy_separates_plated_nonplated_and_missing_intent() {
     assert_eq!(non_plated_report.intent, ViaDrillIntent::NonPlated);
     assert_eq!(non_plated_report.annular_ring, None);
 
-    let unspecified_report = unspecified.classify_drill_policy(&r(3), PredicatePolicy::default());
+    let unspecified_report = unspecified.classify_drill_policy(&r(3), PredicatePolicy);
     assert_eq!(
         unspecified_report.class,
         ViaDrillPolicyClass::UnspecifiedDrilledHole
@@ -5773,7 +5557,7 @@ fn pcb_via_fabrication_policy_accepts_certified_plated_through_via() {
     let via = PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(20), r(4))
         .unwrap();
     let policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
-    let report = certify_via_fabrication_policy(&via, &policy, PredicatePolicy::default()).unwrap();
+    let report = certify_via_fabrication_policy(&via, &policy, PredicatePolicy).unwrap();
 
     assert_eq!(
         report.transition_policy.transition.class,
@@ -5799,7 +5583,7 @@ fn pcb_via_fabrication_policy_reports_transition_annular_aspect_and_intent_failu
             .unwrap();
     let through_only = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
     let blind_report =
-        certify_via_fabrication_policy(&blind, &through_only, PredicatePolicy::default()).unwrap();
+        certify_via_fabrication_policy(&blind, &through_only, PredicatePolicy).unwrap();
     assert_eq!(
         blind_report.transition_policy.transition.class,
         ViaLayerTransitionClass::BlindVia
@@ -5811,8 +5595,7 @@ fn pcb_via_fabrication_policy_reports_transition_annular_aspect_and_intent_failu
         PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(8), r(4))
             .unwrap();
     let poor_ring_report =
-        certify_via_fabrication_policy(&poor_ring, &through_only, PredicatePolicy::default())
-            .unwrap();
+        certify_via_fabrication_policy(&poor_ring, &through_only, PredicatePolicy).unwrap();
     assert_eq!(
         poor_ring_report.drill_policy.annular_ring,
         Some(ViaAnnularRingReport::Violation)
@@ -5826,8 +5609,7 @@ fn pcb_via_fabrication_policy_reports_transition_annular_aspect_and_intent_failu
         PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(20), r(3))
             .unwrap();
     let poor_aspect_report =
-        certify_via_fabrication_policy(&poor_aspect, &through_only, PredicatePolicy::default())
-            .unwrap();
+        certify_via_fabrication_policy(&poor_aspect, &through_only, PredicatePolicy).unwrap();
     assert_eq!(
         poor_aspect_report.aspect_ratio,
         ViaAspectRatioReport::Violation
@@ -5848,8 +5630,7 @@ fn pcb_via_fabrication_policy_reports_transition_annular_aspect_and_intent_failu
     )
     .unwrap();
     let non_plated_report =
-        certify_via_fabrication_policy(&non_plated, &through_only, PredicatePolicy::default())
-            .unwrap();
+        certify_via_fabrication_policy(&non_plated, &through_only, PredicatePolicy).unwrap();
     assert_eq!(
         non_plated_report.drill_policy.class,
         ViaDrillPolicyClass::NonPlatedMechanicalHole
@@ -5865,7 +5646,7 @@ fn pcb_via_fabrication_policy_reports_unknown_and_invalid_inputs() {
     let missing = PcbViaStack::new(NetId(1), TraceLayer(0), TraceLayer(3), p(0, 0), r(20)).unwrap();
     let policy = ViaFabricationPolicy::through_only(4, r(24), r(3), r(6));
     let missing_report =
-        certify_via_fabrication_policy(&missing, &policy, PredicatePolicy::default()).unwrap();
+        certify_via_fabrication_policy(&missing, &policy, PredicatePolicy).unwrap();
     assert_eq!(
         missing_report.aspect_ratio,
         ViaAspectRatioReport::UnknownNoDrill
@@ -5876,14 +5657,14 @@ fn pcb_via_fabrication_policy_reports_unknown_and_invalid_inputs() {
         PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(4), p(0, 0), r(20), r(4))
             .unwrap();
     assert_eq!(
-        certify_via_fabrication_policy(&outside, &policy, PredicatePolicy::default()).unwrap_err(),
+        certify_via_fabrication_policy(&outside, &policy, PredicatePolicy).unwrap_err(),
         ViaFabricationError::ViaOutsideBoardStackup
     );
     assert_eq!(
         certify_via_fabrication_policy(
             &missing,
             &ViaFabricationPolicy::through_only(0, r(24), r(3), r(6)),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         ViaFabricationError::InvalidBoardLayerCount
@@ -5892,7 +5673,7 @@ fn pcb_via_fabrication_policy_reports_unknown_and_invalid_inputs() {
         certify_via_fabrication_policy(
             &missing,
             &ViaFabricationPolicy::through_only(4, r(0), r(3), r(6)),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         ViaFabricationError::NonPositiveBoardThickness
@@ -5901,7 +5682,7 @@ fn pcb_via_fabrication_policy_reports_unknown_and_invalid_inputs() {
         certify_via_fabrication_policy(
             &missing,
             &ViaFabricationPolicy::through_only(4, r(24), r(3), r(0)),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         ViaFabricationError::NonPositiveAspectRatio
@@ -5910,7 +5691,7 @@ fn pcb_via_fabrication_policy_reports_unknown_and_invalid_inputs() {
         certify_via_fabrication_policy(
             &missing,
             &ViaFabricationPolicy::through_only(4, r(24), r(-1), r(6)),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         ViaFabricationError::NegativeAnnularRing
@@ -5922,10 +5703,10 @@ fn pcb_trace_rect_pad_clearance_certifies_non_circular_pad_gap() {
     let trace = trace(1, 0, p(0, 0), p(10, 0), 2);
     let pad = PcbRectPad::new(NetId(2), TraceLayer(0), p(5, 6), r(4), r(2)).unwrap();
 
-    let clear = check_trace_rect_pad_clearance(&trace, &pad, &r(4), PredicatePolicy::default());
+    let clear = check_trace_rect_pad_clearance(&trace, &pad, &r(4), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
 
-    let violation = check_trace_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy::default());
+    let violation = check_trace_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -5934,7 +5715,7 @@ fn pcb_trace_rect_pad_clearance_reports_overlap() {
     let trace = trace(1, 0, p(0, 0), p(10, 0), 2);
     let pad = PcbRectPad::new(NetId(2), TraceLayer(0), p(5, 1), r(4), r(2)).unwrap();
 
-    let report = check_trace_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+    let report = check_trace_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 }
 
@@ -5943,12 +5724,10 @@ fn pcb_trace_rounded_rect_pad_clearance_certifies_corner_radius_gap() {
     let trace = trace(1, 0, p(0, 0), p(10, 0), 2);
     let pad = PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(5, 8), r(6), r(4), r(1)).unwrap();
 
-    let tangent =
-        check_trace_rounded_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy::default());
+    let tangent = check_trace_rounded_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
 
-    let violation =
-        check_trace_rounded_rect_pad_clearance(&trace, &pad, &r(6), PredicatePolicy::default());
+    let violation = check_trace_rounded_rect_pad_clearance(&trace, &pad, &r(6), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -5957,8 +5736,7 @@ fn pcb_trace_rounded_rect_pad_clearance_reports_corner_overlap() {
     let trace = trace(1, 0, p(0, 0), p(10, 0), 2);
     let pad = PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(5, 2), r(6), r(4), r(1)).unwrap();
 
-    let report =
-        check_trace_rounded_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+    let report = check_trace_rounded_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 }
 
@@ -5969,10 +5747,9 @@ fn pcb_rounded_rect_pad_zero_radius_matches_rect_pad_predicate() {
     let rounded =
         PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(5, 6), r(4), r(2), r(0)).unwrap();
 
-    let rect_report =
-        check_trace_rect_pad_clearance(&trace, &rect, &r(4), PredicatePolicy::default());
+    let rect_report = check_trace_rect_pad_clearance(&trace, &rect, &r(4), PredicatePolicy);
     let rounded_report =
-        check_trace_rounded_rect_pad_clearance(&trace, &rounded, &r(4), PredicatePolicy::default());
+        check_trace_rounded_rect_pad_clearance(&trace, &rounded, &r(4), PredicatePolicy);
     assert_eq!(rounded_report.status, rect_report.status);
 }
 
@@ -5983,10 +5760,9 @@ fn pcb_rounded_square_with_half_radius_matches_circular_pad_predicate() {
     let rounded =
         PcbRoundedRectPad::new(NetId(2), TraceLayer(0), p(5, 6), r(4), r(4), r(2)).unwrap();
 
-    let circular_report =
-        check_trace_pad_clearance(&trace, &circular, &r(3), PredicatePolicy::default());
+    let circular_report = check_trace_pad_clearance(&trace, &circular, &r(3), PredicatePolicy);
     let rounded_report =
-        check_trace_rounded_rect_pad_clearance(&trace, &rounded, &r(3), PredicatePolicy::default());
+        check_trace_rounded_rect_pad_clearance(&trace, &rounded, &r(3), PredicatePolicy);
     assert_eq!(rounded_report.status, circular_report.status);
 }
 
@@ -6018,12 +5794,10 @@ fn pcb_trace_obround_pad_clearance_certifies_general_spine_gap() {
     )
     .unwrap();
 
-    let tangent =
-        check_trace_obround_pad_clearance(&trace, &pad, &r(6), PredicatePolicy::default());
+    let tangent = check_trace_obround_pad_clearance(&trace, &pad, &r(6), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
 
-    let violation =
-        check_trace_obround_pad_clearance(&trace, &pad, &r(7), PredicatePolicy::default());
+    let violation = check_trace_obround_pad_clearance(&trace, &pad, &r(7), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6038,7 +5812,7 @@ fn pcb_trace_obround_pad_clearance_reports_diagonal_spine_overlap() {
     )
     .unwrap();
 
-    let report = check_trace_obround_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+    let report = check_trace_obround_pad_clearance(&trace, &pad, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 }
 
@@ -6056,9 +5830,8 @@ fn pcb_degenerate_obround_pad_matches_circular_pad_predicate() {
 
     assert_eq!(obround.facts().degenerate_spine, Some(true));
     assert_eq!(
-        check_trace_obround_pad_clearance(&trace, &obround, &r(3), PredicatePolicy::default())
-            .status,
-        check_trace_pad_clearance(&trace, &circular, &r(3), PredicatePolicy::default()).status
+        check_trace_obround_pad_clearance(&trace, &obround, &r(3), PredicatePolicy).status,
+        check_trace_pad_clearance(&trace, &circular, &r(3), PredicatePolicy).status
     );
 }
 
@@ -6112,11 +5885,10 @@ fn pcb_trace_convex_pad_clearance_certifies_polygon_gap() {
     )
     .unwrap();
 
-    let tangent = check_trace_convex_pad_clearance(&trace, &pad, &r(4), PredicatePolicy::default());
+    let tangent = check_trace_convex_pad_clearance(&trace, &pad, &r(4), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
 
-    let violation =
-        check_trace_convex_pad_clearance(&trace, &pad, &r(5), PredicatePolicy::default());
+    let violation = check_trace_convex_pad_clearance(&trace, &pad, &r(5), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6131,12 +5903,10 @@ fn pcb_trace_convex_pad_clearance_reports_overlap_and_not_applicable() {
     )
     .unwrap();
 
-    let report =
-        check_trace_convex_pad_clearance(&crossing_trace, &pad, &r(0), PredicatePolicy::default());
+    let report = check_trace_convex_pad_clearance(&crossing_trace, &pad, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 
-    let skipped =
-        check_trace_convex_pad_clearance(&same_net, &pad, &r(0), PredicatePolicy::default());
+    let skipped = check_trace_convex_pad_clearance(&same_net, &pad, &r(0), PredicatePolicy);
     assert_eq!(skipped.status, ClearanceStatus::NotApplicable);
 }
 
@@ -6191,40 +5961,21 @@ fn pcb_trace_orthogonal_pad_clearance_handles_nonconvex_notches_exactly() {
     let near_notch_wall = trace(1, 0, p(3, 3), p(6, 3), 1);
 
     assert_eq!(
-        check_trace_orthogonal_pad_clearance(
-            &through_copper,
-            &pad,
-            &r(0),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_orthogonal_pad_clearance(&through_copper, &pad, &r(0), PredicatePolicy).status,
         ClearanceStatus::NoShortViolation
     );
     assert_eq!(
-        check_trace_orthogonal_pad_clearance(
-            &through_notch,
-            &pad,
-            &r(0),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_orthogonal_pad_clearance(&through_notch, &pad, &r(0), PredicatePolicy).status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_trace_orthogonal_pad_clearance(
-            &near_notch_wall,
-            &pad,
-            &r(2),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_orthogonal_pad_clearance(&near_notch_wall, &pad, &r(2), PredicatePolicy).status,
         ClearanceStatus::ClearanceViolation
     );
 
     let same_net = trace(2, 0, p(1, 1), p(5, 1), 1);
     assert_eq!(
-        check_trace_orthogonal_pad_clearance(&same_net, &pad, &r(0), PredicatePolicy::default())
-            .status,
+        check_trace_orthogonal_pad_clearance(&same_net, &pad, &r(0), PredicatePolicy).status,
         ClearanceStatus::NotApplicable
     );
 }
@@ -6280,23 +6031,13 @@ fn pcb_trace_cardinal_rect_pad_clearance_uses_rotated_extents() {
     .unwrap();
 
     assert_eq!(
-        check_trace_cardinal_rect_pad_clearance(
-            &trace,
-            &wide_horizontal,
-            &r(4),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_cardinal_rect_pad_clearance(&trace, &wide_horizontal, &r(4), PredicatePolicy)
+            .status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_trace_cardinal_rect_pad_clearance(
-            &trace,
-            &wide_vertical,
-            &r(4),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_cardinal_rect_pad_clearance(&trace, &wide_vertical, &r(4), PredicatePolicy)
+            .status,
         ClearanceStatus::ClearanceViolation
     );
 }
@@ -6325,7 +6066,7 @@ fn pcb_oriented_rect_pad_accepts_exact_pythagorean_axis() {
         r(10),
         r(4),
         Point2::new(rq(3, 5), rq(4, 5)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -6343,7 +6084,7 @@ fn pcb_oriented_rect_pad_rejects_non_unit_axis_and_negative_extent() {
         r(10),
         r(4),
         Point2::new(r(1), r(1)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .expect_err("non-unit orientation must not be normalized silently");
     assert_eq!(
@@ -6358,7 +6099,7 @@ fn pcb_oriented_rect_pad_rejects_non_unit_axis_and_negative_extent() {
         r(-10),
         r(4),
         Point2::new(r(1), r(0)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .expect_err("negative oriented pad width must be rejected");
     assert_eq!(negative, "oriented rect pad width must be nonnegative");
@@ -6373,7 +6114,7 @@ fn pcb_trace_oriented_rect_pad_clearance_certifies_rotated_gap() {
         r(10),
         r(4),
         Point2::new(rq(3, 5), rq(4, 5)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     let trace = PcbTrace::new(
@@ -6386,12 +6127,10 @@ fn pcb_trace_oriented_rect_pad_clearance_certifies_rotated_gap() {
         .unwrap(),
     );
 
-    let tangent =
-        check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(4), PredicatePolicy::default());
+    let tangent = check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(4), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
 
-    let violation =
-        check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy::default());
+    let violation = check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(5), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6404,7 +6143,7 @@ fn pcb_trace_oriented_rect_pad_clearance_reports_rotated_overlap() {
         r(10),
         r(4),
         Point2::new(rq(3, 5), rq(4, 5)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     let trace = PcbTrace::new(
@@ -6417,8 +6156,7 @@ fn pcb_trace_oriented_rect_pad_clearance_reports_rotated_overlap() {
         .unwrap(),
     );
 
-    let report =
-        check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+    let report = check_trace_oriented_rect_pad_clearance(&trace, &pad, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::NoShortViolation);
 }
 
@@ -6522,23 +6260,15 @@ fn pcb_trace_convex_board_clearance_certifies_slanted_edge_gap() {
     let outside_slant = trace(1, 0, p(24, 9), p(25, 9), 0);
 
     assert_eq!(
-        check_trace_convex_board_clearance(&centered, &board, &r(1), PredicatePolicy::default())
-            .status,
+        check_trace_convex_board_clearance(&centered, &board, &r(1), PredicatePolicy).status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_trace_convex_board_clearance(&near_bottom, &board, &r(1), PredicatePolicy::default())
-            .status,
+        check_trace_convex_board_clearance(&near_bottom, &board, &r(1), PredicatePolicy).status,
         ClearanceStatus::ClearanceViolation
     );
     assert_eq!(
-        check_trace_convex_board_clearance(
-            &outside_slant,
-            &board,
-            &r(0),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_convex_board_clearance(&outside_slant, &board, &r(0), PredicatePolicy).status,
         ClearanceStatus::ClearanceViolation
     );
 }
@@ -6562,38 +6292,21 @@ fn pcb_trace_orthogonal_board_clearance_handles_nonconvex_notches_exactly() {
     let outside_notch = trace(1, 0, p(9, 6), p(11, 6), 0);
 
     assert_eq!(
-        check_trace_orthogonal_board_clearance(&clear, &board, &r(1), PredicatePolicy::default())
-            .status,
+        check_trace_orthogonal_board_clearance(&clear, &board, &r(1), PredicatePolicy).status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_trace_orthogonal_board_clearance(
-            &near_notch,
-            &board,
-            &r(1),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_orthogonal_board_clearance(&near_notch, &board, &r(1), PredicatePolicy).status,
         ClearanceStatus::ClearanceViolation
     );
     assert_eq!(
-        check_trace_orthogonal_board_clearance(
-            &crossing_notch,
-            &board,
-            &r(0),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_orthogonal_board_clearance(&crossing_notch, &board, &r(0), PredicatePolicy)
+            .status,
         ClearanceStatus::ClearanceViolation
     );
     assert_eq!(
-        check_trace_orthogonal_board_clearance(
-            &outside_notch,
-            &board,
-            &r(0),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_trace_orthogonal_board_clearance(&outside_notch, &board, &r(0), PredicatePolicy)
+            .status,
         ClearanceStatus::ClearanceViolation
     );
 }
@@ -6605,17 +6318,15 @@ fn pcb_trace_board_clearance_certifies_inside_gap_and_edge_violation() {
     let near_edge = trace(1, 0, p(1, 5), p(17, 5), 2);
     let outside = trace(1, 0, p(-1, 5), p(17, 5), 2);
 
-    let clear = check_trace_board_clearance(&centered, &board, &r(2), PredicatePolicy::default());
+    let clear = check_trace_board_clearance(&centered, &board, &r(2), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.axis_gap, Some(r(3)));
 
-    let violation =
-        check_trace_board_clearance(&near_edge, &board, &r(1), PredicatePolicy::default());
+    let violation = check_trace_board_clearance(&near_edge, &board, &r(1), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.axis_gap, Some(r(1)));
 
-    let outside_report =
-        check_trace_board_clearance(&outside, &board, &r(0), PredicatePolicy::default());
+    let outside_report = check_trace_board_clearance(&outside, &board, &r(0), PredicatePolicy);
     assert_eq!(outside_report.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(outside_report.axis_gap, Some(r(-1)));
 }
@@ -6632,12 +6343,10 @@ fn pcb_trace_circular_board_clearance_certifies_diagonal_endpoint_radius() {
     let board = PcbCircularBoardOutline::new(p(0, 0), r(10)).unwrap();
     let trace = trace(1, 0, p(-3, -4), p(3, 4), 2);
 
-    let tangent =
-        check_trace_circular_board_clearance(&trace, &board, &r(4), PredicatePolicy::default());
+    let tangent = check_trace_circular_board_clearance(&trace, &board, &r(4), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
 
-    let violation =
-        check_trace_circular_board_clearance(&trace, &board, &r(5), PredicatePolicy::default());
+    let violation = check_trace_circular_board_clearance(&trace, &board, &r(5), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6646,8 +6355,7 @@ fn pcb_trace_circular_board_clearance_rejects_impossible_allowance_before_squari
     let board = PcbCircularBoardOutline::new(p(0, 0), r(3)).unwrap();
     let trace = trace(1, 0, p(0, 0), p(0, 0), 8);
 
-    let report =
-        check_trace_circular_board_clearance(&trace, &board, &r(0), PredicatePolicy::default());
+    let report = check_trace_circular_board_clearance(&trace, &board, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6656,21 +6364,12 @@ fn pcb_circular_pad_circular_board_clearance_uses_exact_center_radius_sum() {
     let board = PcbCircularBoardOutline::new(p(0, 0), r(10)).unwrap();
     let pad = PcbCircularPad::new(NetId(1), TraceLayer(0), p(3, 4), r(4)).unwrap();
 
-    let tangent = check_circular_pad_circular_board_clearance(
-        &pad,
-        &board,
-        &r(3),
-        PredicatePolicy::default(),
-    );
+    let tangent = check_circular_pad_circular_board_clearance(&pad, &board, &r(3), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
     assert_eq!(tangent.copper_gap, None);
 
-    let violation = check_circular_pad_circular_board_clearance(
-        &pad,
-        &board,
-        &r(4),
-        PredicatePolicy::default(),
-    );
+    let violation =
+        check_circular_pad_circular_board_clearance(&pad, &board, &r(4), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6697,21 +6396,16 @@ fn pcb_trace_obround_board_clearance_uses_exact_capsule_erosion() {
     let cap_inside = trace(1, 0, p(-2, 0), p(22, 0), 0);
     let outside_side = trace(1, 0, p(2, 2), p(18, 2), 2);
 
-    let tangent =
-        check_trace_obround_board_clearance(&centered, &board, &r(3), PredicatePolicy::default());
+    let tangent = check_trace_obround_board_clearance(&centered, &board, &r(3), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
     assert_eq!(tangent.axis_gap, None);
 
     let cap_tangent =
-        check_trace_obround_board_clearance(&cap_inside, &board, &r(3), PredicatePolicy::default());
+        check_trace_obround_board_clearance(&cap_inside, &board, &r(3), PredicatePolicy);
     assert_eq!(cap_tangent.status, ClearanceStatus::CertifiedClear);
 
-    let violation = check_trace_obround_board_clearance(
-        &outside_side,
-        &board,
-        &r(3),
-        PredicatePolicy::default(),
-    );
+    let violation =
+        check_trace_obround_board_clearance(&outside_side, &board, &r(3), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6720,8 +6414,7 @@ fn pcb_obround_board_rejects_impossible_allowance_before_squaring() {
     let board = PcbObroundBoardOutline::new(LinePathSegment::new(p(0, 0), p(20, 0)), r(4)).unwrap();
     let trace = trace(1, 0, p(10, 0), p(10, 0), 6);
 
-    let report =
-        check_trace_obround_board_clearance(&trace, &board, &r(0), PredicatePolicy::default());
+    let report = check_trace_obround_board_clearance(&trace, &board, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6731,13 +6424,12 @@ fn pcb_circular_pad_obround_board_clearance_uses_exact_center_to_spine_distance(
         PcbObroundBoardOutline::new(LinePathSegment::new(p(0, 0), p(20, 0)), r(10)).unwrap();
     let pad = PcbCircularPad::new(NetId(1), TraceLayer(0), p(10, 4), r(2)).unwrap();
 
-    let tangent =
-        check_circular_pad_obround_board_clearance(&pad, &board, &r(0), PredicatePolicy::default());
+    let tangent = check_circular_pad_obround_board_clearance(&pad, &board, &r(0), PredicatePolicy);
     assert_eq!(tangent.status, ClearanceStatus::CertifiedClear);
     assert_eq!(tangent.copper_gap, None);
 
     let violation =
-        check_circular_pad_obround_board_clearance(&pad, &board, &r(1), PredicatePolicy::default());
+        check_circular_pad_obround_board_clearance(&pad, &board, &r(1), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
 }
 
@@ -6750,36 +6442,14 @@ fn degenerate_obround_board_matches_circular_board_for_exact_pad_clearance() {
 
     assert_eq!(obround.facts().degenerate_spine, Some(true));
     assert_eq!(
-        check_circular_pad_obround_board_clearance(
-            &pad,
-            &obround,
-            &r(3),
-            PredicatePolicy::default(),
-        )
-        .status,
-        check_circular_pad_circular_board_clearance(
-            &pad,
-            &circular,
-            &r(3),
-            PredicatePolicy::default(),
-        )
-        .status
+        check_circular_pad_obround_board_clearance(&pad, &obround, &r(3), PredicatePolicy,).status,
+        check_circular_pad_circular_board_clearance(&pad, &circular, &r(3), PredicatePolicy,)
+            .status
     );
     assert_eq!(
-        check_circular_pad_obround_board_clearance(
-            &pad,
-            &obround,
-            &r(4),
-            PredicatePolicy::default(),
-        )
-        .status,
-        check_circular_pad_circular_board_clearance(
-            &pad,
-            &circular,
-            &r(4),
-            PredicatePolicy::default(),
-        )
-        .status
+        check_circular_pad_obround_board_clearance(&pad, &obround, &r(4), PredicatePolicy,).status,
+        check_circular_pad_circular_board_clearance(&pad, &circular, &r(4), PredicatePolicy,)
+            .status
     );
 }
 
@@ -6796,7 +6466,7 @@ fn pcb_via_drill_board_clearance_certifies_edge_gap_and_missing_drill() {
         PcbViaStack::new(NetId(1), TraceLayer(0), TraceLayer(2), p(10, 5), r(8)).unwrap();
 
     assert_eq!(
-        check_via_drill_board_clearance(&centered, &board, &r(3), PredicatePolicy::default()),
+        check_via_drill_board_clearance(&centered, &board, &r(3), PredicatePolicy),
         DrillBoardClearanceReport {
             status: ClearanceStatus::CertifiedClear,
             axis_gap: Some(r(5)),
@@ -6804,7 +6474,7 @@ fn pcb_via_drill_board_clearance_certifies_edge_gap_and_missing_drill() {
         }
     );
     assert_eq!(
-        check_via_drill_board_clearance(&near_edge, &board, &r(2), PredicatePolicy::default()),
+        check_via_drill_board_clearance(&near_edge, &board, &r(2), PredicatePolicy),
         DrillBoardClearanceReport {
             status: ClearanceStatus::ClearanceViolation,
             axis_gap: Some(r(2)),
@@ -6812,7 +6482,7 @@ fn pcb_via_drill_board_clearance_certifies_edge_gap_and_missing_drill() {
         }
     );
     assert_eq!(
-        check_via_drill_board_clearance(&no_drill, &board, &r(1), PredicatePolicy::default()),
+        check_via_drill_board_clearance(&no_drill, &board, &r(1), PredicatePolicy),
         DrillBoardClearanceReport {
             status: ClearanceStatus::Unknown,
             axis_gap: None,
@@ -6828,8 +6498,7 @@ fn pcb_via_drill_board_clearance_reports_outside_board() {
         PcbViaStack::with_drill(NetId(1), TraceLayer(0), TraceLayer(2), p(-1, 5), r(8), r(2))
             .unwrap();
 
-    let report =
-        check_via_drill_board_clearance(&outside, &board, &r(0), PredicatePolicy::default());
+    let report = check_via_drill_board_clearance(&outside, &board, &r(0), PredicatePolicy);
     assert_eq!(report.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(report.axis_gap, Some(r(-1)));
     assert!(!report.missing_drill);
@@ -6842,18 +6511,16 @@ fn pcb_circular_pad_board_clearance_certifies_edge_gap() {
     let near_edge = PcbCircularPad::new(NetId(1), TraceLayer(0), p(3, 5), r(4)).unwrap();
     let outside = PcbCircularPad::new(NetId(1), TraceLayer(0), p(1, 5), r(4)).unwrap();
 
-    let clear =
-        check_circular_pad_board_clearance(&centered, &board, &r(3), PredicatePolicy::default());
+    let clear = check_circular_pad_board_clearance(&centered, &board, &r(3), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(r(3)));
 
-    let violation =
-        check_circular_pad_board_clearance(&near_edge, &board, &r(2), PredicatePolicy::default());
+    let violation = check_circular_pad_board_clearance(&near_edge, &board, &r(2), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(1)));
 
     let outside_report =
-        check_circular_pad_board_clearance(&outside, &board, &r(0), PredicatePolicy::default());
+        check_circular_pad_board_clearance(&outside, &board, &r(0), PredicatePolicy);
     assert_eq!(outside_report.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(outside_report.copper_gap, Some(r(-1)));
 }
@@ -6864,13 +6531,11 @@ fn pcb_rect_pad_board_clearance_uses_copper_edges() {
     let centered = PcbRectPad::new(NetId(1), TraceLayer(0), p(10, 5), r(4), r(2)).unwrap();
     let near_edge = PcbRectPad::new(NetId(1), TraceLayer(0), p(3, 5), r(4), r(2)).unwrap();
 
-    let clear =
-        check_rect_pad_board_clearance(&centered, &board, &r(4), PredicatePolicy::default());
+    let clear = check_rect_pad_board_clearance(&centered, &board, &r(4), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(r(4)));
 
-    let violation =
-        check_rect_pad_board_clearance(&near_edge, &board, &r(2), PredicatePolicy::default());
+    let violation = check_rect_pad_board_clearance(&near_edge, &board, &r(2), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(1)));
 }
@@ -6883,21 +6548,12 @@ fn pcb_rounded_rect_pad_board_clearance_uses_outer_copper_bounds() {
     let near_edge =
         PcbRoundedRectPad::new(NetId(1), TraceLayer(0), p(3, 5), r(4), r(2), r(1)).unwrap();
 
-    let clear = check_rounded_rect_pad_board_clearance(
-        &centered,
-        &board,
-        &r(4),
-        PredicatePolicy::default(),
-    );
+    let clear = check_rounded_rect_pad_board_clearance(&centered, &board, &r(4), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(r(4)));
 
-    let violation = check_rounded_rect_pad_board_clearance(
-        &near_edge,
-        &board,
-        &r(2),
-        PredicatePolicy::default(),
-    );
+    let violation =
+        check_rounded_rect_pad_board_clearance(&near_edge, &board, &r(2), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(1)));
 }
@@ -6913,12 +6569,11 @@ fn pcb_obround_pad_board_clearance_uses_spine_extrema_plus_radius() {
     )
     .unwrap();
 
-    let clear = check_obround_pad_board_clearance(&pad, &board, &r(2), PredicatePolicy::default());
+    let clear = check_obround_pad_board_clearance(&pad, &board, &r(2), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(r(2)));
 
-    let violation =
-        check_obround_pad_board_clearance(&pad, &board, &r(3), PredicatePolicy::default());
+    let violation = check_obround_pad_board_clearance(&pad, &board, &r(3), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(2)));
 }
@@ -6933,12 +6588,11 @@ fn pcb_convex_pad_board_clearance_uses_vertex_extrema() {
     )
     .unwrap();
 
-    let clear = check_convex_pad_board_clearance(&pad, &board, &r(5), PredicatePolicy::default());
+    let clear = check_convex_pad_board_clearance(&pad, &board, &r(5), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(r(5)));
 
-    let violation =
-        check_convex_pad_board_clearance(&pad, &board, &r(6), PredicatePolicy::default());
+    let violation = check_convex_pad_board_clearance(&pad, &board, &r(6), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(5)));
 }
@@ -6953,13 +6607,11 @@ fn pcb_orthogonal_pad_board_clearance_uses_vertex_extrema() {
     )
     .unwrap();
 
-    let clear =
-        check_orthogonal_pad_board_clearance(&pad, &board, &r(1), PredicatePolicy::default());
+    let clear = check_orthogonal_pad_board_clearance(&pad, &board, &r(1), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(r(1)));
 
-    let violation =
-        check_orthogonal_pad_board_clearance(&pad, &board, &r(2), PredicatePolicy::default());
+    let violation = check_orthogonal_pad_board_clearance(&pad, &board, &r(2), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(r(1)));
 }
@@ -6987,23 +6639,11 @@ fn pcb_cardinal_rect_pad_board_clearance_uses_rotated_extents() {
     .unwrap();
 
     assert_eq!(
-        check_cardinal_rect_pad_board_clearance(
-            &horizontal,
-            &board,
-            &r(2),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_cardinal_rect_pad_board_clearance(&horizontal, &board, &r(2), PredicatePolicy).status,
         ClearanceStatus::CertifiedClear
     );
     assert_eq!(
-        check_cardinal_rect_pad_board_clearance(
-            &vertical,
-            &board,
-            &r(0),
-            PredicatePolicy::default()
-        )
-        .status,
+        check_cardinal_rect_pad_board_clearance(&vertical, &board, &r(0), PredicatePolicy).status,
         ClearanceStatus::ClearanceViolation
     );
 }
@@ -7018,17 +6658,15 @@ fn pcb_oriented_rect_pad_board_clearance_uses_rotated_corner_extrema() {
         r(10),
         r(4),
         Point2::new(rq(3, 5), rq(4, 5)),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
-    let clear =
-        check_oriented_rect_pad_board_clearance(&pad, &board, &r(4), PredicatePolicy::default());
+    let clear = check_oriented_rect_pad_board_clearance(&pad, &board, &r(4), PredicatePolicy);
     assert_eq!(clear.status, ClearanceStatus::CertifiedClear);
     assert_eq!(clear.copper_gap, Some(rq(24, 5)));
 
-    let violation =
-        check_oriented_rect_pad_board_clearance(&pad, &board, &r(5), PredicatePolicy::default());
+    let violation = check_oriented_rect_pad_board_clearance(&pad, &board, &r(5), PredicatePolicy);
     assert_eq!(violation.status, ClearanceStatus::ClearanceViolation);
     assert_eq!(violation.copper_gap, Some(rq(24, 5)));
 }
@@ -7046,15 +6684,9 @@ fn axis_aligned_line_offset_preserves_exact_distance_and_provenance() {
     let segment = LinePathSegment::with_provenance(p(0, 0), p(10, 0), provenance);
 
     let left =
-        offset_axis_aligned_segment(&segment, r(3), OffsetSide::Left, PredicatePolicy::default())
-            .unwrap();
-    let right = offset_axis_aligned_segment(
-        &segment,
-        r(3),
-        OffsetSide::Right,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+        offset_axis_aligned_segment(&segment, r(3), OffsetSide::Left, PredicatePolicy).unwrap();
+    let right =
+        offset_axis_aligned_segment(&segment, r(3), OffsetSide::Right, PredicatePolicy).unwrap();
 
     assert_eq!(left.segment.start(), &p(0, 3));
     assert_eq!(left.segment.end(), &p(10, 3));
@@ -7069,20 +6701,10 @@ fn axis_aligned_line_offset_respects_reversed_and_vertical_direction() {
     let reversed = LinePathSegment::new(p(10, 0), p(0, 0));
     let vertical = LinePathSegment::new(p(0, 0), p(0, 10));
 
-    let reversed_left = offset_axis_aligned_segment(
-        &reversed,
-        r(2),
-        OffsetSide::Left,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
-    let vertical_left = offset_axis_aligned_segment(
-        &vertical,
-        r(2),
-        OffsetSide::Left,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let reversed_left =
+        offset_axis_aligned_segment(&reversed, r(2), OffsetSide::Left, PredicatePolicy).unwrap();
+    let vertical_left =
+        offset_axis_aligned_segment(&vertical, r(2), OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(reversed_left.segment.start(), &p(10, -2));
     assert_eq!(reversed_left.segment.end(), &p(0, -2));
@@ -7097,33 +6719,18 @@ fn line_offset_rejects_invalid_candidates() {
     let horizontal = LinePathSegment::new(p(0, 0), p(1, 0));
 
     assert_eq!(
-        offset_axis_aligned_segment(
-            &diagonal,
-            r(1),
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        offset_axis_aligned_segment(&diagonal, r(1), OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         LineOffsetError::NotAxisAligned
     );
     assert_eq!(
-        offset_axis_aligned_segment(
-            &degenerate,
-            r(1),
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        offset_axis_aligned_segment(&degenerate, r(1), OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         LineOffsetError::UnknownDirection
     );
     assert_eq!(
-        offset_axis_aligned_segment(
-            &horizontal,
-            r(-1),
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        offset_axis_aligned_segment(&horizontal, r(-1), OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         LineOffsetError::NegativeDistance
     );
 }
@@ -7136,7 +6743,7 @@ fn bezier_offset_samples_retain_exact_normal_facts() {
         BezierParameter::new(1, 2).unwrap(),
         r(3),
         OffsetSide::Left,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(sample.point, p(5, 0));
@@ -7152,7 +6759,7 @@ fn bezier_offset_samples_retain_exact_normal_facts() {
         BezierParameter::new(1, 2).unwrap(),
         r(2),
         OffsetSide::Right,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     let nine_halves = Real::new(Rational::fraction(9, 2).unwrap());
@@ -7173,7 +6780,7 @@ fn bezier_offset_samples_reject_invalid_inputs() {
             BezierParameter::new(1, 2).unwrap(),
             r(1),
             OffsetSide::Left,
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         BezierOffsetError::DegenerateTangent
@@ -7186,7 +6793,7 @@ fn bezier_offset_samples_reject_invalid_inputs() {
             BezierParameter::new(1, 2).unwrap(),
             r(-1),
             OffsetSide::Left,
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         BezierOffsetError::NegativeDistance
@@ -7197,8 +6804,7 @@ fn bezier_offset_samples_reject_invalid_inputs() {
 fn rectangular_pocket_plan_schedules_exact_inset_rings() {
     let pocket = RectangularPocket::new(p(0, 0), p(20, 12)).unwrap();
     let plan =
-        build_rectangular_pocket_plan(pocket.clone(), r(2), r(3), 8, PredicatePolicy::default())
-            .unwrap();
+        build_rectangular_pocket_plan(pocket.clone(), r(2), r(3), 8, PredicatePolicy).unwrap();
 
     assert_eq!(plan.pocket, pocket);
     assert_eq!(plan.rings.len(), 2);
@@ -7224,22 +6830,18 @@ fn rectangular_pocket_plan_rejects_invalid_inputs_and_respects_ring_limit() {
     );
     let pocket = RectangularPocket::new(p(0, 0), p(100, 100)).unwrap();
     assert_eq!(
-        build_rectangular_pocket_plan(pocket.clone(), r(-1), r(1), 1, PredicatePolicy::default())
-            .unwrap_err(),
+        build_rectangular_pocket_plan(pocket.clone(), r(-1), r(1), 1, PredicatePolicy).unwrap_err(),
         PocketPlanError::NegativeToolRadius
     );
     assert_eq!(
-        build_rectangular_pocket_plan(pocket.clone(), r(1), r(0), 1, PredicatePolicy::default())
-            .unwrap_err(),
+        build_rectangular_pocket_plan(pocket.clone(), r(1), r(0), 1, PredicatePolicy).unwrap_err(),
         PocketPlanError::NonPositiveStepover
     );
     assert_eq!(
-        build_rectangular_pocket_plan(pocket.clone(), r(1), r(1), 0, PredicatePolicy::default())
-            .unwrap_err(),
+        build_rectangular_pocket_plan(pocket.clone(), r(1), r(1), 0, PredicatePolicy).unwrap_err(),
         PocketPlanError::ZeroMaxRings
     );
-    let limited =
-        build_rectangular_pocket_plan(pocket, r(1), r(1), 2, PredicatePolicy::default()).unwrap();
+    let limited = build_rectangular_pocket_plan(pocket, r(1), r(1), 2, PredicatePolicy).unwrap();
     assert_eq!(limited.rings.len(), 2);
     assert_eq!(limited.stop_reason, PocketPlanStopReason::MaxRingsReached);
 }
@@ -7247,10 +6849,8 @@ fn rectangular_pocket_plan_rejects_invalid_inputs_and_respects_ring_limit() {
 #[test]
 fn rectangular_pocket_link_graph_emits_retained_ring_segments_and_doglegs() {
     let pocket = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
-    let plan =
-        build_rectangular_pocket_plan(pocket, r(1), r(2), 2, PredicatePolicy::default()).unwrap();
-    let graph =
-        build_rectangular_pocket_link_graph(plan.clone(), PredicatePolicy::default()).unwrap();
+    let plan = build_rectangular_pocket_plan(pocket, r(1), r(2), 2, PredicatePolicy).unwrap();
+    let graph = build_rectangular_pocket_link_graph(plan.clone(), PredicatePolicy).unwrap();
 
     assert_eq!(graph.plan, plan);
     assert_eq!(graph.ring_segments.len(), 8);
@@ -7286,12 +6886,12 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
         r(2),
         r(1),
         4,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(empty.rings.is_empty());
     assert_eq!(
-        build_rectangular_pocket_link_graph(empty, PredicatePolicy::default()).unwrap_err(),
+        build_rectangular_pocket_link_graph(empty, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::EmptyPlan
     );
 
@@ -7300,12 +6900,12 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
         r(5),
         r(1),
         1,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(collapsed.rings[0].min, collapsed.rings[0].max);
     assert_eq!(
-        build_rectangular_pocket_link_graph(collapsed, PredicatePolicy::default()).unwrap_err(),
+        build_rectangular_pocket_link_graph(collapsed, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::DegenerateRing
     );
 
@@ -7314,12 +6914,12 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
         r(1),
         r(2),
         2,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     bad_index.rings[1].index = 4;
     assert_eq!(
-        build_rectangular_pocket_link_graph(bad_index, PredicatePolicy::default()).unwrap_err(),
+        build_rectangular_pocket_link_graph(bad_index, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::InvalidRingIndex
     );
 
@@ -7328,12 +6928,12 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
         r(1),
         r(2),
         2,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     non_nested.rings[1].min = p(0, 3);
     assert_eq!(
-        build_rectangular_pocket_link_graph(non_nested, PredicatePolicy::default()).unwrap_err(),
+        build_rectangular_pocket_link_graph(non_nested, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::NonNestedRings
     );
 }
@@ -7347,7 +6947,7 @@ fn rectangular_bead_plan_schedules_exact_centerlines() {
         r(2),
         r(2),
         8,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -7367,7 +6967,7 @@ fn rectangular_bead_plan_schedules_exact_centerlines() {
         r(2),
         r(4),
         8,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(vertical.beads.len(), 3);
@@ -7385,7 +6985,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
             r(0),
             r(1),
             1,
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         BeadPlanError::NonPositiveBeadWidth
@@ -7397,7 +6997,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
             r(1),
             r(0),
             1,
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         BeadPlanError::NonPositiveSpacing
@@ -7409,7 +7009,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
             r(1),
             r(1),
             0,
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         BeadPlanError::ZeroMaxBeads
@@ -7420,7 +7020,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
         r(2),
         r(1),
         2,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(limited.beads.len(), 2);
@@ -7435,11 +7035,10 @@ fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
         r(2),
         r(2),
         8,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
-    let graph = build_rectangular_serpentine_infill_graph(plan.clone(), PredicatePolicy::default())
-        .unwrap();
+    let graph = build_rectangular_serpentine_infill_graph(plan.clone(), PredicatePolicy).unwrap();
 
     assert_eq!(graph.plan, plan);
     assert_eq!(graph.deposition_segments.len(), 3);
@@ -7466,13 +7065,13 @@ fn rectangular_serpentine_infill_graph_rejects_empty_bead_plans() {
         r(2),
         r(2),
         8,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
     assert!(plan.beads.is_empty());
     assert_eq!(
-        build_rectangular_serpentine_infill_graph(plan, PredicatePolicy::default()).unwrap_err(),
+        build_rectangular_serpentine_infill_graph(plan, PredicatePolicy).unwrap_err(),
         InfillGraphError::EmptyBeadPlan
     );
 }
@@ -7481,13 +7080,9 @@ fn rectangular_serpentine_infill_graph_rejects_empty_bead_plans() {
 fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
     let overhang = RectangularPocket::new(p(4, 4), p(6, 6)).unwrap();
     let base = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
-    let plan = build_rectangular_support_plan(
-        overhang.clone(),
-        base.clone(),
-        r(1),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let plan =
+        build_rectangular_support_plan(overhang.clone(), base.clone(), r(1), PredicatePolicy)
+            .unwrap();
 
     assert_eq!(plan.overhang, overhang);
     assert_eq!(plan.base, base);
@@ -7500,7 +7095,7 @@ fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
         RectangularPocket::new(p(1, 1), p(3, 3)).unwrap(),
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         r(2),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(outside.footprint.min(), &p(-1, -1));
@@ -7514,7 +7109,7 @@ fn rectangular_support_plan_rejects_negative_margin() {
             RectangularPocket::new(p(4, 4), p(6, 6)).unwrap(),
             RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
             r(-1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         SupportPlanError::NegativeMargin
@@ -7526,7 +7121,7 @@ fn rectangular_region_intersection_classifies_disjoint_touching_and_overlap() {
     let overlap = intersect_rectangular_regions(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         RectangularPocket::new(p(4, 3), p(12, 8)).unwrap(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(overlap.relation, RectangularRegionRelation::AreaOverlap);
@@ -7536,7 +7131,7 @@ fn rectangular_region_intersection_classifies_disjoint_touching_and_overlap() {
     let touching = intersect_rectangular_regions(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         RectangularPocket::new(p(10, 2), p(12, 8)).unwrap(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(touching.relation, RectangularRegionRelation::Touching);
@@ -7546,7 +7141,7 @@ fn rectangular_region_intersection_classifies_disjoint_touching_and_overlap() {
     let disjoint = intersect_rectangular_regions(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         RectangularPocket::new(p(11, 2), p(12, 8)).unwrap(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(disjoint.relation, RectangularRegionRelation::Disjoint);
@@ -7558,7 +7153,7 @@ fn rectangular_region_difference_emits_positive_area_remainder_pieces() {
     let difference = subtract_rectangular_region(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         RectangularPocket::new(p(3, 4), p(7, 8)).unwrap(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -7578,7 +7173,7 @@ fn rectangular_region_difference_emits_positive_area_remainder_pieces() {
     let covered = subtract_rectangular_region(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         RectangularPocket::new(p(-1, -1), p(11, 11)).unwrap(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(covered.relation, RectangularRegionRelation::AreaOverlap);
@@ -7587,7 +7182,7 @@ fn rectangular_region_difference_emits_positive_area_remainder_pieces() {
     let touching = subtract_rectangular_region(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         RectangularPocket::new(p(10, 0), p(12, 10)).unwrap(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(touching.relation, RectangularRegionRelation::Touching);
@@ -7604,12 +7199,9 @@ fn rectangular_rest_material_graph_replays_multi_cut_area_exactly() {
         RectangularPocket::new(p(-1, 4), p(4, 6)).unwrap(),
         RectangularPocket::new(p(8, 0), p(12, 10)).unwrap(),
     ];
-    let graph = build_rectangular_rest_material_graph(
-        stock.clone(),
-        cutters.clone(),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let graph =
+        build_rectangular_rest_material_graph(stock.clone(), cutters.clone(), PredicatePolicy)
+            .unwrap();
 
     assert_eq!(graph.stock, stock);
     assert_eq!(graph.cutters, cutters);
@@ -7662,7 +7254,7 @@ fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
         build_rectangular_rest_material_graph(
             RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
             Vec::<RectangularPocket>::new(),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RectangularRestMaterialError::EmptyCutterSet
@@ -7674,7 +7266,7 @@ fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
             RectangularPocket::new(p(11, 0), p(12, 10)).unwrap(),
             RectangularPocket::new(p(10, 0), p(11, 10)).unwrap(),
         ],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(disjoint_and_touching.all_area_certified());
@@ -7696,7 +7288,7 @@ fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
             RectangularPocket::new(p(-1, -1), p(11, 11)).unwrap(),
             RectangularPocket::new(p(2, 2), p(4, 4)).unwrap(),
         ],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(covered.all_area_certified());
@@ -7732,8 +7324,7 @@ fn differential_pair_skew_replays_exact_axis_lengths() {
         LinePathSegment::new(p(10, 0), p(10, 5)),
     ];
     let second = vec![LinePathSegment::new(p(0, 2), p(12, 2))];
-    let report =
-        certify_differential_pair_skew(&first, &second, r(3), PredicatePolicy::default()).unwrap();
+    let report = certify_differential_pair_skew(&first, &second, r(3), PredicatePolicy).unwrap();
 
     assert_eq!(report.first_length, r(15));
     assert_eq!(report.second_length, r(12));
@@ -7741,8 +7332,7 @@ fn differential_pair_skew_replays_exact_axis_lengths() {
     assert_eq!(report.target_skew, r(3));
     assert!(report.certification.all_satisfied());
 
-    let wrong =
-        certify_differential_pair_skew(&first, &second, r(4), PredicatePolicy::default()).unwrap();
+    let wrong = certify_differential_pair_skew(&first, &second, r(4), PredicatePolicy).unwrap();
     assert!(wrong.certification.has_certified_violation());
 }
 
@@ -7752,12 +7342,11 @@ fn differential_pair_skew_rejects_empty_and_unsupported_routes() {
     let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
 
     assert_eq!(
-        certify_differential_pair_skew(&[], &axis, Real::zero(), PredicatePolicy::default())
-            .unwrap_err(),
+        certify_differential_pair_skew(&[], &axis, Real::zero(), PredicatePolicy).unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
-        certify_differential_pair_skew(&axis, &diagonal, Real::zero(), PredicatePolicy::default())
+        certify_differential_pair_skew(&axis, &diagonal, Real::zero(), PredicatePolicy)
             .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
@@ -7769,15 +7358,14 @@ fn constant_feed_time_replays_exact_axis_length() {
         LinePathSegment::new(p(0, 0), p(10, 0)),
         LinePathSegment::new(p(10, 0), p(10, 5)),
     ];
-    let report =
-        certify_constant_feed_time(&route, r(5), r(3), PredicatePolicy::default()).unwrap();
+    let report = certify_constant_feed_time(&route, r(5), r(3), PredicatePolicy).unwrap();
 
     assert_eq!(report.path_length, r(15));
     assert_eq!(report.feed_rate, r(5));
     assert_eq!(report.target_time, r(3));
     assert!(report.certification.all_satisfied());
 
-    let wrong = certify_constant_feed_time(&route, r(5), r(4), PredicatePolicy::default()).unwrap();
+    let wrong = certify_constant_feed_time(&route, r(5), r(4), PredicatePolicy).unwrap();
     assert!(wrong.certification.has_certified_violation());
 }
 
@@ -7796,9 +7384,7 @@ fn mixed_path_constant_feed_replays_exact_arc_length() {
         FeedPathElement::Line(LinePathSegment::new(p(0, 0), p(5, 0))),
         FeedPathElement::ExplicitArc(arc),
     ];
-    let report =
-        certify_constant_feed_time_for_path(&route, r(5), r(3), PredicatePolicy::default())
-            .unwrap();
+    let report = certify_constant_feed_time_for_path(&route, r(5), r(3), PredicatePolicy).unwrap();
 
     assert_eq!(report.path_length, r(15));
     assert_eq!(report.feed_rate, r(5));
@@ -7811,24 +7397,23 @@ fn constant_feed_time_rejects_invalid_inputs() {
     let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
 
     assert_eq!(
-        certify_constant_feed_time(&[], r(1), r(1), PredicatePolicy::default()).unwrap_err(),
+        certify_constant_feed_time(&[], r(1), r(1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
-        certify_constant_feed_time(&route, r(-1), r(1), PredicatePolicy::default()).unwrap_err(),
+        certify_constant_feed_time(&route, r(-1), r(1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::NegativeFeedRate
     );
     assert_eq!(
-        certify_constant_feed_time(&route, Real::zero(), r(1), PredicatePolicy::default())
-            .unwrap_err(),
+        certify_constant_feed_time(&route, Real::zero(), r(1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::ZeroFeedRate
     );
     assert_eq!(
-        certify_constant_feed_time(&route, r(1), r(-1), PredicatePolicy::default()).unwrap_err(),
+        certify_constant_feed_time(&route, r(1), r(-1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::NegativeTime
     );
     assert_eq!(
-        certify_constant_feed_time(&diagonal, r(1), r(5), PredicatePolicy::default()).unwrap_err(),
+        certify_constant_feed_time(&diagonal, r(1), r(5), PredicatePolicy).unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
 }
@@ -7840,8 +7425,7 @@ fn mixed_path_feed_replay_rejects_unsupported_line_elements() {
         p(3, 4),
     ))];
     assert_eq!(
-        certify_constant_feed_time_for_path(&diagonal, r(1), r(5), PredicatePolicy::default())
-            .unwrap_err(),
+        certify_constant_feed_time_for_path(&diagonal, r(1), r(5), PredicatePolicy).unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
 }
@@ -7854,7 +7438,7 @@ fn acceleration_limited_feed_time_replays_triangular_and_trapezoidal_profiles() 
         r(10),
         r(4),
         r(3),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(triangular.path_length, r(9));
@@ -7876,7 +7460,7 @@ fn acceleration_limited_feed_time_replays_triangular_and_trapezoidal_profiles() 
         r(10),
         r(5),
         r(12),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(trapezoid.path_length, r(100));
@@ -7891,7 +7475,7 @@ fn acceleration_limited_feed_time_replays_triangular_and_trapezoidal_profiles() 
         r(10),
         r(5),
         r(11),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(wrong.certification.has_certified_violation());
@@ -7917,7 +7501,7 @@ fn mixed_path_acceleration_and_jerk_feed_replay_accept_curves() {
         r(10),
         r(4),
         r(3),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(triangular.path_length, r(9));
@@ -7946,7 +7530,7 @@ fn mixed_path_acceleration_and_jerk_feed_replay_accept_curves() {
         r(6),
         r(2),
         r(12),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(jerk.path_length, r(108));
@@ -7958,14 +7542,8 @@ fn mixed_path_acceleration_and_jerk_feed_replay_accept_curves() {
 #[test]
 fn acceleration_limited_feed_time_handles_boundary_and_rejects_invalid_inputs() {
     let route = vec![LinePathSegment::new(p(0, 0), p(25, 0))];
-    let boundary = certify_acceleration_limited_feed_time(
-        &route,
-        r(10),
-        r(4),
-        r(5),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let boundary =
+        certify_acceleration_limited_feed_time(&route, r(10), r(4), r(5), PredicatePolicy).unwrap();
     assert_eq!(
         boundary.profile,
         AccelerationLimitedFeedProfileClass::Boundary
@@ -7974,63 +7552,32 @@ fn acceleration_limited_feed_time_handles_boundary_and_rejects_invalid_inputs() 
 
     let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
     assert_eq!(
-        certify_acceleration_limited_feed_time(&[], r(1), r(1), r(1), PredicatePolicy::default())
-            .unwrap_err(),
+        certify_acceleration_limited_feed_time(&[], r(1), r(1), r(1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
-        certify_acceleration_limited_feed_time(
-            &route,
-            r(-1),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_acceleration_limited_feed_time(&route, r(-1), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeFeedRate
     );
     assert_eq!(
-        certify_acceleration_limited_feed_time(
-            &route,
-            r(1),
-            Real::zero(),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_acceleration_limited_feed_time(&route, r(1), Real::zero(), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::ZeroAcceleration
     );
     assert_eq!(
-        certify_acceleration_limited_feed_time(
-            &route,
-            r(1),
-            r(-1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_acceleration_limited_feed_time(&route, r(1), r(-1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeAcceleration
     );
     assert_eq!(
-        certify_acceleration_limited_feed_time(
-            &route,
-            r(1),
-            r(1),
-            r(-1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_acceleration_limited_feed_time(&route, r(1), r(1), r(-1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeTime
     );
     assert_eq!(
-        certify_acceleration_limited_feed_time(
-            &diagonal,
-            r(1),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_acceleration_limited_feed_time(&diagonal, r(1), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
 }
@@ -8038,15 +7585,9 @@ fn acceleration_limited_feed_time_handles_boundary_and_rejects_invalid_inputs() 
 #[test]
 fn symmetric_jerk_limited_feed_time_replays_cubic_s_curve_profile() {
     let route = vec![LinePathSegment::new(p(0, 0), p(16, 0))];
-    let report: JerkLimitedFeedTimeReport = certify_symmetric_jerk_limited_feed_time(
-        &route,
-        r(16),
-        r(4),
-        r(1),
-        r(8),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report: JerkLimitedFeedTimeReport =
+        certify_symmetric_jerk_limited_feed_time(&route, r(16), r(4), r(1), r(8), PredicatePolicy)
+            .unwrap();
 
     assert_eq!(report.path_length, r(16));
     assert_eq!(report.max_feed_rate, r(16));
@@ -8057,26 +7598,14 @@ fn symmetric_jerk_limited_feed_time_replays_cubic_s_curve_profile() {
     assert_eq!(report.peak_acceleration, r(2));
     assert!(report.certification.all_satisfied());
 
-    let wrong_time = certify_symmetric_jerk_limited_feed_time(
-        &route,
-        r(16),
-        r(4),
-        r(1),
-        r(7),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let wrong_time =
+        certify_symmetric_jerk_limited_feed_time(&route, r(16), r(4), r(1), r(7), PredicatePolicy)
+            .unwrap();
     assert!(wrong_time.certification.has_certified_violation());
 
-    let too_slow_for_limits = certify_symmetric_jerk_limited_feed_time(
-        &route,
-        r(3),
-        r(1),
-        r(1),
-        r(8),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let too_slow_for_limits =
+        certify_symmetric_jerk_limited_feed_time(&route, r(3), r(1), r(1), r(8), PredicatePolicy)
+            .unwrap();
     assert_eq!(too_slow_for_limits.peak_feed_rate, r(4));
     assert_eq!(too_slow_for_limits.peak_acceleration, r(2));
     assert!(too_slow_for_limits.certification.has_certified_violation());
@@ -8088,27 +7617,13 @@ fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
     let diagonal = vec![LinePathSegment::new(p(0, 0), p(3, 4))];
 
     assert_eq!(
-        certify_symmetric_jerk_limited_feed_time(
-            &[],
-            r(16),
-            r(4),
-            r(1),
-            r(8),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_symmetric_jerk_limited_feed_time(&[], r(16), r(4), r(1), r(8), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
-        certify_symmetric_jerk_limited_feed_time(
-            &route,
-            r(-1),
-            r(4),
-            r(1),
-            r(8),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_symmetric_jerk_limited_feed_time(&route, r(-1), r(4), r(1), r(8), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeFeedRate
     );
     assert_eq!(
@@ -8118,21 +7633,14 @@ fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
             r(4),
             r(1),
             r(8),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroFeedRate
     );
     assert_eq!(
-        certify_symmetric_jerk_limited_feed_time(
-            &route,
-            r(16),
-            r(-1),
-            r(1),
-            r(8),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_symmetric_jerk_limited_feed_time(&route, r(16), r(-1), r(1), r(8), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeAcceleration
     );
     assert_eq!(
@@ -8142,21 +7650,14 @@ fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
             Real::zero(),
             r(1),
             r(8),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroAcceleration
     );
     assert_eq!(
-        certify_symmetric_jerk_limited_feed_time(
-            &route,
-            r(16),
-            r(4),
-            r(-1),
-            r(8),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_symmetric_jerk_limited_feed_time(&route, r(16), r(4), r(-1), r(8), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeJerk
     );
     assert_eq!(
@@ -8166,21 +7667,14 @@ fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
             r(4),
             Real::zero(),
             r(8),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroJerk
     );
     assert_eq!(
-        certify_symmetric_jerk_limited_feed_time(
-            &route,
-            r(16),
-            r(4),
-            r(1),
-            r(-1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_symmetric_jerk_limited_feed_time(&route, r(16), r(4), r(1), r(-1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeTime
     );
     assert_eq!(
@@ -8190,7 +7684,7 @@ fn symmetric_jerk_limited_feed_time_rejects_invalid_inputs() {
             r(4),
             r(1),
             r(8),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
@@ -8203,15 +7697,9 @@ fn corner_lookahead_limits_certify_corners_g1_and_reversals() {
         TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(10, 0))),
         TangentSpan::from_line_segment(&LinePathSegment::new(p(10, 0), p(10, 10))),
     ];
-    let corner = certify_corner_lookahead_limits(
-        &corner_spans,
-        r(2),
-        r(5),
-        r(2),
-        r(2),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let corner =
+        certify_corner_lookahead_limits(&corner_spans, r(2), r(5), r(2), r(2), PredicatePolicy)
+            .unwrap();
     assert_eq!(corner.joins.len(), 1);
     assert_eq!(
         corner.joins[0].class,
@@ -8221,15 +7709,9 @@ fn corner_lookahead_limits_certify_corners_g1_and_reversals() {
     assert!(corner.all_satisfied());
     assert_eq!(corner.first_unsatisfied_join(), None);
 
-    let too_fast = certify_corner_lookahead_limits(
-        &corner_spans,
-        r(3),
-        r(5),
-        r(2),
-        r(2),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let too_fast =
+        certify_corner_lookahead_limits(&corner_spans, r(3), r(5), r(2), r(2), PredicatePolicy)
+            .unwrap();
     assert!(too_fast.joins[0].certification.has_certified_violation());
     assert_eq!(too_fast.first_unsatisfied_join(), Some(0));
 
@@ -8237,15 +7719,8 @@ fn corner_lookahead_limits_certify_corners_g1_and_reversals() {
         TangentSpan::from_line_segment(&LinePathSegment::new(p(0, 0), p(5, 0))),
         TangentSpan::from_line_segment(&LinePathSegment::new(p(5, 0), p(10, 0))),
     ];
-    let g1 = certify_corner_lookahead_limits(
-        &g1_spans,
-        r(5),
-        r(5),
-        r(1),
-        r(1),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let g1 = certify_corner_lookahead_limits(&g1_spans, r(5), r(5), r(1), r(1), PredicatePolicy)
+        .unwrap();
     assert_eq!(g1.joins[0].class, CornerLookaheadJoinClass::StraightThrough);
     assert_eq!(
         g1.joins[0].tangent_join.class,
@@ -8263,7 +7738,7 @@ fn corner_lookahead_limits_certify_corners_g1_and_reversals() {
         r(5),
         r(2),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(
@@ -8276,15 +7751,9 @@ fn corner_lookahead_limits_certify_corners_g1_and_reversals() {
     );
     assert!(stopped.all_satisfied());
 
-    let rolling_reversal = certify_corner_lookahead_limits(
-        &reversal_spans,
-        r(1),
-        r(5),
-        r(2),
-        r(1),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let rolling_reversal =
+        certify_corner_lookahead_limits(&reversal_spans, r(1), r(5), r(2), r(1), PredicatePolicy)
+            .unwrap();
     assert!(
         rolling_reversal.joins[0]
             .certification
@@ -8299,68 +7768,32 @@ fn corner_lookahead_limits_reject_invalid_inputs_and_uncertified_joins() {
         TangentSpan::from_line_segment(&LinePathSegment::new(p(10, 0), p(10, 10))),
     ];
     assert_eq!(
-        certify_corner_lookahead_limits(&[], r(1), r(1), r(1), r(1), PredicatePolicy::default())
-            .unwrap_err(),
+        certify_corner_lookahead_limits(&[], r(1), r(1), r(1), r(1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
-        certify_corner_lookahead_limits(
-            &spans,
-            r(-1),
-            r(1),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_corner_lookahead_limits(&spans, r(-1), r(1), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeFeedRate
     );
     assert_eq!(
-        certify_corner_lookahead_limits(
-            &spans,
-            r(1),
-            Real::zero(),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_corner_lookahead_limits(&spans, r(1), Real::zero(), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::ZeroFeedRate
     );
     assert_eq!(
-        certify_corner_lookahead_limits(
-            &spans,
-            r(1),
-            r(1),
-            Real::zero(),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_corner_lookahead_limits(&spans, r(1), r(1), Real::zero(), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::ZeroAcceleration
     );
     assert_eq!(
-        certify_corner_lookahead_limits(
-            &spans,
-            r(1),
-            r(1),
-            r(1),
-            Real::zero(),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_corner_lookahead_limits(&spans, r(1), r(1), r(1), Real::zero(), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::ZeroCornerRadius
     );
     assert_eq!(
-        certify_corner_lookahead_limits(
-            &spans,
-            r(1),
-            r(1),
-            r(1),
-            r(-1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_corner_lookahead_limits(&spans, r(1), r(1), r(1), r(-1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::NegativeCornerRadius
     );
 
@@ -8369,15 +7802,8 @@ fn corner_lookahead_limits_reject_invalid_inputs_and_uncertified_joins() {
         TangentSpan::from_line_segment(&LinePathSegment::new(p(11, 0), p(11, 10))),
     ];
     assert_eq!(
-        certify_corner_lookahead_limits(
-            &mismatch,
-            r(1),
-            r(1),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_corner_lookahead_limits(&mismatch, r(1), r(1), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
     );
 }
@@ -8403,15 +7829,9 @@ fn lookahead_feed_schedule_certifies_local_corner_and_span_speed_nodes() {
         corner_radii: vec![r(4), r(4)],
         exit_feed: Real::zero(),
     };
-    let report = certify_lookahead_feed_schedule(
-        &route,
-        &spans,
-        &schedule,
-        r(5),
-        r(4),
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let report =
+        certify_lookahead_feed_schedule(&route, &spans, &schedule, r(5), r(4), PredicatePolicy)
+            .unwrap();
 
     assert_eq!(report.corners.joins.len(), 2);
     assert_eq!(report.spans.len(), 3);
@@ -8450,7 +7870,7 @@ fn lookahead_feed_schedule_reports_corner_and_transition_violations() {
         &transition_violation,
         r(20),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(transition_report.corners.all_satisfied());
@@ -8473,7 +7893,7 @@ fn lookahead_feed_schedule_reports_corner_and_transition_violations() {
         &corner_violation,
         r(20),
         r(4),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(
@@ -8496,15 +7916,8 @@ fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
     };
 
     assert_eq!(
-        certify_lookahead_feed_schedule(
-            &[],
-            &[],
-            &valid_schedule,
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_lookahead_feed_schedule(&[], &[], &valid_schedule, r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     let wrong_shape = LookaheadFeedSchedule {
@@ -8514,15 +7927,8 @@ fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
         exit_feed: Real::zero(),
     };
     assert_eq!(
-        certify_lookahead_feed_schedule(
-            &route,
-            &spans,
-            &wrong_shape,
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_lookahead_feed_schedule(&route, &spans, &wrong_shape, r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::ScheduleShapeMismatch
     );
     let negative_entry = LookaheadFeedSchedule {
@@ -8538,7 +7944,7 @@ fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
             &negative_entry,
             r(1),
             r(1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::NegativeFeedRate
@@ -8550,7 +7956,7 @@ fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
             &valid_schedule,
             Real::zero(),
             r(1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroFeedRate
@@ -8562,7 +7968,7 @@ fn lookahead_feed_schedule_rejects_shape_and_invalid_process_inputs() {
             &valid_schedule,
             r(1),
             Real::zero(),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroAcceleration
@@ -8586,7 +7992,7 @@ fn jerk_ramp_feed_schedule_certifies_constant_acceleration_span() {
         r(12),
         r(1),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -8616,7 +8022,7 @@ fn jerk_ramp_feed_schedule_reports_distance_velocity_and_jerk_violations() {
         r(12),
         r(1),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(
@@ -8643,7 +8049,7 @@ fn jerk_ramp_feed_schedule_reports_distance_velocity_and_jerk_violations() {
         r(12),
         r(1),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(
@@ -8669,7 +8075,7 @@ fn jerk_ramp_feed_schedule_reports_distance_velocity_and_jerk_violations() {
         r(4),
         r(2),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(jerk_report.spans[0].certification.has_certified_violation());
@@ -8687,12 +8093,11 @@ fn jerk_ramp_feed_schedule_rejects_shape_and_invalid_inputs() {
         traversal_time: r(10),
     };
     assert_eq!(
-        certify_jerk_ramp_feed_schedule(&[], &[], r(1), r(1), r(1), PredicatePolicy::default())
-            .unwrap_err(),
+        certify_jerk_ramp_feed_schedule(&[], &[], r(1), r(1), r(1), PredicatePolicy).unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
-        certify_jerk_ramp_feed_schedule(&route, &[], r(1), r(1), r(1), PredicatePolicy::default())
+        certify_jerk_ramp_feed_schedule(&route, &[], r(1), r(1), r(1), PredicatePolicy)
             .unwrap_err(),
         RouteCertificationError::ScheduleShapeMismatch
     );
@@ -8707,7 +8112,7 @@ fn jerk_ramp_feed_schedule_rejects_shape_and_invalid_inputs() {
             r(1),
             r(1),
             r(1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::NegativeFeedRate
@@ -8717,25 +8122,18 @@ fn jerk_ramp_feed_schedule_rejects_shape_and_invalid_inputs() {
         ..valid.clone()
     };
     assert_eq!(
-        certify_jerk_ramp_feed_schedule(
-            &route,
-            &[zero_time],
-            r(1),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_jerk_ramp_feed_schedule(&route, &[zero_time], r(1), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::ZeroTime
     );
     assert_eq!(
         certify_jerk_ramp_feed_schedule(
             &route,
-            &[valid.clone()],
+            std::slice::from_ref(&valid),
             Real::zero(),
             r(1),
             r(1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroFeedRate
@@ -8747,7 +8145,7 @@ fn jerk_ramp_feed_schedule_rejects_shape_and_invalid_inputs() {
             r(1),
             r(1),
             Real::zero(),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ZeroJerk
@@ -8788,7 +8186,7 @@ fn multi_phase_jerk_ramp_schedule_certifies_length_sum_and_continuity() {
         r(20),
         r(2),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -8835,7 +8233,7 @@ fn multi_phase_jerk_ramp_schedule_reports_sum_continuity_and_phase_violations() 
         r(20),
         r(2),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(
@@ -8868,7 +8266,7 @@ fn multi_phase_jerk_ramp_schedule_reports_sum_continuity_and_phase_violations() 
         r(25),
         r(2),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(continuity_report.elements[0].continuity[0].has_certified_violation());
@@ -8887,7 +8285,7 @@ fn multi_phase_jerk_ramp_schedule_reports_sum_continuity_and_phase_violations() 
         },
     ]];
     let phase_report = certify_multi_phase_jerk_ramp_feed_schedule(
-        &vec![FeedPathElement::Line(LinePathSegment::new(
+        &[FeedPathElement::Line(LinePathSegment::new(
             p(0, 0),
             p(200, 0),
         ))],
@@ -8895,7 +8293,7 @@ fn multi_phase_jerk_ramp_schedule_reports_sum_continuity_and_phase_violations() 
         r(30),
         r(2),
         r(1),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(
@@ -8923,15 +8321,8 @@ fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
         },
     };
     assert_eq!(
-        certify_multi_phase_jerk_ramp_feed_schedule(
-            &[],
-            &[],
-            r(1),
-            r(1),
-            r(1),
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        certify_multi_phase_jerk_ramp_feed_schedule(&[], &[], r(1), r(1), r(1), PredicatePolicy)
+            .unwrap_err(),
         RouteCertificationError::EmptyRoute
     );
     assert_eq!(
@@ -8941,7 +8332,7 @@ fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
             r(1),
             r(1),
             r(1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::ScheduleShapeMismatch
@@ -8957,7 +8348,7 @@ fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
             r(1),
             r(1),
             r(1),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         RouteCertificationError::UnsupportedRouteGeometry
@@ -8968,8 +8359,7 @@ fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let meander =
-        build_single_detour_meander(&source, r(6), OffsetSide::Left, PredicatePolicy::default())
-            .unwrap();
+        build_single_detour_meander(&source, r(6), OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.amplitude, r(3));
     assert_eq!(meander.segments.len(), 3);
@@ -8979,15 +8369,10 @@ fn single_detour_meander_adds_exact_length_and_certifies_target() {
     assert_eq!(meander.segments[1].end(), &p(10, 3));
     assert_eq!(meander.segments[2].start(), &p(10, 3));
     assert_eq!(meander.segments[2].end(), &p(10, 0));
-    assert_eq!(
-        meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
-        r(16)
-    );
+    assert_eq!(meander.exact_axis_length(PredicatePolicy).unwrap(), r(16));
     assert!(
         meander
-            .certify_target_length(r(16), PredicatePolicy::default())
+            .certify_target_length(r(16), PredicatePolicy)
             .unwrap()
             .all_satisfied()
     );
@@ -8999,26 +8384,16 @@ fn single_detour_meander_handles_zero_and_rejects_invalid_inputs() {
     let diagonal = LinePathSegment::new(p(0, 0), p(1, 1));
 
     let zero =
-        build_single_detour_meander(&source, r(0), OffsetSide::Left, PredicatePolicy::default())
-            .unwrap();
+        build_single_detour_meander(&source, r(0), OffsetSide::Left, PredicatePolicy).unwrap();
     assert_eq!(zero.segments, vec![source.clone()]);
+    assert_eq!(zero.exact_axis_length(PredicatePolicy).unwrap(), r(10));
     assert_eq!(
-        zero.exact_axis_length(PredicatePolicy::default()).unwrap(),
-        r(10)
-    );
-    assert_eq!(
-        build_single_detour_meander(&source, r(-1), OffsetSide::Left, PredicatePolicy::default())
-            .unwrap_err(),
+        build_single_detour_meander(&source, r(-1), OffsetSide::Left, PredicatePolicy).unwrap_err(),
         MeanderError::NegativeExtraLength
     );
     assert_eq!(
-        build_single_detour_meander(
-            &diagonal,
-            r(2),
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        build_single_detour_meander(&diagonal, r(2), OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         MeanderError::UnsupportedSourceGeometry
     );
 }
@@ -9026,14 +8401,8 @@ fn single_detour_meander_handles_zero_and_rejects_invalid_inputs() {
 #[test]
 fn multi_detour_meander_splits_source_and_certifies_exact_length() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
-    let meander = build_multi_detour_meander(
-        &source,
-        r(12),
-        3,
-        OffsetSide::Left,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let meander =
+        build_multi_detour_meander(&source, r(12), 3, OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.bump_count, 3);
     assert_eq!(meander.amplitude, r(2));
@@ -9045,15 +8414,10 @@ fn multi_detour_meander_splits_source_and_certifies_exact_length() {
     assert_eq!(meander.segments[2].end(), &p(4, 0));
     assert_eq!(meander.segments[7].start(), &p(8, 2));
     assert_eq!(meander.segments[7].end(), &p(12, 2));
-    assert_eq!(
-        meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
-        r(24)
-    );
+    assert_eq!(meander.exact_axis_length(PredicatePolicy).unwrap(), r(24));
     assert!(
         meander
-            .certify_target_length(r(24), PredicatePolicy::default())
+            .certify_target_length(r(24), PredicatePolicy)
             .unwrap()
             .all_satisfied()
     );
@@ -9062,14 +8426,8 @@ fn multi_detour_meander_splits_source_and_certifies_exact_length() {
 #[test]
 fn multi_detour_meander_handles_vertical_reversed_and_rejects_bad_bumps() {
     let vertical = LinePathSegment::new(p(0, 10), p(0, 0));
-    let meander = build_multi_detour_meander(
-        &vertical,
-        r(8),
-        2,
-        OffsetSide::Left,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let meander =
+        build_multi_detour_meander(&vertical, r(8), 2, OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.amplitude, r(2));
     assert_eq!(meander.segments.len(), 6);
@@ -9077,32 +8435,15 @@ fn multi_detour_meander_handles_vertical_reversed_and_rejects_bad_bumps() {
     assert_eq!(meander.segments[0].end(), &p(2, 10));
     assert_eq!(meander.segments[1].end(), &p(2, 5));
     assert_eq!(meander.segments[5].end(), &p(0, 0));
+    assert_eq!(meander.exact_axis_length(PredicatePolicy).unwrap(), r(18));
     assert_eq!(
-        meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
-        r(18)
-    );
-    assert_eq!(
-        build_multi_detour_meander(
-            &vertical,
-            r(8),
-            0,
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        build_multi_detour_meander(&vertical, r(8), 0, OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         MeanderError::ZeroBumps
     );
     assert_eq!(
-        build_multi_detour_meander(
-            &vertical,
-            r(-1),
-            2,
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        build_multi_detour_meander(&vertical, r(-1), 2, OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         MeanderError::NegativeExtraLength
     );
 }
@@ -9110,14 +8451,9 @@ fn multi_detour_meander_handles_vertical_reversed_and_rejects_bad_bumps() {
 #[test]
 fn alternating_detour_meander_flips_sides_and_certifies_length() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
-    let meander = build_alternating_detour_meander(
-        &source,
-        r(12),
-        3,
-        OffsetSide::Left,
-        PredicatePolicy::default(),
-    )
-    .unwrap();
+    let meander =
+        build_alternating_detour_meander(&source, r(12), 3, OffsetSide::Left, PredicatePolicy)
+            .unwrap();
 
     assert_eq!(meander.bump_count, 3);
     assert_eq!(meander.amplitude, r(2));
@@ -9128,15 +8464,10 @@ fn alternating_detour_meander_flips_sides_and_certifies_length() {
     assert_eq!(meander.segments[4].end(), &p(8, -2));
     assert_eq!(meander.segments[6].end(), &p(8, 2));
     assert_eq!(meander.segments[7].end(), &p(12, 2));
-    assert_eq!(
-        meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
-        r(24)
-    );
+    assert_eq!(meander.exact_axis_length(PredicatePolicy).unwrap(), r(24));
     assert!(
         meander
-            .certify_target_length(r(24), PredicatePolicy::default())
+            .certify_target_length(r(24), PredicatePolicy)
             .unwrap()
             .all_satisfied()
     );
@@ -9149,7 +8480,7 @@ fn nonuniform_detour_meander_retains_amplitudes_and_certifies_length() {
         &source,
         vec![r(1), r(3), r(2)],
         OffsetSide::Left,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9162,15 +8493,10 @@ fn nonuniform_detour_meander_retains_amplitudes_and_certifies_length() {
     assert_eq!(meander.segments[4].end(), &p(8, 3));
     assert_eq!(meander.segments[6].end(), &p(8, 2));
     assert_eq!(meander.segments[7].end(), &p(12, 2));
-    assert_eq!(
-        meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
-        r(24)
-    );
+    assert_eq!(meander.exact_axis_length(PredicatePolicy).unwrap(), r(24));
     assert!(
         meander
-            .certify_target_length(r(24), PredicatePolicy::default())
+            .certify_target_length(r(24), PredicatePolicy)
             .unwrap()
             .all_satisfied()
     );
@@ -9181,13 +8507,8 @@ fn nonuniform_detour_meander_rejects_empty_and_negative_amplitudes() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
 
     assert_eq!(
-        build_nonuniform_detour_meander(
-            &source,
-            vec![],
-            OffsetSide::Left,
-            PredicatePolicy::default()
-        )
-        .unwrap_err(),
+        build_nonuniform_detour_meander(&source, vec![], OffsetSide::Left, PredicatePolicy)
+            .unwrap_err(),
         MeanderError::ZeroBumps
     );
     assert_eq!(
@@ -9195,7 +8516,7 @@ fn nonuniform_detour_meander_rejects_empty_and_negative_amplitudes() {
             &source,
             vec![r(1), r(-1)],
             OffsetSide::Left,
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         MeanderError::NegativeAmplitude
@@ -9204,7 +8525,7 @@ fn nonuniform_detour_meander_rejects_empty_and_negative_amplitudes() {
         &source,
         vec![r(0), r(0)],
         OffsetSide::Left,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert_eq!(zero.segments, vec![source]);
@@ -9224,7 +8545,7 @@ fn obstacle_aware_detour_meander_selects_clear_side_and_certifies_length() {
         3,
         OffsetSide::Left,
         vec![obstacle.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9239,16 +8560,13 @@ fn obstacle_aware_detour_meander_selects_clear_side_and_certifies_length() {
     assert_eq!(routed.meander.segments[1].end(), &p(4, -2));
     assert_eq!(routed.meander.segments[3].end(), &p(4, 2));
     assert_eq!(
-        routed
-            .meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
+        routed.meander.exact_axis_length(PredicatePolicy).unwrap(),
         r(24)
     );
     assert!(
         routed
             .meander
-            .certify_target_length(r(24), PredicatePolicy::default())
+            .certify_target_length(r(24), PredicatePolicy)
             .unwrap()
             .all_satisfied()
     );
@@ -9267,7 +8585,7 @@ fn meander_placement_slots_report_exact_side_blockage() {
         3,
         OffsetSide::Left,
         vec![obstacle.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9299,7 +8617,7 @@ fn meander_keepout_slots_block_against_exact_circular_obstacles() {
         3,
         OffsetSide::Left,
         vec![keepout.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9326,7 +8644,7 @@ fn meander_keepout_slots_block_against_exact_orthogonal_polygons() {
         3,
         OffsetSide::Left,
         vec![keepout.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9354,7 +8672,7 @@ fn keepout_aware_detour_meander_routes_around_round_keepouts() {
         3,
         OffsetSide::Left,
         vec![keepout.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9368,16 +8686,13 @@ fn keepout_aware_detour_meander_routes_around_round_keepouts() {
     assert_eq!(routed.meander.segments[0].end(), &p(0, -2));
     assert_eq!(routed.meander.segments[1].end(), &p(4, -2));
     assert_eq!(
-        routed
-            .meander
-            .exact_axis_length(PredicatePolicy::default())
-            .unwrap(),
+        routed.meander.exact_axis_length(PredicatePolicy).unwrap(),
         r(24)
     );
     assert!(
         routed
             .meander
-            .certify_target_length(r(24), PredicatePolicy::default())
+            .certify_target_length(r(24), PredicatePolicy)
             .unwrap()
             .all_satisfied()
     );
@@ -9401,7 +8716,7 @@ fn meander_candidate_slots_accept_arbitrary_windows_and_amplitudes() {
         vec![first.clone(), second.clone()],
         OffsetSide::Left,
         vec![obstacle.clone()],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9441,7 +8756,7 @@ fn meander_candidate_slots_accept_mixed_keepout_shapes() {
         vec![first.clone(), second.clone()],
         OffsetSide::Left,
         keepouts.clone(),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9469,7 +8784,7 @@ fn meander_candidate_slots_reject_invalid_candidate_geometry() {
             vec![diagonal],
             OffsetSide::Left,
             Vec::new(),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         )
         .unwrap_err(),
         MeanderError::UnsupportedSourceGeometry
@@ -9479,7 +8794,7 @@ fn meander_candidate_slots_reject_invalid_candidate_geometry() {
             vec![negative],
             OffsetSide::Left,
             Vec::new(),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         )
         .unwrap_err(),
         MeanderError::NegativeAmplitude
@@ -9489,7 +8804,7 @@ fn meander_candidate_slots_reject_invalid_candidate_geometry() {
             Vec::new(),
             OffsetSide::Left,
             Vec::new(),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         )
         .unwrap_err(),
         MeanderError::ZeroBumps
@@ -9513,7 +8828,7 @@ fn meander_placement_slots_report_conflicted_windows_without_committing_route() 
         1,
         OffsetSide::Left,
         vec![above, below],
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -9541,7 +8856,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
             3,
             OffsetSide::Left,
             vec![above, below],
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         MeanderError::ObstacleConflict
@@ -9558,7 +8873,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
             3,
             OffsetSide::Left,
             vec![invalid],
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         MeanderError::InvalidObstacleBounds
@@ -9575,7 +8890,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
             1,
             OffsetSide::Left,
             vec![invalid_disc],
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         MeanderError::NegativeObstacleRadius
@@ -9591,7 +8906,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
             1,
             OffsetSide::Left,
             vec![diagonal_polygon],
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         MeanderError::InvalidObstaclePolygon
@@ -9616,7 +8931,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
             1,
             OffsetSide::Left,
             vec![self_intersecting_polygon],
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         MeanderError::InvalidObstaclePolygon
@@ -10116,7 +9431,7 @@ fn specctra_route_rule_audit_selects_scoped_width_rules_for_traces_and_arcs() {
         std::slice::from_ref(&trace),
         std::slice::from_ref(&arc),
         &rules,
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
 
@@ -10178,7 +9493,7 @@ fn specctra_route_rule_audit_reports_width_violations_unruled_items_and_bad_inpu
         std::slice::from_ref(&trace),
         &[],
         std::slice::from_ref(&matching_rule),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(!violation.all_widths_certified());
@@ -10192,7 +9507,7 @@ fn specctra_route_rule_audit_reports_width_violations_unruled_items_and_bad_inpu
         std::slice::from_ref(&trace),
         &[],
         std::slice::from_ref(&unmatching_rule),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(unruled.has_unruled_item());
@@ -10209,8 +9524,7 @@ fn specctra_route_rule_audit_reports_width_violations_unruled_items_and_bad_inpu
         provenance: PathProvenance::native(),
     };
     assert_eq!(
-        audit_specctra_route_rule_widths(&[trace], &[], &[bad_rule], PredicatePolicy::default())
-            .unwrap_err(),
+        audit_specctra_route_rule_widths(&[trace], &[], &[bad_rule], PredicatePolicy).unwrap_err(),
         SpecctraRouteRuleAuditError::NegativeRuleValue
     );
 }
@@ -10288,8 +9602,7 @@ fn specctra_trace_rule_clearance_audit_replays_pairwise_retained_clearances() {
     .collect::<Result<Vec<_>, _>>()
     .unwrap();
 
-    let report =
-        audit_specctra_trace_rule_clearances(&traces, &rules, PredicatePolicy::default()).unwrap();
+    let report = audit_specctra_trace_rule_clearances(&traces, &rules, PredicatePolicy).unwrap();
 
     assert_eq!(report.item_audits.len(), 3);
     assert_eq!(report.pairs.len(), 3);
@@ -10353,7 +9666,7 @@ fn specctra_trace_rule_clearance_audit_reports_unruled_same_net_and_bad_inputs()
     let unruled = audit_specctra_trace_rule_clearances(
         &[first.clone(), second.clone()],
         std::slice::from_ref(&wrong_net_rule),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(unruled.has_unruled_pair());
@@ -10385,7 +9698,7 @@ fn specctra_trace_rule_clearance_audit_reports_unruled_same_net_and_bad_inputs()
     let same_net = audit_specctra_trace_rule_clearances(
         &[first.clone(), same_net_second],
         std::slice::from_ref(&global_rule),
-        PredicatePolicy::default(),
+        PredicatePolicy,
     )
     .unwrap();
     assert!(same_net.all_clearances_certified());
@@ -10406,7 +9719,7 @@ fn specctra_trace_rule_clearance_audit_reports_unruled_same_net_and_bad_inputs()
         audit_specctra_trace_rule_clearances(
             &[negative_width],
             std::slice::from_ref(&global_rule),
-            PredicatePolicy::default()
+            PredicatePolicy
         )
         .unwrap_err(),
         SpecctraRouteRuleAuditError::NegativeRouteWidth
@@ -10723,7 +10036,7 @@ proptest! {
         let first = trace(1, 0, p(0, i64::from(y0)), p(10, i64::from(y0)), i64::from(width));
         let second_y = i64::from(y0) + i64::from(gap);
         let second = trace(2, 0, p(0, second_y), p(10, second_y), i64::from(width));
-        let report = check_trace_clearance(&first, &second, &r(0), PredicatePolicy::default());
+        let report = check_trace_clearance(&first, &second, &r(0), PredicatePolicy);
         if gap == 0 {
             prop_assert_eq!(report.status, ClearanceStatus::NoShortViolation);
         } else {
@@ -10744,7 +10057,7 @@ proptest! {
             p(10, i64::from(gap)),
             r(i64::from(pad_diameter)),
         ).unwrap();
-        let report = check_trace_pad_clearance(&trace, &pad, &r(0), PredicatePolicy::default());
+        let report = check_trace_pad_clearance(&trace, &pad, &r(0), PredicatePolicy);
 
         let doubled_gap = i64::from(gap) * 2;
         let overlap = i64::from(trace_width) + i64::from(pad_diameter);
@@ -10770,7 +10083,7 @@ proptest! {
             r(20),
             r(i64::from(drill_diameter)),
         ).unwrap();
-        let report = check_trace_via_drill_clearance(&trace, &via, &r(0), PredicatePolicy::default());
+        let report = check_trace_via_drill_clearance(&trace, &via, &r(0), PredicatePolicy);
 
         let doubled_gap = i64::from(gap) * 2;
         let overlap = i64::from(trace_width) + i64::from(drill_diameter);
@@ -10879,7 +10192,7 @@ proptest! {
             r(i64::from(land)),
             r(i64::from(drill)),
         ).unwrap();
-        let report = via.classify_drill_policy(&r(i64::from(minimum)), PredicatePolicy::default());
+        let report = via.classify_drill_policy(&r(i64::from(minimum)), PredicatePolicy);
         let expected = if i64::from(land) >= i64::from(drill) + 2 * i64::from(minimum) {
             ViaAnnularRingReport::Certified
         } else {
@@ -10922,7 +10235,7 @@ proptest! {
         let report = certify_via_fabrication_policy(
             &via,
             &policy,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let annular_ok = land >= drill + 2 * minimum;
         let aspect_ok = board_thickness <= drill * aspect;
@@ -11148,7 +10461,7 @@ proptest! {
             },
             grid_denominator: u64::from(denominator),
         };
-        let text = serialize_specctra_grid_keepout_records(&[record.clone()]);
+        let text = serialize_specctra_grid_keepout_records(std::slice::from_ref(&record));
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
         let exact = specctra_grid_keepout_record(record.clone()).unwrap();
 
@@ -11175,7 +10488,7 @@ proptest! {
             },
             grid_denominator: u64::from(denominator),
         };
-        let text = serialize_specctra_grid_keepout_records(&[record.clone()]);
+        let text = serialize_specctra_grid_keepout_records(std::slice::from_ref(&record));
         let parsed = parse_specctra_grid_route_records(&text).unwrap();
         let exact = specctra_grid_keepout_record(record.clone()).unwrap();
 
@@ -11238,7 +10551,7 @@ proptest! {
             std::slice::from_ref(&trace),
             &[],
             std::slice::from_ref(&rule),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let expected_status = if trace_width >= rule_width {
             SpecctraRouteRuleWidthStatus::Certified
@@ -11295,7 +10608,7 @@ proptest! {
         let report = audit_specctra_trace_rule_clearances(
             &[first, second],
             std::slice::from_ref(&rule),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let required = i64::from(first_width) + i64::from(second_width)
             + 2 * i64::from(clearance);
@@ -11555,7 +10868,7 @@ proptest! {
             BezierParameter::new(1, 2).unwrap(),
             r(distance),
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(sample.tangent, p(2 * step, 0));
@@ -11577,7 +10890,7 @@ proptest! {
             r(0),
             r(stepover),
             128,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let expected = (size / (2 * stepover) + 1) as usize;
 
@@ -11605,18 +10918,18 @@ proptest! {
             r(1),
             r(stepover),
             max_rings,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let positive_rings = plan.rings.iter().take_while(|ring| {
             ring.min.x != ring.max.x && ring.min.y != ring.max.y
         }).count();
 
         if positive_rings == 0 || positive_rings != plan.rings.len() {
-            prop_assert!(build_rectangular_pocket_link_graph(plan, PredicatePolicy::default()).is_err());
+            prop_assert!(build_rectangular_pocket_link_graph(plan, PredicatePolicy).is_err());
             return Ok(());
         }
 
-        let graph = build_rectangular_pocket_link_graph(plan, PredicatePolicy::default()).unwrap();
+        let graph = build_rectangular_pocket_link_graph(plan, PredicatePolicy).unwrap();
         prop_assert_eq!(graph.ring_segments.len(), graph.plan.rings.len() * 4);
         prop_assert_eq!(
             graph.links.len(),
@@ -11652,7 +10965,7 @@ proptest! {
             r(2),
             r(spacing),
             128,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let expected = if height < 2 {
             0
@@ -11683,13 +10996,13 @@ proptest! {
             r(2),
             r(spacing),
             128,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         prop_assume!(!plan.beads.is_empty());
         let expected_links = plan.beads.len().saturating_sub(1);
         let graph = build_rectangular_serpentine_infill_graph(
             plan,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(graph.links.len(), expected_links);
@@ -11730,7 +11043,7 @@ proptest! {
             overhang,
             base,
             r(margin),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(plan.footprint.min(), &p(x0 - margin, y0 - margin));
@@ -11762,7 +11075,7 @@ proptest! {
         let report = subtract_rectangular_region(
             subject,
             cutter,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.relation, RectangularRegionRelation::AreaOverlap);
@@ -11799,7 +11112,7 @@ proptest! {
         let graph = build_rectangular_rest_material_graph(
             stock,
             cutters,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let expected_remaining = r(vertical_x * horizontal_y);
         let expected_removed = r(width * height - vertical_x * horizontal_y);
@@ -11835,12 +11148,12 @@ proptest! {
             &segment,
             r(i64::from(distance)),
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
-            offset.segment.axis_length(PredicatePolicy::default()),
-            segment.axis_length(PredicatePolicy::default())
+            offset.segment.axis_length(PredicatePolicy),
+            segment.axis_length(PredicatePolicy)
         );
         prop_assert_eq!(
             offset.segment.start().x.clone() - segment.start().x.clone(),
@@ -11862,16 +11175,16 @@ proptest! {
             &source,
             r(i64::from(extra)),
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
-            meander.exact_axis_length(PredicatePolicy::default()).unwrap(),
+            meander.exact_axis_length(PredicatePolicy).unwrap(),
             r(i64::from(length) + i64::from(extra))
         );
         prop_assert!(
             meander
-                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy::default())
+                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy)
                 .unwrap()
                 .all_satisfied()
         );
@@ -11900,7 +11213,7 @@ proptest! {
             &first,
             &second,
             r(expected),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.first_length, r(i64::from(first_horizontal) + i64::from(first_vertical)));
@@ -11920,7 +11233,7 @@ proptest! {
             &route,
             r(i64::from(feed_rate)),
             r(i64::from(time)),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.path_length, r(path_length));
@@ -11942,7 +11255,7 @@ proptest! {
             r(max_feed),
             r(acceleration),
             r(time),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.path_length, r(path_length));
@@ -11965,7 +11278,7 @@ proptest! {
             r(max_feed),
             r(1),
             r(target_time),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.path_length, r(path_length));
@@ -11990,7 +11303,7 @@ proptest! {
             r(peak_acceleration),
             r(jerk),
             r(total_time),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.path_length, r(path_length));
@@ -12016,7 +11329,7 @@ proptest! {
             r(i64::from(max_feed)),
             r(i64::from(acceleration)),
             r(i64::from(radius)),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.joins[0].class, CornerLookaheadJoinClass::RadiusLimitedCorner);
@@ -12048,7 +11361,7 @@ proptest! {
             &schedule,
             r(i64::from(max_feed)),
             r(i64::from(acceleration)),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         let start_sq = i64::from(start_feed).pow(2);
@@ -12085,7 +11398,7 @@ proptest! {
             r(end_feed),
             r(acceleration),
             r(1),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.spans[0].path_length.clone(), r(length));
@@ -12131,7 +11444,7 @@ proptest! {
             r(end_feed.max(mid_feed)),
             r(acceleration),
             r(acceleration),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.elements[0].route_length.clone(), r(total_length));
@@ -12224,16 +11537,16 @@ proptest! {
             r(i64::from(extra)),
             bump_count,
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
-            meander.exact_axis_length(PredicatePolicy::default()).unwrap(),
+            meander.exact_axis_length(PredicatePolicy).unwrap(),
             r(i64::from(length) + i64::from(extra))
         );
         prop_assert!(
             meander
-                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy::default())
+                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy)
                 .unwrap()
                 .all_satisfied()
         );
@@ -12262,16 +11575,16 @@ proptest! {
             r(i64::from(extra)),
             bump_count,
             first_side,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
-            meander.exact_axis_length(PredicatePolicy::default()).unwrap(),
+            meander.exact_axis_length(PredicatePolicy).unwrap(),
             r(i64::from(length) + i64::from(extra))
         );
         prop_assert!(
             meander
-                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy::default())
+                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy)
                 .unwrap()
                 .all_satisfied()
         );
@@ -12296,17 +11609,17 @@ proptest! {
             &source,
             amplitudes,
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(&meander.extra_length, &r(expected_extra));
         prop_assert_eq!(
-            meander.exact_axis_length(PredicatePolicy::default()).unwrap(),
+            meander.exact_axis_length(PredicatePolicy).unwrap(),
             r(i64::from(length) + expected_extra)
         );
         prop_assert!(
             meander
-                .certify_target_length(r(i64::from(length) + expected_extra), PredicatePolicy::default())
+                .certify_target_length(r(i64::from(length) + expected_extra), PredicatePolicy)
                 .unwrap()
                 .all_satisfied()
         );
@@ -12325,7 +11638,7 @@ proptest! {
             bump_count,
             OffsetSide::Left,
             vec![],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
@@ -12333,13 +11646,13 @@ proptest! {
             vec![OffsetSide::Left; bump_count as usize]
         );
         prop_assert_eq!(
-            routed.meander.exact_axis_length(PredicatePolicy::default()).unwrap(),
+            routed.meander.exact_axis_length(PredicatePolicy).unwrap(),
             r(i64::from(length) + i64::from(extra))
         );
         prop_assert!(
             routed
                 .meander
-                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy::default())
+                .certify_target_length(r(i64::from(length) + i64::from(extra)), PredicatePolicy)
                 .unwrap()
                 .all_satisfied()
         );
@@ -12357,7 +11670,7 @@ proptest! {
             bump_count,
             OffsetSide::Left,
             Vec::new(),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.slots.len(), bump_count as usize);
@@ -12386,7 +11699,7 @@ proptest! {
             bump_count,
             OffsetSide::Left,
             vec![keepout],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.slots.len(), bump_count as usize);
@@ -12419,7 +11732,7 @@ proptest! {
             vec![first.clone(), second.clone()],
             OffsetSide::Right,
             Vec::new(),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.slots.len(), 2);
@@ -12449,7 +11762,7 @@ proptest! {
             &arc,
             r(i64::from(distance)),
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(offset.arc.facts().quarter_turns, arc.facts().quarter_turns);
@@ -12508,15 +11821,15 @@ proptest! {
         let east = p(i64::from(cx) + 5 * scale, i64::from(cy));
 
         prop_assert_eq!(
-            arc.classify_point(&north, PredicatePolicy::default()),
+            arc.classify_point(&north, PredicatePolicy),
             ExplicitArcPointClassification::OnArc
         );
         prop_assert_eq!(
-            arc.classify_point(&east, PredicatePolicy::default()),
+            arc.classify_point(&east, PredicatePolicy),
             ExplicitArcPointClassification::OnArc
         );
         prop_assert_eq!(
-            arc.classify_point(&center, PredicatePolicy::default()),
+            arc.classify_point(&center, PredicatePolicy),
             ExplicitArcPointClassification::OffCircle
         );
     }
@@ -12534,7 +11847,7 @@ proptest! {
             ArcDirection::Ccw,
         ).unwrap();
         let line = LinePathSegment::new(p(-10 * scale, 4 * scale), p(10 * scale, 4 * scale));
-        let report = arc.intersect_axis_aligned_segment(&line, PredicatePolicy::default());
+        let report = arc.intersect_axis_aligned_segment(&line, PredicatePolicy);
 
         prop_assert_eq!(report.class, LineExplicitArcIntersectionClass::Secant);
         prop_assert_eq!(report.points, vec![p(3 * scale, 4 * scale), p(-3 * scale, 4 * scale)]);
@@ -12561,7 +11874,7 @@ proptest! {
             p(-3 * scale, 4 * scale),
             ArcDirection::Ccw,
         ).unwrap();
-        let report = full.classify_same_circle_overlap(&minor, PredicatePolicy::default());
+        let report = full.classify_same_circle_overlap(&minor, PredicatePolicy);
 
         prop_assert_eq!(report.class, ExplicitArcOverlapClass::FirstCoversSecond);
     }
@@ -12585,13 +11898,13 @@ proptest! {
             p(2 * radius, radius),
             ArcDirection::Ccw,
         ).unwrap();
-        let report = left.classify_circle_relation(&right, PredicatePolicy::default());
+        let report = left.classify_circle_relation(&right, PredicatePolicy);
 
         prop_assert_eq!(report.class, ExplicitCircleRelationClass::ExternallyTangent);
         prop_assert_eq!(report.center_distance_squared, r(4 * radius * radius));
         prop_assert_eq!(report.radius_sum_squared, r(4 * radius * radius));
         prop_assert_eq!(report.tangent_point, Some(p(radius, 0)));
-        let arc_report = left.classify_tangent_intersection(&right, PredicatePolicy::default());
+        let arc_report = left.classify_tangent_intersection(&right, PredicatePolicy);
         prop_assert_eq!(arc_report.class, ExplicitArcTangentClass::TangentOnBoth);
         prop_assert_eq!(arc_report.tangent_point, Some(p(radius, 0)));
     }
@@ -12615,12 +11928,12 @@ proptest! {
             p(11 * scale, 0),
             ArcDirection::Ccw,
         ).unwrap();
-        let report = left.intersect_arc(&right, PredicatePolicy::default());
+        let report = left.intersect_arc(&right, PredicatePolicy);
 
         prop_assert_eq!(report.class, ExplicitArcIntersectionClass::TwoPoints);
         prop_assert_eq!(report.circle_relation, ExplicitCircleRelationClass::Secant);
         prop_assert_eq!(report.points, vec![p(3 * scale, 4 * scale), p(3 * scale, -4 * scale)]);
-        let arrangement = left.arrange_with(&right, PredicatePolicy::default());
+        let arrangement = left.arrange_with(&right, PredicatePolicy);
         prop_assert_eq!(
             arrangement.class,
             ExplicitArcArrangementClass::DifferentCircleTwoPoints
@@ -12670,7 +11983,7 @@ proptest! {
             &arc,
             r(5 * distance),
             OffsetSide::Left,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let expected_scale = scale + distance;
 
@@ -12733,7 +12046,7 @@ proptest! {
                 &trace,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12767,7 +12080,7 @@ proptest! {
                 &trace,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12805,7 +12118,7 @@ proptest! {
                 &trace,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12834,7 +12147,7 @@ proptest! {
                 &trace,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12855,7 +12168,7 @@ proptest! {
         ).unwrap();
         let trace = trace(1, 0, p(0, 0), p(length, 0), width);
         let report =
-            check_trace_obround_board_clearance(&trace, &board, &r(0), PredicatePolicy::default());
+            check_trace_obround_board_clearance(&trace, &board, &r(0), PredicatePolicy);
 
         if width <= diameter {
             prop_assert_eq!(report.status, ClearanceStatus::CertifiedClear);
@@ -12882,7 +12195,7 @@ proptest! {
             &pad,
             &board,
             &r(0),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         let allowable = diameter - pad_diameter;
@@ -12915,7 +12228,7 @@ proptest! {
                 &via,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12941,7 +12254,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12967,7 +12280,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -12995,7 +12308,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -13027,7 +12340,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -13062,13 +12375,13 @@ proptest! {
                 &trace,
                 &rounded,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             check_trace_rect_pad_clearance(
                 &trace,
                 &rect,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status
         );
     }
@@ -13098,13 +12411,13 @@ proptest! {
                 &trace,
                 &obround,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             check_trace_pad_clearance(
                 &trace,
                 &circular,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status
         );
     }
@@ -13133,7 +12446,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -13178,13 +12491,13 @@ proptest! {
                 &trace,
                 &convex,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             check_trace_rect_pad_clearance(
                 &trace,
                 &rect,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status
         );
     }
@@ -13224,13 +12537,13 @@ proptest! {
                 &trace,
                 &orthogonal,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             check_trace_rect_pad_clearance(
                 &trace,
                 &rect,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status
         );
     }
@@ -13262,7 +12575,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -13290,7 +12603,7 @@ proptest! {
             r(i64::from(width)),
             r(i64::from(height)),
             Point2::new(r(1), r(0)),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
@@ -13298,13 +12611,13 @@ proptest! {
                 &trace,
                 &oriented,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             check_trace_rect_pad_clearance(
                 &trace,
                 &rect,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status
         );
     }
@@ -13325,7 +12638,7 @@ proptest! {
             r(i64::from(width)),
             r(i64::from(height)),
             Point2::new(rq(3, 5), rq(4, 5)),
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(
@@ -13333,7 +12646,7 @@ proptest! {
                 &pad,
                 &board,
                 &r(i64::from(clearance)),
-                PredicatePolicy::default(),
+                PredicatePolicy,
             ).status,
             ClearanceStatus::CertifiedClear
         );
@@ -13352,11 +12665,11 @@ proptest! {
         let opposite = Point2::new(-base.x.clone() * r(i64::from(b)), -base.y.clone() * r(i64::from(b)));
 
         prop_assert_eq!(
-            classify_tangent_alignment(&base, &same, PredicatePolicy::default()),
+            classify_tangent_alignment(&base, &same, PredicatePolicy),
             TangentAlignment::SameDirection
         );
         prop_assert_eq!(
-            classify_tangent_alignment(&base, &opposite, PredicatePolicy::default()),
+            classify_tangent_alignment(&base, &opposite, PredicatePolicy),
             TangentAlignment::OppositeDirection
         );
     }
@@ -13381,7 +12694,7 @@ proptest! {
             &tangent,
             &endpoint,
             &scaled,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         prop_assert_eq!(report.class, TangentJoinClass::G1Continuous);
@@ -13426,7 +12739,7 @@ proptest! {
             p(x, y + vertical_half),
         );
 
-        let report = arrange_line_segments(&[horizontal, vertical], PredicatePolicy::default()).unwrap();
+        let report = arrange_line_segments(&[horizontal, vertical], PredicatePolicy).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineArrangementEventClass::ProperCrossing);
         prop_assert_eq!(report.events[0].point.as_ref().unwrap(), &p(x, y));
@@ -13450,7 +12763,7 @@ proptest! {
         let first = LinePathSegment::new(p(a, 7), p(a + len_a, 7));
         let second = LinePathSegment::new(p(a + offset, 7), p(a + offset + len_b, 7));
 
-        let report = arrange_line_segments(&[first, second], PredicatePolicy::default()).unwrap();
+        let report = arrange_line_segments(&[first, second], PredicatePolicy).unwrap();
 
         prop_assert!(matches!(
             report.events[0].class,
@@ -13487,7 +12800,7 @@ proptest! {
         )
         .unwrap();
 
-        let report = arrange_line_segments_with_explicit_arcs(&[line], &[arc], PredicatePolicy::default()).unwrap();
+        let report = arrange_line_segments_with_explicit_arcs(&[line], &[arc], PredicatePolicy).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineArcArrangementEventClass::Secant);
         prop_assert_eq!(report.events[0].points.len(), 2);
@@ -13517,7 +12830,7 @@ proptest! {
             p(i64::from(x1), i64::from(y1)),
             p(i64::from(x2), i64::from(y2)),
         );
-        let report = arrange_quadratic_beziers(&[curve.clone()], &[vec![parameter]], PredicatePolicy::default()).unwrap();
+        let report = arrange_quadratic_beziers(std::slice::from_ref(&curve), &[vec![parameter]], PredicatePolicy).unwrap();
 
         prop_assert_eq!(report.fragments.len(), 2);
         prop_assert_eq!(report.fragments[0].curve.start(), curve.start());
@@ -13543,7 +12856,7 @@ proptest! {
         let line = LinePathSegment::new(p(start_x, 0), p(start_x + 2 * width, 0));
 
         let report =
-            intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy::default());
+            intersect_axis_aligned_line_quadratic_bezier(&line, &curve, PredicatePolicy);
 
         prop_assert_eq!(report.class, LineQuadraticBezierIntersectionClass::TwoPoints);
         prop_assert_eq!(report.intersections.len(), 2);
@@ -13575,7 +12888,7 @@ proptest! {
         let report = arrange_line_segments_with_quadratic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineQuadraticBezierIntersectionClass::Tangent);
@@ -13606,7 +12919,7 @@ proptest! {
         let report = arrange_line_segments_with_quadratic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineQuadraticBezierIntersectionClass::Overlap);
@@ -13636,7 +12949,7 @@ proptest! {
         let report = arrange_line_segments_with_quadratic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineQuadraticBezierIntersectionClass::Overlap);
@@ -13672,7 +12985,7 @@ proptest! {
         let report = arrange_line_segments_with_cubic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::TwoPoints);
@@ -13704,7 +13017,7 @@ proptest! {
         let report = intersect_axis_aligned_line_cubic_bezier(
             &line,
             &curve,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         prop_assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
@@ -13757,7 +13070,7 @@ proptest! {
         let report = arrange_line_segments_with_cubic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::Unknown);
@@ -13816,7 +13129,7 @@ proptest! {
         let report = intersect_line_cubic_bezier(
             &line,
             &curve,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
 
         prop_assert_eq!(report.class, LineCubicBezierIntersectionClass::Unknown);
@@ -13834,7 +13147,7 @@ proptest! {
         let arrangement = arrange_line_segments_with_cubic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
         let has_retained_breakpoint = arrangement.algebraic_breakpoints.iter().any(|breakpoint| {
             breakpoint.domain == LineCubicBezierAlgebraicBreakpointDomain::InsideLineAndCurve
@@ -13865,7 +13178,7 @@ proptest! {
         let report = arrange_line_segments_with_cubic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::Overlap);
@@ -13893,7 +13206,7 @@ proptest! {
         let report = arrange_line_segments_with_cubic_beziers(
             &[line],
             &[curve],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineCubicBezierIntersectionClass::Overlap);
@@ -13946,7 +13259,7 @@ proptest! {
         let report = arrange_line_segments_with_rational_quadratic_beziers(
             &[line],
             &[conic],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Tangent);
@@ -13981,7 +13294,7 @@ proptest! {
         let report = arrange_line_segments_with_rational_quadratic_beziers(
             &[line],
             &[conic],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Overlap);
@@ -14015,14 +13328,14 @@ proptest! {
         let legacy_report = intersect_axis_aligned_line_rational_quadratic_bezier(
             &line,
             &conic,
-            PredicatePolicy::default(),
+            PredicatePolicy,
         );
         prop_assert_eq!(legacy_report.class, LineRationalQuadraticBezierIntersectionClass::Unknown);
 
         let report = arrange_line_segments_with_rational_quadratic_beziers(
             &[line],
             &[conic],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Overlap);
@@ -14055,7 +13368,7 @@ proptest! {
         let report = arrange_line_segments_with_rational_quadratic_beziers(
             &[line],
             &[conic],
-            PredicatePolicy::default(),
+            PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(report.events[0].class, LineRationalQuadraticBezierIntersectionClass::Unknown);
@@ -14142,7 +13455,7 @@ proptest! {
             p(i64::from(x2), i64::from(y2)),
             p(i64::from(x3), i64::from(y3)),
         );
-        let report = arrange_cubic_beziers(&[curve.clone()], &[vec![parameter]], PredicatePolicy::default()).unwrap();
+        let report = arrange_cubic_beziers(std::slice::from_ref(&curve), &[vec![parameter]], PredicatePolicy).unwrap();
 
         prop_assert_eq!(report.fragments.len(), 2);
         prop_assert_eq!(report.fragments[0].curve.start(), curve.start());
@@ -14253,7 +13566,7 @@ proptest! {
                 end_tangent: scaled,
             },
         ];
-        let report = classify_tangent_chain(&spans, PredicatePolicy::default());
+        let report = classify_tangent_chain(&spans, PredicatePolicy);
 
         prop_assert!(report.all_g1_continuous());
         prop_assert_eq!(report.first_non_g1_join(), None);

@@ -745,16 +745,14 @@ pub fn import_specctra_keepout_record(record: &SpecctraKeepoutRecord) -> Meander
 }
 
 fn validate_imported_keepout(keepout: &MeanderKeepout) -> Result<(), SpecctraImportError> {
-    validate_meander_keepouts(
-        std::slice::from_ref(keepout),
-        hyperlimit::PredicatePolicy::default(),
+    validate_meander_keepouts(std::slice::from_ref(keepout), hyperlimit::PredicatePolicy).map_err(
+        |error| match error {
+            MeanderError::NegativeObstacleRadius => SpecctraImportError::NegativeRadius,
+            MeanderError::InvalidObstacleBounds => SpecctraImportError::InvalidKeepoutBounds,
+            MeanderError::InvalidObstaclePolygon => SpecctraImportError::InvalidKeepoutPolygon,
+            _ => SpecctraImportError::InvalidKeepoutPolygon,
+        },
     )
-    .map_err(|error| match error {
-        MeanderError::NegativeObstacleRadius => SpecctraImportError::NegativeRadius,
-        MeanderError::InvalidObstacleBounds => SpecctraImportError::InvalidKeepoutBounds,
-        MeanderError::InvalidObstaclePolygon => SpecctraImportError::InvalidKeepoutPolygon,
-        _ => SpecctraImportError::InvalidKeepoutPolygon,
-    })
 }
 
 /// Serialize fixed-grid route records into a small DSN/SES-style S-expression.

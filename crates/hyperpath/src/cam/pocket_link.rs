@@ -219,6 +219,7 @@ fn lower_left_dogleg(
     Ok(links)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn push_link_leg(
     links: &mut Vec<PocketLinkSegment>,
     from_ring: usize,

@@ -254,21 +254,21 @@ fn bounds_for_points(first: &Point2, second: &Point2) -> (Point2, Point2) {
 }
 
 fn min_real(first: &Real, second: &Real) -> Option<Real> {
-    match compare_reals_with_policy(first, second, PredicatePolicy::default()).value()? {
+    match compare_reals_with_policy(first, second, PredicatePolicy).value()? {
         Ordering::Less | Ordering::Equal => Some(first.clone()),
         Ordering::Greater => Some(second.clone()),
     }
 }
 
 fn max_real(first: &Real, second: &Real) -> Option<Real> {
-    match compare_reals_with_policy(first, second, PredicatePolicy::default()).value()? {
+    match compare_reals_with_policy(first, second, PredicatePolicy).value()? {
         Ordering::Less | Ordering::Equal => Some(second.clone()),
         Ordering::Greater => Some(first.clone()),
     }
 }
 
 fn same_real(left: &Real, right: &Real) -> Option<bool> {
-    compare_reals_with_policy(left, right, PredicatePolicy::default())
+    compare_reals_with_policy(left, right, PredicatePolicy)
         .value()
         .map(|ordering| ordering == Ordering::Equal)
 }

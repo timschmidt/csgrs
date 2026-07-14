@@ -1122,7 +1122,6 @@ fn exact_or_refined_cubic_root(
             policy,
             max_interval_width: None,
             max_refinement_steps: 256,
-            ..RootIsolationConfig::default()
         },
     );
     if refinement.status == IsolatedRootRefinementStatus::ExactRoot {

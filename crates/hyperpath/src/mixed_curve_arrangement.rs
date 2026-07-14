@@ -434,25 +434,21 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
     policy: PredicatePolicy,
     provenance: PathProvenance,
 ) -> Result<LineMixedBezierArrangementReport, LineMixedBezierArrangementError> {
-    let arc_report = arrange_line_segments_with_explicit_arcs_and_provenance(
-        lines,
-        arcs,
-        policy,
-        provenance.clone(),
-    )
-    .map_err(LineMixedBezierArrangementError::Arc)?;
+    let arc_report =
+        arrange_line_segments_with_explicit_arcs_and_provenance(lines, arcs, policy, provenance)
+            .map_err(LineMixedBezierArrangementError::Arc)?;
     let quadratic_report = arrange_line_segments_with_quadratic_beziers_and_provenance(
         lines,
         quadratic_curves,
         policy,
-        provenance.clone(),
+        provenance,
     )
     .map_err(LineMixedBezierArrangementError::Quadratic)?;
     let cubic_report = arrange_line_segments_with_cubic_beziers_and_provenance(
         lines,
         cubic_curves,
         policy,
-        provenance.clone(),
+        provenance,
     )
     .map_err(LineMixedBezierArrangementError::Cubic)?;
     let rational_quadratic_report =
@@ -460,7 +456,7 @@ pub fn arrange_line_segments_with_mixed_curves_and_provenance(
             lines,
             rational_quadratic_curves,
             policy,
-            provenance.clone(),
+            provenance,
         )
         .map_err(LineMixedBezierArrangementError::RationalQuadratic)?;
 
@@ -1084,8 +1080,8 @@ fn box_from_conic_fragment(
     ))
 }
 
-fn box_from_points<'a, const N: usize>(
-    points: [&'a Point2; N],
+fn box_from_points<const N: usize>(
+    points: [&Point2; N],
     policy: PredicatePolicy,
 ) -> Result<FragmentBox, LineMixedBezierArrangementError> {
     let mut x_min = points[0].x.clone();

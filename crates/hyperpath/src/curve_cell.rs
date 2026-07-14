@@ -794,13 +794,13 @@ fn curve_vertex_index(
 /// object/predicate boundary from "Towards Exact Geometric Computation,"
 /// *Computational Geometry* 7.1-2 (1997), applied to de Boor/Farouki-style
 /// retained curve objects rather than sampled polylines.
-fn find_duplicate_curve_edge<'a>(
-    edges: &'a mut [CurveArrangementCellEdge],
+fn find_duplicate_curve_edge(
+    edges: &mut [CurveArrangementCellEdge],
     kind: CurveArrangementCellEdgeKind,
     start: usize,
     end: usize,
     mut same_image: impl FnMut(&CurveArrangementCellEdge) -> bool,
-) -> Option<&'a mut CurveArrangementCellEdge> {
+) -> Option<&mut CurveArrangementCellEdge> {
     edges.iter_mut().find(|edge| {
         edge.kind == kind
             && ((edge.start == start && edge.end == end)
@@ -904,6 +904,7 @@ fn conic_fragments_same_image(
     same_orientation || opposite_orientation
 }
 
+#[allow(clippy::too_many_arguments)]
 fn sort_curve_outgoing_half_edges(
     vertex: usize,
     vertices: &mut [CurveArrangementCellVertex],
@@ -953,6 +954,7 @@ fn sort_curve_outgoing_half_edges(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn compare_curve_half_edge_angle(
     left: usize,
     right: usize,
@@ -1006,6 +1008,7 @@ fn compare_curve_half_edge_angle(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn curve_half_edge_tangent(
     half_edge: usize,
     edges: &[CurveArrangementCellEdge],
@@ -1095,9 +1098,9 @@ fn assign_curve_half_edge_successors(
     vertices: &[CurveArrangementCellVertex],
     half_edges: &mut [CurveArrangementHalfEdge],
 ) {
-    for half_edge in 0..half_edges.len() {
-        let twin = half_edges[half_edge].twin;
-        let vertex = half_edges[half_edge].to;
+    for half_edge in half_edges.iter_mut() {
+        let twin = half_edge.twin;
+        let vertex = half_edge.to;
         let outgoing = &vertices[vertex].outgoing_half_edges;
         let Some(position) = outgoing.iter().position(|candidate| *candidate == twin) else {
             continue;
@@ -1107,10 +1110,11 @@ fn assign_curve_half_edge_successors(
         } else {
             position - 1
         };
-        half_edges[half_edge].next = Some(outgoing[next_position]);
+        half_edge.next = Some(outgoing[next_position]);
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn curve_cell_faces(
     vertices: &[CurveArrangementCellVertex],
     edges: &[CurveArrangementCellEdge],
@@ -1195,6 +1199,7 @@ fn curve_cell_faces(
     Ok(faces)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn curve_loop_role_reports(
     vertices: &[CurveArrangementCellVertex],
     edges: &[CurveArrangementCellEdge],
@@ -1351,6 +1356,7 @@ fn uncertain_loop_role(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn native_face_representative(
     face: &CurveArrangementCellFace,
     vertices: &[CurveArrangementCellVertex],
@@ -1444,8 +1450,8 @@ fn average_cycle_vertices(
     let mut x = Real::zero();
     let mut y = Real::zero();
     for vertex in &unique {
-        x = x + vertices[*vertex].point.x.clone();
-        y = y + vertices[*vertex].point.y.clone();
+        x += vertices[*vertex].point.x.clone();
+        y += vertices[*vertex].point.y.clone();
     }
     let denominator = Real::from(unique.len() as i64);
     Some(Point2::new(
@@ -1554,6 +1560,7 @@ fn arc_midpoint_candidate(
     None
 }
 
+#[allow(clippy::too_many_arguments)]
 fn half_edge_midpoint(
     half_edge: usize,
     vertices: &[CurveArrangementCellVertex],
@@ -1589,11 +1596,7 @@ fn half_edge_midpoint(
             eval_conic_fragment_half(fragment, policy)?
         }
     };
-    if half_edge < half.twin {
-        Some(midpoint)
-    } else {
-        Some(midpoint)
-    }
+    Some(midpoint)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1604,6 +1607,7 @@ enum NativePointFaceClassification {
     Unknown(CurveArrangementLoopRoleBlocker),
 }
 
+#[allow(clippy::too_many_arguments)]
 fn classify_point_against_native_face(
     point: &Point2,
     face: &CurveArrangementCellFace,
@@ -1654,6 +1658,7 @@ enum RayCrossingResult {
     Unknown(CurveArrangementLoopRoleBlocker),
 }
 
+#[allow(clippy::too_many_arguments)]
 fn horizontal_ray_crossings(
     point: &Point2,
     half_edge: usize,
@@ -1710,6 +1715,7 @@ fn cycle_without_canceling_twins(
         .collect()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn signed_curve_face_area_twice(
     cycle: &[usize],
     vertices: &[CurveArrangementCellVertex],
@@ -1724,19 +1730,18 @@ fn signed_curve_face_area_twice(
 ) -> Option<Real> {
     let mut area = Real::zero();
     for half_edge in cycle {
-        area = area
-            + signed_curve_half_edge_area_twice(
-                *half_edge,
-                vertices,
-                edges,
-                half_edges,
-                line_fragments,
-                arc_fragments,
-                bezier_fragments,
-                cubic_fragments,
-                conic_fragments,
-                policy,
-            )?;
+        area += signed_curve_half_edge_area_twice(
+            *half_edge,
+            vertices,
+            edges,
+            half_edges,
+            line_fragments,
+            arc_fragments,
+            bezier_fragments,
+            cubic_fragments,
+            conic_fragments,
+            policy,
+        )?;
     }
     Some(area)
 }
@@ -2156,7 +2161,6 @@ fn isolate_cubic_ray_roots(
             policy,
             max_interval_width: Some((Real::one() / Real::from(4096)).ok()?),
             max_refinement_steps: 96,
-            ..RootIsolationConfig::default()
         },
     );
     if reports.is_empty() {
@@ -2508,6 +2512,7 @@ fn traversal_half_open_parameter(parameter: &Real, forward: bool, policy: Predic
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn signed_curve_half_edge_area_twice(
     half_edge: usize,
     vertices: &[CurveArrangementCellVertex],
@@ -2932,7 +2937,7 @@ fn certify_quadratic_weight_nonzero_sign(
         .iter()
         .map(|value| compare_reals_with_policy(value, &Real::zero(), policy).value())
         .collect::<Option<Vec<_>>>()?;
-    if signs.iter().any(|sign| *sign == Ordering::Equal) {
+    if signs.contains(&Ordering::Equal) {
         return None;
     }
     if signs.iter().all(|sign| *sign == Ordering::Greater) {
@@ -3198,9 +3203,8 @@ fn cubic_bezier_area_twice(fragment: &CubicBezierRealFragment) -> Real {
     for i in 0..4 {
         for j in 0..3 {
             let coefficient = x[i].clone() * dy[j].clone() - y[i].clone() * dx[j].clone();
-            area = area
-                + (coefficient / Real::from((i + j + 1) as i64))
-                    .expect("positive polynomial integration denominator");
+            area += (coefficient / Real::from((i + j + 1) as i64))
+                .expect("positive polynomial integration denominator");
         }
     }
     area

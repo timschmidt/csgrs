@@ -1737,7 +1737,6 @@ fn true_cubic_algebraic_support_report_from_polynomial(
             policy,
             max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
             max_refinement_steps: 64,
-            ..RootIsolationConfig::default()
         },
     )
     .into_iter()
@@ -2792,7 +2791,6 @@ fn represent_cubic_varying_roots(
             policy,
             max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
             max_refinement_steps: 64,
-            ..RootIsolationConfig::default()
         },
     )
     .into_iter()
@@ -3224,7 +3222,6 @@ fn represent_rational_quadratic_inverse_roots(
             policy,
             max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
             max_refinement_steps: 64,
-            ..RootIsolationConfig::default()
         },
     )
     .into_iter()
@@ -3676,9 +3673,8 @@ fn push_unique_intersection(
     _policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        match point2_equal(&existing.point, &point).value()? {
-            true => return Some(()),
-            false => {}
+        if point2_equal(&existing.point, &point).value()? {
+            return Some(());
         }
     }
     intersections.push(LineQuadraticBezierIntersection { parameter, point });
@@ -3775,9 +3771,8 @@ fn push_unique_rational_quadratic_intersection(
     _policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        match point2_equal(&existing.point, &point).value()? {
-            true => return Some(()),
-            false => {}
+        if point2_equal(&existing.point, &point).value()? {
+            return Some(());
         }
     }
     intersections.push(LineRationalQuadraticBezierIntersection { parameter, point });
@@ -3813,9 +3808,8 @@ fn push_unique_cubic_intersection(
     _policy: PredicatePolicy,
 ) -> Option<()> {
     for existing in intersections.iter() {
-        match point2_equal(&existing.point, &point).value()? {
-            true => return Some(()),
-            false => {}
+        if point2_equal(&existing.point, &point).value()? {
+            return Some(());
         }
     }
     intersections.push(LineCubicBezierIntersection { parameter, point });

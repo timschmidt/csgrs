@@ -958,7 +958,7 @@ pub fn classify_meander_candidate_slots_with_keepouts(
 /// Certify exact differential-pair skew for retained axis-aligned routes.
 ///
 /// The residual is `first_length - second_length - target_skew = 0`, built by
-/// [`hypersolve::differential_pair_skew_equation`] and replayed through the
+/// [`crate::differential_pair_skew_equation`] and replayed through the
 /// normal exact candidate-certification path. This does not certify no-short,
 /// clearance, pad/via transitions, impedance, or board-edge rules; those stay
 /// in the dedicated exact PCB predicates before any route is accepted.
@@ -997,7 +997,7 @@ pub fn certify_differential_pair_skew(
 /// Certify a constant-feed traversal time for retained axis-aligned geometry.
 ///
 /// The route is measured exactly from retained segment structure, then replayed
-/// through [`hypersolve::constant_feed_time_equation`]. This follows Yap's
+/// through [`crate::constant_feed_time_equation`]. This follows Yap's
 /// exact-geometric-computation boundary: path objects provide exact facts,
 /// solver rows certify continuous parameters, and downstream CAM/export code
 /// still owns process-specific feed, acceleration, and controller constraints.
@@ -1283,6 +1283,7 @@ fn opposite_side(side: OffsetSide) -> OffsetSide {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn classify_meander_placement_slots_with_step(
     source: &LinePathSegment,
     amplitude: Real,
@@ -1312,6 +1313,7 @@ fn classify_meander_placement_slots_with_step(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn classify_meander_placement_slots_with_keepout_step(
     source: &LinePathSegment,
     amplitude: Real,

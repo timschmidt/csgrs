@@ -87,6 +87,7 @@ impl PcbOrientedRectPad {
     /// construction precondition rather than an automatic normalization step:
     /// square-root normalization would manufacture a new object whose exactness
     /// and branch provenance are not present in typical footprint input.
+    #[allow(clippy::too_many_arguments)]
     pub fn with_provenance(
         net: crate::pcb::NetId,
         layer: crate::pcb::TraceLayer,

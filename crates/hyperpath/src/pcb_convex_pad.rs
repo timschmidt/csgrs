@@ -73,18 +73,15 @@ impl PcbConvexPad {
             return Err(BoardContourError::TooFewVertices);
         }
         let signed_area_twice = polygon_signed_area_twice(&vertices);
-        let orientation = match compare_reals_with_policy(
-            &signed_area_twice,
-            &Real::zero(),
-            PredicatePolicy::default(),
-        )
-        .value()
-        {
-            Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
-            Some(Ordering::Less) => BoardContourOrientation::Clockwise,
-            Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
-            None => return Err(BoardContourError::UnknownOrientation),
-        };
+        let orientation =
+            match compare_reals_with_policy(&signed_area_twice, &Real::zero(), PredicatePolicy)
+                .value()
+            {
+                Some(Ordering::Greater) => BoardContourOrientation::CounterClockwise,
+                Some(Ordering::Less) => BoardContourOrientation::Clockwise,
+                Some(Ordering::Equal) => return Err(BoardContourError::DegenerateArea),
+                None => return Err(BoardContourError::UnknownOrientation),
+            };
         validate_strict_convexity(&vertices, orientation)?;
         let refs = vertices
             .iter()
@@ -367,9 +364,7 @@ fn validate_strict_convexity(
             BoardContourOrientation::CounterClockwise => Ordering::Greater,
             BoardContourOrientation::Clockwise => Ordering::Less,
         };
-        match compare_reals_with_policy(&cross_value, &Real::zero(), PredicatePolicy::default())
-            .value()
-        {
+        match compare_reals_with_policy(&cross_value, &Real::zero(), PredicatePolicy).value() {
             Some(Ordering::Equal) => return Err(BoardContourError::CollinearEdge),
             Some(ordering) if ordering == expected => {}
             Some(_) => return Err(BoardContourError::NonConvex),

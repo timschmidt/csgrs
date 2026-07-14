@@ -670,29 +670,17 @@ fn classify_explicit_arc_arrangement_event(
     match report.class {
         ExplicitArcArrangementClass::DifferentCircleOnePoint
         | ExplicitArcArrangementClass::DifferentCircleTwoPoints => {
-            if let Some(intersection) = &report.intersection {
-                if matches!(
+            if let Some(intersection) = &report.intersection
+                && matches!(
                     intersection.class,
                     ExplicitArcIntersectionClass::OnePoint
                         | ExplicitArcIntersectionClass::TwoPoints
-                ) {
-                    for point in &intersection.points {
-                        push_unique_arc_point(&mut points, point.clone(), policy)?;
-                        add_arc_breakpoint(
-                            breakpoints,
-                            first,
-                            &arcs[first],
-                            point.clone(),
-                            policy,
-                        )?;
-                        add_arc_breakpoint(
-                            breakpoints,
-                            second,
-                            &arcs[second],
-                            point.clone(),
-                            policy,
-                        )?;
-                    }
+                )
+            {
+                for point in &intersection.points {
+                    push_unique_arc_point(&mut points, point.clone(), policy)?;
+                    add_arc_breakpoint(breakpoints, first, &arcs[first], point.clone(), policy)?;
+                    add_arc_breakpoint(breakpoints, second, &arcs[second], point.clone(), policy)?;
                 }
             }
         }
@@ -1565,9 +1553,9 @@ fn assign_half_edge_successors(
     vertices: &[LineArrangementCellVertex],
     half_edges: &mut [LineArrangementHalfEdge],
 ) {
-    for half_edge in 0..half_edges.len() {
-        let twin = half_edges[half_edge].twin;
-        let vertex = half_edges[half_edge].to;
+    for half_edge in half_edges.iter_mut() {
+        let twin = half_edge.twin;
+        let vertex = half_edge.to;
         let outgoing = &vertices[vertex].outgoing_half_edges;
         let Some(position) = outgoing.iter().position(|candidate| *candidate == twin) else {
             continue;
@@ -1577,7 +1565,7 @@ fn assign_half_edge_successors(
         } else {
             position - 1
         };
-        half_edges[half_edge].next = Some(outgoing[next_position]);
+        half_edge.next = Some(outgoing[next_position]);
     }
 }
 

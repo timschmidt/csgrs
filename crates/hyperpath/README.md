@@ -12,42 +12,6 @@ The crate is not a full autorouter or CAM kernel yet. It is the path-domain laye
 candidates, source-grid provenance, clearance reports, tangent facts, and certification
 evidence remain explicit.
 
-## Hyper Ecosystem
-
-`hyperpath` connects exact geometry decisions to routing and manufacturing workflows.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact path coordinates,
-  distances, widths, offsets, and timing values.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector, point, and
-  homogeneous carriers used by sibling geometry crates.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate decisions for
-  clearance, sidedness, and tangency.
-- [hypertri](https://github.com/timschmidt/hypertri): triangulation and planar
-  subdivision support for future pocket and offset arrangements.
-- [hypercurve](https://github.com/timschmidt/hypercurve): exact curve and Bezier
-  primitives that supply curved path and offset inputs.
-- [hypermesh](https://github.com/timschmidt/hypermesh): exact mesh and surface evidence
-  for obstacle, fixture, and swept-volume consumers.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): sparse-grid process and swept
-  evidence for sampled manufacturing handoffs.
-- [hypersolve](https://github.com/timschmidt/hypersolve): length, skew, feed-time, and
-  future constrained path certification.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB readiness checks that consume
-  routing and board evidence.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit) and
-  [hyperphysics](https://github.com/timschmidt/hyperphysics): electrical and physical
-  context for coupled routing, heating, support, and process checks.
-- [hyperpack](https://github.com/timschmidt/hyperpack): package and panel metadata for
-  board-level manufacturing context.
-- [hyperparts](https://github.com/timschmidt/hyperparts): part and footprint records that
-  anchor routing constraints.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): optimization and design
-  exploration layer for route and process candidates.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): exact boundary-representation
-  surfaces for future toolpath and fixture geometry.
-- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance evidence for future
-  clearance previews and implicit obstacles.
-
 ## Typical Path Problems
 
 Routing and toolpath software often mixes candidate generation, clearance checks,
@@ -130,7 +94,7 @@ and autorouting are not complete.
 
 ```toml
 [dependencies]
-hyperpath = "0.2.0"
+hyperpath = "0.3.0"
 ```
 
 For sibling checkouts:
@@ -161,12 +125,15 @@ let offset = offset_axis_aligned_segment(
     &centerline,
     Real::from(2),
     OffsetSide::Left,
-    PredicatePolicy::STRICT,
+    PredicatePolicy::default(),
 )?;
 
 let swept = SweptLineSegment::new(centerline.clone(), Real::from(1))?;
 let trace = PcbTrace::new(NetId(1), TraceLayer(0), swept);
 ```
+
+See [`examples/basic.rs`](examples/basic.rs) for a compiling version of this
+workflow.
 
 Solver-facing helpers keep PCB and CAM semantics in `hyperpath` while producing
 `hypersolve` residuals:
@@ -207,13 +174,20 @@ G1 chain certification helpers.
 ## References
 
 - Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
-  (1997): 3-23.
+  (1997): 3-23. https://doi.org/10.1016/0925-7721(95)00040-2.
 - Lee, C. Y. "An Algorithm for Path Connections and Its Applications." *IRE
   Transactions on Electronic Computers* EC-10.3 (1961): 346-365.
+  https://doi.org/10.1109/TEC.1961.5219222.
 - Hightower, David W. "A Solution to Line-Routing Problems on the Continuous Plane."
   *Proceedings of the 6th Design Automation Workshop* (1969): 1-24.
+  https://doi.org/10.1145/800260.809014.
 - Farouki, Rida T., and Takis Sakkalis. "Pythagorean Hodographs." *IBM Journal of
   Research and Development* 34.5 (1990): 736-752.
+  https://doi.org/10.1147/rd.345.0736.
+- Erkorkmaz, Kaan, and Yusuf Altintas. "High Speed CNC System Design. Part I:
+  Jerk Limited Trajectory Generation and Quintic Spline Interpolation."
+  *International Journal of Machine Tools and Manufacture* 41.9 (2001):
+  1323-1345. https://doi.org/10.1016/S0890-6955(01)00002-5.
 - Ucamco. *Gerber Layer Format Specification*.
 - KiCad Project. *KiCad PCB File Format / S-expression Board Format*.
 - Cadence Design Systems. *SPECCTRA Design Language Reference*.
@@ -224,5 +198,18 @@ Useful local checks:
 
 ```sh
 cargo test
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+cargo check --examples --benches
+cargo run --example basic
 cargo bench --bench path_predicates
 ```
+
+## Hyper Ecosystem
+
+`hyperpath` builds on [hyperreal](https://github.com/timschmidt/hyperreal),
+[hyperlimit](https://github.com/timschmidt/hyperlimit), and
+[hypersolve](https://github.com/timschmidt/hypersolve). It connects exact curve,
+PCB, CAM, and routing evidence to the other [Hyper geometry and engineering
+crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).
