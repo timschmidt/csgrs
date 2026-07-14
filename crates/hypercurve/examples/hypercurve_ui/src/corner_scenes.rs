@@ -1,8 +1,9 @@
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider};
 use egui_plot::{Plot, PlotPoint, Text};
 use hypercurve::{
-    CircularArc2, CubicBezier2, Curve2, CurveFamily2, CurvePath2, CurveRegion2, LineSeg2, Point2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
+    CircularArc2, CubicBezier2, Curve2, CurveFamily2, CurveParameterSide2, CurvePath2,
+    CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
+    Real, RealSign,
 };
 
 use crate::geometry::{Polyline, Shape};
@@ -11,7 +12,8 @@ use crate::theme::Theme;
 
 const DISPLAY_STEPS: usize = 48;
 const RECTANGLE_HOLE_COUNT: usize = 12;
-const EDITED_CORNER_COUNT: usize = 4 + RECTANGLE_HOLE_COUNT * 4;
+const ARC_HOLE_COUNT: usize = 2;
+const EDITED_CORNER_COUNT: usize = 4 + (RECTANGLE_HOLE_COUNT + ARC_HOLE_COUNT) * 4;
 #[cfg(test)]
 const ALL_FAMILIES: [CurveFamily2; 8] = [
     CurveFamily2::Line,
@@ -46,14 +48,18 @@ impl CornerOperation {
     }
 
     const fn amount_bounds(self) -> (f64, f64) {
-        (0.25, 1.5)
+        match self {
+            Self::Fillet => (0.25, 0.7),
+            Self::Chamfer => (0.25, 1.5),
+        }
     }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum HoleKind {
     Rectangle,
-    Circle,
+    ArcThenFamily,
+    FamilyThenArc,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -148,8 +154,22 @@ const HOLE_SPECS: [HoleSpec; 14] = [
         CurveFamily2::PolynomialBSpline,
         CurveFamily2::RationalQuadraticBezier,
     ),
-    circle((-4, 7)),
-    circle((6, 7)),
+    arc_hole(
+        (-4, 7),
+        HoleKind::ArcThenFamily,
+        CurveFamily2::Nurbs,
+        CurveFamily2::QuadraticBezier,
+        CurveFamily2::CubicBezier,
+        CurveFamily2::RationalQuadraticBezier,
+    ),
+    arc_hole(
+        (6, 7),
+        HoleKind::FamilyThenArc,
+        CurveFamily2::RationalBezier,
+        CurveFamily2::PolynomialBSpline,
+        CurveFamily2::Line,
+        CurveFamily2::CubicBezier,
+    ),
 ];
 
 const fn rectangle(
@@ -166,11 +186,18 @@ const fn rectangle(
     }
 }
 
-const fn circle(origin: (i32, i32)) -> HoleSpec {
+const fn arc_hole(
+    origin: (i32, i32),
+    kind: HoleKind,
+    first: CurveFamily2,
+    second: CurveFamily2,
+    third: CurveFamily2,
+    fourth: CurveFamily2,
+) -> HoleSpec {
     HoleSpec {
         origin,
-        families: [CurveFamily2::CircularArc; 4],
-        kind: HoleKind::Circle,
+        families: [first, second, third, fourth],
+        kind,
     }
 }
 
@@ -236,18 +263,29 @@ impl CornerScene {
             ScrollArea::vertical().show(ui, |ui| {
                 ui.heading(self.operation.heading());
                 let (minimum, maximum) = self.operation.amount_bounds();
-                ui.add(
+                let mut slider =
                     Slider::new(&mut self.amount, minimum..=maximum)
-                        .text(self.operation.amount_label()),
-                );
+                        .text(self.operation.amount_label());
+                if self.operation == CornerOperation::Fillet {
+                    // The UI value is the rational arc-tangency parameter q;
+                    // the visible radius is the exact construction 2q².
+                    slider = slider
+                        .custom_formatter(|scale, _| format!("{:.3}", 2.0 * scale * scale))
+                        .custom_parser(|text| {
+                            text.parse::<f64>()
+                                .ok()
+                                .filter(|radius| *radius >= 0.0)
+                                .map(|radius| (radius / 2.0).sqrt())
+                        });
+                }
+                ui.add(slider);
                 ui.separator();
                 ui.label(format!(
-                    "CurveRegion2: {} boundaries · 1 material + {RECTANGLE_HOLE_COUNT} mixed-family polygons + {} circles",
+                    "CurveRegion2: {} boundaries · 1 material + {RECTANGLE_HOLE_COUNT} mixed-family polygons + {ARC_HOLE_COUNT} arc-corner holes",
                     self.source_region.len(),
-                    HOLE_SPECS.len() - RECTANGLE_HOLE_COUNT
                 ));
                 ui.small(
-                    "Every adjustment edits every corner of the material and mixed-family hole boundaries.",
+                    "Every adjustment edits every corner, including both circular-arc/family orders.",
                 );
                 if let Some(result) = &self.result_region {
                     ui.small(format!("Result retains {} exact boundary loops", result.len()));
@@ -351,7 +389,12 @@ fn build_corner_result(
         .iter()
         .enumerate()
         .map(|(boundary_index, path)| {
-            edit_all_corners(path, operation, amount.clone())
+            let kind = if boundary_index == 0 {
+                HoleKind::Rectangle
+            } else {
+                HOLE_SPECS[boundary_index - 1].kind
+            };
+            edit_all_corners(path, kind, operation, amount.clone())
                 .map_err(|error| format!("boundary {boundary_index}: {error}"))
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -365,10 +408,12 @@ struct CornerWitness {
     previous_parameter: Real,
     next_parameter: Real,
     center: Point2,
+    clockwise: bool,
 }
 
 fn edit_all_corners(
     source: &CurvePath2,
+    kind: HoleKind,
     operation: CornerOperation,
     amount: Real,
 ) -> Result<CurvePath2, String> {
@@ -376,9 +421,12 @@ fn edit_all_corners(
         return Ok(source.clone());
     }
 
-    let corner_indices = (0..source.curves().len())
-        .filter(|vertex_index| is_geometric_corner(source, *vertex_index))
-        .collect::<Vec<_>>();
+    let mut corner_indices = Vec::new();
+    for vertex_index in 0..source.curves().len() {
+        if corner_orientation(source, vertex_index)?.is_some() {
+            corner_indices.push(vertex_index);
+        }
+    }
     let mut result = source.clone();
 
     // Editing in descending source order keeps every not-yet-edited vertex at
@@ -386,18 +434,18 @@ fn edit_all_corners(
     // for the neighboring end trim already applied to a retained curve.
     for vertex_index in corner_indices.iter().rev() {
         if *vertex_index != 0 {
-            let witness = corner_witness(&result, *vertex_index, &amount)?;
+            let witness = corner_witness_for(&result, *vertex_index, kind, operation, &amount)?;
             result = apply_corner_edit(result, *vertex_index, operation, &witness)?;
         }
     }
     if corner_indices.first() == Some(&0) {
-        let seam_witness = corner_witness(&result, 0, &amount)?;
+        let seam_witness = corner_witness_for(&result, 0, kind, operation, &amount)?;
         result = apply_corner_edit(result, 0, operation, &seam_witness)?;
     }
     Ok(result)
 }
 
-fn is_geometric_corner(source: &CurvePath2, vertex_index: usize) -> bool {
+fn corner_orientation(source: &CurvePath2, vertex_index: usize) -> Result<Option<bool>, String> {
     let previous_index = if vertex_index == 0 {
         source.curves().len() - 1
     } else {
@@ -405,9 +453,36 @@ fn is_geometric_corner(source: &CurvePath2, vertex_index: usize) -> bool {
     };
     let previous = &source.curves()[previous_index];
     let next = &source.curves()[vertex_index];
-    let (previous_dx, previous_dy) = previous.end().delta_from(previous.start());
-    let (next_dx, next_dy) = next.end().delta_from(next.start());
-    &previous_dx * &next_dy - &previous_dy * &next_dx != Real::zero()
+    let previous_tangent = previous
+        .derivative_at_side(previous.parameter_domain().end(), CurveParameterSide2::Left)
+        .map_err(string_error)?;
+    let next_tangent = next
+        .derivative_at_side(next.parameter_domain().start(), CurveParameterSide2::Right)
+        .map_err(string_error)?;
+    let cross =
+        previous_tangent.dx() * next_tangent.dy() - previous_tangent.dy() * next_tangent.dx();
+    Ok(match cross.structural_facts().sign {
+        Some(RealSign::Positive) => Some(false),
+        Some(RealSign::Negative) => Some(true),
+        Some(RealSign::Zero) => {
+            let dot = previous_tangent.dx() * next_tangent.dx()
+                + previous_tangent.dy() * next_tangent.dy();
+            match dot.structural_facts().sign {
+                Some(RealSign::Positive) => None,
+                Some(RealSign::Negative) => Some(false),
+                Some(RealSign::Zero) | None => {
+                    return Err(format!(
+                        "vertex {vertex_index} has an indeterminate endpoint tangent"
+                    ));
+                }
+            }
+        }
+        None => {
+            return Err(format!(
+                "vertex {vertex_index} has an indeterminate turn orientation"
+            ));
+        }
+    })
 }
 
 fn apply_corner_edit(
@@ -423,7 +498,7 @@ fn apply_corner_edit(
                 witness.previous_parameter.clone(),
                 witness.next_parameter.clone(),
                 &witness.center,
-                false,
+                witness.clockwise,
             )
             .map_err(|error| format!("vertex {vertex_index}: {error}")),
         CornerOperation::Chamfer => path
@@ -436,9 +511,32 @@ fn apply_corner_edit(
     }
 }
 
-fn corner_witness(
+fn corner_witness_for(
     source: &CurvePath2,
     vertex_index: usize,
+    kind: HoleKind,
+    operation: CornerOperation,
+    amount: &Real,
+) -> Result<CornerWitness, String> {
+    let special_vertex = match kind {
+        HoleKind::ArcThenFamily => Some(1),
+        HoleKind::FamilyThenArc => Some(4),
+        HoleKind::Rectangle => None,
+    };
+    if special_vertex == Some(vertex_index) {
+        return arc_family_corner_witness(source, vertex_index, kind, operation, amount);
+    }
+    let amount = match operation {
+        CornerOperation::Fillet => Real::from(2_i32) * (amount * amount),
+        CornerOperation::Chamfer => amount.clone(),
+    };
+    linear_image_corner_witness(source, vertex_index, operation, &amount)
+}
+
+fn linear_image_corner_witness(
+    source: &CurvePath2,
+    vertex_index: usize,
+    operation: CornerOperation,
     amount: &Real,
 ) -> Result<CornerWitness, String> {
     let previous_index = if vertex_index == 0 {
@@ -448,8 +546,29 @@ fn corner_witness(
     };
     let previous = &source.curves()[previous_index];
     let next = &source.curves()[vertex_index];
-    let previous_fraction = (amount / chord_length(previous)?).map_err(string_error)?;
-    let next_fraction = (amount / chord_length(next)?).map_err(string_error)?;
+    let previous_length = chord_length(previous)?;
+    let next_length = chord_length(next)?;
+    let (previous_dx, previous_dy) = previous.end().delta_from(previous.start());
+    let (next_dx, next_dy) = next.end().delta_from(next.start());
+    let previous_unit_x = (&previous_dx / &previous_length).map_err(string_error)?;
+    let previous_unit_y = (&previous_dy / &previous_length).map_err(string_error)?;
+    let next_unit_x = (&next_dx / &next_length).map_err(string_error)?;
+    let next_unit_y = (&next_dy / &next_length).map_err(string_error)?;
+    let clockwise = corner_orientation(source, vertex_index)?
+        .ok_or_else(|| format!("vertex {vertex_index} is smooth"))?;
+    let setback = match operation {
+        CornerOperation::Chamfer => amount.clone(),
+        CornerOperation::Fillet => {
+            // For unit tangents enclosing turn angle θ, the tangent setback is
+            // r·tan(θ/2) = r·|cross|/(1 + dot).
+            let dot = &previous_unit_x * &next_unit_x + &previous_unit_y * &next_unit_y;
+            let cross = &previous_unit_x * &next_unit_y - &previous_unit_y * &next_unit_x;
+            let positive_cross = if clockwise { -cross } else { cross };
+            (amount * positive_cross / (Real::one() + dot)).map_err(string_error)?
+        }
+    };
+    let previous_fraction = (&setback / &previous_length).map_err(string_error)?;
+    let next_fraction = (&setback / &next_length).map_err(string_error)?;
 
     let previous_domain = previous.parameter_domain();
     let previous_span = previous_domain.end() - previous_domain.start();
@@ -458,23 +577,83 @@ fn corner_witness(
     let next_span = next_domain.end() - next_domain.start();
     let next_parameter = next_domain.start() + &(&next_span * &next_fraction);
 
-    let (previous_dx, previous_dy) = previous.end().delta_from(previous.start());
-    let (next_dx, next_dy) = next.end().delta_from(next.start());
     let previous_offset_x = &previous_dx * &previous_fraction;
     let previous_offset_y = &previous_dy * &previous_fraction;
-    let next_offset_x = &next_dx * &next_fraction;
-    let next_offset_y = &next_dy * &next_fraction;
     let vertex = next.start();
+    let previous_tangent = Point2::new(
+        vertex.x() - previous_offset_x,
+        vertex.y() - previous_offset_y,
+    );
+    let (normal_x, normal_y) = if clockwise {
+        (previous_unit_y, -previous_unit_x)
+    } else {
+        (-previous_unit_y, previous_unit_x)
+    };
     let center = Point2::new(
-        vertex.x() - previous_offset_x + next_offset_x,
-        vertex.y() - previous_offset_y + next_offset_y,
+        previous_tangent.x() + &(normal_x * amount),
+        previous_tangent.y() + &(normal_y * amount),
     );
 
     Ok(CornerWitness {
         previous_parameter,
         next_parameter,
         center,
+        clockwise,
     })
+}
+
+fn arc_family_corner_witness(
+    source: &CurvePath2,
+    vertex_index: usize,
+    kind: HoleKind,
+    operation: CornerOperation,
+    amount: &Real,
+) -> Result<CornerWitness, String> {
+    let q = match operation {
+        CornerOperation::Fillet => amount.clone(),
+        CornerOperation::Chamfer => (amount / Real::from(4_i32)).map_err(string_error)?,
+    };
+    let line_distance = Real::from(4_i32) * &q;
+    let maximum_q = rational(3, 4);
+    let angular_half_tangent =
+        ((&maximum_q - &q) / (Real::one() + &maximum_q * &q)).map_err(string_error)?;
+    let arc_parameter = (&angular_half_tangent
+        / (rational(3, 5) + rational(1, 5) * &angular_half_tangent))
+        .map_err(string_error)?;
+    let radius = Real::from(2_i32) * (&q * &q);
+    let vertex = source.curves()[vertex_index].start();
+    let center = Point2::new(vertex.x() - &line_distance, vertex.y() + radius);
+
+    match kind {
+        HoleKind::ArcThenFamily => {
+            let next = &source.curves()[vertex_index];
+            let next_fraction = (&line_distance / chord_length(next)?).map_err(string_error)?;
+            let next_domain = next.parameter_domain();
+            let next_parameter =
+                next_domain.start() + &((next_domain.end() - next_domain.start()) * next_fraction);
+            Ok(CornerWitness {
+                previous_parameter: arc_parameter,
+                next_parameter,
+                center,
+                clockwise: true,
+            })
+        }
+        HoleKind::FamilyThenArc => {
+            let previous = &source.curves()[vertex_index - 1];
+            let previous_fraction =
+                (&line_distance / chord_length(previous)?).map_err(string_error)?;
+            let previous_domain = previous.parameter_domain();
+            let previous_parameter = previous_domain.end()
+                - &((previous_domain.end() - previous_domain.start()) * previous_fraction);
+            Ok(CornerWitness {
+                previous_parameter,
+                next_parameter: Real::one() - arc_parameter,
+                center,
+                clockwise: false,
+            })
+        }
+        HoleKind::Rectangle => Err("rectangle has no circular-arc corner witness".into()),
+    }
 }
 
 fn chord_length(curve: &Curve2) -> Result<Real, String> {
@@ -526,7 +705,8 @@ fn outer_boundary() -> Result<CurvePath2, String> {
 fn family_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
     match spec.kind {
         HoleKind::Rectangle => rectangle_hole(spec),
-        HoleKind::Circle => circle_hole(spec),
+        HoleKind::ArcThenFamily => arc_then_family_hole(spec),
+        HoleKind::FamilyThenArc => arc_then_family_hole(spec)?.reversed().map_err(string_error),
     }
 }
 
@@ -548,12 +728,32 @@ fn rectangle_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
     CurvePath2::try_new(curves).map_err(string_error)
 }
 
-fn circle_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
-    let start = local_point(spec.origin, 0, 2);
-    let circle =
-        CircularArc2::try_from_center(start.clone(), start, local_point(spec.origin, -2, 2), false)
-            .map_err(string_error)?;
-    CurvePath2::try_new(vec![Curve2::from(circle)]).map_err(string_error)
+fn arc_then_family_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
+    let arc_start = local_real_point(spec.origin, -rational(48, 25), rational(36, 25));
+    let corner = local_point(spec.origin, 0, 0);
+    let arc = CircularArc2::try_from_center(
+        arc_start.clone(),
+        corner.clone(),
+        local_point(spec.origin, 0, 2),
+        false,
+    )
+    .map_err(string_error)?;
+    let points = [
+        corner,
+        local_point(spec.origin, -8, 0),
+        local_real_point(spec.origin, Real::from(-8_i32), rational(39, 10)),
+        local_real_point(spec.origin, -rational(18, 5), rational(36, 5)),
+        arc_start,
+    ];
+    let mut curves = vec![Curve2::from(arc)];
+    for index in 0..spec.families.len() {
+        curves.push(affine_family_curve(
+            spec.families[index],
+            points[index].clone(),
+            points[index + 1].clone(),
+        )?);
+    }
+    CurvePath2::try_new(curves).map_err(string_error)
 }
 
 fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Result<Curve2, String> {
@@ -659,6 +859,10 @@ fn local_point(origin: (i32, i32), x: i32, y: i32) -> Point2 {
     point(origin.0 + x, origin.1 + y)
 }
 
+fn local_real_point(origin: (i32, i32), x: Real, y: Real) -> Point2 {
+    Point2::new(Real::from(origin.0) + x, Real::from(origin.1) + y)
+}
+
 fn rational(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).expect("nonzero exact denominator")
 }
@@ -708,7 +912,10 @@ mod tests {
     fn both_corner_tabs_materialize_every_hole_at_both_slider_extremes() {
         for operation in [CornerOperation::Fillet, CornerOperation::Chamfer] {
             let mut scene = CornerScene::new(operation, 1.0);
-            let amounts = [0.25, 1.5];
+            let amounts = match operation {
+                CornerOperation::Fillet => [0.25, 0.7],
+                CornerOperation::Chamfer => [0.25, 1.5],
+            };
             for amount in amounts {
                 scene.apply_amount(amount).unwrap();
                 scene.refresh_result();
@@ -730,27 +937,65 @@ mod tests {
     }
 
     #[test]
-    fn both_operations_edit_every_geometric_corner_and_preserve_smooth_circles() {
+    fn every_family_participates_in_a_corner_and_both_operations_edit_them_all() {
         let source_paths = curve_region_paths().unwrap();
+        let corner_counts = source_paths
+            .iter()
+            .map(|path| {
+                (0..path.curves().len())
+                    .filter(|index| corner_orientation(path, *index).unwrap().is_some())
+                    .count()
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(corner_counts.iter().sum::<usize>(), EDITED_CORNER_COUNT);
         assert_eq!(
-            source_paths
-                .iter()
-                .map(|path| {
-                    (0..path.curves().len())
-                        .filter(|index| is_geometric_corner(path, *index))
-                        .count()
-                })
-                .sum::<usize>(),
-            EDITED_CORNER_COUNT
+            (
+                source_paths[RECTANGLE_HOLE_COUNT + 1].curves()[0].family(),
+                source_paths[RECTANGLE_HOLE_COUNT + 1].curves()[1].family(),
+            ),
+            (CurveFamily2::CircularArc, CurveFamily2::Nurbs)
+        );
+        assert_eq!(
+            (
+                source_paths[RECTANGLE_HOLE_COUNT + 2].curves()[3].family(),
+                source_paths[RECTANGLE_HOLE_COUNT + 2].curves()[4].family(),
+            ),
+            (CurveFamily2::RationalBezier, CurveFamily2::CircularArc)
         );
 
+        for family in ALL_FAMILIES {
+            assert!(source_paths.iter().any(|path| {
+                (0..path.curves().len()).any(|vertex_index| {
+                    if corner_orientation(path, vertex_index).unwrap().is_none() {
+                        return false;
+                    }
+                    let previous_index = if vertex_index == 0 {
+                        path.curves().len() - 1
+                    } else {
+                        vertex_index - 1
+                    };
+                    path.curves()[previous_index].family() == family
+                        || path.curves()[vertex_index].family() == family
+                })
+            }));
+        }
+
         for operation in [CornerOperation::Fillet, CornerOperation::Chamfer] {
-            for source in &source_paths {
-                let corner_count = (0..source.curves().len())
-                    .filter(|index| is_geometric_corner(source, *index))
-                    .count();
-                let edited = edit_all_corners(source, operation, Real::one()).unwrap();
-                assert_eq!(edited.curves().len(), source.curves().len() + corner_count);
+            let amount = match operation {
+                CornerOperation::Fillet => rational(1, 2),
+                CornerOperation::Chamfer => Real::one(),
+            };
+            for (boundary_index, source) in source_paths.iter().enumerate() {
+                let kind = if boundary_index == 0 {
+                    HoleKind::Rectangle
+                } else {
+                    HOLE_SPECS[boundary_index - 1].kind
+                };
+                let edited = edit_all_corners(source, kind, operation, amount.clone()).unwrap();
+                assert_eq!(
+                    edited.curves().len(),
+                    source.curves().len() + corner_counts[boundary_index]
+                );
             }
         }
     }
