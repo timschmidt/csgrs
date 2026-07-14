@@ -36,12 +36,10 @@ impl BuildHasher for IdentityHasherBuilder {
 }
 
 pub type PatternsHashmap = HashMap<u64, BlockId, IdentityHasherBuilder>;
-// type PatternsHashmap = FxHashMap<u64, BlockId>;
 
 pub fn compute_empty_branch_hash() -> u64 {
     let mut hasher = FxHasher::default();
 
-    // Hash branch tag and child presence
     hasher.write_u8(NODE_TYPE_BRANCH);
     for _ in EMPTY_CHILD.iter() {
         hasher.write_u8(CHILD_ABSENT);
@@ -56,7 +54,6 @@ pub fn compute_leaf_hash_for_value<T: VoxelTrait>(value: &T) -> u64 {
 
     let mut hasher = FxHasher::default();
 
-    // Hash leaf tag and value
     hasher.write_u8(NODE_TYPE_LEAF);
     value.hash(&mut hasher);
 
@@ -69,7 +66,6 @@ pub fn compute_branch_hash_for_children(children: &Children, types: u8, mask: u8
 
     let mut hasher = FxHasher::default();
 
-    // Hash branch tag and child hashes
     hasher.write_u8(NODE_TYPE_BRANCH);
     hasher.write_u16(((types as u16) << 8) | mask as u16);
 

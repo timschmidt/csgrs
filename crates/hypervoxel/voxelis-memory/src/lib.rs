@@ -1,3 +1,8 @@
+//! Fixed-capacity pool allocators used by the Voxelis node interner.
+//!
+//! [`PoolAllocator`] manages its own free list. [`PoolAllocatorLite`] leaves
+//! free-index ownership to its caller for lower per-slot overhead.
+
 #[cfg(feature = "memory_stats")]
 mod allocator_stats;
 

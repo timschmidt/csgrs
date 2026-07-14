@@ -6,9 +6,11 @@ legacy Voxelis OBJ voxelizer.
 ## API
 
 - `triangle_cube_intersection` tests a triangle against an axis-aligned cube.
-- `point_in_or_on_cube` and `point_in_or_on_triangle` provide containment
-  helpers.
-- `edge_quad_intersection` and `point_in_quad` support the triangle/cube test.
+- `point_in_or_on_cube` provides tolerant AABB containment.
+- `point_in_or_on_triangle` and `point_in_quad` test barycentric projection;
+  callers must check coplanarity when using them independently.
+- `edge_quad_intersection` intersects a segment with a planar quad; coplanar
+  segments are not reported as intersections.
 
 All inputs use `glam::DVec3`. These routines use explicit floating tolerances
 and are suitable for sampled voxelization and previews, not proof-producing

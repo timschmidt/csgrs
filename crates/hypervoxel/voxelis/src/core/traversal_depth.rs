@@ -1,6 +1,4 @@
-//! Module `core::traversal_depth`
-//!
-//! Defines the [`TraversalDepth`] struct, a compact representation of current and maximum depth in a voxel storage node.
+//! Packed current/maximum depth state used while traversing a voxel tree.
 //!
 //! # Layout
 //!
@@ -12,24 +10,11 @@
 //! └─────────┴──────────┘
 //! ```
 //!
-//! - Bits 15-8: Current depth value (`u8`)
-//! - Bits 7-0: Maximum allowed depth (`u8`)
-//!
-//! # Examples
-//!
-//! ```rust
-//! use voxelis::TraversalDepth;
-//!
-//! let depth = TraversalDepth::new(3, 6);
-//! assert_eq!(depth.current(), 3);
-//! assert_eq!(depth.max(), 6);
-//! ```
+//! The high byte stores the current depth and the low byte stores the maximum.
 
 use crate::interner::MAX_ALLOWED_DEPTH;
 
-/// A combined representation of current and maximum depth.
-///
-/// Internally stored as a 16-bit value: high byte for current, low byte for max.
+/// Current traversal depth paired with its validated maximum.
 ///
 /// # Examples
 ///
@@ -48,12 +33,8 @@ impl TraversalDepth {
     /// Creates a new [`TraversalDepth`].
     ///
     /// # Panics
-    /// - If `current > max`.
-    /// - If `max >= MAX_ALLOWED_DEPTH`.
     ///
-    /// # Parameters
-    /// - `current` - Current depth value (`u8`).
-    /// - `max` - Maximum allowed depth (`u8`), must be less than `MAX_ALLOWED_DEPTH`.
+    /// Panics if `current > max` or `max` reaches the implementation limit.
     ///
     /// # Examples
     ///
@@ -156,14 +137,12 @@ impl TraversalDepth {
     }
 }
 
-/// Display implementation for [`TraversalDepth`] that provides a human-readable representation
 impl std::fmt::Display for TraversalDepth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.current(), self.max())
     }
 }
 
-/// Debug implementation for [`TraversalDepth`] that provides a human-readable representation
 impl std::fmt::Debug for TraversalDepth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.current(), self.max())

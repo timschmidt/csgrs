@@ -5,14 +5,16 @@ a selected LOD, generates a greedy render mesh, and provides orbit-camera,
 wireframe, lighting, and diagnostic controls.
 
 ```text
-vtm-viewer <input.vtm> [lod]
+vtm-viewer <input.vtm> [chunk_size_in_m] [lod]
 ```
 
 Run it from the workspace with:
 
 ```sh
-cargo run -p vtm-viewer --release -- model.vtm 0
+cargo run -p vtm-viewer --release -- model.vtm 1.28 0
 ```
+
+The default chunk size is `1.28` metres and the default LOD is `0`.
 
 The viewer requires a graphics-capable desktop environment and its Bevy assets.
 It is a visualization adapter: the displayed primitive-float mesh is not exact

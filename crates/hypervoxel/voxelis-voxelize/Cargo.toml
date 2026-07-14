@@ -14,7 +14,7 @@ memory_stats = ["voxelis/memory_stats"]
 tracy = ["voxelis/tracy", "dep:tracy-client"]
 
 [dependencies]
-voxelis.workspace = true
+voxelis = { workspace = true, features = ["vtm"] }
 voxelis-math.workspace = true
 crossbeam.workspace = true
 glam.workspace = true

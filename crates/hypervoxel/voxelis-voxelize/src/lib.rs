@@ -1,3 +1,10 @@
+//! Parallel, tolerance-based OBJ surface voxelization for Voxelis models.
+//!
+//! [`Voxelizer`] partitions triangle faces by chunk, samples candidate cells
+//! with `voxelis-math`, and applies the resulting [`Batch`] values to a
+//! [`VoxModel`]. The result is a rendering/storage approximation rather than a
+//! proof of source-mesh topology.
+
 use std::{
     sync::{
         Arc,
@@ -42,6 +49,7 @@ fn convert_voxel_world_to_chunk_position(
     voxel_world_position.as_vec3().floor().as_ivec3() * (chunk_world_size as i32)
 }
 
+/// Human-readable binary byte count used in progress output.
 pub struct ByteSize(pub usize);
 
 impl std::fmt::Display for ByteSize {
@@ -58,12 +66,16 @@ impl std::fmt::Display for ByteSize {
     }
 }
 
+/// OBJ-to-`VoxModel<i32>` surface voxelization workflow.
 pub struct Voxelizer {
+    /// Parsed source mesh.
     pub mesh: Obj,
+    /// Destination model; occupied surface voxels use value `1`.
     pub model: VoxModel<i32>,
 }
 
 impl Voxelizer {
+    /// Creates a voxelizer with an initially unbounded, empty model.
     pub fn empty(
         max_depth: MaxDepth,
         chunk_world_size: f32,
@@ -79,6 +91,7 @@ impl Voxelizer {
         }
     }
 
+    /// Creates a voxelizer whose model bounds cover the source mesh.
     pub fn new(
         max_depth: MaxDepth,
         chunk_world_size: f32,
@@ -105,6 +118,7 @@ impl Voxelizer {
         }
     }
 
+    /// Removes all destination chunks without changing the source mesh.
     pub fn clear(&mut self) {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::clear");
@@ -112,6 +126,8 @@ impl Voxelizer {
         self.model.clear();
     }
 
+    /// Maps each candidate chunk coordinate to the OBJ faces overlapping its
+    /// voxel-space bounding box.
     pub fn build_face_to_chunk_map(&mut self) -> FxHashMap<IVec3, Vec<IVec3>> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::build_face_to_chunk_map");
@@ -135,7 +151,6 @@ impl Voxelizer {
             let world_min_voxel = (min * inv_voxel_size).floor().as_ivec3();
             let world_max_voxel = (max * inv_voxel_size).ceil().as_ivec3();
 
-            // Determine which chunks this face overlaps
             let min_chunk = world_min_voxel / voxels_per_axis as i32;
             let max_chunk = world_max_voxel / voxels_per_axis as i32;
 
@@ -176,7 +191,6 @@ impl Voxelizer {
 
         let chunk_world_position = chunk_position.as_dvec3() * chunk_world_size;
 
-        // Compute the chunk's world bounding box
         let chunk_world_min = chunk_world_position;
         let chunk_world_max = chunk_world_min + DVec3::splat(chunk_world_size);
 
@@ -185,24 +199,19 @@ impl Voxelizer {
             let v2 = vertices[(face.y - 1) as usize] - mesh_min;
             let v3 = vertices[(face.z - 1) as usize] - mesh_min;
 
-            // Compute the face's bounding box in world coordinates
             let face_min = v1.min(v2).min(v3);
             let face_max = v1.max(v2).max(v3);
 
-            // Compute the overlapping region between the face and the chunk
             let overlap_min = face_min.max(chunk_world_min) - splat;
             let overlap_max = face_max.min(chunk_world_max) + splat;
 
-            // Check if there is any overlap
             if overlap_min.x >= overlap_max.x
                 || overlap_min.y >= overlap_max.y
                 || overlap_min.z >= overlap_max.z
             {
-                // No overlap with the current chunk, skip to the next face
                 continue;
             }
 
-            // Map the overlapping region to voxel indices within the chunk
             let local_min_voxel = ((overlap_min - chunk_world_min) / voxel_size)
                 .floor()
                 .as_ivec3();
@@ -210,26 +219,22 @@ impl Voxelizer {
                 .ceil()
                 .as_ivec3();
 
-            // Clamp voxel indices to valid range [0, VOXELS_PER_AXIS - 1]
             let local_min_voxel =
                 local_min_voxel.clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
             let local_max_voxel =
                 local_max_voxel.clamp(IVec3::ZERO, IVec3::splat(voxels_per_axis as i32 - 1));
 
-            // Iterate over the voxels within the overlapping region
             for y in local_min_voxel.y..=local_max_voxel.y {
                 for z in local_min_voxel.z..=local_max_voxel.z {
                     for x in local_min_voxel.x..=local_max_voxel.x {
-                        // Compute world position of the voxel
                         let world_voxel_position =
                             chunk_world_min + DVec3::new(x as f64, y as f64, z as f64) * voxel_size;
 
-                        // Expand voxel bounds slightly by epsilon (if needed)
+                        // Expand both sides to retain near-boundary contacts.
                         let world_min_position = world_voxel_position - splat;
                         let world_max_position =
                             world_voxel_position + DVec3::splat(voxel_size) + splat;
 
-                        // Perform the intersection test
                         if triangle_cube_intersection(
                             (v1, v2, v3),
                             (world_min_position, world_max_position),
@@ -248,6 +253,8 @@ impl Voxelizer {
         }
     }
 
+    /// Voxelizes the chunks in a prepared face schedule and applies their
+    /// batches to [`Self::model`].
     pub fn voxelize_mesh(&mut self, chunk_face_map: FxHashMap<IVec3, Vec<IVec3>>) {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::voxelize_mesh");
@@ -384,6 +391,9 @@ impl Voxelizer {
         handle.join().unwrap();
     }
 
+    /// Marks only source vertices, providing a fast baseline for comparisons.
+    ///
+    /// Unlike [`Self::voxelize`], this does not test triangle interiors.
     pub fn simple_voxelize(&mut self) {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::simple_voxelize");
@@ -416,6 +426,7 @@ impl Voxelizer {
         println!("Simple voxelize took: {:?}", now.elapsed());
     }
 
+    /// Builds the face schedule and voxelizes the complete source mesh.
     pub fn voxelize(&mut self) {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::voxelize");
@@ -426,7 +437,6 @@ impl Voxelizer {
 
         println!("Building face-to-chunk mapping");
 
-        // Build face-to-chunk mapping
         let chunk_face_map = self.build_face_to_chunk_map();
 
         let face_to_chunk_map_time = face_to_chunk_map_time.elapsed();

@@ -1,39 +1,17 @@
-//! Module `core::block_id`
-//!
-//! This module defines the [`BlockId`] struct, a compact 64-bit identifier for nodes in an octree.
-//! It encodes node type (leaf/branch), child types, presence mask, generation, and index.
-//!
-//! # Examples
-//!
-//! ```rust
-//! use voxelis::BlockId;
-//!
-//! let leaf_id = BlockId::new_leaf(123, 456);
-//! println!("{}", leaf_id);
-//!
-//! let branch_id = BlockId::new_branch(789, 1011, 0xAB, 0xCD);
-//! println!("{}", branch_id);
-//! ```
+//! Compact identifiers for interned leaf and branch nodes.
 
-/// Shift for the leaf/branch flag (1 bit)
+// Packed-field offsets and masks. The layout is part of serialized node IDs,
+// so changes require an explicit compatibility migration.
 const LEAF_SHIFT: u64 = 63;
-/// Shift for the types bits (8 bits)
 const TYPES_SHIFT: u32 = 55;
-/// Shift for the mask bits (8 bits)
 const MASK_SHIFT: u32 = 47;
-/// Shift for the generation bits (15 bits)
 const GENERATION_SHIFT: u32 = 32;
-
-/// Mask for accessing the generation bits (15 bits)
 const GENERATION_MASK: u64 = 0x7FFF;
-/// Mask for accessing the index bits (32 bits)
 const INDEX_MASK: u64 = 0xFFFF_FFFF;
 
-/// # [`BlockId`]
+/// Packed identity and branch metadata for a node owned by [`crate::VoxInterner`].
 ///
-/// Represents a node in an octree structure used for voxel interner.
-///
-/// ## Bit Layout (64-bit structure)
+/// # Bit layout
 ///
 /// ```text
 /// ┌63──────63┬62───────55┬54──────47┬46─────────────32┬31─────────0┐
@@ -41,31 +19,13 @@ const INDEX_MASK: u64 = 0xFFFF_FFFF;
 /// └──────────┴───────────┴──────────┴─────────────────┴────────────┘
 /// ```
 ///
-/// - Bit 63: Node type flag
-///   - 1 = Leaf node (contains actual voxel data)
-///   - 0 = Branch node (internal node with children)
+/// The top bit distinguishes leaves from branches. For a branch, `types` marks
+/// leaf children and `mask` marks present children. The generation detects a
+/// stale index after the interner recycles its storage slot.
 ///
-/// - Bits 62-55 (types): For branch nodes, each bit represents one of 8 children
-///   - Bit position corresponds to octree child index (0-7)
-///   - 1 = Child at this position is a leaf node
-///   - 0 = Child at this position is a branch node
-///
-/// - Bits 54-47 (mask): Child presence mask, each bit represents one of 8 children
-///   - Bit position corresponds to octree child index (0-7)
-///   - 1 = Child exists at this position
-///   - 0 = No child at this position
-///
-/// - Bits 46-32: Generation (15 bits)
-///   - Tracks version/generation of the node for memory management
-///   - Maximum value is 0x7FFE (32,766)
-///
-/// - Bits 31-0: Index (32 bits)
-///   - Unique identifier for the node within its generation
-///   - Full range of u32 is available (0 to 4,294,967,295)
-///
-/// # Examples
-///
-/// Create a new leaf node [`BlockId`]
+/// A value being different from [`Self::INVALID`] does not prove that it is
+/// live in a particular interner; use the interner's validity checks when
+/// validating externally retained IDs.
 ///
 /// ```
 /// use voxelis::BlockId;
@@ -74,22 +34,6 @@ const INDEX_MASK: u64 = 0xFFFF_FFFF;
 /// assert_eq!(leaf_id.index(), 123);
 /// assert_eq!(leaf_id.generation(), 456);
 /// assert!(leaf_id.is_leaf());
-///```
-///
-/// Create a new branch node [`BlockId`]
-/// ```
-/// use voxelis::BlockId;
-///
-/// let branch_id = BlockId::new_branch(789, 1011, 0xAB, 0xCD);
-/// assert_eq!(branch_id.index(), 789);
-/// assert_eq!(branch_id.generation(), 1011);
-/// assert_eq!(branch_id.types(), 0xAB);
-/// assert_eq!(branch_id.mask(), 0xCD);
-/// assert!(branch_id.is_branch());
-///
-/// // Check if a child exists at a specific index
-/// assert!(branch_id.has_child(0)); // Check if child at index 0 exists
-/// assert!(!branch_id.has_child(1)); // Check if child at index 1 exists
 /// ```
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -116,24 +60,25 @@ impl Default for BlockId {
 }
 
 impl BlockId {
-    /// Represents an invalid block ID (all bits set to 1)
+    /// Invalid sentinel with every bit set.
     pub const INVALID: BlockId = BlockId(u64::MAX);
 
-    /// Represents an empty block ID (all bits set to 0)
+    /// Canonical empty-branch sentinel with every bit clear.
     pub const EMPTY: BlockId = BlockId(0);
 
-    /// Maximum allowed index value (2^32 - 1)
+    /// Largest encodable storage index.
     pub const MAX_INDEX: u32 = u32::MAX;
 
-    /// Maximum allowed generation value (0x7FFE = 32766)
-    /// The highest bit is used for the leaf/branch flag, so the maximum generation is 0x7FFE.
+    /// Largest generation issued before the interner wraps back to zero.
+    ///
+    /// The all-ones generation is reserved, keeping normal IDs away from the
+    /// all-ones invalid sentinel and giving recycling one explicit wrap point.
     pub const MAX_GENERATION: u16 = 0x7FFE;
 
-    /// Creates a [`BlockId`] from a raw 64-bit value
+    /// Wraps an unvalidated packed value.
     ///
-    /// # Parameters
-    ///
-    /// * `raw` - The raw 64-bit value to create the [`BlockId`] from
+    /// This accepts reserved and internally inconsistent bit patterns. It is
+    /// intended for trusted serialization code that validates in context.
     ///
     /// # Examples
     ///
@@ -150,14 +95,11 @@ impl BlockId {
         BlockId(raw)
     }
 
-    /// Creates a new leaf node [`BlockId`] with the specified index and generation
+    /// Creates a leaf ID for an interner storage slot and generation.
     ///
-    /// Leaf nodes represent actual voxel data in the octree (terminal nodes).
+    /// # Panics
     ///
-    /// # Parameters
-    ///
-    /// * `index` - Unique identifier for this node (32 bits)
-    /// * `generation` - Generation/version of this node (15 bits)
+    /// Panics if `generation` exceeds [`Self::MAX_GENERATION`].
     ///
     /// # Examples
     ///
@@ -175,14 +117,14 @@ impl BlockId {
         Self::new_extended(index, generation, 0, 0, true)
     }
 
-    /// Creates a new branch node [`BlockId`] with the specified parameters
+    /// Creates a branch ID with packed child type and presence masks.
     ///
-    /// # Parameters
+    /// Bit `n` in `types` is set when child `n` is a leaf; bit `n` in `mask`
+    /// is set when that child exists.
     ///
-    /// * `index` - Unique identifier for this node
-    /// * `generation` - Generation/version of this node
-    /// * `types` - 8-bit value where each bit indicates if the corresponding child is a leaf (1) or branch (0)
-    /// * `mask` - 8-bit value where each bit indicates if a child exists (1) or not (0) at the corresponding position
+    /// # Panics
+    ///
+    /// Panics if `generation` exceeds [`Self::MAX_GENERATION`].
     ///
     /// # Examples
     ///
@@ -202,15 +144,7 @@ impl BlockId {
         Self::new_extended(index, generation, types, mask, false)
     }
 
-    /// Internal function to create a [`BlockId`] with all parameters specified
-    ///
-    /// # Parameters
-    ///
-    /// * `index` - The 32-bit index value (bits 31-0)
-    /// * `generation` - The generation value (bits 46-32, only 15 bits used)
-    /// * `types` - The 8-bit types field indicating child types (bits 62-55)
-    /// * `mask` - The 8-bit mask field indicating child presence (bits 54-47)
-    /// * `is_leaf` - Whether this is a leaf node (bit 63)
+    /// Packs all identifier fields after validating the generation.
     #[must_use]
     #[inline(always)]
     const fn new_extended(index: u32, generation: u16, types: u8, mask: u8, is_leaf: bool) -> Self {
@@ -225,7 +159,7 @@ impl BlockId {
         )
     }
 
-    /// Retrieves the 32-bit index component of this [`BlockId`]
+    /// Returns the 32-bit storage index.
     ///
     /// # Examples
     ///
@@ -241,7 +175,7 @@ impl BlockId {
         (self.0 & INDEX_MASK) as u32
     }
 
-    /// Retrieves the 15-bit generation component of this [`BlockId`]
+    /// Returns the 15-bit storage generation.
     ///
     /// # Examples
     ///
@@ -257,8 +191,11 @@ impl BlockId {
         ((self.0 >> GENERATION_SHIFT) & GENERATION_MASK) as u16
     }
 
-    /// Retrieves the 8-bit types field of this [`BlockId`]
-    /// Each bit indicates whether the corresponding child is a leaf (1) or branch (0)
+    /// Returns the branch's child-type mask.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called on a leaf.
     ///
     /// # Examples
     ///
@@ -275,8 +212,11 @@ impl BlockId {
         ((self.0 >> TYPES_SHIFT) & 0xFF) as u8
     }
 
-    /// Retrieves the 8-bit mask field of this [`BlockId`]
-    /// Each bit indicates whether a child exists (1) or not (0) at the corresponding position
+    /// Returns the branch's child-presence mask.
+    ///
+    /// # Panics
+    ///
+    /// Panics when called on a leaf.
     ///
     /// # Examples
     ///
@@ -293,12 +233,11 @@ impl BlockId {
         ((self.0 >> MASK_SHIFT) & 0xFF) as u8
     }
 
-    /// Checks if this branch node has a child at the specified index (0-7)
-    /// Returns `true` if a child exists at the specified position, `false` otherwise
+    /// Returns whether branch child `child_index` is present.
     ///
-    /// # Parameters
+    /// # Panics
     ///
-    /// * `child_index` - Index of the child to check (0-7, corresponding to octree position)
+    /// Panics when called on a leaf or with an index outside `0..8`.
     ///
     /// # Examples
     ///
@@ -318,8 +257,7 @@ impl BlockId {
         (((self.0 >> MASK_SHIFT) & 0xFF) as u8 & (1 << child_index)) != 0
     }
 
-    /// Checks if this [`BlockId`] represents a leaf node
-    /// Leaf nodes contain actual voxel data
+    /// Returns whether the packed node-kind bit denotes a leaf.
     ///
     /// # Examples
     ///
@@ -335,8 +273,7 @@ impl BlockId {
         (self.0 >> LEAF_SHIFT) == 1
     }
 
-    /// Checks if this [`BlockId`] represents a branch node
-    /// Branch nodes are internal nodes that may have children
+    /// Returns whether the packed node-kind bit denotes a branch.
     ///
     /// # Examples
     ///
@@ -352,7 +289,7 @@ impl BlockId {
         (self.0 >> LEAF_SHIFT) == 0
     }
 
-    /// Checks if this [`BlockId`] is invalid (equals INVALID constant)
+    /// Returns whether this is the invalid sentinel.
     ///
     /// # Examples
     ///
@@ -368,7 +305,10 @@ impl BlockId {
         self.0 == Self::INVALID.0
     }
 
-    /// Checks if this [`BlockId`] is valid (not equal to INVALID constant)
+    /// Returns whether this is not the invalid sentinel.
+    ///
+    /// This does not check that the index and generation are live in an
+    /// interner.
     ///
     /// # Examples
     ///
@@ -384,7 +324,7 @@ impl BlockId {
         self.0 != Self::INVALID.0
     }
 
-    /// Checks if this [`BlockId`] is empty (all zeros)
+    /// Returns whether this is the canonical empty-branch sentinel.
     ///
     /// # Examples
     ///
@@ -400,7 +340,7 @@ impl BlockId {
         self.0 == 0
     }
 
-    /// Returns raw 64-bit value of this [`BlockId`]
+    /// Returns the packed 64-bit representation.
     ///
     /// # Examples
     ///
@@ -417,7 +357,6 @@ impl BlockId {
     }
 }
 
-/// Display implementation for [`BlockId`] that provides a human-readable representation
 impl std::fmt::Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_invalid() {
@@ -444,7 +383,6 @@ impl std::fmt::Display for BlockId {
     }
 }
 
-/// Debug implementation for [`BlockId`] that provides a human-readable representation
 impl std::fmt::Debug for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_invalid() {

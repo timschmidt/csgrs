@@ -563,6 +563,8 @@ pub fn generate_occupancy_masks<T: VoxelTrait>(
             let child_cube_half_side = 1 << (max_depth - depth - 1);
             let childs = interner.get_children_ref(&node_id);
             for i in (0..8).rev() {
+                // SAFETY: `Children` is an eight-element array and this loop
+                // restricts `i` to `0..8`.
                 let child_id = unsafe { childs.get_unchecked(i) };
 
                 let i = i as u32;
@@ -647,7 +649,7 @@ pub fn generate_greedy_mesh_arrays(
         timings.prep = now.elapsed();
     }
 
-    // we iterate over all planes first, to not process global occupancy masks for each material separately
+    // Process each global plane once before splitting its faces by material.
     for plane_data in &PLANES {
         let external_pos_start = plane_data.pos as usize * MAX_VOXELS_PER_AXIS;
         let external_pos_end = external_pos_start + MAX_VOXELS_PER_AXIS;
@@ -669,7 +671,7 @@ pub fn generate_greedy_mesh_arrays(
         #[cfg(feature = "trace_greedy_timings")]
         let now = Instant::now();
 
-        // process global occupancy masks for the plane
+        // Find exposed faces in the plane's global occupancy masks.
         for row in min_row..max_row {
             if ((global_active_rows.active >> row) & 1) == 0 {
                 continue;
@@ -684,14 +686,13 @@ pub fn generate_greedy_mesh_arrays(
 
                 let idx = base_idx + col;
 
-                // process global occupancy masks for the plane
                 let mask = occupancy_data.global[plane_data.offset + idx];
 
-                // find voxel boundaries: where occupied meets empty
+                // A face begins where an occupied run meets an empty bit.
                 let mut global_mask_pos = !(mask >> 1) & mask; // +AXIS faces
                 let mut global_mask_neg = !(mask << 1) & mask; // -AXIS faces
 
-                // remove faces adjacent to external neighbors
+                // Remove faces covered by a neighboring chunk.
                 global_mask_pos &=
                     !(((external_pos[row] >> col) & 1) << max_voxels_per_axis_min_one);
                 global_mask_neg &= !((external_neg[row] >> col) & 1);
@@ -709,7 +710,7 @@ pub fn generate_greedy_mesh_arrays(
         #[cfg(feature = "trace_greedy_timings")]
         let now = Instant::now();
 
-        // generate greedy faces per material and direction of the plane
+        // Generate greedy faces for each material and plane direction.
         for material_idx in 0..materials_len {
             let occupancy_per_material = &occupancy_data.per_material[material_idx];
 
@@ -723,7 +724,7 @@ pub fn generate_greedy_mesh_arrays(
             let mut active_depth_neg = 0;
             let mut material_count_opt_neg = 0;
 
-            // process per material occupancy masks for the plane
+            // Intersect per-material occupancy with the exposed global faces.
             for row in min_row..max_row {
                 let base_idx = row * MAX_VOXELS_PER_AXIS;
 
@@ -737,34 +738,30 @@ pub fn generate_greedy_mesh_arrays(
                     //               global mask neg: 0 0 0 0 0 1 0 0 <- last face for column
                     let mask = occupancy_per_material[plane_data.offset + idx];
 
-                    // select only faces if they are at the same spot as start/end on the global mask
+                    // Retain positive faces at global run boundaries.
                     // for example - global mask pos: 0 0 1 0 0 0 0 0
                     //                 material mask: 0 0 0 1 1 1 0 0 &
                     //                      pos_mask: 0 0 0 0 0 0 0 0
                     let material_mask_pos = mask & global_face_masks_pos[idx];
                     active_depth_pos |= material_mask_pos;
 
-                    // put masks into the material face masks
                     material_face_masks_pos[idx] = material_mask_pos;
 
-                    // count how many faces we have for the material
                     material_count_opt_pos += material_mask_pos.count_ones() as usize;
 
                     let mask_pos_active = (material_mask_pos != 0) as u64;
                     active_row_pos |= mask_pos_active << row;
                     active_col_pos |= mask_pos_active << col;
 
-                    // select only faces if they are at the same spot as start/end on the global mask
+                    // Retain negative faces at global run boundaries.
                     // for example - global mask neg: 0 0 0 0 0 1 0 0
                     //                 material mask: 0 0 0 1 1 1 0 0 &
                     //                      neg_mask: 0 0 0 0 0 1 0 0
                     let material_mask_neg = mask & global_face_masks_neg[idx];
                     active_depth_neg |= material_mask_neg;
 
-                    // put masks into the material face masks
                     material_face_masks_neg[idx] = material_mask_neg;
 
-                    // count how many faces we have for the material
                     material_count_opt_neg += material_mask_neg.count_ones() as usize;
 
                     let mask_neg_active = (material_mask_neg != 0) as u64;

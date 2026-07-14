@@ -226,9 +226,7 @@ impl<T: VoxelTrait> VoxModel<T> {
         writer.write_u32::<BigEndian>(leaf_size).unwrap();
         for id in leaf_patterns.iter() {
             let new_id = *id_map.get(&id.index()).unwrap();
-            // println!(" leaf id: {} -> {new_id}", id.index());
             let new_id_bytes = encode_varint_u32(new_id);
-            // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
             let value = interner.get_value(id);
             value.write_as_be(&mut writer).unwrap();
@@ -241,21 +239,16 @@ impl<T: VoxelTrait> VoxModel<T> {
             }
 
             let new_id = *id_map.get(&id.index()).unwrap();
-            // println!("branch id: {} -> {new_id}", id.index());
             let new_id_bytes = encode_varint_u32(new_id);
-            // writer.write_u32::<BigEndian>(new_id).unwrap();
             writer.write_all(&new_id_bytes).unwrap();
             writer.write_u8(id.mask()).unwrap();
             let branch = interner.get_children_ref(id);
             for child in branch.iter() {
                 if child.is_empty() {
-                    // println!(" empty child");
                     continue;
                 }
                 let new_id = *id_map.get(&child.index()).unwrap();
-                // println!("  child id: {} -> {new_id}", child.index());
                 let new_id_bytes = encode_varint_u32(new_id);
-                // writer.write_u32::<BigEndian>(new_id).unwrap();
                 writer.write_all(&new_id_bytes).unwrap();
             }
             let branch_lod_value = interner.get_value(id);
@@ -293,8 +286,6 @@ impl<T: VoxelTrait> VoxModel<T> {
         let mut reader = BufReader::new(data);
 
         let leaf_size = reader.read_u32::<BigEndian>().unwrap();
-        // let mut leaf_patterns: HashMap<u32, (BlockId, i32)> =
-        //     HashMap<K, V, FxBuildHasher>(leaf_size as usize);
         let mut leaf_patterns: FxHashMap<u32, (BlockId, T)> = FxHashMap::default();
 
         let mut interner = self.interner.write();
@@ -310,9 +301,7 @@ impl<T: VoxelTrait> VoxModel<T> {
         }
 
         let branch_size = reader.read_u32::<BigEndian>().unwrap();
-        let mut branch_patterns: FxHashMap<u32, (BlockId, [u32; 8], T)> =
-        // FxHashMap::with_capacity(branch_size as usize);
-            FxHashMap::default();
+        let mut branch_patterns: FxHashMap<u32, (BlockId, [u32; 8], T)> = FxHashMap::default();
 
         branch_patterns.insert(0, (BlockId::EMPTY, [0u32; 8], T::default()));
 
@@ -321,15 +310,12 @@ impl<T: VoxelTrait> VoxModel<T> {
             assert_ne!(id, 0);
 
             let mask = reader.read_u8().unwrap();
-            // println!("id: {} mask: {:08b}", id, mask);
             let mut types: u8 = 0;
             let mut children = [0u32; 8];
             for child_id in 0..8 {
                 if mask & (1 << child_id) == 0 {
-                    // println!(" skipping child {child_id}");
                     continue;
                 }
-                // println!(" reading child {child_id}");
                 children[child_id] = decode_varint_u32_from_reader(&mut reader).unwrap();
                 if leaf_patterns.contains_key(&children[child_id]) {
                     types |= 1 << child_id;
@@ -340,9 +326,6 @@ impl<T: VoxelTrait> VoxModel<T> {
             let block_id = interner.preallocate_branch_id(id, types, mask);
 
             branch_patterns.insert(id, (block_id, children, lod_value));
-            // println!(
-            //     " branch: mask: {mask:08b} types: {types:08b} id: {id:08X} [{block_id:?}] -> {children:08X?}"
-            // );
             assert_ne!(mask, 0);
         }
 
@@ -371,22 +354,8 @@ impl<T: VoxelTrait> VoxModel<T> {
                     }
                 }
 
-                // println!("branch: {block_id:?} -> {branch:?}");
                 interner.deserialize_branch(*block_id, branch, types, mask, *lod_value);
             });
-
-        // drop(interner);
-
-        let mut branch_ids = branch_patterns
-            .iter()
-            .map(|(_, (block_id, _, _))| *block_id)
-            .collect::<Vec<_>>();
-        branch_ids.sort_by_key(|id| id.index());
-
-        // for branch_id in branch_ids.iter() {
-        //     println!("Branch id: {branch_id:?}");
-        //     interner.dump_node(*branch_id, 0, "  ");
-        // }
 
         let actual_chunks_len = reader.read_u32::<BigEndian>().unwrap();
 

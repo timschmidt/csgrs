@@ -1,3 +1,9 @@
+//! Hash-consed storage shared by Voxelis trees and chunks.
+//!
+//! [`VoxInterner`] assigns generation-tagged [`BlockId`] values, deduplicates
+//! equal leaves and branches, and recycles slots when reference counts reach
+//! zero. IDs are meaningful only with the interner that issued them.
+
 use std::collections::{HashMap, hash_map::Entry};
 
 use voxelis_memory::PoolAllocatorLite;
@@ -22,6 +28,7 @@ use hash::{
 
 pub type Children = [BlockId; MAX_CHILDREN];
 
+/// Memory-budgeted owner of deduplicated voxel DAG nodes.
 pub struct VoxInterner<T> {
     patterns: [PatternsHashmap; 2],
     free_indices: Vec<u32>,
@@ -40,25 +47,25 @@ pub struct VoxInterner<T> {
 }
 
 impl<T: VoxelTrait> VoxInterner<T> {
-    const INITIAL_CAPACITY: usize = 16384; // 43ms
+    // Avoid early hash-table growth in normal model workloads.
+    const INITIAL_CAPACITY: usize = 16384;
 
+    /// Creates an interner whose node pools fit within `requested_budget`.
+    ///
+    /// The usable budget is rounded down to a whole number of node slots.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the budget cannot hold one node or would require more than
+    /// `u32::MAX` slots.
     pub fn with_memory_budget(requested_budget: usize) -> Self {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::with_memory_budget");
 
         let single_node_size = Self::node_size();
 
-        // Calculate how many complete nodes fit in the budget
         let nodes_capacity = requested_budget / single_node_size;
         let actual_budget = nodes_capacity * single_node_size;
-
-        // println!(
-        //     "Requested budget: {}, actual budget: {}, single node size: {}, capacity: {}",
-        //     humanize_bytes::humanize_bytes_decimal!(requested_budget),
-        //     humanize_bytes::humanize_bytes_decimal!(actual_budget),
-        //     humanize_bytes::humanize_bytes_decimal!(single_node_size),
-        //     humanize_bytes::humanize_quantity!(nodes_capacity),
-        // );
 
         assert!(nodes_capacity > 0, "Requested budget is too small");
         assert!(actual_budget > 0, "Requested budget is too small");
@@ -88,7 +95,6 @@ impl<T: VoxelTrait> VoxInterner<T> {
             BlockId::new_branch(empty_branch_index, empty_branch_generation, 0, 0);
         assert_eq!(empty_branch_id, BlockId::EMPTY, "Empty branch id mismatch");
 
-        // *types.get_mut(empty_branch_index) = 0;
         *ref_counts.get_mut(empty_branch_index) = 0;
         *generations.get_mut(empty_branch_index) = empty_branch_generation;
         *children.get_mut(empty_branch_index) = EMPTY_CHILD;
@@ -425,20 +431,20 @@ impl<T: VoxelTrait> VoxInterner<T> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::dec_ref_recursive");
 
-        #[cfg(debug_assertions)]
-        let max_idx = self.dec_ref_rec_stack.capacity();
+        let stack_len = self.dec_ref_rec_stack.len();
+        assert!(stack_len > 0, "dec_ref_rec_stack must not be empty");
 
         let stack_ptr = self.dec_ref_rec_stack.as_mut_ptr();
 
+        // SAFETY: the stack has at least one initialized element, and the raw
+        // pointer avoids holding a mutable Vec borrow while other `self`
+        // fields are accessed during traversal.
         unsafe {
             *stack_ptr.add(0) = *block_id;
         }
 
         let mut read_idx = 0;
         let mut write_idx = 1;
-
-        // #[cfg(feature = "debug_trace_ref_counts")]
-        // let mut total_processed = 0;
 
         #[cfg(feature = "debug_trace_ref_counts")]
         {
@@ -447,11 +453,10 @@ impl<T: VoxelTrait> VoxInterner<T> {
         }
 
         while read_idx < write_idx {
+            // SAFETY: entries below `write_idx` were initialized before the
+            // counter advanced, and every write is checked against `stack_len`.
             let current_id = unsafe { *stack_ptr.add(read_idx) };
             read_idx += 1;
-
-            #[cfg(debug_assertions)]
-            assert!(read_idx < max_idx, "dec_ref_rec_stack overflow: {read_idx}");
 
             #[cfg(debug_assertions)]
             assert!(self.is_valid_block_id(&current_id));
@@ -459,7 +464,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
             #[cfg(feature = "debug_trace_ref_counts")]
             {
                 println!(
-                    " {}/{write_idx}/{max_idx} Processing: {current_id:?}",
+                    " {}/{write_idx}/{stack_len} Processing: {current_id:?}",
                     read_idx - 1,
                 );
                 self.dump_node(current_id, 0, "  ");
@@ -501,16 +506,17 @@ impl<T: VoxelTrait> VoxInterner<T> {
                             println!(
                                 "      adding child:   {child:?} at {write_idx} ref_count: {child_ref_count}",
                             );
+                            assert!(
+                                write_idx < stack_len,
+                                "dec_ref_rec_stack overflow: {write_idx}, length: {stack_len}"
+                            );
+                            // SAFETY: the preceding check places `write_idx`
+                            // within the initialized backing array. This entry
+                            // becomes readable only after `write_idx` advances.
                             unsafe {
                                 *stack_ptr.add(write_idx) = *child;
                             }
                             write_idx += 1;
-
-                            #[cfg(debug_assertions)]
-                            assert!(
-                                write_idx < max_idx,
-                                "dec_ref_rec_stack overflow: {write_idx}, capacity: {max_idx}"
-                            );
                         }
                     }
                 }
@@ -577,7 +583,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
         let block_index = block_id.index();
 
-        // Clear node data
+        // Reset every payload before making the slot available for reuse.
         *self.values.get_mut(block_index) = T::default();
         *self.children.get_mut(block_index) = EMPTY_CHILD;
         *self.hashes.get_mut(block_index) = 0;
@@ -604,7 +610,6 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Double free detected!"
         );
 
-        // Mark index as free
         self.free_indices.push(block_index);
 
         #[cfg(feature = "memory_stats")]
@@ -630,13 +635,11 @@ impl<T: VoxelTrait> VoxInterner<T> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::get_or_create_leaf");
 
-        // Compute hash for the new node
         let hash = compute_leaf_hash_for_value(&value);
 
         match self.patterns[PATTERNS_TYPE_LEAF].entry(hash) {
             Entry::Occupied(entry) => {
                 let existing_id = *entry.get();
-                // Verify the node is still valid
                 if self.is_valid_block_id(&existing_id) {
                     self.inc_ref(&existing_id);
 
@@ -667,18 +670,14 @@ impl<T: VoxelTrait> VoxInterner<T> {
                 }
             }
             Entry::Vacant(entry) => {
-                // Get new index
                 let index = get_next_index_macro!(self);
 
                 let generation = *self.generations.get(index);
 
-                // Create new block id
                 let block_id = BlockId::new_leaf(index, generation);
 
-                // Cache the new node
                 entry.insert(block_id);
 
-                // Set up the new leaf node
                 *self.values.get_mut(index) = value;
                 *self.hashes.get_mut(index) = hash;
 
@@ -709,15 +708,15 @@ impl<T: VoxelTrait> VoxInterner<T> {
         }
     }
 
-    /// All non-empty blocks inside `children` must have bumped ref counts:
-    /// - if there is no branch, ref counts will be kept
-    /// - if there is a branch, ref counts will be decremented, and branch ref count will be bumped
-    /// There is no other way, since we can't act like Arc without access to interner
+    /// Interns a branch and transfers ownership of the supplied child references.
+    ///
+    /// Every non-empty child must already have one reference held for this
+    /// call. A cache hit consumes those references and returns a reference to
+    /// the existing branch; a miss retains them in the newly created branch.
     pub fn get_or_create_branch(&mut self, children: Children, types: u8, mask: u8) -> BlockId {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::get_or_create_branch");
 
-        // Compute hash for the new node
         let hash = compute_branch_hash_for_children(&children, types, mask);
 
         debug_assert_ne!(
@@ -740,7 +739,6 @@ impl<T: VoxelTrait> VoxInterner<T> {
                     "get_or_create_branch: children: {children:?} hash = {hash:X} existing_id = {existing_id:?}"
                 );
 
-                // Verify the node is still valid
                 debug_assert!(
                     self.is_valid_block_id(&existing_id),
                     "Expired node in patterns: {existing_id:?} hash = {hash:X}"
@@ -780,24 +778,20 @@ impl<T: VoxelTrait> VoxInterner<T> {
                 existing_id
             }
             Entry::Vacant(entry) => {
-                // Get new index
                 let index = get_next_index_macro!(self);
 
                 let generation = *self.generations.get(index);
 
-                // Create new block id
                 let block_id = BlockId::new_branch(index, generation, types, mask);
 
                 debug_assert_ne!(block_id, BlockId::INVALID, "Invalid block id");
 
-                // Cache the new node
                 entry.insert(block_id);
 
-                // Compute average value for the children - free LODs
+                // Cache the aggregate value used by coarser-LOD reads.
                 let values: [T; 8] = std::array::from_fn(|i| *self.values.get(children[i].index()));
                 let average = T::average(&values);
 
-                // Set up the new branch node
                 *self.children.get_mut(index) = children;
                 *self.values.get_mut(index) = average;
                 *self.hashes.get_mut(index) = hash;
@@ -834,17 +828,14 @@ impl<T: VoxelTrait> VoxInterner<T> {
     }
 
     pub fn create_empty_branch(&mut self) -> BlockId {
-        // Get new index
         let index = get_next_index_macro!(self);
 
         let generation = *self.generations.get(index);
 
-        // Create new block id
         let block_id = BlockId::new_branch(index, generation, 0, 0);
 
         debug_assert_ne!(block_id, BlockId::INVALID, "Invalid block id");
 
-        // Set up the new branch node
         *self.children.get_mut(index) = EMPTY_CHILD;
 
         #[cfg(feature = "debug_trace_ref_counts")]
@@ -867,17 +858,14 @@ impl<T: VoxelTrait> VoxInterner<T> {
     }
 
     pub fn create_branch(&mut self, children: Children, types: u8, mask: u8) -> BlockId {
-        // Get new index
         let index = get_next_index_macro!(self);
 
         let generation = *self.generations.get(index);
 
-        // Create new block id
         let block_id = BlockId::new_branch(index, generation, types, mask);
 
         debug_assert_ne!(block_id, BlockId::INVALID, "Invalid block id");
 
-        // Set up the new branch node
         *self.children.get_mut(index) = children;
 
         #[cfg(feature = "debug_trace_ref_counts")]
@@ -911,12 +899,10 @@ impl<T: VoxelTrait> VoxInterner<T> {
     ) -> BlockId {
         let block_index = block_id.index();
 
-        // Create new block id
         let new_block_id = BlockId::new_branch(block_index, block_id.generation(), types, mask);
 
         debug_assert_ne!(new_block_id, BlockId::INVALID, "Invalid block id");
 
-        // Set up the new branch node
         self.children.get_mut(block_index)[child_index] = *child_id;
 
         #[cfg(feature = "debug_trace_ref_counts")]
@@ -934,14 +920,12 @@ impl<T: VoxelTrait> VoxInterner<T> {
         let generation = *self.generations.get(index);
         assert_eq!(generation, 0, "Invalid generation");
 
-        // Create new block id
         BlockId::new_branch(index, generation, types, mask)
     }
 
     pub fn deserialize_leaf(&mut self, index: u32, value: T) -> BlockId {
         debug_assert_ne!(value, T::default(), "Leaf value should not be default");
 
-        // Compute hash for the new node
         let hash = compute_leaf_hash_for_value(&value);
 
         let next_id = get_next_index_macro!(self);
@@ -950,14 +934,11 @@ impl<T: VoxelTrait> VoxInterner<T> {
         let generation = *self.generations.get(index);
         assert_eq!(generation, 0, "Invalid generation");
 
-        // Create new block id
         let block_id = BlockId::new_leaf(index, generation);
 
-        // Set up the new leaf node
         *self.values.get_mut(index) = value;
         *self.hashes.get_mut(index) = hash;
 
-        // Cache the new node
         self.patterns[PATTERNS_TYPE_LEAF].insert(hash, block_id);
 
         block_id
@@ -971,7 +952,6 @@ impl<T: VoxelTrait> VoxInterner<T> {
         mask: u8,
         average: T,
     ) {
-        // Compute hash for the new node
         let hash = compute_branch_hash_for_children(&children, types, mask);
 
         let index = block_id.index();
@@ -981,12 +961,10 @@ impl<T: VoxelTrait> VoxInterner<T> {
             "Empty branch hash collision: {children:?}"
         );
 
-        // Set up the new branch node
         *self.children.get_mut(index) = children;
         *self.values.get_mut(index) = average;
         *self.hashes.get_mut(index) = hash;
 
-        // Cache the new node
         self.patterns[PATTERNS_TYPE_BRANCH].insert(hash, block_id);
 
         self.inc_all_child_refs(&children);
@@ -1002,9 +980,10 @@ impl<T: VoxelTrait> VoxInterner<T> {
     #[inline(always)]
     #[cfg(not(debug_assertions))]
     pub fn is_valid_block_id(&self, block_id: &BlockId) -> bool {
+        // Generation comparison is constant-time and rejects recycled IDs.
+        // Debug builds additionally scan the free list to expose bookkeeping
+        // errors before a slot is reallocated.
         *self.generations.get(block_id.index()) == block_id.generation()
-        // TODO(aljen): Disable for final?
-        // true
     }
 
     pub fn ensure_valid_children(&self, children: &Children) {
@@ -1164,147 +1143,3 @@ impl<T: VoxelTrait> VoxInterner<T> {
         discovered_nodes
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_basic() {
-//         let mut storage = NodeStorage::<u32>::new(1024);
-
-//         let id1 = storage.allocate_node();
-//         let id2 = storage.allocate_node();
-
-//         assert_ne!(id1, id2);
-
-//         *storage.values.get_mut(id1.index()) = 42;
-//         *storage.values.get_mut(id2.index()) = 24;
-
-//         assert_eq!(*storage.values.get(id1.index()), 42);
-//         assert_eq!(*storage.values.get(id2.index()), 24);
-
-//         storage.recycle(id1);
-//         let id3 = storage.allocate_node();
-//         assert_eq!(id3.index(), id1.index());
-//         assert_eq!(id3.generation(), id1.generation() + 1);
-//     }
-
-//     #[test]
-//     fn test_capacity() {
-//         let requested_budget = 1024;
-//         let storage = NodeStorage::<u32>::new(requested_budget);
-//         let node_size = NodeStorage::<u32>::node_size();
-//         let nodes_count = requested_budget / node_size;
-//         assert!(storage.capacity() > 0);
-//         assert!(storage.capacity() < 1024);
-//         assert_eq!(storage.capacity(), nodes_count);
-//     }
-
-//     #[test]
-//     #[should_panic(expected = "Requested budget is too small")]
-//     fn test_budget_too_small() {
-//         let _storage = NodeStorage::<u32>::new(1); // Should panic
-//     }
-
-//     #[test]
-//     fn test_generation_flow() {
-//         let mut storage = NodeStorage::<u32>::new(1024);
-
-//         // Test normal generation increment
-//         let id1 = storage.allocate_node();
-//         let gen1 = id1.generation();
-//         storage.recycle(id1);
-
-//         let id2 = storage.allocate_node();
-//         assert_eq!(id2.index(), id1.index());
-//         assert_eq!(id2.generation(), gen1 + 1);
-
-//         // Test generation overflow
-//         storage.recycle(id2);
-
-//         *storage.generations.get_mut(id2.index()) = u32::MAX;
-
-//         // Allocating new node, should have the same index but generation 0
-//         let id3 = storage.allocate_node();
-//         assert_eq!(id3.index(), id2.index());
-//         assert_eq!(id3.generation(), u32::MAX);
-
-//         // Deallocating and allocating again - now we should have overflow to 0
-//         storage.recycle(id3);
-//         let id4 = storage.allocate_node();
-//         assert_eq!(id4.index(), id3.index());
-//         assert_eq!(id4.generation(), 0);
-//     }
-
-//     #[test]
-//     fn test_reuse_pattern() {
-//         let mut storage = NodeStorage::<u32>::new(1024);
-//         let mut ids = Vec::new();
-
-//         // Allocate few nodes
-//         for _ in 0..3 {
-//             ids.push(storage.allocate_node());
-//         }
-
-//         // Deallocate in specific order
-//         storage.recycle(ids[1]); // Middle
-//         storage.recycle(ids[0]); // First
-
-//         // New allocations should reuse in LIFO order
-//         let new_id1 = storage.allocate_node();
-//         let new_id2 = storage.allocate_node();
-
-//         assert_eq!(new_id1.index(), ids[0].index());
-//         assert_eq!(new_id2.index(), ids[1].index());
-//     }
-
-//     #[test]
-//     #[should_panic(expected = "Double free detected")]
-//     fn test_double_free() {
-//         let mut storage = NodeStorage::<u32>::new(1024);
-//         let id = storage.allocate_node();
-//         storage.recycle(id);
-//         storage.recycle(id); // Should panic
-//     }
-
-//     #[test]
-//     fn test_node_hash_computation() {
-//         let mut storage = NodeStorage::<u32>::new(1024);
-
-//         // Test leaf node hash
-//         let leaf1 = storage.get_or_create(42, true);
-//         let leaf2 = storage.get_or_create(42, true);
-//         assert_eq!(storage.get_hash(leaf1.index()), storage.get_hash(leaf2.index()),
-//             "Same leaf value should have same hash");
-
-//         let leaf3 = storage.get_or_create(43, true);
-//         assert_ne!(storage.get_hash(leaf1.index()), storage.get_hash(leaf3.index()),
-//             "Different leaf values should have different hashes");
-
-//         // Test branch node hash
-//         let mut children1 = [None; MAX_CHILDREN];
-//         children1[0] = Some(leaf1);
-//         children1[1] = Some(leaf2);
-
-//         let mut children2 = [None; MAX_CHILDREN];
-//         children2[0] = Some(leaf1);
-//         children2[1] = Some(leaf2);
-
-//         let branch1 = storage.get_or_create(Default::default(), false);
-//         storage.set_children(branch1.index(), children1);
-//         let branch2 = storage.get_or_create(Default::default(), false);
-//         storage.set_children(branch2.index(), children2);
-
-//         assert_eq!(storage.get_hash(branch1.index()), storage.get_hash(branch2.index()),
-//             "Same branch structure should have same hash");
-
-//         let mut children3 = children1;
-//         children3[1] = Some(leaf3);
-//         let branch3 = storage.get_or_create(Default::default(), false);
-//         storage.set_children(branch3.index(), children3);
-
-//         assert_ne!(storage.get_hash(branch1.index()), storage.get_hash(branch3.index()),
-//             "Different branch structures should have different hashes");
-//     }
-// }

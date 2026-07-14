@@ -3,6 +3,16 @@ use std::alloc::Layout;
 #[cfg(feature = "memory_stats")]
 use super::AllocatorStats;
 
+/// Fixed-capacity pool whose caller owns the free-index data structure.
+///
+/// Passing `None` to [`Self::allocate`] consumes a fresh bump slot. Passing
+/// `Some(index)` reuses that exact slot; the caller must previously have
+/// deallocated it and must not offer the same index twice. Likewise, only live
+/// initialized indices may be read, mutated, or deallocated.
+///
+/// Live values are not dropped when the pool itself is dropped. Deallocate
+/// them explicitly when `T` owns resources. Zero-sized marker types are
+/// supported; their indices are logical rather than distinct addresses.
 pub struct PoolAllocatorLite<T> {
     memory: *mut T,
     layout: Layout,
@@ -12,20 +22,34 @@ pub struct PoolAllocatorLite<T> {
     stats: AllocatorStats,
 }
 
-unsafe impl<T> Send for PoolAllocatorLite<T> {}
-unsafe impl<T> Sync for PoolAllocatorLite<T> {}
+// SAFETY: moving the pool transfers unique ownership of its allocation. No
+// value is accessed without borrowing the pool, so this is sound when `T` can
+// itself be transferred between threads.
+unsafe impl<T: Send> Send for PoolAllocatorLite<T> {}
+
+// SAFETY: shared access exposes only `&T`; mutation requires `&mut self`.
+// Sharing is therefore sound when shared references to `T` are thread-safe.
+unsafe impl<T: Sync> Sync for PoolAllocatorLite<T> {}
 
 impl<T> PoolAllocatorLite<T> {
+    /// Returns the bytes reserved per slot.
     #[inline(always)]
     pub const fn block_size() -> usize {
         std::mem::size_of::<T>()
     }
 
+    /// Returns the alignment required by `T`.
     #[inline(always)]
     pub const fn align() -> usize {
         std::mem::align_of::<T>()
     }
 
+    /// Reserves storage for exactly `capacity` values.
+    ///
+    /// # Panics
+    ///
+    /// Panics for zero capacity, a capacity that does not fit in `u32`, layout
+    /// overflow, or allocation failure.
     pub fn new(capacity: usize) -> Self {
         assert!(capacity > 0, "Capacity must be greater than 0");
         assert!(
@@ -38,7 +62,15 @@ impl<T> PoolAllocatorLite<T> {
 
         let block_size = Self::block_size();
         let block_align = Self::align();
-        let actual_size = block_size * capacity;
+        let actual_size = if block_size == 0 {
+            // GlobalAlloc requires a nonzero layout. One alignment-sized
+            // allocation provides a suitably aligned address for every ZST.
+            block_align
+        } else {
+            block_size
+                .checked_mul(capacity)
+                .expect("Pool allocation size overflow")
+        };
 
         let layout = Layout::from_size_align(actual_size, block_align).expect("Invalid layout");
 
@@ -51,6 +83,8 @@ impl<T> PoolAllocatorLite<T> {
         };
 
         let memory = unsafe {
+            // SAFETY: `layout` has nonzero size and valid alignment. The raw
+            // allocation is not interpreted as `T` until a slot is initialized.
             let ptr = std::alloc::alloc_zeroed(layout) as *mut T;
 
             if ptr.is_null() {
@@ -80,9 +114,10 @@ impl<T> PoolAllocatorLite<T> {
         }
     }
 
+    /// Returns the value in a live initialized slot.
     #[inline(always)]
     pub fn get(&self, index: u32) -> &T {
-        debug_assert!(
+        assert!(
             index < self.capacity as u32,
             "Block index out of bounds index: {index} capacity: {}",
             self.capacity
@@ -91,12 +126,15 @@ impl<T> PoolAllocatorLite<T> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("PoolAllocatorLite::get");
 
+        // SAFETY: the bounds check keeps the pointer within the allocation;
+        // the caller-managed index contract requires this slot to hold a `T`.
         unsafe { &*self.memory.add(index as usize) }
     }
 
+    /// Returns the value in a live initialized slot mutably.
     #[inline(always)]
     pub fn get_mut(&mut self, index: u32) -> &mut T {
-        debug_assert!(
+        assert!(
             index < self.capacity as u32,
             "Block index out of bounds index: {index} capacity: {}",
             self.capacity
@@ -105,9 +143,18 @@ impl<T> PoolAllocatorLite<T> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("PoolAllocatorLite::get_mut");
 
+        // SAFETY: the bounds check keeps the pointer within the allocation;
+        // the unique pool borrow prevents aliases through this API, and the
+        // caller-managed index contract requires a live `T`.
         unsafe { &mut *self.memory.add(index as usize) }
     }
 
+    /// Stores `value` in a fresh slot or caller-supplied free slot.
+    ///
+    /// # Panics
+    ///
+    /// Panics when no fresh slot remains and `next_free` is `None`, or when a
+    /// supplied index is out of range.
     pub fn allocate(&mut self, value: T, next_free: Option<u32>) -> u32 {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("PoolAllocatorLite::allocate");
@@ -138,20 +185,27 @@ impl<T> PoolAllocatorLite<T> {
             }
         };
 
-        debug_assert!(
+        assert!(
             index < self.capacity as u32,
             "Block index out of bounds index: {index} capacity: {}",
             self.capacity
         );
 
+        // SAFETY: the checked index is within this allocation.
         let ptr = unsafe { self.memory.add(index as usize) };
+        // SAFETY: the caller contract requires a supplied index to be free; a
+        // bump index has never been initialized. `write` initializes the slot.
         unsafe { std::ptr::write(ptr, value) };
 
         index
     }
 
+    /// Drops a live value so its index can be returned to the caller's free list.
+    ///
+    /// The caller must record the index and pass it at most once to a future
+    /// allocation.
     pub fn deallocate(&mut self, index: u32) {
-        debug_assert!(
+        assert!(
             index < self.capacity as u32,
             "Block index out of bounds index: {index} capacity: {}",
             self.capacity
@@ -160,7 +214,10 @@ impl<T> PoolAllocatorLite<T> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("PoolAllocatorLite::deallocate");
 
+        // SAFETY: the checked index is within this allocation.
         let ptr = unsafe { self.memory.add(index as usize) };
+        // SAFETY: the caller-managed index contract requires this slot to
+        // contain one live value and forbids duplicate deallocation.
         unsafe { std::ptr::drop_in_place(ptr) };
 
         #[cfg(feature = "memory_stats")]
@@ -177,6 +234,8 @@ impl<T> Drop for PoolAllocatorLite<T> {
         let _span = tracy_client::span!("PoolAllocatorLite::drop");
 
         unsafe {
+            // SAFETY: `memory` was allocated with this exact layout and has
+            // not been deallocated. Live values are intentionally not dropped.
             std::alloc::dealloc(self.memory as *mut u8, self.layout);
         }
     }

@@ -946,7 +946,6 @@ fn draw_axes(mut gizmos: Gizmos, settings: Res<WorldSettings>) {
                 Quat::from_rotation_x(PI / 2.),
                 UVec2::splat(10),
                 Vec2::new(CHUNK_SIZE, CHUNK_SIZE),
-                // Light gray
                 LinearRgba::gray(0.65),
             )
             .outer_edges();
@@ -984,9 +983,7 @@ fn setup_world(
         DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),
             shadows_enabled: true,
-            // illuminance: 3_000., //light_consts::lux::OVERCAST_DAY,
-            illuminance: 6_000., //light_consts::lux::OVERCAST_DAY,
-            // illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
+            illuminance: 6_000.,
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),

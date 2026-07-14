@@ -1,25 +1,10 @@
-//! Module `core::max_depth`
-//!
-//! Defines the [`MaxDepth`] struct, a compact and type-safe representation of the maximum allowed depth for an octree or voxel structure.
-//!
-//! # Usage
-//!
-//! Use [`MaxDepth`] to avoid confusion and bugs related to raw integer depth parameters. This type enforces invariants and provides clear API boundaries.
-//!
-//! # Examples
-//!
-//! ```rust
-//! use voxelis::MaxDepth;
-//!
-//! let depth = MaxDepth::new(6);
-//! assert_eq!(depth.max(), 6);
-//! ```
+//! Validated maximum depths for voxel trees.
 
 use crate::interner::MAX_ALLOWED_DEPTH;
 
 use super::Lod;
 
-/// A representation of maximum depth.
+/// Maximum tree depth, always less than the implementation limit.
 ///
 /// # Examples
 ///
@@ -54,11 +39,7 @@ impl TryFrom<u8> for MaxDepth {
 }
 
 impl MaxDepth {
-    /// Creates a new [`MaxDepth`].
-    ///
-    /// # Parameters
-    ///
-    /// - `max`: Maximum allowed depth (`u8`). Must be less than [`MAX_ALLOWED_DEPTH`].
+    /// Creates a maximum depth.
     ///
     /// # Panics
     ///
@@ -113,15 +94,7 @@ impl MaxDepth {
         self.0 as usize
     }
 
-    /// Returns a [`MaxDepth`] for a given [`Lod`].
-    ///
-    /// # Parameters
-    ///
-    /// - `lod`: Level of detail to subtract from the current max depth.
-    ///
-    /// # Returns
-    ///
-    /// New [`MaxDepth`] with value `self.max() - lod.lod()`, saturating at 0.
+    /// Subtracts `lod` from this depth, saturating at zero.
     ///
     /// # Examples
     ///
@@ -140,14 +113,12 @@ impl MaxDepth {
     }
 }
 
-/// Display implementation for [`MaxDepth`] that provides a human-readable representation
 impl std::fmt::Display for MaxDepth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.max())
     }
 }
 
-/// Debug implementation for [`MaxDepth`] that provides a human-readable representation
 impl std::fmt::Debug for MaxDepth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.max())

@@ -1,5 +1,16 @@
+//! Floating-point overlap helpers used by the legacy Voxelis voxelizer.
+//!
+//! These functions deliberately use scale-dependent or fixed tolerances. They
+//! are suitable for sampled occupancy, not exact topology or certification.
+
 use glam::DVec3;
 
+/// Tests a triangle against an axis-aligned cube using tolerant rejection and
+/// feature-intersection checks.
+///
+/// `cube.0` and `cube.1` are expected to be component-wise minimum and maximum
+/// corners. This is a floating-point sampling predicate and may conservatively
+/// classify near-degenerate configurations as intersections.
 pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3, DVec3)) -> bool {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("triangle_cube_intersection");
@@ -7,11 +18,10 @@ pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3,
     let (tv0, tv1, tv2) = triangle;
     let (cube_min, cube_max) = cube;
 
-    // Calculate the bounding box of the triangle
     let tri_min = tv0.min(tv1).min(tv2);
     let tri_max = tv0.max(tv1).max(tv2);
 
-    // Check if the bounding boxes overlap or touch with precision handling
+    // Reject separated bounding boxes, retaining a small contact tolerance.
     let epsilon = 1e-5;
     if tri_max.x < cube_min.x - epsilon
         || tri_min.x > cube_max.x + epsilon
@@ -23,11 +33,10 @@ pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3,
         return false;
     }
 
-    // Check if the triangle's plane intersects the cube
+    // Treat a cube that straddles the triangle plane as a conservative hit.
     let normal = (tv1 - tv0).cross(tv2 - tv0);
     let d = -normal.dot(tv0);
 
-    // Define the vertices of the cube once for use throughout the function
     let cube_points = [
         DVec3::new(cube_min.x, cube_min.y, cube_min.z),
         DVec3::new(cube_max.x, cube_min.y, cube_min.z),
@@ -42,16 +51,14 @@ pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3,
 
     for p in &cube_points[1..] {
         let new_sign = (normal.dot(*p) + d).signum();
-        // Handle near-zero cases to improve intersection detection accuracy
         if (normal.dot(*p) + d).abs() < epsilon {
-            continue; // Skip further checks if a point is very close to the plane
+            continue;
         }
         if new_sign != sign {
-            return true; // The plane intersects the cube
+            return true;
         }
     }
 
-    // Check if any of the triangle's vertices are inside or on the cube
     if point_in_or_on_cube(tv0, cube)
         || point_in_or_on_cube(tv1, cube)
         || point_in_or_on_cube(tv2, cube)
@@ -65,7 +72,6 @@ pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3,
         }
     }
 
-    // Check if any of the triangle's edges intersect with any of the cube's faces
     let triangle_edges = [(tv0, tv1), (tv1, tv2), (tv2, tv0)];
     let cube_faces = [
         // Front
@@ -123,23 +129,23 @@ pub fn triangle_cube_intersection(triangle: (DVec3, DVec3, DVec3), cube: (DVec3,
     false
 }
 
+/// Tests whether `point` lies within or near an axis-aligned cube.
+///
+/// The boundary tolerance is `1e-8` times the cube diagonal. A cube with a
+/// shorter diagonal is treated as a point.
 pub fn point_in_or_on_cube(point: DVec3, cube: (DVec3, DVec3)) -> bool {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("point_in_or_on_cube");
 
     let (cube_min, cube_max) = cube;
 
-    // Calculate a dynamic epsilon based on the size of the cube
     let cube_size = (cube_max - cube_min).length();
-    let epsilon = cube_size * 1e-8; // Scale epsilon based on the size of the cube
+    let epsilon = cube_size * 1e-8;
 
-    // Check for degenerate cube cases (collapsing into a plane, line, or point)
     if cube_size < 1e-8 {
-        // Treat the cube as a single point in this case
-        return (point - cube_min).length() < epsilon;
+        return (point - cube_min).length() <= 1e-8;
     }
 
-    // Check if the point is inside or very close to the cube's boundaries
     point.x >= cube_min.x - epsilon
         && point.x <= cube_max.x + epsilon
         && point.y >= cube_min.y - epsilon
@@ -148,6 +154,11 @@ pub fn point_in_or_on_cube(point: DVec3, cube: (DVec3, DVec3)) -> bool {
         && point.z <= cube_max.z + epsilon
 }
 
+/// Tests the barycentric projection of `point` against a triangle.
+///
+/// Degenerate triangles return `false`. This helper does not test that `point`
+/// lies in the triangle's plane; callers that need 3D containment must perform
+/// a coplanarity test first.
 pub fn point_in_or_on_triangle(point: DVec3, triangle: (DVec3, DVec3, DVec3)) -> bool {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("point_in_or_on_triangle");
@@ -175,39 +186,41 @@ pub fn point_in_or_on_triangle(point: DVec3, triangle: (DVec3, DVec3, DVec3)) ->
     u >= 0.0 && v >= 0.0 && (u + v) <= 1.0
 }
 
+/// Tests whether a segment crosses the interior or boundary of a planar quad.
+///
+/// The quad is split along `(0, 2)`. Segments parallel or coplanar with the
+/// quad plane return `false`.
 pub fn edge_quad_intersection(edge: (DVec3, DVec3), quad: (DVec3, DVec3, DVec3, DVec3)) -> bool {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("edge_quad_intersection");
 
     let (e1, e2) = edge;
 
-    // First, check if the edge intersects the plane of the quad
     let normal = (quad.1 - quad.0).cross(quad.2 - quad.0).normalize();
     let denom = normal.dot(e2 - e1);
     if denom.abs() < 1e-8 {
-        // Edge is parallel to the plane
         return false;
     }
 
     let t = normal.dot(quad.0 - e1) / denom;
     if !(0.0..=1.0).contains(&t) {
-        // Intersection point is not on the edge segment
         return false;
     }
 
     let intersection_point = e1 + t * (e2 - e1);
 
-    // Check if the intersection point is inside the quad
     point_in_quad(intersection_point, quad)
 }
 
+/// Tests the barycentric projection of `point` against either triangle of a quad.
+///
+/// This function does not independently verify coplanarity.
 pub fn point_in_quad(point: DVec3, quad: (DVec3, DVec3, DVec3, DVec3)) -> bool {
     #[cfg(feature = "tracy")]
     let _span = tracy_client::span!("point_in_quad");
 
     let (a, b, c, d) = quad;
 
-    // Check if the point is inside either of the two triangles formed by the quad
     point_in_or_on_triangle(point, (a, b, c)) || point_in_or_on_triangle(point, (a, c, d))
 }
 

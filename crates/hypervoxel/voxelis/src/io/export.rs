@@ -101,7 +101,6 @@ pub fn export_model_to_vtm<T: VoxelTrait, P: AsRef<Path>>(
     let mut writer = std::io::BufWriter::new(&mut vox_file);
 
     let flags = Flags::DEFAULT;
-    // let flags = Flags::NONE;
 
     let max_depth = model.max_depth(Lod::new(0));
 

@@ -606,30 +606,19 @@ fn remove_at_depth_branch<T: VoxelTrait>(
 
             let is_empty = new_child_id.is_empty();
 
-            // let current_mask = node_id.mask();
-
             let mask = if is_empty {
                 node_id.mask() & !(1 << index)
             } else {
                 node_id.mask()
             };
 
-            // Check if all children are empty
             if mask == 0 {
-                // All children are empty, remove this branch node
                 BlockId::EMPTY
             } else {
-                // Return the updated branch node
                 let is_branch = new_child_id.is_branch();
                 assert!(is_branch, "Removing voxel should never produce a leaf node");
 
-                // let current_types = node_id.types();
                 let types = node_id.types() & !(1 << index);
-
-                // println!(
-                //     "before types: {current_types:08b} mask: {current_mask:08b}"
-                // );
-                // println!(" after types: {types:08b} mask: {mask:08b}");
 
                 branch[index] = new_child_id;
 
@@ -674,15 +663,14 @@ fn remove_at_depth_leaf<T: VoxelTrait>(
     let _span = tracy_client::span!("remove_at_depth_leaf");
 
     if depth.current() == depth.max() {
-        // At max depth, just remove the leaf
         BlockId::EMPTY
     } else {
-        // Remove the voxel in the appropriate child, splitting the leaf always results in a new branch
+        // Removing below a uniform leaf expands it into a branch whose other
+        // seven children retain the original leaf value.
         let new_node_id = remove_at_depth_leaf(interner, node_id, position, &depth.increment());
 
         assert!(interner.is_valid_block_id(&new_node_id));
 
-        // Convert leaf to branch
         let index = child_index_macro!(position, depth);
         let mut children = [*node_id; MAX_CHILDREN];
         children[index] = new_node_id;
@@ -695,11 +683,8 @@ fn remove_at_depth_leaf<T: VoxelTrait>(
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("incrementing refs for node_id: {node_id:?}");
 
-        // println!("types: {types:b} mask: {mask:b}");
-
         interner.inc_ref_by(node_id, 7);
 
-        // Create new branch node
         interner.get_or_create_branch(children, types, mask)
     }
 }

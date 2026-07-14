@@ -1,19 +1,8 @@
-//! Module `core::lod`
+//! Level-of-detail selection for voxel traversal and meshing.
 //!
-//! Defines the [`Lod`] struct, a compact and type-safe representation of Level of Detail (LOD) for voxel/octree structures.
-//!
-//! # Usage
-//!
-//! LOD is used to represent the resolution or coarseness of voxel data, where higher values typically mean lower resolution (coarser data).
-//!
-//! # Examples
-//!
-//! ```rust
-//! use voxelis::Lod;
-//!
-//! let lod = Lod::new(2);
-//! assert_eq!(lod.lod(), 2);
-//! ```
+//! `Lod::new(0)` selects full resolution. Each larger value removes one level
+//! from the effective tree depth, saturating at depth zero where the consuming
+//! API uses [`crate::MaxDepth::for_lod`].
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -33,7 +22,6 @@ impl From<u8> for Lod {
     }
 }
 
-/// Display implementation for [`Lod`] that provides a human-readable representation
 impl std::fmt::Display for Lod {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.lod())
@@ -41,11 +29,7 @@ impl std::fmt::Display for Lod {
 }
 
 impl Lod {
-    /// Creates a new [`Lod`].
-    ///
-    /// # Parameters
-    ///
-    /// - `lod`: Level of detail (`u8`).
+    /// Creates a level-of-detail offset.
     ///
     /// # Examples
     ///

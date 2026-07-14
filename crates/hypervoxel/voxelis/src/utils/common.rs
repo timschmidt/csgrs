@@ -187,6 +187,8 @@ pub fn to_vec<T: VoxelTrait>(
             let child_cube_half_side = 1 << (max_depth - depth - 1);
             let childs = interner.get_children_ref(&node_id);
             for i in (0..8).rev() {
+                // SAFETY: `Children` is an eight-element array and this loop
+                // restricts `i` to `0..8`.
                 let child_id = unsafe { *childs.get_unchecked(i) };
 
                 if !child_id.is_empty() {
@@ -237,6 +239,8 @@ fn fill_sub_volume<T: VoxelTrait>(
             let start_index = base_z + pos_x;
             let end_index = start_index + cube_side;
 
+            // SAFETY: traversal-derived positions and `cube_side` stay within
+            // the `voxels_per_axis³` buffer allocated by `to_vec`.
             unsafe {
                 let slice = data.get_unchecked_mut(start_index..end_index);
                 slice.fill(value);

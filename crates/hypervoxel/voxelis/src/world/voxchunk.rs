@@ -279,22 +279,52 @@ impl<T: VoxelTrait> VoxOpsMesh<T> for VoxChunk<T> {
                 for x in 0..voxels_per_axis {
                     let index = base_index_z + x as usize;
 
-                    if unsafe { *data.get_unchecked(index) } == T::default() {
+                    if unsafe {
+                        // SAFETY: `x`, `y`, and `z` are each bounded by
+                        // `voxels_per_axis`, and `data` contains exactly that
+                        // many voxels cubed.
+                        *data.get_unchecked(index)
+                    } == T::default()
+                    {
                         continue;
                     }
 
                     let has_top = y + 1 >= voxels_per_axis
-                        || unsafe { *data.get_unchecked(index + shift_y) } == T::default();
-                    let has_bottom =
-                        y == 0 || unsafe { *data.get_unchecked(index - shift_y) } == T::default();
+                        || unsafe {
+                            // SAFETY: short-circuiting evaluates this only
+                            // when the positive-y neighbor is in bounds.
+                            *data.get_unchecked(index + shift_y)
+                        } == T::default();
+                    let has_bottom = y == 0
+                        || unsafe {
+                            // SAFETY: short-circuiting evaluates this only
+                            // when the negative-y neighbor is in bounds.
+                            *data.get_unchecked(index - shift_y)
+                        } == T::default();
                     let has_front = z + 1 >= voxels_per_axis
-                        || unsafe { *data.get_unchecked(index + shift_z) } == T::default();
-                    let has_back =
-                        z == 0 || unsafe { *data.get_unchecked(index - shift_z) } == T::default();
+                        || unsafe {
+                            // SAFETY: short-circuiting evaluates this only
+                            // when the positive-z neighbor is in bounds.
+                            *data.get_unchecked(index + shift_z)
+                        } == T::default();
+                    let has_back = z == 0
+                        || unsafe {
+                            // SAFETY: short-circuiting evaluates this only
+                            // when the negative-z neighbor is in bounds.
+                            *data.get_unchecked(index - shift_z)
+                        } == T::default();
                     let has_right = x + 1 >= voxels_per_axis
-                        || unsafe { *data.get_unchecked(index + 1) } == T::default();
-                    let has_left =
-                        x == 0 || unsafe { *data.get_unchecked(index - 1) } == T::default();
+                        || unsafe {
+                            // SAFETY: short-circuiting evaluates this only
+                            // when the positive-x neighbor is in bounds.
+                            *data.get_unchecked(index + 1)
+                        } == T::default();
+                    let has_left = x == 0
+                        || unsafe {
+                            // SAFETY: short-circuiting evaluates this only
+                            // when the negative-x neighbor is in bounds.
+                            *data.get_unchecked(index - 1)
+                        } == T::default();
 
                     if !(has_top || has_bottom || has_left || has_right || has_back || has_front) {
                         continue;
@@ -419,8 +449,6 @@ pub fn deserialize_chunk<T: VoxelTrait>(
     let mut magic = [0; VTC_MAGIC.len()];
     reader.read_exact(&mut magic).unwrap();
     assert_eq!(magic, VTC_MAGIC);
-
-    // println!("Magic: {:?}", std::str::from_utf8(&magic).unwrap());
 
     let x = reader.read_i32::<BigEndian>().unwrap();
     let y = reader.read_i32::<BigEndian>().unwrap();

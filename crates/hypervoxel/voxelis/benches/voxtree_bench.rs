@@ -1423,9 +1423,8 @@ fn benchmark_voxtree(c: &mut Criterion) {
                             });
                         }
                         BenchType::Batch => {
-                            // TODO(aljen): fix this case
-                            // let mut batch = tree.create_batch();
-
+                            // A one-edit batch isolates batch setup/application
+                            // overhead against the direct single-edit path.
                             b.iter(|| {
                                 let x = rng.random_range(0..size as i32);
                                 let y = rng.random_range(0..size as i32);
@@ -1436,8 +1435,6 @@ fn benchmark_voxtree(c: &mut Criterion) {
                                 batch.just_set(IVec3::new(x, y, z), value);
 
                                 tree.apply_batch(&mut interner, black_box(&batch));
-
-                                // batch.just_set(IVec3::new(x, y, z), 0);
 
                                 #[cfg(feature = "tracy")]
                                 tracy_client::frame_mark();

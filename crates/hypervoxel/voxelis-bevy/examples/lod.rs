@@ -160,9 +160,7 @@ fn setup_world(
         DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),
             shadows_enabled: true,
-            // illuminance: 3_000., //light_consts::lux::OVERCAST_DAY,
-            illuminance: 6_000., //light_consts::lux::OVERCAST_DAY,
-            // illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
+            illuminance: 6_000.,
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),

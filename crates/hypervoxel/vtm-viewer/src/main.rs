@@ -69,9 +69,7 @@ fn setup(
         DirectionalLight {
             color: Color::srgb(0.98, 0.95, 0.82),
             shadows_enabled: true,
-            // illuminance: 3_000., //light_consts::lux::OVERCAST_DAY,
-            illuminance: 6_000., //light_consts::lux::OVERCAST_DAY,
-            // illuminance: light_consts::lux::AMBIENT_DAYLIGHT,
+            illuminance: 6_000.,
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
@@ -85,9 +83,7 @@ fn setup(
                 ..default()
             },
             Msaa::Off,
-            // transform: Transform::from_xyz(0.0, 7., 14.0)
             Transform::from_xyz(2.2716377, 1.2876732, 3.9676127)
-                // transform: Transform::from_xyz(-1.9573995, 1.9533201, -1.9587312)
                 .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
             TemporalJitter::default(),
             PanOrbitCamera::default(),
@@ -239,10 +235,6 @@ fn main() {
     }
 
     App::new()
-        // .insert_resource(AmbientLight {
-        //     brightness: 1000.,
-        //     ..default()
-        // })
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {

@@ -1,23 +1,16 @@
-//! Module `core::batch`
+//! Buffered voxel edits for one fixed-depth tree.
 //!
-//! This module provides a buffer for batching set, clear, and fill operations on an octree node interner.
-//! It is designed to optimize voxel modifications by accumulating changes before applying them to the octree.
-//!
-//! # Examples
+//! A [`Batch`] stores the last set or clear operation for each addressed voxel.
+//! Applying the batch lets a tree path-copy related edits together.
 //!
 //! ```
 //! use voxelis::{Batch, MaxDepth, VoxInterner, spatial::{VoxOpsBulkWrite, VoxOpsWrite}};
 //! use glam::IVec3;
 //!
-//! // Create interner for 8-bit voxels
 //! let mut interner = VoxInterner::<u8>::with_memory_budget(1024);
-//!
 //! let mut batch = Batch::<u8>::new(MaxDepth::new(4));
-//! // Fill the octree with a uniform voxel value
 //! batch.fill(&mut interner, 2);
-//! // Set a voxel at position (1, 2, 3)
 //! batch.set(&mut interner, IVec3::new(1, 2, 3), 1);
-//! // Clear a voxel at position (4, 5, 6)
 //! batch.set(&mut interner, IVec3::new(4, 5, 6), 0);
 //! ```
 
@@ -30,11 +23,7 @@ use crate::{
     utils::common::encode_child_index_path,
 };
 
-/// Accumulates per-node voxel modifications, enabling efficient bulk updates for an octree.
-///
-/// # Type parameters
-///
-/// * `T` - The voxel type implementing [`VoxelTrait`].
+/// Accumulates voxel modifications for a tree with one configured depth.
 #[derive(Debug)]
 pub struct Batch<T: VoxelTrait> {
     masks: Vec<(u8, u8)>,
@@ -45,12 +34,7 @@ pub struct Batch<T: VoxelTrait> {
 }
 
 impl<T: VoxelTrait> Batch<T> {
-    /// Creates a new [`Batch`] for a tree of the given maximum depth.
-    /// Returns a new, empty [`Batch`] ready to record set, clear, or fill operations.
-    ///
-    /// # Arguments
-    ///
-    /// * `max_depth` - Maximum depth (levels) of the target octree.
+    /// Creates an empty batch for a tree with `max_depth` levels.
     ///
     /// # Example
     ///
@@ -110,7 +94,10 @@ impl<T: VoxelTrait> Batch<T> {
         self.to_fill
     }
 
-    /// Counts and returns the number of recorded set or clear operations.
+    /// Returns the number of leaf-parent entries containing one or more edits.
+    ///
+    /// This is not necessarily the number of edited voxels because each mask
+    /// entry represents up to eight sibling voxels.
     #[must_use]
     pub fn size(&self) -> usize {
         #[cfg(feature = "tracy")]
@@ -122,7 +109,10 @@ impl<T: VoxelTrait> Batch<T> {
             .count()
     }
 
-    /// Indicates whether any operations have been recorded in this batch.
+    /// Returns whether the batch contains any per-voxel patches.
+    ///
+    /// A uniform fill alone does not count as a patch; inspect [`Self::to_fill`]
+    /// when both forms of pending work matter.
     #[must_use]
     pub fn has_patches(&self) -> bool {
         #[cfg(feature = "tracy")]
@@ -131,13 +121,12 @@ impl<T: VoxelTrait> Batch<T> {
         self.has_patches
     }
 
-    /// Records a voxel set or clear operation at the specified 3D position.
-    /// Returns `true` indicating that the state has changed.
+    /// Records a set or clear at `position` and returns `true`.
     ///
     /// # Arguments
     ///
     /// * `position` - 3D coordinates of the voxel to modify.
-    /// * `voxel` - The voxel value to set; `T::default()` clears the voxel.
+    /// * `voxel` - Value to set; `T::default()` records a clear.
     ///
     /// # Panics
     ///
@@ -196,43 +185,27 @@ impl<T: VoxelTrait> Batch<T> {
 }
 
 impl<T: VoxelTrait> VoxOpsWrite<T> for Batch<T> {
-    /// Records a set or clear operation for the given `position`, delegating to `just_set`.
-    /// Records a voxel set or clear operation at the specified 3D position.
-    /// Returns `true` indicating that the state has changed.
-    ///
-    /// # Arguments
-    ///
-    /// * `position` - 3D coordinates of the voxel to modify.
-    /// * `voxel` - The voxel value to set; `T::default()` clears the voxel.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `position` is out of bounds for the configured `max_depth`.
     fn set(&mut self, _interner: &mut VoxInterner<T>, position: IVec3, voxel: T) -> bool {
         self.just_set(position, voxel)
     }
 }
 
 impl<T: VoxelTrait> VoxOpsBulkWrite<T> for Batch<T> {
-    /// Clears existing operations and sets a uniform fill value for the batch.
     fn fill(&mut self, _interner: &mut VoxInterner<T>, value: T) {
         self.just_fill(value);
     }
 
-    /// Resets all recorded operations, clearing masks, values, and fill state.
     fn clear(&mut self, _interner: &mut VoxInterner<T>) {
         self.just_clear();
     }
 }
 
 impl<T: VoxelTrait> VoxOpsConfig for Batch<T> {
-    /// Returns the maximum depth of the octree this batch is configured for.
     #[inline(always)]
     fn max_depth(&self, lod: Lod) -> MaxDepth {
         self.max_depth.for_lod(lod)
     }
 
-    /// Returns the number of voxels per axis at the current LOD.
     #[inline(always)]
     fn voxels_per_axis(&self, lod: Lod) -> u32 {
         1 << self.max_depth.for_lod(lod).max()
