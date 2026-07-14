@@ -173,7 +173,7 @@ struct DemoScenesState {
 }
 
 const fn default_fillet_radius() -> f64 {
-    0.5
+    1.0
 }
 
 const fn default_chamfer_setback() -> f64 {

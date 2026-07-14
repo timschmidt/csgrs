@@ -10,6 +10,8 @@ use crate::plotting::draw_shape;
 use crate::theme::Theme;
 
 const DISPLAY_STEPS: usize = 48;
+const RECTANGLE_HOLE_COUNT: usize = 12;
+const EDITED_CORNER_COUNT: usize = 4 + RECTANGLE_HOLE_COUNT * 4;
 #[cfg(test)]
 const ALL_FAMILIES: [CurveFamily2; 8] = [
     CurveFamily2::Line,
@@ -44,130 +46,131 @@ impl CornerOperation {
     }
 
     const fn amount_bounds(self) -> (f64, f64) {
-        match self {
-            Self::Fillet => (0.25, 0.7),
-            Self::Chamfer => (0.25, 1.5),
-        }
+        (0.25, 1.5)
     }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum HoleCornerKind {
-    AffinePair,
-    ArcThenLine,
-    LineThenArc,
+enum HoleKind {
+    Rectangle,
+    Circle,
 }
 
 #[derive(Clone, Copy, Debug)]
 struct HoleSpec {
     origin: (i32, i32),
-    previous_family: CurveFamily2,
-    next_family: CurveFamily2,
-    top_family: CurveFamily2,
-    corner_kind: HoleCornerKind,
+    families: [CurveFamily2; 4],
+    kind: HoleKind,
 }
 
 const HOLE_SPECS: [HoleSpec; 14] = [
-    hole(
+    rectangle(
         (-24, -11),
         CurveFamily2::Line,
         CurveFamily2::QuadraticBezier,
-        CurveFamily2::CircularArc,
+        CurveFamily2::CubicBezier,
+        CurveFamily2::RationalQuadraticBezier,
     ),
-    hole(
+    rectangle(
         (-14, -11),
         CurveFamily2::QuadraticBezier,
         CurveFamily2::CubicBezier,
         CurveFamily2::RationalQuadraticBezier,
+        CurveFamily2::RationalBezier,
     ),
-    hole(
+    rectangle(
         (-4, -11),
         CurveFamily2::CubicBezier,
         CurveFamily2::RationalQuadraticBezier,
         CurveFamily2::RationalBezier,
+        CurveFamily2::PolynomialBSpline,
     ),
-    hole(
+    rectangle(
         (6, -11),
         CurveFamily2::RationalQuadraticBezier,
         CurveFamily2::RationalBezier,
         CurveFamily2::PolynomialBSpline,
+        CurveFamily2::Nurbs,
     ),
-    hole(
+    rectangle(
         (16, -11),
         CurveFamily2::RationalBezier,
         CurveFamily2::PolynomialBSpline,
         CurveFamily2::Nurbs,
+        CurveFamily2::Line,
     ),
-    hole(
+    rectangle(
         (-24, -2),
         CurveFamily2::PolynomialBSpline,
         CurveFamily2::Nurbs,
-        CurveFamily2::CircularArc,
+        CurveFamily2::Line,
+        CurveFamily2::QuadraticBezier,
     ),
-    hole(
+    rectangle(
         (-14, -2),
         CurveFamily2::Nurbs,
         CurveFamily2::Line,
         CurveFamily2::QuadraticBezier,
+        CurveFamily2::CubicBezier,
     ),
-    hole(
+    rectangle(
         (-4, -2),
         CurveFamily2::Line,
         CurveFamily2::CubicBezier,
-        CurveFamily2::CubicBezier,
+        CurveFamily2::Nurbs,
+        CurveFamily2::RationalBezier,
     ),
-    hole(
+    rectangle(
         (6, -2),
         CurveFamily2::QuadraticBezier,
         CurveFamily2::RationalBezier,
         CurveFamily2::RationalQuadraticBezier,
+        CurveFamily2::PolynomialBSpline,
     ),
-    hole(
+    rectangle(
         (16, -2),
         CurveFamily2::CubicBezier,
         CurveFamily2::PolynomialBSpline,
         CurveFamily2::RationalBezier,
+        CurveFamily2::Nurbs,
     ),
-    hole(
+    rectangle(
         (-24, 7),
         CurveFamily2::RationalQuadraticBezier,
         CurveFamily2::Nurbs,
-        CurveFamily2::CircularArc,
+        CurveFamily2::Line,
+        CurveFamily2::CubicBezier,
     ),
-    hole(
+    rectangle(
         (-14, 7),
         CurveFamily2::Nurbs,
         CurveFamily2::QuadraticBezier,
         CurveFamily2::PolynomialBSpline,
+        CurveFamily2::RationalQuadraticBezier,
     ),
-    HoleSpec {
-        origin: (-4, 7),
-        previous_family: CurveFamily2::CircularArc,
-        next_family: CurveFamily2::Line,
-        top_family: CurveFamily2::Nurbs,
-        corner_kind: HoleCornerKind::ArcThenLine,
-    },
-    HoleSpec {
-        origin: (6, 7),
-        previous_family: CurveFamily2::Line,
-        next_family: CurveFamily2::CircularArc,
-        top_family: CurveFamily2::CubicBezier,
-        corner_kind: HoleCornerKind::LineThenArc,
-    },
+    circle((-4, 7)),
+    circle((6, 7)),
 ];
 
-const fn hole(
+const fn rectangle(
     origin: (i32, i32),
-    previous_family: CurveFamily2,
-    next_family: CurveFamily2,
-    top_family: CurveFamily2,
+    bottom: CurveFamily2,
+    right: CurveFamily2,
+    top: CurveFamily2,
+    left: CurveFamily2,
 ) -> HoleSpec {
     HoleSpec {
         origin,
-        previous_family,
-        next_family,
-        top_family,
-        corner_kind: HoleCornerKind::AffinePair,
+        families: [bottom, right, top, left],
+        kind: HoleKind::Rectangle,
+    }
+}
+
+const fn circle(origin: (i32, i32)) -> HoleSpec {
+    HoleSpec {
+        origin,
+        families: [CurveFamily2::CircularArc; 4],
+        kind: HoleKind::Circle,
     }
 }
 
@@ -233,29 +236,18 @@ impl CornerScene {
             ScrollArea::vertical().show(ui, |ui| {
                 ui.heading(self.operation.heading());
                 let (minimum, maximum) = self.operation.amount_bounds();
-                let mut slider =
+                ui.add(
                     Slider::new(&mut self.amount, minimum..=maximum)
-                        .text(self.operation.amount_label());
-                if self.operation == CornerOperation::Fillet {
-                    // The egui value is the rational circle parameter `q`; only
-                    // this display boundary presents the constructed radius 2q².
-                    slider = slider
-                        .custom_formatter(|scale, _| format!("{:.3}", 2.0 * scale * scale))
-                        .custom_parser(|text| {
-                            text.parse::<f64>()
-                                .ok()
-                                .filter(|radius| *radius >= 0.0)
-                                .map(|radius| (radius / 2.0).sqrt())
-                        });
-                }
-                ui.add(slider);
+                        .text(self.operation.amount_label()),
+                );
                 ui.separator();
                 ui.label(format!(
-                    "CurveRegion2: 1 material + {} mixed-family holes",
-                    self.source_region.len().saturating_sub(1)
+                    "CurveRegion2: {} boundaries · 1 material + {RECTANGLE_HOLE_COUNT} mixed-family polygons + {} circles",
+                    self.source_region.len(),
+                    HOLE_SPECS.len() - RECTANGLE_HOLE_COUNT
                 ));
                 ui.small(
-                    "Every adjustment rebuilds all hole corners across repeated curve-family pairings.",
+                    "Every adjustment edits every corner of the material and mixed-family hole boundaries.",
                 );
                 if let Some(result) = &self.result_region {
                     ui.small(format!("Result retains {} exact boundary loops", result.len()));
@@ -299,9 +291,9 @@ impl CornerScene {
                         "corner operation label",
                         PlotPoint::new(0.0, 16.3),
                         format!(
-                            "{} · {} mixed-family corner interactions",
+                            "{} · {} exact corners",
                             self.operation.heading(),
-                            HOLE_SPECS.len()
+                            EDITED_CORNER_COUNT
                         ),
                     )
                     .color(theme.accent),
@@ -355,103 +347,139 @@ fn build_corner_result(
     amount: Real,
     source_paths: &[CurvePath2],
 ) -> Result<CornerRegionResult, String> {
-    let mut result_paths = source_paths.to_vec();
-    for (hole_index, spec) in HOLE_SPECS.iter().enumerate() {
-        result_paths[hole_index + 1] = edit_hole(
-            &source_paths[hole_index + 1],
-            *spec,
-            operation,
-            amount.clone(),
-        )?;
-    }
+    let result_paths = source_paths
+        .iter()
+        .enumerate()
+        .map(|(boundary_index, path)| {
+            edit_all_corners(path, operation, amount.clone())
+                .map_err(|error| format!("boundary {boundary_index}: {error}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let region = CurveRegion2::try_from_boundary_paths(&result_paths).map_err(string_error)?;
     let display = display_region(&result_paths)?;
     Ok(CornerRegionResult { region, display })
 }
 
-fn edit_hole(
+#[derive(Clone)]
+struct CornerWitness {
+    previous_parameter: Real,
+    next_parameter: Real,
+    center: Point2,
+}
+
+fn edit_all_corners(
     source: &CurvePath2,
-    spec: HoleSpec,
     operation: CornerOperation,
     amount: Real,
 ) -> Result<CurvePath2, String> {
-    if operation == CornerOperation::Chamfer {
-        return source
-            .chamfer_vertex_by_parameters(
-                1,
-                unit_setback_parameter(&amount)?,
-                unit_advance_parameter(&amount)?,
-            )
-            .map_err(string_error);
+    if source.curves().len() < 2 {
+        return Ok(source.clone());
     }
 
-    let radius = Real::from(2_i32) * (&amount * &amount);
-    let (previous_parameter, next_parameter, center_x, clockwise) = match spec.corner_kind {
-        HoleCornerKind::AffinePair => (
-            unit_setback_parameter(&radius)?,
-            unit_advance_parameter(&radius)?,
-            -radius.clone(),
-            false,
-        ),
-        HoleCornerKind::ArcThenLine => {
-            let witnesses = arc_line_fillet_witnesses(&amount)?;
-            (
-                witnesses.arc_then_line_parameter,
-                witnesses.line_advance_parameter,
-                -witnesses.center_distance,
-                true,
-            )
+    let corner_indices = (0..source.curves().len())
+        .filter(|vertex_index| is_geometric_corner(source, *vertex_index))
+        .collect::<Vec<_>>();
+    let mut result = source.clone();
+
+    // Editing in descending source order keeps every not-yet-edited vertex at
+    // its original index. Recomputing each witness on the current path accounts
+    // for the neighboring end trim already applied to a retained curve.
+    for vertex_index in corner_indices.iter().rev() {
+        if *vertex_index != 0 {
+            let witness = corner_witness(&result, *vertex_index, &amount)?;
+            result = apply_corner_edit(result, *vertex_index, operation, &witness)?;
         }
-        HoleCornerKind::LineThenArc => {
-            let witnesses = arc_line_fillet_witnesses(&amount)?;
-            (
-                Real::one() - &witnesses.line_advance_parameter,
-                witnesses.line_then_arc_parameter,
-                -witnesses.center_distance,
+    }
+    if corner_indices.first() == Some(&0) {
+        let seam_witness = corner_witness(&result, 0, &amount)?;
+        result = apply_corner_edit(result, 0, operation, &seam_witness)?;
+    }
+    Ok(result)
+}
+
+fn is_geometric_corner(source: &CurvePath2, vertex_index: usize) -> bool {
+    let previous_index = if vertex_index == 0 {
+        source.curves().len() - 1
+    } else {
+        vertex_index - 1
+    };
+    let previous = &source.curves()[previous_index];
+    let next = &source.curves()[vertex_index];
+    let (previous_dx, previous_dy) = previous.end().delta_from(previous.start());
+    let (next_dx, next_dy) = next.end().delta_from(next.start());
+    &previous_dx * &next_dy - &previous_dy * &next_dx != Real::zero()
+}
+
+fn apply_corner_edit(
+    path: CurvePath2,
+    vertex_index: usize,
+    operation: CornerOperation,
+    witness: &CornerWitness,
+) -> Result<CurvePath2, String> {
+    match operation {
+        CornerOperation::Fillet => path
+            .fillet_vertex_by_parameters(
+                vertex_index,
+                witness.previous_parameter.clone(),
+                witness.next_parameter.clone(),
+                &witness.center,
                 false,
             )
-        }
+            .map_err(|error| format!("vertex {vertex_index}: {error}")),
+        CornerOperation::Chamfer => path
+            .chamfer_vertex_by_parameters(
+                vertex_index,
+                witness.previous_parameter.clone(),
+                witness.next_parameter.clone(),
+            )
+            .map_err(|error| format!("vertex {vertex_index}: {error}")),
+    }
+}
+
+fn corner_witness(
+    source: &CurvePath2,
+    vertex_index: usize,
+    amount: &Real,
+) -> Result<CornerWitness, String> {
+    let previous_index = if vertex_index == 0 {
+        source.curves().len() - 1
+    } else {
+        vertex_index - 1
     };
-    let center = local_real_point(spec.origin, center_x, radius);
-    source
-        .fillet_vertex_by_parameters(1, previous_parameter, next_parameter, &center, clockwise)
-        .map_err(string_error)
-}
+    let previous = &source.curves()[previous_index];
+    let next = &source.curves()[vertex_index];
+    let previous_fraction = (amount / chord_length(previous)?).map_err(string_error)?;
+    let next_fraction = (amount / chord_length(next)?).map_err(string_error)?;
 
-fn unit_setback_parameter(amount: &Real) -> Result<Real, String> {
-    let four = Real::from(4_i32);
-    ((&four - amount) / four).map_err(string_error)
-}
+    let previous_domain = previous.parameter_domain();
+    let previous_span = previous_domain.end() - previous_domain.start();
+    let previous_parameter = previous_domain.end() - &(&previous_span * &previous_fraction);
+    let next_domain = next.parameter_domain();
+    let next_span = next_domain.end() - next_domain.start();
+    let next_parameter = next_domain.start() + &(&next_span * &next_fraction);
 
-fn unit_advance_parameter(amount: &Real) -> Result<Real, String> {
-    (amount / Real::from(4_i32)).map_err(string_error)
-}
+    let (previous_dx, previous_dy) = previous.end().delta_from(previous.start());
+    let (next_dx, next_dy) = next.end().delta_from(next.start());
+    let previous_offset_x = &previous_dx * &previous_fraction;
+    let previous_offset_y = &previous_dy * &previous_fraction;
+    let next_offset_x = &next_dx * &next_fraction;
+    let next_offset_y = &next_dy * &next_fraction;
+    let vertex = next.start();
+    let center = Point2::new(
+        vertex.x() - previous_offset_x + next_offset_x,
+        vertex.y() - previous_offset_y + next_offset_y,
+    );
 
-struct ArcLineFilletWitnesses {
-    center_distance: Real,
-    line_advance_parameter: Real,
-    arc_then_line_parameter: Real,
-    line_then_arc_parameter: Real,
-}
-
-fn arc_line_fillet_witnesses(scale: &Real) -> Result<ArcLineFilletWitnesses, String> {
-    // On the fixed radius-2 source circle, q gives exact rational tangent
-    // witnesses and a fillet radius of 2q². Keeping q below 3/4 keeps both
-    // tangent points strictly inside the authored arc and line domains.
-    let center_distance = Real::from(4_i32) * scale;
-    let line_advance_parameter = scale.clone();
-    let maximum_scale = rational(3, 4);
-    let angular_half_tangent = ((&maximum_scale - scale) / (Real::one() + &maximum_scale * scale))
-        .map_err(string_error)?;
-    let arc_then_line_parameter = (&angular_half_tangent
-        / (rational(3, 5) + rational(1, 5) * &angular_half_tangent))
-        .map_err(string_error)?;
-    Ok(ArcLineFilletWitnesses {
-        center_distance,
-        line_advance_parameter,
-        line_then_arc_parameter: Real::one() - &arc_then_line_parameter,
-        arc_then_line_parameter,
+    Ok(CornerWitness {
+        previous_parameter,
+        next_parameter,
+        center,
     })
+}
+
+fn chord_length(curve: &Curve2) -> Result<Real, String> {
+    let (dx, dy) = curve.end().delta_from(curve.start());
+    (&dx * &dx + &dy * &dy).sqrt().map_err(string_error)
 }
 
 fn curve_region_paths() -> Result<Vec<CurvePath2>, String> {
@@ -496,88 +524,36 @@ fn outer_boundary() -> Result<CurvePath2, String> {
 }
 
 fn family_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
-    match spec.corner_kind {
-        HoleCornerKind::AffinePair => affine_pair_hole(spec),
-        HoleCornerKind::ArcThenLine => arc_then_line_hole(spec),
-        HoleCornerKind::LineThenArc => line_then_arc_hole(spec),
+    match spec.kind {
+        HoleKind::Rectangle => rectangle_hole(spec),
+        HoleKind::Circle => circle_hole(spec),
     }
 }
 
-fn affine_pair_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
-    CurvePath2::try_new(vec![
-        affine_family_curve(
-            spec.previous_family,
-            local_point(spec.origin, -4, 0),
-            local_point(spec.origin, 0, 0),
-        )?,
-        affine_family_curve(
-            spec.next_family,
-            local_point(spec.origin, 0, 0),
-            local_point(spec.origin, 0, 4),
-        )?,
-        representative_top_curve(spec.top_family, spec.origin)?,
-        line_curve(
-            local_point(spec.origin, -4, 4),
-            local_point(spec.origin, -4, 0),
-        )?,
-    ])
-    .map_err(string_error)
-}
-
-fn arc_then_line_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
-    let arc_start = arc_transition_point(spec.origin);
-    let previous = CircularArc2::try_from_center(
-        arc_start.clone(),
+fn rectangle_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
+    let points = [
+        local_point(spec.origin, -4, 0),
         local_point(spec.origin, 0, 0),
-        local_point(spec.origin, 0, 2),
-        false,
-    )
-    .map_err(string_error)?;
-    CurvePath2::try_new(vec![
-        Curve2::from(previous),
-        line_curve(
-            local_point(spec.origin, 0, 0),
-            local_point(spec.origin, -4, 0),
-        )?,
-        line_curve(
-            local_point(spec.origin, -4, 0),
-            local_point(spec.origin, -4, 4),
-        )?,
-        representative_top_curve(spec.top_family, spec.origin)?
-            .reversed()
-            .map_err(string_error)?,
-        line_curve(local_point(spec.origin, 0, 4), arc_start)?,
-    ])
-    .map_err(string_error)
+        local_point(spec.origin, 0, 4),
+        local_point(spec.origin, -4, 4),
+    ];
+    let mut curves = Vec::with_capacity(points.len());
+    for index in 0..points.len() {
+        curves.push(affine_family_curve(
+            spec.families[index],
+            points[index].clone(),
+            points[(index + 1) % points.len()].clone(),
+        )?);
+    }
+    CurvePath2::try_new(curves).map_err(string_error)
 }
 
-fn line_then_arc_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
-    let arc_end = arc_transition_point(spec.origin);
-    let next = CircularArc2::try_from_center(
-        local_point(spec.origin, 0, 0),
-        arc_end.clone(),
-        local_point(spec.origin, 0, 2),
-        true,
-    )
-    .map_err(string_error)?;
-    CurvePath2::try_new(vec![
-        line_curve(
-            local_point(spec.origin, -4, 0),
-            local_point(spec.origin, 0, 0),
-        )?,
-        Curve2::from(next),
-        line_curve(arc_end, local_point(spec.origin, 0, 4))?,
-        representative_top_curve(spec.top_family, spec.origin)?,
-        line_curve(
-            local_point(spec.origin, -4, 4),
-            local_point(spec.origin, -4, 0),
-        )?,
-    ])
-    .map_err(string_error)
-}
-
-fn arc_transition_point(origin: (i32, i32)) -> Point2 {
-    local_real_point(origin, -rational(48, 25), rational(36, 25))
+fn circle_hole(spec: HoleSpec) -> Result<CurvePath2, String> {
+    let start = local_point(spec.origin, 0, 2);
+    let circle =
+        CircularArc2::try_from_center(start.clone(), start, local_point(spec.origin, -2, 2), false)
+            .map_err(string_error)?;
+    CurvePath2::try_new(vec![Curve2::from(circle)]).map_err(string_error)
 }
 
 fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Result<Curve2, String> {
@@ -626,102 +602,10 @@ fn affine_family_curve(family: CurveFamily2, start: Point2, end: Point2) -> Resu
     })
 }
 
-fn representative_top_curve(family: CurveFamily2, origin: (i32, i32)) -> Result<Curve2, String> {
-    let start = local_point(origin, 0, 4);
-    let end = local_point(origin, -4, 4);
-    Ok(match family {
-        CurveFamily2::Line => line_curve(start, end)?,
-        CurveFamily2::CircularArc => Curve2::from(
-            CircularArc2::from_bulge(start, end, rational(1, 3)).map_err(string_error)?,
-        ),
-        CurveFamily2::QuadraticBezier => Curve2::from(QuadraticBezier2::new(
-            start,
-            local_point(origin, -2, 6),
-            end,
-        )),
-        CurveFamily2::CubicBezier => Curve2::from(CubicBezier2::new(
-            start,
-            local_point(origin, -1, 6),
-            local_point(origin, -3, 3),
-            end,
-        )),
-        CurveFamily2::RationalQuadraticBezier => Curve2::from(
-            RationalQuadraticBezier2::try_unit_end_weights(
-                start,
-                local_point(origin, -2, 6),
-                end,
-                Real::from(2_i32),
-            )
-            .map_err(string_error)?,
-        ),
-        CurveFamily2::RationalBezier => Curve2::from(
-            RationalBezier2::try_new(
-                vec![
-                    start,
-                    local_point(origin, -1, 6),
-                    local_point(origin, -2, 3),
-                    local_point(origin, -3, 6),
-                    end,
-                ],
-                vec![
-                    Real::one(),
-                    Real::from(2_i32),
-                    Real::one(),
-                    Real::from(3_i32),
-                    Real::one(),
-                ],
-            )
-            .map_err(string_error)?,
-        ),
-        CurveFamily2::PolynomialBSpline => {
-            Curve2::try_polynomial_bspline(3, top_spline_points(origin), top_spline_knots(), None)
-                .map_err(string_error)?
-        }
-        CurveFamily2::Nurbs => Curve2::try_nurbs(
-            3,
-            top_spline_points(origin),
-            vec![
-                Real::one(),
-                Real::from(2_i32),
-                Real::one(),
-                Real::from(3_i32),
-                Real::one(),
-            ],
-            top_spline_knots(),
-            None,
-        )
-        .map_err(string_error)?,
-    })
-}
-
 fn interpolate_point(start: &Point2, end: &Point2, parameter: Real) -> Point2 {
     let x = start.x() + &((end.x() - start.x()) * &parameter);
     let y = start.y() + &((end.y() - start.y()) * parameter);
     Point2::new(x, y)
-}
-
-fn top_spline_points(origin: (i32, i32)) -> Vec<Point2> {
-    vec![
-        local_point(origin, 0, 4),
-        local_point(origin, -1, 6),
-        local_point(origin, -2, 3),
-        local_point(origin, -3, 6),
-        local_point(origin, -4, 4),
-    ]
-}
-
-fn top_spline_knots() -> Vec<Real> {
-    vec![
-        Real::zero(),
-        Real::zero(),
-        Real::zero(),
-        Real::zero(),
-        Real::one(),
-        Real::from(2_i32),
-        Real::from(2_i32),
-        Real::from(2_i32),
-        Real::from(2_i32),
-    ]
 }
 
 fn linear_spline_knots() -> Vec<Real> {
@@ -775,10 +659,6 @@ fn local_point(origin: (i32, i32), x: i32, y: i32) -> Point2 {
     point(origin.0 + x, origin.1 + y)
 }
 
-fn local_real_point(origin: (i32, i32), x: Real, y: Real) -> Point2 {
-    Point2::new(Real::from(origin.0) + x, Real::from(origin.1) + y)
-}
-
 fn rational(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).expect("nonzero exact denominator")
 }
@@ -828,10 +708,7 @@ mod tests {
     fn both_corner_tabs_materialize_every_hole_at_both_slider_extremes() {
         for operation in [CornerOperation::Fillet, CornerOperation::Chamfer] {
             let mut scene = CornerScene::new(operation, 1.0);
-            let amounts = match operation {
-                CornerOperation::Fillet => [0.25, 0.7],
-                CornerOperation::Chamfer => [0.25, 1.5],
-            };
+            let amounts = [0.25, 1.5];
             for amount in amounts {
                 scene.apply_amount(amount).unwrap();
                 scene.refresh_result();
@@ -848,6 +725,32 @@ mod tests {
                     scene.result_display.as_ref().unwrap().holes.len(),
                     HOLE_SPECS.len()
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn both_operations_edit_every_geometric_corner_and_preserve_smooth_circles() {
+        let source_paths = curve_region_paths().unwrap();
+        assert_eq!(
+            source_paths
+                .iter()
+                .map(|path| {
+                    (0..path.curves().len())
+                        .filter(|index| is_geometric_corner(path, *index))
+                        .count()
+                })
+                .sum::<usize>(),
+            EDITED_CORNER_COUNT
+        );
+
+        for operation in [CornerOperation::Fillet, CornerOperation::Chamfer] {
+            for source in &source_paths {
+                let corner_count = (0..source.curves().len())
+                    .filter(|index| is_geometric_corner(source, *index))
+                    .count();
+                let edited = edit_all_corners(source, operation, Real::one()).unwrap();
+                assert_eq!(edited.curves().len(), source.curves().len() + corner_count);
             }
         }
     }
