@@ -117,6 +117,18 @@ fn bench_exact_triangulation(c: &mut Criterion) {
         })
     });
 
+    let located_delaunay_points = (0..400_i64)
+        .map(|index| {
+            p(
+                r((index % 20) * 100 + (index * 17) % 31),
+                r((index / 20) * 100 + (index * 29) % 37),
+            )
+        })
+        .collect::<Vec<_>>();
+    c.bench_function("exact_delaunay_400_located_insertions", |b| {
+        b.iter(|| hypertri::cdt::delaunay(&located_delaunay_points).unwrap())
+    });
+
     let shared_denominator_polygon = hypertri::PolygonInput::new(
         vec![
             p(q(0, 3), q(0, 3)),

@@ -13,6 +13,10 @@ use crate::predicates;
 use crate::types::{Constraint, ExactPoint, Point2, Real, Triangle};
 use crate::types::{Sign, TriangleLocation};
 
+// Sorting a handful of integer edge handles costs more than the exhaustive
+// exact test, so retain the simple path until a nontrivial mesh exists.
+const LOCATED_CAVITY_THRESHOLD: usize = 4;
+
 /// Triangulation result for an unconstrained 2D point set.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
@@ -499,10 +503,35 @@ where
 
     for point in 0..points.len() {
         let mut bad = vec![false; triangles.len()];
-        for (triangle_index, &triangle) in triangles.iter().enumerate() {
-            if incircle_inside_or_on::<K>(&work_points, triangle, point)? {
-                bad[triangle_index] = true;
+        if triangles.len() >= LOCATED_CAVITY_THRESHOLD {
+            let neighbors = triangle_neighbors(&triangles);
+            if let Some(seed) = locate_triangle::<K>(
+                &work_points,
+                &triangles,
+                &neighbors,
+                point,
+                triangles.len().saturating_sub(1),
+            )? {
+                let mut visited = vec![false; triangles.len()];
+                let mut pending = vec![seed];
+                while let Some(triangle_index) = pending.pop() {
+                    if visited[triangle_index] {
+                        continue;
+                    }
+                    visited[triangle_index] = true;
+                    if incircle_inside_or_on::<K>(&work_points, triangles[triangle_index], point)? {
+                        bad[triangle_index] = true;
+                        pending.extend(neighbors[triangle_index].iter().flatten().copied());
+                    }
+                }
+                if !bad.iter().any(|is_bad| *is_bad) {
+                    mark_bad_triangles_exhaustive::<K>(&work_points, &triangles, point, &mut bad)?;
+                }
+            } else {
+                mark_bad_triangles_exhaustive::<K>(&work_points, &triangles, point, &mut bad)?;
             }
+        } else {
+            mark_bad_triangles_exhaustive::<K>(&work_points, &triangles, point, &mut bad)?;
         }
 
         let mut cavity = Vec::new();
@@ -533,6 +562,103 @@ where
 
     triangles.retain(|triangle| !triangle.iter().any(|&index| index >= first_super));
     Ok(triangles)
+}
+
+fn mark_bad_triangles_exhaustive<K>(
+    points: &[Point2],
+    triangles: &[Triangle],
+    point: usize,
+    bad: &mut [bool],
+) -> Result<()>
+where
+    K: Kernel,
+{
+    for (triangle_index, &triangle) in triangles.iter().enumerate() {
+        if incircle_inside_or_on::<K>(points, triangle, point)? {
+            bad[triangle_index] = true;
+        }
+    }
+    Ok(())
+}
+
+fn triangle_neighbors(triangles: &[Triangle]) -> Vec<[Option<usize>; 3]> {
+    let mut edges = Vec::with_capacity(triangles.len() * 3);
+    for (triangle_index, triangle) in triangles.iter().enumerate() {
+        for (edge_index, (from, to)) in [
+            (triangle[0], triangle[1]),
+            (triangle[1], triangle[2]),
+            (triangle[2], triangle[0]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            edges.push((from.min(to), from.max(to), triangle_index, edge_index));
+        }
+    }
+    edges.sort_unstable();
+
+    let mut neighbors = vec![[None; 3]; triangles.len()];
+    let mut start = 0;
+    while start < edges.len() {
+        let mut end = start + 1;
+        while end < edges.len() && edges[end].0 == edges[start].0 && edges[end].1 == edges[start].1
+        {
+            end += 1;
+        }
+        if end - start == 2 {
+            let (_, _, first_triangle, first_edge) = edges[start];
+            let (_, _, second_triangle, second_edge) = edges[start + 1];
+            neighbors[first_triangle][first_edge] = Some(second_triangle);
+            neighbors[second_triangle][second_edge] = Some(first_triangle);
+        }
+        start = end;
+    }
+    neighbors
+}
+
+fn locate_triangle<K>(
+    points: &[Point2],
+    triangles: &[Triangle],
+    neighbors: &[[Option<usize>; 3]],
+    point: usize,
+    seed: usize,
+) -> Result<Option<usize>>
+where
+    K: Kernel,
+{
+    if triangles.is_empty() {
+        return Ok(None);
+    }
+    let mut current = seed.min(triangles.len() - 1);
+    let mut visited = vec![false; triangles.len()];
+    while !visited[current] {
+        visited[current] = true;
+        let triangle = triangles[current];
+        let mut crossed_edge = false;
+        for (edge_index, (from, to)) in [
+            (triangle[0], triangle[1]),
+            (triangle[1], triangle[2]),
+            (triangle[2], triangle[0]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            if predicates::orient2d::<K>(&points[from], &points[to], &points[point])?
+                == Sign::Negative
+            {
+                crossed_edge = true;
+                let Some(neighbor) = neighbors[current][edge_index] else {
+                    return Ok(None);
+                };
+                current = neighbor;
+                break;
+            }
+        }
+        if !crossed_edge {
+            return Ok(Some(current));
+        }
+    }
+    Ok(None)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -867,6 +993,30 @@ mod tests {
                 .flatten()
                 .all(|&index| index < points.len())
         );
+    }
+
+    #[test]
+    fn located_cavity_triangulates_and_validates_large_exact_set() {
+        let points = (0..400_i32)
+            .map(|index| {
+                p(
+                    (index % 20) * 100 + (index * 17) % 31,
+                    (index / 20) * 100 + (index * 29) % 37,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let triangulation = delaunay(&points).unwrap();
+
+        triangulation.validate().unwrap();
+        for index in 0..points.len() {
+            assert!(
+                triangulation
+                    .triangles()
+                    .iter()
+                    .any(|triangle| triangle.contains(&index))
+            );
+        }
     }
 
     #[cfg(feature = "earcut")]
