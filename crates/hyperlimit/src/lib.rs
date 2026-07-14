@@ -76,8 +76,7 @@ pub use orient::{
     Point2, Point3, PreparedCircle2Polynomial, PreparedIncircle2, PreparedInsphere3,
     PreparedLiftedPolynomialFacts, PreparedLine2, PreparedPredicateFacts,
     PreparedSphere3Polynomial, classify_point_line, incircle2d, incircle2d_report, insphere3d,
-    insphere3d_report, orient2d, orient2d_f64, orient2d_f64_report, orient2d_report,
-    orient2d_with_policy, orient3d, orient3d_report,
+    insphere3d_report, orient2d, orient2d_report, orient2d_with_policy, orient3d, orient3d_report,
 };
 pub use plane::{
     Plane3, PlaneAabbReport, PlaneAabbReportValidationError, PreparedOrientedPlane3,

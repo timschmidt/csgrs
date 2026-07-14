@@ -32,30 +32,6 @@ pub fn orient2d_report(a: &Point2, b: &Point2, c: &Point2) -> PredicateReport<Si
     orient2d_report_with_policy(a, b, c, PredicatePolicy)
 }
 
-/// Orientation of three finite primitive 2D points.
-///
-/// This is a boundary adapter: coordinates are first lifted through
-/// `hyperlattice::Point2` and the orientation decision then follows the ordinary
-/// hyperlimit predicate pipeline.
-pub fn orient2d_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateOutcome<Sign> {
-    orient2d_f64_report(a, b, c).outcome
-}
-
-/// Orientation of three finite primitive 2D points with provenance.
-pub fn orient2d_f64_report(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> PredicateReport<Sign> {
-    let (Ok(a), Ok(b), Ok(c)) = (
-        Point2::try_from_f64_array(a),
-        Point2::try_from_f64_array(b),
-        Point2::try_from_f64_array(c),
-    ) else {
-        return PredicateReport::from_outcome(PredicateOutcome::unknown(
-            RefinementNeed::Unsupported,
-            Escalation::Undecided,
-        ));
-    };
-    orient2d_report(&a, &b, &c)
-}
-
 /// Orientation of three 2D points with an explicit escalation policy and
 /// provenance certificate.
 pub(crate) fn orient2d_report_with_policy(
@@ -1469,19 +1445,6 @@ mod tests {
         let b = p2(1.0, 0.0);
         let c = p2(0.0, 1.0);
         assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
-    }
-
-    #[test]
-    fn orient2d_f64_lifts_finite_boundary_points() {
-        assert_eq!(
-            orient2d_f64([0.0, 0.0], [1.0, 0.0], [0.0, 1.0]).value(),
-            Some(Sign::Positive)
-        );
-        assert!(
-            orient2d_f64([0.0, 0.0], [f64::NAN, 0.0], [0.0, 1.0])
-                .value()
-                .is_none()
-        );
     }
 
     #[test]
