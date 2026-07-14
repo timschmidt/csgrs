@@ -26,9 +26,6 @@ bytemuck = "1.23"
 glow = "0.16"
 nalgebra = "0.34"
 
-[dev-dependencies]
-proptest = "1.7.0"
-
 # Keep transitive Hyper crates unified while using sibling path dependencies.
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }
