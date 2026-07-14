@@ -70,6 +70,32 @@ mod tests {
     }
 
     #[test]
+    fn homogeneous_quadratic_interpolation_division_preserves_nonzero_numerator() {
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        let two_thirds = Real::new(Rational::fraction(2, 3).unwrap());
+        let weight = (Real::from(2_i32).sqrt().unwrap() / Real::from(2_i32)).unwrap();
+
+        let first_y = &weight * &third;
+        let second_y = (&weight * &two_thirds) + &third;
+        let homogeneous_y = (&first_y * &two_thirds) + (&second_y * &third);
+
+        let first_weight = &two_thirds + (&weight * &third);
+        let second_weight = (&weight * &two_thirds) + &third;
+        let homogeneous_weight = (&first_weight * &two_thirds) + (&second_weight * &third);
+
+        assert!(!homogeneous_y.definitely_zero());
+        assert_close(homogeneous_y.clone(), 0.42538079163846554, 1e-12);
+        assert_close(homogeneous_weight.clone(), 0.8698252360829101, 1e-12);
+        assert_close(
+            homogeneous_weight.inverse_ref().unwrap(),
+            1.1496562280755465,
+            1e-12,
+        );
+        let coordinate = (&homogeneous_y / &homogeneous_weight).unwrap();
+        assert_close(coordinate, 0.4890416764108682, 1e-12);
+    }
+
+    #[test]
     fn rational() {
         let two: Real = 2.into();
         assert_ne!(two, Real::zero());

@@ -63,8 +63,8 @@ fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) 
     if sign2 == Some(Sign::NoSign) {
         return c1.approx_signal(signal, p);
     }
-    let msd1 = planning_msd1.unwrap_or_else(|| c1.msd(cutoff));
-    let msd2 = planning_msd2.unwrap_or_else(|| c2.msd(cutoff));
+    let msd1 = planning_msd1.flatten().or_else(|| c1.msd(cutoff));
+    let msd2 = planning_msd2.flatten().or_else(|| c2.msd(cutoff));
 
     match (msd1, msd2) {
         (None, None) => return Zero::zero(),
@@ -136,8 +136,8 @@ fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precis
     if sign1 == Some(Sign::NoSign) || sign2 == Some(Sign::NoSign) {
         return Zero::zero();
     }
-    let msd1 = msd1.unwrap_or_else(|| c1.msd(half_prec));
-    let msd2 = msd2.unwrap_or_else(|| c2.msd(half_prec));
+    let msd1 = msd1.flatten().or_else(|| c1.msd(half_prec));
+    let msd2 = msd2.flatten().or_else(|| c2.msd(half_prec));
 
     match (msd1, msd2) {
         (None, None) => Zero::zero(),

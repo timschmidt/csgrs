@@ -123,11 +123,18 @@ impl Rational {
         Self::from_parts_raw(self.sign, n, self.denominator.clone())
     }
 
-    pub(crate) fn denominator(&self) -> &BigUint {
+    /// Returns the reduced positive denominator magnitude.
+    ///
+    /// Together with [`Rational::numerator`] and [`Rational::sign`], this
+    /// exposes the canonical exact-rational representation without cloning it.
+    pub fn denominator(&self) -> &BigUint {
         &self.denominator
     }
 
-    pub(crate) fn numerator(&self) -> &BigUint {
+    /// Returns the reduced unsigned numerator magnitude.
+    ///
+    /// The sign is available separately through [`Rational::sign`].
+    pub fn numerator(&self) -> &BigUint {
         &self.numerator
     }
 
