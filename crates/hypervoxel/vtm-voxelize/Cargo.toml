@@ -7,6 +7,8 @@ edition = "2024"
 description = "Convert OBJ triangle meshes to Voxelis VTM models"
 repository.workspace = true
 readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 voxelis.workspace = true

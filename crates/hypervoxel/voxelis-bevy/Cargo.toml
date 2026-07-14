@@ -7,10 +7,11 @@ edition = "2024"
 description = "Bevy examples for visualizing Voxelis models and greedy meshes"
 repository.workspace = true
 readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 voxelis.workspace = true
-# egui_extras.workspace = true
 bevy_egui.workspace = true
 bevy_panorbit_camera.workspace = true
 bevy_screen_diagnostics.workspace = true

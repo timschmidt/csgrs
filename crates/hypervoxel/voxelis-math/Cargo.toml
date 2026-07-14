@@ -7,6 +7,8 @@ edition = "2024"
 description = "Floating-point intersection helpers used by Voxelis voxelizers"
 repository.workspace = true
 readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 glam.workspace = true

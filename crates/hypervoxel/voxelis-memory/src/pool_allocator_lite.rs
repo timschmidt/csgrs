@@ -271,7 +271,7 @@ mod tests {
 
         let _id1 = allocator.allocate(42, None);
         let _id2 = allocator.allocate(24, None);
-        let _id3 = allocator.allocate(22, None); // Should panic
+        let _id3 = allocator.allocate(22, None);
     }
 
     #[repr(align(16))]
@@ -288,22 +288,18 @@ mod tests {
         let mut allocator: PoolAllocatorLite<u32> = PoolAllocatorLite::new(4);
         let mut free_list = Vec::new();
 
-        // Allocate all blocks
         let id1 = allocator.allocate(1, None);
         let id2 = allocator.allocate(2, None);
         let _id3 = allocator.allocate(3, None);
 
-        // Free in specific order
-        allocator.deallocate(id2); // Middle
+        allocator.deallocate(id2);
         free_list.push(id2);
-        allocator.deallocate(id1); // First
+        allocator.deallocate(id1);
         free_list.push(id1);
 
-        // Check LIFO order
         let new_id1 = allocator.allocate(4, free_list.pop());
         let new_id2 = allocator.allocate(5, free_list.pop());
 
-        // We should get blocks in reverse deallocation order
         assert_eq!(new_id1, id1);
         assert_eq!(new_id2, id2);
     }
@@ -313,11 +309,9 @@ mod tests {
         let mut allocator: PoolAllocatorLite<u32> = PoolAllocatorLite::new(1);
         let mut free_list = Vec::new();
 
-        // Aloocate single block
         let id = allocator.allocate(42, None);
         assert_eq!(id, 0);
 
-        // Deallocate and allocate again - should reuse the same block
         allocator.deallocate(id);
         free_list.push(id);
 

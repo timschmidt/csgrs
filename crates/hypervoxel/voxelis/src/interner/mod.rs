@@ -338,10 +338,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::inc_all_child_refs");
 
-        #[cfg(feature = "debug_trace_ref_counts")]
-        let mut i = 0;
-
-        for child_id in children.iter() {
+        for (_i, child_id) in children.iter().enumerate() {
             if !child_id.is_empty() {
                 #[cfg(feature = "debug_trace_ref_counts")]
                 let current_ref_count = self.get_ref(child_id);
@@ -350,14 +347,9 @@ impl<T: VoxelTrait> VoxInterner<T> {
 
                 #[cfg(feature = "debug_trace_ref_counts")]
                 println!(
-                    "  [{i}] Incrementing ref count for child_id: {child_id:?} ref_count: {current_ref_count} -> {}",
+                    "  [{_i}] Incrementing ref count for child_id: {child_id:?} ref_count: {current_ref_count} -> {}",
                     self.get_ref(child_id),
                 );
-            }
-
-            #[cfg(feature = "debug_trace_ref_counts")]
-            {
-                i += 1;
             }
         }
     }

@@ -1,5 +1,8 @@
 use std::{f32::consts::PI, time::Duration};
 
+#[cfg(feature = "trace_greedy_timings")]
+use std::time::Instant;
+
 use bevy::{
     core_pipeline::{
         Skybox,

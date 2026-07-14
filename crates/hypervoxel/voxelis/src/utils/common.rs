@@ -22,7 +22,7 @@ pub const fn child_index2(position: &IVec3, current: usize, max: usize) -> usize
 
 #[inline(always)]
 pub const fn encode_child_index_path(position: &IVec3) -> u32 {
-    const MASK_10_BITS: u32 = 0x000003FF; // Mask for lower 10 bits
+    const MASK_10_BITS: u32 = 0x000003FF;
     const MASK_1: u32 = 0x30000FF;
     const MASK_2: u32 = 0x300F00F;
     const MASK_3: u32 = 0x30C30C3;
@@ -32,32 +32,30 @@ pub const fn encode_child_index_path(position: &IVec3) -> u32 {
     let y = (position.y as u32) & MASK_10_BITS;
     let z = (position.z as u32) & MASK_10_BITS;
 
-    // Split x bits using magic shifts and masks
+    // Spread each coordinate bit into every third output position.
     let x = (x | (x << 16)) & MASK_1;
     let x = (x | (x << 8)) & MASK_2;
     let x = (x | (x << 4)) & MASK_3;
     let x = (x | (x << 2)) & MASK_4;
 
-    // Split y bits
     let y = (y | (y << 16)) & MASK_1;
     let y = (y | (y << 8)) & MASK_2;
     let y = (y | (y << 4)) & MASK_3;
     let y = (y | (y << 2)) & MASK_4;
 
-    // Split z bits
     let z = (z | (z << 16)) & MASK_1;
     let z = (z | (z << 8)) & MASK_2;
     let z = (z | (z << 4)) & MASK_3;
     let z = (z | (z << 2)) & MASK_4;
 
-    // Combine results - x at positions 3n, y at 3n+1, z at 3n+2
+    // Interleave x at 3n, y at 3n + 1, and z at 3n + 2.
     x | (y << 1) | (z << 2)
 }
 
 #[macro_export]
 macro_rules! encode_child_index_path_macro {
     ($position:expr) => {{
-        const MASK_10_BITS: u32 = 0x000003FF; // Mask for lower 10 bits
+        const MASK_10_BITS: u32 = 0x000003FF;
         const MASK_1: u32 = 0x30000FF;
         const MASK_2: u32 = 0x300F00F;
         const MASK_3: u32 = 0x30C30C3;
@@ -67,25 +65,23 @@ macro_rules! encode_child_index_path_macro {
         let y = ($position.y as u32) & MASK_10_BITS;
         let z = ($position.z as u32) & MASK_10_BITS;
 
-        // Split x bits using magic shifts and masks
+        // Spread each coordinate bit into every third output position.
         let x = (x | (x << 16)) & MASK_1;
         let x = (x | (x << 8)) & MASK_2;
         let x = (x | (x << 4)) & MASK_3;
         let x = (x | (x << 2)) & MASK_4;
 
-        // Split y bits
         let y = (y | (y << 16)) & MASK_1;
         let y = (y | (y << 8)) & MASK_2;
         let y = (y | (y << 4)) & MASK_3;
         let y = (y | (y << 2)) & MASK_4;
 
-        // Split z bits
         let z = (z | (z << 16)) & MASK_1;
         let z = (z | (z << 8)) & MASK_2;
         let z = (z | (z << 4)) & MASK_3;
         let z = (z | (z << 2)) & MASK_4;
 
-        // Combine results - x at positions 3n, y at 3n+1, z at 3n+2
+        // Interleave x at 3n, y at 3n + 1, and z at 3n + 2.
         x | (y << 1) | (z << 2)
     }};
 }
@@ -311,13 +307,11 @@ fn collect_stats<T: VoxelTrait>(
 ) {
     stats.total_nodes += 1;
 
-    // Ensure we have enough space in nodes_by_depth
     while stats.nodes_by_depth.len() <= depth as usize {
         stats.nodes_by_depth.push(0);
     }
     stats.nodes_by_depth[depth as usize] += 1;
 
-    // Update max depth
     stats.max_depth_reached = stats.max_depth_reached.max(depth);
 
     match node_id.is_leaf() {

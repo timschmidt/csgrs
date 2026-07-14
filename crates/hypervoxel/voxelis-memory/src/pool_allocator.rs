@@ -291,7 +291,7 @@ mod tests {
 
         let _id1 = allocator.allocate(42);
         let _id2 = allocator.allocate(24);
-        let _id3 = allocator.allocate(22); // Should panic
+        let _id3 = allocator.allocate(22);
     }
 
     #[test]
@@ -301,7 +301,7 @@ mod tests {
 
         let id = allocator.allocate(42);
         allocator.deallocate(id);
-        allocator.deallocate(id); // Should panic
+        allocator.deallocate(id);
     }
 
     #[repr(align(16))]
@@ -317,20 +317,16 @@ mod tests {
     fn test_pool_allocator_reuse_order() {
         let mut allocator: PoolAllocator<u32> = PoolAllocator::new(4);
 
-        // Allocate all blocks
         let id1 = allocator.allocate(1);
         let id2 = allocator.allocate(2);
         let _ = allocator.allocate(3);
 
-        // Free in specific order
-        allocator.deallocate(id2); // Middle
-        allocator.deallocate(id1); // First
+        allocator.deallocate(id2);
+        allocator.deallocate(id1);
 
-        // Check LIFO order
         let new_id1 = allocator.allocate(4);
         let new_id2 = allocator.allocate(5);
 
-        // We should get blocks in reverse deallocation order
         assert_eq!(new_id1, id1);
         assert_eq!(new_id2, id2);
     }
@@ -339,11 +335,9 @@ mod tests {
     fn test_pool_allocator_capacity_edge() {
         let mut allocator: PoolAllocator<u32> = PoolAllocator::new(1);
 
-        // Aloocate single block
         let id = allocator.allocate(42);
         assert_eq!(id, 0);
 
-        // Deallocate and allocate again - should reuse the same block
         allocator.deallocate(id);
         let new_id = allocator.allocate(24);
         assert_eq!(new_id, 0);

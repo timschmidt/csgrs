@@ -13,31 +13,9 @@ use super::{
     VoxOpsBatch, VoxOpsBulkWrite, VoxOpsConfig, VoxOpsDirty, VoxOpsRead, VoxOpsState, VoxOpsWrite,
 };
 
-/// Lookup table for fast sibling scanning in octree traversal using Morton-encoded paths.
-///
-/// `PATH_MASKS[max_depth][level]` provides a bitmask indicating which sibling nodes
-/// (at a given tree level) are affected by a batch operation or traversal, based on the
-/// Morton encoding of the path. Each mask allows to quickly select all siblings up to
-/// a given position, enabling efficient batch updates and queries.
-///
-/// - The outer array index (`max_depth`) corresponds to the maximum octree depth.
-/// - The inner array index (`level`) corresponds to the current level within the octree (0-based).
-/// - Each mask is a bitfield where set bits indicate affected siblings at that level.
-///
-/// # Usage
-///
-/// Used internally in SVO DAG batch algorithms for fast propagation of changes
-/// across sibling nodes, leveraging the spatial locality of Morton codes.
-///
-/// # Morton Encoding
-///
-/// Morton codes (Z-order curve) interleave the bits of the 3D coordinates,
-/// enabling efficient spatial indexing and traversal in octrees.
-///
-/// # See also
-///
-/// - [`encode_child_index_path`]
-/// - SVO DAG batch update logic
+// `PATH_MASKS[max_depth][level]` selects the Morton path groups from the root
+// through `level`. Batch traversal uses these prefixes to identify siblings
+// affected by a sorted run of voxel addresses.
 const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
     // max_depth == 0
     [
@@ -104,7 +82,11 @@ const PATH_MASKS: [[u32; MAX_ALLOWED_DEPTH - 1]; MAX_ALLOWED_DEPTH] = [
     ],
 ];
 
-/// VoxTree - a high performance, SVO DAG (Sparse Voxel Octree Directed Acyclic Graph) structure.
+/// Root handle for one fixed-depth sparse voxel DAG.
+///
+/// Nodes and values live in a [`VoxInterner`]; a tree must always be operated
+/// on with the interner that owns its [`BlockId`]. Edits path-copy shared nodes,
+/// allowing multiple trees to deduplicate identical subtrees.
 pub struct VoxTree<T: VoxelTrait> {
     max_depth: MaxDepth,
     root_id: BlockId,
@@ -181,7 +163,6 @@ impl<T: VoxelTrait> VoxOpsWrite<T> for VoxTree<T> {
                 interner.dump_node(self.root_id, 0, "  ");
             }
 
-            // Existing root - modify
             set_at_root(
                 interner,
                 &self.root_id,
@@ -437,7 +418,7 @@ fn set_at_depth_iterative<T: VoxelTrait>(
             current_node_id = interner.get_child_id(&current_node_id, index);
         } else {
             if interner.get_value(&current_node_id) == &voxel {
-                return BlockId::INVALID; // Nothing changed
+                return BlockId::INVALID;
             }
 
             // Split leaf node
@@ -469,7 +450,7 @@ fn set_at_depth_iterative<T: VoxelTrait>(
     if current_node_id.is_leaf() && interner.get_value(&current_node_id) == &voxel {
         #[cfg(feature = "debug_trace_ref_counts")]
         println!("  voxel already exists, no change required");
-        return BlockId::INVALID; // Nothing changed
+        return BlockId::INVALID;
     }
 
     current_node_id = interner.get_or_create_leaf(voxel);
@@ -836,7 +817,6 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                 let value = &values[idx];
 
                 if !children[idx].is_empty() && interner.get_value(&children[idx]) == value {
-                    // No change needed
                     continue;
                 }
 
@@ -848,7 +828,6 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
             }
 
             if modified_childs == 0 {
-                // No changes made
                 continue;
             }
 
@@ -859,7 +838,7 @@ fn set_batch_at_depth_iterative<T: VoxelTrait>(
                     non_modified_childs_bits &= !(1 << idx);
 
                     if !children[idx].is_empty() {
-                        // If the child was not modified, we need to increment its ref count
+                        // Reused children gain one reference from the new branch.
                         interner.inc_ref_by(&children[idx], 1);
                     }
                 }
@@ -1144,18 +1123,14 @@ mod tests {
         let mut tree = VoxTree::new(MaxDepth::new(3));
         let position = IVec3::new(0, 0, 0);
 
-        // Test setting and getting a value
         assert!(tree.set(&mut interner, position, 42));
         assert_eq!(tree.get(&interner, position), Some(42));
 
-        // Test overwriting a value
         assert!(tree.set(&mut interner, position, 24));
         assert_eq!(tree.get(&interner, position), Some(24));
 
-        // Test getting from an empty position
         assert_eq!(tree.get(&interner, IVec3::new(1, 1, 1)), None);
 
-        // Test setting at max depth
         let max_pos = IVec3::new(7, 7, 7); // 2^3 - 1
         assert!(tree.set(&mut interner, max_pos, 99));
         assert_eq!(tree.get(&interner, max_pos), Some(99));
@@ -1189,11 +1164,9 @@ mod tests {
         let mut tree = VoxTree::new(MaxDepth::new(3));
         assert!(tree.is_empty());
 
-        // Setting a value makes it non-empty
         assert!(tree.set(&mut interner, IVec3::new(0, 0, 0), 1));
         assert!(!tree.is_empty());
 
-        // Clearing makes it empty again
         tree.clear(&mut interner);
         assert!(tree.is_empty());
     }
@@ -1233,15 +1206,12 @@ mod tests {
 
         let mut tree = VoxTree::new(MaxDepth::new(3));
 
-        // Set a value and then set it back to default
         let position = IVec3::new(0, 0, 0);
         assert!(tree.set(&mut interner, position, 42));
         assert_eq!(tree.get(&interner, position), Some(42));
         assert!(!tree.is_empty());
 
-        // 0 is default for u8
         assert!(tree.set(&mut interner, position, 0));
-        // The node should be removed when set to default
         assert_eq!(tree.get(&interner, position), None);
         assert!(tree.is_empty());
     }
@@ -1253,15 +1223,12 @@ mod tests {
         let mut tree = VoxTree::new(MaxDepth::new(3));
         assert!(!tree.is_dirty());
 
-        // Setting a value should make it dirty
         assert!(tree.set(&mut interner, IVec3::new(0, 0, 0), 1));
         assert!(tree.is_dirty());
 
-        // Clearing the dirty flag
         tree.clear_dirty();
         assert!(!tree.is_dirty());
 
-        // Clearing the voxtree should make it dirty again
         tree.clear(&mut interner);
         assert!(tree.is_dirty());
     }
@@ -1273,16 +1240,13 @@ mod tests {
         let mut tree1 = VoxTree::new(MaxDepth::new(3));
         let mut tree2 = VoxTree::new(MaxDepth::new(3));
 
-        // Both trees should be empty initially
         assert!(tree1.is_empty());
         assert!(tree2.is_empty());
 
-        // Setting in one tree should not affect the other
         assert!(tree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
         assert_eq!(tree1.get(&interner, IVec3::new(0, 0, 0)), Some(42));
         assert_eq!(tree2.get(&interner, IVec3::new(0, 0, 0)), None);
 
-        // But they should share the same interner for efficiency
         assert!(tree2.set(&mut interner, IVec3::new(0, 0, 0), 24));
         assert_eq!(tree2.get(&interner, IVec3::new(0, 0, 0)), Some(24));
         assert_ne!(tree1.get_root_id(), tree2.get_root_id());
@@ -1295,11 +1259,9 @@ mod tests {
         let mut tree1 = VoxTree::new(MaxDepth::new(3));
         let mut tree2 = VoxTree::new(MaxDepth::new(3));
 
-        // Both trees should be empty initially
         assert!(tree1.is_empty());
         assert!(tree2.is_empty());
 
-        // Setting same value in both trees should result in the same root id (deduplication)
         assert!(tree1.set(&mut interner, IVec3::new(0, 0, 0), 42));
         assert!(tree2.set(&mut interner, IVec3::new(0, 0, 0), 42));
         assert_eq!(tree1.get_root_id(), tree2.get_root_id());
@@ -1318,11 +1280,9 @@ mod tests {
         assert!(tree.set(&mut interner, position, TEST_VALUE));
         assert_eq!(tree.get(&interner, position), Some(TEST_VALUE));
 
-        // Test overwriting a value
         assert!(tree.set(&mut interner, position, TEST_VALUE + 1));
         assert_eq!(tree.get(&interner, position), Some(TEST_VALUE + 1));
 
-        // Test setting same value
         assert!(!tree.set(&mut interner, position, TEST_VALUE + 1));
         assert_eq!(tree.get(&interner, position), Some(TEST_VALUE + 1));
     }
@@ -1427,7 +1387,6 @@ mod tests {
         let mut tree = VoxTree::new(MAX_DEPTH);
         let voxels_per_axis = tree.voxels_per_axis(Lod::new(0)) as i32;
 
-        // Create a checkerboard pattern
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {
@@ -1467,7 +1426,6 @@ mod tests {
 
         let mut batch = tree.create_batch();
 
-        // Create a checkerboard pattern
         for y in 0..voxels_per_axis {
             for z in 0..voxels_per_axis {
                 for x in 0..voxels_per_axis {

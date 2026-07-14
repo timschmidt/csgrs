@@ -18,5 +18,10 @@ floating-point triangle/cube tests and produces sampled storage rather than an
 exact source-geometry certificate. Enable `memory_stats` (default) for allocator
 statistics or `tracy` for profiling.
 
+## References
+
+- Tomas Akenine-Möller, [“Fast 3D Triangle-Box Overlap Testing”](https://doi.org/10.1145/1198555.1198748), 2005.
+- Viktor Kämpe, Erik Sintorn, and Ulf Assarsson, [“High Resolution Sparse Voxel DAGs”](https://doi.org/10.1145/2461912.2462024), 2013.
+
 See [Voxelis Voxelize](../voxelis-voxelize/README.md) for the library workflow
 and [HyperVoxel](../README.md) for exact-aware voxelization.

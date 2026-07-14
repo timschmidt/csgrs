@@ -9,6 +9,8 @@ homepage = "https://github.com/WildPixelGames/voxelis"
 repository = "https://github.com/WildPixelGames/voxelis"
 documentation = "https://docs.rs/voxelis-memory"
 readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

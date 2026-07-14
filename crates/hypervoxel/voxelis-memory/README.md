@@ -38,6 +38,11 @@ cargo test -p voxelis-memory --all-features --locked
 cargo clippy -p voxelis-memory --all-targets --all-features --locked -- -D warnings
 ```
 
+## References
+
+- [Rust `Layout` documentation](https://doc.rust-lang.org/std/alloc/struct.Layout.html) defines the size and alignment contract used for pool allocations.
+- [The Rustonomicon: Allocating Memory](https://doc.rust-lang.org/nomicon/vec/vec-alloc.html) explains the raw-allocation invariants behind contiguous storage.
+
 The allocator design supports [Voxelis](../voxelis/README.md). See
 [HyperVoxel](../README.md) for the exact-aware voxel layer and wider Hyper
 ecosystem.

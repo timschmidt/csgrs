@@ -3,6 +3,7 @@ name = "hypervoxel-fuzz"
 version = "0.1.0"
 publish = false
 edition = "2024"
+readme = "README.md"
 
 [workspace]
 
@@ -12,8 +13,8 @@ cargo-fuzz = true
 [dependencies]
 arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+# Local paths fuzz the complete development stack; the commented versions
+# record the corresponding release coordinates.
 hypervoxel = { path = "..", features = ["hypermesh-adapter", "legacy-voxelis"] }
 hyperreal = { path = "../../hyperreal" }
 hypermesh = { path = "../../hypermesh" }

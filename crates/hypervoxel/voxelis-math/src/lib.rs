@@ -235,7 +235,6 @@ mod tests {
         fn test_inside_cube() {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
-            // Inside the cube
             assert!(point_in_or_on_cube(DVec3::new(0.5, 0.5, 0.5), cube));
         }
 
@@ -243,7 +242,6 @@ mod tests {
         fn test_on_edges() {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
-            // On the edges
             assert!(point_in_or_on_cube(DVec3::new(0.0, 0.5, 0.5), cube));
             assert!(point_in_or_on_cube(DVec3::new(1.0, 0.5, 0.5), cube));
             assert!(point_in_or_on_cube(DVec3::new(0.5, 0.0, 0.5), cube));
@@ -256,7 +254,6 @@ mod tests {
         fn test_on_faces() {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
-            // On the faces
             assert!(point_in_or_on_cube(DVec3::new(0.0, 0.0, 0.5), cube));
             assert!(point_in_or_on_cube(DVec3::new(1.0, 1.0, 0.5), cube));
             assert!(point_in_or_on_cube(DVec3::new(0.5, 0.0, 0.0), cube));
@@ -267,7 +264,6 @@ mod tests {
         fn test_at_vertices() {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
-            // At the vertices
             assert!(point_in_or_on_cube(DVec3::new(0.0, 0.0, 0.0), cube));
             assert!(point_in_or_on_cube(DVec3::new(1.0, 0.0, 0.0), cube));
             assert!(point_in_or_on_cube(DVec3::new(0.0, 1.0, 0.0), cube));
@@ -282,7 +278,6 @@ mod tests {
         fn test_outside_cube() {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
-            // Outside the cube
             assert!(!point_in_or_on_cube(DVec3::new(-0.1, 0.5, 0.5), cube));
             assert!(!point_in_or_on_cube(DVec3::new(1.1, 0.5, 0.5), cube));
             assert!(!point_in_or_on_cube(DVec3::new(0.5, -0.1, 0.5), cube));
@@ -296,7 +291,6 @@ mod tests {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             let epsilon = 1e-5;
 
-            // Very close to the cube but outside
             assert!(!point_in_or_on_cube(
                 DVec3::new(1.0 + epsilon, 0.5, 0.5),
                 cube
@@ -315,8 +309,22 @@ mod tests {
         fn test_at_center_of_cube() {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
 
-            // At the center of the cube
             assert!(point_in_or_on_cube(DVec3::new(0.5, 0.5, 0.5), cube));
+        }
+
+        #[test]
+        fn test_degenerate_cube() {
+            let point_cube = (DVec3::splat(2.0), DVec3::splat(2.0));
+
+            assert!(point_in_or_on_cube(DVec3::splat(2.0), point_cube));
+            assert!(point_in_or_on_cube(
+                DVec3::new(2.0 + 0.5e-8, 2.0, 2.0),
+                point_cube
+            ));
+            assert!(!point_in_or_on_cube(
+                DVec3::new(2.0 + 2.0e-8, 2.0, 2.0),
+                point_cube
+            ));
         }
     }
 
@@ -331,7 +339,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // Inside the triangle
             assert!(point_in_or_on_triangle(
                 DVec3::new(0.25, 0.25, 0.0),
                 triangle
@@ -346,7 +353,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // On the edges
             assert!(point_in_or_on_triangle(DVec3::new(0.5, 0.0, 0.0), triangle));
             assert!(point_in_or_on_triangle(DVec3::new(0.0, 0.5, 0.0), triangle));
             assert!(point_in_or_on_triangle(DVec3::new(0.5, 0.5, 0.0), triangle));
@@ -360,7 +366,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // On the vertices
             assert!(point_in_or_on_triangle(DVec3::new(0.0, 0.0, 0.0), triangle));
             assert!(point_in_or_on_triangle(DVec3::new(1.0, 0.0, 0.0), triangle));
             assert!(point_in_or_on_triangle(DVec3::new(0.0, 1.0, 0.0), triangle));
@@ -374,7 +379,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // Outside the triangle but in the same plane
             assert!(!point_in_or_on_triangle(
                 DVec3::new(1.0, 1.0, 0.0),
                 triangle
@@ -398,7 +402,6 @@ mod tests {
             );
             let epsilon = 1e-5;
 
-            // Very close to the triangle but outside
             assert!(!point_in_or_on_triangle(
                 DVec3::new(1.0 + epsilon, 0.0, 0.0),
                 triangle
@@ -421,7 +424,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // At the centroid of the triangle
             let centroid = (triangle.0 + triangle.1 + triangle.2) / 3.0;
             assert!(point_in_or_on_triangle(centroid, triangle));
         }
@@ -621,7 +623,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // Point on the boundary but not on the edges or vertices
             assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.0), quad));
         }
 
@@ -634,7 +635,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // Point exactly at the center of the quad
             assert!(point_in_quad(DVec3::new(0.5, 0.5, 0.0), quad));
         }
 
@@ -647,7 +647,6 @@ mod tests {
                 DVec3::new(0.0, 1.0, 0.0),
             );
 
-            // Point very close to the quad but outside (testing epsilon)
             assert!(!point_in_quad(DVec3::new(1.0 + 1e-4, 0.5, 0.0), quad));
         }
 
@@ -735,7 +734,7 @@ mod tests {
 
         #[test]
         fn test_triangle_crosses_cube() {
-            // Test case 1: Current triangle crossing the cube
+            // Crosses the cube.
             let triangle = (
                 DVec3::new(-0.5, 0.5, 0.5),
                 DVec3::new(1.5, 0.5, 0.5),
@@ -744,7 +743,7 @@ mod tests {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
 
-            // Test case 2: Triangle completely outside and above the cube
+            // Completely outside and above the cube.
             let triangle = (
                 DVec3::new(0.5, 1.5, 1.5),
                 DVec3::new(1.5, 1.5, 1.5),
@@ -753,7 +752,7 @@ mod tests {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
 
-            // Test case 3: Triangle with one vertex inside the cube
+            // One vertex lies inside the cube.
             let triangle = (
                 DVec3::new(0.5, 0.5, 0.5),
                 DVec3::new(2.0, 2.0, 2.0),
@@ -762,7 +761,7 @@ mod tests {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(triangle_cube_intersection(triangle, cube));
 
-            // Test case 4: Triangle parallel to one face of the cube but fully outside
+            // Parallel to a cube face but fully outside.
             let triangle = (
                 DVec3::new(1.5, 0.5, 0.5),
                 DVec3::new(2.5, 0.5, 0.5),
@@ -771,7 +770,7 @@ mod tests {
             let cube = (DVec3::new(0.0, 0.0, 0.0), DVec3::new(1.0, 1.0, 1.0));
             assert!(!triangle_cube_intersection(triangle, cube));
 
-            // Test case 5: Triangle fully inside the cube
+            // Fully inside the cube.
             let triangle = (
                 DVec3::new(0.2, 0.2, 0.2),
                 DVec3::new(0.8, 0.2, 0.2),

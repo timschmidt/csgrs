@@ -188,7 +188,7 @@ impl<T: VoxelTrait> VoxModel<T> {
         let mut id_map: FxHashMap<u32, u32> = FxHashMap::default();
         id_map.insert(0, 0);
 
-        let mut leaf_patterns = leaf_patterns.values().map(|id| *id).collect::<Vec<_>>();
+        let mut leaf_patterns = leaf_patterns.values().copied().collect::<Vec<_>>();
         let mut branch_patterns = branch_patterns.values().copied().collect::<Vec<_>>();
 
         let mut next_id = 1;
@@ -257,8 +257,8 @@ impl<T: VoxelTrait> VoxModel<T> {
 
         let chunks_data: Vec<Vec<u8>> = self
             .chunks
-            .iter() // .par_iter() needs Send + Sync for VoxelTrait
-            .map(|(_, chunk)| {
+            .values()
+            .map(|chunk| {
                 let mut buffer = Vec::with_capacity(BUFFER_SIZE);
                 serialize_chunk(chunk, &id_map, &mut buffer);
                 buffer

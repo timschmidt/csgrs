@@ -25,8 +25,8 @@ members = [
 default-members = ["voxelis", "voxelis-memory"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+# Local paths support ecosystem development; the commented versions record
+# the crates.io coordinates used for releases.
 hyperreal = { path = "../hyperreal" }
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
@@ -85,8 +85,8 @@ categories = [
 rust-version = "1.88"
 
 [workspace.dependencies]
-# Voxelis sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
+# Local paths support monorepo-style development; the commented versions
+# record upstream release coordinates.
 voxelis = { path = "voxelis" }
 voxelis-math = { path = "voxelis-math" }
 voxelis-voxelize = { path = "voxelis-voxelize" }
@@ -118,7 +118,7 @@ tracy-client = "0.18"
 wide = "0.7"
 zstd = "0.13"
 
-# Bevy & EGUI
+# Bevy and egui integration versions.
 bevy = "0.16"
 bevy_egui = "0.35"
 bevy_panorbit_camera = { version = "0.27", features = ["bevy_egui"] }
@@ -126,11 +126,8 @@ bevy_screen_diagnostics = "0.8"
 egui_extras = "0.32"
 egui_plot = "0.33"
 
-# Enable a small amount of optimization in debug mode
-# [profile.dev]
-#opt-level = 1
-
-# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+# Optimize dependencies in development builds while keeping workspace crates
+# debuggable.
 [profile.dev.package."*"]
 opt-level = 3
 
@@ -146,4 +143,3 @@ codegen-units = 1
 lto = "fat"
 debug = false
 overflow-checks = false
-# panic = "unwind"

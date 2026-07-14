@@ -266,7 +266,7 @@ impl OccupancyDataBuilder {
         let _span = tracy_client::span!("OccupancyDataBuilder::build");
 
         let mut materials = self.materials.into_iter().collect::<Vec<_>>();
-        materials.sort_by(|a, b| a.0.cmp(&b.0));
+        materials.sort_by_key(|entry| entry.0);
 
         let mut per_material = Vec::with_capacity(materials.len());
 
@@ -597,14 +597,11 @@ pub fn generate_occupancy_masks<T: VoxelTrait>(
     }
 }
 
-// This function generates greedy mesh arrays from occupancy data.
-// It can process simultaneosly multiple chunks with same size
-// -     1 ( 1x 1x 1) chunks of 64x64x64 voxels
-// -     8 ( 2x 2x 2) chunks of 32x32x32 voxels
-// -    64 ( 4x 4x 4) chunks of 16x16x16 voxels
-// -   512 ( 8x 8x 8) chunks of  8x 8x 8 voxels
-// -  4096 (16x16x16) chunks of  4x 4x 4 voxels
-// - 32768 (32x32x32) chunks of  2x 2x 2 voxels
+/// Appends a greedy surface mesh for one 64³ occupancy region.
+///
+/// `max_depth` controls how that region is partitioned: depth 6 represents one
+/// 64³ chunk, depth 5 represents eight 32³ chunks, and each lower depth doubles
+/// the number of chunks per axis while halving their voxel dimensions.
 pub fn generate_greedy_mesh_arrays(
     occupancy_data: &OccupancyData,
     mesh_data: &mut MeshData,
@@ -731,17 +728,13 @@ pub fn generate_greedy_mesh_arrays(
                 for col in min_col..max_col {
                     let idx = base_idx + col;
 
-                    // take bitmask occupancy for the current material
-                    //   for example - material mask: 0 0 0 1 1 1 0 0 <- 3 voxels with material 'X'
-                    //            global voxels mask: 0 0 1 1 1 1 0 0 <- 4 voxels in total
-                    //               global mask pos: 0 0 1 0 0 0 0 0 <- first face for column
-                    //               global mask neg: 0 0 0 0 0 1 0 0 <- last face for column
+                    // A material may occupy only the interior of a global run:
+                    // material 00011100, occupancy 00111100, +edge 00100000,
+                    // -edge 00000100.
                     let mask = occupancy_per_material[plane_data.offset + idx];
 
-                    // Retain positive faces at global run boundaries.
-                    // for example - global mask pos: 0 0 1 0 0 0 0 0
-                    //                 material mask: 0 0 0 1 1 1 0 0 &
-                    //                      pos_mask: 0 0 0 0 0 0 0 0
+                    // Retain positive faces only where this material owns the
+                    // global run boundary.
                     let material_mask_pos = mask & global_face_masks_pos[idx];
                     active_depth_pos |= material_mask_pos;
 
@@ -753,10 +746,8 @@ pub fn generate_greedy_mesh_arrays(
                     active_row_pos |= mask_pos_active << row;
                     active_col_pos |= mask_pos_active << col;
 
-                    // Retain negative faces at global run boundaries.
-                    // for example - global mask neg: 0 0 0 0 0 1 0 0
-                    //                 material mask: 0 0 0 1 1 1 0 0 &
-                    //                      neg_mask: 0 0 0 0 0 1 0 0
+                    // Retain negative faces only where this material owns the
+                    // global run boundary.
                     let material_mask_neg = mask & global_face_masks_neg[idx];
                     active_depth_neg |= material_mask_neg;
 
@@ -970,17 +961,17 @@ pub fn add_quad(mesh_data: &mut MeshData, quad: [Vec3; 4], normal: &Vec3) {
 
 #[inline(always)]
 const fn find_contiguous_bits(mask: u64, start: usize) -> u64 {
-    // if the mask is all ones, return it as is
+    // A full row is the maximal 64-bit run.
     if mask == u64::MAX {
         return !0u64 << start;
     }
 
-    // find all bits from start to the first gap
+    // Count consecutive occupied bits from the first set bit.
     let shifted = mask >> start;
     let inverted = !shifted;
     let first_zero = inverted.trailing_zeros() as u64;
 
-    // mask of bits from start to start+width
+    // Isolate that run.
     ((1u64 << first_zero) - 1) << start
 }
 
@@ -1244,7 +1235,11 @@ pub fn generate_greedy_mesh_arrays_stride<
     }
 }
 
-// debug version, to be removed later
+/// Appends a greedy mesh for one chunk at the selected LOD.
+///
+/// A `true` entry in `clear_external_planes` treats the corresponding outside
+/// plane as occupied, suppressing faces on that chunk boundary. Plane order is
+/// positive YZ, negative YZ, positive XZ, negative XZ, positive XY, negative XY.
 pub fn chunk_generate_greedy_mesh_arrays_ext<T: VoxelTrait>(
     chunk: &VoxChunk<T>,
     interner: &VoxInterner<T>,

@@ -29,7 +29,7 @@ pub fn export_model_to_obj<T: VoxelTrait, P: AsRef<Path>>(
     let interner = model.get_interner();
     let interner = interner.read();
 
-    for (_, chunk) in model.chunks.iter() {
+    for chunk in model.chunks.values() {
         if chunk.is_empty() {
             continue;
         }

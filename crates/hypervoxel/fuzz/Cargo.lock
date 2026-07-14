@@ -162,6 +162,7 @@ dependencies = [
  "hyperlimit",
  "hypermesh",
  "hyperreal",
+ "rustc-hash",
  "voxelis",
 ]
 

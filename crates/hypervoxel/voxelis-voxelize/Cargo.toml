@@ -7,6 +7,8 @@ edition = "2024"
 description = "Parallel OBJ-to-Voxelis surface voxelization"
 repository.workspace = true
 readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
 
 [features]
 default = []

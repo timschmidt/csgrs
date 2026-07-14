@@ -21,5 +21,10 @@ It is a visualization adapter: the displayed primitive-float mesh is not exact
 source geometry. Features `memory_stats` and `tracy` enable storage statistics
 and profiling.
 
+## References
+
+- [Bevy 0.16 documentation](https://docs.rs/bevy/0.16).
+- Mikola Lysenko, [“Meshing in a Minecraft Game”](https://0fps.net/2012/06/30/meshing-in-a-minecraft-game/), 2012.
+
 See [Voxelis](../voxelis/README.md) for model and greedy-mesh APIs and
 [HyperVoxel](../README.md) for exact-aware preview contracts.

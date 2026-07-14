@@ -16,7 +16,7 @@ use std::{
 #[cfg(feature = "memory_stats")]
 use std::{fmt::Write, sync::Mutex};
 
-use crossbeam::channel::{Receiver, Sender, bounded};
+use crossbeam::channel::bounded;
 use glam::{DVec3, IVec3};
 #[cfg(feature = "memory_stats")]
 use indicatif::ProgressState;
@@ -72,6 +72,17 @@ pub struct Voxelizer {
     pub mesh: Obj,
     /// Destination model; occupied surface voxels use value `1`.
     pub model: VoxModel<i32>,
+}
+
+struct ChunkVoxelization<'a> {
+    position: IVec3,
+    depth: MaxDepth,
+    chunk_world_size: f64,
+    voxel_size: f64,
+    voxels_per_axis: usize,
+    mesh_min: DVec3,
+    faces: &'a [IVec3],
+    vertices: &'a [DVec3],
 }
 
 impl Voxelizer {
@@ -171,25 +182,27 @@ impl Voxelizer {
         chunk_face_map
     }
 
-    fn voxelize_chunk(
-        chunk_position: IVec3,
-        depth: MaxDepth,
-        chunk_world_size: f64,
-        voxel_size: f64,
-        voxels_per_axis: usize,
-        mesh_min: DVec3,
-        faces: &[IVec3],
-        vertices: &[DVec3],
-    ) -> Option<Batch<i32>> {
+    fn voxelize_chunk(input: ChunkVoxelization<'_>) -> Option<Batch<i32>> {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::voxelize_chunk");
+
+        let ChunkVoxelization {
+            position,
+            depth,
+            chunk_world_size,
+            voxel_size,
+            voxels_per_axis,
+            mesh_min,
+            faces,
+            vertices,
+        } = input;
 
         let epsilon = voxel_size * 1e-7;
         let splat = DVec3::splat(epsilon);
 
         let mut batch = Batch::new(depth);
 
-        let chunk_world_position = chunk_position.as_dvec3() * chunk_world_size;
+        let chunk_world_position = position.as_dvec3() * chunk_world_size;
 
         let chunk_world_min = chunk_world_position;
         let chunk_world_max = chunk_world_min + DVec3::splat(chunk_world_size);
@@ -259,7 +272,7 @@ impl Voxelizer {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::voxelize_mesh");
 
-        let (tx, rx): (Sender<(IVec3, Batch<i32>)>, Receiver<(IVec3, Batch<i32>)>) = bounded(1024);
+        let (tx, rx) = bounded::<(IVec3, Batch<i32>)>(1024);
 
         let lod = Lod::new(0);
 
@@ -306,16 +319,16 @@ impl Voxelizer {
                     return;
                 }
 
-                let Some(batch) = Self::voxelize_chunk(
-                    *chunk_position,
+                let Some(batch) = Self::voxelize_chunk(ChunkVoxelization {
+                    position: *chunk_position,
                     depth,
                     chunk_world_size,
                     voxel_size,
                     voxels_per_axis,
                     mesh_min,
                     faces,
-                    &vertices,
-                ) else {
+                    vertices: &vertices,
+                }) else {
                     early_quit_empty_batch_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                     return;
                 };

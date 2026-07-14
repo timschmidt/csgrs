@@ -376,8 +376,8 @@ impl ImageStackManifest {
         );
         // Exact replay needs a current source binding, not merely the absence
         // of a stale-source proof. A grid with unknown source freshness is
-        // still useful adapter evidence, but it is
-        // not the same exact voxel artifact as its source construction.
+        // still useful adapter evidence, but it is not the same exact voxel
+        // artifact as its source construction.
         let exact = unknown_metadata_fields == 0
             && positive_dimensions_ready
             && has_sample_evidence

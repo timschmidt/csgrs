@@ -69,10 +69,11 @@ impl BlockId {
     /// Largest encodable storage index.
     pub const MAX_INDEX: u32 = u32::MAX;
 
-    /// Largest generation issued before the interner wraps back to zero.
+    /// Largest generation accepted by the constructors.
     ///
-    /// The all-ones generation is reserved, keeping normal IDs away from the
-    /// all-ones invalid sentinel and giving recycling one explicit wrap point.
+    /// The interner uses this value as its recycling threshold and therefore
+    /// does not normally issue it. The all-ones generation remains reserved
+    /// for the invalid sentinel.
     pub const MAX_GENERATION: u16 = 0x7FFE;
 
     /// Wraps an unvalidated packed value.
