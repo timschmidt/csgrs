@@ -6,9 +6,9 @@
 //! keys, construction dependencies, replay hooks, and surrogate screening
 //! status together. COCO/BBOB-style black-box benchmarks can use this shape as
 //! performance fixtures, while Hyper domain candidates still need exact replay
-//! before acceptance. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: heuristic or lossy proposal stages
-//! are useful, but exact/certified evidence decides promotion.
+//! before acceptance. Heuristic or lossy proposal stages are useful, but
+//! exact/certified evidence decides promotion. The README lists the benchmark
+//! and exact-computation references.
 
 use crate::{Candidate, FitnessReport, ReplayStatus};
 

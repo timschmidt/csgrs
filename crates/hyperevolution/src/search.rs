@@ -2,15 +2,11 @@
 //!
 //! Local search is still proposal generation: a neighbor can be evaluated
 //! quickly, but promotion depends on exact/certified fitness and replay status.
-//! The hill-climb helper below follows the standard deterministic first/best
-//! improvement shape used in local-search literature such as Hoos and Stutzle,
-//! "Stochastic Local Search: Foundations and Applications" (2004), while
-//! preserving Yap's exact-geometric-computation boundary: exact evidence ranks
-//! candidates, not primitive-float surrogate scores.
-//! Genetic/evolutionary helpers follow the same rule. Holland-style selection
-//! and variation operators can propose candidate genomes, but they preserve
-//! exact genes and return reportable unsupported/unknown states instead of
-//! treating hidden random floats as proof.
+//! The hill-climb helper uses deterministic first/best improvement, while exact
+//! evidence—not primitive-float surrogate scores—ranks candidates. Selection
+//! and variation operators preserve exact genes and return reportable
+//! unsupported/unknown states instead of treating hidden random floats as
+//! proof. The README collects the underlying search references.
 
 use hyperreal::Real;
 
@@ -192,9 +188,8 @@ pub struct SimulatedAnnealingPolicy {
 /// Better exact/certified neighbors are accepted deterministically. Worse
 /// neighbors require evaluating an exponential acceptance probability, which is
 /// a proposal-stage computation unless a caller supplies an exact/certified
-/// probabilistic comparison. This follows Kirkpatrick, Gelatt, and Vecchi,
-/// "Optimization by Simulated Annealing" (*Science* 220(4598), 1983), while
-/// keeping exact promotion separate from stochastic acceptance.
+/// probabilistic comparison. Exact promotion remains separate from stochastic
+/// acceptance.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AnnealingAcceptance {
     /// Neighbor is exactly better and can be accepted.

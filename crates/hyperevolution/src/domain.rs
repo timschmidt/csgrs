@@ -6,8 +6,8 @@
 //! as `hypersolve`, `hyperpath`, `hypercurve`, `hypervoxel`, `hyperpack`,
 //! `hyperdrc`, `hyperphysics`, and `hypercircuit`, then carry the resulting
 //! exact/certified/unknown/lossy replay status back into search reports. This
-//! preserves Yap's exact-geometric-computation layering: search proposes;
-//! domain predicates, residuals, or simulators certify.
+//! preserves the separation between search proposals and certification by
+//! domain predicates, residuals, or simulators.
 
 use crate::{CandidateId, ConstructionDependency, EvaluationCacheKey, ReplayHook, ReplayStatus};
 

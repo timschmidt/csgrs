@@ -4,11 +4,9 @@
 //! domain constructors, but generated programs must be checked before
 //! evaluation. This module starts with a small typed `Real` expression AST and
 //! report-bearing validation for arity, depth, node budget, unbound inputs, and
-//! division by structurally zero constants. The GP framing follows Koza,
-//! "Genetic Programming" (1992); the exact/replay boundary follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997: candidate programs propose structure, but exact values and domain
-//! reports decide acceptance.
+//! division by structurally zero constants. Candidate programs propose
+//! structure, but exact values and domain reports decide acceptance. The README
+//! lists the genetic-programming and exact-computation references.
 
 use std::collections::HashMap;
 
@@ -75,7 +73,7 @@ pub enum GpValidationIssue {
         /// Missing input index.
         input: usize,
     },
-    /// Exact scalar division was not supported by the scalar layer.
+    /// Exact scalar division failed.
     UnsupportedDivision,
 }
 
@@ -213,7 +211,7 @@ impl GpRealExpr {
     }
 }
 
-/// Evaluates a batch of validated expressions, preserving per-expression errors.
+/// Evaluates a batch of expressions, preserving per-expression errors.
 pub fn eval_gp_batch(
     expressions: &[GpRealExpr],
     inputs: &HashMap<usize, Real>,

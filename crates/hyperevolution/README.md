@@ -1,235 +1,139 @@
-<h1>
-  hyperevolution
-</h1>
+# hyperevolution
 
-`hyperevolution` is the exact-aware search and proposal layer for the Hyper ecosystem.
-It defines candidate IDs, genomes, populations, replay policy, exact fitness reports,
-lexicographic and Pareto comparisons, archives, and policy records for common
-stochastic and local-search operators.
+`hyperevolution` provides exact-aware candidate, fitness, archive, and replay
+types for optimization in the Hyper stack. Search heuristics may propose or
+screen candidates cheaply, but accepted results retain exact fitness and the
+owning domain's replay status.
 
-The crate does not own domain truth. It gives optimizers a shared way to keep proposals,
-fitness, replay status, and acceptance evidence together.
-
-## Hyper Ecosystem
-
-`hyperevolution` is useful when a domain crate can generate candidates cheaply but needs
-exact replay before accepting them.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar genome and fitness
-  values.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
-  carriers used by domain crates whose candidates are searched here.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate decisions for
-  candidate validation.
-- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and constraint
-  certification.
-- [hypercurve](https://github.com/timschmidt/hypercurve),
-  [hypertri](https://github.com/timschmidt/hypertri),
-  [hypermesh](https://github.com/timschmidt/hypermesh),
-  [hypervoxel](https://github.com/timschmidt/hypervoxel),
-  [hyperpath](https://github.com/timschmidt/hyperpath),
-  [hyperpack](https://github.com/timschmidt/hyperpack),
-  [hyperparts](https://github.com/timschmidt/hyperparts),
-  [hyperdrc](https://github.com/timschmidt/hyperdrc),
-  [hypercircuit](https://github.com/timschmidt/hypercircuit), and
-  [hyperphysics](https://github.com/timschmidt/hyperphysics): domain crates that can
-  certify accepted candidates.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): boundary-representation
-  candidates for future geometry and manufacturing searches.
-- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance and implicit-field
-  candidates for future clearance and field searches.
-
-## Typical Search Problems
-
-Evolutionary and black-box optimizers often accept candidates because a sampled float
-objective improved, even when constraints, geometry, or manufacturing rules were
-evaluated by approximate surrogates. That makes accepted results hard to audit, hard to
-reproduce, and easy to confuse with proof.
-
-`hyperevolution` separates exploration from acceptance. A stochastic policy may propose
-or rank candidates, but archive promotion can depend on exact fitness comparison and
-domain replay status.
-
-## Main Types
-
-- `CandidateId`, `Genome`, `Candidate`, and `Population` describe search state.
-- `FitnessValue`, `FitnessReport`, `FitnessDirection`, `FitnessComparison`, and
-  `ParetoRelation` describe exact scalar, lexicographic, interval, and Pareto
-  ordering.
-- `ReplayPolicy` and `ReplayStatus` capture how exact acceptance is gated.
-- `Archive` stores candidates with replay-aware acceptance status.
-- `SelectionPolicy`, `MutationPolicy`, `CrossoverPolicy`, `HillClimbPolicy`,
-  `HillClimbReport`, and `SimulatedAnnealingPolicy` record proposal settings and
-  exact local-search outcomes without implementing every optimizer family.
-- `GpRealExpr`, `GpValidationLimits`, `GpValidationReport`, and `eval_gp_batch` provide
-  typed GP expression genomes with validation before exact evaluation.
-- `FitnessOracle`, `BlackBoxEvaluationReport`, `SurrogateScreenReport`,
-  `EvaluationCacheKey`, `ReplayHook`, and `DomainReplayManifest` keep opaque objective,
-  surrogate, cache, and domain-replay evidence attached to candidates.
-- `DiversityReport`, `DiversityRelation`, and `exact_structural_diversity` expose exact
-  structural diversity without pretending approximate coordinate distance is proof.
-
-## Precision Model
-
-Genome values and fitness values use `Real`. Comparison helpers avoid collapsing exact
-fitness to primitive floats before ordering. Interval fitness uses exact lower and upper
-endpoints and reports overlap or invalid bounds explicitly rather than ranking by a
-lossy midpoint. Replay status is explicit, so a candidate that is promising under a
-sampled or approximate proposal can remain pending or unknown until the domain crate
-certifies it.
-
-Numerical explosion is controlled by keeping proposal mechanics separate from domain
-certification. Genomes, GP expression trees, cache keys, replay hooks, surrogate stages,
-and fitness reports are compact evidence carriers; expensive predicates, residuals, and
-geometry checks stay in the owning domain crate until replay is requested.
-
-## Performance Model
-
-The crate is intentionally light. It stores policies, reports, and archive state without
-forcing a single optimizer loop. That lets domain crates run fast approximate proposal
-engines while retaining deterministic seeds, compact records, and exact comparison only
-where promotion or audit requires it.
-
-Future performance work should focus on batch replay scheduling, archive pruning, and
-domain-specific caching rather than hiding approximations in the shared types.
-
-The crate is deliberately friendly to approximate proposal engines: black-box or
-surrogate stages can screen candidates, but archive promotion remains tied to exact
-fitness comparison and accepted replay reports.
-
-## Current Status
-
-Implemented today:
-
-- exact candidate IDs, genomes, populations, and replay policy records;
-- scalar, lexicographic, interval, and Pareto fitness reports over `Real` values;
-- replay-gated archive records;
-- deterministic first/best-improvement hill climbing over exact `Real` genomes;
-- simulated-annealing acceptance classification that keeps worse-move probability
-  handling as an explicit proposal stage;
-- deterministic exact-best and explicit-index tournament selection plus exact
-  additive mutation and one-point crossover for `Real` genomes;
-- exact structural diversity reports based on genome equality and arity;
-- typed `Real` GP expression genomes with arity, depth, node-budget, and
-  structurally-zero-division validation before exact evaluation;
-- black-box objective and surrogate-screening reports carrying fitness, cost,
-  cache keys, construction dependencies, replay hooks, and promotion status;
-- domain replay manifests and reports that name the Hyper crate responsible for
-  certifying a memetic candidate;
-- policy carriers for selection, mutation, crossover, hill climbing, and simulated
-  annealing.
-
-Known limits: large optimizer families are not implemented here yet. The crate is the
-typed boundary those algorithms should use.
+The crate does not own geometry, physics, circuit, or manufacturing truth. It
+provides the shared boundary that keeps proposals, deterministic seeds,
+fitness evidence, cache keys, and certification together.
 
 ## Installation
 
 ```toml
 [dependencies]
-hyperevolution = "0.2.0"
+hyperevolution = "0.3.0"
 ```
 
-For sibling checkouts:
+Use a sibling checkout during Hyper-stack development:
 
 ```toml
 [dependencies]
 hyperevolution = { path = "../hyperevolution" }
 ```
 
-## Usage
+## Quick start
 
-Use proposal helpers for search mechanics, then require exact replay for promotion:
+Mutate an exact genome, compare its fitness, and archive an accepted replay:
 
-```rust,ignore
+```rust
 use hyperevolution::{
-    Archive, Candidate, CandidateId, FitnessComparison, FitnessDirection, FitnessReport,
-    FitnessValue, Genome, ReplayPolicy, ReplayStatus, mutate_exact_delta,
-};
-use hyperreal::Real;
-
-let candidate = Candidate {
-    id: CandidateId::new("seed-0")?,
-    genome: Genome { genes: vec![Real::from(2), Real::from(3)] },
-    replay_policy: ReplayPolicy { seed: 42, require_exact_replay: true },
+    Archive, Candidate, CandidateId, FitnessComparison, FitnessDirection,
+    FitnessReport, Genome, Real, ReplayPolicy, ReplayStatus, mutate_exact_delta,
 };
 
-let mutated = mutate_exact_delta(&candidate, 0, Real::from(1), CandidateId::new("seed-0-mut")?)?;
+fn main() {
+    let seed = Candidate {
+        id: CandidateId::new("seed").expect("non-empty id"),
+        genome: Genome {
+            genes: vec![Real::from(2), Real::from(3)],
+        },
+        replay_policy: ReplayPolicy {
+            seed: 42,
+            require_exact_replay: true,
+        },
+    };
+    let child = mutate_exact_delta(
+        &seed,
+        0,
+        Real::from(-1),
+        CandidateId::new("child").expect("non-empty id"),
+    )
+    .expect("gene 0 exists");
 
-let before = FitnessValue::Scalar(Box::new(Real::from(10)));
-let after = FitnessValue::Scalar(Box::new(Real::from(8)));
-assert_eq!(
-    after.compare_total(&before, FitnessDirection::Minimize),
-    FitnessComparison::Better,
-);
+    let before = FitnessReport::scalar(seed.id, Real::from(4), ReplayStatus::Accepted);
+    let after = FitnessReport::scalar(child.id, Real::from(1), ReplayStatus::Accepted);
+    assert_eq!(
+        after
+            .value
+            .compare_total(&before.value, FitnessDirection::Minimize),
+        FitnessComparison::Better,
+    );
 
-let report = FitnessReport {
-    candidate: mutated.id,
-    value: after,
-    replay: ReplayStatus::Accepted,
-    evidence: vec!["domain replay accepted".into()],
-};
-
-let mut archive = Archive::default();
-assert!(archive.insert_replayed(report));
+    let mut archive = Archive::default();
+    assert!(archive.insert_replayed(after));
+}
 ```
 
-For multi-objective work, use `FitnessValue::Pareto` and `Archive`; for symbolic or
-memetic search, use `GpRealExpr`, surrogate-screen reports, and
-`DomainReplayManifest` to keep the certifying crate named.
+## Core API
 
-```rust,ignore
-use std::collections::HashMap;
-use hyperevolution::{
-    CandidateId, DomainReplayTarget, GpRealExpr, GpValidationLimits, domain_replay_manifest,
-    eval_gp_batch,
-};
-use hyperreal::Real;
+- `CandidateId`, `Genome`, `Candidate`, `Population`, and `ReplayPolicy` describe
+  reproducible search state over `hyperreal::Real` genes.
+- `FitnessValue` supports scalar, lexicographic, Pareto, and interval objectives.
+  `compare_total`, `compare_pareto`, and `FitnessInterval::compare` preserve
+  unknown or overlapping results instead of inventing a float ordering.
+- `Archive` gates insertion on `ReplayStatus` and can retain a non-dominated
+  accepted set.
+- `select_exact_best`, `select_tournament_by_indices`, `mutate_exact_delta`,
+  `crossover_one_point`, and `hill_climb_exact` provide deterministic mechanics
+  without hidden random draws.
+- `GpRealExpr` validates arity and tree budgets before exact evaluation.
+- `FitnessOracle`, `SurrogateScreenReport`, `EvaluationCacheKey`, `ReplayHook`,
+  and `DomainReplayManifest` carry black-box and domain-replay evidence.
 
-let expr = GpRealExpr::Add(
-    Box::new(GpRealExpr::Input(0)),
-    Box::new(GpRealExpr::Constant(Box::new(Real::from(2)))),
-);
-let validation = expr.validate(GpValidationLimits {
-    input_arity: 1,
-    max_depth: 4,
-    max_nodes: 8,
-});
-assert!(validation.is_valid());
+## Precision and performance
 
-let mut inputs = HashMap::new();
-inputs.insert(0, Real::from(3));
-let values = eval_gp_batch(&[expr], &inputs);
-assert_eq!(values[0].as_ref().unwrap(), &Real::from(5));
+Genes, supported fitness values, interval endpoints, and deterministic mutation
+steps use `Real`. Approximate objectives and stochastic choices remain named
+proposal stages. A candidate with rejected or unknown replay cannot silently
+become accepted, and overlapping interval objectives remain unordered.
 
-let manifest = domain_replay_manifest(
-    CandidateId::new("seed-0-mut")?,
-    DomainReplayTarget::Hyperpack,
-    "layout-0",
-);
-assert_eq!(manifest.hook.domain, "hyperpack");
-```
+The crate stores compact policies and reports instead of forcing one optimizer
+loop or expanding domain constraints into a global expression tree. Expensive
+predicates, simulations, and residuals stay in their owning crates until replay.
+This makes batch scheduling, archive pruning, and domain-specific caching the
+natural performance levers.
+
+Implemented today are exact scalar/lexicographic/interval/Pareto comparisons,
+replay-gated archives, deterministic selection and variation, exact hill
+climbing, simulated-annealing decision classification, structural diversity,
+typed GP expressions, black-box/surrogate reports, and domain replay manifests.
+Large optimizer families and probabilistic proposal engines are intentionally
+outside the current implementation.
 
 ## References
 
-- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry* 7.1-2
-  (1997): 3-23.
-- Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
-- Holland, John H. *Adaptation in Natural and Artificial Systems*. University of
-  Michigan Press, 1975.
-- Kirkpatrick, Scott, C. Daniel Gelatt, and Mario P. Vecchi. "Optimization by Simulated
-  Annealing." *Science* 220.4598 (1983): 671-680.
-- Hoos, Holger H., and Thomas Stutzle. *Stochastic Local Search: Foundations and
-  Applications*. Morgan Kaufmann, 2004.
-- Koza, John R. *Genetic Programming*. MIT Press, 1992.
-- Hansen, Nikolaus, Anne Auger, Steffen Finck, and Raymond Ros. *Real-Parameter
-  Black-Box Optimization Benchmarking 2009: Noiseless Functions Definitions*. INRIA,
-  2009.
+- Yap, [*Towards Exact Geometric
+  Computation*](https://doi.org/10.1016/0925-7721(95)00040-2), 1997.
+- Moore, Kearfott, and Cloud, [*Introduction to Interval
+  Analysis*](https://doi.org/10.1137/1.9780898717716), 2009.
+- Holland, [*Adaptation in Natural and Artificial
+  Systems*](https://mitpress.mit.edu/9780262581110/adaptation-in-natural-and-artificial-systems/),
+  1975/1992.
+- Kirkpatrick, Gelatt, and Vecchi, [*Optimization by Simulated
+  Annealing*](https://doi.org/10.1126/science.220.4598.671), 1983.
+- Hoos and Stutzle, [*Stochastic Local Search: Foundations and
+  Applications*](https://www.cs.ubc.ca/~hoos/SLS-Book/), 2004.
+- Koza, [*Genetic
+  Programming*](https://mitpress.mit.edu/9780262527910/genetic-programming/),
+  1992.
+- COCO, [the BBOB test suite](https://numbbo.github.io/coco/testsuites/bbob).
+
+Direct dependency: [hyperreal](https://github.com/timschmidt/hyperreal).
+Replay domains include [hypersolve](https://github.com/timschmidt/hypersolve) ·
+[hypercurve](https://github.com/timschmidt/hypercurve) ·
+[hypermesh](https://github.com/timschmidt/hypermesh) ·
+[hyperpath](https://github.com/timschmidt/hyperpath) ·
+[hyperpack](https://github.com/timschmidt/hyperpack) ·
+[hyperdrc](https://github.com/timschmidt/hyperdrc) ·
+[hyperphysics](https://github.com/timschmidt/hyperphysics) ·
+[hypercircuit](https://github.com/timschmidt/hypercircuit)
 
 ## Development
 
-Useful local checks:
-
 ```sh
-cargo test
+cargo test --all-targets
+cargo clippy --all-targets -- -D warnings
 cargo bench --bench fitness
 ```

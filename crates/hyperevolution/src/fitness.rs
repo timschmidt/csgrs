@@ -3,10 +3,9 @@
 //! Fitness is report-bearing evidence, not a primitive score. Exact scalar and
 //! vector comparisons use `hyperreal::Real`; interval comparisons keep overlap
 //! and invalid bounds visible instead of ranking candidates through lossy
-//! midpoint or endpoint floats. This follows Moore-style interval analysis for
-//! enclosure comparisons and Yap's exact-geometric-computation boundary:
-//! proposal search may be heuristic, but archive promotion needs exact or
-//! explicitly uncertain evidence.
+//! midpoint or endpoint floats. Proposal search may be heuristic, but archive
+//! promotion needs exact or explicitly uncertain evidence. The README lists
+//! the supporting interval-analysis and exact-computation references.
 
 use std::cmp::Ordering;
 

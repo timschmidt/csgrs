@@ -6,14 +6,9 @@
 //! candidates must replay through exact/certified predicates, residuals, or
 //! domain reports.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997
-//! (<https://doi.org/10.1016/0925-7721(95)00040-2>) at the optimization
-//! boundary. Search heuristics such as Holland's genetic algorithms
-//! ("Adaptation in Natural and Artificial Systems", 1975) and Kirkpatrick,
-//! Gelatt, and Vecchi's simulated annealing ("Optimization by Simulated
-//! Annealing", *Science* 220(4598), 1983) can propose candidates, but exact
-//! ranking and replay evidence remain first-class data.
+//! Search heuristics can propose candidates, but exact ranking and replay
+//! evidence remain first-class data. The README collects the search,
+//! interval-analysis, and exact-computation references behind this boundary.
 
 pub mod domain;
 pub mod fitness;
