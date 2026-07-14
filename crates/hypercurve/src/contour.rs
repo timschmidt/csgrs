@@ -1,11 +1,11 @@
 //! Closed contour topology.
 
-use std::cmp::Ordering;
+use std::{cell::OnceCell, cmp::Ordering, rc::Rc};
 
-use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
+use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::{classify_oriented_line, compare_reals};
+use crate::classify::{classify_oriented_line, compare_reals, real_sign};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2,
@@ -78,7 +78,7 @@ pub struct ContourClosureResult2 {
     report: ContourClosureReport2,
 }
 
-/// Report for a closed-contour line-line chamfer.
+/// Report for a closed-contour native-segment chamfer.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourChamferReport2 {
     stage: ContourChamferStage2,
@@ -107,7 +107,7 @@ pub enum ContourChamferStage2 {
     ContourMaterialization,
 }
 
-/// Report for a closed-contour line-line fillet.
+/// Report for a closed-contour native-segment fillet.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContourFilletReport2 {
     stage: ContourFilletStage2,
@@ -194,10 +194,39 @@ pub enum ContourLineMergePredicatePath2 {
 }
 
 /// A closed sequence of connected native segments.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Contour2 {
     curve: CurveString2,
     fill_rule: FillRule,
+    offset_provenance: Option<Rc<ContourOffsetProvenance2>>,
+    signed_area_cache: Rc<OnceCell<CurveResult<Option<Real>>>>,
+}
+
+#[derive(Debug, PartialEq)]
+struct ContourOffsetSource2 {
+    curve: CurveString2,
+    fill_rule: FillRule,
+    orientation: RealSign,
+}
+
+#[derive(Debug, PartialEq)]
+struct ContourOffsetProvenance2 {
+    source: Rc<ContourOffsetSource2>,
+    left_distance: Real,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum RetainedContourOffsetRelation2 {
+    FirstContainsSecond,
+    SecondContainsFirst,
+    Coincident,
+    Uncertain,
+}
+
+impl PartialEq for Contour2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.curve == other.curve && self.fill_rule == other.fill_rule
+    }
 }
 
 impl Contour2 {
@@ -213,12 +242,112 @@ impl Contour2 {
     ) -> CurveResult<Self> {
         let curve = CurveString2::try_new(segments)?;
         validate_closed_curve_string(&curve)?;
-        Ok(Self { curve, fill_rule })
+        Ok(Self {
+            curve,
+            fill_rule,
+            offset_provenance: None,
+            signed_area_cache: Rc::new(OnceCell::new()),
+        })
     }
 
     /// Constructs a closed contour without checking connectivity or closure.
-    pub const fn new_unchecked(curve: CurveString2, fill_rule: FillRule) -> Self {
-        Self { curve, fill_rule }
+    pub fn new_unchecked(curve: CurveString2, fill_rule: FillRule) -> Self {
+        Self {
+            curve,
+            fill_rule,
+            offset_provenance: None,
+            signed_area_cache: Rc::new(OnceCell::new()),
+        }
+    }
+
+    pub(crate) fn retain_left_offset_from(
+        mut self,
+        source: &Self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> Self {
+        // A simple raw offset can re-expand after a collapse while remaining
+        // self-contact free. Retain nesting only on the regular branch where
+        // every output line still follows its corresponding source line.
+        if self.segments().len() != source.segments().len()
+            || !self
+                .segments()
+                .iter()
+                .zip(source.segments())
+                .all(|(offset, source)| match (offset, source) {
+                    (Segment2::Line(offset), Segment2::Line(source)) => {
+                        let (offset_x, offset_y) = offset.delta();
+                        let (source_x, source_y) = source.delta();
+                        let direction_dot = (&offset_x * &source_x) + (&offset_y * &source_y);
+                        real_sign(&direction_dot, policy) == Some(RealSign::Positive)
+                    }
+                    _ => false,
+                })
+        {
+            return self;
+        }
+
+        let provenance = match source.offset_provenance.as_ref() {
+            None => {
+                let Some(orientation) = source
+                    .signed_area()
+                    .ok()
+                    .flatten()
+                    .and_then(|area| real_sign(&area, policy))
+                else {
+                    return self;
+                };
+                ContourOffsetProvenance2 {
+                    source: Rc::new(ContourOffsetSource2 {
+                        curve: source.curve.clone(),
+                        fill_rule: source.fill_rule,
+                        orientation,
+                    }),
+                    left_distance: distance,
+                }
+            }
+            Some(provenance) => ContourOffsetProvenance2 {
+                source: provenance.source.clone(),
+                left_distance: &provenance.left_distance + &distance,
+            },
+        };
+        self.offset_provenance = Some(Rc::new(provenance));
+        self
+    }
+
+    pub(crate) fn retained_offset_relation(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> Option<RetainedContourOffsetRelation2> {
+        let (Some(first), Some(second)) = (
+            self.offset_provenance.as_ref(),
+            other.offset_provenance.as_ref(),
+        ) else {
+            return None;
+        };
+        if first.source != second.source {
+            return None;
+        }
+
+        Some(
+            match compare_reals(&first.left_distance, &second.left_distance, policy) {
+                Some(Ordering::Equal) => RetainedContourOffsetRelation2::Coincident,
+                Some(ordering) => match (first.source.orientation, ordering) {
+                    (RealSign::Positive, Ordering::Less)
+                    | (RealSign::Negative, Ordering::Greater) => {
+                        RetainedContourOffsetRelation2::FirstContainsSecond
+                    }
+                    (RealSign::Positive, Ordering::Greater)
+                    | (RealSign::Negative, Ordering::Less) => {
+                        RetainedContourOffsetRelation2::SecondContainsFirst
+                    }
+                    (RealSign::Zero, _) => RetainedContourOffsetRelation2::Uncertain,
+                    (_, Ordering::Equal) => RetainedContourOffsetRelation2::Coincident,
+                },
+                None => RetainedContourOffsetRelation2::Uncertain,
+            },
+        )
     }
 
     /// Converts a connected curve string into a closed contour with a report.
@@ -239,7 +368,12 @@ impl Contour2 {
         let predicate_path = contour_closure_predicate_path(&endpoint_distance_squared);
         match closure_status_from_distance(&endpoint_distance_squared) {
             Classification::Decided(()) => Ok(ContourClosureResult2 {
-                contour: Some(Self { curve, fill_rule }),
+                contour: Some(Self {
+                    curve,
+                    fill_rule,
+                    offset_provenance: None,
+                    signed_area_cache: Rc::new(OnceCell::new()),
+                }),
                 report: ContourClosureReport2 {
                     stage: ContourClosureStage2::ContourMaterialization,
                     predicate_path,
@@ -457,7 +591,7 @@ impl Contour2 {
         })
     }
 
-    /// Chamfers an interior line-line contour vertex by exact parameters.
+    /// Chamfers an interior native-segment contour vertex by exact parameters.
     ///
     /// `vertex_index` identifies the shared vertex between
     /// `segments[vertex_index - 1]` and `segments[vertex_index]`, with
@@ -466,14 +600,14 @@ impl Contour2 {
     /// resulting segment sequence is accepted only through the checked closed
     /// contour constructor. Wrapped vertex edits rotate the materialized closed
     /// boundary but remap retained source segment indices back to this contour.
-    pub fn chamfer_line_line_vertex_by_parameters(
+    pub fn chamfer_vertex_by_parameters(
         &self,
         vertex_index: usize,
         previous_param: Real,
         next_param: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourChamferResult2> {
-        self.chamfer_line_line_vertex_by_parameters_with_report(
+        self.chamfer_vertex_by_parameters_with_report(
             vertex_index,
             previous_param,
             next_param,
@@ -481,8 +615,8 @@ impl Contour2 {
         )
     }
 
-    /// Chamfers an interior line-line contour vertex by exact parameters and retains evidence.
-    pub fn chamfer_line_line_vertex_by_parameters_with_report(
+    /// Chamfers an interior native-segment contour vertex by exact parameters and retains evidence.
+    pub fn chamfer_vertex_by_parameters_with_report(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -494,7 +628,7 @@ impl Contour2 {
         }
         let chamfer = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut chamfer = rotated.chamfer_line_line_vertex_by_parameters_with_report(
+            let mut chamfer = rotated.chamfer_vertex_by_parameters_with_report(
                 1,
                 previous_param,
                 next_param,
@@ -506,13 +640,12 @@ impl Contour2 {
             });
             chamfer
         } else {
-            self.curve
-                .chamfer_line_line_vertex_by_parameters_with_report(
-                    vertex_index,
-                    previous_param,
-                    next_param,
-                    policy,
-                )?
+            self.curve.chamfer_vertex_by_parameters_with_report(
+                vertex_index,
+                previous_param,
+                next_param,
+                policy,
+            )?
         };
         let curve_string_report = chamfer.report().clone();
         let status = curve_string_report.status();
@@ -545,31 +678,26 @@ impl Contour2 {
         })
     }
 
-    /// Chamfers an interior line-line contour vertex by exact cut points.
+    /// Chamfers an interior native-segment contour vertex by exact cut points.
     ///
-    /// The supplied points are validated against the adjacent source line
+    /// The supplied points are validated against the adjacent source native
     /// segments by the underlying curve-string operation. Materialization then
     /// goes back through the checked contour constructor, so closed topology is
     /// retained only when the resulting segment sequence is still certified.
     /// Wrapped vertex edits rotate the materialized closed boundary but remap
     /// retained source segment indices back to this contour.
-    pub fn chamfer_line_line_vertex_by_points(
+    pub fn chamfer_vertex_by_points(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
         next_point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourChamferResult2> {
-        self.chamfer_line_line_vertex_by_points_with_report(
-            vertex_index,
-            previous_point,
-            next_point,
-            policy,
-        )
+        self.chamfer_vertex_by_points_with_report(vertex_index, previous_point, next_point, policy)
     }
 
-    /// Chamfers an interior line-line contour vertex by exact cut points and retains evidence.
-    pub fn chamfer_line_line_vertex_by_points_with_report(
+    /// Chamfers an interior native-segment contour vertex by exact cut points and retains evidence.
+    pub fn chamfer_vertex_by_points_with_report(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
@@ -581,7 +709,7 @@ impl Contour2 {
         }
         let chamfer = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut chamfer = rotated.chamfer_line_line_vertex_by_points_with_report(
+            let mut chamfer = rotated.chamfer_vertex_by_points_with_report(
                 1,
                 previous_point,
                 next_point,
@@ -593,7 +721,7 @@ impl Contour2 {
             });
             chamfer
         } else {
-            self.curve.chamfer_line_line_vertex_by_points_with_report(
+            self.curve.chamfer_vertex_by_points_with_report(
                 vertex_index,
                 previous_point,
                 next_point,
@@ -631,14 +759,14 @@ impl Contour2 {
         })
     }
 
-    /// Fillets an interior line-line contour vertex by exact parameters and center.
+    /// Fillets an interior native-segment contour vertex by exact parameters and center.
     ///
     /// `vertex_index` identifies the shared vertex between
     /// `segments[vertex_index - 1]` and `segments[vertex_index]`, with
     /// `vertex_index == 0` using the final segment as the previous segment.
     /// The underlying curve-string fillet report is retained, and wrapped
     /// vertex edits remap retained source segment indices back to this contour.
-    pub fn fillet_line_line_vertex_by_parameters(
+    pub fn fillet_vertex_by_parameters(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -647,7 +775,7 @@ impl Contour2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourFilletResult2> {
-        self.fillet_line_line_vertex_by_parameters_with_report(
+        self.fillet_vertex_by_parameters_with_report(
             vertex_index,
             previous_param,
             next_param,
@@ -657,8 +785,8 @@ impl Contour2 {
         )
     }
 
-    /// Fillets an interior line-line contour vertex by exact parameters and center, retaining evidence.
-    pub fn fillet_line_line_vertex_by_parameters_with_report(
+    /// Fillets an interior native-segment contour vertex by exact parameters and center, retaining evidence.
+    pub fn fillet_vertex_by_parameters_with_report(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -672,7 +800,7 @@ impl Contour2 {
         }
         let fillet = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut fillet = rotated.fillet_line_line_vertex_by_parameters_with_report(
+            let mut fillet = rotated.fillet_vertex_by_parameters_with_report(
                 1,
                 previous_param,
                 next_param,
@@ -686,15 +814,14 @@ impl Contour2 {
             });
             fillet
         } else {
-            self.curve
-                .fillet_line_line_vertex_by_parameters_with_report(
-                    vertex_index,
-                    previous_param,
-                    next_param,
-                    center,
-                    clockwise,
-                    policy,
-                )?
+            self.curve.fillet_vertex_by_parameters_with_report(
+                vertex_index,
+                previous_param,
+                next_param,
+                center,
+                clockwise,
+                policy,
+            )?
         };
         let curve_string_report = fillet.report().clone();
         let status = curve_string_report.status();
@@ -727,16 +854,16 @@ impl Contour2 {
         })
     }
 
-    /// Fillets an interior line-line contour vertex by exact tangent points and center.
+    /// Fillets an interior native-segment contour vertex by exact tangent points and center.
     ///
     /// The supplied points and center are validated by the underlying
     /// curve-string operation: tangent points must be strict interior points on
-    /// adjacent line segments, the center must certify a nonzero equal radius,
+    /// adjacent native segments, the center must certify a nonzero equal radius,
     /// and the arc orientation must match the contour traversal. The
     /// materialized result is accepted only through the checked closed-contour
     /// constructor, and wrapped vertex edits remap retained source indices back
     /// to this contour.
-    pub fn fillet_line_line_vertex_by_points(
+    pub fn fillet_vertex_by_points(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
@@ -745,7 +872,7 @@ impl Contour2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<ContourFilletResult2> {
-        self.fillet_line_line_vertex_by_points_with_report(
+        self.fillet_vertex_by_points_with_report(
             vertex_index,
             previous_point,
             next_point,
@@ -755,8 +882,8 @@ impl Contour2 {
         )
     }
 
-    /// Fillets an interior line-line contour vertex by exact tangent points and center, retaining evidence.
-    pub fn fillet_line_line_vertex_by_points_with_report(
+    /// Fillets an interior native-segment contour vertex by exact tangent points and center, retaining evidence.
+    pub fn fillet_vertex_by_points_with_report(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
@@ -770,7 +897,7 @@ impl Contour2 {
         }
         let fillet = if vertex_index == 0 {
             let rotated = CurveString2::try_new(wraparound_chamfer_segments(self.segments()))?;
-            let mut fillet = rotated.fillet_line_line_vertex_by_points_with_report(
+            let mut fillet = rotated.fillet_vertex_by_points_with_report(
                 1,
                 previous_point,
                 next_point,
@@ -784,7 +911,7 @@ impl Contour2 {
             });
             fillet
         } else {
-            self.curve.fillet_line_line_vertex_by_points_with_report(
+            self.curve.fillet_vertex_by_points_with_report(
                 vertex_index,
                 previous_point,
                 next_point,
@@ -829,32 +956,21 @@ impl Contour2 {
     ///
     /// The returned value is `1/2 * integral(x dy - y dx)` around the closed
     /// contour. Straight segments are polynomial and always supported.
-    /// Circular arcs are supported when they carry CAD bulge data, where the
-    /// circular segment term is `r^2 / 2 * (theta - sin(theta))` with
-    /// `theta = 4 atan(bulge)`. Arcs constructed only from center data return
-    /// `Ok(None)` until the crate grows an exact `atan2` sweep primitive.
+    /// Circular arcs use the circular-segment term
+    /// `r^2 / 2 * (theta - sin(theta))`. Bulge arcs retain
+    /// `theta = 4 atan(bulge)`; center-defined arcs derive the directed sweep
+    /// from exact radial cross/dot evidence and Hyperreal `atan2`.
     ///
     /// This is the line/arc counterpart to Green's-theorem area accumulation
     /// used for Bezier moments in this crate. Keeping area facts on exact
     /// curve objects follows Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// The exact result is computed lazily once and shared by contour clones.
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
-        let mut area = Real::zero();
-
-        for segment in self.segments() {
-            match segment {
-                Segment2::Line(line) => {
-                    area = &area + &line_signed_area_contribution(line.start(), line.end())?;
-                }
-                Segment2::Arc(arc) => match arc_signed_area_contribution(arc)? {
-                    Some(contribution) => area = &area + &contribution,
-                    None => return Ok(None),
-                },
-            }
-        }
-
-        Ok(Some(area))
+        self.signed_area_cache
+            .get_or_init(|| compute_contour_signed_area(self.segments()))
+            .clone()
     }
 
     /// Returns the segment count.
@@ -1734,20 +1850,86 @@ fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Re
     (((start.x() * end.y()) - (end.x() * start.y())) / Real::from(2_i8)).map_err(CurveError::from)
 }
 
-fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option<Real>> {
-    let Some(bulge) = arc.bulge() else {
-        return Ok(None);
-    };
+fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real>> {
+    let mut area = Real::zero();
 
+    for segment in segments {
+        match segment {
+            Segment2::Line(line) => {
+                area = &area + &line_signed_area_contribution(line.start(), line.end())?;
+            }
+            Segment2::Arc(arc) => match arc_signed_area_contribution(arc)? {
+                Some(contribution) => area = &area + &contribution,
+                None => return Ok(None),
+            },
+        }
+    }
+
+    Ok(Some(area))
+}
+
+fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option<Real>> {
     let chord = line_signed_area_contribution(arc.start(), arc.end())?;
-    let b2 = bulge * bulge;
-    let one_plus_b2 = Real::one() + &b2;
-    let sin_numerator = (Real::from(4_i8) * bulge) * (Real::one() - &b2);
-    let sin_denominator = &one_plus_b2 * &one_plus_b2;
-    let sin_theta = (sin_numerator / sin_denominator)?;
-    let theta = Real::from(4_i8) * bulge.clone().atan()?;
-    let segment = (arc.radius_squared() * (theta - sin_theta) / Real::from(2_i8))?;
+    let segment = match arc.bulge() {
+        Some(bulge) => {
+            let b2 = bulge * bulge;
+            let one_plus_b2 = Real::one() + &b2;
+            let sin_numerator = (Real::from(4_i8) * bulge) * (Real::one() - &b2);
+            let sin_denominator = &one_plus_b2 * &one_plus_b2;
+            let sin_theta = (sin_numerator / sin_denominator)?;
+            let theta = Real::from(4_i8) * bulge.clone().atan()?;
+            (arc.radius_squared() * (theta - sin_theta) / Real::from(2_i8))?
+        }
+        None => {
+            let start = arc.start().delta_from(arc.center());
+            let end = arc.end().delta_from(arc.center());
+            let cross = (&start.0 * &end.1) - (&start.1 * &end.0);
+            let dot = (&start.0 * &end.0) + (&start.1 * &end.1);
+            let Some(theta) = center_arc_signed_sweep(arc, cross.clone(), dot)? else {
+                return Ok(None);
+            };
+            ((arc.radius_squared() * theta - cross) / Real::from(2_i8))?
+        }
+    };
     Ok(Some(chord + segment))
+}
+
+fn center_arc_signed_sweep(
+    arc: &crate::CircularArc2,
+    cross: Real,
+    dot: Real,
+) -> CurveResult<Option<Real>> {
+    let sweep = match crate::arc_bezier::classify_sweep(arc, None) {
+        Ok(sweep) => sweep,
+        Err(crate::ExactCurveError::Blocked(_)) => return Ok(None),
+        Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+    };
+    let theta = match sweep {
+        crate::arc_bezier::ArcSweepKind::FullCircle => {
+            if arc.is_clockwise() {
+                -Real::tau()
+            } else {
+                Real::tau()
+            }
+        }
+        crate::arc_bezier::ArcSweepKind::Semicircle => {
+            if arc.is_clockwise() {
+                -Real::pi()
+            } else {
+                Real::pi()
+            }
+        }
+        crate::arc_bezier::ArcSweepKind::Minor => cross.atan2(dot),
+        crate::arc_bezier::ArcSweepKind::Major => {
+            let principal = cross.atan2(dot);
+            if arc.is_clockwise() {
+                principal - Real::tau()
+            } else {
+                principal + Real::tau()
+            }
+        }
+    };
+    Ok(Some(theta))
 }
 
 fn wraparound_chamfer_segments(segments: &[Segment2]) -> Vec<Segment2> {
@@ -1939,22 +2121,70 @@ fn process_arc_winding(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<i32> {
+    let sweep_kind = crate::arc_bezier::classify_sweep(arc, None).ok()?;
+    if matches!(
+        sweep_kind,
+        crate::arc_bezier::ArcSweepKind::Major | crate::arc_bezier::ArcSweepKind::FullCircle
+    ) {
+        let midpoint = match arc.retained_representative_point().as_ref().ok()? {
+            Classification::Decided(midpoint) => midpoint,
+            Classification::Uncertain(_) => return None,
+        };
+        return Some(
+            process_minor_arc_winding(
+                arc.start(),
+                midpoint,
+                arc.center(),
+                arc.radius_squared_ref(),
+                arc.is_clockwise(),
+                point,
+                policy,
+            )? + process_minor_arc_winding(
+                midpoint,
+                arc.end(),
+                arc.center(),
+                arc.radius_squared_ref(),
+                arc.is_clockwise(),
+                point,
+                policy,
+            )?,
+        );
+    }
+
+    process_minor_arc_winding(
+        arc.start(),
+        arc.end(),
+        arc.center(),
+        arc.radius_squared_ref(),
+        arc.is_clockwise(),
+        point,
+        policy,
+    )
+}
+
+fn process_minor_arc_winding(
+    start: &Point2,
+    end: &Point2,
+    center: &Point2,
+    radius_squared: &Real,
+    clockwise: bool,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> Option<i32> {
     // Arc winding is the circular-arc extension of the boundary-first winding
     // classifier used for polygon point containment. The tests below split the
     // arc by its endpoint chord and circle interior so the horizontal-ray count
     // changes exactly when the directed arc crosses the query ray. The
     // boundary and degeneracy discipline follows Hormann and Agathos,
     // "The Point in Polygon Problem for Arbitrary Polygons" (2001).
-    let start = arc.start();
-    let end = arc.end();
-    let is_ccw = !arc.is_clockwise();
+    let is_ccw = !clockwise;
     let point_is_left = if is_ccw {
         is_left(start, end, point, policy)?
     } else {
         is_left_or_equal(start, end, point, policy)?
     };
 
-    let inside_circle = point_inside_circle(arc, point, policy)?;
+    let inside_circle = point_inside_circle(center, radius_squared, point, policy)?;
 
     if le_real(start.y(), point.y(), policy)? {
         if gt_real(end.y(), point.y(), policy)? {
@@ -2018,13 +2248,14 @@ fn process_arc_winding(
 }
 
 fn point_inside_circle(
-    arc: &crate::CircularArc2,
+    center: &Point2,
+    radius_squared: &Real,
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<bool> {
-    let distance_squared = point.distance_squared(arc.center());
+    let distance_squared = point.distance_squared(center);
     Some(matches!(
-        compare_reals(&distance_squared, &arc.radius_squared(), policy)?,
+        compare_reals(&distance_squared, radius_squared, policy)?,
         Ordering::Less
     ))
 }
@@ -2067,4 +2298,91 @@ fn gt_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
         compare_reals(left, right, policy)?,
         Ordering::Greater
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(x.into(), y.into())
+    }
+
+    fn center_circle(clockwise: bool) -> Contour2 {
+        Contour2::try_new(vec![
+            Segment2::Arc(
+                crate::CircularArc2::try_from_center(
+                    point(2, 0),
+                    point(-2, 0),
+                    point(0, 0),
+                    clockwise,
+                )
+                .unwrap(),
+            ),
+            Segment2::Arc(
+                crate::CircularArc2::try_from_center(
+                    point(-2, 0),
+                    point(2, 0),
+                    point(0, 0),
+                    clockwise,
+                )
+                .unwrap(),
+            ),
+        ])
+        .unwrap()
+    }
+
+    #[test]
+    fn contour_clones_share_lazy_exact_signed_area() {
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(point(0, 0), Real::zero()),
+            BulgeVertex2::new(point(2, 0), Real::zero()),
+            BulgeVertex2::new(point(2, 2), Real::zero()),
+            BulgeVertex2::new(point(0, 2), Real::zero()),
+        ])
+        .unwrap();
+        let clone = contour.clone();
+
+        assert!(Rc::ptr_eq(
+            &contour.signed_area_cache,
+            &clone.signed_area_cache
+        ));
+        assert!(clone.signed_area_cache.get().is_none());
+        assert_eq!(contour.signed_area().unwrap(), Some(Real::from(4)));
+        assert_eq!(clone.signed_area().unwrap(), Some(Real::from(4)));
+        assert!(clone.signed_area_cache.get().is_some());
+    }
+
+    #[test]
+    fn center_defined_circle_signed_area_is_exact_in_both_orientations() {
+        let expected = Real::from(4) * Real::pi();
+
+        assert_eq!(
+            center_circle(false).signed_area().unwrap(),
+            Some(expected.clone())
+        );
+        assert_eq!(center_circle(true).signed_area().unwrap(), Some(-expected));
+    }
+
+    #[test]
+    fn translated_center_defined_arc_sector_has_exact_signed_area() {
+        let center = point(3, 4);
+        let contour = Contour2::try_new(vec![
+            Segment2::Arc(
+                crate::CircularArc2::try_from_center(
+                    point(4, 4),
+                    point(3, 5),
+                    center.clone(),
+                    false,
+                )
+                .unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(point(3, 5), center.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(center, point(4, 4)).unwrap()),
+        ])
+        .unwrap();
+        let expected = (Real::pi() / Real::from(4)).unwrap();
+
+        assert_eq!(contour.signed_area().unwrap(), Some(expected));
+    }
 }

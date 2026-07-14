@@ -13,7 +13,7 @@ use hyperreal::Real;
 use crate::classify::compare_reals;
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, Point2, RetainedTopologyStatus,
-    UncertaintyReason,
+    SplinePeriodicity2, UncertaintyReason,
 };
 
 /// Curve family carried by retained curve metadata.
@@ -63,15 +63,6 @@ pub struct RetainedTrimInterval1 {
     direction: RetainedTrimDirection,
 }
 
-/// Periodicity evidence for a retained curve.
-#[derive(Clone, Debug, PartialEq)]
-pub enum RetainedCurvePeriodicity1 {
-    /// The carrier is non-periodic in the retained parameter domain.
-    NonPeriodic,
-    /// The carrier has an exact positive parameter period.
-    Periodic { period: Box<Real> },
-}
-
 /// Exact endpoint evidence at the active retained domain boundaries.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RetainedEndpointEvidence2 {
@@ -102,7 +93,7 @@ pub struct RetainedCurveProfile2 {
     identity: RetainedCurveIdentity2,
     domain: RetainedParameterDomain1,
     trim: RetainedTrimInterval1,
-    periodicity: RetainedCurvePeriodicity1,
+    periodicity: SplinePeriodicity2,
     topology_status: RetainedTopologyStatus,
     endpoints: RetainedEndpointEvidence2,
     cache_summary: RetainedCurveCacheSummary2,
@@ -230,19 +221,6 @@ impl RetainedTrimInterval1 {
     }
 }
 
-impl RetainedCurvePeriodicity1 {
-    /// Constructs exact positive-period evidence.
-    pub fn periodic(period: Real, policy: &CurvePolicy) -> CurveResult<Classification<Self>> {
-        match compare_reals(&Real::zero(), &period, policy) {
-            Some(std::cmp::Ordering::Less) => Ok(Classification::Decided(Self::Periodic {
-                period: Box::new(period),
-            })),
-            Some(_) => Err(CurveError::InvalidBezierRange),
-            None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
-    }
-}
-
 impl RetainedEndpointEvidence2 {
     /// Constructs exact endpoint evidence for a certified retained domain.
     pub fn new(domain: &RetainedParameterDomain1, start_point: Point2, end_point: Point2) -> Self {
@@ -362,7 +340,7 @@ impl RetainedCurveProfile2 {
         identity: RetainedCurveIdentity2,
         domain: RetainedParameterDomain1,
         trim: RetainedTrimInterval1,
-        periodicity: RetainedCurvePeriodicity1,
+        periodicity: SplinePeriodicity2,
         topology_status: RetainedTopologyStatus,
         endpoints: RetainedEndpointEvidence2,
         cache_summary: RetainedCurveCacheSummary2,
@@ -371,6 +349,7 @@ impl RetainedCurveProfile2 {
             identity,
             &domain,
             &trim,
+            &periodicity,
             topology_status,
             &endpoints,
             &cache_summary,
@@ -402,7 +381,7 @@ impl RetainedCurveProfile2 {
     }
 
     /// Returns periodicity evidence.
-    pub const fn periodicity(&self) -> &RetainedCurvePeriodicity1 {
+    pub const fn periodicity(&self) -> &SplinePeriodicity2 {
         &self.periodicity
     }
 
@@ -479,6 +458,7 @@ fn validate_curve_profile_evidence(
     identity: RetainedCurveIdentity2,
     domain: &RetainedParameterDomain1,
     trim: &RetainedTrimInterval1,
+    periodicity: &SplinePeriodicity2,
     topology_status: RetainedTopologyStatus,
     endpoints: &RetainedEndpointEvidence2,
     cache_summary: &RetainedCurveCacheSummary2,
@@ -502,6 +482,7 @@ fn validate_curve_profile_evidence(
             "retained curve endpoint evidence must match the active parameter domain".into(),
         ));
     }
+    validate_profile_periodicity(periodicity, domain, endpoints)?;
     if topology_status.is_native_exact() && cache_summary.retained_span_count() != 0 {
         return Err(CurveError::Topology(
             "native retained curve profile must not report retained unsupported spans".into(),
@@ -515,6 +496,44 @@ fn validate_curve_profile_evidence(
     if !topology_status.is_native_exact() && !topology_status.is_retained_evidence() {
         return Err(CurveError::Topology(
             "retained curve profile must carry exact native or retained evidence status".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_profile_periodicity(
+    periodicity: &SplinePeriodicity2,
+    domain: &RetainedParameterDomain1,
+    endpoints: &RetainedEndpointEvidence2,
+) -> CurveResult<()> {
+    let SplinePeriodicity2::Periodic { period } = periodicity else {
+        return Ok(());
+    };
+    let policy = CurvePolicy::certified();
+    if compare_reals(&Real::zero(), period, &policy) != Some(std::cmp::Ordering::Less) {
+        return Err(CurveError::Topology(
+            "retained periodic curve must carry an exact positive period".into(),
+        ));
+    }
+    let domain_width = domain.end() - domain.start();
+    if compare_reals(&domain_width, period, &policy) != Some(std::cmp::Ordering::Equal) {
+        return Err(CurveError::Topology(
+            "retained periodic curve period must equal its active parameter-domain width".into(),
+        ));
+    }
+    if compare_reals(
+        endpoints.start_point().x(),
+        endpoints.end_point().x(),
+        &policy,
+    ) != Some(std::cmp::Ordering::Equal)
+        || compare_reals(
+            endpoints.start_point().y(),
+            endpoints.end_point().y(),
+            &policy,
+        ) != Some(std::cmp::Ordering::Equal)
+    {
+        return Err(CurveError::Topology(
+            "retained periodic curve endpoint evidence must close at the canonical seam".into(),
         ));
     }
     Ok(())
@@ -534,9 +553,10 @@ fn validate_profile_family_shape(
             )
         })?;
     match identity.family() {
-        RetainedCurveFamily2::PolynomialBSpline if !(2..=3).contains(&degree) => {
+        RetainedCurveFamily2::PolynomialBSpline if !(1..=3).contains(&degree) => {
             Err(CurveError::Topology(
-                "polynomial B-spline profile must carry quadratic or cubic cache evidence".into(),
+                "polynomial B-spline profile must carry linear, quadratic, or cubic cache evidence"
+                    .into(),
             ))
         }
         RetainedCurveFamily2::RationalQuadraticBSpline if degree != 2 => Err(CurveError::Topology(

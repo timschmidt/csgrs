@@ -164,6 +164,12 @@ pub(crate) fn boolean_boundary_loops_between_prepared(
             Classification::Decided(selection) => selection,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+    let selection =
+        match crate::region_boolean::resolve_shared_boundary_selection(&fragments, &selection, op)?
+        {
+            Classification::Decided(selection) => selection,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
 
     let emitted = selection.emit_boundary_fragments(&fragments)?;
     let chains = match emitted.assemble_chains(policy) {
@@ -272,6 +278,23 @@ pub(crate) fn boolean_region_between_prepared_with_report(
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let boundary_events = first.intersect_prepared_region(second, policy)?;
+    if let Some(region) =
+        crate::region_boolean::retained_offset_region_boolean(&first_view, &second_view, op, policy)
+    {
+        return Ok(
+            crate::region_boolean::region_boolean_result_from_role_assigned_shortcut_region(
+                &first_view,
+                &second_view,
+                op,
+                fill_rule,
+                crate::RegionBooleanQueryPath2::Prepared,
+                &boundary_events,
+                region,
+                crate::RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
+                Some(region_boolean_prepared_cache_report(first, second)),
+            ),
+        );
+    }
     if op == BooleanOp::Xor {
         return match xor_region_by_prepared_difference_union(first, second, fill_rule, policy)? {
             Classification::Decided(region) => Ok(
@@ -464,6 +487,8 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
         }
     };
     let selection_result = fragments.classify_for_boolean_with_point_classifier_with_report(
+        &first_view,
+        &second_view,
         op,
         policy,
         |source_side, sample| match source_side {
@@ -482,6 +507,13 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
             ));
         }
     };
+    let (selection, shared_boundary_resolutions) =
+        match crate::region_boolean::resolve_shared_boundary_selection_with_report(
+            fragments, selection, op,
+        )? {
+            Classification::Decided(resolved) => resolved,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     let emission_result = selection.emit_boundary_fragments_with_report(fragments)?;
     let emitted = match emission_result.fragments() {
         Some(emitted) => emitted,
@@ -533,6 +565,7 @@ fn boolean_boundary_contours_between_prepared_with_pipeline_report(
     let pipeline_report = RegionBooleanPipelineReport2::new(
         fragment_result.report().clone(),
         selection_result.report().clone(),
+        shared_boundary_resolutions,
         emission_result.report().clone(),
         chain_result.report().clone(),
         loop_result.report().clone(),
@@ -887,8 +920,12 @@ fn containment_difference_boundary_contours_prepared(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
-    crate::region_boolean::boundary_contours_dropping_unresolved(
-        &fragments, &selection, fill_rule, policy,
+    crate::region_boolean::boundary_contours_resolving_shared_boundaries(
+        &fragments,
+        &selection,
+        BooleanOp::Difference,
+        fill_rule,
+        policy,
     )
 }
 
@@ -940,8 +977,8 @@ fn boundary_overlap_union_contours_prepared(
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
-    crate::region_boolean::boundary_contours_dropping_unresolved(
-        &fragments, &selection, fill_rule, policy,
+    crate::region_boolean::boundary_contours_resolving_shared_boundaries(
+        &fragments, &selection, op, fill_rule, policy,
     )
 }
 
@@ -952,12 +989,18 @@ pub(crate) fn classify_fragments_with_prepared_regions(
     op: BooleanOp,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BooleanFragmentSelection>> {
-    fragments.classify_for_boolean_with_point_classifier(op, policy, |source_side, sample| {
-        match source_side {
+    let first_view = first.as_region_view();
+    let second_view = second.as_region_view();
+    fragments.classify_for_boolean_with_point_classifier(
+        &first_view,
+        &second_view,
+        op,
+        policy,
+        |source_side, sample| match source_side {
             RegionSide::First => second.classify_point(sample, policy),
             RegionSide::Second => first.classify_point(sample, policy),
-        }
-    })
+        },
+    )
 }
 
 fn xor_region_by_prepared_difference_union(

@@ -380,11 +380,11 @@ fn contour_merge_adjacent_collinear_lines_merges_wraparound_run() {
 }
 
 #[test]
-fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
+fn contour_chamfer_vertex_materializes_closed_line_contour() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &policy())
+        .chamfer_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -394,7 +394,7 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
     );
     assert_eq!(
         chamfer.report().predicate_path(),
-        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+        CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters
     );
     assert_eq!(chamfer.report().vertex_index(), 1);
     assert_eq!(
@@ -499,6 +499,55 @@ fn contour_chamfer_line_line_vertex_materializes_closed_contour() {
 }
 
 #[test]
+fn contour_chamfer_wraparound_arc_arc_vertex_preserves_exact_provenance() {
+    let contour = Contour2::from_bulge_vertices(&[vertex(0, 0, 1), vertex(2, 0, 1)]).unwrap();
+
+    let chamfer = contour
+        .chamfer_vertex_by_parameters_with_report(0, q(1, 2), q(1, 2), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(
+        chamfer.report().stage(),
+        ContourChamferStage2::ContourMaterialization
+    );
+    assert_eq!(chamfer.report().previous_segment_index(), 1);
+    assert_eq!(chamfer.report().next_segment_index(), 0);
+    assert_eq!(chamfer.report().previous_cut_point(), Some(&p(1, 1)));
+    assert_eq!(chamfer.report().next_cut_point(), Some(&p(1, -1)));
+    assert_eq!(
+        chamfer.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 0, arcs: 2 }
+    );
+    assert_eq!(
+        chamfer.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 2 })
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[0].source_segment_index(),
+        1
+    );
+    assert_eq!(
+        chamfer.report().segment_reports()[1].source_segment_index(),
+        0
+    );
+    let [
+        Segment2::Arc(previous),
+        Segment2::Line(bevel),
+        Segment2::Arc(next),
+    ] = chamfer.contour().unwrap().segments()
+    else {
+        panic!("wraparound arc chamfer should preserve both circular arcs");
+    };
+    assert_eq!(previous.start(), &p(2, 0));
+    assert_eq!(previous.end(), &p(1, 1));
+    assert_eq!(bevel.start(), &p(1, 1));
+    assert_eq!(bevel.end(), &p(1, -1));
+    assert_eq!(next.start(), &p(1, -1));
+    assert_eq!(next.end(), &p(2, 0));
+}
+
+#[test]
 fn contour_chamfer_preserves_fill_rule() {
     let contour = Contour2::from_bulge_vertices_with_fill_rule(
         &[
@@ -512,7 +561,7 @@ fn contour_chamfer_preserves_fill_rule() {
     .unwrap();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy())
+        .chamfer_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy())
         .unwrap();
 
     assert_eq!(chamfer.report().fill_rule(), FillRule::EvenOdd);
@@ -524,7 +573,7 @@ fn contour_chamfer_reports_boundary_parameters() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_parameters(1, s(1), q(1, 4), &policy())
+        .chamfer_vertex_by_parameters(1, s(1), q(1, 4), &policy())
         .unwrap();
 
     assert!(chamfer.contour().is_none());
@@ -559,11 +608,11 @@ fn contour_chamfer_reports_boundary_parameters() {
 }
 
 #[test]
-fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
+fn contour_chamfer_vertex_by_points_materializes_closed_line_contour() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &policy())
+        .chamfer_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -573,7 +622,7 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
     );
     assert_eq!(
         chamfer.report().predicate_path(),
-        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+        CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters
     );
     assert_eq!(chamfer.report().vertex_index(), 1);
     assert_eq!(
@@ -605,11 +654,11 @@ fn contour_chamfer_line_line_vertex_by_points_materializes_closed_contour() {
 }
 
 #[test]
-fn contour_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
+fn contour_chamfer_vertex_by_points_reports_off_segment_boundary() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
+        .chamfer_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
         .unwrap();
 
     assert!(chamfer.contour().is_none());
@@ -641,7 +690,7 @@ fn contour_chamfer_line_line_wraparound_vertex_materializes_closed_contour() {
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_parameters(0, q(3, 4), q(1, 4), &policy())
+        .chamfer_vertex_by_parameters(0, q(3, 4), q(1, 4), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -701,7 +750,7 @@ fn contour_chamfer_line_line_wraparound_vertex_by_points_materializes_closed_con
     let contour = rectangle();
 
     let chamfer = contour
-        .chamfer_line_line_vertex_by_points(0, &p(0, 1), &p(1, 0), &policy())
+        .chamfer_vertex_by_points(0, &p(0, 1), &p(1, 0), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -750,25 +799,18 @@ fn contour_chamfer_rejects_out_of_range_vertex() {
 
     assert_eq!(
         contour
-            .chamfer_line_line_vertex_by_parameters(4, q(3, 4), q(1, 4), &policy())
+            .chamfer_vertex_by_parameters(4, q(3, 4), q(1, 4), &policy())
             .unwrap_err(),
         CurveError::InvalidCurveRange
     );
 }
 
 #[test]
-fn contour_fillet_line_line_vertex_materializes_closed_contour() {
+fn contour_fillet_vertex_materializes_closed_line_contour() {
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_points_with_report(
-            1,
-            &p(3, 0),
-            &p(4, 1),
-            &p(3, 1),
-            false,
-            &policy(),
-        )
+        .fillet_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
@@ -778,7 +820,7 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
     );
     assert_eq!(
         fillet.report().predicate_path(),
-        CurveStringFilletPredicatePath2::LineLineTangentArc
+        CurveStringFilletPredicatePath2::NativeSegmentsTangentArc
     );
     assert_eq!(fillet.report().vertex_index(), 1);
     assert_eq!(
@@ -880,18 +922,11 @@ fn contour_fillet_line_line_vertex_materializes_closed_contour() {
 }
 
 #[test]
-fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
+fn contour_fillet_vertex_by_parameters_materializes_closed_line_contour() {
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_parameters_with_report(
-            1,
-            q(3, 4),
-            q(1, 4),
-            &p(3, 1),
-            false,
-            &policy(),
-        )
+        .fillet_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy())
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
@@ -901,7 +936,7 @@ fn contour_fillet_line_line_vertex_by_parameters_materializes_closed_contour() {
     );
     assert_eq!(
         fillet.report().predicate_path(),
-        CurveStringFilletPredicatePath2::LineLineTangentArc
+        CurveStringFilletPredicatePath2::NativeSegmentsTangentArc
     );
     assert_eq!(fillet.report().vertex_index(), 1);
     assert_eq!(
@@ -961,7 +996,7 @@ fn contour_fillet_preserves_fill_rule() {
     .unwrap();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .fillet_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
         .unwrap();
 
     assert_eq!(fillet.report().fill_rule(), FillRule::EvenOdd);
@@ -973,7 +1008,7 @@ fn contour_fillet_reports_wrong_orientation_boundary() {
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), true, &policy())
+        .fillet_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), true, &policy())
         .unwrap();
 
     assert!(fillet.contour().is_none());
@@ -1003,7 +1038,7 @@ fn contour_fillet_line_line_wraparound_vertex_materializes_closed_contour() {
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_points(0, &p(0, 1), &p(1, 0), &p(1, 1), false, &policy())
+        .fillet_vertex_by_points(0, &p(0, 1), &p(1, 0), &p(1, 1), false, &policy())
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
@@ -1068,7 +1103,7 @@ fn contour_fillet_line_line_wraparound_vertex_by_parameters_materializes_closed_
     let contour = rectangle();
 
     let fillet = contour
-        .fillet_line_line_vertex_by_parameters(0, q(3, 4), q(1, 4), &p(1, 1), false, &policy())
+        .fillet_vertex_by_parameters(0, q(3, 4), q(1, 4), &p(1, 1), false, &policy())
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
@@ -1107,12 +1142,87 @@ fn contour_fillet_line_line_wraparound_vertex_by_parameters_materializes_closed_
 }
 
 #[test]
+fn contour_fillet_arc_arc_wraparound_preserves_sources_and_remaps_provenance() {
+    let previous_center = hypercurve::Point2::new(s(3), q(13, 6));
+    let previous_start = hypercurve::Point2::new(s(3), q(13, 3));
+    let shared_vertex = p(5, 3);
+    let next_center = hypercurve::Point2::new(q(13, 2), s(1));
+    let next_end = hypercurve::Point2::new(q(9, 2), q(5, 2));
+    let previous_arc = hypercurve::CircularArc2::try_from_center(
+        previous_start.clone(),
+        shared_vertex.clone(),
+        previous_center.clone(),
+        false,
+    )
+    .unwrap();
+    let next_arc = hypercurve::CircularArc2::try_from_center(
+        shared_vertex,
+        next_end.clone(),
+        next_center.clone(),
+        true,
+    )
+    .unwrap();
+    let contour = Contour2::try_new(vec![
+        Segment2::Arc(next_arc),
+        Segment2::Line(
+            hypercurve::LineSeg2::try_new(next_end.clone(), previous_start.clone()).unwrap(),
+        ),
+        Segment2::Arc(previous_arc),
+    ])
+    .unwrap();
+
+    let fillet = contour
+        .fillet_vertex_by_points(0, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    assert_eq!(fillet.report().vertex_index(), 0);
+    assert_eq!(
+        fillet.report().source_segment_kind_counts(),
+        SegmentKindCounts { lines: 1, arcs: 2 }
+    );
+    assert_eq!(
+        fillet.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 3 })
+    );
+    assert_eq!(fillet.report().previous_segment_index(), 2);
+    assert_eq!(fillet.report().next_segment_index(), 0);
+    let segment_reports = fillet.report().curve_string_report().segment_reports();
+    assert_eq!(segment_reports[0].source_segment_index(), 2);
+    assert_eq!(segment_reports[1].source_segment_index(), 0);
+
+    let output = fillet
+        .contour()
+        .expect("wraparound arc-arc contour fillet should materialize");
+    let [
+        Segment2::Arc(previous),
+        Segment2::Arc(inserted),
+        Segment2::Arc(next),
+        Segment2::Line(closing),
+    ] = output.segments()
+    else {
+        panic!("wraparound arc-arc fillet should preserve both source arcs");
+    };
+    assert_eq!(previous.start(), &previous_start);
+    assert_eq!(previous.end(), &p(3, 0));
+    assert_eq!(previous.center(), &previous_center);
+    assert_eq!(inserted.start(), &p(3, 0));
+    assert_eq!(inserted.end(), &p(4, 1));
+    assert_eq!(inserted.center(), &p(3, 1));
+    assert_eq!(next.start(), &p(4, 1));
+    assert_eq!(next.end(), &next_end);
+    assert_eq!(next.center(), &next_center);
+    assert_eq!(closing.start(), &next_end);
+    assert_eq!(closing.end(), &previous_start);
+}
+
+#[test]
 fn contour_fillet_rejects_out_of_range_vertex() {
     let contour = rectangle();
 
     assert_eq!(
         contour
-            .fillet_line_line_vertex_by_points(4, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
+            .fillet_vertex_by_points(4, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
             .unwrap_err(),
         CurveError::InvalidCurveRange
     );

@@ -81,6 +81,7 @@ fuzz_target!(|data: &[u8]| {
                     assert!(end.is_exact());
                 }
                 BezierSplitFragment2::AlgebraicEndpointImages {
+                    reversed: false,
                     start,
                     end,
                     start_image,

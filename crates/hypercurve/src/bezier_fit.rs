@@ -12,7 +12,7 @@ use crate::classify::{classify_oriented_line, is_zero, real_sign};
 use crate::{
     Aabb2, BezierFlatteningCertificate, CertifiedBezierPolyline2, Classification, CubicBezier2,
     CurveError, CurvePolicy, CurveResult, LineSeg2, LineSide, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, UncertaintyReason,
+    RationalBezier2, RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Error metric used by a zero-error primitive fit.
@@ -397,6 +397,24 @@ impl RationalQuadraticBezier2 {
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
         match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
             Some(true) => fit_control_polygon_line_image(&self.control_points(), policy),
+            Some(false) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+}
+
+impl RationalBezier2 {
+    /// Fits this rational Bezier to its exact endpoint line image when possible.
+    pub fn fit_exact_line_image(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
+        let weights = self.weights().iter().collect::<Vec<_>>();
+        match weights_known_same_nonzero_sign(&weights, policy) {
+            Some(true) => {
+                let controls = self.control_points().iter().collect::<Vec<_>>();
+                fit_control_polygon_line_image(&controls, policy)
+            }
             Some(false) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
             None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }

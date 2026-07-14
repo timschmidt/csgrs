@@ -423,6 +423,16 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     b_segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> CurveResult<ContourIntersectionSet> {
+    if matches!(
+        a.retained_offset_relation(b, policy),
+        Some(
+            crate::contour::RetainedContourOffsetRelation2::FirstContainsSecond
+                | crate::contour::RetainedContourOffsetRelation2::SecondContainsFirst
+        )
+    ) {
+        return ContourIntersectionSet::new_with_policy(Vec::new(), policy);
+    }
+
     if let (Some(a_box), Some(b_box)) = (a_box, b_box)
         && aabbs_decided_disjoint(a_box, b_box, policy)
     {
@@ -569,38 +579,44 @@ fn append_segment_relation_events(
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::None) => {}
         SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) => {
-            append_point_from_segments(
+            append_certified_point_event(
                 events,
                 a_segment_index,
                 b_segment_index,
                 a_segment,
                 b_segment,
                 hit.point,
+                hit.a_param,
+                hit.b_param,
                 hit.kind,
                 policy,
-            )?;
+            );
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::TwoPoints { first, second }) => {
-            append_point_from_segments(
+            append_certified_point_event(
                 events,
                 a_segment_index,
                 b_segment_index,
                 a_segment,
                 b_segment,
                 first.point,
+                first.a_param,
+                first.b_param,
                 first.kind,
                 policy,
-            )?;
-            append_point_from_segments(
+            );
+            append_certified_point_event(
                 events,
                 a_segment_index,
                 b_segment_index,
                 a_segment,
                 b_segment,
                 second.point,
+                second.a_param,
+                second.b_param,
                 second.kind,
                 policy,
-            )?;
+            );
         }
         SegmentIntersection::ArcArc(ArcArcIntersection::Overlap {
             segment,
@@ -702,16 +718,9 @@ fn append_line_arc_hit(
     hit: crate::LineArcIntersectionPoint,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
-    let point = hit.point;
     let (a_param, b_param) = match order {
-        LineArcOrder::LineThenArc => {
-            let arc_param = segment_chord_param(b_segment, &point)?;
-            (hit.line_param, arc_param)
-        }
-        LineArcOrder::ArcThenLine => {
-            let arc_param = segment_chord_param(a_segment, &point)?;
-            (arc_param, hit.line_param)
-        }
+        LineArcOrder::LineThenArc => (hit.line_param, hit.arc_param),
+        LineArcOrder::ArcThenLine => (hit.arc_param, hit.line_param),
     };
 
     append_certified_point_event(
@@ -720,40 +729,13 @@ fn append_line_arc_hit(
         b_segment_index,
         a_segment,
         b_segment,
-        point,
+        hit.point,
         a_param,
         b_param,
         hit.kind,
         policy,
     );
 
-    Ok(())
-}
-
-fn append_point_from_segments(
-    events: &mut Vec<ContourIntersection>,
-    a_segment_index: usize,
-    b_segment_index: usize,
-    a_segment: &Segment2,
-    b_segment: &Segment2,
-    point: Point2,
-    kind: IntersectionKind,
-    policy: &CurvePolicy,
-) -> CurveResult<()> {
-    let a_param = segment_chord_param(a_segment, &point)?;
-    let b_param = segment_chord_param(b_segment, &point)?;
-    append_certified_point_event(
-        events,
-        a_segment_index,
-        b_segment_index,
-        a_segment,
-        b_segment,
-        point,
-        a_param,
-        b_param,
-        kind,
-        policy,
-    );
     Ok(())
 }
 
@@ -862,14 +844,6 @@ fn points_match_for_connectivity(point: &Point2, expected: &Point2, policy: &Cur
     }
 
     false
-}
-
-fn segment_chord_param(segment: &Segment2, point: &Point2) -> CurveResult<Real> {
-    let (dx, dy) = segment.end().delta_from(segment.start());
-    let (px, py) = point.delta_from(segment.start());
-    let numerator = (&px * &dx) + (&py * &dy);
-    let denominator = (&dx * &dx) + (&dy * &dy);
-    (numerator / denominator).map_err(Into::into)
 }
 
 fn insertion_index(

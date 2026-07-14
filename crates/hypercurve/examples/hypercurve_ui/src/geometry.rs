@@ -932,7 +932,10 @@ pub fn contour_intersections(
         match event {
             ContourIntersection::Point(point) => points.push(hpoint_array(&point.point)),
             ContourIntersection::Overlap(overlap) => {
-                overlaps.push(Polyline::from_segments(&[overlap.segment.clone()], false));
+                overlaps.push(Polyline::from_segments(
+                    std::slice::from_ref(&overlap.segment),
+                    false,
+                ));
             }
             ContourIntersection::Uncertain(_) => {}
         }
@@ -956,13 +959,13 @@ pub fn contour_slices(
         first_fragments
             .fragments()
             .iter()
-            .map(|fragment| Polyline::from_segments(&[fragment.segment.clone()], false))
+            .map(|fragment| Polyline::from_segments(std::slice::from_ref(&fragment.segment), false))
             .filter(display_slice_is_non_degenerate)
             .collect(),
         second_fragments
             .fragments()
             .iter()
-            .map(|fragment| Polyline::from_segments(&[fragment.segment.clone()], false))
+            .map(|fragment| Polyline::from_segments(std::slice::from_ref(&fragment.segment), false))
             .filter(display_slice_is_non_degenerate)
             .collect(),
     ))

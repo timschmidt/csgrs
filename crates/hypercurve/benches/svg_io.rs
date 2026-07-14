@@ -163,9 +163,9 @@ fn bench_region_import(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_unsupported_import(iterations: u32) -> CurveResult<()> {
+fn bench_cubic_import(iterations: u32) -> CurveResult<()> {
     let started = Instant::now();
-    let mut unsupported_count = 0_usize;
+    let mut curve_count = 0_usize;
 
     for source_version in 0..iterations {
         let imported = import_svg_path_data_with_report(
@@ -174,14 +174,18 @@ fn bench_unsupported_import(iterations: u32) -> CurveResult<()> {
             source_version.into(),
             None,
         );
-        if imported.curve_string().is_none() && imported.report().blocker().is_some() {
-            unsupported_count += black_box(1);
-        }
+        curve_count += black_box(
+            imported
+                .curve_path()
+                .expect("cubic path should materialize")
+                .curves()
+                .len(),
+        );
     }
 
     let elapsed = started.elapsed();
     println!(
-        "svg_unsupported_cubic_import_report: {iterations} iterations in {elapsed:?} ({:?}/iter), unsupported={unsupported_count}",
+        "svg_cubic_import: {iterations} iterations in {elapsed:?} ({:?}/iter), curves={curve_count}",
         elapsed / iterations
     );
     Ok(())
@@ -193,6 +197,6 @@ fn main() -> CurveResult<()> {
     bench_open_arc_import(20_000)?;
     bench_closed_contour_import(20_000)?;
     bench_region_import(10_000)?;
-    bench_unsupported_import(20_000)?;
+    bench_cubic_import(20_000)?;
     Ok(())
 }

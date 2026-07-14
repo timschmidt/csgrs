@@ -20,8 +20,10 @@ use hypersolve::{
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
-    AlgebraicRootRationalImageStatus, transform_algebraic_root_polynomial_image,
-    transform_algebraic_root_rational_image, validate_algebraic_root_representation,
+    AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
+    compare_algebraic_root_representations_by_difference,
+    transform_algebraic_root_polynomial_image, transform_algebraic_root_rational_image,
+    validate_algebraic_root_representation,
 };
 
 use crate::classify::compare_reals;
@@ -84,6 +86,87 @@ impl BezierAlgebraicRationalCoordinateImage {
     pub fn representation(&self) -> Option<&AlgebraicRootRepresentation> {
         self.report.representation.as_ref()
     }
+
+    /// Compares this exact algebraic coordinate with a represented real value.
+    ///
+    /// The comparison reuses the retained rational-image representation and
+    /// performs certified root refinement; it never converts either operand to
+    /// a primitive floating-point value.
+    pub fn compare_to_real(
+        &self,
+        value: &Real,
+        policy: &CurvePolicy,
+    ) -> crate::Classification<Ordering> {
+        let Some(representation) = self.representation() else {
+            return crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+        };
+        compare_root_representation_to_real(representation, value, policy)
+    }
+}
+
+impl BezierAlgebraicCoordinateImage {
+    /// Compares this exact algebraic coordinate with a represented real value.
+    ///
+    /// The retained polynomial-image representation is refined only as far as
+    /// needed to certify order, without materializing a primitive float.
+    pub fn compare_to_real(
+        &self,
+        value: &Real,
+        policy: &CurvePolicy,
+    ) -> crate::Classification<Ordering> {
+        let Some(representation) = self.representation() else {
+            return crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported);
+        };
+        compare_root_representation_to_real(representation, value, policy)
+    }
+}
+
+fn compare_root_representation_to_real(
+    representation: &AlgebraicRootRepresentation,
+    value: &Real,
+    policy: &CurvePolicy,
+) -> crate::Classification<Ordering> {
+    if let Some(exact) = representation.exact_rational_witness() {
+        return compare_reals(exact, value, policy)
+            .map(crate::Classification::Decided)
+            .unwrap_or(crate::Classification::Uncertain(
+                crate::UncertaintyReason::Ordering,
+            ));
+    }
+    compare_algebraic_representation_to_real(representation, value, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn compare_algebraic_representation_to_real(
+    representation: &AlgebraicRootRepresentation,
+    value: &Real,
+    policy: &CurvePolicy,
+) -> crate::Classification<Ordering> {
+    let exact = exact_real_algebraic_representation(value);
+    let report = compare_algebraic_root_representations_by_difference(
+        representation,
+        &exact,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: policy.predicate_policy,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    );
+    report
+        .comparison
+        .ordering
+        .map(crate::Classification::Decided)
+        .unwrap_or(crate::Classification::Uncertain(
+            crate::UncertaintyReason::Ordering,
+        ))
+}
+
+#[cfg(not(feature = "predicates"))]
+fn compare_algebraic_representation_to_real(
+    _representation: &AlgebraicRootRepresentation,
+    _value: &Real,
+    _policy: &CurvePolicy,
+) -> crate::Classification<Ordering> {
+    crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported)
 }
 
 impl BezierAlgebraicCoordinateImage {
@@ -188,7 +271,7 @@ impl RationalBezierAlgebraicPointImage2 {
     }
 }
 
-/// Exact algebraic image of a rational quadratic Bezier derivative vector.
+/// Exact algebraic image of a rational Bezier derivative vector.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalBezierAlgebraicTangentImage2 {
     status: BezierAlgebraicImageStatus,
@@ -420,6 +503,28 @@ impl RationalQuadraticBezier2 {
             policy,
         )
     }
+
+    /// Evaluates exact affine derivative images through `max_order` in one
+    /// quotient-recurrence pass.
+    ///
+    /// The returned vector stores orders `1..=max_order`; order `k` is retained
+    /// as a rational image with denominator `D^(k+1)`.
+    pub fn derivatives_at_algebraic_parameter(
+        &self,
+        parameter: &BezierAlgebraicParameter2,
+        max_order: usize,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
+        let point = rational_point_coefficients(self);
+        rational_derivative_images_from_power_basis(
+            parameter,
+            point.x_numerator,
+            point.y_numerator,
+            point.denominator,
+            policy,
+            max_order,
+        )
+    }
 }
 
 fn point_image(
@@ -514,6 +619,107 @@ fn rational_point_image(
         y: Some(y),
         message: None,
     })
+}
+
+pub(crate) fn rational_point_image_from_power_basis(
+    parameter: &BezierAlgebraicParameter2,
+    x_numerator: Vec<Real>,
+    y_numerator: Vec<Real>,
+    denominator: Vec<Real>,
+    policy: &CurvePolicy,
+) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+    let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, policy)?;
+    let y_numerator = reduce_algebraic_image_polynomial(parameter, y_numerator, policy)?;
+    let denominator = reduce_algebraic_image_polynomial(parameter, denominator, policy)?;
+    rational_point_image(
+        parameter,
+        RationalCoordinatePolynomials {
+            x_numerator,
+            y_numerator,
+            denominator,
+        },
+        policy,
+    )
+}
+
+pub(crate) fn rational_tangent_image_from_power_basis(
+    parameter: &BezierAlgebraicParameter2,
+    x_numerator: Vec<Real>,
+    y_numerator: Vec<Real>,
+    denominator: Vec<Real>,
+    policy: &CurvePolicy,
+) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
+    Ok(rational_derivative_images_from_power_basis(
+        parameter,
+        x_numerator,
+        y_numerator,
+        denominator,
+        policy,
+        1,
+    )?
+    .pop()
+    .expect("one requested rational derivative image"))
+}
+
+pub(crate) fn rational_derivative_images_from_power_basis(
+    parameter: &BezierAlgebraicParameter2,
+    mut x_numerator: Vec<Real>,
+    mut y_numerator: Vec<Real>,
+    denominator: Vec<Real>,
+    policy: &CurvePolicy,
+    max_order: usize,
+) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
+    let denominator_derivative = derivative_coefficients(&denominator);
+    let mut denominator_power = denominator.clone();
+    let mut images = Vec::with_capacity(max_order);
+    for order in 1..=max_order {
+        let coefficient = Real::from(order as u64);
+        x_numerator = subtract_polynomials(
+            &multiply_polynomials(&derivative_coefficients(&x_numerator), &denominator),
+            &scale_polynomial(
+                &multiply_polynomials(&x_numerator, &denominator_derivative),
+                coefficient.clone(),
+            ),
+        );
+        y_numerator = subtract_polynomials(
+            &multiply_polynomials(&derivative_coefficients(&y_numerator), &denominator),
+            &scale_polynomial(
+                &multiply_polynomials(&y_numerator, &denominator_derivative),
+                coefficient,
+            ),
+        );
+        denominator_power = multiply_polynomials(&denominator_power, &denominator);
+        let dx_numerator =
+            reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), policy)?;
+        let dy_numerator =
+            reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), policy)?;
+        let derivative_denominator =
+            reduce_algebraic_image_polynomial(parameter, denominator_power.clone(), policy)?;
+        images.push(rational_tangent_image(
+            parameter,
+            RationalTangentPolynomials {
+                dx_numerator,
+                dy_numerator,
+                denominator: derivative_denominator,
+            },
+            policy,
+        )?);
+    }
+    Ok(images)
+}
+
+fn reduce_algebraic_image_polynomial(
+    parameter: &BezierAlgebraicParameter2,
+    coefficients: Vec<Real>,
+    policy: &CurvePolicy,
+) -> CurveResult<Vec<Real>> {
+    match parameter
+        .polynomial()
+        .reduce_power_basis(coefficients.clone(), policy)?
+    {
+        crate::Classification::Decided(remainder) => Ok(remainder),
+        crate::Classification::Uncertain(_) => Ok(coefficients),
+    }
 }
 
 fn tangent_image(
@@ -617,7 +823,7 @@ fn coordinate_image(
 ) -> Option<BezierAlgebraicCoordinateImage> {
     if let Some(parameter_value) = parameter.exact_rational_witness() {
         let value = evaluate_power_polynomial(&coefficients, parameter_value);
-        let representation = exact_real_representation(&value);
+        let representation = exact_real_algebraic_representation(&value);
         return Some(BezierAlgebraicCoordinateImage {
             report: AlgebraicRootPolynomialImageReport {
                 status: AlgebraicRootPolynomialImageStatus::Transformed,
@@ -629,7 +835,7 @@ fn coordinate_image(
         });
     }
     if coefficients.len() == 1 {
-        let representation = exact_real_representation(&coefficients[0]);
+        let representation = exact_real_algebraic_representation(&coefficients[0]);
         return Some(BezierAlgebraicCoordinateImage {
             report: AlgebraicRootPolynomialImageReport {
                 status: AlgebraicRootPolynomialImageStatus::Transformed,
@@ -717,7 +923,7 @@ fn rational_coordinate_image_from_replay(
     None
 }
 
-fn exact_real_representation(value: &Real) -> AlgebraicRootRepresentation {
+pub(crate) fn exact_real_algebraic_representation(value: &Real) -> AlgebraicRootRepresentation {
     AlgebraicRootRepresentation {
         constraint_index: 0,
         symbol: SymbolId(0),

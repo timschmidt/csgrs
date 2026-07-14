@@ -24,10 +24,10 @@ hyperreal = { version = "0.13.1", default-features = false }
 hypersolve = { version = "0.3.0", default-features = false }
 hyperlimit = { version = "0.4.0", default-features = false, features = ["std"], optional = true }
 hypertri = { version = "0.4.0", default-features = false, features = ["earcut"], optional = true }
+num = { version = "0.4.3", features = ["num-bigint"] }
 [dev-dependencies]
 geo = "0.32"
 proptest = "1"
-static_aabb2d_index = "2.0"
 
 [features]
 default = ["predicates"]
@@ -53,6 +53,10 @@ name = "bezier_arrangement"
 harness = false
 
 [[bench]]
+name = "bezier_rational_overlap"
+harness = false
+
+[[bench]]
 name = "bezier_region"
 harness = false
 
@@ -62,6 +66,22 @@ harness = false
 
 [[bench]]
 name = "bezier_tangent_order"
+harness = false
+
+[[bench]]
+name = "bspline"
+harness = false
+
+[[bench]]
+name = "rational_bezier"
+harness = false
+
+[[bench]]
+name = "arc"
+harness = false
+
+[[bench]]
+name = "curve_path"
 harness = false
 
 [[bench]]

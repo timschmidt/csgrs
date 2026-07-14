@@ -5,11 +5,13 @@
 //! those need overlap-aware traversal, not a midpoint guess.
 
 use crate::boolean_boundary::{BooleanBoundaryFragmentSet, DirectedBooleanFragment};
+use crate::classify::real_sign;
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, ParamRange, Point2, RegionContourKey,
     RegionContourRole, RegionFragmentSet, RegionPointLocation, RegionSide, RegionView2,
     RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
+use hyperreal::{Real, RealSign};
 
 /// Boolean operation requested between two regions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -57,6 +59,8 @@ pub struct BooleanFragmentClassification {
     pub fragment_index: usize,
     /// Location of the fragment representative point in the opposite region.
     pub opposite_location: RegionPointLocation,
+    /// Whether the source region is filled left of this contour's traversal.
+    pub source_filled_side_is_left: bool,
     /// Selection action for the requested operation.
     pub action: BooleanFragmentAction,
 }
@@ -87,6 +91,8 @@ pub struct BooleanFragmentSelectionReport2 {
 /// Furthest exact stage reached by boolean fragment classification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BooleanFragmentSelectionStage2 {
+    /// Source-contour orientation and signed fill role were being certified.
+    SourceFillSideClassification,
     /// A retained fragment representative point was being materialized.
     RepresentativePoint,
     /// Representative points were being classified against opposite regions.
@@ -100,6 +106,14 @@ pub enum BooleanFragmentSelectionStage2 {
 pub struct BooleanFragmentSelectionResult2 {
     selection: Option<BooleanFragmentSelection>,
     report: BooleanFragmentSelectionReport2,
+}
+
+enum FragmentInteriorClassification {
+    Decided(RegionPointLocation),
+    Blocked {
+        stage: BooleanFragmentSelectionStage2,
+        reason: UncertaintyReason,
+    },
 }
 
 /// Report for emitting selected boolean classifications as boundary fragments.
@@ -184,6 +198,47 @@ impl BooleanFragmentSelection {
             .iter()
             .filter(|classification| classification.action == action)
             .count()
+    }
+
+    pub(crate) fn resolve_boundary_actions(
+        &self,
+        resolutions: &[(RegionContourKey, usize, BooleanFragmentAction)],
+    ) -> CurveResult<Self> {
+        let mut classifications = self.classifications.clone();
+        let mut used = vec![false; resolutions.len()];
+        for classification in &mut classifications {
+            if classification.action != BooleanFragmentAction::BoundaryNeedsResolution {
+                continue;
+            }
+            let mut matched = None;
+            for (index, (key, fragment_index, action)) in resolutions.iter().enumerate() {
+                if *key != classification.key || *fragment_index != classification.fragment_index {
+                    continue;
+                }
+                if used[index]
+                    || *action == BooleanFragmentAction::BoundaryNeedsResolution
+                    || matched.is_some()
+                {
+                    return Err(CurveError::Topology(
+                        "boolean shared-boundary resolution is duplicated or unresolved".into(),
+                    ));
+                }
+                matched = Some((index, *action));
+            }
+            let Some((index, action)) = matched else {
+                return Err(CurveError::Topology(
+                    "boolean shared-boundary resolution is incomplete".into(),
+                ));
+            };
+            used[index] = true;
+            classification.action = action;
+        }
+        if used.iter().any(|used| !used) {
+            return Err(CurveError::Topology(
+                "boolean shared-boundary resolution references a decided fragment".into(),
+            ));
+        }
+        Ok(Self { classifications })
     }
 
     /// Converts selected classifications into directed boundary fragments.
@@ -524,10 +579,19 @@ fn boolean_directed_fragment_report_source_kind_counts(
 }
 
 impl BooleanOp {
+    pub(crate) const fn apply(self, first: bool, second: bool) -> bool {
+        match self {
+            Self::Union => first || second,
+            Self::Intersection => first && second,
+            Self::Difference => first && !second,
+            Self::Xor => first != second,
+        }
+    }
+
     fn action_for(
         self,
         source_side: RegionSide,
-        source_role: RegionContourRole,
+        source_filled_side_is_left: bool,
         opposite_location: RegionPointLocation,
     ) -> BooleanFragmentAction {
         use BooleanFragmentAction::{
@@ -562,11 +626,46 @@ impl BooleanOp {
             },
         };
 
-        match source_role {
-            RegionContourRole::Material => material_action,
-            RegionContourRole::Hole => reverse_emitted_action(material_action),
+        if source_filled_side_is_left {
+            material_action
+        } else {
+            reverse_emitted_action(material_action)
         }
     }
+}
+
+pub(crate) fn source_contour_filled_side_is_left(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    key: RegionContourKey,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<bool>> {
+    let view = match key.side {
+        RegionSide::First => first,
+        RegionSide::Second => second,
+    };
+    let contours = match key.role {
+        RegionContourRole::Material => view.material_contours(),
+        RegionContourRole::Hole => view.hole_contours(),
+    };
+    let contour = contours.get(key.index).copied().ok_or_else(|| {
+        CurveError::Topology("boolean classification references a missing contour".into())
+    })?;
+    let Some(area) = contour.signed_area()? else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let interior_left = match real_sign(&area, policy) {
+        Some(RealSign::Positive) => true,
+        Some(RealSign::Negative) => false,
+        Some(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    };
+    Ok(Classification::Decided(match key.role {
+        RegionContourRole::Material => interior_left,
+        RegionContourRole::Hole => !interior_left,
+    }))
 }
 
 fn reverse_emitted_action(action: BooleanFragmentAction) -> BooleanFragmentAction {
@@ -575,12 +674,12 @@ fn reverse_emitted_action(action: BooleanFragmentAction) -> BooleanFragmentActio
     };
 
     // Region contour bins carry signed fill roles independently of storage
-    // direction. When a selected source fragment belongs to a hole contour, the
-    // local boundary orientation is the opposite of an equivalent material
-    // contour. Vatti frames clipping output as fill-state transitions
+    // direction. Whenever the source region is filled right of traversal, the
+    // output direction is the opposite of the canonical filled-left action.
+    // Vatti frames clipping output as fill-state transitions
     // (B. R. Vatti, "A generic solution to polygon clipping," Communications
     // of the ACM 35(7), 56-63, 1992); this is the signed-contour equivalent of
-    // flipping the transition direction for negative fill edges.
+    // flipping the transition direction for a right-filled edge.
     match action {
         KeepSourceDirection => KeepReversed,
         KeepReversed => KeepSourceDirection,
@@ -719,6 +818,8 @@ impl RegionFragmentSet {
         policy: &CurvePolicy,
     ) -> CurveResult<BooleanFragmentSelectionResult2> {
         self.classify_for_boolean_with_point_classifier_with_report(
+            first,
+            second,
             op,
             policy,
             |source_side, sample| {
@@ -738,6 +839,8 @@ impl RegionFragmentSet {
     /// selection rules while reusing cached region classifiers.
     pub(crate) fn classify_for_boolean_with_point_classifier<F>(
         &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
         mut classify_opposite: F,
@@ -746,6 +849,8 @@ impl RegionFragmentSet {
         F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
     {
         let result = self.classify_for_boolean_with_point_classifier_with_report(
+            first,
+            second,
             op,
             policy,
             &mut classify_opposite,
@@ -755,6 +860,8 @@ impl RegionFragmentSet {
 
     pub(crate) fn classify_for_boolean_with_point_classifier_with_report<F>(
         &self,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
         mut classify_opposite: F,
@@ -768,45 +875,54 @@ impl RegionFragmentSet {
         let source_fragment_kind_counts = region_fragment_kind_counts(self);
 
         for contour_fragments in self.contours() {
+            let source_filled_side_is_left = match source_contour_filled_side_is_left(
+                first,
+                second,
+                contour_fragments.key,
+                policy,
+            )? {
+                Classification::Decided(filled_side) => filled_side,
+                Classification::Uncertain(reason) => {
+                    return Ok(blocked_boolean_fragment_selection_result(
+                        op,
+                        BooleanFragmentSelectionStage2::SourceFillSideClassification,
+                        source_contour_count,
+                        source_fragment_count,
+                        source_fragment_kind_counts,
+                        classifications.len(),
+                        reason,
+                    ));
+                }
+            };
             for (fragment_index, fragment) in
                 contour_fragments.fragments.fragments().iter().enumerate()
             {
-                let sample = match fragment.segment.representative_point(policy)? {
-                    Classification::Decided(sample) => sample,
-                    Classification::Uncertain(reason) => {
-                        return Ok(blocked_boolean_fragment_selection_result(
-                            op,
-                            BooleanFragmentSelectionStage2::RepresentativePoint,
-                            source_contour_count,
-                            source_fragment_count,
-                            source_fragment_kind_counts,
-                            classifications.len(),
-                            reason,
-                        ));
-                    }
-                };
                 let source_side = contour_fragments.key.side;
-                let opposite_location = match classify_opposite(source_side, &sample) {
-                    Classification::Decided(location) => location,
-                    Classification::Uncertain(reason) => {
-                        return Ok(blocked_boolean_fragment_selection_result(
-                            op,
-                            BooleanFragmentSelectionStage2::OppositeRegionClassification,
-                            source_contour_count,
-                            source_fragment_count,
-                            source_fragment_kind_counts,
-                            classifications.len(),
-                            reason,
-                        ));
-                    }
-                };
+                let opposite_location =
+                    match classify_fragment_interior(&fragment.segment, policy, |sample| {
+                        classify_opposite(source_side, sample)
+                    })? {
+                        FragmentInteriorClassification::Decided(location) => location,
+                        FragmentInteriorClassification::Blocked { stage, reason } => {
+                            return Ok(blocked_boolean_fragment_selection_result(
+                                op,
+                                stage,
+                                source_contour_count,
+                                source_fragment_count,
+                                source_fragment_kind_counts,
+                                classifications.len(),
+                                reason,
+                            ));
+                        }
+                    };
                 let action =
-                    op.action_for(source_side, contour_fragments.key.role, opposite_location);
+                    op.action_for(source_side, source_filled_side_is_left, opposite_location);
 
                 classifications.push(BooleanFragmentClassification {
                     key: contour_fragments.key,
                     fragment_index,
                     opposite_location,
+                    source_filled_side_is_left,
                     action,
                 });
             }
@@ -827,6 +943,52 @@ impl RegionFragmentSet {
             selection: Some(selection),
         })
     }
+}
+
+fn classify_fragment_interior<F>(
+    segment: &Segment2,
+    policy: &CurvePolicy,
+    mut classify: F,
+) -> CurveResult<FragmentInteriorClassification>
+where
+    F: FnMut(&Point2) -> Classification<RegionPointLocation>,
+{
+    let fractions = [
+        (Real::one() / Real::from(2_i8))?,
+        (Real::one() / Real::from(3_i8))?,
+        (Real::from(2_i8) / Real::from(3_i8))?,
+    ];
+    let mut representative_blocker = None;
+    let mut classification_blocker = None;
+
+    for fraction in &fractions {
+        let sample = match segment.point_at(fraction, policy)? {
+            Classification::Decided(sample) => sample,
+            Classification::Uncertain(reason) => {
+                representative_blocker.get_or_insert(reason);
+                continue;
+            }
+        };
+        match classify(&sample) {
+            Classification::Decided(location) => {
+                return Ok(FragmentInteriorClassification::Decided(location));
+            }
+            Classification::Uncertain(reason) => {
+                classification_blocker.get_or_insert(reason);
+            }
+        }
+    }
+
+    if let Some(reason) = classification_blocker {
+        return Ok(FragmentInteriorClassification::Blocked {
+            stage: BooleanFragmentSelectionStage2::OppositeRegionClassification,
+            reason,
+        });
+    }
+    Ok(FragmentInteriorClassification::Blocked {
+        stage: BooleanFragmentSelectionStage2::RepresentativePoint,
+        reason: representative_blocker.unwrap_or(UncertaintyReason::Unsupported),
+    })
 }
 
 impl BooleanFragmentSelectionReport2 {

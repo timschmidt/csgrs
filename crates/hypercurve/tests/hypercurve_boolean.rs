@@ -15,6 +15,10 @@ fn s(value: i32) -> Real {
     value.into()
 }
 
+fn q(numerator: i32, denominator: i32) -> Real {
+    (s(numerator) / s(denominator)).unwrap()
+}
+
 fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
@@ -34,6 +38,110 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmax, ymax, 0),
         vertex(xmin, ymax, 0),
     ])
+}
+
+fn center_defined_circle(radius: i32, clockwise: bool) -> Contour2 {
+    Contour2::try_new(vec![
+        Segment2::Arc(
+            hypercurve::CircularArc2::try_from_center(
+                p(radius, 0),
+                p(-radius, 0),
+                p(0, 0),
+                clockwise,
+            )
+            .unwrap(),
+        ),
+        Segment2::Arc(
+            hypercurve::CircularArc2::try_from_center(
+                p(-radius, 0),
+                p(radius, 0),
+                p(0, 0),
+                clockwise,
+            )
+            .unwrap(),
+        ),
+    ])
+    .unwrap()
+}
+
+fn major_arc_segment_contour(radius: i32) -> Contour2 {
+    let start = p(radius, 0);
+    let end = p(0, radius);
+    Contour2::try_new(vec![
+        Segment2::Arc(
+            hypercurve::CircularArc2::try_from_center(start.clone(), end.clone(), p(0, 0), true)
+                .unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(end, start).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn triangle(vertices: [(i32, i32); 3]) -> Contour2 {
+    contour(
+        &vertices
+            .map(|(x, y)| vertex(x, y, 0))
+            .into_iter()
+            .collect::<Vec<_>>(),
+    )
+}
+
+fn boolean_truth(op: BooleanOp, first: bool, second: bool) -> bool {
+    match op {
+        BooleanOp::Union => first || second,
+        BooleanOp::Intersection => first && second,
+        BooleanOp::Difference => first && !second,
+        BooleanOp::Xor => first ^ second,
+    }
+}
+
+fn assert_exact_boolean_matrix(
+    first: &Region2,
+    second: &Region2,
+    samples: &[(hypercurve::Point2, bool, bool)],
+) {
+    let policy = policy();
+    let prepared_first = first.prepare_topology_queries(&policy);
+    let prepared_second = second.prepare_topology_queries(&policy);
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ] {
+        let direct = first
+            .boolean_region_with_report(second, op, FillRule::NonZero, &policy)
+            .unwrap();
+        let Classification::Decided(direct_region) = direct.region_classification() else {
+            panic!("direct {op:?} was {direct:#?}");
+        };
+        let prepared = prepared_first
+            .boolean_region_with_report(&prepared_second, op, FillRule::NonZero, &policy)
+            .unwrap();
+        let Classification::Decided(prepared_region) = prepared.region_classification() else {
+            panic!("prepared {op:?} was {prepared:#?}");
+        };
+
+        assert_eq!(prepared_region, direct_region, "prepared {op:?}");
+        for (point, first_inside, second_inside) in samples {
+            let expected = if boolean_truth(op, *first_inside, *second_inside) {
+                RegionPointLocation::Inside
+            } else {
+                RegionPointLocation::Outside
+            };
+            assert_eq!(
+                direct_region.classify_point(point, &policy),
+                Classification::Decided(expected),
+                "direct {op:?} at {point:?}"
+            );
+            assert_eq!(
+                prepared_region.classify_point(point, &policy),
+                Classification::Decided(expected),
+                "prepared {op:?} at {point:?}"
+            );
+        }
+    }
 }
 
 fn policy() -> CurvePolicy {
@@ -184,6 +292,80 @@ fn symbolic_regular_polygon_booleans_with_rectangle_are_decided() {
             "symbolic {op:?} was {result:#?}"
         );
     }
+}
+
+#[test]
+fn concentric_symbolic_polygon_offsets_form_decided_ring() {
+    let source = symbolic_regular_polygon(Real::from(15_u8), 40);
+    let Classification::Decided(outer) =
+        source.offset_left_checked(-Real::one(), &policy()).unwrap()
+    else {
+        panic!("outward exact offset was uncertain");
+    };
+    let Classification::Decided(inner) =
+        source.offset_left_checked(Real::one(), &policy()).unwrap()
+    else {
+        panic!("inward exact offset was uncertain");
+    };
+    let outer = Region2::from_material_contours(vec![outer]);
+    let inner = Region2::from_material_contours(vec![inner]);
+
+    let result = outer
+        .boolean_region_with_report(&inner, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap();
+    assert!(
+        matches!(result.region_classification(), Classification::Decided(region) if region.material_contours().len() == 1 && region.hole_contours().len() == 1),
+        "concentric exact offset difference was {result:#?}"
+    );
+
+    let prepared_outer = outer.prepare_topology_queries(&policy());
+    let prepared_inner = inner.prepare_topology_queries(&policy());
+    let prepared_result = prepared_outer
+        .boolean_region_with_report(
+            &prepared_inner,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    assert!(
+        matches!(prepared_result.region_classification(), Classification::Decided(region) if region.material_contours().len() == 1 && region.hole_contours().len() == 1),
+        "prepared concentric exact offset difference was {prepared_result:#?}"
+    );
+}
+
+#[test]
+fn retained_offset_containment_stops_at_line_direction_reversal() {
+    let source = rectangle(0, 0, 2, 2);
+    let near_distance = (Real::one() / Real::from(4_u8)).unwrap();
+    let beyond_collapse_distance = (Real::from(7_u8) / Real::from(4_u8)).unwrap();
+    let Classification::Decided(near) = source
+        .offset_left_checked(near_distance, &policy())
+        .unwrap()
+    else {
+        panic!("near square inset was uncertain");
+    };
+    let Classification::Decided(beyond_collapse) = source
+        .offset_left_checked(beyond_collapse_distance, &policy())
+        .unwrap()
+    else {
+        panic!("over-inset square was uncertain");
+    };
+    let near = Region2::from_material_contours(vec![near]);
+    let beyond_collapse = Region2::from_material_contours(vec![beyond_collapse]);
+
+    let result = near
+        .boolean_region_with_report(
+            &beyond_collapse,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    assert!(
+        matches!(result.region_classification(), Classification::Decided(region) if region.is_empty()),
+        "symmetric pre/post-collapse insets were not recognized as equal: {result:#?}"
+    );
 }
 
 #[test]
@@ -559,6 +741,7 @@ fn fragment_classification_with_location(
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0),
         fragment_index,
         opposite_location,
+        source_filled_side_is_left: true,
         action,
     }
 }
@@ -1096,6 +1279,7 @@ fn boolean_fragment_selection_emit_rejects_incomplete_or_foreign_inventory() {
         key: RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 99),
         fragment_index: 0,
         opposite_location: RegionPointLocation::Outside,
+        source_filled_side_is_left: true,
         action: BooleanFragmentAction::Discard,
     });
     let foreign = BooleanFragmentSelection::new(foreign).unwrap();
@@ -1426,6 +1610,202 @@ fn boolean_fragment_selection_defers_shared_boundary_fragments() {
     assert_eq!(
         emitted.assemble_chains(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+}
+
+#[test]
+fn shared_boundary_same_direction_boolean_matrix_is_exact() {
+    let first = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (0, 6)])]);
+    let second = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (6, 6)])]);
+    let samples = [
+        (p(1, 4), true, false),
+        (p(5, 4), false, true),
+        (p(3, 1), true, true),
+        (p(3, -1), false, false),
+    ];
+
+    assert_exact_boolean_matrix(&first, &second, &samples);
+
+    let clockwise_first = Region2::from_material_contours(vec![triangle([(0, 0), (0, 6), (6, 0)])]);
+    let clockwise_second =
+        Region2::from_material_contours(vec![triangle([(0, 0), (6, 6), (6, 0)])]);
+    assert_exact_boolean_matrix(&clockwise_first, &clockwise_second, &samples);
+
+    let clockwise_union = clockwise_first
+        .boolean_region_with_report(
+            &clockwise_second,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    let pipeline = clockwise_union
+        .report()
+        .pipeline_report()
+        .expect("clockwise shared-edge union retained its arrangement pipeline");
+    assert_eq!(pipeline.shared_boundary_resolution_count(), 1);
+    let resolution = &pipeline.shared_boundary_resolutions()[0];
+    assert!(resolution.same_direction());
+    assert!(!resolution.first_filled_side_is_left());
+    assert!(!resolution.second_filled_side_is_left());
+    assert_eq!(
+        resolution.first_action(),
+        BooleanFragmentAction::KeepReversed
+    );
+    assert_eq!(resolution.second_action(), BooleanFragmentAction::Discard);
+}
+
+#[test]
+fn shared_boundary_opposite_direction_boolean_matrix_is_exact() {
+    let first = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (0, 6)])]);
+    let second = Region2::from_material_contours(vec![triangle([(6, 0), (0, 0), (6, -6)])]);
+
+    assert_exact_boolean_matrix(
+        &first,
+        &second,
+        &[
+            (p(1, 1), true, false),
+            (p(5, -1), false, true),
+            (p(3, 4), false, false),
+        ],
+    );
+}
+
+#[test]
+fn shared_material_hole_boundary_boolean_matrix_is_exact() {
+    let first = Region2::new(
+        vec![rectangle(-10, -10, 10, 10)],
+        vec![rectangle(0, 0, 6, 6)],
+    );
+    let second = Region2::from_material_contours(vec![triangle([(0, 0), (6, 0), (3, 3)])]);
+
+    assert_exact_boolean_matrix(
+        &first,
+        &second,
+        &[
+            (p(-5, 0), true, false),
+            (p(3, 1), false, true),
+            (p(1, 5), false, false),
+            (p(20, 0), false, false),
+        ],
+    );
+}
+
+#[test]
+fn center_defined_circle_boolean_matrix_is_orientation_independent() {
+    let rectangle = Region2::from_material_contours(vec![rectangle(0, -2, 6, 2)]);
+    let samples = [
+        (p(-3, 0), true, false),
+        (p(1, 0), true, true),
+        (p(5, 0), false, true),
+        (p(5, 3), false, false),
+    ];
+
+    for clockwise in [false, true] {
+        let circle = Region2::from_material_contours(vec![center_defined_circle(4, clockwise)]);
+        let intersections = circle.intersect_region(&rectangle, &policy()).unwrap();
+        let split = intersections
+            .split_regions_with_report(&circle.as_view(), &rectangle.as_view(), &policy())
+            .unwrap();
+        let fragments = split
+            .fragments()
+            .unwrap_or_else(|| panic!("circle split was unresolved: {split:#?}"));
+        let selection = fragments
+            .classify_for_boolean_with_report(
+                &circle.as_view(),
+                &rectangle.as_view(),
+                BooleanOp::Union,
+                &policy(),
+            )
+            .unwrap();
+        selection
+            .selection()
+            .unwrap_or_else(|| panic!("circle selection was unresolved: {selection:#?}"));
+        assert_exact_boolean_matrix(&circle, &rectangle, &samples);
+    }
+}
+
+#[test]
+fn major_arc_multiple_hits_split_in_sweep_order_and_boolean_exactly() {
+    let major = Region2::from_material_contours(vec![major_arc_segment_contour(4)]);
+    let strip = Region2::from_material_contours(vec![rectangle(-3, -5, -2, 5)]);
+    let intersections = major.intersect_region(&strip, &policy()).unwrap();
+    assert_eq!(intersections.point_event_count(), 4);
+
+    let split = intersections
+        .split_regions_with_report(&major.as_view(), &strip.as_view(), &policy())
+        .unwrap();
+    let fragments = split
+        .fragments()
+        .unwrap_or_else(|| panic!("major-arc split was unresolved: {split:#?}"));
+    let major_fragments = fragments
+        .fragments_for_contour(RegionContourKey::new(
+            RegionSide::First,
+            RegionContourRole::Material,
+            0,
+        ))
+        .unwrap();
+    assert_eq!(
+        major_fragments
+            .fragments
+            .fragments()
+            .iter()
+            .filter(|fragment| fragment.source_segment_index == 0)
+            .count(),
+        5
+    );
+    let selection = fragments
+        .classify_for_boolean_with_report(
+            &major.as_view(),
+            &strip.as_view(),
+            BooleanOp::Union,
+            &policy(),
+        )
+        .unwrap();
+    let selection_value = selection
+        .selection()
+        .unwrap_or_else(|| panic!("major-arc selection was unresolved: {selection:#?}"));
+    let emitted = selection_value
+        .emit_boundary_fragments_with_report(fragments)
+        .unwrap();
+    let emitted_value = emitted
+        .fragments()
+        .unwrap_or_else(|| panic!("major-arc emission was unresolved: {emitted:#?}"));
+    let chains = emitted_value.assemble_chains_with_report(&policy());
+    chains
+        .chains()
+        .unwrap_or_else(|| panic!("major-arc chain assembly was unresolved: {chains:#?}"));
+    let Classification::Decided(difference_contours) = major
+        .boolean_boundary_contours(&strip, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap()
+    else {
+        panic!("major-arc difference boundary did not materialize");
+    };
+    assert_eq!(difference_contours.len(), 2);
+    let difference_contacts = difference_contours[0]
+        .intersect_contour(&difference_contours[1], &policy())
+        .unwrap();
+    assert!(difference_contacts.is_empty());
+    let reverse_difference = strip
+        .boolean_region_with_report(&major, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap();
+    assert!(
+        matches!(
+            reverse_difference.region_classification(),
+            Classification::Decided(_)
+        ),
+        "reverse major-arc difference was {reverse_difference:#?}"
+    );
+
+    assert_exact_boolean_matrix(
+        &major,
+        &strip,
+        &[
+            (p(0, 0), true, false),
+            (hypercurve::Point2::new(q(-5, 2), s(0)), true, true),
+            (hypercurve::Point2::new(q(-5, 2), s(4)), false, true),
+            (p(5, 0), false, false),
+        ],
     );
 }
 

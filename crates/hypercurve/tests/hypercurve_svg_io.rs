@@ -1,12 +1,13 @@
 #![cfg(feature = "svg")]
 
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, ContourClosureStage2, CurveString2,
-    FillRule, LineSeg2, Point2, Real, Region2, RegionBoundaryContourBuildStage2,
-    RetainedImportFormat2, RetainedImportTopology2, RetainedTopologyStatus, Segment2, SegmentKind,
-    SvgPathExportTarget2, UncertaintyReason, import_svg_contour_path_data_with_report,
-    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
-    retained_svg_import_record,
+    BulgeVertex2, CircularArc2, Classification, Contour2, ContourClosureStage2,
+    ContourPointLocation, Curve2, CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy,
+    CurveSource2, CurveString2, FillRule, LineSeg2, Point2, RationalBezier2, Real, Region2,
+    RegionBoundaryContourBuildStage2, RetainedImportFormat2, RetainedImportTopology2,
+    RetainedTopologyStatus, Segment2, SegmentKind, SvgPathExportTarget2, UncertaintyReason,
+    import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
+    import_svg_region_path_data_with_report, retained_svg_import_record,
 };
 
 fn s(value: i32) -> Real {
@@ -100,6 +101,47 @@ fn arc_svg_export_uses_exact_radius_not_radius_squared() {
 }
 
 #[test]
+fn arc_svg_export_preserves_exact_minor_major_and_full_sweep_images() {
+    let minor = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::try_from_center(p(2, 0), p(0, 2), p(0, 0), false).unwrap(),
+    )])
+    .unwrap();
+    assert_eq!(
+        minor
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 2 0 A 2 2 0 0 0 0 2")
+    );
+
+    let major = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::try_from_center(p(2, 0), p(0, 2), p(0, 0), true).unwrap(),
+    )])
+    .unwrap();
+    assert_eq!(
+        major
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 2 0 A 2 2 0 1 1 0 2")
+    );
+
+    let full = CurvePath2::try_new(vec![Curve2::from(
+        CircularArc2::try_from_center(p(2, 0), p(2, 0), p(0, 0), false).unwrap(),
+    )])
+    .unwrap();
+    assert_eq!(
+        full.to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 2 0 A 2 2 0 0 0 -2 0 A 2 2 0 0 0 2 0")
+    );
+}
+
+#[test]
 fn region_svg_export_preserves_material_and_hole_counts() {
     let region = Region2::new(vec![rectangle(0, 0, 4, 4)], vec![rectangle(1, 1, 2, 2)]);
 
@@ -165,7 +207,7 @@ fn svg_line_path_import_materializes_with_retained_report() {
     let owned_report = imported.clone().into_report();
     assert_eq!(&owned_report, imported.report());
     let (owned_curve, owned_parts_report) = imported.clone().into_parts();
-    assert_eq!(owned_curve.as_ref(), imported.curve_string());
+    assert_eq!(owned_curve.as_ref(), imported.curve_path());
     assert_eq!(&owned_parts_report, imported.report());
     assert!(matches!(
         imported.into_curve_string_classification(),
@@ -268,49 +310,296 @@ fn svg_relative_semicircle_arc_import_materializes_exact_native_arc() {
 }
 
 #[test]
-fn svg_cubic_path_import_remains_explicitly_unsupported() {
+fn svg_cubic_path_import_materializes_exact_top_level_curve() {
     let imported = import_svg_path_data_with_report("M 0 0 C 1 0 1 1 2 1", 8, 1, None);
 
+    let path = imported
+        .curve_path()
+        .expect("cubic SVG path should materialize");
+    assert_eq!(path.curves().len(), 1);
+    let CurveGeometry2::CubicBezier(cubic) = path.curves()[0].geometry() else {
+        panic!("SVG C command should retain cubic Bezier geometry");
+    };
+    assert_eq!(cubic.start(), &p(0, 0));
+    assert_eq!(cubic.control1(), &p(1, 0));
+    assert_eq!(cubic.control2(), &p(1, 1));
+    assert_eq!(cubic.end(), &p(2, 1));
+    assert_eq!(
+        path.curves()[0].source(),
+        Some(CurveSource2::with_version(8, 1))
+    );
+    let exported = path.to_svg_path_data_with_report().unwrap();
+    assert_eq!(
+        exported.path_data().map(String::as_str),
+        Some("M 0 0 C 1 0 1 1 2 1")
+    );
+    assert_eq!(exported.report().target(), SvgPathExportTarget2::CurvePath);
+    assert!(exported.report().segment_reports().is_empty());
+    assert_eq!(exported.report().curve_reports().len(), 1);
+    assert_eq!(
+        exported.report().curve_reports()[0].family(),
+        CurveFamily2::CubicBezier
+    );
+    assert_eq!(
+        exported.report().curve_reports()[0].source(),
+        Some(CurveSource2::with_version(8, 1))
+    );
+
+    // CurveString2 is intentionally the narrower native line/arc adapter.
     assert!(imported.curve_string().is_none());
     assert_eq!(imported.report().source_index(), 8);
     assert_eq!(imported.report().command_count(), 2);
     assert_eq!(
         imported.report().status(),
-        RetainedTopologyStatus::Unsupported
+        RetainedTopologyStatus::ImportedLossy
     );
-    assert_eq!(
-        imported.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
-    assert_eq!(
-        imported.curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
+    assert_eq!(imported.report().blocker(), None);
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(record.input_point_count(), 2);
+    assert_eq!(record.emitted_segment_count(), 1);
+    assert!(matches!(
+        imported.curve_path_classification(),
+        Classification::Decided(path) if path.curves().len() == 1
+    ));
     let owned_report = imported.clone().into_report();
     assert_eq!(&owned_report, imported.report());
     let (owned_curve, owned_parts_report) = imported.clone().into_parts();
-    assert_eq!(owned_curve, None);
+    assert_eq!(owned_curve.as_ref(), imported.curve_path());
     assert_eq!(&owned_parts_report, imported.report());
+    assert!(matches!(
+        imported.into_curve_path_classification(),
+        Classification::Decided(path) if path.curves().len() == 1
+    ));
+}
+
+#[test]
+fn svg_closed_cubic_path_feeds_exact_top_level_boundary_queries() {
+    let imported = import_svg_path_data_with_report("M 0 0 C 0 2 2 2 2 0 Z", 17, 2, None);
+    let path = imported.curve_path().unwrap();
+
+    assert_eq!(path.curves().len(), 2);
+    assert_eq!(path.start(), path.end());
+    assert!(path.bezier_boundary_loop().is_ok());
     assert_eq!(
-        imported.into_curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        path.classify_point(&p(1, 1), &CurvePolicy::certified())
+            .unwrap(),
+        Classification::Decided(ContourPointLocation::Inside)
+    );
+    assert_eq!(
+        path.classify_point(&p(1, -1), &CurvePolicy::certified())
+            .unwrap(),
+        Classification::Decided(ContourPointLocation::Outside)
+    );
+    assert!(imported.curve_string().is_none());
+    assert_eq!(
+        imported
+            .report()
+            .retained_import()
+            .unwrap()
+            .source_topology(),
+        RetainedImportTopology2::ClosedContour
     );
 }
 
 #[test]
-fn svg_non_semicircle_arc_import_remains_explicitly_unsupported() {
+fn svg_relative_and_smooth_cubic_commands_retain_exact_reflected_controls() {
+    let imported = import_svg_path_data_with_report("m 1 1 c 1 0 2 1 3 1 s 2 1 3 0", 18, 4, None);
+
+    let curves = imported.curve_path().unwrap().curves();
+    assert_eq!(curves.len(), 2);
+    let CurveGeometry2::CubicBezier(first) = curves[0].geometry() else {
+        panic!("relative c command should retain cubic geometry");
+    };
+    assert_eq!(first.start(), &p(1, 1));
+    assert_eq!(first.control1(), &p(2, 1));
+    assert_eq!(first.control2(), &p(3, 2));
+    assert_eq!(first.end(), &p(4, 2));
+
+    let CurveGeometry2::CubicBezier(second) = curves[1].geometry() else {
+        panic!("relative s command should retain cubic geometry");
+    };
+    assert_eq!(second.start(), &p(4, 2));
+    assert_eq!(second.control1(), &p(5, 2));
+    assert_eq!(second.control2(), &p(6, 3));
+    assert_eq!(second.end(), &p(7, 2));
+    assert_eq!(imported.report().command_count(), 3);
+    assert_eq!(
+        imported
+            .report()
+            .retained_import()
+            .unwrap()
+            .input_point_count(),
+        3
+    );
+    assert_eq!(
+        imported
+            .report()
+            .retained_import()
+            .unwrap()
+            .emitted_segment_count(),
+        2
+    );
+}
+
+#[test]
+fn svg_quadratic_and_smooth_commands_retain_exact_controls_and_reset_semantics() {
+    let imported =
+        import_svg_path_data_with_report("M 0 0 Q 1 2 2 0 T 4 0 L 5 0 T 6 0", 19, 7, None);
+
+    let curves = imported.curve_path().unwrap().curves();
+    assert_eq!(curves.len(), 4);
+    let CurveGeometry2::QuadraticBezier(first) = curves[0].geometry() else {
+        panic!("Q command should retain quadratic Bezier geometry");
+    };
+    assert_eq!(first.start(), &p(0, 0));
+    assert_eq!(first.control(), &p(1, 2));
+    assert_eq!(first.end(), &p(2, 0));
+
+    let CurveGeometry2::QuadraticBezier(smooth) = curves[1].geometry() else {
+        panic!("T command should retain quadratic Bezier geometry");
+    };
+    assert_eq!(smooth.control(), &p(3, -2));
+    assert_eq!(smooth.end(), &p(4, 0));
+
+    assert!(matches!(curves[2].geometry(), CurveGeometry2::Line(_)));
+    let CurveGeometry2::QuadraticBezier(reset) = curves[3].geometry() else {
+        panic!("T after a line should use its current point as the control");
+    };
+    assert_eq!(reset.start(), &p(5, 0));
+    assert_eq!(reset.control(), &p(5, 0));
+    assert_eq!(reset.end(), &p(6, 0));
+    assert_eq!(imported.report().command_count(), 5);
+    let record = imported.report().retained_import().unwrap();
+    assert_eq!(record.input_point_count(), 5);
+    assert_eq!(record.emitted_segment_count(), 4);
+    assert_eq!(
+        imported
+            .curve_path()
+            .unwrap()
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 0 0 Q 1 2 2 0 Q 3 -2 4 0 L 5 0 Q 5 0 6 0")
+    );
+}
+
+#[test]
+fn svg_relative_quadratic_commands_apply_offsets_to_authored_points() {
+    let imported = import_svg_path_data_with_report("m 1 1 q 1 2 2 0 t 2 0", 20, 1, None);
+
+    let curves = imported.curve_path().unwrap().curves();
+    let CurveGeometry2::QuadraticBezier(first) = curves[0].geometry() else {
+        panic!("relative q command should retain quadratic geometry");
+    };
+    assert_eq!(first.control(), &p(2, 3));
+    assert_eq!(first.end(), &p(3, 1));
+    let CurveGeometry2::QuadraticBezier(second) = curves[1].geometry() else {
+        panic!("relative t command should retain quadratic geometry");
+    };
+    assert_eq!(second.control(), &p(4, -1));
+    assert_eq!(second.end(), &p(5, 1));
+}
+
+#[test]
+fn svg_path_export_reports_inexpressible_rational_family_without_approximation() {
+    let rational =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 2), p(2, 0)], vec![s(1), s(2), s(1)]).unwrap();
+    let path = CurvePath2::try_new(vec![Curve2::from(rational)]).unwrap();
+
+    let exported = path.to_svg_path_data_with_report().unwrap();
+    assert!(exported.path_data().is_none());
+    assert_eq!(
+        exported.report().status(),
+        RetainedTopologyStatus::Unsupported
+    );
+    assert_eq!(
+        exported.report().blocker(),
+        Some(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(exported.report().curve_reports().len(), 1);
+    assert_eq!(
+        exported.report().curve_reports()[0].family(),
+        CurveFamily2::RationalBezier
+    );
+    assert_eq!(
+        exported.report().curve_reports()[0].status(),
+        RetainedTopologyStatus::Unsupported
+    );
+}
+
+#[test]
+fn svg_non_semicircle_circular_arc_import_retains_exact_radical_center() {
     let imported = import_svg_path_data_with_report("M 0 0 A 2 2 0 0 0 2 0", 9, 1, None);
 
-    assert!(imported.curve_string().is_none());
+    let curve = imported.curve_string().unwrap();
+    let Segment2::Arc(arc) = &curve.segments()[0] else {
+        panic!("circular A command should retain native arc geometry");
+    };
+    assert_eq!(arc.center().x(), &s(1));
+    assert_eq!(arc.center().y() * arc.center().y(), s(3));
+    assert_eq!(
+        arc.center().y().structural_facts().sign,
+        Some(hypercurve::RealSign::Positive)
+    );
+    assert_eq!(
+        curve
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 0 0 A 2 2 0 0 0 2 0")
+    );
     assert_eq!(imported.report().source_index(), 9);
     assert_eq!(imported.report().command_count(), 2);
     assert_eq!(
         imported.report().status(),
-        RetainedTopologyStatus::Unsupported
+        RetainedTopologyStatus::ImportedLossy
     );
+    assert_eq!(imported.report().blocker(), None);
+}
+
+#[test]
+fn svg_circular_arc_import_preserves_major_sweep_and_corrects_small_radius() {
+    let major = import_svg_path_data_with_report("M 0 0 A 2 2 37 1 0 2 0", 21, 1, None);
+    let major_path = major.curve_path().unwrap();
     assert_eq!(
-        imported.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
+        major_path
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 0 0 A 2 2 0 1 0 2 0")
+    );
+
+    let corrected = import_svg_path_data_with_report("M 0 0 A 1 1 0 0 0 4 0", 22, 1, None);
+    let corrected_curve = corrected.curve_string().unwrap();
+    let Segment2::Arc(arc) = &corrected_curve.segments()[0] else {
+        panic!("radius-corrected circular command should retain an arc");
+    };
+    assert_eq!(arc.center(), &p(2, 0));
+    assert_eq!(arc.radius_squared(), s(4));
+    assert_eq!(
+        corrected_curve
+            .to_svg_path_data_with_report()
+            .unwrap()
+            .path_data()
+            .map(String::as_str),
+        Some("M 0 0 A 2 2 0 0 0 4 0")
+    );
+}
+
+#[test]
+fn svg_zero_radius_arc_falls_back_to_exact_line() {
+    let imported = import_svg_path_data_with_report("M 0 0 A 0 2 0 0 0 3 1", 23, 1, None);
+    let path = imported.curve_path().unwrap();
+    assert!(matches!(
+        path.curves()[0].geometry(),
+        CurveGeometry2::Line(_)
+    ));
+    assert_eq!(
+        imported.curve_string().unwrap().segments()[0].end(),
+        &p(3, 1)
     );
 }
 

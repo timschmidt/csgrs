@@ -66,9 +66,9 @@ fn rational_vector(
     let tangent = curve
         .tangent_at_algebraic_parameter(parameter, policy)
         .unwrap();
-    BezierAlgebraicTangentVector2::from_endpoint_image(
-        &BezierEndpointTangentImage2::RationalQuadratic(tangent),
-    )
+    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(
+        tangent,
+    ))
     .vector
     .unwrap()
 }
@@ -81,9 +81,9 @@ fn rational_second_vector(
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .unwrap();
-    BezierAlgebraicTangentVector2::from_endpoint_image(
-        &BezierEndpointTangentImage2::RationalQuadratic(tangent),
-    )
+    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(
+        tangent,
+    ))
     .vector
     .unwrap()
 }

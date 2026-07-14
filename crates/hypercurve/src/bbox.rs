@@ -365,6 +365,62 @@ impl Aabb2 {
             !(self_left_of_other || other_left_of_self || self_below_other || other_below_self),
         )
     }
+
+    /// Returns the sole point in the intersection of two closed boxes.
+    ///
+    /// `None` means the boxes are disjoint or their intersection has positive
+    /// extent in at least one axis. Uncertain coordinate order remains explicit.
+    pub fn singleton_intersection(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> Classification<Option<Point2>> {
+        let x = match singleton_interval_intersection(
+            self.min_x(),
+            self.max_x(),
+            other.min_x(),
+            other.max_x(),
+            policy,
+        ) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let y = match singleton_interval_intersection(
+            self.min_y(),
+            self.max_y(),
+            other.min_y(),
+            other.max_y(),
+            policy,
+        ) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        Classification::Decided(x.zip(y).map(|(x, y)| Point2::new(x, y)))
+    }
+}
+
+fn singleton_interval_intersection(
+    first_min: &Real,
+    first_max: &Real,
+    second_min: &Real,
+    second_max: &Real,
+    policy: &CurvePolicy,
+) -> Classification<Option<Real>> {
+    let lower = match compare_reals(first_min, second_min, policy) {
+        Some(Ordering::Less) => second_min,
+        Some(Ordering::Equal | Ordering::Greater) => first_min,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let upper = match compare_reals(first_max, second_max, policy) {
+        Some(Ordering::Less | Ordering::Equal) => first_max,
+        Some(Ordering::Greater) => second_max,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    match compare_reals(lower, upper, policy) {
+        Some(Ordering::Equal) => Classification::Decided(Some(lower.clone())),
+        Some(Ordering::Less | Ordering::Greater) => Classification::Decided(None),
+        None => Classification::Uncertain(UncertaintyReason::Ordering),
+    }
 }
 
 pub(crate) fn decided_segment_aabb(segment: &Segment2, policy: &CurvePolicy) -> Option<Aabb2> {

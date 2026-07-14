@@ -4,7 +4,7 @@
 //! bins used by [`crate::Region2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, rc::Rc};
 
 use hyperreal::Real;
 
@@ -17,17 +17,17 @@ use crate::{
     SegmentKind, SegmentKindCounts, UncertaintyReason,
 };
 
-/// Canonical retained arrangement request for exact curve topology.
+/// Internal retained arrangement request for exact curve topology.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementRequest2 {
+pub(crate) struct ExactCurveArrangementRequest2 {
     source_segments: Vec<Segment2>,
     source_line_segments: Option<Vec<LineSeg2>>,
     fill_rule: FillRule,
 }
 
-/// Retained workspace for a single exact curve arrangement attempt.
+/// Internal retained facts for a single exact curve arrangement attempt.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveWorkspace2 {
+pub(crate) struct ExactCurveWorkspace2 {
     request: ExactCurveArrangementRequest2,
     source_segment_kind_counts: SegmentKindCounts,
     source_segment_aabbs: Vec<Option<Aabb2>>,
@@ -935,9 +935,9 @@ pub struct ExactCurveArrangementOutputCache2 {
     blocker: Option<UncertaintyReason>,
 }
 
-/// Final retained evaluation facts derived from workspace caches.
+/// Final retained evaluation facts derived from arrangement caches.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementEvaluationSummaryCache2 {
+pub struct ExactCurveArrangementSummary2 {
     evaluated_output: bool,
     materialized_region: Option<bool>,
     stage: Option<RegionLineSegmentRegionBuildStage2>,
@@ -950,40 +950,26 @@ pub struct ExactCurveArrangementEvaluationSummaryCache2 {
     output_segment_count: Option<usize>,
 }
 
-/// Evaluation record for a retained exact curve arrangement attempt.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementEvaluation2 {
-    workspace: ExactCurveWorkspace2,
-    summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
-}
-
-/// Canonical exact curve arrangement attempt.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementAttempt2 {
-    request: ExactCurveArrangementRequest2,
-}
-
-/// Result of a retained exact curve arrangement attempt.
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementResult2 {
-    evaluation: ExactCurveArrangementEvaluation2,
-    region: Option<Region2>,
-    // Deprecated compatibility APIs borrow this legacy shape; the report is
-    // derived from `evaluation`.
-    derived_compatibility_projection: RegionLineSegmentRegionBuildResult2,
-}
-
-/// Derived report for a retained exact curve arrangement attempt.
+/// Retained result of arranging unordered exact boundaries into a [`Region2`].
 ///
-/// This is a compatibility/reporting view over retained request, workspace,
-/// evaluation, and output caches. It must not recompute topology: each field is
-/// either retained evidence or a derived compatibility projection from facts
-/// already certified and retained by [`ExactCurveWorkspace2`] or
-/// [`ExactCurveArrangementEvaluation2`].
+/// This is the domain-level arrangement carrier returned by the
+/// [`Region2::arrange_unordered_segments`] family. It retains the certified
+/// facts, blocker evidence, derived report, and optional materialized region so
+/// repeated inspection does not rerun topology.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementReport2 {
-    workspace: ExactCurveWorkspace2,
-    summary_cache: ExactCurveArrangementEvaluationSummaryCache2,
+pub struct RegionArrangement2 {
+    report: RegionArrangementReport2,
+    region: Option<Region2>,
+}
+
+/// Retained facts and diagnostics for an unordered region arrangement.
+///
+/// Clones share the immutable arrangement workspace. Reading or cloning this
+/// report does not recompute topology or deep-copy retained geometric facts.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RegionArrangementReport2 {
+    workspace: Rc<ExactCurveWorkspace2>,
+    summary_cache: ExactCurveArrangementSummary2,
 }
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -1136,13 +1122,7 @@ pub enum RegionLineSegmentRingAssemblyPredicatePath2 {
     ExactEndpointBucketTraversal,
 }
 
-/// Compatibility report for unordered exact segment region construction.
-///
-/// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and use
-/// [`ExactCurveArrangementReport2`] or retained result accessors directly. This
-/// legacy-shaped report is kept for existing `*_with_report` callers and is
-/// projected from retained arrangement caches; it must not be treated as a
-/// separate topology pipeline.
+/// Internal staging report for unordered exact segment region construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildReport2 {
     stage: RegionLineSegmentRegionBuildStage2,
@@ -1206,12 +1186,7 @@ pub enum RegionLineSegmentRegionBuildStage2 {
     RegionRoleAssignment,
 }
 
-/// Compatibility result for unordered exact segment region construction.
-///
-/// New callers should prefer [`ExactCurveArrangementResult2`] plus
-/// [`ExactCurveArrangementReport2`]. This legacy-shaped result remains only as
-/// the return type for deprecated `Region2::from_unordered_*_with_report`
-/// constructors and for explicit derived compatibility projections.
+/// Internal staging result for unordered exact segment region construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionLineSegmentRegionBuildResult2 {
     region: Option<Region2>,
@@ -1254,139 +1229,6 @@ enum BoundaryContourNestingOutcome {
         blocker: BoundaryContourNestingBlocker,
         counts: BoundaryContourValidationCounts,
     },
-}
-
-impl Region2 {
-    /// Deprecated compatibility wrapper for building a region from unordered exact line segments.
-    ///
-    /// New callers should build an [`ExactCurveArrangementRequest2`], evaluate
-    /// an [`ExactCurveArrangementAttempt2`], and read the retained
-    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
-    /// compatibility and delegates to that retained pipeline.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
-    )]
-    pub fn from_unordered_line_segments(
-        segments: Vec<LineSeg2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Self>> {
-        let request =
-            ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        Ok(result.into_region_classification())
-    }
-
-    /// Deprecated compatibility wrapper for borrowed unordered exact line segments.
-    ///
-    /// New callers should build a borrowed [`ExactCurveArrangementRequest2`],
-    /// evaluate an [`ExactCurveArrangementAttempt2`], and read the retained
-    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
-    /// compatibility and delegates to that retained pipeline.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate"
-    )]
-    pub fn from_unordered_line_segments_borrowed(
-        segments: &[LineSeg2],
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Self>> {
-        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
-            segments, fill_rule,
-        );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        Ok(result.into_region_classification())
-    }
-
-    /// Deprecated compatibility wrapper for borrowed unordered line segments with a retained report.
-    ///
-    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
-    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
-    /// view is needed.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
-    )]
-    pub fn from_unordered_line_segments_borrowed_with_arrangement_report(
-        segments: &[LineSeg2],
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
-        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
-            segments, fill_rule,
-        );
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .into_region_classification_with_arrangement_report())
-    }
-
-    /// Deprecated compatibility wrapper for owned unordered line segments with a retained report.
-    ///
-    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
-    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
-    /// view is needed.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
-    )]
-    pub fn from_unordered_line_segments_with_arrangement_report(
-        segments: Vec<LineSeg2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
-        let request =
-            ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .into_region_classification_with_arrangement_report())
-    }
-
-    /// Deprecated compatibility wrapper for borrowed unordered line segments with a legacy report.
-    ///
-    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Legacy-shaped result output is
-    /// compatibility-only.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
-    )]
-    pub fn from_unordered_line_segments_borrowed_with_report(
-        segments: &[LineSeg2],
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
-            segments, fill_rule,
-        );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        #[allow(deprecated)]
-        let compatibility_result = result.derived_region_build_result();
-        Ok(compatibility_result)
-    }
-
-    /// Deprecated compatibility wrapper for owned unordered line segments with a legacy report.
-    ///
-    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Legacy-shaped result output is
-    /// compatibility-only.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_line_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
-    )]
-    pub fn from_unordered_line_segments_with_report(
-        segments: Vec<LineSeg2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        let request =
-            ExactCurveArrangementRequest2::from_unordered_line_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        #[allow(deprecated)]
-        let compatibility_result = result.derived_region_build_result();
-        Ok(compatibility_result)
-    }
 }
 
 fn evaluate_unordered_line_segments_region_result(
@@ -1564,133 +1406,6 @@ fn evaluate_unordered_line_segments_region_result(
     })
 }
 
-impl Region2 {
-    /// Deprecated compatibility wrapper for unordered native line/arc segments.
-    ///
-    /// New callers should build an [`ExactCurveArrangementRequest2`], evaluate
-    /// an [`ExactCurveArrangementAttempt2`], and read the retained
-    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
-    /// compatibility and delegates to that retained pipeline.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
-    )]
-    pub fn from_unordered_segments(
-        segments: Vec<Segment2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Self>> {
-        let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        Ok(result.into_region_classification())
-    }
-
-    /// Deprecated compatibility wrapper for borrowed unordered native line/arc segments.
-    ///
-    /// New callers should build a borrowed [`ExactCurveArrangementRequest2`],
-    /// evaluate an [`ExactCurveArrangementAttempt2`], and read the retained
-    /// [`ExactCurveArrangementResult2`] directly. This wrapper remains only for
-    /// compatibility and delegates to that retained pipeline.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate"
-    )]
-    pub fn from_unordered_segments_borrowed(
-        segments: &[Segment2],
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Self>> {
-        let request =
-            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        Ok(result.into_region_classification())
-    }
-
-    /// Deprecated compatibility wrapper for borrowed unordered native segments with a retained report.
-    ///
-    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
-    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
-    /// view is needed.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
-    )]
-    pub fn from_unordered_segments_borrowed_with_arrangement_report(
-        segments: &[Segment2],
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
-        let request =
-            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .into_region_classification_with_arrangement_report())
-    }
-
-    /// Deprecated compatibility wrapper for owned unordered native segments with a retained report.
-    ///
-    /// New callers should evaluate an [`ExactCurveArrangementAttempt2`] and
-    /// call [`ExactCurveArrangementResult2::arrangement_report`] when a report
-    /// view is needed.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate, then ExactCurveArrangementResult2::arrangement_report"
-    )]
-    pub fn from_unordered_segments_with_arrangement_report(
-        segments: Vec<Segment2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<(Classification<Self>, ExactCurveArrangementReport2)> {
-        let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
-        Ok(ExactCurveArrangementAttempt2::new(request)
-            .evaluate_owned(policy)?
-            .into_region_classification_with_arrangement_report())
-    }
-
-    /// Deprecated compatibility wrapper for borrowed unordered native segments with a legacy report.
-    ///
-    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Legacy-shaped result output is
-    /// compatibility-only.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_borrowed_unordered_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
-    )]
-    pub fn from_unordered_segments_borrowed_with_report(
-        segments: &[Segment2],
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        let request =
-            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        #[allow(deprecated)]
-        let compatibility_result = result.derived_region_build_result();
-        Ok(compatibility_result)
-    }
-
-    /// Deprecated compatibility wrapper for owned unordered native segments with a legacy report.
-    ///
-    /// Prefer evaluating an [`ExactCurveArrangementAttempt2`] and reading its
-    /// retained accessors directly. Legacy-shaped result output is
-    /// compatibility-only.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementRequest2::from_unordered_segments with ExactCurveArrangementAttempt2::evaluate; legacy-shaped result output is compatibility-only"
-    )]
-    pub fn from_unordered_segments_with_report(
-        segments: Vec<Segment2>,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionLineSegmentRegionBuildResult2> {
-        let request = ExactCurveArrangementRequest2::from_unordered_segments(segments, fill_rule);
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(policy)?;
-        #[allow(deprecated)]
-        let compatibility_result = result.derived_region_build_result();
-        Ok(compatibility_result)
-    }
-}
-
 fn evaluate_unordered_segments_region_result(
     segments: &[Segment2],
     fill_rule: FillRule,
@@ -1865,6 +1580,60 @@ fn evaluate_unordered_segments_region_result(
 }
 
 impl Region2 {
+    /// Arranges unordered exact line/arc segments into a retained region result.
+    pub fn arrange_unordered_segments(
+        source_segments: Vec<Segment2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionArrangement2> {
+        evaluate_exact_curve_arrangement(
+            ExactCurveArrangementRequest2::from_unordered_segments(source_segments, fill_rule),
+            policy,
+        )
+    }
+
+    /// Arranges borrowed unordered exact line/arc segments into a retained region result.
+    pub fn arrange_unordered_segments_borrowed(
+        source_segments: &[Segment2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionArrangement2> {
+        evaluate_exact_curve_arrangement(
+            ExactCurveArrangementRequest2::from_borrowed_unordered_segments(
+                source_segments,
+                fill_rule,
+            ),
+            policy,
+        )
+    }
+
+    /// Arranges unordered exact line segments using the specialized line pipeline.
+    pub fn arrange_unordered_line_segments(
+        source_segments: Vec<LineSeg2>,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionArrangement2> {
+        evaluate_exact_curve_arrangement(
+            ExactCurveArrangementRequest2::from_unordered_line_segments(source_segments, fill_rule),
+            policy,
+        )
+    }
+
+    /// Arranges borrowed unordered exact lines using the specialized line pipeline.
+    pub fn arrange_unordered_line_segments_borrowed(
+        source_segments: &[LineSeg2],
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionArrangement2> {
+        evaluate_exact_curve_arrangement(
+            ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
+                source_segments,
+                fill_rule,
+            ),
+            policy,
+        )
+    }
+
     /// Builds a region by nesting closed boundary contours into material/hole bins.
     ///
     /// Contours at even containment depth become material. Contours at odd
@@ -2072,25 +1841,6 @@ impl ExactCurveArrangementRequest2 {
     /// Returns line-only source carriers when the request came from the line-specific API.
     pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
         self.source_line_segments.as_deref()
-    }
-
-    /// Consumes this request and returns its retained exact source segments.
-    pub fn into_source_segments(self) -> Vec<Segment2> {
-        self.source_segments
-    }
-
-    /// Consumes this request and returns line-only source carriers, when present.
-    pub fn into_source_line_segments(self) -> Option<Vec<LineSeg2>> {
-        self.source_line_segments
-    }
-
-    /// Consumes this request and returns its retained source carriers and fill rule.
-    pub fn into_parts(self) -> (Vec<Segment2>, Option<Vec<LineSeg2>>, FillRule) {
-        (
-            self.source_segments,
-            self.source_line_segments,
-            self.fill_rule,
-        )
     }
 
     /// Returns the fill rule used when closed loops become contours.
@@ -2438,34 +2188,28 @@ impl ExactCurveWorkspace2 {
         })
     }
 
-    fn with_legacy_region_build_evidence(
+    fn with_region_build_evidence(
         mut self,
         report: &RegionLineSegmentRegionBuildReport2,
         materialized_region: bool,
     ) -> Self {
-        self.split_cache =
-            Some(ExactCurveArrangementSplitCache2::from_legacy_region_build_report(report));
+        self.split_cache = Some(ExactCurveArrangementSplitCache2::from_region_build_report(
+            report,
+        ));
         self.endpoint_graph_cache =
-            ExactCurveArrangementEndpointGraphCache2::from_legacy_region_build_report(report);
+            ExactCurveArrangementEndpointGraphCache2::from_region_build_report(report);
         self.ring_assembly_cache =
-            ExactCurveArrangementRingAssemblyCache2::from_legacy_region_build_report(report);
-        self.output_cache = Some(
-            ExactCurveArrangementOutputCache2::from_legacy_region_build_report(
-                report,
-                materialized_region,
-            ),
-        );
+            ExactCurveArrangementRingAssemblyCache2::from_region_build_report(report);
+        self.output_cache = Some(ExactCurveArrangementOutputCache2::from_region_build_report(
+            report,
+            materialized_region,
+        ));
         self
     }
 
     /// Returns the retained request.
     pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
         &self.request
-    }
-
-    /// Consumes this workspace and returns the retained request.
-    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
-        self.request
     }
 
     /// Returns retained source segment primitive-family counts.
@@ -4467,7 +4211,7 @@ impl ExactCurveArrangementSplitScheduleCache2 {
 }
 
 impl ExactCurveArrangementSplitCache2 {
-    fn from_legacy_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Self {
         let intersection_bucket_cache =
             split_intersection_bucket_cache(report.split_intersection_reports());
         let intersection_parameter_cache =
@@ -4480,7 +4224,7 @@ impl ExactCurveArrangementSplitCache2 {
             report.split_uncertain_relation_count(),
         );
         let blocker_cache =
-            ExactCurveArrangementSplitBlockerCache2::from_legacy_region_build_report(report);
+            ExactCurveArrangementSplitBlockerCache2::from_region_build_report(report);
         let intersection_reports = report.split_intersection_reports().to_vec();
         let intersection_points = intersection_reports
             .iter()
@@ -4586,9 +4330,7 @@ impl ExactCurveArrangementSplitCache2 {
 }
 
 impl ExactCurveArrangementSplitBlockerCache2 {
-    fn from_legacy_region_build_report(
-        report: &RegionLineSegmentRegionBuildReport2,
-    ) -> Option<Self> {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         Some(Self {
             first_source_segment_index: report.split_blocker_first_source_segment_index()?,
             first_source_segment_kind: report.split_blocker_first_source_segment_kind()?,
@@ -4855,9 +4597,7 @@ impl ExactCurveArrangementSplitIntersectionParameterCache2 {
 }
 
 impl ExactCurveArrangementEndpointGraphCache2 {
-    fn from_legacy_region_build_report(
-        report: &RegionLineSegmentRegionBuildReport2,
-    ) -> Option<Self> {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         let endpoint_bucket_cache =
             arranged_endpoint_bucket_cache(report.arranged_source_reports());
         let endpoint_side_bucket_cache =
@@ -7451,9 +7191,7 @@ impl ExactCurveArrangementOutputRoleCache2 {
 }
 
 impl ExactCurveArrangementOutputBoundaryCache2 {
-    fn from_legacy_region_build_report(
-        report: &RegionLineSegmentRegionBuildReport2,
-    ) -> Option<Self> {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         let boundary_build_report = report.boundary_build_report()?;
         if boundary_build_report.role_reports().is_empty() {
             return None;
@@ -7619,9 +7357,7 @@ impl ExactCurveArrangementOutputBoundaryRoleBucket2 {
 }
 
 impl ExactCurveArrangementRingAssemblyCache2 {
-    fn from_legacy_region_build_report(
-        report: &RegionLineSegmentRegionBuildReport2,
-    ) -> Option<Self> {
+    fn from_region_build_report(report: &RegionLineSegmentRegionBuildReport2) -> Option<Self> {
         let predicate_path = report.ring_assembly_predicate_path()?;
         let arranged_source_reports = report.arranged_source_reports().to_vec();
         let source_reports = report.source_reports().to_vec();
@@ -7804,13 +7540,13 @@ impl ExactCurveArrangementRingAssemblyCache2 {
 }
 
 impl ExactCurveArrangementOutputCache2 {
-    fn from_legacy_region_build_report(
+    fn from_region_build_report(
         report: &RegionLineSegmentRegionBuildReport2,
         materialized_region: bool,
     ) -> Self {
         let boundary_build_report = report.boundary_build_report().cloned();
         let boundary_output_cache =
-            ExactCurveArrangementOutputBoundaryCache2::from_legacy_region_build_report(report);
+            ExactCurveArrangementOutputBoundaryCache2::from_region_build_report(report);
         let role_cache = boundary_build_report
             .as_ref()
             .and_then(ExactCurveArrangementOutputRoleCache2::from_boundary_build_report);
@@ -7961,7 +7697,7 @@ impl ExactCurveArrangementOutputCache2 {
     }
 }
 
-impl ExactCurveArrangementEvaluationSummaryCache2 {
+impl ExactCurveArrangementSummary2 {
     fn from_workspace(workspace: &ExactCurveWorkspace2) -> Self {
         let output_cache = workspace.output_cache();
         let ring_cache = workspace.ring_assembly_cache();
@@ -8034,84 +7770,101 @@ impl ExactCurveArrangementEvaluationSummaryCache2 {
     }
 }
 
-impl ExactCurveArrangementEvaluation2 {
-    /// Builds an evaluation record from retained workspace facts.
-    pub fn new(workspace: ExactCurveWorkspace2) -> Self {
-        let summary_cache =
-            ExactCurveArrangementEvaluationSummaryCache2::from_workspace(&workspace);
-        Self {
-            workspace,
-            summary_cache,
-        }
+fn evaluate_exact_curve_arrangement(
+    request: ExactCurveArrangementRequest2,
+    policy: &CurvePolicy,
+) -> CurveResult<RegionArrangement2> {
+    let staging_result = if let Some(source_line_segments) = request.source_line_segments.as_ref() {
+        evaluate_unordered_line_segments_region_result(
+            source_line_segments,
+            request.fill_rule,
+            policy,
+        )?
+    } else {
+        evaluate_unordered_segments_region_result(
+            &request.source_segments,
+            request.fill_rule,
+            policy,
+        )?
+    };
+    let workspace = ExactCurveWorkspace2::from_request(request, policy)?
+        .with_region_build_evidence(staging_result.report(), staging_result.region().is_some());
+    let region = staging_result.region().cloned();
+    let summary_cache = ExactCurveArrangementSummary2::from_workspace(&workspace);
+    let report = RegionArrangementReport2 {
+        workspace: Rc::new(workspace),
+        summary_cache,
+    };
+    Ok(RegionArrangement2 { report, region })
+}
+
+impl RegionArrangement2 {
+    /// Consumes this result and returns its retained arrangement report.
+    pub fn into_report(self) -> RegionArrangementReport2 {
+        self.report
     }
 
-    /// Returns the retained workspace consumed by this evaluation.
-    pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
-        &self.workspace
-    }
-
-    /// Returns the retained arrangement request consumed by this evaluation.
-    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
-        self.workspace().request()
+    fn facts(&self) -> &ExactCurveWorkspace2 {
+        self.report.facts()
     }
 
     /// Returns the source segments supplied to the retained arrangement request.
     pub fn source_segments(&self) -> &[Segment2] {
-        self.request().source_segments()
+        self.facts().request().source_segments()
     }
 
     /// Returns line-only source carriers when the retained request came from a line-specific API.
     pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
-        self.request().source_line_segments()
+        self.facts().request().source_line_segments()
     }
 
     /// Returns the fill rule retained by the arrangement request.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.request().fill_rule()
+    pub fn fill_rule(&self) -> FillRule {
+        self.facts().request().fill_rule()
     }
 
     /// Returns retained source segment count from the arrangement request.
     pub fn source_segment_count(&self) -> usize {
-        self.request().source_segment_count()
+        self.facts().request().source_segment_count()
     }
 
     /// Returns retained source segment primitive-family counts.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.workspace().source_segment_kind_counts()
+    pub fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+        self.facts().source_segment_kind_counts()
     }
 
     /// Returns retained source segment boxes in request order.
     pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
-        self.workspace().source_segment_aabbs()
+        self.facts().source_segment_aabbs()
     }
 
     /// Returns a retained aggregate source box when every source box was decided.
-    pub const fn source_aabb(&self) -> Option<&Aabb2> {
-        self.workspace().source_aabb()
+    pub fn source_aabb(&self) -> Option<&Aabb2> {
+        self.facts().source_aabb()
     }
 
     /// Returns the number of source segment boxes certified during workspace preparation.
     pub fn decided_source_segment_aabb_count(&self) -> usize {
-        self.workspace().decided_source_segment_aabb_count()
+        self.facts().decided_source_segment_aabb_count()
     }
 
     /// Returns the number of source segment boxes that stayed uncertain.
     pub fn undecided_source_segment_aabb_count(&self) -> usize {
-        self.workspace().undecided_source_segment_aabb_count()
+        self.facts().undecided_source_segment_aabb_count()
     }
 
     /// Returns retained source segment facts prepared before split scheduling.
-    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
-        self.workspace().source_segment_cache()
+    pub fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+        self.facts().source_segment_cache()
     }
 
     /// Returns retained source AABB buckets grouped by certification status.
-    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+    pub fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
         self.source_segment_cache().source_aabb_bucket_cache()
     }
 
     /// Returns retained source segment buckets grouped by primitive family.
-    pub const fn source_segment_kind_bucket_cache(
+    pub fn source_segment_kind_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
         self.source_segment_cache()
@@ -8119,2704 +7872,1200 @@ impl ExactCurveArrangementEvaluation2 {
     }
 
     /// Returns retained source AABB-status bucket count.
-    pub const fn source_aabb_bucket_count(&self) -> usize {
-        self.workspace().source_aabb_bucket_count()
+    pub fn source_aabb_bucket_count(&self) -> usize {
+        self.facts().source_aabb_bucket_count()
     }
 
     /// Returns retained source AABB references.
-    pub const fn source_aabb_ref_count(&self) -> usize {
-        self.workspace().source_aabb_ref_count()
+    pub fn source_aabb_ref_count(&self) -> usize {
+        self.facts().source_aabb_ref_count()
     }
 
     /// Returns retained source AABB references certified as decided.
-    pub const fn source_aabb_decided_ref_count(&self) -> usize {
-        self.workspace().source_aabb_decided_ref_count()
+    pub fn source_aabb_decided_ref_count(&self) -> usize {
+        self.facts().source_aabb_decided_ref_count()
     }
 
     /// Returns retained source AABB references that stayed undecided.
-    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
-        self.workspace().source_aabb_undecided_ref_count()
+    pub fn source_aabb_undecided_ref_count(&self) -> usize {
+        self.facts().source_aabb_undecided_ref_count()
     }
 
     /// Returns the largest retained source AABB-status bucket size.
-    pub const fn source_aabb_max_bucket_size(&self) -> usize {
-        self.workspace().source_aabb_max_bucket_size()
+    pub fn source_aabb_max_bucket_size(&self) -> usize {
+        self.facts().source_aabb_max_bucket_size()
     }
 
     /// Returns retained source segment primitive-family bucket count.
-    pub const fn source_segment_kind_bucket_count(&self) -> usize {
-        self.workspace().source_segment_kind_bucket_count()
+    pub fn source_segment_kind_bucket_count(&self) -> usize {
+        self.facts().source_segment_kind_bucket_count()
     }
 
     /// Returns retained source segment references grouped by primitive family.
-    pub const fn source_segment_kind_ref_count(&self) -> usize {
-        self.workspace().source_segment_kind_ref_count()
+    pub fn source_segment_kind_ref_count(&self) -> usize {
+        self.facts().source_segment_kind_ref_count()
     }
 
     /// Returns retained line source segment references.
-    pub const fn source_line_segment_ref_count(&self) -> usize {
-        self.workspace().source_line_segment_ref_count()
+    pub fn source_line_segment_ref_count(&self) -> usize {
+        self.facts().source_line_segment_ref_count()
     }
 
     /// Returns retained arc source segment references.
-    pub const fn source_arc_segment_ref_count(&self) -> usize {
-        self.workspace().source_arc_segment_ref_count()
+    pub fn source_arc_segment_ref_count(&self) -> usize {
+        self.facts().source_arc_segment_ref_count()
     }
 
     /// Returns the largest retained source segment primitive-family bucket size.
-    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
-        self.workspace().source_segment_kind_max_bucket_size()
+    pub fn source_segment_kind_max_bucket_size(&self) -> usize {
+        self.facts().source_segment_kind_max_bucket_size()
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.
-    pub const fn source_endpoint_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
-        self.workspace().source_endpoint_bucket_cache()
+    pub fn source_endpoint_bucket_cache(&self) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
+        self.facts().source_endpoint_bucket_cache()
     }
 
     /// Returns source endpoints retained in exact structural endpoint buckets.
-    pub const fn source_endpoint_count(&self) -> usize {
-        self.workspace().source_endpoint_count()
+    pub fn source_endpoint_count(&self) -> usize {
+        self.facts().source_endpoint_count()
     }
 
     /// Returns exact structural source endpoint bucket count.
-    pub const fn source_endpoint_bucket_count(&self) -> usize {
-        self.workspace().source_endpoint_bucket_count()
+    pub fn source_endpoint_bucket_count(&self) -> usize {
+        self.facts().source_endpoint_bucket_count()
     }
 
     /// Returns source endpoint buckets containing one endpoint.
-    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
-        self.workspace().source_endpoint_singleton_bucket_count()
+    pub fn source_endpoint_singleton_bucket_count(&self) -> usize {
+        self.facts().source_endpoint_singleton_bucket_count()
     }
 
     /// Returns the largest exact structural source endpoint bucket size.
-    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
-        self.workspace().source_endpoint_max_bucket_size()
+    pub fn source_endpoint_max_bucket_size(&self) -> usize {
+        self.facts().source_endpoint_max_bucket_size()
     }
 
     /// Returns the retained source-pair schedule prepared before split predicates run.
-    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
-        self.workspace().split_schedule_cache()
+    pub fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+        self.facts().split_schedule_cache()
     }
 
     /// Returns retained split schedule buckets grouped by AABB pruning status.
-    pub const fn split_schedule_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
-        self.workspace().split_schedule_bucket_cache()
+    pub fn split_schedule_bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        self.facts().split_schedule_bucket_cache()
     }
 
     /// Returns source segment pairs scheduled before retained split predicates run.
-    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
-        self.workspace().split_schedule_candidate_pair_count()
+    pub fn split_schedule_candidate_pair_count(&self) -> usize {
+        self.facts().split_schedule_candidate_pair_count()
     }
 
     /// Returns scheduled source segment pairs pruned by retained AABB evidence.
-    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
-        self.workspace()
-            .split_schedule_decided_disjoint_pair_count()
+    pub fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
+        self.facts().split_schedule_decided_disjoint_pair_count()
     }
 
     /// Returns scheduled source segment pairs that require split predicate evaluation.
-    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
-        self.workspace()
-            .split_schedule_predicate_candidate_pair_count()
+    pub fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
+        self.facts().split_schedule_predicate_candidate_pair_count()
     }
 
     /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
-    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
-        self.workspace().split_schedule_undecided_aabb_pair_count()
+    pub fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
+        self.facts().split_schedule_undecided_aabb_pair_count()
     }
 
     /// Returns retained split schedule AABB-status bucket count.
-    pub const fn split_schedule_bucket_count(&self) -> usize {
-        self.workspace().split_schedule_bucket_count()
+    pub fn split_schedule_bucket_count(&self) -> usize {
+        self.facts().split_schedule_bucket_count()
     }
 
     /// Returns retained split schedule source-pair references grouped by AABB status.
-    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
-        self.workspace().split_schedule_candidate_ref_count()
+    pub fn split_schedule_candidate_ref_count(&self) -> usize {
+        self.facts().split_schedule_candidate_ref_count()
     }
 
     /// Returns the largest retained split schedule AABB-status bucket size.
-    pub const fn split_schedule_max_bucket_size(&self) -> usize {
-        self.workspace().split_schedule_max_bucket_size()
+    pub fn split_schedule_max_bucket_size(&self) -> usize {
+        self.facts().split_schedule_max_bucket_size()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
-    pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
-        self.workspace().split_cache()
+    pub fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
+        self.facts().split_cache()
     }
 
     /// Returns the exact predicate family used by retained split evaluation.
-    pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
-        self.workspace().split_predicate_path()
+    pub fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
+        self.facts().split_predicate_path()
     }
 
     /// Returns source segment pairs considered by retained split evaluation.
-    pub const fn split_candidate_pair_count(&self) -> Option<usize> {
-        self.workspace().split_candidate_pair_count()
+    pub fn split_candidate_pair_count(&self) -> Option<usize> {
+        self.facts().split_candidate_pair_count()
     }
 
     /// Returns source segment pairs skipped by certified AABB disjointness.
-    pub const fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
-        self.workspace().split_skipped_aabb_pair_count()
+    pub fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
+        self.facts().split_skipped_aabb_pair_count()
     }
 
     /// Returns source segment pairs tested by exact split predicates.
-    pub const fn split_tested_pair_count(&self) -> Option<usize> {
-        self.workspace().split_tested_pair_count()
+    pub fn split_tested_pair_count(&self) -> Option<usize> {
+        self.facts().split_tested_pair_count()
     }
 
     /// Returns exact point-intersection event count found during splitting.
-    pub const fn split_intersection_event_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_event_count()
+    pub fn split_intersection_event_count(&self) -> Option<usize> {
+        self.facts().split_intersection_event_count()
     }
 
     /// Returns source-pair relations classified as point intersections.
-    pub const fn split_point_relation_count(&self) -> Option<usize> {
-        self.workspace().split_point_relation_count()
+    pub fn split_point_relation_count(&self) -> Option<usize> {
+        self.facts().split_point_relation_count()
     }
 
     /// Returns source-pair relations classified as overlaps.
-    pub const fn split_overlap_relation_count(&self) -> Option<usize> {
-        self.workspace().split_overlap_relation_count()
+    pub fn split_overlap_relation_count(&self) -> Option<usize> {
+        self.facts().split_overlap_relation_count()
     }
 
     /// Returns source-pair relations that remained uncertain.
-    pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
-        self.workspace().split_uncertain_relation_count()
+    pub fn split_uncertain_relation_count(&self) -> Option<usize> {
+        self.facts().split_uncertain_relation_count()
     }
 
     /// Returns exact intersection points retained by split evaluation.
     pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.workspace().split_intersection_points()
+        self.facts().split_intersection_points()
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
     pub fn split_intersection_reports(
         &self,
     ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.workspace().split_intersection_reports()
+        self.facts().split_intersection_reports()
     }
 
     /// Returns retained split-stage relation buckets.
-    pub const fn split_relation_bucket_cache(
+    pub fn split_relation_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        self.workspace().split_relation_bucket_cache()
+        self.facts().split_relation_bucket_cache()
     }
 
     /// Returns exact split-intersection point buckets.
-    pub const fn split_intersection_bucket_cache(
+    pub fn split_intersection_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        self.workspace().split_intersection_bucket_cache()
+        self.facts().split_intersection_bucket_cache()
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
-    pub const fn split_intersection_parameter_cache(
+    pub fn split_intersection_parameter_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        self.workspace().split_intersection_parameter_cache()
+        self.facts().split_intersection_parameter_cache()
     }
 
     /// Returns retained split-stage relation bucket count.
-    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_relation_bucket_count()
+    pub fn split_relation_bucket_count(&self) -> Option<usize> {
+        self.facts().split_relation_bucket_count()
     }
 
     /// Returns retained split-stage classified relation references.
-    pub const fn split_relation_ref_count(&self) -> Option<usize> {
-        self.workspace().split_relation_ref_count()
+    pub fn split_relation_ref_count(&self) -> Option<usize> {
+        self.facts().split_relation_ref_count()
     }
 
     /// Returns the largest retained split-stage relation bucket size.
-    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().split_relation_max_bucket_size()
+    pub fn split_relation_max_bucket_size(&self) -> Option<usize> {
+        self.facts().split_relation_max_bucket_size()
     }
 
     /// Returns retained exact split-intersection point bucket count.
-    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_bucket_count()
+    pub fn split_intersection_bucket_count(&self) -> Option<usize> {
+        self.facts().split_intersection_bucket_count()
     }
 
     /// Returns retained split-intersection buckets containing one event.
-    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_singleton_bucket_count()
+    pub fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
+        self.facts().split_intersection_singleton_bucket_count()
     }
 
     /// Returns the largest retained split-intersection point bucket size.
-    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().split_intersection_max_bucket_size()
+    pub fn split_intersection_max_bucket_size(&self) -> Option<usize> {
+        self.facts().split_intersection_max_bucket_size()
     }
 
     /// Returns retained source-parameter references for split intersections.
-    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .split_intersection_source_parameter_ref_count()
+    pub fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
+        self.facts().split_intersection_source_parameter_ref_count()
     }
 
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
-    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
-        self.workspace().split_blocker_cache()
+    pub fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+        self.facts().split_blocker_cache()
     }
 
     /// Returns the first source segment in a split-stage blocker, when known.
-    pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
-        self.workspace().split_blocker_first_source_segment_index()
+    pub fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
+        self.facts().split_blocker_first_source_segment_index()
     }
 
     /// Returns the primitive family of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.workspace().split_blocker_first_source_segment_kind()
+    pub fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.facts().split_blocker_first_source_segment_kind()
     }
 
     /// Returns the exact start point of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_first_source_start_point()
+    pub fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_first_source_start_point()
     }
 
     /// Returns the exact end point of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_first_source_end_point()
+    pub fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_first_source_end_point()
     }
 
     /// Returns the second source segment in a split-stage blocker, when known.
-    pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
-        self.workspace().split_blocker_second_source_segment_index()
+    pub fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
+        self.facts().split_blocker_second_source_segment_index()
     }
 
     /// Returns the primitive family of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.workspace().split_blocker_second_source_segment_kind()
+    pub fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.facts().split_blocker_second_source_segment_kind()
     }
 
     /// Returns the exact start point of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_second_source_start_point()
+    pub fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_second_source_start_point()
     }
 
     /// Returns the exact end point of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_second_source_end_point()
+    pub fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_second_source_end_point()
     }
 
     /// Returns arranged output segment count when retained splitting completed.
-    pub const fn split_output_segment_count(&self) -> Option<usize> {
-        self.workspace().split_output_segment_count()
+    pub fn split_output_segment_count(&self) -> Option<usize> {
+        self.facts().split_output_segment_count()
     }
 
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
-    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
-        self.workspace().endpoint_graph_cache()
+    pub fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+        self.facts().endpoint_graph_cache()
     }
 
     /// Returns the exact predicate family used by retained endpoint-graph validation.
-    pub const fn endpoint_graph_predicate_path(
+    pub fn endpoint_graph_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        self.workspace().endpoint_graph_predicate_path()
+        self.facts().endpoint_graph_predicate_path()
     }
 
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
-    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_endpoint_count()
+    pub fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_endpoint_count()
     }
 
     /// Returns exact structural endpoint bucket count.
-    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_structural_bucket_count()
+    pub fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_structural_bucket_count()
     }
 
     /// Returns structural endpoint singleton bucket count.
-    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .endpoint_graph_structural_singleton_bucket_count()
     }
 
     /// Returns the largest retained structural endpoint bucket size.
-    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_max_structural_bucket_size()
+    pub fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        self.facts().endpoint_graph_max_structural_bucket_size()
     }
 
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
-    pub const fn arranged_endpoint_bucket_cache(
+    pub fn arranged_endpoint_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        self.workspace().arranged_endpoint_bucket_cache()
+        self.facts().arranged_endpoint_bucket_cache()
     }
 
     /// Returns retained arranged endpoint references in structural buckets.
-    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_ref_count()
+    pub fn arranged_endpoint_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_ref_count()
     }
 
     /// Returns retained exact structural arranged endpoint bucket count.
-    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_bucket_count()
+    pub fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_bucket_count()
     }
 
     /// Returns retained arranged endpoint buckets containing one endpoint.
-    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_singleton_bucket_count()
+    pub fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_singleton_bucket_count()
     }
 
     /// Returns the largest retained arranged endpoint structural bucket size.
-    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_max_bucket_size()
+    pub fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_max_bucket_size()
     }
 
     /// Returns arranged endpoints grouped by retained endpoint side.
-    pub const fn arranged_endpoint_side_bucket_cache(
+    pub fn arranged_endpoint_side_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        self.workspace().arranged_endpoint_side_bucket_cache()
+        self.facts().arranged_endpoint_side_bucket_cache()
     }
 
     /// Returns retained arranged endpoint side bucket count.
-    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_bucket_count()
+    pub fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_side_bucket_count()
     }
 
     /// Returns retained arranged endpoint references grouped by side.
-    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_ref_count()
+    pub fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_side_ref_count()
     }
 
     /// Returns retained arranged start endpoint references.
-    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_start_ref_count()
+    pub fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_start_ref_count()
     }
 
     /// Returns retained arranged end endpoint references.
-    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_end_ref_count()
+    pub fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_end_ref_count()
     }
 
     /// Returns the largest retained arranged endpoint side bucket size.
-    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_max_bucket_size()
+    pub fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_side_max_bucket_size()
     }
 
     /// Returns exact endpoint records for arranged fragments.
-    pub const fn arranged_endpoint_point_cache(
+    pub fn arranged_endpoint_point_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        self.workspace().arranged_endpoint_point_cache()
+        self.facts().arranged_endpoint_point_cache()
     }
 
     /// Returns retained arranged fragment endpoint records.
-    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_point_fragment_ref_count()
+    pub fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_point_fragment_ref_count()
     }
 
     /// Returns retained arranged endpoint point references.
-    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_point_ref_count()
+    pub fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_point_ref_count()
     }
 
     /// Returns structural arranged endpoints grouped by retained degree.
-    pub const fn arranged_endpoint_degree_bucket_cache(
+    pub fn arranged_endpoint_degree_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        self.workspace().arranged_endpoint_degree_bucket_cache()
+        self.facts().arranged_endpoint_degree_bucket_cache()
     }
 
     /// Returns retained arranged endpoint degree bucket count.
-    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_degree_bucket_count()
+    pub fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_degree_bucket_count()
     }
 
     /// Returns structural endpoint buckets classified by retained degree.
-    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_degree_structural_bucket_ref_count()
     }
 
     /// Returns structural endpoint buckets classified as dangling.
-    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_dangling_structural_bucket_count()
     }
 
     /// Returns structural endpoint buckets classified as chain continuations.
-    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_chain_structural_bucket_count()
     }
 
     /// Returns structural endpoint buckets classified as branches.
-    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_branch_structural_bucket_count()
     }
 
     /// Returns the largest retained arranged endpoint degree bucket size.
-    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_degree_max_bucket_size()
+    pub fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_degree_max_bucket_size()
     }
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
-    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_dangling_endpoint_count()
+    pub fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_dangling_endpoint_count()
     }
 
     /// Returns branch endpoint count found during endpoint-graph validation.
-    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_branch_endpoint_count()
+    pub fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_branch_endpoint_count()
     }
 
     /// Returns the blocker arranged segment index from endpoint validation, when blocked.
-    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        self.workspace()
-            .endpoint_graph_blocker_arranged_segment_index()
+    pub fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        self.facts().endpoint_graph_blocker_arranged_segment_index()
     }
 
     /// Returns the blocker endpoint from endpoint validation, when blocked.
-    pub const fn endpoint_graph_blocker_endpoint(
-        &self,
-    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        self.workspace().endpoint_graph_blocker_endpoint()
+    pub fn endpoint_graph_blocker_endpoint(&self) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        self.facts().endpoint_graph_blocker_endpoint()
     }
 
     /// Returns the exact blocker point from endpoint validation, when blocked.
-    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        self.workspace().endpoint_graph_blocker_point()
+    pub fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
+        self.facts().endpoint_graph_blocker_point()
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
-    pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
-        self.workspace().ring_assembly_cache()
+    pub fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
+        self.facts().ring_assembly_cache()
     }
 
     /// Returns the exact predicate family used by retained ring traversal.
-    pub const fn ring_assembly_predicate_path(
+    pub fn ring_assembly_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
-        self.workspace().ring_assembly_predicate_path()
+        self.facts().ring_assembly_predicate_path()
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
-    pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().attempted_endpoint_connection_count()
+    pub fn attempted_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().attempted_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as equal during ring traversal.
-    pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().exact_endpoint_connection_count()
+    pub fn exact_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().exact_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
-    pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().disconnected_endpoint_connection_count()
+    pub fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().disconnected_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons unresolved during ring traversal.
-    pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().unresolved_endpoint_connection_count()
+    pub fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().unresolved_endpoint_connection_count()
     }
 
     /// Returns source segments reversed while materializing retained ring traversal.
-    pub const fn reversed_source_segment_count(&self) -> Option<usize> {
-        self.workspace().reversed_source_segment_count()
+    pub fn reversed_source_segment_count(&self) -> Option<usize> {
+        self.facts().reversed_source_segment_count()
     }
 
     /// Returns per-arranged-fragment source provenance retained after exact splitting.
     pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.workspace().arranged_source_reports()
+        self.facts().arranged_source_reports()
     }
 
     /// Returns the retained arranged-source provenance record count.
     pub fn arranged_source_report_count(&self) -> Option<usize> {
-        self.workspace().arranged_source_report_count()
+        self.facts().arranged_source_report_count()
     }
 
     /// Returns per-output segment source provenance retained by ring traversal.
     pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.workspace().source_reports()
+        self.facts().source_reports()
     }
 
     /// Returns the retained output-source provenance record count.
     pub fn source_report_count(&self) -> Option<usize> {
-        self.workspace().source_report_count()
+        self.facts().source_report_count()
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
-    pub const fn arranged_fragment_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        self.workspace().arranged_fragment_cache()
+    pub fn arranged_fragment_cache(&self) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
+        self.facts().arranged_fragment_cache()
     }
 
     /// Returns arranged fragment count retained after exact splitting, when available.
-    pub const fn arranged_segment_count(&self) -> Option<usize> {
-        self.workspace().arranged_segment_count()
+    pub fn arranged_segment_count(&self) -> Option<usize> {
+        self.facts().arranged_segment_count()
     }
 
     /// Returns arranged fragment primitive-family counts retained after exact splitting.
-    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().arranged_segment_kind_counts()
+    pub fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.facts().arranged_segment_kind_counts()
     }
 
     /// Returns arranged fragments grouped by primitive family.
-    pub const fn arranged_fragment_kind_bucket_cache(
+    pub fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        self.workspace().arranged_fragment_kind_bucket_cache()
+        self.facts().arranged_fragment_kind_bucket_cache()
     }
 
     /// Returns retained arranged fragment primitive-family bucket count.
-    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_bucket_count()
+    pub fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_kind_bucket_count()
     }
 
     /// Returns retained arranged fragment references grouped by primitive family.
-    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_ref_count()
+    pub fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_kind_ref_count()
     }
 
     /// Returns retained line arranged fragment references.
-    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_line_fragment_ref_count()
+    pub fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_line_fragment_ref_count()
     }
 
     /// Returns retained arc arranged fragment references.
-    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_arc_fragment_ref_count()
+    pub fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_arc_fragment_ref_count()
     }
 
     /// Returns the largest retained arranged fragment primitive-family bucket size.
-    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_max_bucket_size()
+    pub fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_fragment_kind_max_bucket_size()
     }
 
     /// Returns arranged fragment source records grouped by retained topology status.
-    pub const fn arranged_fragment_status_bucket_cache(
+    pub fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        self.workspace().arranged_fragment_status_bucket_cache()
+        self.facts().arranged_fragment_status_bucket_cache()
     }
 
     /// Returns retained arranged fragment topology-status bucket count.
-    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_bucket_count()
+    pub fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_status_bucket_count()
     }
 
     /// Returns retained arranged fragment source references grouped by topology status.
-    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_source_ref_count()
+    pub fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_status_source_ref_count()
     }
 
     /// Returns retained native-exact arranged fragment source references.
-    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_native_exact_ref_count()
+    pub fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_native_exact_ref_count()
     }
 
     /// Returns retained certified-approximation arranged fragment source references.
-    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_fragment_certified_approximation_ref_count()
     }
 
     /// Returns retained display/export-only arranged fragment source references.
-    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_display_or_export_ref_count()
+    pub fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_display_or_export_ref_count()
     }
 
     /// Returns retained lossy-import arranged fragment source references.
-    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_imported_lossy_ref_count()
+    pub fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_imported_lossy_ref_count()
     }
 
     /// Returns retained unsupported arranged fragment source references.
-    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_unsupported_ref_count()
+    pub fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_unsupported_ref_count()
     }
 
     /// Returns retained unresolved arranged fragment source references.
-    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_unresolved_ref_count()
+    pub fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_unresolved_ref_count()
     }
 
     /// Returns the largest retained arranged fragment topology-status bucket size.
-    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_max_bucket_size()
+    pub fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_fragment_status_max_bucket_size()
     }
 
     /// Returns arranged fragment source parameter ranges.
-    pub const fn arranged_fragment_source_range_cache(
+    pub fn arranged_fragment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        self.workspace().arranged_fragment_source_range_cache()
+        self.facts().arranged_fragment_source_range_cache()
     }
 
     /// Returns retained arranged fragment source range references.
-    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_source_range_ref_count()
+    pub fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_source_range_ref_count()
     }
 
     /// Returns retained arranged fragment source ranges covering complete source segments.
-    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_full_source_range_ref_count()
+    pub fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_full_source_range_ref_count()
     }
 
     /// Returns retained arranged fragment source ranges covering proper source subranges.
-    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_fragment_partial_source_range_ref_count()
     }
 
     /// Returns per-output-ring source provenance buckets.
-    pub const fn output_ring_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        self.workspace().output_ring_bucket_cache()
+    pub fn output_ring_bucket_cache(&self) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
+        self.facts().output_ring_bucket_cache()
     }
 
     /// Returns retained output ring provenance bucket count.
-    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_ring_bucket_count()
+    pub fn output_ring_bucket_count(&self) -> Option<usize> {
+        self.facts().output_ring_bucket_count()
     }
 
     /// Returns retained output ring segment references.
-    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_ring_segment_ref_count()
+    pub fn output_ring_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_ring_segment_ref_count()
     }
 
     /// Returns the largest retained output ring segment count.
-    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
-        self.workspace().output_ring_max_segment_count()
+    pub fn output_ring_max_segment_count(&self) -> Option<usize> {
+        self.facts().output_ring_max_segment_count()
     }
 
     /// Returns retained output segment buckets grouped by primitive family.
-    pub const fn output_segment_kind_bucket_cache(
+    pub fn output_segment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        self.workspace().output_segment_kind_bucket_cache()
+        self.facts().output_segment_kind_bucket_cache()
     }
 
     /// Returns retained output segment primitive-family bucket count.
-    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_bucket_count()
+    pub fn output_segment_kind_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_kind_bucket_count()
     }
 
     /// Returns retained output segment references grouped by primitive family.
-    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_ref_count()
+    pub fn output_segment_kind_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_kind_ref_count()
     }
 
     /// Returns retained line output segment references.
-    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_line_segment_ref_count()
+    pub fn output_line_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_line_segment_ref_count()
     }
 
     /// Returns retained arc output segment references.
-    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_arc_segment_ref_count()
+    pub fn output_arc_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_arc_segment_ref_count()
     }
 
     /// Returns the largest retained output segment primitive-family bucket size.
-    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_max_bucket_size()
+    pub fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_kind_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by source segment.
-    pub const fn output_segment_source_bucket_cache(
+    pub fn output_segment_source_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        self.workspace().output_segment_source_bucket_cache()
+        self.facts().output_segment_source_bucket_cache()
     }
 
     /// Returns retained source-segment bucket count for output segments.
-    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_bucket_count()
+    pub fn output_segment_source_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_source_bucket_count()
     }
 
     /// Returns retained output segment references grouped by source segment.
-    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_ref_count()
+    pub fn output_segment_source_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_source_ref_count()
     }
 
     /// Returns the largest retained source-segment output bucket size.
-    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_source_max_bucket_size()
+    pub fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_source_max_bucket_size()
     }
 
     /// Returns retained output segment source parameter ranges.
-    pub const fn output_segment_source_range_cache(
+    pub fn output_segment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        self.workspace().output_segment_source_range_cache()
+        self.facts().output_segment_source_range_cache()
     }
 
     /// Returns retained output segment source-range references.
-    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_range_ref_count()
+    pub fn output_segment_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_source_range_ref_count()
     }
 
     /// Returns retained output segments covering a complete source range.
-    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_full_source_range_ref_count()
+    pub fn output_full_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().output_full_source_range_ref_count()
     }
 
     /// Returns retained output segments covering a proper source subrange.
-    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_partial_source_range_ref_count()
+    pub fn output_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().output_partial_source_range_ref_count()
     }
 
     /// Returns retained output segment exact endpoint records.
-    pub const fn output_segment_endpoint_cache(
+    pub fn output_segment_endpoint_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        self.workspace().output_segment_endpoint_cache()
+        self.facts().output_segment_endpoint_cache()
     }
 
     /// Returns retained output segment endpoint records.
-    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
-        self.workspace().output_segment_endpoint_record_count()
+    pub fn output_segment_endpoint_record_count(&self) -> Option<usize> {
+        self.facts().output_segment_endpoint_record_count()
     }
 
     /// Returns retained exact output endpoint references.
-    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
-        self.workspace().output_endpoint_ref_count()
+    pub fn output_endpoint_ref_count(&self) -> Option<usize> {
+        self.facts().output_endpoint_ref_count()
     }
 
     /// Returns retained exact continuity records between adjacent output segments.
-    pub const fn output_ring_continuity_cache(
+    pub fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        self.workspace().output_ring_continuity_cache()
+        self.facts().output_ring_continuity_cache()
     }
 
     /// Returns output rings with retained continuity evidence.
-    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
-        self.workspace().output_ring_continuity_ring_ref_count()
+    pub fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
+        self.facts().output_ring_continuity_ring_ref_count()
     }
 
     /// Returns retained output segment-to-next-segment continuity references.
-    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_ring_continuity_connection_ref_count()
+    pub fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
+        self.facts().output_ring_continuity_connection_ref_count()
     }
 
     /// Returns the largest retained continuity connection count for one output ring.
-    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_ring_continuity_max_connection_count()
+    pub fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
+        self.facts().output_ring_continuity_max_connection_count()
     }
 
     /// Returns retained output segment buckets grouped by topology status.
-    pub const fn output_segment_status_bucket_cache(
+    pub fn output_segment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        self.workspace().output_segment_status_bucket_cache()
+        self.facts().output_segment_status_bucket_cache()
     }
 
     /// Returns retained topology-status bucket count for output segments.
-    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_status_bucket_count()
+    pub fn output_segment_status_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_status_bucket_count()
     }
 
     /// Returns retained output segment references grouped by topology status.
-    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_status_ref_count()
+    pub fn output_segment_status_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_status_ref_count()
     }
 
     /// Returns retained native-exact output segment references.
-    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_native_exact_segment_ref_count()
+    pub fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_native_exact_segment_ref_count()
     }
 
     /// Returns retained certified-approximation output segment references.
-    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
+        self.facts()
             .output_certified_approximation_segment_ref_count()
     }
 
     /// Returns retained display/export-only output segment references.
-    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_display_or_export_segment_ref_count()
+    pub fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_display_or_export_segment_ref_count()
     }
 
     /// Returns retained lossy-import output segment references.
-    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_imported_lossy_segment_ref_count()
+    pub fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_imported_lossy_segment_ref_count()
     }
 
     /// Returns retained unsupported output segment references.
-    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_unsupported_segment_ref_count()
+    pub fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_unsupported_segment_ref_count()
     }
 
     /// Returns retained unresolved output segment references.
-    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_unresolved_segment_ref_count()
+    pub fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_unresolved_segment_ref_count()
     }
 
     /// Returns the largest retained topology-status output bucket size.
-    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_status_max_bucket_size()
+    pub fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_status_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by traversal direction.
-    pub const fn output_segment_direction_bucket_cache(
+    pub fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        self.workspace().output_segment_direction_bucket_cache()
+        self.facts().output_segment_direction_bucket_cache()
     }
 
     /// Returns retained traversal-direction bucket count for output segments.
-    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_bucket_count()
+    pub fn output_segment_direction_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_direction_bucket_count()
     }
 
     /// Returns retained output segment references grouped by traversal direction.
-    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_ref_count()
+    pub fn output_segment_direction_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_direction_ref_count()
     }
 
     /// Returns retained forward output segment references.
-    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_forward_segment_ref_count()
+    pub fn output_forward_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_forward_segment_ref_count()
     }
 
     /// Returns retained reversed output segment references.
-    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_reversed_segment_ref_count()
+    pub fn output_reversed_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_reversed_segment_ref_count()
     }
 
     /// Returns the largest retained traversal-direction output bucket size.
-    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_max_bucket_size()
+    pub fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_direction_max_bucket_size()
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.
-    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
-        self.workspace().output_cache()
+    pub fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+        self.facts().output_cache()
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.workspace().boundary_build_report()
+    pub fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.facts().boundary_build_report()
     }
 
     /// Returns final boundary-role assignment stage, if reached.
-    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        self.workspace().boundary_build_stage()
+    pub fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        self.facts().boundary_build_stage()
     }
 
     /// Returns final boundary-role assignment predicate path, if reached.
-    pub const fn boundary_build_predicate_path(
+    pub fn boundary_build_predicate_path(
         &self,
     ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        self.workspace().boundary_build_predicate_path()
+        self.facts().boundary_build_predicate_path()
     }
 
     /// Returns final boundary-role assignment retained status, if reached.
-    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        self.workspace().boundary_build_status()
+    pub fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        self.facts().boundary_build_status()
     }
 
     /// Returns final boundary-role assignment blocker, if present.
-    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        self.workspace().boundary_build_blocker()
+    pub fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        self.facts().boundary_build_blocker()
     }
 
     /// Returns source contour count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        self.workspace().boundary_build_source_contour_count()
+    pub fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        self.facts().boundary_build_source_contour_count()
     }
 
     /// Returns source boundary segment count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_build_source_segment_count()
+    pub fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        self.facts().boundary_build_source_segment_count()
     }
 
     /// Returns contour-pair validation schedule size from final role assignment, if reached.
-    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        self.facts()
             .boundary_build_validation_candidate_pair_count()
     }
 
     /// Returns contour-pair validation test count from final role assignment, if reached.
-    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_validation_tested_pair_count()
+    pub fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        self.facts().boundary_build_validation_tested_pair_count()
     }
 
     /// Returns exact validation intersection event count from final role assignment, if reached.
-    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        self.facts()
             .boundary_build_validation_intersection_event_count()
     }
 
     /// Returns containment classification count from final role assignment, if reached.
-    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_nesting_classification_count()
+    pub fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        self.facts().boundary_build_nesting_classification_count()
     }
 
     /// Returns first blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_blocker_first_contour_index()
+    pub fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        self.facts().boundary_build_blocker_first_contour_index()
     }
 
     /// Returns second blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_blocker_second_contour_index()
+    pub fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        self.facts().boundary_build_blocker_second_contour_index()
     }
 
     /// Returns retained final boundary output summary when role assignment materialized.
-    pub const fn boundary_output_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
-        self.workspace().boundary_output_cache()
+    pub fn boundary_output_cache(&self) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
+        self.facts().boundary_output_cache()
     }
 
     /// Returns final boundary output counts grouped by material/hole role.
-    pub const fn boundary_output_role_bucket_cache(
+    pub fn boundary_output_role_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
-        self.workspace().boundary_output_role_bucket_cache()
+        self.facts().boundary_output_role_bucket_cache()
     }
 
     /// Returns retained final boundary role bucket count.
-    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_bucket_count()
+    pub fn boundary_output_role_bucket_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_bucket_count()
     }
 
     /// Returns retained final boundary output contour references grouped by role.
-    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_contour_count()
+    pub fn boundary_output_role_contour_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_contour_count()
     }
 
     /// Returns retained final boundary output segment references grouped by role.
-    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_segment_count()
+    pub fn boundary_output_role_segment_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_segment_count()
     }
 
     /// Returns the largest retained output segment count for one boundary role.
-    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_max_segment_count()
+    pub fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_max_segment_count()
     }
 
     /// Returns retained material/hole role buckets when role assignment was reached.
-    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
-        self.workspace().role_cache()
+    pub fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
+        self.facts().role_cache()
     }
 
     /// Returns output boundary primitive-family counts after role assignment.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().output_segment_kind_counts()
+    pub fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.facts().output_segment_kind_counts()
     }
 
     /// Returns material contour count after output role assignment.
-    pub const fn material_contour_count(&self) -> Option<usize> {
-        self.workspace().material_contour_count()
+    pub fn material_contour_count(&self) -> Option<usize> {
+        self.facts().material_contour_count()
     }
 
     /// Returns hole contour count after output role assignment.
-    pub const fn hole_contour_count(&self) -> Option<usize> {
-        self.workspace().hole_contour_count()
+    pub fn hole_contour_count(&self) -> Option<usize> {
+        self.facts().hole_contour_count()
     }
 
     /// Returns material boundary segment count after output role assignment.
-    pub const fn material_segment_count(&self) -> Option<usize> {
-        self.workspace().material_segment_count()
+    pub fn material_segment_count(&self) -> Option<usize> {
+        self.facts().material_segment_count()
     }
 
     /// Returns hole boundary segment count after output role assignment.
-    pub const fn hole_segment_count(&self) -> Option<usize> {
-        self.workspace().hole_segment_count()
+    pub fn hole_segment_count(&self) -> Option<usize> {
+        self.facts().hole_segment_count()
     }
 
     /// Returns retained output role report count when role assignment was reached.
-    pub const fn role_report_count(&self) -> Option<usize> {
-        self.workspace().role_report_count()
+    pub fn role_report_count(&self) -> Option<usize> {
+        self.facts().role_report_count()
     }
 
     /// Returns output role assignment buckets grouped by topology status.
-    pub const fn role_status_bucket_cache(
+    pub fn role_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        self.workspace().role_status_bucket_cache()
+        self.facts().role_status_bucket_cache()
     }
 
     /// Returns retained output role topology-status bucket count.
-    pub const fn role_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_status_bucket_count()
+    pub fn role_status_bucket_count(&self) -> Option<usize> {
+        self.facts().role_status_bucket_count()
     }
 
     /// Returns retained output role assignment references grouped by topology status.
-    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_status_assignment_ref_count()
+    pub fn role_status_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_status_assignment_ref_count()
     }
 
     /// Returns retained native-exact output role assignment references.
-    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_native_exact_assignment_ref_count()
+    pub fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_native_exact_assignment_ref_count()
     }
 
     /// Returns retained certified-approximation output role assignment references.
-    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
+        self.facts()
             .role_certified_approximation_assignment_ref_count()
     }
 
     /// Returns retained display/export-only output role assignment references.
-    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .role_display_or_export_assignment_ref_count()
+    pub fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_display_or_export_assignment_ref_count()
     }
 
     /// Returns retained lossy-import output role assignment references.
-    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_imported_lossy_assignment_ref_count()
+    pub fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_imported_lossy_assignment_ref_count()
     }
 
     /// Returns retained unsupported output role assignment references.
-    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_unsupported_assignment_ref_count()
+    pub fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_unsupported_assignment_ref_count()
     }
 
     /// Returns retained unresolved output role assignment references.
-    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_unresolved_assignment_ref_count()
+    pub fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_unresolved_assignment_ref_count()
     }
 
     /// Returns the largest retained output role topology-status bucket size.
-    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_status_max_bucket_size()
+    pub fn role_status_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_status_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by source contour identity.
-    pub const fn role_source_contour_bucket_cache(
+    pub fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        self.workspace().role_source_contour_bucket_cache()
+        self.facts().role_source_contour_bucket_cache()
     }
 
     /// Returns retained output role source-contour bucket count.
-    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_source_contour_bucket_count()
+    pub fn role_source_contour_bucket_count(&self) -> Option<usize> {
+        self.facts().role_source_contour_bucket_count()
     }
 
     /// Returns retained output role assignment references grouped by source contour.
-    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_source_contour_assignment_ref_count()
+    pub fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_source_contour_assignment_ref_count()
     }
 
     /// Returns the largest retained source-contour output role bucket size.
-    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_source_contour_max_bucket_size()
+    pub fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_source_contour_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub const fn role_nesting_depth_bucket_cache(
+    pub fn role_nesting_depth_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        self.workspace().role_nesting_depth_bucket_cache()
+        self.facts().role_nesting_depth_bucket_cache()
     }
 
     /// Returns retained output role nesting-depth bucket count.
-    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_bucket_count()
+    pub fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
+        self.facts().role_nesting_depth_bucket_count()
     }
 
     /// Returns retained output role assignment references grouped by nesting depth.
-    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_assignment_ref_count()
+    pub fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_nesting_depth_assignment_ref_count()
     }
 
     /// Returns the largest retained nesting-depth output role bucket size.
-    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_max_bucket_size()
+    pub fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_nesting_depth_max_bucket_size()
     }
 
     /// Returns output role containment evidence grouped by containing source contour.
-    pub const fn role_containment_bucket_cache(
+    pub fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        self.workspace().role_containment_bucket_cache()
+        self.facts().role_containment_bucket_cache()
     }
 
     /// Returns retained output role containing-contour bucket count.
-    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_containment_bucket_count()
+    pub fn role_containment_bucket_count(&self) -> Option<usize> {
+        self.facts().role_containment_bucket_count()
     }
 
     /// Returns retained output role containment references.
-    pub const fn role_containment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_containment_ref_count()
+    pub fn role_containment_ref_count(&self) -> Option<usize> {
+        self.facts().role_containment_ref_count()
     }
 
     /// Returns retained output role assignments with no containing contour.
-    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_uncontained_assignment_ref_count()
+    pub fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_uncontained_assignment_ref_count()
     }
 
     /// Returns the largest retained containing-contour bucket size.
-    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_containment_max_bucket_size()
+    pub fn role_containment_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_containment_max_bucket_size()
     }
 
     /// Returns material and hole role buckets in stable order.
     pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.workspace().role_buckets()
+        self.facts().role_buckets()
     }
 
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.workspace().role_reports()
+        self.facts().role_reports()
     }
 
-    /// Returns a derived report assembled only from retained evaluation caches.
-    pub fn arrangement_report(&self) -> ExactCurveArrangementReport2 {
-        ExactCurveArrangementReport2::from_evaluation(self)
-    }
-
-    /// Consumes this evaluation and returns a report assembled from retained caches.
-    pub fn into_arrangement_report(self) -> ExactCurveArrangementReport2 {
-        ExactCurveArrangementReport2 {
-            workspace: self.workspace,
-            summary_cache: self.summary_cache,
-        }
-    }
-
-    /// Consumes this evaluation and returns its retained workspace and summary cache.
-    pub fn into_parts(
-        self,
-    ) -> (
-        ExactCurveWorkspace2,
-        ExactCurveArrangementEvaluationSummaryCache2,
-    ) {
-        (self.workspace, self.summary_cache)
-    }
-
-    /// Returns a legacy-shaped region build report projected from retained caches.
-    pub fn derived_region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
-        retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)
-    }
-
-    /// Consumes this evaluation and returns the retained workspace.
-    pub fn into_workspace(self) -> ExactCurveWorkspace2 {
-        self.workspace
-    }
-
-    /// Consumes this evaluation and returns the retained arrangement request.
-    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
-        self.workspace.into_request()
+    /// Returns the retained arrangement report without copying its facts.
+    pub fn report(&self) -> &RegionArrangementReport2 {
+        &self.report
     }
 
     /// Returns final retained evaluation facts derived from workspace caches.
-    pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
-        &self.summary_cache
+    pub fn summary(&self) -> &ExactCurveArrangementSummary2 {
+        self.report.summary()
     }
 
     /// Returns whether final output evaluation facts were retained.
-    pub const fn evaluated_output(&self) -> bool {
-        self.workspace().evaluated_output()
-    }
-
-    /// Returns whether the evaluation materialized a region, when evaluated.
-    pub const fn materialized_region(&self) -> Option<bool> {
-        self.workspace().materialized_region()
-    }
-
-    /// Returns the final retained build stage, when evaluated.
-    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.workspace().stage()
-    }
-
-    /// Returns the final retained topology status, when evaluated.
-    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.workspace().status()
-    }
-
-    /// Returns the final blocker, when the evaluated arrangement blocked.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.workspace().blocker()
-    }
-
-    /// Returns output ring count retained by ring assembly, when available.
-    pub const fn output_ring_count(&self) -> Option<usize> {
-        self.workspace().output_ring_count()
-    }
-
-    /// Returns output boundary segment count retained by ring assembly, when available.
-    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
-        self.workspace().output_boundary_segment_count()
-    }
-
-    /// Returns output boundary primitive-family counts retained by ring assembly, when available.
-    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().output_boundary_segment_kind_counts()
-    }
-
-    /// Returns final output contour count retained after boundary role assignment.
-    pub const fn output_contour_count(&self) -> Option<usize> {
-        self.workspace().output_contour_count()
-    }
-
-    /// Returns final output boundary segment count retained after boundary role assignment.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.workspace().output_segment_count()
-    }
-}
-
-impl ExactCurveArrangementAttempt2 {
-    /// Creates a canonical exact arrangement attempt from a retained request.
-    pub const fn new(request: ExactCurveArrangementRequest2) -> Self {
-        Self { request }
-    }
-
-    /// Returns the retained request.
-    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
-        &self.request
-    }
-
-    /// Consumes this attempt and returns the retained request.
-    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
-        self.request
-    }
-
-    /// Evaluates the request through the retained exact arrangement pipeline.
-    pub fn evaluate(&self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
-        Self::evaluate_request(self.request.clone(), policy)
-    }
-
-    /// Consumes this attempt and evaluates its request through the retained exact arrangement pipeline.
-    pub fn evaluate_owned(self, policy: &CurvePolicy) -> CurveResult<ExactCurveArrangementResult2> {
-        Self::evaluate_request(self.request, policy)
-    }
-
-    fn evaluate_request(
-        request: ExactCurveArrangementRequest2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ExactCurveArrangementResult2> {
-        let compatibility_projection =
-            if let Some(source_line_segments) = request.source_line_segments.as_ref() {
-                evaluate_unordered_line_segments_region_result(
-                    source_line_segments,
-                    request.fill_rule,
-                    policy,
-                )?
-            } else {
-                evaluate_unordered_segments_region_result(
-                    &request.source_segments,
-                    request.fill_rule,
-                    policy,
-                )?
-            };
-        let workspace = ExactCurveWorkspace2::from_request(request, policy)?
-            .with_legacy_region_build_evidence(
-                compatibility_projection.report(),
-                compatibility_projection.region().is_some(),
-            );
-        let region = compatibility_projection.region().cloned();
-        let evaluation = ExactCurveArrangementEvaluation2::new(workspace);
-        let derived_compatibility_projection = RegionLineSegmentRegionBuildResult2 {
-            region: region.clone(),
-            report: evaluation.derived_region_build_report(),
-        };
-        Ok(ExactCurveArrangementResult2 {
-            evaluation,
-            region,
-            derived_compatibility_projection,
-        })
-    }
-}
-
-impl ExactCurveArrangementResult2 {
-    const fn derived_compatibility_region_build_result(
-        &self,
-    ) -> &RegionLineSegmentRegionBuildResult2 {
-        &self.derived_compatibility_projection
-    }
-
-    /// Returns an owned legacy-shaped region build result derived from retained evidence.
-    ///
-    /// This does not borrow the deprecated compatibility cache stored for
-    /// reference-returning legacy APIs; the report is projected from the retained
-    /// evaluation each time.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_report(); legacy-shaped result output is compatibility-only"
-    )]
-    pub fn derived_region_build_result(&self) -> RegionLineSegmentRegionBuildResult2 {
-        Self::derive_region_build_result_from_evaluation(&self.evaluation, self.region.clone())
-    }
-
-    /// Returns an owned legacy-shaped region build report derived from retained evidence.
-    ///
-    /// This projects legacy-shaped report data without constructing a
-    /// legacy-shaped result object.
-    pub fn derived_region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
-        Self::derive_region_build_report_from_evaluation(&self.evaluation)
-    }
-
-    fn derive_region_build_result_from_evaluation(
-        evaluation: &ExactCurveArrangementEvaluation2,
-        region: Option<Region2>,
-    ) -> RegionLineSegmentRegionBuildResult2 {
-        RegionLineSegmentRegionBuildResult2 {
-            region,
-            report: Self::derive_region_build_report_from_evaluation(evaluation),
-        }
-    }
-
-    fn derive_region_build_report_from_evaluation(
-        evaluation: &ExactCurveArrangementEvaluation2,
-    ) -> RegionLineSegmentRegionBuildReport2 {
-        evaluation.derived_region_build_report()
-    }
-
-    /// Returns the retained evaluation record.
-    pub const fn evaluation(&self) -> &ExactCurveArrangementEvaluation2 {
-        &self.evaluation
-    }
-
-    /// Consumes this result and returns the retained evaluation record.
-    pub fn into_evaluation(self) -> ExactCurveArrangementEvaluation2 {
-        let Self {
-            evaluation,
-            region,
-            derived_compatibility_projection,
-        } = self;
-        drop(region);
-        drop(derived_compatibility_projection);
-        evaluation
-    }
-
-    /// Consumes this result and returns a report assembled from retained evaluation caches.
-    pub fn into_arrangement_report(self) -> ExactCurveArrangementReport2 {
-        self.into_evaluation().into_arrangement_report()
-    }
-
-    /// Consumes this result and returns the retained workspace consumed by the evaluation.
-    pub fn into_workspace(self) -> ExactCurveWorkspace2 {
-        self.into_evaluation().into_workspace()
-    }
-
-    /// Consumes this result and returns the retained arrangement request.
-    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
-        self.into_evaluation().into_request()
-    }
-
-    /// Returns the retained workspace consumed by the evaluation.
-    pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
-        self.evaluation.workspace()
-    }
-
-    /// Returns the retained arrangement request.
-    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
-        self.workspace().request()
-    }
-
-    /// Returns the source segments supplied to the retained arrangement request.
-    pub fn source_segments(&self) -> &[Segment2] {
-        self.request().source_segments()
-    }
-
-    /// Returns line-only source carriers when the retained request came from a line-specific API.
-    pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
-        self.request().source_line_segments()
-    }
-
-    /// Returns the fill rule retained by the arrangement request.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.request().fill_rule()
-    }
-
-    /// Returns retained source segment count from the arrangement request.
-    pub fn source_segment_count(&self) -> usize {
-        self.request().source_segment_count()
-    }
-
-    /// Returns retained source segment primitive-family counts.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.workspace().source_segment_kind_counts()
-    }
-
-    /// Returns retained source segment boxes in request order.
-    pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
-        self.workspace().source_segment_aabbs()
-    }
-
-    /// Returns a retained aggregate source box when every source box was decided.
-    pub const fn source_aabb(&self) -> Option<&Aabb2> {
-        self.workspace().source_aabb()
-    }
-
-    /// Returns the number of source segment boxes certified during workspace preparation.
-    pub fn decided_source_segment_aabb_count(&self) -> usize {
-        self.workspace().decided_source_segment_aabb_count()
-    }
-
-    /// Returns the number of source segment boxes that stayed uncertain.
-    pub fn undecided_source_segment_aabb_count(&self) -> usize {
-        self.workspace().undecided_source_segment_aabb_count()
-    }
-
-    /// Returns retained source segment facts prepared before split scheduling.
-    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
-        self.workspace().source_segment_cache()
-    }
-
-    /// Returns retained source AABB buckets grouped by certification status.
-    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
-        self.source_segment_cache().source_aabb_bucket_cache()
-    }
-
-    /// Returns retained source segment buckets grouped by primitive family.
-    pub const fn source_segment_kind_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
-        self.source_segment_cache()
-            .source_segment_kind_bucket_cache()
-    }
-
-    /// Returns retained source AABB-status bucket count.
-    pub const fn source_aabb_bucket_count(&self) -> usize {
-        self.workspace().source_aabb_bucket_count()
-    }
-
-    /// Returns retained source AABB references.
-    pub const fn source_aabb_ref_count(&self) -> usize {
-        self.workspace().source_aabb_ref_count()
-    }
-
-    /// Returns retained source AABB references certified as decided.
-    pub const fn source_aabb_decided_ref_count(&self) -> usize {
-        self.workspace().source_aabb_decided_ref_count()
-    }
-
-    /// Returns retained source AABB references that stayed undecided.
-    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
-        self.workspace().source_aabb_undecided_ref_count()
-    }
-
-    /// Returns the largest retained source AABB-status bucket size.
-    pub const fn source_aabb_max_bucket_size(&self) -> usize {
-        self.workspace().source_aabb_max_bucket_size()
-    }
-
-    /// Returns retained source segment primitive-family bucket count.
-    pub const fn source_segment_kind_bucket_count(&self) -> usize {
-        self.workspace().source_segment_kind_bucket_count()
-    }
-
-    /// Returns retained source segment references grouped by primitive family.
-    pub const fn source_segment_kind_ref_count(&self) -> usize {
-        self.workspace().source_segment_kind_ref_count()
-    }
-
-    /// Returns retained line source segment references.
-    pub const fn source_line_segment_ref_count(&self) -> usize {
-        self.workspace().source_line_segment_ref_count()
-    }
-
-    /// Returns retained arc source segment references.
-    pub const fn source_arc_segment_ref_count(&self) -> usize {
-        self.workspace().source_arc_segment_ref_count()
-    }
-
-    /// Returns the largest retained source segment primitive-family bucket size.
-    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
-        self.workspace().source_segment_kind_max_bucket_size()
-    }
-
-    /// Returns exact source endpoint buckets retained during workspace preparation.
-    pub const fn source_endpoint_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
-        self.workspace().source_endpoint_bucket_cache()
-    }
-
-    /// Returns source endpoints retained in exact structural endpoint buckets.
-    pub const fn source_endpoint_count(&self) -> usize {
-        self.workspace().source_endpoint_count()
-    }
-
-    /// Returns exact structural source endpoint bucket count.
-    pub const fn source_endpoint_bucket_count(&self) -> usize {
-        self.workspace().source_endpoint_bucket_count()
-    }
-
-    /// Returns source endpoint buckets containing one endpoint.
-    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
-        self.workspace().source_endpoint_singleton_bucket_count()
-    }
-
-    /// Returns the largest exact structural source endpoint bucket size.
-    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
-        self.workspace().source_endpoint_max_bucket_size()
-    }
-
-    /// Returns the retained source-pair schedule prepared before split predicates run.
-    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
-        self.workspace().split_schedule_cache()
-    }
-
-    /// Returns retained split schedule buckets grouped by AABB pruning status.
-    pub const fn split_schedule_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
-        self.workspace().split_schedule_bucket_cache()
-    }
-
-    /// Returns source segment pairs scheduled before retained split predicates run.
-    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
-        self.workspace().split_schedule_candidate_pair_count()
-    }
-
-    /// Returns scheduled source segment pairs pruned by retained AABB evidence.
-    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
-        self.workspace()
-            .split_schedule_decided_disjoint_pair_count()
-    }
-
-    /// Returns scheduled source segment pairs that require split predicate evaluation.
-    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
-        self.workspace()
-            .split_schedule_predicate_candidate_pair_count()
-    }
-
-    /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
-    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
-        self.workspace().split_schedule_undecided_aabb_pair_count()
-    }
-
-    /// Returns retained split schedule AABB-status bucket count.
-    pub const fn split_schedule_bucket_count(&self) -> usize {
-        self.workspace().split_schedule_bucket_count()
-    }
-
-    /// Returns retained split schedule source-pair references grouped by AABB status.
-    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
-        self.workspace().split_schedule_candidate_ref_count()
-    }
-
-    /// Returns the largest retained split schedule AABB-status bucket size.
-    pub const fn split_schedule_max_bucket_size(&self) -> usize {
-        self.workspace().split_schedule_max_bucket_size()
-    }
-
-    /// Returns exact split evidence retained from the evaluated arrangement.
-    pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
-        self.workspace().split_cache()
-    }
-
-    /// Returns the exact predicate family used by retained split evaluation.
-    pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
-        self.workspace().split_predicate_path()
-    }
-
-    /// Returns source segment pairs considered by retained split evaluation.
-    pub const fn split_candidate_pair_count(&self) -> Option<usize> {
-        self.workspace().split_candidate_pair_count()
-    }
-
-    /// Returns source segment pairs skipped by certified AABB disjointness.
-    pub const fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
-        self.workspace().split_skipped_aabb_pair_count()
-    }
-
-    /// Returns source segment pairs tested by exact split predicates.
-    pub const fn split_tested_pair_count(&self) -> Option<usize> {
-        self.workspace().split_tested_pair_count()
-    }
-
-    /// Returns exact point-intersection event count found during splitting.
-    pub const fn split_intersection_event_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_event_count()
-    }
-
-    /// Returns source-pair relations classified as point intersections.
-    pub const fn split_point_relation_count(&self) -> Option<usize> {
-        self.workspace().split_point_relation_count()
-    }
-
-    /// Returns source-pair relations classified as overlaps.
-    pub const fn split_overlap_relation_count(&self) -> Option<usize> {
-        self.workspace().split_overlap_relation_count()
-    }
-
-    /// Returns source-pair relations that remained uncertain.
-    pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
-        self.workspace().split_uncertain_relation_count()
-    }
-
-    /// Returns exact intersection points retained by split evaluation.
-    pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.workspace().split_intersection_points()
-    }
-
-    /// Returns exact per-event source and parameter evidence retained by split evaluation.
-    pub fn split_intersection_reports(
-        &self,
-    ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.workspace().split_intersection_reports()
-    }
-
-    /// Returns retained split-stage relation buckets.
-    pub const fn split_relation_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        self.workspace().split_relation_bucket_cache()
-    }
-
-    /// Returns exact split-intersection point buckets.
-    pub const fn split_intersection_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        self.workspace().split_intersection_bucket_cache()
-    }
-
-    /// Returns exact source-parameter evidence for retained split intersections.
-    pub const fn split_intersection_parameter_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        self.workspace().split_intersection_parameter_cache()
-    }
-
-    /// Returns retained split-stage relation bucket count.
-    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_relation_bucket_count()
-    }
-
-    /// Returns retained split-stage classified relation references.
-    pub const fn split_relation_ref_count(&self) -> Option<usize> {
-        self.workspace().split_relation_ref_count()
-    }
-
-    /// Returns the largest retained split-stage relation bucket size.
-    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().split_relation_max_bucket_size()
-    }
-
-    /// Returns retained exact split-intersection point bucket count.
-    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_bucket_count()
-    }
-
-    /// Returns retained split-intersection buckets containing one event.
-    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_singleton_bucket_count()
-    }
-
-    /// Returns the largest retained split-intersection point bucket size.
-    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().split_intersection_max_bucket_size()
-    }
-
-    /// Returns retained source-parameter references for split intersections.
-    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .split_intersection_source_parameter_ref_count()
-    }
-
-    /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
-    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
-        self.workspace().split_blocker_cache()
-    }
-
-    /// Returns the first source segment in a split-stage blocker, when known.
-    pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
-        self.workspace().split_blocker_first_source_segment_index()
-    }
-
-    /// Returns the primitive family of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.workspace().split_blocker_first_source_segment_kind()
-    }
-
-    /// Returns the exact start point of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_first_source_start_point()
-    }
-
-    /// Returns the exact end point of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_first_source_end_point()
-    }
-
-    /// Returns the second source segment in a split-stage blocker, when known.
-    pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
-        self.workspace().split_blocker_second_source_segment_index()
-    }
-
-    /// Returns the primitive family of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.workspace().split_blocker_second_source_segment_kind()
-    }
-
-    /// Returns the exact start point of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_second_source_start_point()
-    }
-
-    /// Returns the exact end point of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_second_source_end_point()
-    }
-
-    /// Returns arranged output segment count when retained splitting completed.
-    pub const fn split_output_segment_count(&self) -> Option<usize> {
-        self.workspace().split_output_segment_count()
-    }
-
-    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
-    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
-        self.workspace().endpoint_graph_cache()
-    }
-
-    /// Returns the exact predicate family used by retained endpoint-graph validation.
-    pub const fn endpoint_graph_predicate_path(
-        &self,
-    ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        self.workspace().endpoint_graph_predicate_path()
-    }
-
-    /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
-    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_endpoint_count()
-    }
-
-    /// Returns exact structural endpoint bucket count.
-    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_structural_bucket_count()
-    }
-
-    /// Returns structural endpoint singleton bucket count.
-    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace()
-            .endpoint_graph_structural_singleton_bucket_count()
-    }
-
-    /// Returns the largest retained structural endpoint bucket size.
-    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_max_structural_bucket_size()
-    }
-
-    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
-    pub const fn arranged_endpoint_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        self.workspace().arranged_endpoint_bucket_cache()
-    }
-
-    /// Returns retained arranged endpoint references in structural buckets.
-    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_ref_count()
-    }
-
-    /// Returns retained exact structural arranged endpoint bucket count.
-    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_bucket_count()
-    }
-
-    /// Returns retained arranged endpoint buckets containing one endpoint.
-    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_singleton_bucket_count()
-    }
-
-    /// Returns the largest retained arranged endpoint structural bucket size.
-    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_max_bucket_size()
-    }
-
-    /// Returns arranged endpoints grouped by retained endpoint side.
-    pub const fn arranged_endpoint_side_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        self.workspace().arranged_endpoint_side_bucket_cache()
-    }
-
-    /// Returns retained arranged endpoint side bucket count.
-    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_bucket_count()
-    }
-
-    /// Returns retained arranged endpoint references grouped by side.
-    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_ref_count()
-    }
-
-    /// Returns retained arranged start endpoint references.
-    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_start_ref_count()
-    }
-
-    /// Returns retained arranged end endpoint references.
-    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_end_ref_count()
-    }
-
-    /// Returns the largest retained arranged endpoint side bucket size.
-    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_max_bucket_size()
-    }
-
-    /// Returns exact endpoint records for arranged fragments.
-    pub const fn arranged_endpoint_point_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        self.workspace().arranged_endpoint_point_cache()
-    }
-
-    /// Returns retained arranged fragment endpoint records.
-    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_point_fragment_ref_count()
-    }
-
-    /// Returns retained arranged endpoint point references.
-    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_point_ref_count()
-    }
-
-    /// Returns structural arranged endpoints grouped by retained degree.
-    pub const fn arranged_endpoint_degree_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        self.workspace().arranged_endpoint_degree_bucket_cache()
-    }
-
-    /// Returns retained arranged endpoint degree bucket count.
-    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_degree_bucket_count()
-    }
-
-    /// Returns structural endpoint buckets classified by retained degree.
-    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_degree_structural_bucket_ref_count()
-    }
-
-    /// Returns structural endpoint buckets classified as dangling.
-    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_dangling_structural_bucket_count()
-    }
-
-    /// Returns structural endpoint buckets classified as chain continuations.
-    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_chain_structural_bucket_count()
-    }
-
-    /// Returns structural endpoint buckets classified as branches.
-    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_branch_structural_bucket_count()
-    }
-
-    /// Returns the largest retained arranged endpoint degree bucket size.
-    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_degree_max_bucket_size()
-    }
-
-    /// Returns dangling endpoint count found during endpoint-graph validation.
-    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_dangling_endpoint_count()
-    }
-
-    /// Returns branch endpoint count found during endpoint-graph validation.
-    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_branch_endpoint_count()
-    }
-
-    /// Returns the blocker arranged segment index from endpoint validation, when blocked.
-    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        self.workspace()
-            .endpoint_graph_blocker_arranged_segment_index()
-    }
-
-    /// Returns the blocker endpoint from endpoint validation, when blocked.
-    pub const fn endpoint_graph_blocker_endpoint(
-        &self,
-    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        self.workspace().endpoint_graph_blocker_endpoint()
-    }
-
-    /// Returns the exact blocker point from endpoint validation, when blocked.
-    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        self.workspace().endpoint_graph_blocker_point()
-    }
-
-    /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
-    pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
-        self.workspace().ring_assembly_cache()
-    }
-
-    /// Returns the exact predicate family used by retained ring traversal.
-    pub const fn ring_assembly_predicate_path(
-        &self,
-    ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
-        self.workspace().ring_assembly_predicate_path()
-    }
-
-    /// Returns endpoint pair comparisons attempted during retained ring traversal.
-    pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().attempted_endpoint_connection_count()
-    }
-
-    /// Returns endpoint pair comparisons certified as equal during ring traversal.
-    pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().exact_endpoint_connection_count()
-    }
-
-    /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
-    pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().disconnected_endpoint_connection_count()
-    }
-
-    /// Returns endpoint pair comparisons unresolved during ring traversal.
-    pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().unresolved_endpoint_connection_count()
-    }
-
-    /// Returns source segments reversed while materializing retained ring traversal.
-    pub const fn reversed_source_segment_count(&self) -> Option<usize> {
-        self.workspace().reversed_source_segment_count()
-    }
-
-    /// Returns per-arranged-fragment source provenance retained after exact splitting.
-    pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.workspace().arranged_source_reports()
-    }
-
-    /// Returns the retained arranged-source provenance record count.
-    pub fn arranged_source_report_count(&self) -> Option<usize> {
-        self.workspace().arranged_source_report_count()
-    }
-
-    /// Returns per-output segment source provenance retained by ring traversal.
-    pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.workspace().source_reports()
-    }
-
-    /// Returns the retained output-source provenance record count.
-    pub fn source_report_count(&self) -> Option<usize> {
-        self.workspace().source_report_count()
-    }
-
-    /// Returns per-arranged-fragment source provenance buckets.
-    pub const fn arranged_fragment_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        self.workspace().arranged_fragment_cache()
-    }
-
-    /// Returns arranged fragment count retained after exact splitting, when available.
-    pub const fn arranged_segment_count(&self) -> Option<usize> {
-        self.workspace().arranged_segment_count()
-    }
-
-    /// Returns arranged fragment primitive-family counts retained after exact splitting.
-    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().arranged_segment_kind_counts()
-    }
-
-    /// Returns arranged fragments grouped by primitive family.
-    pub const fn arranged_fragment_kind_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        self.workspace().arranged_fragment_kind_bucket_cache()
-    }
-
-    /// Returns retained arranged fragment primitive-family bucket count.
-    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_bucket_count()
-    }
-
-    /// Returns retained arranged fragment references grouped by primitive family.
-    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_ref_count()
-    }
-
-    /// Returns retained line arranged fragment references.
-    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_line_fragment_ref_count()
-    }
-
-    /// Returns retained arc arranged fragment references.
-    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_arc_fragment_ref_count()
-    }
-
-    /// Returns the largest retained arranged fragment primitive-family bucket size.
-    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_max_bucket_size()
-    }
-
-    /// Returns arranged fragment source records grouped by retained topology status.
-    pub const fn arranged_fragment_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        self.workspace().arranged_fragment_status_bucket_cache()
-    }
-
-    /// Returns retained arranged fragment topology-status bucket count.
-    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_bucket_count()
-    }
-
-    /// Returns retained arranged fragment source references grouped by topology status.
-    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_source_ref_count()
-    }
-
-    /// Returns retained native-exact arranged fragment source references.
-    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_native_exact_ref_count()
-    }
-
-    /// Returns retained certified-approximation arranged fragment source references.
-    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_certified_approximation_ref_count()
-    }
-
-    /// Returns retained display/export-only arranged fragment source references.
-    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_display_or_export_ref_count()
-    }
-
-    /// Returns retained lossy-import arranged fragment source references.
-    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_imported_lossy_ref_count()
-    }
-
-    /// Returns retained unsupported arranged fragment source references.
-    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_unsupported_ref_count()
-    }
-
-    /// Returns retained unresolved arranged fragment source references.
-    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_unresolved_ref_count()
-    }
-
-    /// Returns the largest retained arranged fragment topology-status bucket size.
-    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_max_bucket_size()
-    }
-
-    /// Returns arranged fragment source parameter ranges.
-    pub const fn arranged_fragment_source_range_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        self.workspace().arranged_fragment_source_range_cache()
-    }
-
-    /// Returns retained arranged fragment source range references.
-    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_source_range_ref_count()
-    }
-
-    /// Returns retained arranged fragment source ranges covering complete source segments.
-    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_full_source_range_ref_count()
-    }
-
-    /// Returns retained arranged fragment source ranges covering proper source subranges.
-    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_partial_source_range_ref_count()
-    }
-
-    /// Returns per-output-ring source provenance buckets.
-    pub const fn output_ring_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        self.workspace().output_ring_bucket_cache()
-    }
-
-    /// Returns retained output ring provenance bucket count.
-    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_ring_bucket_count()
-    }
-
-    /// Returns retained output ring segment references.
-    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_ring_segment_ref_count()
-    }
-
-    /// Returns the largest retained output ring segment count.
-    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
-        self.workspace().output_ring_max_segment_count()
-    }
-
-    /// Returns retained output segment buckets grouped by primitive family.
-    pub const fn output_segment_kind_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        self.workspace().output_segment_kind_bucket_cache()
-    }
-
-    /// Returns retained output segment primitive-family bucket count.
-    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_bucket_count()
-    }
-
-    /// Returns retained output segment references grouped by primitive family.
-    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_ref_count()
-    }
-
-    /// Returns retained line output segment references.
-    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_line_segment_ref_count()
-    }
-
-    /// Returns retained arc output segment references.
-    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_arc_segment_ref_count()
-    }
-
-    /// Returns the largest retained output segment primitive-family bucket size.
-    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_max_bucket_size()
-    }
-
-    /// Returns retained output segment buckets grouped by source segment.
-    pub const fn output_segment_source_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        self.workspace().output_segment_source_bucket_cache()
-    }
-
-    /// Returns retained source-segment bucket count for output segments.
-    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_bucket_count()
-    }
-
-    /// Returns retained output segment references grouped by source segment.
-    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_ref_count()
-    }
-
-    /// Returns the largest retained source-segment output bucket size.
-    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_source_max_bucket_size()
-    }
-
-    /// Returns retained output segment source parameter ranges.
-    pub const fn output_segment_source_range_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        self.workspace().output_segment_source_range_cache()
-    }
-
-    /// Returns retained output segment source-range references.
-    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_range_ref_count()
-    }
-
-    /// Returns retained output segments covering a complete source range.
-    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_full_source_range_ref_count()
-    }
-
-    /// Returns retained output segments covering a proper source subrange.
-    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_partial_source_range_ref_count()
-    }
-
-    /// Returns retained output segment exact endpoint records.
-    pub const fn output_segment_endpoint_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        self.workspace().output_segment_endpoint_cache()
-    }
-
-    /// Returns retained output segment endpoint records.
-    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
-        self.workspace().output_segment_endpoint_record_count()
-    }
-
-    /// Returns retained exact output endpoint references.
-    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
-        self.workspace().output_endpoint_ref_count()
-    }
-
-    /// Returns retained exact continuity records between adjacent output segments.
-    pub const fn output_ring_continuity_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        self.workspace().output_ring_continuity_cache()
-    }
-
-    /// Returns output rings with retained continuity evidence.
-    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
-        self.workspace().output_ring_continuity_ring_ref_count()
-    }
-
-    /// Returns retained output segment-to-next-segment continuity references.
-    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_ring_continuity_connection_ref_count()
-    }
-
-    /// Returns the largest retained continuity connection count for one output ring.
-    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_ring_continuity_max_connection_count()
-    }
-
-    /// Returns retained output segment buckets grouped by topology status.
-    pub const fn output_segment_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        self.workspace().output_segment_status_bucket_cache()
-    }
-
-    /// Returns retained topology-status bucket count for output segments.
-    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_status_bucket_count()
-    }
-
-    /// Returns retained output segment references grouped by topology status.
-    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_status_ref_count()
-    }
-
-    /// Returns retained native-exact output segment references.
-    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_native_exact_segment_ref_count()
-    }
-
-    /// Returns retained certified-approximation output segment references.
-    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_certified_approximation_segment_ref_count()
-    }
-
-    /// Returns retained display/export-only output segment references.
-    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_display_or_export_segment_ref_count()
-    }
-
-    /// Returns retained lossy-import output segment references.
-    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_imported_lossy_segment_ref_count()
-    }
-
-    /// Returns retained unsupported output segment references.
-    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_unsupported_segment_ref_count()
-    }
-
-    /// Returns retained unresolved output segment references.
-    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_unresolved_segment_ref_count()
-    }
-
-    /// Returns the largest retained topology-status output bucket size.
-    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_status_max_bucket_size()
-    }
-
-    /// Returns retained output segment buckets grouped by traversal direction.
-    pub const fn output_segment_direction_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        self.workspace().output_segment_direction_bucket_cache()
-    }
-
-    /// Returns retained traversal-direction bucket count for output segments.
-    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_bucket_count()
-    }
-
-    /// Returns retained output segment references grouped by traversal direction.
-    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_ref_count()
-    }
-
-    /// Returns retained forward output segment references.
-    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_forward_segment_ref_count()
-    }
-
-    /// Returns retained reversed output segment references.
-    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_reversed_segment_ref_count()
-    }
-
-    /// Returns the largest retained traversal-direction output bucket size.
-    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_max_bucket_size()
-    }
-
-    /// Returns final output evidence retained from the evaluated arrangement.
-    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
-        self.workspace().output_cache()
-    }
-
-    /// Returns delegated boundary-contour role assignment evidence, when output reached it.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.workspace().boundary_build_report()
-    }
-
-    /// Returns final boundary-role assignment stage, if reached.
-    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        self.workspace().boundary_build_stage()
-    }
-
-    /// Returns final boundary-role assignment predicate path, if reached.
-    pub const fn boundary_build_predicate_path(
-        &self,
-    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        self.workspace().boundary_build_predicate_path()
-    }
-
-    /// Returns final boundary-role assignment retained status, if reached.
-    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        self.workspace().boundary_build_status()
-    }
-
-    /// Returns final boundary-role assignment blocker, if present.
-    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        self.workspace().boundary_build_blocker()
-    }
-
-    /// Returns source contour count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        self.workspace().boundary_build_source_contour_count()
-    }
-
-    /// Returns source boundary segment count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_build_source_segment_count()
-    }
-
-    /// Returns contour-pair validation schedule size from final role assignment, if reached.
-    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_validation_candidate_pair_count()
-    }
-
-    /// Returns contour-pair validation test count from final role assignment, if reached.
-    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_validation_tested_pair_count()
-    }
-
-    /// Returns exact validation intersection event count from final role assignment, if reached.
-    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_validation_intersection_event_count()
-    }
-
-    /// Returns containment classification count from final role assignment, if reached.
-    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_nesting_classification_count()
-    }
-
-    /// Returns first blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_blocker_first_contour_index()
-    }
-
-    /// Returns second blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_blocker_second_contour_index()
-    }
-
-    /// Returns retained final boundary output summary when role assignment materialized.
-    pub const fn boundary_output_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
-        self.workspace().boundary_output_cache()
-    }
-
-    /// Returns final boundary output counts grouped by material/hole role.
-    pub const fn boundary_output_role_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
-        self.workspace().boundary_output_role_bucket_cache()
-    }
-
-    /// Returns retained final boundary role bucket count.
-    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_bucket_count()
-    }
-
-    /// Returns retained final boundary output contour references grouped by role.
-    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_contour_count()
-    }
-
-    /// Returns retained final boundary output segment references grouped by role.
-    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_segment_count()
-    }
-
-    /// Returns the largest retained output segment count for one boundary role.
-    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_max_segment_count()
-    }
-
-    /// Returns retained material/hole role buckets when role assignment was reached.
-    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
-        self.workspace().role_cache()
-    }
-
-    /// Returns output boundary primitive-family counts after role assignment.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().output_segment_kind_counts()
-    }
-
-    /// Returns material contour count after output role assignment.
-    pub const fn material_contour_count(&self) -> Option<usize> {
-        self.workspace().material_contour_count()
-    }
-
-    /// Returns hole contour count after output role assignment.
-    pub const fn hole_contour_count(&self) -> Option<usize> {
-        self.workspace().hole_contour_count()
-    }
-
-    /// Returns material boundary segment count after output role assignment.
-    pub const fn material_segment_count(&self) -> Option<usize> {
-        self.workspace().material_segment_count()
-    }
-
-    /// Returns hole boundary segment count after output role assignment.
-    pub const fn hole_segment_count(&self) -> Option<usize> {
-        self.workspace().hole_segment_count()
-    }
-
-    /// Returns retained output role report count when role assignment was reached.
-    pub const fn role_report_count(&self) -> Option<usize> {
-        self.workspace().role_report_count()
-    }
-
-    /// Returns output role assignment buckets grouped by topology status.
-    pub const fn role_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        self.workspace().role_status_bucket_cache()
-    }
-
-    /// Returns retained output role topology-status bucket count.
-    pub const fn role_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_status_bucket_count()
-    }
-
-    /// Returns retained output role assignment references grouped by topology status.
-    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_status_assignment_ref_count()
-    }
-
-    /// Returns retained native-exact output role assignment references.
-    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_native_exact_assignment_ref_count()
-    }
-
-    /// Returns retained certified-approximation output role assignment references.
-    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .role_certified_approximation_assignment_ref_count()
-    }
-
-    /// Returns retained display/export-only output role assignment references.
-    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .role_display_or_export_assignment_ref_count()
-    }
-
-    /// Returns retained lossy-import output role assignment references.
-    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_imported_lossy_assignment_ref_count()
-    }
-
-    /// Returns retained unsupported output role assignment references.
-    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_unsupported_assignment_ref_count()
-    }
-
-    /// Returns retained unresolved output role assignment references.
-    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_unresolved_assignment_ref_count()
-    }
-
-    /// Returns the largest retained output role topology-status bucket size.
-    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_status_max_bucket_size()
-    }
-
-    /// Returns output role assignment buckets grouped by source contour identity.
-    pub const fn role_source_contour_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        self.workspace().role_source_contour_bucket_cache()
-    }
-
-    /// Returns retained output role source-contour bucket count.
-    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_source_contour_bucket_count()
-    }
-
-    /// Returns retained output role assignment references grouped by source contour.
-    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_source_contour_assignment_ref_count()
-    }
-
-    /// Returns the largest retained source-contour output role bucket size.
-    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_source_contour_max_bucket_size()
-    }
-
-    /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub const fn role_nesting_depth_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        self.workspace().role_nesting_depth_bucket_cache()
-    }
-
-    /// Returns retained output role nesting-depth bucket count.
-    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_bucket_count()
-    }
-
-    /// Returns retained output role assignment references grouped by nesting depth.
-    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_assignment_ref_count()
-    }
-
-    /// Returns the largest retained nesting-depth output role bucket size.
-    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_max_bucket_size()
-    }
-
-    /// Returns output role containment evidence grouped by containing source contour.
-    pub const fn role_containment_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        self.workspace().role_containment_bucket_cache()
-    }
-
-    /// Returns retained output role containing-contour bucket count.
-    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_containment_bucket_count()
-    }
-
-    /// Returns retained output role containment references.
-    pub const fn role_containment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_containment_ref_count()
-    }
-
-    /// Returns retained output role assignments with no containing contour.
-    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_uncontained_assignment_ref_count()
-    }
-
-    /// Returns the largest retained containing-contour bucket size.
-    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_containment_max_bucket_size()
-    }
-
-    /// Returns material and hole role buckets in stable order.
-    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.workspace().role_buckets()
-    }
-
-    /// Returns retained output role reports when role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.workspace().role_reports()
-    }
-
-    /// Returns a derived report assembled only from retained arrangement caches.
-    pub fn arrangement_report(&self) -> ExactCurveArrangementReport2 {
-        self.evaluation().arrangement_report()
-    }
-
-    /// Returns final retained evaluation facts derived from workspace caches.
-    pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
-        self.evaluation.summary_cache()
-    }
-
-    /// Returns whether final output evaluation facts were retained.
-    pub const fn evaluated_output(&self) -> bool {
-        self.workspace().evaluated_output()
+    pub fn evaluated_output(&self) -> bool {
+        self.facts().evaluated_output()
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.
-    pub const fn materialized_region(&self) -> Option<bool> {
-        self.workspace().materialized_region()
+    pub fn materialized_region(&self) -> Option<bool> {
+        self.facts().materialized_region()
     }
 
     /// Returns the final retained build stage, when evaluated.
-    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.workspace().stage()
+    pub fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        self.facts().stage()
     }
 
     /// Returns the final retained topology status, when evaluated.
-    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.workspace().status()
+    pub fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.facts().status()
     }
 
     /// Returns the final retained blocker, when the evaluated arrangement blocked.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.workspace().blocker()
+    pub fn blocker(&self) -> Option<UncertaintyReason> {
+        self.facts().blocker()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
-    pub const fn output_ring_count(&self) -> Option<usize> {
-        self.workspace().output_ring_count()
+    pub fn output_ring_count(&self) -> Option<usize> {
+        self.facts().output_ring_count()
     }
 
     /// Returns output boundary segment count retained by ring assembly, when available.
-    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
-        self.workspace().output_boundary_segment_count()
+    pub fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.facts().output_boundary_segment_count()
     }
 
     /// Returns output boundary primitive-family counts retained by ring assembly, when available.
-    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().output_boundary_segment_kind_counts()
+    pub fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.facts().output_boundary_segment_kind_counts()
     }
 
     /// Returns final output contour count retained after boundary role assignment.
-    pub const fn output_contour_count(&self) -> Option<usize> {
-        self.workspace().output_contour_count()
+    pub fn output_contour_count(&self) -> Option<usize> {
+        self.facts().output_contour_count()
     }
 
     /// Returns final output boundary segment count retained after boundary role assignment.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.workspace().output_segment_count()
-    }
-
-    /// Returns the underlying legacy region build result.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_report(); legacy-shaped result output is compatibility-only"
-    )]
-    pub const fn region_build_result(&self) -> &RegionLineSegmentRegionBuildResult2 {
-        self.derived_compatibility_region_build_result()
+    pub fn output_segment_count(&self) -> Option<usize> {
+        self.facts().output_segment_count()
     }
 
     /// Returns the materialized region, if the arrangement succeeded.
-    pub const fn region(&self) -> Option<&Region2> {
+    pub fn region(&self) -> Option<&Region2> {
         self.region.as_ref()
     }
 
@@ -10835,25 +9084,6 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
-    /// Returns the underlying legacy region build report.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, or derived_region_build_report() when a legacy-shaped compatibility report is required"
-    )]
-    pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
-        self.derived_compatibility_region_build_result().report()
-    }
-
-    /// Consumes this result and returns the underlying legacy region build result.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use ExactCurveArrangementResult2 retained accessors, into_region(), or derived_region_build_report(); legacy-shaped result output is compatibility-only"
-    )]
-    pub fn into_region_build_result(self) -> RegionLineSegmentRegionBuildResult2 {
-        #[allow(deprecated)]
-        self.derived_region_build_result()
-    }
-
     /// Consumes this result and returns the materialized region as a classification.
     ///
     /// This preserves the explicit blocker used by the retained evaluation when
@@ -10866,96 +9096,31 @@ impl ExactCurveArrangementResult2 {
         }
     }
 
-    /// Consumes this result and returns the retained evaluation with the materialized region.
-    pub fn into_evaluation_and_region(self) -> (ExactCurveArrangementEvaluation2, Option<Region2>) {
-        let Self {
-            evaluation,
-            region,
-            derived_compatibility_projection,
-        } = self;
-        drop(derived_compatibility_projection);
-        (evaluation, region)
-    }
-
-    /// Consumes this result and returns its retained evaluation with the materialized region.
-    pub fn into_parts(self) -> (ExactCurveArrangementEvaluation2, Option<Region2>) {
-        self.into_evaluation_and_region()
-    }
-
-    /// Consumes this result and returns the retained evaluation with the region classification.
+    /// Consumes this result and returns the materialized region with a derived arrangement report.
     ///
-    /// This is the ownership-preserving retained-result form of
-    /// [`ExactCurveArrangementResult2::into_region_classification`].
-    pub fn into_evaluation_and_region_classification(
+    /// This keeps owned output and its retained diagnostic evidence together.
+    pub fn into_region_with_report(self) -> (Option<Region2>, RegionArrangementReport2) {
+        let Self { report, region } = self;
+        (region, report)
+    }
+
+    /// Consumes this result and returns the region classification with a derived arrangement report.
+    ///
+    /// This preserves the retained blocker in the classification while deriving
+    /// the report directly from arrangement facts.
+    pub fn into_region_classification_with_report(
         self,
-    ) -> (ExactCurveArrangementEvaluation2, Classification<Region2>) {
-        let Self {
-            evaluation,
-            region,
-            derived_compatibility_projection,
-        } = self;
-        drop(derived_compatibility_projection);
-        let blocker = evaluation
-            .summary_cache()
+    ) -> (Classification<Region2>, RegionArrangementReport2) {
+        let Self { report, region } = self;
+        let blocker = report
+            .summary()
             .blocker()
             .unwrap_or(UncertaintyReason::Unsupported);
         let classification = match region {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(blocker),
         };
-        (evaluation, classification)
-    }
-
-    /// Consumes this result and returns the materialized region with a derived arrangement report.
-    ///
-    /// This is the retained-result replacement for deprecated
-    /// `Region2::from_unordered_*_with_report` callers that need owned output
-    /// plus derived report data without taking the legacy compatibility result.
-    pub fn into_region_with_arrangement_report(
-        self,
-    ) -> (Option<Region2>, ExactCurveArrangementReport2) {
-        let (evaluation, region) = self.into_evaluation_and_region();
-        let report = evaluation.into_arrangement_report();
-        (region, report)
-    }
-
-    /// Consumes this result and returns the region classification with a derived arrangement report.
-    ///
-    /// This preserves the retained blocker in the classification while keeping
-    /// the report derived from arrangement caches rather than the legacy
-    /// compatibility result.
-    pub fn into_region_classification_with_arrangement_report(
-        self,
-    ) -> (Classification<Region2>, ExactCurveArrangementReport2) {
-        let (evaluation, classification) = self.into_evaluation_and_region_classification();
-        let report = evaluation.into_arrangement_report();
         (classification, report)
-    }
-
-    /// Consumes this result and returns the materialized region with a derived arrangement report.
-    ///
-    /// This is the retained replacement for deprecated `Region2::from_unordered_*_with_report`
-    /// callers that need owned output plus report data without taking the legacy compatibility
-    /// result.
-    #[deprecated(since = "0.3.0", note = "use into_region_with_arrangement_report()")]
-    pub fn into_region_and_arrangement_report(
-        self,
-    ) -> (Option<Region2>, ExactCurveArrangementReport2) {
-        self.into_region_with_arrangement_report()
-    }
-
-    /// Consumes this result and returns the region classification with a derived arrangement report.
-    ///
-    /// This preserves the retained blocker in the classification while keeping the report derived
-    /// from arrangement caches rather than the legacy compatibility result.
-    #[deprecated(
-        since = "0.3.0",
-        note = "use into_region_classification_with_arrangement_report()"
-    )]
-    pub fn into_region_classification_and_arrangement_report(
-        self,
-    ) -> (Classification<Region2>, ExactCurveArrangementReport2) {
-        self.into_region_classification_with_arrangement_report()
     }
 
     /// Consumes this result and returns the materialized region, if any.
@@ -11369,26 +9534,6 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.stage
     }
 
-    /// Returns the number of source segments considered.
-    pub const fn source_segment_count(&self) -> usize {
-        self.source_segment_count
-    }
-
-    /// Returns source segment primitive-family counts.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
-    /// Returns arranged segment count after exact point-intersection splitting.
-    pub const fn arranged_segment_count(&self) -> Option<usize> {
-        self.arranged_segment_count
-    }
-
-    /// Returns arranged fragment primitive-family counts after exact splitting.
-    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.arranged_segment_kind_counts
-    }
-
     /// Returns the exact predicate family used for split arrangement, when reached.
     pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
         self.split_predicate_path
@@ -11423,11 +9568,6 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_tested_pair_count
     }
 
-    /// Returns certified point-intersection split events collected.
-    pub const fn split_intersection_event_count(&self) -> usize {
-        self.split_intersection_event_count
-    }
-
     /// Returns source segment-pair relations that produced one or more exact split points.
     pub const fn split_point_relation_count(&self) -> usize {
         self.split_point_relation_count
@@ -11441,11 +9581,6 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns source segment-pair relations left unresolved by the active policy.
     pub const fn split_uncertain_relation_count(&self) -> usize {
         self.split_uncertain_relation_count
-    }
-
-    /// Returns exact point-intersection events retained during split arrangement.
-    pub fn split_intersection_points(&self) -> &[Point2] {
-        &self.split_intersection_points
     }
 
     /// Returns source/parameter evidence for retained point-intersection split events.
@@ -11498,36 +9633,6 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.split_blocker_second_source_end_point.as_ref()
     }
 
-    /// Returns arranged endpoint count validated before ring traversal.
-    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        self.endpoint_graph_endpoint_count
-    }
-
-    /// Returns structurally identical endpoint bucket count.
-    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        self.endpoint_graph_structural_bucket_count
-    }
-
-    /// Returns structurally identical endpoint buckets containing exactly one endpoint.
-    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        self.endpoint_graph_structural_singleton_bucket_count
-    }
-
-    /// Returns the largest structurally identical endpoint bucket size.
-    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        self.endpoint_graph_max_structural_bucket_size
-    }
-
-    /// Returns arranged endpoints with no exact mate.
-    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        self.endpoint_graph_dangling_endpoint_count
-    }
-
-    /// Returns arranged endpoints with more than one exact mate.
-    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        self.endpoint_graph_branch_endpoint_count
-    }
-
     /// Returns the arranged segment index of the first endpoint-graph blocker.
     pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
         self.endpoint_graph_blocker_arranged_segment_index
@@ -11565,26 +9670,6 @@ impl RegionLineSegmentRegionBuildReport2 {
         self.unresolved_endpoint_connection_count
     }
 
-    /// Returns source segments reversed while materializing ring traversal.
-    pub const fn reversed_source_segment_count(&self) -> usize {
-        self.reversed_source_segment_count
-    }
-
-    /// Returns output ring count when available.
-    pub const fn output_ring_count(&self) -> Option<usize> {
-        self.output_ring_count
-    }
-
-    /// Returns output boundary segment count when available.
-    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
-        self.output_boundary_segment_count
-    }
-
-    /// Returns output boundary segment primitive-family counts when available.
-    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.output_boundary_segment_kind_counts
-    }
-
     /// Returns per-arranged-fragment source provenance after exact splitting.
     pub fn arranged_source_reports(&self) -> &[RegionLineSegmentArrangedSourceReport2] {
         &self.arranged_source_reports
@@ -11598,164 +9683,6 @@ impl RegionLineSegmentRegionBuildReport2 {
     /// Returns delegated boundary-contour role assignment evidence, when reached.
     pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
         self.boundary_build_report.as_ref()
-    }
-
-    /// Returns final boundary-role assignment stage, if reached.
-    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.stage()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment predicate path, if reached.
-    pub const fn boundary_build_predicate_path(
-        &self,
-    ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.predicate_path()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment retained status, if reached.
-    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.status()),
-            None => None,
-        }
-    }
-
-    /// Returns final boundary-role assignment blocker, if present.
-    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker(),
-            None => None,
-        }
-    }
-
-    /// Returns source contour count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_contour_count()),
-            None => None,
-        }
-    }
-
-    /// Returns source boundary segment count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.source_segment_count()),
-            None => None,
-        }
-    }
-
-    /// Returns contour-pair validation schedule size from final role assignment, if reached.
-    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_candidate_pair_count()),
-            None => None,
-        }
-    }
-
-    /// Returns contour-pair validation test count from final role assignment, if reached.
-    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_tested_pair_count()),
-            None => None,
-        }
-    }
-
-    /// Returns exact validation intersection event count from final role assignment, if reached.
-    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.validation_intersection_event_count()),
-            None => None,
-        }
-    }
-
-    /// Returns containment classification count from final role assignment, if reached.
-    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => Some(report.nesting_classification_count()),
-            None => None,
-        }
-    }
-
-    /// Returns first blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_first_contour_index(),
-            None => None,
-        }
-    }
-
-    /// Returns second blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.blocker_second_contour_index(),
-            None => None,
-        }
-    }
-
-    /// Returns final output contour count when role assignment was reached.
-    pub const fn output_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.output_contour_count(),
-            None => None,
-        }
-    }
-
-    /// Returns final output boundary segment count when role assignment was reached.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.output_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns material contour count when role assignment was reached.
-    pub const fn material_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.material_contour_count(),
-            None => None,
-        }
-    }
-
-    /// Returns hole contour count when role assignment was reached.
-    pub const fn hole_contour_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.hole_contour_count(),
-            None => None,
-        }
-    }
-
-    /// Returns material boundary segment count when role assignment was reached.
-    pub const fn material_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.material_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns hole boundary segment count when role assignment was reached.
-    pub const fn hole_segment_count(&self) -> Option<usize> {
-        match self.boundary_build_report() {
-            Some(report) => report.hole_segment_count(),
-            None => None,
-        }
-    }
-
-    /// Returns retained output role report count when role assignment was reached.
-    pub fn role_report_count(&self) -> Option<usize> {
-        self.boundary_build_report()
-            .map(|report| report.role_reports().len())
-    }
-
-    /// Returns retained output role reports when role assignment was reached.
-    pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.boundary_build_report()
-            .map(RegionBoundaryContourBuildReport2::role_reports)
     }
 
     /// Returns line-region construction status.
@@ -11826,234 +9753,38 @@ impl RegionLineSegmentSplitIntersectionReport2 {
     }
 }
 
-fn retained_arrangement_region_build_report(
-    workspace: &ExactCurveWorkspace2,
-    summary_cache: &ExactCurveArrangementEvaluationSummaryCache2,
-) -> RegionLineSegmentRegionBuildReport2 {
-    let split_cache = workspace
-        .split_cache()
-        .expect("evaluated exact arrangement report missing retained split cache");
-    let split_predicate_path = split_cache.predicate_path();
-    let split_candidate_pair_count = split_cache.candidate_pair_count();
-    let split_skipped_aabb_pair_count = split_cache.skipped_aabb_pair_count();
-    let split_tested_pair_count = split_cache.tested_pair_count();
-    let split_intersection_event_count = split_cache.intersection_event_count();
-    let split_point_relation_count = split_cache.point_relation_count();
-    let split_overlap_relation_count = split_cache.overlap_relation_count();
-    let split_uncertain_relation_count = split_cache.uncertain_relation_count();
-    let split_intersection_points = split_cache.intersection_points().to_vec();
-    let split_intersection_reports = split_cache.intersection_reports().to_vec();
-    let split_output_segment_count = split_cache.output_segment_count();
-    let split_blocker_cache = split_cache.blocker_cache();
-    let split_blocker_first_source_segment_index = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_index);
-    let split_blocker_first_source_segment_kind =
-        split_blocker_cache.map(ExactCurveArrangementSplitBlockerCache2::first_source_segment_kind);
-    let split_blocker_first_source_start_point = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::first_source_start_point)
-        .cloned();
-    let split_blocker_first_source_end_point = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::first_source_end_point)
-        .cloned();
-    let split_blocker_second_source_segment_index = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_index);
-    let split_blocker_second_source_segment_kind = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::second_source_segment_kind);
-    let split_blocker_second_source_start_point = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::second_source_start_point)
-        .cloned();
-    let split_blocker_second_source_end_point = split_blocker_cache
-        .map(ExactCurveArrangementSplitBlockerCache2::second_source_end_point)
-        .cloned();
-    let endpoint_graph_cache = workspace.endpoint_graph_cache();
-    let endpoint_graph_predicate_path =
-        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::predicate_path);
-    let endpoint_graph_endpoint_count =
-        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::endpoint_count);
-    let endpoint_graph_structural_bucket_count =
-        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::structural_bucket_count);
-    let endpoint_graph_structural_singleton_bucket_count = endpoint_graph_cache
-        .map(ExactCurveArrangementEndpointGraphCache2::structural_singleton_bucket_count);
-    let endpoint_graph_max_structural_bucket_size = endpoint_graph_cache
-        .map(ExactCurveArrangementEndpointGraphCache2::max_structural_bucket_size);
-    let endpoint_graph_dangling_endpoint_count =
-        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::dangling_endpoint_count);
-    let endpoint_graph_branch_endpoint_count =
-        endpoint_graph_cache.map(ExactCurveArrangementEndpointGraphCache2::branch_endpoint_count);
-    let endpoint_graph_blocker_arranged_segment_index = endpoint_graph_cache
-        .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_arranged_segment_index);
-    let endpoint_graph_blocker_endpoint =
-        endpoint_graph_cache.and_then(ExactCurveArrangementEndpointGraphCache2::blocker_endpoint);
-    let endpoint_graph_blocker_point = endpoint_graph_cache
-        .and_then(ExactCurveArrangementEndpointGraphCache2::blocker_point)
-        .cloned();
-    let ring_cache = workspace.ring_assembly_cache();
-    let attempted_endpoint_connection_count = ring_cache
-        .map(ExactCurveArrangementRingAssemblyCache2::attempted_endpoint_connection_count)
-        .unwrap_or(0);
-    let exact_endpoint_connection_count = ring_cache
-        .map(ExactCurveArrangementRingAssemblyCache2::exact_endpoint_connection_count)
-        .unwrap_or(0);
-    let disconnected_endpoint_connection_count = ring_cache
-        .map(ExactCurveArrangementRingAssemblyCache2::disconnected_endpoint_connection_count)
-        .unwrap_or(0);
-    let unresolved_endpoint_connection_count = ring_cache
-        .map(ExactCurveArrangementRingAssemblyCache2::unresolved_endpoint_connection_count)
-        .unwrap_or(0);
-    let reversed_source_segment_count = ring_cache
-        .map(ExactCurveArrangementRingAssemblyCache2::reversed_source_segment_count)
-        .unwrap_or(0);
-    let output_ring_count =
-        ring_cache.and_then(ExactCurveArrangementRingAssemblyCache2::output_ring_count);
-    let output_boundary_segment_count =
-        ring_cache.and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_count);
-    let output_boundary_segment_kind_counts = ring_cache
-        .and_then(ExactCurveArrangementRingAssemblyCache2::output_boundary_segment_kind_counts);
-    let arranged_fragment_cache =
-        ring_cache.map(ExactCurveArrangementRingAssemblyCache2::arranged_fragment_cache);
-    let arranged_segment_count = arranged_fragment_cache
-        .map(ExactCurveArrangementArrangedFragmentCache2::arranged_fragment_count);
-    let arranged_segment_kind_counts = arranged_fragment_cache
-        .map(ExactCurveArrangementArrangedFragmentCache2::arranged_segment_kind_counts);
-    let arranged_source_reports = ring_cache
-        .map(|cache| cache.arranged_source_reports().to_vec())
-        .unwrap_or_default();
-    let source_reports = ring_cache
-        .map(|cache| cache.source_reports().to_vec())
-        .unwrap_or_default();
-    let ring_assembly_predicate_path =
-        ring_cache.map(ExactCurveArrangementRingAssemblyCache2::predicate_path);
-    let output_cache = workspace.output_cache();
-    let stage = output_cache
-        .map(ExactCurveArrangementOutputCache2::stage)
-        .or_else(|| summary_cache.stage())
-        .expect("evaluated exact arrangement report missing final stage");
-    let status = output_cache
-        .map(ExactCurveArrangementOutputCache2::status)
-        .or_else(|| summary_cache.status())
-        .expect("evaluated exact arrangement report missing final status");
-    let blocker = output_cache
-        .and_then(ExactCurveArrangementOutputCache2::blocker)
-        .or_else(|| summary_cache.blocker());
-    let boundary_build_report = output_cache
-        .and_then(ExactCurveArrangementOutputCache2::boundary_build_report)
-        .cloned();
-
-    RegionLineSegmentRegionBuildReport2 {
-        stage,
-        source_segment_count: workspace.source_segment_cache().source_segment_count(),
-        source_segment_kind_counts: workspace
-            .source_segment_cache()
-            .source_segment_kind_counts(),
-        arranged_segment_count,
-        arranged_segment_kind_counts,
-        split_predicate_path,
-        endpoint_graph_predicate_path,
-        ring_assembly_predicate_path,
-        split_candidate_pair_count,
-        split_skipped_aabb_pair_count,
-        split_tested_pair_count,
-        split_intersection_event_count,
-        split_point_relation_count,
-        split_overlap_relation_count,
-        split_uncertain_relation_count,
-        split_intersection_points,
-        split_intersection_reports,
-        split_output_segment_count,
-        split_blocker_first_source_segment_index,
-        split_blocker_first_source_segment_kind,
-        split_blocker_first_source_start_point,
-        split_blocker_first_source_end_point,
-        split_blocker_second_source_segment_index,
-        split_blocker_second_source_segment_kind,
-        split_blocker_second_source_start_point,
-        split_blocker_second_source_end_point,
-        endpoint_graph_endpoint_count,
-        endpoint_graph_structural_bucket_count,
-        endpoint_graph_structural_singleton_bucket_count,
-        endpoint_graph_max_structural_bucket_size,
-        endpoint_graph_dangling_endpoint_count,
-        endpoint_graph_branch_endpoint_count,
-        endpoint_graph_blocker_arranged_segment_index,
-        endpoint_graph_blocker_endpoint,
-        endpoint_graph_blocker_point,
-        attempted_endpoint_connection_count,
-        exact_endpoint_connection_count,
-        disconnected_endpoint_connection_count,
-        unresolved_endpoint_connection_count,
-        reversed_source_segment_count,
-        output_ring_count,
-        output_boundary_segment_count,
-        output_boundary_segment_kind_counts,
-        arranged_source_reports,
-        source_reports,
-        boundary_build_report,
-        status,
-        blocker,
-    }
-}
-
-impl ExactCurveArrangementReport2 {
-    fn from_evaluation(evaluation: &ExactCurveArrangementEvaluation2) -> Self {
-        Self {
-            workspace: evaluation.workspace().clone(),
-            summary_cache: evaluation.summary_cache().clone(),
-        }
-    }
-
-    /// Returns a legacy-shaped region build report projected from retained caches.
-    ///
-    /// The returned report is projected from retained request, workspace, split,
-    /// ring, and output caches. It does not rerun topology.
-    pub fn region_build_report(&self) -> RegionLineSegmentRegionBuildReport2 {
-        retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)
-    }
-
-    /// Consumes this retained arrangement report and returns a legacy-shaped region build report.
-    ///
-    /// The returned report is projected from retained request, workspace, split,
-    /// ring, and output caches. It does not rerun topology.
-    pub fn into_region_build_report(self) -> RegionLineSegmentRegionBuildReport2 {
-        retained_arrangement_region_build_report(&self.workspace, &self.summary_cache)
-    }
-
-    /// Returns the retained workspace projected by this report.
-    pub const fn workspace(&self) -> &ExactCurveWorkspace2 {
+impl RegionArrangementReport2 {
+    fn facts(&self) -> &ExactCurveWorkspace2 {
         &self.workspace
     }
 
-    /// Returns the retained arrangement request projected by this report.
-    pub const fn request(&self) -> &ExactCurveArrangementRequest2 {
-        self.workspace().request()
-    }
-
     /// Returns the fill rule retained by the arrangement request.
-    pub const fn fill_rule(&self) -> FillRule {
-        self.request().fill_rule()
+    pub fn fill_rule(&self) -> FillRule {
+        self.facts().request().fill_rule()
     }
 
     /// Returns exact source segments retained from the arrangement request.
     pub fn source_segments(&self) -> &[Segment2] {
-        self.request().source_segments()
+        self.facts().request().source_segments()
     }
 
     /// Returns line-only source carriers when the retained request came from a line-specific API.
     pub fn source_line_segments(&self) -> Option<&[LineSeg2]> {
-        self.request().source_line_segments()
+        self.facts().request().source_line_segments()
     }
 
     /// Returns retained source segment facts prepared before split scheduling.
-    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
-        self.workspace().source_segment_cache()
+    pub fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+        self.facts().source_segment_cache()
     }
 
     /// Returns retained source AABB buckets grouped by certification status.
-    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+    pub fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
         self.source_segment_cache().source_aabb_bucket_cache()
     }
 
     /// Returns retained source segment buckets grouped by primitive family.
-    pub const fn source_segment_kind_bucket_cache(
+    pub fn source_segment_kind_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
         self.source_segment_cache()
@@ -12061,1279 +9792,1223 @@ impl ExactCurveArrangementReport2 {
     }
 
     /// Returns retained source AABB-status bucket count.
-    pub const fn source_aabb_bucket_count(&self) -> usize {
-        self.workspace().source_aabb_bucket_count()
+    pub fn source_aabb_bucket_count(&self) -> usize {
+        self.facts().source_aabb_bucket_count()
     }
 
     /// Returns retained source AABB references.
-    pub const fn source_aabb_ref_count(&self) -> usize {
-        self.workspace().source_aabb_ref_count()
+    pub fn source_aabb_ref_count(&self) -> usize {
+        self.facts().source_aabb_ref_count()
     }
 
     /// Returns retained source AABB references certified as decided.
-    pub const fn source_aabb_decided_ref_count(&self) -> usize {
-        self.workspace().source_aabb_decided_ref_count()
+    pub fn source_aabb_decided_ref_count(&self) -> usize {
+        self.facts().source_aabb_decided_ref_count()
     }
 
     /// Returns retained source AABB references that stayed undecided.
-    pub const fn source_aabb_undecided_ref_count(&self) -> usize {
-        self.workspace().source_aabb_undecided_ref_count()
+    pub fn source_aabb_undecided_ref_count(&self) -> usize {
+        self.facts().source_aabb_undecided_ref_count()
     }
 
     /// Returns the largest retained source AABB-status bucket size.
-    pub const fn source_aabb_max_bucket_size(&self) -> usize {
-        self.workspace().source_aabb_max_bucket_size()
+    pub fn source_aabb_max_bucket_size(&self) -> usize {
+        self.facts().source_aabb_max_bucket_size()
     }
 
     /// Returns retained source segment primitive-family bucket count.
-    pub const fn source_segment_kind_bucket_count(&self) -> usize {
-        self.workspace().source_segment_kind_bucket_count()
+    pub fn source_segment_kind_bucket_count(&self) -> usize {
+        self.facts().source_segment_kind_bucket_count()
     }
 
     /// Returns retained source segment references grouped by primitive family.
-    pub const fn source_segment_kind_ref_count(&self) -> usize {
-        self.workspace().source_segment_kind_ref_count()
+    pub fn source_segment_kind_ref_count(&self) -> usize {
+        self.facts().source_segment_kind_ref_count()
     }
 
     /// Returns retained line source segment references.
-    pub const fn source_line_segment_ref_count(&self) -> usize {
-        self.workspace().source_line_segment_ref_count()
+    pub fn source_line_segment_ref_count(&self) -> usize {
+        self.facts().source_line_segment_ref_count()
     }
 
     /// Returns retained arc source segment references.
-    pub const fn source_arc_segment_ref_count(&self) -> usize {
-        self.workspace().source_arc_segment_ref_count()
+    pub fn source_arc_segment_ref_count(&self) -> usize {
+        self.facts().source_arc_segment_ref_count()
     }
 
     /// Returns the largest retained source segment primitive-family bucket size.
-    pub const fn source_segment_kind_max_bucket_size(&self) -> usize {
-        self.workspace().source_segment_kind_max_bucket_size()
+    pub fn source_segment_kind_max_bucket_size(&self) -> usize {
+        self.facts().source_segment_kind_max_bucket_size()
     }
 
     /// Returns exact source endpoint buckets retained during workspace preparation.
-    pub const fn source_endpoint_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
-        self.workspace().source_endpoint_bucket_cache()
+    pub fn source_endpoint_bucket_cache(&self) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
+        self.facts().source_endpoint_bucket_cache()
     }
 
     /// Returns source endpoints retained in exact structural endpoint buckets.
-    pub const fn source_endpoint_count(&self) -> usize {
-        self.workspace().source_endpoint_count()
+    pub fn source_endpoint_count(&self) -> usize {
+        self.facts().source_endpoint_count()
     }
 
     /// Returns exact structural source endpoint bucket count.
-    pub const fn source_endpoint_bucket_count(&self) -> usize {
-        self.workspace().source_endpoint_bucket_count()
+    pub fn source_endpoint_bucket_count(&self) -> usize {
+        self.facts().source_endpoint_bucket_count()
     }
 
     /// Returns source endpoint buckets containing one endpoint.
-    pub const fn source_endpoint_singleton_bucket_count(&self) -> usize {
-        self.workspace().source_endpoint_singleton_bucket_count()
+    pub fn source_endpoint_singleton_bucket_count(&self) -> usize {
+        self.facts().source_endpoint_singleton_bucket_count()
     }
 
     /// Returns the largest exact structural source endpoint bucket size.
-    pub const fn source_endpoint_max_bucket_size(&self) -> usize {
-        self.workspace().source_endpoint_max_bucket_size()
+    pub fn source_endpoint_max_bucket_size(&self) -> usize {
+        self.facts().source_endpoint_max_bucket_size()
     }
 
     /// Returns the retained source-pair schedule prepared before split predicates run.
-    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
-        self.workspace().split_schedule_cache()
+    pub fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+        self.facts().split_schedule_cache()
     }
 
     /// Returns retained split schedule buckets grouped by AABB pruning status.
-    pub const fn split_schedule_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
-        self.workspace().split_schedule_bucket_cache()
+    pub fn split_schedule_bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+        self.facts().split_schedule_bucket_cache()
     }
 
     /// Returns source segment pairs scheduled before retained split predicates run.
-    pub const fn split_schedule_candidate_pair_count(&self) -> usize {
-        self.workspace().split_schedule_candidate_pair_count()
+    pub fn split_schedule_candidate_pair_count(&self) -> usize {
+        self.facts().split_schedule_candidate_pair_count()
     }
 
     /// Returns scheduled source segment pairs pruned by retained AABB evidence.
-    pub const fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
-        self.workspace()
-            .split_schedule_decided_disjoint_pair_count()
+    pub fn split_schedule_decided_disjoint_pair_count(&self) -> usize {
+        self.facts().split_schedule_decided_disjoint_pair_count()
     }
 
     /// Returns scheduled source segment pairs that require split predicate evaluation.
-    pub const fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
-        self.workspace()
-            .split_schedule_predicate_candidate_pair_count()
+    pub fn split_schedule_predicate_candidate_pair_count(&self) -> usize {
+        self.facts().split_schedule_predicate_candidate_pair_count()
     }
 
     /// Returns scheduled source segment pairs whose AABB pruning status stayed undecided.
-    pub const fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
-        self.workspace().split_schedule_undecided_aabb_pair_count()
+    pub fn split_schedule_undecided_aabb_pair_count(&self) -> usize {
+        self.facts().split_schedule_undecided_aabb_pair_count()
     }
 
     /// Returns retained split schedule AABB-status bucket count.
-    pub const fn split_schedule_bucket_count(&self) -> usize {
-        self.workspace().split_schedule_bucket_count()
+    pub fn split_schedule_bucket_count(&self) -> usize {
+        self.facts().split_schedule_bucket_count()
     }
 
     /// Returns retained split schedule source-pair references grouped by AABB status.
-    pub const fn split_schedule_candidate_ref_count(&self) -> usize {
-        self.workspace().split_schedule_candidate_ref_count()
+    pub fn split_schedule_candidate_ref_count(&self) -> usize {
+        self.facts().split_schedule_candidate_ref_count()
     }
 
     /// Returns the largest retained split schedule AABB-status bucket size.
-    pub const fn split_schedule_max_bucket_size(&self) -> usize {
-        self.workspace().split_schedule_max_bucket_size()
+    pub fn split_schedule_max_bucket_size(&self) -> usize {
+        self.facts().split_schedule_max_bucket_size()
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
-    pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
-        self.workspace().split_cache()
+    pub fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
+        self.facts().split_cache()
     }
 
     /// Returns retained split-stage relation buckets.
-    pub const fn split_relation_bucket_cache(
+    pub fn split_relation_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        self.workspace().split_relation_bucket_cache()
+        self.facts().split_relation_bucket_cache()
     }
 
     /// Returns exact split-intersection point buckets.
-    pub const fn split_intersection_bucket_cache(
+    pub fn split_intersection_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        self.workspace().split_intersection_bucket_cache()
+        self.facts().split_intersection_bucket_cache()
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
-    pub const fn split_intersection_parameter_cache(
+    pub fn split_intersection_parameter_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        self.workspace().split_intersection_parameter_cache()
+        self.facts().split_intersection_parameter_cache()
     }
 
     /// Returns retained split-stage relation bucket count.
-    pub const fn split_relation_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_relation_bucket_count()
+    pub fn split_relation_bucket_count(&self) -> Option<usize> {
+        self.facts().split_relation_bucket_count()
     }
 
     /// Returns retained split-stage classified relation references.
-    pub const fn split_relation_ref_count(&self) -> Option<usize> {
-        self.workspace().split_relation_ref_count()
+    pub fn split_relation_ref_count(&self) -> Option<usize> {
+        self.facts().split_relation_ref_count()
     }
 
     /// Returns the largest retained split-stage relation bucket size.
-    pub const fn split_relation_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().split_relation_max_bucket_size()
+    pub fn split_relation_max_bucket_size(&self) -> Option<usize> {
+        self.facts().split_relation_max_bucket_size()
     }
 
     /// Returns retained exact split-intersection point bucket count.
-    pub const fn split_intersection_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_bucket_count()
+    pub fn split_intersection_bucket_count(&self) -> Option<usize> {
+        self.facts().split_intersection_bucket_count()
     }
 
     /// Returns retained split-intersection buckets containing one event.
-    pub const fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_singleton_bucket_count()
+    pub fn split_intersection_singleton_bucket_count(&self) -> Option<usize> {
+        self.facts().split_intersection_singleton_bucket_count()
     }
 
     /// Returns the largest retained split-intersection point bucket size.
-    pub const fn split_intersection_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().split_intersection_max_bucket_size()
+    pub fn split_intersection_max_bucket_size(&self) -> Option<usize> {
+        self.facts().split_intersection_max_bucket_size()
     }
 
     /// Returns retained source-parameter references for split intersections.
-    pub const fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .split_intersection_source_parameter_ref_count()
+    pub fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
+        self.facts().split_intersection_source_parameter_ref_count()
     }
 
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
-    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
-        self.workspace().split_blocker_cache()
+    pub fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+        self.facts().split_blocker_cache()
     }
 
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
-    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
-        self.workspace().endpoint_graph_cache()
+    pub fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+        self.facts().endpoint_graph_cache()
     }
 
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
-    pub const fn arranged_endpoint_bucket_cache(
+    pub fn arranged_endpoint_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        self.workspace().arranged_endpoint_bucket_cache()
+        self.facts().arranged_endpoint_bucket_cache()
     }
 
     /// Returns retained arranged endpoint references in structural buckets.
-    pub const fn arranged_endpoint_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_ref_count()
+    pub fn arranged_endpoint_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_ref_count()
     }
 
     /// Returns retained exact structural arranged endpoint bucket count.
-    pub const fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_bucket_count()
+    pub fn arranged_endpoint_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_bucket_count()
     }
 
     /// Returns retained arranged endpoint buckets containing one endpoint.
-    pub const fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_singleton_bucket_count()
+    pub fn arranged_endpoint_singleton_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_singleton_bucket_count()
     }
 
     /// Returns the largest retained arranged endpoint structural bucket size.
-    pub const fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_max_bucket_size()
+    pub fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_max_bucket_size()
     }
 
     /// Returns arranged endpoints grouped by retained endpoint side.
-    pub const fn arranged_endpoint_side_bucket_cache(
+    pub fn arranged_endpoint_side_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        self.workspace().arranged_endpoint_side_bucket_cache()
+        self.facts().arranged_endpoint_side_bucket_cache()
     }
 
     /// Returns retained arranged endpoint side bucket count.
-    pub const fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_bucket_count()
+    pub fn arranged_endpoint_side_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_side_bucket_count()
     }
 
     /// Returns retained arranged endpoint references grouped by side.
-    pub const fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_ref_count()
+    pub fn arranged_endpoint_side_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_side_ref_count()
     }
 
     /// Returns retained arranged start endpoint references.
-    pub const fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_start_ref_count()
+    pub fn arranged_endpoint_start_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_start_ref_count()
     }
 
     /// Returns retained arranged end endpoint references.
-    pub const fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_end_ref_count()
+    pub fn arranged_endpoint_end_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_end_ref_count()
     }
 
     /// Returns the largest retained arranged endpoint side bucket size.
-    pub const fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_side_max_bucket_size()
+    pub fn arranged_endpoint_side_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_side_max_bucket_size()
     }
 
     /// Returns exact endpoint records for arranged fragments.
-    pub const fn arranged_endpoint_point_cache(
+    pub fn arranged_endpoint_point_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        self.workspace().arranged_endpoint_point_cache()
+        self.facts().arranged_endpoint_point_cache()
     }
 
     /// Returns retained arranged fragment endpoint records.
-    pub const fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_endpoint_point_fragment_ref_count()
+    pub fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_point_fragment_ref_count()
     }
 
     /// Returns retained arranged endpoint point references.
-    pub const fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_point_ref_count()
+    pub fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_point_ref_count()
     }
 
     /// Returns structural arranged endpoints grouped by retained degree.
-    pub const fn arranged_endpoint_degree_bucket_cache(
+    pub fn arranged_endpoint_degree_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        self.workspace().arranged_endpoint_degree_bucket_cache()
+        self.facts().arranged_endpoint_degree_bucket_cache()
     }
 
     /// Returns retained arranged endpoint degree bucket count.
-    pub const fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_degree_bucket_count()
+    pub fn arranged_endpoint_degree_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_degree_bucket_count()
     }
 
     /// Returns structural endpoint buckets classified by retained degree.
-    pub const fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_degree_structural_bucket_ref_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_degree_structural_bucket_ref_count()
     }
 
     /// Returns structural endpoint buckets classified as dangling.
-    pub const fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_dangling_structural_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_dangling_structural_bucket_count()
     }
 
     /// Returns structural endpoint buckets classified as chain continuations.
-    pub const fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_chain_structural_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_chain_structural_bucket_count()
     }
 
     /// Returns structural endpoint buckets classified as branches.
-    pub const fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_endpoint_branch_structural_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_endpoint_branch_structural_bucket_count()
     }
 
     /// Returns the largest retained arranged endpoint degree bucket size.
-    pub const fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_endpoint_degree_max_bucket_size()
+    pub fn arranged_endpoint_degree_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_endpoint_degree_max_bucket_size()
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
-    pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
-        self.workspace().ring_assembly_cache()
+    pub fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
+        self.facts().ring_assembly_cache()
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.
-    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
-        self.workspace().output_cache()
+    pub fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+        self.facts().output_cache()
     }
 
     /// Returns final retained evaluation facts derived from workspace caches.
-    pub const fn summary_cache(&self) -> &ExactCurveArrangementEvaluationSummaryCache2 {
+    pub fn summary(&self) -> &ExactCurveArrangementSummary2 {
         &self.summary_cache
     }
 
-    /// Consumes this report and returns the retained workspace it projects.
-    pub fn into_workspace(self) -> ExactCurveWorkspace2 {
-        self.workspace
-    }
-
-    /// Consumes this report and returns the retained arrangement request it projects.
-    pub fn into_request(self) -> ExactCurveArrangementRequest2 {
-        self.workspace.into_request()
-    }
-
-    /// Consumes this report and returns the retained evaluation it projects.
-    pub fn into_evaluation(self) -> ExactCurveArrangementEvaluation2 {
-        ExactCurveArrangementEvaluation2 {
-            workspace: self.workspace,
-            summary_cache: self.summary_cache,
-        }
-    }
-
-    /// Consumes this report and returns the retained workspace and summary cache it projects.
-    pub fn into_parts(
-        self,
-    ) -> (
-        ExactCurveWorkspace2,
-        ExactCurveArrangementEvaluationSummaryCache2,
-    ) {
-        (self.workspace, self.summary_cache)
-    }
-
     /// Returns retained source segment count.
-    pub const fn source_segment_count(&self) -> usize {
+    pub fn source_segment_count(&self) -> usize {
         self.source_segment_cache().source_segment_count()
     }
 
     /// Returns retained source segment primitive-family counts.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
+    pub fn source_segment_kind_counts(&self) -> SegmentKindCounts {
         self.source_segment_cache().source_segment_kind_counts()
     }
 
     /// Returns retained source segment boxes in request order.
     pub fn source_segment_aabbs(&self) -> &[Option<Aabb2>] {
-        self.workspace().source_segment_aabbs()
+        self.facts().source_segment_aabbs()
     }
 
     /// Returns a retained aggregate source box when every source box was decided.
-    pub const fn source_aabb(&self) -> Option<&Aabb2> {
+    pub fn source_aabb(&self) -> Option<&Aabb2> {
         self.source_segment_cache().source_aabb()
     }
 
     /// Returns the number of source segment boxes certified during workspace preparation.
-    pub const fn decided_source_segment_aabb_count(&self) -> usize {
+    pub fn decided_source_segment_aabb_count(&self) -> usize {
         self.source_segment_cache()
             .decided_source_segment_aabb_count()
     }
 
     /// Returns the number of source segment boxes that stayed uncertain.
-    pub const fn undecided_source_segment_aabb_count(&self) -> usize {
+    pub fn undecided_source_segment_aabb_count(&self) -> usize {
         self.source_segment_cache()
             .undecided_source_segment_aabb_count()
     }
 
     /// Returns source segment pairs considered by retained split evaluation.
-    pub const fn split_candidate_pair_count(&self) -> Option<usize> {
-        self.workspace().split_candidate_pair_count()
+    pub fn split_candidate_pair_count(&self) -> Option<usize> {
+        self.facts().split_candidate_pair_count()
     }
 
     /// Returns source segment pairs skipped by certified AABB disjointness.
-    pub const fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
-        self.workspace().split_skipped_aabb_pair_count()
+    pub fn split_skipped_aabb_pair_count(&self) -> Option<usize> {
+        self.facts().split_skipped_aabb_pair_count()
     }
 
     /// Returns source segment pairs tested by exact split predicates.
-    pub const fn split_tested_pair_count(&self) -> Option<usize> {
-        self.workspace().split_tested_pair_count()
+    pub fn split_tested_pair_count(&self) -> Option<usize> {
+        self.facts().split_tested_pair_count()
     }
 
     /// Returns exact point-intersection event count found during splitting.
-    pub const fn split_intersection_event_count(&self) -> Option<usize> {
-        self.workspace().split_intersection_event_count()
+    pub fn split_intersection_event_count(&self) -> Option<usize> {
+        self.facts().split_intersection_event_count()
     }
 
     /// Returns source-pair relations classified as point intersections.
-    pub const fn split_point_relation_count(&self) -> Option<usize> {
-        self.workspace().split_point_relation_count()
+    pub fn split_point_relation_count(&self) -> Option<usize> {
+        self.facts().split_point_relation_count()
     }
 
     /// Returns source-pair relations classified as overlaps.
-    pub const fn split_overlap_relation_count(&self) -> Option<usize> {
-        self.workspace().split_overlap_relation_count()
+    pub fn split_overlap_relation_count(&self) -> Option<usize> {
+        self.facts().split_overlap_relation_count()
     }
 
     /// Returns source-pair relations that remained uncertain.
-    pub const fn split_uncertain_relation_count(&self) -> Option<usize> {
-        self.workspace().split_uncertain_relation_count()
+    pub fn split_uncertain_relation_count(&self) -> Option<usize> {
+        self.facts().split_uncertain_relation_count()
     }
 
     /// Returns exact intersection points retained by split evaluation, when reached.
     pub fn split_intersection_points(&self) -> Option<&[Point2]> {
-        self.workspace().split_intersection_points()
+        self.facts().split_intersection_points()
     }
 
     /// Returns exact per-event source and parameter evidence retained by split evaluation.
     pub fn split_intersection_reports(
         &self,
     ) -> Option<&[RegionLineSegmentSplitIntersectionReport2]> {
-        self.workspace().split_intersection_reports()
+        self.facts().split_intersection_reports()
     }
 
     /// Returns the exact predicate family used for split arrangement, when reached.
-    pub const fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
-        self.workspace().split_predicate_path()
+    pub fn split_predicate_path(&self) -> Option<RegionLineSegmentSplitPredicatePath2> {
+        self.facts().split_predicate_path()
     }
 
     /// Returns arranged output segment count when retained splitting completed.
-    pub const fn split_output_segment_count(&self) -> Option<usize> {
-        self.workspace().split_output_segment_count()
+    pub fn split_output_segment_count(&self) -> Option<usize> {
+        self.facts().split_output_segment_count()
     }
 
     /// Returns the first source segment in a split-stage blocker, when known.
-    pub const fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
-        self.workspace().split_blocker_first_source_segment_index()
+    pub fn split_blocker_first_source_segment_index(&self) -> Option<usize> {
+        self.facts().split_blocker_first_source_segment_index()
     }
 
     /// Returns the primitive family of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.workspace().split_blocker_first_source_segment_kind()
+    pub fn split_blocker_first_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.facts().split_blocker_first_source_segment_kind()
     }
 
     /// Returns the exact start point of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_first_source_start_point()
+    pub fn split_blocker_first_source_start_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_first_source_start_point()
     }
 
     /// Returns the exact end point of the first source segment in a split-stage blocker.
-    pub const fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_first_source_end_point()
+    pub fn split_blocker_first_source_end_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_first_source_end_point()
     }
 
     /// Returns the second source segment in a split-stage blocker, when known.
-    pub const fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
-        self.workspace().split_blocker_second_source_segment_index()
+    pub fn split_blocker_second_source_segment_index(&self) -> Option<usize> {
+        self.facts().split_blocker_second_source_segment_index()
     }
 
     /// Returns the primitive family of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
-        self.workspace().split_blocker_second_source_segment_kind()
+    pub fn split_blocker_second_source_segment_kind(&self) -> Option<SegmentKind> {
+        self.facts().split_blocker_second_source_segment_kind()
     }
 
     /// Returns the exact start point of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_second_source_start_point()
+    pub fn split_blocker_second_source_start_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_second_source_start_point()
     }
 
     /// Returns the exact end point of the second source segment in a split-stage blocker.
-    pub const fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
-        self.workspace().split_blocker_second_source_end_point()
+    pub fn split_blocker_second_source_end_point(&self) -> Option<&Point2> {
+        self.facts().split_blocker_second_source_end_point()
     }
 
     /// Returns the exact predicate family used for endpoint-graph validation, when reached.
-    pub const fn endpoint_graph_predicate_path(
+    pub fn endpoint_graph_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentEndpointGraphPredicatePath2> {
-        self.workspace().endpoint_graph_predicate_path()
+        self.facts().endpoint_graph_predicate_path()
     }
 
     /// Returns arranged endpoint count validated by retained endpoint-graph evidence.
-    pub const fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_endpoint_count()
+    pub fn endpoint_graph_endpoint_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_endpoint_count()
     }
 
     /// Returns exact structural endpoint bucket count.
-    pub const fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_structural_bucket_count()
+    pub fn endpoint_graph_structural_bucket_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_structural_bucket_count()
     }
 
     /// Returns exact structural endpoint singleton bucket count.
-    pub const fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn endpoint_graph_structural_singleton_bucket_count(&self) -> Option<usize> {
+        self.facts()
             .endpoint_graph_structural_singleton_bucket_count()
     }
 
     /// Returns the largest exact structural endpoint bucket size.
-    pub const fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_max_structural_bucket_size()
+    pub fn endpoint_graph_max_structural_bucket_size(&self) -> Option<usize> {
+        self.facts().endpoint_graph_max_structural_bucket_size()
     }
 
     /// Returns dangling endpoint count found during endpoint-graph validation.
-    pub const fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_dangling_endpoint_count()
+    pub fn endpoint_graph_dangling_endpoint_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_dangling_endpoint_count()
     }
 
     /// Returns branch endpoint count found during endpoint-graph validation.
-    pub const fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
-        self.workspace().endpoint_graph_branch_endpoint_count()
+    pub fn endpoint_graph_branch_endpoint_count(&self) -> Option<usize> {
+        self.facts().endpoint_graph_branch_endpoint_count()
     }
 
     /// Returns the arranged segment index of the first endpoint-graph blocker.
-    pub const fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
-        self.workspace()
-            .endpoint_graph_blocker_arranged_segment_index()
+    pub fn endpoint_graph_blocker_arranged_segment_index(&self) -> Option<usize> {
+        self.facts().endpoint_graph_blocker_arranged_segment_index()
     }
 
     /// Returns the arranged endpoint of the first endpoint-graph blocker.
-    pub const fn endpoint_graph_blocker_endpoint(
-        &self,
-    ) -> Option<RegionLineSegmentArrangedEndpoint2> {
-        self.workspace().endpoint_graph_blocker_endpoint()
+    pub fn endpoint_graph_blocker_endpoint(&self) -> Option<RegionLineSegmentArrangedEndpoint2> {
+        self.facts().endpoint_graph_blocker_endpoint()
     }
 
     /// Returns the exact arranged endpoint point of the first endpoint-graph blocker.
-    pub const fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
-        self.workspace().endpoint_graph_blocker_point()
+    pub fn endpoint_graph_blocker_point(&self) -> Option<&Point2> {
+        self.facts().endpoint_graph_blocker_point()
     }
 
     /// Returns the exact predicate family used for ring traversal, when reached.
-    pub const fn ring_assembly_predicate_path(
+    pub fn ring_assembly_predicate_path(
         &self,
     ) -> Option<RegionLineSegmentRingAssemblyPredicatePath2> {
-        self.workspace().ring_assembly_predicate_path()
+        self.facts().ring_assembly_predicate_path()
     }
 
     /// Returns endpoint pair comparisons attempted during retained ring traversal.
-    pub const fn attempted_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().attempted_endpoint_connection_count()
+    pub fn attempted_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().attempted_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as equal during ring traversal.
-    pub const fn exact_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().exact_endpoint_connection_count()
+    pub fn exact_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().exact_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons certified as disconnected during ring traversal.
-    pub const fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().disconnected_endpoint_connection_count()
+    pub fn disconnected_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().disconnected_endpoint_connection_count()
     }
 
     /// Returns endpoint pair comparisons unresolved during ring traversal.
-    pub const fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
-        self.workspace().unresolved_endpoint_connection_count()
+    pub fn unresolved_endpoint_connection_count(&self) -> Option<usize> {
+        self.facts().unresolved_endpoint_connection_count()
     }
 
     /// Returns source segments reversed while materializing retained ring traversal.
-    pub const fn reversed_source_segment_count(&self) -> Option<usize> {
-        self.workspace().reversed_source_segment_count()
+    pub fn reversed_source_segment_count(&self) -> Option<usize> {
+        self.facts().reversed_source_segment_count()
     }
 
     /// Returns arranged fragment count retained after exact splitting.
-    pub const fn arranged_segment_count(&self) -> Option<usize> {
-        self.workspace().arranged_segment_count()
+    pub fn arranged_segment_count(&self) -> Option<usize> {
+        self.facts().arranged_segment_count()
     }
 
     /// Returns arranged fragment primitive-family counts retained after exact splitting.
-    pub const fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().arranged_segment_kind_counts()
+    pub fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.facts().arranged_segment_kind_counts()
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
-    pub const fn arranged_fragment_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        self.workspace().arranged_fragment_cache()
+    pub fn arranged_fragment_cache(&self) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
+        self.facts().arranged_fragment_cache()
     }
 
     /// Returns arranged fragments grouped by primitive family.
-    pub const fn arranged_fragment_kind_bucket_cache(
+    pub fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        self.workspace().arranged_fragment_kind_bucket_cache()
+        self.facts().arranged_fragment_kind_bucket_cache()
     }
 
     /// Returns retained arranged fragment primitive-family bucket count.
-    pub const fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_bucket_count()
+    pub fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_kind_bucket_count()
     }
 
     /// Returns retained arranged fragment references grouped by primitive family.
-    pub const fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_ref_count()
+    pub fn arranged_fragment_kind_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_kind_ref_count()
     }
 
     /// Returns retained line arranged fragment references.
-    pub const fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_line_fragment_ref_count()
+    pub fn arranged_line_fragment_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_line_fragment_ref_count()
     }
 
     /// Returns retained arc arranged fragment references.
-    pub const fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_arc_fragment_ref_count()
+    pub fn arranged_arc_fragment_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_arc_fragment_ref_count()
     }
 
     /// Returns the largest retained arranged fragment primitive-family bucket size.
-    pub const fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_kind_max_bucket_size()
+    pub fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_fragment_kind_max_bucket_size()
     }
 
     /// Returns arranged fragment source records grouped by retained topology status.
-    pub const fn arranged_fragment_status_bucket_cache(
+    pub fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        self.workspace().arranged_fragment_status_bucket_cache()
+        self.facts().arranged_fragment_status_bucket_cache()
     }
 
     /// Returns retained arranged fragment topology-status bucket count.
-    pub const fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_bucket_count()
+    pub fn arranged_fragment_status_bucket_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_status_bucket_count()
     }
 
     /// Returns retained arranged fragment source references grouped by topology status.
-    pub const fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_source_ref_count()
+    pub fn arranged_fragment_status_source_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_status_source_ref_count()
     }
 
     /// Returns retained native-exact arranged fragment source references.
-    pub const fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_native_exact_ref_count()
+    pub fn arranged_fragment_native_exact_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_native_exact_ref_count()
     }
 
     /// Returns retained certified-approximation arranged fragment source references.
-    pub const fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_fragment_certified_approximation_ref_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_fragment_certified_approximation_ref_count()
     }
 
     /// Returns retained display/export-only arranged fragment source references.
-    pub const fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_display_or_export_ref_count()
+    pub fn arranged_fragment_display_or_export_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_display_or_export_ref_count()
     }
 
     /// Returns retained lossy-import arranged fragment source references.
-    pub const fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_imported_lossy_ref_count()
+    pub fn arranged_fragment_imported_lossy_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_imported_lossy_ref_count()
     }
 
     /// Returns retained unsupported arranged fragment source references.
-    pub const fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_unsupported_ref_count()
+    pub fn arranged_fragment_unsupported_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_unsupported_ref_count()
     }
 
     /// Returns retained unresolved arranged fragment source references.
-    pub const fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_unresolved_ref_count()
+    pub fn arranged_fragment_unresolved_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_unresolved_ref_count()
     }
 
     /// Returns the largest retained arranged fragment topology-status bucket size.
-    pub const fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_status_max_bucket_size()
+    pub fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
+        self.facts().arranged_fragment_status_max_bucket_size()
     }
 
     /// Returns arranged fragment source parameter ranges.
-    pub const fn arranged_fragment_source_range_cache(
+    pub fn arranged_fragment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        self.workspace().arranged_fragment_source_range_cache()
+        self.facts().arranged_fragment_source_range_cache()
     }
 
     /// Returns retained arranged fragment source range references.
-    pub const fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().arranged_fragment_source_range_ref_count()
+    pub fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_source_range_ref_count()
     }
 
     /// Returns retained arranged fragment source ranges covering complete source segments.
-    pub const fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .arranged_fragment_full_source_range_ref_count()
+    pub fn arranged_fragment_full_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().arranged_fragment_full_source_range_ref_count()
     }
 
     /// Returns retained arranged fragment source ranges covering proper source subranges.
-    pub const fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn arranged_fragment_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.facts()
             .arranged_fragment_partial_source_range_ref_count()
     }
 
     /// Returns the retained arranged-source provenance record count.
-    pub const fn arranged_source_report_count(&self) -> Option<usize> {
-        self.workspace().arranged_source_report_count()
+    pub fn arranged_source_report_count(&self) -> Option<usize> {
+        self.facts().arranged_source_report_count()
     }
 
     /// Returns retained arranged-source provenance records, when ring assembly was reached.
     pub fn arranged_source_reports(&self) -> Option<&[RegionLineSegmentArrangedSourceReport2]> {
-        self.workspace().arranged_source_reports()
+        self.facts().arranged_source_reports()
     }
 
     /// Returns the retained output-source provenance record count.
-    pub const fn source_report_count(&self) -> Option<usize> {
-        self.workspace().source_report_count()
+    pub fn source_report_count(&self) -> Option<usize> {
+        self.facts().source_report_count()
     }
 
     /// Returns retained output-source provenance records, when ring assembly was reached.
     pub fn source_reports(&self) -> Option<&[RegionLineSegmentRingSourceReport2]> {
-        self.workspace().source_reports()
+        self.facts().source_reports()
     }
 
     /// Returns output ring count retained by ring assembly, when available.
-    pub const fn output_ring_count(&self) -> Option<usize> {
-        self.workspace().output_ring_count()
+    pub fn output_ring_count(&self) -> Option<usize> {
+        self.facts().output_ring_count()
     }
 
     /// Returns output boundary segment count retained by ring assembly, when available.
-    pub const fn output_boundary_segment_count(&self) -> Option<usize> {
-        self.workspace().output_boundary_segment_count()
+    pub fn output_boundary_segment_count(&self) -> Option<usize> {
+        self.facts().output_boundary_segment_count()
     }
 
     /// Returns output boundary primitive-family counts retained by ring assembly.
-    pub const fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().output_boundary_segment_kind_counts()
+    pub fn output_boundary_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.facts().output_boundary_segment_kind_counts()
     }
 
     /// Returns final output contour count retained after boundary role assignment.
-    pub const fn output_contour_count(&self) -> Option<usize> {
-        self.workspace().output_contour_count()
+    pub fn output_contour_count(&self) -> Option<usize> {
+        self.facts().output_contour_count()
     }
 
     /// Returns final output boundary segment count retained after boundary role assignment.
-    pub const fn output_segment_count(&self) -> Option<usize> {
-        self.workspace().output_segment_count()
+    pub fn output_segment_count(&self) -> Option<usize> {
+        self.facts().output_segment_count()
     }
 
     /// Returns final output primitive-family counts after role assignment.
-    pub const fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
-        self.workspace().output_segment_kind_counts()
+    pub fn output_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
+        self.facts().output_segment_kind_counts()
     }
 
     /// Returns per-output-ring source provenance buckets.
-    pub const fn output_ring_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        self.workspace().output_ring_bucket_cache()
+    pub fn output_ring_bucket_cache(&self) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
+        self.facts().output_ring_bucket_cache()
     }
 
     /// Returns retained output ring provenance bucket count.
-    pub const fn output_ring_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_ring_bucket_count()
+    pub fn output_ring_bucket_count(&self) -> Option<usize> {
+        self.facts().output_ring_bucket_count()
     }
 
     /// Returns retained output ring segment references.
-    pub const fn output_ring_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_ring_segment_ref_count()
+    pub fn output_ring_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_ring_segment_ref_count()
     }
 
     /// Returns the largest retained output ring segment count.
-    pub const fn output_ring_max_segment_count(&self) -> Option<usize> {
-        self.workspace().output_ring_max_segment_count()
+    pub fn output_ring_max_segment_count(&self) -> Option<usize> {
+        self.facts().output_ring_max_segment_count()
     }
 
     /// Returns retained output segment buckets grouped by primitive family.
-    pub const fn output_segment_kind_bucket_cache(
+    pub fn output_segment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        self.workspace().output_segment_kind_bucket_cache()
+        self.facts().output_segment_kind_bucket_cache()
     }
 
     /// Returns retained output segment primitive-family bucket count.
-    pub const fn output_segment_kind_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_bucket_count()
+    pub fn output_segment_kind_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_kind_bucket_count()
     }
 
     /// Returns retained output segment references grouped by primitive family.
-    pub const fn output_segment_kind_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_ref_count()
+    pub fn output_segment_kind_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_kind_ref_count()
     }
 
     /// Returns retained line output segment references.
-    pub const fn output_line_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_line_segment_ref_count()
+    pub fn output_line_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_line_segment_ref_count()
     }
 
     /// Returns retained arc output segment references.
-    pub const fn output_arc_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_arc_segment_ref_count()
+    pub fn output_arc_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_arc_segment_ref_count()
     }
 
     /// Returns the largest retained output segment primitive-family bucket size.
-    pub const fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_kind_max_bucket_size()
+    pub fn output_segment_kind_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_kind_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by source segment.
-    pub const fn output_segment_source_bucket_cache(
+    pub fn output_segment_source_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        self.workspace().output_segment_source_bucket_cache()
+        self.facts().output_segment_source_bucket_cache()
     }
 
     /// Returns retained source-segment bucket count for output segments.
-    pub const fn output_segment_source_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_bucket_count()
+    pub fn output_segment_source_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_source_bucket_count()
     }
 
     /// Returns retained output segment references grouped by source segment.
-    pub const fn output_segment_source_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_ref_count()
+    pub fn output_segment_source_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_source_ref_count()
     }
 
     /// Returns the largest retained source-segment output bucket size.
-    pub const fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_source_max_bucket_size()
+    pub fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_source_max_bucket_size()
     }
 
     /// Returns retained output segment source parameter ranges.
-    pub const fn output_segment_source_range_cache(
+    pub fn output_segment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        self.workspace().output_segment_source_range_cache()
+        self.facts().output_segment_source_range_cache()
     }
 
     /// Returns retained output segment source-range references.
-    pub const fn output_segment_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_source_range_ref_count()
+    pub fn output_segment_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_source_range_ref_count()
     }
 
     /// Returns retained output segments covering a complete source range.
-    pub const fn output_full_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_full_source_range_ref_count()
+    pub fn output_full_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().output_full_source_range_ref_count()
     }
 
     /// Returns retained output segments covering a proper source subrange.
-    pub const fn output_partial_source_range_ref_count(&self) -> Option<usize> {
-        self.workspace().output_partial_source_range_ref_count()
+    pub fn output_partial_source_range_ref_count(&self) -> Option<usize> {
+        self.facts().output_partial_source_range_ref_count()
     }
 
     /// Returns retained output segment exact endpoint records.
-    pub const fn output_segment_endpoint_cache(
+    pub fn output_segment_endpoint_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        self.workspace().output_segment_endpoint_cache()
+        self.facts().output_segment_endpoint_cache()
     }
 
     /// Returns retained output segment endpoint records.
-    pub const fn output_segment_endpoint_record_count(&self) -> Option<usize> {
-        self.workspace().output_segment_endpoint_record_count()
+    pub fn output_segment_endpoint_record_count(&self) -> Option<usize> {
+        self.facts().output_segment_endpoint_record_count()
     }
 
     /// Returns retained exact output endpoint references.
-    pub const fn output_endpoint_ref_count(&self) -> Option<usize> {
-        self.workspace().output_endpoint_ref_count()
+    pub fn output_endpoint_ref_count(&self) -> Option<usize> {
+        self.facts().output_endpoint_ref_count()
     }
 
     /// Returns retained exact continuity records between adjacent output segments.
-    pub const fn output_ring_continuity_cache(
+    pub fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        self.workspace().output_ring_continuity_cache()
+        self.facts().output_ring_continuity_cache()
     }
 
     /// Returns output rings with retained continuity evidence.
-    pub const fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
-        self.workspace().output_ring_continuity_ring_ref_count()
+    pub fn output_ring_continuity_ring_ref_count(&self) -> Option<usize> {
+        self.facts().output_ring_continuity_ring_ref_count()
     }
 
     /// Returns retained output segment-to-next-segment continuity references.
-    pub const fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_ring_continuity_connection_ref_count()
+    pub fn output_ring_continuity_connection_ref_count(&self) -> Option<usize> {
+        self.facts().output_ring_continuity_connection_ref_count()
     }
 
     /// Returns the largest retained continuity connection count for one output ring.
-    pub const fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_ring_continuity_max_connection_count()
+    pub fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
+        self.facts().output_ring_continuity_max_connection_count()
     }
 
     /// Returns retained output segment buckets grouped by topology status.
-    pub const fn output_segment_status_bucket_cache(
+    pub fn output_segment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        self.workspace().output_segment_status_bucket_cache()
+        self.facts().output_segment_status_bucket_cache()
     }
 
     /// Returns retained topology-status bucket count for output segments.
-    pub const fn output_segment_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_status_bucket_count()
+    pub fn output_segment_status_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_status_bucket_count()
     }
 
     /// Returns retained output segment references grouped by topology status.
-    pub const fn output_segment_status_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_status_ref_count()
+    pub fn output_segment_status_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_status_ref_count()
     }
 
     /// Returns retained native-exact output segment references.
-    pub const fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_native_exact_segment_ref_count()
+    pub fn output_native_exact_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_native_exact_segment_ref_count()
     }
 
     /// Returns retained certified-approximation output segment references.
-    pub const fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn output_certified_approximation_segment_ref_count(&self) -> Option<usize> {
+        self.facts()
             .output_certified_approximation_segment_ref_count()
     }
 
     /// Returns retained display/export-only output segment references.
-    pub const fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .output_display_or_export_segment_ref_count()
+    pub fn output_display_or_export_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_display_or_export_segment_ref_count()
     }
 
     /// Returns retained lossy-import output segment references.
-    pub const fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_imported_lossy_segment_ref_count()
+    pub fn output_imported_lossy_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_imported_lossy_segment_ref_count()
     }
 
     /// Returns retained unsupported output segment references.
-    pub const fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_unsupported_segment_ref_count()
+    pub fn output_unsupported_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_unsupported_segment_ref_count()
     }
 
     /// Returns retained unresolved output segment references.
-    pub const fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_unresolved_segment_ref_count()
+    pub fn output_unresolved_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_unresolved_segment_ref_count()
     }
 
     /// Returns the largest retained topology-status output bucket size.
-    pub const fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_status_max_bucket_size()
+    pub fn output_segment_status_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_status_max_bucket_size()
     }
 
     /// Returns retained output segment buckets grouped by traversal direction.
-    pub const fn output_segment_direction_bucket_cache(
+    pub fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        self.workspace().output_segment_direction_bucket_cache()
+        self.facts().output_segment_direction_bucket_cache()
     }
 
     /// Returns retained traversal-direction bucket count for output segments.
-    pub const fn output_segment_direction_bucket_count(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_bucket_count()
+    pub fn output_segment_direction_bucket_count(&self) -> Option<usize> {
+        self.facts().output_segment_direction_bucket_count()
     }
 
     /// Returns retained output segment references grouped by traversal direction.
-    pub const fn output_segment_direction_ref_count(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_ref_count()
+    pub fn output_segment_direction_ref_count(&self) -> Option<usize> {
+        self.facts().output_segment_direction_ref_count()
     }
 
     /// Returns retained forward output segment references.
-    pub const fn output_forward_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_forward_segment_ref_count()
+    pub fn output_forward_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_forward_segment_ref_count()
     }
 
     /// Returns retained reversed output segment references.
-    pub const fn output_reversed_segment_ref_count(&self) -> Option<usize> {
-        self.workspace().output_reversed_segment_ref_count()
+    pub fn output_reversed_segment_ref_count(&self) -> Option<usize> {
+        self.facts().output_reversed_segment_ref_count()
     }
 
     /// Returns the largest retained traversal-direction output bucket size.
-    pub const fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().output_segment_direction_max_bucket_size()
+    pub fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
+        self.facts().output_segment_direction_max_bucket_size()
     }
 
     /// Returns retained final boundary output summary when role assignment materialized.
-    pub const fn boundary_output_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
-        self.workspace().boundary_output_cache()
+    pub fn boundary_output_cache(&self) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
+        self.facts().boundary_output_cache()
     }
 
     /// Returns final boundary output counts grouped by material/hole role.
-    pub const fn boundary_output_role_bucket_cache(
+    pub fn boundary_output_role_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
-        self.workspace().boundary_output_role_bucket_cache()
+        self.facts().boundary_output_role_bucket_cache()
     }
 
     /// Returns retained final boundary role bucket count.
-    pub const fn boundary_output_role_bucket_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_bucket_count()
+    pub fn boundary_output_role_bucket_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_bucket_count()
     }
 
     /// Returns retained final boundary output contour references grouped by role.
-    pub const fn boundary_output_role_contour_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_contour_count()
+    pub fn boundary_output_role_contour_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_contour_count()
     }
 
     /// Returns retained final boundary output segment references grouped by role.
-    pub const fn boundary_output_role_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_segment_count()
+    pub fn boundary_output_role_segment_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_segment_count()
     }
 
     /// Returns the largest retained output segment count for one boundary role.
-    pub const fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_output_role_max_segment_count()
+    pub fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
+        self.facts().boundary_output_role_max_segment_count()
     }
 
     /// Returns retained material/hole role buckets when role assignment was reached.
-    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
-        self.workspace().role_cache()
+    pub fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
+        self.facts().role_cache()
     }
 
     /// Returns output role assignment buckets grouped by topology status.
-    pub const fn role_status_bucket_cache(
+    pub fn role_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        self.workspace().role_status_bucket_cache()
+        self.facts().role_status_bucket_cache()
     }
 
     /// Returns retained output role topology-status bucket count.
-    pub const fn role_status_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_status_bucket_count()
+    pub fn role_status_bucket_count(&self) -> Option<usize> {
+        self.facts().role_status_bucket_count()
     }
 
     /// Returns retained output role assignment references grouped by topology status.
-    pub const fn role_status_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_status_assignment_ref_count()
+    pub fn role_status_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_status_assignment_ref_count()
     }
 
     /// Returns retained native-exact output role assignment references.
-    pub const fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_native_exact_assignment_ref_count()
+    pub fn role_native_exact_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_native_exact_assignment_ref_count()
     }
 
     /// Returns retained certified-approximation output role assignment references.
-    pub const fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn role_certified_approximation_assignment_ref_count(&self) -> Option<usize> {
+        self.facts()
             .role_certified_approximation_assignment_ref_count()
     }
 
     /// Returns retained display/export-only output role assignment references.
-    pub const fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace()
-            .role_display_or_export_assignment_ref_count()
+    pub fn role_display_or_export_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_display_or_export_assignment_ref_count()
     }
 
     /// Returns retained lossy-import output role assignment references.
-    pub const fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_imported_lossy_assignment_ref_count()
+    pub fn role_imported_lossy_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_imported_lossy_assignment_ref_count()
     }
 
     /// Returns retained unsupported output role assignment references.
-    pub const fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_unsupported_assignment_ref_count()
+    pub fn role_unsupported_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_unsupported_assignment_ref_count()
     }
 
     /// Returns retained unresolved output role assignment references.
-    pub const fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_unresolved_assignment_ref_count()
+    pub fn role_unresolved_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_unresolved_assignment_ref_count()
     }
 
     /// Returns the largest retained output role topology-status bucket size.
-    pub const fn role_status_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_status_max_bucket_size()
+    pub fn role_status_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_status_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by source contour identity.
-    pub const fn role_source_contour_bucket_cache(
+    pub fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        self.workspace().role_source_contour_bucket_cache()
+        self.facts().role_source_contour_bucket_cache()
     }
 
     /// Returns retained output role source-contour bucket count.
-    pub const fn role_source_contour_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_source_contour_bucket_count()
+    pub fn role_source_contour_bucket_count(&self) -> Option<usize> {
+        self.facts().role_source_contour_bucket_count()
     }
 
     /// Returns retained output role assignment references grouped by source contour.
-    pub const fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_source_contour_assignment_ref_count()
+    pub fn role_source_contour_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_source_contour_assignment_ref_count()
     }
 
     /// Returns the largest retained source-contour output role bucket size.
-    pub const fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_source_contour_max_bucket_size()
+    pub fn role_source_contour_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_source_contour_max_bucket_size()
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub const fn role_nesting_depth_bucket_cache(
+    pub fn role_nesting_depth_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        self.workspace().role_nesting_depth_bucket_cache()
+        self.facts().role_nesting_depth_bucket_cache()
     }
 
     /// Returns retained output role nesting-depth bucket count.
-    pub const fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_bucket_count()
+    pub fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
+        self.facts().role_nesting_depth_bucket_count()
     }
 
     /// Returns retained output role assignment references grouped by nesting depth.
-    pub const fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_assignment_ref_count()
+    pub fn role_nesting_depth_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_nesting_depth_assignment_ref_count()
     }
 
     /// Returns the largest retained nesting-depth output role bucket size.
-    pub const fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_nesting_depth_max_bucket_size()
+    pub fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_nesting_depth_max_bucket_size()
     }
 
     /// Returns output role containment evidence grouped by containing source contour.
-    pub const fn role_containment_bucket_cache(
+    pub fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        self.workspace().role_containment_bucket_cache()
+        self.facts().role_containment_bucket_cache()
     }
 
     /// Returns retained output role containing-contour bucket count.
-    pub const fn role_containment_bucket_count(&self) -> Option<usize> {
-        self.workspace().role_containment_bucket_count()
+    pub fn role_containment_bucket_count(&self) -> Option<usize> {
+        self.facts().role_containment_bucket_count()
     }
 
     /// Returns retained output role containment references.
-    pub const fn role_containment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_containment_ref_count()
+    pub fn role_containment_ref_count(&self) -> Option<usize> {
+        self.facts().role_containment_ref_count()
     }
 
     /// Returns retained output role assignments with no containing contour.
-    pub const fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
-        self.workspace().role_uncontained_assignment_ref_count()
+    pub fn role_uncontained_assignment_ref_count(&self) -> Option<usize> {
+        self.facts().role_uncontained_assignment_ref_count()
     }
 
     /// Returns the largest retained containing-contour bucket size.
-    pub const fn role_containment_max_bucket_size(&self) -> Option<usize> {
-        self.workspace().role_containment_max_bucket_size()
+    pub fn role_containment_max_bucket_size(&self) -> Option<usize> {
+        self.facts().role_containment_max_bucket_size()
     }
 
     /// Returns material and hole role buckets in stable order.
     pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.workspace().role_buckets()
+        self.facts().role_buckets()
     }
 
     /// Returns material contour count after output role assignment.
-    pub const fn material_contour_count(&self) -> Option<usize> {
-        self.workspace().material_contour_count()
+    pub fn material_contour_count(&self) -> Option<usize> {
+        self.facts().material_contour_count()
     }
 
     /// Returns hole contour count after output role assignment.
-    pub const fn hole_contour_count(&self) -> Option<usize> {
-        self.workspace().hole_contour_count()
+    pub fn hole_contour_count(&self) -> Option<usize> {
+        self.facts().hole_contour_count()
     }
 
     /// Returns material boundary segment count after output role assignment.
-    pub const fn material_segment_count(&self) -> Option<usize> {
-        self.workspace().material_segment_count()
+    pub fn material_segment_count(&self) -> Option<usize> {
+        self.facts().material_segment_count()
     }
 
     /// Returns hole boundary segment count after output role assignment.
-    pub const fn hole_segment_count(&self) -> Option<usize> {
-        self.workspace().hole_segment_count()
+    pub fn hole_segment_count(&self) -> Option<usize> {
+        self.facts().hole_segment_count()
     }
 
     /// Returns retained output role report count when role assignment was reached.
-    pub const fn role_report_count(&self) -> Option<usize> {
-        self.workspace().role_report_count()
+    pub fn role_report_count(&self) -> Option<usize> {
+        self.facts().role_report_count()
     }
 
     /// Returns retained output role reports when role assignment was reached.
     pub fn role_reports(&self) -> Option<&[RegionBoundaryContourRoleReport2]> {
-        self.workspace().role_reports()
+        self.facts().role_reports()
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
-    pub const fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
-        self.workspace().boundary_build_report()
+    pub fn boundary_build_report(&self) -> Option<&RegionBoundaryContourBuildReport2> {
+        self.facts().boundary_build_report()
     }
 
     /// Returns final boundary-role assignment stage, if reached.
-    pub const fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
-        self.workspace().boundary_build_stage()
+    pub fn boundary_build_stage(&self) -> Option<RegionBoundaryContourBuildStage2> {
+        self.facts().boundary_build_stage()
     }
 
     /// Returns final boundary-role assignment predicate path, if reached.
-    pub const fn boundary_build_predicate_path(
+    pub fn boundary_build_predicate_path(
         &self,
     ) -> Option<RegionBoundaryContourBuildPredicatePath2> {
-        self.workspace().boundary_build_predicate_path()
+        self.facts().boundary_build_predicate_path()
     }
 
     /// Returns final boundary-role assignment retained status, if reached.
-    pub const fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
-        self.workspace().boundary_build_status()
+    pub fn boundary_build_status(&self) -> Option<RetainedTopologyStatus> {
+        self.facts().boundary_build_status()
     }
 
     /// Returns final boundary-role assignment blocker, if present.
-    pub const fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
-        self.workspace().boundary_build_blocker()
+    pub fn boundary_build_blocker(&self) -> Option<UncertaintyReason> {
+        self.facts().boundary_build_blocker()
     }
 
     /// Returns source contour count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_contour_count(&self) -> Option<usize> {
-        self.workspace().boundary_build_source_contour_count()
+    pub fn boundary_build_source_contour_count(&self) -> Option<usize> {
+        self.facts().boundary_build_source_contour_count()
     }
 
     /// Returns source boundary segment count from final boundary-role assignment, if reached.
-    pub const fn boundary_build_source_segment_count(&self) -> Option<usize> {
-        self.workspace().boundary_build_source_segment_count()
+    pub fn boundary_build_source_segment_count(&self) -> Option<usize> {
+        self.facts().boundary_build_source_segment_count()
     }
 
     /// Returns contour-pair validation schedule size from final role assignment, if reached.
-    pub const fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn boundary_build_validation_candidate_pair_count(&self) -> Option<usize> {
+        self.facts()
             .boundary_build_validation_candidate_pair_count()
     }
 
     /// Returns contour-pair validation test count from final role assignment, if reached.
-    pub const fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_validation_tested_pair_count()
+    pub fn boundary_build_validation_tested_pair_count(&self) -> Option<usize> {
+        self.facts().boundary_build_validation_tested_pair_count()
     }
 
     /// Returns exact validation intersection event count from final role assignment, if reached.
-    pub const fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
-        self.workspace()
+    pub fn boundary_build_validation_intersection_event_count(&self) -> Option<usize> {
+        self.facts()
             .boundary_build_validation_intersection_event_count()
     }
 
     /// Returns containment classification count from final role assignment, if reached.
-    pub const fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_nesting_classification_count()
+    pub fn boundary_build_nesting_classification_count(&self) -> Option<usize> {
+        self.facts().boundary_build_nesting_classification_count()
     }
 
     /// Returns first blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_blocker_first_contour_index()
+    pub fn boundary_build_blocker_first_contour_index(&self) -> Option<usize> {
+        self.facts().boundary_build_blocker_first_contour_index()
     }
 
     /// Returns second blocking contour index from final role assignment, if present.
-    pub const fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
-        self.workspace()
-            .boundary_build_blocker_second_contour_index()
+    pub fn boundary_build_blocker_second_contour_index(&self) -> Option<usize> {
+        self.facts().boundary_build_blocker_second_contour_index()
     }
 
     /// Returns whether final output evaluation facts were retained.
-    pub const fn evaluated_output(&self) -> bool {
-        self.workspace().evaluated_output()
+    pub fn evaluated_output(&self) -> bool {
+        self.facts().evaluated_output()
     }
 
     /// Returns whether the retained evaluation materialized a region, when evaluated.
-    pub const fn materialized_region(&self) -> Option<bool> {
-        self.workspace().materialized_region()
+    pub fn materialized_region(&self) -> Option<bool> {
+        self.facts().materialized_region()
     }
 
     /// Returns the final retained build stage, when evaluated.
-    pub const fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
-        self.workspace().stage()
+    pub fn stage(&self) -> Option<RegionLineSegmentRegionBuildStage2> {
+        self.facts().stage()
     }
 
     /// Returns the final retained topology status, when evaluated.
-    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
-        self.workspace().status()
+    pub fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.facts().status()
     }
 
     /// Returns the final retained blocker, when the evaluated arrangement blocked.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.workspace().blocker()
+    pub fn blocker(&self) -> Option<UncertaintyReason> {
+        self.facts().blocker()
     }
 }
 
@@ -13343,48 +11018,9 @@ impl RegionLineSegmentRegionBuildResult2 {
         self.region.as_ref()
     }
 
-    /// Consumes this result and returns the materialized region, if any.
-    pub fn into_region(self) -> Option<Region2> {
-        self.region
-    }
-
-    /// Consumes this result and returns the retained line-region construction report.
-    pub fn into_report(self) -> RegionLineSegmentRegionBuildReport2 {
-        self.report
-    }
-
-    /// Consumes this result and returns the materialized region with its report.
-    pub fn into_parts(self) -> (Option<Region2>, RegionLineSegmentRegionBuildReport2) {
-        (self.region, self.report)
-    }
-
     /// Returns the retained line-region construction report.
     pub const fn report(&self) -> &RegionLineSegmentRegionBuildReport2 {
         &self.report
-    }
-
-    /// Returns the materialized region as a convenience classification.
-    pub fn region_classification(&self) -> Classification<&Region2> {
-        match self.region() {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(
-                self.report()
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
-        }
-    }
-
-    /// Consumes this result and returns the materialized region as a convenience classification.
-    pub fn into_region_classification(self) -> Classification<Region2> {
-        let blocker = self
-            .report()
-            .blocker()
-            .unwrap_or(UncertaintyReason::Unsupported);
-        match self.into_region() {
-            Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(blocker),
-        }
     }
 }
 
@@ -15271,10 +12907,10 @@ fn contour_nesting_depths(
             counts.tested_pair_count += 1;
             let intersections = left.intersect_contour(right, policy)?;
             counts.intersection_event_count += intersections.len();
-            if !intersections.is_empty() {
+            if let Some(reason) = contour_intersection_blocker(&intersections) {
                 return Ok(BoundaryContourNestingOutcome::Blocked {
                     blocker: BoundaryContourNestingBlocker {
-                        reason: crate::UncertaintyReason::Boundary,
+                        reason,
                         first_contour_index: left_index,
                         second_contour_index: left_index + 1 + right_offset,
                     },
@@ -15294,55 +12930,159 @@ fn contour_nesting_depths(
         // problem for arbitrary polygons," Computational Geometry 20(3),
         // 131-144, 2001. If that sample lies on another contour boundary, we
         // return uncertainty instead of inventing a role.
-        let sample = candidate
+        let first_sample = candidate
             .segments()
             .first()
             .ok_or(CurveError::EmptyCurveString)?
-            .start();
-        let mut containing_contour_indices = Vec::new();
-
-        for (container_index, container) in contours.iter().enumerate() {
-            if candidate_index == container_index {
-                continue;
-            }
-
-            counts.nesting_classification_count += 1;
-            match container.classify_point(sample, policy) {
-                Classification::Decided(ContourPointLocation::Inside) => {
-                    containing_contour_indices.push(container_index);
-                }
-                Classification::Decided(ContourPointLocation::Outside) => {}
-                Classification::Decided(ContourPointLocation::Boundary) => {
-                    return Ok(BoundaryContourNestingOutcome::Blocked {
-                        blocker: BoundaryContourNestingBlocker {
-                            reason: crate::UncertaintyReason::Boundary,
-                            first_contour_index: candidate_index,
-                            second_contour_index: container_index,
-                        },
-                        counts,
-                    });
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(BoundaryContourNestingOutcome::Blocked {
-                        blocker: BoundaryContourNestingBlocker {
-                            reason,
-                            first_contour_index: candidate_index,
-                            second_contour_index: container_index,
-                        },
-                        counts,
-                    });
+            .start()
+            .clone();
+        let fractions = [
+            (Real::one() / Real::from(2_i8))?,
+            (Real::one() / Real::from(3_i8))?,
+            (Real::from(2_i8) / Real::from(3_i8))?,
+        ];
+        let mut samples = Vec::with_capacity(1 + candidate.segments().len() * fractions.len());
+        samples.push(first_sample);
+        for segment in candidate.segments() {
+            for fraction in &fractions {
+                if let Classification::Decided(sample) = segment.point_at(fraction, policy)? {
+                    samples.push(sample);
                 }
             }
         }
 
-        entries.push(BoundaryContourNestingEntry {
-            sample_point: sample.clone(),
-            containing_contour_indices,
-        });
+        let mut last_blocker = None;
+        let mut decided_entry = None;
+        'sample: for sample in samples {
+            let mut containing_contour_indices = Vec::new();
+            for (container_index, container) in contours.iter().enumerate() {
+                if candidate_index == container_index {
+                    continue;
+                }
+
+                counts.nesting_classification_count += 1;
+                match container.classify_point(&sample, policy) {
+                    Classification::Decided(ContourPointLocation::Inside) => {
+                        containing_contour_indices.push(container_index);
+                    }
+                    Classification::Decided(ContourPointLocation::Outside) => {}
+                    Classification::Decided(ContourPointLocation::Boundary) => {
+                        return Ok(BoundaryContourNestingOutcome::Blocked {
+                            blocker: BoundaryContourNestingBlocker {
+                                reason: crate::UncertaintyReason::Boundary,
+                                first_contour_index: candidate_index,
+                                second_contour_index: container_index,
+                            },
+                            counts,
+                        });
+                    }
+                    Classification::Uncertain(reason) => {
+                        last_blocker = Some((reason, container_index));
+                        continue 'sample;
+                    }
+                }
+            }
+            decided_entry = Some(BoundaryContourNestingEntry {
+                sample_point: sample,
+                containing_contour_indices,
+            });
+            break;
+        }
+
+        let Some(entry) = decided_entry else {
+            let (reason, container_index) = last_blocker.unwrap_or((
+                crate::UncertaintyReason::Unsupported,
+                usize::from(candidate_index == 0),
+            ));
+            return Ok(BoundaryContourNestingOutcome::Blocked {
+                blocker: BoundaryContourNestingBlocker {
+                    reason,
+                    first_contour_index: candidate_index,
+                    second_contour_index: container_index,
+                },
+                counts,
+            });
+        };
+        entries.push(entry);
     }
 
     Ok(BoundaryContourNestingOutcome::Decided {
         nesting: BoundaryContourNestingDepths { entries },
         counts,
     })
+}
+
+fn contour_intersection_blocker(
+    intersections: &crate::ContourIntersectionSet,
+) -> Option<UncertaintyReason> {
+    let mut uncertainty = None;
+    for event in intersections.events() {
+        match event {
+            crate::ContourIntersection::Point(_) | crate::ContourIntersection::Overlap(_) => {
+                return Some(UncertaintyReason::Boundary);
+            }
+            crate::ContourIntersection::Uncertain(event) => {
+                uncertainty.get_or_insert(event.reason);
+            }
+        }
+    }
+    uncertainty
+}
+
+#[cfg(test)]
+mod tests {
+    use super::contour_intersection_blocker;
+    use crate::{
+        ContourIntersection, ContourIntersectionSet, ContourPointIntersection,
+        ContourUncertainIntersection, IntersectionKind, Point2, SegmentKind, UncertaintyReason,
+    };
+    use hyperreal::Real;
+
+    #[test]
+    fn contour_nesting_preserves_uncertain_intersection_reason() {
+        let intersections = ContourIntersectionSet::new(vec![ContourIntersection::Uncertain(
+            ContourUncertainIntersection {
+                a_segment_index: 2,
+                b_segment_index: 4,
+                a_segment_kind: SegmentKind::Arc,
+                b_segment_kind: SegmentKind::Line,
+                reason: UncertaintyReason::RealSign,
+            },
+        )])
+        .unwrap();
+
+        assert_eq!(
+            contour_intersection_blocker(&intersections),
+            Some(UncertaintyReason::RealSign)
+        );
+    }
+
+    #[test]
+    fn contour_nesting_prefers_decided_contact_over_uncertainty() {
+        let intersections = ContourIntersectionSet::new(vec![
+            ContourIntersection::Uncertain(ContourUncertainIntersection {
+                a_segment_index: 0,
+                b_segment_index: 0,
+                a_segment_kind: SegmentKind::Line,
+                b_segment_kind: SegmentKind::Line,
+                reason: UncertaintyReason::Ordering,
+            }),
+            ContourIntersection::Point(ContourPointIntersection {
+                a_segment_index: 1,
+                b_segment_index: 1,
+                a_segment_kind: SegmentKind::Line,
+                b_segment_kind: SegmentKind::Line,
+                point: Point2::new(Real::zero(), Real::zero()),
+                a_param: Real::zero(),
+                b_param: Real::zero(),
+                kind: IntersectionKind::Endpoint,
+            }),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            contour_intersection_blocker(&intersections),
+            Some(UncertaintyReason::Boundary)
+        );
+    }
 }

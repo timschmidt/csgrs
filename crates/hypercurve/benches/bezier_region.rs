@@ -3,11 +3,12 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
-    BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierRegion2, BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2,
-    Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    Real,
+    BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
+    BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
+    Classification, Curve2, CurveError, CurvePath2, CurvePolicy, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveResult, LineSeg2, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -46,8 +47,42 @@ fn line_fragment(
     )
 }
 
-fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveResult<BezierRetainedBoundaryLoop2> {
-    BezierRetainedBoundaryLoop2::new(fragments)
+fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveResult<CurveRegionBoundaryLoop2> {
+    CurveRegionBoundaryLoop2::new(fragments)
+}
+
+fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurveRegion2> {
+    let points = [
+        p(min_x, min_y),
+        p(max_x, min_y),
+        p(max_x, max_y),
+        p(min_x, max_y),
+    ];
+    let path = CurvePath2::try_new(
+        (0..points.len())
+            .map(|index| {
+                LineSeg2::try_new(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+                .map(Curve2::from)
+            })
+            .collect::<CurveResult<Vec<_>>>()?,
+    )
+    .map_err(|error| match error {
+        hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
+        hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+            "square benchmark path blocked: {:?}",
+            blocker.reason()
+        )),
+    })?;
+    CurveRegion2::try_from_boundary_paths(&[path]).map_err(|error| match error {
+        hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
+        hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+            "square benchmark region blocked: {:?}",
+            blocker.reason()
+        )),
+    })
 }
 
 fn algebraic_polynomial_parameter(
@@ -96,6 +131,7 @@ fn retained_algebraic_line_fragment(
 ) -> CurveResult<BezierSplitFragment2> {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
     Ok(BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
         source_curve: None,
@@ -106,6 +142,78 @@ fn retained_algebraic_line_fragment(
 
 fn main() -> CurveResult<()> {
     let policy = CurvePolicy::certified();
+    let first_region = square_region(0, 0, 4, 4)?;
+    let second_region = square_region(2, 0, 6, 4)?;
+    let region_boolean_iterations = 1_000_u32;
+    let started = Instant::now();
+    let mut region_boolean_checksum = 0_usize;
+    for _ in 0..region_boolean_iterations {
+        let prepared = first_region
+            .try_prepare_boolean(&second_region, &policy)
+            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+        let region = prepared
+            .boolean_region(BooleanOp::Union)
+            .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+        region_boolean_checksum ^= black_box(region.boundary_loops().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_boolean_prepare_and_union: {region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={region_boolean_checksum}",
+        elapsed / region_boolean_iterations
+    );
+
+    let prepared_region_boolean = first_region
+        .try_prepare_boolean(&second_region, &policy)
+        .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+    prepared_region_boolean
+        .boolean_region_view(BooleanOp::Union)
+        .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?;
+    let started = Instant::now();
+    let mut cached_region_boolean_checksum = 0_usize;
+    let cached_region_boolean_iterations = 2_000_u32;
+    for _ in 0..cached_region_boolean_iterations {
+        cached_region_boolean_checksum ^= black_box(
+            prepared_region_boolean
+                .boolean_region_view(BooleanOp::Union)
+                .map_err(|error| CurveError::Topology(format!("region benchmark: {error}")))?
+                .boundary_loops()
+                .len(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_boolean_cached_union: {cached_region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={cached_region_boolean_checksum}",
+        elapsed / cached_region_boolean_iterations
+    );
+
+    let algebraic_ray_loop = BezierBoundaryLoop2::new(vec![
+        BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 2), r(0)),
+            p(1, 1),
+        )),
+        BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            p(1, 1),
+            Point2::new(q(1, 2), q(1, 2)),
+            p(0, 0),
+        )),
+    ])?;
+    let algebraic_ray_query = Point2::new(q(1, 2), q(3, 8));
+    let classification_iterations = 2_000_u32;
+    let started = Instant::now();
+    let mut classification_checksum = 0_usize;
+    for _ in 0..classification_iterations {
+        let location =
+            decided(algebraic_ray_loop.classify_point(black_box(&algebraic_ray_query), &policy)?);
+        classification_checksum =
+            classification_checksum.wrapping_add(black_box(location as usize));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_region_algebraic_ray_classification: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={classification_checksum}",
+        elapsed / classification_iterations
+    );
+
     let half = decided(BezierParameter2::exact(q(1, 2), &policy)?);
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
@@ -131,10 +239,31 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
+    let classified_region = decided(CurveRegion2::from_retained_arrangement_traversal(
+        &graph,
+        &retained_traversal,
+    ));
+    let classified_point = p(2, 0);
+    decided(classified_region.classify_point(&classified_point, &policy)?);
+    let started = Instant::now();
+    let mut curved_classification_checksum = 0_usize;
+    for _ in 0..classification_iterations {
+        let location = decided(
+            classified_region.classify_point(black_box(&classified_point), black_box(&policy))?,
+        );
+        curved_classification_checksum =
+            curved_classification_checksum.wrapping_add(black_box(location as usize));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_cached_classification: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={curved_classification_checksum}",
+        elapsed / classification_iterations
+    );
+
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
+        let region = decided(CurveRegion2::from_retained_arrangement_traversal(
             &graph,
             &retained_traversal,
         ));
@@ -174,7 +303,40 @@ fn main() -> CurveResult<()> {
         )?],
         &policy,
     )?);
-    let algebraic_loop = retained_loop(algebraic_split.fragments().to_vec())?;
+    let mut algebraic_loop_fragments = algebraic_split.fragments().to_vec();
+    algebraic_loop_fragments.extend(
+        algebraic_split
+            .fragments()
+            .iter()
+            .rev()
+            .map(BezierSplitFragment2::reversed)
+            .collect::<CurveResult<Vec<_>>>()?,
+    );
+    let algebraic_loop = retained_loop(algebraic_loop_fragments)?;
+    let mut algebraic_region_fragments = algebraic_split.fragments().to_vec();
+    algebraic_region_fragments.push(BezierSplitFragment2::Materialized {
+        start: BezierParameter2::Exact(Real::zero()),
+        end: BezierParameter2::Exact(Real::one()),
+        curve: BezierSubcurve2::Quadratic(lower),
+    });
+    let algebraic_region = CurveRegion2::new(vec![retained_loop(algebraic_region_fragments)?])?;
+    let algebraic_region_query = p(2, 0);
+    decided(algebraic_region.classify_point(&algebraic_region_query, &policy)?);
+    let started = Instant::now();
+    let mut algebraic_classification_checksum = 0_usize;
+    for _ in 0..classification_iterations {
+        let location = decided(
+            algebraic_region
+                .classify_point(black_box(&algebraic_region_query), black_box(&policy))?,
+        );
+        algebraic_classification_checksum =
+            algebraic_classification_checksum.wrapping_add(black_box(location as usize));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_cached_algebraic_classification: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_classification_checksum}",
+        elapsed / classification_iterations
+    );
     let started = Instant::now();
     let mut algebraic_envelope_checksum = 0_usize;
     for _ in 0..iterations {
@@ -201,7 +363,11 @@ fn main() -> CurveResult<()> {
         )?],
         &policy,
     )?);
-    let exact_endpoint_loop = retained_loop(vec![exact_endpoint_split.fragments()[0].clone()])?;
+    let exact_endpoint_fragment = exact_endpoint_split.fragments()[0].clone();
+    let exact_endpoint_loop = retained_loop(vec![
+        exact_endpoint_fragment.clone(),
+        exact_endpoint_fragment.reversed()?,
+    ])?;
     let started = Instant::now();
     let mut algebraic_exact_endpoint_checksum = 0_usize;
     for _ in 0..iterations {
@@ -218,7 +384,7 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let algebraic_line_region = BezierRetainedRegion2::new(vec![
+    let algebraic_line_region = CurveRegion2::new(vec![
         retained_loop(vec![
             retained_algebraic_line_fragment(p(-3, -3), p(3, -3), &policy)?,
             retained_algebraic_line_fragment(p(3, -3), p(3, 3), &policy)?,
@@ -269,9 +435,9 @@ fn main() -> CurveResult<()> {
             &overlap_traversal,
         ));
         overlap_checksum ^= black_box(format!("{:?}", native.signed_area()?).len());
-        let retained = decided(
-            BezierRetainedRegion2::from_retained_linear_overlap_traversal(&overlap_traversal),
-        );
+        let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
+            &overlap_traversal,
+        ));
         overlap_checksum ^= black_box(format!("{:?}", retained.signed_area()?).len());
         if let Classification::Decided(report) = retained.line_image_role_report(&policy)? {
             overlap_checksum ^= black_box(usize::from(

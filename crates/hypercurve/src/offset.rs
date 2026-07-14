@@ -183,9 +183,10 @@ impl LineSeg2 {
         let offset_x = &normal_x * &distance;
         let offset_y = &normal_y * &distance;
 
-        Self::try_new(
+        self.offset_between(
             self.start().translated(offset_x.clone(), offset_y.clone()),
             self.end().translated(offset_x, offset_y),
+            distance,
         )
     }
 }
@@ -552,7 +553,8 @@ impl Contour2 {
             Classification::Decided(joined) => joined,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Ok(checked_joined_contour(joined, self.fill_rule()))
+        Ok(checked_joined_contour(joined, self.fill_rule())
+            .map(|offset| offset.retain_left_offset_from(self, distance, policy)))
     }
 
     /// Returns a raw joined left offset, rejecting self-contacting output.
@@ -1915,7 +1917,7 @@ fn adjust_offset_segment(
                 .cloned()
                 .unwrap_or_else(|| line.start().clone());
             let end = end_override.cloned().unwrap_or_else(|| line.end().clone());
-            match LineSeg2::try_new(start, end) {
+            match line.fragment_between(start, end) {
                 Ok(line) => Ok(Classification::Decided(Segment2::Line(line))),
                 Err(CurveError::ZeroLengthLine) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))

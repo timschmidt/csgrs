@@ -29,9 +29,9 @@ use hypersolve::AlgebraicRootRepresentation;
 
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierRetainedBoundaryLoop2,
-    BezierRetainedRegion2, BezierSplitFragment2, BezierSubcurve2, Classification, CurvePolicy,
-    Point2, UncertaintyReason,
+    Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, Point2,
+    UncertaintyReason,
 };
 
 /// Exact curve-interior envelope for retained Bezier/conic carriers.
@@ -66,10 +66,7 @@ impl BezierRetainedCurveEnvelope2 {
     /// Empty regions are unsupported because there is no finite neutral
     /// envelope. A retained algebraic endpoint-image fragment must carry its
     /// source curve; endpoint-only evidence is unsupported.
-    pub fn from_region(
-        region: &BezierRetainedRegion2,
-        policy: &CurvePolicy,
-    ) -> Classification<Self> {
+    pub fn from_region(region: &CurveRegion2, policy: &CurvePolicy) -> Classification<Self> {
         let mut accumulator = CurveEnvelopeAccumulator::default();
         for boundary_loop in region.boundary_loops() {
             match accumulator.include_loop(boundary_loop, policy) {
@@ -82,7 +79,7 @@ impl BezierRetainedCurveEnvelope2 {
 
     /// Constructs a curve-interior envelope for one retained boundary loop.
     pub fn from_loop(
-        boundary_loop: &BezierRetainedBoundaryLoop2,
+        boundary_loop: &CurveRegionBoundaryLoop2,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
         let mut accumulator = CurveEnvelopeAccumulator::default();
@@ -139,10 +136,7 @@ impl BezierRetainedEndpointEnvelope2 {
     /// envelope. Retained algebraic fragments must provide endpoint point
     /// images for every endpoint they contribute; otherwise the envelope is
     /// explicit boundary uncertainty rather than a partial box.
-    pub fn from_region(
-        region: &BezierRetainedRegion2,
-        policy: &CurvePolicy,
-    ) -> Classification<Self> {
+    pub fn from_region(region: &CurveRegion2, policy: &CurvePolicy) -> Classification<Self> {
         let mut accumulator = EndpointEnvelopeAccumulator::default();
         for boundary_loop in region.boundary_loops() {
             match accumulator.include_loop(boundary_loop, policy) {
@@ -155,7 +149,7 @@ impl BezierRetainedEndpointEnvelope2 {
 
     /// Constructs an endpoint envelope for one retained boundary loop.
     pub fn from_loop(
-        boundary_loop: &BezierRetainedBoundaryLoop2,
+        boundary_loop: &CurveRegionBoundaryLoop2,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
         let mut accumulator = EndpointEnvelopeAccumulator::default();
@@ -228,7 +222,7 @@ struct CurveEnvelopeAccumulator {
 impl CurveEnvelopeAccumulator {
     fn include_loop(
         &mut self,
-        boundary_loop: &BezierRetainedBoundaryLoop2,
+        boundary_loop: &CurveRegionBoundaryLoop2,
         policy: &CurvePolicy,
     ) -> Classification<()> {
         for fragment in boundary_loop.fragments() {
@@ -457,6 +451,9 @@ fn retained_curve_monotone_parameters(
             BezierSubcurve2::RationalQuadratic(curve) => {
                 curve.axis_monotone_parameters(axis, policy)
             }
+            BezierSubcurve2::Rational(_) => {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
         };
         let axis_parameters = match axis_parameters {
             Classification::Decided(axis_parameters) => axis_parameters,
@@ -505,6 +502,7 @@ fn source_curve_point_at(
         BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
         BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
         BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
+        BezierSubcurve2::Rational(curve) => curve.point_at_classified(&parameter, policy),
     }
 }
 
@@ -572,6 +570,15 @@ fn subcurve_between_exact(
         BezierSubcurve2::RationalQuadratic(curve) => curve
             .subcurve_between_exact(start, end, policy)
             .map(BezierSubcurve2::RationalQuadratic),
+        BezierSubcurve2::Rational(curve) => {
+            match curve.subcurve_between_exact(start, end, policy) {
+                Ok(Classification::Decided(curve)) => Ok(BezierSubcurve2::Rational(curve)),
+                Ok(Classification::Uncertain(_)) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                }
+                Err(error) => Err(error),
+            }
+        }
     };
     match result {
         Ok(curve) => Classification::Decided(curve),
@@ -584,13 +591,14 @@ fn retained_curve_bounds(curve: &BezierSubcurve2, policy: &CurvePolicy) -> Class
         BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::Cubic(curve) => curve.certified_bounds(policy),
         BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
     }
 }
 
 impl EndpointEnvelopeAccumulator {
     fn include_loop(
         &mut self,
-        boundary_loop: &BezierRetainedBoundaryLoop2,
+        boundary_loop: &CurveRegionBoundaryLoop2,
         policy: &CurvePolicy,
     ) -> Classification<()> {
         for fragment in boundary_loop.fragments() {
@@ -753,7 +761,7 @@ fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<Endp
             )?,
             kind: BezierRetainedEnvelopeSourceKind::Algebraic,
         }),
-        BezierEndpointPointImage2::RationalQuadratic(point) => Some(EndpointInterval {
+        BezierEndpointPointImage2::Rational(point) => Some(EndpointInterval {
             x: represented_coordinate_interval(point.x()?.representation()?),
             y: represented_coordinate_interval(point.y()?.representation()?),
             kind: BezierRetainedEnvelopeSourceKind::Algebraic,

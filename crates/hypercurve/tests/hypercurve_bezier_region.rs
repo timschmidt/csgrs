@@ -1,13 +1,13 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRegion2, BezierRetainedBoundaryLoop2,
-    BezierRetainedCurveEnvelope2, BezierRetainedCurvedNestingRoleReport2,
+    BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
-    BezierRetainedFragmentSource2, BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2,
-    BezierRetainedRegionLoopRole, BezierRetainedSignedAreaRoleReport2, BezierSplitFragment2,
-    Classification, CurveError, CurvePolicy, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    Real, UncertaintyReason,
+    BezierRetainedOverlapReport2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CurveError, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionFragmentSource2,
+    CurveRegionLineRoleReport2, CurveRegionLoopRole, CurveRegionNestingRoleReport2,
+    CurveRegionSignedAreaRoleReport2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -55,33 +55,18 @@ fn graph(fragments: Vec<BezierArrangementFragment2>) -> BezierArrangementGraph2 
     BezierArrangementGraph2::new(fragments).unwrap()
 }
 
-fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> BezierRetainedBoundaryLoop2 {
-    BezierRetainedBoundaryLoop2::new(fragments).unwrap()
+fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveRegionBoundaryLoop2 {
+    CurveRegionBoundaryLoop2::new(fragments).unwrap()
 }
 
 #[cfg(feature = "predicates")]
 fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFragment2 {
-    let BezierSplitFragment2::AlgebraicEndpointImages {
-        start,
-        end,
-        source_curve,
-        start_image,
-        end_image,
-    } = fragment
-    else {
-        panic!("test fragment must carry algebraic endpoint images");
-    };
-    BezierSplitFragment2::AlgebraicEndpointImages {
-        start: end.clone(),
-        end: start.clone(),
-        source_curve: source_curve.clone(),
-        start_image: end_image.clone(),
-        end_image: start_image.clone(),
-    }
+    assert!(fragment.is_algebraic_endpoint_images());
+    fragment.reversed().unwrap()
 }
 
-fn retained_region(boundary_loops: Vec<BezierRetainedBoundaryLoop2>) -> BezierRetainedRegion2 {
-    BezierRetainedRegion2::new(boundary_loops).unwrap()
+fn retained_region(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> CurveRegion2 {
+    CurveRegion2::new(boundary_loops).unwrap()
 }
 
 fn exact(value: Real) -> BezierParameter2 {
@@ -127,6 +112,7 @@ fn algebraic_constant_point_image(point: Point2) -> BezierAlgebraicEndpointImage
 fn retained_algebraic_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
         source_curve: None,
@@ -168,7 +154,7 @@ fn materialized_line_fragment_at(
     )
 }
 
-fn retained_line_loop(vertices: &[Point2]) -> BezierRetainedBoundaryLoop2 {
+fn retained_line_loop(vertices: &[Point2]) -> CurveRegionBoundaryLoop2 {
     let mut fragments = Vec::new();
     for edge in vertices.windows(2) {
         fragments.push(BezierSplitFragment2::Materialized {
@@ -197,9 +183,9 @@ fn retained_line_loop(vertices: &[Point2]) -> BezierRetainedBoundaryLoop2 {
 
 fn retained_line_loop_with_sources(
     vertices: &[Point2],
-    sources: Vec<BezierRetainedFragmentSource2>,
-) -> BezierRetainedBoundaryLoop2 {
-    BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(
+    sources: Vec<CurveRegionFragmentSource2>,
+) -> CurveRegionBoundaryLoop2 {
+    CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
         retained_line_loop(vertices).into_fragments(),
         sources,
     )
@@ -260,6 +246,39 @@ fn quarter_circle_rational_conic_area_is_exact_symbolic_sector() {
         .unwrap()
         .expect("quarter-circle conic area is supported");
     assert_real_close(&area, &(Real::pi() / Real::from(4_i8)).unwrap(), 1.0e-12);
+}
+
+#[test]
+fn exact_conic_splits_and_reversal_retain_denominator_and_area_facts() {
+    let weight = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
+    let quarter =
+        RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), weight).unwrap();
+    let materialization = decided(
+        quarter
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 3))], &policy())
+            .unwrap(),
+    );
+    let mut area = Real::zero();
+    let mut reversed_area = Real::zero();
+    for fragment in materialization.fragments() {
+        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+            panic!("represented conic split must materialize exactly");
+        };
+        assert!(matches!(curve, BezierSubcurve2::RationalQuadratic(_)));
+        let contribution = curve
+            .signed_area_contribution()
+            .unwrap()
+            .expect("split conic retains a certified affine denominator");
+        area += contribution;
+        reversed_area += curve
+            .reversed()
+            .signed_area_contribution()
+            .unwrap()
+            .expect("reversed split conic retains a certified affine denominator");
+    }
+    let expected = (Real::pi() / Real::from(4_i8)).unwrap();
+    assert_real_close(&area, &expected, 1.0e-12);
+    assert_real_close(&reversed_area, &(-expected), 1.0e-12);
 }
 
 #[test]
@@ -338,8 +357,9 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
     let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
     assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
 
-    let retained =
-        decided(BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal));
+    let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
+        &traversal,
+    ));
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 5);
     assert!(!retained.has_algebraic_fragments());
@@ -369,6 +389,71 @@ fn resolved_linear_overlap_traversal_materializes_native_and_retained_regions() 
 }
 
 #[test]
+fn resolved_rational_overlap_traversal_materializes_native_and_retained_regions() {
+    let curved_boundary =
+        RationalBezier2::try_new(vec![p(0, 0), p(2, 2), p(4, 0)], vec![r(1), r(1), r(1)]).unwrap();
+    let overlapping_tail = decided(
+        curved_boundary
+            .subcurve_between_exact(&q(1, 2), &r(1), &policy())
+            .unwrap(),
+    );
+    let graph = graph(vec![
+        BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
+                curve: BezierSubcurve2::Rational(curved_boundary),
+            },
+        ),
+        BezierArrangementFragment2::new(
+            1,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
+                curve: BezierSubcurve2::Rational(overlapping_tail),
+            },
+        ),
+        materialized_line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
+        materialized_line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
+        materialized_line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
+    ]);
+
+    let report = decided(BezierRetainedOverlapReport2::from_graph(&graph, &policy()));
+    assert_eq!(report.len(), 1);
+    let refinement = decided(graph.split_retained_rational_overlaps(&policy()));
+    assert_eq!(refinement.graph().len(), 6);
+    let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
+    assert_eq!(traversal.refinement().graph().len(), 6);
+    assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
+    assert_eq!(
+        traversal.refined_traversal().shadowed_fragment_indices(),
+        &[2]
+    );
+    assert_eq!(traversal.traversal().closed_count(), 1);
+
+    let retained = decided(CurveRegion2::from_retained_rational_overlap_traversal(
+        &traversal,
+    ));
+    assert_eq!(retained.len(), 1);
+    assert_eq!(retained.boundary_loops()[0].len(), 5);
+    assert!(!retained.has_algebraic_fragments());
+    assert!(retained.boundary_loops()[0].has_arrangement_sources());
+
+    let native = decided(BezierRegion2::from_retained_rational_overlap_traversal(
+        &traversal,
+    ));
+    assert_eq!(native.len(), 1);
+    assert_eq!(native.boundary_loops()[0].len(), 5);
+    assert_eq!(
+        native.signed_area().unwrap(),
+        retained.signed_area().unwrap()
+    );
+}
+
+#[test]
 fn reversed_internal_overlap_traversal_materializes_union_boundary() {
     let graph = graph(vec![
         materialized_line_fragment_at(0, 0, p(0, 0), p(1, 0), p(2, 0)),
@@ -387,8 +472,9 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
         &[1, 7]
     );
 
-    let retained =
-        decided(BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal));
+    let retained = decided(CurveRegion2::from_retained_linear_overlap_traversal(
+        &traversal,
+    ));
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 6);
     assert_eq!(retained.signed_area().unwrap(), Some(r(8)));
@@ -418,10 +504,7 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
 
     assert_eq!(
         report.roles(),
-        &[
-            BezierRetainedRegionLoopRole::Material,
-            BezierRetainedRegionLoopRole::Hole
-        ]
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(report.nesting_depths(), &[0, 1]);
     assert_eq!(report.materialized_fragment_count(), 8);
@@ -437,19 +520,20 @@ fn retained_line_image_role_report_assigns_nested_material_and_hole() {
 
 #[test]
 fn retained_role_report_constructors_reject_mismatched_evidence() {
-    let roles = vec![BezierRetainedRegionLoopRole::Material];
+    let roles = vec![CurveRegionLoopRole::Material];
 
-    assert_topology_error(
-        BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(Vec::new(), Vec::new()),
-    );
-    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+    assert_topology_error(CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
+        Vec::new(),
+        Vec::new(),
+    ));
+    assert_topology_error(CurveRegionLineRoleReport2::new(
         roles.clone(),
         Vec::new(),
         0,
         0,
         Vec::new(),
     ));
-    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+    assert_topology_error(CurveRegionLineRoleReport2::new(
         Vec::new(),
         Vec::new(),
         0,
@@ -463,21 +547,21 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         p(0, 4),
     ])]);
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
-    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
-        vec![BezierRetainedRegionLoopRole::Hole],
+    assert_topology_error(CurveRegionLineRoleReport2::new(
+        vec![CurveRegionLoopRole::Hole],
         vec![0],
         report.materialized_fragment_count(),
         report.algebraic_fragment_count(),
         report.contours().to_vec(),
     ));
-    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+    assert_topology_error(CurveRegionLineRoleReport2::new(
         report.roles().to_vec(),
         report.nesting_depths().to_vec(),
         0,
         0,
         report.contours().to_vec(),
     ));
-    assert_topology_error(BezierRetainedLineRegionRoleReport2::new(
+    assert_topology_error(CurveRegionLineRoleReport2::new(
         report.roles().to_vec(),
         report.nesting_depths().to_vec(),
         usize::MAX,
@@ -485,7 +569,7 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         report.contours().to_vec(),
     ));
     assert_topology_error(
-        BezierRetainedLineRegionRoleReport2::new(
+        CurveRegionLineRoleReport2::new(
             report.roles().to_vec(),
             report.nesting_depths().to_vec(),
             report.materialized_fragment_count(),
@@ -493,9 +577,7 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
             report.contours().to_vec(),
         )
         .unwrap()
-        .with_loop_arrangement_sources(vec![Some(vec![
-            BezierRetainedFragmentSource2::new(0, 0, 0),
-        ])]),
+        .with_loop_arrangement_sources(vec![Some(vec![CurveRegionFragmentSource2::new(0, 0, 0)])]),
     );
     let two_loop_retained = retained_region(vec![
         retained_line_loop(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]),
@@ -503,7 +585,7 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
     ]);
     let two_loop_report = decided(two_loop_retained.line_image_role_report(&policy()).unwrap());
     assert_topology_error(
-        BezierRetainedLineRegionRoleReport2::new(
+        CurveRegionLineRoleReport2::new(
             two_loop_report.roles().to_vec(),
             two_loop_report.nesting_depths().to_vec(),
             two_loop_report.materialized_fragment_count(),
@@ -513,84 +595,78 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         .unwrap()
         .with_loop_arrangement_sources(vec![
             Some(vec![
-                BezierRetainedFragmentSource2::new(0, 0, 0),
-                BezierRetainedFragmentSource2::new(1, 0, 1),
-                BezierRetainedFragmentSource2::new(2, 0, 2),
-                BezierRetainedFragmentSource2::new(3, 0, 3),
+                CurveRegionFragmentSource2::new(0, 0, 0),
+                CurveRegionFragmentSource2::new(1, 0, 1),
+                CurveRegionFragmentSource2::new(2, 0, 2),
+                CurveRegionFragmentSource2::new(3, 0, 3),
             ]),
             Some(vec![
-                BezierRetainedFragmentSource2::new(0, 1, 0),
-                BezierRetainedFragmentSource2::new(4, 1, 1),
-                BezierRetainedFragmentSource2::new(5, 1, 2),
-                BezierRetainedFragmentSource2::new(6, 1, 3),
+                CurveRegionFragmentSource2::new(0, 1, 0),
+                CurveRegionFragmentSource2::new(4, 1, 1),
+                CurveRegionFragmentSource2::new(5, 1, 2),
+                CurveRegionFragmentSource2::new(6, 1, 3),
             ]),
         ]),
     );
-    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
+    assert_topology_error(CurveRegionSignedAreaRoleReport2::new(
         roles.clone(),
         Vec::new(),
     ));
-    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
+    assert_topology_error(CurveRegionSignedAreaRoleReport2::new(
         Vec::new(),
         Vec::new(),
     ));
-    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
-        vec![BezierRetainedRegionLoopRole::Material],
+    assert_topology_error(CurveRegionSignedAreaRoleReport2::new(
+        vec![CurveRegionLoopRole::Material],
         vec![r(1)],
     ));
-    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
-        vec![BezierRetainedRegionLoopRole::Hole],
+    assert_topology_error(CurveRegionSignedAreaRoleReport2::new(
+        vec![CurveRegionLoopRole::Hole],
         vec![r(-1)],
     ));
-    assert_topology_error(BezierRetainedSignedAreaRoleReport2::new(
-        vec![BezierRetainedRegionLoopRole::Material],
+    assert_topology_error(CurveRegionSignedAreaRoleReport2::new(
+        vec![CurveRegionLoopRole::Material],
         vec![r(0)],
     ));
     assert_topology_error(
-        BezierRetainedSignedAreaRoleReport2::new(
-            vec![BezierRetainedRegionLoopRole::Material],
-            vec![r(-1)],
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(Vec::new())]),
+        CurveRegionSignedAreaRoleReport2::new(vec![CurveRegionLoopRole::Material], vec![r(-1)])
+            .unwrap()
+            .with_loop_arrangement_sources(vec![Some(Vec::new())]),
     );
     assert_topology_error(
-        BezierRetainedSignedAreaRoleReport2::new(
-            vec![BezierRetainedRegionLoopRole::Material],
-            vec![r(-1)],
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(vec![
-            BezierRetainedFragmentSource2::new(0, 0, 0),
-        ])]),
+        CurveRegionSignedAreaRoleReport2::new(vec![CurveRegionLoopRole::Material], vec![r(-1)])
+            .unwrap()
+            .with_loop_arrangement_sources(vec![Some(vec![CurveRegionFragmentSource2::new(
+                0, 0, 0,
+            )])]),
     );
-    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
+    assert_topology_error(CurveRegionNestingRoleReport2::new(
         roles.clone(),
         vec![0],
         vec![r(1)],
         Vec::new(),
     ));
-    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
+    assert_topology_error(CurveRegionNestingRoleReport2::new(
         Vec::new(),
         Vec::new(),
         Vec::new(),
         Vec::new(),
     ));
-    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
+    assert_topology_error(CurveRegionNestingRoleReport2::new(
         roles,
         vec![1],
         vec![r(1)],
         vec![p(0, 0)],
     ));
-    assert_topology_error(BezierRetainedCurvedNestingRoleReport2::new(
-        vec![BezierRetainedRegionLoopRole::Material],
+    assert_topology_error(CurveRegionNestingRoleReport2::new(
+        vec![CurveRegionLoopRole::Material],
         vec![0],
         vec![r(0)],
         vec![p(0, 0)],
     ));
     assert_topology_error(
-        BezierRetainedCurvedNestingRoleReport2::new(
-            vec![BezierRetainedRegionLoopRole::Material],
+        CurveRegionNestingRoleReport2::new(
+            vec![CurveRegionLoopRole::Material],
             vec![0],
             vec![r(-1)],
             vec![p(0, 0)],
@@ -599,23 +675,21 @@ fn retained_role_report_constructors_reject_mismatched_evidence() {
         .with_loop_arrangement_sources(vec![Some(Vec::new())]),
     );
     assert_topology_error(
-        BezierRetainedCurvedNestingRoleReport2::new(
-            vec![BezierRetainedRegionLoopRole::Material],
+        CurveRegionNestingRoleReport2::new(
+            vec![CurveRegionLoopRole::Material],
             vec![0],
             vec![r(-1)],
             vec![p(0, 0)],
         )
         .unwrap()
-        .with_loop_arrangement_sources(vec![Some(vec![
-            BezierRetainedFragmentSource2::new(0, 0, 0),
-        ])]),
+        .with_loop_arrangement_sources(vec![Some(vec![CurveRegionFragmentSource2::new(0, 0, 0)])]),
     );
 }
 
 #[test]
 fn empty_boundary_loops_do_not_certify_signed_area() {
     assert_topology_error(BezierBoundaryLoop2::new(Vec::new()));
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(Vec::new()));
+    assert_topology_error(CurveRegionBoundaryLoop2::new(Vec::new()));
 }
 
 #[test]
@@ -628,7 +702,7 @@ fn native_boundary_loop_constructor_rejects_open_fragment_cycle() {
 
 #[test]
 fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![
         BezierSplitFragment2::Materialized {
             start: exact(r(0)),
             end: exact(r(1)),
@@ -652,7 +726,7 @@ fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
 
 #[test]
 fn retained_boundary_loop_constructor_rejects_forged_materialized_range_order() {
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![
         BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(r(1)),
             end: BezierParameter2::Exact(r(0)),
@@ -671,8 +745,9 @@ fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
     let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
     let forged_image = algebraic_image(&QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)));
 
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![
         BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed: false,
             start: parameter.clone(),
             end: parameter,
             source_curve: Some(hypercurve::BezierSubcurve2::Quadratic(source_curve)),
@@ -684,18 +759,16 @@ fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
 
 #[test]
 fn retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources() {
-    assert_topology_error(
-        BezierRetainedBoundaryLoop2::try_new_with_arrangement_sources(
-            vec![
-                retained_algebraic_line_fragment(p(0, 0), p(1, 0)),
-                retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
-            ],
-            vec![
-                BezierRetainedFragmentSource2::new(0, 0, 0),
-                BezierRetainedFragmentSource2::new(0, 1, 0),
-            ],
-        ),
-    );
+    assert_topology_error(CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
+        vec![
+            retained_algebraic_line_fragment(p(0, 0), p(1, 0)),
+            retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
+        ],
+        vec![
+            CurveRegionFragmentSource2::new(0, 0, 0),
+            CurveRegionFragmentSource2::new(0, 1, 0),
+        ],
+    ));
 }
 
 #[test]
@@ -703,23 +776,23 @@ fn retained_region_constructor_rejects_reused_arrangement_sources_across_loops()
     let outer = retained_line_loop_with_sources(
         &[p(0, 0), p(6, 0), p(6, 6), p(0, 6)],
         vec![
-            BezierRetainedFragmentSource2::new(0, 0, 0),
-            BezierRetainedFragmentSource2::new(1, 0, 1),
-            BezierRetainedFragmentSource2::new(2, 0, 2),
-            BezierRetainedFragmentSource2::new(3, 0, 3),
+            CurveRegionFragmentSource2::new(0, 0, 0),
+            CurveRegionFragmentSource2::new(1, 0, 1),
+            CurveRegionFragmentSource2::new(2, 0, 2),
+            CurveRegionFragmentSource2::new(3, 0, 3),
         ],
     );
     let inner = retained_line_loop_with_sources(
         &[p(2, 2), p(4, 2), p(4, 4), p(2, 4)],
         vec![
-            BezierRetainedFragmentSource2::new(0, 1, 0),
-            BezierRetainedFragmentSource2::new(4, 1, 1),
-            BezierRetainedFragmentSource2::new(5, 1, 2),
-            BezierRetainedFragmentSource2::new(6, 1, 3),
+            CurveRegionFragmentSource2::new(0, 1, 0),
+            CurveRegionFragmentSource2::new(4, 1, 1),
+            CurveRegionFragmentSource2::new(5, 1, 2),
+            CurveRegionFragmentSource2::new(6, 1, 3),
         ],
     );
 
-    assert_topology_error(BezierRetainedRegion2::new(vec![outer, inner]));
+    assert_topology_error(CurveRegion2::new(vec![outer, inner]));
 }
 
 #[test]
@@ -740,7 +813,7 @@ fn retained_region_constructor_rejects_duplicate_boundary_loops() {
         retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
     ]);
 
-    assert_topology_error(BezierRetainedRegion2::new(vec![loop_.clone(), loop_]));
+    assert_topology_error(CurveRegion2::new(vec![loop_.clone(), loop_]));
 }
 
 #[test]
@@ -763,10 +836,7 @@ fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
 
     assert_eq!(
         report.roles(),
-        &[
-            BezierRetainedRegionLoopRole::Material,
-            BezierRetainedRegionLoopRole::Hole
-        ]
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(report.nesting_depths(), &[0, 1]);
     assert_eq!(report.materialized_fragment_count(), 0);
@@ -782,27 +852,133 @@ fn retained_line_image_role_report_accepts_exact_algebraic_endpoint_carriers() {
         retained.signed_area_role_report(&policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
+    let clone = retained.clone();
+    assert!(!retained.is_line_image_region_cached());
+    assert_eq!(
+        retained.classify_point(&p(1, 1), &policy()).unwrap(),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        retained.classify_point(&p(3, 3), &policy()).unwrap(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+    assert_eq!(
+        retained.classify_point(&p(2, 3), &policy()).unwrap(),
+        Classification::Decided(RegionPointLocation::Boundary)
+    );
+    assert_eq!(
+        retained.classify_point(&p(7, 3), &policy()).unwrap(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+    assert!(retained.is_line_image_region_cached());
+    assert!(clone.is_line_image_region_cached());
+}
+
+#[test]
+#[cfg(feature = "predicates")]
+fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
+    let policy = policy();
+    let upper = QuadraticBezier2::new(p(-1, 0), p(0, 2), p(1, 0));
+    let split = decided(
+        upper
+            .split_at_parameters(
+                &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
+                &policy,
+            )
+            .unwrap(),
+    );
+    assert!(
+        split
+            .fragments()
+            .iter()
+            .all(BezierSplitFragment2::is_algebraic_endpoint_images)
+    );
+    let lower = BezierSplitFragment2::Materialized {
+        start: exact(Real::zero()),
+        end: exact(Real::one()),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(1, 0), p(0, -2), p(-1, 0))),
+    };
+    let mut fragments = split.fragments().to_vec();
+    fragments.push(lower);
+    let region = retained_region(vec![retained_loop(fragments)]);
+    let clone = region.clone();
+
+    assert!(region.has_algebraic_fragments());
+    assert!(!region.is_native_boundary_cache_cached());
+    assert!(!region.is_line_image_region_cached());
+    assert!(!region.is_retained_rational_evaluator_cache_cached());
+    assert_eq!(
+        region.classify_point(&p(0, 0), &policy).unwrap(),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        region.classify_point(&p(0, 2), &policy).unwrap(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+    assert_eq!(
+        region.classify_point(&p(2, 0), &policy).unwrap(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
+    assert_eq!(
+        region.classify_point(&p(0, 1), &policy).unwrap(),
+        Classification::Decided(RegionPointLocation::Boundary)
+    );
+    assert!(region.is_retained_rational_evaluator_cache_cached());
+    assert!(clone.is_retained_rational_evaluator_cache_cached());
+    assert!(region.is_line_image_region_cached());
+    assert!(clone.is_line_image_region_cached());
 }
 
 #[test]
 #[cfg(feature = "predicates")]
 fn retained_line_image_role_report_rejects_nonrational_algebraic_endpoint() {
     let parameter = BezierParameter2::algebraic(algebraic_sqrt_half_parameter());
-    let nonrational_x = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 0));
-    let nonrational_image = BezierAlgebraicEndpointImage2::quadratic(
-        &nonrational_x,
+    let nonrational_a_curve = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 0));
+    let nonrational_b_curve = QuadraticBezier2::new(p(1, 0), Point2::new(q(3, 2), r(0)), p(2, 0));
+    let nonrational_a = BezierAlgebraicEndpointImage2::quadratic(
+        &nonrational_a_curve,
         &algebraic_sqrt_half_parameter(),
         &policy(),
     )
     .unwrap();
-    let fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+    let nonrational_b = BezierAlgebraicEndpointImage2::quadratic(
+        &nonrational_b_curve,
+        &algebraic_sqrt_half_parameter(),
+        &policy(),
+    )
+    .unwrap();
+    let first = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
+        start: parameter.clone(),
+        end: parameter.clone(),
+        source_curve: None,
+        start_image: Some(nonrational_a.clone()),
+        end_image: Some(nonrational_b.clone()),
+    };
+    let second = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
-        source_curve: Some(hypercurve::BezierSubcurve2::Quadratic(nonrational_x)),
-        start_image: Some(nonrational_image.clone()),
-        end_image: Some(nonrational_image),
+        source_curve: None,
+        start_image: Some(nonrational_b),
+        end_image: Some(nonrational_a),
     };
-    let retained = retained_region(vec![retained_loop(vec![fragment])]);
+    let graph = graph(vec![
+        BezierArrangementFragment2::new(0, 0, first),
+        BezierArrangementFragment2::new(1, 0, second),
+    ]);
+    let traversal = match graph.traverse_retained_with_tangent_order(&policy()) {
+        Classification::Decided(traversal) => traversal,
+        Classification::Uncertain(reason) => {
+            panic!("nonrational algebraic cycle traversal was uncertain: {reason:?}")
+        }
+    };
+    let retained = match CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal) {
+        Classification::Decided(retained) => retained,
+        Classification::Uncertain(reason) => {
+            panic!("nonrational algebraic cycle retention was uncertain: {reason:?}")
+        }
+    };
 
     assert_eq!(
         retained.line_image_role_report(&policy()).unwrap(),
@@ -854,7 +1030,7 @@ fn retained_line_image_role_report_accepts_certified_nonlinear_line_image_loop()
 
     let report = decided(retained.line_image_role_report(&policy()).unwrap());
 
-    assert_eq!(report.roles(), &[BezierRetainedRegionLoopRole::Material]);
+    assert_eq!(report.roles(), &[CurveRegionLoopRole::Material]);
     assert_eq!(report.nesting_depths(), &[0]);
     assert_eq!(report.materialized_fragment_count(), 4);
     assert_eq!(report.algebraic_fragment_count(), 0);
@@ -870,7 +1046,7 @@ fn retained_quadratic_lens_loop(
     right_x: i32,
     height: i32,
     material_orientation: bool,
-) -> BezierRetainedBoundaryLoop2 {
+) -> CurveRegionBoundaryLoop2 {
     let upper = BezierSplitFragment2::Materialized {
         start: exact(r(0)),
         end: exact(r(1)),
@@ -945,10 +1121,7 @@ fn retained_signed_area_role_report_accepts_nonlinear_bezier_loops() {
 
     assert_eq!(
         report.roles(),
-        &[
-            BezierRetainedRegionLoopRole::Material,
-            BezierRetainedRegionLoopRole::Hole
-        ]
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(report.material_loop_indices(), vec![0]);
     assert_eq!(report.hole_loop_indices(), vec![1]);
@@ -969,10 +1142,7 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
     let signed_area = decided(retained.signed_area_role_report(&policy()).unwrap());
     assert_eq!(
         signed_area.roles(),
-        &[
-            BezierRetainedRegionLoopRole::Material,
-            BezierRetainedRegionLoopRole::Material
-        ]
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material]
     );
 
     let nesting = decided(retained.curved_nesting_role_report(&policy()).unwrap());
@@ -984,10 +1154,7 @@ fn retained_curved_nesting_role_report_assigns_same_orientation_nonlinear_hole()
     assert!(nesting_sources[1].is_none());
     assert_eq!(
         nesting.roles(),
-        &[
-            BezierRetainedRegionLoopRole::Material,
-            BezierRetainedRegionLoopRole::Hole
-        ]
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(nesting.nesting_depths(), &[0, 1]);
     assert_eq!(nesting.signed_areas()[0], q(-64, 3));
@@ -1048,7 +1215,7 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     ])
     .unwrap();
     let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
-    let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
+    let retained = decided(CurveRegion2::from_retained_arrangement_traversal(
         &graph, &traversal,
     ));
     let sources = retained.boundary_loops()[0]
@@ -1215,6 +1382,7 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
     let p1_left = algebraic_image(&line_midpoint_curve(2, 1, 0));
     let p0_left = algebraic_image(&line_midpoint_curve(1, 0, -1));
     let first = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter.clone(),
         source_curve: None,
@@ -1222,6 +1390,7 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
         end_image: Some(p1_right),
     };
     let second = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
         source_curve: None,
@@ -1238,7 +1407,7 @@ fn retained_region_materializes_closed_algebraic_carrier_loop_without_area_sampl
         BezierRegion2::from_arrangement_traversal(&graph, &traversal),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
-    let retained = decided(BezierRetainedRegion2::from_retained_arrangement_traversal(
+    let retained = decided(CurveRegion2::from_retained_arrangement_traversal(
         &graph, &traversal,
     ));
     let sources = retained.boundary_loops()[0]
@@ -1293,7 +1462,7 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
     .unwrap();
 
     assert_eq!(
-        BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal),
+        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 }
@@ -1302,6 +1471,7 @@ fn retained_region_rejects_unresolved_carriers_even_when_marked_closed() {
 fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let partial = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
         source_curve: None,
@@ -1309,7 +1479,7 @@ fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evid
         end_image: None,
     };
 
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![partial]));
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![partial]));
 }
 
 #[test]
@@ -1318,6 +1488,7 @@ fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evi
     let source_curve =
         hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
     let source_only = BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
         source_curve: Some(source_curve),
@@ -1325,7 +1496,7 @@ fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evi
         end_image: None,
     };
 
-    assert_topology_error(BezierRetainedBoundaryLoop2::new(vec![source_only]));
+    assert_topology_error(CurveRegionBoundaryLoop2::new(vec![source_only]));
 }
 
 proptest! {

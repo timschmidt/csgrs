@@ -54,6 +54,30 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
+    let rational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(3), r(-1), r(3)],
+        &policy,
+    )?);
+    let rational_interval = decided(BezierParameterInterval::try_new(q(1, 4), q(1, 2), &policy)?);
+    let rational_parameter = decided(BezierAlgebraicParameter2::try_isolate(
+        rational_polynomial,
+        rational_interval,
+        &policy,
+    )?);
+    let reconstruction_iterations = 5_000_u32;
+    let started = Instant::now();
+    let mut reconstructed = 0_usize;
+    for _ in 0..reconstruction_iterations {
+        reconstructed += black_box(
+            decided(rational_parameter.represented_rational_root(&policy)?).is_some() as usize,
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_algebraic_parameter_exact_rational_reconstruction: {reconstruction_iterations} iterations in {elapsed:?} ({:?}/iter), reconstructed={reconstructed}",
+        elapsed / reconstruction_iterations
+    );
+
     let midpoint_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         vec![r(-1), r(2)],
         &policy,

@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
+mod corner_scenes;
 mod editor;
 mod geometry;
 mod plotting;

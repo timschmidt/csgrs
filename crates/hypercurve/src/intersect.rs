@@ -17,6 +17,7 @@ use crate::classify::{
     at_unit_interval_endpoint, compare_reals, in_closed_unit_interval, is_zero, max_real, min_real,
     sort_pair,
 };
+use crate::segment::RetainedLineRelation2;
 use crate::{
     CircularArc2, Classification, CurveError, CurvePolicy, CurveResult, LineSeg2, NumericMode,
     Point2, Segment2, UncertaintyReason,
@@ -44,6 +45,82 @@ impl ParamRange {
     pub const fn end(&self) -> &Real {
         &self.end
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct OrientedParamRangeOverlap {
+    pub(crate) first: ParamRange,
+    pub(crate) second: ParamRange,
+    pub(crate) same_orientation: bool,
+}
+
+pub(crate) fn oriented_param_range_overlap(
+    first: &ParamRange,
+    second: &ParamRange,
+    policy: &CurvePolicy,
+) -> Classification<Option<OrientedParamRangeOverlap>> {
+    let first_direction = match compare_reals(first.start(), first.end(), policy) {
+        Some(Ordering::Equal) => return Classification::Decided(None),
+        Some(direction) => direction,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let second_direction = match compare_reals(second.start(), second.end(), policy) {
+        Some(Ordering::Equal) => return Classification::Decided(None),
+        Some(direction) => direction,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let (first_low, first_high) = if first_direction == Ordering::Less {
+        (first.start(), first.end())
+    } else {
+        (first.end(), first.start())
+    };
+    let (second_low, second_high) = if second_direction == Ordering::Less {
+        (second.start(), second.end())
+    } else {
+        (second.end(), second.start())
+    };
+    let overlap_low = match compare_reals(first_low, second_low, policy) {
+        Some(Ordering::Less) => second_low,
+        Some(_) => first_low,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let overlap_high = match compare_reals(first_high, second_high, policy) {
+        Some(Ordering::Greater) => second_high,
+        Some(_) => first_high,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    match compare_reals(overlap_low, overlap_high, policy) {
+        Some(Ordering::Less) => {}
+        Some(Ordering::Equal | Ordering::Greater) => return Classification::Decided(None),
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    }
+
+    let (source_start, source_end) = if first_direction == Ordering::Less {
+        (overlap_low, overlap_high)
+    } else {
+        (overlap_high, overlap_low)
+    };
+    let Some(first_start) = local_parameter_in_range(first, source_start) else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let Some(first_end) = local_parameter_in_range(first, source_end) else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let Some(second_start) = local_parameter_in_range(second, source_start) else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    let Some(second_end) = local_parameter_in_range(second, source_end) else {
+        return Classification::Uncertain(UncertaintyReason::Boundary);
+    };
+    Classification::Decided(Some(OrientedParamRangeOverlap {
+        first: ParamRange::new(first_start, first_end),
+        second: ParamRange::new(second_start, second_end),
+        same_orientation: first_direction == second_direction,
+    }))
+}
+
+fn local_parameter_in_range(range: &ParamRange, source_parameter: &Real) -> Option<Real> {
+    ((source_parameter - range.start()) / (range.end() - range.start())).ok()
 }
 
 /// Local intersection kind.
@@ -165,13 +242,11 @@ pub struct LineArcIntersectionPoint {
     pub point: Point2,
     /// Parameter on the line segment.
     pub line_param: Real,
-    /// Chord-projection ordering parameter on the arc segment.
+    /// Exact directed-angular sweep fraction on the arc segment.
     ///
-    /// This is retained event-ordering evidence for the current minor/
-    /// semicircle arc model. It is not a primitive-float angle or an
-    /// approximate sweep parameter; it is computed from exact point/arc
-    /// coordinates and used only under the same finite-arc predicates that
-    /// certified the witness.
+    /// This is retained event-ordering evidence in `[0, 1]`. It supports minor,
+    /// semicircular, major, and full-circle traversal and is not a
+    /// primitive-float approximation.
     pub arc_param: Real,
     /// Local kind of point contact.
     pub kind: IntersectionKind,
@@ -269,9 +344,9 @@ impl CircleCircleRelation {
 pub struct ArcArcIntersectionPoint {
     /// Intersection point.
     pub point: Point2,
-    /// Chord-projection ordering parameter on the first arc segment.
+    /// Exact directed-angular sweep fraction on the first arc segment.
     pub a_param: Real,
-    /// Chord-projection ordering parameter on the second arc segment.
+    /// Exact directed-angular sweep fraction on the second arc segment.
     pub b_param: Real,
     /// Local kind of point contact.
     pub kind: IntersectionKind,
@@ -391,6 +466,22 @@ impl LineSeg2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<LineLineIntersection> {
+        if line_segments_decided_axis_separated(self, other, policy) {
+            return Ok(LineLineIntersection::None);
+        }
+        if self.retained_support_ranges_decided_disjoint(other, policy) == Some(true) {
+            return Ok(LineLineIntersection::None);
+        }
+        if let Some(relation) = self.retained_offset_relation(other, policy) {
+            return match relation {
+                RetainedLineRelation2::Coincident => intersect_collinear(self, other, policy),
+                RetainedLineRelation2::ParallelDistinct => Ok(LineLineIntersection::None),
+                RetainedLineRelation2::Uncertain => Ok(LineLineIntersection::Uncertain {
+                    reason: UncertaintyReason::RealSign,
+                }),
+            };
+        }
+
         let (rx, ry) = self.delta();
         let (sx, sy) = other.delta();
         let qmp = other.start().delta_from(self.start());
@@ -827,14 +918,6 @@ fn parameter_on_line(line: &LineSeg2, point: &Point2, policy: &CurvePolicy) -> C
     }
 }
 
-fn arc_chord_param(arc: &CircularArc2, point: &Point2) -> CurveResult<Real> {
-    let (dx, dy) = arc.end().delta_from(arc.start());
-    let (px, py) = point.delta_from(arc.start());
-    let numerator = (&px * &dx) + (&py * &dy);
-    let denominator = (&dx * &dx) + (&dy * &dy);
-    (numerator / denominator).map_err(Into::into)
-}
-
 fn cross(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
     (ax * by) - (ay * bx)
 }
@@ -985,10 +1068,18 @@ fn insert_same_circle_candidate(
         }
     }
 
+    let a_param = match a.sweep_fraction_for_incident_point(point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(Some(reason)),
+    };
+    let b_param = match b.sweep_fraction_for_incident_point(point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(Some(reason)),
+    };
     candidates.push(SameCircleArcCandidate {
         point: point.clone(),
-        a_param: arc_chord_param(a, point)?,
-        b_param: arc_chord_param(b, point)?,
+        a_param,
+        b_param,
     });
     Ok(None)
 }
@@ -1291,9 +1382,17 @@ fn arc_arc_hit_candidate(
         base_kind
     };
 
+    let a_param = match a.sweep_fraction_for_incident_point(&point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(ArcArcCandidate::Uncertain(reason)),
+    };
+    let b_param = match b.sweep_fraction_for_incident_point(&point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(ArcArcCandidate::Uncertain(reason)),
+    };
     Ok(ArcArcCandidate::Hit(ArcArcIntersectionPoint {
-        a_param: arc_chord_param(a, &point)?,
-        b_param: arc_chord_param(b, &point)?,
+        a_param,
+        b_param,
         point,
         kind,
     }))
@@ -1313,10 +1412,8 @@ fn line_arc_hit_candidate(
     base_kind: IntersectionKind,
     policy: &CurvePolicy,
 ) -> CurveResult<LineArcCandidate> {
-    let Some(in_line_range) = in_closed_unit_interval(&line_param, policy) else {
-        return Ok(LineArcCandidate::Uncertain(UncertaintyReason::Ordering));
-    };
-    if !in_line_range {
+    let in_line_range = in_closed_unit_interval(&line_param, policy);
+    if in_line_range == Some(false) {
         return Ok(LineArcCandidate::Miss);
     }
 
@@ -1327,6 +1424,9 @@ fn line_arc_hit_candidate(
         Classification::Uncertain(reason) => {
             return Ok(LineArcCandidate::Uncertain(reason));
         }
+    }
+    if in_line_range.is_none() {
+        return Ok(LineArcCandidate::Uncertain(UncertaintyReason::Ordering));
     }
 
     let Some(line_endpoint) = at_unit_interval_endpoint(&line_param, policy) else {
@@ -1341,8 +1441,12 @@ fn line_arc_hit_candidate(
         base_kind
     };
 
+    let arc_param = match arc.sweep_fraction_for_incident_point(&point, policy)? {
+        Classification::Decided(param) => param,
+        Classification::Uncertain(reason) => return Ok(LineArcCandidate::Uncertain(reason)),
+    };
     Ok(LineArcCandidate::Hit(LineArcIntersectionPoint {
-        arc_param: arc_chord_param(arc, &point)?,
+        arc_param,
         point,
         line_param,
         kind,

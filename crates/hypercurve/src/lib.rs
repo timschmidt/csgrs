@@ -14,6 +14,7 @@
 //! Geometric Predicates" (*Discrete & Computational Geometry* 18(3), 305-363,
 //! 1997).
 
+mod arc_bezier;
 mod bbox;
 mod bezier;
 mod bezier_algebraic_image;
@@ -37,6 +38,10 @@ mod bspline;
 mod bulge;
 mod classify;
 mod contour;
+mod curve;
+mod curve_intersection;
+mod curve_path_intersection;
+mod curve_region_boolean;
 mod curve_string;
 mod error;
 mod events;
@@ -44,13 +49,16 @@ mod facts;
 mod finite_projection;
 mod fragment;
 mod intersect;
+mod nurbs;
+mod nurbs_interpolation;
 mod offset;
-mod planar_pcurve;
 mod point;
 mod policy;
+mod polynomial_spline;
 mod prepared;
 mod prepared_boolean;
 mod rational_bezier;
+mod rational_bezier_general;
 mod reconstruct;
 mod region;
 mod region_boolean;
@@ -62,6 +70,7 @@ mod retained_import;
 mod retained_status;
 mod segment;
 mod self_intersect;
+mod spline_periodic;
 mod split;
 #[cfg(feature = "svg")]
 mod svg_io;
@@ -69,6 +78,7 @@ mod transform;
 #[cfg(feature = "triangulation")]
 mod triangulation;
 
+pub use arc_bezier::{CircularArcBezierDecomposition2, CircularArcBezierSpan2};
 pub use bbox::Aabb2;
 pub use bezier::{
     BezierEndpoint, BezierInterpolationReplayPath2, BezierInterpolationSolvePath2, CubicBezier2,
@@ -100,24 +110,26 @@ pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk};
 pub use bezier_parameter::{
-    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierParameterRange2,
 };
 pub use bezier_region::{
-    BezierBoundaryLoop2, BezierRegion2, BezierRetainedBoundaryLoop2,
-    BezierRetainedCurvedNestingRoleReport2, BezierRetainedFragmentSource2,
-    BezierRetainedLineRegionRoleReport2, BezierRetainedRegion2, BezierRetainedRegionLoopRole,
-    BezierRetainedSignedAreaRoleReport2,
+    BezierBoundaryLoop2, BezierRegion2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionFragmentProvenance2, CurveRegionFragmentSource2, CurveRegionLineRoleReport2,
+    CurveRegionLoopRole, CurveRegionNestingRoleReport2, CurveRegionSignedAreaRoleReport2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
 };
 pub use bezier_retained_overlap::{
-    BezierRetainedLineOverlapExtent2, BezierRetainedLineOverlapSplit2,
-    BezierRetainedLinearOverlapSplit2, BezierRetainedLinearOverlapSplitGraph2,
-    BezierRetainedLinearOverlapTraversal2, BezierRetainedOverlap2,
-    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
-    BezierRetainedOverlapRelation2, BezierRetainedOverlapReport2, BezierRetainedOverlapTraversal2,
-    BezierRetainedResolvedLinearOverlap2,
+    BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
+    BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
+    BezierRetainedOverlap2, BezierRetainedOverlapExtent2, BezierRetainedOverlapOrientation2,
+    BezierRetainedOverlapRefinedFragment2, BezierRetainedOverlapRelation2,
+    BezierRetainedOverlapReport2, BezierRetainedOverlapTraversal2,
+    BezierRetainedRationalOverlapSplit2, BezierRetainedRationalOverlapSplitGraph2,
+    BezierRetainedRationalOverlapTraversal2, BezierRetainedResolvedLinearOverlap2,
+    BezierRetainedResolvedRationalOverlap2,
 };
 pub use bezier_split::{BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2};
 pub use bezier_split_endpoint::{
@@ -170,6 +182,24 @@ pub use contour::{
     ContourLineMergePredicatePath2, ContourLineMergeReport2, ContourLineMergeResult2,
     ContourLineMergeSpanReport2, ContourLineMergeStage2, ContourPointLocation, FillRule,
 };
+pub use curve::{
+    Curve2, CurveDerivative2, CurveFamily2, CurveGeometry2, CurveParameterDomain2,
+    CurveParameterSide2, CurvePath2, CurvePathView2, CurveSource2, CurveSpanProvenance2,
+    CurveView2, NativeBezierBoundaryLoop2, NativeBezierFragment2,
+};
+pub use curve_intersection::{
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveIntersectionReport2,
+    CurveIntersectionTopology2, PreparedCurveIntersection2,
+};
+pub use curve_path_intersection::{
+    CurveBoundaryInteriorSide2, CurvePathBooleanFragment2, CurvePathBooleanFragmentAction2,
+    CurvePathBooleanOperand2, CurvePathBooleanSelection2, CurvePathIntersectionBlocker2,
+    CurvePathIntersectionContact2, CurvePathIntersectionOverlap2, CurvePathIntersectionReport2,
+    CurvePathIntersectionTopology2, CurvePathOverlapAction2, CurvePathOverlapResolution2,
+    CurvePathSplit2, PreparedCurvePathIntersection2,
+};
+pub use curve_region_boolean::PreparedCurveRegionBoolean2;
 pub use curve_string::{
     ConnectedCurveString2, CurveString2, CurveStringChamferInputPath2,
     CurveStringChamferPredicatePath2, CurveStringChamferReport2, CurveStringChamferResult2,
@@ -203,7 +233,9 @@ pub use curve_string::{
     CurveStringTrimReport2, CurveStringTrimResult2, CurveStringTrimSegmentReport2,
     LinkedCurveString2, OrderedLinkedCurveString2, RegionTrimPreparedCacheAudit2,
 };
-pub use error::{CurveError, CurveResult};
+pub use error::{
+    CurveError, CurveOperation2, CurveResult, ExactCurveBlocker, ExactCurveError, ExactCurveResult,
+};
 pub use events::{
     ContourIntersection, ContourIntersectionSet, ContourOperand, ContourOverlapIntersection,
     ContourPointIntersection, ContourUncertainIntersection,
@@ -223,25 +255,37 @@ pub use intersect::{
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
+pub use nurbs::{
+    NurbsBezierDecomposition2, NurbsBezierSpanView2, NurbsCurve2, NurbsDegreeElevation2,
+    NurbsElevatedBezierSpan2, NurbsNativeSpanView2,
+};
+pub use nurbs_interpolation::{
+    NurbsInterpolation2, NurbsInterpolationParameterization2, NurbsInterpolationReport2,
+    NurbsInterpolationSolvePath2,
+};
 pub use offset::{
     ContourOffsetReport2, ContourOffsetResult2, ContourOffsetStage2, CurveStringOffsetReport2,
     CurveStringOffsetResult2, CurveStringOffsetStage2, CurveStringOutlineOffsetReport2,
     CurveStringOutlineOffsetResult2, CurveStringOutlineOffsetStage2, OffsetCap,
     OffsetConstructionPath2, OutlineCapConstructionPath2,
 };
-pub use planar_pcurve::{
-    PlanarPcurveImageEqualityReport2, PlanarPcurveImageRelation2, PreparedRetainedPlanarFace2,
-    RetainedPlanarFace2, RetainedPlanarFaceEdgeUseRelation2, RetainedPlanarFaceEdgeUseReport2,
-    RetainedPlanarFacePointLocation2, RetainedPlanarFacePointReport2, RetainedPlanarPcurve2,
-    RetainedPlanarSurfaceIdentity2, RetainedPlanarTrimLoop2, RetainedPlanarTrimLoopRole2,
-};
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
+pub use polynomial_spline::{
+    PolynomialSplineBezierDecomposition2, PolynomialSplineBezierSpanView2, PolynomialSplineCurve2,
+};
 pub use prepared::{
     PreparedCircularArc2, PreparedContourView2, PreparedCurveStringView2, PreparedLineSeg2,
     PreparedRegionView2, PreparedSegment2,
 };
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
+pub use rational_bezier_general::{
+    PreparedRationalBezierIntersection2, RationalBezier2, RationalBezierIntersectionCandidates2,
+    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierIntersectionTopology2, RationalBezierOverlapOrientation2,
+    RationalBezierPointIncidence2,
+};
 pub use reconstruct::{
     ContourPolylineReconstructionResult2, CurveStringPolylineReconstructionResult2,
     FiniteContourImport2, FiniteCurveStringImport2, PolylineReconstructionOptions,
@@ -251,8 +295,8 @@ pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2
 pub use region_boolean::{
     RegionBooleanBoundaryContourSourcePath2, RegionBooleanBoundaryPredicatePath2,
     RegionBooleanPipelineReport2, RegionBooleanPreparedCacheReport2, RegionBooleanQueryPath2,
-    RegionBooleanReport2, RegionBooleanResult2, RegionBooleanStage2, RegionPreparedCacheAudit2,
-    RegionPreparedCacheFreshness2,
+    RegionBooleanReport2, RegionBooleanResult2, RegionBooleanSharedBoundaryResolution2,
+    RegionBooleanStage2, RegionPreparedCacheAudit2, RegionPreparedCacheFreshness2,
 };
 pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
@@ -264,87 +308,23 @@ pub use region_fragments::{
     RegionFragmentBuildStage2, RegionFragmentSet,
 };
 pub use region_nesting::{
-    ExactCurveArrangementArrangedEndpointBucket2,
-    ExactCurveArrangementArrangedEndpointBucketCache2,
-    ExactCurveArrangementArrangedEndpointDegree2,
-    ExactCurveArrangementArrangedEndpointDegreeBucket2,
-    ExactCurveArrangementArrangedEndpointDegreeBucketCache2,
-    ExactCurveArrangementArrangedEndpointDegreeRef2,
-    ExactCurveArrangementArrangedEndpointPointCache2,
-    ExactCurveArrangementArrangedEndpointPointRef2, ExactCurveArrangementArrangedEndpointRef2,
-    ExactCurveArrangementArrangedEndpointSideBucket2,
-    ExactCurveArrangementArrangedEndpointSideBucketCache2, ExactCurveArrangementArrangedFragment2,
-    ExactCurveArrangementArrangedFragmentCache2, ExactCurveArrangementArrangedFragmentKindBucket2,
-    ExactCurveArrangementArrangedFragmentKindBucketCache2,
-    ExactCurveArrangementArrangedFragmentRef2,
-    ExactCurveArrangementArrangedFragmentSourceRangeCache2,
-    ExactCurveArrangementArrangedFragmentSourceRangeRef2,
-    ExactCurveArrangementArrangedFragmentSourceRef2,
-    ExactCurveArrangementArrangedFragmentStatusBucket2,
-    ExactCurveArrangementArrangedFragmentStatusBucketCache2,
-    ExactCurveArrangementArrangedFragmentStatusRef2, ExactCurveArrangementAttempt2,
-    ExactCurveArrangementEndpointGraphCache2, ExactCurveArrangementEvaluation2,
-    ExactCurveArrangementEvaluationSummaryCache2, ExactCurveArrangementOutputBoundaryCache2,
-    ExactCurveArrangementOutputBoundaryRoleBucket2,
-    ExactCurveArrangementOutputBoundaryRoleBucketCache2, ExactCurveArrangementOutputCache2,
-    ExactCurveArrangementOutputRingBucket2, ExactCurveArrangementOutputRingBucketCache2,
-    ExactCurveArrangementOutputRingContinuityCache2, ExactCurveArrangementOutputRingContinuityRef2,
-    ExactCurveArrangementOutputRingSegmentRef2, ExactCurveArrangementOutputRoleAssignment2,
-    ExactCurveArrangementOutputRoleBucket2, ExactCurveArrangementOutputRoleCache2,
-    ExactCurveArrangementOutputRoleContainmentBucket2,
-    ExactCurveArrangementOutputRoleContainmentBucketCache2,
-    ExactCurveArrangementOutputRoleContainmentRef2,
-    ExactCurveArrangementOutputRoleNestingDepthBucket2,
-    ExactCurveArrangementOutputRoleNestingDepthBucketCache2,
-    ExactCurveArrangementOutputRoleNestingDepthRef2,
-    ExactCurveArrangementOutputRoleSourceContourBucket2,
-    ExactCurveArrangementOutputRoleSourceContourBucketCache2,
-    ExactCurveArrangementOutputRoleSourceContourRef2, ExactCurveArrangementOutputRoleStatusBucket2,
-    ExactCurveArrangementOutputRoleStatusBucketCache2, ExactCurveArrangementOutputRoleStatusRef2,
-    ExactCurveArrangementOutputSegmentDirectionBucket2,
-    ExactCurveArrangementOutputSegmentDirectionBucketCache2,
-    ExactCurveArrangementOutputSegmentDirectionRef2,
-    ExactCurveArrangementOutputSegmentEndpointCache2,
-    ExactCurveArrangementOutputSegmentEndpointRef2, ExactCurveArrangementOutputSegmentKindBucket2,
-    ExactCurveArrangementOutputSegmentKindBucketCache2, ExactCurveArrangementOutputSegmentKindRef2,
-    ExactCurveArrangementOutputSegmentSourceBucket2,
-    ExactCurveArrangementOutputSegmentSourceBucketCache2,
-    ExactCurveArrangementOutputSegmentSourceRangeCache2,
-    ExactCurveArrangementOutputSegmentSourceRangeRef2,
-    ExactCurveArrangementOutputSegmentSourceRef2, ExactCurveArrangementOutputSegmentStatusBucket2,
-    ExactCurveArrangementOutputSegmentStatusBucketCache2,
-    ExactCurveArrangementOutputSegmentStatusRef2, ExactCurveArrangementReport2,
-    ExactCurveArrangementRequest2, ExactCurveArrangementResult2,
-    ExactCurveArrangementRingAssemblyCache2, ExactCurveArrangementSourceAabbBucket2,
-    ExactCurveArrangementSourceAabbBucketCache2, ExactCurveArrangementSourceAabbRef2,
-    ExactCurveArrangementSourceAabbStatus2, ExactCurveArrangementSourceEndpoint2,
-    ExactCurveArrangementSourceEndpointBucket2, ExactCurveArrangementSourceEndpointBucketCache2,
-    ExactCurveArrangementSourceEndpointRef2, ExactCurveArrangementSourceSegmentCache2,
-    ExactCurveArrangementSourceSegmentFact2, ExactCurveArrangementSourceSegmentKindBucket2,
-    ExactCurveArrangementSourceSegmentKindBucketCache2, ExactCurveArrangementSourceSegmentKindRef2,
-    ExactCurveArrangementSplitBlockerCache2, ExactCurveArrangementSplitCache2,
+    ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementArrangedFragment2,
+    ExactCurveArrangementOutputRoleAssignment2, ExactCurveArrangementSourceAabbStatus2,
+    ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSourceSegmentFact2,
     ExactCurveArrangementSplitCandidateAabbStatus2, ExactCurveArrangementSplitCandidatePair2,
-    ExactCurveArrangementSplitIntersectionBucket2,
-    ExactCurveArrangementSplitIntersectionBucketCache2,
-    ExactCurveArrangementSplitIntersectionParameterCache2,
-    ExactCurveArrangementSplitIntersectionParameterRef2,
-    ExactCurveArrangementSplitIntersectionRef2, ExactCurveArrangementSplitRelationBucket2,
-    ExactCurveArrangementSplitRelationBucketCache2, ExactCurveArrangementSplitRelationClass2,
-    ExactCurveArrangementSplitScheduleBucket2, ExactCurveArrangementSplitScheduleBucketCache2,
-    ExactCurveArrangementSplitScheduleCache2, ExactCurveArrangementSplitScheduleRef2,
-    ExactCurveWorkspace2, RegionBoundaryContourBuildPredicatePath2,
+    ExactCurveArrangementSplitRelationClass2, ExactCurveArrangementSummary2, RegionArrangement2,
+    RegionArrangementReport2, RegionBoundaryContourBuildPredicatePath2,
     RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildResult2,
     RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2, RegionBoundaryContourRoleReport2,
     RegionLineSegmentArrangedEndpoint2, RegionLineSegmentArrangedSourceReport2,
-    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildReport2,
-    RegionLineSegmentRegionBuildResult2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
     RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentRingSourceReport2,
     RegionLineSegmentSplitIntersectionReport2, RegionLineSegmentSplitPredicatePath2,
 };
 pub use retained_curve::{
     RetainedCurveCacheSummary2, RetainedCurveFamily2, RetainedCurveIdentity2,
-    RetainedCurvePeriodicity1, RetainedCurveProfile2, RetainedEndpointEvidence2,
-    RetainedParameterDomain1, RetainedTrimDirection, RetainedTrimInterval1,
+    RetainedCurveProfile2, RetainedEndpointEvidence2, RetainedParameterDomain1,
+    RetainedTrimDirection, RetainedTrimInterval1,
 };
 pub use retained_import::{
     RetainedImportFormat2, RetainedImportRecord2, RetainedImportTopology2, RetainedSourceTolerance2,
@@ -355,14 +335,15 @@ pub use self_intersect::{
     SelfContactPredicatePath2, SelfContactPreparedCacheFreshness2, SelfContactPreparedCacheReport2,
     SelfContactReport2, SelfContactResult2,
 };
+pub use spline_periodic::SplinePeriodicity2;
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 #[cfg(feature = "svg")]
 pub use svg_io::{
-    SvgContourImportReport2, SvgContourImportResult2, SvgPathExportReport2, SvgPathExportResult2,
-    SvgPathExportSegmentReport2, SvgPathExportTarget2, SvgPathImportReport2, SvgPathImportResult2,
-    SvgRegionImportReport2, SvgRegionImportResult2, import_svg_contour_path_data_with_report,
-    import_svg_path_data_with_report, import_svg_region_path_data_with_report,
-    retained_svg_import_record,
+    SvgContourImportReport2, SvgContourImportResult2, SvgPathExportCurveReport2,
+    SvgPathExportReport2, SvgPathExportResult2, SvgPathExportSegmentReport2, SvgPathExportTarget2,
+    SvgPathImportReport2, SvgPathImportResult2, SvgRegionImportReport2, SvgRegionImportResult2,
+    import_svg_contour_path_data_with_report, import_svg_path_data_with_report,
+    import_svg_region_path_data_with_report, retained_svg_import_record,
 };
 pub use transform::Similarity2;
 #[cfg(feature = "triangulation")]
@@ -693,6 +674,26 @@ mod tests {
     }
 
     #[test]
+    fn independently_constructed_exact_offsets_retain_parallel_relation() {
+        let angle = (Real::pi() / Real::from(20_u8)).unwrap();
+        let source = LineSeg2::try_new(
+            Point2::new(Real::from(15_u8), Real::zero()),
+            Point2::new(
+                Real::from(15_u8) * angle.clone().cos(),
+                Real::from(15_u8) * angle.sin(),
+            ),
+        )
+        .unwrap();
+        let left = source.offset_left(Real::one()).unwrap();
+        let right = source.offset_left(-Real::one()).unwrap();
+
+        assert_eq!(
+            left.intersect_line(&right, &topology_policy()).unwrap(),
+            LineLineIntersection::None
+        );
+    }
+
+    #[test]
     fn arc_sweep_classifies_positive_bulge_semicircle() {
         let arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
         assert_eq!(
@@ -813,8 +814,9 @@ mod tests {
         };
 
         assert_eq!(hit.point, p(4, 3));
-        assert_eq!(hit.a_param, q(1, 10));
-        assert_eq!(hit.b_param, q(1, 10));
+        let hit_fraction = (q(3, 4).atan().unwrap() / Real::pi()).unwrap();
+        assert_eq!(hit.a_param, hit_fraction);
+        assert_eq!(hit.b_param, hit.a_param);
         assert_eq!(hit.kind, IntersectionKind::Crossing);
     }
 

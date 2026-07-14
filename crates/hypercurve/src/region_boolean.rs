@@ -1,22 +1,22 @@
 //! Region-level boolean boundary pipeline.
 //!
 //! The routines here compose the existing event, split, classify, and boundary
-//! traversal stages. Simple boundary-only contacts are regularized here, while
-//! shared-boundary cases that also involve interior containment remain explicit
-//! uncertainty instead of being guessed through.
+//! traversal stages. Boundary-only contacts and exactly paired coincident
+//! fragments are regularized from certified local fill state; incomplete or
+//! ambiguous overlap evidence remains explicit uncertainty.
 
 use crate::classify::compare_reals;
 use crate::{
     Aabb2, BooleanBoundaryChainAssemblyReport2, BooleanBoundaryContourTransferReport2,
-    BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryFragmentSet,
-    BooleanBoundaryLoopExtractionReport2, BooleanBoundaryLoopSet, BooleanFragmentAction,
-    BooleanFragmentClassification, BooleanFragmentSelection, BooleanFragmentSelectionReport2,
-    BooleanOp, BulgeVertex2, Classification, Contour2, ContourIntersection, CurveError,
-    CurvePolicy, CurveResult, FillRule, IntersectionKind, Point2, Real, Region2,
-    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRoleReport2, RegionFragmentBuildReport2,
-    RegionFragmentSet, RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2,
-    RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
+    BooleanBoundaryFragmentEmissionReport2, BooleanBoundaryLoopExtractionReport2,
+    BooleanBoundaryLoopSet, BooleanFragmentAction, BooleanFragmentClassification,
+    BooleanFragmentSelection, BooleanFragmentSelectionReport2, BooleanOp, BulgeVertex2,
+    Classification, Contour2, ContourIntersection, CurveError, CurvePolicy, CurveResult, FillRule,
+    IntersectionKind, Point2, Real, Region2, RegionBoundaryContourBuildPredicatePath2,
+    RegionBoundaryContourBuildReport2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRoleReport2, RegionFragmentBuildReport2, RegionFragmentSet,
+    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, RetainedTopologyStatus,
+    Segment2, SegmentKindCounts, UncertaintyReason,
 };
 use std::cmp::Ordering;
 
@@ -67,11 +67,32 @@ pub struct RegionBooleanReport2 {
 pub struct RegionBooleanPipelineReport2 {
     fragment_build_report: RegionFragmentBuildReport2,
     fragment_selection_report: BooleanFragmentSelectionReport2,
+    shared_boundary_resolutions: Vec<RegionBooleanSharedBoundaryResolution2>,
     boundary_fragment_emission_report: BooleanBoundaryFragmentEmissionReport2,
     chain_assembly_report: BooleanBoundaryChainAssemblyReport2,
     loop_extraction_report: BooleanBoundaryLoopExtractionReport2,
     contour_transfer_report: BooleanBoundaryContourTransferReport2,
     boundary_build_report: Option<RegionBoundaryContourBuildReport2>,
+}
+
+/// Exact ownership decision for one pair of coincident Boolean fragments.
+///
+/// Fragment keys and indices refer directly to the source-provenance entries in
+/// [`RegionBooleanPipelineReport2::fragment_build_report`]. Fill-side values are
+/// expressed in each source contour's traversal direction. The relative
+/// direction flag records the normalization used before applying the Boolean
+/// operation's local fill-state truth table.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RegionBooleanSharedBoundaryResolution2 {
+    first_key: crate::RegionContourKey,
+    first_fragment_index: usize,
+    second_key: crate::RegionContourKey,
+    second_fragment_index: usize,
+    same_direction: bool,
+    first_filled_side_is_left: bool,
+    second_filled_side_is_left: bool,
+    first_action: BooleanFragmentAction,
+    second_action: BooleanFragmentAction,
 }
 
 /// Query path used by a report-bearing closed region boolean.
@@ -1021,6 +1042,7 @@ impl RegionBooleanPipelineReport2 {
     pub(crate) const fn new(
         fragment_build_report: RegionFragmentBuildReport2,
         fragment_selection_report: BooleanFragmentSelectionReport2,
+        shared_boundary_resolutions: Vec<RegionBooleanSharedBoundaryResolution2>,
         boundary_fragment_emission_report: BooleanBoundaryFragmentEmissionReport2,
         chain_assembly_report: BooleanBoundaryChainAssemblyReport2,
         loop_extraction_report: BooleanBoundaryLoopExtractionReport2,
@@ -1029,6 +1051,7 @@ impl RegionBooleanPipelineReport2 {
         Self {
             fragment_build_report,
             fragment_selection_report,
+            shared_boundary_resolutions,
             boundary_fragment_emission_report,
             chain_assembly_report,
             loop_extraction_report,
@@ -1045,6 +1068,16 @@ impl RegionBooleanPipelineReport2 {
     /// Returns retained boolean fragment classification evidence.
     pub const fn fragment_selection_report(&self) -> &BooleanFragmentSelectionReport2 {
         &self.fragment_selection_report
+    }
+
+    /// Returns exact coincident-fragment ownership decisions.
+    pub fn shared_boundary_resolutions(&self) -> &[RegionBooleanSharedBoundaryResolution2] {
+        &self.shared_boundary_resolutions
+    }
+
+    /// Returns the number of coincident-fragment pairs resolved by local fill state.
+    pub const fn shared_boundary_resolution_count(&self) -> usize {
+        self.shared_boundary_resolutions.len()
     }
 
     /// Returns retained boundary-fragment emission evidence.
@@ -1213,6 +1246,53 @@ impl RegionBooleanPipelineReport2 {
     /// Returns final boundary-contour role report count, if role assignment was reached.
     pub fn role_report_count(&self) -> Option<usize> {
         self.role_reports().map(<[_]>::len)
+    }
+}
+
+impl RegionBooleanSharedBoundaryResolution2 {
+    /// Returns the first-operand contour key.
+    pub const fn first_key(&self) -> crate::RegionContourKey {
+        self.first_key
+    }
+
+    /// Returns the first-operand fragment index within its split contour.
+    pub const fn first_fragment_index(&self) -> usize {
+        self.first_fragment_index
+    }
+
+    /// Returns the second-operand contour key.
+    pub const fn second_key(&self) -> crate::RegionContourKey {
+        self.second_key
+    }
+
+    /// Returns the second-operand fragment index within its split contour.
+    pub const fn second_fragment_index(&self) -> usize {
+        self.second_fragment_index
+    }
+
+    /// Returns whether both source fragments traverse the shared image identically.
+    pub const fn same_direction(&self) -> bool {
+        self.same_direction
+    }
+
+    /// Returns whether the first region is filled left of its source fragment.
+    pub const fn first_filled_side_is_left(&self) -> bool {
+        self.first_filled_side_is_left
+    }
+
+    /// Returns whether the second region is filled left of its source fragment.
+    pub const fn second_filled_side_is_left(&self) -> bool {
+        self.second_filled_side_is_left
+    }
+
+    /// Returns the resolved action for the first fragment copy.
+    pub const fn first_action(&self) -> BooleanFragmentAction {
+        self.first_action
+    }
+
+    /// Returns the resolved action for the second fragment copy.
+    pub const fn second_action(&self) -> BooleanFragmentAction {
+        self.second_action
     }
 }
 
@@ -1481,6 +1561,10 @@ pub(crate) fn boolean_boundary_loops_between(
         Classification::Decided(selection) => selection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
+    let selection = match resolve_shared_boundary_selection(&fragments, &selection, op)? {
+        Classification::Decided(selection) => selection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
 
     let emitted = selection.emit_boundary_fragments(&fragments)?;
     let chains = match emitted.assemble_chains(policy) {
@@ -1599,6 +1683,19 @@ pub(crate) fn boolean_region_between_with_report(
     policy: &CurvePolicy,
 ) -> CurveResult<RegionBooleanResult2> {
     let boundary_events = first.intersect_region(second, policy)?;
+    if let Some(region) = retained_offset_region_boolean(first, second, op, policy) {
+        return Ok(region_boolean_result_from_role_assigned_shortcut_region(
+            first,
+            second,
+            op,
+            fill_rule,
+            RegionBooleanQueryPath2::Direct,
+            &boundary_events,
+            region,
+            RegionBooleanBoundaryContourSourcePath2::ContainmentShortcut,
+            None,
+        ));
+    }
     if op == BooleanOp::Xor {
         return match xor_region_by_difference_union(first, second, fill_rule, policy)? {
             Classification::Decided(region) => {
@@ -1660,6 +1757,58 @@ pub(crate) fn boolean_region_between_with_report(
         boundary_contour_source_path,
         pipeline_report,
         policy,
+    )
+}
+
+pub(crate) fn retained_offset_region_boolean(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+    policy: &CurvePolicy,
+) -> Option<Region2> {
+    use crate::contour::RetainedContourOffsetRelation2::{
+        FirstContainsSecond, SecondContainsFirst,
+    };
+
+    if first.material_contours().len() != 1
+        || second.material_contours().len() != 1
+        || !first.hole_contours().is_empty()
+        || !second.hole_contours().is_empty()
+    {
+        return None;
+    }
+    let first_contour = first.material_contours()[0];
+    let second_contour = second.material_contours()[0];
+    let relation = first_contour.retained_offset_relation(second_contour, policy)?;
+
+    Some(match (relation, op) {
+        (FirstContainsSecond, BooleanOp::Union) => clone_region_view(first),
+        (FirstContainsSecond, BooleanOp::Intersection) => clone_region_view(second),
+        (FirstContainsSecond, BooleanOp::Difference | BooleanOp::Xor) => {
+            Region2::new(vec![first_contour.clone()], vec![second_contour.clone()])
+        }
+        (SecondContainsFirst, BooleanOp::Union) => clone_region_view(second),
+        (SecondContainsFirst, BooleanOp::Intersection) => clone_region_view(first),
+        (SecondContainsFirst, BooleanOp::Difference) => Region2::empty(),
+        (SecondContainsFirst, BooleanOp::Xor) => {
+            Region2::new(vec![second_contour.clone()], vec![first_contour.clone()])
+        }
+        _ => return None,
+    })
+}
+
+fn clone_region_view(region: &RegionView2<'_>) -> Region2 {
+    Region2::new(
+        region
+            .material_contours()
+            .iter()
+            .map(|contour| (*contour).clone())
+            .collect(),
+        region
+            .hole_contours()
+            .iter()
+            .map(|contour| (*contour).clone())
+            .collect(),
     )
 }
 
@@ -1797,6 +1946,11 @@ fn boolean_boundary_contours_between_with_pipeline_report(
             ));
         }
     };
+    let (selection, shared_boundary_resolutions) =
+        match resolve_shared_boundary_selection_with_report(fragments, selection, op)? {
+            Classification::Decided(resolved) => resolved,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     let emission_result = selection.emit_boundary_fragments_with_report(fragments)?;
     let emitted = match emission_result.fragments() {
         Some(emitted) => emitted,
@@ -1848,6 +2002,7 @@ fn boolean_boundary_contours_between_with_pipeline_report(
     let pipeline_report = RegionBooleanPipelineReport2::new(
         fragment_result.report().clone(),
         selection_result.report().clone(),
+        shared_boundary_resolutions,
         emission_result.report().clone(),
         chain_result.report().clone(),
         loop_result.report().clone(),
@@ -2560,7 +2715,13 @@ fn containment_difference_boundary_contours(
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
-    boundary_contours_dropping_unresolved(&fragments, &selection, fill_rule, policy)
+    boundary_contours_resolving_shared_boundaries(
+        &fragments,
+        &selection,
+        BooleanOp::Difference,
+        fill_rule,
+        policy,
+    )
 }
 
 fn boundary_contact_boundary_contours(
@@ -2611,32 +2772,27 @@ fn boundary_overlap_union_contours(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
 
-    boundary_contours_dropping_unresolved(&fragments, &selection, fill_rule, policy)
+    boundary_contours_resolving_shared_boundaries(&fragments, &selection, op, fill_rule, policy)
 }
 
-pub(crate) fn boundary_contours_dropping_unresolved(
+pub(crate) fn boundary_contours_resolving_shared_boundaries(
     fragments: &RegionFragmentSet,
     selection: &BooleanFragmentSelection,
+    op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Contour2>>> {
-    match certify_unresolved_boundary_pairs(fragments, selection)? {
-        Classification::Decided(()) => {}
+    let selection = match resolve_shared_boundary_selection(fragments, selection, op)? {
+        Classification::Decided(selection) => selection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
+    };
 
     let emitted = selection.emit_boundary_fragments(fragments)?;
 
-    // Certified contact handlers call this only after proving that every
-    // unresolved classification represents a zero-area coincident boundary
-    // edge. Dropping those edges and assembling the remaining directed graph is
-    // the regularized fill-state treatment described by Vatti's scanline
-    // formulation (B. R. Vatti, "A generic solution to polygon clipping,"
-    // Communications of the ACM 35(7), 56-63, 1992). The containment-difference
-    // caller additionally uses Foster, Hormann, and Popa's degeneracy split to
-    // keep positive-area overlap and branch cases out of this helper.
-    let emitted =
-        BooleanBoundaryFragmentSet::new(emitted.directed_fragments().to_vec(), Vec::new())?;
+    // Exact local fill-side ownership has resolved every coincident pair before
+    // traversal. This is the regularized fill-state treatment described by
+    // Vatti's scanline formulation (B. R. Vatti, "A generic solution to polygon
+    // clipping," Communications of the ACM 35(7), 56-63, 1992).
     let chains = match emitted.assemble_chains(policy) {
         Classification::Decided(chains) => chains,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2650,44 +2806,137 @@ pub(crate) fn boundary_contours_dropping_unresolved(
     }
 }
 
-fn certify_unresolved_boundary_pairs(
+pub(crate) fn resolve_shared_boundary_selection(
     fragments: &RegionFragmentSet,
     selection: &BooleanFragmentSelection,
-) -> CurveResult<Classification<()>> {
+    op: BooleanOp,
+) -> CurveResult<Classification<BooleanFragmentSelection>> {
+    Ok(
+        match resolve_shared_boundary_selection_with_report(fragments, selection, op)? {
+            Classification::Decided((selection, _)) => Classification::Decided(selection),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
+}
+
+pub(crate) fn resolve_shared_boundary_selection_with_report(
+    fragments: &RegionFragmentSet,
+    selection: &BooleanFragmentSelection,
+    op: BooleanOp,
+) -> CurveResult<
+    Classification<(
+        BooleanFragmentSelection,
+        Vec<RegionBooleanSharedBoundaryResolution2>,
+    )>,
+> {
+    let pairs = match unresolved_boundary_pairs(fragments, selection)? {
+        Classification::Decided(pairs) => pairs,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mut resolutions = Vec::with_capacity(pairs.len() * 2);
+    let mut resolution_reports = Vec::with_capacity(pairs.len());
+    for (left_index, right_index) in pairs {
+        let left = &selection.classifications()[left_index];
+        let right = &selection.classifications()[right_index];
+        let (first_classification, second_classification) = if left.key.side == RegionSide::First {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        if first_classification.key.side != RegionSide::First
+            || second_classification.key.side != RegionSide::Second
+        {
+            return Err(CurveError::Topology(
+                "boolean shared-boundary pair does not span both operands".into(),
+            ));
+        }
+        let first_segment = fragment_segment_for_classification(fragments, first_classification)?;
+        let second_segment = fragment_segment_for_classification(fragments, second_classification)?;
+        let first_left = first_classification.source_filled_side_is_left;
+        let second_left = second_classification.source_filled_side_is_left;
+        let same_direction = first_segment == second_segment;
+        let normalized_second_left = if same_direction {
+            second_left
+        } else {
+            !second_left
+        };
+        let action = match (
+            op.apply(first_left, normalized_second_left),
+            op.apply(!first_left, !normalized_second_left),
+        ) {
+            (true, false) => BooleanFragmentAction::KeepSourceDirection,
+            (false, true) => BooleanFragmentAction::KeepReversed,
+            (false, false) | (true, true) => BooleanFragmentAction::Discard,
+        };
+        resolutions.push((
+            first_classification.key,
+            first_classification.fragment_index,
+            action,
+        ));
+        resolutions.push((
+            second_classification.key,
+            second_classification.fragment_index,
+            BooleanFragmentAction::Discard,
+        ));
+        resolution_reports.push(RegionBooleanSharedBoundaryResolution2 {
+            first_key: first_classification.key,
+            first_fragment_index: first_classification.fragment_index,
+            second_key: second_classification.key,
+            second_fragment_index: second_classification.fragment_index,
+            same_direction,
+            first_filled_side_is_left: first_left,
+            second_filled_side_is_left: second_left,
+            first_action: action,
+            second_action: BooleanFragmentAction::Discard,
+        });
+    }
+    selection
+        .resolve_boundary_actions(&resolutions)
+        .map(|selection| Classification::Decided((selection, resolution_reports)))
+}
+
+fn unresolved_boundary_pairs(
+    fragments: &RegionFragmentSet,
+    selection: &BooleanFragmentSelection,
+) -> CurveResult<Classification<Vec<(usize, usize)>>> {
     let unresolved = selection
         .classifications()
         .iter()
+        .enumerate()
         .filter(|classification| {
-            classification.action == BooleanFragmentAction::BoundaryNeedsResolution
+            classification.1.action == BooleanFragmentAction::BoundaryNeedsResolution
         })
         .collect::<Vec<_>>();
 
     if unresolved.is_empty() {
-        return Ok(Classification::Decided(()));
+        return Ok(Classification::Decided(Vec::new()));
     }
     if unresolved.len() % 2 != 0 {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
 
     let mut paired = vec![false; unresolved.len()];
+    let mut pairs = Vec::with_capacity(unresolved.len() / 2);
     for left_index in 0..unresolved.len() {
         if paired[left_index] {
             continue;
         }
-        let left_segment = fragment_segment_for_classification(fragments, unresolved[left_index])?;
+        let left_segment =
+            fragment_segment_for_classification(fragments, unresolved[left_index].1)?;
         let mut matched = false;
         for right_index in left_index + 1..unresolved.len() {
             if paired[right_index] {
                 continue;
             }
-            if unresolved[left_index].key.side == unresolved[right_index].key.side {
+            if unresolved[left_index].1.key.side == unresolved[right_index].1.key.side {
                 continue;
             }
             let right_segment =
-                fragment_segment_for_classification(fragments, unresolved[right_index])?;
+                fragment_segment_for_classification(fragments, unresolved[right_index].1)?;
             if segment_images_match_undirected(left_segment, right_segment) {
                 paired[left_index] = true;
                 paired[right_index] = true;
+                pairs.push((unresolved[left_index].0, unresolved[right_index].0));
                 matched = true;
                 break;
             }
@@ -2697,7 +2946,7 @@ fn certify_unresolved_boundary_pairs(
         }
     }
 
-    Ok(Classification::Decided(()))
+    Ok(Classification::Decided(pairs))
 }
 
 fn fragment_segment_for_classification<'a>(
@@ -2877,12 +3126,13 @@ mod tests {
             key,
             fragment_index: 0,
             opposite_location: RegionPointLocation::Boundary,
+            source_filled_side_is_left: true,
             action: BooleanFragmentAction::BoundaryNeedsResolution,
         }
     }
 
     #[test]
-    fn dropping_unresolved_boundaries_requires_opposite_fragment_pair_evidence() {
+    fn unresolved_boundaries_require_opposite_fragment_pair_evidence() {
         let first_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
         let fragments =
             RegionFragmentSet::new(vec![fragment_set_for(first_key, line_segment(0, 0, 1, 0))])
@@ -2890,13 +3140,7 @@ mod tests {
         let selection =
             BooleanFragmentSelection::new(vec![unresolved_boundary(first_key)]).unwrap();
 
-        let result = boundary_contours_dropping_unresolved(
-            &fragments,
-            &selection,
-            FillRule::NonZero,
-            &CurvePolicy::certified(),
-        )
-        .unwrap();
+        let result = unresolved_boundary_pairs(&fragments, &selection).unwrap();
 
         assert_eq!(
             result,
@@ -2905,7 +3149,7 @@ mod tests {
     }
 
     #[test]
-    fn dropping_unresolved_boundaries_accepts_certified_opposite_fragment_pairs() {
+    fn unresolved_boundaries_retain_certified_opposite_fragment_pairs() {
         let first_key = RegionContourKey::new(RegionSide::First, RegionContourRole::Material, 0);
         let second_key = RegionContourKey::new(RegionSide::Second, RegionContourRole::Material, 0);
         let fragments = RegionFragmentSet::new(vec![
@@ -2919,15 +3163,9 @@ mod tests {
         ])
         .unwrap();
 
-        let result = boundary_contours_dropping_unresolved(
-            &fragments,
-            &selection,
-            FillRule::NonZero,
-            &CurvePolicy::certified(),
-        )
-        .unwrap();
+        let result = unresolved_boundary_pairs(&fragments, &selection).unwrap();
 
-        assert_eq!(result, Classification::Decided(Vec::new()));
+        assert_eq!(result, Classification::Decided(vec![(0, 1)]));
     }
 
     #[test]

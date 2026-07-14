@@ -22,13 +22,13 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierParameter2, Classification,
-    CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2,
+    CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalBezier2,
+    RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// A native Bezier subcurve produced by exact split materialization.
@@ -41,6 +41,8 @@ pub enum BezierSubcurve2 {
     Cubic(CubicBezier2),
     /// Rational quadratic Bezier/conic subcurve.
     RationalQuadratic(RationalQuadraticBezier2),
+    /// General exact rational Bezier subcurve.
+    Rational(RationalBezier2),
 }
 
 /// One fragment between adjacent split boundaries.
@@ -59,6 +61,8 @@ pub enum BezierSplitFragment2 {
     /// At least one boundary is algebraic, and its exact endpoint images were
     /// constructed without making a native subcurve.
     AlgebraicEndpointImages {
+        /// Whether traversal runs from the source end boundary to its start boundary.
+        reversed: bool,
         /// Start split boundary in the original parameter space.
         start: BezierParameter2,
         /// End split boundary in the original parameter space.
@@ -126,6 +130,256 @@ impl BezierSplitMaterialization2 {
                 BezierSplitFragment2::AlgebraicEndpointImages { .. }
             )
         })
+    }
+}
+
+impl BezierSubcurve2 {
+    /// Returns the exact local-parameter start point.
+    pub fn start(&self) -> &Point2 {
+        match self {
+            Self::Quadratic(curve) => curve.start(),
+            Self::Cubic(curve) => curve.start(),
+            Self::RationalQuadratic(curve) => curve.start(),
+            Self::Rational(curve) => curve.start(),
+        }
+    }
+
+    /// Returns the exact local-parameter end point.
+    pub fn end(&self) -> &Point2 {
+        match self {
+            Self::Quadratic(curve) => curve.end(),
+            Self::Cubic(curve) => curve.end(),
+            Self::RationalQuadratic(curve) => curve.end(),
+            Self::Rational(curve) => curve.end(),
+        }
+    }
+
+    /// Evaluates this native subcurve at an exact local parameter.
+    pub fn point_at(&self, parameter: &Real, policy: &CurvePolicy) -> Classification<Point2> {
+        match self {
+            Self::Quadratic(curve) => Classification::Decided(curve.point_at(parameter.clone())),
+            Self::Cubic(curve) => Classification::Decided(curve.point_at(parameter.clone())),
+            Self::RationalQuadratic(curve) => curve.point_at(parameter.clone(), policy),
+            Self::Rational(curve) => curve.point_at_classified(parameter, policy),
+        }
+    }
+
+    pub(crate) fn split_at_parameters(
+        &self,
+        parameters: &[BezierParameter2],
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+        match self {
+            Self::Quadratic(curve) => curve.split_at_parameters(parameters, policy),
+            Self::Cubic(curve) => curve.split_at_parameters(parameters, policy),
+            Self::RationalQuadratic(curve) => curve.split_at_parameters(parameters, policy),
+            Self::Rational(curve) => curve.split_at_parameters(parameters, policy),
+        }
+    }
+
+    pub(crate) fn split_at_parameters_refined(
+        &self,
+        parameters: &[BezierParameter2],
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+        match self {
+            Self::Quadratic(curve) => split_curve_at_parameters(
+                parameters,
+                policy,
+                true,
+                |_| true,
+                |start, end| {
+                    Ok(Self::Quadratic(
+                        curve.subcurve_between_exact(start, end, policy)?,
+                    ))
+                },
+                |parameter| BezierAlgebraicEndpointImage2::quadratic(curve, parameter, policy),
+                self.clone(),
+            ),
+            Self::Cubic(curve) => split_curve_at_parameters(
+                parameters,
+                policy,
+                true,
+                |_| true,
+                |start, end| {
+                    Ok(Self::Cubic(
+                        curve.subcurve_between_exact(start, end, policy)?,
+                    ))
+                },
+                |parameter| BezierAlgebraicEndpointImage2::cubic(curve, parameter, policy),
+                self.clone(),
+            ),
+            Self::RationalQuadratic(curve) => split_curve_at_parameters(
+                parameters,
+                policy,
+                true,
+                |parameter| {
+                    matches!(
+                        curve.point_at(parameter.clone(), policy),
+                        Classification::Decided(_)
+                    )
+                },
+                |start, end| {
+                    Ok(Self::RationalQuadratic(
+                        curve.subcurve_between_exact(start, end, policy)?,
+                    ))
+                },
+                |parameter| {
+                    BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, policy)
+                },
+                self.clone(),
+            ),
+            Self::Rational(curve) => split_curve_at_parameters(
+                parameters,
+                policy,
+                true,
+                |parameter| {
+                    matches!(
+                        curve.point_at_classified(parameter, policy),
+                        Classification::Decided(_)
+                    )
+                },
+                |start, end| match curve.subcurve_between_exact(start, end, policy)? {
+                    Classification::Decided(curve) => Ok(Self::Rational(curve)),
+                    Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                        "general rational Bezier exact split is uncertified: {reason:?}"
+                    ))),
+                },
+                |parameter| BezierAlgebraicEndpointImage2::rational(curve, parameter, policy),
+                self.clone(),
+            ),
+        }
+    }
+
+    pub(crate) fn subcurve_between_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
+        match self {
+            Self::Quadratic(curve) => Ok(Classification::Decided(Self::Quadratic(
+                curve.subcurve_between_exact(start, end, policy)?,
+            ))),
+            Self::Cubic(curve) => Ok(Classification::Decided(Self::Cubic(
+                curve.subcurve_between_exact(start, end, policy)?,
+            ))),
+            Self::RationalQuadratic(curve) => Ok(Classification::Decided(Self::RationalQuadratic(
+                curve.subcurve_between_exact(start, end, policy)?,
+            ))),
+            Self::Rational(curve) => curve
+                .subcurve_between_exact(start, end, policy)
+                .map(|result| result.map(Self::Rational)),
+        }
+    }
+
+    /// Returns the same exact image with traversal direction reversed.
+    pub fn reversed(&self) -> Self {
+        match self {
+            Self::Quadratic(curve) => Self::Quadratic(QuadraticBezier2::new(
+                curve.end().clone(),
+                curve.control().clone(),
+                curve.start().clone(),
+            )),
+            Self::Cubic(curve) => Self::Cubic(CubicBezier2::new(
+                curve.end().clone(),
+                curve.control2().clone(),
+                curve.control1().clone(),
+                curve.start().clone(),
+            )),
+            Self::RationalQuadratic(curve) => Self::RationalQuadratic(
+                RationalQuadraticBezier2::try_new_with_common_weight_sign(
+                    curve.end().clone(),
+                    curve.control().clone(),
+                    curve.start().clone(),
+                    curve.end_weight().clone(),
+                    curve.control_weight().clone(),
+                    curve.start_weight().clone(),
+                    curve.common_nonzero_weight_sign(&CurvePolicy::certified()),
+                )
+                .expect("reversing a valid rational quadratic remains valid"),
+            ),
+            Self::Rational(curve) => Self::Rational(curve.reversed()),
+        }
+    }
+}
+
+impl BezierSplitFragment2 {
+    /// Returns true when this fragment retains exact algebraic endpoint images.
+    pub const fn is_algebraic_endpoint_images(&self) -> bool {
+        matches!(self, Self::AlgebraicEndpointImages { .. })
+    }
+
+    /// Constructs an exact represented point certified inside this fragment.
+    ///
+    /// Algebraic boundaries use the rational gap between their disjoint
+    /// isolating intervals. This samples neither root: interval ordering proves
+    /// the represented parameter lies strictly between the exact boundaries.
+    pub fn representative_point(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Point2>> {
+        match self {
+            Self::Materialized { curve, .. } => {
+                let half = (Real::one() / Real::from(2_i8))?;
+                Ok(curve.point_at(&half, policy))
+            }
+            Self::AlgebraicEndpointImages {
+                start,
+                end,
+                source_curve: Some(source_curve),
+                ..
+            } => {
+                let parameter = match start.strict_rational_between(end, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                Ok(source_curve.point_at(&parameter, policy))
+            }
+            Self::AlgebraicEndpointImages {
+                source_curve: None, ..
+            }
+            | Self::Unresolved { .. } => {
+                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            }
+        }
+    }
+
+    /// Returns the retained fragment in reverse traversal direction.
+    ///
+    /// Materialized fragments reverse exactly. Algebraic endpoint-image
+    /// carriers retain their source-oriented parameter range and exact images,
+    /// while recording the opposite traversal direction. Consumers transform
+    /// endpoint and derivative evidence when they traverse the carrier.
+    pub fn reversed(&self) -> CurveResult<Self> {
+        match self {
+            Self::Materialized { start, end, curve } => Ok(Self::Materialized {
+                start: start.clone(),
+                end: end.clone(),
+                curve: curve.reversed(),
+            }),
+            Self::AlgebraicEndpointImages {
+                reversed,
+                start,
+                end,
+                source_curve,
+                start_image,
+                end_image,
+            } => Ok(Self::AlgebraicEndpointImages {
+                reversed: !reversed,
+                start: start.clone(),
+                end: end.clone(),
+                source_curve: source_curve.clone(),
+                start_image: start_image.clone(),
+                end_image: end_image.clone(),
+            }),
+            Self::Unresolved { .. } => Err(CurveError::Topology(
+                "reversing an unresolved Bezier split fragment requires endpoint evidence"
+                    .to_owned(),
+            )),
+        }
     }
 }
 
@@ -205,6 +459,7 @@ fn validate_bezier_split_fragment(
             source_curve,
             start_image,
             end_image,
+            ..
         } => {
             let Some(source_curve) = source_curve else {
                 return Err(CurveError::Topology(
@@ -349,6 +604,8 @@ impl QuadraticBezier2 {
         split_curve_at_parameters(
             parameters,
             policy,
+            false,
+            |_| true,
             |start, end| {
                 Ok(BezierSubcurve2::Quadratic(
                     self.subcurve_between_exact(start, end, policy)?,
@@ -413,6 +670,8 @@ impl CubicBezier2 {
         split_curve_at_parameters(
             parameters,
             policy,
+            false,
+            |_| true,
             |start, end| {
                 Ok(BezierSubcurve2::Cubic(
                     self.subcurve_between_exact(start, end, policy)?,
@@ -485,6 +744,13 @@ impl RationalQuadraticBezier2 {
         split_curve_at_parameters(
             parameters,
             policy,
+            false,
+            |parameter| {
+                matches!(
+                    self.point_at(parameter.clone(), policy),
+                    Classification::Decided(_)
+                )
+            },
             |start, end| {
                 Ok(BezierSubcurve2::RationalQuadratic(
                     self.subcurve_between_exact(start, end, policy)?,
@@ -547,6 +813,11 @@ impl RationalQuadraticBezier2 {
         t: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<(RationalQuadraticBezier2, RationalQuadraticBezier2)> {
+        let retained_common_weight_sign = if in_closed_unit_interval(&t, policy) == Some(true) {
+            self.common_nonzero_weight_sign(policy)
+        } else {
+            None
+        };
         let controls = self.control_points();
         let weights = self.weights();
         let levels = homogeneous_de_casteljau_levels(&controls, &weights, t);
@@ -560,15 +831,50 @@ impl RationalQuadraticBezier2 {
             .map(|level| level[level.len() - 1].clone())
             .collect::<Vec<_>>();
         Ok((
-            rational_from_homogeneous(&left, policy)?,
-            rational_from_homogeneous(&right, policy)?,
+            rational_from_homogeneous(&left, policy, retained_common_weight_sign)?,
+            rational_from_homogeneous(&right, policy, retained_common_weight_sign)?,
         ))
     }
 }
 
-fn split_curve_at_parameters<F, G>(
+impl RationalBezier2 {
+    /// Splits this rational Bezier at exact/algebraic Bezier parameters.
+    ///
+    /// Represented parameters materialize exact homogeneous subcurves.
+    /// Nonlinear algebraic boundaries retain exact point and tangent images;
+    /// represented boundaries materialize native homogeneous subcurves.
+    pub fn split_at_parameters(
+        &self,
+        parameters: &[BezierParameter2],
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
+        split_curve_at_parameters(
+            parameters,
+            policy,
+            false,
+            |parameter| {
+                matches!(
+                    self.point_at_classified(parameter, policy),
+                    Classification::Decided(_)
+                )
+            },
+            |start, end| match self.subcurve_between_exact(start, end, policy)? {
+                Classification::Decided(curve) => Ok(BezierSubcurve2::Rational(curve)),
+                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
+                    "general rational Bezier exact split is uncertified: {reason:?}"
+                ))),
+            },
+            |parameter| BezierAlgebraicEndpointImage2::rational(self, parameter, policy),
+            BezierSubcurve2::Rational(self.clone()),
+        )
+    }
+}
+
+fn split_curve_at_parameters<F, G, H>(
     parameters: &[BezierParameter2],
     policy: &CurvePolicy,
+    refine_ordering: bool,
+    mut exact_boundary_is_regular: H,
     mut materialize: F,
     mut endpoint_image: G,
     source_curve: BezierSubcurve2,
@@ -576,6 +882,7 @@ fn split_curve_at_parameters<F, G>(
 where
     F: FnMut(&Real, &Real) -> CurveResult<BezierSubcurve2>,
     G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
+    H: FnMut(&Real) -> bool,
 {
     let mut boundaries = vec![
         BezierParameter2::Exact(Real::zero()),
@@ -583,13 +890,22 @@ where
     ];
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
-        let parameter = match parameter.clone().promote_represented_linear_root(policy)? {
+        let promoted = match parameter
+            .clone()
+            .promote_represented_rational_root(policy)?
+        {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        push_boundary(&mut boundaries, parameter, policy)?;
+        let parameter = match promoted.as_exact() {
+            Some(exact) if !parameter.is_exact() && !exact_boundary_is_regular(exact) => {
+                parameter.clone()
+            }
+            _ => promoted,
+        };
+        push_boundary(&mut boundaries, parameter, policy, refine_ordering)?;
     }
-    match sort_boundaries(&mut boundaries, policy)? {
+    match sort_boundaries(&mut boundaries, policy, refine_ordering)? {
         Classification::Decided(()) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
@@ -614,6 +930,7 @@ where
                         .is_none_or(BezierAlgebraicEndpointImage2::is_transformed)
                 {
                     fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
+                        reversed: false,
                         start,
                         end,
                         source_curve: Some(source_curve.clone()),
@@ -658,10 +975,11 @@ fn push_boundary(
     boundaries: &mut Vec<BezierParameter2>,
     candidate: BezierParameter2,
     policy: &CurvePolicy,
+    refine_ordering: bool,
 ) -> CurveResult<()> {
     for existing in boundaries.iter() {
         if let Classification::Decided(Ordering::Equal) =
-            candidate.cmp_by_interval(existing, policy)?
+            compare_boundary_parameters(&candidate, existing, policy, refine_ordering)?
         {
             return Ok(());
         }
@@ -673,11 +991,17 @@ fn push_boundary(
 fn sort_boundaries(
     boundaries: &mut [BezierParameter2],
     policy: &CurvePolicy,
+    refine_ordering: bool,
 ) -> CurveResult<Classification<()>> {
     for index in 1..boundaries.len() {
         let mut cursor = index;
         while cursor > 0 {
-            match boundaries[cursor].cmp_by_interval(&boundaries[cursor - 1], policy)? {
+            match compare_boundary_parameters(
+                &boundaries[cursor],
+                &boundaries[cursor - 1],
+                policy,
+                refine_ordering,
+            )? {
                 Classification::Decided(Ordering::Less) => {
                     boundaries.swap(cursor, cursor - 1);
                     cursor -= 1;
@@ -688,6 +1012,19 @@ fn sort_boundaries(
         }
     }
     Ok(Classification::Decided(()))
+}
+
+fn compare_boundary_parameters(
+    first: &BezierParameter2,
+    second: &BezierParameter2,
+    policy: &CurvePolicy,
+    refine_ordering: bool,
+) -> CurveResult<Classification<Ordering>> {
+    if refine_ordering {
+        first.cmp_by_refinement(second, policy)
+    } else {
+        first.cmp_by_interval(second, policy)
+    }
 }
 
 fn validate_exact_range(start: &Real, end: &Real, policy: &CurvePolicy) -> CurveResult<()> {
@@ -764,6 +1101,7 @@ fn lerp_homogeneous(
 fn rational_from_homogeneous(
     controls: &[HomogeneousControl],
     policy: &CurvePolicy,
+    retained_common_weight_sign: Option<RealSign>,
 ) -> CurveResult<RationalQuadraticBezier2> {
     let mut points = Vec::with_capacity(controls.len());
     let mut weights = Vec::with_capacity(controls.len());
@@ -783,12 +1121,13 @@ fn rational_from_homogeneous(
         weights.push(control.weight.clone());
     }
 
-    RationalQuadraticBezier2::try_new(
+    RationalQuadraticBezier2::try_new_with_common_weight_sign(
         points[0].clone(),
         points[1].clone(),
         points[2].clone(),
         weights[0].clone(),
         weights[1].clone(),
         weights[2].clone(),
+        retained_common_weight_sign,
     )
 }

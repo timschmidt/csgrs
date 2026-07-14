@@ -19,10 +19,10 @@ use std::ops::Range;
 
 use hyperreal::Real;
 
-use crate::classify::{compare_reals, in_closed_unit_interval, real_sign};
+use crate::classify::{compare_reals, in_closed_unit_interval};
 use crate::{
     Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, RealSign, UncertaintyReason,
+    RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Exact Green's-theorem area and first-moment boundary contributions.
@@ -396,7 +396,7 @@ fn rational_quadratic_signed_area_contribution(
     curve: &RationalQuadraticBezier2,
 ) -> CurveResult<Option<Real>> {
     let policy = CurvePolicy::certified();
-    if !weights_have_one_nonzero_sign(curve.weights(), &policy)? {
+    if curve.common_nonzero_weight_sign(&policy).is_none() {
         return Ok(None);
     }
 
@@ -430,28 +430,6 @@ fn rational_quadratic_signed_area_contribution(
         return Ok(None);
     };
     Ok(Some((integral / Real::from(2_i8))?))
-}
-
-fn weights_have_one_nonzero_sign(weights: [&Real; 3], policy: &CurvePolicy) -> CurveResult<bool> {
-    let mut expected = None;
-    for weight in weights {
-        let Some(sign) = real_sign(weight, policy) else {
-            return Ok(false);
-        };
-        match sign {
-            RealSign::Positive | RealSign::Negative => {
-                if let Some(expected) = expected {
-                    if expected != sign {
-                        return Ok(false);
-                    }
-                } else {
-                    expected = Some(sign);
-                }
-            }
-            RealSign::Zero => return Ok(false),
-        }
-    }
-    Ok(expected.is_some())
 }
 
 fn quadratic_bernstein_power_coefficients(values: [Real; 3]) -> [Real; 3] {

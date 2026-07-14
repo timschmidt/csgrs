@@ -2,7 +2,8 @@ use std::cmp::Ordering;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurveError, CurvePolicy, Real, UncertaintyReason,
+    BezierParameterPolynomial, BezierParameterRange2, Classification, CurveError, CurvePolicy,
+    Real,
 };
 use proptest::prelude::*;
 
@@ -18,6 +19,13 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
+fn decided<T>(classification: Classification<T>) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
+}
+
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
     match BezierParameterPolynomial::try_new_power_basis(coefficients, &policy()).unwrap() {
         Classification::Decided(value) => value,
@@ -25,6 +33,33 @@ fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
             panic!("polynomial unexpectedly uncertain: {reason:?}")
         }
     }
+}
+
+#[test]
+fn unit_root_isolation_orders_represented_and_algebraic_roots() {
+    let polynomial = polynomial(vec![q(1, 4), q(-1, 2), q(-1, 2), r(1)]);
+    let roots = match polynomial.isolate_unit_interval_roots(&policy()).unwrap() {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => panic!("root isolation was uncertain: {reason:?}"),
+    };
+
+    assert_eq!(roots.len(), 2);
+    assert_eq!(roots[0], BezierParameter2::Exact(q(1, 2)));
+    assert!(matches!(roots[1], BezierParameter2::Algebraic(_)));
+    assert_eq!(
+        roots[0].cmp_by_interval(&roots[1], &policy()).unwrap(),
+        Classification::Decided(Ordering::Less)
+    );
+    let zero = BezierParameter2::Exact(r(0));
+    let one = BezierParameter2::Exact(r(1));
+    assert_eq!(
+        zero.cmp_by_interval(&roots[1], &policy()).unwrap(),
+        Classification::Decided(Ordering::Less)
+    );
+    assert_eq!(
+        roots[1].cmp_by_interval(&one, &policy()).unwrap(),
+        Classification::Decided(Ordering::Less)
+    );
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
@@ -57,38 +92,127 @@ fn linear_midpoint_root_is_a_valid_algebraic_parameter() {
 }
 
 #[test]
-fn linear_algebraic_parameter_recovers_represented_root() {
+fn algebraic_parameter_recovers_represented_linear_root() {
     let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
 
     assert_eq!(
-        parameter.represented_linear_root(&policy()).unwrap(),
+        parameter.represented_rational_root(&policy()).unwrap(),
         Classification::Decided(Some(q(1, 2)))
     );
     assert_eq!(
         BezierParameter2::algebraic(parameter)
-            .promote_represented_linear_root(&policy())
+            .promote_represented_rational_root(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 2)))
     );
 }
 
 #[test]
-fn nonlinear_algebraic_parameter_does_not_claim_represented_root() {
+fn irrational_nonlinear_parameter_remains_algebraic() {
     let parameter = isolate(
         polynomial(vec![r(-1), r(0), r(2)]),
         interval(q(2, 3), q(3, 4)),
     );
 
     assert_eq!(
-        parameter.represented_linear_root(&policy()).unwrap(),
+        parameter.represented_rational_root(&policy()).unwrap(),
         Classification::Decided(None)
     );
     assert!(matches!(
         BezierParameter2::algebraic(parameter)
-            .promote_represented_linear_root(&policy())
+            .promote_represented_rational_root(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Algebraic(_))
     ));
+}
+
+#[test]
+fn oriented_parameter_range_retains_irrational_boundary() {
+    let start = BezierParameter2::algebraic(isolate(
+        polynomial(vec![r(-1), r(0), r(2)]),
+        interval(q(2, 3), q(3, 4)),
+    ));
+    let range = match BezierParameterRange2::try_new(
+        start.clone(),
+        BezierParameter2::Exact(Real::one()),
+        &policy(),
+    )
+    .unwrap()
+    {
+        Classification::Decided(range) => range,
+        Classification::Uncertain(reason) => panic!("range unexpectedly uncertain: {reason:?}"),
+    };
+
+    assert_eq!(range.start(), &start);
+    assert_eq!(range.end(), &Real::one());
+    assert_eq!(range.reversed().start(), &Real::one());
+    assert!(range.exact_endpoints().is_none());
+    let promoted = decided(
+        range
+            .promote_represented_rational_endpoints(&policy())
+            .unwrap(),
+    );
+    assert!(promoted.exact_endpoints().is_none());
+    assert_eq!(promoted.start(), &start);
+}
+
+#[test]
+fn parameter_range_promotes_represented_rational_boundary() {
+    let start = BezierParameter2::algebraic(isolate(
+        polynomial(vec![r(-1), r(2)]),
+        interval(q(2, 5), q(3, 5)),
+    ));
+    let range = decided(
+        BezierParameterRange2::try_new(start, BezierParameter2::Exact(Real::one()), &policy())
+            .unwrap(),
+    );
+
+    let promoted = decided(
+        range
+            .promote_represented_rational_endpoints(&policy())
+            .unwrap(),
+    );
+
+    assert_eq!(promoted.exact_endpoints(), Some((&q(1, 2), &r(1))));
+}
+
+#[test]
+fn parameter_range_rejects_equal_or_out_of_domain_boundaries() {
+    let midpoint = BezierParameter2::Exact(q(1, 2));
+    assert_eq!(
+        BezierParameterRange2::try_new(midpoint.clone(), midpoint, &policy()).unwrap_err(),
+        CurveError::InvalidBezierRange
+    );
+    assert_eq!(
+        BezierParameterRange2::try_new(
+            BezierParameter2::Exact(r(-1)),
+            BezierParameter2::Exact(r(1)),
+            &policy(),
+        )
+        .unwrap_err(),
+        CurveError::InvalidBezierParameter
+    );
+}
+
+#[test]
+fn nonlinear_algebraic_parameter_reconstructs_exact_rational_root() {
+    // (3t - 1)(t^2 + 1) has the sole real root t = 1/3. The cubic defining
+    // polynomial ensures promotion does not rely on a linear representation.
+    let parameter = isolate(
+        polynomial(vec![r(-1), r(3), r(-1), r(3)]),
+        interval(q(1, 4), q(1, 2)),
+    );
+
+    assert_eq!(
+        parameter.represented_rational_root(&policy()).unwrap(),
+        Classification::Decided(Some(q(1, 3)))
+    );
+    assert_eq!(
+        BezierParameter2::algebraic(parameter)
+            .promote_represented_rational_root(&policy())
+            .unwrap(),
+        Classification::Decided(BezierParameter2::Exact(q(1, 3)))
+    );
 }
 
 #[test]
@@ -165,7 +289,83 @@ fn exact_and_algebraic_parameters_compare_only_when_certified() {
     };
     assert_eq!(
         overlapping.cmp_by_interval(&algebraic, &policy()).unwrap(),
-        Classification::Uncertain(UncertaintyReason::Ordering)
+        Classification::Decided(Ordering::Equal)
+    );
+}
+
+#[test]
+fn endpoint_touching_singleton_isolators_have_strict_order() {
+    let defining = polynomial(vec![r(-112), r(576), r(-576)]);
+    let left = BezierParameter2::algebraic(isolate(defining.clone(), interval(q(1, 4), q(1, 2))));
+    let right = BezierParameter2::algebraic(isolate(defining, interval(q(1, 2), q(3, 4))));
+
+    assert_eq!(
+        left.cmp_by_interval(&right, &policy()).unwrap(),
+        Classification::Decided(Ordering::Less)
+    );
+    assert_eq!(
+        right.cmp_by_interval(&left, &policy()).unwrap(),
+        Classification::Decided(Ordering::Greater)
+    );
+}
+
+#[test]
+fn equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators() {
+    let quadratic = BezierParameter2::algebraic(isolate(
+        polynomial(vec![r(-1), r(0), r(2)]),
+        interval(q(2, 3), q(3, 4)),
+    ));
+    let cubic = BezierParameter2::algebraic(isolate(
+        polynomial(vec![r(-1), r(-1), r(2), r(2)]),
+        interval(q(7, 10), q(4, 5)),
+    ));
+
+    assert_eq!(
+        quadratic.cmp_by_interval(&cubic, &policy()).unwrap(),
+        Classification::Decided(Ordering::Equal)
+    );
+    assert_eq!(
+        cubic.cmp_by_interval(&quadratic, &policy()).unwrap(),
+        Classification::Decided(Ordering::Equal)
+    );
+}
+
+#[test]
+fn algebraic_root_sign_change_tracks_multiplicity_parity() {
+    let simple = polynomial(vec![r(-1), r(0), r(2)]);
+    let simple_root =
+        BezierParameter2::algebraic(isolate(simple.clone(), interval(q(2, 3), q(3, 4))));
+    assert_eq!(
+        simple
+            .changes_sign_at_root(&simple_root, &policy())
+            .unwrap(),
+        Classification::Decided(true)
+    );
+
+    let double = polynomial(vec![r(1), r(0), r(-4), r(0), r(4)]);
+    let double_root =
+        BezierParameter2::algebraic(isolate(double.clone(), interval(q(2, 3), q(3, 4))));
+    assert_eq!(
+        double
+            .changes_sign_at_root(&double_root, &policy())
+            .unwrap(),
+        Classification::Decided(false)
+    );
+}
+
+#[test]
+fn represented_root_sign_change_tracks_high_multiplicity_parity() {
+    let double = polynomial(vec![q(1, 4), r(-1), r(1)]);
+    let triple = polynomial(vec![q(-1, 8), q(3, 4), q(-3, 2), r(1)]);
+    let root = BezierParameter2::Exact(q(1, 2));
+
+    assert_eq!(
+        double.changes_sign_at_root(&root, &policy()).unwrap(),
+        Classification::Decided(false)
+    );
+    assert_eq!(
+        triple.changes_sign_at_root(&root, &policy()).unwrap(),
+        Classification::Decided(true)
     );
 }
 

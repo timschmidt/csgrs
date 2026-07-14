@@ -8,8 +8,9 @@
 
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, IntersectionKind,
-    LineLineIntersection, LineSeg2, Point2, Real, Region2, RegionPointLocation, UncertaintyReason,
+    BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy,
+    FillRule, IntersectionKind, LineLineIntersection, LineSeg2, Point2, Real, Region2,
+    RegionPointLocation,
 };
 
 type HPoint = Point2;
@@ -396,7 +397,7 @@ fn geo_boolean_triangle_pair_matches_geo_samples() {
 }
 
 #[test]
-fn geo_unary_union_third_triangle_branch_case_is_explicitly_deferred() {
+fn geo_unary_union_third_triangle_shared_edge_is_resolved_by_fill_side() {
     let first = &[
         (204.0, 287.0),
         (203.69670020700084, 288.2213844497616),
@@ -430,22 +431,79 @@ fn geo_unary_union_third_triangle_branch_case_is_explicitly_deferred() {
     };
 
     let result = partial
-        .boolean_region(
+        .boolean_region_with_report(
             &third_region,
             BooleanOp::Union,
             FillRule::NonZero,
             &policy(),
         )
         .unwrap();
+    let region = result.region().expect("shared-edge union materialized");
+    assert_eq!(result.report().blocker(), None);
+    assert_eq!(result.report().boundary_overlap_event_count(), 1);
+    assert_eq!(result.report().result_material_contour_count(), Some(1));
+    assert_eq!(result.report().result_boundary_segment_count(), Some(7));
+    let pipeline = result
+        .report()
+        .pipeline_report()
+        .expect("shared-edge union retained its arrangement pipeline");
     assert_eq!(
-        result,
-        Classification::Uncertain(UncertaintyReason::Boundary)
+        pipeline
+            .fragment_selection_report()
+            .boundary_needs_resolution_count(),
+        Some(2)
+    );
+    assert_eq!(
+        pipeline
+            .boundary_fragment_emission_report()
+            .unresolved_boundary_count(),
+        Some(0)
+    );
+    assert_eq!(pipeline.shared_boundary_resolution_count(), 1);
+    let resolution = &pipeline.shared_boundary_resolutions()[0];
+    assert!(resolution.same_direction());
+    assert!(resolution.first_filled_side_is_left());
+    assert!(resolution.second_filled_side_is_left());
+    assert_eq!(
+        resolution.first_action(),
+        BooleanFragmentAction::KeepSourceDirection
+    );
+    assert_eq!(resolution.second_action(), BooleanFragmentAction::Discard);
+    let prepared_third = third_region.prepare_topology_queries(&policy());
+    let prepared_result = partial
+        .as_view()
+        .boolean_region_with_report_against_prepared_region(
+            &prepared_third,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap();
+    assert_eq!(prepared_result.region(), Some(region));
+    assert_eq!(prepared_result.report().blocker(), None);
+    assert_eq!(
+        prepared_result
+            .report()
+            .pipeline_report()
+            .expect("prepared shared-edge union retained its arrangement pipeline")
+            .shared_boundary_resolutions(),
+        pipeline.shared_boundary_resolutions()
     );
 
     let geo_expected = geo_polygon(first)
         .union(&geo_polygon(second))
         .union(&geo_polygon(third));
-    assert!(geo_expected.contains(&Point::new(210.0, 289.0)));
+    for &(x, y) in &[(210.0, 289.0), (203.0, 288.0), (214.0, 289.0)] {
+        let expected_inside = geo_expected.contains(&Point::new(x, y));
+        assert_eq!(
+            region.classify_point(&p(x, y), &policy()),
+            Classification::Decided(if expected_inside {
+                RegionPointLocation::Inside
+            } else {
+                RegionPointLocation::Outside
+            })
+        );
+    }
 }
 
 #[test]

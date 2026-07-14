@@ -20,6 +20,11 @@ use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
     AlgebraicRootRepresentation, arithmetic_algebraic_root_representations,
 };
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    compare_algebraic_root_representations_by_difference,
+};
 
 use crate::classify::compare_reals;
 use crate::{BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurvePolicy};
@@ -62,7 +67,7 @@ impl BezierAlgebraicTangentVector2 {
                     .and_then(|coordinate| coordinate.representation());
                 (dx, dy)
             }
-            BezierEndpointTangentImage2::RationalQuadratic(image) => {
+            BezierEndpointTangentImage2::Rational(image) => {
                 let dx = image
                     .dx()
                     .and_then(|coordinate| coordinate.representation());
@@ -1131,8 +1136,35 @@ fn represented_sign(value: &AlgebraicRootRepresentation, policy: &CurvePolicy) -
     } else if matches!(upper, Ordering::Less) {
         Some(Ordering::Less)
     } else {
-        None
+        refined_represented_sign(value, policy)
     }
+}
+
+#[cfg(feature = "predicates")]
+fn refined_represented_sign(
+    value: &AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) -> Option<Ordering> {
+    let zero = exact_value_representation(&Real::zero());
+    let report = compare_algebraic_root_representations_by_difference(
+        value,
+        &zero,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: policy.predicate_policy,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    );
+    (report.comparison.status == AlgebraicRootComparisonStatus::Compared)
+        .then_some(report.comparison.ordering)
+        .flatten()
+}
+
+#[cfg(not(feature = "predicates"))]
+fn refined_represented_sign(
+    _value: &AlgebraicRootRepresentation,
+    _policy: &CurvePolicy,
+) -> Option<Ordering> {
+    None
 }
 
 fn sign_status(report: &BezierAlgebraicScalarSignReport) -> ScalarSignStatus {

@@ -16,8 +16,9 @@ use crate::classify::{
     real_sign,
 };
 use crate::{
-    Aabb2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult,
-    LineLineIntersection, LineSeg2, LineSide, Point2, QuadraticBezier2, UncertaintyReason,
+    Aabb2, BezierParameter2, BezierParameterPolynomial, Classification, CubicBezier2, CurveError,
+    CurvePolicy, CurveResult, LineLineIntersection, LineSeg2, LineSide, Point2, QuadraticBezier2,
+    UncertaintyReason,
 };
 
 /// Current finite dyadic frontier for exact same-parameter Bezier candidates.
@@ -239,33 +240,33 @@ pub enum BezierLineRelation {
     Unresolved,
 }
 
-/// Certified contact kind for a represented Bezier/supporting-line root.
+/// Certified contact kind for an exact Bezier/supporting-line root.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BezierLineContactKind {
-    /// The signed line-distance polynomial changes with nonzero first derivative.
+    /// The signed line-distance polynomial has odd root multiplicity.
     Crossing,
-    /// The signed line-distance polynomial has a zero first derivative at the root.
+    /// The signed line-distance polynomial has even root multiplicity.
     Tangent,
 }
 
-/// Certified represented root of a Bezier/supporting-line predicate.
+/// Certified exact root of a Bezier/supporting-line predicate.
 ///
-/// The contact kind is decided from the exact derivative of the scalar
-/// Bernstein signed-distance polynomial at the represented root. This keeps
-/// tangent/contact classification in the algebraic predicate layer, following
+/// The parameter remains represented or algebraically isolated. Contact kind
+/// is decided from exact root-multiplicity parity, which correctly handles
+/// higher-order crossings as well as ordinary tangencies. This keeps
+/// contact classification in the algebraic predicate layer, following
 /// Yap's exact geometric computation boundary; see Yap, "Towards Exact
 /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-/// signed-distance Bernstein polynomial and derivative identities are the
-/// standard Bezier formulas in Farin, *Curves and Surfaces for CAGD* (5th
-/// ed., 2002), while bracket-only roots remain Sederberg-Nishita
-/// Bezier-clipping regions rather than sampled contacts.
+/// signed-distance Bernstein polynomial identities are the standard Bezier
+/// formulas in Farin, *Curves and Surfaces for CAGD* (5th ed., 2002), while
+/// Sturm isolators retain irrational roots without sampling.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierLineContact {
-    parameter: Real,
+    parameter: BezierParameter2,
     kind: BezierLineContactKind,
 }
 
-/// Supporting-line relation with represented root contact classification.
+/// Complete supporting-line relation with exact root contact classification.
 #[derive(Clone, Debug, PartialEq)]
 pub enum BezierLineContactRelation {
     /// The Bezier control hull is certified to lie strictly on one side.
@@ -275,33 +276,28 @@ pub enum BezierLineContactRelation {
     },
     /// Every Bezier control point is certified on the supporting line.
     OnSupportingLine,
-    /// Certified represented line roots with crossing/tangent classification.
+    /// The finite curve does not meet the supporting line.
+    NoContact,
+    /// Certified exact line roots with crossing/tangent classification.
     Contacts {
-        /// Sorted unique represented contacts in the closed unit interval.
+        /// Sorted unique exact contacts in the closed unit interval.
         contacts: Vec<BezierLineContact>,
     },
-    /// Certified isolating spans for roots that are not represented as exact parameters.
-    IsolatedIntersections {
-        /// Sorted closed parameter spans, each retaining at least one line root.
-        spans: Vec<BezierMonotoneSpan>,
-    },
-    /// The relation needs a higher-degree root or overlap solver.
-    Unresolved,
 }
 
 impl BezierLineContact {
-    /// Constructs a represented Bezier/supporting-line contact.
-    pub fn new(parameter: Real, kind: BezierLineContactKind) -> CurveResult<Self> {
-        match in_closed_unit_interval(&parameter, &CurvePolicy::certified()) {
-            Some(true) => Ok(Self { parameter, kind }),
-            Some(false) | None => Err(CurveError::Topology(
-                "Bezier line contact parameter must be certified inside the unit interval".into(),
+    /// Constructs an exact Bezier/supporting-line contact.
+    pub fn new(parameter: BezierParameter2, kind: BezierLineContactKind) -> CurveResult<Self> {
+        match parameter.known_interval(&CurvePolicy::certified()) {
+            Ok(Classification::Decided(_)) => Ok(Self { parameter, kind }),
+            Ok(Classification::Uncertain(_)) | Err(_) => Err(CurveError::Topology(
+                "Bezier line contact parameter must have a certified unit interval".into(),
             )),
         }
     }
 
     /// Returns the exact Bezier parameter of the contact.
-    pub const fn parameter(&self) -> &Real {
+    pub const fn parameter(&self) -> &BezierParameter2 {
         &self.parameter
     }
 
@@ -2817,18 +2813,18 @@ fn control_sides_against_line(
     controls: &[&Point2],
     line: &LineSeg2,
     policy: &CurvePolicy,
-) -> Classification<Vec<LineSide>> {
-    let mut sides = Vec::with_capacity(controls.len());
-    for side in controls
-        .iter()
-        .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
-    {
-        match side {
-            Classification::Decided(side) => sides.push(side),
+) -> Classification<([LineSide; 4], usize)> {
+    if controls.len() > 4 {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    }
+    let mut sides = [LineSide::On; 4];
+    for (index, point) in controls.iter().enumerate() {
+        match classify_oriented_line(line.start(), line.end(), point, policy) {
+            Classification::Decided(side) => sides[index] = side,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
     }
-    Classification::Decided(sides)
+    Classification::Decided((sides, controls.len()))
 }
 
 fn relation_to_line(
@@ -2836,10 +2832,11 @@ fn relation_to_line(
     line: &LineSeg2,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineRelation> {
-    let decided_sides = match control_sides_against_line(controls, line, policy) {
+    let (decided_sides, side_count) = match control_sides_against_line(controls, line, policy) {
         Classification::Decided(sides) => sides,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
+    let decided_sides = &decided_sides[..side_count];
 
     if decided_sides.iter().all(|side| *side == LineSide::On) {
         return Classification::Decided(BezierLineRelation::OnSupportingLine);
@@ -2892,7 +2889,8 @@ fn relation_to_line(
         if parameters.is_empty() {
             BezierLineRelation::ControlHullDisjoint {
                 side: decided_sides
-                    .into_iter()
+                    .iter()
+                    .copied()
                     .find(|side| *side != LineSide::On)
                     .unwrap_or(LineSide::On),
             }
@@ -2907,10 +2905,11 @@ fn relation_to_line_with_contacts(
     line: &LineSeg2,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineContactRelation> {
-    let decided_sides = match control_sides_against_line(controls, line, policy) {
+    let (decided_sides, side_count) = match control_sides_against_line(controls, line, policy) {
         Classification::Decided(sides) => sides,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
+    let decided_sides = &decided_sides[..side_count];
 
     if decided_sides.iter().all(|side| *side == LineSide::On) {
         return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
@@ -2936,114 +2935,45 @@ fn relation_to_line_with_contacts(
         .iter()
         .map(|point| orient2d_real_expr(line.start(), line.end(), point))
         .collect::<Vec<_>>();
-    match distances.as_slice() {
-        [d0, d1, d2] => quadratic_line_contact_relation(
-            [d0.clone(), d1.clone(), d2.clone()],
-            decided_sides,
-            policy,
-        ),
-        [d0, d1, d2, d3] => {
-            cubic_line_contact_relation([d0.clone(), d1.clone(), d2.clone(), d3.clone()], policy)
-        }
-        _ => Classification::Uncertain(UncertaintyReason::Unsupported),
-    }
+    exact_line_contact_relation_from_bernstein_distances(distances, policy)
 }
 
-fn quadratic_line_contact_relation(
-    distances: [Real; 3],
-    decided_sides: Vec<LineSide>,
+pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
+    distances: Vec<Real>,
     policy: &CurvePolicy,
 ) -> Classification<BezierLineContactRelation> {
-    let two = Real::from(2_i8);
-    let c0 = distances[0].clone();
-    let c1 = &two * &(&distances[1] - &distances[0]);
-    let c2 = &distances[0] - &(&two * &distances[1]) + &distances[2];
-    let roots = match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis(distances, policy) {
+        Ok(Classification::Decided(polynomial)) => polynomial,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    if roots.is_empty() {
-        return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
-            side: decided_sides
-                .into_iter()
-                .find(|side| *side != LineSide::On)
-                .unwrap_or(LineSide::On),
-        });
+    let parameters = match polynomial.isolate_unit_interval_roots(policy) {
+        Ok(Classification::Decided(parameters)) => parameters,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+    };
+    if parameters.is_empty() {
+        return Classification::Decided(BezierLineContactRelation::NoContact);
     }
-
-    let mut contacts = Vec::new();
-    for root in roots {
-        let derivative = scalar_quadratic_derivative_at(&distances, &root);
-        let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
-            return Classification::Uncertain(UncertaintyReason::RealSign);
+    let mut contacts = Vec::with_capacity(parameters.len());
+    for parameter in parameters {
+        let changes_sign = match polynomial.changes_sign_at_root(&parameter, policy) {
+            Ok(Classification::Decided(changes_sign)) => changes_sign,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
-        let contact = match BezierLineContact::new(root, kind) {
-            Ok(contact) => contact,
-            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
-        };
-        if let Err(reason) = push_unique_line_contact(&mut contacts, contact, policy) {
-            return Classification::Uncertain(reason);
-        }
-    }
-    Classification::Decided(BezierLineContactRelation::Contacts { contacts })
-}
-
-fn cubic_line_contact_relation(
-    distances: [Real; 4],
-    policy: &CurvePolicy,
-) -> Classification<BezierLineContactRelation> {
-    if distances
-        .iter()
-        .all(|value| is_zero(value, policy) == Some(true))
-    {
-        return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
-    }
-    let mut exact_parameters = Vec::new();
-    let mut spans = Vec::new();
-    if let Err(reason) = isolate_scalar_cubic_roots(
-        distances.clone(),
-        Real::zero(),
-        Real::one(),
-        0,
-        policy,
-        &mut exact_parameters,
-        &mut spans,
-    ) {
-        return Classification::Uncertain(reason);
-    }
-    if !spans.is_empty() {
-        if let Err(reason) = merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy)
-        {
-            return Classification::Uncertain(reason);
-        }
-        return Classification::Decided(BezierLineContactRelation::IsolatedIntersections { spans });
-    }
-    if exact_parameters.is_empty() {
-        return Classification::Decided(BezierLineContactRelation::Unresolved);
-    }
-
-    let mut contacts = Vec::new();
-    for parameter in exact_parameters {
-        let derivative = scalar_cubic_derivative_at(&distances, &parameter);
-        let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
-            return Classification::Uncertain(UncertaintyReason::RealSign);
+        let kind = if changes_sign {
+            BezierLineContactKind::Crossing
+        } else {
+            BezierLineContactKind::Tangent
         };
         let contact = match BezierLineContact::new(parameter, kind) {
             Ok(contact) => contact,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
         };
-        if let Err(reason) = push_unique_line_contact(&mut contacts, contact, policy) {
-            return Classification::Uncertain(reason);
-        }
+        contacts.push(contact);
     }
     Classification::Decided(BezierLineContactRelation::Contacts { contacts })
-}
-
-fn scalar_quadratic_derivative_at(controls: &[Real; 3], parameter: &Real) -> Real {
-    let one_minus_t = Real::one() - parameter;
-    let left = &controls[1] - &controls[0];
-    let right = &controls[2] - &controls[1];
-    Real::from(2_i8) * ((&one_minus_t * &left) + (parameter * &right))
 }
 
 fn scalar_cubic_derivative_at(controls: &[Real; 4], parameter: &Real) -> Real {
@@ -3065,27 +2995,6 @@ fn contact_kind_from_derivative(
         RealSign::Zero => Some(BezierLineContactKind::Tangent),
         RealSign::Positive | RealSign::Negative => Some(BezierLineContactKind::Crossing),
     }
-}
-
-fn push_unique_line_contact(
-    contacts: &mut Vec<BezierLineContact>,
-    contact: BezierLineContact,
-    policy: &CurvePolicy,
-) -> Result<(), UncertaintyReason> {
-    let mut insert_at = contacts.len();
-    for (index, existing) in contacts.iter().enumerate() {
-        match compare_reals(existing.parameter(), contact.parameter(), policy) {
-            Some(Ordering::Equal) => return Ok(()),
-            Some(Ordering::Greater) => {
-                insert_at = index;
-                break;
-            }
-            Some(Ordering::Less) => {}
-            None => return Err(UncertaintyReason::Ordering),
-        }
-    }
-    contacts.insert(insert_at, contact);
-    Ok(())
 }
 
 fn push_unique_graph_contact(

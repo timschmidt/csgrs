@@ -116,6 +116,27 @@ fn aabb_overlap_is_inclusive_at_edge_and_corner_contacts() {
 }
 
 #[test]
+fn singleton_box_intersection_requires_zero_extent_on_both_axes() {
+    let first = Aabb2::new_unchecked(p(0, 0), p(2, 2));
+    let corner = Aabb2::new_unchecked(p(2, 2), p(4, 4));
+    let edge = Aabb2::new_unchecked(p(2, 1), p(4, 3));
+    let disjoint = Aabb2::new_unchecked(p(3, 3), p(4, 4));
+
+    assert_eq!(
+        first.singleton_intersection(&corner, &policy()),
+        Classification::Decided(Some(p(2, 2)))
+    );
+    assert_eq!(
+        first.singleton_intersection(&edge, &policy()),
+        Classification::Decided(None)
+    );
+    assert_eq!(
+        first.singleton_intersection(&disjoint, &policy()),
+        Classification::Decided(None)
+    );
+}
+
+#[test]
 fn curve_string_aabb_unions_segment_boxes() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 4, 0),

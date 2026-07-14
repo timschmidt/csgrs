@@ -3,6 +3,7 @@ use egui_plot::Plot;
 use hypercurve::OffsetCap;
 use serde::{Deserialize, Serialize};
 
+use crate::corner_scenes::{CornerOperation, CornerScene};
 use crate::editor::PolylineEditor;
 use crate::geometry::{
     BooleanMode, Polyline, Shape, boolean_polylines, contour_intersections, contour_slices,
@@ -19,6 +20,8 @@ pub struct DemoScenes {
     pline_offset: PlineOffsetScene,
     multi_boolean: MultiPlineBooleanScene,
     multi_offset: MultiPlineOffsetScene,
+    fillet: CornerScene,
+    chamfer: CornerScene,
     #[cfg(target_arch = "wasm32")]
     share_status: Option<String>,
 }
@@ -49,6 +52,8 @@ impl DemoScenes {
             pline_offset: PlineOffsetScene::default(),
             multi_boolean: MultiPlineBooleanScene::default(),
             multi_offset: MultiPlineOffsetScene::default(),
+            fillet: CornerScene::new(CornerOperation::Fillet, default_fillet_radius()),
+            chamfer: CornerScene::new(CornerOperation::Chamfer, default_chamfer_setback()),
             #[cfg(target_arch = "wasm32")]
             share_status: None,
         }
@@ -80,6 +85,8 @@ impl DemoScenes {
                     "Polyline Offset",
                     "Multi Polyline Boolean",
                     "Multi Polyline Offset",
+                    "Fillets",
+                    "Chamfers",
                 ]
                 .into_iter()
                 .enumerate()
@@ -115,7 +122,9 @@ impl DemoScenes {
             0 => self.pline_boolean.ui(ctx, &theme),
             1 => self.pline_offset.ui(ctx, &theme),
             2 => self.multi_boolean.ui(ctx, &theme),
-            _ => self.multi_offset.ui(ctx, &theme),
+            3 => self.multi_offset.ui(ctx, &theme),
+            4 => self.fillet.ui(ctx, &theme),
+            _ => self.chamfer.ui(ctx, &theme),
         }
     }
 
@@ -124,11 +133,13 @@ impl DemoScenes {
             return Err(format!("unsupported state version {}", state.version));
         }
         let mut scenes = Self::fallback_default();
-        scenes.active = state.active.min(3);
+        scenes.active = state.active.min(5);
         scenes.pline_boolean.apply_state(state.pline_boolean)?;
         scenes.pline_offset.apply_state(state.pline_offset)?;
         scenes.multi_boolean.apply_state(state.multi_boolean)?;
         scenes.multi_offset.apply_state(state.multi_offset)?;
+        scenes.fillet.apply_amount(state.fillet_radius)?;
+        scenes.chamfer.apply_amount(state.chamfer_setback)?;
         Ok(scenes)
     }
 
@@ -141,6 +152,8 @@ impl DemoScenes {
             pline_offset: self.pline_offset.state(),
             multi_boolean: self.multi_boolean.state(),
             multi_offset: self.multi_offset.state(),
+            fillet_radius: self.fillet.amount(),
+            chamfer_setback: self.chamfer.amount(),
         }
     }
 }
@@ -153,6 +166,18 @@ struct DemoScenesState {
     pline_offset: PlineOffsetSceneState,
     multi_boolean: MultiPlineBooleanSceneState,
     multi_offset: MultiPlineOffsetSceneState,
+    #[serde(default = "default_fillet_radius")]
+    fillet_radius: f64,
+    #[serde(default = "default_chamfer_setback")]
+    chamfer_setback: f64,
+}
+
+const fn default_fillet_radius() -> f64 {
+    1.0
+}
+
+const fn default_chamfer_setback() -> f64 {
+    1.0
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1166,6 +1191,8 @@ mod tests {
         assert_eq!(state.pline_boolean.polylines[1].curve_data.len(), 8);
         assert_eq!(state.pline_offset.polylines.len(), 1);
         assert_eq!(state.pline_offset.polylines[0].curve_data.len(), 8);
+        assert_eq!(state.fillet_radius, default_fillet_radius());
+        assert_eq!(state.chamfer_setback, default_chamfer_setback());
         assert_eq!(state.multi_boolean.first.materials.len(), 2);
         assert_eq!(state.multi_boolean.first.holes.len(), 3);
         assert_eq!(state.multi_boolean.second.materials.len(), 2);

@@ -3,6 +3,11 @@
 This is a small egui test article for `hypercurve`; all geometry operations are
 routed through the native `hypercurve` kernel.
 
+The Fillets and Chamfers tabs exercise line, circular-arc, polynomial Bezier,
+rational quadratic, arbitrary rational Bezier, polynomial B-spline, and NURBS
+inputs in one place. Their scene tests require every public `Curve2` family to
+remain represented after the edit.
+
 Run natively:
 
 ```text

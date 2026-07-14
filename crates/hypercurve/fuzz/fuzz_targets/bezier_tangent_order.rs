@@ -54,7 +54,7 @@ fn second_vector_from_rational_curve(
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .ok()?;
     BezierAlgebraicTangentVector2::from_endpoint_image(
-        &BezierEndpointTangentImage2::RationalQuadratic(tangent),
+        &BezierEndpointTangentImage2::Rational(tangent),
     )
     .vector
 }

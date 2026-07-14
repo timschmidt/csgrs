@@ -26,8 +26,13 @@ use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
     arithmetic_algebraic_root_representations,
 };
+#[cfg(feature = "predicates")]
+use hypersolve::{
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    compare_algebraic_root_representations_by_difference,
+};
 
-use crate::classify::{is_zero, real_sign};
+use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
@@ -43,6 +48,8 @@ use crate::{
 pub struct BezierArrangementFragment2 {
     source_curve_index: usize,
     source_fragment_index: usize,
+    start_topology_vertex: Option<usize>,
+    end_topology_vertex: Option<usize>,
     fragment: BezierSplitFragment2,
 }
 
@@ -75,8 +82,28 @@ impl BezierArrangementFragment2 {
         Self {
             source_curve_index,
             source_fragment_index,
+            start_topology_vertex: None,
+            end_topology_vertex: None,
             fragment,
         }
+    }
+
+    pub(crate) const fn with_topology_vertices(
+        mut self,
+        start_topology_vertex: Option<usize>,
+        end_topology_vertex: Option<usize>,
+    ) -> Self {
+        self.start_topology_vertex = start_topology_vertex;
+        self.end_topology_vertex = end_topology_vertex;
+        self
+    }
+
+    pub(crate) const fn start_topology_vertex(&self) -> Option<usize> {
+        self.start_topology_vertex
+    }
+
+    pub(crate) const fn end_topology_vertex(&self) -> Option<usize> {
+        self.end_topology_vertex
     }
 
     /// Returns the source curve index supplied to the graph builder.
@@ -263,7 +290,7 @@ impl BezierArrangementGraph2 {
     ) -> Classification<BezierArrangementTraversal2> {
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
-            let endpoints_for_fragment = match retained_endpoint_data(fragment.fragment(), policy) {
+            let endpoints_for_fragment = match retained_endpoint_data(fragment, policy) {
                 Some(Classification::Decided(endpoints)) => endpoints,
                 Some(Classification::Uncertain(reason)) => {
                     return Classification::Uncertain(reason);
@@ -363,6 +390,7 @@ fn validate_arrangement_fragment_source_range(
         source_curve,
         start_image,
         end_image,
+        ..
     } = fragment.fragment()
     else {
         return Ok(());
@@ -542,9 +570,11 @@ fn validate_arrangement_chain_indices(fragment_indices: &[usize]) -> CurveResult
         ));
     }
 
-    let mut sorted = fragment_indices.to_vec();
-    sorted.sort_unstable();
-    if sorted.windows(2).any(|window| window[0] == window[1]) {
+    if fragment_indices.iter().enumerate().any(|(index, value)| {
+        fragment_indices[index + 1..]
+            .iter()
+            .any(|candidate| candidate == value)
+    }) {
         return Err(CurveError::Topology(
             "retained Bezier arrangement chain fragment indices must be unique".to_owned(),
         ));
@@ -615,6 +645,8 @@ struct TangentVector {
 struct RetainedEndpointData {
     start: Option<RetainedEndpointKey>,
     end: Option<RetainedEndpointKey>,
+    start_topology_vertex: Option<usize>,
+    end_topology_vertex: Option<usize>,
     start_tangent: Option<RetainedTangentVector>,
     end_tangent: Option<RetainedTangentVector>,
     start_second_derivative: Option<RetainedTangentVector>,
@@ -636,6 +668,14 @@ enum RetainedTangentVector {
     Algebraic(Box<BezierAlgebraicTangentVector2>),
 }
 
+#[derive(Clone, Debug)]
+struct RetainedEndpointSideData {
+    point: RetainedEndpointKey,
+    tangent: RetainedTangentVector,
+    second_derivative: Option<RetainedTangentVector>,
+    third_derivative: Option<RetainedTangentVector>,
+}
+
 fn materialized_endpoint_data(
     fragment: &BezierSplitFragment2,
     policy: &CurvePolicy,
@@ -648,14 +688,17 @@ fn materialized_endpoint_data(
 }
 
 fn retained_endpoint_data(
-    fragment: &BezierSplitFragment2,
+    arrangement_fragment: &BezierArrangementFragment2,
     policy: &CurvePolicy,
 ) -> Option<Classification<RetainedEndpointData>> {
+    let fragment = arrangement_fragment.fragment();
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => match curve.endpoint_data(policy) {
             Classification::Decided(data) => Some(Classification::Decided(RetainedEndpointData {
                 start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
                 end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
                 start_tangent: Some(RetainedTangentVector::Native(Box::new(data.start_tangent))),
                 end_tangent: Some(RetainedTangentVector::Native(Box::new(data.end_tangent))),
                 start_second_derivative: data
@@ -670,65 +713,56 @@ fn retained_endpoint_data(
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
         BezierSplitFragment2::AlgebraicEndpointImages {
+            reversed,
+            start,
+            end,
+            source_curve,
             start_image,
             end_image,
-            ..
         } => {
-            let start = match start_image {
-                Some(image) => match retained_algebraic_point_key(image.point()) {
-                    Some(key) => Some(key),
+            let source_start = match retained_endpoint_side_data(
+                start,
+                start_image.as_ref(),
+                source_curve.as_ref(),
+                policy,
+            ) {
+                Classification::Decided(data) => data,
+                Classification::Uncertain(reason) => {
+                    return Some(Classification::Uncertain(reason));
+                }
+            };
+            let source_end = match retained_endpoint_side_data(
+                end,
+                end_image.as_ref(),
+                source_curve.as_ref(),
+                policy,
+            ) {
+                Classification::Decided(data) => data,
+                Classification::Uncertain(reason) => {
+                    return Some(Classification::Uncertain(reason));
+                }
+            };
+            let (start, end) = if *reversed {
+                let start = match reverse_retained_endpoint_side_option(source_end) {
+                    Some(data) => data,
                     None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
-                },
-                None => None,
-            };
-            let end = match end_image {
-                Some(image) => match retained_algebraic_point_key(image.point()) {
-                    Some(key) => Some(key),
+                };
+                let end = match reverse_retained_endpoint_side_option(source_start) {
+                    Some(data) => data,
                     None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
-                },
-                None => None,
+                };
+                (start, end)
+            } else {
+                (source_start, source_end)
             };
-            let start_tangent = match start_image {
-                Some(image) => match retained_algebraic_tangent(image.tangent()) {
-                    Some(tangent) => Some(tangent),
-                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
-                },
-                None => None,
-            };
-            let end_tangent = match end_image {
-                Some(image) => match retained_algebraic_tangent(image.tangent()) {
-                    Some(tangent) => Some(tangent),
-                    None => return Some(Classification::Uncertain(UncertaintyReason::Boundary)),
-                },
-                None => None,
-            };
-            let start_second_derivative = match start_image
-                .as_ref()
-                .and_then(|image| image.second_derivative())
-            {
-                Some(image) => match retained_algebraic_tangent(image) {
-                    Some(tangent) => Some(tangent),
-                    None => {
-                        return Some(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                },
-                None => None,
-            };
-            let start_third_derivative = match start_image
-                .as_ref()
-                .and_then(|image| image.third_derivative())
-            {
-                Some(image) => match retained_algebraic_tangent(image) {
-                    Some(tangent) => Some(tangent),
-                    None => {
-                        return Some(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                },
-                None => None,
-            };
+            let (start, start_tangent, start_second_derivative, start_third_derivative) =
+                retained_endpoint_side_parts(start);
+            let (end, end_tangent, _, _) = retained_endpoint_side_parts(end);
             Some(Classification::Decided(RetainedEndpointData {
                 start,
                 end,
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
                 start_tangent,
                 end_tangent,
                 start_second_derivative,
@@ -739,13 +773,142 @@ fn retained_endpoint_data(
     }
 }
 
+fn retained_endpoint_side_data(
+    parameter: &BezierParameter2,
+    image: Option<&BezierAlgebraicEndpointImage2>,
+    source_curve: Option<&BezierSubcurve2>,
+    policy: &CurvePolicy,
+) -> Classification<Option<RetainedEndpointSideData>> {
+    if let Some(image) = image {
+        let Some(point) = retained_algebraic_point_key(image.point()) else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        let Some(tangent) = retained_algebraic_tangent(image.tangent()) else {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        };
+        let second_derivative = match image.second_derivative() {
+            Some(image) => match retained_algebraic_tangent(image) {
+                Some(tangent) => Some(tangent),
+                None => return Classification::Uncertain(UncertaintyReason::Boundary),
+            },
+            None => None,
+        };
+        let third_derivative = match image.third_derivative() {
+            Some(image) => match retained_algebraic_tangent(image) {
+                Some(tangent) => Some(tangent),
+                None => return Classification::Uncertain(UncertaintyReason::Boundary),
+            },
+            None => None,
+        };
+        return Classification::Decided(Some(RetainedEndpointSideData {
+            point,
+            tangent,
+            second_derivative,
+            third_derivative,
+        }));
+    }
+
+    let (BezierParameter2::Exact(parameter), Some(source_curve)) = (parameter, source_curve) else {
+        return Classification::Decided(None);
+    };
+    retained_exact_source_endpoint_side_data(source_curve, parameter, policy).map(Some)
+}
+
+fn retained_exact_source_endpoint_side_data(
+    source_curve: &BezierSubcurve2,
+    parameter: &Real,
+    policy: &CurvePolicy,
+) -> Classification<RetainedEndpointSideData> {
+    let at_source_end = match compare_reals(parameter, &Real::one(), policy) {
+        Some(ordering) => ordering == std::cmp::Ordering::Equal,
+        None => return Classification::Uncertain(UncertaintyReason::Ordering),
+    };
+    let (data, restore_source_orientation) = if at_source_end {
+        match source_curve.reversed().endpoint_data(policy) {
+            Classification::Decided(data) => (data, true),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    } else {
+        let subcurve = match source_curve.subcurve_between_exact(parameter, &Real::one(), policy) {
+            Ok(Classification::Decided(subcurve)) => subcurve,
+            Ok(Classification::Uncertain(reason)) => {
+                return Classification::Uncertain(reason);
+            }
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+        };
+        match subcurve.endpoint_data(policy) {
+            Classification::Decided(data) => (data, false),
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    };
+    let side = RetainedEndpointSideData {
+        point: RetainedEndpointKey::Exact(Box::new(data.start)),
+        tangent: RetainedTangentVector::Native(Box::new(data.start_tangent)),
+        second_derivative: data
+            .start_second_derivative
+            .map(Box::new)
+            .map(RetainedTangentVector::Native),
+        third_derivative: data
+            .start_third_derivative
+            .map(Box::new)
+            .map(RetainedTangentVector::Native),
+    };
+    if restore_source_orientation {
+        match reversed_retained_endpoint_side(side) {
+            Some(side) => Classification::Decided(side),
+            None => Classification::Uncertain(UncertaintyReason::Boundary),
+        }
+    } else {
+        Classification::Decided(side)
+    }
+}
+
+fn retained_endpoint_side_parts(
+    side: Option<RetainedEndpointSideData>,
+) -> (
+    Option<RetainedEndpointKey>,
+    Option<RetainedTangentVector>,
+    Option<RetainedTangentVector>,
+    Option<RetainedTangentVector>,
+) {
+    match side {
+        Some(side) => (
+            Some(side.point),
+            Some(side.tangent),
+            side.second_derivative,
+            side.third_derivative,
+        ),
+        None => (None, None, None, None),
+    }
+}
+
+fn reverse_retained_endpoint_side_option(
+    side: Option<RetainedEndpointSideData>,
+) -> Option<Option<RetainedEndpointSideData>> {
+    match side {
+        Some(side) => Some(Some(reversed_retained_endpoint_side(side)?)),
+        None => Some(None),
+    }
+}
+
+fn reversed_retained_endpoint_side(
+    mut side: RetainedEndpointSideData,
+) -> Option<RetainedEndpointSideData> {
+    side.tangent = negate_retained_tangent(side.tangent)?;
+    side.third_derivative = match side.third_derivative {
+        Some(derivative) => Some(negate_retained_tangent(derivative)?),
+        None => None,
+    };
+    Some(side)
+}
+
 fn retained_algebraic_point_key(point: &BezierEndpointPointImage2) -> Option<RetainedEndpointKey> {
     let (x, y) = match point {
         BezierEndpointPointImage2::Polynomial(point) => (
             point.x()?.representation()?.clone(),
             point.y()?.representation()?.clone(),
         ),
-        BezierEndpointPointImage2::RationalQuadratic(point) => (
+        BezierEndpointPointImage2::Rational(point) => (
             point.x()?.representation()?.clone(),
             point.y()?.representation()?.clone(),
         ),
@@ -763,6 +926,64 @@ fn retained_algebraic_tangent(
         .vector
         .map(Box::new)
         .map(RetainedTangentVector::Algebraic)
+}
+
+fn negate_retained_tangent(tangent: RetainedTangentVector) -> Option<RetainedTangentVector> {
+    match tangent {
+        RetainedTangentVector::Native(tangent) => {
+            let TangentVector { dx, dy } = *tangent;
+            Some(RetainedTangentVector::Native(Box::new(TangentVector {
+                dx: -dx,
+                dy: -dy,
+            })))
+        }
+        RetainedTangentVector::Algebraic(tangent) => Some(RetainedTangentVector::Algebraic(
+            Box::new(BezierAlgebraicTangentVector2::new(
+                negate_algebraic_root(tangent.dx())?,
+                negate_algebraic_root(tangent.dy())?,
+            )),
+        )),
+    }
+}
+
+fn negate_algebraic_root(
+    value: &AlgebraicRootRepresentation,
+) -> Option<AlgebraicRootRepresentation> {
+    let report =
+        arithmetic_algebraic_root_representations(value, None, AlgebraicRootArithmeticOp::Negate);
+    if !matches!(
+        report.status,
+        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
+            | AlgebraicRootArithmeticStatus::ComputedRepresentation
+    ) {
+        return None;
+    }
+    if let Some(result) = report.result_representation {
+        return Some(result);
+    }
+    report
+        .exact_result
+        .map(|value| exact_value_representation(&value))
+}
+
+fn exact_value_representation(value: &Real) -> AlgebraicRootRepresentation {
+    AlgebraicRootRepresentation {
+        constraint_index: 0,
+        symbol: hypersolve::SymbolId(0),
+        interval_index: 0,
+        polynomial_coefficients: vec![-value.clone(), Real::one()],
+        interval: hypersolve::IsolatedRootInterval {
+            lower: value.clone(),
+            upper: value.clone(),
+            exact_root: Some(value.clone()),
+            distinct_root_count: 1,
+        },
+        kind: hypersolve::AlgebraicRootKind::ExactRationalWitness,
+        validation: hypersolve::AlgebraicRootValidationReport {
+            status: hypersolve::AlgebraicRootValidationStatus::Valid,
+            message: None,
+        },
+    }
 }
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
@@ -886,7 +1107,13 @@ fn retained_outgoing_adjacency(
             let Some(right_start) = right.start.as_ref() else {
                 continue;
             };
-            match retained_endpoints_equal(left_end, right_start, policy) {
+            match retained_endpoints_equal(
+                left.end_topology_vertex,
+                left_end,
+                right.start_topology_vertex,
+                right_start,
+                policy,
+            ) {
                 Some(true) => outgoing[left_index].push(right_index),
                 Some(false) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
@@ -912,7 +1139,13 @@ fn retained_predecessor_counts(
             let Some(right_start) = right.start.as_ref() else {
                 continue;
             };
-            match retained_endpoints_equal(left_end, right_start, policy) {
+            match retained_endpoints_equal(
+                left.end_topology_vertex,
+                left_end,
+                right.start_topology_vertex,
+                right_start,
+                policy,
+            ) {
                 Some(true) => predecessors[right_index] += 1,
                 Some(false) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
@@ -930,6 +1163,7 @@ fn follow_retained_tangent_ordered_chain(
     policy: &CurvePolicy,
 ) -> Classification<BezierArrangementChain2> {
     let first_start = endpoints[start].start.clone();
+    let first_start_topology_vertex = endpoints[start].start_topology_vertex;
     let mut current = start;
     let mut indices = Vec::new();
 
@@ -948,7 +1182,13 @@ fn follow_retained_tangent_ordered_chain(
             };
         let Some(next) = next else {
             let closed = match (&endpoints[current].end, &first_start) {
-                (Some(end), Some(start)) => match retained_endpoints_equal(end, start, policy) {
+                (Some(end), Some(start)) => match retained_endpoints_equal(
+                    endpoints[current].end_topology_vertex,
+                    end,
+                    first_start_topology_vertex,
+                    start,
+                    policy,
+                ) {
                     Some(value) => value,
                     None => return Classification::Uncertain(UncertaintyReason::RealSign),
                 },
@@ -1506,10 +1746,15 @@ fn points_equal(left: &Point2, right: &Point2, policy: &CurvePolicy) -> Option<b
 }
 
 fn retained_endpoints_equal(
+    left_topology_vertex: Option<usize>,
     left: &RetainedEndpointKey,
+    right_topology_vertex: Option<usize>,
     right: &RetainedEndpointKey,
     policy: &CurvePolicy,
 ) -> Option<bool> {
+    if let (Some(left), Some(right)) = (left_topology_vertex, right_topology_vertex) {
+        return Some(left == right);
+    }
     match (left, right) {
         (RetainedEndpointKey::Exact(left), RetainedEndpointKey::Exact(right)) => {
             points_equal(left, right, policy)
@@ -1528,14 +1773,10 @@ fn retained_endpoints_equal(
                 && represented_roots_equal(left_y, right_y, policy)?,
         ),
         (RetainedEndpointKey::Exact(point), RetainedEndpointKey::Algebraic { x, y })
-        | (RetainedEndpointKey::Algebraic { x, y }, RetainedEndpointKey::Exact(point)) => {
-            let x_witness = x.exact_rational_witness()?;
-            let y_witness = y.exact_rational_witness()?;
-            Some(
-                compare_reals_equal(x_witness, point.x(), policy)?
-                    && compare_reals_equal(y_witness, point.y(), policy)?,
-            )
-        }
+        | (RetainedEndpointKey::Algebraic { x, y }, RetainedEndpointKey::Exact(point)) => Some(
+            represented_roots_equal(x, &exact_value_representation(point.x()), policy)?
+                && represented_roots_equal(y, &exact_value_representation(point.y()), policy)?,
+        ),
     }
 }
 
@@ -1543,7 +1784,7 @@ fn compare_reals_equal(left: &Real, right: &Real, policy: &CurvePolicy) -> Optio
     Some(crate::classify::compare_reals(left, right, policy)? == std::cmp::Ordering::Equal)
 }
 
-fn represented_roots_equal(
+pub(crate) fn represented_roots_equal(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
     policy: &CurvePolicy,
@@ -1560,38 +1801,42 @@ fn represented_roots_equal(
 
     // Algebraic endpoint images produced from different curve expressions can
     // represent the same point without having byte-identical construction
-    // payloads. Subtract the represented roots and certify the sign of the
-    // exact difference; this keeps endpoint gluing inside Yap's exact
-    // construction/decision model instead of comparing interval samples.
-    let difference = arithmetic_algebraic_root_representations(
+    // payloads. Refine the roots and, when needed, construct their exact
+    // difference rather than comparing interval samples.
+    compare_represented_roots_by_difference(left, right, policy)
+}
+
+#[cfg(feature = "predicates")]
+fn compare_represented_roots_by_difference(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    let comparison = compare_algebraic_root_representations_by_difference(
         left,
-        Some(right),
-        AlgebraicRootArithmeticOp::Subtract,
+        right,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: policy.predicate_policy,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
     );
-    if !matches!(
-        difference.status,
-        AlgebraicRootArithmeticStatus::ComputedExactRationalWitness
-            | AlgebraicRootArithmeticStatus::ComputedRepresentation
-    ) {
-        return None;
-    }
-    if let Some(exact) = difference.exact_result.as_ref() {
-        return compare_reals_equal(exact, &Real::zero(), policy);
-    }
-    let representation = difference.result_representation.as_ref()?;
-    let lower =
-        crate::classify::compare_reals(&representation.interval.lower, &Real::zero(), policy)?;
-    let upper =
-        crate::classify::compare_reals(&representation.interval.upper, &Real::zero(), policy)?;
-    if lower == std::cmp::Ordering::Equal && upper == std::cmp::Ordering::Equal {
-        Some(true)
-    } else if matches!(lower, std::cmp::Ordering::Greater)
-        || matches!(upper, std::cmp::Ordering::Less)
-    {
-        Some(false)
-    } else {
-        None
-    }
+    (comparison.comparison.status == AlgebraicRootComparisonStatus::Compared)
+        .then_some(
+            comparison
+                .comparison
+                .ordering
+                .map(|ordering| ordering.is_eq()),
+        )
+        .flatten()
+}
+
+#[cfg(not(feature = "predicates"))]
+fn compare_represented_roots_by_difference(
+    _left: &AlgebraicRootRepresentation,
+    _right: &AlgebraicRootRepresentation,
+    _policy: &CurvePolicy,
+) -> Option<bool> {
+    None
 }
 
 impl BezierSubcurve2 {
@@ -1601,6 +1846,7 @@ impl BezierSubcurve2 {
             Self::Quadratic(curve) => (curve.start().clone(), curve.end().clone()),
             Self::Cubic(curve) => (curve.start().clone(), curve.end().clone()),
             Self::RationalQuadratic(curve) => (curve.start().clone(), curve.end().clone()),
+            Self::Rational(curve) => (curve.start().clone(), curve.end().clone()),
         }
     }
 
@@ -1642,18 +1888,60 @@ impl BezierSubcurve2 {
                     Some(cubic_third_derivative(curve)),
                 ),
                 Self::RationalQuadratic(curve) => {
-                    let (start_tangent, end_tangent) = rational_endpoint_tangents(curve);
-                    let start_second_derivative = match rational_start_second_derivative(curve) {
-                        Classification::Decided(derivative) => derivative,
+                    let general = match crate::RationalBezier2::try_new(
+                        curve.control_points().into_iter().cloned().collect(),
+                        curve.weights().into_iter().cloned().collect(),
+                    ) {
+                        Ok(curve) => curve,
+                        Err(_) => {
+                            return Classification::Uncertain(UncertaintyReason::Unsupported);
+                        }
+                    };
+                    let start = match general.endpoint_derivatives(false, 3, policy) {
+                        Classification::Decided(derivatives) => derivatives,
                         Classification::Uncertain(reason) => {
                             return Classification::Uncertain(reason);
                         }
                     };
+                    let end = match general.endpoint_derivatives(true, 1, policy) {
+                        Classification::Decided(derivatives) => derivatives,
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    };
+                    let vector = |derivative: &(Real, Real)| TangentVector {
+                        dx: derivative.0.clone(),
+                        dy: derivative.1.clone(),
+                    };
                     (
-                        start_tangent,
-                        end_tangent,
-                        Some(start_second_derivative),
-                        None,
+                        vector(&start[1]),
+                        vector(&end[1]),
+                        start.get(2).map(vector),
+                        start.get(3).map(vector),
+                    )
+                }
+                Self::Rational(curve) => {
+                    let start = match curve.endpoint_derivatives(false, 3, policy) {
+                        Classification::Decided(derivatives) => derivatives,
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    };
+                    let end = match curve.endpoint_derivatives(true, 1, policy) {
+                        Classification::Decided(derivatives) => derivatives,
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    };
+                    let vector = |derivative: &(Real, Real)| TangentVector {
+                        dx: derivative.0.clone(),
+                        dy: derivative.1.clone(),
+                    };
+                    (
+                        vector(&start[1]),
+                        vector(&end[1]),
+                        start.get(2).map(vector),
+                        start.get(3).map(vector),
                     )
                 }
             };
@@ -1718,90 +2006,6 @@ fn cubic_third_derivative(curve: &crate::CubicBezier2) -> TangentVector {
         * (((curve.end().y() - (&three * curve.control2().y())) + (&three * curve.control1().y()))
             - curve.start().y());
     TangentVector { dx, dy }
-}
-
-/// Returns the affine second derivative at `t = 0` for a rational quadratic.
-///
-/// A conic Bezier is evaluated as a homogeneous quotient `R(t) = N(t) / W(t)`.
-/// For same-tangent branch vertices we need the local Taylor coefficient used
-/// by the signed-curvature witness in [`compare_same_tangent_second_order`].
-/// The quotient derivative
-/// `R'' = (N''W - NW'') / W^2 - 2W'(N'W - NW') / W^3` is evaluated exactly in
-/// the scalar model; no floating approximation is introduced. The Bernstein
-/// endpoint derivatives are the rational Bezier identities from Farin,
-/// *Curves and Surfaces for CAGD* (5th ed., 2002), and refusing unsupported
-/// divisions preserves Yap's exact-computation boundary from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 3-23 (1997).
-fn rational_start_second_derivative(
-    curve: &crate::RationalQuadraticBezier2,
-) -> Classification<TangentVector> {
-    let dx = match rational_start_second_derivative_coordinate(
-        curve.start().x(),
-        curve.control().x(),
-        curve.end().x(),
-        curve.start_weight(),
-        curve.control_weight(),
-        curve.end_weight(),
-    ) {
-        Ok(value) => value,
-        Err(reason) => return Classification::Uncertain(reason),
-    };
-    let dy = match rational_start_second_derivative_coordinate(
-        curve.start().y(),
-        curve.control().y(),
-        curve.end().y(),
-        curve.start_weight(),
-        curve.control_weight(),
-        curve.end_weight(),
-    ) {
-        Ok(value) => value,
-        Err(reason) => return Classification::Uncertain(reason),
-    };
-    Classification::Decided(TangentVector { dx, dy })
-}
-
-fn rational_start_second_derivative_coordinate(
-    p0: &Real,
-    p1: &Real,
-    p2: &Real,
-    w0: &Real,
-    w1: &Real,
-    w2: &Real,
-) -> Result<Real, UncertaintyReason> {
-    let two = Real::from(2_i8);
-    let n0 = w0 * p0;
-    let n1 = &two * ((w1 * p1) - (w0 * p0));
-    let n2 = &two * (((w0 * p0) - (&two * (w1 * p1))) + (w2 * p2));
-    let d1 = &two * (w1 - w0);
-    let d2 = &two * ((w0 - (&two * w1)) + w2);
-    let w0_squared = w0 * w0;
-    let w0_cubed = &w0_squared * w0;
-    let first_numerator = (&n2 * w0) - (&n0 * &d2);
-    let second_inner = (&n1 * w0) - (&n0 * &d1);
-    let second_numerator = (&two * &d1) * second_inner;
-    let first_term = (first_numerator / w0_squared).map_err(|_| UncertaintyReason::Unsupported)?;
-    let second_term = (second_numerator / w0_cubed).map_err(|_| UncertaintyReason::Unsupported)?;
-    Ok(first_term - second_term)
-}
-
-fn rational_endpoint_tangents(
-    curve: &crate::RationalQuadraticBezier2,
-) -> (TangentVector, TangentVector) {
-    let two = Real::from(2_i8);
-    let start_scale = &two * curve.start_weight() * curve.control_weight();
-    let end_scale = &two * curve.control_weight() * curve.end_weight();
-    let (start_dx, start_dy) = curve.control().delta_from(curve.start());
-    let (end_dx, end_dy) = curve.end().delta_from(curve.control());
-    (
-        TangentVector {
-            dx: &start_scale * start_dx,
-            dy: &start_scale * start_dy,
-        },
-        TangentVector {
-            dx: &end_scale * end_dx,
-            dy: &end_scale * end_dy,
-        },
-    )
 }
 
 fn cross_vectors(left: &TangentVector, right: &TangentVector) -> Real {

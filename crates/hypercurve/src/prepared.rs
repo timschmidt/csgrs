@@ -188,6 +188,18 @@ impl<'a> PreparedCircularArc2<'a> {
     ) -> Classification<bool> {
         #[cfg(feature = "predicates")]
         if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+            let sweep_kind = match crate::arc_bezier::classify_sweep(self.arc, None) {
+                Ok(kind) => kind,
+                Err(crate::ExactCurveError::Blocked(blocker)) => {
+                    return Classification::Uncertain(blocker.reason());
+                }
+                Err(crate::ExactCurveError::Invalid { .. }) => {
+                    return Classification::Uncertain(UncertaintyReason::Predicate);
+                }
+            };
+            if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
+                return Classification::Decided(true);
+            }
             let query = predicate_point(point);
             let start_side = classify_prepared_line(
                 &self.predicate_center,
@@ -209,14 +221,9 @@ impl<'a> PreparedCircularArc2<'a> {
                 return Classification::Uncertain(UncertaintyReason::Predicate);
             };
 
-            let contains = if self.arc.is_clockwise() {
-                matches!(start_side, LineSide::Right | LineSide::On)
-                    && matches!(end_side, LineSide::Left | LineSide::On)
-            } else {
-                matches!(start_side, LineSide::Left | LineSide::On)
-                    && matches!(end_side, LineSide::Right | LineSide::On)
-            };
-            return Classification::Decided(contains);
+            return self
+                .arc
+                .contains_classified_sweep_sides(start_side, end_side, sweep_kind);
         }
 
         self.arc.contains_sweep_point(point, policy)

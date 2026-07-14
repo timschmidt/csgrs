@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Format, lint, test, and WASM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          path: hypercurve
+
+      - name: Check out patched hyperreal sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperreal
+          path: hyperreal
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo build output
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            hypercurve -> hypercurve/target
+            hypercurve/examples/hypercurve_ui -> hypercurve/examples/hypercurve_ui/target
+
+      - name: Check formatting
+        working-directory: hypercurve
+        run: cargo fmt --all --check
+
+      - name: Run strict Clippy
+        working-directory: hypercurve
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+
+      - name: Run complete test suite
+        working-directory: hypercurve
+        run: cargo test --locked --all-features --no-fail-fast
+
+      - name: Test WASM demo crate
+        working-directory: hypercurve/examples/hypercurve_ui
+        run: cargo test --locked --no-fail-fast
+
+      - name: Run strict demo Clippy
+        working-directory: hypercurve/examples/hypercurve_ui
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Build release WASM demo
+        working-directory: hypercurve/examples/hypercurve_ui
+        run: cargo build --locked --release --target wasm32-unknown-unknown

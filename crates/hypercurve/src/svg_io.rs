@@ -4,12 +4,14 @@
 //! named boundary instead of allowing finite path syntax to silently become
 //! native topology. Export of native line/arc carriers is exact-string
 //! preserving with retained segment counts. Import materializes a conservative
-//! exact native line and restricted circular-arc subset and returns explicit
-//! report evidence for unsupported path commands instead of guessing topology.
+//! exact native line, cubic Bezier, and restricted circular-arc subset and
+//! returns explicit report evidence for unsupported path commands instead of
+//! guessing topology.
 
 use crate::{
-    CircularArc2, Classification, Contour2, ContourClosureReport2, CurvePolicy, CurveResult,
-    CurveString2, FillRule, LineSeg2, Point2, Rational, Real, Region2,
+    CircularArc2, Classification, Contour2, ContourClosureReport2, CubicBezier2, Curve2,
+    CurveFamily2, CurveGeometry2, CurvePath2, CurvePolicy, CurveResult, CurveSource2, CurveString2,
+    FillRule, LineSeg2, Point2, QuadraticBezier2, Rational, Real, Region2,
     RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildReport2,
     RegionBoundaryContourBuildStage2, RetainedImportFormat2, RetainedImportRecord2,
     RetainedSourceTolerance2, RetainedTopologyStatus, Segment2, SegmentKind, SegmentKindCounts,
@@ -21,6 +23,8 @@ use std::fmt::Write;
 /// SVG path serialization target.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SvgPathExportTarget2 {
+    /// General connected top-level curve path.
+    CurvePath,
     /// Open or closed curve-string path data.
     CurveString,
     /// Closed contour path data.
@@ -40,6 +44,17 @@ pub struct SvgPathExportSegmentReport2 {
     status: RetainedTopologyStatus,
 }
 
+/// Provenance for one top-level curve emitted through SVG path export.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SvgPathExportCurveReport2 {
+    curve_index: usize,
+    family: CurveFamily2,
+    source: Option<CurveSource2>,
+    start_point: Point2,
+    end_point: Point2,
+    status: RetainedTopologyStatus,
+}
+
 /// Report for exact SVG path emission.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvgPathExportReport2 {
@@ -50,6 +65,7 @@ pub struct SvgPathExportReport2 {
     segment_count: usize,
     segment_kind_counts: SegmentKindCounts,
     segment_reports: Vec<SvgPathExportSegmentReport2>,
+    curve_reports: Vec<SvgPathExportCurveReport2>,
     closed_subpath_count: usize,
     status: RetainedTopologyStatus,
     lossy_boundary: bool,
@@ -80,6 +96,7 @@ pub struct SvgPathImportReport2 {
 /// Result of report-bearing SVG path import.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SvgPathImportResult2 {
+    curve_path: Option<CurvePath2>,
     curve_string: Option<CurveString2>,
     report: SvgPathImportReport2,
 }
@@ -133,6 +150,13 @@ impl CurveString2 {
     }
 }
 
+impl CurvePath2 {
+    /// Exports SVG-expressible top-level curves with retained family provenance.
+    pub fn to_svg_path_data_with_report(&self) -> CurveResult<SvgPathExportResult2> {
+        export_curve_path_svg_path(self)
+    }
+}
+
 impl Contour2 {
     /// Exports this contour as one closed SVG subpath with retained evidence.
     pub fn to_svg_path_data_with_report(&self) -> CurveResult<SvgPathExportResult2> {
@@ -152,7 +176,7 @@ impl SvgPathImportResult2 {
     ///
     /// The returned report records the named SVG boundary and leaves
     /// materialization unsupported for path syntax outside the exact native
-    /// line/restricted-circular-arc subset.
+    /// line/cubic/restricted-circular-arc subset.
     pub fn unsupported_path_data(
         path_data: &str,
         source_index: u64,
@@ -161,6 +185,7 @@ impl SvgPathImportResult2 {
     ) -> Self {
         let command_count = count_svg_path_commands(path_data);
         Self {
+            curve_path: None,
             curve_string: None,
             report: SvgPathImportReport2 {
                 source_index,
@@ -173,6 +198,40 @@ impl SvgPathImportResult2 {
                 lossy_boundary: true,
                 blocker: Some(UncertaintyReason::Unsupported),
             },
+        }
+    }
+
+    /// Returns the imported exact top-level curve path when materialized.
+    pub const fn curve_path(&self) -> Option<&CurvePath2> {
+        self.curve_path.as_ref()
+    }
+
+    /// Consumes the result and returns the imported exact top-level curve path.
+    pub fn into_curve_path(self) -> Option<CurvePath2> {
+        self.curve_path
+    }
+
+    /// Returns the imported top-level curve path as a convenience classification.
+    pub fn curve_path_classification(&self) -> Classification<&CurvePath2> {
+        match self.curve_path() {
+            Some(curve_path) => Classification::Decided(curve_path),
+            None => Classification::Uncertain(
+                self.report()
+                    .blocker()
+                    .unwrap_or(UncertaintyReason::Unsupported),
+            ),
+        }
+    }
+
+    /// Consumes the result and returns the top-level path classification.
+    pub fn into_curve_path_classification(self) -> Classification<CurvePath2> {
+        let blocker = self
+            .report()
+            .blocker()
+            .unwrap_or(UncertaintyReason::Unsupported);
+        match self.into_curve_path() {
+            Some(curve_path) => Classification::Decided(curve_path),
+            None => Classification::Uncertain(blocker),
         }
     }
 
@@ -191,9 +250,9 @@ impl SvgPathImportResult2 {
         self.report
     }
 
-    /// Consumes this result and returns the imported curve string with its report.
-    pub fn into_parts(self) -> (Option<CurveString2>, SvgPathImportReport2) {
-        (self.curve_string, self.report)
+    /// Consumes this result and returns the imported top-level path with its report.
+    pub fn into_parts(self) -> (Option<CurvePath2>, SvgPathImportReport2) {
+        (self.curve_path, self.report)
     }
 
     /// Returns retained import evidence.
@@ -309,6 +368,38 @@ impl SvgPathExportSegmentReport2 {
     }
 }
 
+impl SvgPathExportCurveReport2 {
+    /// Returns the authored curve index in the exported path.
+    pub const fn curve_index(&self) -> usize {
+        self.curve_index
+    }
+
+    /// Returns the exact top-level curve family.
+    pub const fn family(&self) -> CurveFamily2 {
+        self.family
+    }
+
+    /// Returns stable source identity retained by the curve.
+    pub const fn source(&self) -> Option<CurveSource2> {
+        self.source
+    }
+
+    /// Returns the exact curve start point.
+    pub const fn start_point(&self) -> &Point2 {
+        &self.start_point
+    }
+
+    /// Returns the exact curve end point.
+    pub const fn end_point(&self) -> &Point2 {
+        &self.end_point
+    }
+
+    /// Returns export status for this authored curve.
+    pub const fn status(&self) -> RetainedTopologyStatus {
+        self.status
+    }
+}
+
 impl SvgPathExportReport2 {
     /// Returns the SVG path export target.
     pub const fn target(&self) -> SvgPathExportTarget2 {
@@ -343,6 +434,11 @@ impl SvgPathExportReport2 {
     /// Returns per-segment native provenance emitted through SVG export.
     pub fn segment_reports(&self) -> &[SvgPathExportSegmentReport2] {
         &self.segment_reports
+    }
+
+    /// Returns per-curve family and source provenance for a top-level path export.
+    pub fn curve_reports(&self) -> &[SvgPathExportCurveReport2] {
+        &self.curve_reports
     }
 
     /// Returns the number of emitted `Z` subpath closures.
@@ -742,11 +838,144 @@ impl SvgRegionImportReport2 {
     }
 }
 
+fn export_curve_path_svg_path(path: &CurvePath2) -> CurveResult<SvgPathExportResult2> {
+    let expressible = path.curves().iter().all(|curve| {
+        matches!(
+            curve.geometry(),
+            CurveGeometry2::Line(_)
+                | CurveGeometry2::CircularArc(_)
+                | CurveGeometry2::QuadraticBezier(_)
+                | CurveGeometry2::CubicBezier(_)
+        )
+    });
+    let status = if expressible {
+        RetainedTopologyStatus::DisplayOrExport
+    } else {
+        RetainedTopologyStatus::Unsupported
+    };
+    let curve_reports = path
+        .curves()
+        .iter()
+        .enumerate()
+        .map(|(curve_index, curve)| SvgPathExportCurveReport2 {
+            curve_index,
+            family: curve.family(),
+            source: curve.source(),
+            start_point: curve.start().clone(),
+            end_point: curve.end().clone(),
+            status: if matches!(
+                curve.geometry(),
+                CurveGeometry2::Line(_)
+                    | CurveGeometry2::CircularArc(_)
+                    | CurveGeometry2::QuadraticBezier(_)
+                    | CurveGeometry2::CubicBezier(_)
+            ) {
+                RetainedTopologyStatus::DisplayOrExport
+            } else {
+                RetainedTopologyStatus::Unsupported
+            },
+        })
+        .collect();
+    let mut segment_kind_counts = SegmentKindCounts::default();
+    let segment_reports = path
+        .curves()
+        .iter()
+        .enumerate()
+        .filter_map(|(curve_index, curve)| {
+            let segment_kind = match curve.geometry() {
+                CurveGeometry2::Line(_) => {
+                    segment_kind_counts.lines += 1;
+                    SegmentKind::Line
+                }
+                CurveGeometry2::CircularArc(_) => {
+                    segment_kind_counts.arcs += 1;
+                    SegmentKind::Arc
+                }
+                _ => return None,
+            };
+            Some(SvgPathExportSegmentReport2 {
+                carrier_index: 0,
+                segment_index: curve_index,
+                segment_kind,
+                start_point: curve.start().clone(),
+                end_point: curve.end().clone(),
+                status: RetainedTopologyStatus::DisplayOrExport,
+            })
+        })
+        .collect();
+    let path_data = if expressible {
+        let mut path_data = String::new();
+        append_top_level_curve_path(&mut path_data, path)?;
+        Some(path_data)
+    } else {
+        None
+    };
+    Ok(SvgPathExportResult2 {
+        path_data,
+        report: SvgPathExportReport2 {
+            target: SvgPathExportTarget2::CurvePath,
+            material_contour_count: 0,
+            hole_contour_count: 0,
+            curve_string_count: 1,
+            segment_count: path.curves().len(),
+            segment_kind_counts,
+            segment_reports,
+            curve_reports,
+            closed_subpath_count: usize::from(path.start() == path.end()),
+            status,
+            lossy_boundary: false,
+            blocker: (!expressible).then_some(UncertaintyReason::Unsupported),
+        },
+    })
+}
+
+fn append_top_level_curve_path(path_data: &mut String, path: &CurvePath2) -> CurveResult<()> {
+    write_point_command(path_data, "M", path.start())?;
+    for curve in path.curves() {
+        match curve.geometry() {
+            CurveGeometry2::Line(line) => write_point_command(path_data, "L", line.end())?,
+            CurveGeometry2::CircularArc(arc) => append_svg_arc(path_data, arc)?,
+            CurveGeometry2::QuadraticBezier(curve) => {
+                write!(
+                    path_data,
+                    " Q {} {} {} {}",
+                    curve.control().x(),
+                    curve.control().y(),
+                    curve.end().x(),
+                    curve.end().y()
+                )
+                .expect("writing to String cannot fail");
+            }
+            CurveGeometry2::CubicBezier(curve) => {
+                write!(
+                    path_data,
+                    " C {} {} {} {} {} {}",
+                    curve.control1().x(),
+                    curve.control1().y(),
+                    curve.control2().x(),
+                    curve.control2().y(),
+                    curve.end().x(),
+                    curve.end().y()
+                )
+                .expect("writing to String cannot fail");
+            }
+            CurveGeometry2::RationalQuadraticBezier(_)
+            | CurveGeometry2::RationalBezier(_)
+            | CurveGeometry2::PolynomialBSpline(_)
+            | CurveGeometry2::Nurbs(_) => {
+                unreachable!("unsupported SVG curve family was rejected before emission")
+            }
+        }
+    }
+    Ok(())
+}
+
 fn export_curve_string_svg_path(curve: &CurveString2) -> CurveResult<SvgPathExportResult2> {
     let mut path_data = String::new();
     append_curve_string_path(&mut path_data, curve, false)?;
     let segment_kind_counts = count_segment_kinds(curve.segments());
     let segment_reports = svg_export_segment_reports(0, curve.segments());
+    let curve_reports = svg_native_curve_reports(curve.segments());
     Ok(SvgPathExportResult2 {
         path_data: Some(path_data),
         report: SvgPathExportReport2 {
@@ -757,6 +986,7 @@ fn export_curve_string_svg_path(curve: &CurveString2) -> CurveResult<SvgPathExpo
             segment_count: curve.segments().len(),
             segment_kind_counts,
             segment_reports,
+            curve_reports,
             closed_subpath_count: 0,
             status: RetainedTopologyStatus::DisplayOrExport,
             lossy_boundary: false,
@@ -770,6 +1000,7 @@ fn export_contour_svg_path(contour: &Contour2) -> CurveResult<SvgPathExportResul
     append_segments_path(&mut path_data, contour.segments(), true)?;
     let segment_kind_counts = count_segment_kinds(contour.segments());
     let segment_reports = svg_export_segment_reports(0, contour.segments());
+    let curve_reports = svg_native_curve_reports(contour.segments());
     Ok(SvgPathExportResult2 {
         path_data: Some(path_data),
         report: SvgPathExportReport2 {
@@ -780,6 +1011,7 @@ fn export_contour_svg_path(contour: &Contour2) -> CurveResult<SvgPathExportResul
             segment_count: contour.segments().len(),
             segment_kind_counts,
             segment_reports,
+            curve_reports,
             closed_subpath_count: 1,
             status: RetainedTopologyStatus::DisplayOrExport,
             lossy_boundary: false,
@@ -793,6 +1025,7 @@ fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2>
     let mut segment_count = 0;
     let mut segment_kind_counts = SegmentKindCounts::default();
     let mut segment_reports = Vec::new();
+    let mut curve_reports = Vec::new();
     for (carrier_index, contour) in region
         .material_contours()
         .iter()
@@ -807,6 +1040,15 @@ fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2>
             carrier_index,
             contour.segments(),
         ));
+        let curve_offset = curve_reports.len();
+        curve_reports.extend(
+            svg_native_curve_reports(contour.segments())
+                .into_iter()
+                .map(|mut report| {
+                    report.curve_index += curve_offset;
+                    report
+                }),
+        );
         segment_count += contour.segments().len();
         add_segment_kind_counts(
             &mut segment_kind_counts,
@@ -825,6 +1067,7 @@ fn export_region_svg_path(region: &Region2) -> CurveResult<SvgPathExportResult2>
             segment_count,
             segment_kind_counts,
             segment_reports,
+            curve_reports,
             closed_subpath_count: contour_count,
             status: RetainedTopologyStatus::DisplayOrExport,
             lossy_boundary: false,
@@ -853,25 +1096,52 @@ fn append_segments_path(
     for segment in segments {
         match segment {
             Segment2::Line(line) => write_point_command(path_data, "L", line.end())?,
-            Segment2::Arc(arc) => {
-                let radius = arc.radius_squared().sqrt()?;
-                let large_arc = 0;
-                let sweep = if arc.is_clockwise() { 1 } else { 0 };
-                write!(
-                    path_data,
-                    " A {} {} 0 {large_arc} {sweep} {} {}",
-                    radius,
-                    radius,
-                    arc.end().x(),
-                    arc.end().y()
-                )
-                .expect("writing to String cannot fail");
-            }
+            Segment2::Arc(arc) => append_svg_arc(path_data, arc)?,
         }
     }
     if close {
         path_data.push_str(" Z");
     }
+    Ok(())
+}
+
+fn append_svg_arc(path_data: &mut String, arc: &CircularArc2) -> CurveResult<()> {
+    let kind = crate::arc_bezier::classify_sweep(arc, None).map_err(|error| match error {
+        crate::ExactCurveError::Invalid { cause, .. } => cause,
+        crate::ExactCurveError::Blocked(_) => crate::CurveError::InvalidArcSweep,
+    })?;
+    let radius = arc.radius_squared().sqrt()?;
+    let sweep = if arc.is_clockwise() { 1 } else { 0 };
+    if kind == crate::arc_bezier::ArcSweepKind::FullCircle {
+        let opposite = Point2::new(
+            Real::from(2_i8) * arc.center().x() - arc.start().x(),
+            Real::from(2_i8) * arc.center().y() - arc.start().y(),
+        );
+        write!(
+            path_data,
+            " A {} {} 0 0 {sweep} {} {} A {} {} 0 0 {sweep} {} {}",
+            radius,
+            radius,
+            opposite.x(),
+            opposite.y(),
+            radius,
+            radius,
+            arc.end().x(),
+            arc.end().y()
+        )
+        .expect("writing to String cannot fail");
+        return Ok(());
+    }
+    let large_arc = u8::from(kind == crate::arc_bezier::ArcSweepKind::Major);
+    write!(
+        path_data,
+        " A {} {} 0 {large_arc} {sweep} {} {}",
+        radius,
+        radius,
+        arc.end().x(),
+        arc.end().y()
+    )
+    .expect("writing to String cannot fail");
     Ok(())
 }
 
@@ -947,6 +1217,24 @@ fn svg_export_segment_reports(
         .collect()
 }
 
+fn svg_native_curve_reports(segments: &[Segment2]) -> Vec<SvgPathExportCurveReport2> {
+    segments
+        .iter()
+        .enumerate()
+        .map(|(curve_index, segment)| SvgPathExportCurveReport2 {
+            curve_index,
+            family: match segment {
+                Segment2::Line(_) => CurveFamily2::Line,
+                Segment2::Arc(_) => CurveFamily2::CircularArc,
+            },
+            source: None,
+            start_point: segment.start().clone(),
+            end_point: segment.end().clone(),
+            status: RetainedTopologyStatus::DisplayOrExport,
+        })
+        .collect()
+}
+
 fn add_segment_kind_counts(counts: &mut SegmentKindCounts, addend: SegmentKindCounts) {
     counts.lines += addend.lines;
     counts.arcs += addend.arcs;
@@ -959,8 +1247,8 @@ pub fn import_svg_path_data_with_report(
     source_version: u64,
     source_tolerance: Option<RetainedSourceTolerance2>,
 ) -> SvgPathImportResult2 {
-    match parse_svg_line_path(path_data) {
-        Ok(parsed) => import_parsed_svg_line_path(
+    match parse_svg_path(path_data) {
+        Ok(parsed) => import_parsed_svg_path(
             path_data,
             source_index,
             source_version,
@@ -984,7 +1272,7 @@ pub fn import_svg_contour_path_data_with_report(
     source_version: u64,
     source_tolerance: Option<RetainedSourceTolerance2>,
 ) -> SvgContourImportResult2 {
-    let parsed = match parse_svg_line_path(path_data) {
+    let parsed = match parse_svg_path(path_data) {
         Ok(parsed) if parsed.closed => parsed,
         Ok(_) | Err(()) => {
             let path_result = SvgPathImportResult2::unsupported_path_data(
@@ -997,7 +1285,7 @@ pub fn import_svg_contour_path_data_with_report(
         }
     };
 
-    let path_result = import_parsed_svg_line_path(
+    let path_result = import_parsed_svg_path(
         path_data,
         source_index,
         source_version,
@@ -1177,9 +1465,9 @@ pub fn retained_svg_import_record(
 }
 
 #[derive(Clone, Debug)]
-struct ParsedSvgLinePath {
+struct ParsedSvgPath {
     points: Vec<Point2>,
-    segments: Vec<Segment2>,
+    curves: Vec<Curve2>,
     discarded_duplicate_count: usize,
     closed: bool,
 }
@@ -1190,18 +1478,18 @@ enum SvgPathToken<'a> {
     Number(&'a str),
 }
 
-fn import_parsed_svg_line_path(
+fn import_parsed_svg_path(
     path_data: &str,
     source_index: u64,
     source_version: u64,
     source_tolerance: Option<RetainedSourceTolerance2>,
-    parsed: ParsedSvgLinePath,
+    parsed: ParsedSvgPath,
 ) -> SvgPathImportResult2 {
-    let mut segments = parsed.segments;
+    let mut curves = parsed.curves;
     let mut discarded_duplicate_count = parsed.discarded_duplicate_count;
-    let has_non_line_segment = segments
+    let has_non_line_segment = curves
         .iter()
-        .any(|segment| !matches!(segment, Segment2::Line(_)));
+        .any(|curve| !matches!(curve.geometry(), CurveGeometry2::Line(_)));
 
     if parsed.closed {
         let Some(start) = parsed.points.first().cloned() else {
@@ -1221,12 +1509,17 @@ fn import_parsed_svg_line_path(
             );
         };
         match LineSeg2::try_new(end, start) {
-            Ok(line) => segments.push(Segment2::Line(line)),
+            Ok(line) => curves.push(line.into()),
             Err(_) => discarded_duplicate_count += 1,
         }
     }
 
-    let Ok(curve_string) = CurveString2::try_new(segments) else {
+    let source = CurveSource2::with_version(source_index, source_version);
+    let curves = curves
+        .into_iter()
+        .map(|curve| Curve2::with_source(curve.geometry().clone(), source))
+        .collect::<Result<Vec<_>, _>>();
+    let Ok(curves) = curves else {
         return SvgPathImportResult2::unsupported_path_data(
             path_data,
             source_index,
@@ -1234,6 +1527,24 @@ fn import_parsed_svg_line_path(
             source_tolerance,
         );
     };
+    let Ok(curve_path) = CurvePath2::try_new(curves) else {
+        return SvgPathImportResult2::unsupported_path_data(
+            path_data,
+            source_index,
+            source_version,
+            source_tolerance,
+        );
+    };
+    let native_segments = curve_path
+        .curves()
+        .iter()
+        .map(|curve| match curve.geometry() {
+            CurveGeometry2::Line(line) => Some(Segment2::Line(line.clone())),
+            CurveGeometry2::CircularArc(arc) => Some(Segment2::Arc(arc.clone())),
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>();
+    let curve_string = native_segments.and_then(|segments| CurveString2::try_new(segments).ok());
 
     let retained_import = if parsed.closed && has_non_line_segment {
         RetainedImportRecord2::try_new_closed_contour_with_source_version(
@@ -1242,7 +1553,7 @@ fn import_parsed_svg_line_path(
             source_version,
             source_tolerance,
             parsed.points.len(),
-            curve_string.len(),
+            curve_path.curves().len(),
             discarded_duplicate_count,
         )
     } else if parsed.closed {
@@ -1252,7 +1563,7 @@ fn import_parsed_svg_line_path(
             source_version,
             source_tolerance,
             parsed.points.len(),
-            curve_string.len(),
+            curve_path.curves().len(),
             discarded_duplicate_count,
         )
     } else if has_non_line_segment {
@@ -1262,7 +1573,7 @@ fn import_parsed_svg_line_path(
             source_version,
             source_tolerance,
             parsed.points.len(),
-            curve_string.len(),
+            curve_path.curves().len(),
             discarded_duplicate_count,
         )
     } else {
@@ -1272,7 +1583,7 @@ fn import_parsed_svg_line_path(
             source_version,
             source_tolerance,
             parsed.points.len(),
-            curve_string.len(),
+            curve_path.curves().len(),
             discarded_duplicate_count,
         )
     };
@@ -1287,7 +1598,8 @@ fn import_parsed_svg_line_path(
     };
 
     SvgPathImportResult2 {
-        curve_string: Some(curve_string),
+        curve_path: Some(curve_path),
+        curve_string,
         report: SvgPathImportReport2 {
             source_index,
             source_version,
@@ -1302,62 +1614,98 @@ fn import_parsed_svg_line_path(
     }
 }
 
-fn parse_svg_line_path(path_data: &str) -> Result<ParsedSvgLinePath, ()> {
+fn parse_svg_path(path_data: &str) -> Result<ParsedSvgPath, ()> {
     let tokens = tokenize_svg_path(path_data)?;
-    let mut parser = SvgLinePathParser::new(tokens);
+    let mut parser = SvgPathParser::new(tokens);
     parser.parse()
 }
 
-fn svg_semicircle_arc(
+fn svg_circular_arc(
     start: Point2,
     end: Point2,
     rx: Real,
     ry: Real,
-    rotation: Real,
+    _rotation: Real,
     large_arc: bool,
     sweep: bool,
-) -> Result<CircularArc2, ()> {
-    if rotation != Real::zero() || rx != ry || large_arc {
+) -> Result<Option<CircularArc2>, ()> {
+    if rx != ry {
         return Err(());
     }
     if rx.structural_facts().sign != Some(RealSign::Positive) {
         return Err(());
     }
+    if start == end {
+        return Ok(None);
+    }
     let chord_squared = start.distance_squared(&end);
     let radius_squared = &rx * &rx;
-    if chord_squared != Real::from(4_i8) * &radius_squared {
-        return Err(());
+    let four = Real::from(4_i8);
+    let quarter_chord_squared = (&chord_squared / &four).map_err(|_| ())?;
+    let center_offset_squared = &radius_squared - &quarter_chord_squared;
+    let center_offset_scale = match center_offset_squared.structural_facts().sign {
+        Some(RealSign::Negative) | Some(RealSign::Zero) => Real::zero(),
+        Some(RealSign::Positive) => {
+            let ratio = (center_offset_squared / &chord_squared).map_err(|_| ())?;
+            ratio.sqrt().map_err(|_| ())?
+        }
+        None => return Err(()),
+    };
+    let midpoint = Point2::new(
+        ((start.x() + end.x()) / &Real::from(2_i8)).map_err(|_| ())?,
+        ((start.y() + end.y()) / &Real::from(2_i8)).map_err(|_| ())?,
+    );
+    let dx = end.x() - start.x();
+    let dy = end.y() - start.y();
+    let offset_x = -(&dy * &center_offset_scale);
+    let offset_y = &dx * &center_offset_scale;
+    let centers = [
+        Point2::new(midpoint.x() + &offset_x, midpoint.y() + &offset_y),
+        Point2::new(midpoint.x() - &offset_x, midpoint.y() - &offset_y),
+    ];
+    for center in centers {
+        let arc = CircularArc2::try_from_center(start.clone(), end.clone(), center, sweep)
+            .map_err(|_| ())?;
+        let kind = crate::arc_bezier::classify_sweep(&arc, None).map_err(|_| ())?;
+        if kind == crate::arc_bezier::ArcSweepKind::Semicircle
+            || (kind == crate::arc_bezier::ArcSweepKind::Major) == large_arc
+        {
+            return Ok(Some(arc));
+        }
     }
-    let bulge = if sweep { -Real::one() } else { Real::one() };
-    CircularArc2::from_bulge(start, end, bulge).map_err(|_| ())
+    Err(())
 }
 
-struct SvgLinePathParser<'a> {
+struct SvgPathParser<'a> {
     tokens: Vec<SvgPathToken<'a>>,
     index: usize,
     command: Option<char>,
     points: Vec<Point2>,
-    segments: Vec<Segment2>,
+    curves: Vec<Curve2>,
     discarded_duplicate_count: usize,
     current: Option<Point2>,
+    previous_cubic_control: Option<Point2>,
+    previous_quadratic_control: Option<Point2>,
     closed: bool,
 }
 
-impl<'a> SvgLinePathParser<'a> {
+impl<'a> SvgPathParser<'a> {
     fn new(tokens: Vec<SvgPathToken<'a>>) -> Self {
         Self {
             tokens,
             index: 0,
             command: None,
             points: Vec::new(),
-            segments: Vec::new(),
+            curves: Vec::new(),
             discarded_duplicate_count: 0,
             current: None,
+            previous_cubic_control: None,
+            previous_quadratic_control: None,
             closed: false,
         }
     }
 
-    fn parse(&mut self) -> Result<ParsedSvgLinePath, ()> {
+    fn parse(&mut self) -> Result<ParsedSvgPath, ()> {
         while self.index < self.tokens.len() {
             if let Some(command) = self.consume_command() {
                 self.command = Some(command);
@@ -1368,9 +1716,15 @@ impl<'a> SvgLinePathParser<'a> {
                 'L' | 'l' => self.parse_line(command == 'l')?,
                 'H' | 'h' => self.parse_horizontal(command == 'h')?,
                 'V' | 'v' => self.parse_vertical(command == 'v')?,
+                'C' | 'c' => self.parse_cubic(command == 'c')?,
+                'S' | 's' => self.parse_smooth_cubic(command == 's')?,
+                'Q' | 'q' => self.parse_quadratic(command == 'q')?,
+                'T' | 't' => self.parse_smooth_quadratic(command == 't')?,
                 'A' | 'a' => self.parse_arc(command == 'a')?,
                 'Z' | 'z' => {
                     self.closed = true;
+                    self.previous_cubic_control = None;
+                    self.previous_quadratic_control = None;
                     self.command = None;
                     if self.index < self.tokens.len() {
                         return Err(());
@@ -1382,9 +1736,9 @@ impl<'a> SvgLinePathParser<'a> {
         if self.points.len() < 2 {
             return Err(());
         }
-        Ok(ParsedSvgLinePath {
+        Ok(ParsedSvgPath {
             points: self.points.clone(),
-            segments: self.segments.clone(),
+            curves: self.curves.clone(),
             discarded_duplicate_count: self.discarded_duplicate_count,
             closed: self.closed,
         })
@@ -1397,6 +1751,8 @@ impl<'a> SvgLinePathParser<'a> {
         let point = self.parse_point(relative && self.current.is_some())?;
         self.current = Some(point.clone());
         self.points.push(point);
+        self.previous_cubic_control = None;
+        self.previous_quadratic_control = None;
         self.command = Some(if relative { 'l' } else { 'L' });
         Ok(())
     }
@@ -1410,11 +1766,13 @@ impl<'a> SvgLinePathParser<'a> {
     fn push_line_to(&mut self, point: Point2) -> Result<(), ()> {
         let current = self.current.as_ref().ok_or(())?;
         match LineSeg2::try_new(current.clone(), point.clone()) {
-            Ok(line) => self.segments.push(Segment2::Line(line)),
+            Ok(line) => self.curves.push(line.into()),
             Err(_) => self.discarded_duplicate_count += 1,
         }
         self.current = Some(point.clone());
         self.points.push(point);
+        self.previous_cubic_control = None;
+        self.previous_quadratic_control = None;
         Ok(())
     }
 
@@ -1448,8 +1806,95 @@ impl<'a> SvgLinePathParser<'a> {
         let sweep = self.parse_flag()?;
         let end = self.parse_point(relative)?;
         let start = self.current.as_ref().ok_or(())?.clone();
-        let arc = svg_semicircle_arc(start, end.clone(), rx, ry, rotation, large_arc, sweep)?;
-        self.segments.push(Segment2::Arc(arc));
+        if rx.zero_status() == hyperreal::ZeroKnowledge::Zero
+            || ry.zero_status() == hyperreal::ZeroKnowledge::Zero
+        {
+            return self.push_line_to(end);
+        }
+        match svg_circular_arc(start, end.clone(), rx, ry, rotation, large_arc, sweep)? {
+            Some(arc) => self.curves.push(arc.into()),
+            None => self.discarded_duplicate_count += 1,
+        }
+        self.current = Some(end.clone());
+        self.points.push(end);
+        self.previous_cubic_control = None;
+        self.previous_quadratic_control = None;
+        Ok(())
+    }
+
+    fn parse_cubic(&mut self, relative: bool) -> Result<(), ()> {
+        self.previous_quadratic_control = None;
+        let start = self.current.as_ref().ok_or(())?.clone();
+        let control1 = self.parse_point(relative)?;
+        let control2 = self.parse_point(relative)?;
+        let end = self.parse_point(relative)?;
+        self.push_cubic(start, control1, control2, end)
+    }
+
+    fn parse_smooth_cubic(&mut self, relative: bool) -> Result<(), ()> {
+        self.previous_quadratic_control = None;
+        let start = self.current.as_ref().ok_or(())?.clone();
+        let control1 = match self.previous_cubic_control.as_ref() {
+            Some(previous) => Point2::new(
+                Real::from(2_i8) * start.x() - previous.x(),
+                Real::from(2_i8) * start.y() - previous.y(),
+            ),
+            None => start.clone(),
+        };
+        let control2 = self.parse_point(relative)?;
+        let end = self.parse_point(relative)?;
+        self.push_cubic(start, control1, control2, end)
+    }
+
+    fn push_cubic(
+        &mut self,
+        start: Point2,
+        control1: Point2,
+        control2: Point2,
+        end: Point2,
+    ) -> Result<(), ()> {
+        if start == end && start == control1 && start == control2 {
+            self.discarded_duplicate_count += 1;
+        } else {
+            self.curves
+                .push(CubicBezier2::new(start, control1, control2.clone(), end.clone()).into());
+        }
+        self.previous_cubic_control = Some(control2);
+        self.current = Some(end.clone());
+        self.points.push(end);
+        Ok(())
+    }
+
+    fn parse_quadratic(&mut self, relative: bool) -> Result<(), ()> {
+        self.previous_cubic_control = None;
+        let start = self.current.as_ref().ok_or(())?.clone();
+        let control = self.parse_point(relative)?;
+        let end = self.parse_point(relative)?;
+        self.push_quadratic(start, control, end)
+    }
+
+    fn parse_smooth_quadratic(&mut self, relative: bool) -> Result<(), ()> {
+        self.previous_cubic_control = None;
+        let start = self.current.as_ref().ok_or(())?.clone();
+        let control = match self.previous_quadratic_control.as_ref() {
+            Some(previous) => Point2::new(
+                Real::from(2_i8) * start.x() - previous.x(),
+                Real::from(2_i8) * start.y() - previous.y(),
+            ),
+            None => start.clone(),
+        };
+        let end = self.parse_point(relative)?;
+        self.push_quadratic(start, control, end)
+    }
+
+    fn push_quadratic(&mut self, start: Point2, control: Point2, end: Point2) -> Result<(), ()> {
+        if start == end && start == control {
+            self.discarded_duplicate_count += 1;
+        } else {
+            self.curves
+                .push(QuadraticBezier2::new(start, control.clone(), end.clone()).into());
+        }
+        self.previous_quadratic_control = Some(control);
         self.current = Some(end.clone());
         self.points.push(end);
         Ok(())
@@ -1509,7 +1954,25 @@ fn tokenize_svg_path(path_data: &str) -> Result<Vec<SvgPathToken<'_>>, ()> {
         if ch.is_ascii_alphabetic() {
             if !matches!(
                 ch,
-                'M' | 'm' | 'L' | 'l' | 'H' | 'h' | 'V' | 'v' | 'A' | 'a' | 'Z' | 'z'
+                'M' | 'm'
+                    | 'L'
+                    | 'l'
+                    | 'H'
+                    | 'h'
+                    | 'V'
+                    | 'v'
+                    | 'C'
+                    | 'c'
+                    | 'S'
+                    | 's'
+                    | 'Q'
+                    | 'q'
+                    | 'T'
+                    | 't'
+                    | 'A'
+                    | 'a'
+                    | 'Z'
+                    | 'z'
             ) {
                 return Err(());
             }

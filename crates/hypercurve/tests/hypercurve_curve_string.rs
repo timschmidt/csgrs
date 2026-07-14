@@ -2480,12 +2480,12 @@ fn curve_string_extend_arc_endpoint_blocks_existing_arc_point() {
 }
 
 #[test]
-fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
+fn curve_string_chamfer_vertex_materializes_exact_line_segments() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let chamfer = curve
-        .chamfer_line_line_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &policy())
+        .chamfer_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -2499,7 +2499,7 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
     );
     assert_eq!(
         chamfer.report().predicate_path(),
-        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+        CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters
     );
     assert_eq!(chamfer.report().previous_segment_index(), 0);
     assert_eq!(chamfer.report().next_segment_index(), 1);
@@ -2624,12 +2624,12 @@ fn curve_string_chamfer_line_line_vertex_materializes_exact_segments() {
 }
 
 #[test]
-fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments() {
+fn curve_string_chamfer_vertex_by_points_materializes_exact_line_segments() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let chamfer = curve
-        .chamfer_line_line_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &policy())
+        .chamfer_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &policy())
         .unwrap();
 
     assert!(chamfer.report().status().is_native_exact());
@@ -2639,7 +2639,7 @@ fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments()
     );
     assert_eq!(
         chamfer.report().predicate_path(),
-        CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters
+        CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters
     );
     assert_eq!(chamfer.report().previous_trim().param(), &q(3, 4));
     assert_eq!(chamfer.report().next_trim().param(), &q(1, 4));
@@ -2666,12 +2666,12 @@ fn curve_string_chamfer_line_line_vertex_by_points_materializes_exact_segments()
 }
 
 #[test]
-fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary() {
+fn curve_string_chamfer_vertex_by_points_reports_off_segment_boundary() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let chamfer = curve
-        .chamfer_line_line_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
+        .chamfer_vertex_by_points(1, &p(5, 0), &p(4, 1), &policy())
         .unwrap();
 
     assert!(chamfer.curve_string().is_none());
@@ -2709,12 +2709,12 @@ fn curve_string_chamfer_line_line_vertex_by_points_reports_off_segment_boundary(
 }
 
 #[test]
-fn curve_string_chamfer_line_line_vertex_reports_boundary_parameters() {
+fn curve_string_chamfer_vertex_reports_boundary_parameters() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let chamfer = curve
-        .chamfer_line_line_vertex_by_parameters(1, s(1), q(1, 4), &policy())
+        .chamfer_vertex_by_parameters(1, s(1), q(1, 4), &policy())
         .unwrap();
 
     assert!(chamfer.curve_string().is_none());
@@ -2737,7 +2737,7 @@ fn curve_string_chamfer_line_line_vertex_reports_boundary_parameters() {
 }
 
 #[test]
-fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
+fn curve_string_chamfer_arc_line_vertex_materializes_exact_segments() {
     let curve = CurveString2::try_new(vec![
         Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap()),
         line_segment(2, 0, 2, 2),
@@ -2745,36 +2745,53 @@ fn curve_string_chamfer_arc_neighbor_reports_unsupported() {
     .unwrap();
 
     let chamfer = curve
-        .chamfer_line_line_vertex_by_parameters(1, q(1, 2), q(1, 2), &policy())
+        .chamfer_vertex_by_parameters(1, q(1, 2), q(1, 2), &policy())
         .unwrap();
 
-    assert!(chamfer.curve_string().is_none());
-    assert!(chamfer.report().status().is_retained_evidence());
+    assert!(chamfer.report().status().is_native_exact());
     assert_eq!(
         chamfer.report().input_path(),
         CurveStringChamferInputPath2::Parameters
     );
     assert_eq!(
         chamfer.report().predicate_path(),
-        CurveStringChamferPredicatePath2::UnsupportedSegmentFamily
+        CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters
     );
-    assert_eq!(
-        chamfer.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
+    assert_eq!(chamfer.report().blocker(), None);
     assert_eq!(chamfer.report().previous_segment_start_point(), &p(0, 0));
     assert_eq!(chamfer.report().previous_segment_end_point(), &p(2, 0));
     assert_eq!(chamfer.report().next_segment_start_point(), &p(2, 0));
     assert_eq!(chamfer.report().next_segment_end_point(), &p(2, 2));
-    assert_eq!(chamfer.report().previous_cut_point(), None);
-    assert_eq!(chamfer.report().next_cut_point(), None);
-    assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
-    assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
-    assert_eq!(chamfer.report().output_segment_count(), None);
+    assert_eq!(chamfer.report().previous_cut_point(), Some(&p(1, -1)));
+    assert_eq!(chamfer.report().next_cut_point(), Some(&p(2, 1)));
+    assert_eq!(
+        chamfer.report().chamfer_segment_start_point(),
+        Some(&p(1, -1))
+    );
+    assert_eq!(chamfer.report().chamfer_segment_end_point(), Some(&p(2, 1)));
+    assert_eq!(chamfer.report().output_segment_count(), Some(3));
+    assert_eq!(
+        chamfer.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 1 })
+    );
+    let [
+        Segment2::Arc(previous),
+        Segment2::Line(bevel),
+        Segment2::Line(next),
+    ] = chamfer.curve_string().unwrap().segments()
+    else {
+        panic!("arc-line chamfer should preserve both source families");
+    };
+    assert_eq!(previous.start(), &p(0, 0));
+    assert_eq!(previous.end(), &p(1, -1));
+    assert_eq!(bevel.start(), &p(1, -1));
+    assert_eq!(bevel.end(), &p(2, 1));
+    assert_eq!(next.start(), &p(2, 1));
+    assert_eq!(next.end(), &p(2, 2));
 }
 
 #[test]
-fn curve_string_chamfer_next_arc_neighbor_reports_parameter_path_unsupported() {
+fn curve_string_chamfer_line_arc_vertex_by_points_materializes_exact_segments() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 2, 0),
         Segment2::Arc(CircularArc2::from_bulge(p(2, 0), p(4, 0), s(1)).unwrap()),
@@ -2782,27 +2799,23 @@ fn curve_string_chamfer_next_arc_neighbor_reports_parameter_path_unsupported() {
     .unwrap();
 
     let chamfer = curve
-        .chamfer_line_line_vertex_by_parameters_with_report(1, q(1, 2), q(1, 2), &policy())
+        .chamfer_vertex_by_points_with_report(1, &p(1, 0), &p(3, -1), &policy())
         .unwrap();
 
-    assert!(chamfer.curve_string().is_none());
-    assert!(chamfer.report().status().is_retained_evidence());
+    assert!(chamfer.report().status().is_native_exact());
     assert_eq!(
         chamfer.report().input_path(),
-        CurveStringChamferInputPath2::Parameters
+        CurveStringChamferInputPath2::Points
     );
     assert_eq!(
         chamfer.report().stage(),
-        CurveStringChamferStage2::InputValidation
+        CurveStringChamferStage2::SegmentMaterialization
     );
     assert_eq!(
         chamfer.report().predicate_path(),
-        CurveStringChamferPredicatePath2::UnsupportedSegmentFamily
+        CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters
     );
-    assert_eq!(
-        chamfer.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
+    assert_eq!(chamfer.report().blocker(), None);
     assert_eq!(
         chamfer.report().source_segment_kind_counts(),
         SegmentKindCounts { lines: 1, arcs: 1 }
@@ -2811,42 +2824,85 @@ fn curve_string_chamfer_next_arc_neighbor_reports_parameter_path_unsupported() {
     assert_eq!(chamfer.report().previous_segment_end_point(), &p(2, 0));
     assert_eq!(chamfer.report().next_segment_start_point(), &p(2, 0));
     assert_eq!(chamfer.report().next_segment_end_point(), &p(4, 0));
-    assert_eq!(chamfer.report().previous_cut_point(), None);
-    assert_eq!(chamfer.report().next_cut_point(), None);
-    assert_eq!(chamfer.report().chamfer_segment_index(), None);
-    assert_eq!(chamfer.report().chamfer_segment_start_point(), None);
-    assert_eq!(chamfer.report().chamfer_segment_end_point(), None);
-    assert_eq!(chamfer.report().output_segment_count(), None);
-    assert_eq!(chamfer.report().output_segment_kind_counts(), None);
+    assert_eq!(chamfer.report().previous_cut_point(), Some(&p(1, 0)));
+    assert_eq!(chamfer.report().next_cut_point(), Some(&p(3, -1)));
+    assert_eq!(chamfer.report().chamfer_segment_index(), Some(1));
+    assert_eq!(chamfer.report().output_segment_count(), Some(3));
     assert_eq!(
-        chamfer.curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        chamfer.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 2, arcs: 1 })
     );
+    let trimmed = chamfer.curve_string().unwrap();
+    let [
+        Segment2::Line(previous),
+        Segment2::Line(bevel),
+        Segment2::Arc(next),
+    ] = trimmed.segments()
+    else {
+        panic!("line-arc chamfer should preserve both source families");
+    };
+    assert_eq!(previous.start(), &p(0, 0));
+    assert_eq!(previous.end(), &p(1, 0));
+    assert_eq!(bevel.start(), &p(1, 0));
+    assert_eq!(bevel.end(), &p(3, -1));
+    assert_eq!(next.start(), &p(3, -1));
+    assert_eq!(next.end(), &p(4, 0));
+    assert!(matches!(
+        chamfer.curve_string_classification(),
+        Classification::Decided(curve) if curve == trimmed
+    ));
     let owned_report = chamfer.clone().into_report();
     assert_eq!(&owned_report, chamfer.report());
     let (owned_curve, owned_parts_report) = chamfer.clone().into_parts();
     assert_eq!(owned_curve.as_ref(), chamfer.curve_string());
     assert_eq!(&owned_parts_report, chamfer.report());
-    assert_eq!(
+    assert!(matches!(
         chamfer.clone().into_curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
+        Classification::Decided(curve) if curve == *trimmed
+    ));
 }
 
 #[test]
-fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
+fn curve_string_chamfer_arc_arc_vertex_materializes_exact_segments() {
+    let curve = CurveString2::try_new(vec![
+        Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap()),
+        Segment2::Arc(CircularArc2::from_bulge(p(2, 0), p(4, 0), s(1)).unwrap()),
+    ])
+    .unwrap();
+
+    let chamfer = curve
+        .chamfer_vertex_by_parameters(1, q(1, 2), q(1, 2), &policy())
+        .unwrap();
+
+    assert!(chamfer.report().status().is_native_exact());
+    assert_eq!(chamfer.report().blocker(), None);
+    assert_eq!(
+        chamfer.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 2 })
+    );
+    let [
+        Segment2::Arc(previous),
+        Segment2::Line(bevel),
+        Segment2::Arc(next),
+    ] = chamfer.curve_string().unwrap().segments()
+    else {
+        panic!("arc-arc chamfer should preserve both circular arcs");
+    };
+    assert_eq!(previous.start(), &p(0, 0));
+    assert_eq!(previous.end(), &p(1, -1));
+    assert_eq!(bevel.start(), &p(1, -1));
+    assert_eq!(bevel.end(), &p(3, -1));
+    assert_eq!(next.start(), &p(3, -1));
+    assert_eq!(next.end(), &p(4, 0));
+}
+
+#[test]
+fn curve_string_fillet_vertex_materializes_exact_line_line_arc() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let fillet = curve
-        .fillet_line_line_vertex_by_points_with_report(
-            1,
-            &p(3, 0),
-            &p(4, 1),
-            &p(3, 1),
-            false,
-            &policy(),
-        )
+        .fillet_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
         .unwrap();
 
     assert!(fillet.report().status().is_native_exact());
@@ -2860,7 +2916,7 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
     );
     assert_eq!(
         fillet.report().predicate_path(),
-        CurveStringFilletPredicatePath2::LineLineTangentArc
+        CurveStringFilletPredicatePath2::NativeSegmentsTangentArc
     );
     assert_eq!(fillet.report().previous_segment_index(), 0);
     assert_eq!(fillet.report().next_segment_index(), 1);
@@ -2983,29 +3039,30 @@ fn curve_string_fillet_line_line_vertex_materializes_exact_arc() {
 }
 
 #[test]
-fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
+fn curve_string_fillet_vertex_by_parameters_materializes_exact_line_line_arc() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let fillet = curve
-        .fillet_line_line_vertex_by_parameters_with_report(
-            1,
-            q(3, 4),
-            q(1, 4),
-            &p(3, 1),
-            false,
-            &policy(),
-        )
+        .fillet_vertex_by_parameters_with_report(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy())
         .unwrap();
 
-    assert!(fillet.report().status().is_native_exact());
+    assert!(
+        fillet.report().status().is_native_exact(),
+        "status={:?}, predicate={:?}, blocker={:?}, previous={:?}, next={:?}",
+        fillet.report().status(),
+        fillet.report().predicate_path(),
+        fillet.report().blocker(),
+        fillet.report().previous_tangent_point(),
+        fillet.report().next_tangent_point()
+    );
     assert_eq!(
         fillet.report().input_path(),
         CurveStringFilletInputPath2::Parameters
     );
     assert_eq!(
         fillet.report().predicate_path(),
-        CurveStringFilletPredicatePath2::LineLineTangentArc
+        CurveStringFilletPredicatePath2::NativeSegmentsTangentArc
     );
     assert_eq!(fillet.report().previous_trim().param(), &q(3, 4));
     assert_eq!(fillet.report().next_trim().param(), &q(1, 4));
@@ -3038,12 +3095,153 @@ fn curve_string_fillet_line_line_vertex_by_parameters_materializes_exact_arc() {
 }
 
 #[test]
+fn curve_string_fillet_line_arc_vertex_materializes_exact_native_segments() {
+    let source_arc = CircularArc2::try_from_center(p(5, 0), p(5, 2), p(5, 1), true).unwrap();
+    assert_eq!(
+        source_arc.contains_point(&p(4, 1), &policy()),
+        Classification::Decided(true)
+    );
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 5, 0), Segment2::Arc(source_arc)]).unwrap();
+
+    let fillet = curve
+        .fillet_vertex_by_points_with_report(1, &p(3, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    assert_eq!(fillet.report().blocker(), None);
+    assert_eq!(
+        fillet.report().predicate_path(),
+        CurveStringFilletPredicatePath2::NativeSegmentsTangentArc
+    );
+    assert_eq!(
+        fillet.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 1, arcs: 2 })
+    );
+    let [
+        Segment2::Line(previous),
+        Segment2::Arc(inserted),
+        Segment2::Arc(next),
+    ] = fillet.curve_string().unwrap().segments()
+    else {
+        panic!("line-arc fillet should preserve the source arc");
+    };
+    assert_eq!(previous.start(), &p(0, 0));
+    assert_eq!(previous.end(), &p(3, 0));
+    assert_eq!(inserted.start(), &p(3, 0));
+    assert_eq!(inserted.end(), &p(4, 1));
+    assert_eq!(inserted.center(), &p(3, 1));
+    assert_eq!(next.start(), &p(4, 1));
+    assert_eq!(next.end(), &p(5, 2));
+    assert_eq!(next.center(), &p(5, 1));
+}
+
+#[test]
+fn curve_string_fillet_arc_line_vertex_materializes_exact_native_segments() {
+    let source_arc = CircularArc2::try_from_center(p(5, 2), p(5, 0), p(5, 1), false).unwrap();
+    let curve =
+        CurveString2::try_new(vec![Segment2::Arc(source_arc), line_segment(5, 0, 0, 0)]).unwrap();
+
+    let fillet = curve
+        .fillet_vertex_by_points(1, &p(4, 1), &p(3, 0), &p(3, 1), true, &policy())
+        .unwrap();
+
+    assert!(fillet.report().status().is_native_exact());
+    let [
+        Segment2::Arc(previous),
+        Segment2::Arc(inserted),
+        Segment2::Line(next),
+    ] = fillet.curve_string().unwrap().segments()
+    else {
+        panic!("arc-line fillet should preserve the source arc");
+    };
+    assert_eq!(previous.start(), &p(5, 2));
+    assert_eq!(previous.end(), &p(4, 1));
+    assert_eq!(inserted.start(), &p(4, 1));
+    assert_eq!(inserted.end(), &p(3, 0));
+    assert!(inserted.is_clockwise());
+    assert_eq!(next.start(), &p(3, 0));
+    assert_eq!(next.end(), &p(0, 0));
+}
+
+#[test]
+fn curve_string_fillet_arc_arc_vertex_certifies_distinct_circle_tangents() {
+    let previous_center = Point2::new(s(3), q(13, 6));
+    let previous_start = Point2::new(s(3), q(13, 3));
+    let shared_vertex = p(5, 3);
+    let next_center = Point2::new(q(13, 2), s(1));
+    let next_end = Point2::new(q(9, 2), q(5, 2));
+    let previous_arc = CircularArc2::try_from_center(
+        previous_start.clone(),
+        shared_vertex.clone(),
+        previous_center.clone(),
+        false,
+    )
+    .unwrap();
+    let next_arc =
+        CircularArc2::try_from_center(shared_vertex, next_end.clone(), next_center.clone(), true)
+            .unwrap();
+    assert_eq!(
+        previous_arc.contains_point(&p(3, 0), &policy()),
+        Classification::Decided(true)
+    );
+    assert_eq!(
+        next_arc.contains_point(&p(4, 1), &policy()),
+        Classification::Decided(true)
+    );
+    let Classification::Decided(previous_param) =
+        previous_arc.sweep_fraction(&p(3, 0), &policy()).unwrap()
+    else {
+        panic!("previous rational tangent point should have an exact arc parameter");
+    };
+    let Classification::Decided(next_param) = next_arc.sweep_fraction(&p(4, 1), &policy()).unwrap()
+    else {
+        panic!("next rational tangent point should have an exact arc parameter");
+    };
+    let curve =
+        CurveString2::try_new(vec![Segment2::Arc(previous_arc), Segment2::Arc(next_arc)]).unwrap();
+
+    let fillet = curve
+        .fillet_vertex_by_parameters(1, previous_param, next_param, &p(3, 1), false, &policy())
+        .unwrap();
+
+    assert!(
+        fillet.report().status().is_native_exact(),
+        "status={:?}, predicate={:?}, blocker={:?}, previous={:?}, next={:?}",
+        fillet.report().status(),
+        fillet.report().predicate_path(),
+        fillet.report().blocker(),
+        fillet.report().previous_tangent_point(),
+        fillet.report().next_tangent_point()
+    );
+    assert_eq!(
+        fillet.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 0, arcs: 3 })
+    );
+    let [
+        Segment2::Arc(previous),
+        Segment2::Arc(inserted),
+        Segment2::Arc(next),
+    ] = fillet.curve_string().unwrap().segments()
+    else {
+        panic!("arc-arc fillet should retain both distinct source circles");
+    };
+    assert_eq!(previous.start(), &previous_start);
+    assert_eq!(previous.end(), &p(3, 0));
+    assert_eq!(previous.center(), &previous_center);
+    assert_eq!(inserted.center(), &p(3, 1));
+    assert_eq!(next.start(), &p(4, 1));
+    assert_eq!(next.end(), &next_end);
+    assert_eq!(next.center(), &next_center);
+}
+
+#[test]
 fn curve_string_fillet_reports_radius_mismatch_boundary() {
     let curve =
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let fillet = curve
-        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 2), false, &policy())
+        .fillet_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 2), false, &policy())
         .unwrap();
 
     assert!(fillet.curve_string().is_none());
@@ -3092,7 +3290,7 @@ fn curve_string_fillet_reports_wrong_orientation_boundary() {
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let fillet = curve
-        .fillet_line_line_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), true, &policy())
+        .fillet_vertex_by_points(1, &p(3, 0), &p(4, 1), &p(3, 1), true, &policy())
         .unwrap();
 
     assert!(fillet.curve_string().is_none());
@@ -3117,7 +3315,7 @@ fn curve_string_fillet_reports_boundary_parameters() {
         CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 4)]).unwrap();
 
     let fillet = curve
-        .fillet_line_line_vertex_by_points(1, &p(4, 0), &p(4, 1), &p(3, 1), false, &policy())
+        .fillet_vertex_by_points(1, &p(4, 0), &p(4, 1), &p(3, 1), false, &policy())
         .unwrap();
 
     assert!(fillet.curve_string().is_none());
@@ -3204,8 +3402,14 @@ fn curve_string_trim_materializes_exact_line_subsegment_with_report() {
         trim.report().segment_reports()[0].source_range().end(),
         &q(3, 4)
     );
-    assert_eq!(trim.report().segment_reports()[0].range_start_point(), None);
-    assert_eq!(trim.report().segment_reports()[0].range_end_point(), None);
+    assert_eq!(
+        trim.report().segment_reports()[0].range_start_point(),
+        Some(&p(1, 0))
+    );
+    assert_eq!(
+        trim.report().segment_reports()[0].range_end_point(),
+        Some(&p(3, 0))
+    );
     assert!(matches!(
         trim.curve_string_classification(),
         Classification::Decided(curve_string)
@@ -3297,11 +3501,14 @@ fn curve_string_trim_preserves_whole_arc_segment() {
 }
 
 #[test]
-fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() {
+fn curve_string_trim_materializes_exact_partial_arc_from_sweep_parameters() {
     let curve = CurveString2::try_new(vec![Segment2::Arc(
         CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
     )])
     .unwrap();
+    let half_sqrt_two = (Real::from(2_u8).sqrt().unwrap() / Real::from(2_u8)).unwrap();
+    let expected_start = Point2::new(Real::one() - &half_sqrt_two, -half_sqrt_two.clone());
+    let expected_end = Point2::new(Real::one() + &half_sqrt_two, -half_sqrt_two);
 
     let trim = curve
         .trim_between_parameters(
@@ -3311,8 +3518,7 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
         )
         .unwrap();
 
-    assert!(trim.curve_string().is_none());
-    assert!(trim.report().status().is_retained_evidence());
+    assert!(trim.report().status().is_native_exact());
     assert_eq!(
         trim.report().input_path(),
         CurveStringTrimInputPath2::Parameters
@@ -3321,21 +3527,21 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
         trim.report().predicate_path(),
         CurveStringTrimPredicatePath2::ExactParameterRange
     );
-    assert_eq!(
-        trim.report().blocker(),
-        Some(UncertaintyReason::Unsupported)
-    );
-    assert_eq!(trim.report().output_segment_count(), None);
+    assert_eq!(trim.report().blocker(), None);
+    assert_eq!(trim.report().output_segment_count(), Some(1));
     assert_eq!(
         trim.report().source_segment_kind_counts(),
         SegmentKindCounts { lines: 0, arcs: 1 }
     );
-    assert_eq!(trim.report().output_segment_kind_counts(), None);
+    assert_eq!(
+        trim.report().output_segment_kind_counts(),
+        Some(SegmentKindCounts { lines: 0, arcs: 1 })
+    );
     assert_eq!(trim.report().segment_reports().len(), 1);
     assert!(
         trim.report().segment_reports()[0]
             .status()
-            .is_retained_evidence()
+            .is_native_exact()
     );
     assert_eq!(
         trim.report().segment_reports()[0].source_segment_kind(),
@@ -3343,19 +3549,19 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
     );
     assert_eq!(
         trim.report().segment_reports()[0].output_segment_kind(),
-        None
+        Some(SegmentKind::Arc)
     );
     assert_eq!(
         trim.report().segment_reports()[0].output_segment_index(),
-        None
+        Some(0)
     );
     assert_eq!(
         trim.report().segment_reports()[0].output_segment_start_point(),
-        None
+        Some(&expected_start)
     );
     assert_eq!(
         trim.report().segment_reports()[0].output_segment_end_point(),
-        None
+        Some(&expected_end)
     );
     assert_eq!(
         trim.report().segment_reports()[0].source_range().start(),
@@ -3365,20 +3571,139 @@ fn curve_string_trim_reports_partial_arc_as_unsupported_without_materializing() 
         trim.report().segment_reports()[0].source_range().end(),
         &q(3, 4)
     );
-    assert_eq!(trim.report().segment_reports()[0].range_start_point(), None);
-    assert_eq!(trim.report().segment_reports()[0].range_end_point(), None);
     assert_eq!(
-        trim.curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        trim.report().segment_reports()[0].range_start_point(),
+        Some(&expected_start)
     );
+    assert_eq!(
+        trim.report().segment_reports()[0].range_end_point(),
+        Some(&expected_end)
+    );
+    let trimmed = trim.curve_string().expect("arc trim should materialize");
+    assert_eq!(trimmed.start(), Some(&expected_start));
+    assert_eq!(trimmed.end(), Some(&expected_end));
+    let [Segment2::Arc(trimmed_arc)] = trimmed.segments() else {
+        panic!("arc trim should preserve the circular-arc family");
+    };
+    assert_eq!(trimmed_arc.center(), &p(1, 0));
+    assert_eq!(trimmed_arc.radius_squared(), Real::one());
+    assert!(!trimmed_arc.is_clockwise());
+    assert!(matches!(
+        trim.curve_string_classification(),
+        Classification::Decided(curve_string) if curve_string == trimmed
+    ));
     let owned_report = trim.clone().into_report();
     assert_eq!(&owned_report, trim.report());
     let (owned_curve, owned_parts_report) = trim.clone().into_parts();
     assert_eq!(owned_curve.as_ref(), trim.curve_string());
     assert_eq!(&owned_parts_report, trim.report());
-    assert_eq!(
+    assert!(matches!(
         trim.clone().into_curve_string_classification(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        Classification::Decided(curve_string) if curve_string == *trimmed
+    ));
+}
+
+#[test]
+fn curve_string_trim_retains_non_cardinal_arc_parameter_lineage() {
+    let source_arc = CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap();
+    let curve = CurveString2::try_new(vec![Segment2::Arc(source_arc.clone())]).unwrap();
+    let policy = policy();
+    let start_fraction = q(1, 7);
+    let end_fraction = q(5, 7);
+    let midpoint_fraction = q(3, 7);
+    let Classification::Decided(expected_start) = source_arc
+        .point_at_sweep_fraction(&start_fraction, &policy)
+        .unwrap()
+    else {
+        panic!("source start fraction should evaluate exactly");
+    };
+    let Classification::Decided(expected_end) = source_arc
+        .point_at_sweep_fraction(&end_fraction, &policy)
+        .unwrap()
+    else {
+        panic!("source end fraction should evaluate exactly");
+    };
+    let Classification::Decided(expected_midpoint) = source_arc
+        .point_at_sweep_fraction(&midpoint_fraction, &policy)
+        .unwrap()
+    else {
+        panic!("source midpoint fraction should evaluate exactly");
+    };
+
+    let trim = curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, start_fraction),
+            CurveStringTrimPoint2::new(0, end_fraction),
+            &policy,
+        )
+        .unwrap();
+    let trimmed = trim
+        .curve_string()
+        .expect("exact arc trim should materialize");
+    let [Segment2::Arc(trimmed_arc)] = trimmed.segments() else {
+        panic!("arc trim should preserve the circular-arc family");
+    };
+
+    assert_eq!(trimmed_arc.start(), &expected_start);
+    assert_eq!(trimmed_arc.end(), &expected_end);
+    assert_eq!(
+        trimmed_arc.contains_point(trimmed_arc.start(), &policy),
+        Classification::Decided(true)
+    );
+    assert_eq!(
+        trimmed_arc.contains_point(trimmed_arc.end(), &policy),
+        Classification::Decided(true)
+    );
+    assert_eq!(
+        trimmed_arc
+            .point_at_sweep_fraction(&q(1, 2), &policy)
+            .unwrap(),
+        Classification::Decided(expected_midpoint.clone())
+    );
+    assert_eq!(
+        trimmed_arc.representative_point(&policy).unwrap(),
+        Classification::Decided(expected_midpoint.clone())
+    );
+
+    let repeated_trim = curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, q(1, 7)),
+            CurveStringTrimPoint2::new(0, q(5, 7)),
+            &policy,
+        )
+        .unwrap();
+    let [Segment2::Arc(repeated_arc)] = repeated_trim
+        .curve_string()
+        .expect("repeated exact arc trim should materialize")
+        .segments()
+    else {
+        panic!("repeated arc trim should preserve the circular-arc family");
+    };
+    assert!(std::ptr::eq(
+        trimmed_arc.rational_bezier_decomposition().unwrap(),
+        repeated_arc.rational_bezier_decomposition().unwrap()
+    ));
+
+    let nested_curve = CurveString2::try_new(vec![Segment2::Arc(trimmed_arc.clone())]).unwrap();
+    let nested_trim = nested_curve
+        .trim_between_parameters(
+            CurveStringTrimPoint2::new(0, q(1, 4)),
+            CurveStringTrimPoint2::new(0, q(3, 4)),
+            &policy,
+        )
+        .unwrap();
+    let [Segment2::Arc(nested_arc)] = nested_trim
+        .curve_string()
+        .expect("nested exact arc trim should materialize")
+        .segments()
+    else {
+        panic!("nested arc trim should preserve the circular-arc family");
+    };
+    assert_eq!(
+        nested_arc
+            .point_at_sweep_fraction(&q(1, 2), &policy)
+            .unwrap(),
+        Classification::Decided(expected_midpoint)
     );
 }
 

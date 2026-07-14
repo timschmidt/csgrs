@@ -1,13 +1,12 @@
 use hypercurve::{
     Aabb2, BezierBoundaryLoop2, BezierRegion2, BezierSubcurve2, Classification, CurveError,
     CurvePolicy, Point2, PolynomialBSplineCurve2, QuadraticBezier2, RationalBSplineCurve2,
-    RationalBSplineNativeTopologyReport2, RationalBezierSpanTopologyPath2,
+    RationalBSplineNativeTopologyReport2, RationalBezier2, RationalBezierSpanTopologyPath2,
     RationalBezierSpanTopologyReport2, RationalQuadraticBSplineCurve2, Real,
     RetainedBSplineSpanFactReport2, RetainedBSplineSpanFacts2, RetainedCurveCacheSummary2,
-    RetainedCurveFamily2, RetainedCurveIdentity2, RetainedCurvePeriodicity1, RetainedCurveProfile2,
-    RetainedEndpointEvidence2, RetainedParameterDomain1, RetainedSpanAxisMonotonicity,
-    RetainedSpanWeightDomainReport2, RetainedTopologyStatus, RetainedTrimDirection,
-    RetainedTrimInterval1,
+    RetainedCurveFamily2, RetainedCurveIdentity2, RetainedCurveProfile2, RetainedEndpointEvidence2,
+    RetainedParameterDomain1, RetainedSpanAxisMonotonicity, RetainedSpanWeightDomainReport2,
+    RetainedTopologyStatus, RetainedTrimDirection, RetainedTrimInterval1, SplinePeriodicity2,
 };
 
 fn r(value: i32) -> Real {
@@ -57,6 +56,16 @@ fn span_topology_report(
     )
 }
 
+fn general_rational_cubic() -> BezierSubcurve2 {
+    BezierSubcurve2::Rational(
+        RationalBezier2::try_new(
+            vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
+            vec![r(1), r(2), r(3), r(4)],
+        )
+        .unwrap(),
+    )
+}
+
 fn assert_point_eq(left: &Point2, right: &Point2) {
     assert_eq!(
         left.x().partial_cmp(right.x()),
@@ -65,6 +74,83 @@ fn assert_point_eq(left: &Point2, right: &Point2) {
     assert_eq!(
         left.y().partial_cmp(right.y()),
         Some(std::cmp::Ordering::Equal)
+    );
+}
+
+#[test]
+fn linear_bspline_spans_are_elevated_exactly() {
+    let spline = decided(
+        PolynomialBSplineCurve2::try_new(
+            1,
+            vec![p(0, 0), p(2, 2), p(4, 0)],
+            vec![r(0), r(0), r(1), r(2), r(2)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+
+    assert_eq!(extraction.degree(), 1);
+    assert_eq!(extraction.spans().len(), 2);
+    let BezierSubcurve2::Quadratic(first) = &extraction.spans()[0] else {
+        panic!("linear span was not elevated to a quadratic");
+    };
+    assert_point_eq(first.start(), &p(0, 0));
+    assert_point_eq(first.control(), &p(1, 1));
+    assert_point_eq(first.end(), &p(2, 2));
+}
+
+#[test]
+fn rational_linear_span_preserves_homogeneous_parameterization() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            1,
+            vec![p(0, 0), p(4, 0)],
+            vec![r(1), r(3)],
+            vec![r(0), r(0), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+
+    assert_eq!(report.span_reports().len(), 1);
+    assert_eq!(
+        report.span_reports()[0].decision_path(),
+        RationalBezierSpanTopologyPath2::NativeRationalLinearSpan
+    );
+    let Some(BezierSubcurve2::RationalQuadratic(curve)) =
+        report.span_reports()[0].native_subcurve()
+    else {
+        panic!("linear NURBS span was not elevated homogeneously");
+    };
+    assert_point_eq(curve.control(), &p(3, 0));
+    assert_eq!(curve.weights(), [&r(1), &r(2), &r(3)]);
+}
+
+#[test]
+fn singular_rational_linear_elevation_stays_retained() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            1,
+            vec![p(0, 0), p(4, 0)],
+            vec![r(1), r(-1)],
+            vec![r(0), r(0), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let report = decided(extraction.native_topology_report(&policy()).unwrap());
+
+    assert_eq!(
+        report.span_reports()[0].decision_path(),
+        RationalBezierSpanTopologyPath2::RetainedSingularLinearSpan
+    );
+    assert_eq!(
+        extraction.native_subcurves(&policy()).unwrap(),
+        Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
     );
 }
 
@@ -137,7 +223,7 @@ fn cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot() {
 }
 
 #[test]
-fn bspline_constructor_rejects_unclamped_or_degenerate_knot_vectors() {
+fn bspline_constructor_rejects_degenerate_knot_vectors() {
     assert_eq!(
         PolynomialBSplineCurve2::try_new(
             2,
@@ -155,6 +241,69 @@ fn bspline_constructor_rejects_unclamped_or_degenerate_knot_vectors() {
             &policy(),
         ),
         Err(CurveError::InvalidBSpline)
+    );
+}
+
+#[test]
+fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
+    let spline = decided(
+        PolynomialBSplineCurve2::try_new(
+            2,
+            vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+            (0..=6).map(r).collect(),
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+
+    assert_eq!(extraction.inserted_knot_count(), 3);
+    assert_eq!(extraction.spans().len(), 2);
+    let BezierSubcurve2::Quadratic(first) = &extraction.spans()[0] else {
+        panic!("unclamped quadratic did not extract a quadratic first span");
+    };
+    let BezierSubcurve2::Quadratic(second) = &extraction.spans()[1] else {
+        panic!("unclamped quadratic did not extract a quadratic second span");
+    };
+    assert_eq!(
+        first.control_points(),
+        [&Point2::new(r(1), r(2)), &p(2, 4), &p(3, 4)]
+    );
+    assert_eq!(
+        second.control_points(),
+        [&p(3, 4), &p(4, 4), &Point2::new(r(5), r(2))]
+    );
+
+    let profile = decided(spline.retained_curve_profile(12, &policy()).unwrap());
+    assert_eq!(profile.domain().start(), &r(2));
+    assert_eq!(profile.domain().end(), &r(4));
+    assert_eq!(profile.endpoints().start_point(), first.start());
+    assert_eq!(profile.endpoints().end_point(), second.end());
+
+    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+    assert_eq!(facts.span_facts().len(), 2);
+    assert_eq!(facts.span_facts()[0].knot_interval(), (&r(2), &r(3)));
+    assert_eq!(facts.span_facts()[1].knot_interval(), (&r(3), &r(4)));
+
+    let rational = decided(
+        RationalQuadraticBSplineCurve2::try_new(
+            vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+            vec![r(1), r(2), r(3), r(4)],
+            (0..=6).map(r).collect(),
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let rational_extraction = decided(rational.extract_bezier_spans(&policy()).unwrap());
+    let rational_facts = decided(rational_extraction.span_fact_report(&policy()).unwrap());
+    assert_eq!(rational_facts.span_facts().len(), 2);
+    assert_eq!(
+        rational_facts.span_facts()[0].knot_interval(),
+        (&r(2), &r(3))
+    );
+    assert_eq!(
+        rational_facts.span_facts()[1].knot_interval(),
+        (&r(3), &r(4))
     );
 }
 
@@ -408,7 +557,7 @@ fn equal_weight_retained_rational_cubic_spans_feed_native_region_area() {
 }
 
 #[test]
-fn nonuniform_retained_rational_cubic_spans_do_not_promote_to_native_topology() {
+fn nonuniform_rational_cubic_spans_promote_without_degree_reduction() {
     let spline = decided(
         RationalBSplineCurve2::try_new(
             3,
@@ -422,20 +571,21 @@ fn nonuniform_retained_rational_cubic_spans_do_not_promote_to_native_topology() 
     let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
     let report = decided(extraction.native_topology_report(&policy()).unwrap());
 
-    assert!(!report.is_fully_native_exact());
+    assert!(report.is_fully_native_exact());
     assert_eq!(report.span_reports().len(), extraction.spans().len());
     assert!(report.span_reports().iter().all(|span| {
         span.degree() == 3
-            && span.status() == RetainedTopologyStatus::Unsupported
-            && span.decision_path()
-                == RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan
-            && span.native_subcurve().is_none()
-            && span.status().is_retained_evidence()
+            && span.status() == RetainedTopologyStatus::NativeExact
+            && span.decision_path() == RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan
+            && matches!(span.native_subcurve(), Some(BezierSubcurve2::Rational(_)))
     }));
 
-    assert_eq!(
-        extraction.native_subcurves(&policy()).unwrap(),
-        Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
+    let native = decided(extraction.native_subcurves(&policy()).unwrap());
+    assert_eq!(native.len(), extraction.spans().len());
+    assert!(
+        native
+            .iter()
+            .all(|span| matches!(span, BezierSubcurve2::Rational(_)))
     );
 }
 
@@ -498,10 +648,7 @@ fn retained_bspline_profile_reports_exact_domain_trim_and_endpoints() {
     assert_eq!(profile.trim().start(), &r(0));
     assert_eq!(profile.trim().end(), &r(2));
     assert_eq!(profile.trim().direction(), RetainedTrimDirection::Forward);
-    assert_eq!(
-        profile.periodicity(),
-        &RetainedCurvePeriodicity1::NonPeriodic
-    );
+    assert_eq!(profile.periodicity(), &SplinePeriodicity2::NonPeriodic);
     assert_eq!(
         profile.topology_status(),
         RetainedTopologyStatus::NativeExact
@@ -601,7 +748,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         full_trim.clone(),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         cache.clone(),
@@ -615,7 +762,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         versioned_identity,
         domain.clone(),
         full_trim.clone(),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         stale_cache,
@@ -627,7 +774,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         versioned_identity,
         domain.clone(),
         full_trim.clone(),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         fresh_cache,
@@ -639,7 +786,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         partial_trim,
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         cache.clone(),
@@ -654,7 +801,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         smaller_domain.clone(),
         transplanted_trim,
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         cache.clone(),
@@ -665,7 +812,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         full_trim.clone(),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         bad_endpoints,
         cache.clone(),
@@ -676,7 +823,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         full_trim,
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         mixed_cache,
@@ -687,7 +834,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::Unsupported,
         endpoints,
         cache.clone(),
@@ -699,7 +846,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         retained_trim,
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::Unresolved,
         endpoints,
         cache,
@@ -716,7 +863,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
             identity,
             domain.clone(),
             decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
-            RetainedCurvePeriodicity1::NonPeriodic,
+            SplinePeriodicity2::NonPeriodic,
             topology_status,
             endpoints,
             native_only_cache,
@@ -733,7 +880,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
             identity,
             domain.clone(),
             decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
-            RetainedCurvePeriodicity1::NonPeriodic,
+            SplinePeriodicity2::NonPeriodic,
             topology_status,
             endpoints,
             mixed_cache,
@@ -746,7 +893,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         RetainedCurveIdentity2::new(RetainedCurveFamily2::RationalQuadraticBSpline, 43),
         domain.clone(),
         decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         cubic_cache,
@@ -758,7 +905,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
         identity,
         domain.clone(),
         decided(RetainedTrimInterval1::try_new(r(0), r(2), &domain, &policy).unwrap()),
-        RetainedCurvePeriodicity1::NonPeriodic,
+        SplinePeriodicity2::NonPeriodic,
         RetainedTopologyStatus::NativeExact,
         endpoints,
         quartic_cache,
@@ -766,7 +913,7 @@ fn retained_curve_profile_rejects_mismatched_endpoint_evidence_without_blocking_
 }
 
 #[test]
-fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
+fn retained_rational_cubic_profile_reports_native_general_spans() {
     let spline = decided(
         RationalBSplineCurve2::try_new(
             3,
@@ -787,11 +934,11 @@ fn retained_rational_cubic_profile_keeps_unsupported_spans_as_evidence() {
     assert_eq!(profile.identity().source_version(), 0);
     assert_eq!(
         profile.topology_status(),
-        RetainedTopologyStatus::Unsupported
+        RetainedTopologyStatus::NativeExact
     );
     assert_eq!(profile.cache_summary().span_count(), 2);
-    assert_eq!(profile.cache_summary().native_span_count(), 0);
-    assert_eq!(profile.cache_summary().retained_span_count(), 2);
+    assert_eq!(profile.cache_summary().native_span_count(), 2);
+    assert_eq!(profile.cache_summary().retained_span_count(), 0);
     assert_eq!(profile.cache_summary().source_version(), 0);
     assert!(profile.cache_summary().is_fresh_for(profile.identity()));
 
@@ -986,7 +1133,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         r(0),
         r(1),
         RetainedTopologyStatus::Unsupported,
-        RationalBezierSpanTopologyPath2::RetainedUnsupportedDegree,
+        RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
         None,
     ));
     assert_topology_error(span_topology_report(
@@ -1035,7 +1182,7 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         r(0),
         r(1),
         RetainedTopologyStatus::Unsupported,
-        RationalBezierSpanTopologyPath2::RetainedUnsupportedDegree,
+        RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
         None,
     ));
     for topology_status in [
@@ -1050,8 +1197,8 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
             r(0),
             r(1),
             topology_status,
-            RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
-            None,
+            RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
+            Some(general_rational_cubic()),
         ));
     }
 
@@ -1060,9 +1207,9 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         3,
         r(0),
         r(1),
-        RetainedTopologyStatus::Unsupported,
-        RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
-        None,
+        RetainedTopologyStatus::NativeExact,
+        RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
+        Some(general_rational_cubic()),
     )
     .unwrap();
     assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
@@ -1099,9 +1246,9 @@ fn retained_rational_span_topology_reports_reject_forged_native_evidence() {
         3,
         r(1),
         r(2),
-        RetainedTopologyStatus::Unsupported,
-        RationalBezierSpanTopologyPath2::RetainedUnequalWeightCubicSpan,
-        None,
+        RetainedTopologyStatus::NativeExact,
+        RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan,
+        Some(general_rational_cubic()),
     )
     .unwrap();
     assert_topology_error(RationalBSplineNativeTopologyReport2::new(vec![
@@ -1197,7 +1344,7 @@ fn retained_rational_quadratic_span_facts_follow_refined_knot_windows() {
 }
 
 #[test]
-fn retained_rational_cubic_span_facts_keep_control_hull_and_unsupported_monotonicity() {
+fn retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity() {
     let spline = decided(
         RationalBSplineCurve2::try_new(
             3,
@@ -1213,9 +1360,9 @@ fn retained_rational_cubic_span_facts_keep_control_hull_and_unsupported_monotoni
 
     assert_eq!(facts.span_facts().len(), 2);
     assert!(facts.span_facts().iter().all(|span| {
-        span.topology_status() == RetainedTopologyStatus::Unsupported
-            && span.x_monotonicity() == RetainedSpanAxisMonotonicity::Unsupported
-            && span.y_monotonicity() == RetainedSpanAxisMonotonicity::Unsupported
+        span.topology_status() == RetainedTopologyStatus::NativeExact
+            && span.x_monotonicity() == RetainedSpanAxisMonotonicity::CertifiedMonotone
+            && span.y_monotonicity() == RetainedSpanAxisMonotonicity::CertifiedMonotone
             && span
                 .weight_domain()
                 .is_some_and(|weights| weights.all_weights_certified_nonzero())
@@ -1224,6 +1371,42 @@ fn retained_rational_cubic_span_facts_keep_control_hull_and_unsupported_monotoni
     assert_eq!(
         facts.span_facts()[0].bounds().max(),
         &Point2::new(q(11, 3), r(3))
+    );
+}
+
+#[test]
+fn retained_degree_four_nurbs_span_certifies_stationary_monotone_axis() {
+    let spline = decided(
+        RationalBSplineCurve2::try_new(
+            4,
+            vec![
+                p(0, 0),
+                Point2::new(q(3, 4), r(0)),
+                Point2::new(q(1, 2), r(0)),
+                Point2::new(q(1, 4), r(0)),
+                p(1, 0),
+            ],
+            vec![r(1); 5],
+            vec![r(0), r(0), r(0), r(0), r(0), r(1), r(1), r(1), r(1), r(1)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let extraction = decided(spline.extract_bezier_spans(&policy()).unwrap());
+    let topology = decided(extraction.native_topology_report(&policy()).unwrap());
+    let facts = decided(extraction.span_fact_report(&policy()).unwrap());
+
+    assert_eq!(
+        topology.span_reports()[0].decision_path(),
+        RationalBezierSpanTopologyPath2::NativeGeneralRationalSpan
+    );
+    assert_eq!(
+        facts.span_facts()[0].x_monotonicity(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone
+    );
+    assert_eq!(
+        facts.span_facts()[0].y_monotonicity(),
+        RetainedSpanAxisMonotonicity::CertifiedMonotone
     );
 }
 
@@ -1250,16 +1433,10 @@ fn retained_trim_interval_rejects_out_of_domain_and_accepts_reversal() {
 }
 
 #[test]
-fn retained_rational_bspline_rejects_unsupported_degree_and_zero_weight() {
+fn retained_rational_bspline_rejects_invalid_degree_and_zero_weight() {
     assert_eq!(
-        RationalBSplineCurve2::try_new(
-            1,
-            vec![p(0, 0), p(1, 1)],
-            vec![r(1), r(1)],
-            vec![r(0), r(0), r(1), r(1)],
-            &policy(),
-        )
-        .unwrap(),
+        RationalBSplineCurve2::try_new(0, vec![p(0, 0)], vec![r(1)], vec![r(0), r(1)], &policy(),)
+            .unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Unsupported)
     );
     assert_eq!(

@@ -335,7 +335,11 @@ fn split_marker_matches_source_arc(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
-    let expected_param = segment_chord_param(source_arc.start(), source_arc.end(), &marker.point)?;
+    let expected_param =
+        match source_arc.sweep_fraction_for_incident_point(&marker.point, policy)? {
+            Classification::Decided(param) => param,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     match compare_reals(&marker.param, &expected_param, policy) {
         Some(Ordering::Equal) => Ok(Classification::Decided(())),
         Some(_) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
@@ -346,18 +350,6 @@ fn split_marker_matches_source_arc(
         )),
         None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
-}
-
-fn segment_chord_param(
-    start: &crate::Point2,
-    end: &crate::Point2,
-    point: &crate::Point2,
-) -> CurveResult<Real> {
-    let (dx, dy) = end.delta_from(start);
-    let (px, py) = point.delta_from(start);
-    let numerator = (&px * &dx) + (&py * &dy);
-    let denominator = (&dx * &dx) + (&dy * &dy);
-    (numerator / denominator).map_err(Into::into)
 }
 
 pub(crate) fn split_contour_at_intersections(
@@ -474,49 +466,21 @@ fn build_fragment_segment(
 
     match source_segment {
         Segment2::Line(line) => line
-            .fragment_between(start.point.clone(), end.point.clone())
-            .map(Segment2::Line)
-            .map(Classification::Decided),
-        Segment2::Arc(arc) => build_arc_fragment_segment(arc, start, end, policy),
-    }
-}
-
-fn build_arc_fragment_segment(
-    source_arc: &CircularArc2,
-    start: &SegmentSplitMarker,
-    end: &SegmentSplitMarker,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<Segment2>> {
-    // Intersection points in the f64 interop comparison path can be infinitesimally off
-    // the source circle after square roots and line solves. The fragment still
-    // belongs to the original arc when both split markers are on that source
-    // circle under the active policy, so preserve the source radius instead of
-    // revalidating with the exact public constructor. This is a finite-output
-    // normalization step in the sense of Hobby, "Practical Segment Intersection
-    // with Finite Precision Output" (Computational Geometry 13(4), 199-214,
-    // 1999), and is limited to fragment reconstruction after the source arc has
-    // already supplied the circle.
-    let radius_squared = source_arc.radius_squared();
-    let start_radius_delta = start.point.distance_squared(source_arc.center()) - &radius_squared;
-    let end_radius_delta = end.point.distance_squared(source_arc.center()) - &radius_squared;
-    match (
-        radius_delta_is_zero(&start_radius_delta, &radius_squared, policy),
-        radius_delta_is_zero(&end_radius_delta, &radius_squared, policy),
-    ) {
-        (Some(true), Some(true)) => Ok(Classification::Decided(Segment2::Arc(
-            CircularArc2::new_unchecked_with_radius(
+            .fragment_between_with_source_range(
                 start.point.clone(),
                 end.point.clone(),
-                source_arc.center().clone(),
-                radius_squared,
-                source_arc.is_clockwise(),
-                None,
-            ),
-        ))),
-        (Some(false), _) | (_, Some(false)) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-        }
-        _ => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                ParamRange::new(start.param.clone(), end.param.clone()),
+            )
+            .map(Segment2::Line)
+            .map(Classification::Decided),
+        Segment2::Arc(arc) => arc
+            .fragment_between_sweep_range(
+                start.point.clone(),
+                end.point.clone(),
+                &ParamRange::new(start.param.clone(), end.param.clone()),
+                policy,
+            )
+            .map(|classification| classification.map(Segment2::Arc)),
     }
 }
 

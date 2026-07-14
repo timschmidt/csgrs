@@ -14,15 +14,16 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
+use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
 use crate::bezier_topology::polynomial_roots_in_unit_interval;
 use crate::classify::{
     classify_oriented_line, compare_reals, is_zero, orient2d_real_expr, real_sign,
 };
 use crate::{
     Aabb2, Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
-    BezierLineContact, BezierLineContactKind, BezierLineContactRelation, BezierLineRelation,
-    BezierMonotoneGraphOrder, BezierMonotoneSpan, Classification, CubicBezier2, CurveError,
-    CurvePolicy, LineSeg2, LineSide, Point2, QuadraticBezier2, UncertaintyReason,
+    BezierLineContactRelation, BezierLineRelation, BezierMonotoneGraphOrder, BezierMonotoneSpan,
+    Classification, CubicBezier2, CurveError, CurvePolicy, LineSeg2, LineSide, Point2,
+    QuadraticBezier2, UncertaintyReason,
 };
 
 /// Coarse conic family represented by a rational quadratic Bezier segment.
@@ -37,7 +38,7 @@ pub enum RationalQuadraticConicKind {
 }
 
 /// A rational quadratic Bezier segment with exact control points and weights.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct RationalQuadraticBezier2 {
     start: Point2,
     control: Point2,
@@ -45,6 +46,18 @@ pub struct RationalQuadraticBezier2 {
     start_weight: Real,
     control_weight: Real,
     end_weight: Real,
+    common_weight_sign: Option<RealSign>,
+}
+
+impl PartialEq for RationalQuadraticBezier2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start
+            && self.control == other.control
+            && self.end == other.end
+            && self.start_weight == other.start_weight
+            && self.control_weight == other.control_weight
+            && self.end_weight == other.end_weight
+    }
 }
 
 impl RationalQuadraticBezier2 {
@@ -57,6 +70,26 @@ impl RationalQuadraticBezier2 {
         control_weight: Real,
         end_weight: Real,
     ) -> Result<Self, CurveError> {
+        Self::try_new_with_common_weight_sign(
+            start,
+            control,
+            end,
+            start_weight,
+            control_weight,
+            end_weight,
+            None,
+        )
+    }
+
+    pub(crate) fn try_new_with_common_weight_sign(
+        start: Point2,
+        control: Point2,
+        end: Point2,
+        start_weight: Real,
+        control_weight: Real,
+        end_weight: Real,
+        retained_common_weight_sign: Option<RealSign>,
+    ) -> Result<Self, CurveError> {
         if [
             start_weight.zero_status(),
             control_weight.zero_status(),
@@ -66,6 +99,16 @@ impl RationalQuadraticBezier2 {
         {
             return Err(CurveError::ZeroRationalBezierWeight);
         }
+        let classified_common_weight_sign = common_weight_sign_for_values(
+            [&start_weight, &control_weight, &end_weight],
+            &CurvePolicy::certified(),
+        );
+        debug_assert!(
+            classified_common_weight_sign.is_none()
+                || retained_common_weight_sign.is_none()
+                || classified_common_weight_sign == retained_common_weight_sign,
+            "retained rational weight sign contradicts classified weights"
+        );
         Ok(Self {
             start,
             control,
@@ -73,6 +116,7 @@ impl RationalQuadraticBezier2 {
             start_weight,
             control_weight,
             end_weight,
+            common_weight_sign: classified_common_weight_sign.or(retained_common_weight_sign),
         })
     }
 
@@ -133,6 +177,11 @@ impl RationalQuadraticBezier2 {
         [&self.start_weight, &self.control_weight, &self.end_weight]
     }
 
+    pub(crate) fn common_nonzero_weight_sign(&self, policy: &CurvePolicy) -> Option<RealSign> {
+        self.common_weight_sign
+            .or_else(|| common_weight_sign_for_values(self.weights(), policy))
+    }
+
     /// Evaluates the rational segment at affine parameter `t`.
     ///
     /// The numerator and denominator are evaluated in homogeneous Bernstein
@@ -142,6 +191,13 @@ impl RationalQuadraticBezier2 {
     pub fn point_at(&self, t: Real, policy: &CurvePolicy) -> Classification<Point2> {
         let one_minus_t = Real::one() - &t;
         let two = Real::from(2_i8);
+        if self.start_weight == Real::one()
+            && self.end_weight == Real::one()
+            && let Some(point) =
+                self.point_at_unit_end_weights_rationalized(&t, &one_minus_t, &two, policy)
+        {
+            return point;
+        }
         let b0 = &one_minus_t * &one_minus_t * &self.start_weight;
         let b1 = &two * &one_minus_t * &t * &self.control_weight;
         let b2 = &t * &t * &self.end_weight;
@@ -161,6 +217,43 @@ impl RationalQuadraticBezier2 {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
         Classification::Decided(Point2::new(x, y))
+    }
+
+    fn point_at_unit_end_weights_rationalized(
+        &self,
+        t: &Real,
+        one_minus_t: &Real,
+        two: &Real,
+        policy: &CurvePolicy,
+    ) -> Option<Classification<Point2>> {
+        let u_squared = one_minus_t * one_minus_t;
+        let t_squared = t * t;
+        let unweighted = &u_squared + &t_squared;
+        let middle_basis = two * one_minus_t * t;
+        let weight_squared = &self.control_weight * &self.control_weight;
+        let conjugate_denominator =
+            (&unweighted * &unweighted) - (&middle_basis * &middle_basis * &weight_squared);
+        if is_zero(&conjugate_denominator, policy) != Some(false) {
+            return None;
+        }
+
+        let coordinate = |start: &Real, control: &Real, end: &Real| {
+            let unweighted_numerator = (&u_squared * start) + (&t_squared * end);
+            let weighted_control = &middle_basis * control;
+            let rational_part = (&unweighted_numerator * &unweighted)
+                - (&weighted_control * &middle_basis * &weight_squared);
+            let radical_part = ((&weighted_control * &unweighted)
+                - (&unweighted_numerator * &middle_basis))
+                * &self.control_weight;
+            (rational_part + radical_part) / &conjugate_denominator
+        };
+        let Ok(x) = coordinate(self.start.x(), self.control.x(), self.end.x()) else {
+            return Some(Classification::Uncertain(UncertaintyReason::Boundary));
+        };
+        let Ok(y) = coordinate(self.start.y(), self.control.y(), self.end.y()) else {
+            return Some(Classification::Uncertain(UncertaintyReason::Boundary));
+        };
+        Some(Classification::Decided(Point2::new(x, y)))
     }
 
     /// Classifies whether `point` equals this conic at parameter `t`.
@@ -303,24 +396,29 @@ impl RationalQuadraticBezier2 {
         Classification::Decided(BezierLineRelation::Unresolved)
     }
 
-    /// Classifies represented conic/supporting-line contacts as crossings or tangencies.
+    /// Classifies exact conic/supporting-line contacts as crossings or tangencies.
     ///
     /// The signed affine line predicate for a rational quadratic is the
     /// weighted Bernstein numerator `sum B_i(t) w_i orient(line, P_i)`. A root
     /// becomes a finite conic contact only when the homogeneous denominator is
     /// certified nonzero at the same parameter; denominator zeros remain
-    /// explicit projective-boundary uncertainty. Represented contacts are then
-    /// labelled from the exact derivative of that numerator. This follows
+    /// explicit projective-boundary uncertainty. Contacts retain represented or
+    /// algebraically isolated parameters and are labelled from exact root
+    /// multiplicity parity. This follows
     /// Yap's exact geometric computation boundary; see Yap, "Towards Exact
     /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
     /// rational Bezier numerator/denominator identities are from Farin,
-    /// *Curves and Surfaces for CAGD* (5th ed., 2002), and unrepresented
-    /// roots remain Sederberg-Nishita Bezier-clipping brackets.
+    /// *Curves and Surfaces for CAGD* (5th ed., 2002).
     pub fn relation_to_line_with_contacts(
         &self,
         line: &LineSeg2,
         policy: &CurvePolicy,
     ) -> Classification<BezierLineContactRelation> {
+        match self.weights_known_same_nonzero_sign(policy) {
+            Some(true) => {}
+            Some(false) => return Classification::Uncertain(UncertaintyReason::Boundary),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
         let weighted_distances = self.weighted_line_distances(line);
         if weighted_distances
             .iter()
@@ -328,28 +426,19 @@ impl RationalQuadraticBezier2 {
         {
             return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
         }
-
-        let two = Real::from(2_i8);
-        let c0 = weighted_distances[0].clone();
-        let c1 = &two * &(&weighted_distances[1] - &weighted_distances[0]);
-        let c2 = &weighted_distances[0] - &(&two * &weighted_distances[1]) + &weighted_distances[2];
-        let roots = match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => {
-                if self.weights_known_same_nonzero_sign(policy) == Some(true) {
-                    return rational_line_contact_relation_from_isolation(
-                        self,
-                        weighted_distances,
-                        policy,
-                    );
-                }
-                return Classification::Uncertain(reason);
+        for side in [LineSide::Left, LineSide::Right] {
+            if self.control_points().iter().all(|point| {
+                matches!(
+                    classify_oriented_line(line.start(), line.end(), point, policy),
+                    Classification::Decided(candidate) if candidate == side
+                )
+            }) {
+                return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
+                    side,
+                });
             }
-        };
-        if roots.is_empty() {
-            return rational_line_contact_miss_or_unresolved(self, line, policy);
         }
-        rational_line_contacts_from_parameters(self, &weighted_distances, roots, policy)
+        exact_line_contact_relation_from_bernstein_distances(weighted_distances.to_vec(), policy)
     }
 
     /// Returns quotient-derivative roots that split this conic into monotone spans.
@@ -792,6 +881,9 @@ impl RationalQuadraticBezier2 {
     }
 
     fn weights_known_same_nonzero_sign(&self, policy: &CurvePolicy) -> Option<bool> {
+        if self.common_weight_sign.is_some() {
+            return Some(true);
+        }
         let mut expected = None;
         for weight in self.weights() {
             let sign = real_sign(weight, policy)?;
@@ -1523,7 +1615,7 @@ fn degree5_root_cover(
     Ok(RationalPolynomialRootCover::Isolated { exact, spans })
 }
 
-fn isolate_scalar_bernstein_roots(
+pub(crate) fn isolate_scalar_bernstein_roots(
     controls: Vec<Real>,
     start: Real,
     end: Real,
@@ -2586,8 +2678,12 @@ fn common_rational_weight_sign(
     curve: &RationalQuadraticBezier2,
     policy: &CurvePolicy,
 ) -> Option<RealSign> {
+    curve.common_nonzero_weight_sign(policy)
+}
+
+fn common_weight_sign_for_values(weights: [&Real; 3], policy: &CurvePolicy) -> Option<RealSign> {
     let mut common = None;
-    for weight in curve.weights() {
+    for weight in weights {
         let sign = real_sign(weight, policy)?;
         match (common, sign) {
             (_, RealSign::Zero) => return None,
@@ -2773,139 +2869,6 @@ fn isolate_rational_quadratic_line_roots(
     Classification::Decided(BezierLineRelation::Unresolved)
 }
 
-fn rational_line_contact_relation_from_isolation(
-    curve: &RationalQuadraticBezier2,
-    weighted_distances: [Real; 3],
-    policy: &CurvePolicy,
-) -> Classification<BezierLineContactRelation> {
-    let mut exact_parameters = Vec::new();
-    let mut spans = Vec::new();
-    if let Err(reason) = isolate_scalar_quadratic_roots(
-        weighted_distances.clone(),
-        Real::zero(),
-        Real::one(),
-        0,
-        policy,
-        &mut exact_parameters,
-        &mut spans,
-    ) {
-        return Classification::Uncertain(reason);
-    }
-    if !spans.is_empty() {
-        for parameter in exact_parameters {
-            let span = match zero_width_span(parameter) {
-                Ok(span) => span,
-                Err(reason) => return Classification::Uncertain(reason),
-            };
-            if let Err(reason) = push_unique_graph_region_span(&mut spans, span, policy) {
-                return Classification::Uncertain(reason);
-            }
-        }
-        return Classification::Decided(BezierLineContactRelation::IsolatedIntersections { spans });
-    }
-    if exact_parameters.is_empty() {
-        return Classification::Decided(BezierLineContactRelation::Unresolved);
-    }
-    rational_line_contacts_from_parameters(curve, &weighted_distances, exact_parameters, policy)
-}
-
-fn rational_line_contacts_from_parameters(
-    curve: &RationalQuadraticBezier2,
-    weighted_distances: &[Real; 3],
-    roots: Vec<Real>,
-    policy: &CurvePolicy,
-) -> Classification<BezierLineContactRelation> {
-    let mut contacts = Vec::new();
-    for root in roots {
-        match is_zero(&curve.denominator_at(root.clone()), policy) {
-            Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
-            Some(false) => {}
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        }
-        let derivative = scalar_quadratic_bernstein_derivative_at(weighted_distances, &root);
-        let Some(kind) = rational_line_contact_kind_from_derivative(&derivative, policy) else {
-            return Classification::Uncertain(UncertaintyReason::RealSign);
-        };
-        let contact = match BezierLineContact::new(root, kind) {
-            Ok(contact) => contact,
-            Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
-        };
-        if let Err(reason) = push_unique_rational_line_contact(&mut contacts, contact, policy) {
-            return Classification::Uncertain(reason);
-        }
-    }
-    Classification::Decided(BezierLineContactRelation::Contacts { contacts })
-}
-
-fn rational_line_contact_miss_or_unresolved(
-    curve: &RationalQuadraticBezier2,
-    line: &LineSeg2,
-    policy: &CurvePolicy,
-) -> Classification<BezierLineContactRelation> {
-    if curve.weights_known_same_nonzero_sign(policy) == Some(true) {
-        let sides = curve
-            .control_points()
-            .iter()
-            .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
-            .collect::<Vec<_>>();
-        if sides
-            .iter()
-            .all(|side| matches!(side, Classification::Decided(LineSide::Left)))
-        {
-            return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
-                side: LineSide::Left,
-            });
-        }
-        if sides
-            .iter()
-            .all(|side| matches!(side, Classification::Decided(LineSide::Right)))
-        {
-            return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
-                side: LineSide::Right,
-            });
-        }
-    }
-    Classification::Decided(BezierLineContactRelation::Unresolved)
-}
-
-fn scalar_quadratic_bernstein_derivative_at(controls: &[Real; 3], parameter: &Real) -> Real {
-    let one_minus_t = Real::one() - parameter;
-    let left = &controls[1] - &controls[0];
-    let right = &controls[2] - &controls[1];
-    Real::from(2_i8) * ((&one_minus_t * &left) + (parameter * &right))
-}
-
-fn rational_line_contact_kind_from_derivative(
-    derivative: &Real,
-    policy: &CurvePolicy,
-) -> Option<BezierLineContactKind> {
-    match real_sign(derivative, policy)? {
-        RealSign::Zero => Some(BezierLineContactKind::Tangent),
-        RealSign::Positive | RealSign::Negative => Some(BezierLineContactKind::Crossing),
-    }
-}
-
-fn push_unique_rational_line_contact(
-    contacts: &mut Vec<BezierLineContact>,
-    contact: BezierLineContact,
-    policy: &CurvePolicy,
-) -> Result<(), UncertaintyReason> {
-    let mut insert_at = contacts.len();
-    for (index, existing) in contacts.iter().enumerate() {
-        match compare_reals(existing.parameter(), contact.parameter(), policy) {
-            Some(Ordering::Equal) => return Ok(()),
-            Some(Ordering::Greater) => {
-                insert_at = index;
-                break;
-            }
-            Some(Ordering::Less) => {}
-            None => return Err(UncertaintyReason::Ordering),
-        }
-    }
-    contacts.insert(insert_at, contact);
-    Ok(())
-}
-
 fn same_parameter_candidates_from_root_sets(
     x_roots: RationalPointRootSet,
     y_roots: RationalPointRootSet,
@@ -3058,7 +3021,7 @@ fn subdivide_scalar_quadratic_half(
     ))
 }
 
-fn push_unique_graph_parameter(
+pub(crate) fn push_unique_graph_parameter(
     values: &mut Vec<Real>,
     value: Real,
     policy: &CurvePolicy,
@@ -3079,7 +3042,7 @@ fn push_unique_graph_parameter(
     Ok(())
 }
 
-fn push_unique_graph_region_span(
+pub(crate) fn push_unique_graph_region_span(
     spans: &mut Vec<BezierMonotoneSpan>,
     span: BezierMonotoneSpan,
     policy: &CurvePolicy,

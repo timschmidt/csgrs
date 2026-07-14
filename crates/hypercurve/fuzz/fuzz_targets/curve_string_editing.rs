@@ -187,7 +187,7 @@ fuzz_target!(|data: &[u8]| {
     }
 
     let _ = curve
-        .chamfer_line_line_vertex_by_parameters(1, q(data[14]), q(data[15]), &policy)
+        .chamfer_vertex_by_parameters(1, q(data[14]), q(data[15]), &policy)
         .map(|result| {
             let _ = result.report().trim_segment_report_count();
             let _ = result.report().chamfer_segment_index();
@@ -196,7 +196,7 @@ fuzz_target!(|data: &[u8]| {
             let _ = result.report().blocker();
         });
     let _ = curve
-        .fillet_line_line_vertex_by_parameters(
+        .fillet_vertex_by_parameters(
             1,
             q(data[14]),
             q(data[15]),

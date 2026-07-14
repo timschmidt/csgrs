@@ -2,10 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, CircularArc2, Contour2, CurvePolicy, CurveResult, CurveString2,
-    CurveStringEndpoint2, CurveStringTrimPoint2, ExactCurveArrangementAttempt2,
-    ExactCurveArrangementRequest2, FillRule, LineSeg2, Point2, Real, Region2,
-    RegionBooleanQueryPath2, Segment2,
+    BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult,
+    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2, Point2, Real,
+    Region2, RegionBooleanQueryPath2, Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -40,6 +39,15 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
         vertex(xmin, ymax, 0),
     ])
     .unwrap()
+}
+
+fn subdivided_rectangle(edge_steps: i32) -> Contour2 {
+    let mut vertices = Vec::with_capacity((edge_steps as usize) * 4);
+    vertices.extend((0..edge_steps).map(|x| vertex(x, 0, 0)));
+    vertices.extend((0..edge_steps).map(|y| vertex(edge_steps, y, 0)));
+    vertices.extend((1..=edge_steps).rev().map(|x| vertex(x, edge_steps, 0)));
+    vertices.extend((1..=edge_steps).rev().map(|y| vertex(0, y, 0)));
+    Contour2::from_bulge_vertices(&vertices).unwrap()
 }
 
 fn bench_parameter_trim(iterations: u32) -> CurveResult<()> {
@@ -93,6 +101,34 @@ fn bench_point_arc_trim(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_string_point_arc_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_parameter_arc_trim(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(CircularArc2::from_bulge(
+        p(0, 0),
+        p(2, 0),
+        s(1),
+    )?)])?;
+    let policy = CurvePolicy::certified();
+    let start = CurveStringTrimPoint2::new(0, q(1, 7));
+    let end = CurveStringTrimPoint2::new(0, q(5, 7));
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.trim_between_parameters(start.clone(), end.clone(), &policy)?;
+        let trimmed = result
+            .curve_string()
+            .expect("parameter arc trim benchmark should materialize");
+        total_segments += black_box(trimmed.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_parameter_arc_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
         elapsed / iterations
     );
     Ok(())
@@ -225,7 +261,7 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
     let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.chamfer_line_line_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy)?;
+        let result = curve.chamfer_vertex_by_parameters(1, q(3, 4), q(1, 4), &policy)?;
         let chamfered = result
             .curve_string()
             .expect("line-line chamfer benchmark should materialize");
@@ -236,6 +272,33 @@ fn bench_line_chamfer(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_string_line_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_arc_chamfer(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1))?),
+        Segment2::Arc(CircularArc2::from_bulge(p(2, 0), p(4, 0), s(1))?),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+    let mut total_trim_ranges = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.chamfer_vertex_by_parameters(1, q(5, 7), q(2, 7), &policy)?;
+        let chamfered = result
+            .curve_string()
+            .expect("arc-arc chamfer benchmark should materialize");
+        total_segments += black_box(chamfered.len());
+        total_trim_ranges += black_box(result.report().trim_segment_report_count());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_arc_chamfer: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
         elapsed / iterations
     );
     Ok(())
@@ -253,14 +316,8 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
     let mut total_trim_ranges = 0_usize;
 
     for _ in 0..iterations {
-        let result = curve.fillet_line_line_vertex_by_parameters(
-            1,
-            q(3, 4),
-            q(1, 4),
-            &p(3, 1),
-            false,
-            &policy,
-        )?;
+        let result =
+            curve.fillet_vertex_by_parameters(1, q(3, 4), q(1, 4), &p(3, 1), false, &policy)?;
         let filleted = result
             .curve_string()
             .expect("line-line fillet benchmark should materialize");
@@ -271,6 +328,56 @@ fn bench_line_fillet(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_string_line_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_arc_fillet(iterations: u32) -> CurveResult<()> {
+    let previous_arc = CircularArc2::try_from_center(
+        Point2::new(s(3), q(13, 3)),
+        p(5, 3),
+        Point2::new(s(3), q(13, 6)),
+        false,
+    )?;
+    let next_arc = CircularArc2::try_from_center(
+        p(5, 3),
+        Point2::new(q(9, 2), q(5, 2)),
+        Point2::new(q(13, 2), s(1)),
+        true,
+    )?;
+    let policy = CurvePolicy::certified();
+    let Classification::Decided(previous_param) = previous_arc.sweep_fraction(&p(3, 0), &policy)?
+    else {
+        panic!("previous arc fillet parameter must be decided");
+    };
+    let Classification::Decided(next_param) = next_arc.sweep_fraction(&p(4, 1), &policy)? else {
+        panic!("next arc fillet parameter must be decided");
+    };
+    let curve = CurveString2::try_new(vec![Segment2::Arc(previous_arc), Segment2::Arc(next_arc)])?;
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+    let mut total_trim_ranges = 0_usize;
+
+    for _ in 0..iterations {
+        let result = curve.fillet_vertex_by_parameters(
+            1,
+            previous_param.clone(),
+            next_param.clone(),
+            &p(3, 1),
+            false,
+            &policy,
+        )?;
+        let filleted = result
+            .curve_string()
+            .expect("arc-arc fillet benchmark should materialize");
+        total_segments += black_box(filleted.len());
+        total_trim_ranges += black_box(result.report().trim_segment_report_count());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_arc_fillet: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}, trim ranges={total_trim_ranges}",
         elapsed / iterations
     );
     Ok(())
@@ -494,49 +601,27 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_request_sources = 0_usize;
-    let mut total_workspace_cache_counts = 0_usize;
-    let mut total_evaluation_outputs = 0_usize;
+    let mut total_retained_cache_counts = 0_usize;
+    let mut total_retained_outputs = 0_usize;
     let mut total_segments = 0_usize;
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_line_segments(
-            &lines,
-            FillRule::NonZero,
-        );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(&policy)?;
+        let result =
+            Region2::arrange_unordered_line_segments_borrowed(&lines, FillRule::NonZero, &policy)?;
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
-        total_request_sources += black_box(result.request().source_segment_count());
-        total_workspace_cache_counts +=
-            black_box(result.workspace().decided_source_segment_aabb_count());
-        total_workspace_cache_counts += black_box(
-            result
-                .workspace()
-                .source_endpoint_bucket_cache()
-                .bucket_count(),
-        );
-        total_workspace_cache_counts += black_box(
-            result
-                .workspace()
-                .split_schedule_cache()
-                .candidate_pair_count(),
-        );
-        total_workspace_cache_counts += black_box(
-            result
-                .workspace()
-                .split_schedule_cache()
-                .decided_disjoint_pair_count(),
-        );
-        total_evaluation_outputs += black_box(
-            result
-                .evaluation()
-                .output_boundary_segment_count()
-                .unwrap_or(0),
-        );
-        total_evaluation_outputs +=
-            black_box(result.evaluation().output_contour_count().unwrap_or(0));
+        total_request_sources += black_box(result.source_segment_count());
+        total_retained_cache_counts += black_box(result.decided_source_segment_aabb_count());
+        total_retained_cache_counts +=
+            black_box(result.source_endpoint_bucket_cache().bucket_count());
+        total_retained_cache_counts +=
+            black_box(result.split_schedule_cache().candidate_pair_count());
+        total_retained_cache_counts +=
+            black_box(result.split_schedule_cache().decided_disjoint_pair_count());
+        total_retained_outputs += black_box(result.output_boundary_segment_count().unwrap_or(0));
+        total_retained_outputs += black_box(result.output_contour_count().unwrap_or(0));
         total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
         total_segments += black_box(result.split_skipped_aabb_pair_count().unwrap_or_default());
@@ -557,7 +642,7 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
 
     let elapsed = started.elapsed();
     println!(
-        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, workspace cache counts={total_workspace_cache_counts}, evaluation outputs={total_evaluation_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, retained cache counts={total_retained_cache_counts}, retained outputs={total_retained_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
         elapsed / iterations
     );
     Ok(())
@@ -571,49 +656,30 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_request_sources = 0_usize;
-    let mut total_workspace_cache_counts = 0_usize;
-    let mut total_evaluation_outputs = 0_usize;
+    let mut total_retained_cache_counts = 0_usize;
+    let mut total_retained_outputs = 0_usize;
     let mut total_segments = 0_usize;
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let request = ExactCurveArrangementRequest2::from_borrowed_unordered_segments(
-            &segments,
-            FillRule::NonZero,
-        );
-        let result = ExactCurveArrangementAttempt2::new(request).evaluate_owned(&policy)?;
+        let result =
+            Region2::arrange_unordered_segments_borrowed(&segments, FillRule::NonZero, &policy)?;
         if !result.status().unwrap().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }
-        total_request_sources += black_box(result.request().source_segment_count());
-        total_workspace_cache_counts +=
-            black_box(result.workspace().decided_source_segment_aabb_count());
-        total_workspace_cache_counts += black_box(
+        total_request_sources += black_box(result.source_segment_count());
+        total_retained_cache_counts += black_box(result.decided_source_segment_aabb_count());
+        total_retained_cache_counts +=
+            black_box(result.source_endpoint_bucket_cache().bucket_count());
+        total_retained_cache_counts +=
+            black_box(result.split_schedule_cache().candidate_pair_count());
+        total_retained_cache_counts += black_box(
             result
-                .workspace()
-                .source_endpoint_bucket_cache()
-                .bucket_count(),
-        );
-        total_workspace_cache_counts += black_box(
-            result
-                .workspace()
-                .split_schedule_cache()
-                .candidate_pair_count(),
-        );
-        total_workspace_cache_counts += black_box(
-            result
-                .workspace()
                 .split_schedule_cache()
                 .predicate_candidate_pair_count(),
         );
-        total_evaluation_outputs += black_box(
-            result
-                .evaluation()
-                .output_boundary_segment_count()
-                .unwrap_or(0),
-        );
-        total_evaluation_outputs +=
-            black_box(result.evaluation().output_contour_count().unwrap_or(0));
+        total_retained_outputs += black_box(result.output_boundary_segment_count().unwrap_or(0));
+        total_retained_outputs += black_box(result.output_contour_count().unwrap_or(0));
         total_segments += black_box(result.split_output_segment_count().unwrap_or_default());
         total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
         total_endpoint_checks += black_box(
@@ -628,7 +694,33 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
 
     let elapsed = started.elapsed();
     println!(
-        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, workspace cache counts={total_workspace_cache_counts}, evaluation outputs={total_evaluation_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, retained cache counts={total_retained_cache_counts}, retained outputs={total_retained_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_region_arrangement_report_replay(iterations: u32) -> CurveResult<()> {
+    let lines = vec![
+        line(0, 0, 10, 0),
+        line(10, 0, 10, 10),
+        line(10, 10, 0, 10),
+        line(0, 10, 0, 0),
+    ];
+    let policy = CurvePolicy::certified();
+    let result = Region2::arrange_unordered_line_segments(lines, FillRule::NonZero, &policy)?;
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+
+    for _ in 0..iterations {
+        let report = black_box(result.report().clone());
+        checksum = checksum.wrapping_add(black_box(report.source_segment_count()));
+        checksum = checksum.wrapping_add(black_box(report.output_segment_count().unwrap_or(0)));
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "region_arrangement_report_replay: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
     );
     Ok(())
@@ -710,6 +802,28 @@ fn bench_region_boolean_report(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
+    let contour = subdivided_rectangle(64);
+    let clone = contour.clone();
+    let cold_started = Instant::now();
+    let cold_area = contour.signed_area()?;
+    let cold_elapsed = cold_started.elapsed();
+    let replay_started = Instant::now();
+    let mut replay_count = 0_usize;
+
+    for _ in 0..iterations {
+        replay_count += black_box(clone.signed_area()?.is_some()) as usize;
+    }
+
+    let replay_elapsed = replay_started.elapsed();
+    println!(
+        "contour_signed_area_cache: cold={cold_elapsed:?}, {iterations} retained clone replays in {replay_elapsed:?} ({:?}/replay), area={}, replay count={replay_count}",
+        replay_elapsed / iterations,
+        cold_area.is_some(),
+    );
+    Ok(())
+}
+
 fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
@@ -758,13 +872,16 @@ fn bench_prepared_region_boolean_report(iterations: u32) -> CurveResult<()> {
 fn main() -> CurveResult<()> {
     let iterations = 10_000;
     bench_parameter_trim(iterations)?;
+    bench_parameter_arc_trim(iterations)?;
     bench_point_arc_trim(iterations)?;
     bench_curve_intersection_trim(iterations)?;
     bench_prepared_curve_intersection_trim(iterations)?;
     bench_region_trim(iterations)?;
     bench_prepared_region_trim(iterations)?;
     bench_line_chamfer(iterations)?;
+    bench_arc_chamfer(iterations)?;
     bench_line_fillet(iterations)?;
+    bench_arc_fillet(iterations)?;
     bench_arc_extension(iterations)?;
     bench_curve_string_line_merge_report(iterations)?;
     bench_curve_string_reversed_duplicate_report(iterations)?;
@@ -774,7 +891,9 @@ fn main() -> CurveResult<()> {
     bench_boundary_contour_region_build(1_000)?;
     bench_unordered_line_segment_region_build(1_000)?;
     bench_unordered_native_segment_region_build(1_000)?;
+    bench_region_arrangement_report_replay(100_000)?;
     bench_contour_line_merge_report(1_000)?;
+    bench_contour_signed_area_cache(100_000)?;
     bench_region_boolean_report(1_000)?;
     bench_prepared_region_boolean_report(1_000)?;
     Ok(())

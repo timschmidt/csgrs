@@ -26,8 +26,8 @@ use crate::{
 pub enum BezierEndpointPointImage2 {
     /// Polynomial quadratic/cubic Bezier coordinate images.
     Polynomial(BezierAlgebraicPointImage2),
-    /// Rational quadratic/conic affine coordinate images.
-    RationalQuadratic(RationalBezierAlgebraicPointImage2),
+    /// Rational Bezier affine coordinate images of any degree.
+    Rational(RationalBezierAlgebraicPointImage2),
 }
 
 impl BezierEndpointPointImage2 {
@@ -35,7 +35,7 @@ impl BezierEndpointPointImage2 {
     pub const fn status(&self) -> BezierAlgebraicImageStatus {
         match self {
             Self::Polynomial(image) => image.status(),
-            Self::RationalQuadratic(image) => image.status(),
+            Self::Rational(image) => image.status(),
         }
     }
 
@@ -51,8 +51,8 @@ impl BezierEndpointPointImage2 {
 pub enum BezierEndpointTangentImage2 {
     /// Polynomial quadratic/cubic Bezier derivative coordinate images.
     Polynomial(BezierAlgebraicTangentImage2),
-    /// Rational quadratic/conic affine derivative coordinate images.
-    RationalQuadratic(RationalBezierAlgebraicTangentImage2),
+    /// Rational Bezier affine derivative coordinate images of any degree.
+    Rational(RationalBezierAlgebraicTangentImage2),
 }
 
 impl BezierEndpointTangentImage2 {
@@ -60,7 +60,7 @@ impl BezierEndpointTangentImage2 {
     pub const fn status(&self) -> BezierAlgebraicImageStatus {
         match self {
             Self::Polynomial(image) => image.status(),
-            Self::RationalQuadratic(image) => image.status(),
+            Self::Rational(image) => image.status(),
         }
     }
 
@@ -93,6 +93,7 @@ impl BezierAlgebraicEndpointImage2 {
             BezierSubcurve2::RationalQuadratic(curve) => {
                 Self::rational_quadratic(curve, parameter, policy)
             }
+            BezierSubcurve2::Rational(curve) => Self::rational(curve, parameter, policy),
         }
     }
 
@@ -146,22 +147,47 @@ impl BezierAlgebraicEndpointImage2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
-        let second_derivative =
-            curve.second_derivative_at_algebraic_parameter(parameter, policy)?;
+        let mut derivatives = curve
+            .derivatives_at_algebraic_parameter(parameter, 3, policy)?
+            .into_iter();
+        let tangent = derivatives
+            .next()
+            .expect("three requested rational derivative images");
+        let second_derivative = derivatives.next().and_then(transformed_rational_derivative);
+        let third_derivative = derivatives.next().and_then(transformed_rational_derivative);
         Ok(Self {
             parameter: parameter.clone(),
-            point: BezierEndpointPointImage2::RationalQuadratic(
+            point: BezierEndpointPointImage2::Rational(
                 curve.point_at_algebraic_parameter(parameter, policy)?,
             ),
-            tangent: BezierEndpointTangentImage2::RationalQuadratic(
-                curve.tangent_at_algebraic_parameter(parameter, policy)?,
+            tangent: BezierEndpointTangentImage2::Rational(tangent),
+            second_derivative,
+            third_derivative,
+        })
+    }
+
+    /// Constructs endpoint evidence for an arbitrary-degree rational Bezier.
+    pub fn rational(
+        curve: &crate::RationalBezier2,
+        parameter: &BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Self> {
+        let mut derivatives = curve
+            .derivatives_at_algebraic_parameter(parameter, 3, policy)?
+            .into_iter();
+        let tangent = derivatives
+            .next()
+            .expect("three requested rational derivative images");
+        let second_derivative = derivatives.next().and_then(transformed_rational_derivative);
+        let third_derivative = derivatives.next().and_then(transformed_rational_derivative);
+        Ok(Self {
+            parameter: parameter.clone(),
+            point: BezierEndpointPointImage2::Rational(
+                curve.point_at_algebraic_parameter(parameter, policy)?,
             ),
-            second_derivative: (second_derivative.status()
-                == BezierAlgebraicImageStatus::Transformed)
-                .then_some(Box::new(BezierEndpointTangentImage2::RationalQuadratic(
-                    second_derivative,
-                ))),
-            third_derivative: None,
+            tangent: BezierEndpointTangentImage2::Rational(tangent),
+            second_derivative,
+            third_derivative,
         })
     }
 
@@ -195,4 +221,11 @@ impl BezierAlgebraicEndpointImage2 {
     pub const fn is_transformed(&self) -> bool {
         self.point.is_transformed() && self.tangent.is_transformed()
     }
+}
+
+fn transformed_rational_derivative(
+    derivative: RationalBezierAlgebraicTangentImage2,
+) -> Option<Box<BezierEndpointTangentImage2>> {
+    (derivative.status() == BezierAlgebraicImageStatus::Transformed)
+        .then(|| Box::new(BezierEndpointTangentImage2::Rational(derivative)))
 }

@@ -3,8 +3,8 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierRegion2,
-    BezierRetainedBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedRegion2, BezierSplitFragment2, Classification, CurvePolicy, Point2,
+    CurveRegionBoundaryLoop2, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
+    CurveRegion2, BezierSplitFragment2, Classification, CurvePolicy, Point2,
     QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -107,6 +107,7 @@ fn algebraic_line_fragment(
 ) -> Option<BezierSplitFragment2> {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_root(policy)?);
     Some(BezierSplitFragment2::AlgebraicEndpointImages {
+        reversed: false,
         start: parameter.clone(),
         end: parameter,
         source_curve: None,
@@ -147,7 +148,7 @@ fuzz_target!(|data: &[u8]| {
                 curve.split_at_parameters(&[algebraic], &policy)
             && let Some(fragment) = split.fragments().first()
         {
-            if let Ok(loop_) = BezierRetainedBoundaryLoop2::new(vec![fragment.clone()]) {
+            if let Ok(loop_) = CurveRegionBoundaryLoop2::new(vec![fragment.clone()]) {
                 let _ = BezierRetainedCurveEnvelope2::from_loop(&loop_, &policy);
             }
         }
@@ -156,7 +157,7 @@ fuzz_target!(|data: &[u8]| {
                 curve.split_at_parameters(&[algebraic], &policy)
             && let Some(fragment) = split.fragments().first()
         {
-            if let Ok(loop_) = BezierRetainedBoundaryLoop2::new(vec![fragment.clone()]) {
+            if let Ok(loop_) = CurveRegionBoundaryLoop2::new(vec![fragment.clone()]) {
                 let _ = BezierRetainedCurveEnvelope2::from_loop(&loop_, &policy);
             }
         }
@@ -170,7 +171,7 @@ fuzz_target!(|data: &[u8]| {
         if let Classification::Decided(traversal) =
             graph.traverse_retained_with_tangent_order(&policy)
         {
-            let _ = BezierRetainedRegion2::from_retained_arrangement_traversal(&graph, &traversal)
+            let _ = CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal)
                 .map(|region| {
                     let _ = region.signed_area();
                     let _ = region.line_image_role_report(&policy);
@@ -185,7 +186,7 @@ fuzz_target!(|data: &[u8]| {
         {
             let _ = BezierRegion2::from_retained_linear_overlap_traversal(&traversal)
                 .map(|region| region.signed_area());
-            let _ = BezierRetainedRegion2::from_retained_linear_overlap_traversal(&traversal).map(
+            let _ = CurveRegion2::from_retained_linear_overlap_traversal(&traversal).map(
                 |region| {
                     let _ = region.signed_area();
                     let _ = region.line_image_role_report(&policy);
@@ -244,10 +245,10 @@ fuzz_target!(|data: &[u8]| {
         .collect::<Vec<_>>();
     if outer.len() == 4 && inner.len() == 4 {
         if let (Ok(outer), Ok(inner)) = (
-            BezierRetainedBoundaryLoop2::new(outer),
-            BezierRetainedBoundaryLoop2::new(inner),
+            CurveRegionBoundaryLoop2::new(outer),
+            CurveRegionBoundaryLoop2::new(inner),
         ) {
-            if let Ok(region) = BezierRetainedRegion2::new(vec![outer, inner]) {
+            if let Ok(region) = CurveRegion2::new(vec![outer, inner]) {
                 let _ = region.line_image_role_report(&policy);
             }
         }

@@ -582,7 +582,7 @@ pub struct CurveStringExtendResult2 {
     report: CurveStringExtendReport2,
 }
 
-/// Report for a line-line chamfer at one open curve-string vertex.
+/// Report for a native-segment chamfer at one open curve-string vertex.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringChamferReport2 {
     input_path: CurveStringChamferInputPath2,
@@ -611,14 +611,12 @@ pub struct CurveStringChamferReport2 {
     blocker: Option<UncertaintyReason>,
 }
 
-/// Exact predicate path used to validate one line-line chamfer.
+/// Exact predicate path used to validate one native-segment chamfer.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringChamferPredicatePath2 {
-    /// Both adjacent segments were lines and both cut parameters were strict interior values.
-    LineLineStrictInteriorParameters,
-    /// At least one adjacent segment is not a line, so this chamfer slice cannot materialize.
-    UnsupportedSegmentFamily,
-    /// A point-supplied cut could not be certified on its selected source line segment.
+    /// Both adjacent native segments and both strict-interior cut parameters were certified.
+    NativeSegmentsStrictInteriorParameters,
+    /// A point-supplied cut could not be certified on its selected source segment.
     PointCutNotOnSourceSegment,
     /// A cut parameter was on or outside the valid strict interior range.
     CutParameterNotStrictInterior,
@@ -626,7 +624,7 @@ pub enum CurveStringChamferPredicatePath2 {
     CutValidationUnresolved,
 }
 
-/// Input path used by a report-bearing line-line chamfer operation.
+/// Input path used by a report-bearing native-segment chamfer operation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringChamferInputPath2 {
     /// Cut points were supplied by exact segment parameters.
@@ -635,7 +633,7 @@ pub enum CurveStringChamferInputPath2 {
     Points,
 }
 
-/// Furthest exact stage reached by a line-line chamfer attempt.
+/// Furthest exact stage reached by a native-segment chamfer attempt.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringChamferStage2 {
     /// Input segment family and cut-parameter evidence were being validated.
@@ -644,14 +642,14 @@ pub enum CurveStringChamferStage2 {
     SegmentMaterialization,
 }
 
-/// Result of a report-bearing line-line chamfer operation.
+/// Result of a report-bearing native-segment chamfer operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringChamferResult2 {
     curve_string: Option<CurveString2>,
     report: CurveStringChamferReport2,
 }
 
-/// Report for a line-line fillet at one open curve-string vertex.
+/// Report for a native-segment fillet at one open curve-string vertex.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringFilletReport2 {
     input_path: CurveStringFilletInputPath2,
@@ -682,14 +680,12 @@ pub struct CurveStringFilletReport2 {
     blocker: Option<UncertaintyReason>,
 }
 
-/// Exact predicate path used to validate one line-line fillet.
+/// Exact predicate path used to validate one native-segment fillet.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringFilletPredicatePath2 {
-    /// Line-line tangent, nonzero/equal-radius, and orientation predicates all passed.
-    LineLineTangentArc,
-    /// At least one adjacent segment is not a line, so this fillet slice cannot materialize.
-    UnsupportedSegmentFamily,
-    /// A point-supplied tangent could not be certified on its selected source line segment.
+    /// Native source tangents, nonzero/equal-radius, and orientation predicates all passed.
+    NativeSegmentsTangentArc,
+    /// A point-supplied tangent could not be certified on its selected source segment.
     TangentPointNotOnSourceSegment,
     /// A tangent parameter was on or outside the valid strict interior range.
     TangentParameterNotStrictInterior,
@@ -707,7 +703,7 @@ pub enum CurveStringFilletPredicatePath2 {
     TangencyOrOrientationUnresolved,
 }
 
-/// Input path used by a report-bearing line-line fillet operation.
+/// Input path used by a report-bearing native-segment fillet operation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringFilletInputPath2 {
     /// Tangent points were supplied by exact segment parameters.
@@ -716,7 +712,7 @@ pub enum CurveStringFilletInputPath2 {
     Points,
 }
 
-/// Furthest exact stage reached by a line-line fillet attempt.
+/// Furthest exact stage reached by a native-segment fillet attempt.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CurveStringFilletStage2 {
     /// Input segment family and tangent-parameter evidence were being validated.
@@ -727,7 +723,7 @@ pub enum CurveStringFilletStage2 {
     ArcMaterialization,
 }
 
-/// Result of a report-bearing line-line fillet operation.
+/// Result of a report-bearing native-segment fillet operation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveStringFilletResult2 {
     curve_string: Option<CurveString2>,
@@ -1916,14 +1912,9 @@ impl CurveString2 {
 
     /// Trims this open curve string between two segment-local parameters.
     ///
-    /// The result always carries a report. Materialization currently supports
-    /// exact line subsegments and whole native segments. Partial arc ranges are
-    /// retained as unsupported blockers because the existing arc split
-    /// parameter is chord-projection evidence; without a point-bearing split
-    /// marker or stronger arc parameter, constructing a new arc endpoint would
-    /// cross the exactness boundary. This keeps future point/curve/region trim
-    /// paths free to supply certified split points without letting this API
-    /// guess.
+    /// Line parameters are affine and arc parameters are directed-angular sweep
+    /// fractions. Both native families materialize exact subsegments, and the
+    /// report retains their evaluated range endpoints.
     pub fn trim_between_parameters(
         &self,
         start: CurveStringTrimPoint2,
@@ -1998,24 +1989,12 @@ impl CurveString2 {
                     segment_report.output_segment_kind = Some(segment.structural_facts().kind);
                     segment_report.output_segment_start_point = Some(segment.start().clone());
                     segment_report.output_segment_end_point = Some(segment.end().clone());
+                    segment_report.range_start_point = Some(segment.start().clone());
+                    segment_report.range_end_point = Some(segment.end().clone());
                     segment_reports.push(segment_report);
                     trimmed_segments.push(segment);
                 }
                 SegmentTrimMaterialization::SkippedEmpty => {}
-                SegmentTrimMaterialization::Unsupported(reason) => {
-                    let mut segment_report = segment_report;
-                    segment_report.status = RetainedTopologyStatus::Unsupported;
-                    segment_reports.push(segment_report);
-                    return Ok(blocked_trim_result(
-                        self,
-                        start,
-                        end,
-                        segment_reports,
-                        CurveStringTrimInputPath2::Parameters,
-                        RetainedTopologyStatus::Unsupported,
-                        Some(reason),
-                    ));
-                }
                 SegmentTrimMaterialization::Unresolved(reason) => {
                     let mut segment_report = segment_report;
                     segment_report.status = RetainedTopologyStatus::Unresolved;
@@ -2201,22 +2180,23 @@ impl CurveString2 {
         trim_curve_string_inside_prepared_region(self, region, prepared_cache_report, policy)
     }
 
-    /// Chamfers one interior line-line vertex by exact segment parameters.
+    /// Chamfers one interior native-segment vertex by exact segment parameters.
     ///
     /// `vertex_index` identifies the shared vertex between
     /// `segments[vertex_index - 1]` and `segments[vertex_index]`. The previous
-    /// line is cut at `previous_param` and the next line is cut at
+    /// segment is cut at `previous_param` and the next segment is cut at
     /// `next_param`; the two cut points are connected by an exact line segment.
-    /// This first chamfer slice supports only strict interior line parameters
-    /// so it never deletes a neighboring segment silently.
-    pub fn chamfer_line_line_vertex_by_parameters(
+    /// Line parameters are affine and circular-arc parameters are directed
+    /// angular sweep fractions. Only strict interior parameters are accepted,
+    /// so the operation never deletes a neighboring segment silently.
+    pub fn chamfer_vertex_by_parameters(
         &self,
         vertex_index: usize,
         previous_param: Real,
         next_param: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringChamferResult2> {
-        self.chamfer_line_line_vertex_by_parameters_with_report(
+        self.chamfer_vertex_by_parameters_with_report(
             vertex_index,
             previous_param,
             next_param,
@@ -2224,8 +2204,8 @@ impl CurveString2 {
         )
     }
 
-    /// Chamfers one interior line-line vertex by exact segment parameters and retains evidence.
-    pub fn chamfer_line_line_vertex_by_parameters_with_report(
+    /// Chamfers one interior native-segment vertex by exact parameters and retains evidence.
+    pub fn chamfer_vertex_by_parameters_with_report(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -2242,25 +2222,8 @@ impl CurveString2 {
         validate_trim_point(self, &previous_trim, policy)?;
         validate_trim_point(self, &next_trim, policy)?;
 
-        let (previous_line, next_line) = match (
-            &self.segments[previous_segment_index],
-            &self.segments[next_segment_index],
-        ) {
-            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
-            _ => {
-                return Ok(blocked_chamfer_result(
-                    self,
-                    previous_segment_index,
-                    next_segment_index,
-                    previous_trim,
-                    next_trim,
-                    Vec::new(),
-                    CurveStringChamferPredicatePath2::UnsupportedSegmentFamily,
-                    RetainedTopologyStatus::Unsupported,
-                    Some(UncertaintyReason::Unsupported),
-                ));
-            }
-        };
+        let previous_source = &self.segments[previous_segment_index];
+        let next_source = &self.segments[next_segment_index];
 
         match (
             compare_reals(previous_trim.param(), &Real::zero(), policy),
@@ -2302,23 +2265,101 @@ impl CurveString2 {
             }
         }
 
-        let previous_cut = previous_line.point_at(previous_trim.param().clone());
-        let next_cut = next_line.point_at(next_trim.param().clone());
+        let previous_cut = match segment_point_at_trim_parameter(
+            previous_source,
+            previous_trim.param(),
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Vec::new(),
+                    CurveStringChamferPredicatePath2::CutValidationUnresolved,
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
+            }
+        };
+        let next_cut =
+            match segment_point_at_trim_parameter(next_source, next_trim.param(), policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(blocked_chamfer_result(
+                        self,
+                        previous_segment_index,
+                        next_segment_index,
+                        previous_trim,
+                        next_trim,
+                        Vec::new(),
+                        CurveStringChamferPredicatePath2::CutValidationUnresolved,
+                        retained_status_for_uncertainty(reason),
+                        Some(reason),
+                    ));
+                }
+            };
         let previous_cut_point = previous_cut.clone();
         let next_cut_point = next_cut.clone();
         let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());
         let next_range = ParamRange::new(next_trim.param().clone(), Real::one());
-        let previous_segment =
-            LineSeg2::try_new(previous_line.start().clone(), previous_cut.clone())?;
+        let previous_segment = match materialize_strict_native_range(
+            previous_source,
+            previous_source.start(),
+            &previous_cut_point,
+            &previous_range,
+            policy,
+        )? {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Vec::new(),
+                    CurveStringChamferPredicatePath2::CutValidationUnresolved,
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
+            }
+        };
         let chamfer_segment = LineSeg2::try_new(previous_cut, next_cut.clone())?;
-        let next_segment = LineSeg2::try_new(next_cut, next_line.end().clone())?;
+        let next_segment = match materialize_strict_native_range(
+            next_source,
+            &next_cut_point,
+            next_source.end(),
+            &next_range,
+            policy,
+        )? {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_chamfer_result(
+                    self,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Vec::new(),
+                    CurveStringChamferPredicatePath2::CutValidationUnresolved,
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
+            }
+        };
+        let previous_kind = segment_kind(previous_source);
+        let next_kind = segment_kind(next_source);
 
         let mut segments = Vec::with_capacity(self.len() + 1);
         segments.extend(self.segments[..previous_segment_index].iter().cloned());
-        segments.push(Segment2::Line(previous_segment));
+        segments.push(previous_segment);
         let chamfer_segment_index = segments.len();
         segments.push(Segment2::Line(chamfer_segment));
-        segments.push(Segment2::Line(next_segment));
+        segments.push(next_segment);
         segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
@@ -2326,30 +2367,30 @@ impl CurveString2 {
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
-                source_segment_kind: SegmentKind::Line,
+                source_segment_kind: previous_kind,
                 output_segment_index: Some(previous_segment_index),
-                output_segment_kind: Some(SegmentKind::Line),
-                output_segment_start_point: Some(previous_line.start().clone()),
+                output_segment_kind: Some(previous_kind),
+                output_segment_start_point: Some(previous_source.start().clone()),
                 output_segment_end_point: Some(previous_cut_point.clone()),
-                source_segment_start_point: previous_line.start().clone(),
-                source_segment_end_point: previous_line.end().clone(),
+                source_segment_start_point: previous_source.start().clone(),
+                source_segment_end_point: previous_source.end().clone(),
                 source_range: previous_range,
-                range_start_point: Some(previous_line.start().clone()),
+                range_start_point: Some(previous_source.start().clone()),
                 range_end_point: Some(previous_cut_point.clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
-                source_segment_kind: SegmentKind::Line,
+                source_segment_kind: next_kind,
                 output_segment_index: Some(next_segment_index + 1),
-                output_segment_kind: Some(SegmentKind::Line),
+                output_segment_kind: Some(next_kind),
                 output_segment_start_point: Some(next_cut_point.clone()),
-                output_segment_end_point: Some(next_line.end().clone()),
-                source_segment_start_point: next_line.start().clone(),
-                source_segment_end_point: next_line.end().clone(),
+                output_segment_end_point: Some(next_source.end().clone()),
+                source_segment_start_point: next_source.start().clone(),
+                source_segment_end_point: next_source.end().clone(),
                 source_range: next_range,
                 range_start_point: Some(next_cut_point.clone()),
-                range_end_point: Some(next_line.end().clone()),
+                range_end_point: Some(next_source.end().clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
         ];
@@ -2358,13 +2399,14 @@ impl CurveString2 {
             report: CurveStringChamferReport2 {
                 input_path: CurveStringChamferInputPath2::Parameters,
                 stage: CurveStringChamferStage2::SegmentMaterialization,
-                predicate_path: CurveStringChamferPredicatePath2::LineLineStrictInteriorParameters,
+                predicate_path:
+                    CurveStringChamferPredicatePath2::NativeSegmentsStrictInteriorParameters,
                 previous_segment_index,
                 next_segment_index,
-                previous_segment_start_point: previous_line.start().clone(),
-                previous_segment_end_point: previous_line.end().clone(),
-                next_segment_start_point: next_line.start().clone(),
-                next_segment_end_point: next_line.end().clone(),
+                previous_segment_start_point: previous_source.start().clone(),
+                previous_segment_end_point: previous_source.end().clone(),
+                next_segment_start_point: next_source.start().clone(),
+                next_segment_end_point: next_source.end().clone(),
                 previous_trim,
                 next_trim,
                 previous_cut_point: Some(previous_cut_point.clone()),
@@ -2384,31 +2426,26 @@ impl CurveString2 {
         })
     }
 
-    /// Chamfers one interior line-line vertex by exact cut points.
+    /// Chamfers one interior native-segment vertex by exact cut points.
     ///
     /// The supplied points are validated against the specific previous and next
-    /// finite line segments adjacent to `vertex_index`. Certified point
+    /// finite native segments adjacent to `vertex_index`. Certified point
     /// parameters are then passed to
-    /// [`CurveString2::chamfer_line_line_vertex_by_parameters`], so the same
+    /// [`CurveString2::chamfer_vertex_by_parameters`], so the same
     /// strict interior-parameter and retained-range rules decide whether native
     /// topology may be materialized.
-    pub fn chamfer_line_line_vertex_by_points(
+    pub fn chamfer_vertex_by_points(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
         next_point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringChamferResult2> {
-        self.chamfer_line_line_vertex_by_points_with_report(
-            vertex_index,
-            previous_point,
-            next_point,
-            policy,
-        )
+        self.chamfer_vertex_by_points_with_report(vertex_index, previous_point, next_point, policy)
     }
 
-    /// Chamfers one interior line-line vertex by exact cut points and retains evidence.
-    pub fn chamfer_line_line_vertex_by_points_with_report(
+    /// Chamfers one interior native-segment vertex by exact cut points and retains evidence.
+    pub fn chamfer_vertex_by_points_with_report(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
@@ -2422,28 +2459,11 @@ impl CurveString2 {
         let next_segment_index = vertex_index;
         let previous_zero = CurveStringTrimPoint2::new(previous_segment_index, Real::zero());
         let next_zero = CurveStringTrimPoint2::new(next_segment_index, Real::zero());
-        let (previous_line, next_line) = match (
-            &self.segments[previous_segment_index],
-            &self.segments[next_segment_index],
-        ) {
-            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
-            _ => {
-                return Ok(blocked_chamfer_result(
-                    self,
-                    previous_segment_index,
-                    next_segment_index,
-                    previous_zero,
-                    next_zero,
-                    Vec::new(),
-                    CurveStringChamferPredicatePath2::UnsupportedSegmentFamily,
-                    RetainedTopologyStatus::Unsupported,
-                    Some(UncertaintyReason::Unsupported),
-                ));
-            }
-        };
+        let previous_segment = &self.segments[previous_segment_index];
+        let next_segment = &self.segments[next_segment_index];
 
         let previous_param =
-            match line_chamfer_point_parameter(previous_line, previous_point, policy)? {
+            match segment_chamfer_point_parameter(previous_segment, previous_point, policy)? {
                 Classification::Decided(param) => param,
                 Classification::Uncertain(reason) => {
                     let mut result = blocked_chamfer_result(
@@ -2467,7 +2487,7 @@ impl CurveString2 {
             };
         let previous_trim =
             CurveStringTrimPoint2::new(previous_segment_index, previous_param.clone());
-        let next_param = match line_chamfer_point_parameter(next_line, next_point, policy)? {
+        let next_param = match segment_chamfer_point_parameter(next_segment, next_point, policy)? {
             Classification::Decided(param) => param,
             Classification::Uncertain(reason) => {
                 let mut result = blocked_chamfer_result(
@@ -2490,7 +2510,7 @@ impl CurveString2 {
             }
         };
 
-        let mut result = self.chamfer_line_line_vertex_by_parameters_with_report(
+        let mut result = self.chamfer_vertex_by_parameters_with_report(
             vertex_index,
             previous_param,
             next_param,
@@ -2500,16 +2520,16 @@ impl CurveString2 {
         Ok(result)
     }
 
-    /// Fillets one interior line-line vertex from exact parameters and center.
+    /// Fillets one interior native-segment vertex from exact parameters and center.
     ///
     /// `vertex_index` identifies the shared vertex between
     /// `segments[vertex_index - 1]` and `segments[vertex_index]`. The
-    /// parameters identify the tangent points on the previous and next line
+    /// parameters identify the tangent points on the previous and next native
     /// segments. The final materialization delegates to
-    /// [`CurveString2::fillet_line_line_vertex_by_points`], so the same
+    /// [`CurveString2::fillet_vertex_by_points`], so the same
     /// nonzero-radius, equal-radius, tangency, orientation, and retained-range
     /// checks decide whether native topology may be emitted.
-    pub fn fillet_line_line_vertex_by_parameters(
+    pub fn fillet_vertex_by_parameters(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -2518,7 +2538,7 @@ impl CurveString2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringFilletResult2> {
-        self.fillet_line_line_vertex_by_parameters_with_report(
+        self.fillet_vertex_by_parameters_with_report(
             vertex_index,
             previous_param,
             next_param,
@@ -2528,8 +2548,8 @@ impl CurveString2 {
         )
     }
 
-    /// Fillets one interior line-line vertex from exact parameters and center, retaining evidence.
-    pub fn fillet_line_line_vertex_by_parameters_with_report(
+    /// Fillets one interior native-segment vertex from exact parameters and center, retaining evidence.
+    pub fn fillet_vertex_by_parameters_with_report(
         &self,
         vertex_index: usize,
         previous_param: Real,
@@ -2543,57 +2563,68 @@ impl CurveString2 {
         }
         let previous_segment_index = vertex_index - 1;
         let next_segment_index = vertex_index;
-        let previous_trim = CurveStringTrimPoint2::new(previous_segment_index, previous_param);
-        let next_trim = CurveStringTrimPoint2::new(next_segment_index, next_param);
-        validate_trim_point(self, &previous_trim, policy)?;
-        validate_trim_point(self, &next_trim, policy)?;
-
-        let (previous_line, next_line) = match (
-            &self.segments[previous_segment_index],
-            &self.segments[next_segment_index],
-        ) {
-            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
-            _ => {
-                let mut result = blocked_fillet_result(
+        let previous_segment = &self.segments[previous_segment_index];
+        let next_segment = &self.segments[next_segment_index];
+        let previous_point =
+            match segment_point_at_trim_parameter(previous_segment, &previous_param, policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => {
+                    return Ok(blocked_fillet_result(
+                        self,
+                        CurveStringFilletInputPath2::Parameters,
+                        previous_segment_index,
+                        next_segment_index,
+                        CurveStringTrimPoint2::new(previous_segment_index, previous_param),
+                        CurveStringTrimPoint2::new(next_segment_index, next_param),
+                        Some(center.clone()),
+                        None,
+                        Vec::new(),
+                        CurveStringFilletPredicatePath2::TangentValidationUnresolved,
+                        retained_status_for_uncertainty(reason),
+                        Some(reason),
+                    ));
+                }
+            };
+        let next_point = match segment_point_at_trim_parameter(next_segment, &next_param, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_fillet_result(
                     self,
+                    CurveStringFilletInputPath2::Parameters,
                     previous_segment_index,
                     next_segment_index,
-                    previous_trim,
-                    next_trim,
+                    CurveStringTrimPoint2::new(previous_segment_index, previous_param),
+                    CurveStringTrimPoint2::new(next_segment_index, next_param),
                     Some(center.clone()),
                     None,
                     Vec::new(),
-                    CurveStringFilletPredicatePath2::UnsupportedSegmentFamily,
-                    RetainedTopologyStatus::Unsupported,
-                    Some(UncertaintyReason::Unsupported),
-                );
-                result.report_mut().input_path = CurveStringFilletInputPath2::Parameters;
-                return Ok(result);
+                    CurveStringFilletPredicatePath2::TangentValidationUnresolved,
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
             }
         };
-
-        let previous_point = previous_line.point_at(previous_trim.param().clone());
-        let next_point = next_line.point_at(next_trim.param().clone());
-        let mut result = self.fillet_line_line_vertex_by_points_with_report(
+        self.fillet_vertex_with_report(
             vertex_index,
             &previous_point,
             &next_point,
             center,
             clockwise,
             policy,
-        )?;
-        result.report_mut().input_path = CurveStringFilletInputPath2::Parameters;
-        Ok(result)
+            Some(previous_param),
+            Some(next_param),
+            CurveStringFilletInputPath2::Parameters,
+        )
     }
 
-    /// Fillets one interior line-line vertex from exact tangent points and center.
+    /// Fillets one interior native-segment vertex from exact tangent points and center.
     ///
     /// The tangent points must lie at strict interior parameters of the two
-    /// adjacent finite line segments. The center must be equidistant from both
-    /// tangent points, nonzero-radius, perpendicular to both line directions,
-    /// and oriented so the inserted arc is tangent to the incoming and outgoing
-    /// line traversal. Failed predicates are retained as explicit blockers.
-    pub fn fillet_line_line_vertex_by_points(
+    /// adjacent finite native segments. The center must be equidistant from
+    /// both tangent points with nonzero radius, and the inserted arc tangent
+    /// must agree with each source traversal tangent. Failed predicates are
+    /// retained as explicit blockers.
+    pub fn fillet_vertex_by_points(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
@@ -2602,7 +2633,7 @@ impl CurveString2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringFilletResult2> {
-        self.fillet_line_line_vertex_by_points_with_report(
+        self.fillet_vertex_by_points_with_report(
             vertex_index,
             previous_point,
             next_point,
@@ -2612,8 +2643,8 @@ impl CurveString2 {
         )
     }
 
-    /// Fillets one interior line-line vertex by exact tangent points and center, retaining evidence.
-    pub fn fillet_line_line_vertex_by_points_with_report(
+    /// Fillets one interior native-segment vertex by exact tangent points and center, retaining evidence.
+    pub fn fillet_vertex_by_points_with_report(
         &self,
         vertex_index: usize,
         previous_point: &Point2,
@@ -2622,6 +2653,32 @@ impl CurveString2 {
         clockwise: bool,
         policy: &CurvePolicy,
     ) -> CurveResult<CurveStringFilletResult2> {
+        self.fillet_vertex_with_report(
+            vertex_index,
+            previous_point,
+            next_point,
+            center,
+            clockwise,
+            policy,
+            None,
+            None,
+            CurveStringFilletInputPath2::Points,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn fillet_vertex_with_report(
+        &self,
+        vertex_index: usize,
+        previous_point: &Point2,
+        next_point: &Point2,
+        center: &Point2,
+        clockwise: bool,
+        policy: &CurvePolicy,
+        known_previous_param: Option<Real>,
+        known_next_param: Option<Real>,
+        input_path: CurveStringFilletInputPath2,
+    ) -> CurveResult<CurveStringFilletResult2> {
         if vertex_index == 0 || vertex_index >= self.len() {
             return Err(CurveError::InvalidCurveRange);
         }
@@ -2629,37 +2686,50 @@ impl CurveString2 {
         let next_segment_index = vertex_index;
         let previous_zero = CurveStringTrimPoint2::new(previous_segment_index, Real::zero());
         let next_zero = CurveStringTrimPoint2::new(next_segment_index, Real::zero());
-        let (previous_line, next_line) = match (
-            &self.segments[previous_segment_index],
-            &self.segments[next_segment_index],
-        ) {
-            (Segment2::Line(previous), Segment2::Line(next)) => (previous, next),
-            _ => {
-                return Ok(blocked_fillet_result(
-                    self,
-                    previous_segment_index,
-                    next_segment_index,
-                    previous_zero,
-                    next_zero,
-                    Some(center.clone()),
-                    None,
-                    Vec::new(),
-                    CurveStringFilletPredicatePath2::UnsupportedSegmentFamily,
-                    RetainedTopologyStatus::Unsupported,
-                    Some(UncertaintyReason::Unsupported),
-                ));
+        let previous_segment = &self.segments[previous_segment_index];
+        let next_segment = &self.segments[next_segment_index];
+
+        let previous_param = match known_previous_param {
+            Some(param) => param,
+            None => {
+                match segment_chamfer_point_parameter(previous_segment, previous_point, policy)? {
+                    Classification::Decided(param) => param,
+                    Classification::Uncertain(reason) => {
+                        return Ok(blocked_fillet_result(
+                            self,
+                            input_path,
+                            previous_segment_index,
+                            next_segment_index,
+                            previous_zero,
+                            next_zero,
+                            Some(center.clone()),
+                            None,
+                            Vec::new(),
+                            if reason == UncertaintyReason::Boundary {
+                                CurveStringFilletPredicatePath2::TangentPointNotOnSourceSegment
+                            } else {
+                                CurveStringFilletPredicatePath2::TangentValidationUnresolved
+                            },
+                            retained_status_for_uncertainty(reason),
+                            Some(reason),
+                        ));
+                    }
+                }
             }
         };
-
-        let previous_param =
-            match line_chamfer_point_parameter(previous_line, previous_point, policy)? {
+        let previous_trim =
+            CurveStringTrimPoint2::new(previous_segment_index, previous_param.clone());
+        let next_param = match known_next_param {
+            Some(param) => param,
+            None => match segment_chamfer_point_parameter(next_segment, next_point, policy)? {
                 Classification::Decided(param) => param,
                 Classification::Uncertain(reason) => {
                     return Ok(blocked_fillet_result(
                         self,
+                        input_path,
                         previous_segment_index,
                         next_segment_index,
-                        previous_zero,
+                        previous_trim,
                         next_zero,
                         Some(center.clone()),
                         None,
@@ -2673,30 +2743,7 @@ impl CurveString2 {
                         Some(reason),
                     ));
                 }
-            };
-        let previous_trim =
-            CurveStringTrimPoint2::new(previous_segment_index, previous_param.clone());
-        let next_param = match line_chamfer_point_parameter(next_line, next_point, policy)? {
-            Classification::Decided(param) => param,
-            Classification::Uncertain(reason) => {
-                return Ok(blocked_fillet_result(
-                    self,
-                    previous_segment_index,
-                    next_segment_index,
-                    previous_trim,
-                    next_zero,
-                    Some(center.clone()),
-                    None,
-                    Vec::new(),
-                    if reason == UncertaintyReason::Boundary {
-                        CurveStringFilletPredicatePath2::TangentPointNotOnSourceSegment
-                    } else {
-                        CurveStringFilletPredicatePath2::TangentValidationUnresolved
-                    },
-                    retained_status_for_uncertainty(reason),
-                    Some(reason),
-                ));
-            }
+            },
         };
         let next_trim = CurveStringTrimPoint2::new(next_segment_index, next_param);
         validate_trim_point(self, &previous_trim, policy)?;
@@ -2717,6 +2764,7 @@ impl CurveString2 {
             (Some(_), Some(_), Some(_), Some(_)) => {
                 return Ok(blocked_fillet_result(
                     self,
+                    input_path,
                     previous_segment_index,
                     next_segment_index,
                     previous_trim,
@@ -2732,6 +2780,7 @@ impl CurveString2 {
             _ => {
                 return Ok(blocked_fillet_result(
                     self,
+                    input_path,
                     previous_segment_index,
                     next_segment_index,
                     previous_trim,
@@ -2752,6 +2801,7 @@ impl CurveString2 {
             Some(true) => {
                 return Ok(blocked_fillet_result(
                     self,
+                    input_path,
                     previous_segment_index,
                     next_segment_index,
                     previous_trim,
@@ -2767,6 +2817,7 @@ impl CurveString2 {
             None => {
                 return Ok(blocked_fillet_result(
                     self,
+                    input_path,
                     previous_segment_index,
                     next_segment_index,
                     previous_trim,
@@ -2788,6 +2839,7 @@ impl CurveString2 {
             Some(false) => {
                 return Ok(blocked_fillet_result(
                     self,
+                    input_path,
                     previous_segment_index,
                     next_segment_index,
                     previous_trim,
@@ -2803,6 +2855,7 @@ impl CurveString2 {
             None => {
                 return Ok(blocked_fillet_result(
                     self,
+                    input_path,
                     previous_segment_index,
                     next_segment_index,
                     previous_trim,
@@ -2817,8 +2870,8 @@ impl CurveString2 {
             }
         }
 
-        if let Some(reason) = line_line_fillet_validation_blocker(
-            previous_line,
+        if let Some(reason) = segment_fillet_validation_blocker(
+            previous_segment,
             previous_point,
             center,
             clockwise,
@@ -2826,6 +2879,7 @@ impl CurveString2 {
         ) {
             return Ok(blocked_fillet_result(
                 self,
+                input_path,
                 previous_segment_index,
                 next_segment_index,
                 previous_trim,
@@ -2843,10 +2897,11 @@ impl CurveString2 {
             ));
         }
         if let Some(reason) =
-            line_line_fillet_validation_blocker(next_line, next_point, center, clockwise, policy)
+            segment_fillet_validation_blocker(next_segment, next_point, center, clockwise, policy)
         {
             return Ok(blocked_fillet_result(
                 self,
+                input_path,
                 previous_segment_index,
                 next_segment_index,
                 previous_trim,
@@ -2866,22 +2921,73 @@ impl CurveString2 {
 
         let previous_range = ParamRange::new(Real::zero(), previous_trim.param().clone());
         let next_range = ParamRange::new(next_trim.param().clone(), Real::one());
-        let previous_segment =
-            LineSeg2::try_new(previous_line.start().clone(), previous_point.clone())?;
-        let fillet_segment = CircularArc2::try_from_center(
+        let previous_output = match materialize_strict_native_range(
+            previous_segment,
+            previous_segment.start(),
+            previous_point,
+            &previous_range,
+            policy,
+        )? {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_fillet_result(
+                    self,
+                    input_path,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Some(center.clone()),
+                    Some(radius_squared),
+                    Vec::new(),
+                    CurveStringFilletPredicatePath2::TangentValidationUnresolved,
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
+            }
+        };
+        let fillet_segment = CircularArc2::new_with_certified_radius(
             previous_point.clone(),
             next_point.clone(),
             center.clone(),
+            radius_squared.clone(),
             clockwise,
-        )?;
-        let next_segment = LineSeg2::try_new(next_point.clone(), next_line.end().clone())?;
+            None,
+        );
+        let next_output = match materialize_strict_native_range(
+            next_segment,
+            next_point,
+            next_segment.end(),
+            &next_range,
+            policy,
+        )? {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(reason) => {
+                return Ok(blocked_fillet_result(
+                    self,
+                    input_path,
+                    previous_segment_index,
+                    next_segment_index,
+                    previous_trim,
+                    next_trim,
+                    Some(center.clone()),
+                    Some(radius_squared),
+                    Vec::new(),
+                    CurveStringFilletPredicatePath2::TangentValidationUnresolved,
+                    retained_status_for_uncertainty(reason),
+                    Some(reason),
+                ));
+            }
+        };
+        let previous_kind = segment_kind(previous_segment);
+        let next_kind = segment_kind(next_segment);
 
         let mut segments = Vec::with_capacity(self.len() + 1);
         segments.extend(self.segments[..previous_segment_index].iter().cloned());
-        segments.push(Segment2::Line(previous_segment));
+        segments.push(previous_output);
         let fillet_segment_index = segments.len();
         segments.push(Segment2::Arc(fillet_segment));
-        segments.push(Segment2::Line(next_segment));
+        segments.push(next_output);
         segments.extend(self.segments[next_segment_index + 1..].iter().cloned());
         let curve_string = CurveString2::try_new(segments)?;
         let output_segment_count = curve_string.len();
@@ -2889,45 +2995,45 @@ impl CurveString2 {
         let segment_reports = vec![
             CurveStringTrimSegmentReport2 {
                 source_segment_index: previous_segment_index,
-                source_segment_kind: SegmentKind::Line,
+                source_segment_kind: previous_kind,
                 output_segment_index: Some(previous_segment_index),
-                output_segment_kind: Some(SegmentKind::Line),
-                output_segment_start_point: Some(previous_line.start().clone()),
+                output_segment_kind: Some(previous_kind),
+                output_segment_start_point: Some(previous_segment.start().clone()),
                 output_segment_end_point: Some((*previous_point).clone()),
-                source_segment_start_point: previous_line.start().clone(),
-                source_segment_end_point: previous_line.end().clone(),
+                source_segment_start_point: previous_segment.start().clone(),
+                source_segment_end_point: previous_segment.end().clone(),
                 source_range: previous_range,
-                range_start_point: Some(previous_line.start().clone()),
+                range_start_point: Some(previous_segment.start().clone()),
                 range_end_point: Some((*previous_point).clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
             CurveStringTrimSegmentReport2 {
                 source_segment_index: next_segment_index,
-                source_segment_kind: SegmentKind::Line,
+                source_segment_kind: next_kind,
                 output_segment_index: Some(next_segment_index + 1),
-                output_segment_kind: Some(SegmentKind::Line),
+                output_segment_kind: Some(next_kind),
                 output_segment_start_point: Some((*next_point).clone()),
-                output_segment_end_point: Some(next_line.end().clone()),
-                source_segment_start_point: next_line.start().clone(),
-                source_segment_end_point: next_line.end().clone(),
+                output_segment_end_point: Some(next_segment.end().clone()),
+                source_segment_start_point: next_segment.start().clone(),
+                source_segment_end_point: next_segment.end().clone(),
                 source_range: next_range,
                 range_start_point: Some((*next_point).clone()),
-                range_end_point: Some(next_line.end().clone()),
+                range_end_point: Some(next_segment.end().clone()),
                 status: RetainedTopologyStatus::NativeExact,
             },
         ];
         Ok(CurveStringFilletResult2 {
             curve_string: Some(curve_string),
             report: CurveStringFilletReport2 {
-                input_path: CurveStringFilletInputPath2::Points,
+                input_path,
                 stage: CurveStringFilletStage2::ArcMaterialization,
-                predicate_path: CurveStringFilletPredicatePath2::LineLineTangentArc,
+                predicate_path: CurveStringFilletPredicatePath2::NativeSegmentsTangentArc,
                 previous_segment_index,
                 next_segment_index,
-                previous_segment_start_point: previous_line.start().clone(),
-                previous_segment_end_point: previous_line.end().clone(),
-                next_segment_start_point: next_line.start().clone(),
-                next_segment_end_point: next_line.end().clone(),
+                previous_segment_start_point: previous_segment.start().clone(),
+                previous_segment_end_point: previous_segment.end().clone(),
+                next_segment_start_point: next_segment.start().clone(),
+                next_segment_end_point: next_segment.end().clone(),
                 previous_trim,
                 next_trim,
                 previous_tangent_point: Some((*previous_point).clone()),
@@ -3476,20 +3582,6 @@ impl CurveString2 {
                     trimmed_segments.push(segment);
                 }
                 SegmentTrimMaterialization::SkippedEmpty => {}
-                SegmentTrimMaterialization::Unsupported(reason) => {
-                    let mut segment_report = segment_report;
-                    segment_report.status = RetainedTopologyStatus::Unsupported;
-                    segment_reports.push(segment_report);
-                    return Ok(blocked_trim_result(
-                        self,
-                        start.trim_point,
-                        end.trim_point,
-                        segment_reports,
-                        CurveStringTrimInputPath2::Points,
-                        RetainedTopologyStatus::Unsupported,
-                        Some(reason),
-                    ));
-                }
                 SegmentTrimMaterialization::Unresolved(reason) => {
                     let mut segment_report = segment_report;
                     segment_report.status = RetainedTopologyStatus::Unresolved;
@@ -5029,7 +5121,6 @@ impl CurveStringExtendResult2 {
 enum SegmentTrimMaterialization {
     Materialized(Segment2),
     SkippedEmpty,
-    Unsupported(UncertaintyReason),
     Unresolved(UncertaintyReason),
 }
 
@@ -5286,45 +5377,6 @@ fn trim_curve_string_inside_region_with_hits(
             )? {
                 SegmentTrimMaterialization::Materialized(fragment) => fragment,
                 SegmentTrimMaterialization::SkippedEmpty => continue,
-                SegmentTrimMaterialization::Unsupported(reason) => {
-                    interval_reports.push(CurveStringRegionTrimIntervalReport2 {
-                        source_segment_index,
-                        source_segment_kind: source_segment.structural_facts().kind,
-                        source_segment_start_point: source_segment.start().clone(),
-                        source_segment_end_point: source_segment.end().clone(),
-                        source_range,
-                        range_start_point: start.point.clone(),
-                        range_end_point: end.point.clone(),
-                        representative_point: None,
-                        location: None,
-                        output_curve_string_index: None,
-                        output_segment_index: None,
-                        output_segment_kind: None,
-                        output_segment_start_point: None,
-                        output_segment_end_point: None,
-                        status: RetainedTopologyStatus::Unsupported,
-                        blocker: Some(reason),
-                    });
-                    return Ok(blocked_region_trim_result(
-                        curve_string,
-                        region_material_contour_count,
-                        region_hole_contour_count,
-                        region_material_segment_count,
-                        region_hole_segment_count,
-                        region_material_segment_kind_counts,
-                        region_hole_segment_kind_counts,
-                        boundary_workload,
-                        interval_candidate_count,
-                        interval_classification_count,
-                        boundary_hits,
-                        interval_reports,
-                        query_path,
-                        prepared_cache_report.clone(),
-                        CurveStringRegionTrimStage2::IntervalClassification,
-                        RetainedTopologyStatus::Unsupported,
-                        reason,
-                    ));
-                }
                 SegmentTrimMaterialization::Unresolved(reason) => {
                     interval_reports.push(CurveStringRegionTrimIntervalReport2 {
                         source_segment_index,
@@ -6537,6 +6589,7 @@ fn blocked_chamfer_result(
 
 fn blocked_fillet_result(
     curve_string: &CurveString2,
+    input_path: CurveStringFilletInputPath2,
     previous_segment_index: usize,
     next_segment_index: usize,
     previous_trim: CurveStringTrimPoint2,
@@ -6551,7 +6604,7 @@ fn blocked_fillet_result(
     CurveStringFilletResult2 {
         curve_string: None,
         report: CurveStringFilletReport2 {
-            input_path: CurveStringFilletInputPath2::Points,
+            input_path,
             stage: if radius_squared.is_some() {
                 CurveStringFilletStage2::RadiusAndTangencyValidation
             } else {
@@ -6668,9 +6721,7 @@ fn trim_segment_by_range(
         )),
         Some(false) => match source_segment {
             Segment2::Line(line) => trim_line_segment_by_range(line, source_range),
-            Segment2::Arc(_) => Ok(SegmentTrimMaterialization::Unsupported(
-                UncertaintyReason::Unsupported,
-            )),
+            Segment2::Arc(arc) => trim_arc_segment_by_range(arc, source_range, policy),
         },
         None => Ok(SegmentTrimMaterialization::Unresolved(
             UncertaintyReason::Ordering,
@@ -6687,6 +6738,31 @@ fn trim_line_segment_by_range(
     LineSeg2::try_new(start, end)
         .map(Segment2::Line)
         .map(SegmentTrimMaterialization::Materialized)
+}
+
+fn trim_arc_segment_by_range(
+    arc: &CircularArc2,
+    source_range: &ParamRange,
+    policy: &CurvePolicy,
+) -> CurveResult<SegmentTrimMaterialization> {
+    let start = match arc.point_at_sweep_fraction(source_range.start(), policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(SegmentTrimMaterialization::Unresolved(reason));
+        }
+    };
+    let end = match arc.point_at_sweep_fraction(source_range.end(), policy)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(SegmentTrimMaterialization::Unresolved(reason));
+        }
+    };
+    match arc.fragment_between_sweep_range(start, end, source_range, policy)? {
+        Classification::Decided(fragment) => Ok(SegmentTrimMaterialization::Materialized(
+            Segment2::Arc(fragment),
+        )),
+        Classification::Uncertain(reason) => Ok(SegmentTrimMaterialization::Unresolved(reason)),
+    }
 }
 
 fn trim_segment_by_point_range(
@@ -6714,12 +6790,15 @@ fn trim_segment_by_point_range(
         Segment2::Line(_) => LineSeg2::try_new(start_point.clone(), end_point.clone())
             .map(Segment2::Line)
             .map(SegmentTrimMaterialization::Materialized),
-        Segment2::Arc(arc) => trim_arc_segment_by_point_range(arc, start_point, end_point, policy),
+        Segment2::Arc(arc) => {
+            trim_arc_segment_by_point_range(arc, source_range, start_point, end_point, policy)
+        }
     }
 }
 
 fn trim_arc_segment_by_point_range(
     source_arc: &CircularArc2,
+    source_range: &ParamRange,
     start_point: &Point2,
     end_point: &Point2,
     policy: &CurvePolicy,
@@ -6740,16 +6819,17 @@ fn trim_arc_segment_by_point_range(
     let distance = start_point.distance_squared(end_point);
     match is_zero(&distance, policy) {
         Some(true) => Ok(SegmentTrimMaterialization::SkippedEmpty),
-        Some(false) => Ok(SegmentTrimMaterialization::Materialized(Segment2::Arc(
-            CircularArc2::new_unchecked_with_radius(
-                start_point.clone(),
-                end_point.clone(),
-                source_arc.center().clone(),
-                source_arc.radius_squared(),
-                source_arc.is_clockwise(),
-                None,
-            ),
-        ))),
+        Some(false) => match source_arc.fragment_between_sweep_range(
+            start_point.clone(),
+            end_point.clone(),
+            source_range,
+            policy,
+        )? {
+            Classification::Decided(fragment) => Ok(SegmentTrimMaterialization::Materialized(
+                Segment2::Arc(fragment),
+            )),
+            Classification::Uncertain(reason) => Ok(SegmentTrimMaterialization::Unresolved(reason)),
+        },
         None => Ok(SegmentTrimMaterialization::Unresolved(
             UncertaintyReason::RealSign,
         )),
@@ -6937,7 +7017,56 @@ fn segment_point_parameter(
 ) -> CurveResult<Classification<Real>> {
     match segment {
         Segment2::Line(line) => line_point_parameter(line, point, policy),
-        Segment2::Arc(arc) => arc_chord_parameter(arc, point),
+        Segment2::Arc(arc) => arc_sweep_parameter(arc, point, policy),
+    }
+}
+
+const fn segment_kind(segment: &Segment2) -> SegmentKind {
+    match segment {
+        Segment2::Line(_) => SegmentKind::Line,
+        Segment2::Arc(_) => SegmentKind::Arc,
+    }
+}
+
+fn segment_point_at_trim_parameter(
+    segment: &Segment2,
+    parameter: &Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Point2>> {
+    match segment {
+        Segment2::Line(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
+        Segment2::Arc(arc) => arc.point_at_sweep_fraction(parameter, policy),
+    }
+}
+
+fn materialize_strict_native_range(
+    source: &Segment2,
+    start: &Point2,
+    end: &Point2,
+    source_range: &ParamRange,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Segment2>> {
+    match source {
+        Segment2::Line(_) => LineSeg2::try_new(start.clone(), end.clone())
+            .map(Segment2::Line)
+            .map(Classification::Decided),
+        Segment2::Arc(arc) => arc
+            .fragment_between_sweep_range(start.clone(), end.clone(), source_range, policy)
+            .map(|fragment| fragment.map(Segment2::Arc)),
+    }
+}
+
+fn segment_chamfer_point_parameter(
+    segment: &Segment2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Real>> {
+    match segment.contains_point(point, policy) {
+        Classification::Decided(true) => segment_point_parameter(segment, point, policy),
+        Classification::Decided(false) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
 }
 
@@ -6965,42 +7094,38 @@ fn line_point_parameter(
     }
 }
 
-fn line_chamfer_point_parameter(
-    line: &LineSeg2,
-    point: &Point2,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<Real>> {
-    match line.contains_point(point, policy) {
-        Classification::Decided(true) => line_point_parameter(line, point, policy),
-        Classification::Decided(false) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
-        }
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
-}
-
-fn line_line_fillet_validation_blocker(
-    line: &LineSeg2,
+fn segment_fillet_validation_blocker(
+    segment: &Segment2,
     tangent_point: &Point2,
     center: &Point2,
     clockwise: bool,
     policy: &CurvePolicy,
 ) -> Option<UncertaintyReason> {
-    let (line_dx, line_dy) = line.delta();
+    let (source_dx, source_dy) = match segment {
+        Segment2::Line(line) => line.delta(),
+        Segment2::Arc(arc) => {
+            let (radius_dx, radius_dy) = tangent_point.delta_from(arc.center());
+            if arc.is_clockwise() {
+                (radius_dy, -radius_dx)
+            } else {
+                (-radius_dy, radius_dx)
+            }
+        }
+    };
     let (radius_dx, radius_dy) = tangent_point.delta_from(center);
-    let perpendicular = (&line_dx * &radius_dx) + (&line_dy * &radius_dy);
-    match is_zero(&perpendicular, policy) {
+    let (fillet_dx, fillet_dy) = if clockwise {
+        (radius_dy, -radius_dx)
+    } else {
+        (-radius_dy, radius_dx)
+    };
+    let tangent_cross = (&source_dx * &fillet_dy) - (&source_dy * &fillet_dx);
+    match is_zero(&tangent_cross, policy) {
         Some(true) => {}
         Some(false) => return Some(UncertaintyReason::Boundary),
         None => return Some(UncertaintyReason::RealSign),
     }
 
-    let (tangent_dx, tangent_dy) = if clockwise {
-        (radius_dy, -radius_dx)
-    } else {
-        (-radius_dy, radius_dx)
-    };
-    let direction_dot = (&line_dx * &tangent_dx) + (&line_dy * &tangent_dy);
+    let direction_dot = (&source_dx * &fillet_dx) + (&source_dy * &fillet_dy);
     match real_sign(&direction_dot, policy) {
         Some(RealSign::Positive) => None,
         Some(RealSign::Zero | RealSign::Negative) => Some(UncertaintyReason::Boundary),
@@ -7017,14 +7142,12 @@ fn retained_status_for_uncertainty(reason: UncertaintyReason) -> RetainedTopolog
     }
 }
 
-fn arc_chord_parameter(arc: &CircularArc2, point: &Point2) -> CurveResult<Classification<Real>> {
-    let (dx, dy) = arc.end().delta_from(arc.start());
-    let (px, py) = point.delta_from(arc.start());
-    let numerator = (&px * &dx) + (&py * &dy);
-    let denominator = (&dx * &dx) + (&dy * &dy);
-    (numerator / denominator)
-        .map(Classification::Decided)
-        .map_err(Into::into)
+fn arc_sweep_parameter(
+    arc: &CircularArc2,
+    point: &Point2,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Real>> {
+    arc.sweep_fraction_for_incident_point(point, policy)
 }
 
 impl CurveStringIntersection {
