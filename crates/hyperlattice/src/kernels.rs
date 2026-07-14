@@ -123,10 +123,7 @@ impl RealKernelExt for Real {
         // Structural-dispatch note: vector and matrix callers can carry
         // row/column sparsity, orthonormality, affine-basis, and common
         // rational-grid facts so this layer can route directly to sparse,
-        // fused, or dyadic exact reducers. The sparse fixed-kernel scheduling
-        // follows Gustavson's sparse-product idea; see Gustavson, "Two Fast
-        // Algorithms for Sparse Matrices: Multiplication and Permuted
-        // Transposition," ACM TOMS 4.3 (1978).
+        // fused, or dyadic exact reducers.
         Real::dot3_refs(left, right)
     }
 
@@ -168,10 +165,7 @@ impl RealKernelExt for Real {
         // Fixed determinant and cofactor formulas are short signed sums of
         // products. Prune zero terms before the exact-rational fused path so
         // sparse cases avoid building a shared-denominator accumulator at all.
-        // Dense exact-rational cases preserve the delayed-normalization
-        // principle of Bareiss fraction-free elimination; see Bareiss,
-        // "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-        // Elimination," Mathematics of Computation 22.103 (1968).
+        // Dense exact-rational cases preserve delayed normalization.
         let mut first_term: Option<([&Self; 2], bool)> = None;
         let mut second_term: Option<([&Self; 2], bool)> = None;
         let mut nonzero_count = 0usize;

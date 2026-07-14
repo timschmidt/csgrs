@@ -71,10 +71,8 @@ pub struct ProductSum2Facts<const TERMS: usize> {
 /// This type records the displacement and product-term zero structure behind
 /// that expression without deciding the determinant sign. It is intended for
 /// predicate layers that want to select sparse or axis-specialized exact
-/// kernels before constructing every scalar term. This retained determinant
-/// shape follows Yap's exact-geometric-computation separation of object facts
-/// from predicate decisions; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// kernels before constructing every scalar term. The retained determinant
+/// shape keeps object facts separate from predicate decisions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Orient2Facts {
     /// Structural facts for `b - a`.
@@ -164,11 +162,8 @@ impl Orient2Facts {
     ///
     /// Callers that already materialized `b - a` and `c - a` can use this form
     /// to avoid recomputing displacement scalars while still preserving the
-    /// compact two-term determinant shape. The sparse-product motivation is the
-    /// same fixed-size version of Gustavson's sparse multiplication idea:
-    /// Gustavson, "Two Fast Algorithms for Sparse Matrices: Multiplication and
-    /// Permuted Transposition," *ACM Transactions on Mathematical Software*
-    /// 4.3 (1978).
+    /// compact two-term determinant shape. This is the fixed-size analogue of
+    /// scheduling a sparse product from known support.
     pub fn from_displacements(ab: [&Real; 2], ac: [&Real; 2]) -> Self {
         let ab_facts = Displacement2Facts::from_components(ab);
         let ac_facts = Displacement2Facts::from_components(ac);
@@ -213,11 +208,9 @@ impl Displacement2Facts {
     ///
     /// This constructor exists so higher crates can cache exact displacements
     /// once and reuse their structural facts without rebuilding scalar
-    /// differences. The retained-object strategy follows Yap's exact geometric
-    /// computation guidance: exploit cheap object structure before lower-level
-    /// scalar evaluation, while keeping final predicate decisions separate. See
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// differences. The retained-object strategy exploits cheap object
+    /// structure before lower-level scalar evaluation while keeping final
+    /// predicate decisions separate.
     pub fn from_components(components: [&Real; 2]) -> Self {
         let component_zero = [components[0].zero_status(), components[1].zero_status()];
         let known_zero = matches!(component_zero, [ZeroStatus::Zero, ZeroStatus::Zero]);
@@ -291,9 +284,7 @@ impl Displacement2Facts {
     ///
     /// Structural-dispatch note: count helpers let triangulation and curve
     /// layers pick sparse exact kernels without depending on this crate's mask
-    /// layout. Sparse product-sum dispatch is motivated by Gustavson, "Two Fast
-    /// Algorithms for Sparse Matrices: Multiplication and Permuted
-    /// Transposition," *ACM Transactions on Mathematical Software* 4.3 (1978).
+    /// layout and select sparse exact product-sum paths from stable metadata.
     pub fn unknown_zero_count(self) -> u32 {
         self.unknown_zero_mask().count_ones()
     }
@@ -365,11 +356,8 @@ pub fn product_term2_facts(term: [&Real; 2]) -> ProductTerm2Facts {
 /// Return structural zero facts for a short sum of pairwise products.
 ///
 /// Product-sum facts let callers choose sparse exact kernels without expanding
-/// every product first. This follows the sparse-product observation in
-/// Gustavson, "Two Fast Algorithms for Sparse Matrices: Multiplication and
-/// Permuted Transposition," *ACM Transactions on Mathematical Software* 4.3
-/// (1978), while preserving Bareiss-style delayed normalization for the
-/// surviving exact product sum.
+/// every product first while preserving delayed normalization for the surviving
+/// exact product sum.
 pub fn product_sum2_facts<const TERMS: usize>(
     terms: [[&Real; 2]; TERMS],
 ) -> ProductSum2Facts<TERMS> {
@@ -398,10 +386,7 @@ pub fn orient2_expr_facts(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Orient
 /// whether that product is added or subtracted. This exposes the exact reducer
 /// used by small determinants and cofactors without exposing kernel internals.
 /// Real kernels can prune structurally zero factors and share exact-rational
-/// denominator work, following Bareiss-style fraction-free/delayed
-/// normalization. See Bareiss, "Sylvester's Identity and Multistep
-/// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
-/// 22.103 (1968).
+/// denominator work through delayed normalization.
 ///
 /// Structural-dispatch note: callers that already carry zero masks or
 /// exact-rational/dyadic facts can use this helper to preserve the compact
@@ -430,9 +415,7 @@ pub fn positive_product_sum2<const TERMS: usize>(terms: [[&Real; 2]; TERMS]) -> 
 /// It is kept in `hyperlattice` because it is pure algebra over two vectors,
 /// not a predicate decision. The implementation routes the short determinant
 /// through the Real signed-product reducer so exact rationals can share
-/// denominator work, following the fraction-free/delayed-normalization
-/// strategy of Bareiss, "Sylvester's Identity and Multistep Integer-Preserving
-/// Gaussian Elimination," *Mathematics of Computation* 22.103 (1968).
+/// denominator work through delayed normalization.
 pub fn wedge2(left: [&Real; 2], right: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "wedge2");
     signed_product_sum2([true, false], [[left[0], right[1]], [left[1], right[0]]])
@@ -477,10 +460,8 @@ pub fn squared_distance2(a: [&Real; 2], b: [&Real; 2]) -> Real {
 /// The return value is the determinant
 /// `(b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)`.
 /// `hyperlattice` stops at expression construction; `hyperlimit` owns the
-/// exact sign decision. Keeping this split follows Yap's exact-geometric
-/// computation boundary: algebraic objects may carry structure, while geometric
-/// decisions live in a predicate layer. See Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// exact sign decision. Algebraic objects may carry structure, while geometric
+/// decisions live in a predicate layer.
 pub fn orient2_expr(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Real {
     crate::trace_dispatch!("hyperlattice_algebra2", "helper", "orient2-expr");
     let [abx, aby] = displacement2(a, b);

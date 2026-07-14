@@ -10,45 +10,6 @@ facts.
 The crate is not a general BLAS replacement. It focuses on the small exact vector and
 matrix objects that geometry, predicates, solvers, and domain crates repeatedly need.
 
-## Hyper Ecosystem
-
-`hyperlattice` is the object-algebra layer between scalar facts and topology/domain
-crates. It owns the fixed-size vector, matrix, point, shared-scale, and homogeneous
-projective carriers that predicate and geometry crates reuse.
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and
-  computable scalar arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicates, escalation
-  policy, and predicate provenance over lattice-owned objects.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curves, contours,
-  regions, offsets, and boolean-boundary work.
-- [hypertri](https://github.com/timschmidt/hypertri): polygon triangulation, Delaunay,
-  constrained Delaunay, and D-dimensional topology.
-- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh validation, topology,
-  and exact-aware boolean preflight.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): retained BREP topology,
-  planar surfaces, trim evidence, tessellation manifests, and mesh handoff reports.
-- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance and implicit-field
-  carriers with exact-aware sampling, classification, mesh, and voxel handoffs.
-- [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
-  solver preparation, interval/root certification, and candidate replay.
-- [hyperpath](https://github.com/timschmidt/hyperpath): routing, CAM, PCB path,
-  provenance, and path-domain residual builders.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): exact-aware voxel frames,
-  sparse-grid facts, and storage/adapter manifests.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): exact-aware materials,
-  shapes, mass properties, contact, fields, and simulation handoff reports.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit MNA carriers,
-  exact residual replay, nonlinear-device reports, and electrothermal coupling.
-- [hyperparts](https://github.com/timschmidt/hyperparts): source-attributed part,
-  interface, process, and compatibility facts.
-- [hyperpack](https://github.com/timschmidt/hyperpack): exact-aware packing models,
-  proposal reports, and feasibility replay.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): exact-aware search,
-  fitness, archive, and replay-policy carriers.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks and
-  manufacturing package evidence.
-
 ## Typical Linear-Algebra Problems
 
 Small linear algebra sits on the fault line between performance and exactness. Floating
@@ -142,7 +103,7 @@ reject definite zero and unknown-zero divisors or pivots.
 
 ```toml
 [dependencies]
-hyperlattice = "0.5.0"
+hyperlattice = "0.6.0"
 ```
 
 For sibling checkouts:
@@ -162,39 +123,56 @@ Feature summary:
 ```rust
 use hyperlattice::{intersect_three_planes, Matrix3, Point3, ProjectivePlane3, Real, Vector3};
 
-fn r(value: i32) -> Real { value.into() }
+fn r(value: i32) -> Real {
+    value.into()
+}
 
-let v = Vector3::new([r(3), r(4), r(0)]);
-assert_eq!(v.dot(&v), r(25));
+fn main() {
+    let v = Vector3::new([r(3), r(4), r(0)]);
+    assert_eq!(v.dot(&v), r(25));
 
-let m = Matrix3::identity();
-assert_eq!(m.clone() * m.inverse().unwrap(), Matrix3::identity());
+    let m = Matrix3::identity();
+    assert_eq!(m.clone() * m.inverse().unwrap(), Matrix3::identity());
 
-let x = ProjectivePlane3::new(Point3::new(r(1), r(0), r(0)), r(-2));
-let y = ProjectivePlane3::new(Point3::new(r(0), r(1), r(0)), r(-3));
-let z = ProjectivePlane3::new(Point3::new(r(0), r(0), r(1)), r(-4));
-let p = intersect_three_planes(&x, &y, &z);
-assert_eq!(p.to_affine_point().unwrap(), Point3::new(r(2), r(3), r(4)));
+    let x = ProjectivePlane3::new(Point3::new(r(1), r(0), r(0)), r(-2));
+    let y = ProjectivePlane3::new(Point3::new(r(0), r(1), r(0)), r(-3));
+    let z = ProjectivePlane3::new(Point3::new(r(0), r(0), r(1)), r(-4));
+    let p = intersect_three_planes(&x, &y, &z);
+    assert_eq!(p.to_affine_point().unwrap(), Point3::new(r(2), r(3), r(4)));
+}
 ```
 
 ## Development
 
-Useful local checks:
-
 ```sh
-cargo test
+cargo fmt --all -- --check
+cargo test --locked
+cargo check --benches --locked
+cargo clippy --all-targets --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
 cargo bench --bench mathbench
 cargo bench --bench regression_sentinels
 ```
 
 ## References
 
-Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
-Gaussian Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
-pp. 565-578.
+Implementation comments describe local structure and dispatch choices; the numerical
+background is consolidated here.
 
-Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
-vol. 7, nos. 1-2, 1997, pp. 3-23.
+- Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving Gaussian
+  Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
+  https://doi.org/10.2307/2004533.
+- Berkowitz, Stuart J. "On Computing the Determinant in Small Parallel Time Using a
+  Small Number of Processors." *Information Processing Letters*, vol. 18, no. 3,
+  1984, https://doi.org/10.1016/0020-0190(84)90018-8.
+- Gustavson, Fred G. "Two Fast Algorithms for Sparse Matrices: Multiplication and
+  Permuted Transposition." *ACM Transactions on Mathematical Software*, vol. 4,
+  no. 3, 1978, https://doi.org/10.1145/355791.355796.
+- Hou, Shui-Hung. "A Simple Proof of the Leverrier-Faddeev Characteristic Polynomial
+  Algorithm." *SIAM Review*, vol. 40, no. 3, 1998,
+  https://doi.org/10.1137/S003614459732076X.
+- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
+  vol. 7, nos. 1-2, 1997, https://doi.org/10.1016/0925-7721(95)00040-2.
 
 ## Source Layout
 
@@ -206,3 +184,15 @@ vol. 7, nos. 1-2, 1997, pp. 3-23.
 - `src/projective.rs`: homogeneous points, Pluecker lines, and plane intersections
 - `src/matrix`: `Matrix3`, `Matrix4`, and transform handles
 - `src/kernels.rs`: crate-private `Real` product-sum and structural helpers
+
+## Hyper Ecosystem
+
+`hyperlattice` builds fixed-size exact objects over
+[hyperreal](https://github.com/timschmidt/hyperreal) for predicate consumers such as
+[hyperlimit](https://github.com/timschmidt/hyperlimit) and geometry owners such as
+[hypercurve](https://github.com/timschmidt/hypercurve),
+[hypertri](https://github.com/timschmidt/hypertri), and
+[hypermesh](https://github.com/timschmidt/hypermesh). Solver and domain consumers
+include [hypersolve](https://github.com/timschmidt/hypersolve),
+[hyperpath](https://github.com/timschmidt/hyperpath), and
+[hyperphysics](https://github.com/timschmidt/hyperphysics).

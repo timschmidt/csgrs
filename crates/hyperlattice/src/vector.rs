@@ -25,9 +25,8 @@ pub enum Axis2 {
 /// This is a compact object-level certificate for vectors whose coordinates
 /// are exactly one signed unit and one exact zero. It lets sparse linear
 /// algebra, curve, and predicate preparation code choose signed-axis schedules
-/// without repeating scalar identity probes. The separation between this
-/// structural fact and geometric decisions follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// without repeating scalar identity probes. This structural fact remains
+/// separate from geometric decisions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SignedAxis2 {
     /// Positive X axis.
@@ -86,10 +85,8 @@ impl Axis2 {
 /// denominator kind, coarse rational storage class, plus zero/nonzero masks. It
 /// intentionally does not expose numerators or the common denominator;
 /// `hyperreal::Rational` remains responsible for scalar storage and reduction.
-/// This is the first borrowed common-scale object in the vector layer,
-/// following Yap's guidance that exact geometric computation should preserve
-/// rational object structure before scalar expansion; see Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// This is the first borrowed common-scale object in the vector layer and
+/// preserves rational object structure before scalar expansion.
 #[derive(Clone, Copy, Debug)]
 pub struct VectorSharedScaleView<'a, const N: usize> {
     components: [&'a Real; N],
@@ -108,11 +105,8 @@ pub struct VectorSharedScaleView<'a, const N: usize> {
 /// This is the stable scheduling surface for common-scale vector storage and
 /// borrowed common-scale views. It groups exact-set facts, sparse masks, and
 /// count helpers without exposing rational numerators or denominators. Keeping
-/// this object-level packet separate from scalar storage follows Yap's
-/// exact-geometric-computation layering: geometric objects retain enough
-/// structure to choose arithmetic packages before expanding into BigNumber
-/// operations. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// this object-level packet separate from scalar storage lets geometric objects
+/// choose arithmetic packages before expanding into big-number operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VectorSharedScaleFacts<const N: usize> {
     /// Exact-rational representation facts for all coordinates.
@@ -238,10 +232,8 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
     ///
     /// Callers should prefer this helper over reading the bit-mask layout
     /// directly when choosing sparse exact kernels. This keeps mask encoding
-    /// local to `hyperlattice` while preserving the object-level structural
-    /// facts that Yap recommends using before scalar expansion; see Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// local to `hyperlattice` while preserving object-level structural facts
+    /// before scalar expansion.
     pub fn known_zero_count(self) -> u32 {
         self.facts().known_zero_count()
     }
@@ -261,12 +253,8 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
     /// Both views certify that every lane is already an exact rational, so this
     /// method jumps directly to the known-exact fused product-sum route instead
     /// of asking every factor to prove exactness again. The reducer itself
-    /// remains in `hyperreal`, preserving the scalar abstraction boundary and
-    /// Yap's object-structure-first exact-computation model; see Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
-    /// The fused reduction follows the delayed-normalization idea used by
-    /// Bareiss, "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-    /// Elimination," *Mathematics of Computation* 22.103 (1968).
+    /// remains in `hyperreal`, preserving the scalar abstraction boundary. The
+    /// fused reduction delays normalization across the product sum.
     pub fn dot(self, rhs: Self) -> Real {
         crate::trace_dispatch!(
             "hyperlattice_vector",
@@ -294,12 +282,8 @@ impl<'a> VectorSharedScaleView<'a, 2> {
     /// This is the algebraic determinant behind planar orientation, not an
     /// orientation predicate. The method consumes the retained exact-rational
     /// certificate and dispatches directly to the known-exact product-sum
-    /// reducer, preserving the object-level common-scale information that Yap
-    /// recommends retaining before scalar expansion. See Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    /// fused signed sum follows Bareiss-style delayed normalization; see
-    /// Bareiss, "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-    /// Elimination," *Mathematics of Computation* 22.103 (1968).
+    /// reducer, preserving object-level common-scale information before scalar
+    /// expansion and delaying normalization across the signed sum.
     pub fn wedge(self, rhs: Self) -> Real {
         crate::trace_dispatch!(
             "hyperlattice_vector",
@@ -324,13 +308,9 @@ impl<'a> VectorSharedScaleView<'a, 3> {
     /// product-sum reducer for each lane. The result is not wrapped in
     /// [`SharedScaleVec`] because reduced output coordinates may lose a common
     /// reduced denominator after cancellation or zero components. This keeps
-    /// the current abstraction honest while still following Yap's guidance to
-    /// preserve object-level exact structure for the arithmetic package
-    /// selection; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997). The short determinant reductions
-    /// follow Bareiss-style delayed normalization; see Bareiss, "Sylvester's
-    /// Identity and Multistep Integer-Preserving Gaussian Elimination,"
-    /// *Mathematics of Computation* 22.103 (1968).
+    /// the current abstraction honest while preserving exact object structure
+    /// for arithmetic-package selection. Short determinant reductions delay
+    /// normalization across each signed sum.
     pub fn cross(self, rhs: Self) -> Vector3 {
         crate::trace_dispatch!(
             "hyperlattice_vector",
@@ -370,8 +350,7 @@ impl<'a> VectorSharedScaleView<'a, 3> {
 /// storage-free exact facts, rather than exposing rational numerators or the
 /// common denominator. That keeps scalar representation and reduction in
 /// `hyperreal`, while letting matrix, predicate, and triangulation code retain
-/// Yap-style object structure across API boundaries. See Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// object structure across API boundaries.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SharedScaleVec<const N: usize> {
     components: [Real; N],
@@ -456,8 +435,7 @@ impl<const N: usize> SharedScaleVec<N> {
     /// This forwards the borrowed view's mask-derived count without exposing
     /// the mask layout. Keeping count queries stable gives callers a cheap
     /// sparse-kernel dispatch signal while preserving the common-scale storage
-    /// boundary described by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// boundary.
     pub fn known_zero_count(&self) -> u32 {
         self.facts.known_zero_count()
     }
@@ -575,10 +553,8 @@ fn single_bit_index(mask: u128) -> Option<usize> {
 fn signed_axis2_from_components(values: &[Real; 2]) -> Option<SignedAxis2> {
     // The combined signed-unit query is scalar-owned, so the vector layer can
     // carry a signed-axis certificate without depending on rational storage.
-    // This is Yap's object-fact rule in miniature: retain cheap shape before
-    // expanding into algebra, but leave predicate decisions to `hyperlimit`.
-    // See Yap, "Towards Exact Geometric Computation," Computational Geometry
-    // 7.1-2 (1997).
+    // Retain cheap shape before expanding into algebra, but leave predicate
+    // decisions to `hyperlimit`.
     match (
         values[0].zero_one_or_minus_one(),
         values[1].zero_one_or_minus_one(),
@@ -626,10 +602,8 @@ pub struct Vector2Facts {
     /// This summary lets transform, predicate-preparation, and future solver
     /// code schedule constant-family or opaque-expression paths without
     /// inspecting `Real` internals. It is deliberately a dependency-family
-    /// certificate, not a CAS expression graph. The boundary follows Yap's
-    /// exact-computation separation between expression structure and geometric
-    /// decisions; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// certificate, not a CAS expression graph. Expression structure remains
+    /// separate from geometric decisions.
     pub symbolic_dependencies: RealSymbolicDependencyMask,
     /// Axis occupied by a known nonzero component when the other component is
     /// known zero.
@@ -713,12 +687,9 @@ impl Vector2Facts {
     /// Count components with unknown zero status.
     ///
     /// Structural-dispatch note: count helpers keep higher crates from
-    /// reinterpreting the mask layout. This lets future `hyperlattice` versions
-    /// grow richer vector facts, while callers still select sparse exact
-    /// product-sum paths from stable public metadata. The sparse-kernel
-    /// motivation follows Gustavson, "Two Fast Algorithms for Sparse Matrices:
-    /// Multiplication and Permuted Transposition," *ACM Transactions on
-    /// Mathematical Software* 4.3 (1978).
+    /// reinterpreting the mask layout. This lets later `hyperlattice` versions
+    /// grow richer vector facts while callers still select sparse exact
+    /// product-sum paths from stable public metadata.
     pub fn unknown_zero_count(self) -> u32 {
         self.unknown_zero_mask().count_ones()
     }
@@ -729,7 +700,7 @@ impl Vector2Facts {
     /// itself. If any coordinate is known nonzero, the squared norm is known
     /// nonzero over the exact ordered `Real` field; if all coordinates are
     /// known zero it is zero; otherwise it remains unknown. Carrying this fact
-    /// at the vector boundary follows Yap's object-structure-first exact
+    /// at the vector boundary follows the object-structure-first exact
     /// computation model and lets normalization or distance code reject
     /// zero/unknown cases before building a product-sum.
     pub fn squared_norm_zero_status(self) -> ZeroStatus {
@@ -747,12 +718,8 @@ impl Vector2Facts {
 /// The masks are conservative object metadata for exact-kernel dispatch. They
 /// intentionally do not decide collinearity, orientation, incidence, or
 /// containment; those combinatorial questions belong in `hyperlimit`. Carrying
-/// the masks at the vector boundary follows Yap's exact-geometric-computation
-/// guidance to preserve object structure before scalar expansion; see Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). Sparse mask scheduling follows the same motivation as Gustavson,
-/// "Two Fast Algorithms for Sparse Matrices: Multiplication and Permuted
-/// Transposition," *ACM Transactions on Mathematical Software* 4.3 (1978).
+/// the masks at the vector boundary preserves object structure before scalar
+/// expansion and supports sparse exact-kernel scheduling.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Vector3Facts {
     /// Zero status for `[x, y, z]` components.
@@ -914,9 +881,8 @@ pub(crate) struct Vector4GeometricFacts {
 fn vector4_geometric_facts(values: &[Real; 4]) -> Vector4GeometricFacts {
     // Homogeneous geometry kernels in exact computation benefit from keeping
     // `w`-classification as retained structure; this is the projective split
-    // used throughout 3D affine pipelines, and mirrors the direction/point
-    // specialization logic that precedes exact reductions in robust kernels
-    // (Yap, “Towards Exact Geometric Computation”, 1997).
+    // used throughout 3D affine pipelines and lets robust kernels specialize
+    // direction and point paths before exact reductions.
     let homogeneous = match values[3].zero_one_or_minus_one() {
         RealZeroOneMinusOneStatus::Zero => Vector4HomogeneousKind::Direction,
         RealZeroOneMinusOneStatus::One => Vector4HomogeneousKind::Point,
@@ -1019,7 +985,7 @@ macro_rules! impl_vector {
             /// that still receive renderer, file-format, physics, or FFI
             /// coordinates as `f64`. Keeping the checked lift in `hyperlattice`
             /// lets geometry crates compose with the vector type directly
-            /// instead of reimplementing scalar promotion. This follows Yap's
+            /// instead of reimplementing scalar promotion. This follows the
             /// exact-geometric-computation boundary discipline: finite
             /// coordinates may enter at APIs, but topology-sensitive algebra is
             /// then carried by exact-aware geometric objects.
@@ -1619,10 +1585,8 @@ impl Vector2 {
     /// higher crates can select sparse exact kernels without re-probing every
     /// scalar lane. It remains algebraic metadata, not a topology predicate:
     /// orientation, incidence, and containment decisions still belong in
-    /// `hyperlimit`. This follows Yap's recommendation to exploit geometric
-    /// object structure before lower-level arithmetic in exact geometric
-    /// computation; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// `hyperlimit`. It exposes geometric object structure before lower-level
+    /// exact arithmetic.
     pub fn structural_facts(&self) -> Vector2Facts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector2-structural-facts");
         let component_zero = [self.0[0].zero_status(), self.0[1].zero_status()];
@@ -1719,8 +1683,8 @@ impl Vector3 {
     /// rationals with one reduced denominator.
     ///
     /// This is an opt-in bridge toward common-scale geometry kernels. It keeps
-    /// vector provenance at the object layer, as recommended by Yap, while
-    /// leaving scalar storage and reduction in `hyperreal`.
+    /// vector provenance at the object layer while leaving scalar storage and
+    /// reduction in `hyperreal`.
     pub fn shared_scale_view(&self) -> Option<VectorSharedScaleView<'_, 3>> {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector3-shared-scale-view");
         VectorSharedScaleView::from_components([&self.0[0], &self.0[1], &self.0[2]])
@@ -1766,10 +1730,8 @@ impl Vector3 {
     /// Returns exact-rational representation facts for the three coordinates.
     ///
     /// The facts are intentionally coarse and storage-free. They let higher
-    /// crates carry the common-scale signal described by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), while
-    /// keeping exact determinant and predicate decisions routed through the
-    /// appropriate kernel layer.
+    /// crates carry a common-scale signal while keeping exact determinant and
+    /// predicate decisions routed through the appropriate kernel layer.
     pub fn exact_facts(&self) -> ExactRealSetFacts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector3-exact-facts");
         crate::kernels::exact_real_set_facts(self.0.iter())
@@ -1779,13 +1741,10 @@ impl Vector3 {
     ///
     /// This is an exact algebraic vector expression, not a topology predicate.
     /// Each lane is a short determinant routed through the fixed product-sum
-    /// reducer so exact rational inputs can delay normalization. See Bareiss,
-    /// "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-    /// Elimination," *Mathematics of Computation* 22.103 (1968). Future
-    /// callers that already carry common-scale certificates should prefer
-    /// [`SharedScaleVec<3>::cross`] to bypass repeated scalar exactness probes,
-    /// preserving the object-level structure emphasized by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// reducer so exact rational inputs can delay normalization. Callers that
+    /// already carry common-scale certificates should prefer
+    /// [`SharedScaleVec<3>::cross`] to bypass repeated scalar exactness probes
+    /// and preserve object-level structure.
     pub fn cross(&self, rhs: &Self) -> Self {
         crate::trace_dispatch!("hyperlattice_vector", "method", "cross3");
         Self::new([
@@ -1848,10 +1807,7 @@ impl Vector3 {
     /// This keeps point-distance algebra in the hyper vector layer so CAD and
     /// mesh crates do not need to lower vectors to primitive floats just to
     /// compare distances. Use a predicate policy such as `hyperlimit` when the
-    /// sign or ordering of this value drives topology. The object-level
-    /// algebra boundary follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// sign or ordering of this value drives topology.
     pub fn squared_distance(&self, rhs: &Self) -> Real {
         crate::trace_dispatch!("hyperlattice_vector", "method", "squared-distance3");
         let delta = self - rhs;
@@ -1889,8 +1845,6 @@ impl Vector3 {
                 // once per surviving operand, then keep the pair as a product-sum
                 // so exact Real kernels can reuse denominator/canonicalization work
                 // rather than materializing two independent products plus an add.
-                // This is the same delayed-normalization principle as Bareiss,
-                // Math. Comp. 22(103), 1968, <https://doi.org/10.2307/2004533>.
                 let lhs0 = clone_with_abort(lhs0, signal);
                 let rhs0 = clone_with_abort(rhs0, signal);
                 let lhs1 = clone_with_abort(lhs1, signal);
@@ -1907,10 +1861,8 @@ impl Vector3 {
             // All three lanes survived cheap structural-zero pruning. Keep the
             // active-abort dot as one exact product polynomial after operand
             // attachment instead of reducing three independent products. This
-            // mirrors the vec4 sparse-three fast path and follows Bareiss-style
-            // delayed normalization for short exact sums:
-            // Bareiss, Math. Comp. 22(103), 1968,
-            // <https://doi.org/10.2307/2004533>.
+            // mirrors the vec4 sparse-three fast path and delays normalization
+            // across the short exact sum.
             let lhs0 = clone_with_abort(lhs0, signal);
             let rhs0 = clone_with_abort(rhs0, signal);
             let lhs1 = clone_with_abort(lhs1, signal);
@@ -1983,7 +1935,7 @@ impl Vector4 {
     ///
     /// The returned facts combine sparse coordinate masks, exact-set facts, and
     /// the projective point/direction split used by matrix transform kernels.
-    /// This follows Yap's object-fact discipline while keeping all scalar
+    /// This follows the object-fact discipline while keeping all scalar
     /// representation details in `hyperreal`.
     pub fn structural_facts(&self) -> Vector4Facts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector4-structural-facts");
@@ -2066,9 +2018,8 @@ impl Vector4 {
                 // Keep the two active-abort lanes as one product-sum after operand
                 // attachment. This mirrors the non-abort sparse-dot fast path and
                 // preserves exact-rational sharing where abort wrappers still allow
-                // the Real kernel to see through to exact structure, following the
-                // delayed-normalization principle in Bareiss, Math. Comp. 22(103),
-                // 1968, <https://doi.org/10.2307/2004533>.
+                // the Real kernel to see through to exact structure and delay
+                // normalization across the surviving products.
                 let lhs0 = clone_with_abort(lhs0, signal);
                 let rhs0 = clone_with_abort(rhs0, signal);
                 let lhs1 = clone_with_abort(lhs1, signal);
@@ -2085,11 +2036,8 @@ impl Vector4 {
             // Three active sparse lanes are still a short exact polynomial, so
             // attach abort guards once per operand and keep the sum in the
             // Real kernel's fixed-product reducer instead of materializing three
-            // products plus two adds. This follows the same delayed
-            // normalization rationale as Bareiss fraction-free elimination:
-            // keep exact products grouped until the last responsible moment.
-            // Bareiss, Math. Comp. 22(103), 1968,
-            // <https://doi.org/10.2307/2004533>.
+            // products plus two adds. Keep exact products grouped until the
+            // last responsible moment.
             let lhs0 = clone_with_abort(lhs0, signal);
             let rhs0 = clone_with_abort(rhs0, signal);
             let lhs1 = clone_with_abort(lhs1, signal);
@@ -2113,10 +2061,7 @@ impl Vector4 {
             // The dense active-abort vec4 dot is a four-term exact polynomial.
             // Keeping all terms in the Real reducer avoids four separate
             // guarded products and three immediate additions, preserving shared
-            // denominator/canonicalization work until the fused sum. This is the
-            // same fraction-free/delayed-normalization idea used by Bareiss,
-            // Math. Comp. 22(103), 1968,
-            // <https://doi.org/10.2307/2004533>.
+            // denominator and canonicalization work until the fused sum.
             let lhs0 = clone_with_abort(lhs0, signal);
             let rhs0 = clone_with_abort(rhs0, signal);
             let lhs1 = clone_with_abort(lhs1, signal);

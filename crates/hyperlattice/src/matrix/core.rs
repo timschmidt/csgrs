@@ -296,12 +296,8 @@ fn matrix4_signed_permutation_rows(matrix: &[[Real; 4]; 4]) -> Option<[SignedAxi
     // A signed permutation matrix has one exact signed unit in each row and
     // column, with every other entry exactly zero. Retaining this fact at the
     // matrix boundary lets transform and division code choose signed-axis
-    // schedules without re-probing every scalar lane. The structural-kernel
-    // split follows Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997); the row/column sparsity pattern
-    // is the fixed-size analogue of Gustavson's sparse matrix schedules,
-    // "Two Fast Algorithms for Sparse Matrices: Multiplication and Permuted
-    // Transposition," *ACM Transactions on Mathematical Software* 4.3 (1978).
+    // schedules without re-probing every scalar lane. The row/column sparsity
+    // pattern is the fixed-size analogue of sparse matrix scheduling.
     let rows = [
         matrix4_signed_axis_row(&matrix[0])?,
         matrix4_signed_axis_row(&matrix[1])?,
@@ -396,9 +392,8 @@ fn exact_rational_diagonal_entries_equal<const N: usize>(entries: [&Real; N]) ->
     // Conservative uniform-scale detection is deliberately exact-rational only:
     // it never asks symbolic `Real` values to prove equality and therefore
     // cannot force approximation or deep graph walks from a structural-facts
-    // query. This keeps the object fact cheap, in the spirit of Yap's
-    // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    // (1997): missing a uniform-scale fact is a performance miss, while a
+    // query. This keeps the object fact cheap, in the spirit of the
+    // the exact object-structure policy: missing a uniform-scale fact is a performance miss, while a
     // false fact would be a correctness bug.
     let Some(first) = entries[0].exact_rational_ref() else {
         return false;
@@ -469,14 +464,9 @@ pub struct Matrix4(
 /// certificate. It tells callers which fixed-size exact arithmetic package is
 /// worth trying before generic determinant expansion. This keeps matrix
 /// structure in `hyperlattice` while predicates and topology stay in
-/// `hyperlimit`, matching Yap's exact-geometric-computation separation between
-/// geometric object packages and arithmetic packages. See Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). Sparse and
-/// triangular schedule names follow the classical retained-structure kernels
-/// described by Gustavson, "Two Fast Algorithms for Sparse Matrices:
-/// Multiplication and Permuted Transposition," *ACM Transactions on
-/// Mathematical Software* 4.3 (1978), and Golub and Van Loan,
-/// *Matrix Computations*.
+/// `hyperlimit`, keeping geometric object packages separate from arithmetic
+/// packages. Sparse and triangular schedule names describe the retained matrix
+/// structure directly.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MatrixDeterminantScheduleHint {
     /// The determinant is structurally zero because at least one row or column
@@ -503,9 +493,8 @@ impl MatrixDeterminantScheduleHint {
     ///
     /// Shape-driven hints can be chosen without inspecting scalar denominator
     /// schedules. This keeps matrix structure in `hyperlattice` and arithmetic
-    /// representation in `hyperreal`, matching Yap's object/arithmetic package
-    /// separation for exact geometric computation; see Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// representation in `hyperreal`, matching the object/arithmetic package
+    /// separation for exact geometric computation; see the exact object-structure policy
     pub fn is_shape_driven(self) -> bool {
         matches!(
             self,
@@ -517,10 +506,8 @@ impl MatrixDeterminantScheduleHint {
     ///
     /// These routes are still exact, but they depend on `hyperreal`'s retained
     /// arithmetic facts rather than solely on matrix shape. Downstream kernels
-    /// can use this to try Bareiss-style or common-denominator schedules before
-    /// generic `Real` expansion; see Bareiss, "Sylvester's Identity and
-    /// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
-    /// Computation* 22.103 (1968).
+    /// can use this to try fraction-free or common-denominator schedules before
+    /// generic `Real` expansion.
     pub fn is_exact_rational_driven(self) -> bool {
         matches!(
             self,
@@ -538,10 +525,8 @@ impl MatrixDeterminantScheduleHint {
 ///
 /// The kind is a scheduling fact, not a proof of geometric intent. It is
 /// derived from exact structural facts already collected during matrix
-/// classification, preserving Yap's exact-geometric-computation boundary:
-/// object packages expose cheap structure, while topology and scalar algebra
-/// remain separate decisions. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// classification. Object packages expose cheap structure, while topology and
+/// scalar algebra remain separate decisions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Matrix3TransformKind {
     /// Structurally the identity transform.
@@ -582,13 +567,9 @@ pub enum Matrix4TransformKind {
 ///
 /// These are conservative object-level facts gathered in one matrix scan. They
 /// let callers choose sparse, triangular, affine, dyadic, or shared-denominator
-/// schedules without re-asking every scalar lane. This follows Yap's exact
-/// geometric computation guidance to carry geometric object structure before
-/// scalar expansion; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The row/column mask convention also
-/// supports the fixed sparse-kernel strategy described by Gustavson, "Two Fast
-/// Algorithms for Sparse Matrices: Multiplication and Permuted Transposition,"
-/// *ACM Transactions on Mathematical Software* 4.3 (1978).
+/// schedules without re-asking every scalar lane. Carrying geometric object
+/// structure before scalar expansion also supports fixed sparse-kernel
+/// scheduling through the row and column masks.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Matrix3StructuralFacts {
     /// Exact-rational representation facts for all entries.
@@ -598,9 +579,9 @@ pub struct Matrix3StructuralFacts {
     /// This gives matrix, transform, and prepared-divisor code a stable
     /// object-level scheduling fact for recognized symbolic constant families
     /// without exposing `Real`'s private representation or constructing a
-    /// general expression graph. The abstraction boundary follows Yap's
+    /// general expression graph. The abstraction boundary follows the
     /// separation between expression packages and geometric object packages;
-    /// see Yap, "Towards Exact Geometric Computation," *Computational
+    /// see the exact object-structure policy *Computational
     /// Geometry* 7.1-2 (1997).
     pub symbolic_dependencies: RealSymbolicDependencyMask,
     /// Bit mask of entries known to be exactly zero, in row-major order.
@@ -642,7 +623,7 @@ impl Matrix3StructuralFacts {
     ///
     /// `None` means the row or column is out of bounds. `Some(false)` is not a
     /// nonzero certificate; it only means the cheap structural scan did not
-    /// prove zero. Preserving that distinction follows Yap's exact geometric
+    /// prove zero. Preserving that distinction follows the exact geometric
     /// computation rule that conservative object facts may select algorithms,
     /// but absent facts must not decide mathematics.
     pub fn entry_known_zero(self, row: usize, column: usize) -> Option<bool> {
@@ -714,7 +695,7 @@ impl Matrix3StructuralFacts {
     /// Returns whether one row has certified sparse support.
     ///
     /// A row is sparse here when all but at most one entry are known zero. This
-    /// exposes the Gustavson-style sparse-row scheduling signal without forcing
+    /// exposes the sparse-kernel sparse-row scheduling signal without forcing
     /// callers to interpret mask layouts directly.
     pub fn row_has_sparse_support(self, row: usize) -> Option<bool> {
         self.row_zero_mask(row)
@@ -833,7 +814,7 @@ impl Matrix4StructuralFacts {
     ///
     /// `Some(false)` deliberately does not certify nonzero. It means only that
     /// the retained object facts did not prove zero cheaply, preserving the
-    /// conservative exact-computation boundary described by Yap.
+    /// conservative exact-computation boundary described by the exactness policy.
     pub fn entry_known_zero(self, row: usize, column: usize) -> Option<bool> {
         matrix_entry_mask_value::<4>(self.zero_mask, row, column)
     }
@@ -902,8 +883,8 @@ impl Matrix4StructuralFacts {
     /// Returns whether one row has certified sparse support.
     ///
     /// This helper keeps sparse-kernel selection at the matrix layer. It is a
-    /// conservative row-structure signal in the spirit of Gustavson's sparse
-    /// matrix multiplication schedules and Yap's object-fact-first exact
+    /// conservative row-structure signal in the spirit of sparse-kernel sparse
+    /// matrix multiplication schedules and the object-fact-first exact
     /// computation model.
     pub fn row_has_sparse_support(self, row: usize) -> Option<bool> {
         self.row_zero_mask(row)
@@ -954,10 +935,9 @@ impl Matrix4StructuralFacts {
 /// for structural facts, determinant-derived inverses, reciprocals, or right
 /// division by the same 3x3 matrix. It deliberately reuses
 /// [`PreparedRightDivisor3`] internally so the existing adjugate and determinant
-/// cache remains the single implementation of those exact kernels. Yap's
-/// "Towards Exact Geometric Computation" argues for preserving object
-/// structure and moving exact preprocessing to stable object boundaries; this
-/// handle is that boundary for reusable 3x3 linear maps.
+/// cache remains the single implementation of those exact kernels. This handle
+/// preserves object structure and moves preprocessing to a stable boundary for
+/// reusable 3x3 linear maps.
 #[derive(Debug, Clone)]
 pub struct PreparedMatrix3<'a> {
     right_divisor: PreparedRightDivisor3<'a>,
@@ -978,11 +958,9 @@ pub struct PreparedMatrix4<'a> {
 /// by the same 3×3 divisor.
 ///
 /// This type intentionally stores structural facts once and can lazily cache
-/// the divisor adjugate, determinant, and determinant inverse. Yap's exact
-/// geometric computation notes emphasize avoiding repeated expensive recomputation
-/// when object-level structure is stable ("Towards Exact Geometric Computation",
-/// 1997). The structure is tuned to keep fast-path checks cheap and defer
-// shared-scale inversion until the first call that benefits.
+/// the divisor adjugate, determinant, and determinant inverse. The structure is
+/// tuned to keep fast-path checks cheap and defer shared-scale inversion until
+/// the first call that benefits.
 #[derive(Debug, Clone)]
 pub struct PreparedRightDivisor3<'a> {
     divisor: &'a Matrix3,
@@ -1021,10 +999,8 @@ pub struct PreparedRightDivisor4<'a> {
 /// reciprocal, factor, adjugate, or inverse storage. That keeps the
 /// `hyperlattice` abstraction boundary intact: higher-level crates can decide
 /// whether a reusable matrix handle is cold or warm, while exact algebra still
-/// owns the cached arithmetic values. The design follows Yap's object-level
-/// exact-computation advice to carry structural work at stable geometric
-/// objects without leaking scalar representation details; see Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// owns the cached arithmetic values. Structural work stays at stable geometric
+/// objects without leaking scalar representation details.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct MatrixPreparedCacheState {
     /// Whether a determinant has been computed and retained.
@@ -1081,9 +1057,7 @@ struct Matrix3Facts {
     is_lower_triangular: bool,
     // Cached off-diagonal signal for the affine 2×2 block; used to skip full
     // affine inversion/division schedules when the linear block is axis-aligned.
-    // Retaining this cheap structural fact follows the exact-geometric strategy
-    // of reducing symbolic/geometric structure before arithmetic; see Yap,
-    // "Towards Exact Geometric Computation", 1997.
+    // Retain this cheap structural fact before entering scalar arithmetic.
     linear_is_diagonal: bool,
     is_affine: bool,
     is_affine_translation: bool,
@@ -1160,7 +1134,7 @@ impl<'a> PreparedMatrix3<'a> {
     /// Returns cached structural facts for the prepared matrix.
     ///
     /// The facts are computed during preparation and then reused without
-    /// rescanning scalar entries. This follows Yap's object-level exactness
+    /// rescanning scalar entries. This follows the object-level exactness
     /// guidance: carry cheap geometric structure to the next algorithm choice
     /// instead of rediscovering it lane by lane.
     pub fn structural_facts(&self) -> Matrix3StructuralFacts {
@@ -1207,7 +1181,7 @@ impl<'a> PreparedMatrix3<'a> {
     ///
     /// This keeps determinant reuse on the prepared matrix object instead of
     /// asking callers to remember whether an inverse or right-division already
-    /// materialized the determinant. The cache boundary follows Yap's
+    /// materialized the determinant. The cache boundary follows the
     /// object-package guidance: retain exact facts and derived certificates at
     /// stable geometric/algebraic objects before entering scalar arithmetic
     /// again.
@@ -1235,11 +1209,8 @@ impl<'a> PreparedMatrix3<'a> {
     /// This is the transform-side counterpart to [`PreparedMatrix3::inverse`]
     /// and [`PreparedMatrix3::divide_left`]: geometry code that already keeps a
     /// prepared matrix can reuse the same object-fact scan for repeated vector
-    /// transforms instead of constructing a separate transform handle. The
-    /// boundary follows Yap's object-layer rule in "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997): carry facts on the
-    /// reusable geometric object and select arithmetic kernels from those
-    /// facts.
+    /// transforms instead of constructing a separate transform handle. Facts
+    /// stay on the reusable geometric object and select arithmetic kernels.
     pub fn transform_vec3_handle(&self) -> TransformedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -1387,7 +1358,7 @@ impl<'a> PreparedMatrix4<'a> {
     ///
     /// These facts include homogeneous affine and direction shortcuts, so
     /// transform-heavy callers can select exact fast paths from one retained
-    /// object summary. This is the 4x4 version of Yap's exact-geometric
+    /// object summary. This is the 4x4 version of the exact-geometric
     /// preprocessing boundary.
     pub fn structural_facts(&self) -> Matrix4StructuralFacts {
         crate::trace_dispatch!(
@@ -1433,8 +1404,7 @@ impl<'a> PreparedMatrix4<'a> {
     ///
     /// For 4x4 matrices this may reuse the same fixed minor factors used by the
     /// prepared adjugate path, keeping determinant, inverse, and right-division
-    /// workloads on one cached object boundary as recommended by Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// workloads on one cached object boundary.
     pub fn determinant(&mut self) -> Real {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -1456,9 +1426,8 @@ impl<'a> PreparedMatrix4<'a> {
     /// determinant queries, inverse construction, and right division keeps
     /// affine/homogeneous facts in one semantic cache. The arithmetic kernels
     /// remain owned by the retained transform handle; this method only prevents
-    /// repeated structural rediscovery, following Yap's object-package model in
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// repeated structural rediscovery, following the object-package model in
+    /// the exact object-structure policy.
     pub fn transform_vec4_handle(&self) -> TransformedMatrix4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -1714,7 +1683,7 @@ impl<'a> PreparedRightDivisor3<'a> {
     ///
     /// The first call computes and stores the determinant. Later calls, and any
     /// inverse or shared-adjugate path that has already computed it, reuse the
-    /// cached value. This follows Yap's exact-geometric-computation advice to
+    /// cached value. This follows the exact-geometric-computation advice to
     /// keep derived object facts at the object that owns their validity rather
     /// than rediscovering them in each kernel.
     pub fn determinant(&mut self) -> Real {
@@ -1831,7 +1800,7 @@ impl<'a> PreparedRightDivisor3<'a> {
             let reciprocal_determinant = determinant.inverse_ref()?;
             self.adjugate = Some(adjugate);
             // Keep the shared determinant cache exact for future abort-aware or
-            // checked calls; this aligns with Yap's repeated-object reuse
+            // checked calls; this aligns with the repeated-object reuse
             // guidance by avoiding unnecessary recomputation on subsequent
             // prepared-path uses.
             self.determinant = Some(determinant);
@@ -1847,7 +1816,7 @@ impl<'a> PreparedRightDivisor3<'a> {
     /// adjugate/canonicalized determinant information.
     ///
     /// Reusing the right-side structural facts mirrors the exact GEOMETRIC
-    /// approach in Yap, "Towards Exact Geometric Computation", 1997: expensive
+    /// approach in the exact object-structure policy: expensive
     /// structure and factor derivations should be hoisted out of repeated
     /// calls when the object is reused.
     pub fn divide(&mut self, left: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
@@ -2082,11 +2051,8 @@ impl<'a> PreparedRightDivisor4<'a> {
     /// Returns the determinant of the prepared divisor.
     ///
     /// The 4x4 determinant uses the same cached six-minor factorization as the
-    /// prepared shared-adjugate path when available. This is a small fixed-size
-    /// version of the object-level preprocessing boundary advocated by Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): derive expensive exact structure once, then reuse it for the
-    /// kernels that need it.
+    /// prepared shared-adjugate path when available. Derive expensive exact
+    /// structure once, then reuse it for the kernels that need it.
     pub fn determinant(&mut self) -> Real {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -2210,8 +2176,8 @@ impl<'a> PreparedRightDivisor4<'a> {
                 // Keep the cached factors in the prepared handle so checked and
                 // abort-aware division variants can share the exact same
                 // structural work in each pass. This is a direct application
-                // of Yap-style object-level reuse for repeated geometry
-                // kernels (Yap, 1997).
+                // of object-level reuse for repeated geometry
+                // kernels .
                 if dense_exact && known_rational {
                     matrix4_factors_dense_exact_known_rational(&self.divisor.0)
                 } else if dense_exact {
@@ -2307,7 +2273,7 @@ impl<'a> PreparedRightDivisor4<'a> {
     /// adjugate/canonicalized determinant information.
     ///
     /// Reusing the right-side structural facts mirrors the exact GEOMETRIC
-    /// approach in Yap, "Towards Exact Geometric Computation", 1997: expensive
+    /// approach in the exact object-structure policy: expensive
     /// structure and factor derivations should be hoisted out of repeated
     /// calls when the object is reused.
     pub fn divide(&mut self, left: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
@@ -2610,11 +2576,11 @@ struct Matrix4Facts {
     // Enables direct diagonal right-inverse formulas for scale-only affine
     // updates common in transform stacks. As with the 3×3 case, retaining this
     // cheap geometric fact lets later kernels reduce structure before
-    // arithmetic; see Yap, "Towards Exact Geometric Computation", 1997.
+    // arithmetic; the exact object-structure policy
     linear_is_diagonal: bool,
     // Direction transforms ignore the translation column because w = 0, so this
     // fact deliberately tracks only the 3x3 linear block plus the bottom-row
-    // cross terms. Yap's exact-geometric-computation split between points and
+    // cross terms. the exact-geometric-computation split between points and
     // directions is what makes the cheaper predicate valid.
     direction_linear_is_diagonal: bool,
     // Affine-linear diagonal blocks frequently appear in transform stacks; if the
@@ -2627,7 +2593,7 @@ struct Matrix4Facts {
     // classifying diagonal structure, so retain them here instead of probing
     // `m03/m13/m23` again during handle construction. This is the same
     // "classify cheaply, reuse before arithmetic" principle used in exact
-    // geometric computation; see Yap, "Towards Exact Geometric Computation",
+    // geometric computation; see the exact object-structure policy,
     // 1997.
     translation_xyz_zero: [bool; 3],
     is_affine: bool,
@@ -2741,7 +2707,7 @@ fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
         // Retain the exact coordinate-set summary at the matrix object layer.
         // Future determinant/inverse kernels can route directly to dyadic or
         // shared-denominator schedules instead of rediscovering scalar
-        // denominators lane by lane. This follows Yap's object-level exactness
+        // denominators lane by lane. This follows the object-level exactness
         // guidance while keeping numerator/denominator ownership in
         // `hyperreal::Rational`.
         exact,
@@ -3119,11 +3085,8 @@ where
     F: FnMut([[Real; N]; N], [[Real; N]; N]) -> [[Real; N]; N],
 {
     // Alternative researched paths for fixed 3x3/4x4 powers included
-    // Cayley-Hamilton with Faddeev-LeVerrier characteristic coefficients
-    // (Hou, SIAM Review 40(3), 1998, https://doi.org/10.1137/S003614459732076X)
-    // and Berkowitz-style division-free characteristic polynomials
-    // (Berkowitz, Information Processing Letters 18(3), 1984,
-    // https://doi.org/10.1016/0020-0190(84)90018-8). For the small exponents
+    // Cayley-Hamilton with Faddeev-LeVerrier coefficients and Berkowitz-style
+    // division-free characteristic polynomials. For the small exponents
     // that dominate this crate's matrix benches, those approaches introduce
     // trace/determinant reductions before they can save a multiply. Keep powers
     // on repeated squaring and put the optimization budget into the fixed-size
@@ -3543,8 +3506,7 @@ fn prefer_shared_adjugate_right_division<const N: usize>(
     // forms with one shared denominator, so keep dyadic as the hot first
     // predicate and isolate the broader exact-rational fallback below.
     // This is the same "delay the common scale" idea as fraction-free exact
-    // linear algebra (Bareiss, Math. Comp. 22(103), 1968,
-    // https://doi.org/10.2307/2004533), but applied only when traces show the
+    // linear algebra (fraction-free elimination// , but applied only when traces show the
     // extra products are cheaper than repeated inverses.
     // Check the divisor first. The shared-adjugate branch is only useful when
     // `det(right)` and all adjugate cofactors stay dyadic; decimal divisors can
@@ -3607,7 +3569,7 @@ fn matrix4_direction_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
     // transforms use the same component-wise scale path as true diagonal
     // matrices without changing point or unknown-w behavior. This is the
     // projective point/direction split used in exact geometric computation; see
-    // Yap, "Towards Exact Geometric Computation", 1997.
+    // the exact object-structure policy
     matrix[0][1].definitely_zero()
         && matrix[0][2].definitely_zero()
         && matrix[1][0].definitely_zero()
@@ -3653,7 +3615,7 @@ fn matrix4_affine_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
     // out of prepared paths, where retained `Matrix4Facts` are already
     // available. Targeted sentinel runs showed the public point transform
     // regressed after broad fact collection, while prepared handles stayed flat.
-    // See Yap, "Towards Exact Geometric Computation", 1997.
+    // the exact object-structure policy
     matrix[0][1].definitely_zero()
         && matrix[0][2].definitely_zero()
         && matrix[1][0].definitely_zero()
@@ -3674,8 +3636,8 @@ fn matrix3_is_definitely_dense_for_inverse(matrix: &[[Real; 3]; 3]) -> bool {
     // triangular, `m01 != 0` rules out lower triangular, and `m20 != 0` rules
     // out affine form; together they also rule out diagonal/identity. When any
     // certificate is unknown, fall back to the full fact scan so exact geometry
-    // paths keep their structural reductions. This preserves Yap's object-level
-    // structure principle ("Towards Exact Geometric Computation", 1997) while
+    // paths keep their structural reductions. This preserves the object-level
+    // structure principle the exact object-structure policy while
     // keeping dense cofactor kernels thin.
     matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
         && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
@@ -3690,7 +3652,7 @@ fn matrix4_is_definitely_dense_for_inverse(matrix: &[[Real; 4]; 4]) -> bool {
     // triangular/affine structures already ruled out. The guard uses only three
     // cheap structural facts and never approximates, matching the exact
     // geometric-computation rule of exploiting structure only when it is known.
-    // See Yap, "Towards Exact Geometric Computation", 1997.
+    // the exact object-structure policy
     matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
         && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
         && matches!(matrix[3][0].zero_status(), ZeroStatus::NonZero)
@@ -4432,8 +4394,7 @@ fn affine_translation_column_update(row: &[Real; 4], inverse_translation: &[Real
     // rather than spelling out three multiplies and two adds so exact Real kernels
     // can delay denominator/canonicalization work inside the short polynomial.
     // This is the fixed-size form of fraction-free/delayed-normalization
-    // arithmetic (Bareiss, Math. Comp. 22(103), 1968,
-    // <https://doi.org/10.2307/2004533>).
+    // arithmetic (fraction-free elimination// .
     let matrix_terms = [&row[0], &row[1], &row[2]];
     let translation_terms = [
         &inverse_translation[0],
@@ -5254,9 +5215,7 @@ fn invert_matrix3_by_diagonal(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3];
         // Hyperreal-style Real kernels prefer direct fixed-array construction here:
         // the structural diagonal fact already selected this kernel, so
         // per-cell branch dispatch only re-proves known sparsity. This is the
-        // fixed-size version of exploiting matrix structure before arithmetic
-        // described by Golub and Van Loan, *Matrix Computations*, and by Yap,
-        // "Towards Exact Geometric Computation", 1997.
+        // fixed-size version of exploiting matrix structure before arithmetic.
         Ok([
             [inv00, Real::zero(), Real::zero()],
             [Real::zero(), inv11, Real::zero()],
@@ -5304,7 +5263,7 @@ fn invert_matrix3_by_diagonal_checked_with_abort(
 fn invert_matrix3_upper_triangular(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     // Upper-triangular inversion uses three pivot inverses plus short substitution:
     // exactly the arithmetic savings expected from specialized triangular kernels
-    // in exact linear algebra. Avoiding minors here aligns with Bareiss-style
+    // in exact linear algebra. Avoiding minors here aligns with fraction-free
     // fraction-free goals by minimizing intermediate determinant scaling.
     let inv_a00 = matrix[0][0].clone().inverse()?;
     let inv_a11 = matrix[1][1].clone().inverse()?;
@@ -5400,8 +5359,7 @@ fn invert_matrix3_affine(
     // adjugate for repeated geometric kernels.
     // The caller supplies `linear_is_diagonal` from `Matrix3Facts`, avoiding a
     // second probe of the same off-diagonal entries after affine dispatch.
-    // This follows the retained-object-fact strategy in Yap, "Towards Exact
-    // Geometric Computation", 1997.
+    // Reuse the retained object facts.
     if linear_is_diagonal {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -5789,9 +5747,7 @@ fn invert_matrix4_by_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4];
         // `Matrix4Facts::is_diagonal` chose this helper, all off-diagonal zeros
         // are certified object-level facts. Avoiding a second sparsity decision
         // keeps the symbolic/exact path thinner. This follows the
-        // structure-first principle in
-        // Golub and Van Loan, *Matrix Computations*, and Yap, "Towards Exact
-        // Geometric Computation", 1997.
+        // Keep the structure-first matrix schedule.
         Ok([
             [inv00, Real::zero(), Real::zero(), Real::zero()],
             [Real::zero(), inv11, Real::zero(), Real::zero()],
@@ -7165,7 +7121,7 @@ fn divide_matrix4_by_upper_triangular(
         );
         // Exact Real kernels can keep each row solve as short signed product sums:
         // b_j - x_0 u_0j - ... . This follows the fraction-delay guidance
-        // used by Bareiss/common-factor exact matrix methods while avoiding
+        // used by fraction-free/common-factor exact matrix methods while avoiding
         // scalar zero probes inside the hot triangular lanes.
         let one = Real::one();
         for row in &mut left {
@@ -7514,7 +7470,7 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
         // eliminated.
         // This preserves structural short-circuiting in common dense matrix
         // workloads and aligns with the "defer expensive queries" policy in
-        // exact geometric computation (Yap, 1997).
+        // exact geometric computation .
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
@@ -8178,7 +8134,7 @@ fn right_divide_matrix3_prepared(
     // Shared-adjugate is the intended win for repeated right-division by one divisor:
     // exact factor extraction is lifted out once, then each divisor application uses
     // one reciprocal and fixed-size matrix products. This is the same "delay common
-    // scale" idea used in fraction-free elimination (Bareiss, 1968).
+    // scale" idea used in fraction-free elimination .
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
@@ -8597,7 +8553,7 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
         // Left-side facts are only required for affine dispatch; keeping the
         // non-affine path down to a single right-fact scan avoids unnecessary
         // structural work and mirrors the deferred-symbolic strategy promoted in
-        // Yap's exact geometric computation model.
+        // the exact geometric computation model.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
@@ -8896,8 +8852,7 @@ fn right_divide_matrix4_prepared(
 
     // The shared-adjugate route can keep exact dyadic workloads flat by reusing
     // one factorization and one scalar reciprocal across repeated right
-    // divisons against the same 4×4 divisor. See Bareiss, "Sylvester's
-    // identity and fraction-free Gaussian elimination" lineage, and Yap 1997.
+    // divisions against the same 4x4 divisor.
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
@@ -9562,10 +9517,9 @@ fn right_divide_matrix4_checked(
         return divide_matrix4_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
-        // Defer left-side structural probe until the affine branch to preserve Yap-style fast
+        // Defer left-side structural probe until the affine branch to preserve object-structure fast
         // pathing and avoid materializing facts for matrix divisions that dispatch through
         // cheaper triangular/cofactor routes.
-        // See: Yap, "Toward an API for Real Number Types", 1994.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
@@ -10638,8 +10592,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // For the N==4 case, reuse one structural scan for identity, diagonal,
         // and direction-fast-path predicates. This keeps 4x4 transform kernels
         // on the same fact-on-demand policy used by division/inverse dispatch.
-        // See Golub and Van Loan, *Matrix Computations* (4th ed.), and Yap,
-        // "Towards Exact Geometric Computation", 1997.
+        // Reuse object facts before entering scalar arithmetic.
         let left_facts = matrix4_facts_assuming_const4(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
@@ -10663,8 +10616,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // zero/one/minus-one fact gives direction/point transforms a single
         // query and keeps signed-unit projective coordinates, such as `w = -1`,
         // on the generic homogeneous path. That preserves the object-fact
-        // boundary advocated by Yap, "Towards Exact Geometric Computation,"
-        // Computational Geometry 7.1-2 (1997).
+        // boundary used by the generic homogeneous path.
         match right[3].zero_one_or_minus_one() {
             RealZeroOneMinusOneStatus::Zero => {
                 crate::trace_dispatch!(
@@ -10936,7 +10888,7 @@ fn transform_vector4_rhs_ref_with_facts(
     facts: Vector4GeometricFacts,
 ) -> [Real; 4] {
     // Retained homogeneous classification lets us choose affine-specialized
-    // kernels before re-running scalar structure probes. This mirrors Yap’s
+    // kernels before re-running scalar structure probes. This mirrors the
     // retained-structure thesis for exact geometry, where cheap geometric
     // facts gate fast paths early and postpone canonicalization.
     match facts.homogeneous {
@@ -11035,7 +10987,7 @@ fn transform_vector4_direction_batch_assumed_ref(
         // hyperreal's delayed product-sum reduction instead of constructing a
         // generic four-term expression with a structural zero. This is the
         // projective point/direction split used by exact geometric kernels; see
-        // Yap, "Towards Exact Geometric Computation", 1997.
+        // the exact object-structure policy
         let vector_terms = [&vector.0[0], &vector.0[1], &vector.0[2]];
         transformed.push(Vector4(from_fn(|row| {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -11054,8 +11006,7 @@ fn transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
     // each spatial lane is one cached scale plus one translation add. This avoids
     // building three-term linear combinations whose off-diagonal terms are known
     // structural zeros. The specialization follows the projective point/direction
-    // split used in exact geometric computation; see Yap, "Towards Exact
-    // Geometric Computation", 1997.
+    // split used in exact geometric computation.
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
@@ -11070,7 +11021,7 @@ fn transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
         // lane avoids constructing a fresh scalar and preserves any cached
         // exact/symbolic representation already carried by the point. This is
         // the same object-level information preservation advocated for exact
-        // geometric computation by Yap, "Towards Exact Geometric Computation",
+        // geometric computation by the exact object-structure policy,
         // 1997.
         right[3].clone(),
     ]
@@ -11090,8 +11041,7 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
     // can be written as a 3-term spatial product plus `w'`-scaled
     // translation terms. Keeping this as an affine-only specialization
     // preserves inexpensive structural dispatch while avoiding full homogeneous
-    // matrix multiplication when only one structural coefficient changed
-    // (Yap, "Towards Exact Geometric Computation", 1997).
+    // matrix multiplication when only one structural coefficient changed.
     let vector_terms = [&right[0], &right[1], &right[2]];
     // Precomputed translation flags allow this helper to avoid rescanning `w`-column
     // structural zeros after its caller already inspected it. That keeps this
@@ -11172,7 +11122,7 @@ fn transform_vector4_rhs_point_ref_cached(
     // enter this helper after retained matrix facts have already ruled out
     // identity and diagonal transforms; rechecking them here made prepared
     // point and mixed-batch paths pay a second full matrix probe.
-    // See Yap, "Towards Exact Geometric Computation", 1997.
+    // the exact object-structure policy
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
@@ -11352,8 +11302,7 @@ impl<'a> TransformedMatrix4<'a> {
                 // saves the otherwise redundant `1 * m33` multiply and keeps the
                 // exact projective point/direction invariant visible to later
                 // kernels. This follows the homogeneous-coordinate split used by
-                // exact geometric computation; see Yap, "Towards Exact Geometric
-                // Computation", 1997.
+                // exact geometric computation.
                 return Vector4(
                     transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
                         &self.matrix.0,
@@ -11452,9 +11401,8 @@ impl<'a> TransformedMatrix4<'a> {
             // The handle already paid to classify the matrix, so cloning the
             // point preserves all exact/symbolic scalar structure and avoids
             // three identity multiplies plus three zero translations. This is
-            // Yap's object-package principle applied at the prepared-kernel
-            // boundary: use geometric facts before scalar arithmetic (Yap,
-            // "Towards Exact Geometric Computation", 1997).
+            // Use geometric facts before scalar arithmetic at the prepared-kernel
+            // boundary.
             return rhs.clone();
         }
         if self.facts.is_affine && self.facts.linear_is_diagonal {
@@ -11485,9 +11433,7 @@ impl<'a> TransformedMatrix4<'a> {
             // Identity transforms can return the input without knowing whether
             // it is a point, direction, or unknown, so eager `w` classification
             // is wasted on that exact-object fast path. This keeps deferred
-            // kernels aligned with Yap's recommendation to exploit geometric
-            // object structure before lower-level number facts (Yap, "Towards
-            // Exact Geometric Computation", 1997).
+            // Exploit geometric object structure before lower-level number facts.
             vector_facts: None,
             vector: rhs,
         }
@@ -11521,8 +11467,7 @@ impl<'a> TransformedMatrix4<'a> {
                             // the remaining direction scan only needs `w == 0`.
                             // This avoids asking whether every later direction is a
                             // point while keeping unknown first vectors on a single
-                            // combined signed-unit classifier. See Yap, "Towards
-                            // Exact Geometric Computation", 1997.
+                            // combined signed-unit classifier.
                             for vector in rhs {
                                 transformed.push(Vector4([
                                     vector.0[0].clone().mul_cached(&self.matrix.0[0][0]),
@@ -11746,9 +11691,8 @@ impl<'a> TransformedMatrix4<'a> {
     /// callers that already know `w = 0` can avoid the batch classification pass
     /// and keep dispatch deterministic across every lane. The optimization is
     /// intentionally handle-scoped rather than stored on every vector or matrix,
-    /// following Yap's recommendation to exploit geometric-object structure
-    /// above the BigNumber layer without making each scalar operation heavier
-    /// (Yap, "Towards Exact Geometric Computation", 1997).
+    /// following the rule to exploit geometric-object structure above the
+    /// big-number layer without making each scalar operation heavier.
     pub fn transform_direction_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -11765,9 +11709,8 @@ impl<'a> TransformedMatrix4<'a> {
             // before the diagonal direction kernel so known directions under an
             // identity transform are cloned rather than multiplied by three
             // structural ones. This is the cheapest object-level reduction in
-            // Yap's exact-geometric-computation sense: preserve the geometric
-            // object fact and avoid scalar arithmetic entirely (Yap, "Towards
-            // Exact Geometric Computation", 1997).
+            // exact path: preserve the geometric object fact and avoid scalar
+            // arithmetic entirely.
             return rhs.to_vec();
         }
         transform_vector4_direction_batch_assumed_ref(
@@ -11800,7 +11743,7 @@ impl<'a> TransformedMatrix4<'a> {
             // transforms the mathematically exact result is the input batch, so
             // cloning preserves all scalar structure and avoids unnecessary
             // approximation, canonicalization, and additive identity work. See
-            // Yap, "Towards Exact Geometric Computation", 1997.
+            // the exact object-structure policy
             return rhs.to_vec();
         }
         let mut transformed = Vec::with_capacity(rhs.len());
@@ -11813,8 +11756,7 @@ impl<'a> TransformedMatrix4<'a> {
             // Keep this hot affine point-batch loop local to the prepared
             // handle. If a future exact-Real kernel run shows a stable hyperreal
             // win from a different shape, gate it behind a structural Real kernel
-            // capability. This follows the thin/static-kernel rule from the Yap
-            // backlog: exploit retained point facts, but do not introduce
+            // capability. Exploit retained point facts, but do not introduce
             // abstraction cost into a nanosecond-scale kernel.
             for vector in rhs {
                 transformed.push(Vector4([
@@ -11959,9 +11901,8 @@ impl<'a> TransformedVector4<'a> {
             {
                 // Preserve the retained point fact through deferred
                 // materialization instead of flattening it into a fourth cached
-                // multiply. The same projective invariant is used by the eager
-                // transform path above; see Yap, "Towards Exact Geometric
-                // Computation", 1997.
+                // multiply. The eager transform path uses the same projective
+                // invariant.
                 return Vector4(
                     transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
                         &self.matrix.0,
@@ -12005,7 +11946,7 @@ fn scale_by_shared_factor(value: Real, factor: &Real) -> Real {
     // Hyperreal opts into borrowing that scale so exact/symbolic state is not
     // cloned per lane. This is the fixed-size analogue of delaying the common
     // denominator in fraction-free elimination:
-    // Bareiss, Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533.
+    // fraction-free elimination.
     if true {
         value.mul_cached(factor)
     } else {
@@ -12017,7 +11958,7 @@ fn scale_matrix3(matrix: [[Real; 3]; 3], factor: &Real) -> [[Real; 3]; 3] {
     // Keep the shared determinant inverse borrowed and unroll the fixed 3x3
     // scale. The cofactor inverse/division kernels follow the fraction-free
     // principle of delaying the common denominator until the last pass
-    // (Bareiss, Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533);
+    // (fraction-free elimination);
     // spelling out the final pass avoids nested `array::map` closure layout for
     // hyperreal reciprocal/div_matrix rows while preserving that single shared
     // inverse.
@@ -12085,9 +12026,9 @@ fn mul_sub(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
         // Structural zero pruning is intentionally done before forming exact
         // products. In hyperreal this avoids allocating symbolic/rational terms
         // that would later canonicalize to zero.
-        // The sparse-kernel idea follows Gustavson's observation that skipping
+        // The sparse-kernel idea follows sparse-kernel observation that skipping
         // known-zero products is the central win in sparse matrix arithmetic:
-        // Gustavson, ACM TOMS 4(3), 1978, https://doi.org/10.1145/355791.355796.
+        // sparse-matrix scheduling.
         let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
@@ -12137,8 +12078,8 @@ fn mul_add(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
         // construction until after cheap zero facts decide which lanes can
         // contribute. The surviving nonzero lanes are then passed to the
         // Real fused product-sum path so exact rationals can share one
-        // denominator, mirroring Bareiss's delayed-canonicalization principle
-        // (Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533).
+        // denominator, mirroring fraction-free delayed-canonicalization principle
+        // (Math. Comp. 22(103), 1968, .
         let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
@@ -12357,12 +12298,12 @@ fn mul_sub_add_dense_exact_known_rational(
 #[inline]
 fn determinant3(m: &[[Real; 3]; 3]) -> Real {
     crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant3");
-    // Keep determinant infallible and division-free. A Bareiss prototype would
+    // Keep determinant infallible and division-free. A fraction-free elimination prototype would
     // need pivot divisions and a fallback for singular or unknown-zero pivots,
     // which does not match the public determinant contract and adds exact
     // rational normalization work to the common 3x3 case. The algorithm was
-    // checked against Bareiss's integer-preserving elimination paper
-    // (https://www.ams.org/mcom/1968-22-103/S0025-5718-1968-0226829-0/S0025-5718-1968-0226829-0.pdf);
+    // checked against fraction-free integer-preserving elimination paper
+    // (;
     // for these fixed sizes, keeping cofactors division-free plus delaying dot
     // canonicalization in hyperreal gave the measured wins without changing
     // determinant semantics.
@@ -12458,9 +12399,7 @@ fn matrix3_scaled_adjugate(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]
     // Mat3 reciprocal is hot enough to keep a scaled-cofactor schedule separate
     // from right-division's unscaled-adjugate path. This avoids constructing an
     // intermediate matrix only to immediately rescale it, while preserving one
-    // shared determinant reciprocal. The delayed common-scale principle follows
-    // Bareiss's fraction-free exact linear algebra work, Math. Comp. 22(103),
-    // 1968, https://doi.org/10.2307/2004533.
+    // shared determinant reciprocal and delays common-scale normalization.
     Ok([
         [
             scale_by_shared_factor(c00, &inv_det),
@@ -12835,7 +12774,7 @@ fn determinant4(m: &[[Real; 4]; 4]) -> Real {
     // The six-minor formula shares the same division-free rationale as 3x3.
     // It is also reused by the cofactor inverse path, so determinant and
     // inverse stay aligned with the trace counters used for regression checks.
-    // Bareiss/Gauss-Jordan alternatives remain useful for larger or purely
+    // fraction-free elimination/Gauss-Jordan alternatives remain useful for larger or purely
     // integer systems, but on this 4x4 public API the traced bottleneck was
     // rational canonicalization inside dot products, not the minor schedule.
     let (s, c) = matrix4_factors(m);
@@ -14042,11 +13981,9 @@ impl Matrix3 {
     ///
     /// This exposes the matrix-level common-scale signal without exposing
     /// rational storage. Callers that retain this fact can select dyadic or
-    /// shared-denominator exact schedules before entering determinant,
-    /// inverse, or predicate preparation code. The approach follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997): keep object structure visible long enough to choose the exact
-    /// arithmetic package.
+    /// shared-denominator exact schedules before entering determinant, inverse,
+    /// or predicate preparation code. Object structure stays visible long enough
+    /// to choose the exact arithmetic package.
     pub fn exact_facts(&self) -> ExactRealSetFacts {
         crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix3-exact-facts");
         matrix3_facts(&self.0).exact
@@ -14057,7 +13994,7 @@ impl Matrix3 {
     /// This is the object-level fact boundary for matrix callers: zero/one
     /// masks, triangular/affine shape, and exact coordinate-set facts are
     /// gathered together without exposing scalar storage internals. Keeping the
-    /// summary at the matrix layer matches Yap's recommendation to select exact
+    /// summary at the matrix layer matches the recommendation to select exact
     /// geometric algorithms from retained object structure before scalar
     /// expansion.
     pub fn structural_facts(&self) -> Matrix3StructuralFacts {
@@ -14070,9 +14007,8 @@ impl Matrix3 {
     ///
     /// Preparation computes the matrix-level facts once and then reuses the
     /// same determinant/adjugate cache as [`PreparedRightDivisor3`]. This keeps
-    /// the one-shot API thin while giving higher-level geometry objects a
-    /// stable cache boundary, as recommended by Yap, "Towards Exact Geometric
-    /// Computation" (1997).
+    /// the one-shot API thin while giving higher-level geometry objects a stable
+    /// cache boundary.
     pub fn prepare(&self) -> PreparedMatrix3<'_> {
         PreparedMatrix3::new(self)
     }
@@ -14094,9 +14030,8 @@ impl Matrix3 {
     /// instead of rediscovering it with structural probes inside
     /// [`Matrix3::reciprocal`]. That keeps ordinary inverse/division paths flat
     /// while preserving the exact diagonal solve `D^-1 = diag(1/d_i)` when the
-    /// geometry layer already knows the matrix shape. The choice follows Yap's
-    /// object-package guidance for exact geometric computation ("Towards Exact
-    /// Geometric Computation", 1997) and the diagonal-system specialization in
+    /// geometry layer already knows the matrix shape. The choice follows the
+    /// object-package guidance for exact geometric computation the exact object-structure policy and the diagonal-system specialization in
     /// Golub and Van Loan, *Matrix Computations*.
     pub fn diagonal_inverse(diagonal: [Real; 3]) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal3-inverse");
@@ -14115,8 +14050,7 @@ impl Matrix3 {
     /// a diagonal inverse matrix and avoids generic matrix multiplication when
     /// a caller already retained the diagonal object fact. Keeping the route
     /// opt-in preserves deterministic performance for ordinary matrix division
-    /// while exploiting geometric-object structure as recommended by Yap,
-    /// "Towards Exact Geometric Computation", 1997. The algebra is the standard
+    /// while exploiting geometric-object structure. The algebra is the standard
     /// diagonal linear-system specialization described by Golub and Van Loan,
     /// *Matrix Computations*.
     pub fn div_diagonal(self, diagonal: [Real; 3]) -> BlasResult<Self> {
@@ -14291,9 +14225,7 @@ impl Matrix3 {
     /// diagonal then using the normal matrix-vector kernel preserves the exact
     /// structure while avoiding construction of an intermediate matrix.
     ///
-    /// This path is an opt-in structural fast path aligned with
-    /// "Towards Exact Geometric Computation", 1997 (Yap), and the diagonal
-    /// specialization strategy in Golub and Van Loan's *Matrix Computations*.
+    /// This path is an opt-in structural fast path for a known diagonal divisor.
     pub fn div_diagonal_vector(&self, diagonal: [Real; 3], rhs: &Vector3) -> BlasResult<Vector3> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal3-vector");
         let [d0, d1, d2] = diagonal;
@@ -14326,7 +14258,7 @@ impl Matrix3 {
     ///
     /// This avoids re-deriving structural facts, cofactors, and determinant
     /// inverses for hot geometric pipelines where the same divisor is reused.
-    /// The optimization follows Yap's "Towards Exact Geometric Computation", 1997,
+    /// The optimization follows the exact object-structure policy,
     /// which advises moving expensive object-level preprocessing to stable object
     /// boundaries.
     pub fn prepare_right_divisor(&self) -> PreparedRightDivisor3<'_> {
@@ -14392,10 +14324,7 @@ impl Matrix3 {
     /// geometry. It is intentionally explicit: previous hidden uniform-scale
     /// detection regressed adjacent diagonal reciprocal paths because equality
     /// checks taxed every diagonal matrix. When a caller already knows `A = sI`,
-    /// one scalar inverse and two clones are sufficient. This follows Yap's
-    /// object-layer specialization principle ("Towards Exact Geometric
-    /// Computation", 1997) and the diagonal solve specialization in Golub and
-    /// Van Loan, *Matrix Computations*.
+    /// one scalar inverse and two clones are sufficient.
     pub fn uniform_scale_inverse(scale: Real) -> BlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -14428,7 +14357,7 @@ impl Matrix3 {
     /// The handle retains matrix structural facts once and reuses them across
     /// single-vector, deferred-vector, and batch transforms. This follows the
     /// same "classify before arithmetic" strategy used by exact geometric
-    /// computation; see Yap, "Towards Exact Geometric Computation", 1997.
+    /// computation; the exact object-structure policy
     pub fn transform_vec3_handle(&self) -> TransformedMatrix3<'_> {
         TransformedMatrix3::new(self)
     }
@@ -14590,7 +14519,7 @@ impl Matrix4 {
     /// The prepared handle carries affine/homogeneous matrix facts and reuses
     /// the existing 4x4 determinant, adjugate, factor, and inverse caches.
     /// Keeping this explicit preserves predictable one-shot behavior while
-    /// exposing Yap-style object preprocessing for reusable transforms.
+    /// exposing object preprocessing for reusable transforms.
     pub fn prepare(&self) -> PreparedMatrix4<'_> {
         PreparedMatrix4::new(self)
     }
@@ -14965,9 +14894,9 @@ impl Matrix4 {
     /// showed that adding dynamic probes to the general inverse path made
     /// adjacent cases less deterministic. When callers retain the object-level
     /// fact that `D` is diagonal, the exact inverse is just four independent
-    /// scalar reciprocals and certified off-diagonal zeros. This mirrors Yap's
+    /// scalar reciprocals and certified off-diagonal zeros. This mirrors the
     /// recommendation to exploit geometric-object structure before arithmetic
-    /// ("Towards Exact Geometric Computation", 1997) and the diagonal solve
+    /// the exact object-structure policy and the diagonal solve
     /// treatment in Golub and Van Loan, *Matrix Computations*.
     pub fn diagonal_inverse(diagonal: [Real; 4]) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal-inverse");
@@ -14988,9 +14917,8 @@ impl Matrix4 {
     /// structure-detection experiments showed probe costs can make related
     /// division paths less flat. When a higher geometry layer already knows the
     /// divisor is diagonal, this path uses four scalar reciprocals and sixteen
-    /// cached multiplies with no determinant/cofactor work. This follows Yap's
-    /// object-level exact geometric computation guidance ("Towards Exact
-    /// Geometric Computation", 1997) and the diagonal solve specialization in
+    /// cached multiplies with no determinant/cofactor work. This follows the
+    /// object-level exact geometric computation guidance the exact object-structure policy and the diagonal solve specialization in
     /// Golub and Van Loan, *Matrix Computations*.
     pub fn div_diagonal(self, diagonal: [Real; 4]) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal");
@@ -15177,11 +15105,8 @@ impl Matrix4 {
     /// the matrix-vector helper where one existing structural branch can still
     /// run.
     ///
-    /// The same geometric-structure rationale from Yap's "Towards Exact
-    /// Geometric Computation" (1997) applies here: retain object facts, defer
-    /// expensive algebra, and reduce to a cheaper exact kernel when the divisor
-    /// structure is known. See Golub and Van Loan, *Matrix Computations* for
-    /// the diagonal solve perspective.
+    /// Retain object facts, defer expensive algebra, and reduce to a cheaper
+    /// exact kernel when the divisor structure is known.
     pub fn div_diagonal_vector(&self, diagonal: [Real; 4], rhs: &Vector4) -> BlasResult<Vector4> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal4-vector");
         let [d0, d1, d2, d3] = diagonal;
@@ -15190,8 +15115,8 @@ impl Matrix4 {
             // Direction vectors are guaranteed `w == 0`; avoiding `d3` work keeps
             // this branch aligned with specialized direction kernels and avoids
             // unnecessary reciprocal work when only three linear scales are ever used.
-            // This follows Yap's geometric-object split between points and
-            // directions in "Towards Exact Geometric Computation", 1997.
+            // This follows the geometric-object split between points and
+            // directions in the exact object-structure policy.
             let (inv0, inv1, inv2) = if d0 == d1 && d0 == d2 {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
@@ -15265,8 +15190,7 @@ impl Matrix4 {
                 // After pre-scaling, the point transform is:
                 // `(A / D) * p = A * (D^{-1} p)` with `p.w' = p.w * d3^{-1}`.
                 // This avoids rebuilding a full four-term dot and keeps the
-                // special-point row scheduling aligned with projective geometry
-                // routines (Yap, "Towards Exact Geometric Computation", 1997).
+                // special-point row scheduling aligned with projective geometry.
                 let rhs_div = [rhs_div_x, rhs_div_y, rhs_div_z, rhs_div_3_scale];
                 Ok(Vector4(
                     transform_vector4_rhs_point_with_scaled_w_ref_cached(
@@ -15319,10 +15243,8 @@ impl Matrix4 {
     ///
     /// Direction vectors have `w == 0`, so the fourth diagonal divisor entry is
     /// provably irrelevant. Avoiding its inversion and W-scaling is an exact
-    /// structural optimization that follows Yap's geometric-object viewpoint in
-    /// "Towards Exact Geometric Computation" (1997): preserve and exploit
-    /// projective-direction facts so arithmetic follows the minimal necessary
-    /// path.
+    /// structural optimization: preserve and exploit projective-direction facts
+    /// so arithmetic follows the minimal necessary path.
     #[inline]
     pub fn div_diagonal_direction_vector(
         &self,
@@ -15355,7 +15277,7 @@ impl Matrix4 {
     ///
     /// This avoids re-deriving structural facts, cofactors, and determinant
     /// inverses for hot geometric pipelines where the same divisor is reused.
-    /// The optimization follows Yap's "Towards Exact Geometric Computation", 1997,
+    /// The optimization follows the exact object-structure policy,
     /// which advises moving expensive object-level preprocessing to stable object
     /// boundaries.
     pub fn prepare_right_divisor(&self) -> PreparedRightDivisor4<'_> {
@@ -15441,10 +15363,8 @@ impl Matrix4 {
     /// that dynamic equality checks for uniform scale made adjacent diagonal
     /// inverse paths less flat. When the caller already owns the object-level
     /// fact `A = sI`, one scalar inverse is sufficient and reusing it preserves
-    /// hyperreal's exact/symbolic node cache. This is the explicit object-layer
-    /// specialization recommended by Yap, "Towards Exact Geometric
-    /// Computation", 1997, and the diagonal solve specialization in Golub and
-    /// Van Loan, *Matrix Computations*.
+    /// hyperreal's exact/symbolic node cache. This is an explicit object-layer
+    /// specialization of the diagonal solve.
     pub fn uniform_scale_inverse(scale: Real) -> BlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
@@ -15461,7 +15381,7 @@ impl Matrix4 {
     /// point/direction-relevant facts once so repeated transforms can avoid
     /// rebuilding those structural classifications. This is a deliberate
     /// retained-geometry fast path in the spirit of exact geometric
-    /// computation; see Yap, "Towards Exact Geometric Computation", 1997.
+    /// computation; the exact object-structure policy
     pub fn transform_vec4_handle(&self) -> TransformedMatrix4<'_> {
         TransformedMatrix4::new(self)
     }
@@ -15487,8 +15407,8 @@ impl Matrix4 {
         // Reuse precomputed structural facts for the fallback path by
         // constructing the handle with `new_with_facts` instead of recomputing
         // in `transform_vec4_handle`. This keeps object-level structure on the
-        // handle, matching Yap's "geometric package" philosophy.
-        // See Yap, "Towards Exact Geometric Computation", 1997.
+        // handle, matching the "geometric package" philosophy.
+        // the exact object-structure policy
         TransformedMatrix4::new_with_facts(self, facts).transform_point_vector(rhs)
     }
 
@@ -15572,7 +15492,7 @@ impl Matrix4 {
         // is whether the 3x3 linear block is diagonal while the bottom spatial
         // row is zero. That keeps this convenience API thinner than a prepared
         // handle, while repeated callers can still build the handle once. The
-        // distinction follows Yap's exact-geometry package advice: retain and
+        // distinction follows the exact-geometry package advice: retain and
         // reuse object facts when they exist, but do not make isolated arithmetic
         // calls pay for unrelated geometric metadata.
         transform_vector4_direction_batch_assumed_ref(

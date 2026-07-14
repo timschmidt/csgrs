@@ -52,10 +52,7 @@ impl Complex {
         if true {
             // Isolated exact complex norms are two positive product terms. Fuse
             // only this public norm query so exact-rational hyperreal Real kernels
-            // can share one denominator and reduce once, following the same
-            // fraction-delaying principle as Bareiss fraction-free elimination
-            // (Bareiss, Math. Comp. 22(103), 1968,
-            // https://doi.org/10.2307/2004533). Reciprocal/division deliberately
+            // can share one denominator and reduce once. Reciprocal/division deliberately
             // use `norm_squared_direct`; targeted Criterion showed their larger
             // arithmetic kernels regress when this fused expression is inlined
             // into denominator construction.
