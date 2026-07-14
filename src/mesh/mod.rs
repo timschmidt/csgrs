@@ -267,14 +267,15 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     vertex.position = position;
                     vertex.position_id = position_id;
                 }
-                let cached_normal = transformed_normals
-                    .get(&source_position_id)
-                    .and_then(|entries| {
-                        entries
-                            .iter()
-                            .find(|(source, _)| source == &vertex.normal)
-                            .map(|(_, transformed)| transformed.clone())
-                    });
+                let cached_normal =
+                    transformed_normals
+                        .get(&source_position_id)
+                        .and_then(|entries| {
+                            entries
+                                .iter()
+                                .find(|(source, _)| source == &vertex.normal)
+                                .map(|(_, transformed)| transformed.clone())
+                        });
                 if let Some(normal) = cached_normal {
                     vertex.normal = normal;
                 } else {
