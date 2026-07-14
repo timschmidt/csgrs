@@ -59,6 +59,13 @@ connected paths reverse or undergo exact planar similarity transforms without
 changing their public parameter domains, families, or provenance. `Curve2::split_at`
 and `Curve2::subcurve` dispatch exact trimming across every family while retaining
 family and provenance; spline results also retain their selected authored domains.
+`CurvePath2::chamfer_vertex_by_parameters` and
+`CurvePath2::fillet_vertex_by_parameters` apply that exact trimming uniformly to
+mixed-family vertices. They accept each curve's native `Real` parameter domain,
+support the start/end seam of closed paths, preserve source family and provenance,
+and certify fillet radius, tangency, and traversal direction before inserting a
+native line or circular arc. Edited closed paths remain valid inputs to
+`CurveRegion2::try_from_boundary_paths`.
 Circular arcs promote exactly to one or more rational quadratic spans, including
 minor, semicircular, major, and full-circle sweeps, and share that promotion
 across top-level curve clones.
@@ -158,6 +165,11 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   likewise certify exact source/fillet tangency for every native line/arc pairing,
   preserve trimmed source families, and retain inverse arc-parameter witnesses so
   parameter-driven edits replay the original exact points across clones.
+  The corresponding `CurvePath2` parameter APIs cover line, circular-arc,
+  quadratic/cubic Bezier, rational quadratic/general Bezier, polynomial B-spline,
+  and NURBS pairings, including closed-path seam vertices. Point-bearing APIs stay
+  on the native line/arc carrier because general algebraic point inversion is not
+  silently approximated.
 - `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
   relation, metric, zero-error fitting, staged offset, and flattening APIs represent polynomial and
   rational curve work.

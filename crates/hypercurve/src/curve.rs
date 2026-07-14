@@ -1441,6 +1441,195 @@ impl CurvePath2 {
             .map_err(|error| remap_operation(error, CurveOperation2::Transformation))
     }
 
+    /// Replaces one path vertex with an exact line chamfer.
+    ///
+    /// `vertex_index` identifies the next curve at the vertex. Interior
+    /// vertices therefore use `1..curves().len()`. Index zero addresses the
+    /// start/end seam of an exactly closed path. Both parameters must be
+    /// strictly interior to their adjacent curves' public parameter domains.
+    /// Every retained source curve keeps its family, source identity, and
+    /// authored parameter lineage; only the inserted chamfer is a new line.
+    pub fn chamfer_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_parameter: Real,
+        next_parameter: Real,
+    ) -> ExactCurveResult<Self> {
+        let (previous_index, next_index) =
+            self.corner_curve_indices(vertex_index, CurveOperation2::Chamfer)?;
+        let previous = &self.data.curves[previous_index];
+        let next = &self.data.curves[next_index];
+        validate_corner_parameter(previous, &previous_parameter, CurveOperation2::Chamfer)?;
+        validate_corner_parameter(next, &next_parameter, CurveOperation2::Chamfer)?;
+
+        let previous_cut = previous
+            .point_at_side(&previous_parameter, CurveParameterSide2::Left)
+            .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
+        let next_cut = next
+            .point_at_side(&next_parameter, CurveParameterSide2::Right)
+            .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
+        let previous_trim = previous
+            .subcurve(
+                previous.parameter_domain().start().clone(),
+                previous_parameter,
+            )
+            .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
+        let next_trim = next
+            .subcurve(next_parameter, next.parameter_domain().end().clone())
+            .map_err(|error| remap_operation(error, CurveOperation2::Chamfer))?;
+        let chamfer = LineSeg2::try_new(previous_cut, next_cut)
+            .map(Curve2::from)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Chamfer,
+                    previous.family(),
+                    previous.source(),
+                    cause,
+                )
+            })?;
+
+        self.with_corner_replaced(
+            vertex_index,
+            previous_index,
+            next_index,
+            previous_trim,
+            chamfer,
+            next_trim,
+            CurveOperation2::Chamfer,
+        )
+    }
+
+    /// Replaces one path vertex with an exact tangent circular fillet.
+    ///
+    /// The two parameters identify tangent points on the adjacent curves and
+    /// must be strictly interior to their public domains. `center` and
+    /// `clockwise` define the inserted circular arc. Hypercurve certifies a
+    /// nonzero common radius, tangency, and traversal-direction agreement using
+    /// [`Real`] predicates before materializing the result. Index zero edits
+    /// the seam of an exactly closed path.
+    pub fn fillet_vertex_by_parameters(
+        &self,
+        vertex_index: usize,
+        previous_parameter: Real,
+        next_parameter: Real,
+        center: &Point2,
+        clockwise: bool,
+    ) -> ExactCurveResult<Self> {
+        let (previous_index, next_index) =
+            self.corner_curve_indices(vertex_index, CurveOperation2::Fillet)?;
+        let previous = &self.data.curves[previous_index];
+        let next = &self.data.curves[next_index];
+        validate_corner_parameter(previous, &previous_parameter, CurveOperation2::Fillet)?;
+        validate_corner_parameter(next, &next_parameter, CurveOperation2::Fillet)?;
+
+        let previous_point = previous
+            .point_at_side(&previous_parameter, CurveParameterSide2::Left)
+            .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
+        let next_point = next
+            .point_at_side(&next_parameter, CurveParameterSide2::Right)
+            .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
+        let radius_squared =
+            validate_fillet_radius(previous, &previous_point, &next_point, center)?;
+        validate_curve_fillet_tangent(
+            previous,
+            &previous_parameter,
+            CurveParameterSide2::Left,
+            &previous_point,
+            center,
+            clockwise,
+        )?;
+        validate_curve_fillet_tangent(
+            next,
+            &next_parameter,
+            CurveParameterSide2::Right,
+            &next_point,
+            center,
+            clockwise,
+        )?;
+
+        let previous_trim = previous
+            .subcurve(
+                previous.parameter_domain().start().clone(),
+                previous_parameter,
+            )
+            .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
+        let next_trim = next
+            .subcurve(next_parameter, next.parameter_domain().end().clone())
+            .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
+        let fillet = Curve2::from(CircularArc2::new_with_certified_radius(
+            previous_point,
+            next_point,
+            center.clone(),
+            radius_squared,
+            clockwise,
+            None,
+        ));
+
+        self.with_corner_replaced(
+            vertex_index,
+            previous_index,
+            next_index,
+            previous_trim,
+            fillet,
+            next_trim,
+            CurveOperation2::Fillet,
+        )
+    }
+
+    fn corner_curve_indices(
+        &self,
+        vertex_index: usize,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<(usize, usize)> {
+        let curve_count = self.data.curves.len();
+        if vertex_index >= curve_count {
+            return Err(ExactCurveError::invalid(
+                operation,
+                self.data.curves[0].family(),
+                self.data.curves[0].source(),
+                CurveError::InvalidCurveRange,
+            ));
+        }
+        if vertex_index == 0 {
+            certify_closed_path(self, operation)?;
+            return Ok((curve_count - 1, 0));
+        }
+        Ok((vertex_index - 1, vertex_index))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn with_corner_replaced(
+        &self,
+        vertex_index: usize,
+        previous_index: usize,
+        next_index: usize,
+        previous_trim: Curve2,
+        inserted: Curve2,
+        next_trim: Curve2,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<Self> {
+        let mut curves = Vec::with_capacity(self.data.curves.len() + 1);
+        if vertex_index == 0 {
+            curves.push(inserted);
+            curves.push(next_trim);
+            if next_index + 1 < previous_index {
+                curves.extend(
+                    self.data.curves[next_index + 1..previous_index]
+                        .iter()
+                        .cloned(),
+                );
+            }
+            curves.push(previous_trim);
+        } else {
+            curves.extend(self.data.curves[..previous_index].iter().cloned());
+            curves.push(previous_trim);
+            curves.push(inserted);
+            curves.push(next_trim);
+            curves.extend(self.data.curves[next_index + 1..].iter().cloned());
+        }
+        Self::try_new(curves).map_err(|error| remap_operation(error, operation))
+    }
+
     /// Returns whether aggregate path bounds have already been retained.
     pub fn is_bounds_cached(&self) -> bool {
         self.data.bounds.get().is_some()
@@ -1728,6 +1917,38 @@ impl<'a> CurvePathView2<'a> {
             .collect::<ExactCurveResult<Vec<_>>>()?;
         CurvePath2::try_new(curves)
             .map_err(|error| remap_operation(error, CurveOperation2::Transformation))
+    }
+
+    /// Replaces one borrowed path vertex with an exact line chamfer.
+    pub fn chamfer_vertex_by_parameters(
+        self,
+        vertex_index: usize,
+        previous_parameter: Real,
+        next_parameter: Real,
+    ) -> ExactCurveResult<CurvePath2> {
+        CurvePath2::try_new(self.curves.to_vec())?.chamfer_vertex_by_parameters(
+            vertex_index,
+            previous_parameter,
+            next_parameter,
+        )
+    }
+
+    /// Replaces one borrowed path vertex with an exact tangent circular fillet.
+    pub fn fillet_vertex_by_parameters(
+        self,
+        vertex_index: usize,
+        previous_parameter: Real,
+        next_parameter: Real,
+        center: &Point2,
+        clockwise: bool,
+    ) -> ExactCurveResult<CurvePath2> {
+        CurvePath2::try_new(self.curves.to_vec())?.fillet_vertex_by_parameters(
+            vertex_index,
+            previous_parameter,
+            next_parameter,
+            center,
+            clockwise,
+        )
     }
 }
 
@@ -2240,6 +2461,188 @@ fn validate_unit_parameter(
             family,
             source,
             crate::UncertaintyReason::Ordering,
+        )),
+    }
+}
+
+fn validate_corner_parameter(
+    curve: &Curve2,
+    parameter: &Real,
+    operation: CurveOperation2,
+) -> ExactCurveResult<()> {
+    validate_strict_split_parameter(
+        curve.parameter_domain().start(),
+        parameter,
+        curve.parameter_domain().end(),
+        curve.family(),
+        curve.source(),
+    )
+    .map_err(|error| remap_operation(error, operation))
+}
+
+fn certify_closed_path(path: &CurvePath2, operation: CurveOperation2) -> ExactCurveResult<()> {
+    if path.start() == path.end() {
+        return Ok(());
+    }
+    let first = &path.data.curves[0];
+    match crate::classify::is_zero(
+        &path.start().distance_squared(path.end()),
+        &CurvePolicy::certified(),
+    ) {
+        Some(true) => Ok(()),
+        Some(false) => Err(ExactCurveError::invalid(
+            operation,
+            first.family(),
+            first.source(),
+            CurveError::OpenCurvePath,
+        )),
+        None => Err(ExactCurveError::blocked(
+            operation,
+            first.family(),
+            first.source(),
+            crate::UncertaintyReason::RealSign,
+        )),
+    }
+}
+
+fn validate_fillet_radius(
+    context: &Curve2,
+    previous_point: &Point2,
+    next_point: &Point2,
+    center: &Point2,
+) -> ExactCurveResult<Real> {
+    let policy = CurvePolicy::certified();
+    let radius_squared = previous_point.distance_squared(center);
+    match crate::classify::is_zero(&radius_squared, &policy) {
+        Some(false) => {}
+        Some(true) => {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Fillet,
+                context.family(),
+                context.source(),
+                CurveError::ZeroRadiusArc,
+            ));
+        }
+        None => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                context.family(),
+                context.source(),
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+
+    let radius_delta = &radius_squared - next_point.distance_squared(center);
+    match crate::classify::is_zero(&radius_delta, &policy) {
+        Some(true) => Ok(radius_squared),
+        Some(false) => Err(ExactCurveError::invalid(
+            CurveOperation2::Fillet,
+            context.family(),
+            context.source(),
+            CurveError::RadiusMismatch,
+        )),
+        None => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            context.family(),
+            context.source(),
+            crate::UncertaintyReason::RealSign,
+        )),
+    }
+}
+
+fn validate_curve_fillet_tangent(
+    curve: &Curve2,
+    parameter: &Real,
+    side: CurveParameterSide2,
+    tangent_point: &Point2,
+    center: &Point2,
+    clockwise: bool,
+) -> ExactCurveResult<()> {
+    let (source_dx, source_dy, source_zero_status) = match curve.geometry() {
+        CurveGeometry2::CircularArc(arc) => {
+            let (radius_dx, radius_dy) = tangent_point.delta_from(arc.center());
+            let (dx, dy) = if arc.is_clockwise() {
+                (radius_dy, -radius_dx)
+            } else {
+                (-radius_dy, radius_dx)
+            };
+            let zero_status = (&dx * &dx + &dy * &dy).zero_status();
+            (dx, dy, zero_status)
+        }
+        _ => {
+            let derivative = curve
+                .derivative_at_side(parameter, side)
+                .map_err(|error| remap_operation(error, CurveOperation2::Fillet))?;
+            (
+                derivative.dx().clone(),
+                derivative.dy().clone(),
+                derivative.zero_status(),
+            )
+        }
+    };
+    match source_zero_status {
+        ZeroKnowledge::NonZero => {}
+        ZeroKnowledge::Zero => {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Fillet,
+                curve.family(),
+                curve.source(),
+                CurveError::InvalidFilletTangency,
+            ));
+        }
+        ZeroKnowledge::Unknown => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                curve.family(),
+                curve.source(),
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+
+    let (radius_dx, radius_dy) = tangent_point.delta_from(center);
+    let (fillet_dx, fillet_dy) = if clockwise {
+        (radius_dy, -radius_dx)
+    } else {
+        (-radius_dy, radius_dx)
+    };
+    let tangent_cross = &source_dx * &fillet_dy - &source_dy * &fillet_dx;
+    let policy = CurvePolicy::certified();
+    match crate::classify::is_zero(&tangent_cross, &policy) {
+        Some(true) => {}
+        Some(false) => {
+            return Err(ExactCurveError::invalid(
+                CurveOperation2::Fillet,
+                curve.family(),
+                curve.source(),
+                CurveError::InvalidFilletTangency,
+            ));
+        }
+        None => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                curve.family(),
+                curve.source(),
+                crate::UncertaintyReason::RealSign,
+            ));
+        }
+    }
+
+    let direction_dot = &source_dx * &fillet_dx + &source_dy * &fillet_dy;
+    match crate::classify::real_sign(&direction_dot, &policy) {
+        Some(RealSign::Positive) => Ok(()),
+        Some(RealSign::Zero | RealSign::Negative) => Err(ExactCurveError::invalid(
+            CurveOperation2::Fillet,
+            curve.family(),
+            curve.source(),
+            CurveError::InvalidFilletTangency,
+        )),
+        None => Err(ExactCurveError::blocked(
+            CurveOperation2::Fillet,
+            curve.family(),
+            curve.source(),
+            crate::UncertaintyReason::RealSign,
         )),
     }
 }

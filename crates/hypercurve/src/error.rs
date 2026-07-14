@@ -27,6 +27,10 @@ pub enum CurveOperation2 {
     Interpolation,
     /// Split or trim an exact curve in its public parameter domain.
     Subdivision,
+    /// Replace one path vertex with an exact line chamfer.
+    Chamfer,
+    /// Replace one path vertex with an exact tangent circular fillet.
+    Fillet,
     /// Reverse exact traversal while preserving the curve image.
     Reversal,
     /// Apply an exact geometry-preserving transform.
@@ -292,6 +296,8 @@ pub enum CurveError {
     InvalidCurveParameter,
     /// A native curve trim range is empty, reversed, or outside the source path.
     InvalidCurveRange,
+    /// A requested fillet is not tangent to both retained source curves in traversal order.
+    InvalidFilletTangency,
     /// A certified positive-length overlap has a zero parameter range.
     DegenerateOverlapRange,
     /// A Bezier parameter polynomial is structurally invalid.
@@ -379,6 +385,12 @@ impl fmt::Display for CurveError {
             Self::InvalidBezierRange => write!(f, "Bezier segment range is invalid"),
             Self::InvalidCurveParameter => write!(f, "curve parameter is invalid"),
             Self::InvalidCurveRange => write!(f, "curve trim range is invalid"),
+            Self::InvalidFilletTangency => {
+                write!(
+                    f,
+                    "fillet is not tangent to the source curves in traversal order"
+                )
+            }
             Self::DegenerateOverlapRange => {
                 write!(f, "positive-length overlap has a zero parameter range")
             }
