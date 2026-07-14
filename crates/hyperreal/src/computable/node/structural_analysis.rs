@@ -10,7 +10,7 @@ impl Computable {
     }
 
     fn shared_constant_kind(&self) -> Option<SharedConstant> {
-        match &*self.internal {
+        match &self.internal.approximation {
             Approximation::Constant(constant) => Some(*constant),
             _ => None,
         }
@@ -29,7 +29,7 @@ impl Computable {
         // Recognize "exact rational scale times one shared constant" through
         // lightweight wrappers. This supports pi-3/e-2 style sign certificates
         // without needing a full symbolic Real class.
-        match &*self.internal {
+        match &self.internal.approximation {
             Approximation::Constant(constant) => Some((*constant, Rational::one())),
             Approximation::Negate(child) => {
                 let (constant, scale) = child.shared_constant_term()?;
@@ -77,7 +77,7 @@ impl Computable {
                 .map(|multiple| (multiple, rational))
         }
 
-        match &*self.internal {
+        match &self.internal.approximation {
             Approximation::Add(left, right) => {
                 extract(left, right).or_else(|| extract(right, left))
             }
@@ -132,98 +132,76 @@ impl Computable {
     fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
         // A cached value at precision q can answer any less precise request p
         // by shifting, but not a more precise one. Shared constants use the
-        // thread-local cache; other nodes keep their cache beside the node.
-        if let Some(constant) = self.shared_constant_kind() {
-            if let Some(cached) = Self::cached_shared_constant_at_precision(constant, p) {
-                return Some(cached);
-            }
-            if constant == SharedConstant::Tau
+        // process-wide cache; other nodes keep their cache beside the node.
+        if let Approximation::Constant(constant) = &self.internal.approximation {
+            return Self::cached_constant_at_precision(*constant, p);
+        }
+
+        self.internal.cached_at_precision(p)
+    }
+
+    fn cached_constant_at_precision(constant: SharedConstant, p: Precision) -> Option<BigInt> {
+        if let Some(cached) = Self::cached_shared_constant_at_precision(constant, p) {
+            return Some(cached);
+        }
+        if constant == SharedConstant::Tau
                 && let Some(cached) =
                     Self::cached_shared_constant_at_precision(SharedConstant::Pi, p - 1)
-            {
-                // tau is exactly 2*pi, so a pi approximation at precision p-1
-                // is already a tau approximation at precision p. Populate the
-                // tau cache from pi instead of re-running the Machin pi kernel
-                // when callers ask for tau after pi has been warmed.
-                Self::store_shared_constant_cache_value(SharedConstant::Tau, p, cached.clone());
-                return Some(cached);
-            }
-            if constant == SharedConstant::Pi
+        {
+            // tau is exactly 2*pi, so a pi approximation at precision p-1
+            // is already a tau approximation at precision p. Populate the
+            // tau cache from pi instead of re-running the Machin pi kernel
+            // when callers ask for tau after pi has been warmed.
+            Self::store_shared_constant_cache_value(SharedConstant::Tau, p, cached.clone());
+            return Some(cached);
+        }
+        if constant == SharedConstant::Pi
                 && let Some(cached) =
                     Self::cached_shared_constant_at_precision(SharedConstant::Tau, p + 1)
-            {
-                // The same identity works in reverse: a tau approximation at
-                // precision p+1 is already a pi approximation at precision p.
-                // This matters for applications that use tau for trig
-                // construction and later format pi; reuse the costly Machin
-                // approximation instead of recomputing it under a different
-                // shared-constant key.
-                Self::store_shared_constant_cache_value(SharedConstant::Pi, p, cached.clone());
-                return Some(cached);
-            }
-            return None;
+        {
+            // The same identity works in reverse: a tau approximation at
+            // precision p+1 is already a pi approximation at precision p.
+            // This matters for applications that use tau for trig
+            // construction and later format pi; reuse the costly Machin
+            // approximation instead of recomputing it under a different
+            // shared-constant key.
+            Self::store_shared_constant_cache_value(SharedConstant::Pi, p, cached.clone());
+            return Some(cached);
         }
-
-        let cache = self.cache.borrow();
-        let cached = if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-            Some((*cache_prec, cache_appr.clone()))
-        } else {
-            None
-        }?;
-
-        if p >= cached.0 {
-            if p == cached.0 {
-                // Reusing the exact cached precision avoids a no-op BigInt shift.
-                Some(cached.1)
-            } else {
-                Some(scale(cached.1, cached.0 - p))
-            }
-        } else {
-            None
-        }
+        None
     }
 
     fn cached_shared_constant_at_precision(
         constant: SharedConstant,
         p: Precision,
     ) -> Option<BigInt> {
-        SHARED_CONSTANT_CACHES.with(|caches| {
-            let caches = caches.borrow();
-            let Cache::Valid((cache_prec, cache_appr)) = &caches[constant.cache_index()] else {
-                return None;
-            };
-            if p >= *cache_prec {
-                if p == *cache_prec {
-                    // Reusing shared-constant precision avoids extra shift work.
-                    Some(cache_appr.clone())
-                } else {
-                    Some(scale(cache_appr.clone(), *cache_prec - p))
-                }
-            } else {
-                None
-            }
-        })
+        SHARED_CONSTANT_CACHES[constant.cache_index()].at_precision(p)
     }
 
     fn store_shared_constant_cache_value(constant: SharedConstant, p: Precision, value: BigInt) {
-        SHARED_CONSTANT_CACHES.with(|caches| {
-            caches.borrow_mut()[constant.cache_index()] = Cache::Valid((p, value));
-        });
+        SHARED_CONSTANT_CACHES[constant.cache_index()].store(p, value);
     }
 
-    fn store_cache_value(&self, p: Precision, value: BigInt) {
+    fn store_cache_value(&self, signal: &Option<Signal>, p: Precision, value: BigInt) {
         // Store only exact node approximation results, not temporary scaled
-        // values. For shared constants this updates the global thread-local
-        // cache so every cloned constant wrapper benefits.
+        // values. For shared constants this updates the process-wide cache so
+        // every cloned constant wrapper and worker thread benefits.
+        //
+        // Abort-aware kernels may return an intentionally incomplete value.
+        // Never publish one into shared state where an un-aborted clone could
+        // later mistake it for a certified approximation.
+        if should_stop(signal) {
+            return;
+        }
         if let Some(constant) = self.shared_constant_kind() {
             Self::store_shared_constant_cache_value(constant, p, value);
         } else {
-            self.cache.replace(Cache::Valid((p, value)));
+            self.internal.store_cache_value(p, value);
         }
     }
 
     fn cached_bound(&self) -> Option<BoundInfo> {
-        match self.bound.get() {
+        match self.internal.facts.bound() {
             BoundCache::Invalid => None,
             BoundCache::Valid(info) => Some(info),
         }
@@ -233,7 +211,7 @@ impl Computable {
         // Unknown facts are intentionally not cached; a later approximation may
         // discover a real sign/MSD and should be allowed to populate the cache.
         if *info != BoundInfo::Unknown {
-            self.bound.set(BoundCache::Valid(*info));
+            self.internal.facts.set_bound(BoundCache::Valid(*info));
         }
     }
 
@@ -260,7 +238,7 @@ impl Computable {
         if budget == 0 {
             return None;
         }
-        let info = match &*self.internal {
+        let info = match &self.internal.approximation {
             Approximation::One => Some(BoundInfo::with_sign(Sign::Plus, Some(0))),
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 BoundInfo::Zero
@@ -348,7 +326,7 @@ impl Computable {
         }
 
         fn direct_bound(node: &Computable) -> Option<BoundInfo> {
-            match &*node.internal {
+            match &node.internal.approximation {
                 Approximation::One => Some(BoundInfo::with_sign(Sign::Plus, Some(0))),
                 Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                     BoundInfo::Zero
@@ -410,7 +388,7 @@ impl Computable {
                         continue;
                     }
 
-                    match &*node.internal {
+                    match &node.internal.approximation {
                         Approximation::Negate(child) => {
                             frames.push(Frame::FinishNegate);
                             frames.push(Frame::Eval(child));
@@ -489,7 +467,7 @@ impl Computable {
         // the expression shape or a separated cached approximation proves the
         // sign. Unknown is cached separately so impossible structural proofs do
         // not repeat on every predicate query.
-        let cached_sign = self.exact_sign.get();
+        let cached_sign = self.internal.facts.exact_sign();
         match cached_sign {
             ExactSignCache::Valid(sign) => return Some(sign),
             ExactSignCache::Unknown => {
@@ -497,7 +475,7 @@ impl Computable {
                     && appr.abs() > BigInt::one()
                 {
                     let sign = appr.sign();
-                    self.exact_sign.replace(ExactSignCache::Valid(sign));
+                    self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
                     return Some(sign);
                 }
                 return None;
@@ -517,7 +495,7 @@ impl Computable {
         }
 
         fn cached_exact_sign(node: &Computable) -> Option<Option<Sign>> {
-            let cached_sign = node.exact_sign.get();
+            let cached_sign = node.internal.facts.exact_sign();
             match cached_sign {
                 ExactSignCache::Invalid => None,
                 ExactSignCache::Unknown => {
@@ -525,7 +503,7 @@ impl Computable {
                         && appr.abs() > BigInt::one()
                     {
                         let sign = appr.sign();
-                        node.exact_sign.replace(ExactSignCache::Valid(sign));
+                        node.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
                         Some(Some(sign))
                     } else {
                         Some(None)
@@ -548,7 +526,7 @@ impl Computable {
                 return Some(Some(appr.sign()));
             }
 
-            match &*node.internal {
+            match &node.internal.approximation {
                 Approximation::One => Some(Some(Sign::Plus)),
                 Approximation::Int(n) => Some(Some(n.sign())),
                 Approximation::Constant(_) => Some(Some(Sign::Plus)),
@@ -599,7 +577,7 @@ impl Computable {
         }
 
         fn store_exact_sign(node: &Computable, sign: Option<Sign>) {
-            node.exact_sign.replace(match sign {
+            node.internal.facts.replace_exact_sign(match sign {
                 Some(sign) => ExactSignCache::Valid(sign),
                 None => ExactSignCache::Unknown,
             });
@@ -623,7 +601,7 @@ impl Computable {
                         continue;
                     }
 
-                    match &*node.internal {
+                    match &node.internal.approximation {
                         Approximation::Negate(child) => {
                             frames.push(Frame::FinishNegate(node));
                             frames.push(Frame::Eval(child));
@@ -748,7 +726,7 @@ impl Computable {
         // Only exact leaf nodes are exposed here. Keeping this narrow prevents
         // constructor shortcuts from accidentally forcing approximation of a
         // composite just to discover that it is not rational.
-        match &*self.internal {
+        match &self.internal.approximation {
             Approximation::One => Some(Rational::one()),
             Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
             Approximation::Ratio(r) => Some(r.clone()),

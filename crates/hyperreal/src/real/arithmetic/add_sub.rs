@@ -42,8 +42,7 @@ impl Real {
             rational: term.rational.clone(),
             class,
             computable: Some(computable),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         })
     }
 }
@@ -67,8 +66,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
                 rational,
                 class: self.class.clone(),
                 computable: self.computable.clone(),
-                signal: self.signal.clone(),
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             };
         }
         if self.has_zero_scale() {
@@ -117,8 +115,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             rational: Rational::one(),
             class: Irrational,
             computable: Some(computable),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         }
     }
 }
@@ -185,7 +182,7 @@ impl Neg for Real {
     fn neg(self) -> Self {
         Self {
             rational: -self.rational,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             ..self
         }
     }
@@ -220,8 +217,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 rational,
                 class: self.class.clone(),
                 computable: self.computable.clone(),
-                signal: self.signal.clone(),
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             };
         }
         if self.class == Pi
@@ -283,8 +279,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             rational: Rational::one(),
             class: Irrational,
             computable: Some(computable),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         }
     }
 }
@@ -344,8 +339,7 @@ impl Real {
                 rational: x.clone(),
                 class: One,
                 computable: None,
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             }
         } else if matches!(
             (x.to_integer_i64(), y.to_integer_i64()),
@@ -360,8 +354,7 @@ impl Real {
                 rational: Rational::one(),
                 class: Sqrt(rationals::SIX.clone()),
                 computable: Some(Computable::sqrt_rational(rationals::SIX.clone())),
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             }
         } else {
             let product = x * y;
@@ -370,8 +363,7 @@ impl Real {
                     rational: product,
                     class: One,
                     computable: None,
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 };
             }
             let (a, b) = product.extract_square_reduced();
@@ -382,16 +374,14 @@ impl Real {
                     rational: a,
                     class: One,
                     computable: None,
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 };
             }
             Self {
                 rational: a,
                 class: Sqrt(b.clone()),
                 computable: Some(Computable::sqrt_squarefree_rational(b)),
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             }
         }
     }

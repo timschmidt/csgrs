@@ -1,13 +1,6 @@
 pub type Precision = i32;
 const ATAN2_SIGN_REFINEMENT_FLOOR: Precision = -4096;
 
-#[derive(Clone, Debug, PartialEq, Default)]
-pub(crate) enum Cache {
-    #[default]
-    Invalid,
-    Valid((Precision, BigInt)),
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub(crate) enum BoundCache {
     #[default]
@@ -412,7 +405,6 @@ fn private_sign(sign: RealSign) -> Sign {
     }
 }
 
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 pub type Signal = Arc<AtomicBool>;
@@ -422,11 +414,8 @@ pub(crate) fn should_stop(signal: &Option<Signal>) -> bool {
     signal.as_ref().is_some_and(|s| s.load(Relaxed))
 }
 
-thread_local! {
-    // Constants are value objects, so separate `Computable::pi()` calls are
-    // common. Sharing only their approximation cache avoids rebuilding large
-    // constant approximations in scalar and matrix workloads while keeping the
-    // public `Computable` instances independently owned.
-    static SHARED_CONSTANT_CACHES: RefCell<Vec<Cache>> =
-        RefCell::new(vec![Cache::Invalid; SharedConstant::COUNT]);
-}
+// Constants are value objects, so separate `Computable::pi()` calls are common.
+// A process-wide lock-free cache lets every worker reuse the finest certified
+// approximation instead of recomputing constants once per thread.
+static SHARED_CONSTANT_CACHES: LazyLock<[ApproximationCache; SharedConstant::COUNT]> =
+    LazyLock::new(|| std::array::from_fn(|_| ApproximationCache::default()));

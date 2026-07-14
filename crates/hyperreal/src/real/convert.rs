@@ -81,7 +81,7 @@ impl Real {
                 .multiply_rational(self.rational.clone())
         };
 
-        if let Some(s) = &self.signal {
+        if let Some(s) = self.abort_signal() {
             c.abort(s.clone());
         }
         c
@@ -95,26 +95,25 @@ impl Real {
             rational,
             class,
             computable,
-            signal,
             primitive_approx_cache: _,
         } = self;
-        if rational.is_one() {
-            let mut c = computable.unwrap_or_else(Computable::one);
-            if let Some(s) = signal {
-                c.abort(s.clone());
-            }
-            c
+        let signal = computable
+            .as_ref()
+            .and_then(|computable| computable.signal.as_ref())
+            .cloned();
+        let mut c = if rational.is_one() {
+            computable.unwrap_or_else(Computable::one)
         } else if class == crate::real::Class::One {
             Computable::rational(rational)
         } else {
-            let mut c = computable
+            computable
                 .unwrap_or_else(Computable::one)
-                .multiply_rational(rational);
-            if let Some(s) = signal {
-                c.abort(s);
-            }
-            c
+                .multiply_rational(rational)
+        };
+        if let Some(signal) = signal {
+            c.abort(signal);
         }
+        c
     }
 }
 
@@ -218,10 +217,12 @@ impl Real {
 
         let value = self.to_f32_lossy_uncached();
         #[cfg(feature = "cached-f32-approx")]
-        if matches!(
-            self.primitive_approx_cache.get(),
-            PrimitiveApproxCache::Empty
-        ) {
+        if !self.is_aborted()
+            && matches!(
+                self.primitive_approx_cache.get(),
+                PrimitiveApproxCache::Empty
+            )
+        {
             self.primitive_approx_cache
                 .set(PrimitiveApproxCache::F32(value));
         }
@@ -363,8 +364,10 @@ impl Real {
 
         let value = self.to_f64_lossy_uncached();
         #[cfg(feature = "cached-f64-approx")]
-        self.primitive_approx_cache
-            .set(PrimitiveApproxCache::F64(value));
+        if !self.is_aborted() {
+            self.primitive_approx_cache
+                .set(PrimitiveApproxCache::F64(value));
+        }
         value
     }
 
@@ -376,7 +379,7 @@ impl Real {
 
         if matches!(self.class, Class::One)
             && self.computable.is_none()
-            && self.signal.is_none()
+            && self.abort_signal().is_none()
             && let fast @ Some(_) = self.rational.to_f64_lossy()
         {
             // Exact rationals can often be rounded to f64 without touching the
@@ -835,6 +838,83 @@ mod tests {
         assert!(matches!(
             value.primitive_approx_cache.get(),
             PrimitiveApproxCache::Empty
+        ));
+    }
+
+    #[test]
+    fn exact_real_abort_signal_survives_materialization_clone_and_fold() {
+        use std::sync::Arc;
+        use std::sync::atomic::AtomicBool;
+
+        let signal = Arc::new(AtomicBool::new(false));
+        let mut value = Real::new(Rational::fraction(1, 3).unwrap());
+        assert!(value.computable.is_none());
+
+        value.abort(signal.clone());
+        assert!(
+            value
+                .abort_signal()
+                .is_some_and(|attached| Arc::ptr_eq(attached, &signal))
+        );
+
+        let clone = value.clone();
+        assert!(
+            clone
+                .abort_signal()
+                .is_some_and(|attached| Arc::ptr_eq(attached, &signal))
+        );
+        let folded = clone.fold();
+        assert!(
+            folded
+                .signal
+                .as_ref()
+                .is_some_and(|attached| Arc::ptr_eq(attached, &signal))
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "cached-f64-approx")]
+    fn aborted_lossy_conversion_is_not_cached() {
+        use std::sync::Arc;
+        use std::sync::atomic::AtomicBool;
+
+        let signal = Arc::new(AtomicBool::new(true));
+        let mut value = Real::pi();
+        value.abort(signal);
+        let _ = value.to_f64_lossy();
+
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::Empty
+        ));
+    }
+
+    #[test]
+    #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    fn primitive_approx_cache_is_safe_under_concurrent_mixed_reads() {
+        use std::sync::Arc;
+
+        let value = Arc::new(Real::new(Rational::fraction(1, 3).unwrap()));
+        let expected_f32 = value.to_f32_lossy_uncached();
+        let expected_f64 = value.to_f64_lossy_uncached();
+        std::thread::scope(|scope| {
+            for index in 0..8 {
+                let value = Arc::clone(&value);
+                scope.spawn(move || {
+                    for _ in 0..128 {
+                        if index % 2 == 0 {
+                            assert_eq!(value.to_f32_lossy(), expected_f32);
+                        } else {
+                            assert_eq!(value.to_f64_lossy(), expected_f64);
+                        }
+                    }
+                });
+            }
+        });
+
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(Some(_))
         ));
     }
 

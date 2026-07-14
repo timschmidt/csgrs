@@ -50,7 +50,7 @@ mod tests {
         assert_eq!(five, a.approx(1));
         assert_eq!(two, a.approx(2));
         assert_eq!(one, a.approx(3));
-        assert_eq!(Cache::Valid((0, nine)), a.cache.into_inner());
+        assert!(a.internal.cache_snapshot().is_none());
     }
 
     #[test]
@@ -64,7 +64,7 @@ mod tests {
         assert_eq!(three, a.approx(0));
         assert_eq!(six, a.approx(-1));
         assert_eq!(thirteen, a.approx(-2));
-        assert_eq!(Some((-7, four_zero_two)), a.cached());
+        assert!(a.cached().is_some_and(|(precision, _)| precision <= -7));
     }
 
     #[test]
@@ -75,8 +75,11 @@ mod tests {
         // These identities are pervasive in higher-level constructors. Keep
         // them on the dedicated nodes so structural facts are available without
         // forcing the generic Ratio approximation path.
-        assert!(matches!(*zero.internal, Approximation::Int(ref value) if value.is_zero()));
-        assert!(matches!(*one.internal, Approximation::One));
+        assert!(matches!(&zero.internal.approximation, Approximation::Int(value) if value.is_zero()));
+        assert!(matches!(
+            &one.internal.approximation,
+            Approximation::One
+        ));
         assert_eq!(zero.zero_status(), ZeroKnowledge::Zero);
         assert_eq!(one.zero_status(), ZeroKnowledge::NonZero);
         assert_eq!(zero.exact_sign(), Some(Sign::NoSign));
@@ -88,26 +91,72 @@ mod tests {
         let value = Computable::pi().add(Computable::one());
         let clone = value.clone();
 
-        assert!(Rc::ptr_eq(&value.internal, &clone.internal));
+        assert!(Arc::ptr_eq(&value.internal, &clone.internal));
         assert_eq!(value.approx(-32), clone.approx(-32));
+    }
+
+    #[test]
+    fn computable_is_send_and_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+
+        assert_send_sync::<Computable>();
+        assert_send_sync::<Rational>();
+        assert_send_sync::<crate::Real>();
+    }
+
+    #[test]
+    fn cloned_expression_can_be_refined_concurrently() {
+        let expression = || {
+            Computable::pi()
+                .multiply(Computable::rational(Rational::fraction(7, 3).unwrap()))
+                .sin()
+                .exp()
+        };
+        let expected = expression().approx(-192);
+        let value = expression();
+
+        std::thread::scope(|scope| {
+            for precision in [-32, -64, -96, -128, -160, -192] {
+                let clone = value.clone();
+                let expected = expected.clone();
+                scope.spawn(move || {
+                    let actual = clone.approx(precision);
+                    let expected = scale(expected, -192 - precision);
+                    assert!((actual - expected).abs() <= BigInt::one());
+                });
+            }
+        });
+
+        assert!(matches!(value.internal.cache_snapshot(), Some((p, _)) if p <= -192));
+    }
+
+    #[test]
+    fn aborted_approximation_is_not_shared_through_cache() {
+        use std::sync::atomic::AtomicBool;
+
+        let value = Computable::prescaled_atan(BigInt::from(5));
+        let signal = Some(Arc::new(AtomicBool::new(true)));
+        let _ = value.approx_signal(&signal, -128);
+
+        assert!(value.internal.cache_snapshot().is_none());
     }
 
     #[test]
     fn layout_sizes() {
         assert!(
-            size_of::<Computable>() <= 80,
+            size_of::<Computable>() <= 16,
             "Computable grew to {} bytes",
             size_of::<Computable>()
         );
         assert!(
-            size_of::<Approximation>() <= 168,
+            size_of::<Approximation>() <= 40,
             "Approximation grew to {} bytes",
             size_of::<Approximation>()
         );
         assert!(
-            size_of::<Cache>() <= 40,
-            "Cache grew to {} bytes",
-            size_of::<Cache>()
+            size_of::<Node>() <= 56,
+            "shared expression node grew to {} bytes",
+            size_of::<Node>()
         );
         assert!(
             size_of::<BoundCache>() <= 12,
@@ -174,7 +223,6 @@ mod tests {
     #[test]
     fn e_constant_cache_is_shared() {
         let e = Computable::e_constant();
-        assert!(e.cached().is_none());
         let _ = e.approx(-32);
 
         let cached = Computable::e_constant()
@@ -187,7 +235,7 @@ mod tests {
     fn exp_one_uses_dedicated_e_constant() {
         let e = Computable::rational(Rational::one()).exp();
         assert!(matches!(
-            &*e.internal,
+            &e.internal.approximation,
             Approximation::Constant(SharedConstant::E)
         ));
     }
@@ -195,7 +243,6 @@ mod tests {
     #[test]
     fn pi_cache_is_shared() {
         let pi = Computable::pi();
-        assert!(pi.cached().is_none());
         let _ = pi.approx(-32);
 
         let cached = Computable::pi()
@@ -207,7 +254,6 @@ mod tests {
     #[test]
     fn tau_cache_is_shared() {
         let tau = Computable::tau();
-        assert!(tau.cached().is_none());
         let _ = tau.approx(-32);
 
         let cached = Computable::tau()
@@ -221,7 +267,6 @@ mod tests {
         std::thread::spawn(|| {
             let pi = Computable::pi();
             let _ = pi.approx(-64);
-            assert!(Computable::tau().cached().is_none());
 
             let tau_appr = Computable::tau().approx(-32);
             let pi_scaled_as_tau = Computable::pi().approx(-33);
@@ -230,8 +275,8 @@ mod tests {
             let cached = Computable::tau()
                 .cached()
                 .expect("tau cache should be filled from pi cache");
-            assert_eq!(cached.0, -32);
-            assert_eq!(cached.1, tau_appr);
+            assert!(cached.0 <= -32);
+            assert_eq!(Computable::tau().approx(-32), tau_appr);
         })
         .join()
         .expect("tau cache test thread should finish");
@@ -242,7 +287,6 @@ mod tests {
         std::thread::spawn(|| {
             let tau = Computable::tau();
             let _ = tau.approx(-65);
-            assert!(Computable::pi().cached().is_none());
 
             let pi_appr = Computable::pi().approx(-64);
             let tau_scaled_as_pi = Computable::tau().approx(-63);
@@ -251,17 +295,31 @@ mod tests {
             let cached = Computable::pi()
                 .cached()
                 .expect("pi cache should be filled from tau cache");
-            assert_eq!(cached.0, -64);
-            assert_eq!(cached.1, pi_appr);
+            assert!(cached.0 <= -64);
+            assert_eq!(Computable::pi().approx(-64), pi_appr);
         })
         .join()
         .expect("pi cache test thread should finish");
     }
 
     #[test]
+    fn shared_constant_cache_reuses_work_across_threads() {
+        let expected = std::thread::spawn(|| Computable::pi().approx(-384))
+            .join()
+            .expect("constant producer thread should finish");
+        let (cached, actual) = std::thread::spawn(|| {
+            (Computable::pi().cached(), Computable::pi().approx(-384))
+        })
+        .join()
+        .expect("constant consumer thread should finish");
+
+        assert!(cached.is_some_and(|(precision, _)| precision <= -384));
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn ln_constant_cache_is_shared() {
         let ln2 = Computable::ln_constant(2).unwrap();
-        assert!(ln2.cached().is_none());
         let _ = ln2.approx(-32);
 
         let cached = Computable::ln_constant(2)
@@ -322,10 +380,7 @@ mod tests {
     fn scaled_ln1() {
         let zero = Computable::integer(BigInt::zero());
         let ln = Computable {
-            internal: Rc::new(Approximation::PrescaledLn(zero)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Invalid),
+            internal: Arc::new(Node::new(Approximation::PrescaledLn(zero), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         };
         let zero = BigInt::zero();
@@ -337,10 +392,7 @@ mod tests {
         let zero_4: Rational = "0.4".parse().unwrap();
         let rational = Computable::rational(zero_4);
         let ln = Computable {
-            internal: Rc::new(Approximation::PrescaledLn(rational)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Invalid),
+            internal: Arc::new(Node::new(Approximation::PrescaledLn(rational), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         };
         let five: BigInt = "5".parse().unwrap();
@@ -670,7 +722,7 @@ mod tests {
         let result = tiny.clone().asin();
 
         assert!(matches!(
-            result.internal.as_ref(),
+            &result.internal.approximation,
             Approximation::PrescaledAsin(_)
         ));
         assert_close(result, Computable::asin_deferred(tiny), -80, 4);
@@ -684,7 +736,7 @@ mod tests {
         let result = tiny.clone().atanh();
 
         assert!(matches!(
-            result.internal.as_ref(),
+            &result.internal.approximation,
             Approximation::PrescaledAtanh(_)
         ));
         assert_close(result, Computable::atanh_direct_deferred(tiny), -80, 4);

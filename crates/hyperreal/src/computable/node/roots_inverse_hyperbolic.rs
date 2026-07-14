@@ -9,22 +9,19 @@ impl Computable {
     pub(crate) fn sqrt_squarefree_rational(radicand: Rational) -> Self {
         debug_assert!(radicand.sign() != Sign::Minus);
         let child = Self::rational(radicand);
-        let exact_sign = match child.exact_sign.get() {
+        let exact_sign = match child.internal.facts.exact_sign() {
             ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
             _ => ExactSignCache::Valid(Sign::Plus),
         };
         Self {
-            internal: Rc::new(Approximation::Sqrt(child)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(exact_sign),
+            internal: Arc::new(Node::new(Approximation::Sqrt(child), BoundCache::Invalid, exact_sign)),
             signal: None,
         }
     }
 
     /// Square root of this number.
     pub fn sqrt(self) -> Computable {
-        if let Approximation::Square(child) = self.internal.as_ref() {
+        if let Approximation::Square(child) = &self.internal.approximation {
             // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
             match child.exact_sign() {
                 Some(Sign::Plus) => {
@@ -42,7 +39,7 @@ impl Computable {
                 None => {}
             }
         }
-        if let Approximation::Multiply(left, right) = self.internal.as_ref() {
+        if let Approximation::Multiply(left, right) = &self.internal.approximation {
             let reduced = |scale: Rational, square_side: &Computable| {
                 // Recognize c*x^2 where c is an exact square, preserving the symbolic x
                 // instead of introducing a generic sqrt node.
@@ -50,7 +47,7 @@ impl Computable {
                 if !rest.is_one() {
                     return None;
                 }
-                let Approximation::Square(child) = square_side.internal.as_ref() else {
+                let Approximation::Square(child) = &square_side.internal.approximation else {
                     return None;
                 };
                 match child.exact_sign() {
@@ -105,7 +102,7 @@ impl Computable {
             }
         }
         crate::trace_dispatch!("computable", "sqrt", "generic-sqrt-node");
-        let exact_sign = match self.exact_sign.get() {
+        let exact_sign = match self.internal.facts.exact_sign() {
             // Square roots are nonnegative where defined and preserve structural zero.
             ExactSignCache::Valid(Sign::NoSign) => ExactSignCache::Valid(Sign::NoSign),
             ExactSignCache::Valid(Sign::Plus) | ExactSignCache::Valid(Sign::Minus) => {
@@ -114,10 +111,7 @@ impl Computable {
             _ => ExactSignCache::Invalid,
         };
         Self {
-            internal: Rc::new(Approximation::Sqrt(self)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(exact_sign),
+            internal: Arc::new(Node::new(Approximation::Sqrt(self), BoundCache::Invalid, exact_sign)),
             signal: None,
         }
     }
@@ -126,10 +120,7 @@ impl Computable {
         // atan(1/n) kernel used by pi and atan reduction constants. Passing the
         // denominator as an integer keeps the series loop division-only.
         Self {
-            internal: Rc::new(Approximation::IntegralAtan(n)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Invalid),
+            internal: Arc::new(Node::new(Approximation::IntegralAtan(n), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         }
     }
@@ -141,10 +132,7 @@ impl Computable {
         // same range reductions directly in the approximation kernel.
         crate::trace_dispatch!("computable", "constructor", "atan-rational-deferred");
         Self {
-            internal: Rc::new(Approximation::AtanRational(rational)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Invalid),
+            internal: Arc::new(Node::new(Approximation::AtanRational(rational), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         }
     }
@@ -156,10 +144,7 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "asin-rational-deferred");
         let sign = rational.sign();
         Self {
-            internal: Rc::new(Approximation::AsinRational(rational)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
+            internal: Arc::new(Node::new(Approximation::AsinRational(rational), BoundCache::Invalid, ExactSignCache::Valid(sign))),
             signal: None,
         }
     }
@@ -189,10 +174,7 @@ impl Computable {
             if msd < -1 {
                 crate::trace_dispatch!("computable", "atan", "structural-small-prescaled");
                 return Self {
-                    internal: Rc::new(Approximation::PrescaledAtan(self)),
-                    cache: RefCell::new(Cache::Invalid),
-                    bound: Cell::new(BoundCache::Invalid),
-                    exact_sign: Cell::new(ExactSignCache::Invalid),
+                    internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
                     signal: None,
                 };
             }
@@ -209,10 +191,7 @@ impl Computable {
             // Small atan arguments use the prescaled series directly.
             crate::trace_dispatch!("computable", "atan", "rough-small-prescaled");
             return Self {
-                internal: Rc::new(Approximation::PrescaledAtan(self)),
-                cache: RefCell::new(Cache::Invalid),
-                bound: Cell::new(BoundCache::Invalid),
-                exact_sign: Cell::new(ExactSignCache::Invalid),
+                internal: Arc::new(Node::new(Approximation::PrescaledAtan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
                 signal: None,
             };
         }
@@ -489,7 +468,7 @@ impl Computable {
     /// Inverse hyperbolic cosine of this number. The caller is responsible for
     /// ensuring the input is in-domain.
     pub fn acosh(self) -> Computable {
-        let exact_rational_msd = match self.internal.as_ref() {
+        let exact_rational_msd = match &self.internal.approximation {
             Approximation::One => {
                 crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                 return Self::zero();
@@ -541,7 +520,7 @@ impl Computable {
             }
             _ => None,
         };
-        if let Approximation::Sqrt(child) = self.internal.as_ref()
+        if let Approximation::Sqrt(child) = &self.internal.approximation
             && child
                 .exact_rational()
                 .is_some_and(|r| r == Rational::new(2))

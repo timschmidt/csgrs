@@ -151,11 +151,18 @@ pub(super) enum Approximation {
     LogPnorm(Computable),
     LogNormalSf(Computable),
     LogDnorm(Computable),
-    NormalQuantile {
-        p: Computable,
-        seed: BigInt,
-        seed_prec: Precision,
-    },
+    // Quantiles carry an uncommon BigInt seed. Boxing this payload keeps the
+    // common binary expression variants at 40 bytes instead of making every
+    // node reserve space for the 56-byte quantile representation.
+    NormalQuantile(Box<NormalQuantileData>),
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub(super) struct NormalQuantileData {
+    pub(super) p: Computable,
+    pub(super) seed: BigInt,
+    pub(super) seed_prec: Precision,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -82,8 +82,6 @@ pub(crate) enum Class {
 }
 
 use Class::*;
-use std::cell::Cell;
-
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) enum PrimitiveApproxCache {
     #[default]
@@ -92,6 +90,116 @@ pub(super) enum PrimitiveApproxCache {
     F32(Option<f32>),
     #[cfg(feature = "cached-f64-approx")]
     F64(Option<f64>),
+}
+
+/// Lock-free cache for lossy primitive conversions.
+///
+/// Exact-real values never convert to NaN, so reserved quiet-NaN bit patterns
+/// can represent the empty and overflow states without increasing `Real`'s
+/// layout. A tagged negative-NaN range carries cached finite `f32` values;
+/// every other finite bit pattern is a cached `f64`.
+pub(super) struct AtomicPrimitiveApproxCache(std::sync::atomic::AtomicU64);
+
+impl AtomicPrimitiveApproxCache {
+    const EMPTY: u64 = 0x7ff8_0000_0000_0001;
+    #[cfg(feature = "cached-f32-approx")]
+    const F32_NONE: u64 = 0x7ff8_0000_0000_0002;
+    #[cfg(feature = "cached-f64-approx")]
+    const F64_NONE: u64 = 0x7ff8_0000_0000_0003;
+    #[cfg(feature = "cached-f32-approx")]
+    const F32_TAG: u64 = 0xffff_ffff_0000_0000;
+
+    pub(super) fn new(value: PrimitiveApproxCache) -> Self {
+        Self(std::sync::atomic::AtomicU64::new(Self::encode(value)))
+    }
+
+    pub(super) fn get(&self) -> PrimitiveApproxCache {
+        Self::decode(self.0.load(std::sync::atomic::Ordering::Relaxed))
+    }
+
+    pub(super) fn set(&self, value: PrimitiveApproxCache) {
+        let encoded = Self::encode(value);
+        if matches!(value, PrimitiveApproxCache::Empty) {
+            self.0
+                .store(encoded, std::sync::atomic::Ordering::Relaxed);
+            return;
+        }
+
+        // Keep a concurrently-computed f64 in preference to f32. Conversion
+        // caches are accelerators only, so relaxed ordering is sufficient.
+        let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        while Self::rank(current) <= Self::rank(encoded) {
+            match self.0.compare_exchange_weak(
+                current,
+                encoded,
+                std::sync::atomic::Ordering::Relaxed,
+                std::sync::atomic::Ordering::Relaxed,
+            ) {
+                Ok(_) => break,
+                Err(observed) => current = observed,
+            }
+        }
+    }
+
+    fn encode(value: PrimitiveApproxCache) -> u64 {
+        match value {
+            PrimitiveApproxCache::Empty => Self::EMPTY,
+            #[cfg(feature = "cached-f32-approx")]
+            PrimitiveApproxCache::F32(Some(value)) => Self::F32_TAG | u64::from(value.to_bits()),
+            #[cfg(feature = "cached-f32-approx")]
+            PrimitiveApproxCache::F32(None) => Self::F32_NONE,
+            #[cfg(feature = "cached-f64-approx")]
+            PrimitiveApproxCache::F64(Some(value)) => value.to_bits(),
+            #[cfg(feature = "cached-f64-approx")]
+            PrimitiveApproxCache::F64(None) => Self::F64_NONE,
+        }
+    }
+
+    fn decode(value: u64) -> PrimitiveApproxCache {
+        if value == Self::EMPTY {
+            return PrimitiveApproxCache::Empty;
+        }
+        #[cfg(feature = "cached-f32-approx")]
+        {
+            if value == Self::F32_NONE {
+                return PrimitiveApproxCache::F32(None);
+            }
+            if value & 0xffff_ffff_0000_0000 == Self::F32_TAG {
+                return PrimitiveApproxCache::F32(Some(f32::from_bits(value as u32)));
+            }
+        }
+        #[cfg(feature = "cached-f64-approx")]
+        {
+            if value == Self::F64_NONE {
+                return PrimitiveApproxCache::F64(None);
+            }
+            return PrimitiveApproxCache::F64(Some(f64::from_bits(value)));
+        }
+        #[allow(unreachable_code)]
+        PrimitiveApproxCache::Empty
+    }
+
+    fn rank(value: u64) -> u8 {
+        match Self::decode(value) {
+            PrimitiveApproxCache::Empty => 0,
+            #[cfg(feature = "cached-f32-approx")]
+            PrimitiveApproxCache::F32(_) => 1,
+            #[cfg(feature = "cached-f64-approx")]
+            PrimitiveApproxCache::F64(_) => 2,
+        }
+    }
+}
+
+impl Default for AtomicPrimitiveApproxCache {
+    fn default() -> Self {
+        Self::new(PrimitiveApproxCache::Empty)
+    }
+}
+
+impl std::fmt::Debug for AtomicPrimitiveApproxCache {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.get().fmt(formatter)
+    }
 }
 
 // We can't tell whether an Irrational value is ever equal to anything

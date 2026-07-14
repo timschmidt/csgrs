@@ -96,8 +96,7 @@ impl Real {
             rational,
             class: self.class.clone(),
             computable: self.computable.clone(),
-            signal: self.signal.clone(),
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         }
     }
 

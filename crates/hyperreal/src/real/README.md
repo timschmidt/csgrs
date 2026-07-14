@@ -1,8 +1,9 @@
 # Real
 
 `Real` is the public symbolic scalar. It combines an exact rational scale, a
-compact symbolic class, an optional lazy computable certificate, and an optional
-abort signal.
+compact symbolic class, an optional lazy computable certificate, and a lock-free
+primitive-approximation cache. An optional abort signal lives on the computable
+payload so it is not represented twice.
 
 ## Stored parts
 
@@ -29,9 +30,8 @@ abort signal.
 |  + lazy approximation graph                                           |
 |  + shared constants and cached approximations live inside Computable  |
 |  + absent only when the rational/class certificate is sufficient      |
-|                                                                       |
-|  signal: Option<Signal>                                               |
-|  + optional abort hook for bounded/refinement callers                 |
+|  + optional abort hook lives on the Computable payload                |
+|  + attaching one materializes that payload when it was absent         |
 +-----------------------------------------------------------------------+
 ```
 

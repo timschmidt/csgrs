@@ -34,8 +34,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Pi, Pi) => {
@@ -47,8 +46,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiPow(power), Pi) | (Pi, PiPow(power)) => {
@@ -63,8 +61,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             self.computable_clone(),
                             other.computable_clone(),
                         )),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) = Class::make_pi_power(power);
@@ -73,8 +70,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiPow(left), PiPow(right)) => {
@@ -89,8 +85,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             self.computable_clone(),
                             other.computable_clone(),
                         )),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) = Class::make_pi_power(power);
@@ -99,8 +94,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Pi, Exp(r)) | (Exp(r), Pi) => {
@@ -112,8 +106,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiPow(power), Exp(exp)) | (Exp(exp), PiPow(power)) => {
@@ -125,8 +118,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiExp(r), Exp(s)) | (Exp(s), PiExp(r)) => {
@@ -138,8 +130,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), Exp(exp)) | (Exp(exp), ConstProduct(product)) => {
@@ -151,8 +142,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), Pi) | (Pi, ConstProduct(product)) => {
@@ -167,8 +157,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             self.computable_clone(),
                             other.computable_clone(),
                         )),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) =
@@ -178,8 +167,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), PiPow(power)) | (PiPow(power), ConstProduct(product)) => {
@@ -194,8 +182,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             self.computable_clone(),
                             other.computable_clone(),
                         )),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) =
@@ -205,8 +192,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(left), ConstProduct(right)) => {
@@ -221,8 +207,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             self.computable_clone(),
                             other.computable_clone(),
                         )),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) =
@@ -232,8 +217,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Pi, Sqrt(r)) | (Sqrt(r), Pi) => {
@@ -245,8 +229,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Exp(exp), Sqrt(r)) | (Sqrt(r), Exp(exp)) => {
@@ -258,8 +241,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiExp(exp), Sqrt(r)) | (Sqrt(r), PiExp(exp)) => {
@@ -272,8 +254,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiInvExp(exp), Sqrt(r)) | (Sqrt(r), PiInvExp(exp)) => {
@@ -286,8 +267,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), Sqrt(r)) | (Sqrt(r), ConstProduct(product)) => {
@@ -303,8 +283,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiSqrt(r), Sqrt(s)) | (Sqrt(s), PiSqrt(r)) if r == s => {
@@ -315,8 +294,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class: Pi,
                     computable: Some(Computable::pi()),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Ln(r), Ln(s)) => {
@@ -328,8 +306,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
             _ => {
@@ -355,8 +332,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                     rational,
                                     class,
                                     computable: Some(computable),
-                                    signal: None,
-                                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                                 };
                             }
                             Sqrt(radicand) => {
@@ -366,8 +342,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                     rational,
                                     class,
                                     computable: Some(computable),
-                                    signal: None,
-                                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                                 };
                             }
                             _ => unreachable!(),
@@ -390,8 +365,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             rational,
                             class,
                             computable: Some(computable),
-                            signal: None,
-                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                         };
                     }
                     if let (Some((product_pi, product_exp)), Some((sqrt_pi, sqrt_exp, radicand))) = (
@@ -409,8 +383,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             rational,
                             class,
                             computable: Some(computable),
-                            signal: None,
-                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                         };
                     }
                 }
@@ -424,8 +397,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                         rational,
                         class,
                         computable: Some(computable),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     };
                 }
                 let rational = &self.rational * &other.rational;
@@ -436,8 +408,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                         self.computable_clone(),
                         other.computable_clone(),
                     )),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 }
             }
         }
@@ -526,8 +497,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 rational,
                 class: self.class.clone(),
                 computable: self.computable.clone(),
-                signal: self.signal.clone(),
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             });
         }
         if self.class == One {
@@ -538,8 +508,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class: Exp(exp.clone()),
                     computable: Some(Computable::exp_rational(exp)),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             crate::trace_dispatch!("real", "div", "lhs-rational-symbolic-inverse");
@@ -561,8 +530,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (ConstProduct(product), Exp(exp)) => {
@@ -573,8 +541,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (ConstProduct(product), Pi) if product.pi_power > 0 => {
@@ -585,8 +552,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (PiExp(exp), Exp(divisor_exp)) => {
@@ -596,8 +562,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (PiExp(exp), Pi) => {
@@ -607,8 +572,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (Exp(exp), Pi) => {
@@ -619,8 +583,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class: PiInvExp(exp.clone()),
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (Pi, Exp(exp)) => {
@@ -630,8 +593,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             (ConstProductSqrt(product), Exp(exp)) => {
@@ -655,8 +617,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational: &self.rational / &other.rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             _ => {}
@@ -720,8 +681,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                             rational,
                             class,
                             computable: Some(computable),
-                            signal: None,
-                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                         }
                     }
                     Sqrt(radicand) => {
@@ -731,8 +691,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                             rational,
                             class,
                             computable: Some(computable),
-                            signal: None,
-                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                         }
                     }
                     _ => unreachable!(),
@@ -762,8 +721,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                         rational: &self.rational / &other.rational,
                         class,
                         computable: Some(computable),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -790,8 +748,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     rational,
                     class,
                     computable: Some(computable),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
         }
@@ -804,8 +761,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 rational: &self.rational / &other.rational,
                 class,
                 computable: Some(computable),
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             });
         }
         // Simplify ln(x) / ln(10) to just log10(x)
@@ -843,9 +799,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     return Ok(Real {
                         rational,
                         class: Log2(r.clone()),
-                        computable: Some(computable),
-                        signal: self.signal.clone(),
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        computable: Some(self.inherit_abort(computable)),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
             } else {

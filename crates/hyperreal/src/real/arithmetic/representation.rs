@@ -51,10 +51,8 @@ pub struct Real {
     // scalar produced by dense algebra and matrix kernels; folding materializes
     // the rational leaf only when a generic approximation kernel actually needs it.
     pub(super) computable: Option<Computable>,
-    #[cfg_attr(feature = "serde", serde(skip))]
-    pub(super) signal: Option<Signal>,
     #[cfg_attr(feature = "serde", serde(skip, default))]
-    pub(super) primitive_approx_cache: Cell<PrimitiveApproxCache>,
+    pub(super) primitive_approx_cache: AtomicPrimitiveApproxCache,
 }
 
 impl Clone for Real {
@@ -66,7 +64,7 @@ impl Clone for Real {
         // certificate; keep opaque irrational payloads and abort-attached values
         // as true clones because their graph shape or signal cannot be inferred.
         let computable =
-            if self.signal.is_some() || matches!(self.class, Irrational | ConstOffset(_)) {
+            if self.abort_signal().is_some() || matches!(self.class, Irrational | ConstOffset(_)) {
                 // ConstOffset payloads are shallow enough to clone and expensive
                 // enough to rebuild that scalar rows like 1000*pi+eps regress if
                 // every clone reconstructs cached pi plus a rational offset tree.
@@ -81,8 +79,9 @@ impl Clone for Real {
             rational: self.rational.clone(),
             class: self.class.clone(),
             computable,
-            signal: self.signal.clone(),
-            primitive_approx_cache: Cell::new(self.primitive_approx_cache.get()),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                self.primitive_approx_cache.get(),
+            ),
         }
     }
 }
@@ -101,8 +100,7 @@ impl Real {
             rational,
             class: One,
             computable: None,
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         }
     }
 
@@ -137,11 +135,32 @@ impl Real {
     /// The provided flag can be used e.g. from another execution thread.
     /// Aborted calculations may have incorrect results.
     pub fn abort(&mut self, s: Signal) {
-        self.signal = Some(s.clone());
         self.primitive_approx_cache.set(PrimitiveApproxCache::Empty);
-        if let Some(computable) = &mut self.computable {
-            computable.abort(s);
+        let computable = self
+            .computable
+            .get_or_insert_with(|| self.class.computable_certificate());
+        computable.abort(s);
+    }
+
+    pub(super) fn abort_signal(&self) -> Option<&Signal> {
+        self.computable
+            .as_ref()
+            .and_then(|computable| computable.signal.as_ref())
+    }
+
+    #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    pub(super) fn is_aborted(&self) -> bool {
+        use std::sync::atomic::Ordering::Relaxed;
+
+        self.abort_signal()
+            .is_some_and(|signal| signal.load(Relaxed))
+    }
+
+    pub(super) fn inherit_abort(&self, mut computable: Computable) -> Computable {
+        if let Some(signal) = self.abort_signal() {
+            computable.abort(signal.clone());
         }
+        computable
     }
 
     /// Zero, the additive identity.

@@ -167,7 +167,7 @@ impl Computable {
             crate::trace_dispatch!("computable", "ln", "exact-one-zero");
             return Self::zero();
         }
-        if let Approximation::Ratio(r) = &*self.internal
+        if let Approximation::Ratio(r) = &self.internal.approximation
             && r.sign() == Sign::Plus
         {
             if r.numerator() >= r.denominator() && r < THREE_HALVES_RATIONAL.deref() {
@@ -316,10 +316,7 @@ impl Computable {
         // Private constructor for ln(1+x). Public ln range reduction must run
         // first so this node never sees an arbitrary positive value.
         Self {
-            internal: Rc::new(Approximation::PrescaledLn(self)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Invalid),
+            internal: Arc::new(Node::new(Approximation::PrescaledLn(self), BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         }
     }
@@ -330,10 +327,7 @@ impl Computable {
         // has the same sign as x, so store that cheap certificate too.
         let sign = rational.sign();
         Self {
-            internal: Rc::new(Approximation::PrescaledLnRational(rational)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Valid(sign)),
+            internal: Arc::new(Node::new(Approximation::PrescaledLnRational(rational), BoundCache::Invalid, ExactSignCache::Valid(sign))),
             signal: None,
         }
     }
@@ -344,10 +338,7 @@ impl Computable {
         // together for hot ln(1+x^2) offenders and lets the approximation
         // kernel combine the two terms without allocating a short-lived graph.
         Self {
-            internal: Rc::new(Approximation::BinaryScaledLnRational { residual, shift }),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Invalid),
+            internal: Arc::new(Node::new(Approximation::BinaryScaledLnRational { residual, shift }, BoundCache::Invalid, ExactSignCache::Invalid)),
             signal: None,
         }
     }

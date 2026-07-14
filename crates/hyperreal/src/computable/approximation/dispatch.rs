@@ -89,11 +89,13 @@ impl Approximation {
             LogPnorm(c) => log_pnorm(signal, c, p),
             LogNormalSf(c) => log_normal_sf(signal, c, p),
             LogDnorm(c) => log_dnorm(signal, c, p),
-            NormalQuantile {
-                p: prob,
-                seed,
-                seed_prec,
-            } => normal_quantile(signal, prob, seed, *seed_prec, p),
+            NormalQuantile(data) => normal_quantile(
+                signal,
+                &data.p,
+                &data.seed,
+                data.seed_prec,
+                p,
+            ),
         }
     }
 }
@@ -132,10 +134,11 @@ fn raw(kind: Approximation) -> Computable {
     // for internal constant identities where adding public simplification would
     // either recurse back into the same constant or erase the intended kernel.
     Computable {
-        internal: Rc::new(kind),
-        cache: std::cell::RefCell::new(crate::computable::Cache::Invalid),
-        bound: std::cell::Cell::new(crate::computable::BoundCache::Invalid),
-        exact_sign: std::cell::Cell::new(crate::computable::ExactSignCache::Invalid),
+        internal: std::sync::Arc::new(crate::computable::node::Node::new(
+            kind,
+            Default::default(),
+            Default::default(),
+        )),
         signal: None,
     }
 }

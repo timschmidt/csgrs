@@ -8,15 +8,349 @@
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Computable {
-    pub(super) internal: Rc<Approximation>,
-    #[cfg_attr(feature = "serde", serde(skip))]
-    pub(crate) cache: RefCell<Cache>,
-    #[cfg_attr(feature = "serde", serde(skip))]
-    pub(crate) bound: Cell<BoundCache>,
-    #[cfg_attr(feature = "serde", serde(skip))]
-    pub(crate) exact_sign: Cell<ExactSignCache>,
+    pub(super) internal: Arc<Node>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) signal: Option<Signal>,
+}
+
+/// Immutable expression and its shared, synchronized accelerator state.
+/// Keeping these in one allocation makes a `Computable` clone one pointer and
+/// one atomic reference-count update instead of two of each.
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+pub(super) struct Node {
+    #[cfg_attr(feature = "serde", serde(skip, default))]
+    facts: AtomicFacts,
+    approximation: Approximation,
+    #[cfg_attr(feature = "serde", serde(skip, default))]
+    cache: ApproximationCache,
+}
+
+impl Node {
+    pub(crate) fn new(
+        approximation: Approximation,
+        bound: BoundCache,
+        exact_sign: ExactSignCache,
+    ) -> Self {
+        Self {
+            facts: AtomicFacts::new(bound, exact_sign),
+            approximation,
+            cache: ApproximationCache::new(),
+        }
+    }
+
+    pub(crate) fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
+        self.cache.at_precision(p)
+    }
+
+    pub(crate) fn cached_value(&self) -> Option<(Precision, BigInt)> {
+        self.cache.get()
+    }
+
+    pub(crate) fn cached_sign(&self) -> Option<Sign> {
+        self.cache.sign()
+    }
+
+    pub(crate) fn store_cache_value(&self, p: Precision, value: BigInt) {
+        self.cache.store(p, value);
+    }
+
+    #[cfg(test)]
+    pub(crate) fn cache_snapshot(&self) -> Option<(Precision, BigInt)> {
+        self.cache.get()
+    }
+}
+
+struct CachedApproximation {
+    precision: Precision,
+    value: BigInt,
+}
+
+/// Guarded atomic single-value cache. Reads are lock-free and replaced values
+/// stay alive until every concurrent guard has been released. The swap cell is
+/// allocated lazily so constructing and dropping a cold expression performs no
+/// hazard-slot bookkeeping.
+struct ApproximationCache(
+    std::sync::atomic::AtomicPtr<arc_swap::ArcSwapOption<CachedApproximation>>,
+);
+
+impl ApproximationCache {
+    fn new() -> Self {
+        Self(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()))
+    }
+
+    fn cell(&self) -> Option<&arc_swap::ArcSwapOption<CachedApproximation>> {
+        let pointer = self.0.load(std::sync::atomic::Ordering::Acquire);
+        if pointer.is_null() {
+            None
+        } else {
+            // SAFETY: the pointed-to cell is installed once and remains alive
+            // until the enclosing Node is exclusively dropped.
+            Some(unsafe { &*pointer })
+        }
+    }
+
+    fn cell_or_init(&self) -> &arc_swap::ArcSwapOption<CachedApproximation> {
+        if let Some(cell) = self.cell() {
+            return cell;
+        }
+
+        let allocated = Box::into_raw(Box::new(arc_swap::ArcSwapOption::empty()));
+        let pointer = match self.0.compare_exchange(
+            std::ptr::null_mut(),
+            allocated,
+            std::sync::atomic::Ordering::AcqRel,
+            std::sync::atomic::Ordering::Acquire,
+        ) {
+            Ok(_) => allocated,
+            Err(installed) => {
+                // SAFETY: this allocation lost the installation race and was
+                // never published.
+                unsafe { drop(Box::from_raw(allocated)) };
+                installed
+            }
+        };
+        // SAFETY: the winning pointer remains installed until Node::drop.
+        unsafe { &*pointer }
+    }
+
+    fn get(&self) -> Option<(Precision, BigInt)> {
+        let cached = self.load_arc()?;
+        Some((cached.precision, cached.value.clone()))
+    }
+
+    fn at_precision(&self, p: Precision) -> Option<BigInt> {
+        let cached = self.load_arc()?;
+        Self::value_at_precision(&cached, p)
+    }
+
+    fn load_arc(&self) -> Option<Arc<CachedApproximation>> {
+        self.cell()?.load_full()
+    }
+
+    #[inline(always)]
+    fn value_at_precision(cached: &CachedApproximation, p: Precision) -> Option<BigInt> {
+        if p < cached.precision {
+            None
+        } else if p == cached.precision {
+            Some(cached.value.clone())
+        } else {
+            Some(scale(cached.value.clone(), cached.precision - p))
+        }
+    }
+
+    fn sign(&self) -> Option<Sign> {
+        self.cell()?
+            .load()
+            .as_deref()
+            .map(|cached| cached.value.sign())
+    }
+
+    fn store(&self, p: Precision, value: BigInt) {
+        let replacement = Arc::new(CachedApproximation {
+            precision: p,
+            value,
+        });
+        self.cell_or_init().rcu(|current| {
+            // Concurrent evaluations may finish out of order. Never let a
+            // coarser result evict a finer result already published.
+            if current
+                .as_deref()
+                .is_some_and(|cached| cached.precision <= p)
+            {
+                current.clone()
+            } else {
+                Some(replacement.clone())
+            }
+        });
+    }
+}
+
+impl Default for ApproximationCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Debug for ApproximationCache {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.get().fmt(formatter)
+    }
+}
+
+impl Drop for ApproximationCache {
+    fn drop(&mut self) {
+        let pointer = *self.0.get_mut();
+        if !pointer.is_null() {
+            // SAFETY: dropping the enclosing Node proves exclusive access and
+            // no guard can still borrow this cell.
+            unsafe { drop(Box::from_raw(pointer)) };
+        }
+    }
+}
+
+impl Deref for Node {
+    type Target = Approximation;
+
+    fn deref(&self) -> &Self::Target {
+        &self.approximation
+    }
+}
+
+#[derive(Debug)]
+struct AtomicFacts(std::sync::atomic::AtomicU64);
+
+impl Default for AtomicFacts {
+    fn default() -> Self {
+        Self::new(BoundCache::Invalid, ExactSignCache::Invalid)
+    }
+}
+
+impl AtomicFacts {
+    const TAG_INVALID: u64 = 0;
+    const TAG_UNKNOWN: u64 = 1;
+    const TAG_ZERO: u64 = 2;
+    const TAG_NONZERO: u64 = 3;
+    const SIGN_SHIFT: u32 = 2;
+    const MSD_PRESENT: u64 = 1 << 4;
+    const EXACT_MSD: u64 = 1 << 5;
+    const EXACT_SIGN_SHIFT: u32 = 6;
+    const EXACT_SIGN_MASK: u64 = 0b111 << Self::EXACT_SIGN_SHIFT;
+    const MSD_SHIFT: u32 = 32;
+
+    fn new(bound: BoundCache, exact_sign: ExactSignCache) -> Self {
+        Self(std::sync::atomic::AtomicU64::new(
+            Self::encode_bound(bound) | Self::encode_exact_sign(exact_sign),
+        ))
+    }
+
+    fn encode_bound(value: BoundCache) -> u64 {
+        match value {
+            BoundCache::Invalid => Self::TAG_INVALID,
+            BoundCache::Valid(BoundInfo::Unknown) => Self::TAG_UNKNOWN,
+            BoundCache::Valid(BoundInfo::Zero) => Self::TAG_ZERO,
+            BoundCache::Valid(BoundInfo::NonZero {
+                sign,
+                msd,
+                exact_msd,
+            }) => {
+                let sign = match sign {
+                    None => 0,
+                    Some(Sign::Plus) => 1,
+                    Some(Sign::Minus) => 2,
+                    Some(Sign::NoSign) => 3,
+                };
+                let mut encoded =
+                    Self::TAG_NONZERO | ((sign as u64) << Self::SIGN_SHIFT);
+                if let Some(msd) = msd {
+                    encoded |= Self::MSD_PRESENT | ((msd as u32 as u64) << Self::MSD_SHIFT);
+                }
+                if exact_msd {
+                    encoded |= Self::EXACT_MSD;
+                }
+                encoded
+            }
+        }
+    }
+
+    fn decode_bound(value: u64) -> BoundCache {
+        match value & 0b11 {
+            Self::TAG_INVALID => BoundCache::Invalid,
+            Self::TAG_UNKNOWN => BoundCache::Valid(BoundInfo::Unknown),
+            Self::TAG_ZERO => BoundCache::Valid(BoundInfo::Zero),
+            Self::TAG_NONZERO => {
+                let sign = match (value >> Self::SIGN_SHIFT) & 0b11 {
+                    0 => None,
+                    1 => Some(Sign::Plus),
+                    2 => Some(Sign::Minus),
+                    3 => Some(Sign::NoSign),
+                    _ => unreachable!(),
+                };
+                let msd = (value & Self::MSD_PRESENT != 0)
+                    .then_some(((value >> Self::MSD_SHIFT) as u32) as i32);
+                BoundCache::Valid(BoundInfo::NonZero {
+                    sign,
+                    msd,
+                    exact_msd: value & Self::EXACT_MSD != 0,
+                })
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    fn bound(&self) -> BoundCache {
+        Self::decode_bound(
+            self.0.load(std::sync::atomic::Ordering::Relaxed) & !Self::EXACT_SIGN_MASK,
+        )
+    }
+
+    fn snapshot(&self) -> (BoundCache, ExactSignCache) {
+        let encoded = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        (
+            Self::decode_bound(encoded & !Self::EXACT_SIGN_MASK),
+            Self::decode_exact_sign(encoded),
+        )
+    }
+
+    fn set_bound(&self, value: BoundCache) {
+        let encoded = Self::encode_bound(value);
+        let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        loop {
+            let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
+            match self.0.compare_exchange_weak(
+                current,
+                updated,
+                std::sync::atomic::Ordering::Relaxed,
+                std::sync::atomic::Ordering::Relaxed,
+            ) {
+                Ok(_) => return,
+                Err(observed) => current = observed,
+            }
+        }
+    }
+
+    fn encode_exact_sign(value: ExactSignCache) -> u64 {
+        let encoded = match value {
+            ExactSignCache::Invalid => 0,
+            ExactSignCache::Unknown => 1,
+            ExactSignCache::Valid(Sign::Minus) => 2,
+            ExactSignCache::Valid(Sign::NoSign) => 3,
+            ExactSignCache::Valid(Sign::Plus) => 4,
+        };
+        encoded << Self::EXACT_SIGN_SHIFT
+    }
+
+    fn decode_exact_sign(value: u64) -> ExactSignCache {
+        match (value & Self::EXACT_SIGN_MASK) >> Self::EXACT_SIGN_SHIFT {
+            0 => ExactSignCache::Invalid,
+            1 => ExactSignCache::Unknown,
+            2 => ExactSignCache::Valid(Sign::Minus),
+            3 => ExactSignCache::Valid(Sign::NoSign),
+            4 => ExactSignCache::Valid(Sign::Plus),
+            _ => unreachable!("invalid atomic exact-sign cache state"),
+        }
+    }
+
+    fn exact_sign(&self) -> ExactSignCache {
+        Self::decode_exact_sign(self.0.load(std::sync::atomic::Ordering::Relaxed))
+    }
+
+    fn replace_exact_sign(&self, value: ExactSignCache) -> ExactSignCache {
+        let encoded = Self::encode_exact_sign(value);
+        let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        loop {
+            let updated = (current & !Self::EXACT_SIGN_MASK) | encoded;
+            match self.0.compare_exchange_weak(
+                current,
+                updated,
+                std::sync::atomic::Ordering::Relaxed,
+                std::sync::atomic::Ordering::Relaxed,
+            ) {
+                Ok(_) => return Self::decode_exact_sign(current),
+                Err(observed) => current = observed,
+            }
+        }
+    }
 }
 
 pub(crate) mod signed {

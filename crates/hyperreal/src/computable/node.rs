@@ -8,7 +8,7 @@
 //! "Exact real arithmetic: a case study in higher order programming",
 //! LFP 1986, <https://doi.org/10.1145/319838.319860>.
 
-use crate::computable::approximation::{Approximation, SharedConstant};
+use crate::computable::approximation::{Approximation, NormalQuantileData, SharedConstant};
 use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};
 use core::cmp::Ordering;
 use num::Signed;
@@ -17,10 +17,8 @@ use num::{One, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
-    cell::{Cell, RefCell},
     ops::{Deref, Neg},
-    rc::Rc,
-    sync::LazyLock,
+    sync::{Arc, LazyLock},
 };
 
 include!("node/bounds.rs");

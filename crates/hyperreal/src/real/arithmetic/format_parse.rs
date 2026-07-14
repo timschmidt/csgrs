@@ -81,8 +81,7 @@ impl std::str::FromStr for Real {
             rational,
             class: One,
             computable: None,
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         })
     }
 }

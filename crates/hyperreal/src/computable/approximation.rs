@@ -7,7 +7,6 @@ use num::{One, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
-use std::rc::Rc;
 use std::sync::LazyLock;
 
 include!("approximation/representation.rs");

@@ -27,9 +27,11 @@ pub(crate) mod rationals {
 }
 
 mod constants {
-    use super::{Class, ConstOffsetClass, LnAffineClass, PrimitiveApproxCache};
+    use super::{
+        AtomicPrimitiveApproxCache, Class, ConstOffsetClass, LnAffineClass,
+        PrimitiveApproxCache,
+    };
     use crate::{Computable, Rational, Real};
-    use std::cell::Cell;
     thread_local! {
         // These are the canonical internal constants. Public constructors clone
         // these symbolic/computable forms instead of rebuilding exact classes and
@@ -41,79 +43,68 @@ mod constants {
             rational: Rational::one(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static TAU: Real = Real {
             rational: Rational::new(2),
             class: Class::Pi,
             computable: Some(Computable::pi()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_FOUR: Real = Real {
             rational: Rational::fraction(1, 4).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_SIX: Real = Real {
             rational: Rational::fraction(1, 6).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static HALF: Real = Real::new(Rational::fraction(1, 2).unwrap());
         static SQRT_TWO_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(2)),
             computable: Some(Computable::sqrt_constant(2).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_THREE_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
             computable: Some(Computable::sqrt_constant(3).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_THREE: Real = Real {
             rational: Rational::one(),
             class: Class::Sqrt(Rational::new(3)),
             computable: Some(Computable::sqrt_constant(3).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_THREE_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
             computable: Some(Computable::sqrt_constant(3).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_SIX_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Sqrt(Rational::new(6)),
             computable: Some(Computable::sqrt_rational(Rational::new(6))),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static PI_SQRT_TWO: Real = Real {
             rational: Rational::one(),
@@ -122,57 +113,49 @@ mod constants {
                 Computable::pi(),
                 Computable::sqrt_constant(2).unwrap(),
             )),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static LN2: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(2)),
             computable: Some(Computable::ln_constant(2).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static LN3: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(3)),
             computable: Some(Computable::ln_constant(3).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static HALF_LN3: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Ln(Rational::new(3)),
             computable: Some(Computable::ln_constant(3).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static LN5: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(5)),
             computable: Some(Computable::ln_constant(5).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static LN6: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(6)),
             computable: Some(Computable::ln_constant(6).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static LN7: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(7)),
             computable: Some(Computable::ln_constant(7).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static LN10: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(10)),
             computable: Some(Computable::ln_constant(10).unwrap()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static PI_MINUS_THREE: Real = Real {
             rational: Rational::one(),
@@ -185,8 +168,7 @@ mod constants {
                 Computable::pi(),
                 Computable::rational(Rational::new(-3)),
             )),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static ONE_PLUS_LN2: Real = Real {
             rational: Rational::one(),
@@ -198,15 +180,13 @@ mod constants {
                 Computable::one(),
                 Computable::ln_constant(2).unwrap(),
             )),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
         static E: Real = Real {
             rational: Rational::one(),
             class: Class::Exp(Rational::one()),
             computable: Some(Computable::e_constant()),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         };
     }
 
@@ -273,8 +253,7 @@ mod constants {
                 rational: Rational::one(),
                 class: Class::Sqrt(Rational::new(2)),
                 computable: Some(Computable::sqrt_constant(2).unwrap()),
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             }),
             3 => Some(sqrt_three()),
             _ => None,
@@ -332,4 +311,3 @@ mod unsigned {
     pub(super) static FOUR: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(4_u8));
     pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(6_u8));
 }
-

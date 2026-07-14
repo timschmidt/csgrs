@@ -17,12 +17,7 @@ mod tests {
 
     #[test]
     fn layout_sizes() {
-        #[cfg(feature = "cached-f64-approx")]
-        const MAX_REAL_SIZE: usize = 224;
-        #[cfg(all(not(feature = "cached-f64-approx"), feature = "cached-f32-approx"))]
-        const MAX_REAL_SIZE: usize = 216;
-        #[cfg(not(any(feature = "cached-f32-approx", feature = "cached-f64-approx")))]
-        const MAX_REAL_SIZE: usize = 208;
+        const MAX_REAL_SIZE: usize = 48;
 
         assert!(
             size_of::<Real>() <= MAX_REAL_SIZE,
@@ -30,14 +25,19 @@ mod tests {
             size_of::<Real>()
         );
         assert!(
-            size_of::<Rational>() <= 56,
+            size_of::<Rational>() <= 8,
             "Rational grew to {} bytes",
             size_of::<Rational>()
         );
         assert!(
-            size_of::<Class>() <= 64,
+            size_of::<Class>() <= 16,
             "Class grew to {} bytes",
             size_of::<Class>()
+        );
+        assert!(
+            size_of::<AtomicPrimitiveApproxCache>() <= 8,
+            "atomic primitive cache grew to {} bytes",
+            size_of::<AtomicPrimitiveApproxCache>()
         );
         assert!(
             size_of::<PrimitiveApproxCache>() <= 16,
@@ -45,27 +45,27 @@ mod tests {
             size_of::<PrimitiveApproxCache>()
         );
         assert!(
-            size_of::<ConstProductClass>() <= 64,
+            size_of::<ConstProductClass>() <= 16,
             "ConstProductClass grew to {} bytes",
             size_of::<ConstProductClass>()
         );
         assert!(
-            size_of::<ConstOffsetClass>() <= 120,
+            size_of::<ConstOffsetClass>() <= 24,
             "ConstOffsetClass grew to {} bytes",
             size_of::<ConstOffsetClass>()
         );
         assert!(
-            size_of::<ConstProductSqrtClass>() <= 120,
+            size_of::<ConstProductSqrtClass>() <= 24,
             "ConstProductSqrtClass grew to {} bytes",
             size_of::<ConstProductSqrtClass>()
         );
         assert!(
-            size_of::<LnAffineClass>() <= 112,
+            size_of::<LnAffineClass>() <= 16,
             "LnAffineClass grew to {} bytes",
             size_of::<LnAffineClass>()
         );
         assert!(
-            size_of::<LnProductClass>() <= 112,
+            size_of::<LnProductClass>() <= 16,
             "LnProductClass grew to {} bytes",
             size_of::<LnProductClass>()
         );

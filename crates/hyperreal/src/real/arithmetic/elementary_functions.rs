@@ -159,8 +159,7 @@ impl Real {
                         rational: square,
                         class: One,
                         computable: None,
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 } else if !square.is_one()
                     && let Some(shared) = rest.to_integer_i64().and_then(constants::sqrt_constant)
@@ -175,8 +174,7 @@ impl Real {
                         rational: square,
                         class: shared.class,
                         computable: shared.computable,
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 } else {
                     crate::trace_dispatch!("real", "sqrt", "rational-sqrt-special-form");
@@ -184,8 +182,7 @@ impl Real {
                         rational: square,
                         class: Sqrt(rest.clone()),
                         computable: Some(Computable::sqrt_squarefree_rational(rest)),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -200,8 +197,7 @@ impl Real {
                         rational: square,
                         class: Irrational,
                         computable: Some(Computable::sqrt(self.into_computable())),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -217,8 +213,7 @@ impl Real {
                         rational: square,
                         class: Exp(exp.clone()),
                         computable: Some(Computable::exp_rational(exp)),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -307,8 +302,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Exp(self.rational.clone()),
                     computable: Some(Computable::exp_rational(self.rational)),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 });
             }
             Ln(ln) => {
@@ -319,8 +313,7 @@ impl Real {
                         rational: ln.clone().powi(int)?,
                         class: One,
                         computable: None,
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -372,8 +365,7 @@ impl Real {
             rational: Rational::one(),
             class: Log10(r),
             computable: Some(computable),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         })
     }
 
@@ -427,8 +419,7 @@ impl Real {
             rational: Rational::one(),
             class: Log2(r),
             computable: Some(computable),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         })
     }
 
@@ -547,8 +538,7 @@ impl Real {
                     rational: Rational::new(-1),
                     class: Ln(inv),
                     computable: Some(Computable::ln(new)),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 })
             }
             std::cmp::Ordering::Equal => {
@@ -567,8 +557,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Ln(r),
                     computable: Some(Computable::ln(new)),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 })
             }
         }
@@ -596,8 +585,7 @@ impl Real {
             rational: term.rational.clone(),
             class,
             computable: Some(computable),
-            signal: None,
-            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
         })
     }
 
@@ -617,8 +605,7 @@ impl Real {
                         rational: exp.clone(),
                         class: One,
                         computable: None,
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 if exp == &*rationals::ONE && self.rational == *rationals::TWO {
@@ -2219,16 +2206,14 @@ impl Real {
                 rational: Rational::new(-1),
                 class: TanPi(n),
                 computable: Some(computable),
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             }
         } else {
             Self {
                 rational: Rational::one(),
                 class: TanPi(n),
                 computable: Some(computable),
-                signal: None,
-                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
             }
         })
     }
@@ -3017,8 +3002,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Irrational,
                     computable: Some(value.ln().multiply(exp).exp()),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 })
             }
             Sign::Minus => {
@@ -3030,16 +3014,14 @@ impl Real {
                         rational: Rational::one(),
                         class: Irrational,
                         computable: Some(value.ln().multiply(exp).exp().negate()),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     })
                 } else {
                     Ok(Self {
                         rational: Rational::one(),
                         class: Irrational,
                         computable: Some(value.ln().multiply(exp).exp()),
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     })
                 }
             }
@@ -3082,8 +3064,7 @@ impl Real {
                         rational,
                         class: One,
                         computable: None,
-                        signal: None,
-                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 Sqrt(sqrt) => 'quick: {
@@ -3099,8 +3080,7 @@ impl Real {
                             rational: product,
                             class: Sqrt(sqrt.clone()),
                             computable: self.computable,
-                            signal: None,
-                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                         };
                         crate::trace_dispatch!("real", "powi", "sqrt-odd-special-form");
                         return Ok(n);
@@ -3120,8 +3100,7 @@ impl Real {
                             rational,
                             class: Irrational,
                             computable: Some(computable),
-                            signal: None,
-                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                         });
                     }
                 }
@@ -3171,8 +3150,7 @@ impl Real {
                     rational: Rational::one(),
                     class: Irrational,
                     computable: Some(value.ln().multiply(exp).exp()),
-                    signal: None,
-                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 })
             }
         }

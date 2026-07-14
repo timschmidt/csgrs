@@ -72,19 +72,34 @@ impl Computable {
             FinishOffset(&'a Computable, Precision),
         }
 
-        if let Some(cached) = self.cached_at_precision(p) {
+        // Exact integer leaves are cheaper to shift directly than to traverse
+        // any synchronized cache, and the direct result uses no more limbs
+        // than the requested precision.
+        let uses_node_cache = match &self.internal.approximation {
+            Approximation::Int(value) => return scale(value.clone(), -p),
+            Approximation::One => return scale(signed::ONE.deref().clone(), -p),
+            Approximation::Constant(constant) => {
+                if let Some(cached) = Self::cached_constant_at_precision(*constant, p) {
+                    return cached;
+                }
+                false
+            }
+            _ => true,
+        };
+
+        if uses_node_cache && let Some(cached) = self.internal.cached_at_precision(p) {
             return cached;
         }
 
         if !matches!(
-            &*self.internal,
+            &self.internal.approximation,
             Approximation::Negate(_) | Approximation::Add(_, _) | Approximation::Offset(_, _)
         ) {
             // Most node kinds evaluate as one kernel call. Only Negate/Add/Offset
             // are flattened below because they form the long chains seen in
             // parser, matrix, and structural-reduction workloads.
             let result = self.internal.approximate(signal, p);
-            self.store_cache_value(p, result.clone());
+            self.store_cache_value(signal, p, result.clone());
             return result;
         }
 
@@ -102,7 +117,7 @@ impl Computable {
                         continue;
                     }
 
-                    match &*node.internal {
+                    match &node.internal.approximation {
                         Approximation::Negate(child) => {
                             // Flatten sign wrappers so a deep chain of negated
                             // sums does not recurse through approx_signal.
@@ -125,26 +140,26 @@ impl Computable {
                         }
                         _ => {
                             let result = node.internal.approximate(signal, prec);
-                            node.store_cache_value(prec, result.clone());
+                            node.store_cache_value(signal, prec, result.clone());
                             values.push(result);
                         }
                     }
                 }
                 Frame::FinishNegate(node, prec) => {
                     let result = -values.pop().expect("negate child result should exist");
-                    node.store_cache_value(prec, result.clone());
+                    node.store_cache_value(signal, prec, result.clone());
                     values.push(result);
                 }
                 Frame::FinishAdd(node, prec) => {
                     let right = values.pop().expect("add rhs result should exist");
                     let left = values.pop().expect("add lhs result should exist");
                     let result = scale(left + right, -2);
-                    node.store_cache_value(prec, result.clone());
+                    node.store_cache_value(signal, prec, result.clone());
                     values.push(result);
                 }
                 Frame::FinishOffset(node, prec) => {
                     let result = values.pop().expect("offset child result should exist");
-                    node.store_cache_value(prec, result.clone());
+                    node.store_cache_value(signal, prec, result.clone());
                     values.push(result);
                 }
             }
@@ -156,8 +171,14 @@ impl Computable {
     /// Conservatively inspect cached and structural numeric facts.
     pub fn structural_facts(&self) -> RealStructuralFacts {
         let exact = self.exact_rational();
+        let (cached_bound, cached_sign) = self.internal.facts.snapshot();
 
-        let mut sign = self.exact_sign().map(public_sign);
+        let mut sign = match cached_sign {
+            ExactSignCache::Valid(sign) => Some(public_sign(sign)),
+            ExactSignCache::Invalid | ExactSignCache::Unknown => {
+                self.exact_sign().map(public_sign)
+            }
+        };
         #[cfg(feature = "dispatch-trace")]
         if sign.is_some() {
             crate::trace_dispatch!("computable", "structural_facts", "exact-sign-cache");
@@ -170,7 +191,10 @@ impl Computable {
             sign = Some(public_sign(appr.sign()));
         }
 
-        let bound = self.cheap_bound();
+        let bound = match cached_bound {
+            BoundCache::Valid(bound) => bound,
+            BoundCache::Invalid => self.cheap_bound(),
+        };
         if sign.is_none() {
             let bound_sign = bound.known_sign();
             #[cfg(feature = "dispatch-trace")]
@@ -267,7 +291,7 @@ impl Computable {
             && appr.abs() > BigInt::one()
         {
             let sign = appr.sign();
-            self.exact_sign.replace(ExactSignCache::Valid(sign));
+            self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
             crate::trace_dispatch!("computable", "sign_until", "approximation-cache-sign");
             return Some(public_sign(sign));
         }
@@ -286,7 +310,7 @@ impl Computable {
             let appr = self.approx(p);
             if appr.abs() > BigInt::one() {
                 let sign = appr.sign();
-                self.exact_sign.replace(ExactSignCache::Valid(sign));
+                self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
                 return Some(public_sign(sign));
             }
 
@@ -322,22 +346,20 @@ impl Computable {
             crate::trace_dispatch!("computable", "sign", "exact-sign-cache");
             return sign;
         }
+        if let Some(sign) = self.internal.cached_sign()
+            && sign != Sign::NoSign
         {
-            let cache = self.cache.borrow();
-            if let Cache::Valid((_prec, cache_appr)) = &*cache {
-                let sign = cache_appr.sign();
-                if sign != Sign::NoSign {
-                    self.exact_sign.replace(ExactSignCache::Valid(sign));
-                    crate::trace_dispatch!("computable", "sign", "approximation-cache-sign");
-                    return sign;
-                }
-            }
+            self.internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(sign));
+            crate::trace_dispatch!("computable", "sign", "approximation-cache-sign");
+            return sign;
         }
         // Delay approximation refinement until after structural information has
         // had a chance to prove the sign. This avoids precision work for
         // purely symbolic queries.
         if let Some(sign) = self.cheap_bound().known_sign() {
-            self.exact_sign.replace(ExactSignCache::Valid(sign));
+            self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
             crate::trace_dispatch!("computable", "sign", "cheap-bound-sign");
             return sign;
         }
@@ -350,29 +372,16 @@ impl Computable {
             sign = appr.sign();
         }
         if sign != Sign::NoSign {
-            self.exact_sign.replace(ExactSignCache::Valid(sign));
+            self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
         }
         sign
     }
 
     fn cached(&self) -> Option<(Precision, BigInt)> {
         if let Some(constant) = self.shared_constant_kind() {
-            SHARED_CONSTANT_CACHES.with(|caches| {
-                let caches = caches.borrow();
-                match &caches[constant.cache_index()] {
-                    Cache::Valid((cache_prec, cache_appr)) => {
-                        Some((*cache_prec, cache_appr.clone()))
-                    }
-                    Cache::Invalid => None,
-                }
-            })
+            SHARED_CONSTANT_CACHES[constant.cache_index()].get()
         } else {
-            let cache = self.cache.borrow();
-            if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-                Some((*cache_prec, cache_appr.clone()))
-            } else {
-                None
-            }
+            self.internal.cached_value()
         }
     }
 
@@ -488,7 +497,7 @@ impl Computable {
             return order;
         }
 
-        if let Approximation::Add(left, right) = &*self.internal
+        if let Approximation::Add(left, right) = &self.internal.approximation
             && let Some(order) = if Self::internal_structural_eq(left, other) {
                 crate::trace_dispatch!(
                     "computable",
@@ -509,7 +518,7 @@ impl Computable {
         {
             return order;
         }
-        if let Approximation::Add(left, right) = &*other.internal
+        if let Approximation::Add(left, right) = &other.internal.approximation
             && let Some(order) = if Self::internal_structural_eq(left, self) {
                 crate::trace_dispatch!(
                     "computable",
@@ -645,7 +654,7 @@ impl Computable {
 
     #[inline]
     fn exact_rational_leaf_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (&*self.internal, &*other.internal) {
+        match (&self.internal.approximation, &other.internal.approximation) {
             (Approximation::Ratio(left), Approximation::Ratio(right)) => left.partial_cmp(right),
             (Approximation::Int(left), Approximation::Int(right)) => Some(left.cmp(right)),
             (Approximation::One, Approximation::One) => Some(Ordering::Equal),

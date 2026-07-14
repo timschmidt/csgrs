@@ -11,6 +11,19 @@ operations, elementary functions, scale/shift nodes, and specialized kernels.
 Nodes carry caches for approximations and conservative facts so repeated
 queries do not rebuild work.
 
+The graph is safe to share between threads. `Computable` is a 16-byte pair of
+an `Arc<Node>` and an optional independently attached abort signal. A common
+node is 56 bytes: a 40-byte expression payload, one packed atomic fact word,
+and one lazy cache pointer. Rare large payloads such as normal-quantile seeds
+are boxed so they do not inflate every arithmetic node.
+
+Approximation values are published through a lazily allocated lock-free swap
+cell. Cold expressions therefore pay neither a lock nor cache allocation, and
+concurrent refinements cannot replace a finer result with a coarser one. Bound,
+MSD, and exact-sign facts share one atomic word. Named transcendental constants
+use one process-wide certified value, so threads reuse the same BigInt and
+costly refinement work. Aborted or incomplete evaluations are never published.
+
 `Computable` follows the exact-real arithmetic model: callers request an
 approximation at a binary precision, and the graph refines only as much as is
 needed for that request.

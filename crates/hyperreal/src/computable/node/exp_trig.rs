@@ -66,10 +66,7 @@ impl Computable {
         // exp(x) stays strictly positive across all domain values, so cache
         // that fact directly for fast sign/zero checks.
         Self {
-            internal: Rc::new(Approximation::PrescaledExp(self)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(ExactSignCache::Valid(Sign::Plus)),
+            internal: Arc::new(Node::new(Approximation::PrescaledExp(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
             signal: None,
         }
     }
@@ -164,10 +161,7 @@ impl Computable {
             None => ExactSignCache::Invalid,
         };
         Self {
-            internal: Rc::new(Approximation::Expm1(self)),
-            cache: RefCell::new(Cache::Invalid),
-            bound: Cell::new(BoundCache::Invalid),
-            exact_sign: Cell::new(exact_sign),
+            internal: Arc::new(Node::new(Approximation::Expm1(self), BoundCache::Invalid, exact_sign)),
             signal: None,
         }
     }
@@ -261,7 +255,7 @@ impl Computable {
         // shared constants already carry enough structural MSD information, so
         // using it here avoids an extra approximation pass for generic scalar
         // sin/cos rows such as 1e6 and 1e30.
-        match &*self.internal {
+        match &self.internal.approximation {
             Approximation::One => Some(Some(0)),
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 None
@@ -535,10 +529,7 @@ impl Computable {
             // Known |x| < 2: enter the tangent quotient kernel directly.
             crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
             return Self {
-                internal: Rc::new(Approximation::PrescaledTan(self)),
-                cache: RefCell::new(Cache::Invalid),
-                bound: Cell::new(BoundCache::Invalid),
-                exact_sign: Cell::new(ExactSignCache::Invalid),
+                internal: Arc::new(Node::new(Approximation::PrescaledTan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
                 signal: None,
             };
         }
@@ -553,10 +544,7 @@ impl Computable {
         if abs_rough_appr < unsigned::TWO.deref() {
             crate::trace_dispatch!("computable", "tan", "rough-small-prescaled");
             return Self {
-                internal: Rc::new(Approximation::PrescaledTan(self)),
-                cache: RefCell::new(Cache::Invalid),
-                bound: Cell::new(BoundCache::Invalid),
-                exact_sign: Cell::new(ExactSignCache::Invalid),
+                internal: Arc::new(Node::new(Approximation::PrescaledTan(self), BoundCache::Invalid, ExactSignCache::Invalid)),
                 signal: None,
             };
         }
@@ -567,10 +555,7 @@ impl Computable {
             let complement = Self::pi().shift_right(1).add(self.negate());
             crate::trace_dispatch!("computable", "tan", "near-half-pi-cotangent-rewrite");
             return Self {
-                internal: Rc::new(Approximation::PrescaledCot(complement)),
-                cache: RefCell::new(Cache::Invalid),
-                bound: Cell::new(BoundCache::Invalid),
-                exact_sign: Cell::new(ExactSignCache::Invalid),
+                internal: Arc::new(Node::new(Approximation::PrescaledCot(complement), BoundCache::Invalid, ExactSignCache::Invalid)),
                 signal: None,
             };
         }
