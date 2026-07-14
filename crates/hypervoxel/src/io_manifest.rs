@@ -4,8 +4,7 @@
 //! their filenames, palettes, and byte layouts must not silently define metric
 //! spacing, material meaning, or occupancy truth. These manifests make that
 //! boundary explicit. Missing metadata remains unknown unless supplied by a
-//! caller policy, following Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997.
+//! caller policy.
 
 use crate::{
     FreshnessStatus, GridSource, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit,
@@ -198,9 +197,9 @@ impl VoxelIoMetadata {
 
     /// Returns whether the declared axis order is a complete permutation.
     ///
-    /// Axis order is a combinatorial grid fact, not a display hint. Following
-    /// Yap's object-level exactness rule, an invalid or missing axis order must
-    /// keep metadata unknown instead of being guessed from array layout.
+    /// Axis order is a combinatorial grid fact, not a display hint. An invalid
+    /// or missing order keeps metadata unknown instead of being guessed from
+    /// array layout.
     pub fn axis_order_is_permutation(&self) -> bool {
         matches!(self.axis_order, Some(order) if {
             let mut seen = [false; 3];
@@ -275,9 +274,8 @@ pub struct VoxelIoReport {
     ///
     /// A present-but-zero dimension is explicit metadata, but it is not a
     /// valid voxel grid extent. Keeping this separate from unknown metadata
-    /// follows Yap's EGC distinction between absent facts and invalid object
-    /// facts: callers should see that the adapter supplied a value and that the
-    /// value cannot support exact replay.
+    /// tells callers that the adapter supplied a value which cannot support
+    /// exact replay.
     pub invalid_dimension_axes: usize,
     /// Whether declared dimensions form a positive 3D index box.
     pub positive_dimensions_ready: bool,
@@ -296,9 +294,7 @@ pub struct VoxelIoReport {
     /// Whether the route declares at least one sample with usable bit depth.
     ///
     /// Complete metadata for an empty array is still an absence report, not
-    /// sample replay evidence. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, binds exact claims to represented
-    /// object facts; IO routes therefore expose non-vacuous sample evidence
+    /// sample replay evidence. IO routes expose non-vacuous sample evidence
     /// separately from metadata completeness.
     pub has_sample_evidence: bool,
     /// Whether missing slices or tiles have an explicit policy.
@@ -327,8 +323,7 @@ pub struct VoxelIoReport {
     pub compression: VoxelIoCompression,
     /// Whether payload samples have at least certified semantic replay.
     ///
-    /// This is the IO-facing form of Yap's exact-object boundary: a decoded
-    /// byte, palette value, or channel sample may enter the Hyper voxel layer
+    /// A decoded byte, palette value, or channel sample may enter the voxel layer
     /// only after metadata, payload mapping, and side-table links are explicit
     /// enough to replay its meaning. It may still be a certified mapping rather
     /// than exact source replay when source freshness is unknown.
@@ -338,8 +333,7 @@ pub struct VoxelIoReport {
     /// This is stricter than [`Self::certified_sample_replay_ready`]: exact
     /// replay also requires a current source binding, so a lossless stack with
     /// missing provenance remains adapter evidence instead of source geometry
-    /// truth. See Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997.
+    /// truth.
     pub exact_sample_replay_ready: bool,
 }
 
@@ -374,16 +368,15 @@ impl ImageStackManifest {
             VoxelIoPayloadStatus::CertifiedMapping
         };
         // Channel mappings are part of the combinatorial object identity of an
-        // imported grid. Following Yap's exact-geometric-computation boundary,
-        // an overdeclared or underdeclared mapping is reported as unknown
+        // imported grid. An overdeclared or underdeclared mapping is unknown
         // evidence instead of being silently repaired by byte-layout guesses.
         let payload_replay_safe = matches!(
             payload_status,
             VoxelIoPayloadStatus::ExactReplay | VoxelIoPayloadStatus::CertifiedMapping
         );
         // Exact replay needs a current source binding, not merely the absence
-        // of a stale-source proof. Under Yap's object-level model, a grid with
-        // unknown source freshness is still useful adapter evidence, but it is
+        // of a stale-source proof. A grid with unknown source freshness is
+        // still useful adapter evidence, but it is
         // not the same exact voxel artifact as its source construction.
         let exact = unknown_metadata_fields == 0
             && positive_dimensions_ready

@@ -3,10 +3,8 @@
 //! This module is the scheduled counterpart to [`crate::triangle_mesh`]. It
 //! keeps retained source triangles as the owning evidence, but prepares exact
 //! triangle AABBs once and reports how many triangle predicates each cell
-//! actually consumed. The design follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997: the prepared data are
-//! replayable object facts, not approximate acceleration hints that may change
-//! topology silently.
+//! actually consumed. Prepared data are replayable object facts, not
+//! approximate hints that may silently change topology.
 
 use std::collections::VecDeque;
 
@@ -64,10 +62,8 @@ impl PreparedExactTriangleSolidMesh {
     /// voxelization and then stores exact triangle AABBs. The AABB stage is a
     /// broad-phase scheduling application of the exact separating-box test; it
     /// does not replace the later triangle/cell predicates. This mirrors the
-    /// broad/narrow phase split described for robust triangle overlap by
-    /// Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap Test
-    /// Using Orientation Predicates," *Journal of Graphics Tools* 8(1), 2003,
-    /// with Yap's requirement that the broad phase be exact and reportable.
+    /// broad/narrow phase split used by robust triangle-overlap predicates; the
+    /// broad phase remains exact and reportable.
     pub fn prepare(solid: ExactTriangleSolidMesh) -> HypervoxelResult<Self> {
         let source = solid.report();
         if source.surface.empty_triangle_set {
@@ -422,17 +418,13 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh(
 /// Voxelize a prepared exact closed triangle solid by connected non-boundary
 /// components.
 ///
-/// This is the first arrangement-style accelerator above the per-cell parity
+/// This is an arrangement-style accelerator above the per-cell parity
 /// path. It performs the exact boundary classification for every cell, labels
 /// connected components of cells proven disjoint from the boundary, marks
 /// components touching the grid boundary as exterior, and ray-classifies only
-/// one representative cell for every remaining component. The component
-/// labeling follows the 6-neighbor digital topology model used by Rosenfeld
-/// and Pfaltz, "Sequential Operations in Digital Picture Processing," *JACM*
-/// 13(4), 1966. The topology-changing decisions remain gated by Yap's exact
-/// computation discipline: boundary predicates and representative parity
-/// queries must be proof-producing, otherwise the whole component is reported
-/// as unknown.
+/// one representative cell for every remaining component. Components use
+/// 6-neighbor digital topology. Boundary predicates and representative parity
+/// queries must be proof-producing; otherwise the whole component is unknown.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -460,11 +452,10 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_components(
 /// winding/parity. If any cell disagrees, becomes unknown, or unexpectedly
 /// reclassifies as boundary, the whole component is materialized as unknown.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7(1-2), 1997: the accelerated representative decision is accepted
-/// only after exact replay validates the combinatorial invariant it depends
-/// on. The connected-cell model is the same Rosenfeld and Pfaltz 6-neighbor
-/// digital topology used by [`voxelize_prepared_exact_triangle_solid_mesh_by_components`].
+/// The accelerated representative decision is accepted only after exact replay
+/// validates its combinatorial invariant. The connected-cell model is the same
+/// 6-neighbor topology used by
+/// [`voxelize_prepared_exact_triangle_solid_mesh_by_components`].
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -491,14 +482,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_components(
 /// every open cell on that row falls back to the existing multi-direction
 /// per-cell parity classifier, and the fallback work is reported.
 ///
-/// The row sweep is the same parity/winding idea used by point-in-polyhedron
-/// tests, but lifted to a report-bearing arrangement pass. Its sorting and
-/// unique-parameter replay follow Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: the accelerated row decision is exact
-/// only when the combinatorial crossing sequence is certified. The sweep-line
-/// batching is in the spirit of Bentley and Ottmann, "Algorithms for Reporting
-/// and Counting Geometric Intersections," *IEEE Transactions on Computers*
-/// C-28(9), 1979, but all acceptance still comes from exact ray/triangle
+/// The row sweep lifts point-in-polyhedron parity to a report-bearing
+/// arrangement pass. A row decision is exact only when its sorted crossing
+/// sequence is certified; all acceptance comes from exact ray/triangle
 /// predicates.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
     frame: GridFrame,
@@ -650,14 +636,10 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
 /// exact ray/triangle crossing sequence is free of vertex, edge, coplanar, and
 /// parameter-order ambiguity.
 ///
-/// The method follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: the accelerator is an exact
-/// arrangement replay with explicit refusal states, not a numerical shortcut.
-/// The row batching is a discrete analogue of sweep-line arrangements in
-/// Bentley and Ottmann, "Algorithms for Reporting and Counting Geometric
-/// Intersections," *IEEE Transactions on Computers* C-28(9), 1979, while the
-/// final parity rule is the classic ray-crossing winding test retained here as
-/// exact rational ray/triangle predicates.
+/// The accelerator is an exact arrangement replay with explicit refusal
+/// states, not a numerical shortcut. Row batching is a discrete sweep-line
+/// arrangement, and the final parity rule uses exact rational ray/triangle
+/// predicates.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -819,9 +801,8 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
 /// produces the same cell payloads, predicate certificate counts, boundary and
 /// unknown counts, and aggregate facts.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7(1-2), 1997: acceleration is acceptable only when replay can
-/// validate the retained object facts. The row-sweep side is the exact
+/// Acceleration is accepted only when replay validates the retained object
+/// facts. The row-sweep side is the exact
 /// arrangement batching described in
 /// [`voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps`],
 /// while the verifier intentionally uses the slower cell-local ray parity path
@@ -897,15 +878,10 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_adaptive_axis_swe
 /// multi-direction exact parity classifier, and the report keeps those cases
 /// separate.
 ///
-/// The construction follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: the row arrangements are retained
-/// exact predicates, and acceleration is refused when the combinatorial
-/// winding evidence is incomplete or inconsistent. The consensus rule is a
-/// report-bearing variant of ray-crossing parity for polyhedra; its row
-/// batching is in the spirit of Bentley and Ottmann, "Algorithms for
-/// Reporting and Counting Geometric Intersections," *IEEE Transactions on
-/// Computers* C-28(9), 1979, but no floating arrangement state is allowed to
-/// decide topology.
+/// Row arrangements retain exact predicates, and acceleration is refused when
+/// combinatorial winding evidence is incomplete or inconsistent. The consensus
+/// rule is report-bearing ray-crossing parity for polyhedra; no floating
+/// arrangement state decides topology.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -1171,13 +1147,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_consensus_axis_sw
 /// contradictory votes, or parameter-order ambiguity fall back to exact
 /// per-cell replay.
 ///
-/// The component labeling follows Rosenfeld and Pfaltz, "Sequential
-/// Operations in Digital Picture Processing," *JACM* 13(4), 1966. The
-/// winding evidence and replay gate follow Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997: a component-level
-/// acceleration is accepted only when retained exact predicates prove the
-/// combinatorial invariant that parity is constant on a boundary-disjoint
-/// component.
+/// Components use 6-neighbor digital topology. Component-level acceleration is
+/// accepted only when retained exact predicates prove that parity is constant
+/// on a boundary-disjoint component.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -1503,12 +1475,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_component_consens
 /// acceptance rule: every cell in an enclosed component must have certified
 /// row votes and all votes in that component must agree.
 ///
-/// The discrete component model follows Rosenfeld and Pfaltz, "Sequential
-/// Operations in Digital Picture Processing," *JACM* 13(4), 1966. The
-/// component-local row arrangement follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997: row schedules are
-/// performance evidence only, and exact predicates plus explicit refusal
-/// states decide whether the component can be materialized.
+/// Components use 6-neighbor digital topology. Component-local row schedules
+/// are performance evidence only; exact predicates and explicit refusal states
+/// decide whether a component can be materialized.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -1858,12 +1827,9 @@ pub fn voxelize_prepared_exact_triangle_solid_mesh_by_verified_local_component_c
 /// redundant schedule evidence. If no axis prefix proves the component, the
 /// component falls back to exact per-cell replay.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7(1-2), 1997: early acceptance is allowed only after exact
-/// predicates have proved the component invariant, while skipped rows are
-/// merely avoided work and never implicit topology evidence. The 6-neighbor
-/// component model remains the Rosenfeld and Pfaltz digital-topology model
-/// used by the other component schedulers.
+/// Early acceptance is allowed only after exact predicates prove the component
+/// invariant. Skipped rows are avoided work, never implicit topology evidence.
+/// Components use the same 6-neighbor topology as the other schedulers.
 pub fn voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus(
     frame: GridFrame,
     prepared: &PreparedExactTriangleSolidMesh,
@@ -2772,9 +2738,8 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     ///
     /// This is retained schedule evidence for the deterministic retry witness:
     /// each attempted direction must test every cell in the enclosed component.
-    /// Following Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7(1-2), 1997, this keeps the accelerated combinatorial
-    /// decision replayable instead of trusting aggregate predicate counts.
+    /// This keeps the accelerated combinatorial decision replayable instead of
+    /// trusting aggregate predicate counts.
     pub retry_direction_component_cells: usize,
     /// Component-cell memberships scheduled by successful retry directions.
     pub retry_successful_direction_cells: usize,
@@ -2836,11 +2801,8 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     pub row_cache_hits: usize,
     /// Cache hits that replayed certified exact crossing-sequence evidence.
     ///
-    /// Yap frames exact geometric computation as a system property, not only a
-    /// predicate property ("Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997). This counter keeps retained row
-    /// evidence auditable after acceleration by proving that a cache hit reused
-    /// a certified row, not merely an untyped shortcut.
+    /// This counter proves that a cache hit reused a certified row rather than
+    /// an untyped shortcut.
     pub row_cache_certified_hits: usize,
     /// Cache hits that replayed retained ambiguous arrangement evidence.
     ///
@@ -2897,10 +2859,8 @@ pub struct PreparedTriangleSolidComponentConsensusVoxelizationReport {
     /// Certified ray attempts seen during fallback classification.
     ///
     /// Fallback is an exact repair path, not an exemption from arrangement
-    /// evidence. In Yap's terms ("Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997), the system has to retain enough
-    /// proof structure to explain the final combinatorial decision; this
-    /// counter proves which fallback cells ended with certified parity rays.
+    /// evidence. This counter records which fallback cells ended with certified
+    /// parity rays.
     pub certified_fallback_ray_attempts: usize,
     /// Whether component-level winding consensus produced exact arrangement
     /// evidence for all non-boundary cells without fallback blockers.
@@ -3308,10 +3268,8 @@ fn classify_component_consensus_axis_row_with_candidate_schedule(
 ///
 /// Each retry direction is a component-wide parity witness: every cell center
 /// must produce a certified ray/triangle classification and all certified
-/// cells must agree. This is the same exact replay discipline advocated by
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997: failed or conflicting rays are reported as refusal evidence,
-/// while only a complete exact component witness can replace slower fallback.
+/// cells must agree. Failed or conflicting rays become refusal evidence; only
+/// a complete component witness can replace slower fallback.
 fn classify_component_by_retry_ray_consensus(
     component: &[[u64; 3]],
     frame: &GridFrame,

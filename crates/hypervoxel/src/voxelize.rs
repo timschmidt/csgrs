@@ -1,13 +1,10 @@
 //! Exact axis-aligned box voxelization fixtures.
 //!
 //! This module is intentionally modest: it does not claim to solve general
-//! triangle-mesh voxelization. It provides the first proof-carrying
+//! triangle-mesh voxelization. It provides a proof-carrying
 //! geometry-to-grid path for exact axis-aligned boxes, using certified
-//! comparisons over [`hyperreal::Real`]. The design follows Yap's exact
-//! geometric computation principle that combinatorial classification must be
-//! derived from exact/proof-producing predicates rather than primitive-float
-//! epsilon tests. See Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry*, 1997, Sections 2 and 6.
+//! comparisons over [`hyperreal::Real`]. Combinatorial classification comes
+//! from proof-producing predicates rather than primitive-float epsilon tests.
 
 use core::cmp::Ordering;
 
@@ -35,10 +32,9 @@ pub struct ExactBox {
 ///
 /// Exact voxelization may continue through undecided predicate comparisons as
 /// explicit unknown cells, but source geometry with a certified inverted axis
-/// is not a valid box. The report keeps that distinction visible, following
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997: invalid object structure is rejected, while undecided
-/// comparisons remain explicit uncertainty instead of an epsilon repair.
+/// is not a valid box. The report rejects invalid object structure while
+/// keeping undecided comparisons explicit instead of applying an epsilon
+/// repair.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExactBoxReport {
     /// Axes where `min <= max` was certified.
@@ -46,10 +42,8 @@ pub struct ExactBoxReport {
     /// Axes where `min == max` was certified.
     ///
     /// A zero-thickness axis is ordered, but it is not a valid 3D box volume
-    /// for source-geometry voxelization. Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997, distinguishes
-    /// exact object structure from predicate accidents; degenerate solids are
-    /// rejected rather than being promoted into boundary-only topology.
+    /// for source-geometry voxelization. Degenerate solids are rejected rather
+    /// than promoted into boundary-only topology.
     pub zero_extent_axes: Vec<usize>,
     /// Axes where `min > max` was certified.
     pub invalid_axes: Vec<usize>,
@@ -127,9 +121,8 @@ fn certified_cmp(left: &Real, right: &Real, axis: usize) -> HypervoxelResult<Ord
 /// fixtures: a box `[1, 3)^3` covers exactly the cells with coordinates `1`
 /// and `2` on each axis, while a fractional box such as `[1/2, 5/2)^3` still
 /// produces conservative partial-overlap boundary cells. This is an exact
-/// object-level convention, not an epsilon shift, following Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997: the
-/// cell model is named and all comparisons remain proof-producing.
+/// object-level convention, not an epsilon shift; all comparisons remain
+/// proof-producing.
 pub fn classify_cell_against_box(
     address: VoxelAddress,
     frame: &GridFrame,

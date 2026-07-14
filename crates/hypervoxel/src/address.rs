@@ -67,9 +67,8 @@ impl VoxelAddress {
     ///
     /// Morton ordering is a storage key, not a geometric predicate. It is
     /// exposed here because SVO-DAG interning and chunk paging need a stable
-    /// exact integer path code, while Yap's EGC boundary keeps metric
-    /// coordinates in [`Real`] cell bounds instead of conflating them with this
-    /// layout code.
+    /// exact integer path code. Metric coordinates remain in [`Real`] cell
+    /// bounds instead of being conflated with this layout code.
     pub fn morton_code(self) -> u64 {
         spread_morton_bits(self.xyz[0])
             | (spread_morton_bits(self.xyz[1]) << 1)

@@ -7,12 +7,10 @@
 //! source-face split records, index bounds, triangle degeneracy, and indexed
 //! edge incidence before treating the mesh as a shared Hyper surface artifact.
 //!
-//! The gate follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: a representation boundary is exact
-//! only when its object-level facts are replayable and its blockers are named.
-//! The indexed vertex/edge/face vocabulary follows the combinatorial mesh
-//! model in Botsch et al., *Polygon Mesh Processing*, AK Peters, 2010, while
-//! retaining exact grid-lattice vertices and source voxel-face identities.
+//! A representation boundary is exact only when its object-level facts are
+//! replayable and its blockers are named. The indexed vertex/edge/face
+//! vocabulary retains exact grid-lattice vertices and source voxel-face
+//! identities.
 
 use std::collections::{BTreeMap, BTreeSet};
 

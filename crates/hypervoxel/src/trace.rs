@@ -2,11 +2,8 @@
 //!
 //! Benchmarks and downstream diagnostics need to distinguish exact predicate
 //! work, storage/interner work, lossy adapter lowering, and domain handoff
-//! checks. This module keeps those dimensions semantic rather than timing-only.
-//! That matches Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997: exact systems should preserve the structure of the
-//! operation so later decisions can see which object-level facts were proved
-//! and which adapter routes were merely replayed.
+//! checks. This module keeps those dimensions semantic rather than timing-only
+//! so later decisions can distinguish proved object facts from adapter replay.
 
 use std::collections::BTreeSet;
 
@@ -84,10 +81,6 @@ pub struct VoxelTraceReport {
     /// step lowered through a primitive-float adapter or ended in an explicit
     /// unknown. A vacuous trace is also rejected: at least one semantic
     /// operation dimension and one exact predicate/comparison must be present.
-    /// That follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, by keeping exact decisions
-    /// separated from adapter replay, undecided predicates, and empty timing
-    /// shells.
     pub exact_trace_evidence_ready: bool,
 }
 

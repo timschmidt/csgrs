@@ -5,10 +5,8 @@
 //! filename, cache key, or primitive preview. This module provides a compact
 //! manifest/report pair for cataloging grid artifacts with their role,
 //! freshness, aggregate certainty, storage replay status, and handoff
-//! destinations. Following Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997, the artifact remains an object with
-//! explicit provenance and certification status rather than an unqualified
-//! sampled scalar field.
+//! destinations. The artifact remains an object with explicit provenance and
+//! certification status rather than an unqualified sampled scalar field.
 
 use crate::{
     AggregateCertainty, FreshnessStatus, StorageReplayStatus, VoxelAggregateFacts,
@@ -75,9 +73,7 @@ pub struct VoxelArtifactReport {
     /// Whether the artifact id is non-empty after trimming whitespace.
     ///
     /// A catalog entry without a stable id cannot be replayed or cross-checked
-    /// by a downstream index. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, frames exactness as structured
-    /// object evidence; an unnamed artifact is not durable object evidence.
+    /// by a downstream index; an unnamed artifact is not durable evidence.
     pub stable_id_ready: bool,
     /// Whether the artifact declares at least one intended consumer domain.
     ///
@@ -90,10 +86,8 @@ pub struct VoxelArtifactReport {
     /// Whether the aggregate packet contains retained voxel evidence.
     ///
     /// A catalog entry may be current and well named, but an empty aggregate
-    /// packet is not evidence for indexed voxel content. This mirrors Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997: exact indexing is an object-evidence claim, not just a
-    /// metadata claim.
+    /// packet is not evidence for indexed voxel content. Exact indexing is an
+    /// object-evidence claim, not just a metadata claim.
     pub has_aggregate_evidence: bool,
     /// Whether the artifact can be indexed as exact evidence.
     pub indexable_as_exact: bool,
@@ -135,10 +129,8 @@ impl VoxelArtifactRole {
     /// Returns whether this artifact family can stand as exact voxel evidence.
     ///
     /// Preview artifacts are adapter outputs by definition. Even when their
-    /// inputs were exact and their storage is deterministic, Yap's exact object
-    /// boundary requires the exact voxel artifact to be indexed instead of a
-    /// display/export derivative; see Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997.
+    /// inputs were exact and storage is deterministic, exact indexing targets
+    /// the voxel artifact rather than a display or export derivative.
     pub fn supports_exact_indexing(self) -> bool {
         !matches!(self, Self::PreviewArtifact)
     }

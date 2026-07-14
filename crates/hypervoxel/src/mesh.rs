@@ -1,10 +1,9 @@
 //! Exact exposed-face extraction and lossy mesh export reports.
 //!
-//! Greedy meshing in `voxelis` is a useful performance source, but the Hyper
+//! Greedy meshing in `voxelis` is a useful performance source, but the semantic
 //! boundary must first distinguish exact grid faces from display triangles.
-//! This module follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry*, 1997: combinatorial boundary faces are exact
-//! object facts; primitive-float vertices are only lossy export views.
+//! Combinatorial boundary faces are exact object facts; primitive-float
+//! vertices are only lossy export views.
 
 use crate::{
     CellBounds, HypervoxelError, LegacyAdapterKind, LegacyAdapterStatus, OccupancyState,
@@ -64,11 +63,9 @@ pub struct ExactVoxelFace {
 /// Report from exact exposed-face extraction.
 ///
 /// Exposed faces are exact grid-boundary facts only when every inspected cell
-/// and neighbor has exact-ready cell evidence. Unknown or lossy cells are kept
-/// out of the extracted shell and counted here instead of being treated as
-/// empty space. That follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: undecided object structure remains
-/// explicit and cannot be repaired by a meshing convention.
+/// and neighbor has exact-ready cell evidence. Unknown or lossy cells stay out
+/// of the extracted shell and are counted instead of being treated as empty
+/// space. A meshing convention cannot repair undecided object structure.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactFaceExtractionReport {
     /// Extracted exact exposed faces.
@@ -78,9 +75,7 @@ pub struct ExactFaceExtractionReport {
     /// Whether at least one exact face was extracted.
     ///
     /// An empty shell extraction is a precise no-face report, but it is not
-    /// evidence that any boundary face was certified. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
-    /// exact claims attached to explicit object facts; this flag prevents an
+    /// evidence that any boundary face was certified. This flag prevents an
     /// empty grid from becoming vacuous shell evidence.
     pub has_exact_faces: bool,
     /// Stored source cells skipped because their occupancy was unknown.
@@ -109,9 +104,8 @@ pub struct LossyMeshExportReport {
     /// Whether emitted vertices/triangles are only a preview adapter product.
     ///
     /// Primitive-float mesh topology is not a replacement for exact source
-    /// geometry. The split follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997: exact combinatorial faces remain
-    /// the certificate, while display meshes are named approximating adapters.
+    /// geometry. Exact combinatorial faces remain the certificate; display
+    /// meshes are named approximating adapters.
     pub display_only: bool,
     /// Whether this export can be used as exact geometry/topology evidence.
     pub exact_geometry_replay_ready: bool,
@@ -192,10 +186,9 @@ pub struct GreedyFacePatchPlan {
 
 /// Lowers exact exposed faces to a primitive-float quad-per-face mesh.
 ///
-/// The function is deliberately named as a lossy adapter. Yap's EGC model
-/// treats exact combinatorial boundary faces as the robust object facts; the
-/// `f64` vertices emitted here are for display, preview, and legacy interop,
-/// not for later topology predicates.
+/// The function is deliberately named as a lossy adapter. Exact combinatorial
+/// boundary faces remain the object facts; emitted `f64` vertices are for
+/// display, preview, and legacy interop, not later topology predicates.
 pub fn lossy_quad_mesh_from_faces(
     faces: &[ExactVoxelFace],
     policy: impl Into<String>,
@@ -261,10 +254,8 @@ pub fn lossy_obj_from_quad_mesh(mesh: &LossyQuadMesh) -> LossyObjExport {
 /// This is intentionally a patch plan, not a claim that greedy meshing is exact
 /// source geometry. The maximal rectangles are exact combinatorial facts over
 /// equal-depth voxel faces; any normals, colors, or primitive-float vertices
-/// remain lossy adapter products. Greedy rectangle merging follows the common
-/// voxel meshing idea popularized in Mikola Lysenko, "Meshing in a Minecraft
-/// Game," 2012, but the Hyper boundary keeps the merged patches as exact grid
-/// address facts as recommended by Yap's EGC model.
+/// remain lossy adapter products. Greedy rectangle merging runs over exact
+/// grid-address facts rather than display coordinates.
 pub fn greedy_face_patch_plan(
     faces: &[ExactVoxelFace],
     policy: impl Into<String>,

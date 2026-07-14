@@ -6,12 +6,10 @@
 //! shared surface topology. This module ties those reports together without
 //! letting the SVO layout decide topology directly.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997: acceleration and compression can be used only when
-//! exact object facts are retained and replayed. The SVO sharing idea follows
-//! Kämpe, Sintorn, and Assarsson, "High Resolution Sparse Voxel DAGs," *ACM
-//! Transactions on Graphics* 32(4), 2013, while the exposed-face and
-//! vertex/edge/face reports keep the combinatorial mesh vocabulary explicit.
+//! Acceleration and compression can be used only when exact object facts are
+//! retained and replayed. SVO-DAG sharing schedules storage while the
+//! exposed-face and vertex/edge/face reports keep the combinatorial mesh
+//! vocabulary explicit.
 
 use crate::{
     ExactFaceExtractionReport, ExactSurfaceTriangleMeshVocabularyReport, ExactVoxelFace,
@@ -88,12 +86,9 @@ pub fn extract_svo_exposed_faces_with_report(
 /// only schedules decompression: the path first replays to canonical sparse
 /// cells, extracts exact exposed faces, audits exact surface topology, emits
 /// lattice-vertex indexed triangles, and finally audits the shared mesh
-/// vocabulary. Following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997, compression is never accepted as
-/// topology evidence until the retained object facts have been replayed. The
-/// indexed mesh vocabulary follows Botsch et al., *Polygon Mesh Processing*,
-/// AK Peters, 2010, with exact lattice vertices instead of primitive-float
-/// display coordinates.
+/// vocabulary. Compression is never accepted as topology evidence until the
+/// retained object facts have been replayed. Indexed mesh vertices remain
+/// exact lattice coordinates rather than primitive-float display coordinates.
 pub fn svo_exact_surface_triangle_mesh_with_report(
     grid: &SvoVoxelGrid,
 ) -> HypervoxelResult<SvoExactSurfaceTriangleMeshReport> {

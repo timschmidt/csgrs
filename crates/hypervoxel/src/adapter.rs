@@ -6,10 +6,9 @@
 //! contract says how source units were scaled, how scalar values were produced,
 //! and whether any epsilon/tolerance policy was explicitly bounded.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997, pp. 3-23: approximate numerical stages can propose
-//! work, but exact combinatorial decisions must be replayed or certified rather
-//! than inferred from primitive-float tolerances.
+//! Approximate numerical stages may propose work, but exact combinatorial
+//! decisions must be replayed or certified rather than inferred from
+//! primitive-float tolerances.
 
 use hyperreal::{Real, RealSign};
 
@@ -65,9 +64,8 @@ pub struct AdapterNumericReport {
     pub adapter: LegacyAdapterStatus,
     /// Whether the adapter supplied non-empty policy/provenance text.
     ///
-    /// Yap's EGC separation treats approximate stages as auditable proposals.
-    /// An exact replay flag without its boundary policy is therefore
-    /// insufficient evidence for exact topology.
+    /// Approximate stages are auditable proposals. An exact-replay flag without
+    /// its boundary policy is insufficient evidence for exact topology.
     pub adapter_policy_ready: bool,
     /// Declared scalar precision at this boundary.
     pub scalar_precision: AdapterScalarPrecision,
@@ -84,9 +82,8 @@ pub struct AdapterNumericReport {
     /// Whether the adapter supplied at least one numeric error bound.
     ///
     /// This is evidence, not a request to interpret that bound as geometry.
-    /// Yap's exact-geometric-computation separation requires approximate
-    /// proposals to expose their numerical envelope before an exact layer can
-    /// decide whether the proposal is admissible.
+    /// Approximate proposals expose their numerical envelope so an exact layer
+    /// can decide whether they are admissible.
     pub has_explicit_error_bound: bool,
     /// Whether the declared tolerance status is internally coherent.
     ///

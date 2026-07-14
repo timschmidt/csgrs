@@ -1,6 +1,6 @@
 //! Exact chunk-paged sparse storage.
 //!
-//! This module is the first Hyper-owned chunk paging backend rather than a
+//! This module is the Hyper-owned chunk paging backend rather than a
 //! manifest-only description of paging. It borrows the useful storage idea
 //! from voxel engines such as `voxelis`: group sparse cells by integer pages so
 //! repeated queries can avoid scanning the whole sparse map. The paging
@@ -8,10 +8,9 @@
 //! from [`crate::VoxelAddress`] integer coordinates and [`crate::ChunkShape`];
 //! metric coordinates still live in [`crate::GridFrame`].
 //!
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997: an optimized representation may accelerate lookup,
-//! but it must not change the object-level facts that exact predicates and
-//! reports consume. Page reports therefore expose exact address replay,
+//! An optimized representation may accelerate lookup, but it must not change
+//! the object-level facts consumed by exact predicates and reports. Page
+//! reports therefore expose exact address replay,
 //! payload readiness, unknown/lossy blockers, and aggregate facts instead of
 //! asking callers to trust a compressed layout name.
 
@@ -331,13 +330,9 @@ impl ChunkPagedSparseGrid {
     /// The page filter is an acceleration stage only. It may prove a page
     /// disjoint from a same-depth [`QueryRegion`], but aggregate membership is
     /// still decided by the exact [`QueryRegion::contains`] address predicate
-    /// for every candidate cell. This is the storage-query analogue of Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997: the optimized representation proposes less work, while
-    /// retained integer addresses decide the object facts. The hierarchical
-    /// page layout follows the spatial subdivision role described by Samet,
-    /// *The Design and Analysis of Spatial Data Structures*, Addison-Wesley,
-    /// 1990, but without floating bounding boxes or tolerance predicates.
+    /// for every candidate cell. Page subdivision proposes less work while
+    /// retained integer addresses decide object facts, without floating bounds
+    /// or tolerance predicates.
     pub fn query_region_aggregate(
         &self,
         region: &QueryRegion,
@@ -406,11 +401,8 @@ impl ChunkPagedSparseGrid {
     /// and [`GridFrame`] cell bounds. A page certified disjoint from the query
     /// is skipped; intersecting and undecided pages are scanned at the
     /// retained-cell level, where each stored cell is still classified by its
-    /// exact cell AABB. This is a report-bearing broad/narrow split in the
-    /// spirit of Bentley and Ottmann, "Algorithms for Reporting and Counting
-    /// Geometric Intersections," *IEEE Transactions on Computers* C-28.9
-    /// (1979), but with Yap's exact-geometric-computation discipline: page
-    /// pruning can reduce work, never decide topology by tolerance.
+    /// exact cell AABB. This report-bearing broad/narrow split lets page
+    /// pruning reduce work but never decide topology by tolerance.
     pub fn query_aabb_broad_phase(
         &self,
         query: &ExactAabb3,
@@ -495,12 +487,8 @@ impl ChunkPagedSparseGrid {
     /// queries. The traversal uses exact integer 6-neighbor adjacency and page
     /// membership only as a storage shortcut: a missing page proves all
     /// explicit sparse cells in that page are absent, while present pages still
-    /// require exact address lookup. The lattice connectivity model follows
-    /// Rosenfeld and Pfaltz, "Sequential Operations in Digital Picture
-    /// Processing," *JACM* 13(4), 1966. As in Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997, unknown and lossy
-    /// cells remain explicit blockers instead of being coerced into exact
-    /// topology evidence.
+    /// require exact address lookup. The traversal uses 6-neighbor digital
+    /// connectivity; unknown and lossy cells remain explicit blockers.
     pub fn query_connected_component(
         &self,
         seed: VoxelAddress,
@@ -590,13 +578,9 @@ impl ChunkPagedSparseGrid {
     /// non-empty cells.
     ///
     /// The metric is exact integer graph distance on the 6-neighbor voxel
-    /// lattice, matching Rosenfeld and Pfaltz, "Distance functions on digital
-    /// pictures," *Pattern Recognition* 1(1), 1968. Chunk pages only
-    /// accelerate absence checks; a present page does not certify a neighbor
-    /// until the exact address lookup succeeds. This preserves the
-    /// precision-driven model in Yap, "Towards Exact Geometric Computation,"
-    /// by keeping unknown/lossy cells and storage page evidence visible in the
-    /// report instead of letting an accelerator decide topology.
+    /// lattice. Chunk pages accelerate absence checks; a present page does not
+    /// certify a neighbor until exact address lookup succeeds. Unknown/lossy
+    /// cells and page evidence remain visible in the report.
     pub fn query_manhattan_band(
         &self,
         seed: VoxelAddress,

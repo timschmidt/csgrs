@@ -3,9 +3,7 @@
 //! Material laws remain outside `hypervoxel`; cells carry compact
 //! [`MaterialRegionId`] handles into side tables. These reports validate that a
 //! grid's material references can be resolved before `hyperphysics`,
-//! `hyperparts`, or fabrication code interprets the material. This is another
-//! object-level fact boundary in the sense of Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997.
+//! `hyperparts`, or fabrication code interprets the material.
 
 use std::collections::BTreeSet;
 
@@ -42,10 +40,8 @@ impl MaterialRegionQuery {
 /// Hypervoxel does not own material laws. This report is the voxel-side
 /// contract that a downstream material/physics crate can inspect before it
 /// interprets density, composition, elasticity, conductivity, optical constants,
-/// or fabrication state. Following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997, pp. 3-23, the grid preserves
-/// object-level evidence and explicit unknowns instead of guessing missing
-/// material facts from payload IDs or display labels.
+/// or fabrication state. The grid preserves object-level evidence and explicit
+/// unknowns instead of guessing missing material facts from IDs or labels.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MaterialRegionMetadataReport {
     /// Number of distinct material regions referenced by cells.
@@ -53,9 +49,7 @@ pub struct MaterialRegionMetadataReport {
     /// Whether at least one material region was referenced.
     ///
     /// Absence of material regions is useful diagnostic information, but it is
-    /// not complete material evidence. Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997, requires exact
-    /// object facts to remain tied to the object evidence that produced them.
+    /// not complete material evidence.
     pub has_material_regions: bool,
     /// Number of referenced regions with side-table records.
     pub resolved_records: usize,
@@ -216,10 +210,8 @@ pub struct MaterialColorLookupReport {
     ///
     /// Display colors are still preview adapter data, not physical material
     /// laws. This flag only certifies palette completeness for visualization
-    /// lookup. Following Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, missing display data remains an
-    /// explicit report fact instead of being filled by a default color that
-    /// could hide material-region distinctions.
+    /// lookup. Missing display data remains explicit rather than being filled
+    /// by a default color that could hide material-region distinctions.
     pub complete_display_palette_ready: bool,
     /// Explicit lossy adapter status.
     pub adapter: LegacyAdapterStatus,

@@ -7,11 +7,9 @@
 //! evidence; it is schedule evidence that can be audited against later row
 //! cache and candidate counters.
 //!
-//! The component model follows Rosenfeld and Pfaltz, "Sequential Operations in
-//! Digital Picture Processing," *JACM* 13(4), 1966. The exactness rule follows
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 1997: an accelerated arrangement may be consumed only when the
-//! discrete object facts it relies on are retained and replayable.
+//! Components use 6-neighbor digital connectivity. An accelerated arrangement
+//! may be consumed only while its discrete object facts remain retained and
+//! replayable.
 
 use std::collections::{BTreeMap, BTreeSet};
 

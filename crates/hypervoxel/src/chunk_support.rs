@@ -14,12 +14,8 @@ use crate::{
 ///
 /// [`SupportMaskReport`] contains the semantic per-cell support decisions. The
 /// remaining fields expose the chunk-page schedule used to make those exact
-/// address lookups. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: page layout is acceleration evidence
-/// only, while exact support status comes from retained cells or named absence.
-/// The conservative mask interpretation is the process-planning style used in
-/// Gibson, Rosen, and Stucker, *Additive Manufacturing Technologies*, 2nd ed.,
-/// Springer, 2015, but without replacing grid evidence with floating
+/// address lookups. Page layout is acceleration evidence only; exact support
+/// status comes from retained cells or named absence, not floating
 /// overhang/contact heuristics.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkPagedSupportMaskReport {

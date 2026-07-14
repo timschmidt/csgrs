@@ -1,11 +1,10 @@
 //! Exact half-space voxelization fixtures.
 //!
-//! This module extends the initial exact-box path with a simple but useful
+//! This module complements exact-box classification with a useful
 //! exact geometric predicate: classifying voxel cells against one linear
-//! half-space. It is still not a full `hypermesh` solid voxelizer. The point is
-//! to keep the predicate proof-producing and explicit, following Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997, rather than importing triangle epsilon tests as truth.
+//! half-space. It is still not a full `hypermesh` solid voxelizer. The
+//! predicate remains proof-producing and explicit rather than treating
+//! triangle epsilon tests as truth.
 
 use hyperlimit::{PlaneSide, PredicateOutcome};
 use hyperreal::{Real, RealSign};
@@ -32,9 +31,7 @@ pub struct ExactHalfSpace {
 ///
 /// A linear half-space needs at least one nonzero normal component. This report
 /// distinguishes a certified zero normal from an undecided one rather than
-/// inventing an epsilon threshold. That is the exact-object boundary described
-/// by Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997.
+/// inventing an epsilon threshold.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExactHalfSpaceReport {
     /// Normal axes structurally known to be nonzero.
@@ -50,9 +47,8 @@ pub struct ExactHalfSpaceReport {
     /// Readiness requires a certified nonzero normal and no structurally
     /// unknown normal component. Even if one component is known nonzero, an
     /// unknown second component still changes the predicate being voxelized.
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997, requires the represented object to be explicit before its
-    /// predicates can certify topology.
+    /// The represented object must be explicit before its predicates can
+    /// certify topology.
     pub exact_halfspace_ready: bool,
 }
 

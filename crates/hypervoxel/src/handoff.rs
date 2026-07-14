@@ -3,9 +3,8 @@
 //! `hypervoxel` stores grid artifacts and conservative facts; it does not own
 //! physical laws, toolpath planning, part identity, or circuit semantics. These
 //! reports give domain crates a checked handoff surface with source freshness,
-//! side-table link, and aggregate-status visibility. This follows Yap's
-//! structural exactness requirement by keeping the object and its provenance
-//! explicit instead of hiding assumptions in payload IDs.
+//! side-table link, and aggregate-status visibility. The object and its
+//! provenance remain explicit instead of hiding assumptions in payload IDs.
 
 use crate::{AggregateCertainty, FreshnessStatus, GridSource, VoxelAggregateFacts};
 
@@ -66,10 +65,7 @@ pub struct VoxelHandoffReport {
     /// Whether the aggregate packet contains at least one retained child fact.
     ///
     /// Exact aggregate certainty over an empty packet is still an absence
-    /// report, not handoff evidence for a voxel artifact. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, requires
-    /// exact consumers to receive object-level evidence rather than infer it
-    /// from status enums alone.
+    /// report, not handoff evidence for a voxel artifact.
     pub has_aggregate_evidence: bool,
     /// Whether the destination may consume this handoff as exact voxel evidence.
     pub exact_handoff_ready: bool,

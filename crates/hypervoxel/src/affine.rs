@@ -2,10 +2,8 @@
 //!
 //! General affine transforms are still object-level constructions here: the
 //! matrix and translation are exact [`hyperreal::Real`] values, and transformed
-//! bounds are produced by accumulating the exact per-axis term intervals. This
-//! follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997, by keeping the geometric construction exact until an
-//! explicit adapter lowers it.
+//! bounds are produced by accumulating exact per-axis term intervals. The
+//! construction remains exact until an explicit adapter lowers it.
 
 use std::cmp::Ordering;
 

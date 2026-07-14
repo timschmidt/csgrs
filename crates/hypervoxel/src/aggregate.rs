@@ -1,10 +1,9 @@
 //! Conservative multi-resolution aggregate facts.
 //!
-//! This module is where `hypervoxel` deliberately diverges from
-//! rendering-oriented voxel averaging. Yap's exact geometric computation
-//! paradigm treats combinatorial facts as first-class results of exact
-//! predicates, not values inferred from nearby floating-point samples. A parent
-//! cell therefore reports what is proved by its children: all-filled,
+//! This module deliberately diverges from rendering-oriented voxel averaging.
+//! Combinatorial facts are first-class results of exact predicates, not values
+//! inferred from nearby floating-point samples. A parent cell therefore
+//! reports what is proved by its children: all-filled,
 //! all-empty, mixed, boundary, unknown, or lossy.
 
 use std::collections::BTreeSet;
@@ -59,11 +58,9 @@ impl Eq for VoxelAggregateFacts {}
 ///
 /// The lower bound counts cells definitely filled. The upper bound counts cells
 /// that may be occupied because they are filled, boundary, mixed, unknown, or
-/// lossy. This is interval evidence, not an averaged LOD material. It follows
-/// Yap's exact-geometric-computation rule that combinatorial facts must remain
-/// explicit, and uses the classic interval-arithmetic idea of enclosing an
-/// unknown value rather than guessing it; see Moore, *Interval Analysis*,
-/// Prentice-Hall, 1966.
+/// lossy. This is interval evidence, not an averaged LOD material: an unknown
+/// value is enclosed rather than guessed, and combinatorial facts remain
+/// explicit.
 #[derive(Clone, Debug, PartialEq)]
 pub struct VoxelOccupancyInterval {
     /// Number of children examined.
@@ -93,8 +90,8 @@ impl VoxelOccupancyInterval {
         let (lower, upper, certainty) = if total_cells == 0 {
             // An empty child set proves no occupancy ratio. Keep the full unit
             // interval as explicit unknown evidence rather than certifying a
-            // vacuous average as exact. This follows Yap's requirement that
-            // unproved geometric facts stay outside the exact layer.
+            // vacuous average as exact. Unproved geometric facts stay outside
+            // the exact layer.
             (Real::from(0), Real::from(1), AggregateCertainty::Unknown)
         } else {
             (
@@ -204,7 +201,7 @@ impl VoxelAggregateFacts {
     /// Sparse voxel stores normally omit empty cells. For a finite voxelization
     /// report, those omitted cells are still proved exact-empty when the
     /// classifier visited the whole frame. This constructor records that
-    /// evidence without expanding every empty cell, preserving Yap's distinction
+    /// evidence without expanding every empty cell, preserving the distinction
     /// between proved combinatorial facts and storage layout.
     pub fn from_explicit_cells_in_frame<'a>(
         total_cells: usize,
@@ -289,10 +286,9 @@ impl VoxelAggregateFacts {
     /// Builds aggregate facts for a uniform compressed subtree.
     ///
     /// SVO-DAG storage may collapse millions of equal descendant cells into one
-    /// interned leaf. The aggregate still has to describe the logical subtree,
-    /// not the physical node count. This is the storage-side form of Yap's
-    /// object-structure rule: compression may change representation, but not
-    /// the exact combinatorial facts consumed by downstream decisions.
+    /// interned leaf. The aggregate still describes the logical subtree, not
+    /// the physical node count. Compression may change representation but not
+    /// the exact combinatorial facts consumed downstream.
     pub fn from_uniform_cell(total_cells: usize, cell: &VoxelCell) -> Self {
         let has_boundary = cell.occupancy == OccupancyState::Boundary;
         let has_mixed = cell.occupancy == OccupancyState::Mixed;

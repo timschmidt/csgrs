@@ -3,10 +3,8 @@
 //! Chunking is a storage/layout concern, not a geometric predicate. The types
 //! here keep that distinction explicit: chunk IDs are integer partitions of
 //! exact voxel addresses, while metric cell bounds still come from
-//! [`crate::GridFrame`]. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997, by preserving the
-//! object-level grid structure instead of deriving paging decisions from
-//! approximate world coordinates.
+//! [`crate::GridFrame`]. Paging decisions preserve object-level grid structure
+//! rather than deriving partitions from approximate world coordinates.
 
 use crate::{HypervoxelError, HypervoxelResult, VoxelAddress};
 
@@ -47,10 +45,8 @@ pub struct ChunkAddress {
 /// Exact chunk/local decomposition of a voxel address.
 ///
 /// The decomposition is entirely integer-grid based: it never consults metric
-/// world coordinates or primitive floats. This is the chunk-level counterpart
-/// to Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997: storage layout may be optimized, but exact object identity
-/// remains a replayable structural fact.
+/// world coordinates or primitive floats. Storage layout may be optimized, but
+/// exact object identity remains a replayable structural fact.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ChunkLocalAddress {
     /// Shape used for the split.
@@ -122,17 +118,14 @@ pub struct ChunkPageSummary {
     ///
     /// An empty address stream can be summarized exactly as empty, but it does
     /// not prove that a paging adapter preserved any voxel object identity.
-    /// Keeping this evidence bit explicit follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: exact
-    /// replay claims should be grounded in retained object facts, not vacuous
-    /// layout inequalities.
+    /// Exact replay claims need retained object facts, not vacuous layout
+    /// inequalities.
     pub has_stored_cells: bool,
     /// Whether page addresses were derived purely from exact integer voxel addresses.
     ///
     /// Chunk paging is not a geometric predicate. This flag records that the
-    /// page summary is an exact integer partition, following Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997:
-    /// storage layout facts stay separate from floating-world coordinates.
+    /// page summary is an exact integer partition, keeping storage facts
+    /// separate from floating-world coordinates.
     pub exact_integer_partition: bool,
     /// Maximum number of finest cells represented by the occupied pages.
     pub page_capacity_cells: usize,

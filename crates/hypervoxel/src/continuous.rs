@@ -5,10 +5,9 @@
 //! This module is the intake boundary between those roles. It accepts explicit
 //! cell rows that have already been classified by an exact/certified
 //! continuous-field predicate, validates frame/address/source readiness, and
-//! only then offers materialization into voxel storage. This follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997: sampled grid artifacts must preserve the exact object-level evidence
-//! that justified their combinatorial labels.
+//! only then offers materialization into voxel storage. Sampled artifacts must
+//! preserve the object-level evidence that justified their combinatorial
+//! labels.
 
 use std::collections::BTreeSet;
 
@@ -108,11 +107,9 @@ pub struct ContinuousFieldVoxelInterchangeReport {
 
 /// Exact storage-admission blocker for continuous-field voxel rows.
 ///
-/// This enum is intentionally more specific than a boolean readiness flag.
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997, treats exactness as a property of the represented geometric
-/// system, so a downstream storage owner must be able to distinguish stale
-/// source replay from duplicate rows, lossy payloads, or an incomplete frame
+/// This enum is intentionally more specific than a boolean readiness flag. A
+/// downstream storage owner must distinguish stale source replay from
+/// duplicate rows, lossy payloads, or an incomplete frame
 /// cover before admitting a sampled artifact as exact topology.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ContinuousFieldMaterializationBlocker {
@@ -344,8 +341,7 @@ impl ContinuousFieldVoxelManifest {
     ///
     /// The method still returns a grid for incomplete or uncertain rows, but
     /// the attached report exposes that the result is not exact topology. This
-    /// keeps storage construction deterministic while preserving Yap's rule
-    /// that uncertain evidence remains visible to consumers.
+    /// keeps storage deterministic while uncertainty remains visible.
     pub fn materialize_sparse_grid(&self) -> HypervoxelResult<PreparedVoxelGrid<SparseVoxelGrid>> {
         let mut grid = SparseVoxelGrid::new(self.frame.clone());
         for row in &self.cells {
@@ -361,9 +357,8 @@ impl ContinuousFieldVoxelManifest {
     /// Unlike [`Self::materialize_sparse_grid`], this is a hard gate for
     /// producer handoffs such as frame-aware `hypersdf` cell reports. It
     /// rejects stale, duplicate, incomplete, unknown, and lossy rows before
-    /// allocating the returned prepared grid. That keeps storage admission at
-    /// Yap's EGC boundary: exact/certified source predicates may become
-    /// topology, while unresolved or approximate rows remain reports.
+    /// allocating the returned prepared grid. Exact or certified source
+    /// predicates may become topology; unresolved rows remain reports.
     pub fn materialize_exact_sparse_grid(
         &self,
     ) -> HypervoxelResult<PreparedVoxelGrid<SparseVoxelGrid>> {

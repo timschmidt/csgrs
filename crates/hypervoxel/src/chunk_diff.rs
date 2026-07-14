@@ -12,13 +12,9 @@ use crate::{ChunkAddress, ChunkPagedSparseGrid, VoxelAddress};
 /// Differential report between two chunk-paged sparse grids.
 ///
 /// Page counters expose the storage schedule, while address and cell
-/// mismatches remain the semantic facts. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997: an optimized
-/// representation may be audited, but exact claims are grounded in retained
-/// object structure. The page-set partition follows the spatial-subdivision
-/// role described by Samet, *The Design and Analysis of Spatial Data
-/// Structures*, Addison-Wesley, 1990; it is evidence about storage coverage,
-/// not an approximate geometric predicate.
+/// mismatches remain the semantic facts. The page-set partition describes
+/// storage coverage, not an approximate geometric predicate; exact claims are
+/// grounded in retained object structure.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkPagedSparseGridDiffReport {
     /// Whether both grids use the same exact frame.

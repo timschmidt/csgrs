@@ -2,9 +2,7 @@
 //!
 //! A Hyper LOD cell is not an averaged material value. It is a coarser exact
 //! address plus conservative facts over the stored descendants that selected
-//! it. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: preserve object-level combinatorial
-//! structure and expose what has actually been proved.
+//! it, preserving combinatorial structure and what has actually been proved.
 
 use std::collections::BTreeMap;
 
@@ -32,11 +30,9 @@ pub struct LodSelectionReport {
     /// Whether at least one coarse cell was selected.
     ///
     /// An empty sparse grid can produce a precise empty LOD selection, but it
-    /// is not evidence that any descendant aggregate was certified. This
-    /// non-vacuous gate follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997: exact consumers should see what
-    /// object facts were actually proved rather than inheriting truth from an
-    /// empty count.
+    /// is not evidence that any descendant aggregate was certified. Exact
+    /// consumers must see which object facts were proved rather than inherit
+    /// truth from an empty count.
     pub has_selected_cells: bool,
     /// Number of selected cells whose descendant aggregate is exact.
     pub exact_aggregate_cells: usize,
@@ -51,9 +47,7 @@ pub struct LodSelectionReport {
     /// This is deliberately not a claim that a coarse voxel equals an averaged
     /// material or topology value. It is a readiness flag for consuming the
     /// selected descendants as conservative LOD evidence. Empty selections,
-    /// unknown packets, and lossy descendant packets block the flag, following
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997.
+    /// unknown packets, and lossy descendant packets block the flag.
     pub certified_lod_aggregate_ready: bool,
     /// Selected cells in deterministic address order.
     pub cells: Vec<LodCellSelection>,

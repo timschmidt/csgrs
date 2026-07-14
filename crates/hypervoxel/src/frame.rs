@@ -1,10 +1,8 @@
 //! Exact voxel grid frames.
 //!
-//! A `GridFrame` is the object-level counterpart to Yap's "beyond BigNumber"
-//! package stack: the grid origin, axis pitches, source units, and source
-//! provenance travel together instead of being rediscovered from scalar
-//! coordinates or approximated chunk sizes. See Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry*, 1997, Section 6.
+//! A `GridFrame` keeps the grid origin, axis pitches, source units, and source
+//! provenance together instead of rediscovering them from scalar coordinates
+//! or approximated chunk sizes.
 
 use hyperreal::{Real, RealExactSetFacts, RealSign};
 
@@ -189,10 +187,9 @@ impl GridFrame {
 
     /// Returns object-level exactness facts for the origin and pitch scalars.
     ///
-    /// This is the frame-side scheduling hook required by Yap's EGC paradigm:
-    /// downstream kernels can choose integer, dyadic, shared-denominator, or
-    /// general exact-rational routes from a fact packet rather than peeking into
-    /// scalar internals or lowering to floats.
+    /// Downstream kernels can choose integer, dyadic, shared-denominator, or
+    /// general exact-rational routes from this fact packet rather than peeking
+    /// into scalar internals or lowering to floats.
     pub fn facts(&self) -> GridFrameFacts {
         let scalars = [
             &self.origin[0],
@@ -227,10 +224,8 @@ pub struct GridFrameFacts {
 /// `GridFrame` stores the exact axis-aligned model used by Hyper kernels. This
 /// manifest records adapter-facing frame facts such as handedness, basis,
 /// source coordinate system, and chunk shape without mutating the core frame.
-/// The split follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: object structure and provenance must
-/// remain available so downstream predicates do not infer geometry from an
-/// approximate view or an import convention.
+/// Object structure and provenance remain available so downstream predicates
+/// do not infer geometry from an approximate view or import convention.
 #[derive(Clone, Debug, PartialEq)]
 pub struct GridFrameManifest {
     /// Exact Hyper grid frame.

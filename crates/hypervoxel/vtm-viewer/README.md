@@ -1,0 +1,23 @@
+# VTM Viewer
+
+`vtm-viewer` is an interactive Bevy viewer for Voxelis `.vtm` models. It loads
+a selected LOD, generates a greedy render mesh, and provides orbit-camera,
+wireframe, lighting, and diagnostic controls.
+
+```text
+vtm-viewer <input.vtm> [lod]
+```
+
+Run it from the workspace with:
+
+```sh
+cargo run -p vtm-viewer --release -- model.vtm 0
+```
+
+The viewer requires a graphics-capable desktop environment and its Bevy assets.
+It is a visualization adapter: the displayed primitive-float mesh is not exact
+source geometry. Features `memory_stats` and `tracy` enable storage statistics
+and profiling.
+
+See [Voxelis](../voxelis/README.md) for model and greedy-mesh APIs and
+[HyperVoxel](../README.md) for exact-aware preview contracts.

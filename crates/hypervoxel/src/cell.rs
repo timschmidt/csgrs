@@ -63,9 +63,8 @@ pub struct VoxelCell {
 /// cells directly when importing side-table IDs or legacy fixtures. This report
 /// makes the exactness boundary explicit: a cell whose occupancy and payload do
 /// not agree is not exact voxel evidence, and unknown/lossy cells stay visible
-/// instead of being repaired by convention. That follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997, where object
-/// structure and uncertainty must remain part of the geometric state.
+/// instead of being repaired by convention. Object structure and uncertainty
+/// remain part of the geometric state.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct VoxelCellReport {
     /// Occupancy state carried by the cell.

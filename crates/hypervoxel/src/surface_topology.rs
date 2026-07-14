@@ -6,13 +6,9 @@
 //! That gives downstream mesh/part crates a report-bearing handoff point before
 //! any OBJ/glTF/renderer adapter runs.
 //!
-//! The design follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: topology is accepted from retained
-//! combinatorial objects and certified predicates, not from approximate mesh
-//! coordinates. The vertex/edge/face incidence vocabulary matches the
-//! combinatorial mesh model used in Botsch et al., *Polygon Mesh Processing*,
-//! AK Peters, 2010, but every coordinate here is an integer grid coordinate at
-//! an explicit voxel depth.
+//! Topology is accepted from retained combinatorial objects and certified
+//! predicates, not approximate mesh coordinates. Every vertex/edge/face
+//! coordinate is an integer grid coordinate at an explicit voxel depth.
 
 use std::collections::{BTreeMap, BTreeSet};
 

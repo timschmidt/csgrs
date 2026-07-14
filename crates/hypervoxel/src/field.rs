@@ -2,10 +2,9 @@
 //!
 //! `hypervoxel` stores compact field-sample IDs, not physical laws. This
 //! module builds conservative exact/certified bounds over the side-table
-//! records that those IDs reference. The separation follows Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997:
-//! preserve object references and certified bounds at the voxel layer, while
-//! leaving domain interpretation to `hyperphysics` or another owning crate.
+//! records that those IDs reference. The voxel layer preserves references and
+//! certified bounds while `hyperphysics` or another owning crate supplies
+//! domain interpretation.
 
 use std::{cmp::Ordering, collections::BTreeSet};
 
@@ -74,10 +73,8 @@ pub struct FieldAggregateFacts {
     /// Whether at least one field-sample cell was observed.
     ///
     /// Zero field samples is a precise absence report, not certified field
-    /// evidence. This follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997: an exact/certified object fact
-    /// must be backed by object-level evidence rather than by an empty
-    /// iterator convention.
+    /// evidence. Certified facts need object-level evidence rather than an
+    /// empty-iterator convention.
     pub has_field_samples: bool,
     /// Distinct sample IDs observed.
     pub sample_ids: BTreeSet<FieldSampleId>,
@@ -92,9 +89,8 @@ pub struct FieldAggregateFacts {
     /// Whether certified field bounds are complete enough for downstream use.
     ///
     /// The voxel layer does not assign physics meaning to field samples. This
-    /// flag only says that every referenced side-table record supplied a
-    /// certified lower/upper scalar interval, matching Yap's separation of
-    /// exact/certified facts from unknown object data.
+    /// flag says only that every referenced side-table record supplied a
+    /// certified lower/upper scalar interval.
     pub certified_field_bounds_ready: bool,
 }
 
@@ -110,10 +106,8 @@ pub struct FieldEnvelopeFacts {
     /// Whether at least one vector or tensor envelope was observed.
     ///
     /// An empty envelope list is an exact absence report, not evidence that a
-    /// vector/tensor field has a certified envelope. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, treats
-    /// exactness as a property of represented objects and predicates; this
-    /// flag keeps an empty iterator from being promoted into object evidence.
+    /// vector/tensor field has a certified envelope. This flag keeps an empty
+    /// iterator from being promoted into object evidence.
     pub has_envelopes: bool,
     /// Union of vector component intervals when dimensions are consistent.
     pub vector_interval: Option<CertifiedVectorInterval>,
@@ -126,9 +120,9 @@ pub struct FieldEnvelopeFacts {
     /// Whether every observed vector/tensor envelope contributed compatible
     /// certified component intervals and at least one envelope was present.
     ///
-    /// In Yap's EGC terms, incompatible envelope shapes remain explicit
-    /// unknowns rather than being coerced into a lossy common layout, while an
-    /// empty set remains unknown for envelope-certification purposes.
+    /// Incompatible envelope shapes remain explicit unknowns rather than being
+    /// coerced into a lossy common layout; an empty set also remains unknown
+    /// for envelope-certification purposes.
     pub certified_envelope_ready: bool,
 }
 

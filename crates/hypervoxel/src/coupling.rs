@@ -4,10 +4,9 @@
 //! mechanical, or process state, but downstream residual equations live in
 //! `hyperphysics` and `hypercircuit`. This module records whether a voxel field
 //! grid has exact residual replay, certified interval evidence, explicit
-//! adapter error bounds, or unresolved uncertainty. The boundary follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997: sampled objects carry provenance and certification status instead of
-//! becoming unqualified scalar truth.
+//! adapter error bounds, or unresolved uncertainty. Sampled objects carry
+//! provenance and certification status instead of becoming unqualified scalar
+//! truth.
 
 use hyperreal::{Real, RealSign};
 
@@ -64,10 +63,8 @@ pub struct VoxelFieldCouplingReport {
     pub has_adapter_error_bound: bool,
     /// Whether the supplied adapter error bound is structurally non-negative.
     ///
-    /// A negative or sign-unknown "absolute error" is not a certificate. This
-    /// keeps interval/error-bounded coupling aligned with Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: adapter
-    /// evidence must carry a valid object-level bound before downstream
+    /// A negative or sign-unknown "absolute error" is not a certificate.
+    /// Adapter evidence needs a valid object-level bound before downstream
     /// residual code can consume it as certified evidence.
     pub adapter_error_bound_non_negative: bool,
     /// Whether the adapter route carries a certified usable error bound.

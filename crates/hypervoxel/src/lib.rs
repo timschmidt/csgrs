@@ -8,13 +8,12 @@
 //! aggregate facts, and lossy voxelizers or renderers must report their adapter
 //! status.
 //!
-//! The guiding design follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997, pp. 3-23. Yap argues that exact
-//! geometric systems need more than a scalar BigNumber layer: expressions and
-//! geometric objects must preserve structure so combinatorial decisions are not
+//! Exact geometric systems need more than a large scalar type: expressions and
+//! objects must preserve enough structure that combinatorial decisions are not
 //! inferred from fixed-precision approximations. `hypervoxel` applies that
-//! rule to grids: a voxel parent is not an averaged material value; it is a
-//! conservative object-level fact packet over its children.
+//! principle to grids: a voxel parent is not an averaged material value but a
+//! conservative fact packet over its children. See the repository README for
+//! the design references.
 
 mod aabb;
 mod adapter;

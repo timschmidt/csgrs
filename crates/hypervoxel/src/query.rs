@@ -19,14 +19,11 @@ pub struct OccupancyQuery {
     /// Whether the returned cell is exact occupancy evidence.
     ///
     /// Sparse absence means exact empty in the current grid frame, but explicit
-    /// unknown and lossy adapter cells remain non-ready evidence. This follows
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997: exact consumers must see undecided or approximate object
-    /// facts instead of treating them as topology.
+    /// unknown and lossy adapter cells remain non-ready evidence.
     pub exact_cell_evidence_ready: bool,
 }
 
-/// Coarse query region used by initial prepared APIs.
+/// Coarse query region used by prepared APIs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QueryRegion {
     /// Minimum inclusive address.
@@ -58,10 +55,8 @@ pub struct ConnectedComponentQuery {
     /// Whether the component contains at least one stored non-empty cell.
     ///
     /// An empty result is a precise "seed is empty" report, but it is not
-    /// component evidence. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, frames exactness at the object
-    /// level; this flag prevents an empty traversal from masquerading as a
-    /// certified connected object.
+    /// component evidence. This flag prevents an empty traversal from
+    /// masquerading as a certified connected object.
     pub has_reached_cells: bool,
     /// Whether the component contains only exact stored cells.
     ///
@@ -83,18 +78,13 @@ pub struct ManhattanDistanceBand {
     /// Whether the traversal reached at least one stored non-empty cell.
     ///
     /// A zero-sized band from an empty seed is a valid query result, but it is
-    /// not usable as exact distance evidence for a retained object. The
-    /// non-vacuous evidence gate follows Yap's exact-object distinction, while
-    /// the lattice distance itself follows Rosenfeld and Pfaltz, "Distance
-    /// functions on digital pictures," *Pattern Recognition* 1(1), 1968.
+    /// not usable as exact distance evidence for a retained object.
     pub has_reached_cells: bool,
     /// Whether the band is exact address-space distance evidence.
     ///
     /// The traversal is a discrete Manhattan metric over the 6-neighbor voxel
-    /// lattice, following the digital-distance role introduced by Rosenfeld
-    /// and Pfaltz, "Distance functions on digital pictures," *Pattern
-    /// Recognition* 1(1), 1968. The result is exact-ready only when no reached
-    /// cell carries unknown or lossy occupancy.
+    /// lattice. The result is exact-ready only when no reached cell carries
+    /// unknown or lossy occupancy.
     pub exact_distance_band_ready: bool,
 }
 
@@ -112,10 +102,8 @@ pub struct AabbBroadPhaseCandidate {
 /// Exact AABB broad-phase report over explicitly stored non-empty cells.
 ///
 /// This is a candidate filter, not a topology mutation. It uses
-/// `hyperlimit::classify_aabb3_intersection`, whose 3D AABB classifier follows
-/// Yap's exact-geometric-computation boundary and the broad-phase interval role
-/// used by Bentley and Ottmann, "Algorithms for Reporting and Counting
-/// Geometric Intersections," *IEEE Transactions on Computers* C-28.9 (1979).
+/// `hyperlimit::classify_aabb3_intersection` for exact broad-phase interval
+/// classification.
 /// Disjoint cells can be rejected; touching and overlapping cells remain
 /// narrow-phase candidates; undecided predicate outcomes stay explicit.
 #[derive(Clone, Debug, PartialEq)]
@@ -127,10 +115,8 @@ pub struct AabbBroadPhaseQuery {
     /// Whether at least one stored non-empty cell was tested.
     ///
     /// An empty broad-phase scan is a precise empty-result report, but it is
-    /// not evidence that any retained object relation was certified. Keeping
-    /// this bit separate follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997: exact consumers should see the
-    /// object-level evidence boundary rather than infer it from vacuous counts.
+    /// not evidence that any retained object relation was certified. Exact
+    /// consumers should not infer evidence from vacuous counts.
     pub has_tested_cells: bool,
     /// Stored non-empty cells whose exact AABBs intersect the query.
     pub candidates: Vec<AabbBroadPhaseCandidate>,
@@ -141,13 +127,8 @@ pub struct AabbBroadPhaseQuery {
     /// Whether at least one stored cell was tested and every relation was certified.
     ///
     /// Broad-phase acceleration is exact evidence only when there is a tested
-    /// object relation and every tested cell has a decided AABB relation. This
-    /// follows Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7(1-2), 1997, and the broad-phase/narrow-phase split used by
-    /// Bentley and Ottmann, "Algorithms for Reporting and Counting Geometric
-    /// Intersections," *IEEE Transactions on Computers* C-28.9 (1979):
-    /// undecided or absent relation evidence remains explicit rather than
-    /// being promoted by convention.
+    /// object relation and every tested cell has a decided AABB relation.
+    /// Undecided or absent relations remain explicit.
     pub certified_broad_phase_ready: bool,
 }
 
@@ -160,10 +141,8 @@ impl AabbBroadPhaseQuery {
 
 /// Prepared acceleration evidence retained beside a sparse query handle.
 ///
-/// This report intentionally describes prepared *facts* rather than promising a
-/// floating-point acceleration structure. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997, separates numerical
-/// approximation from exact object-level predicates; here that means an AABB
+/// This report describes prepared *facts* rather than promising a
+/// floating-point acceleration structure. An AABB
 /// handoff, Morton order, or predicate replay cache is only usable as exact
 /// evidence when its provenance says so. The retained report frame is checked
 /// against the prepared grid frame so a reused cache cannot borrow freshness
@@ -177,10 +156,8 @@ pub struct PreparedQueryReport {
     /// Whether at least one non-empty cell produced query evidence.
     ///
     /// Prepared predicate replay can make a cache reusable, but it is not by
-    /// itself a voxel query result. Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997, requires exact
-    /// object claims to remain tied to represented object evidence; this flag
-    /// prevents an empty prepared handle from becoming exact evidence through a
+    /// itself a voxel query result. This flag prevents an empty prepared handle
+    /// from becoming exact evidence through a
     /// vacuous aggregate.
     pub has_query_evidence: bool,
     /// Exact aggregate facts retained with the prepared handle.
@@ -202,9 +179,8 @@ pub struct PreparedQueryReport {
     /// Prepared caches are only evidence when their source report is current,
     /// the retained frame matches, exact predicate replay is available, and the
     /// aggregate packet contains non-empty exact cell evidence with no unknown
-    /// or lossy state. That mirrors Yap's exact-object boundary: a cache can
-    /// save work, but it cannot repair stale provenance, uncertified topology,
-    /// or absent query evidence.
+    /// or lossy state. A cache saves work but cannot repair stale provenance,
+    /// uncertified topology, or absent query evidence.
     pub exact_query_evidence_ready: bool,
 }
 
@@ -220,10 +196,9 @@ impl QueryRegion {
 
 /// Returns in-frame six-neighbors for an address in deterministic axis order.
 ///
-/// This is a combinatorial grid operation, not a metric approximation. The
-/// distinction follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry*, 1997: topological adjacency is decided from exact
-/// integer addresses before any geometric export happens.
+/// This is a combinatorial grid operation, not a metric approximation.
+/// Topological adjacency is decided from exact integer addresses before any
+/// geometric export.
 pub fn voxel_neighbors6(address: VoxelAddress) -> Vec<VoxelAddress> {
     let cells = 1_u64 << address.depth;
     let mut neighbors = Vec::with_capacity(6);

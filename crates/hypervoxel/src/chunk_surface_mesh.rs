@@ -5,12 +5,10 @@
 //! This module threads that page-backed shell evidence into the exact
 //! lattice-vertex triangle mesh handoff from [`crate::surface_mesh`].
 //!
-//! The gate follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: an accelerated representation may be
-//! consumed as exact only after replaying retained object facts and reporting
-//! blockers. The indexed triangle vocabulary follows the combinatorial mesh
-//! model in Botsch et al., *Polygon Mesh Processing*, AK Peters, 2010, with
-//! exact grid-lattice vertices replacing primitive-float coordinates.
+//! An accelerated representation may be consumed as exact only after replaying
+//! retained object facts and reporting blockers. The indexed triangle
+//! vocabulary uses exact grid-lattice vertices rather than primitive-float
+//! coordinates.
 
 use crate::{
     ChunkPagedExactFaceExtractionReport, ChunkPagedSparseGrid,

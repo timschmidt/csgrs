@@ -2,11 +2,9 @@
 //!
 //! These checks deliberately sit outside the voxelization scheduler. The
 //! scheduler produces retained evidence; this module replays the accounting
-//! invariants that make that evidence consumable by downstream code. This is
-//! Yap's "geometric-system" discipline from "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997: exact predicates are
-//! necessary, but the system must also preserve enough structure to audit the
-//! combinatorial decision that consumed them.
+//! invariants that make that evidence consumable by downstream code. Exact
+//! predicates are necessary, but the system must also preserve enough
+//! structure to audit the combinatorial decision that consumed them.
 
 use crate::triangle_prepared::PreparedTriangleSolidComponentConsensusVoxelizationReport;
 

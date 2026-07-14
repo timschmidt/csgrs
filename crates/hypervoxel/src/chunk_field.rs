@@ -15,12 +15,9 @@ use crate::{
 ///
 /// The embedded [`FieldSampleQuery`] and [`FieldAggregateFacts`] retain the
 /// canonical field side-table semantics. Page counters describe how chunk
-/// storage scheduled the scan. This follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997: certified bounds must
-/// be represented and checked as object evidence, not inferred from sampled
-/// floats or storage layout. The interval aggregation is also consistent with
-/// Moore, Kearfott, and Cloud, *Introduction to Interval Analysis*, SIAM,
-/// 2009: intervals remain conservative enclosures rather than point samples.
+/// storage scheduled the scan. Certified interval bounds are represented and
+/// checked as object evidence rather than inferred from sampled floats or
+/// storage layout.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChunkPagedFieldAuditReport {
     /// Field sample references and missing side-table evidence.

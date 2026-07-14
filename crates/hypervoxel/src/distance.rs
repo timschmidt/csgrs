@@ -2,10 +2,8 @@
 //!
 //! These routines are preview/query helpers, not continuous signed-distance
 //! geometry. They compute integer Manhattan distances on the voxel lattice so
-//! the result is an exact combinatorial field. Continuous SDF export can be
-//! added later as a named lossy or certified adapter. The separation follows
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 1997.
+//! the result is an exact combinatorial field. Continuous SDF export remains a
+//! separately named lossy or certified adapter.
 
 use std::collections::BTreeMap;
 
@@ -44,20 +42,13 @@ pub struct DistanceFieldPreview {
     ///
     /// A distance transform without sites is a well-defined empty search
     /// result, but it is not exact distance evidence for downstream planning.
-    /// Keeping that distinction explicit follows Rosenfeld and Pfaltz,
-    /// "Distance functions on digital pictures," *Pattern Recognition* 1(1),
-    /// 1968, and Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997.
     pub has_distance_source: bool,
     /// Samples in deterministic address order.
     pub samples: Vec<DistanceSample>,
     /// Whether all samples are exact address-space distance evidence.
     ///
-    /// This is not a continuous SDF certificate. It only certifies the integer
-    /// Manhattan preview over known voxel occupancy, following Rosenfeld and
-    /// Pfaltz, "Distance functions on digital pictures," *Pattern Recognition*
-    /// 1(1), 1968, and Yap's exact-geometric-computation rule that approximate
-    /// geometry must not be smuggled into exact topology.
+    /// This is not a continuous SDF certificate. It certifies only the integer
+    /// Manhattan preview over known voxel occupancy.
     pub exact_address_distance_ready: bool,
 }
 

@@ -2,11 +2,9 @@
 //!
 //! This is a deliberately small solid voxelization path: a convex body is the
 //! intersection of exact linear half-spaces. It gives tests and downstream
-//! callers a proof-producing closed-solid fixture before the future
-//! `hypermesh` triangle/solid voxelizer exists. The design follows Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-//! 1997: classification is made from exact predicates over object structure,
-//! and any uncertified predicate becomes an explicit unknown instead of an
+//! callers a proof-producing closed-solid fixture. Classification uses exact
+//! predicates over object structure, and any uncertified predicate becomes an
+//! explicit unknown instead of an
 //! epsilon-derived topology decision.
 
 use crate::{
@@ -30,10 +28,8 @@ pub struct ExactConvexHalfSpaceSet {
 ///
 /// Empty predicate sets and certified-zero half-space normals are source
 /// geometry errors, not exact solids. Half-spaces with undecided normal
-/// nonzero status remain visible as uncertainty. This keeps the voxelization
-/// boundary aligned with Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: exact topology is consumed from
-/// validated object structure, not inferred from degenerate defaults.
+/// nonzero status remain visible as uncertainty. Exact topology comes from
+/// validated object structure, not degenerate defaults.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ExactConvexHalfSpaceSetReport {
     /// Number of half-space predicates in the set.

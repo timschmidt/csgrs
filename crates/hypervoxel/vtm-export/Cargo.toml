@@ -4,6 +4,9 @@ version.workspace = true
 authors.workspace = true
 license.workspace = true
 edition = "2024"
+description = "Convert Voxelis VTM models to OBJ meshes"
+repository.workspace = true
+readme = "README.md"
 
 [dependencies]
 voxelis.workspace = true

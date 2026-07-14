@@ -3,10 +3,8 @@
 //! `voxelis` is useful because its octree/DAG, chunk paging, batching, and
 //! compact payload ideas scale to large sparse worlds. Hyper still needs an
 //! exact semantic boundary around those storage choices. These reports describe
-//! compression and paging decisions without letting a storage codec redefine
-//! occupancy, material, or aggregate truth. The separation is the same
-//! object-structure rule emphasized by Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997.
+//! compression and paging decisions without letting a codec redefine
+//! occupancy, material, or aggregate truth.
 
 use crate::{AggregateCertainty, ChunkShape, LegacyAdapterKind, LegacyAdapterStatus};
 
@@ -67,10 +65,8 @@ pub struct CompressedStorageReport {
     /// Whether at least one logical non-empty cell is represented.
     ///
     /// Empty compressed storage can be a valid empty layout, but it is not
-    /// replay evidence for preserved voxel content. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
-    /// exact claims tied to explicit object facts rather than format-level
-    /// promises.
+    /// replay evidence for preserved voxel content. Exact claims require
+    /// object facts rather than format-level promises.
     pub has_stored_cells: bool,
     /// Physical record count.
     pub physical_records: usize,
@@ -80,10 +76,8 @@ pub struct CompressedStorageReport {
     ///
     /// A compressed route with non-empty logical cells but no physical records
     /// cannot replay those cells. This is a representation-level certificate,
-    /// not a compression-ratio judgment. Following Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, storage
-    /// codecs must expose the object facts they preserve instead of relying on
-    /// callers to infer them from a format name.
+    /// not a compression-ratio judgment. Codecs expose the object facts they
+    /// preserve rather than relying on a format name.
     pub physical_layout_ready: bool,
     /// Whether non-empty payloads, aggregates, and side-table links replay exactly.
     pub exact_storage_replay_ready: bool,
@@ -124,10 +118,8 @@ pub struct VoxelMemoryBudgetReport {
     ///
     /// A zero-byte route may describe an empty layout or an unmeasured adapter
     /// path, but it is not evidence that storage pressure preserves voxel
-    /// semantics. Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7(1-2), 1997, keeps exact claims attached to represented
-    /// object facts; memory reports follow the same rule by separating
-    /// non-vacuous measurement evidence from budget arithmetic.
+    /// semantics. Memory reports separate non-vacuous measurement evidence
+    /// from budget arithmetic.
     pub has_memory_evidence: bool,
     /// Caller-supplied budget in bytes.
     pub budget_bytes: usize,
@@ -140,11 +132,10 @@ pub struct VoxelMemoryBudgetReport {
     /// Whether this memory state is ready for exact semantic replay.
     ///
     /// This repeats the decision in readiness vocabulary used by the rest of
-    /// the voxel port: a budget overrun is acceptable only when the storage
+    /// the voxel layer: a budget overrun is acceptable only when the storage
     /// route explicitly preserves payload IDs and aggregate facts, and the
-    /// report is backed by non-zero memory evidence. In Yap's EGC framing,
-    /// memory pressure may change representation but cannot silently change the
-    /// object-level facts consumed by exact decisions.
+    /// report is backed by non-zero memory evidence. Memory pressure may change
+    /// representation but cannot silently change object-level facts.
     pub exact_memory_budget_ready: bool,
 }
 

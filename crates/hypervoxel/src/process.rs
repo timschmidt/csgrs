@@ -4,9 +4,8 @@
 //! however, package exact occupancy/sample grids with process provenance so
 //! `hyperpath` and `hyperphysics` can consume them without guessing whether a
 //! grid is additive material, subtractive removal, dose, conversion, or support
-//! state. The boundary follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: store exact object facts and explicit
-//! provenance, not hidden interpretation.
+//! state. It stores exact object facts and explicit provenance, not hidden
+//! interpretation.
 
 use crate::{FreshnessStatus, GridSource, VoxelAggregateFacts};
 
@@ -38,10 +37,8 @@ pub enum ProcessGridRole {
 /// `hypervoxel` intentionally stores only the replay facts needed to identify
 /// the cache. Exact path geometry and clearance predicates remain in
 /// `hyperpath`/`hyperlimit`; this report lets callers reject stale or lossy
-/// process grids before they are used as broad-phase evidence. This follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997, by keeping the source construction and approximation policy
-/// explicit next to the voxel artifact.
+/// process grids before they are used as broad-phase evidence. The source
+/// construction and approximation policy remain beside the voxel artifact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SweptVolumeProvenance {
     /// Path, route, exposure, or tool-sweep source.
@@ -70,9 +67,7 @@ pub struct SweptVolumeReport {
     /// Whether a non-empty tool/beam identity was supplied.
     ///
     /// A swept voxel cache without tool or beam identity is an acceleration
-    /// artifact, not exact process/path evidence. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
-    /// exact object claims bound to their source objects; here that includes
+    /// artifact, not exact process/path evidence. The claim remains bound to
     /// the process object that generated the swept volume.
     pub has_tool_or_beam: bool,
     /// Whether exact replay is available in the owning domain crate.
@@ -90,11 +85,9 @@ pub struct SweptVolumeReport {
 impl SweptVolumeProvenance {
     /// Builds a swept-volume safety report.
     ///
-    /// Exact path evidence is only ready when the path/source construction can
-    /// still be replayed. This is the process-grid analogue of Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997:
-    /// cached voxel facts may accelerate a query, but a stale or unversioned
-    /// cache is not a certificate for the source object.
+    /// Exact path evidence is ready only when the path/source construction can
+    /// still be replayed. Cached voxel facts may accelerate a query, but a
+    /// stale or unversioned cache is not a source-object certificate.
     pub fn report(&self) -> SweptVolumeReport {
         let source_freshness = match (&self.source, self.expected_source_version) {
             (Some(source), Some(expected)) if source.version == expected => {

@@ -1,11 +1,9 @@
 //! Minimal exact sparse-grid storage wrapper.
 //!
 //! This is intentionally the simple semantic map backend; the SVO-DAG backend
-//! lives in `svo` behind the same exact cell/address contract. As
-//! Yap argues in "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997, exact systems should make object-level decisions
-//! explicit; edit reports therefore expose whether storage was inserted,
-//! removed, or left unchanged instead of making callers infer that from maps.
+//! lives in `svo` behind the same exact cell/address contract. Edit reports
+//! expose whether storage was inserted, removed, or unchanged instead of
+//! making callers infer object-level decisions from maps.
 
 use std::collections::BTreeMap;
 
@@ -34,10 +32,8 @@ pub struct VoxelEditReport {
     ///
     /// Storage accepts unknown and lossy cells because those are valid Hyper
     /// evidence states. They are not exact replay states, though. This flag is
-    /// the single-edit version of the batch readiness gate and follows Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997: a representation update cannot upgrade undecided or
-    /// approximate object facts into exact facts.
+    /// the single-edit version of the batch readiness gate: a representation
+    /// update cannot upgrade undecided or approximate facts into exact facts.
     pub exact_edit_replay_ready: bool,
 }
 

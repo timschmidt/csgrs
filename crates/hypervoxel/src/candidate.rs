@@ -4,10 +4,9 @@
 //! compression policies, or LOD choices, but the proposal is not admissible
 //! until exact/certified voxel reports replay it. These small reports give
 //! `hyperevolution`, `hyperpack`, and process planners a common boundary
-//! without moving their objective functions into `hypervoxel`. The rule follows
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7(1-2), 1997: a candidate is accepted because its exact object reports are
-//! structurally replayable, not because a sampled scalar score looks good.
+//! without moving their objective functions into `hypervoxel`. A candidate is
+//! accepted because its exact object reports are structurally replayable, not
+//! because a sampled scalar score looks good.
 
 use crate::{AggregateCertainty, FreshnessStatus};
 
@@ -67,9 +66,8 @@ pub struct VoxelCandidateReport {
     /// Whether at least one exact replay fact was retained.
     ///
     /// A candidate can be fresh and structurally exact but still carry no
-    /// replayed object facts. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, requires exact decisions to rest
-    /// on explicit object evidence rather than vacuous status checks.
+    /// replayed object facts. Exact decisions require explicit object evidence
+    /// rather than vacuous status checks.
     pub has_exact_evidence: bool,
     /// Whether a downstream optimizer may promote this candidate as exact.
     pub promotable_as_exact: bool,

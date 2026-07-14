@@ -5,12 +5,9 @@
 //! and triangles as indexed combinatorial records over exact voxel faces. No
 //! primitive-float coordinates are introduced here.
 //!
-//! The acceptance rule follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: topology is replayable only from
-//! retained exact objects and certified predicates. The indexed
-//! vertex/triangle vocabulary matches the polygon-mesh data model described in
-//! Botsch et al., *Polygon Mesh Processing*, AK Peters, 2010, but the
-//! coordinates remain exact grid-lattice facts rather than display vertices.
+//! Topology is replayable only from retained exact objects and certified
+//! predicates. The indexed vertex/triangle vocabulary uses exact grid-lattice
+//! coordinates rather than display vertices.
 
 use std::collections::BTreeMap;
 

@@ -1,6 +1,6 @@
 //! Exact triangle-surface voxelization handoff.
 //!
-//! This module is the first `hypervoxel` consumer-side path for exact
+//! This module is the `hypervoxel` consumer-side path for exact
 //! mesh/BREP-style triangle evidence. It materializes two related handoffs:
 //! a conservative surface cover, where cells whose exact AABBs intersect
 //! retained source triangles become boundary cells, and a closed-solid cover,
@@ -8,15 +8,11 @@
 //!
 //! The cell/triangle test is a composition of exact predicates: AABB broad
 //! phase, exact 3D point-in-triangle tests, and exact triangle/triangle tests
-//! against the twelve AABB face triangles. This follows Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997: topology is
-//! changed only after proof-producing predicates, and undecided comparisons
-//! stay explicit unknowns. The triangle/triangle decomposition is the same
-//! predicate-family boundary used by Moller, "A Fast Triangle-Triangle
-//! Intersection Test" (1997), and Guigue and Devillers, "Fast and Robust
-//! Triangle-Triangle Overlap Test Using Orientation Predicates" (2003), but
-//! here routed through `hyperlimit`'s exact reports instead of primitive
-//! floating-point tests.
+//! against the twelve AABB face triangles. Topology changes only after
+//! proof-producing predicates; undecided comparisons stay explicit unknowns.
+//! The triangle/triangle decomposition uses the Möller and
+//! Guigue–Devillers predicate families, routed through `hyperlimit`'s exact
+//! reports instead of primitive floating-point tests.
 
 use hyperlimit::{
     Aabb3Intersection, Aabb3PointLocation, PredicateOutcome, RayTriangleIntersection,
@@ -258,12 +254,10 @@ pub fn classify_cell_against_triangle_surface_mesh(
 /// cell center. Proper ray/triangle intersections are counted by unique exact
 /// ray parameter; boundary touches and coplanar ray events cause that ray to be
 /// skipped, and the classifier returns [`VoxelTriangleSolidClassifier::Unknown`]
-/// only when every configured exact rational ray is ambiguous. This is the
-/// standard parity point-in-polyhedron idea, but guarded at Yap's
-/// exact-computation boundary: ambiguous combinatorial events remain explicit
-/// instead of being repaired with floating epsilons. See Yap (1997) and the
-/// ray/triangle decomposition of Moller and Trumbore, "Fast, Minimum Storage
-/// Ray/Triangle Intersection," *Journal of Graphics Tools* 2(1), 1997.
+/// only when every configured exact rational ray is ambiguous. This is an exact
+/// parity point-in-polyhedron test using the Möller–Trumbore ray/triangle
+/// decomposition; ambiguous events remain explicit instead of being repaired
+/// with floating epsilons.
 pub fn classify_cell_against_triangle_solid_mesh(
     address: VoxelAddress,
     frame: &GridFrame,
@@ -577,9 +571,8 @@ fn classify_point_against_triangle_solid_by_ray(
 ) -> HypervoxelResult<RayParityPointClassification> {
     // The direction family is an exact finite retry set, not a symbolic
     // perturbation. Each ray is either a proof-producing parity query or an
-    // explicit ambiguous event. This follows Yap's (1997) separation between
-    // certified predicates and unresolved combinatorics while still avoiding a
-    // brittle single-ray dependency for common grid-aligned solids.
+    // explicit ambiguous event, avoiding a brittle single-ray dependency for
+    // common grid-aligned solids.
     for direction in ray_parity_directions() {
         match classify_point_against_triangle_solid_by_single_ray(point, mesh, &direction)? {
             RayParityPointClassification::Unknown => {}

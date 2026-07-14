@@ -3,8 +3,7 @@
 //! This module validates a retained [`hypermesh::InputMesh`] as a closed,
 //! consistently wound solid before lowering it into
 //! [`crate::ExactTriangleSolidMesh`]. It copies the retained exact coordinates
-//! directly into `hypervoxel`'s triangle-solid carrier. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997: downstream topology is
+//! directly into `hypervoxel`'s triangle-solid carrier. Downstream topology is
 //! admitted only when the owning object replays its exact structure and
 //! proof-producing predicates at the handoff boundary.
 

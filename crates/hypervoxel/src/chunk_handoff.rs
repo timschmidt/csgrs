@@ -7,11 +7,9 @@
 //! deterministic snapshot bytes and audits material, field, and process
 //! side-table references before naming the handoff exact.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997: an optimized or serialized representation can be an
-//! exact component only when the represented object facts and unresolved
-//! blockers remain explicit. The side-table boundary is also kept explicit in
-//! the STEP AP242 spirit (ISO 10303-242:2022): product/process/material
+//! An optimized or serialized representation can be exact only when its object
+//! facts and unresolved blockers remain explicit. The side-table boundary also
+//! follows STEP AP242-style traceability: product, process, and material
 //! references are evidence links, not implicit geometry.
 
 use crate::{

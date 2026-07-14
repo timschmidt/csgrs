@@ -2,12 +2,9 @@
 //!
 //! This module is an acceleration layer only: it may reject triangle AABBs
 //! that a parity ray cannot reach, but it never accepts an inside/outside
-//! decision by itself. The interval overlap test is the exact-arithmetic
-//! version of the slab method from Kay and Kajiya, "Ray Tracing Complex
-//! Scenes," *SIGGRAPH Computer Graphics* 20(4), 1986. Following Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997, every
-//! comparison is proof-producing; an undecided comparison is reported instead
-//! of being repaired with a floating tolerance.
+//! decision by itself. The interval overlap test is an exact-arithmetic slab
+//! method. Every comparison is proof-producing; an undecided comparison is
+//! reported instead of being repaired with a floating tolerance.
 
 use core::cmp::Ordering;
 
@@ -64,10 +61,8 @@ pub(crate) fn classify_ray_aabb_intersection(
 /// entire ray interval exits strictly before the first cell center on the row
 /// cannot affect any parity decision for that row segment. Equality is kept in
 /// [`RayAabbWindowIntersection::Intersects`] so exact ray/triangle replay, not
-/// this broad phase, owns boundary-touch refusal. This is the slab schedule of
-/// Kay and Kajiya, "Ray Tracing Complex Scenes," *SIGGRAPH Computer Graphics*
-/// 20(4), 1986, used under Yap's EGC rule that acceleration may only reject
-/// with certified exact comparisons.
+/// this broad phase, owns boundary-touch refusal. The slab schedule rejects a
+/// candidate only with certified exact comparisons.
 pub(crate) fn classify_ray_aabb_intersection_from_lower(
     origin: &[Real; 3],
     direction: &[Real; 3],

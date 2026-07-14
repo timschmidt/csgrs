@@ -3,10 +3,8 @@
 //! `voxelis` remains the performance seed for a production SVO-DAG backend.
 //! This module establishes the exact semantic contract first: nodes are
 //! interned by value, edits path-copy through integer addresses, and every
-//! branch carries conservative aggregate facts. This follows Yap's guidance in
-//! "Towards Exact Geometric Computation," *Computational Geometry*, 1997, that
-//! geometric objects should preserve facts instead of reducing every decision
-//! to scalar approximation.
+//! branch carries conservative aggregate facts. Geometric objects preserve
+//! facts rather than reducing every decision to scalar approximation.
 
 use rustc_hash::FxHashMap;
 
@@ -77,9 +75,8 @@ pub struct SvoEditReport {
     /// Whether the path-copy edit can be replayed as exact storage evidence.
     ///
     /// SVO-DAG updates are exact only when the address was frame-validated and
-    /// the new cell is exact-ready. This mirrors Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997: the compressed
-    /// representation cannot promote an unknown or lossy cell to exact state.
+    /// the new cell is exact-ready. Compression cannot promote an unknown or
+    /// lossy cell to exact state.
     pub exact_path_replay_ready: bool,
 }
 
@@ -101,10 +98,8 @@ pub struct SvoStorageReport {
     /// Whether the root aggregate contains any non-empty semantic evidence.
     ///
     /// A collapsed empty root is a compact exact absence representation, but
-    /// it is not positive replay evidence for a modeled voxel object. Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997, keeps exactness attached to represented objects and
-    /// predicates, so SVO replay readiness records this evidence bit directly.
+    /// it is not positive replay evidence for a modeled voxel object. SVO
+    /// replay readiness records this evidence bit directly.
     pub has_materialized_evidence: bool,
     /// Whether compressed storage can be consumed as exact replay evidence.
     ///
@@ -120,13 +115,9 @@ pub struct SvoStorageReport {
 /// The SVO-DAG is a compressed representation; this report proves how it
 /// expands back to the canonical sparse-grid object facts. Empty collapsed
 /// leaves remain implicit sparse absence, while non-empty collapsed leaves are
-/// expanded to full-resolution frame leaves. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997: compression
-/// can accelerate and share storage, but exact consumers need a replayable
-/// object representation and explicit blockers. The path-copy/interner idea is
-/// inherited from voxel DAG work such as Kämpe, Sintorn, and Assarsson,
-/// "High Resolution Sparse Voxel DAGs," *ACM Transactions on Graphics* 32(4),
-/// 2013, but the readiness bit here is semantic, not a rendering claim.
+/// expanded to full-resolution frame leaves. Compression can accelerate and
+/// share storage, but exact consumers need replayable object representation and
+/// explicit blockers. The readiness bit is semantic, not a rendering claim.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SvoSparseReplayReport {
     /// Frame depth represented by the replay.
@@ -174,13 +165,9 @@ pub struct SvoSparseReplayReport {
 ///
 /// This report is the import-side counterpart to [`SvoSparseReplayReport`]:
 /// it records how canonical sparse cells were admitted into compressed SVO-DAG
-/// storage and then replayed back to sparse storage for semantic comparison.
-/// The design follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: compression is exact only when it
-/// preserves replayable object facts and reports blockers instead of repairing
-/// them. The DAG interning strategy follows Kämpe, Sintorn, and Assarsson,
-/// "High Resolution Sparse Voxel DAGs," *ACM Transactions on Graphics* 32(4),
-/// 2013, but this readiness report is about Hyper voxel semantics rather than
+/// storage and then replayed back for semantic comparison. Compression is
+/// exact only when it preserves replayable object facts and reports blockers
+/// instead of repairing them. This report concerns voxel semantics rather than
 /// rendering throughput.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SvoCompactionReport {

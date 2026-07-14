@@ -15,10 +15,9 @@ use std::collections::BTreeSet;
 ///
 /// The extracted faces are the same combinatorial voxel-boundary facts as
 /// [`crate::ExactFaceExtractionReport`], with additional page-evidence counters
-/// that keep storage acceleration visible. This follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997: exact object
-/// facts are not inferred from a compact representation, and undecided cells
-/// remain explicit blockers. The grid-face boundary model is the
+/// that keep storage acceleration visible. Exact object facts are not inferred
+/// from a compact representation, and undecided cells remain explicit
+/// blockers. The grid-face boundary model is the
 /// combinatorial-cell view used by Mäntylä, *An Introduction to Solid Modeling*,
 /// Computer Science Press, 1988, where boundary incidence is discrete topology
 /// rather than a floating display mesh.
@@ -63,11 +62,8 @@ pub struct ChunkPagedExactFaceExtractionReport {
 /// new boundary predicate. This report therefore keeps both the exact paged
 /// shell and the greedy plan, then expands every emitted patch back into exact
 /// face keys and compares that set with the extracted shell. The cover audit
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7(1-2), 1997, by validating the compressed representation against
-/// retained object facts. The rectangle-generation heuristic is the voxel
-/// meshing idea described by Mikola Lysenko, "Meshing in a Minecraft Game,"
-/// 2012, but used here only after exact face extraction.
+/// validates compressed representation against retained object facts. Greedy
+/// rectangle generation runs only after exact face extraction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChunkPagedGreedyFacePatchReport {
     /// Exact page-backed shell consumed by the patch planner.

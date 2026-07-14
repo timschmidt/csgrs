@@ -1,10 +1,8 @@
 //! Report-bearing voxelization and prepared-grid handles.
 //!
 //! Voxelization reports keep exact predicate accounting next to the resulting
-//! grid. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: the combinatorial classification
-//! made by predicates is part of the exact object-level state, not debug text
-//! that can be dropped after cells are written.
+//! grid. Combinatorial classifications are part of the object-level state, not
+//! debug text that can be dropped after cells are written.
 
 use crate::{
     FreshnessStatus::Current, GridFrame, GridSource, LegacyAdapterStatus, VoxelAggregateFacts,
@@ -75,10 +73,8 @@ impl VoxelizationPolicy {
     ///
     /// Distance and process policies are still exact report roles when their
     /// inputs are exact, but they are not the same claim as topological
-    /// occupancy. The distinction follows Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997: a report must name
-    /// the predicate or construction it certifies rather than letting callers
-    /// infer topology from an approximate-looking grid value.
+    /// occupancy. A report names the predicate or construction it certifies
+    /// rather than inviting topology inference from a grid value.
     pub fn is_exact_semantic_role(&self) -> bool {
         !matches!(self.quantization, QuantizationPolicy::LossyPreview)
     }
@@ -142,9 +138,7 @@ impl VoxelPredicateCertificateReport {
     /// Returns whether this report contains any classified predicate outcome.
     ///
     /// A zero-count certificate packet is a useful absence report, but it is
-    /// not predicate evidence. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, treats exactness as a certified
-    /// object-level decision; callers need this gate to reject vacuous
+    /// not predicate evidence. Callers use this gate to reject vacuous
     /// predicate summaries.
     pub fn has_classified_cells(&self) -> bool {
         self.classified_cells() > 0
@@ -152,10 +146,8 @@ impl VoxelPredicateCertificateReport {
 
     /// Returns whether every predicate outcome was certified.
     ///
-    /// This is the predicate-accounting boundary from Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: an
-    /// exact voxel report may preserve boundary outcomes, but it must not hide
-    /// an uncertified predicate as an exact cell decision. It also rejects
+    /// An exact voxel report may preserve boundary outcomes, but it must not
+    /// hide an uncertified predicate as an exact cell decision. It also rejects
     /// empty predicate packets so a zero-count report cannot become a vacuous
     /// certificate.
     pub fn is_fully_certified(&self) -> bool {
@@ -204,10 +196,8 @@ impl VoxelizationReport {
     /// This is deliberately separate from [`Self::source_replay_ready`]. A
     /// local fixture with no source version may still have exact/certified cell
     /// topology, while a stale source binding must still be rejected by callers
-    /// that need source replay. The decision follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: topology
-    /// is exact only when all combinatorial predicates were certified and no
-    /// lossy adapter or explicit unknown cell participates.
+    /// that need source replay. Topology is exact only when every combinatorial
+    /// predicate was certified and no lossy or unknown cell participates.
     pub fn exact_topology_ready(&self) -> bool {
         self.policy.is_occupancy_policy()
             && self.policy.is_exact_semantic_role()

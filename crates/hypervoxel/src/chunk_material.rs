@@ -14,14 +14,9 @@ use std::collections::BTreeSet;
 ///
 /// The embedded [`MaterialRegionQuery`] and [`MaterialRegionMetadataReport`]
 /// keep the same side-table semantics as the sparse-grid path. Page counters
-/// expose the storage schedule used to gather those references. This follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7(1-2), 1997: exact payload facts and unresolved metadata stay explicit
-/// rather than being inferred from layout or display labels. The side-table
-/// separation also matches the material-property data boundary described by
-/// Ashby, *Materials Selection in Mechanical Design*, 5th ed., Butterworth-
-/// Heinemann, 2016: a material identifier is not itself a complete property
-/// model.
+/// expose the storage schedule used to gather those references. Exact payload
+/// facts and unresolved metadata stay explicit rather than being inferred from
+/// layout, display labels, or colors; an identifier is not a property model.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkPagedMaterialAuditReport {
     /// Material references and missing side-table records.

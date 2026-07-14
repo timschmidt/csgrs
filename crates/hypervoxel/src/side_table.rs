@@ -1,10 +1,8 @@
 //! Provenance-bearing side tables for compact voxel payload IDs.
 //!
 //! Voxel cells intentionally store small IDs rather than embedding material
-//! laws or field data in every octree node. This follows the same separation of
-//! object facts from scalar values advocated by Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry*, 1997: the grid stores combinatorial
-//! and aggregate facts, while the owning domain crate keeps the richer model.
+//! laws or field data in every octree node. The grid stores combinatorial and
+//! aggregate facts while the owning domain crate keeps the richer model.
 
 use std::collections::BTreeMap;
 

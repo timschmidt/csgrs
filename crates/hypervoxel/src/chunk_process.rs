@@ -12,12 +12,10 @@ use crate::{ChunkPagedSparseGrid, OccupancyState, ProcessStateId, VoxelPayload, 
 ///
 /// This report validates that process-state payload IDs resolve to non-empty
 /// side-table labels and provenance while exposing the page scan that found
-/// them. Following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997, the voxel layer keeps the object
-/// reference and unresolved evidence explicit instead of interpreting process
-/// physics. The provenance boundary follows the manufacturing traceability
-/// principle in ISO 10303-242:2022 (STEP AP242): product/process references
-/// should remain explicit identifiers, not implicit geometry or display state.
+/// them. The voxel layer keeps object references and unresolved evidence
+/// explicit instead of interpreting process physics. STEP AP242-style
+/// traceability keeps process references as identifiers, not implicit geometry
+/// or display state.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkPagedProcessStateAuditReport {
     /// Number of occupied pages scanned.

@@ -3,11 +3,9 @@
 //! Meshes, Bevy scenes, glTF files, OBJ text, SDF previews, and VTM-style
 //! exports are useful operational views of a voxel artifact, but they are not
 //! exact source geometry unless an exact replay says so. These manifests keep
-//! adapter status explicit. The marching-cubes/SDF boundary is intentionally
-//! only a preview route here; Lorensen and Cline, "Marching Cubes,"
-//! *Computer Graphics* 21(4), 1987, is a display extraction idea, while Yap's
-//! exact-geometric-computation model keeps exact predicates and combinatorial
-//! truth in the source/grid reports.
+//! adapter status explicit. Marching-cubes and SDF extraction are preview
+//! routes; exact predicates and combinatorial truth remain in source and grid
+//! reports.
 
 use crate::{FreshnessStatus, LegacyAdapterKind, LegacyAdapterStatus};
 
@@ -66,9 +64,7 @@ pub struct PreviewExportReport {
     /// Whether at least one exact voxel primitive was consumed.
     ///
     /// A preview/export route with no input primitives can still describe a
-    /// valid empty export, but it is not topology replay evidence. Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7(1-2), 1997, keeps exact claims attached to explicit object facts.
+    /// valid empty export, but it is not topology replay evidence.
     pub has_input_primitives: bool,
     /// Whether at least one display/export primitive was emitted.
     pub has_exported_primitives: bool,
@@ -106,10 +102,8 @@ impl PreviewExportManifest {
             },
             exact_grid_topology_replay: exact,
             // Preview/export routes are derived views of voxel artifacts, not
-            // source CAD or mesh certificates. Lorensen and Cline's marching
-            // cubes work is valuable display extraction; Yap's exact geometry
-            // boundary keeps source-geometry truth in proof-carrying source
-            // objects and voxelization reports.
+            // source CAD or mesh certificates. Source-geometry truth remains
+            // in proof-carrying source objects and voxelization reports.
             source_geometry_replay: false,
             adapter: if exact {
                 LegacyAdapterStatus::exact(kind(self.format), "preview/export manifest")

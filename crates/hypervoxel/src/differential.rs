@@ -3,10 +3,9 @@
 //! Differential checks are useful when harvesting `voxelis` storage ideas, but
 //! they must compare semantics that actually match. This module compares exact
 //! address/cell facts between two semantic grids and reports mismatches without
-//! granting exact status to any lossy legacy voxelizer. That boundary is the
-//! same one advocated by Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: predicates and object facts are
-//! checked explicitly instead of inferred from a nearby implementation.
+//! granting exact status to any lossy legacy voxelizer. Predicates and object
+//! facts are checked explicitly instead of inferred from a nearby
+//! implementation.
 
 use std::collections::BTreeSet;
 
@@ -23,10 +22,8 @@ pub struct SparseGridDiffReport {
     ///
     /// Comparing two empty sparse maps is a precise no-difference report, but
     /// it is not evidence that a ported backend preserved any object-level
-    /// voxel facts. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, treats exactness as an explicit
-    /// predicate/object contract; this bit keeps empty fixture comparisons from
-    /// becoming vacuous equivalence certificates.
+    /// voxel facts. This bit keeps empty fixture comparisons from becoming
+    /// vacuous equivalence certificates.
     pub has_compared_addresses: bool,
     /// Addresses present only in the left grid.
     pub only_left: Vec<VoxelAddress>,
@@ -38,11 +35,9 @@ pub struct SparseGridDiffReport {
     pub mismatch_count: usize,
     /// Whether the two grids are non-vacuously semantically identical.
     ///
-    /// This is the storage-differential analogue of Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: a ported
-    /// backend can be treated as matching only when at least one exact address
-    /// and cell fact was compared in the same grid frame, not because a lossy
-    /// fixture looks visually close or because two empty maps share a frame.
+    /// A backend matches only when at least one exact address and cell fact was
+    /// compared in the same grid frame, not because a lossy fixture looks
+    /// visually close or two empty maps share a frame.
     pub semantic_equivalence_ready: bool,
 }
 

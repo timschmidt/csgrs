@@ -6,13 +6,10 @@
 //! audit into one replayable report. That keeps downstream crates from
 //! rebuilding the same proof boundary from partial facts.
 //!
-//! The gate follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: exactness is a property of the whole
-//! geometric system, not a scalar type alone. The surface is accepted only
-//! when the retained sparse-grid shell, indexed triangle records, and mesh
-//! vocabulary all replay. The indexed mesh vocabulary follows Botsch et al.,
-//! *Polygon Mesh Processing*, AK Peters, 2010, while retaining exact
-//! grid-lattice vertices instead of primitive-float display coordinates.
+//! Exactness is a property of the whole geometric system, not a scalar type
+//! alone. The surface is accepted only when the retained sparse-grid shell,
+//! indexed triangle records, and mesh vocabulary all replay. Mesh vertices
+//! remain exact grid-lattice coordinates rather than display floats.
 
 use crate::{
     ExactFaceExtractionReport, ExactSurfaceTriangleMeshVocabularyReport,
@@ -46,9 +43,8 @@ pub struct SparseExactSurfaceTriangleMeshReport {
 ///
 /// Empty grids, unknown cells, lossy adapter cells, open shells, duplicate
 /// faces, and malformed indexed mesh records do not get repaired here; their
-/// blockers are retained in the nested reports. This is the Yap-style
-/// representation boundary: proposal or storage facts are useful, but only
-/// replayed object structure can become exact topology.
+/// blockers are retained in the nested reports. Proposal and storage facts are
+/// useful, but only replayed object structure can become exact topology.
 pub fn sparse_exact_surface_triangle_mesh_with_report(
     grid: &SparseVoxelGrid,
 ) -> HypervoxelResult<SparseExactSurfaceTriangleMeshReport> {

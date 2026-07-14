@@ -14,13 +14,10 @@ use crate::{
 ///
 /// The snapshot bytes are produced by the existing canonical sparse-grid
 /// serializer after exact page replay. The page counters describe the storage
-/// schedule used to reconstruct that semantic grid. This follows Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997:
-/// optimized representations and serialized artifacts are acceptable only when
-/// the exact object facts they preserve remain explicit. The deterministic
-/// replay discipline is also in the spirit of Knuth, *The Art of Computer
-/// Programming*, Vol. 3, 2nd ed., Addison-Wesley, 1998: stable ordering is a
-/// data-structure fact, not a substitute for semantic equality.
+/// schedule used to reconstruct that semantic grid. Optimized representations
+/// and serialized artifacts are acceptable only while the exact object facts
+/// they preserve remain explicit. Stable ordering is a data-structure fact,
+/// not a substitute for semantic equality.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChunkPagedSnapshotReplay {
     /// Deterministic snapshot produced after replaying chunk pages.

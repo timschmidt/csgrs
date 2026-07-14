@@ -2,9 +2,7 @@
 //!
 //! A voxelization report should make its accounting auditable: stored cells,
 //! implied empty cells, boundary/unknown/lossy cells, freshness, and adapter
-//! replay status are separate facts. This mirrors Yap's exact geometric
-//! computation guidance in "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: a geometric pipeline should expose
+//! replay status are separate facts. A geometric pipeline should expose
 //! predicate outcomes and uncertainty instead of hiding them inside a numeric
 //! representation.
 
@@ -37,14 +35,11 @@ pub struct VoxelizationAudit {
     pub predicate_unknown_cells: usize,
     /// Whether this audit can be consumed as exact voxelization accounting.
     ///
-    /// Yap's EGC model requires exact consumers to see whether a result depends
-    /// on unresolved predicates or adapter values. The audit is exact-ready
-    /// only when every classified frame cell has certified predicate evidence
-    /// and no stored cell carries explicit unknown or lossy occupancy. A lossy
-    /// legacy adapter also blocks readiness even when the cell counts look
-    /// clean, because adapter provenance is part of the represented object
-    /// boundary in Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997.
+    /// The audit is exact-ready only when every classified frame cell has
+    /// certified predicate evidence and no stored cell carries unknown or
+    /// lossy occupancy. A lossy legacy adapter also blocks readiness even when
+    /// the counts look clean because its provenance is part of the represented
+    /// object.
     pub exact_audit_ready: bool,
 }
 

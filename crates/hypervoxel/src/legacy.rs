@@ -1,10 +1,9 @@
 //! Explicit status for legacy/lossy adapters.
 //!
-//! Legacy adapters are admissible only as named, auditable boundary stages.
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997, pp. 3-23: a primitive-float stage may propose
-//! geometry, but exact consumers need explicit provenance for the approximation
-//! policy before they can replay or reject its combinatorial decisions.
+//! Legacy adapters are admissible only as named, auditable boundary stages. A
+//! primitive-float stage may propose geometry, but exact consumers need the
+//! approximation policy before they can replay or reject its combinatorial
+//! decisions.
 
 /// Legacy adapter family.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -57,9 +56,9 @@ impl LegacyAdapterStatus {
     ///
     /// Empty or whitespace-only policy strings are not useful audit evidence:
     /// they name an adapter family but do not expose the numeric or replay
-    /// convention that separated the adapter from exact topology. Under Yap's
-    /// exact-geometric-computation model, that missing boundary contract keeps
-    /// the adapter outside exact replay even when a boolean says replay exists.
+    /// convention that separated the adapter from exact topology. A missing
+    /// boundary contract keeps the adapter outside exact replay even when its
+    /// replay flag is set.
     pub fn has_policy(&self) -> bool {
         !self.policy.trim().is_empty()
     }

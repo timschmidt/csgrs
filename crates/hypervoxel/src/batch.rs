@@ -1,7 +1,7 @@
 //! Deterministic sparse-grid edit batches.
 //!
-//! `voxelis` uses batched edits for performance. The Hyper port keeps that
-//! storage idea, but the public contract is semantic: every edit is still
+//! `voxelis` uses batched edits for performance. This semantic layer keeps that
+//! storage idea, but every edit is still
 //! validated against the exact grid frame, and the report preserves the
 //! previous/current cell facts needed to replay or audit the mutation.
 
@@ -32,10 +32,8 @@ pub struct VoxelEditBatchReport {
     /// Whether this report contains at least one applied edit.
     ///
     /// An empty batch is a valid no-op, but it is not replay evidence for an
-    /// object mutation. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, treats exactness as a property of
-    /// replayable object-level operations; this flag prevents an empty
-    /// performance batch from being promoted as exact edit evidence.
+    /// object mutation. This flag prevents an empty performance batch from
+    /// being promoted as exact edit evidence.
     pub has_applied_edits: bool,
     /// Number of edits that stored non-empty explicit cells.
     pub stored_explicit_cells: usize,
@@ -47,12 +45,9 @@ pub struct VoxelEditBatchReport {
     pub non_exact_current_cells: usize,
     /// Whether every edit was frame-validated and exact-ready.
     ///
-    /// This is the batch-edit counterpart to Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7(1-2), 1997: a performance
-    /// batch is exact only when each object-level mutation remains validated,
-    /// semantically coherent, and replayable in order. Unknown/lossy edits are
-    /// still valid storage mutations, but this report keeps them out of exact
-    /// replay.
+    /// A performance batch is exact only when each object-level mutation is
+    /// validated, semantically coherent, and replayable in order. Unknown or
+    /// lossy edits remain valid storage mutations but cannot enter exact replay.
     pub exact_batch_replay_ready: bool,
 }
 

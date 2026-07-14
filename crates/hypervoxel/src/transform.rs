@@ -3,10 +3,8 @@
 //! Full affine geometry belongs in the shape and lattice crates, but voxel
 //! handoff frequently needs the common exact case: axis swaps, axis flips, and
 //! exact translations between grid-aligned frames. Keeping this case explicit
-//! preserves object structure in the sense of Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997, and avoids pretending
-//! that a primitive-float matrix is the source of truth for a transformed
-//! voxel AABB.
+//! preserves object structure and avoids treating a primitive-float matrix as
+//! the source of truth for a transformed voxel AABB.
 
 use std::cmp::Ordering;
 

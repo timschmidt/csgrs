@@ -6,10 +6,9 @@
 //! the owner of Hyper's grid frame, source geometry, voxelization predicates, or
 //! material laws.
 //!
-//! This follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997, pp. 3-23: an approximate or legacy implementation
-//! can be useful test evidence only when the compared object-level facts are
-//! named explicitly. Storage agreement is therefore reported separately from
+//! An approximate or legacy implementation can be useful test evidence only
+//! when the compared object-level facts are named explicitly. Storage
+//! agreement is therefore reported separately from
 //! source-geometry or voxelization truth.
 
 use glam::IVec3;
@@ -41,8 +40,7 @@ pub struct LegacyVoxelisStorageDiffReport {
     /// Whether at least one sample was compared.
     ///
     /// Two empty sample sets are not evidence that a legacy backend matches the
-    /// Hyper model. Yap's EGC contract requires positive object evidence before
-    /// a representation can be admitted as preserving exact facts.
+    /// Hyper model. Representation agreement needs positive object evidence.
     pub has_compared_addresses: bool,
     /// Addresses skipped because they were not full-resolution frame leaves.
     pub skipped_non_leaf_addresses: Vec<VoxelAddress>,
@@ -102,8 +100,8 @@ pub struct LegacyVoxelisChunkPagedMaterializationReport {
     pub exhaustive_chunk_port_ready: bool,
     /// Whether the ported legacy storage can stand in for exact voxelization.
     ///
-    /// This remains false by construction. Yap's EGC model requires the
-    /// source predicates and construction history to be replayed explicitly;
+    /// This remains false by construction. Source predicates and construction
+    /// history must be replayed explicitly;
     /// harvested storage values alone are not geometric truth.
     pub exact_voxelization_ready: bool,
 }
@@ -126,8 +124,8 @@ pub struct LegacyVoxelisExactSurfaceTriangleMeshReport {
     pub exact_legacy_storage_surface_ready: bool,
     /// Whether this legacy surface handoff can stand in for exact voxelization.
     ///
-    /// This remains false by construction. Yap's exact-geometric-computation
-    /// contract requires source-geometry predicates and construction replay;
+    /// This remains false by construction. Source-geometry predicates and
+    /// construction history require replay;
     /// a legacy voxel tree plus a valid storage surface is still not source
     /// voxelization proof.
     pub exact_voxelization_ready: bool,
@@ -215,14 +213,10 @@ where
 /// The function then replays every frame cell through the paged backend and
 /// compares it to the original legacy lookup.
 ///
-/// The design follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7(1-2), 1997: the performance-oriented `voxelis`
-/// SVO-DAG may propose a storage representation, but the Hyper object facts
-/// are accepted only after exact integer address replay through the target
-/// model. It also mirrors the spatial-subdivision discipline described by
-/// Samet, *The Design and Analysis of Spatial Data Structures*,
-/// Addison-Wesley, 1990, while keeping page coordinates as integer evidence
-/// rather than metric approximations.
+/// The performance-oriented `voxelis` SVO-DAG may propose a storage
+/// representation, but Hyper object facts are accepted only after exact
+/// integer-address replay through the target model. Page coordinates remain
+/// integer evidence rather than metric approximations.
 pub fn materialize_legacy_voxelis_u8_chunk_paged_storage(
     tree: &VoxTree<u8>,
     interner: &VoxInterner<u8>,
@@ -323,13 +317,10 @@ pub fn materialize_legacy_voxelis_u8_chunk_paged_storage(
 /// of that materialized storage can be audited using the same exact shell,
 /// triangle, and shared mesh-vocabulary reports as native Hyper pages.
 ///
-/// The acceptance split is deliberate and follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997: exact
-/// claims must name the object whose facts replay. Here the replayed object is
-/// the materialized integer voxel storage surface, not the source geometry
-/// that may have produced the legacy `VoxTree`. The indexed surface vocabulary
-/// follows Botsch et al., *Polygon Mesh Processing*, AK Peters, 2010, while
-/// retaining exact grid-lattice vertices and source voxel-face identities.
+/// Exact claims name the object whose facts replay. Here it is the materialized
+/// integer voxel-storage surface, not source geometry that may have produced
+/// the legacy `VoxTree`. The indexed surface retains exact grid-lattice
+/// vertices and source voxel-face identities.
 pub fn materialize_legacy_voxelis_u8_exact_surface_triangle_mesh(
     tree: &VoxTree<u8>,
     interner: &VoxInterner<u8>,

@@ -1,11 +1,9 @@
 //! Deterministic snapshots for semantic grid artifacts.
 //!
 //! This is not the final compressed storage format. It is a stable diagnostic
-//! and fixture format for exact frame, cell, and aggregate data while the
-//! SVO-DAG backend is being ported. The report surface follows Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997: a
-//! serialized artifact must say which exact object facts it preserves instead
-//! of relying on callers to infer that from a byte prefix.
+//! and fixture format for exact frame, cell, and aggregate data. A serialized
+//! artifact states which object facts it preserves instead of relying on a byte
+//! prefix.
 
 use std::fmt::Write;
 
@@ -54,9 +52,7 @@ pub struct DeterministicSnapshotReport {
     /// Whether at least one cell record or run was retained.
     ///
     /// An empty snapshot may preserve frame metadata exactly, but it is not
-    /// evidence that voxel cell content was replayed. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
-    /// exactness attached to explicit object facts; this gate prevents a
+    /// evidence that voxel cell content was replayed. This gate prevents a
     /// header-only fixture from certifying voxel content.
     pub has_cell_records: bool,
     /// Whether the snapshot is ready for full exact semantic replay.

@@ -4,10 +4,8 @@
 //! geometric oracle. A row key is just the integer arrangement row
 //! `(axis, row_a, row_b)` in the current grid frame, and the cached value is
 //! the certified or ambiguous row result produced by exact predicates in
-//! [`crate::triangle_prepared`]. This follows Yap, "Towards Exact Geometric
-//! Computation," *Computational Geometry* 7(1-2), 1997: acceleration may reuse
-//! retained object facts, but it must not introduce approximate decisions or
-//! unreported topology state.
+//! [`crate::triangle_prepared`]. Acceleration may reuse retained object facts,
+//! but it must not introduce approximate decisions or unreported topology.
 
 use std::collections::BTreeMap;
 

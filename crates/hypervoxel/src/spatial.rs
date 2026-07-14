@@ -2,11 +2,9 @@
 //!
 //! Occupancy aggregates say what is known about cell values. Spatial aggregate
 //! facts say where those values live: exact enclosing bounds, root child
-//! presence, stored-cell counts, and optional source freshness. Keeping these
-//! facts separate follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7(1-2), 1997: spatial/combinatorial evidence is
-//! preserved as structured object data instead of being inferred later from a
-//! lossy mesh, preview, or floating-point bounding box.
+//! presence, stored-cell counts, and optional source freshness. These facts
+//! remain structured object data instead of being inferred later from a lossy
+//! mesh, preview, or floating-point bounding box.
 
 use hyperreal::{CertifiedRealOrdering, Real};
 
@@ -23,10 +21,8 @@ pub struct VoxelSpatialAggregateFacts {
     /// Whether at least one non-empty cell contributed spatial evidence.
     ///
     /// Empty sparse grids can be represented exactly as empty aggregates, but
-    /// they do not provide an enclosing object bound. Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
-    /// object evidence explicit; callers should not infer exact spatial
-    /// support from the absence of stored cells.
+    /// they do not provide an enclosing object bound. Callers must not infer
+    /// exact spatial support from the absence of stored cells.
     pub has_spatial_evidence: bool,
     /// Root-octant child presence mask.
     pub child_presence_mask: u8,

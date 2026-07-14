@@ -1,13 +1,11 @@
 //! Integer-grid segment and sweep queries.
 //!
-//! The first path API is deliberately address-space based. It traces an exact
+//! This path API is deliberately address-space based. It traces an exact
 //! integer segment through voxel addresses and reports the cells encountered,
 //! keeping the combinatorial path separate from any later metric or controller
-//! interpolation. The incremental stepping is the voxel analogue of
-//! Bresenham's line rasterization ("Algorithm for computer control of a
-//! digital plotter," IBM Systems Journal, 1965), used here under Yap's exact
-//! geometric computation rule that grid decisions remain integer/exact until a
-//! lossy adapter is explicitly selected.
+//! interpolation. Incremental stepping is a three-dimensional Bresenham-style
+//! traversal: grid decisions remain integer/exact until a lossy adapter is
+//! explicitly selected.
 
 use crate::{
     HypervoxelError, HypervoxelResult, PreparedVoxelGrid, SparseVoxelGrid, VoxelAddress,
@@ -68,17 +66,15 @@ pub struct AddressRayTrace {
     pub stopped_at_step_limit: bool,
     /// Whether the trace is exact address-space evidence.
     ///
-    /// This is a grid-combinatorial fact, not continuous ray casting. It keeps
-    /// the Bresenham-style integer traversal of Bresenham, "Algorithm for
-    /// computer control of a digital plotter," *IBM Systems Journal*, 1965,
-    /// inside Yap's exact-object boundary for voxel addresses.
+    /// This is a grid-combinatorial fact, not continuous ray casting. The
+    /// Bresenham-style traversal operates entirely on voxel addresses.
     pub exact_address_trace_ready: bool,
 }
 
 /// Traces a deterministic integer-grid segment between two addresses.
 ///
-/// This is a conservative path fixture, not a replacement for future exact
-/// ray/solid intersection kernels. It is useful for tool-access, process-grid,
+/// This is a conservative path fixture, not a replacement for exact metric
+/// ray/solid kernels. It is useful for tool-access, process-grid,
 /// and regression tests that already live in voxel address space.
 pub fn trace_address_segment(
     start: VoxelAddress,
@@ -149,8 +145,8 @@ pub fn sweep_address_segment(
 /// This is an integer-grid query helper, not continuous ray casting. Exact
 /// shape/ray predicates belong in the geometry crates; this function provides
 /// deterministic voxel-address traces for process fixtures and broad-phase
-/// queries while preserving Yap's separation between combinatorial grid facts
-/// and numerical geometry.
+/// queries while keeping combinatorial grid facts separate from metric
+/// geometry.
 pub fn trace_address_ray(ray: AddressRay) -> HypervoxelResult<AddressRayTrace> {
     if ray.axis >= 3 || !matches!(ray.direction, -1 | 1) {
         return Err(HypervoxelError::AddressOverflow);

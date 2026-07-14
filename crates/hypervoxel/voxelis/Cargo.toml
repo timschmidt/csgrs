@@ -8,7 +8,7 @@ homepage = "https://github.com/WildPixelGames/voxelis"
 repository = "https://github.com/WildPixelGames/voxelis"
 documentation = "https://docs.rs/voxelis"
 edition = "2024"
-readme = "../README.md"
+readme = "README.md"
 keywords = ["voxel", "voxel-engine", "sparse-voxel-octree", "dag", "3d-engine"]
 categories = [
   "data-structures",

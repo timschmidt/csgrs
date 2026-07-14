@@ -1,9 +1,7 @@
 //! Exact axis-aligned bounding-box handoff records.
 //!
-//! These records are intentionally object-level. Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7(1-2), 1997, argues that
-//! exact systems should preserve geometric structure until a predicate or
-//! construction selects the needed arithmetic package. `ExactAabb3` therefore
+//! These records preserve geometric structure until a predicate or
+//! construction selects the required arithmetic. `ExactAabb3` therefore
 //! carries exact bounds and source addresses instead of silently flattening
 //! voxel cells into display coordinates.
 
@@ -42,11 +40,9 @@ impl From<&CellBounds> for ExactAabb3 {
 impl ExactAabb3 {
     /// Returns the minimum corner as a [`hyperlattice::Vector3`].
     ///
-    /// This is an exact object handoff, not a numeric lowering. Yap's exact
-    /// geometric computation model favors retaining geometric structure at
-    /// crate boundaries; exposing a lattice vector lets downstream predicate
-    /// and transform code consume exact coordinates without inventing a
-    /// primitive-float AABB adapter.
+    /// This is an exact object handoff, not a numeric lowering. Exposing a
+    /// lattice vector lets downstream predicates and transforms consume exact
+    /// coordinates without inventing a primitive-float AABB adapter.
     pub fn min_vector(&self) -> Vector3 {
         Vector3::new(self.min.clone())
     }
@@ -93,9 +89,9 @@ impl LatticeAabbHandoff {
 
     /// Returns exact structural facts for the minimum and maximum vectors.
     ///
-    /// These facts are non-certifying scheduling metadata in the Yap sense:
-    /// they help downstream exact kernels pick sparse/common-scale routes, but
-    /// they do not replace predicate certificates.
+    /// These facts are non-certifying scheduling metadata. They help exact
+    /// kernels select sparse or common-scale routes but do not replace
+    /// predicate certificates.
     pub fn vector_facts(&self) -> (hyperlattice::Vector3Facts, hyperlattice::Vector3Facts) {
         (self.min.structural_facts(), self.max.structural_facts())
     }

@@ -4,10 +4,8 @@
 //! masks, but a voxel support mask is not a replacement for exact contact,
 //! load, or stability predicates. This module reports support evidence over
 //! integer grid addresses while preserving unknown and lossy cells explicitly.
-//! That follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7(1-2), 1997: combinatorial decisions must be traced to exact
-//! object facts or reported as uncertainty, not inferred from approximate
-//! samples.
+//! Combinatorial decisions trace to exact object facts or remain reported as
+//! uncertainty rather than being inferred from approximate samples.
 
 use crate::{HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress};
 
@@ -64,9 +62,8 @@ pub struct SupportMaskReport {
     /// Whether at least one non-empty target cell was checked.
     ///
     /// An empty target mask is a precise absence report, but it is not exact
-    /// support evidence. Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7(1-2), 1997, requires exact decisions to be
-    /// grounded in object-level evidence rather than vacuous count checks.
+    /// support evidence. Exact decisions need object-level evidence rather
+    /// than vacuous count checks.
     pub has_checked_cells: bool,
     /// Number of cells with explicit support.
     pub supported_cells: usize,
@@ -136,7 +133,7 @@ pub fn classify_support_mask(
     // This boolean is the support-mask equivalent of the other Hyper report
     // readiness flags: downstream process planners should not infer exact
     // usability from counts by convention. Unsupported, unknown, and lossy
-    // cells are all non-ready evidence, following Yap's exact-object boundary.
+    // cells are all non-ready evidence.
     report.has_checked_cells = report.checked_cells > 0;
     report.exact_support_mask_ready = report.has_checked_cells
         && report.unsupported_cells == 0
