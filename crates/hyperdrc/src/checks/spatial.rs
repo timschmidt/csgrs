@@ -26,7 +26,6 @@ const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
 /// full all-pairs CSG pass. Buckets are grouped by layer so same-layer queries
 /// borrow the layer key once instead of allocating one key per bucket probe.
 pub(super) struct CopperSpatialIndex<'a> {
-    #[allow(dead_code)]
     features: &'a [&'a CopperFeature],
     buckets_by_layer: BTreeMap<String, BTreeMap<(i64, i64), Vec<usize>>>,
     all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>>,

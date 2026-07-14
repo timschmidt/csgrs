@@ -247,7 +247,7 @@ fn rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>) -> bool {
 mod tests {
     use super::{different_net_short_readiness, same_net_drill_break_readiness};
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile, rect_polygon};
+    use crate::geometry::{line_polygon, polygons_to_profile, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     #[test]
@@ -582,25 +582,6 @@ mod tests {
             diameter: crate::geometry::exact_real(diameter),
             net: None,
             plated: false,
-        }
-    }
-
-    #[allow(dead_code)]
-    fn via(net: &str, location: [f64; 2], diameter: f64) -> CopperFeature {
-        CopperFeature {
-            layer: "F.Cu".to_string(),
-            net: Some(net.to_string()),
-            kind: CopperKind::Via,
-            location: [
-                crate::geometry::exact_real(location[0]),
-                crate::geometry::exact_real(location[1]),
-            ],
-            sketch: polygons_to_profile(
-                vec![circle_polygon(location, diameter / 2.0, 32)],
-                Some(LayerMetadata {
-                    name: "via".to_string(),
-                }),
-            ),
         }
     }
 }

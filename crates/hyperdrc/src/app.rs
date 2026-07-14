@@ -4266,7 +4266,7 @@ fn gerber_coordinate_format_label(format: GerberCoordinateFormat) -> String {
     format!("{}:{}", format.integer_digits, format.decimal_digits)
 }
 
-#[allow(dead_code)]
+#[cfg(test)]
 fn load_excellon_drills(files: &[PathBuf]) -> Result<Vec<kicad::DrillFeature>> {
     Ok(load_excellon_reports(files)?
         .into_iter()
