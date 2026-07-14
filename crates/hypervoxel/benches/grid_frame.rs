@@ -917,6 +917,36 @@ fn bench_connectivity_and_export_adapters(c: &mut Criterion) {
             )
         })
     });
+
+    let distance_frame = GridFrame::builder().depth(6).build().unwrap();
+    let mut distance_grid = SparseVoxelGrid::new(distance_frame);
+    for i in 0_u64..512 {
+        distance_grid
+            .set(
+                VoxelAddress::new(6, [i % 64, (i / 64) % 8, (i * 37) % 64]).unwrap(),
+                VoxelCell::material(MaterialRegionId(1)),
+            )
+            .unwrap();
+    }
+    let distance_region = QueryRegion {
+        min: [8, 8, 8],
+        max: [39, 39, 39],
+        depth: 6,
+    };
+    c.bench_function("manhattan_distance_preview_32_cube_512_sources", |b| {
+        b.iter(|| {
+            let preview = sample_manhattan_distance_field(
+                black_box(&distance_grid),
+                black_box(distance_region.clone()),
+            )
+            .unwrap();
+            black_box((
+                preview.samples.len(),
+                preview.source_cells,
+                preview.exact_address_distance_ready,
+            ))
+        })
+    });
     c.bench_function("address_ray_trace", |b| {
         b.iter(|| {
             let trace = trace_address_ray(AddressRay {

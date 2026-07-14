@@ -91,25 +91,23 @@ pub fn sample_manhattan_distance_field(
         .filter(|(_, cell)| cell.occupancy != OccupancyState::Empty)
         .map(|(address, _)| *address)
         .collect::<Vec<_>>();
+    let distances = exact_manhattan_transform(&occupied, &region)?;
     let mut samples = BTreeMap::new();
+    let mut distance_index = 0;
     for z in region.min[2]..=region.max[2] {
         for y in region.min[1]..=region.max[1] {
             for x in region.min[0]..=region.max[0] {
                 let address = VoxelAddress::new(region.depth, [x, y, z])?;
                 let occupied_here = grid.get(address)?.occupancy != OccupancyState::Empty;
-                let manhattan_distance = occupied
-                    .iter()
-                    .filter(|candidate| candidate.depth == address.depth)
-                    .map(|candidate| manhattan(address.xyz, candidate.xyz))
-                    .min();
                 samples.insert(
                     address,
                     DistanceSample {
                         address,
-                        manhattan_distance,
+                        manhattan_distance: distances[distance_index],
                         occupied: occupied_here,
                     },
                 );
+                distance_index += 1;
             }
         }
     }
@@ -127,6 +125,93 @@ pub fn sample_manhattan_distance_field(
         samples: samples.into_values().collect(),
         exact_address_distance_ready,
     })
+}
+
+/// Computes the exact lower envelope of integer L1-distance cones over a box.
+///
+/// A source outside the query box is projected coordinate-wise onto the box.
+/// For every point inside the box, its distance to that source is the source's
+/// distance to the projection plus the in-box distance from the projection.
+/// Six linear sweeps therefore replace the previous source-by-sample scan
+/// without changing the integer metric or its evidence boundary.
+fn exact_manhattan_transform(
+    sources: &[VoxelAddress],
+    region: &QueryRegion,
+) -> crate::HypervoxelResult<Vec<Option<u64>>> {
+    if (0..3).any(|axis| region.min[axis] > region.max[axis]) {
+        return Ok(Vec::new());
+    }
+    VoxelAddress::new(region.depth, region.min)?;
+    VoxelAddress::new(region.depth, region.max)?;
+
+    let dimensions = [
+        usize::try_from(region.max[0] - region.min[0] + 1)
+            .map_err(|_| crate::HypervoxelError::AddressOverflow)?,
+        usize::try_from(region.max[1] - region.min[1] + 1)
+            .map_err(|_| crate::HypervoxelError::AddressOverflow)?,
+        usize::try_from(region.max[2] - region.min[2] + 1)
+            .map_err(|_| crate::HypervoxelError::AddressOverflow)?,
+    ];
+    let sample_count = dimensions
+        .iter()
+        .try_fold(1_usize, |count, &dimension| count.checked_mul(dimension))
+        .ok_or(crate::HypervoxelError::AddressOverflow)?;
+    let mut distances = vec![u64::MAX; sample_count];
+
+    for source in sources.iter().filter(|source| source.depth == region.depth) {
+        let projected = [
+            source.xyz[0].clamp(region.min[0], region.max[0]),
+            source.xyz[1].clamp(region.min[1], region.max[1]),
+            source.xyz[2].clamp(region.min[2], region.max[2]),
+        ];
+        let index = transform_index(projected, region, dimensions);
+        distances[index] = distances[index].min(manhattan(source.xyz, projected));
+    }
+
+    let [width, height, depth] = dimensions;
+    for z in 0..depth {
+        for y in 0..height {
+            let start = (z * height + y) * width;
+            relax_line(&mut distances, start, width, 1);
+        }
+    }
+    for z in 0..depth {
+        for x in 0..width {
+            let start = z * height * width + x;
+            relax_line(&mut distances, start, height, width);
+        }
+    }
+    for y in 0..height {
+        for x in 0..width {
+            let start = y * width + x;
+            relax_line(&mut distances, start, depth, width * height);
+        }
+    }
+
+    Ok(distances
+        .into_iter()
+        .map(|distance| (distance != u64::MAX).then_some(distance))
+        .collect())
+}
+
+fn transform_index(xyz: [u64; 3], region: &QueryRegion, [width, height, _]: [usize; 3]) -> usize {
+    let x = (xyz[0] - region.min[0]) as usize;
+    let y = (xyz[1] - region.min[1]) as usize;
+    let z = (xyz[2] - region.min[2]) as usize;
+    (z * height + y) * width + x
+}
+
+fn relax_line(distances: &mut [u64], start: usize, length: usize, stride: usize) {
+    for offset in 1..length {
+        let previous = start + (offset - 1) * stride;
+        let current = start + offset * stride;
+        distances[current] = distances[current].min(distances[previous].saturating_add(1));
+    }
+    for offset in (0..length.saturating_sub(1)).rev() {
+        let current = start + offset * stride;
+        let next = current + stride;
+        distances[current] = distances[current].min(distances[next].saturating_add(1));
+    }
 }
 
 /// Samples signed address-space Manhattan distances in a query region.
@@ -173,4 +258,40 @@ fn exact_distance_source_ready(occupancy: OccupancyState) -> bool {
         occupancy,
         OccupancyState::Unknown | OccupancyState::LossyAdapterValue
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn separable_transform_matches_all_pairs_with_sources_outside_region() {
+        let region = QueryRegion {
+            min: [2, 3, 1],
+            max: [5, 6, 4],
+            depth: 4,
+        };
+        let sources = [
+            VoxelAddress::new(4, [0, 0, 0]).unwrap(),
+            VoxelAddress::new(4, [9, 4, 2]).unwrap(),
+            VoxelAddress::new(4, [3, 12, 8]).unwrap(),
+            VoxelAddress::new(3, [2, 3, 1]).unwrap(),
+        ];
+        let transformed = exact_manhattan_transform(&sources, &region).unwrap();
+
+        let mut index = 0;
+        for z in region.min[2]..=region.max[2] {
+            for y in region.min[1]..=region.max[1] {
+                for x in region.min[0]..=region.max[0] {
+                    let expected = sources
+                        .iter()
+                        .filter(|source| source.depth == region.depth)
+                        .map(|source| manhattan(source.xyz, [x, y, z]))
+                        .min();
+                    assert_eq!(transformed[index], expected);
+                    index += 1;
+                }
+            }
+        }
+    }
 }
