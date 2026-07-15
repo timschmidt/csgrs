@@ -221,14 +221,7 @@ Core dependencies: [hyperreal](https://github.com/timschmidt/hyperreal),
 [hyperlimit](https://github.com/timschmidt/hyperlimit). Related geometry and
 consumer crates: [hypermesh](https://github.com/timschmidt/hypermesh),
 [hypertri](https://github.com/timschmidt/hypertri),
-[hypercurve](https://github.com/timschmidt/hypercurve),
-[hyperbrep](https://github.com/timschmidt/hyperbrep),
-[hypersdf](https://github.com/timschmidt/hypersdf),
-[hyperphysics](https://github.com/timschmidt/hyperphysics),
-[hyperpath](https://github.com/timschmidt/hyperpath),
-[hyperdrc](https://github.com/timschmidt/hyperdrc),
-[hypersolve](https://github.com/timschmidt/hypersolve),
-[hypercircuit](https://github.com/timschmidt/hypercircuit),
-[hyperpack](https://github.com/timschmidt/hyperpack),
-[hyperparts](https://github.com/timschmidt/hyperparts), and
-[hyperevolution](https://github.com/timschmidt/hyperevolution).
+[hyperbrep](https://github.com/timschmidt/hyperbrep), and
+[hypersdf](https://github.com/timschmidt/hypersdf). See the
+[remaining Hyper repositories](https://github.com/timschmidt?tab=repositories&q=hyper)
+for solver and domain consumers.
