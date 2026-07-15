@@ -1,8 +1,7 @@
 fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     // Integral atan is used for atan(1/n), where division by n^2 each iteration
     // is cheaper and more stable than approximating a rational Computable child.
-    // This is the arctangent-series kernel used by the Machin pi computation;
-    // see Brent, https://doi.org/10.1145/321941.321944.
+    // This is the arctangent-series kernel used by the Machin pi computation.
     if p >= 1 {
         return Zero::zero();
     }
@@ -55,8 +54,7 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
 fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| is small. Larger atan inputs are reduced by
     // subtraction of atan(1/2) or the reciprocal identity before reaching here.
-    // That reduction-before-series shape follows the elementary-function
-    // approach in Brent, https://doi.org/10.1145/321941.321944.
+    // Reduce the argument before evaluating the series.
     if p >= 1 {
         return Zero::zero();
     }

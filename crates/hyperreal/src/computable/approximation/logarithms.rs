@@ -2,8 +2,7 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: this computes ln(1+x), not arbitrary ln(x). Public
     // construction keeps |x| < 1/2 by inversion, sqrt scaling, and powers of two.
     // The atanh transform is a standard log argument reduction for faster odd
-    // power-series convergence; see Brent/Zimmermann, Ch. 4:
-    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+    // power-series convergence.
     if p >= 0 {
         return Zero::zero();
     }

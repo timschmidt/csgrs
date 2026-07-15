@@ -26,10 +26,7 @@ pub enum ZeroKnowledge {
 /// in wall-clock time. Keeping this source visible is important for exact
 /// geometric computation: downstream predicate crates can distinguish cheap
 /// object facts from bounded refinement without treating lossy primitive-float
-/// approximations as topology. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and Boehm et al., "Exact Real
-/// Arithmetic: A Case Study in Higher Order Programming," *Proceedings of the
-/// 1998 ACM SIGPLAN International Conference on Functional Programming*.
+/// approximations as topology.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RealSignCertificate {
     /// The sign followed from cheap structural facts already carried by `Real`.
@@ -218,9 +215,7 @@ pub struct MagnitudeBits {
 /// These facts are deliberately cheap structural certificates, not numerical
 /// estimates. They serve the same role as inexpensive filters in exact
 /// geometric computation: rule out impossible branches before spending work on
-/// refinement. See Shewchuk, "Adaptive Precision Floating-Point Arithmetic and
-/// Fast Robust Geometric Predicates", Discrete & Computational Geometry 1997,
-/// and Yap, "Towards Exact Geometric Computation", Computational Geometry 1997.
+/// refinement.
 ///
 /// Invariants:
 ///
@@ -284,10 +279,8 @@ pub enum StructuralKind {
 /// recognized scalar forms: exact rationals and named symbolic constants are
 /// constant with respect to future solver variables, while opaque computable
 /// nodes have unknown degree. The split creates the public boundary requested
-/// by Yap's exact-computation model: preserve expression shape cheaply, then
-/// let higher layers decide whether a solver or predicate can exploit it. See
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// by the exact-computation model: preserve expression shape cheaply, then let
+/// higher layers decide whether a solver or predicate can exploit it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExpressionDegree {
     /// The value is structurally independent of future symbolic variables.
@@ -362,10 +355,8 @@ pub enum ZeroOneStatus {
 /// `-1` to select sparse, identity, or signed-permutation schedules. Keeping
 /// the combined query in `hyperreal` lets higher crates consume one structural
 /// fact without duplicating scalar representation checks. This is the
-/// scalar-layer counterpart to Yap's recommendation that exact geometric
-/// computation preserve inexpensive object facts before expanding arithmetic;
-/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
+/// scalar-layer counterpart to preserving inexpensive object facts before
+/// expanding arithmetic.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ZeroOneMinusOneStatus {
     /// The value is structurally known to be exactly zero.
@@ -384,8 +375,7 @@ pub enum ZeroOneMinusOneStatus {
 /// This is for planning only: callers can avoid repeating expensive exact
 /// rational work in inner loops when a value is structurally large. The bucket
 /// is derived from stored limb bit lengths and does not canonicalize or refine.
-/// This mirrors the filter-first style of exact geometric computation; see Yap,
-/// "Towards Exact Geometric Computation", Computational Geometry 1997.
+/// This mirrors the filter-first style of exact geometric computation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RationalStorageClass {
     /// The exact rational is zero.
@@ -450,10 +440,8 @@ pub struct RationalFacts {
 /// These are exact field-derived comparisons for thresholds that appear in hot
 /// kernels (`0`, `1`, and `|x| <= 1`). Keeping them explicit lets callers reject
 /// invalid domains or take symbolic endpoints without canonicalizing or
-/// approximating. This follows the exact-real design principle that algebraic
-/// reduction and domain filtering should precede numerical refinement; see
-/// Boehm, Cartwright, Riggle, and O'Donnell, "Exact Real Arithmetic: A Case
-/// Study in Higher Order Programming", LISP and Functional Programming 1986.
+/// approximating. Algebraic reduction and domain filtering precede numerical
+/// refinement.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct OrderingFacts {
     pub cmp_one: StructuralComparison,
@@ -464,10 +452,8 @@ pub struct OrderingFacts {
 ///
 /// These are structural domain certificates, not evaluations of the functions.
 /// They let higher layers reject invalid symbolic operations or select exact
-/// simplifications before asking for numerical refinement. That is the scalar
-/// side of Yap's exact-geometric-computation rule that filters must produce
-/// certificates or explicit uncertainty; see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// simplifications before asking for numerical refinement. Filters must produce
+/// certificates or explicit uncertainty.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DomainFacts {
     pub reciprocal: DomainStatus,

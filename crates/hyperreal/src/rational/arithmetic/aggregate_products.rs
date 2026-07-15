@@ -394,13 +394,9 @@ impl Rational {
     /// using it. Returning `None` means the certificate was too weak for this
     /// particular product shape, so callers should fall back to
     /// [`Self::signed_product_sum`]. Keeping the validation in `Rational`
-    /// preserves scalar storage ownership while giving geometric kernels the
-    /// denominator-specialized schedule requested by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
-    /// final delayed reduction is the same Bareiss-style fraction-delay idea
-    /// used by the generic reducer; see Bareiss, "Sylvester's Identity and
-    /// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
-    /// Computation* 22.103 (1968).
+    /// preserves scalar storage ownership while giving geometric kernels a
+    /// denominator-specialized schedule. The final delayed reduction uses the
+    /// same fraction-delay strategy as the generic reducer.
     pub fn signed_product_sum_shared_denominator<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -473,12 +469,8 @@ impl Rational {
     /// their abstraction boundary: they pass a known polynomial shape, but do
     /// not inspect `Rational` storage internals.
     ///
-    /// The fraction-delay strategy follows Bareiss, "Sylvester's Identity and
-    /// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
-    /// Computation* 22.103 (1968), and matches Yap's exact-geometric-
-    /// computation guidance to keep algebraic object shape visible before
-    /// scalar expansion; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// The fraction-delay strategy keeps algebraic object shape visible before
+    /// scalar expansion.
     pub fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -488,12 +480,8 @@ impl Rational {
         // only the final row. This targets the trace rows where fixed 3x3/4x4
         // inverse, division, and negative-powi kernels still paid repeated gcd
         // work after dot products had already been fused. The algebraic
-        // strategy follows the same fraction-delay idea as Bareiss fraction
-        // free elimination (Bareiss, Math. Comp. 22(103), 1968,
-        // https://www.ams.org/mcom/1968-22-103/S0025-5718-1968-0226829-0/S0025-5718-1968-0226829-0.pdf)
-        // and common-factor exact matrix work
-        // (https://link.springer.com/article/10.1007/s11786-020-00495-9),
-        // but keeps the public fixed-size cofactor formulas division-free.
+        // strategy delays fractions and keeps the public fixed-size cofactor
+        // formulas division-free.
         // Structural note: keep this hook scalar-local. Hyperlattice can use it
         // for exact cofactor and determinant kernels, while predicate and
         // triangulation crates should consume only the resulting exact signs or
@@ -728,13 +716,8 @@ impl Rational {
         // Dense vector and matrix dot products are exact rational linear
         // forms when all inputs are rational. Build one shared denominator and
         // canonicalize only the final sum instead of reducing every product
-        // and partial sum. This is the same "delay fractions until the end"
-        // idea used by fraction-free exact linear algebra; see Bareiss-style
-        // exact division/common-factor discussion in
-        // https://link.springer.com/article/10.1007/s11786-020-00495-9 and
-        // the pedagogical Gauss-Jordan fraction-delay variant at
-        // https://openjournals.libs.uga.edu/tme/article/view/1957/1862.
-        // Current 2026-05 trace goal: keep exact matrix rows at one rational
+        // and partial sum, delaying fractions until the end.
+        // Keep exact matrix rows at one rational
         // constructor per output cell. This dropped mat4 powi from-f64 trace
         // activity from 161.75 to 32 reductions/call and from 462.25 to 67.75
         // temporaries/call; keep future changes within noise of those counts.

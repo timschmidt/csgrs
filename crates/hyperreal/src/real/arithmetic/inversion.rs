@@ -299,10 +299,7 @@ impl Real {
                     let rational = if self.rational.is_one() {
                         // Unit-scaled radicals are the hot path from sqrt table
                         // reductions. Avoid multiplying by one and then
-                        // canonicalizing before inversion; see Yap, "Towards
-                        // Exact Geometric Computation" (1997), on preserving
-                        // exact algebraic structure to avoid unnecessary
-                        // refinement/canonicalization work.
+                        // canonicalizing before inversion.
                         Rational::from_unsigned_integer(sqrt.clone()).inverse()?
                     } else {
                         (self.rational * Rational::from_unsigned_integer(sqrt.clone())).inverse()?
@@ -380,9 +377,7 @@ impl Real {
             let rational = if self.rational.is_one() {
                 // Most factored pi/e/sqrt products are unit-scaled. Skipping the
                 // `1 * radicand` rational construction avoids one gcd while
-                // preserving the exact rationalization identity above; see Yap
-                // (1997) on delaying expensive exact-number normalization until
-                // it is structurally required.
+                // preserving the exact rationalization identity above.
                 radicand.clone().inverse()?
             } else {
                 (self.rational * radicand.clone()).inverse()?
@@ -512,7 +507,7 @@ impl Real {
                         // Borrowed unit-scaled sqrt inverses are common in
                         // vector normalization and matrix scalar division. The
                         // structural one fact lets us skip a rational multiply
-                        // before exact inversion; see Yap (1997).
+                        // before exact inversion.
                         Rational::from_unsigned_integer(sqrt.clone()).inverse()?
                     } else {
                         (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
@@ -592,8 +587,7 @@ impl Real {
                     let rational = if self.rational.is_one() {
                         // Preserve the same symbolic rationalization but avoid
                         // constructing `1 * radicand` on the hot borrowed path;
-                        // this follows the exact-structure-first strategy
-                        // described by Yap (1997).
+                        // this follows the exact-structure-first strategy.
                         radicand.clone().inverse()?
                     } else {
                         (&self.rational * radicand.clone()).inverse()?

@@ -3,29 +3,29 @@
 
 Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.
 
-<!-- promoted_slow_score_nanos: 3650 -->
-<!-- promoted_slow_previous_score_nanos: 3650 -->
+<!-- promoted_slow_score_nanos: 3719 -->
+<!-- promoted_slow_previous_score_nanos: 3719 -->
 <!-- promoted_slow_score_delta_nanos: 0 -->
 
 | Metric | Value |
 | --- | ---: |
 | Cases scored | 100 |
-| Average score | 3.650 us |
+| Average score | 3.719 us |
 | Delta | 0 ns |
 | Delta derivative | 0 ns |
 
 | Rank | Current Time | Operation | Input |
 | ---: | ---: | --- | --- |
-| 1 | 10.849 us | `generated_tan_p96` | `generated[18246] -1 187/188` |
-| 2 | 10.610 us | `generated_tan_p96` | `generated[12186] -1 189/299` |
-| 3 | 10.480 us | `generated_tan_p96` | `generated[18276] -1 77/107` |
-| 4 | 10.220 us | `generated_tan_p96` | `generated[321] 1 214/231` |
-| 5 | 10.049 us | `generated_tan_p96` | `generated[486] 1 53/71` |
-| 6 | 8.010 us | `generated_tan_p96` | `generated[6906] -87/128` |
-| 7 | 7.869 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
-| 8 | 7.720 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
-| 9 | 7.649 us | `generated_tan_p96` | `generated[16806] 5 3/22` |
-| 10 | 7.519 us | `generated_tan_p96` | `generated[18666] 5 15/17` |
+| 1 | 11.579 us | `generated_tan_p96` | `generated[1071] -3 177/200` |
+| 2 | 10.909 us | `generated_tan_p96` | `generated[17496] 3 190/219` |
+| 3 | 10.619 us | `generated_tan_p96` | `generated[18246] -1 187/188` |
+| 4 | 10.209 us | `generated_tan_p96` | `generated[18276] -1 77/107` |
+| 5 | 9.989 us | `generated_tan_p96` | `generated[12186] -1 189/299` |
+| 6 | 9.980 us | `generated_tan_p96` | `generated[321] 1 214/231` |
+| 7 | 9.679 us | `generated_tan_p96` | `generated[486] 1 53/71` |
+| 8 | 7.809 us | `generated_tan_p96` | `generated[6906] -87/128` |
+| 9 | 7.599 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
+| 10 | 7.469 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
 
 <!-- END promoted_slow_offender_score -->
 

@@ -65,10 +65,8 @@ pub enum RealExactSetSignPattern {
 /// This type deliberately exposes facts rather than numerator or denominator
 /// storage. Higher crates can choose dyadic or shared-denominator exact
 /// schedules, while [`crate::Rational`] keeps ownership of its representation
-/// and reduction policy. This follows Yap's exact-geometric-computation
-/// guidance to preserve object-level rational structure before scalar
-/// expansion; see Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// and reduction policy, preserving object-level rational structure before
+/// scalar expansion.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RealExactSetFacts {
     /// Number of values examined.
@@ -78,10 +76,7 @@ pub struct RealExactSetFacts {
     /// Number of exact rational values whose reduced denominator is one.
     ///
     /// Integer-grid predicates and transforms can use this to select cheaper
-    /// determinant/product-sum packages without inspecting scalar fields. This
-    /// is the object-structure preservation advocated by Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997), expressed
-    /// as a storage-free fact.
+    /// determinant/product-sum packages without inspecting scalar fields.
     pub exact_integer_count: usize,
     /// Number of exact rational values that are signed powers of two.
     ///
@@ -117,16 +112,12 @@ pub struct RealExactSetFacts {
     /// This is a bucketed scale fact rather than a denominator leak. It lets
     /// object-level kernels decide whether dyadic exact arithmetic will remain
     /// a cheap shift schedule or should be treated as a larger exact-rational
-    /// route. The design follows Yap's EGC recommendation to preserve
-    /// numerical object structure before scalar expansion.
+    /// route while preserving object structure before scalar expansion.
     pub max_dyadic_exponent_class: Option<RealExactSetDyadicExponentClass>,
     /// Number of values structurally known to be exactly zero.
     ///
     /// Sparse exact kernels can use this as a numerator-sparsity hint without
-    /// reaching into rational storage. See Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), for the rationale
-    /// behind keeping object structure visible until an exact arithmetic
-    /// package is selected.
+    /// reaching into rational storage.
     pub known_zero_count: usize,
     /// Number of values structurally known to be nonzero.
     pub known_nonzero_count: usize,

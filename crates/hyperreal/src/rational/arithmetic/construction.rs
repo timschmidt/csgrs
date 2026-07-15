@@ -350,10 +350,8 @@ impl Rational {
     /// common-scale facts opportunistically. It exposes only denominator
     /// equality, not the denominator itself, so geometry crates can select
     /// faster shared-scale schedules while `Rational` keeps ownership of its
-    /// storage and reduction strategy. This follows Yap's recommendation to
-    /// preserve object-level rational structure before scalar expansion; see
-    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-    /// 7.1-2 (1997).
+    /// storage and reduction strategy, preserving object-level rational
+    /// structure before scalar expansion.
     #[inline]
     pub fn same_denominator(&self, other: &Self) -> bool {
         self.denominator == other.denominator

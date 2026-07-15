@@ -3,7 +3,6 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // is intentionally simple here; range reduction belongs in `Computable::exp`.
     // That split mirrors standard multiple-precision exp algorithms: reduce
     // first, evaluate the Taylor series on the reduced input, and reconstruct.
-    // See Brent, https://doi.org/10.1145/321941.321944.
     if p >= 1 {
         return Zero::zero();
     }
@@ -87,9 +86,7 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
     // Newton refinement for deeper requests. This avoids pulling in floating
     // approximations while keeping high-precision sqrt from scaling quadratically.
-    // Newton sqrt/reciprocal-sqrt refinement is the standard arbitrary-precision
-    // strategy described in Brent/Zimmermann, Secs. 1.5 and 4.2:
-    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+    // Newton sqrt/reciprocal-sqrt refinement is the standard arbitrary-precision strategy.
     let fp_prec: i32 = 140;
     let fp_op_prec: i32 = 150;
 

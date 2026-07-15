@@ -632,8 +632,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             let denominator = if other.rational.is_one() {
                 // Unit-scaled denominator radicals should not pay a rational
                 // multiply/gcd just to form `1*b`; keep only the structural
-                // radicand denominator. This is the same normalization-avoidance
-                // principle used for exact geometric predicates in Yap (1997).
+                // radicand denominator, avoiding unnecessary normalization.
                 Rational::from_unsigned_integer(right_integer.clone())
             } else {
                 &other.rational * Rational::from_unsigned_integer(right_integer.clone())
@@ -663,7 +662,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     // Preserve the factored sqrt quotient while skipping
                     // exact multiplication by one. Avoiding this gcd matters
                     // in matrix/vector scalar paths that divide by cached
-                    // unit-scaled symbolic constants; see Yap (1997).
+                    // unit-scaled symbolic constants.
                     right_rad.clone()
                 } else {
                     &other.rational * right_rad
@@ -735,8 +734,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 let denominator = if other.rational.is_one() {
                     // The denominator is just the exact radicand for
                     // unit-scaled sqrt factors. Bypassing `1 * r` preserves
-                    // the delayed-canonicalization invariant from Yap
-                    // (1997) and keeps hot quotient paths flatter.
+                    // delayed canonicalization and keeps hot quotient paths flatter.
                     radicand.clone()
                 } else {
                     &other.rational * radicand.clone()

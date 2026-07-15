@@ -2,8 +2,7 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| < 1. Argument reduction and exact pi-multiple
     // handling happen before this node is constructed. Keeping range reduction
     // outside the Taylor kernel is the same split used by multi-precision
-    // sin/cos algorithms in Brent/Zimmermann, Ch. 4:
-    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+    // sin/cos algorithms.
     if p >= 1 {
         return signed::ONE.deref().clone();
     }
@@ -584,8 +583,7 @@ fn cos_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precisio
 fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| < 1. The caller keeps large arguments out of this
     // Taylor loop so huge sin/cos rows spend time in reduction, not series setup.
-    // This follows the reduced-argument series scheme in Brent/Zimmermann, Ch. 4:
-    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+    // Use a reduced-argument series so huge inputs spend time in reduction, not setup.
     if p >= 1 {
         return Zero::zero();
     }

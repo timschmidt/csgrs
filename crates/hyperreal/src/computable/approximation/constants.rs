@@ -2,8 +2,7 @@ fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
     // Machin formula: pi = 4 * (4 atan(1/5) - atan(1/239)).
     // It converges much faster than a generic trig/log identity and is stable
     // enough to serve as the shared pi cache source. This is the same
-    // arctangent/Machin-style family used in multiple-precision elementary
-    // evaluation; see Brent, https://doi.org/10.1145/321941.321944.
+    // arctangent/Machin-style family used in multiple-precision evaluation.
     let atan5 = Computable::prescaled_atan(BigInt::from(5_u8));
     let atan_239 = Computable::prescaled_atan(BigInt::from(239_u16));
     let four = Computable::integer(BigInt::from(4_u8));
@@ -16,9 +15,7 @@ fn ln2(signal: &Option<Signal>, p: Precision) -> BigInt {
     // A fixed atanh/log1p decomposition for ln(2). Keeping ln2 as its own
     // shared constant matters because exp/ln range reduction adds multiples of
     // ln2 frequently. The identity routes each piece through the reduced
-    // ln(1+x) kernel, following the argument-reduction-plus-series approach in
-    // Brent/Zimmermann, Ch. 4:
-    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+    // ln(1+x) kernel using argument reduction followed by a series.
     let prescaled_9 = raw(Approximation::PrescaledLn(Computable::rational(
         Rational::fraction(1, 9).unwrap(),
     )));
@@ -109,9 +106,7 @@ fn e_terms_for_precision(p: Precision) -> u32 {
 fn e_binary_split(a: u32, b: u32) -> (BigUint, BigUint) {
     // Binary splitting keeps numerator/denominator growth balanced. A linear
     // summation of rationals is noticeably more allocation-heavy for cold e.
-    // This is the standard binary-splitting technique for series evaluation;
-    // see Brent/Zimmermann, Sec. 4.9:
-    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+    // This is the standard binary-splitting technique for series evaluation.
     if b - a == 1 {
         return (BigUint::one(), BigUint::from(a));
     }

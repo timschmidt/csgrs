@@ -188,11 +188,6 @@ impl Real {
     }
 
     /// Prepare an exact word-sized affine 3D determinant filter.
-    ///
-    /// Each fixed point is converted to a homogeneous integer vector using a
-    /// point-local common denominator. The resulting plane coefficients are
-    /// retained for repeated exact-rational queries, with checked overflow
-    /// falling through to the arbitrary-precision determinant.
     #[inline]
     #[doc(hidden)]
     pub fn prepare_affine_det3_exact_word_filter(
@@ -1344,8 +1339,7 @@ impl Real {
     /// Exact-rational lanes are accumulated with one shared denominator and a
     /// single final canonicalization. This is the vector/matrix analogue of the
     /// fraction-delaying exact linear-algebra algorithms discussed around
-    /// Bareiss elimination and common factors in
-    /// <https://link.springer.com/article/10.1007/s11786-020-00495-9>. The
+    /// fraction-free elimination and common factors. The
     /// fallback intentionally preserves the previous product-then-pairwise-add
     /// tree for non-rational symbolic values; sharing that path with the
     /// rational fast path regressed expression-heavy scalar rows. Mixed

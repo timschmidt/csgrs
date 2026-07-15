@@ -9,10 +9,7 @@ impl Rational {
     /// This is a stored-sign structural predicate. It deliberately avoids
     /// constructing a comparison value so downstream numeric kernels can ask
     /// identity questions without allocating or canonicalizing. This keeps
-    /// algebraic simplification ahead of approximation, matching the exact-real
-    /// arithmetic strategy described by Boehm, Cartwright, Riggle, and
-    /// O'Donnell, "Exact Real Arithmetic: A Case Study in Higher Order
-    /// Programming", LFP 1986, <https://doi.org/10.1145/319838.319860>.
+    /// algebraic simplification ahead of approximation.
     #[inline(always)]
     pub fn is_zero(&self) -> bool {
         self.sign == NoSign
@@ -402,10 +399,7 @@ impl Rational {
             // check regresses tiny exact-rational compares, while large
             // numerators avoid two BigUint products. This mirrors the adaptive
             // "cheap predicate first only when it is actually cheap" strategy
-            // used in exact geometric computation; see Shewchuk, "Adaptive
-            // Precision Floating-Point Arithmetic and Fast Robust Geometric
-            // Predicates" (1997), and Yap, "Towards Exact Geometric
-            // Computation" (1997).
+            // used in exact geometric computation.
             return other.denominator.cmp(&self.denominator);
         }
         (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))

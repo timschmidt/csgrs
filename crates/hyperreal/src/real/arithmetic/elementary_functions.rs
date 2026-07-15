@@ -427,7 +427,8 @@ impl Real {
     // n should be positive (not zero) and base should be >= 2
     fn integer_log(n: &BigUint, base: u32) -> Option<u64> {
         use num::Integer;
-        // TODO weed out some large failure cases early and return None
+        // Large non-powers currently use the complete exact power ladder; any
+        // future early rejection must remain proof-producing.
 
         if let Some(mut reduced) = n.to_u64() {
             // The scalar log benches mostly use decimal-sized inputs such as
@@ -461,7 +462,8 @@ impl Real {
         let mut reduced = n.clone();
         let mut i = 1;
         loop {
-            // TODO Looping, may need to handle cancellation
+            // The candidate power's bit length doubles on each iteration, so
+            // this loop terminates once it exceeds the remaining value.
             next = next.pow(2);
             if next.bits() > reduced.bits() {
                 break;
@@ -2857,9 +2859,8 @@ impl Real {
             // `ln((1+x)/(1-x))/2` instead of approximating. Reuse the cached
             // unit rational so each construction only clones a tiny exact leaf
             // and does not rebuild/canonicalize it before the two rational
-            // additions. This follows Boehm et al., "Exact Real Arithmetic: A
-            // Case Study in Higher Order Programming" (1986), where symbolic
-            // construction is kept separate from later numerical refinement.
+            // additions. Symbolic construction stays separate from later
+            // numerical refinement.
             let one = rationals::ONE.clone();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
             if ratio == *rationals::THREE {
@@ -3202,10 +3203,7 @@ impl Real {
                     // approximation. Dispatching them before materializing the
                     // full BigInt avoids cloning arbitrary-precision storage on
                     // the common pow(x, 2/3/17) path while preserving exact
-                    // repeated-squaring semantics; see Boehm et al.,
-                    // "Exact Real Arithmetic: A Case Study in Higher Order
-                    // Programming" (1986) on keeping exact symbolic structure
-                    // ahead of numeric refinement.
+                    // repeated-squaring semantics and symbolic structure.
                     crate::trace_dispatch!("real", "pow", "small-integer-exponent");
                     return self.powi(BigInt::from(n));
                 }

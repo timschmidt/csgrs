@@ -2,9 +2,7 @@
 ///
 /// This is a demand-driven exact-real representation: every node can produce an
 /// integer approximation at a requested binary precision, and caches store only
-/// approximations proven for that node. The model follows the constructive/exact
-/// real arithmetic approach in Boehm et al., "Exact real arithmetic: a case
-/// study in higher order programming", <https://doi.org/10.1145/319838.319860>.
+/// approximations proven for that node.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Computable {

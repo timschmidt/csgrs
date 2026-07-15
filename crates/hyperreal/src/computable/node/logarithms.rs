@@ -270,9 +270,7 @@ impl Computable {
             if rough_appr <= *sixty_four {
                 // Moderate large values use repeated sqrt: ln(x) = 4 ln(sqrt(sqrt(x))).
                 // That is cheaper than running ln1p far from one. This is a
-                // local low-overhead form of logarithm argument reduction; see
-                // Brent/Zimmermann Ch. 4:
-                // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+                // local low-overhead form of logarithm argument reduction.
                 let quarter = self.sqrt().sqrt().ln();
                 crate::trace_dispatch!("computable", "ln", "sqrt-range-reduction");
                 return quarter.shift_left(2);

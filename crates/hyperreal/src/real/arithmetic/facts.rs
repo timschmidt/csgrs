@@ -116,9 +116,8 @@ impl Real {
     ///
     /// This is the scalar-layer entry point for object crates that want to
     /// carry common-scale eligibility without inspecting rational internals.
-    /// The split follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): scalar representation facts are
-    /// produced here, while geometry crates decide how long to retain them.
+    /// Scalar representation facts are produced here, while geometry crates
+    /// decide how long to retain them.
     pub fn exact_set_facts<'a, I>(values: I) -> crate::real::RealExactSetFacts
     where
         I: IntoIterator<Item = &'a Real>,
@@ -178,13 +177,8 @@ impl Real {
     /// denominator fact across all factors. `Rational` still validates the
     /// certificate before using the faster schedule, so stale or over-broad
     /// object facts fall back to the generic exact reducer instead of becoming
-    /// arithmetic assumptions. This follows Yap's exact-geometric-computation
-    /// rule to preserve object structure until a certified arithmetic package
-    /// can consume it; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), and the delayed fraction
-    /// normalization strategy of Bareiss, "Sylvester's Identity and Multistep
-    /// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
-    /// 22.103 (1968).
+    /// arithmetic assumptions. Object structure is preserved until a certified
+    /// arithmetic package can consume it, with fraction normalization delayed.
     pub fn exact_rational_signed_product_sum_known_shared_denominator<
         const TERMS: usize,
         const FACTORS: usize,
@@ -218,12 +212,8 @@ impl Real {
     ///
     /// The API is intentionally fixed-arity and caller-directed rather than a
     /// general symbolic optimizer. Predicate, matrix, and solver crates should
-    /// pass known geometric polynomials here before expanding them. This is the
-    /// representation separation recommended by Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997). The exact-rational
-    /// route uses the same delayed-normalization strategy as Bareiss,
-    /// "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-    /// Elimination," *Mathematics of Computation* 22.103 (1968).
+    /// pass known geometric polynomials here before expanding them. The
+    /// exact-rational route uses delayed normalization.
     pub fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Real; FACTORS]; TERMS],
@@ -450,8 +440,7 @@ impl Real {
     /// not approximate or refine the value. Domain facts are conservative:
     /// `Valid` and `Invalid` are certificates, while `Unknown` means callers
     /// need an exact predicate, a symbolic rewrite, or an explicit refinement
-    /// policy. Keeping these decisions visible follows Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// policy.
     #[inline]
     pub fn domain_facts(&self) -> DomainFacts {
         self.detailed_facts().domains
@@ -529,11 +518,7 @@ impl Real {
     /// approximation and must not be interpreted as a tolerance policy. A known
     /// result is an exact sign proof from structural facts, exact zero scale, or
     /// bounded exact-real refinement. This matches Yap's EGC requirement that
-    /// combinatorial predicates consume certified facts or explicit
-    /// uncertainty, and follows the exact-real refinement model of Boehm et al.,
-    /// "Exact Real Arithmetic: A Case Study in Higher Order Programming,"
-    /// *Proceedings of the 1998 ACM SIGPLAN International Conference on
-    /// Functional Programming*.
+    /// combinatorial predicates consume certified facts or explicit uncertainty.
     #[inline]
     pub fn certified_sign_until(&self, min_precision: i32) -> CertifiedRealSign {
         let facts = self.structural_facts();

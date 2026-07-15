@@ -3,10 +3,6 @@
 //! This facade keeps the shared imports and includes semantic implementation
 //! slices. The included files remain in one module so private graph/cache
 //! invariants and hot constructor rewrites keep their original visibility.
-//!
-//! The exact-real model follows Boehm, Cartwright, Riggle, and O'Donnell,
-//! "Exact real arithmetic: a case study in higher order programming",
-//! LFP 1986, <https://doi.org/10.1145/319838.319860>.
 
 use crate::computable::approximation::{Approximation, NormalQuantileData, SharedConstant};
 use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};

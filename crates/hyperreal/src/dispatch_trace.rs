@@ -21,9 +21,7 @@ pub struct DispatchCount {
 /// reducers, approximation requests, and cache hits without depending on the
 /// private dispatch labels of any one crate. The design follows Yap's
 /// exact-geometric-computation model: observe which arithmetic package and
-/// object-fact boundary was selected before judging performance. See Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// object-fact boundary was selected before judging performance.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct OperationSummary {
     /// Trace layer, such as `real`, `hyperlimit`, or `hyperlattice_matrix`.
@@ -51,9 +49,7 @@ pub struct LayerSummary {
 /// certified or lossy approximation boundaries, refinement, caches, and
 /// fallbacks. The raw labels remain available for detailed profiling; this
 /// type gives benchmark reports one stable, crate-independent view for asking
-/// whether a run spent time preserving structure or rediscovering scalar
-/// facts. See Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// whether a run spent time preserving structure or rediscovering scalar facts.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TraceCorrelationSummary {
     /// Total recorded dispatch events.
@@ -111,8 +107,7 @@ pub struct TraceCorrelationSummary {
 /// caches and it does not certify geometry; it only records which exact
 /// arithmetic and object-fact paths were exercised during a recording scope.
 /// This gives Criterion benches and regression tests one cross-crate view of
-/// the computation ladder described by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// the computation ladder.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TraceSnapshot {
     /// Raw `(layer, operation, path)` counts.

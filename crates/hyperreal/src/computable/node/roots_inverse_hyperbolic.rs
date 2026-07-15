@@ -201,8 +201,6 @@ impl Computable {
         if rough_appr <= *signed::SIXTEEN {
             // For middle-sized arguments, subtract atan(1/2) before recursing. This keeps
             // the residual small without jumping all the way to the reciprocal identity.
-            // This follows the range-reduce-before-series pattern in Brent,
-            // https://doi.org/10.1145/321941.321944.
             let numerator = self.clone().add(half.clone().negate());
             let denominator = one.add(self.multiply(half));
             crate::trace_dispatch!("computable", "atan", "medium-atan-half-reduction");

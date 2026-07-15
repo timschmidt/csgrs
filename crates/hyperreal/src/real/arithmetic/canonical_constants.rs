@@ -12,9 +12,7 @@ pub(crate) mod rationals {
     // These tiny rationals sit on exact trig/inverse-trig hot paths. Reusing
     // them avoids repeated BigUint construction while preserving exact symbolic
     // dispatch. This is the same "cheap certificate before refinement" pattern
-    // used by exact geometric predicates; see Shewchuk, "Adaptive Precision
-    // Floating-Point Arithmetic and Fast Robust Geometric Predicates",
-    // Discrete & Computational Geometry 1997.
+    // used by exact geometric predicates.
     pub(crate) static QUARTER: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 4).unwrap());
     pub(crate) static SIXTH: LazyLock<Rational> =
@@ -36,9 +34,7 @@ mod constants {
         // These are the canonical internal constants. Public constructors clone
         // these symbolic/computable forms instead of rebuilding exact classes and
         // caches on every call. This keeps common pi/log/sqrt certificates in
-        // the symbolic layer and delays approximation until `Computable::approx`,
-        // matching the lazy exact-real architecture described by Boehm et al.,
-        // LFP 1986, https://doi.org/10.1145/319838.319860.
+        // the symbolic layer and delays approximation until `Computable::approx`.
         static PI: Real = Real {
             rational: Rational::one(),
             class: Class::Pi,

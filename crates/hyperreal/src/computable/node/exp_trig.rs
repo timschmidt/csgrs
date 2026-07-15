@@ -121,8 +121,6 @@ impl Computable {
         if rough_appr > *signed::EIGHT || rough_appr < -signed::EIGHT.clone() {
             // Keep the Taylor kernel near zero by subtracting k*ln(2), then reapply
             // the scale as a binary shift. This avoids slow huge-argument series work.
-            // This is the standard exp argument reduction described in Brent,
-            // https://doi.org/10.1145/321941.321944.
             let ln2 = Self::ln2();
             const REDUCTION_MAX_ATTEMPTS: u32 = 64;
 
@@ -171,7 +169,7 @@ impl Computable {
         // Use one low-precision quotient and a cheap correction instead of a full
         // high-precision division. Trig reduction calls this on hot paths; the
         // quotient/residual structure is the same problem addressed by
-        // Payne-Hanek range reduction, https://doi.org/10.1145/1057600.1057602.
+        // Payne-Hanek range reduction.
         let mut multiple = self.integer_ratio_nearest(Self::pi());
         let adjustment =
             Self::pi().multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
@@ -215,8 +213,7 @@ impl Computable {
         // Estimate round(2*x/pi) with one cached pi approximation and integer
         // arithmetic, then let half_pi_multiple's residual correction validate
         // the result. This avoids building and approximating x * (pi/2)^-1.
-        // It is a lightweight exact-rational variant of Payne-Hanek radian
-        // reduction: https://doi.org/10.1145/1057600.1057602.
+        // It is a lightweight exact-rational variant of Payne-Hanek radian reduction.
         let msd = rational.msd_exact()?;
         if msd < 3 {
             return None;

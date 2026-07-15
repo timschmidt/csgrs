@@ -204,10 +204,8 @@ impl Real {
     /// statistics, and external-library adapters. It is not a certified sign,
     /// ordering, equality, or topology predicate. Call
     /// [`Real::certified_sign_until`] or the higher-level predicate crates when
-    /// a decision needs proof. This naming follows Yap's exact-geometric-
-    /// computation separation between certified decisions and approximate
-    /// numerical views; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// a decision needs proof, separating certified decisions from approximate
+    /// numerical views.
     #[inline]
     pub fn to_f32_lossy(&self) -> Option<f32> {
         #[cfg(feature = "cached-f32-approx")]
@@ -351,10 +349,8 @@ impl Real {
     /// `hyperlimit`.
     ///
     /// The API name makes the approximation boundary visible, matching Yap's
-    /// exact-geometric-computation rule that approximate values are views with
-    /// proof obligations, not replacements for exact decisions. See Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// exact-computation rule that approximate values are views with proof
+    /// obligations, not replacements for exact decisions.
     #[inline]
     pub fn to_f64_lossy(&self) -> Option<f64> {
         #[cfg(feature = "cached-f64-approx")]

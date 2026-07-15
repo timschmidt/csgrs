@@ -63,8 +63,7 @@ mod tests {
     }
 
     #[test]
-    /// See e.g. https://discussions.apple.com/thread/252474975
-    /// Apple calculator is not trustworthy if you are a programmer
+    /// Large decimal integer parsing and multiplication remain exact.
     fn parse() {
         let big: Rational = "288230376151711743".parse().unwrap();
         let small: Rational = "45".parse().unwrap();

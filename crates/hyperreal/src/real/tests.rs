@@ -111,9 +111,7 @@ mod tests {
         assert_eq!(opposite, expected);
     }
 
-    // https://devblogs.microsoft.com/oldnewthing/?p=93765
-    // "Why does the Windows calculator generate tiny errors when calculating the square root of a
-    // perfect square?" (fixed in 2018)
+    // Perfect-square roots must remain exact.
     #[test]
     fn perfect_square() {
         let four: Real = 4.into();

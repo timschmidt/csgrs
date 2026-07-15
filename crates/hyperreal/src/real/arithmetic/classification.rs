@@ -536,10 +536,7 @@ impl Class {
         // expressions repeatedly build ln(2), ln(3), etc.; routing them here
         // avoids independent approximation caches for the same mathematical value.
         // The integer extraction is deliberately structural and non-approximating:
-        // keep exact reduction in front of numerical refinement, following the
-        // exact-real model in Boehm, Cartwright, Riggle, and O'Donnell,
-        // "Exact Real Arithmetic: A Case Study in Higher Order Programming",
-        // LFP 1986, https://doi.org/10.1145/319838.319860.
+        // keep exact reduction in front of numerical refinement.
         if let Some(base) = base.to_integer_i64() {
             match base {
                 2 | 3 | 5 | 6 | 7 | 10 => return Computable::ln_constant(base as u32).unwrap(),

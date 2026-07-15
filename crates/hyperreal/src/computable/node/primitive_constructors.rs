@@ -4,9 +4,7 @@ impl Computable {
         // atanh/log-ratio reductions multiply by 1/2 after exact symbolic
         // simplification. Keeping the half rational cached avoids rebuilding a
         // tiny exact leaf on every construction, and still delays approximation
-        // to the final Computable graph. This follows Boehm et al.'s exact-real
-        // separation of symbolic construction from numerical refinement:
-        // https://doi.org/10.1145/319838.319860.
+        // to the final Computable graph.
         Self::rational(HALF_RATIONAL.clone())
     }
 
