@@ -1214,6 +1214,12 @@ fn bottom_up_svo_compaction_retains_only_canonical_reachable_nodes() {
     assert_eq!(replayed, sparse);
     assert_eq!(report.compacted_nodes, svo.stats().nodes);
     assert_eq!(report.compacted_nodes, 39);
+    assert_eq!(report.storage.root_aggregate.material_regions.len(), 4);
+    assert!(SvoVoxelGrid::node_storage_stride_bytes() < std::mem::size_of::<VoxelAggregateFacts>());
+    assert_eq!(
+        svo.node_storage_bytes(),
+        report.compacted_nodes * SvoVoxelGrid::node_storage_stride_bytes()
+    );
     assert!(replay.visited_nodes > report.compacted_nodes);
     assert!(report.compacted_nodes < report.source_cells * 4);
     assert!(report.exact_svo_compaction_ready);

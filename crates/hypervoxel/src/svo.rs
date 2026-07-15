@@ -9,8 +9,9 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-    GridFrame, HypervoxelError, HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress,
-    VoxelAggregateFacts, VoxelCell, VoxelEditReport,
+    AggregateCertainty, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId,
+    OccupancyState, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell, VoxelEditReport,
+    VoxelOccupancyInterval, VoxelPayload,
 };
 
 /// Interned SVO node identifier.
@@ -26,20 +27,219 @@ enum SvoNodeKey {
     Branch([SvoNodeId; 8]),
 }
 
+const AGGREGATE_HAS_BOUNDARY: u8 = 1 << 0;
+const AGGREGATE_HAS_MIXED: u8 = 1 << 1;
+const AGGREGATE_HAS_UNKNOWN: u8 = 1 << 2;
+const AGGREGATE_HAS_LOSSY: u8 = 1 << 3;
+
+/// Sorted material-region summary optimized for the overwhelmingly common
+/// zero- and one-material cases. A full set is allocated only when a subtree
+/// actually crosses material regions.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum SvoMaterialRegions {
+    None,
+    One(MaterialRegionId),
+    Many(Box<[MaterialRegionId]>),
+}
+
+impl SvoMaterialRegions {
+    fn len(&self) -> usize {
+        match self {
+            Self::None => 0,
+            Self::One(_) => 1,
+            Self::Many(regions) => regions.len(),
+        }
+    }
+
+    fn insert_into(&self, regions: &mut Vec<MaterialRegionId>) {
+        let source: &[MaterialRegionId] = match self {
+            Self::None => &[],
+            Self::One(region) => std::slice::from_ref(region),
+            Self::Many(regions) => regions,
+        };
+        for region in source {
+            if let Err(index) = regions.binary_search(region) {
+                regions.insert(index, *region);
+            }
+        }
+    }
+
+    fn from_sorted(regions: Vec<MaterialRegionId>) -> Self {
+        match regions.as_slice() {
+            [] => Self::None,
+            [region] => Self::One(*region),
+            _ => Self::Many(regions.into_boxed_slice()),
+        }
+    }
+
+    fn to_set(&self) -> std::collections::BTreeSet<MaterialRegionId> {
+        match self {
+            Self::None => std::collections::BTreeSet::new(),
+            Self::One(region) => std::iter::once(*region).collect(),
+            Self::Many(regions) => regions.iter().copied().collect(),
+        }
+    }
+}
+
+/// Compact exact aggregate stored beside each physical DAG node.
+///
+/// Public aggregate packets contain two materialized [`hyperreal::Real`]
+/// bounds and a `BTreeSet`. Those are appropriate at API boundaries, but
+/// storing them on every node dominates the octree payload. The SVO keeps the
+/// sufficient integer statistics and flags instead and materializes the rich
+/// packet once for the current root.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct SvoAggregate {
+    definite_filled_cells: usize,
+    possible_occupied_cells: usize,
+    material_regions: SvoMaterialRegions,
+    flags: u8,
+    remaining_depth: u8,
+}
+
+impl SvoAggregate {
+    fn from_uniform_cell(remaining_depth: u8, cell: &VoxelCell) -> Self {
+        let total_cells = logical_leaf_cells(remaining_depth);
+        let mut flags = 0;
+        flags |= u8::from(cell.occupancy == OccupancyState::Boundary) * AGGREGATE_HAS_BOUNDARY;
+        flags |= u8::from(cell.occupancy == OccupancyState::Mixed) * AGGREGATE_HAS_MIXED;
+        flags |= u8::from(cell.occupancy == OccupancyState::Unknown) * AGGREGATE_HAS_UNKNOWN;
+        flags |= u8::from(
+            cell.occupancy == OccupancyState::LossyAdapterValue
+                || matches!(cell.payload, VoxelPayload::LossyAdapterValue(_)),
+        ) * AGGREGATE_HAS_LOSSY;
+        let material_regions = match cell.payload {
+            VoxelPayload::MaterialRegion(region) => SvoMaterialRegions::One(region),
+            _ => SvoMaterialRegions::None,
+        };
+        let definite_filled_cells =
+            usize::from(cell.occupancy == OccupancyState::Filled) * total_cells;
+        let possible_occupied_cells = usize::from(matches!(
+            cell.occupancy,
+            OccupancyState::Filled
+                | OccupancyState::Boundary
+                | OccupancyState::Mixed
+                | OccupancyState::Unknown
+                | OccupancyState::LossyAdapterValue
+        )) * total_cells;
+        Self {
+            definite_filled_cells,
+            possible_occupied_cells,
+            material_regions,
+            flags,
+            remaining_depth,
+        }
+    }
+
+    fn from_aggregates<'a>(facts: impl IntoIterator<Item = &'a Self>, remaining_depth: u8) -> Self {
+        let mut definite_filled_cells = 0;
+        let mut possible_occupied_cells = 0;
+        let mut material_regions = Vec::new();
+        let mut flags = 0;
+
+        for fact in facts {
+            debug_assert_eq!(fact.remaining_depth + 1, remaining_depth);
+            definite_filled_cells += fact.definite_filled_cells;
+            possible_occupied_cells += fact.possible_occupied_cells;
+            fact.material_regions.insert_into(&mut material_regions);
+            flags |= fact.flags;
+            if fact.has_mixed() || !(fact.all_empty() || fact.all_filled()) {
+                flags |= AGGREGATE_HAS_MIXED;
+            }
+        }
+
+        Self {
+            definite_filled_cells,
+            possible_occupied_cells,
+            material_regions: SvoMaterialRegions::from_sorted(material_regions),
+            flags,
+            remaining_depth,
+        }
+    }
+
+    fn child_count(&self) -> usize {
+        logical_leaf_cells(self.remaining_depth)
+    }
+
+    fn all_empty(&self) -> bool {
+        self.possible_occupied_cells == 0
+    }
+
+    fn all_filled(&self) -> bool {
+        self.definite_filled_cells == self.child_count()
+    }
+
+    fn has_mixed(&self) -> bool {
+        self.flags & AGGREGATE_HAS_MIXED != 0
+    }
+
+    fn conservative_occupancy(&self) -> OccupancyState {
+        if self.flags & AGGREGATE_HAS_LOSSY != 0 {
+            OccupancyState::LossyAdapterValue
+        } else if self.flags & AGGREGATE_HAS_UNKNOWN != 0 {
+            OccupancyState::Unknown
+        } else if self.all_empty() {
+            OccupancyState::Empty
+        } else if self.all_filled() && self.material_regions.len() <= 1 {
+            OccupancyState::Filled
+        } else if self.flags & AGGREGATE_HAS_BOUNDARY != 0 {
+            OccupancyState::Boundary
+        } else {
+            OccupancyState::Mixed
+        }
+    }
+
+    fn to_public(&self) -> VoxelAggregateFacts {
+        let child_count = self.child_count();
+        let certainty = aggregate_certainty(child_count, self.flags);
+        VoxelAggregateFacts {
+            child_count,
+            all_empty: self.all_empty(),
+            all_filled: self.all_filled(),
+            has_boundary: self.flags & AGGREGATE_HAS_BOUNDARY != 0,
+            has_mixed: self.has_mixed(),
+            has_unknown: self.flags & AGGREGATE_HAS_UNKNOWN != 0,
+            has_lossy: self.flags & AGGREGATE_HAS_LOSSY != 0,
+            material_regions: self.material_regions.to_set(),
+            occupancy_interval: VoxelOccupancyInterval::from_counts(
+                child_count,
+                self.definite_filled_cells,
+                self.possible_occupied_cells,
+                certainty,
+            ),
+            certainty,
+        }
+    }
+}
+
+fn aggregate_certainty(child_count: usize, flags: u8) -> AggregateCertainty {
+    if child_count == 0 {
+        AggregateCertainty::Unknown
+    } else if flags & AGGREGATE_HAS_LOSSY != 0 {
+        AggregateCertainty::Lossy
+    } else if flags & AGGREGATE_HAS_UNKNOWN != 0 {
+        AggregateCertainty::Unknown
+    } else if flags & (AGGREGATE_HAS_BOUNDARY | AGGREGATE_HAS_MIXED) != 0 {
+        AggregateCertainty::Certified
+    } else {
+        AggregateCertainty::Exact
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum SvoNode {
     Leaf {
         cell: VoxelCell,
-        aggregate: VoxelAggregateFacts,
+        aggregate: SvoAggregate,
     },
     Branch {
         children: [SvoNodeId; 8],
-        aggregate: VoxelAggregateFacts,
+        aggregate: SvoAggregate,
     },
 }
 
 impl SvoNode {
-    fn aggregate(&self) -> &VoxelAggregateFacts {
+    fn aggregate(&self) -> &SvoAggregate {
         match self {
             Self::Leaf { aggregate, .. } | Self::Branch { aggregate, .. } => aggregate,
         }
@@ -226,19 +426,25 @@ pub struct SvoVoxelGrid {
     nodes: Vec<SvoNode>,
     interned: FxHashMap<SvoNodeKey, SvoNodeId>,
     root: SvoNodeId,
+    root_aggregate: VoxelAggregateFacts,
 }
 
 impl SvoVoxelGrid {
     /// Creates an empty interned SVO grid.
     pub fn new(frame: GridFrame) -> Self {
         let frame_depth = frame.depth();
+        let empty_cell = VoxelCell::empty();
         let mut grid = Self {
             frame,
             nodes: Vec::new(),
             interned: FxHashMap::default(),
             root: SvoNodeId(0),
+            root_aggregate: VoxelAggregateFacts::from_uniform_cell(
+                logical_leaf_cells(frame_depth),
+                &empty_cell,
+            ),
         };
-        let root = grid.intern_leaf(VoxelCell::empty(), frame_depth);
+        let root = grid.intern_leaf(empty_cell, frame_depth);
         grid.root = root;
         grid
     }
@@ -281,6 +487,7 @@ impl SvoVoxelGrid {
             let previous_root = grid.root;
             entries.sort_unstable_by_key(|(address, _)| address.morton_code());
             grid.root = grid.build_finest_sparse_subtree(&entries, 0);
+            grid.refresh_root_aggregate();
             (source_cells, 0, usize::from(grid.root != previous_root))
         } else {
             let mut applied_edits = 0_usize;
@@ -340,7 +547,20 @@ impl SvoVoxelGrid {
 
     /// Returns root aggregate facts.
     pub fn aggregate(&self) -> &VoxelAggregateFacts {
-        self.node(self.root).aggregate()
+        &self.root_aggregate
+    }
+
+    /// Bytes occupied by each node in the contiguous SVO node array, excluding
+    /// the interning table and rare multi-material side allocations.
+    pub const fn node_storage_stride_bytes() -> usize {
+        std::mem::size_of::<SvoNode>()
+    }
+
+    /// Bytes occupied by the live contiguous SVO node array, excluding spare
+    /// vector capacity, the interning table, and rare multi-material side
+    /// allocations.
+    pub fn node_storage_bytes(&self) -> usize {
+        self.nodes.len() * Self::node_storage_stride_bytes()
     }
 
     /// Returns storage statistics.
@@ -481,6 +701,7 @@ impl SvoVoxelGrid {
         let previous_nodes = self.nodes.len();
         let previous = self.get(address)?;
         self.root = self.set_recursive(self.root, address, 0, cell)?;
+        self.refresh_root_aggregate();
         let current_nodes = self.nodes.len();
         let edit = VoxelEditReport {
             address,
@@ -519,6 +740,10 @@ impl SvoVoxelGrid {
         &self.nodes[id.0 as usize]
     }
 
+    fn refresh_root_aggregate(&mut self) {
+        self.root_aggregate = self.node(self.root).aggregate().to_public();
+    }
+
     fn intern_leaf(&mut self, cell: VoxelCell, remaining_depth: u8) -> SvoNodeId {
         let key = SvoNodeKey::Leaf {
             cell,
@@ -528,8 +753,7 @@ impl SvoVoxelGrid {
             return *id;
         }
         let id = SvoNodeId(self.nodes.len() as u32);
-        let aggregate =
-            VoxelAggregateFacts::from_uniform_cell(logical_leaf_cells(remaining_depth), &cell);
+        let aggregate = SvoAggregate::from_uniform_cell(remaining_depth, &cell);
         self.nodes.push(SvoNode::Leaf { cell, aggregate });
         self.interned.insert(key, id);
         id
@@ -547,8 +771,9 @@ impl SvoVoxelGrid {
             return *id;
         }
         let id = SvoNodeId(self.nodes.len() as u32);
-        let aggregate = VoxelAggregateFacts::from_aggregates(
+        let aggregate = SvoAggregate::from_aggregates(
             children.iter().map(|child| self.node(*child).aggregate()),
+            remaining_depth,
         );
         self.nodes.push(SvoNode::Branch {
             children,
