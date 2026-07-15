@@ -977,15 +977,24 @@ impl RationalBezier2 {
         };
         let mut has_positive = false;
         let mut has_negative = false;
+        let mut first_nonzero = None;
+        let mut last_nonzero = None;
         for coefficient in coefficients {
             let Some(sign) = real_sign(coefficient, policy) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             };
             has_positive |= sign == RealSign::Positive;
             has_negative |= sign == RealSign::Negative;
+            if sign != RealSign::Zero {
+                first_nonzero.get_or_insert(sign);
+                last_nonzero = Some(sign);
+            }
         }
         if !has_positive || !has_negative {
             return Ok(Classification::Decided(true));
+        }
+        if first_nonzero != last_nonzero {
+            return Ok(Classification::Decided(false));
         }
         let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis(
             coefficients.to_vec(),

@@ -148,6 +148,8 @@ fn mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity() {
         RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(0, 0), p(1, 0)], vec![r(1); 4]).unwrap();
     let two_extrema =
         RationalBezier2::try_new(vec![p(0, 0), p(3, 0), p(-2, 0), p(1, 0)], vec![r(1); 4]).unwrap();
+    let endpoint_sign_reversal =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(1, 0), p(0, 0)], vec![r(1); 4]).unwrap();
 
     assert!(
         stationary_monotone
@@ -155,6 +157,11 @@ fn mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity() {
             .unwrap()
     );
     assert!(!two_extrema.axis_is_monotone(Axis2::X, &policy).unwrap());
+    assert!(
+        !endpoint_sign_reversal
+            .axis_is_monotone(Axis2::X, &policy)
+            .unwrap()
+    );
 }
 
 #[test]

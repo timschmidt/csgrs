@@ -82,6 +82,28 @@ fn main() {
         elapsed / monotonicity_iterations
     );
 
+    let reversing_inputs = (0..2_000)
+        .map(|_| {
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 0), p(1, 0), p(0, 0)], vec![r(1); 4])
+                .expect("benchmark reversing curve is valid")
+        })
+        .collect::<Vec<_>>();
+    let started = Instant::now();
+    let mut reversing_count = 0_usize;
+    for curve in &reversing_inputs {
+        reversing_count += usize::from(
+            curve
+                .axis_is_monotone(Axis2::X, &policy)
+                .expect("benchmark reversing monotonicity is exact"),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_bezier_endpoint_sign_reversal_monotonicity: {} curves in {elapsed:?} ({:?}/curve), checksum={reversing_count}",
+        reversing_inputs.len(),
+        elapsed / u32::try_from(reversing_inputs.len()).unwrap()
+    );
+
     let iterations = 5_000_u32;
     let started = Instant::now();
     let mut incidence_count = 0_usize;
