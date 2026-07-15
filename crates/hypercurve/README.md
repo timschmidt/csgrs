@@ -436,6 +436,9 @@ cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-un
 
 ## References
 
+CGAL Project. "2D Regularized Boolean Set Operations" and
+"2D Arrangements" user manuals. https://doc.cgal.org/latest/.
+
 Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
 no. 9, 1979, pp. 643-647.
@@ -493,6 +496,10 @@ https://doi.org/10.1016/j.cageo.2008.08.009.
 
 Menger, K. "Untersuchungen über allgemeine Metrik." *Mathematische Annalen*,
 vol. 100, 1928, pp. 75-163. https://eudml.org/doc/159284.
+
+Patrikalakis, Nicholas M., Takashi Maekawa, and Woojin Cho. *Shape
+Interrogation for Computer Aided Design and Manufacturing*. MIT Hyperbook,
+2009. https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/.
 
 Schneider, Philip J., and David H. Eberly. *Geometric Tools for Computer
 Graphics*. Morgan Kaufmann, 2002.
