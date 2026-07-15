@@ -18,8 +18,7 @@ use hyperreal::{Real, ZeroKnowledge};
 /// These facts are cheap summaries over exact `Real` coordinates. They are
 /// useful for algorithm selection, but they are not topology certificates:
 /// later containment, visibility, and intersection decisions must still call
-/// exact predicates. That mirrors Yap's object-fact layer from "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// exact predicates.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Ring2Facts {
     /// Number of vertices in the caller-supplied ring.
@@ -40,10 +39,9 @@ pub struct Ring2Facts {
 ///
 /// The report is a predicate-layer audit trail, not a polygon arrangement data
 /// structure. It validates the exact boundary and parity decisions that led to
-/// a point/ring location, following Yap's exact-geometric-computation split:
+/// a point/ring location:
 /// exact predicates own replayable combinatorial decisions, while higher crates
-/// own loop nesting, material roles, and topology mutation. See Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// own loop nesting, material roles, and topology mutation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RingEvenOddValidationError {
     /// The retained edge count and retained edge reports disagree.
@@ -70,8 +68,7 @@ pub enum RingEvenOddValidationError {
 ///
 /// Boundary is certified first through exact point/segment classification. Only
 /// non-boundary y-straddling edges retain the orientation and upward facts used
-/// by the crossing-number test of Hormann and Agathos, "The Point in Polygon
-/// Problem for Arbitrary Polygons," *Computational Geometry* 20.3 (2001).
+/// by the crossing-number test.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RingEvenOddEdgeReport {
     /// Cyclic edge index in the caller-supplied ring.
@@ -108,9 +105,8 @@ impl RingEvenOddEdgeReport {
 /// The coarse [`RingPointLocation`] remains the compatibility result. This
 /// report keeps the exact per-edge evidence that produced it: boundary
 /// point/segment decisions, y-straddle comparisons, orientation signs, crossing
-/// toggles, and final parity. The algorithm is the standard crossing-number
-/// classifier from Hormann and Agathos (2001), evaluated with exact Real
-/// predicates as required by Yap's exact-geometric-computation model.
+/// toggles, and final parity. The standard crossing-number classifier is
+/// evaluated with exact Real predicates.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RingEvenOddReport {
     /// Coarse point/ring location.
@@ -294,9 +290,7 @@ pub(crate) fn indexed_ring_convexity_with_policy(
 /// The input may repeat its first vertex at the end; the repeated closing edge
 /// contributes zero. The function evaluates the shoelace determinant exactly
 /// and reports only its sign. The determinant form is the standard polygon area
-/// formula described in computational-geometry texts such as de Berg, Cheong,
-/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed., Springer, 2008. This function keeps the determinant
+/// formula. This function keeps the determinant
 /// in `hyperlimit` because orientation/winding is a predicate-level decision;
 /// ring storage and material/hole roles belong in `hypercurve` or `hypertri`.
 pub fn ring_area_sign(points: &[Point2]) -> PredicateOutcome<Sign> {
@@ -391,12 +385,8 @@ pub fn classify_point_ring_even_odd_report(
 ///
 /// Boundary checks are performed first with exact point-on-segment
 /// classification. Interior parity is then decided by an orientation-form ray
-/// crossing test so no edge/ray intersection coordinate is constructed. This is
-/// the standard crossing-number idea discussed by Hormann and Agathos, "The
-/// Point in Polygon Problem for Arbitrary Polygons," *Computational Geometry*
-/// 20.3 (2001), but every crossing decision is certified through exact signs in
-/// the exact-geometric-computation model of Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// crossing test so no edge/ray intersection coordinate is constructed. Every
+/// crossing decision is certified through exact signs.
 pub(crate) fn classify_point_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,

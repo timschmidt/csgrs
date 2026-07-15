@@ -2,7 +2,7 @@
 
 This file is generated from Criterion output under `target/criterion`.
 
-Generated at Unix timestamp `1784068807`.
+Generated at Unix timestamp `1784101626`.
 
 ## Commands
 
@@ -34,12 +34,12 @@ Open Criterion's detailed HTML report at `target/criterion/report/index.html`.
 | `classify_point_line` | `hyperreal` | `near_degenerate` | 114.54 us | 114.14 us - 115.03 us | 113.77 us | +1.63% |
 | `classify_point_line_fixed` | `hyperreal` | `easy` | 111.78 us | 111.59 us - 111.98 us | 111.31 us | -1.32% |
 | `classify_point_line_fixed` | `hyperreal` | `near_degenerate` | 111.49 us | 111.22 us - 111.78 us | 110.91 us | +1.01% |
-| `classify_point_line_fixed` | `hyperreal_prepared` | `easy` | 39.36 us | 39.24 us - 39.49 us | 39.10 us | +0.02% |
-| `classify_point_line_fixed` | `hyperreal_prepared` | `near_degenerate` | 40.50 us | 40.35 us - 40.69 us | 40.23 us | -0.64% |
+| `classify_point_line_fixed` | `hyperreal_prepared` | `easy` | 40.37 us | 40.08 us - 40.74 us | 39.90 us | -3.31% |
+| `classify_point_line_fixed` | `hyperreal_prepared` | `near_degenerate` | 41.00 us | 40.80 us - 41.24 us | 40.61 us | -6.70% |
 | `classify_point_oriented_plane` | `hyperreal` | `easy` | 230.51 us | 229.61 us - 231.53 us | 229.38 us | -4.17% |
 | `classify_point_oriented_plane` | `hyperreal` | `near_degenerate` | 235.23 us | 233.83 us - 236.71 us | 231.62 us | +0.94% |
-| `classify_point_oriented_plane` | `hyperreal_prepared` | `easy` | 72.07 us | 71.64 us - 72.55 us | 71.26 us | +2.38% |
-| `classify_point_oriented_plane` | `hyperreal_prepared` | `near_degenerate` | 69.47 us | 69.28 us - 69.68 us | 69.02 us | -0.22% |
+| `classify_point_oriented_plane` | `hyperreal_prepared` | `easy` | 71.95 us | 71.44 us - 72.63 us | 70.94 us | -1.28% |
+| `classify_point_oriented_plane` | `hyperreal_prepared` | `near_degenerate` | 72.75 us | 72.27 us - 73.30 us | 71.95 us | +1.47% |
 | `classify_point_plane` | `hyperreal` | `easy` | 139.78 us | 139.23 us - 140.39 us | 138.87 us | -45.48% |
 | `classify_point_plane` | `hyperreal` | `near_degenerate` | 141.60 us | 141.04 us - 142.20 us | 140.11 us | -4.51% |
 | `classify_point_plane` | `hyperreal_prepared` | `easy` | 73.23 us | 71.62 us - 75.19 us | 70.33 us | -78.41% |

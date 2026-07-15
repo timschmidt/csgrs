@@ -18,10 +18,8 @@ use hyperreal::Real;
 ///
 /// A prepared segment stores borrowed endpoints plus [`Segment2Facts`]. It is a
 /// predicate helper, not segment topology: ownership of edge ids, constraints,
-/// rings, and DCEL handles remains in higher crates. The prepared form follows
-/// Yap's exact-geometric-computation guidance to retain geometric-object facts
-/// across repeated predicates; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// rings, and DCEL handles remains in higher crates. The prepared form retains
+/// geometric-object facts across repeated predicates.
 #[derive(Clone, Copy, Debug)]
 pub struct PreparedSegment2<'a> {
     start: &'a Point2,
@@ -103,9 +101,7 @@ impl<'a> PreparedSegment2<'a> {
     /// an explicit policy.
     ///
     /// Degenerate point-segment cases use cached facts before falling back to
-    /// the standard four-orientation classifier from de Berg, Cheong, van
-    /// Kreveld, and Overmars, *Computational Geometry: Algorithms and
-    /// Applications*, 3rd ed., Springer, 2008. Every equality or containment
+    /// the standard four-orientation classifier. Every equality or containment
     /// result is still certified through exact Real predicates.
     pub(crate) fn classify_intersection_with_policy(
         &self,
@@ -289,12 +285,8 @@ pub fn classify_point_segment_with_facts(
 ///
 /// The facts are advisory exact metadata. They can skip the orientation
 /// determinant for a structurally degenerate segment, but the point equality
-/// decision still goes through exact Real predicates. This preserves the
-/// exact-geometric-computation boundary described by Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), while
-/// retaining object facts in the sense used by de Berg, Cheong, van Kreveld,
-/// and Overmars for degeneracy-aware geometric algorithms in *Computational
-/// Geometry: Algorithms and Applications*, 3rd ed., Springer, 2008.
+/// decision still goes through exact Real predicates while retaining reusable
+/// object facts for degeneracy-aware algorithms.
 pub(crate) fn classify_point_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -442,12 +434,8 @@ pub fn proper_segment_intersection_point(
 /// The construction uses the standard line parameter
 /// `t = cross(c - a, d - c) / cross(b - a, d - c)` and returns
 /// `a + t (b - a)` only after the segment classifier certifies a proper
-/// crossing. The formula is the ordinary segment-intersection construction from
-/// computational geometry texts such as de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
-/// Springer, 2008. The precondition is certified by exact predicates in the
-/// exact-geometric-computation style of Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// crossing. The formula is the ordinary segment-intersection construction;
+/// exact predicates certify its precondition.
 pub(crate) fn proper_segment_intersection_point_with_policy(
     a: &Point2,
     b: &Point2,
@@ -513,13 +501,8 @@ pub fn classify_segment3_intersection(
 /// `u = ((c-a) x (b-a))_k / ((b-a) x (d-c))_k` on a certified nonzero
 /// component `k`. It compares the rational parameters to `[0, 1]` without
 /// division. The parallel branch reduces to exact collinear point/segment
-/// tests. This follows Yap's exact-geometric-computation contract that the
-/// combinatorial relation is decided by exact signs, not primitive-float
-/// tolerances; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997). The geometric classification mirrors
-/// the segment-intersection treatment in de Berg, Cheong, van Kreveld, and
-/// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
-/// Springer, 2008, lifted to 3D with explicit skew/coplanar separation.
+/// tests. Exact signs decide the combinatorial relation, with explicit
+/// skew/coplanar separation in 3D.
 pub(crate) fn classify_segment3_intersection_with_policy(
     a: &Point3,
     b: &Point3,
@@ -682,10 +665,7 @@ pub fn classify_segment_intersection_with_facts(
 /// Known-degenerate facts let this function reduce point-segment or point-point
 /// cases before evaluating the four-orientation classifier. The reduction never
 /// accepts lossy coordinates: every remaining equality or containment question
-/// is certified by exact Real predicates. This follows Yap's exact
-/// computation boundary and the degeneracy handling discipline in de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed., Springer, 2008.
+/// is certified by exact Real predicates.
 pub(crate) fn classify_segment_intersection_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
@@ -721,15 +701,9 @@ fn classify_segment_intersection_impl(
 
     let mut trace = DecisionTrace::default();
 
-    // This is the standard four-orientation segment classifier described in
-    // de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-    // Algorithms and Applications*, 3rd ed., Springer, 2008. The difference in
-    // this crate is numerical: every orientation and interval comparison routes
-    // through exact hyperreal-backed signs, following the exact-geometric
-    // computation discipline of Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997), and the determinant-sign focus of
-    // Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust
-    // Geometric Predicates," *Discrete & Computational Geometry* 18.3 (1997).
+    // This is the standard four-orientation segment classifier. Every
+    // orientation and interval comparison routes through exact
+    // hyperreal-backed determinant signs.
     let o1 = match decided(orient2d_with_policy(a, b, c, policy), &mut trace) {
         Ok(sign) => sign,
         Err(unknown) => return unknown.into_outcome(),

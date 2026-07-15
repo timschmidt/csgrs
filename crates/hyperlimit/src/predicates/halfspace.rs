@@ -155,8 +155,7 @@ impl HalfspaceFeasibilityReport {
 /// multiplying all inequalities by `lambda_i` and summing gives
 /// `0 . x + positive <= 0`, a contradiction. This certificate keeps that proof
 /// as exact `Real` data so callers can replay it without depending on a solver
-/// implementation. The theorem is Farkas' lemma; see Schrijver, *Theory of
-/// Linear and Integer Programming*, Wiley, 1986.
+/// implementation. The theorem is Farkas' lemma.
 #[derive(Clone, Debug, PartialEq)]
 pub struct HalfspaceInfeasibilityCertificate {
     /// Plane indices participating in the certificate.

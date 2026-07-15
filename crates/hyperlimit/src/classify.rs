@@ -342,8 +342,7 @@ impl SegmentIntersection {
     /// segments.
     ///
     /// This is the proper-crossing case in the standard four-orientation
-    /// segment classifier; see de Berg, Cheong, van Kreveld, and Overmars,
-    /// *Computational Geometry: Algorithms and Applications*, 3rd ed., 2008.
+    /// segment classifier used throughout computational geometry.
     pub const fn is_proper_crossing(self) -> bool {
         matches!(self, Self::Proper)
     }
@@ -358,10 +357,8 @@ impl SegmentIntersection {
     /// Identical closed segments are included because they have the strongest
     /// possible positive-length overlap. Keeping this policy on the
     /// classification enum avoids each caller needing an exhaustive local match
-    /// when new exact topological distinctions are added, which follows Yap's
-    /// guidance to keep combinatorial decisions explicit at the predicate
-    /// object layer; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// when new exact topological distinctions are added and keeps combinatorial
+    /// decisions explicit at the predicate-object layer.
     pub const fn has_positive_length_overlap(self) -> bool {
         matches!(self, Self::CollinearOverlap | Self::Identical)
     }
@@ -502,8 +499,7 @@ impl RingPointLocation {
 /// This is an object fact, not a polygon validity proof. It summarizes exact
 /// local orientation predicates so higher crates can choose algorithms without
 /// replacing later visibility, containment, or intersection predicates. That is
-/// the object/predicate split advocated by Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// the object/predicate split used by the exact-computation model.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RingConvexity {
     /// Fewer than three useful vertices, or every certified local turn is zero.

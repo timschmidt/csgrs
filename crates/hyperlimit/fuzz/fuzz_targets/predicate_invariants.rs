@@ -57,10 +57,8 @@ impl RawPoint {
 
 /// Generated 3D rational point.
 ///
-/// Keeping this as rational data mirrors Yap's exact-geometric-computation
-/// model: fuzzing exercises exact predicate packages and prepared-object reuse,
-/// not primitive-float filters. See Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// Rational inputs ensure fuzzing exercises exact predicate packages and
+/// prepared-object reuse, not primitive-float filters.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawPoint3 {
     x_num: i16,
@@ -271,10 +269,8 @@ fn predicate_invariants(input: Input) {
     // Fuzz the versioned prepared-cache invalidation boundary. Stale prepared
     // objects are legal Rust borrows, but their retained facts must be treated
     // as scheduling metadata to recompute or bypass, never as topology
-    // certificates. This is Yap's construction-object separation in executable
-    // form: cached object facts have version provenance, while exact predicates
-    // still certify signs. See Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997).
+    // certificates. Cached object facts have version provenance, while exact
+    // predicates still certify signs.
     let mut stale_session = session;
     stale_session.advance_version();
     for freshness in [
@@ -319,8 +315,8 @@ fn predicate_invariants(input: Input) {
     let no_refine = hyperlimit::orient2d_with_policy(&a, &b, &c, strict_no_refine);
     if let Some(sign) = orient2d(&a, &b, &c).value() {
         // For exact rational fuzz inputs, disabling refinement must not change
-        // decided orientation signs. This is the Yap EGC contract in executable
-        // form: exact rational predicates are not primitive-float filters.
+        // decided orientation signs: exact rational predicates are not
+        // primitive-float filters.
         assert_eq!(no_refine.value(), Some(sign));
     }
 
@@ -344,8 +340,8 @@ fn predicate_invariants(input: Input) {
     );
     if let (Some(sign), Some(swapped)) = (common.value(), swapped.value()) {
         // These generated points all use one unreduced prime denominator, so
-        // they cover the common-scale rational-vector regime Yap identifies
-        // before scalar expansion. The public invariant remains purely
+        // they cover the common-scale rational-vector regime before scalar
+        // expansion. The public invariant remains purely
         // predicate-level: swapping two vertices reverses the certified
         // tetrahedron orientation sign.
         assert_eq!(sign.reversed(), swapped);

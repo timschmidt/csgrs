@@ -30,11 +30,8 @@ use crate::{
 ///
 /// The value is intentionally opaque. Domain crates can copy it into cached
 /// approximate views, broad-phase bins, or construction certificates and compare
-/// later versions before reusing those caches. This follows Yap's object-level
-/// exact-geometric-computation model: cached facts are advisory and conservative,
-/// and validity belongs to the object/session that produced them; see Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// later versions before reusing those caches. Cached facts are advisory and
+/// conservative, and validity belongs to the object/session that produced them.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct ConstructionVersion(u64);
 
@@ -58,7 +55,7 @@ impl ConstructionVersion {
 /// This enum is diagnostic metadata only. A stale cache is not a topology
 /// decision; it tells callers to recompute an approximate view, conservative
 /// fact package, or retained predicate report before using it for scheduling.
-/// The split mirrors Yap's exact-geometric-computation discipline: cache
+/// The exact-computation split keeps cache
 /// validity and approximate views are managed outside exact predicates, while
 /// predicates remain the source of combinatorial truth.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -104,11 +101,9 @@ impl ConstructionFreshness {
 /// The values are abstract work units, not wall-clock timings. Higher crates can
 /// map them to their own operation counters, arena costs, or hot-loop weights
 /// while `hyperlimit` stays independent of topology storage and allocation
-/// policy. This follows Yap's exact-geometric-computation split: geometric
+/// policy. Geometric
 /// objects should preserve structural information that can avoid repeated exact
-/// refinement, but arithmetic truth still comes from exact predicates. See Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// refinement, but arithmetic truth still comes from exact predicates.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct CachePayoff {
     warm_up_work: u32,
@@ -174,11 +169,9 @@ impl CachePayoff {
 /// Approximate views are deliberately separate from exact predicate inputs.
 /// They can cache rendering, IO, or broad-phase coordinates together with a
 /// source [`ConstructionVersion`], precision, and an absolute error budget, but
-/// they do not certify topology. This is the Yap EGC boundary in data form:
+/// they do not certify topology. This is the exact-computation boundary in data form:
 /// approximate numerical views are useful accelerators and presentation data,
-/// while exact predicates remain responsible for combinatorial decisions; see
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// while exact predicates remain responsible for combinatorial decisions.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CachedApproximateView<T> {
     value: T,
@@ -313,8 +306,7 @@ impl ConstructionCertificate {
 /// The dependency list is intentionally only a list of versions, not object
 /// handles. Domain crates own object identity, graph edges, and invalidation
 /// policy; `hyperlimit` only provides a compact exact-kernel data shape they
-/// can attach to those objects. This follows Yap's package split in exact
-/// geometric computation: geometry packages should carry enough provenance to
+/// can attach to those objects. Geometry packages should carry enough provenance to
 /// reuse exact facts, while arithmetic packages remain responsible for exact
 /// number semantics.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
@@ -378,8 +370,7 @@ impl ConstructionDependencies {
 /// at construction, import, preparation, or kernel-selection time. It does not
 /// interpret those facts and does not make them authoritative for topology.
 /// A stale or absent fact must only cost performance; exact predicates still
-/// decide geometry, following Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// decide geometry.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VersionedFacts<F> {
     facts: F,
@@ -395,11 +386,9 @@ pub struct VersionedFacts<F> {
 /// preparation, while higher crates own curve fragments, triangulation nodes,
 /// mesh faces, and invalidation policy. A [`VersionedPrepared`] value lets
 /// callers attach session freshness diagnostics to borrowed prepared
-/// predicates without making stale prepared facts authoritative. Following
-/// Yap's exact-geometric-computation boundary, stale cached object facts must
+/// predicates without making stale prepared facts authoritative. Stale cached object facts must
 /// only trigger recomputation or slower scheduling; exact predicates still
-/// certify topology. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// certify topology.
 #[derive(Clone, Debug)]
 pub struct VersionedPrepared<P> {
     prepared: P,
@@ -412,8 +401,7 @@ pub struct VersionedPrepared<P> {
 /// This type is the session-level carrier for exact sign decisions and their
 /// provenance. The report still contains the predicate outcome, including
 /// explicit uncertainty. The certificate records the construction version and
-/// semantic predicate route. Keeping these together follows Yap's exact
-/// geometric computation guidance: applications can audit and cache certified
+/// semantic predicate route. Applications can audit and cache certified
 /// decisions without depending on `Real` internals or approximate coordinates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VersionedPredicateReport<T> {
@@ -652,7 +640,7 @@ fn freshness_from_source(
 /// coordinates. Instead, it centralizes the strict predicate context and
 /// versioning for prepared predicate objects that borrow immutable inputs. This
 /// keeps `hyperlimit` at the semantic boundary between exact Real predicates
-/// and product-crate topology storage, matching Yap's separation between
+/// and product-crate topology storage, preserving the separation between
 /// geometric object facts and arithmetic packages.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ExactGeometrySession {
@@ -880,9 +868,7 @@ impl ExactGeometrySession {
     /// This is the 3D companion to [`Self::prepare_segment2`]. It keeps segment
     /// endpoint storage and topology ownership in higher crates while giving
     /// construction graphs a session-versioned exact predicate object for
-    /// repeated point/segment and segment/segment queries, following Yap's
-    /// object-package boundary in "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// repeated point/segment and segment/segment queries.
     pub fn prepare_segment3<'a>(&self, start: &'a Point3, end: &'a Point3) -> PreparedSegment3<'a> {
         PreparedSegment3::new(start, end)
     }
@@ -922,7 +908,7 @@ impl ExactGeometrySession {
     /// The prepared object owns no topology and borrows only the fixed sites.
     /// It caches lifted-circle coefficients plus exact structural facts, giving
     /// repeated triangulation and mesh-quality queries one session-level entry
-    /// point for Yap-style prepared arithmetic dispatch.
+    /// point for prepared arithmetic dispatch.
     pub fn prepare_incircle2<'a>(
         &self,
         a: &'a Point2,
@@ -978,10 +964,8 @@ impl ExactGeometrySession {
     /// Prepare the oriented 3D plane through three points.
     ///
     /// The three-point plane is reduced once to an explicit [`Plane3`], then
-    /// point queries reuse that exact object. This follows Yap's exact
-    /// geometric computation boundary between geometric objects and arithmetic
-    /// predicates; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// point queries reuse that exact object, preserving the boundary between
+    /// geometric objects and arithmetic predicates.
     pub fn prepare_oriented_plane3(
         &self,
         a: &Point3,
@@ -996,9 +980,8 @@ impl ExactGeometrySession {
     /// The prepared object caches per-plane structural facts while preserving
     /// the source slice as the caller-owned object package. Feasibility still
     /// returns exact witnesses or Farkas certificates and replays them through
-    /// exact predicates, matching Yap's separation between geometric objects,
-    /// preparation metadata, and combinatorial decisions in "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// exact predicates, separating geometric objects, preparation metadata,
+    /// and combinatorial decisions.
     pub fn prepare_halfspace_system3<'a>(
         &self,
         planes: &'a [Plane3],
@@ -1155,9 +1138,8 @@ impl ExactGeometrySession {
     /// This is the session-level entry point for the mesh-kernel-style
     /// plane/AABB broad-phase predicate. The prepared plane owns only cached
     /// coefficients and structural facts; the returned relation is still
-    /// certified by exact predicate evaluation, following Yap's separation
-    /// between reusable object facts and combinatorial truth in "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// certified by exact predicate evaluation, separating reusable object facts
+    /// from combinatorial truth.
     pub fn classify_prepared_plane3_aabb3(
         &self,
         plane: &PreparedPlane3<'_>,

@@ -12,9 +12,10 @@ use hyperlimit::{
     SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, affine_independent_d,
     certified_ball_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
     classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
-    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_point_convex_planes3,
-    classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
-    classify_point_plane, classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
+    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_plane_segment,
+    classify_plane_triangle, classify_point_convex_planes3, classify_point_convex_polygon2,
+    classify_point_line, classify_point_oriented_plane, classify_point_plane,
+    classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_report, classify_segment3_intersection,
     classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
@@ -55,6 +56,7 @@ fn bench_predicates(c: &mut Criterion) {
     bench_representation(c, "hyperreal", hyperreal_real);
     bench_certified_filters(c);
     bench_prepared_construction(c);
+    bench_plane_composition_filters(c);
     bench_exact_rational_kernels(c);
     bench_nd_symbolic_scale(c);
     bench_shared_scale_views(c);
@@ -66,6 +68,98 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_plane_composition_filters(c: &mut Criterion) {
+    let mut group = c.benchmark_group("plane_composition_filters");
+    let plane = Plane3::new(
+        point3(0.5, -0.75, 1.25, hyperreal_real),
+        hyperreal_real(-0.25),
+    );
+    let cases: Vec<_> = (0..BATCH)
+        .map(|index| {
+            let x = (index as f64 - 256.0) / 16.0;
+            (
+                point3(x, 0.5, -0.25, hyperreal_real),
+                point3(x + 0.5, -0.25, 0.75, hyperreal_real),
+                point3(x - 0.25, 1.0, 0.5, hyperreal_real),
+            )
+        })
+        .collect();
+    group.bench_function("segment/dyadic", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, _) in &cases {
+                score += i64::from(
+                    classify_plane_segment(black_box(&plane), black_box(a), black_box(b))
+                        .value()
+                        .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    group.bench_function("triangle/dyadic", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &cases {
+                score += i64::from(
+                    classify_plane_triangle(
+                        black_box(&plane),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    let rational_plane = Plane3::new(rational_point3(1, 3, -2, 5, 4, 7), rational_real(-3, 11));
+    let rational_cases: Vec<_> = (0..BATCH)
+        .map(|index| {
+            let value = index as i64 - 256;
+            (
+                rational_point3(value, 17, 1, 3, -2, 5),
+                rational_point3(value + 1, 19, -3, 7, 4, 9),
+                rational_point3(value - 1, 23, 5, 11, -6, 13),
+            )
+        })
+        .collect();
+    group.bench_function("segment/exact_rational", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, _) in &rational_cases {
+                score += i64::from(
+                    classify_plane_segment(black_box(&rational_plane), black_box(a), black_box(b))
+                        .value()
+                        .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    group.bench_function("triangle/exact_rational", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &rational_cases {
+                score += i64::from(
+                    classify_plane_triangle(
+                        black_box(&rational_plane),
+                        black_box(a),
+                        black_box(b),
+                        black_box(c),
+                    )
+                    .value()
+                    .is_some(),
+                );
+            }
+            black_box(score)
+        })
+    });
+    group.finish();
 }
 
 fn bench_nd_symbolic_scale(c: &mut Criterion) {
@@ -320,6 +414,19 @@ fn bench_prepared_construction(c: &mut Criterion) {
     group.bench_function("line2/dyadic_filter", |bench| {
         bench.iter(|| PreparedLine2::new(black_box(&line_a), black_box(&line_b)))
     });
+    let rational_line_a = rational_point2(1, 3, 2, 5);
+    let rational_line_b = rational_point2(7, 11, -3, 7);
+    group.bench_function("affine_det2_exact_word_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_affine_det2_exact_word_filter(
+                [black_box(&rational_line_a.x), black_box(&rational_line_a.y)],
+                [black_box(&rational_line_b.x), black_box(&rational_line_b.y)],
+            )
+        })
+    });
+    group.bench_function("line2/exact_rational_word_filter", |bench| {
+        bench.iter(|| PreparedLine2::new(black_box(&rational_line_a), black_box(&rational_line_b)))
+    });
 
     let plane_a = point3(-0.85, -0.7, -0.25, hyperreal_real);
     let plane_b = point3(0.9, -0.35, 0.35, hyperreal_real);
@@ -354,7 +461,39 @@ fn bench_prepared_construction(c: &mut Criterion) {
             )
         })
     });
-
+    let rational_plane_a = rational_point3(1, 3, 2, 5, -1, 7);
+    let rational_plane_b = rational_point3(5, 11, -3, 7, 2, 13);
+    let rational_plane_c = rational_point3(-2, 17, 7, 19, 3, 23);
+    group.bench_function("affine_det3_exact_word_filter_only", |bench| {
+        bench.iter(|| {
+            hyperreal::Real::prepare_affine_det3_exact_word_filter(
+                [
+                    black_box(&rational_plane_a.x),
+                    black_box(&rational_plane_a.y),
+                    black_box(&rational_plane_a.z),
+                ],
+                [
+                    black_box(&rational_plane_b.x),
+                    black_box(&rational_plane_b.y),
+                    black_box(&rational_plane_b.z),
+                ],
+                [
+                    black_box(&rational_plane_c.x),
+                    black_box(&rational_plane_c.y),
+                    black_box(&rational_plane_c.z),
+                ],
+            )
+        })
+    });
+    group.bench_function("oriented_plane3/exact_rational_word_filter", |bench| {
+        bench.iter(|| {
+            PreparedOrientedPlane3::new(
+                black_box(&rational_plane_a),
+                black_box(&rational_plane_b),
+                black_box(&rational_plane_c),
+            )
+        })
+    });
     let explicit_plane = Plane3::new(
         Point3::new(
             hyperreal_real(0.5),
@@ -1042,6 +1181,30 @@ fn bench_transformed_predicates(c: &mut Criterion) {
         );
     }
 
+    let oriented_plane_cases = transformed_oriented_plane_cases();
+    if let Some((a, b, c, _)) = oriented_plane_cases.first() {
+        let prepared = PreparedOrientedPlane3::new(a, b, c);
+        trace_dispatch_cases(
+            "transformed_predicates/classify_point_oriented_plane/prepared_exact_rational_affine",
+            &oriented_plane_cases,
+            |(_, _, _, point)| {
+                black_box(plane_score(prepared.classify_point(point)));
+            },
+        );
+        group.bench_function(
+            "classify_point_oriented_plane/prepared_exact_rational_affine",
+            |bench| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (_, _, _, point) in &oriented_plane_cases {
+                        score += plane_score(black_box(prepared.classify_point(black_box(point))));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+
     // The in-circle determinant is especially sensitive to expansion strategy.
     // Cold and prepared transformed rows reveal whether lifted-circle
     // coefficient reuse preserves the exact determinant sign.
@@ -1210,6 +1373,7 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
             );
         }
     }
+
     group.finish();
 }
 
@@ -2057,6 +2221,28 @@ fn transformed_incircle2d_cases() -> Vec<Incircle2Case> {
     cases
 }
 
+fn transformed_oriented_plane_cases() -> Vec<Orient3Case> {
+    let scale = rational_real(11, 7);
+    let tx = rational_real(-13, 17);
+    let ty = rational_real(19, 23);
+    let tz = rational_real(-29, 31);
+    let a = transform_point3(&rational_point3(0, 1, 0, 1, 0, 1), &scale, &tx, &ty, &tz);
+    let b = transform_point3(&rational_point3(1, 1, 0, 1, 0, 1), &scale, &tx, &ty, &tz);
+    let c = transform_point3(&rational_point3(0, 1, 1, 1, 0, 1), &scale, &tx, &ty, &tz);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point3(j % 17 - 8, 17, (j / 17) % 19 - 9, 19, signed_jitter(j), 37);
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            transform_point3(&point, &scale, &tx, &ty, &tz),
+        ));
+    }
+    cases
+}
+
 fn transform_point2(
     point: &Point2,
     scale: &hyperreal::Real,
@@ -2066,6 +2252,19 @@ fn transform_point2(
     let scaled_x = &point.x * scale;
     let scaled_y = &point.y * scale;
     Point2::new(&scaled_x + tx, &scaled_y + ty)
+}
+
+fn transform_point3(
+    point: &Point3,
+    scale: &hyperreal::Real,
+    tx: &hyperreal::Real,
+    ty: &hyperreal::Real,
+    tz: &hyperreal::Real,
+) -> Point3 {
+    let scaled_x = &point.x * scale;
+    let scaled_y = &point.y * scale;
+    let scaled_z = &point.z * scale;
+    Point3::new(&scaled_x + tx, &scaled_y + ty, &scaled_z + tz)
 }
 
 fn signed_jitter(index: i64) -> i64 {

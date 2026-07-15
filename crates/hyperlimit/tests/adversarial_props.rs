@@ -151,8 +151,7 @@ proptest! {
         y in -1000_i32..=1000,
         z in -1000_i32..=1000,
     ) {
-        // Yap's Section 6.3 recommends common/homogeneous vector
-        // representations for rational geometric objects. This generated test
+        // Common/homogeneous vectors preserve rational geometric objects. This generated test
         // keeps the oracle at the object level: three coordinate planes should
         // produce one homogeneous point that satisfies all three planes before
         // any affine division is requested.
@@ -183,9 +182,7 @@ proptest! {
     ) {
         // Symmetry is the minimum metamorphic law for a segment/segment
         // classifier. The oracle is the exact relation itself under operand
-        // exchange, not an approximate closest-point computation. This follows
-        // Yap's exact decision boundary in "Towards Exact Geometric
-        // Computation," Computational Geometry 7.1-2 (1997).
+        // exchange, not an approximate closest-point computation.
         let relation = classify_segment3_intersection(&a, &b, &c, &d).value();
         prop_assert_eq!(
             relation,
@@ -361,13 +358,8 @@ proptest! {
         cx in -32_i32..32, cy in -32_i32..32,
         scale in 1_i32..16,
     ) {
-        // Metamorphic predicate tests are a direct fit for Yap's exact
-        // computation model: the determinant identity is the oracle, not a
-        // sampled approximate coordinate. See Yap, "Towards Exact Geometric
-        // Computation," Computational Geometry 7.1-2 (1997). The sign change
-        // under reflection is the standard orientation determinant law used by
-        // robust predicates; see Shewchuk, "Adaptive Precision Floating-Point
-        // Arithmetic and Fast Robust Geometric Predicates," DCG 18.3 (1997).
+        // The determinant identity is the oracle, not a sampled approximate
+        // coordinate. Reflection reverses the standard orientation determinant.
         let a = p2i(ax, ay);
         let b = p2i(bx, by);
         let c = p2i(cx, cy);

@@ -121,12 +121,6 @@ domain-specific geometry.
 
 ```toml
 [dependencies]
-hyperlimit = "0.3.0"
-```
-
-Current local development version:
-
-```toml
 hyperlimit = "0.4.0"
 ```
 
@@ -158,18 +152,6 @@ let point = intersect_three_planes(&px, &py, &pz);
 assert_eq!(classify_homogeneous_point_plane(&point, &px).value(), Some(true));
 ```
 
-## Development
-
-Useful local checks:
-
-```sh
-cargo test
-cargo test --no-default-features
-cargo test --all-features
-cargo test --features parallel
-cargo bench --bench predicates
-```
-
 ## References
 
 Arvo, James. "Transforming Axis-Aligned Bounding Boxes." *Graphics Gems*,
@@ -186,6 +168,12 @@ no. 9, 1979, pp. 643-647.
 de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
 *Computational Geometry: Algorithms and Applications*. 3rd ed., Springer, 2008.
 
+Ericson, Christer. *Real-Time Collision Detection*. Morgan Kaufmann, 2005.
+
+Guigue, Philippe, and Olivier Devillers. "Fast and Robust Triangle-Triangle
+Overlap Test Using Orientation Predicates." *Journal of Graphics Tools*, vol.
+8, no. 1, 2003, pp. 25-42.
+
 Gustavson, Fred G. "Two Fast Algorithms for Sparse Matrices: Multiplication
 and Permuted Transposition." *ACM Transactions on Mathematical Software*, vol.
 4, no. 3, 1978, pp. 250-269.
@@ -195,6 +183,9 @@ Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
 131-144.
 
 Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
+
+Möller, Tomas. "A Fast Triangle-Triangle Intersection Test." *Journal of
+Graphics Tools*, vol. 2, no. 2, 1997, pp. 25-30.
 
 Klosowski, James T., Martin Held, Joseph S. B. Mitchell, Henry Sowizral, and
 Karel Zikan. "Efficient Collision Detection Using Bounding Volume Hierarchies

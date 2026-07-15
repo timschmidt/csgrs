@@ -53,11 +53,8 @@ impl Point2DisplacementFacts {
     /// Build displacement facts from already-computed coordinate differences.
     ///
     /// This form lets algorithms cache exact differences once and then reuse
-    /// their cheap zero masks when selecting exact kernels. That retained-object
-    /// approach is the predicate-layer analogue of Yap's recommendation to
-    /// exploit geometric object structure before Real refinement; see Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-    /// (1997).
+    /// their cheap zero masks when selecting exact kernels, exploiting geometric
+    /// object structure before Real refinement.
     pub fn from_deltas(dx: &hyperreal::Real, dy: &hyperreal::Real) -> Self {
         let component_zero = [dx.zero_knowledge(), dy.zero_knowledge()];
         let known_zero = matches!(
@@ -139,9 +136,8 @@ impl Point2DisplacementFacts {
     ///
     /// Sparse determinant and axis-aligned candidate schedules should only be
     /// selected from certified support. This query keeps that uncertainty
-    /// explicit while preserving Yap's split between reusable object facts and
-    /// certified topology decisions; see Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997).
+    /// explicit while preserving the split between reusable object facts and
+    /// certified topology decisions.
     pub fn has_unknown_zero(self) -> bool {
         self.unknown_zero_mask() != 0
     }
@@ -165,10 +161,7 @@ impl Point2DisplacementFacts {
 ///
 /// Segment facts summarize endpoint displacement only. They do not classify
 /// intersections, ring membership, or constraint validity. Those topology
-/// decisions remain in exact segment and orientation predicates. The same
-/// broad-phase/candidate-filter distinction appears in sweep-line treatments
-/// such as Bentley and Ottmann, "Algorithms for Reporting and Counting
-/// Geometric Intersections," *IEEE Transactions on Computers* C-28.9 (1979).
+/// decisions remain in exact segment and orientation predicates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Segment2Facts {
     /// Structural facts for `end - start`.
@@ -210,10 +203,8 @@ impl TriangleEdge2 {
 /// Triangle facts summarize edge displacement and the zero structure of the
 /// anchored orientation determinant. They do not decide winding, containment,
 /// Delaunay legality, or triangulation output topology. Exact orientation and
-/// containment decisions remain in predicate functions. This mirrors Yap's
-/// exact-geometric-computation boundary for reusing object facts before Real
-/// refinement; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// containment decisions remain in predicate functions, allowing object facts
+/// to be reused before Real refinement.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Triangle2Facts {
     /// Structural facts for `b - a`.
@@ -295,10 +286,8 @@ impl Segment2Facts {
 impl Triangle2Facts {
     /// Build triangle facts from displacement and edge facts.
     ///
-    /// The determinant-term shape is the standard orientation determinant used
-    /// throughout computational geometry; see de Berg, Cheong, van Kreveld, and
-    /// Overmars, *Computational Geometry: Algorithms and Applications*, 3rd ed.,
-    /// Springer, 2008. The facts here only expose zero/nonzero structure so
+    /// The determinant-term shape is the standard orientation determinant. The
+    /// facts here only expose zero/nonzero structure so
     /// higher layers can choose faster exact kernels without replacing certified
     /// predicates.
     pub fn from_parts(
@@ -388,8 +377,8 @@ impl Triangle2Facts {
     /// Return whether either determinant term has unknown zero status.
     ///
     /// This keeps future determinant-specialized kernels from treating
-    /// incomplete product support as certified degeneracy. The design follows
-    /// Yap's exact-geometric-computation boundary between structural hints and
+    /// incomplete product support as certified degeneracy, preserving the
+    /// boundary between structural hints and
     /// certified predicate decisions.
     pub fn has_unknown_determinant_zero(self) -> bool {
         self.determinant_unknown_zero_mask() != 0
@@ -402,9 +391,7 @@ impl Triangle2Facts {
 /// summarize whether the x/y extents are structurally zero or nonzero after
 /// considering `max - min`; they do not decide containment, overlap, or any
 /// topology. This keeps the bounding-box role as a broad-phase candidate
-/// reducer, as in Bentley and Ottmann, "Algorithms for Reporting and Counting
-/// Geometric Intersections," *IEEE Transactions on Computers* C-28.9 (1979),
-/// while preserving Yap's exact predicate boundary for final decisions.
+/// reducer while preserving exact predicates for final decisions.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Aabb2Facts {
     /// Structural facts for `max - min`.
@@ -467,9 +454,8 @@ impl Aabb2Facts {
     /// Return whether any extent coordinate has unknown zero status.
     ///
     /// Unknown extent support should block broad-phase specializations that
-    /// require a certified point, segment, or positive-area box. This keeps the
-    /// broad-phase fact layer conservative in the sense of Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    /// require a certified point, segment, or positive-area box, keeping the
+    /// broad-phase fact layer conservative.
     pub fn has_unknown_extent_zero(self) -> bool {
         self.extent.has_unknown_zero()
     }

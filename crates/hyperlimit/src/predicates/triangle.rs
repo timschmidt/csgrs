@@ -31,12 +31,8 @@ use hyperreal::Real;
 /// points against the same triangle. It remains a predicate helper: ear nodes,
 /// face ids, cavity ownership, and triangulation policy stay in `hypertri`.
 ///
-/// The orientation-side test is the standard triangle containment classifier
-/// from computational geometry; see de Berg, Cheong, van Kreveld, and Overmars,
-/// *Computational Geometry: Algorithms and Applications*, 3rd ed., Springer,
-/// 2008. Caching the object facts follows Yap's exact-geometric-computation
-/// model; see Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// The orientation-side test is the standard triangle containment classifier.
+/// Object facts are cached for repeated exact decisions.
 #[derive(Clone, Copy, Debug)]
 pub struct PreparedTriangle2<'a> {
     a: &'a Point2,
@@ -232,11 +228,9 @@ impl<'a> PreparedTriangle3<'a> {
 /// Structural inconsistency in a retained segment/triangle report.
 ///
 /// The report validates the composition of a segment/plane construction event
-/// with a point/triangle classifier. This follows Yap's exact geometric
-/// computation boundary: the exact predicate layer owns replayable evidence,
+/// with a point/triangle classifier. The exact predicate layer owns replayable evidence,
 /// while mesh, voxel, and boolean crates own any topology mutation derived from
-/// that evidence. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// that evidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SegmentTriangleValidationError {
     /// The retained segment/plane event is internally inconsistent.
@@ -261,8 +255,8 @@ pub enum SegmentTriangleValidationError {
 /// the point/triangle location that justified it. Proper crossings keep the
 /// determinant-ratio segment parameter through [`SegmentPlaneIntersection`].
 /// This is the construction-preserving counterpart to the
-/// Moller/Guigue-Devillers triangle-intersection decompositions and uses Yap's
-/// report-before-topology discipline.
+/// standard triangle-intersection decomposition and retains evidence before
+/// topology is changed.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SegmentTriangleIntersectionReport {
     /// Coarse segment/triangle relation.
@@ -315,9 +309,7 @@ impl SegmentTriangleIntersectionReport {
 /// Structural inconsistency in a retained ray/triangle report.
 ///
 /// The ray report validates the exact ray/support-plane construction before
-/// trusting the coarse triangle relation. This mirrors the constructive
-/// predicate discipline in Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): topology-facing callers receive a
+/// trusting the coarse triangle relation. Topology-facing callers receive a
 /// replayable certificate-shaped object instead of an untestable floating
 /// intersection.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -345,8 +337,7 @@ pub enum RayTriangleValidationError {
 /// For ray `r(t) = origin + t * direction` and supporting plane expression
 /// `E(x) = normal . x + offset`, the strict crossing parameter is
 /// `t = -E(origin) / (normal . direction)`. Retaining the ratio keeps the
-/// division auditable and follows Yap's exact-geometric-computation separation
-/// between certified predicates and constructed geometry.
+/// division auditable and separates certified predicates from constructed geometry.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RayTriangleParameterRatio {
     /// Numerator `-E(origin)`.
@@ -360,8 +351,7 @@ pub struct RayTriangleParameterRatio {
 /// The coarse [`RayTriangleIntersection`] relation remains available for cheap
 /// callers. This report retains the exact ray/plane parameter, constructed
 /// candidate point, and point/triangle replay location when a single candidate
-/// exists. The decomposition is the ray analogue of the Moller (1997) and
-/// Guigue-Devillers (2003) triangle-intersection style: first certify the
+/// exists. The decomposition first certifies the
 /// supporting-plane event, then replay containment with exact predicates.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RayTriangleIntersectionReport {
@@ -576,9 +566,7 @@ pub fn classify_segment_triangle3_intersection_report(
 ///
 /// Endpoint signs are first certified against the triangle's supporting plane.
 /// A single candidate point is retained only for endpoint-on-plane and proper
-/// crossing events, using the exact segment/plane determinant ratio described
-/// by Yap (1997) and used by robust triangle-intersection pipelines such as
-/// Moller (1997) and Guigue-Devillers (2003). The candidate is then replayed
+/// crossing events, using an exact segment/plane determinant ratio. The candidate is then replayed
 /// through the exact 3D point/triangle classifier before the coarse relation is
 /// accepted.
 pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
@@ -672,9 +660,7 @@ pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
 /// lowered through a homogeneous line-plane construction and only then through
 /// the existing exact point/triangle classifier. Coplanar cases are reported as
 /// a first-class exact relation instead of being projected with a primitive
-/// tolerance; this follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and keeps planar arrangement
-/// ownership in higher crates.
+/// tolerance, keeping planar arrangement ownership in higher crates.
 pub(crate) fn classify_segment_triangle3_intersection_with_policy(
     p: &Point3,
     q: &Point3,
@@ -791,8 +777,8 @@ pub fn classify_ray_triangle3_intersection_report(
 /// `normal . direction` against the triangle's supporting plane. A candidate is
 /// retained only when the origin lies on the plane or the ray parameter
 /// `-E(origin) / (normal . direction)` is certified by sign logic to be
-/// nonnegative. The retained ratio and point/triangle replay embody Yap's
-/// report-before-topology rule, while keeping the classic
+/// nonnegative. The retained ratio and point/triangle replay preserve evidence
+/// before topology changes, while keeping the classic
 /// ray-plane-then-triangle-containment decomposition explicit.
 pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
     origin: &Point3,
@@ -923,8 +909,7 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
 ///
 /// The ray parameter is tested without division by comparing the signs of
 /// `-(plane(origin))` and `normal.direction`. The actual candidate point is
-/// constructed only after the parameter is certified nonnegative. This is the
-/// same exact-decision discipline advocated by Yap (1997); the final triangle
+/// constructed only after the parameter is certified nonnegative. The final triangle
 /// containment reuses the existing exact edge-halfspace classifier.
 pub(crate) fn classify_ray_triangle3_intersection_with_policy(
     origin: &Point3,
@@ -1252,8 +1237,7 @@ fn triangle_orientation_with_policy_and_facts(
     if facts.known_degenerate() == Some(true) {
         // Same-axis and duplicate-vertex degeneracies can be certified from
         // exact zero/nonzero structure before constructing the orientation
-        // determinant. This is the local version of the retained-object facts
-        // advocated by Yap (1997); it is still an exact predicate result.
+        // determinant; it is still an exact predicate result.
         PredicateOutcome::decided(Sign::Zero, Certainty::Exact, Escalation::Structural)
     } else {
         orient2d_with_policy(a, b, c, policy)

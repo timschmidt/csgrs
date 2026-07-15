@@ -2,14 +2,11 @@
 //!
 //! This module composes the existing exact plane/triangle, segment/triangle,
 //! and coplanar-triangle predicates into one report-bearing 3D triangle pair
-//! classifier. The structure follows the orientation-predicate decomposition
-//! used by Guigue and Devillers, "Fast and Robust Triangle-Triangle Overlap
-//! Test Using Orientation Predicates," *Journal of Graphics Tools* 8.1 (2003):
+//! classifier. The structure follows the orientation-predicate decomposition:
 //! reject by supporting planes, handle fully coplanar pairs by exact projected
 //! 2D predicates, and otherwise inspect the triangle edges against the opposite
 //! triangle. Every accepted relation is replayable from retained predicate
-//! facts rather than primitive tolerances, matching Yap, "Towards Exact
-//! Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! facts rather than primitive tolerances.
 
 use crate::classify::{
     PlaneTriangleRelation, SegmentTriangleIntersection, TriangleLocation,
@@ -76,8 +73,8 @@ impl TriangleTriangleClassification {
     ///
     /// This checks that the collapsed relation follows the retained
     /// degeneracy, plane-side, edge, and coplanar reports. It is intentionally
-    /// a report consistency check, not a new geometric predicate. Yap's EGC
-    /// model treats this as the handoff between exact predicates and
+    /// a report consistency check, not a new geometric predicate. This is the
+    /// handoff between exact predicates and
     /// construction/topology layers.
     pub fn validate(&self) -> Result<(), TriangleTriangleValidationError> {
         if self.left_degeneracy == TriangleDegeneracy::Degenerate

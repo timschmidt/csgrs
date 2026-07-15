@@ -72,13 +72,8 @@ pub fn compare_point2_distance_squared(
 /// Squared-distance comparison is the exact form needed by nearest-candidate
 /// selection in bridge construction, snapping, and broad-phase refinement. It
 /// avoids constructing a square root and asks the Real sign resolver to
-/// certify `|anchor-left|^2 - |anchor-right|^2`. This is the standard
-/// distance-ordering reduction used throughout computational geometry texts
-/// such as de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
-/// Algorithms and Applications*, 3rd ed., Springer, 2008, and it keeps the
-/// final sign decision in the exact-geometric-computation model of Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// certify `|anchor-left|^2 - |anchor-right|^2`. This standard distance-ordering
+/// reduction keeps the final sign decision exact.
 pub(crate) fn compare_point2_distance_squared_with_policy(
     anchor: &Point2,
     left: &Point2,
@@ -131,10 +126,8 @@ pub fn classify_circle_line2(
 ///
 /// The decision compares `|(center-a) x (b-a)|^2` with
 /// `radius_squared * |b-a|^2`, so it never constructs a square root or divides
-/// by line length. This is the standard line/circle discriminant written in
-/// squared-distance form; keeping it as an exact sign comparison follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// by line length. This is the standard line/circle discriminant written as an
+/// exact squared-distance sign comparison.
 pub(crate) fn classify_circle_line2_with_policy(
     center: &Point2,
     radius_squared: &Real,
@@ -338,9 +331,8 @@ pub fn compare_point_line3_distance_squared(
 /// The predicate avoids constructing the projected point or dividing by
 /// `|b-a|^2`: it compares `|(point-a) x (b-a)|^2` with
 /// `threshold_squared * |b-a|^2`. This is the standard squared-distance
-/// reduction for point-line queries in computational geometry, while the
-/// division-free exact decision boundary follows Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+/// reduction for point-line queries in computational geometry with a
+/// division-free exact decision boundary.
 pub(crate) fn compare_point_line3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
@@ -397,8 +389,7 @@ pub fn compare_point_segment3_distance_squared(
 ///
 /// Projection signs select the closest endpoint or the interior line-distance
 /// branch exactly. No square roots, normalized direction vectors, or
-/// primitive-float tolerances are used; this keeps closest-feature decisions in
-/// Yap's exact-geometric-computation model.
+/// primitive-float tolerances are used.
 pub(crate) fn compare_point_segment3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
@@ -532,9 +523,8 @@ pub fn classify_sphere3_intersection(
 ///
 /// The API accepts radii, not squared radii, because sphere-sphere contact is
 /// decided by `|c0-c1|^2` versus `(r0+r1)^2`. Negative radii are rejected as
-/// unsupported domain input instead of being silently reinterpreted. This keeps
-/// the exact algebraic relation square-root-free while preserving Yap's rule
-/// that invalid or undecidable geometric states stay explicit.
+/// unsupported domain input instead of being silently reinterpreted, keeping
+/// invalid or undecidable geometric states explicit.
 pub(crate) fn classify_sphere3_intersection_with_policy(
     first_center: &Point3,
     first_radius: &Real,
@@ -596,8 +586,7 @@ pub fn classify_aabb3_sphere_intersection(
 /// The nearest-point distance is formed as the sum of squared outside-axis
 /// violations, which is the standard AABB/sphere broad-phase predicate. Each
 /// axis comparison is exact and inclusive, and the final comparison stays in
-/// squared-distance form. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), for the exact decision boundary.
+/// squared-distance form.
 pub(crate) fn classify_aabb3_sphere_intersection_with_policy(
     min: &Point3,
     max: &Point3,

@@ -29,14 +29,10 @@ pub fn classify_real_closed_interval(
 /// Endpoints may be supplied in either order; this function first normalizes
 /// them by exact Real comparison. The result is useful for segment parameter
 /// checks, bounding-box point tests, and candidate filtering in arrangement or
-/// triangulation code. The interval itself is not a geometric object here. As
-/// in Bentley and Ottmann's intersection-reporting setting, interval tests are
-/// candidate filters; final topology must still be certified by geometric
-/// predicates. See Bentley and Ottmann, "Algorithms for Reporting and Counting
-/// Geometric Intersections," *IEEE Transactions on Computers* C-28.9 (1979).
-/// The numerical boundary follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every comparison is a certified sign,
-/// not a primitive-float tolerance.
+/// triangulation code. The interval itself is not a geometric object here.
+/// Interval tests are candidate filters; final topology must still be certified
+/// by geometric predicates. Every comparison is a certified sign, not a
+/// primitive-float tolerance.
 pub(crate) fn classify_real_closed_interval_with_policy(
     value: &Real,
     first: &Real,

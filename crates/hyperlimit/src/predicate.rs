@@ -91,11 +91,9 @@ pub enum Escalation {
 /// Exact determinant kernel selected for a predicate.
 ///
 /// This is intentionally a predicate-layer description, not a scalar or matrix
-/// implementation type. The exact-geometric-computation separation follows
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997): higher layers can observe which certified geometric schedule
-/// decided the topology without depending on the internal `Real` expression
-/// tree or on a particular determinant storage representation.
+/// implementation type. Higher layers can observe which certified geometric
+/// schedule decided the topology without depending on the internal `Real`
+/// expression tree or on a particular determinant storage representation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactPredicateKernel {
     /// Rational 2x2 determinant for 2D orientation.
@@ -114,10 +112,8 @@ pub enum ExactPredicateKernel {
 /// predicates and higher crates reuse object-level facts such as sparse support,
 /// dyadic coordinates, or shared denominators before constructing generic
 /// `Real` expressions. The exact predicate report remains the certificate for
-/// any topology decision. This directly follows Yap's exact-geometric-
-/// computation boundary between geometric object structure and arithmetic
-/// packages; see Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// any topology decision. This preserves the exact-computation boundary between
+/// geometric object structure and arithmetic packages.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DeterminantScheduleHint {
     /// Some fixed points have certified sparse support and no fixed point has
@@ -125,9 +121,7 @@ pub enum DeterminantScheduleHint {
     ///
     /// Sparse exact determinant formulas are classical arithmetic-package
     /// choices. They should still be paired with exact reduction schedules such
-    /// as fraction-free elimination when appropriate; see Bareiss,
-    /// "Sylvester's Identity and Multistep Integer-Preserving Gaussian
-    /// Elimination," *Mathematics of Computation* 22.103 (1968).
+    /// as fraction-free elimination when appropriate.
     SparseSupportCandidate {
         /// Exact predicate kernel shape that would consume the schedule.
         kernel: ExactPredicateKernel,
@@ -136,8 +130,7 @@ pub enum DeterminantScheduleHint {
     },
     /// Every fixed coordinate has one shared reduced denominator.
     ///
-    /// This is the borrowed common-scale case highlighted by Yap: keep the
-    /// geometric object scale available instead of immediately expanding every
+    /// Keep the borrowed geometric-object scale available instead of immediately expanding every
     /// coordinate as an independent scalar rational.
     SharedDenominatorCandidate {
         /// Exact predicate kernel shape that would consume the schedule.
@@ -162,12 +155,10 @@ pub enum DeterminantScheduleHint {
 
 /// Public precision-ladder stage for predicate provenance.
 ///
-/// This is the API-facing version of the exact-computation ladder described by
-/// Yap: separate geometric/topological decisions from approximate numeric
+/// This is the API-facing version of the exact-computation ladder: separate
+/// geometric/topological decisions from approximate numeric
 /// convenience, expose when a certified filter or exact reducer has proved a
-/// sign, and make explicit approximation opt-in and auditable. See Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// sign, and make explicit approximation opt-in and auditable.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PredicatePrecisionStage {
     /// Cached structural facts attached to a `Real` or geometric object proved
@@ -191,10 +182,8 @@ pub enum PredicatePrecisionStage {
 /// This label is intentionally coarser than a certificate. It describes the
 /// contract a caller should assume at an API boundary: exact topology,
 /// deferred uncertainty, explicit approximate edge data, or cache population.
-/// The split follows Yap's exact-geometric-computation discipline of keeping
-/// exact combinatorial decisions separate from approximate numerical views and
-/// scheduling caches; see Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// The split keeps exact combinatorial decisions separate from approximate
+/// numerical views and scheduling caches.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PredicateApiSemantics {
     /// The API preserves exact predicate meaning when it returns a decided
@@ -228,7 +217,7 @@ pub enum PredicateCertificate {
     ///
     /// The ball is reduced to an exact closed interval from its center and
     /// radius, then certified by exact endpoint comparisons. This is a
-    /// proof-producing filter in Yap's sense, not a primitive-float tolerance.
+    /// proof-producing filter, not a primitive-float tolerance.
     CertifiedBallFilter,
     /// A fixed exact rational determinant kernel decided it.
     ExactRationalKernel {
@@ -272,9 +261,7 @@ impl PredicateCertificate {
     /// This helper gives downstream crates a stable abstraction boundary for
     /// scheduling and diagnostics: they can react to "certified filter" or
     /// "exact reducer" without inspecting determinant internals or `Real`
-    /// expression structure. That separation follows Yap's exact-geometric-
-    /// computation model; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997).
+    /// expression structure.
     pub const fn precision_stage(self) -> PredicatePrecisionStage {
         match self {
             Self::StructuralFact => PredicatePrecisionStage::StructuralFact,
@@ -295,7 +282,7 @@ impl PredicateCertificate {
     ///
     /// Approximate policy fallbacks are intentionally excluded: they may be
     /// acceptable at rendering or interoperability edges, but they are not
-    /// exact predicate proofs in Yap's sense.
+    /// exact predicate proofs.
     pub const fn is_proof_producing(self) -> bool {
         match self.precision_stage() {
             PredicatePrecisionStage::StructuralFact
@@ -332,11 +319,9 @@ impl PredicateCertificate {
 /// This is the application-facing sibling of [`PredicateCertificate`]. It keeps
 /// the proof-bearing certificate together with stable diagnostic labels so
 /// downstream crates can retain predicate evidence without depending on the
-/// internal predicate pipeline. The separation follows Yap's exact geometric
-/// computation model: exact predicates certify topology, while provenance
-/// records are object-layer evidence that can be replayed and audited. See Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// internal predicate pipeline. Exact predicates certify topology, while
+/// provenance records are object-layer evidence that can be replayed and
+/// audited.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PredicateUse {
     /// Certificate returned by `hyperlimit`.

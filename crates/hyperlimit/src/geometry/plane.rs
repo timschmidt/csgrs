@@ -4,7 +4,8 @@ use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::{
-    PreparedAffineDet3Filter, PreparedLinearForm3Filter, Real, RealExactSetFacts, ZeroKnowledge,
+    PreparedAffineDet3ExactWordFilter, PreparedAffineDet3Filter, PreparedLinearForm3Filter, Real,
+    RealExactSetFacts, ZeroKnowledge,
 };
 
 use crate::RealSymbolicDependencyMask;
@@ -461,6 +462,7 @@ impl<'a> PreparedPlane3<'a> {
 #[derive(Clone, Debug)]
 pub struct PreparedOrientedPlane3 {
     filter: Option<PreparedAffineDet3Filter>,
+    exact_word_filter: Option<Box<PreparedAffineDet3ExactWordFilter>>,
     plane: Plane3,
     facts: Plane3Facts,
 }
@@ -500,8 +502,19 @@ impl PreparedOrientedPlane3 {
             [&b.x, &b.y, &b.z],
             [&c.x, &c.y, &c.z],
         );
+        let exact_word_filter = if filter.is_none() {
+            Real::prepare_affine_det3_exact_word_filter(
+                [&a.x, &a.y, &a.z],
+                [&b.x, &b.y, &b.z],
+                [&c.x, &c.y, &c.z],
+            )
+            .map(Box::new)
+        } else {
+            None
+        };
         Self {
             filter,
+            exact_word_filter,
             plane,
             facts,
         }
@@ -543,7 +556,35 @@ impl PreparedOrientedPlane3 {
                 Escalation::Exact,
             );
         }
+        if self.exact_word_filter.is_some() {
+            return self.classify_point_exact_word_with_policy(point, policy);
+        }
+        classify_point_plane_prepared(point, &self.plane, self.facts, policy)
+    }
 
+    #[cold]
+    #[inline(never)]
+    fn classify_point_exact_word_with_policy(
+        &self,
+        point: &Point3,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<PlaneSide> {
+        if let Some(sign) = self
+            .exact_word_filter
+            .as_deref()
+            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+        {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "prepared_oriented_plane3",
+                "exact-word-homogeneous-det3"
+            );
+            return PredicateOutcome::decided(
+                PlaneSide::from(crate::real::map_real_sign(sign)),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
         classify_point_plane_prepared(point, &self.plane, self.facts, policy)
     }
 }
@@ -604,6 +645,28 @@ pub(crate) fn classify_point_plane_without_filter_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
     classify_point_plane_real(point, plane, None, policy)
+}
+
+#[inline(always)]
+fn classify_point_plane_with_prepared_filter(
+    filter: Option<PreparedLinearForm3Filter>,
+    point: &Point3,
+    plane: &Plane3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSide> {
+    if let Some(sign) = filter.and_then(|filter| filter.sign([&point.x, &point.y, &point.z])) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "classify_point_plane",
+            "locally-prepared-certified-linear-form3-filter"
+        );
+        return PredicateOutcome::decided(
+            PlaneSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    classify_point_plane_without_filter_with_policy(point, plane, policy)
 }
 
 /// Classify a closed segment relative to a plane.
@@ -681,10 +744,16 @@ pub(crate) fn classify_plane_triangle_with_policy(
     c: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneTriangleRelation> {
+    let filter = Real::prepare_linear_form3_filter([
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]);
     let outcomes = [
-        classify_point_plane_without_filter_with_policy(a, plane, policy),
-        classify_point_plane_without_filter_with_policy(b, plane, policy),
-        classify_point_plane_without_filter_with_policy(c, plane, policy),
+        classify_point_plane_with_prepared_filter(filter, a, plane, policy),
+        classify_point_plane_with_prepared_filter(filter, b, plane, policy),
+        classify_point_plane_with_prepared_filter(filter, c, plane, policy),
     ];
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;

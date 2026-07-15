@@ -2,10 +2,9 @@
 //!
 //! These records deliberately describe source, approximation, and predicate
 //! evidence at the same boundary as the predicate certificates they retain.
-//! Yap's exact geometric computation model separates exact objects,
-//! approximate views, and certified combinatorial decisions; see Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997). Keeping the small provenance atoms in `hyperlimit` lets downstream
+//! The exact geometric computation model separates exact objects, approximate
+//! views, and certified combinatorial decisions. Keeping the small provenance
+//! atoms in `hyperlimit` lets downstream
 //! geometry crates share that boundary instead of reimplementing local
 //! certificate summaries.
 
@@ -70,9 +69,7 @@ impl SourceProvenance {
     ///
     /// Hypermesh-derived topology can be retained for compatibility reports,
     /// but it must never enter an exact topology boundary as if it were exact
-    /// or merely a display view. This
-    /// mirrors Yap, "Towards Exact Geometric Computation," *Computational
-    /// Geometry* 7.1-2 (1997), by keeping approximate topology decisions
+    /// or merely a display view. This keeps approximate topology decisions
     /// outside exact object identity.
     pub fn hypermesh_adapter(label: impl Into<String>) -> Self {
         Self {
@@ -95,9 +92,7 @@ impl SourceProvenance {
     /// Validate that a source label and approximation policy agree.
     ///
     /// Source provenance is the smallest public boundary between exact
-    /// geometry objects and edge adapters. Yap, "Towards Exact Geometric
-    /// Computation," *Computational Geometry* 7.1-2 (1997), separates exact
-    /// computation from approximate views; validating the source atom directly
+    /// geometry objects and edge adapters. Validating the source atom directly
     /// keeps adapters from marking lossy or external data as exact-only before
     /// topology is constructed.
     pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {
@@ -175,7 +170,7 @@ impl PredicateUse {
     /// downstream policy code can reject an undecided or approximate predicate
     /// atom before it is copied into a larger exact artifact. The cached stage
     /// and API semantic label are checked against the certificate for the same
-    /// reason: Yap's exact-object model keeps the certificate as the
+    /// reason: the exact-object model keeps the certificate as the
     /// proof-bearing object, while derived scheduling and diagnostic labels are
     /// only valid when they faithfully replay that proof route.
     pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {

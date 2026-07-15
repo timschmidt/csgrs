@@ -185,10 +185,8 @@ pub fn classify_segment3_intersection_batch(
 /// explicit policy.
 ///
 /// Batch APIs are scheduling helpers only: every item still returns its own
-/// exact predicate outcome and provenance. This keeps dense mesh and
-/// narrow-phase loops aligned with Yap's exact-geometric-computation boundary,
-/// where batching can reuse object structure but cannot turn unknown or lossy
-/// answers into topology.
+/// exact predicate outcome and provenance. Batching can reuse object structure
+/// but cannot turn unknown or lossy answers into topology.
 pub(crate) fn classify_segment3_intersection_batch_with_policy(
     cases: &[Segment3IntersectionCase],
     policy: PredicatePolicy,

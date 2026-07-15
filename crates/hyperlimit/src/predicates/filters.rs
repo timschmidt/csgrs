@@ -2,10 +2,8 @@
 //!
 //! Filters in this module are exact, policy-visible shortcuts. They may decide
 //! a predicate before expensive refinement, or return explicit uncertainty.
-//! They are not primitive-float tolerances. This follows Yap's exact geometric
-//! computation pipeline: approximate or interval information is useful only
-//! when it produces a certificate or a bounded non-decision; see Yap, "Towards
-//! Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+//! They are not primitive-float tolerances. Approximate or interval information is useful only
+//! when it produces a certificate or a bounded non-decision.
 
 use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
@@ -30,8 +28,7 @@ use crate::predicates::order::compare_reals_report_with_policy;
 ///
 /// This is the predicate-layer companion to interval arithmetic enclosures:
 /// callers own how the interval was produced, while `hyperlimit` owns the exact
-/// sign certificate. That boundary follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// sign certificate.
 pub fn certified_interval_sign_report(first: &Real, second: &Real) -> PredicateReport<Sign> {
     certified_interval_sign_report_with_policy(first, second, PredicatePolicy)
 }
@@ -61,11 +58,9 @@ pub(crate) fn certified_interval_sign_report_with_policy(
 /// proof that every value in the ball has the returned sign.
 ///
 /// This is the ball analogue of [`certified_interval_sign_report`]. Ball
-/// enclosures are common in approximate and interval filters, but Yap's exact
+/// enclosures are common in approximate and interval filters, but the exact
 /// geometric computation model requires them to return a certificate or an
-/// explicit non-decision before topology can consume them. See Yap, "Towards
-/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997). For
-/// the interval-arithmetic enclosure model, see Moore, *Interval Analysis*.
+/// explicit non-decision before topology can consume them.
 pub fn certified_ball_sign_report(center: &Real, radius: &Real) -> PredicateReport<Sign> {
     certified_ball_sign_report_with_policy(center, radius, PredicatePolicy)
 }
@@ -132,10 +127,8 @@ pub(crate) fn certified_interval_sign_with_policy(
 
     // Endpoint comparisons are themselves exact predicates. Use their
     // report-bearing forms so trace/report users can audit the sub-decisions
-    // that fed this interval certificate. This keeps interval filtering in
-    // Yap's certified-filter layer rather than treating endpoint ordering as
-    // anonymous scalar work; see Yap, "Towards Exact Geometric Computation,"
-    // *Computational Geometry* 7.1-2 (1997).
+    // that fed this interval certificate, keeping endpoint ordering inside the
+    // certified-filter layer rather than treating it as anonymous scalar work.
     let first_cmp = compare_reals_report_with_policy(first, &zero, policy).value()?;
     let second_cmp = compare_reals_report_with_policy(second, &zero, policy).value()?;
     let lower_cmp = min_ordering(first_cmp, second_cmp);

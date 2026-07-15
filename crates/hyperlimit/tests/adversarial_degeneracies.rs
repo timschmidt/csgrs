@@ -69,8 +69,7 @@ fn finite_f64_subnormal_import_remains_exact_dyadic_predicate_input() {
     // This is an explicit f64-edge regression, not a primitive-float predicate.
     // The raw f64 determinant underflows to zero, but the finite inputs are
     // lifted as exact dyadic `Real` values before orientation is decided. That
-    // is the exact-geometric-computation boundary described by Yap, "Towards
-    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
+    // keeps the predicate decision on the exact-computation side of the boundary.
     let primitive_det = (tiny - 0.0) * (tiny - 0.0);
     assert_eq!(primitive_det, 0.0);
     assert_eq!(decided(orient2d(&a, &b, &c)), Sign::Positive);

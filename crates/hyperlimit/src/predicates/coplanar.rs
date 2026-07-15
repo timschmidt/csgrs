@@ -5,14 +5,8 @@
 //! orientation is certified nonzero by exact predicates; no primitive-float
 //! normal magnitude or epsilon selects the projection. The overlap test is then
 //! decomposed into exact 2D segment intersections and point-in-triangle
-//! classifications. This follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): representation choices may preserve
-//! structure, but combinatorial claims require certified predicates.
-//!
-//! The decomposition into projected segment intersections plus containment is
-//! the coplanar counterpart to Guigue and Devillers, "Fast and Robust
-//! Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-//! Graphics Tools* 8.1 (2003).
+//! classifications. Representation choices may preserve structure, but
+//! combinatorial claims require certified predicates.
 
 use crate::classify::{SegmentIntersection, TriangleLocation};
 use crate::geometry::{Point2, Point3};
@@ -59,10 +53,8 @@ impl CoplanarTriangleRelation {
 /// Structural inconsistency in a projected coplanar triangle classifier.
 ///
 /// This validates retained projection, segment relations, vertex-location
-/// facts, and collapsed relation without recomputing predicates. Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997), frames this as the required handoff from certified predicate facts
-/// to combinatorial topology.
+/// facts, and collapsed relation without recomputing predicates. This is the
+/// required handoff from certified predicate facts to combinatorial topology.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CoplanarTriangleValidationError {
     /// A decided relation was produced without a certified projection.
@@ -158,7 +150,7 @@ impl CoplanarTriangleClassification {
     /// Source replay recomputes projection selection, projected segment
     /// predicates, and point-in-triangle predicates from `points`, `left`, and
     /// `right`, then requires exact equality with the retained classifier. This
-    /// is the source-aware form of Yap's exact-computation handoff.
+    /// is the source-aware exact-computation handoff.
     pub fn validate_against_sources(
         &self,
         points: &[Point3],
@@ -212,10 +204,7 @@ impl TrianglePredicateReport {
 ///
 /// Degeneracy is tested by exact 2D orientation in coordinate projections. If
 /// every projection has zero orientation, the three 3D points are collinear.
-/// This uses the same determinant predicate discipline as Shewchuk, "Adaptive
-/// Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates,"
-/// *Discrete & Computational Geometry* 18 (1997), and Yap's exact geometric
-/// computation model.
+/// This uses exact determinant predicates in every coordinate projection.
 pub fn classify_triangle3_degeneracy(
     a: &Point3,
     b: &Point3,
@@ -523,9 +512,7 @@ pub fn intersect_segment_with_projected_line3(
 /// must still use [`orient2d_report`] or another certified sign classifier for
 /// topology decisions; the value helper exists for exact construction
 /// parameters that are consumed only after predicates have selected the
-/// combinatorial case. This separation is the predicate/construction boundary
-/// advocated by Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997).
+/// combinatorial case, preserving the predicate/construction boundary.
 pub fn orient2d_value(a: &Point2, b: &Point2, c: &Point2) -> Real {
     (b.x.clone() - &a.x) * (c.y.clone() - &a.y) - (b.y.clone() - &a.y) * (c.x.clone() - &a.x)
 }
@@ -536,8 +523,7 @@ pub fn orient2d_value(a: &Point2, b: &Point2, c: &Point2) -> Real {
 /// coordinate axis supplies the affine parameter. The helper does not certify
 /// incidence by itself; callers should first use a predicate such as
 /// `point_on_segment` on the projected points. This keeps construction
-/// recovery behind predicate evidence, as required by Yap's exact geometric
-/// computation model.
+/// recovery behind predicate evidence.
 pub fn projected_segment_parameter3(
     point: &Point3,
     start: &Point3,
@@ -557,9 +543,7 @@ pub fn projected_segment_parameter3(
 /// The formula is `d0 / (d0 - d1)`, where `d0` and `d1` are exact projected
 /// orientation determinants against the supporting line. This is a
 /// construction helper, not a predicate: callers must only consume the result
-/// after segment/line topology has been certified by exact predicates. The
-/// retained determinant-ratio shape follows Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997).
+/// after segment/line topology has been certified by exact predicates.
 pub fn projected_line_parameter3(
     segment_start: &Point3,
     segment_end: &Point3,

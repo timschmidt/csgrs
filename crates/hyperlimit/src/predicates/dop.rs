@@ -2,15 +2,10 @@
 //!
 //! A k-DOP is represented here as a finite set of directional slabs
 //! `min <= axis . point <= max`. The module deliberately stores the retained
-//! support witnesses that produced each bound, because Yap's exact geometric
-//! computation model asks geometric systems to preserve object-level structure
-//! instead of immediately expanding every decision into unrelated scalar tests;
-//! see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-//! 7.1-2 (1997). The interval-overlap classifier is the support-function view
-//! of bounding volumes commonly used by k-DOP collision systems; see Klosowski,
-//! Held, Mitchell, Sowizral, and Zikan, "Efficient Collision Detection Using
-//! Bounding Volume Hierarchies of k-DOPs," *IEEE Transactions on Visualization
-//! and Computer Graphics* 4.1 (1998).
+//! support witnesses that produced each bound, preserving object-level structure
+//! instead of expanding every decision into unrelated scalar tests. The
+//! interval-overlap classifier is the support-function view used by k-DOP
+//! collision systems.
 
 use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
@@ -482,14 +477,8 @@ impl SupportSlab3 {
 /// Structural inconsistency in a retained support-DOP/AABB report.
 ///
 /// The report validates the exact support-interval broad-phase reduction
-/// instead of treating it as a lossy bounding-volume hint. Yap's exact
-/// geometric computation model keeps object evidence available for replay
-/// across the geometric system; see Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997). The slab family is the
-/// k-DOP support-function model of Klosowski, Held, Mitchell, Sowizral, and
-/// Zikan, "Efficient Collision Detection Using Bounding Volume Hierarchies of
-/// k-DOPs," *IEEE Transactions on Visualization and Computer Graphics* 4.1
-/// (1998).
+/// instead of treating it as a lossy bounding-volume hint. Object evidence
+/// remains available for replay across the geometric system.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopAabb3ValidationError {
     /// An empty retained DOP did not report the structural degenerate relation.
@@ -686,12 +675,8 @@ impl SupportDopAabb3Report {
 /// The report validates a k-DOP/plane decision as two exact halfspace
 /// feasibility queries: retained-DOP points satisfying the query plane's
 /// `<= 0` side, and retained-DOP points satisfying the opposite closed side.
-/// This is the fixed-dimensional LP view of Seidel, "Small-Dimensional Linear
-/// Programming and Convex Hulls Made Easy," *Discrete & Computational
-/// Geometry* 6 (1991), kept at the object-evidence boundary required by Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997). Individual slab carriers follow Klosowski, Held, Mitchell,
-/// Sowizral, and Zikan's k-DOP support-slab model, *IEEE TVCG* 4.1 (1998).
+/// This is the fixed-dimensional LP view retained at the object-evidence
+/// boundary. Individual slab carriers follow the k-DOP support-slab model.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SupportDopPlane3ValidationError {
     /// An empty retained DOP did not report the structural degenerate relation.
@@ -1056,8 +1041,7 @@ impl SupportDop3 {
     /// This is the report-bearing form of [`Self::classify_aabb3_with_policy`].
     /// It records the exact support interval of the query box on each visited
     /// k-DOP axis and stops at the first terminal slab, matching the coarse
-    /// classifier's scheduling while preserving the object-level evidence that
-    /// Yap's exact geometric computation model requires.
+    /// classifier's scheduling while preserving object-level evidence.
     pub(crate) fn classify_aabb3_report_with_policy(
         &self,
         min: &Point3,

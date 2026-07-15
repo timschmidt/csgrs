@@ -11,8 +11,8 @@ use crate::predicate::{
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 use hyperreal::{
-    PreparedAffineDet2Filter, PreparedIncircle2dFilter, PreparedInsphere3dFilter, Real,
-    RealExactSetFacts, ZeroKnowledge,
+    PreparedAffineDet2ExactWordFilter, PreparedAffineDet2Filter, PreparedIncircle2dFilter,
+    PreparedInsphere3dFilter, Real, RealExactSetFacts, ZeroKnowledge,
 };
 
 /// Orientation of three 2D points.
@@ -458,6 +458,7 @@ pub struct PreparedLine2<'a> {
     to: &'a Point2,
     facts: PreparedPredicateFacts,
     filter: Option<PreparedAffineDet2Filter>,
+    exact_word_filter: Option<PreparedAffineDet2ExactWordFilter>,
 }
 
 impl<'a> PreparedLine2<'a> {
@@ -478,11 +479,17 @@ impl<'a> PreparedLine2<'a> {
     /// the predicate layer that decides sidedness.
     pub fn from_facts(from: &'a Point2, to: &'a Point2, facts: PreparedPredicateFacts) -> Self {
         let filter = Real::prepare_affine_det2_filter([&from.x, &from.y], [&to.x, &to.y]);
+        let exact_word_filter = if filter.is_none() {
+            Real::prepare_affine_det2_exact_word_filter([&from.x, &from.y], [&to.x, &to.y])
+        } else {
+            None
+        };
         Self {
             from,
             to,
             facts,
             filter,
+            exact_word_filter,
         }
     }
 
@@ -516,7 +523,42 @@ impl<'a> PreparedLine2<'a> {
                 Escalation::Exact,
             );
         }
+        if let Some(filter) = self.exact_word_filter {
+            return self.classify_point_exact_word_with_policy(filter, point, policy);
+        }
 
+        if let Some(report) =
+            exact_report(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
+                super::exact::orient2d(self.from, self.to, point)
+            })
+        {
+            return map_outcome(report.outcome, LineSide::from);
+        }
+        map_outcome(
+            orient2d_real_expr(self.from, self.to, point, policy),
+            LineSide::from,
+        )
+    }
+
+    #[inline]
+    fn classify_point_exact_word_with_policy(
+        &self,
+        filter: PreparedAffineDet2ExactWordFilter,
+        point: &Point2,
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<LineSide> {
+        if let Some(sign) = filter.sign([&point.x, &point.y]) {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "prepared_line2",
+                "exact-word-homogeneous-det2"
+            );
+            return PredicateOutcome::decided(
+                LineSide::from(crate::real::map_real_sign(sign)),
+                Certainty::Exact,
+                Escalation::Exact,
+            );
+        }
         if let Some(report) =
             exact_report(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
                 super::exact::orient2d(self.from, self.to, point)

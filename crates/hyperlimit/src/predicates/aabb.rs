@@ -23,11 +23,8 @@ use core::cmp::Ordering;
 /// A prepared AABB stores borrowed min/max points plus [`Aabb2Facts`]. It is a
 /// predicate helper, not a broad-phase tree node: ownership of box ids,
 /// hierarchy links, sweep events, triangulation bins, and curve fragments stays
-/// in higher crates. The cached facts follow Yap's exact-geometric-computation
-/// discipline by preserving cheap, representation-derived object facts across
-/// repeated predicates without importing a primitive-float filter; see Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// in higher crates. The cache preserves cheap, representation-derived object
+/// facts across repeated predicates without importing a primitive-float filter.
 #[derive(Clone, Copy, Debug)]
 pub struct PreparedAabb2<'a> {
     min: &'a Point2,
@@ -108,11 +105,8 @@ impl<'a> PreparedAabb2<'a> {
     /// Cached [`Aabb2Facts`] are deliberately exposed to callers rather than
     /// used to replace interval predicates here. Broad-phase code may route
     /// known-point and known-segment boxes to specialized queues, but this
-    /// method still certifies the relation by exact interval classification as
-    /// in Bentley and Ottmann, "Algorithms for Reporting and Counting
-    /// Geometric Intersections," *IEEE Transactions on Computers* C-28.9
-    /// (1979), with the final topological decision kept inside exact
-    /// predicates per Yap.
+    /// method still certifies the relation by exact interval classification,
+    /// with the final topological decision kept inside exact predicates.
     pub(crate) fn classify_intersection_with_policy(
         &self,
         other: &PreparedAabb2,
@@ -260,13 +254,8 @@ pub fn classify_point_aabb2(
 /// The min/max corners may be supplied in either coordinate order; each axis is
 /// normalized by exact interval predicates. These box predicates are safe
 /// broad-phase filters for arrangements, curve intersection, and triangulation
-/// candidate pruning. They mirror the bounding-interval role in Bentley and
-/// Ottmann, "Algorithms for Reporting and Counting Geometric Intersections,"
-/// *IEEE Transactions on Computers* C-28.9 (1979), while preserving Yap's exact
-/// geometric computation boundary: boxes reduce candidate sets, but final
-/// topology still belongs to orientation/incidence predicates. See Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997).
+/// candidate pruning. Boxes reduce candidate sets, but final topology still
+/// belongs to orientation and incidence predicates.
 pub(crate) fn classify_point_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
@@ -350,11 +339,9 @@ pub fn point_in_triangle2_aabb(
 /// Return whether a point lies in the closed axis-aligned bounding box of a
 /// 2D triangle with an explicit predicate escalation policy.
 ///
-/// This is a rejection filter for downstream exact triangle predicates. The
-/// AABB idea is the standard broad-phase test described by Ericson,
-/// *Real-Time Collision Detection*, Morgan Kaufmann, 2005; here every min/max
-/// and interval decision is exact, preserving Yap's exact-geometric-computation
-/// boundary between filters and final topology.
+/// This is a rejection filter for downstream exact triangle predicates. Every
+/// min/max and interval decision is exact, preserving the boundary between
+/// filters and final topology.
 pub(crate) fn point_in_triangle2_aabb_with_policy(
     a: &Point2,
     b: &Point2,
@@ -539,8 +526,7 @@ pub(crate) fn classify_aabb2_intersection_with_policy(
 /// The facts are used only after exact interval predicates prove both axes
 /// intersect. A structurally zero-area input box cannot have a positive-area
 /// box intersection, so the final relation is `Touching` rather than
-/// `Overlapping`. This is a local exact-specialization of the box broad-phase
-/// role in Bentley and Ottmann (1979), while Yap's EGC boundary is preserved:
+/// `Overlapping`. This is a local exact specialization of the box broad phase;
 /// uncertain extent facts do not decide topology by themselves.
 pub fn classify_aabb2_intersection_with_facts(
     first_min: &Point2,
@@ -688,11 +674,7 @@ pub fn classify_aabb3_intersection(
 /// This is the 3D counterpart to [`classify_aabb2_intersection_with_policy`].
 /// It is a certified broad-phase predicate: `Disjoint` may reject a pair, while
 /// `Touching` and `Overlapping` are still only candidates for exact
-/// narrow-phase predicates before topology is mutated. This follows Yap's
-/// exact-geometric-computation boundary and the broad-phase interval role used
-/// in intersection-reporting algorithms such as Bentley and Ottmann,
-/// "Algorithms for Reporting and Counting Geometric Intersections," *IEEE
-/// Transactions on Computers* C-28.9 (1979).
+/// narrow-phase predicates before topology is mutated.
 pub(crate) fn classify_aabb3_intersection_with_policy(
     first_min: &Point3,
     first_max: &Point3,

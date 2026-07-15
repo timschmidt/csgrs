@@ -3,16 +3,9 @@
 //! A segment/plane crossing is the construction counterpart to plane-side
 //! predicates. Endpoint sides decide the topology, and only a certified proper
 //! crossing constructs `p0 + t (p1 - p0)` with `t = d0 / (d0 - d1)`, where
-//! `d0` and `d1` are exact oriented plane evaluations. Retaining that
-//! determinant-ratio form follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): predicates decide combinatorics, and
-//! constructions preserve the arithmetic structure needed by later predicates.
-//!
-//! The same event is used in robust triangle/triangle pipelines such as
-//! Moller, "A Fast Triangle-Triangle Intersection Test," *Journal of Graphics
-//! Tools* 2.2 (1997), and Guigue and Devillers, "Fast and Robust
-//! Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
-//! Graphics Tools* 8.1 (2003).
+//! `d0` and `d1` are exact oriented plane evaluations. Predicates decide the
+//! combinatorics, and constructions preserve the arithmetic structure needed by
+//! later predicates.
 
 use crate::PreparedOrientedPlane3;
 use crate::classify::PlaneSide;
@@ -51,9 +44,7 @@ pub enum SegmentPlaneConstructionFailure {
 /// Structural inconsistency in a retained segment/plane construction event.
 ///
 /// This validates the event record produced by the construction layer rather
-/// than recomputing the geometry. Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), separates certified predicate facts
-/// from later topology mutation; a segment/plane event whose relation,
+/// than recomputing the geometry. A segment/plane event whose relation,
 /// endpoint-side facts, exact point, and parameter disagree is not a safe
 /// construction artifact.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

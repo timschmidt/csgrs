@@ -63,11 +63,9 @@ pub fn compare_reals_report(left: &Real, right: &Real) -> PredicateReport<Orderi
 /// This keeps Real ordering on the same exact predicate pipeline as
 /// orientation and incidence tests. Higher crates use it for leftmost-vertex
 /// selection, ray-crossing tests, interval comparisons, and deterministic tie
-/// breaking without importing primitive-float ordering into topology code. The
-/// design follows Yap's exact-geometric-computation split: numerical structure
-/// may be carried by Real objects, while geometric decisions ask a predicate
-/// layer to certify signs. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// breaking without importing primitive-float ordering into topology code.
+/// Numerical structure may be carried by Real objects, while geometric
+/// decisions ask a predicate layer to certify signs.
 pub fn compare_reals_with_policy(
     left: &Real,
     right: &Real,
@@ -81,11 +79,8 @@ pub fn compare_reals_with_policy(
 /// Ordering predicates are often used as sub-decisions in intervals,
 /// sweep-line queues, and boundary classifiers. Returning a report makes that
 /// sub-decision auditable without changing the lightweight
-/// [`compare_reals_with_policy`] API. This is the report-level side of Yap's
-/// exact-geometric-computation boundary: approximate views remain outside the
+/// [`compare_reals_with_policy`] API. Approximate views remain outside the
 /// topology path, while certified sign decisions expose how they were decided.
-/// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997).
 pub(crate) fn compare_reals_report_with_policy(
     left: &Real,
     right: &Real,
@@ -337,9 +332,7 @@ pub fn point2_equal_report(left: &Point2, right: &Point2) -> PredicateReport<boo
 /// Point equality is an exact predicate over Real coordinate differences.
 /// Keeping it here avoids each arrangement, curve, or triangulation crate
 /// reimplementing "compare x, then compare y" with slightly different
-/// uncertainty handling. The equality decision follows the exact computation
-/// boundary described by Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997).
+/// uncertainty handling while preserving the exact-computation boundary.
 pub(crate) fn point2_equal_with_policy(
     left: &Point2,
     right: &Point2,
