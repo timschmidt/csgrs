@@ -2,10 +2,8 @@
 //!
 //! Via fabrication rules mix discrete topology, drill process intent, and
 //! exact geometry. This module keeps those pieces explicit instead of folding
-//! them into one tolerance-driven accept/reject flag. The object/predicate
-//! split follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): retain exact via and policy data,
-//! then expose every predicate used to accept or reject the candidate. The
+//! them into one tolerance-driven accept/reject flag. It retains exact via and
+//! policy data, then exposes every predicate used to accept or reject the candidate. The
 //! individual checks mirror IPC-2221-style PCB design-rule practice, where
 //! annular ring, drill aspect ratio, plated/non-plated intent, and blind/
 //! buried/through transition capability are independent fabrication rules.

@@ -37,9 +37,8 @@ pub struct PcbConvexPadFacts {
 /// authored vertices, not as a triangulated mesh or post-union shape. The
 /// constructor accepts only strictly convex polygons with certified winding,
 /// and the trace predicate certifies overlap or spacing by exact
-/// segment/segment predicates plus squared distances. This follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): candidate routes and footprint imports become trusted only after
+/// segment/segment predicates plus squared distances. Candidate routes and
+/// footprint imports become trusted only after
 /// exact object validation and exact predicate replay. The point-in-polygon
 /// half-plane test is the convex specialization of the crossing/winding tests
 /// surveyed by Haines, "Point in Polygon Strategies," *Graphics Gems IV*

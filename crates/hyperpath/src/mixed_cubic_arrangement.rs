@@ -71,9 +71,8 @@ pub struct LineCubicBezierArrangementEvent {
 /// Bezier is certified to lie on an axis-aligned line support. They are
 /// retained even when the event remains
 /// [`LineCubicBezierIntersectionClass::Unknown`] because inverse-boundary
-/// parameters are represented algebraic roots. This is the Yap retained-object
-/// discipline from "Towards Exact Geometric Computation" (1997): the exact
-/// support, hodograph, and inverse-root evidence stays available to later
+/// parameters are represented algebraic roots. The exact support, hodograph,
+/// and inverse-root evidence stays available to later
 /// cell-scheduling work instead of being replaced by sampled topology.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierSupportOverlapCandidate {
@@ -147,8 +146,7 @@ pub enum LineCubicBezierAlgebraicOverlapBreakpointDomain {
 /// separate from [`CubicBezierRealBreakpoint`] until an algebraic
 /// materialization pass can split cubic curves at represented parameters.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997), keeping
-/// exact algebraic objects explicit; the represented roots come from the
+/// Exact algebraic objects remain explicit; the represented roots come from the
 /// Sturm/Collins-Loos univariate root discipline used by `hypersolve`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierAlgebraicOverlapBreakpoint {
@@ -250,8 +248,7 @@ pub enum LineCubicBezierAlgebraicOverlapBreakpointSequenceBlocker {
 /// on the report as exact evidence, but are omitted from readiness sequences
 /// and never become span boundaries.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
-/// objects are not discarded, but topological readiness is stated separately.
+/// Exact objects are not discarded, but topological readiness is stated separately.
 /// The represented cubic roots use Collins and Loos, "Real Zeros of
 /// Polynomials" (1982), via `hypersolve` isolating intervals.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -314,8 +311,7 @@ pub struct LineCubicBezierAlgebraicOverlapSourceSpan {
 /// comparison proves that the derivative root lies inside the retained source
 /// interval.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): represented
-/// roots and exact endpoint witnesses remain first-class retained objects
+/// Represented roots and exact endpoint witnesses remain first-class retained objects
 /// until a later construction pass can materialize algebraic subcurves. The
 /// root intervals that make the source spans valid follow Collins and Loos,
 /// "Real Zeros of Polynomials" (1982); the cubic extrema use the derivative
@@ -370,9 +366,8 @@ pub struct LineCubicBezierExactAlgebraicOverlapBreakpointPromotion {
 /// parameters, while still retaining the original algebraic source candidate
 /// for audit and for downstream exact cell construction.
 ///
-/// This is a deliberately narrow Yap-style materialization step from
-/// "Towards Exact Geometric Computation" (1997): exact construction happens
-/// only after the predicate layer supplies a valid rational root witness,
+/// This is a deliberately narrow materialization step: exact construction
+/// happens only after the predicate layer supplies a valid rational root witness,
 /// exact resultant point/line images, and certified domain membership. The
 /// resultant images cite Sylvester (1853) and Collins and Loos, "Real Zeros
 /// of Polynomials" (1982); the native cubic fragments remain de Casteljau
@@ -416,8 +411,7 @@ pub enum LineCubicBezierAlgebraicBreakpointOrderClass {
 /// witnesses or separated Sturm/resultant isolating intervals; overlapping
 /// intervals stay [`LineCubicBezierAlgebraicBreakpointOrderClass::Unknown`].
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
-/// algebraic order evidence is retained as a report, but it does not mutate
+/// Exact algebraic order evidence is retained as a report, but it does not mutate
 /// the concrete `Real` breakpoint lists until construction can consume the
 /// represented roots without sampling. The polynomial images are the
 /// Sylvester-resultant construction used by Sylvester (1853) and Collins and
@@ -474,8 +468,7 @@ pub enum LineCubicBezierAlgebraicBreakpointSequenceBlocker {
 /// missing or undecidable comparisons and the original discovery order is
 /// preserved.
 ///
-/// The design follows Yap, "Towards Exact Geometric Computation" (1997): exact
-/// algebraic decisions are retained as first-class certificates and uncertain
+/// Exact algebraic decisions are retained as first-class certificates and uncertain
 /// decisions remain explicit. The pairwise certificates consumed here are
 /// Sturm-isolated root comparisons in the sense of Collins and Loos, "Real
 /// Zeros of Polynomials" (1982), with line-parameter images constructed by the
@@ -545,8 +538,7 @@ pub struct LineCubicBezierAlgebraicSourceSpan {
 /// included only when exact root membership in the retained interval is
 /// decidable.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): predicates
-/// and constructed objects remain separate, and unsupported construction keeps
+/// Predicates and constructed objects remain separate, and unsupported construction keeps
 /// exact certificates instead of floating approximations. The algebraic point
 /// images use the Sylvester resultant construction of Sylvester (1853) and the
 /// Sturm/Collins-Loos isolating-interval model from Collins and Loos, "Real
@@ -633,8 +625,7 @@ pub struct LineCubicBezierArrangementFacts {
 /// Certified events are replayed into sorted split parameters before fragments
 /// are emitted. Unknown relations do not add breakpoints. Cubic fragments are
 /// reconstructed from exact endpoint and derivative data on each retained
-/// subinterval. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): exact object construction and exact
+/// subinterval. Exact object construction and exact
 /// predicate replay are separated, and unsupported roots remain report states.
 /// The cubic restriction formula is de Casteljau's affine subdivision written
 /// in endpoint/derivative form; see Farouki, *Pythagorean Hodograph Curves*

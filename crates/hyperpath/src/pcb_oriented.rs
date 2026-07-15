@@ -41,9 +41,8 @@ pub struct PcbOrientedRectPadFacts {
 /// derived by the exact perpendicular `(-y, x)`. Construction rejects
 /// non-unit vectors instead of normalizing them through a square root. The
 /// clearance predicate then checks the retained centerline against the four
-/// exact pad edges and compares exact squared distances. This follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): heuristic route generation may propose a segment, but exact object
+/// exact pad edges and compares exact squared distances. Heuristic route
+/// generation may propose a segment, but exact object
 /// facts and predicates decide whether the candidate is accepted. It also
 /// preserves the Lee/Hightower routing split between candidate paths and final
 /// geometric certification.

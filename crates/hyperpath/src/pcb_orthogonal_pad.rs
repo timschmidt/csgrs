@@ -5,9 +5,8 @@
 //! carrier. This module keeps those pads as retained path-domain polygon
 //! records: it validates a simple rectilinear boundary, then certifies trace
 //! and board clearance by exact edge predicates. It deliberately does not
-//! triangulate, union copper, clip to boards, or materialize meshes. That is
-//! Yap's object/predicate split from "Towards Exact Geometric Computation"
-//! (*Computational Geometry* 7.1-2, 1997): imported geometry remains a precise
+//! triangulate, union copper, clip to boards, or materialize meshes. Imported
+//! geometry remains a precise
 //! object until exact predicates decide whether a candidate route is valid. The
 //! containment test is an exact rectilinear specialization of Shimrat's
 //! crossing test and Haines' "Point in Polygon Strategies" (*Graphics Gems IV*,

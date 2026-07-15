@@ -33,9 +33,8 @@ pub struct PcbCircularBoardOutlineFacts {
 /// The board is retained as center plus radius, not as a polygonal
 /// approximation. Clearance predicates compare exact squared distances against
 /// exact squared allowable radii, avoiding square roots and primitive
-/// tolerances. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): path search may propose candidates,
-/// but exact object records and exact predicates decide acceptance. For a
+/// tolerances. Path search may propose candidates, but exact object records and
+/// exact predicates decide acceptance. For a
 /// straight trace segment inside a disk, endpoint checks are sufficient because
 /// squared distance to the disk center is convex along the segment.
 #[derive(Clone, Debug, PartialEq)]

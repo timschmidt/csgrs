@@ -2,9 +2,7 @@
 //!
 //! This submodule keeps controller-style feed proposals in the path domain:
 //! retained route geometry supplies exact length, while `hypersolve` replays
-//! algebraic residuals and inequalities. That is the boundary advocated by
-//! Yap, "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): constructed candidates are not accepted until exact predicates
+//! algebraic residuals and inequalities. Constructed candidates are not accepted until exact predicates
 //! certify them. The specific four-phase S-curve profile is the standard
 //! jerk-limited rest-to-rest `+j, -j, -j, +j` motion law used in CNC/robotics
 //! time-parameterization literature, e.g. Erkorkmaz and Altintas, "High speed

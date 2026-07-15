@@ -1,9 +1,8 @@
 //! Exact retained rest-material graph for rectangular CAM stock.
 //!
 //! Rest machining is a material-domain question, but `hyperpath` should not
-//! hide that question inside tolerance-driven booleans. Following Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997), this module retains exact stock/cutter records, emits the exact
+//! hide that question inside tolerance-driven booleans. This module retains
+//! exact stock/cutter records, emits the exact
 //! stage schedule, and replays area-conservation predicates before a later
 //! `hypermesh` or process planner accepts material removal. The separation is
 //! also consistent with contour-parallel pocketing discussions such as Held,

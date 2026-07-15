@@ -1,9 +1,8 @@
 //! Exact certification for retained PH smoothing spans.
 //!
 //! PH smoothing is useful only if the proposed curve is accepted as topology
-//! and process evidence, not merely as a numeric curve fit. Following Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997), this module treats a smoothing span as a constructed candidate and
+//! and process evidence, not merely as a numeric curve fit. This module treats
+//! a smoothing span as a constructed candidate and
 //! replays exact endpoint and G1-branch constraints before callers may use its
 //! length in CAM or route-feed reports. The PH carrier itself follows Farouki
 //! and Sakkalis, "Pythagorean hodographs," *IBM Journal of Research and

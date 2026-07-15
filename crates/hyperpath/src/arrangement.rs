@@ -172,11 +172,10 @@ pub struct LineArrangementCellEdge {
 /// Directed half-edge used for exact line-cell face walks.
 ///
 /// Half-edges are sorted around each vertex by exact quadrant/cross-product
-/// predicates. Face traversal uses the standard DCEL rule from de Berg,
-/// Cheong, van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008): after crossing an edge, take the predecessor
+/// predicates. Face traversal uses the standard DCEL rule: after crossing an
+/// edge, take the predecessor
 /// of the twin in the angular order at the arrival vertex. All ordering uses
-/// exact `Real` comparisons, following Yap (1997).
+/// exact `Real` comparisons.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LineArrangementHalfEdge {
     /// Undirected cell edge index.
@@ -306,14 +305,11 @@ pub struct ExplicitArcSetArrangementEvent {
 
 /// Retained line arrangement schedule and split fragments.
 ///
-/// The report is a Yap-style exact object package: input geometry is preserved,
+/// The report is an exact object package: input geometry is preserved,
 /// pairwise events are certified by exact predicates, and split fragments are
 /// emitted only after their exact segment parameters are ordered. The pairwise
-/// classifier is the standard segment-intersection test from de Berg, Cheong,
-/// van Kreveld, and Overmars, *Computational Geometry: Algorithms and
-/// Applications*, 3rd ed. (2008), as exposed by `hyperlimit`. The split ordering
-/// uses exact rational parameter comparison, following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): topology is
+/// classifier is the standard segment-intersection test exposed by `hyperlimit`.
+/// Split ordering uses exact rational parameter comparison; topology is
 /// accepted only after exact predicate replay, not after sampled tolerance
 /// cleanup.
 #[derive(Clone, Debug, PartialEq)]
@@ -338,10 +334,8 @@ pub struct LineArrangementReport {
 /// graph. It schedules exact line/arc events and split fragments on both the
 /// retained lines and retained explicit arcs so later CAM/EDA stages can
 /// consume certified witnesses without flattening the arc or constructing
-/// planar cells in `hyperpath`. The exact line/circle solve is the retained
-/// axis-aligned branch described by CGAL-style circular-arc arrangements, while
-/// acceptance follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): every event point is replayed against
+/// planar cells in `hyperpath`. The exact line/circle solve is a retained
+/// axis-aligned branch. Every event point is replayed against
 /// exact segment bounds and exact arc-sweep predicates before it can split a
 /// source carrier. Full-circle arc fragments reuse the exact retained branch
 /// cut ordering from the arc-only scheduler instead of sampled angles.

@@ -9,8 +9,7 @@
 //! curve-curve intersection remains an explicit unsupported state instead of
 //! sampled topology.
 //!
-//! The design follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): numerical proposal and exact object
+//! Numerical proposal and exact object
 //! construction are separated from topology acceptance. The polynomial
 //! Bezier hodograph/convex-hull facts are the standard curve-carrier
 //! discipline described by Farouki, *Pythagorean Hodograph Curves* (2008).
@@ -159,9 +158,8 @@ pub enum MixedCurveEndpointTangentClass {
 /// This certificate records why a retained pair was allowed into the shared
 /// graph: either both fragments are siblings emitted by one exact pairwise
 /// split scheduler, an exact endpoint-corner contact was replayed, or an
-/// exact axis-aligned hull inequality separates two distinct sources. This
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): accepted topology is accompanied by retained
+/// exact axis-aligned hull inequality separates two distinct sources. Accepted
+/// topology is accompanied by retained
 /// predicate evidence, and unsupported topology remains explicit.
 /// Same-source algebraic siblings arise from Collins-Loos isolated roots
 /// promoted by cubic/conic sub-schedulers, while Bezier/conic hulls retain the
@@ -239,8 +237,7 @@ pub struct LineMixedBezierArrangementFacts {
 /// one concrete cell graph only from exact `Real` fragments. Cubic support
 /// roots and overlap boundaries may still be represented algebraic objects, so
 /// they are retained here as replay evidence instead of being discarded at the
-/// family boundary. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): exact objects and exact predicates
+/// family boundary. Exact objects and exact predicates
 /// are preserved even when construction is not yet available. The represented
 /// roots and order certificates use the Sturm/Collins-Loos model described by
 /// Collins and Loos, "Real Zeros of Polynomials" (1982), while native cubic
@@ -945,8 +942,7 @@ fn fragment_separation(
 
 /// Build a sweep-aware exact hull box for an explicit circular-arc fragment.
 ///
-/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
-/// 7.1-2 (1997), draws the boundary used here: topology is accepted only from
+/// Topology is accepted only from
 /// exact predicates over retained objects. The only interior extrema of an
 /// axis-aligned circular-arc box occur at the four cardinal points of the
 /// retained circle, so this routine asks the arc sweep predicate whether each

@@ -6,9 +6,8 @@
 //! This module starts that boundary for straight trace segments. See Lee,
 //! "An Algorithm for Path Connections and Its Applications," *IRE
 //! Transactions on Electronic Computers* 1961, and Hightower, "A solution to
-//! line-routing problems on the continuous plane," DAC 1969. The exact
-//! predicate discipline follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997).
+//! line-routing problems on the continuous plane," DAC 1969. Exact predicates
+//! certify every accepted route.
 
 use std::cmp::Ordering;
 

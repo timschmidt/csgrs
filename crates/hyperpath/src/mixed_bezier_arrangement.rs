@@ -129,12 +129,10 @@ pub struct LineQuadraticBezierArrangementFacts {
 /// curve cell graph whose line and quadratic edges are ordered by exact
 /// tangents and whose nonzero face walks replay exact Green-integral area.
 ///
-/// This is a Yap-style exact object package: uncertain line/Bezier relations
+/// This is an exact object package: uncertain line/Bezier relations
 /// remain explicit `Unknown` events and never create topology. Certified
 /// events are replayed into ordered line and curve parameters before fragments
-/// are emitted. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and Farouki, *Pythagorean Hodograph
-/// Curves* (2008), for the retained polynomial-curve discipline used here.
+/// are emitted.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineQuadraticBezierArrangementReport {
     /// Retained input line segments.

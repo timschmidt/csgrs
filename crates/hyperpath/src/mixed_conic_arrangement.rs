@@ -95,14 +95,12 @@ pub enum LineRationalQuadraticBezierAlgebraicBreakpointDomain {
 /// `N_v(t) - value * W(t) == 0`; this scheduler attaches each finite root to
 /// the exact line endpoint that induced the boundary value.
 ///
-/// Following Yap, "Towards Exact Geometric Computation" (1997), these
-/// candidates are exact replay evidence, not inserted topology. They remain
+/// These candidates are exact replay evidence, not inserted topology. They remain
 /// separate from [`RationalQuadraticBezierRealBreakpoint`] until a later
 /// ordering/materialization pass can compare represented conic parameters and
 /// split homogeneous rational quadratics without sampling. The homogeneous
-/// rational equation follows Farouki, *Pythagorean Hodograph Curves* (2008),
-/// while the represented root itself is isolated by the Sturm/Collins-Loos
-/// univariate root discipline used by `hypersolve`.
+/// rational equation is homogeneous, while `hypersolve` isolates represented
+/// roots with a Sturm sequence.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineRationalQuadraticBezierAlgebraicBreakpoint {
     /// Line segment index.
@@ -200,12 +198,9 @@ pub enum LineRationalQuadraticBezierAlgebraicBreakpointSequenceBlocker {
 /// it does not mutate [`LineRationalQuadraticBezierArrangementReport::conic_breakpoints`]
 /// or emit homogeneous fragments at algebraic parameters.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): exact
-/// retained objects carry replayable certificates, while equality and
+/// Exact retained objects carry replayable certificates, while equality and
 /// undecidable order remain explicit blockers. The represented conic roots use
-/// the Sturm/Collins-Loos univariate model from Collins and Loos, "Real Zeros
-/// of Polynomials" (1982); the rational conic boundary equation is kept in
-/// homogeneous form as in Farouki, *Pythagorean Hodograph Curves* (2008).
+/// a Sturm sequence, and the rational conic boundary equation stays homogeneous.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LineRationalQuadraticBezierAlgebraicBreakpointSequence {
     /// Source whose parameter orders this sequence.
@@ -358,10 +353,7 @@ pub struct MixedConicLineArrangementFragment {
 ///
 /// The fragment stores homogeneous Bernstein controls `(X, Y, W)` directly.
 /// That is the exact object produced by rational de Casteljau restriction.
-/// Keeping it homogeneous follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and the rational-curve treatment in
-/// Farouki, *Pythagorean Hodograph Curves* (2008): topology is certified before
-/// any affine denominator division is trusted.
+/// Topology is certified before any affine denominator division is trusted.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RationalQuadraticBezierRealFragment {
     /// Source rational quadratic index.

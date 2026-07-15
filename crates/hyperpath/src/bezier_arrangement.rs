@@ -76,12 +76,8 @@ pub struct LineQuadraticBezierIntersection {
 /// line equation gives a scalar quadratic `a t^2 + b t + c = 0`; roots are
 /// accepted only after exact parameter-domain and segment-bound replay. This
 /// is the standard implicit-line/substitution step used by Bezier arrangement
-/// algorithms, with the Yap exact-computation rule applied directly: the
-/// report returns exact witnesses or `Unknown`, never a tolerance-polyline
-/// approximation. See Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), and de Casteljau subdivision as
-/// used in Farouki, *Pythagorean Hodograph Curves* (2008), for the retained
-/// curve-object discipline.
+/// algorithms. The report returns exact witnesses or `Unknown`, never a
+/// tolerance-polyline approximation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineQuadraticBezierIntersectionReport {
     /// Certified intersection class.
@@ -149,9 +145,7 @@ pub enum LineCubicAlgebraicPointDomain {
 /// [`LineCubicBezierIntersectionClass::Unknown`]. This is the Yap EGC
 /// separation in concrete form: the exact algebraic object is carried forward,
 /// while only certified order predicates may later turn it into a split event.
-/// The image construction uses the resultant-based algebraic image described
-/// by Sylvester (1853), Collins and Loos, "Real Zeros of Polynomials" (1982),
-/// and Yap, "Towards Exact Geometric Computation" (1997).
+/// The image construction uses a resultant-based algebraic image.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineCubicBezierAlgebraicPointImage {
     /// Exact represented image for the curve's x-coordinate at the support root.
@@ -205,8 +199,7 @@ pub enum LineCubicBezierInverseBoundarySource {
 /// The parameter represents one root of `B_v(t) - value == 0`, where `B_v`
 /// is the cubic coordinate that varies along the retained line support. Roots
 /// are represented with Sturm-isolated exact algebraic objects rather than
-/// sampled values. This follows Yap, "Towards Exact Geometric Computation"
-/// (1997): exact algebraic evidence is retained even when current topology
+/// sampled values. Exact algebraic evidence is retained even when current topology
 /// code cannot yet materialize a native split at that represented parameter.
 /// The isolation step is the classical Sturm theorem (1835) as developed for
 /// exact real-root algorithms by Collins and Loos, "Real Zeros of Polynomials"
@@ -272,9 +265,8 @@ pub struct LineCubicBezierSupportOverlap {
 /// algebraic inverse-boundary roots. Concrete overlap topology is promoted only
 /// when both overlap endpoints have exact `Real` source parameters.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): unsupported algebraic discovery is reported instead
-/// of sampled. The Bezier restriction/replay rows use the retained polynomial
+/// Unsupported algebraic discovery is reported instead of sampled. The Bezier
+/// restriction/replay rows use the retained polynomial
 /// object discipline described by de Casteljau subdivision and by Farouki,
 /// *Pythagorean Hodograph Curves* (2008).
 #[derive(Clone, Debug, PartialEq)]
@@ -343,9 +335,8 @@ pub enum LineRationalQuadraticBezierInverseRootDomain {
 /// The parameter represents one root of
 /// `N_v(t) - value * W(t) == 0`, where `N_v/W` is the conic coordinate that
 /// varies along the retained line support. Roots are represented with
-/// `hypersolve` Sturm isolation rather than converted to primitive floats.
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): an exact
-/// algebraic object may be reported even when current topology code cannot yet
+/// `hypersolve` Sturm isolation rather than converted to primitive floats. An
+/// exact algebraic object may be reported even when current topology code cannot yet
 /// order and split with it. The univariate isolation step is the classical
 /// Sturm sequence approach; see Sturm (1835) and Collins and Loos, "Real
 /// Zeros of Polynomials" (1982).
@@ -384,12 +375,9 @@ pub struct LineRationalQuadraticBezierInverseBoundaryRoots {
 /// field stores the Bernstein controls of `N'(t)W(t)-N(t)W'(t)` for that
 /// varying coordinate, which is the rational-curve derivative numerator.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation" (1997): the exact
-/// evidence is retained when topology is unsupported. The homogeneous rational
-/// derivative is the standard conic/Bezier construction described by Farouki,
-/// *Pythagorean Hodograph Curves* (2008), and the Bernstein sign certificate is
-/// the same variation-diminishing predicate style used in Bezier arrangement
-/// kernels.
+/// Exact evidence is retained when topology is unsupported. The homogeneous
+/// rational derivative uses the standard conic/Bezier construction, and the
+/// Bernstein sign certificate uses a variation-diminishing predicate.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineRationalQuadraticBezierSupportOverlap {
     /// Axis-aligned line family used for the support equation.
@@ -531,11 +519,7 @@ pub struct QuadraticBezierArrangementReport {
     /// Vertices are de-duplicated by exact endpoint equality, edges retain
     /// fragment provenance, half-edges are sorted by exact endpoint
     /// hodographs, and nonzero faces replay polynomial Green-integral area.
-    /// This follows Yap, "Towards Exact Geometric Computation" (1997), by
-    /// promoting split Bezier objects into topology only after exact predicate
-    /// replay; the hodograph/Green-integral formulas are the standard
-    /// polynomial curve identities used by Farouki, *Pythagorean Hodograph
-    /// Curves* (2008).
+    /// Split Bezier objects enter topology only after exact predicate replay.
     pub cell_graph: CurveArrangementCellGraph,
     /// Source provenance for the schedule.
     pub provenance: PathProvenance,
@@ -588,12 +572,9 @@ pub struct RationalQuadraticBezierArrangementReport {
     /// Vertices are recovered by certified homogeneous affine division, edges
     /// retain fragment provenance, half-edges are sorted by exact homogeneous
     /// endpoint tangents, and nonzero faces replay the same rational conic
-    /// Green-integral evidence used by mixed line/conic cell scheduling. This
-    /// follows Yap, "Towards Exact Geometric Computation" (1997), by keeping
-    /// topology and exact predicates as retained evidence rather than
-    /// flattening conics into sampled polylines; the homogeneous conic carrier
-    /// is the rational Bezier representation described by Farouki,
-    /// *Pythagorean Hodograph Curves* (2008).
+    /// Green-integral evidence used by mixed line/conic cell scheduling.
+    /// Topology and exact predicates remain retained evidence rather than
+    /// flattening conics into sampled polylines.
     pub cell_graph: CurveArrangementCellGraph,
     /// Source provenance for the schedule.
     pub provenance: PathProvenance,
@@ -799,12 +780,9 @@ pub fn intersect_line_quadratic_bezier(
 /// [`LineQuadraticBezierIntersectionClass::Unknown`] because they need a later
 /// exact inverse-parameter construction.
 ///
-/// This follows Yap's "Towards Exact Geometric Computation" rule that
-/// geometric decisions should be made by exact predicates over retained
-/// objects, not sampled approximations. The Bezier substitution is the standard
-/// Bernstein-polynomial line incidence test used in curve arrangement kernels;
-/// see also Farouki, *Pythagorean Hodograph Curves* (2008), for preserving
-/// polynomial curve objects through exact downstream processing.
+/// Geometric decisions use exact predicates over retained objects, not sampled
+/// approximations. The Bezier substitution is the standard Bernstein-polynomial
+/// line incidence test used in curve arrangement kernels.
 pub fn intersect_axis_aligned_line_quadratic_bezier(
     segment: &LinePathSegment,
     curve: &QuadraticBezier,
@@ -883,12 +861,8 @@ fn intersect_axis_aligned_line_quadratic_bezier_with_axis(
 /// point equations and unsupported inverse witnesses remain
 /// [`LineCubicBezierIntersectionClass::Unknown`] for topology, but point
 /// equations retain Sturm-isolated algebraic parameters and exact coordinate
-/// image evidence for later schedulers. This is the Yap boundary from
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): exact construction is admitted only when the predicate layer has a
-/// replayable object. The cubic Bezier carrier and tangent classification
-/// follow the polynomial-curve discipline in Farouki, *Pythagorean Hodograph
-/// Curves* (2008).
+/// image evidence for later schedulers. Exact construction is admitted only
+/// when the predicate layer has a replayable object.
 pub fn intersect_line_cubic_bezier(
     segment: &LinePathSegment,
     curve: &CubicBezier,

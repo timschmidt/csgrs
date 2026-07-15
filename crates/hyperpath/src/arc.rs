@@ -4,9 +4,8 @@
 //! objects instead of tolerance-polylines. This module starts with cardinal
 //! circular arcs, whose endpoints are exact axis points around a center. That
 //! limited construction is still useful for G2/G3-style paths and gives
-//! offset generation a precise radius update. The split follows Yap,
-//! "Towards Exact Geometric Computation," and the arrangement/arc-kernel
-//! discipline used by CGAL circular-arc traits: preserve curve structure first,
+//! offset generation a precise radius update. The arrangement/arc-kernel
+//! discipline preserves curve structure first,
 //! then ask exact predicates to certify topology.
 
 use std::cmp::Ordering;
@@ -262,8 +261,7 @@ pub struct ExplicitArcIntersectionReport {
 /// This is the public scheduling predicate for arc/arc arrangement. It does
 /// not invent new topology; it dispatches to same-circle overlap or
 /// different-circle point intersection and records which exact predicate path
-/// certified the result. Yap's "Towards Exact Geometric Computation" frames
-/// this as an object/predicate split: the scheduler chooses certified
+/// certified the result. The scheduler chooses certified
 /// topology, while later output kernels materialize regions or controller
 /// moves only from the certified report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -768,9 +766,8 @@ impl ExplicitCircularArc {
     /// back into exact points and accepted only after exact closed-segment
     /// bounds and exact arc-sweep membership both replay successfully.
     ///
-    /// The construction follows Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997): exact geometric topology is
-    /// emitted only from replayable exact predicates, with undecidable signs
+    /// Exact geometric topology is emitted only from replayable exact
+    /// predicates, with undecidable signs
     /// and square-root failures reported as
     /// [`LineExplicitArcIntersectionClass::Unknown`]. The retained circular
     /// arc object/predicate split is the same model used by exact circular-arc

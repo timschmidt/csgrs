@@ -365,9 +365,8 @@ pub enum AccelerationLimitedFeedProfileClass {
 /// comparison `acceleration * path_length` against `max_feed^2`; then it
 /// replays a denominator-free residual through `hypersolve`. For a triangular
 /// profile the residual is `a*t^2 - 4L = 0`; for a trapezoidal profile it is
-/// `a*v*t - a*L - v^2 = 0`. Keeping the profile equation explicit follows
-/// Yap, "Towards Exact Geometric Computation," by separating proposed process
-/// parameters from certified path facts. The rest-to-rest speed model is the
+/// `a*v*t - a*L - v^2 = 0`. Keeping the profile equation explicit separates
+/// proposed process parameters from certified path facts. The rest-to-rest speed model is the
 /// CAM/feed-rate counterpart of the hodograph-first view in Farouki,
 /// *Pythagorean Hodograph Curves* (2008): speed laws are certified algebraic
 /// objects, not sampled controller traces.

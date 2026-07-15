@@ -3,9 +3,8 @@
 //! This module certifies per-span motion proposals whose acceleration varies
 //! linearly from `a0` to `a1` over an exact time `T`. The retained route
 //! supplies exact path length, while `hypersolve` replays the kinematic
-//! equalities and process inequalities without sampled controller traces. This
-//! follows Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): constructed numeric schedules are candidates until
+//! equalities and process inequalities without sampled controller traces.
+//! Constructed numeric schedules remain candidates until
 //! exact algebraic predicates certify them.
 //!
 //! The equations are the constant-jerk span identities used in jerk-limited

@@ -41,9 +41,8 @@ pub struct PcbObroundBoardOutlineFacts {
 /// then checking exact point-to-spine squared distances for the retained
 /// centerline endpoints or pad center.
 ///
-/// This follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): lossy polygonal approximations and primitive float
-/// tolerances are not topology evidence. The endpoint-only trace containment
+/// Lossy polygonal approximations and primitive-float tolerances are not
+/// topology evidence. The endpoint-only trace containment
 /// check is valid because capsules are convex; see the standard convex-set
 /// containment property used in Preparata and Shamos, *Computational Geometry:
 /// An Introduction* (1985). Thus a straight centerline segment whose endpoints

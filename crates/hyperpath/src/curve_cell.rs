@@ -2,9 +2,8 @@
 //!
 //! This module is a topology report layer, not a polygonizer. It stores exact
 //! curve fragments as vertices, edges, angular half-edge order, and face walks
-//! only after exact predicate replay. That is the separation advocated by Yap,
-//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-//! (1997): constructed objects and certified predicates are retained, while
+//! only after exact predicate replay. Constructed objects and certified
+//! predicates are retained, while
 //! unproved topology is reported as an error instead of being sampled.
 
 use std::cmp::Ordering;
@@ -141,9 +140,7 @@ pub enum CurveArrangementCellFaceClass {
 /// material loop and no containment ray is needed. Boundary hits, tangent ray
 /// contacts, and genuinely cubic ray equations whose represented roots cannot
 /// certify parameter, image, and derivative predicates stay
-/// [`Uncertain`](Self::Uncertain). This is the
-/// object/predicate boundary in Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): retained topology may be classified
+/// [`Uncertain`](Self::Uncertain). Retained topology may be classified
 /// only when exact witnesses replay; otherwise uncertainty is explicit.
 /// Explicit arcs use retained circle/sweep predicates in the style of exact
 /// circular-arc arrangements such as CGAL `Arrangement_on_surface_2`;
@@ -790,10 +787,8 @@ fn curve_vertex_index(
 /// scheduler one topological carrier for the shared span, just as the line
 /// arrangement already does for collinear overlaps. The predicate remains
 /// deliberately structural: it accepts only exact native curve equality and
-/// refuses broader algebraic overlap ownership. That is Yap's
-/// object/predicate boundary from "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997), applied to de Boor/Farouki-style
-/// retained curve objects rather than sampled polylines.
+/// refuses broader algebraic overlap ownership, retaining curve objects rather
+/// than sampled polylines.
 fn find_duplicate_curve_edge(
     edges: &mut [CurveArrangementCellEdge],
     kind: CurveArrangementCellEdgeKind,
@@ -1805,9 +1800,8 @@ fn point_on_segment(
 /// `(x-c_x)^2 + (y-c_y)^2 = r^2` at the query ordinate, filters the two exact
 /// candidate points through [`ExplicitCircularArc::classify_point`], and then
 /// applies the same half-open endpoint ownership used by the polynomial
-/// carriers. This follows Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): candidates are constructed exactly
-/// and accepted only by exact predicates. The circular-carrier predicate is
+/// carriers. Candidates are constructed exactly and accepted only by exact
+/// predicates. The circular-carrier predicate is
 /// the same object/sweep split used by exact circular-arc arrangements such as
 /// CGAL `Arrangement_on_surface_2`.
 fn explicit_arc_ray_crossing(
@@ -2010,9 +2004,8 @@ fn cubic_ray_crossing(
 /// the root from endpoints, the x-image from the query point, and the local
 /// derivative tower certifies odd multiplicity. Simple roots cross; double
 /// roots with nonzero second derivative touch and contribute zero crossings;
-/// triple roots with nonzero third derivative cross. This follows Yap,
-/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
-/// (1997): exact algebraic witnesses may drive topology, but overlapping or
+/// triple roots with nonzero third derivative cross. Exact algebraic witnesses
+/// may drive topology, but overlapping or
 /// undecidable intervals stay explicit uncertainty. The multiplicity replay is
 /// the standard Sturm/Collins-Loos represented-root discipline, while the
 /// derivative tower is the Bernstein hodograph model described by Farouki,
@@ -2191,9 +2184,7 @@ fn isolate_cubic_ray_roots(
 /// For `P(t) = a t^3 + b t^2 + c t + d`, a triple root exists exactly when
 /// `b^2 = 3ac` and `b^3 = 27a^2d`, with root `-b/(3a)`. This coefficient
 /// certificate avoids asking an interval image of `P'` to be monotone at the
-/// multiple root, where it cannot be. That is the exact-object/exact-predicate
-/// split advocated by Yap, "Towards Exact Geometric Computation,"
-/// *Computational Geometry* 7.1-2 (1997): the retained cubic equation itself
+/// multiple root, where it cannot be. The retained cubic equation itself
 /// certifies the crossing multiplicity, and undecidable evidence still remains
 /// explicit uncertainty.
 fn cubic_triple_root(
@@ -2409,9 +2400,8 @@ fn conic_ray_crossing(
 ///
 /// Simple roots toggle parity. If the first derivative of the scalar support
 /// equation vanishes, this routine asks for the second derivative and certifies
-/// a non-crossing even-multiplicity tangency when it is nonzero. That is the
-/// exact counterpart of the classical crossing-number rule, but with Yap's
-/// "Towards Exact Geometric Computation" boundary: tangency is ignored only
+/// a non-crossing even-multiplicity tangency when it is nonzero. Tangency is
+/// ignored only
 /// after exact multiplicity evidence replays; higher multiplicity or
 /// undecidable derivative evidence remains [`CurveArrangementLoopRoleBlocker::TangentContact`].
 /// The derivative tests use the Bernstein/Farouki Bezier model and the

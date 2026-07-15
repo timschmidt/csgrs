@@ -9,9 +9,8 @@
 //! `u(t)^2 + v(t)^2`. See Farouki and Sakkalis, "Pythagorean hodographs",
 //! *IBM Journal of Research and Development* 34.5 (1990).
 //!
-//! The implementation follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): the curve and inverse-length
-//! parameter are retained as exact algebraic candidates, then `hypersolve`
+//! The curve and inverse-length parameter are retained as exact algebraic
+//! candidates, then `hypersolve`
 //! replays the denominator-free polynomial residual before accepting them.
 
 use hyperlimit::Point2;

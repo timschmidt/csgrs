@@ -2,9 +2,7 @@
 //!
 //! `hyperpath` owns path-domain carriers and scheduling facts for CAM and PCB
 //! routing. It deliberately delegates scalar arithmetic to `hyperreal` and
-//! topology predicates to `hyperlimit`. This is the object-layer split
-//! advocated by Yap, "Towards Exact Geometric Computation," *Computational
-//! Geometry* 7.1-2 (1997): path search may generate candidates, but exact
+//! topology predicates to `hyperlimit`. Path search may generate candidates, but exact
 //! predicates certify the topology before the candidate becomes output.
 
 pub mod arc;

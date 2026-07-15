@@ -5,9 +5,8 @@
 //! applicable retained rule scope for each trace/arc, computes the strongest
 //! exact width and clearance values within that scope, certifies route width,
 //! and replays straight-trace pairwise clearance from the retained rule
-//! evidence. The split follows Yap, "Towards Exact Geometric Computation,"
-//! *Computational Geometry* 7.1-2 (1997): keep exact source objects, exact
-//! predicates, and predicate reports separate. It also mirrors
+//! evidence. Exact source objects, predicates, and predicate reports remain
+//! separate. The design also mirrors
 //! Lee/Hightower-style autorouting, where graph/path proposals and rule
 //! acceptance are distinct phases.
 

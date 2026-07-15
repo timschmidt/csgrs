@@ -1,10 +1,8 @@
 //! Exact predicates for retained orthogonal route keepouts.
 //!
 //! Orthogonal polygon keepouts let router imports retain notched no-route
-//! regions without turning `hyperpath` into a planar boolean engine. The
-//! predicates here are the same object/predicate boundary advocated by Yap,
-//! "Towards Exact Geometric Computation" (*Computational Geometry* 7.1-2,
-//! 1997): source geometry is kept as exact vertices, and route candidates are
+//! regions without turning `hyperpath` into a planar boolean engine. Source
+//! geometry is kept as exact vertices, and route candidates are
 //! rejected only by exact decisions. Boundary containment uses Shimrat's
 //! crossing rule as surveyed by Haines, "Point in Polygon Strategies"
 //! (*Graphics Gems IV*, 1994), specialized to rectilinear loops.
