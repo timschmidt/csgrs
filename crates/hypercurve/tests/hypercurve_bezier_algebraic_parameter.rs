@@ -38,11 +38,8 @@ fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
 #[test]
 fn bernstein_conversion_preserves_high_degree_constant_identity() {
     let cubic = decided(
-        BezierParameterPolynomial::try_new_bernstein_basis(
-            vec![r(1), r(2), r(4), r(8)],
-            &policy(),
-        )
-        .unwrap(),
+        BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1), r(2), r(4), r(8)], &policy())
+            .unwrap(),
     );
     let polynomial = decided(
         BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1); 65], &policy()).unwrap(),

@@ -60,6 +60,34 @@ fn main() {
         elapsed / u32::try_from(cold_monotonicity_inputs.len()).unwrap()
     );
 
+    let high_degree_monotonicity_inputs = (0..250)
+        .map(|_| {
+            RationalBezier2::try_new(
+                (0..=12)
+                    .map(|index| p(index, (index * index) % 7))
+                    .collect(),
+                (0..=12).map(|index| r(1 + index % 3)).collect(),
+            )
+            .expect("benchmark high-degree curve is valid")
+        })
+        .collect::<Vec<_>>();
+    let started = Instant::now();
+    let mut high_degree_monotonicity_count = 0_usize;
+    for curve in &high_degree_monotonicity_inputs {
+        high_degree_monotonicity_count =
+            high_degree_monotonicity_count.wrapping_add(black_box(usize::from(
+                black_box(curve)
+                    .axis_is_monotone(Axis2::X, black_box(&policy))
+                    .expect("benchmark high-degree monotonicity is exact"),
+            )));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_bezier_exact_degree_12_axis_monotonicity: {} curves in {elapsed:?} ({:?}/curve), checksum={high_degree_monotonicity_count}",
+        high_degree_monotonicity_inputs.len(),
+        elapsed / u32::try_from(high_degree_monotonicity_inputs.len()).unwrap()
+    );
+
     let stationary_monotone = stationary_monotone_curve();
     assert!(
         stationary_monotone

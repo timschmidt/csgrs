@@ -1679,23 +1679,19 @@ fn subdivide_scalar_bernstein_half(
     }
 
     let degree = controls.len() - 1;
-    let mut levels = Vec::with_capacity(controls.len());
-    levels.push(controls.to_vec());
+    let mut work = controls.to_vec();
+    let mut left = Vec::with_capacity(controls.len());
+    let mut right = Vec::with_capacity(controls.len());
+    left.push(work[0].clone());
+    right.push(work[degree].clone());
     for level in 1..=degree {
-        let previous = &levels[level - 1];
-        let next = previous
-            .windows(2)
-            .map(|pair| midpoint_real(&pair[0], &pair[1]))
-            .collect::<Result<Vec<_>, _>>()?;
-        levels.push(next);
+        for index in 0..=degree - level {
+            work[index] = midpoint_real(&work[index], &work[index + 1])?;
+        }
+        left.push(work[0].clone());
+        right.push(work[degree - level].clone());
     }
-
-    let left = (0..=degree)
-        .map(|level| levels[level][0].clone())
-        .collect::<Vec<_>>();
-    let right = (0..=degree)
-        .map(|level| levels[degree - level][level].clone())
-        .collect::<Vec<_>>();
+    right.reverse();
     Ok((left, right))
 }
 
@@ -3670,6 +3666,15 @@ mod tests {
             subdivide_scalar_bernstein_half(&[]),
             Err(UncertaintyReason::Unsupported)
         );
+    }
+
+    #[test]
+    fn rational_midpoint_subdivision_retains_both_de_casteljau_diagonals() {
+        let controls = [0_i8, 2, 4, 6, 8].map(Real::from);
+        let (left, right) = subdivide_scalar_bernstein_half(&controls).unwrap();
+
+        assert_eq!(left, [0_i8, 1, 2, 3, 4].map(Real::from));
+        assert_eq!(right, [4_i8, 5, 6, 7, 8].map(Real::from));
     }
 
     #[test]

@@ -142,6 +142,18 @@ fn retained_algebraic_line_fragment(
 
 fn main() -> CurveResult<()> {
     let policy = CurvePolicy::certified();
+    let moment_curve = hypercurve::CubicBezier2::new(p(0, 0), p(1, 3), p(3, -2), p(4, 0));
+    let moment_iterations = 20_000_u32;
+    let started = Instant::now();
+    for _ in 0..moment_iterations {
+        black_box(black_box(&moment_curve).area_moments_contribution()?);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "cubic_bezier_exact_area_moments: {moment_iterations} iterations in {elapsed:?} ({:?}/iter)",
+        elapsed / moment_iterations
+    );
+
     let first_region = square_region(0, 0, 4, 4)?;
     let second_region = square_region(2, 0, 6, 4)?;
     let region_boolean_iterations = 1_000_u32;

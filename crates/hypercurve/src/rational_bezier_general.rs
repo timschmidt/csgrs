@@ -1741,26 +1741,18 @@ impl RationalBezier2 {
                 .skip(derivative_start)
             {
                 let coordinate_index = product_index - derivative_index;
-                let scale = checked_binomial(derivative_degree, derivative_index)?
-                    .checked_mul(checked_binomial(degree, coordinate_index)?)?;
-                coefficient +=
-                    Real::from(scale) * derivative_coordinate * &self.weights()[coordinate_index];
+                let scale = exact_binomial_product(
+                    derivative_degree,
+                    derivative_index,
+                    degree,
+                    coordinate_index,
+                )?;
+                let product_difference = derivative_coordinate * &self.weights()[coordinate_index]
+                    - &weighted_coordinates[coordinate_index]
+                        * &weight_derivative[derivative_index];
+                coefficient += scale * product_difference;
             }
-            let coordinate_start = product_index.saturating_sub(derivative_degree);
-            let coordinate_end = degree.min(product_index);
-            for (coordinate_index, weighted_coordinate) in weighted_coordinates
-                .iter()
-                .enumerate()
-                .take(coordinate_end + 1)
-                .skip(coordinate_start)
-            {
-                let derivative_index = product_index - coordinate_index;
-                let scale = checked_binomial(degree, coordinate_index)?
-                    .checked_mul(checked_binomial(derivative_degree, derivative_index)?)?;
-                coefficient -=
-                    Real::from(scale) * weighted_coordinate * &weight_derivative[derivative_index];
-            }
-            let basis_scale = Real::from(checked_binomial(product_degree, product_index)?);
+            let basis_scale = exact_binomial(product_degree, product_index)?;
             coefficients.push((coefficient / basis_scale).ok()?);
         }
         Some(coefficients)
@@ -3234,6 +3226,35 @@ fn checked_binomial(n: usize, k: usize) -> Option<u64> {
             .checked_mul(numerator)
             .map(|value| value / denominator)
     })
+}
+
+fn exact_binomial(n: usize, k: usize) -> Option<Real> {
+    if let Some(value) = checked_binomial(n, k) {
+        return Some(Real::from(value));
+    }
+    let k = k.min(n.checked_sub(k)?);
+    let mut result = Real::one();
+    for index in 0..k {
+        result *= Real::from(u64::try_from(n.checked_sub(index)?).ok()?);
+        result = (result / Real::from(u64::try_from(index.checked_add(1)?).ok()?)).ok()?;
+    }
+    Some(result)
+}
+
+fn exact_binomial_product(
+    first_n: usize,
+    first_k: usize,
+    second_n: usize,
+    second_k: usize,
+) -> Option<Real> {
+    if let (Some(first), Some(second)) = (
+        checked_binomial(first_n, first_k),
+        checked_binomial(second_n, second_k),
+    ) && let Some(product) = first.checked_mul(second)
+    {
+        return Some(Real::from(product));
+    }
+    Some(exact_binomial(first_n, first_k)? * exact_binomial(second_n, second_k)?)
 }
 
 impl HomogeneousPoint2 {

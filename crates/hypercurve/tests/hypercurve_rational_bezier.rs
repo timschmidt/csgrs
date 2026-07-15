@@ -165,6 +165,38 @@ fn mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity() {
 }
 
 #[test]
+fn high_degree_nonuniform_rational_weights_preserve_axis_monotonicity() {
+    let curve = RationalBezier2::try_new(
+        (0..=12)
+            .map(|index| p(index, (index * index) % 7))
+            .collect(),
+        (0..=12).map(|index| r(1 + index % 3)).collect(),
+    )
+    .unwrap();
+
+    assert!(
+        curve
+            .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
+            .unwrap()
+    );
+}
+
+#[test]
+fn degree_40_rational_monotonicity_does_not_depend_on_u64_binomials() {
+    let curve = RationalBezier2::try_new(
+        (0..=40).map(|index| p(index, index % 3)).collect(),
+        vec![r(1); 41],
+    )
+    .unwrap();
+
+    assert!(
+        curve
+            .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
+            .unwrap()
+    );
+}
+
+#[test]
 fn rational_axis_monotonicity_preserves_typed_sign_blocker() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
         .unwrap();
