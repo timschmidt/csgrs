@@ -36,6 +36,24 @@ fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
 }
 
 #[test]
+fn bernstein_conversion_preserves_high_degree_constant_identity() {
+    let cubic = decided(
+        BezierParameterPolynomial::try_new_bernstein_basis(
+            vec![r(1), r(2), r(4), r(8)],
+            &policy(),
+        )
+        .unwrap(),
+    );
+    let polynomial = decided(
+        BezierParameterPolynomial::try_new_bernstein_basis(vec![r(1); 65], &policy()).unwrap(),
+    );
+
+    assert_eq!(cubic.coefficients(), &[r(1), r(3), r(3), r(1)]);
+    assert_eq!(polynomial.degree(), 0);
+    assert_eq!(polynomial.coefficients(), &[r(1)]);
+}
+
+#[test]
 fn unit_root_isolation_orders_represented_and_algebraic_roots() {
     let polynomial = polynomial(vec![q(1, 4), q(-1, 2), q(-1, 2), r(1)]);
     let roots = match polynomial.isolate_unit_interval_roots(&policy()).unwrap() {

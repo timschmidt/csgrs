@@ -25,6 +25,23 @@ fn decided<T>(classification: Classification<T>) -> T {
 
 fn main() -> CurveResult<()> {
     let policy = CurvePolicy::certified();
+    let bernstein_coefficients = (0..=32).map(|index| r((index % 7) - 3)).collect::<Vec<_>>();
+    let conversion_iterations = 20_000_u32;
+    let started = Instant::now();
+    let mut converted_degree = 0_usize;
+    for _ in 0..conversion_iterations {
+        let polynomial = decided(BezierParameterPolynomial::try_new_bernstein_basis(
+            black_box(bernstein_coefficients.clone()),
+            &policy,
+        )?);
+        converted_degree += black_box(polynomial.degree());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_parameter_bernstein_32_to_power: {conversion_iterations} iterations in {elapsed:?} ({:?}/iter), degree_checksum={converted_degree}",
+        elapsed / conversion_iterations
+    );
+
     let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
         vec![q(1, 16), r(-1), r(1)],
         &policy,

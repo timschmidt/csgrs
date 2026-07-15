@@ -1708,38 +1708,35 @@ pub(crate) fn bernstein_to_power_coefficients(values: Vec<Real>) -> CurveResult<
         .len()
         .checked_sub(1)
         .ok_or(CurveError::InvalidBezierPolynomial)?;
+    let binomials = checked_binomial_triangle(degree)?;
     let mut coefficients = vec![Real::zero(); values.len()];
-    for (index, value) in values.into_iter().enumerate() {
-        for (power, coefficient) in coefficients
-            .iter_mut()
-            .enumerate()
-            .take(degree + 1)
-            .skip(index)
-        {
-            let magnitude = checked_binomial_u64(degree, index)?
-                .checked_mul(checked_binomial_u64(degree - index, power - index)?)
-                .ok_or(CurveError::InvalidBezierPolynomial)?;
-            let term = &value * &Real::from(magnitude);
+    for (power, coefficient) in coefficients.iter_mut().enumerate() {
+        let mut alternating_sum = Real::zero();
+        for (index, value) in values.iter().take(power + 1).enumerate() {
+            let term = value * &Real::from(binomials[power][index]);
             if (power - index).is_multiple_of(2) {
-                *coefficient = &*coefficient + term;
+                alternating_sum = &alternating_sum + term;
             } else {
-                *coefficient = &*coefficient - term;
+                alternating_sum = &alternating_sum - term;
             }
         }
+        *coefficient = alternating_sum * Real::from(binomials[degree][power]);
     }
     Ok(coefficients)
 }
 
-fn checked_binomial_u64(n: usize, k: usize) -> CurveResult<u64> {
-    let k = k.min(n - k);
-    (0..k).try_fold(1_u64, |result, index| {
-        let numerator =
-            u64::try_from(n - index).map_err(|_| CurveError::InvalidBezierPolynomial)?;
-        let denominator =
-            u64::try_from(index + 1).map_err(|_| CurveError::InvalidBezierPolynomial)?;
-        result
-            .checked_mul(numerator)
-            .map(|value| value / denominator)
-            .ok_or(CurveError::InvalidBezierPolynomial)
-    })
+fn checked_binomial_triangle(degree: usize) -> CurveResult<Vec<Vec<u64>>> {
+    let mut rows: Vec<Vec<u64>> = Vec::with_capacity(degree + 1);
+    rows.push(vec![1]);
+    for row_index in 1..=degree {
+        let previous = &rows[row_index - 1];
+        let mut row = vec![1; row_index + 1];
+        for index in 1..row_index {
+            row[index] = previous[index - 1]
+                .checked_add(previous[index])
+                .ok_or(CurveError::InvalidBezierPolynomial)?;
+        }
+        rows.push(row);
+    }
+    Ok(rows)
 }
