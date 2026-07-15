@@ -877,29 +877,14 @@ fn test_csg_exact_mass_properties_use_hyperphysics_report() {
     assert_eq!(report.certificate.triangle_count, 12);
 }
 
-#[ignore = "TODO: impl Mesh::from_stl"]
-#[cfg(any())]
 #[test]
 #[cfg(feature = "stl-io")]
-fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>> {
-    // We'll create a small shape, write to an STL, read it back.
-    // You can redirect to a temp file or do an in-memory test.
-    let tmp_path = "test_csg_output.stl";
-
+fn test_csg_stl_round_trip() -> Result<(), Box<dyn std::error::Error>> {
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());
-    let res = cube.to_stl_binary("A cube");
-    let _ = std::fs::write(tmp_path, res.as_ref().unwrap());
-    assert!(res.is_ok());
-
-    let stl_data: Vec<u8> = std::fs::read(tmp_path)?;
+    let stl_data = cube.to_stl_binary("A cube")?;
     let csg_in: Mesh<()> = Mesh::from_stl(&stl_data, ())?;
-    // We expect to read the same number of triangular faces as the cube originally had
-    // (though the orientation/normals might differ).
-    // The default cube -> 6 polygons x 1 polygon each with 4 vertices => 12 triangles in STL.
-    // So from_stl_file => we get 12 triangles as 12 polygons (each is a tri).
-    assert_eq!(csg_in.polygons.len(), 12);
 
-    // Cleanup the temp file if desired
-    let _ = std::fs::remove_file(tmp_path);
+    // The six quad faces export as twelve triangles.
+    assert_eq!(csg_in.polygons.len(), 12);
     Ok(())
 }
