@@ -1197,6 +1197,49 @@ fn sparse_to_svo_compaction_round_trips_only_canonical_finest_exact_cells() {
 }
 
 #[test]
+fn bottom_up_svo_compaction_retains_only_canonical_reachable_nodes() {
+    let frame = frame(6);
+    let mut sparse = SparseVoxelGrid::new(frame);
+    for i in 0..64_u64 {
+        sparse
+            .set(
+                VoxelAddress::new(6, [i, (i * 3) % 64, (i * 7) % 64]).unwrap(),
+                VoxelCell::material(MaterialRegionId((i % 4) as u32)),
+            )
+            .unwrap();
+    }
+
+    let (svo, report) = SvoVoxelGrid::from_sparse_grid_with_report(&sparse).unwrap();
+    let (replayed, replay) = svo.replay_sparse_grid_with_report().unwrap();
+    assert_eq!(replayed, sparse);
+    assert_eq!(report.compacted_nodes, svo.stats().nodes);
+    assert_eq!(report.compacted_nodes, 39);
+    assert!(replay.visited_nodes > report.compacted_nodes);
+    assert!(report.compacted_nodes < report.source_cells * 4);
+    assert!(report.exact_svo_compaction_ready);
+}
+
+#[test]
+fn uniform_child_collapse_preserves_parent_logical_depth() {
+    let frame = frame(2);
+    let mut svo = SvoVoxelGrid::new(frame);
+    let material = VoxelCell::material(MaterialRegionId(21));
+    for child in 0..8_u8 {
+        svo.set(VoxelAddress::root().child(child).unwrap(), material)
+            .unwrap();
+    }
+
+    let report = svo.report();
+    assert_eq!(
+        svo.get(VoxelAddress::new(2, [3, 3, 3]).unwrap()).unwrap(),
+        material
+    );
+    assert_eq!(report.root_aggregate.child_count, 64);
+    assert_eq!(report.root_aggregate.occupancy_interval.total_cells, 64);
+    assert!(report.root_aggregate_covers_frame);
+}
+
+#[test]
 fn svo_surface_replay_extracts_exact_shell_after_sparse_expansion() {
     let frame = frame(2);
     let mut grid = SvoVoxelGrid::new(frame.clone());

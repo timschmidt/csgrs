@@ -189,7 +189,11 @@ pub struct SvoCompactionReport {
     pub unknown_cells: usize,
     /// Source cells carrying lossy adapter evidence.
     pub lossy_cells: usize,
-    /// Number of path-copy edits applied to the SVO.
+    /// Number of source-cell insertions applied to the SVO.
+    ///
+    /// Canonical finest-depth imports use one bottom-up reduction pass;
+    /// noncanonical coarse imports retain sequential path-copy semantics for
+    /// audit compatibility.
     pub applied_edits: usize,
     /// Edits that were semantic no-ops against the current SVO state.
     pub semantic_noops: usize,
@@ -257,11 +261,10 @@ impl SvoVoxelGrid {
         let mut exact_payload_cells = 0_usize;
         let mut unknown_cells = 0_usize;
         let mut lossy_cells = 0_usize;
-        let mut applied_edits = 0_usize;
-        let mut semantic_noops = 0_usize;
-        let mut root_changes = 0_usize;
+        let mut entries = Vec::with_capacity(source.len());
 
         for (address, cell) in source.iter() {
+            entries.push((*address, *cell));
             source_cells += 1;
             if address.depth == source.frame().depth() {
                 finest_depth_cells += 1;
@@ -272,12 +275,25 @@ impl SvoVoxelGrid {
             exact_payload_cells += usize::from(cell_report.exact_cell_evidence_ready);
             unknown_cells += usize::from(cell_report.has_unknown);
             lossy_cells += usize::from(cell_report.has_lossy);
-
-            let edit = grid.set_with_report(*address, *cell)?;
-            applied_edits += 1;
-            semantic_noops += usize::from(edit.edit.semantic_noop);
-            root_changes += usize::from(edit.root_changed);
         }
+
+        let (applied_edits, semantic_noops, root_changes) = if non_finest_depth_cells == 0 {
+            let previous_root = grid.root;
+            entries.sort_unstable_by_key(|(address, _)| address.morton_code());
+            grid.root = grid.build_finest_sparse_subtree(&entries, 0);
+            (source_cells, 0, usize::from(grid.root != previous_root))
+        } else {
+            let mut applied_edits = 0_usize;
+            let mut semantic_noops = 0_usize;
+            let mut root_changes = 0_usize;
+            for (address, cell) in entries {
+                let edit = grid.set_with_report(address, cell)?;
+                applied_edits += 1;
+                semantic_noops += usize::from(edit.edit.semantic_noop);
+                root_changes += usize::from(edit.root_changed);
+            }
+            (applied_edits, semantic_noops, root_changes)
+        };
 
         let stats = grid.stats();
         let (replayed_sparse, sparse_replay) = grid.replay_sparse_grid_with_report()?;
@@ -519,9 +535,11 @@ impl SvoVoxelGrid {
         id
     }
 
-    fn intern_branch(&mut self, children: [SvoNodeId; 8]) -> SvoNodeId {
-        if children.iter().all(|child| *child == children[0]) {
-            return children[0];
+    fn intern_branch(&mut self, children: [SvoNodeId; 8], remaining_depth: u8) -> SvoNodeId {
+        if children.iter().all(|child| *child == children[0])
+            && let SvoNode::Leaf { cell, .. } = self.node(children[0])
+        {
+            return self.intern_leaf(*cell, remaining_depth);
         }
 
         let key = SvoNodeKey::Branch(children);
@@ -538,6 +556,40 @@ impl SvoVoxelGrid {
         });
         self.interned.insert(key, id);
         id
+    }
+
+    fn build_finest_sparse_subtree(
+        &mut self,
+        entries: &[(VoxelAddress, VoxelCell)],
+        current_depth: u8,
+    ) -> SvoNodeId {
+        let remaining_depth = self.frame.depth() - current_depth;
+        if entries.is_empty() {
+            return self.intern_leaf(VoxelCell::empty(), remaining_depth);
+        }
+        if remaining_depth == 0 {
+            debug_assert_eq!(entries.len(), 1);
+            return self.intern_leaf(entries[0].1, 0);
+        }
+
+        let mut boundaries = [0_usize; 9];
+        let mut cursor = 0_usize;
+        for child in 0..8_u8 {
+            boundaries[usize::from(child)] = cursor;
+            while cursor < entries.len() && child_index(entries[cursor].0, current_depth) == child {
+                cursor += 1;
+            }
+        }
+        boundaries[8] = cursor;
+        debug_assert_eq!(cursor, entries.len());
+        let mut children = [SvoNodeId(0); 8];
+        for child in 0..8 {
+            children[child] = self.build_finest_sparse_subtree(
+                &entries[boundaries[child]..boundaries[child + 1]],
+                current_depth + 1,
+            );
+        }
+        self.intern_branch(children, remaining_depth)
     }
 
     fn set_recursive(
@@ -562,7 +614,7 @@ impl SvoVoxelGrid {
         let child = child_index(address, current_depth);
         children[child as usize] =
             self.set_recursive(children[child as usize], address, current_depth + 1, cell)?;
-        Ok(self.intern_branch(children))
+        Ok(self.intern_branch(children, self.frame.depth() - current_depth))
     }
 
     fn replay_node_to_sparse(
