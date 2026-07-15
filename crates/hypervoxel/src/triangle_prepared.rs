@@ -28,7 +28,7 @@ use crate::triangle_component_audit::{
 use crate::triangle_mesh::{
     ExactTriangle3, ExactTriangleSolidMesh, TriangleCellIntersection, VoxelTriangleSolidClassifier,
     insert_unique_parameter, point3, ray_parity_directions, triangle_bounds,
-    triangle_intersects_cell,
+    triangle_intersects_cell_after_aabb,
 };
 use crate::triangle_row_cache::{ComponentAxisRowCache, ComponentAxisRowKey};
 use crate::{
@@ -263,7 +263,7 @@ fn classify_cell_boundary_against_prepared_triangle_solid(
         }
 
         boundary_triangle_tests += 1;
-        match triangle_intersects_cell(&triangle.triangle, bounds)? {
+        match triangle_intersects_cell_after_aabb(&triangle.triangle, bounds)? {
             TriangleCellIntersection::Intersects => {
                 return Ok(PreparedTriangleSolidCellReport {
                     classifier: VoxelTriangleSolidClassifier::Boundary,

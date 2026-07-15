@@ -258,6 +258,39 @@ fn exact_triangle_surface_classifies_tiny_triangle_against_one_cell() {
 }
 
 #[test]
+fn exact_triangle_cell_sat_rejects_edge_axis_gap_and_keeps_corner_contact() {
+    let frame = frame(2);
+    let address = VoxelAddress::new(2, [0, 0, 0]).unwrap();
+    let separated = ExactTriangleSurfaceMesh::new(
+        vec![tri([
+            [rf(9, 10), rf(6, 5), rf(1, 2)],
+            [rf(6, 5), rf(9, 10), rf(1, 2)],
+            [rf(6, 5), rf(6, 5), rf(1, 2)],
+        ])],
+        frame.source().cloned(),
+        true,
+    );
+    let touching = ExactTriangleSurfaceMesh::new(
+        vec![tri([
+            [rf(4, 5), rf(6, 5), rf(1, 2)],
+            [rf(6, 5), rf(4, 5), rf(1, 2)],
+            [rf(6, 5), rf(6, 5), rf(1, 2)],
+        ])],
+        frame.source().cloned(),
+        true,
+    );
+
+    assert_eq!(
+        classify_cell_against_triangle_surface_mesh(address, &frame, &separated).unwrap(),
+        VoxelTriangleMeshClassifier::Outside
+    );
+    assert_eq!(
+        classify_cell_against_triangle_surface_mesh(address, &frame, &touching).unwrap(),
+        VoxelTriangleMeshClassifier::Boundary
+    );
+}
+
+#[test]
 fn exact_triangle_surface_rejects_empty_and_degenerate_sources() {
     let frame = frame(1);
     let empty = ExactTriangleSurfaceMesh::new(vec![], frame.source().cloned(), true);

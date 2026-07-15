@@ -6,19 +6,17 @@
 //! retained source triangles become boundary cells, and a closed-solid cover,
 //! where strict non-boundary cells are filled by exact ray-parity tests.
 //!
-//! The cell/triangle test is a composition of exact predicates: AABB broad
-//! phase, exact 3D point-in-triangle tests, and exact triangle/triangle tests
-//! against the twelve AABB face triangles. Topology changes only after
-//! proof-producing predicates; undecided comparisons stay explicit unknowns.
-//! The triangle/triangle decomposition uses the Möller and
-//! Guigue–Devillers predicate families, routed through `hyperlimit`'s exact
-//! reports instead of primitive floating-point tests.
+//! The cell/triangle test is the exact separating-axis test of
+//! Akenine-Möller: the three box axes, triangle plane normal, and nine
+//! edge-cross-axis directions. Doubled cell-centered coordinates avoid
+//! division while retaining exact closed-boundary contact. Topology changes
+//! only after proof-producing comparisons; undecided comparisons stay
+//! explicit unknowns.
 
 use hyperlimit::{
-    Aabb3Intersection, Aabb3PointLocation, PredicateOutcome, RayTriangleIntersection,
-    Triangle3Location, TriangleTriangleIntersection, classify_aabb3_intersection,
-    classify_point_aabb3, classify_point_triangle3, classify_ray_triangle3_intersection_report,
-    classify_triangle_triangle3_points_with_policy,
+    Aabb3Intersection, PredicateOutcome, RayTriangleIntersection, Triangle3Location,
+    classify_aabb3_intersection, classify_point_triangle3,
+    classify_ray_triangle3_intersection_report,
 };
 use hyperreal::{Rational, Real};
 
@@ -680,7 +678,6 @@ pub(crate) fn triangle_intersects_cell(
         return Ok(TriangleCellIntersection::Unknown);
     }
 
-    let triangle_points = triangle.points();
     let triangle_bounds = triangle_bounds(triangle)?;
     let cell_min = point3(&bounds.min);
     let cell_max = point3(&bounds.max);
@@ -694,60 +691,95 @@ pub(crate) fn triangle_intersects_cell(
         return Ok(TriangleCellIntersection::Disjoint);
     }
 
-    for point in &triangle_points {
-        if point_in_aabb(point, &cell_min, &cell_max)? {
-            return Ok(TriangleCellIntersection::Intersects);
-        }
-    }
-
-    let cell_corners = cell_corner_points(bounds);
-    for corner in &cell_corners {
-        match decide_triangle_location(classify_point_triangle3(
-            &triangle_points[0],
-            &triangle_points[1],
-            &triangle_points[2],
-            corner,
-        ))? {
-            Triangle3Location::Inside | Triangle3Location::OnEdge | Triangle3Location::OnVertex => {
-                return Ok(TriangleCellIntersection::Intersects);
-            }
-            Triangle3Location::Degenerate => {
-                return Err(HypervoxelError::InvalidSourceGeometry {
-                    reason: "triangle surface mesh contains degenerate triangles",
-                });
-            }
-            Triangle3Location::OffPlane | Triangle3Location::Outside => {}
-        }
-    }
-
-    for face_triangle in aabb_face_triangles(&cell_corners) {
-        match decide_triangle_triangle(classify_triangle_triangle3_points_with_policy(
-            [
-                &triangle_points[0],
-                &triangle_points[1],
-                &triangle_points[2],
-            ],
-            [face_triangle[0], face_triangle[1], face_triangle[2]],
-            hyperlimit::PredicatePolicy,
-        ))? {
-            TriangleTriangleIntersection::Degenerate => {}
-            relation if relation.intersects() => return Ok(TriangleCellIntersection::Intersects),
-            _ => {}
-        }
-    }
-
-    Ok(TriangleCellIntersection::Disjoint)
+    triangle_intersects_cell_after_aabb(triangle, bounds)
 }
 
-fn point_in_aabb(
-    point: &hyperlimit::Point3,
-    min: &hyperlimit::Point3,
-    max: &hyperlimit::Point3,
+pub(crate) fn triangle_intersects_cell_after_aabb(
+    triangle: &ExactTriangle3,
+    bounds: &CellBounds,
+) -> HypervoxelResult<TriangleCellIntersection> {
+    let center_sum: [Real; 3] = core::array::from_fn(|axis| &bounds.min[axis] + &bounds.max[axis]);
+    let full_extents: [Real; 3] =
+        core::array::from_fn(|axis| &bounds.max[axis] - &bounds.min[axis]);
+    let centered: [[Real; 3]; 3] = core::array::from_fn(|vertex| {
+        core::array::from_fn(|axis| {
+            (&triangle.vertices[vertex][axis] * &Real::from(2_u8)) - &center_sum[axis]
+        })
+    });
+    let edges: [[Real; 3]; 3] = core::array::from_fn(|edge| {
+        let next = (edge + 1) % 3;
+        core::array::from_fn(|axis| &centered[next][axis] - &centered[edge][axis])
+    });
+    let normal = cross3(&edges[0], &edges[1]);
+    if separates_triangle_cell_axis(&centered, &full_extents, &normal)? {
+        return Ok(TriangleCellIntersection::Disjoint);
+    }
+    for edge in &edges {
+        let cross_axes = [
+            [Real::zero(), edge[2].clone(), Real::zero() - &edge[1]],
+            [Real::zero() - &edge[2], Real::zero(), edge[0].clone()],
+            [edge[1].clone(), Real::zero() - &edge[0], Real::zero()],
+        ];
+        for axis in &cross_axes {
+            if separates_triangle_cell_axis(&centered, &full_extents, axis)? {
+                return Ok(TriangleCellIntersection::Disjoint);
+            }
+        }
+    }
+    Ok(TriangleCellIntersection::Intersects)
+}
+
+fn cross3(left: &[Real; 3], right: &[Real; 3]) -> [Real; 3] {
+    [
+        &left[1] * &right[2] - &left[2] * &right[1],
+        &left[2] * &right[0] - &left[0] * &right[2],
+        &left[0] * &right[1] - &left[1] * &right[0],
+    ]
+}
+
+fn separates_triangle_cell_axis(
+    triangle: &[[Real; 3]; 3],
+    full_extents: &[Real; 3],
+    axis: &[Real; 3],
 ) -> HypervoxelResult<bool> {
-    Ok(matches!(
-        decide_aabb_point(classify_point_aabb3(min, max, point))?,
-        Aabb3PointLocation::Inside | Aabb3PointLocation::Boundary
-    ))
+    let mut magnitudes: [Real; 3] = core::array::from_fn(|_| Real::zero());
+    let mut nonzero = false;
+    for component in 0..3 {
+        match compare(&axis[component], &Real::zero(), component)? {
+            core::cmp::Ordering::Less => {
+                magnitudes[component] = Real::zero() - &axis[component];
+                nonzero = true;
+            }
+            core::cmp::Ordering::Equal => {}
+            core::cmp::Ordering::Greater => {
+                magnitudes[component] = axis[component].clone();
+                nonzero = true;
+            }
+        }
+    }
+    if !nonzero {
+        return Ok(false);
+    }
+    let projections: [Real; 3] = core::array::from_fn(|vertex| {
+        (0..3).fold(Real::zero(), |sum, component| {
+            &sum + &triangle[vertex][component] * &axis[component]
+        })
+    });
+    let mut min = projections[0].clone();
+    let mut max = projections[0].clone();
+    for projection in projections.iter().skip(1) {
+        if compare(projection, &min, 0)? == core::cmp::Ordering::Less {
+            min = projection.clone();
+        }
+        if compare(projection, &max, 0)? == core::cmp::Ordering::Greater {
+            max = projection.clone();
+        }
+    }
+    let radius = (0..3).fold(Real::zero(), |sum, component| {
+        &sum + &full_extents[component] * &magnitudes[component]
+    });
+    Ok(compare(&min, &radius, 0)? == core::cmp::Ordering::Greater
+        || compare(&max, &(Real::zero() - &radius), 0)? == core::cmp::Ordering::Less)
 }
 
 pub(crate) fn triangle_bounds(triangle: &ExactTriangle3) -> HypervoxelResult<crate::ExactAabb3> {
@@ -778,29 +810,6 @@ fn decide_aabb(
     outcome.ok_or_unknown("triangle-aabb")
 }
 
-fn decide_aabb_point(
-    outcome: PredicateOutcome<Aabb3PointLocation>,
-) -> HypervoxelResult<Aabb3PointLocation> {
-    outcome.ok_or_unknown("triangle-aabb-point")
-}
-
-fn decide_triangle_location(
-    outcome: PredicateOutcome<Triangle3Location>,
-) -> HypervoxelResult<Triangle3Location> {
-    outcome.ok_or_unknown("triangle-point")
-}
-
-fn decide_triangle_triangle(
-    outcome: PredicateOutcome<hyperlimit::TriangleTriangleClassification>,
-) -> HypervoxelResult<TriangleTriangleIntersection> {
-    outcome
-        .value()
-        .map(|classification| classification.relation)
-        .ok_or(HypervoxelError::UnknownScalarOrdering {
-            field: "triangle-triangle",
-        })
-}
-
 trait PredicateOutcomeExt<T> {
     fn ok_or_unknown(self, field: &'static str) -> HypervoxelResult<T>;
 }
@@ -810,27 +819,6 @@ impl<T> PredicateOutcomeExt<T> for PredicateOutcome<T> {
         self.value()
             .ok_or(HypervoxelError::UnknownScalarOrdering { field })
     }
-}
-
-fn cell_corner_points(bounds: &CellBounds) -> [hyperlimit::Point3; 8] {
-    bounds.corners().map(|corner| point3(&corner))
-}
-
-fn aabb_face_triangles(corners: &[hyperlimit::Point3; 8]) -> [[&hyperlimit::Point3; 3]; 12] {
-    [
-        [&corners[0], &corners[1], &corners[2]],
-        [&corners[1], &corners[3], &corners[2]],
-        [&corners[4], &corners[6], &corners[5]],
-        [&corners[5], &corners[6], &corners[7]],
-        [&corners[0], &corners[4], &corners[1]],
-        [&corners[1], &corners[4], &corners[5]],
-        [&corners[2], &corners[3], &corners[6]],
-        [&corners[3], &corners[7], &corners[6]],
-        [&corners[0], &corners[2], &corners[4]],
-        [&corners[2], &corners[6], &corners[4]],
-        [&corners[1], &corners[5], &corners[3]],
-        [&corners[3], &corners[5], &corners[7]],
-    ]
 }
 
 pub(crate) fn point3(values: &[Real; 3]) -> hyperlimit::Point3 {
