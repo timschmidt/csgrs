@@ -28,6 +28,14 @@ use hash::{
 
 pub type Children = [BlockId; MAX_CHILDREN];
 
+/// Advances through a full-period probe sequence when two distinct node keys
+/// have the same 64-bit fingerprint. The odd increment visits every `u64`
+/// value before repeating while dispersing probes for the identity hasher.
+#[inline(always)]
+const fn next_pattern_key(key: u64) -> u64 {
+    key.wrapping_add(0x9E37_79B9_7F4A_7C15)
+}
+
 /// Memory-budgeted owner of deduplicated voxel DAG nodes.
 pub struct VoxInterner<T> {
     patterns: [PatternsHashmap; 2],
@@ -38,6 +46,7 @@ pub struct VoxInterner<T> {
     children: PoolAllocatorLite<Children>,
     values: PoolAllocatorLite<T>,
     hashes: PoolAllocatorLite<u64>,
+    has_pattern_collisions: [bool; 2],
     capacity: usize,
     empty_branch_id: BlockId,
     empty_branch_hash: u64,
@@ -151,6 +160,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
             values,
             hashes,
             patterns: [branch_patterns, leafs_patterns],
+            has_pattern_collisions: [false; 2],
             capacity: nodes_capacity,
             empty_branch_id,
             empty_branch_hash,
@@ -286,7 +296,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         *ref_count -= 1;
 
         if *ref_count == 0 {
-            self.patterns[block_id.is_leaf() as usize].remove(self.hashes.get(block_index));
+            self.remove_pattern(*block_id);
 
             #[cfg(feature = "memory_stats")]
             {
@@ -403,7 +413,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
         *ref_count -= count;
 
         if *ref_count == 0 {
-            self.patterns[block_id.is_leaf() as usize].remove(self.hashes.get(block_index));
+            self.remove_pattern(*block_id);
 
             #[cfg(feature = "memory_stats")]
             {
@@ -513,7 +523,7 @@ impl<T: VoxelTrait> VoxInterner<T> {
                     }
                 }
 
-                self.patterns[current_id.is_leaf() as usize].remove(self.hashes.get(current_index));
+                self.remove_pattern(current_id);
 
                 #[cfg(feature = "memory_stats")]
                 {
@@ -621,81 +631,91 @@ impl<T: VoxelTrait> VoxInterner<T> {
         println!("  Node recycled");
     }
 
+    #[inline(always)]
     pub fn get_or_create_leaf(&mut self, value: T) -> BlockId {
         debug_assert_ne!(value, T::default(), "Leaf value should not be default");
 
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::get_or_create_leaf");
 
-        let hash = compute_leaf_hash_for_value(&value);
+        let fingerprint = compute_leaf_hash_for_value(&value);
+        self.get_or_create_leaf_with_fingerprint(value, fingerprint)
+    }
 
-        match self.patterns[PATTERNS_TYPE_LEAF].entry(hash) {
-            Entry::Occupied(entry) => {
-                let existing_id = *entry.get();
-                if self.is_valid_block_id(&existing_id) {
-                    self.inc_ref(&existing_id);
+    #[inline(always)]
+    fn get_or_create_leaf_with_fingerprint(&mut self, value: T, fingerprint: u64) -> BlockId {
+        let mut pattern_key = fingerprint;
+        loop {
+            match self.patterns[PATTERNS_TYPE_LEAF].entry(pattern_key) {
+                Entry::Occupied(entry) => {
+                    let existing_id = *entry.get();
+                    if !self.is_valid_block_id(&existing_id) {
+                        #[cfg(feature = "debug_trace_ref_counts")]
+                        self.dump_patterns();
+
+                        panic!(
+                            "Expired node in patterns: {existing_id:?} pattern key = {pattern_key:X}"
+                        );
+                    }
+                    if self.values.get(existing_id.index()) == &value {
+                        self.inc_ref(&existing_id);
+
+                        #[cfg(feature = "debug_trace_ref_counts")]
+                        println!(
+                            "get_or_create_leaf: value: {value} fingerprint = {fingerprint:X} pattern_key = {pattern_key:X} existing_id = {existing_id:?} ref_count: {}",
+                            self.get_ref(&existing_id)
+                        );
+
+                        #[cfg(feature = "memory_stats")]
+                        {
+                            self.stats.total_cache_hits += 1;
+                            self.stats.leaf_cache_hits += 1;
+                        }
+
+                        return existing_id;
+                    }
+
+                    pattern_key = next_pattern_key(pattern_key);
+                }
+                Entry::Vacant(entry) => {
+                    if pattern_key != fingerprint {
+                        self.has_pattern_collisions[PATTERNS_TYPE_LEAF] = true;
+                    }
+                    let index = get_next_index_macro!(self);
+
+                    let generation = *self.generations.get(index);
+
+                    let block_id = BlockId::new_leaf(index, generation);
+
+                    entry.insert(block_id);
+
+                    *self.values.get_mut(index) = value;
+                    *self.hashes.get_mut(index) = pattern_key;
+
+                    debug_assert_eq!(
+                        self.get_ref(&block_id),
+                        0,
+                        "New node should have zero ref count"
+                    );
+
+                    self.inc_ref(&block_id);
 
                     #[cfg(feature = "debug_trace_ref_counts")]
                     println!(
-                        "get_or_create_leaf: value: {value} hash = {hash:X} existing_id = {existing_id:?} ref_count: {}",
-                        self.get_ref(&existing_id)
-                    );
-
-                    debug_assert_eq!(
-                        self.values.get(existing_id.index()),
-                        &value,
-                        "Value mismatch for existing leaf node"
+                        "get_or_create_leaf: value: {value} fingerprint = {fingerprint:X} pattern_key = {pattern_key:X} new_id = {block_id:?} ref_count: {}",
+                        self.get_ref(&block_id)
                     );
 
                     #[cfg(feature = "memory_stats")]
                     {
-                        self.stats.total_cache_hits += 1;
-                        self.stats.leaf_cache_hits += 1;
+                        self.stats.leaf_nodes += 1;
+                        self.stats.patterns += 1;
+                        self.stats.total_cache_misses += 1;
+                        self.stats.leaf_cache_misses += 1;
                     }
 
-                    existing_id
-                } else {
-                    #[cfg(feature = "debug_trace_ref_counts")]
-                    self.dump_patterns();
-
-                    panic!("Expired node in patterns: {existing_id:?} hash = {hash:X}");
+                    return block_id;
                 }
-            }
-            Entry::Vacant(entry) => {
-                let index = get_next_index_macro!(self);
-
-                let generation = *self.generations.get(index);
-
-                let block_id = BlockId::new_leaf(index, generation);
-
-                entry.insert(block_id);
-
-                *self.values.get_mut(index) = value;
-                *self.hashes.get_mut(index) = hash;
-
-                debug_assert_eq!(
-                    self.get_ref(&block_id),
-                    0,
-                    "New node should have zero ref count"
-                );
-
-                self.inc_ref(&block_id);
-
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "get_or_create_leaf: value: {value} hash = {hash:X} new_id = {block_id:?} ref_count: {}",
-                    self.get_ref(&block_id)
-                );
-
-                #[cfg(feature = "memory_stats")]
-                {
-                    self.stats.leaf_nodes += 1;
-                    self.stats.patterns += 1;
-                    self.stats.total_cache_misses += 1;
-                    self.stats.leaf_cache_misses += 1;
-                }
-
-                block_id
             }
         }
     }
@@ -705,111 +725,105 @@ impl<T: VoxelTrait> VoxInterner<T> {
     /// Every non-empty child must already have one reference held for this
     /// call. A cache hit consumes those references and returns a reference to
     /// the existing branch; a miss retains them in the newly created branch.
+    #[inline(always)]
     pub fn get_or_create_branch(&mut self, children: Children, types: u8, mask: u8) -> BlockId {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("VoxInterner::get_or_create_branch");
 
-        let hash = compute_branch_hash_for_children(&children, types, mask);
+        let fingerprint = compute_branch_hash_for_children(&children, types, mask);
+        self.get_or_create_branch_with_fingerprint(children, types, mask, fingerprint)
+    }
 
-        debug_assert_ne!(
-            hash, self.empty_branch_hash,
-            "Empty branch hash collision: {children:?}"
-        );
+    #[inline(always)]
+    fn get_or_create_branch_with_fingerprint(
+        &mut self,
+        children: Children,
+        types: u8,
+        mask: u8,
+        fingerprint: u64,
+    ) -> BlockId {
+        let mut pattern_key = fingerprint;
+        loop {
+            match self.patterns[PATTERNS_TYPE_BRANCH].entry(pattern_key) {
+                Entry::Occupied(entry) => {
+                    let existing_id = *entry.get();
+                    assert!(
+                        self.is_valid_block_id(&existing_id),
+                        "Expired node in patterns: {existing_id:?} pattern key = {pattern_key:X}"
+                    );
+                    if existing_id.types() == types
+                        && existing_id.mask() == mask
+                        && self.children.get(existing_id.index()) == &children
+                    {
+                        #[cfg(feature = "debug_trace_ref_counts")]
+                        println!(
+                            "get_or_create_branch: children: {children:?} fingerprint = {fingerprint:X} pattern_key = {pattern_key:X} existing_id = {existing_id:?}"
+                        );
 
-        match self.patterns[PATTERNS_TYPE_BRANCH].entry(hash) {
-            Entry::Occupied(entry) => {
-                let existing_id = *entry.get();
+                        self.dec_child_refs(&children);
 
-                debug_assert_ne!(
-                    existing_id,
-                    BlockId::EMPTY,
-                    "Empty branch id in patterns: {children:?}"
-                );
+                        #[cfg(debug_assertions)]
+                        self.ensure_valid_children(&children);
 
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "get_or_create_branch: children: {children:?} hash = {hash:X} existing_id = {existing_id:?}"
-                );
+                        self.inc_ref(&existing_id);
 
-                debug_assert!(
-                    self.is_valid_block_id(&existing_id),
-                    "Expired node in patterns: {existing_id:?} hash = {hash:X}"
-                );
+                        #[cfg(feature = "memory_stats")]
+                        {
+                            self.stats.total_cache_hits += 1;
+                            self.stats.branch_cache_hits += 1;
+                        }
 
-                debug_assert_eq!(
-                    existing_id.types(),
-                    types,
-                    "Types mismatch for existing branch node"
-                );
+                        return existing_id;
+                    }
 
-                debug_assert_eq!(
-                    existing_id.mask(),
-                    mask,
-                    "Mask mismatch for existing branch node"
-                );
-
-                debug_assert_eq!(
-                    self.children.get(existing_id.index()),
-                    &children,
-                    "Children mismatch for existing branch node"
-                );
-
-                self.dec_child_refs(&children);
-
-                #[cfg(debug_assertions)]
-                self.ensure_valid_children(&children);
-
-                self.inc_ref(&existing_id);
-
-                #[cfg(feature = "memory_stats")]
-                {
-                    self.stats.total_cache_hits += 1;
-                    self.stats.branch_cache_hits += 1;
+                    pattern_key = next_pattern_key(pattern_key);
                 }
+                Entry::Vacant(entry) => {
+                    if pattern_key != fingerprint {
+                        self.has_pattern_collisions[PATTERNS_TYPE_BRANCH] = true;
+                    }
+                    let index = get_next_index_macro!(self);
 
-                existing_id
-            }
-            Entry::Vacant(entry) => {
-                let index = get_next_index_macro!(self);
+                    let generation = *self.generations.get(index);
 
-                let generation = *self.generations.get(index);
+                    let block_id = BlockId::new_branch(index, generation, types, mask);
 
-                let block_id = BlockId::new_branch(index, generation, types, mask);
+                    debug_assert_ne!(block_id, BlockId::INVALID, "Invalid block id");
 
-                debug_assert_ne!(block_id, BlockId::INVALID, "Invalid block id");
+                    entry.insert(block_id);
 
-                entry.insert(block_id);
+                    // Cache the aggregate value used by coarser-LOD reads.
+                    let values: [T; 8] =
+                        std::array::from_fn(|i| *self.values.get(children[i].index()));
+                    let average = T::average(&values);
 
-                // Cache the aggregate value used by coarser-LOD reads.
-                let values: [T; 8] = std::array::from_fn(|i| *self.values.get(children[i].index()));
-                let average = T::average(&values);
+                    *self.children.get_mut(index) = children;
+                    *self.values.get_mut(index) = average;
+                    *self.hashes.get_mut(index) = pattern_key;
 
-                *self.children.get_mut(index) = children;
-                *self.values.get_mut(index) = average;
-                *self.hashes.get_mut(index) = hash;
+                    #[cfg(feature = "debug_trace_ref_counts")]
+                    println!(
+                        "get_or_create_branch: children: {children:?} fingerprint = {fingerprint:X} pattern_key = {pattern_key:X} new_id: {block_id:?} types: {types:2X} mask: {mask:2X}"
+                    );
 
-                #[cfg(feature = "debug_trace_ref_counts")]
-                println!(
-                    "get_or_create_branch: children: {children:?} hash = {hash:X} new_id: {block_id:?} types: {types:2X} mask: {mask:2X}"
-                );
+                    debug_assert_eq!(
+                        self.get_ref(&block_id),
+                        0,
+                        "New node should have zero ref count"
+                    );
 
-                debug_assert_eq!(
-                    self.get_ref(&block_id),
-                    0,
-                    "New node should have zero ref count"
-                );
+                    self.inc_ref(&block_id);
 
-                self.inc_ref(&block_id);
+                    #[cfg(feature = "memory_stats")]
+                    {
+                        self.stats.branch_nodes += 1;
+                        self.stats.patterns += 1;
+                        self.stats.total_cache_misses += 1;
+                        self.stats.branch_cache_misses += 1;
+                    }
 
-                #[cfg(feature = "memory_stats")]
-                {
-                    self.stats.branch_nodes += 1;
-                    self.stats.patterns += 1;
-                    self.stats.total_cache_misses += 1;
-                    self.stats.branch_cache_misses += 1;
+                    return block_id;
                 }
-
-                block_id
             }
         }
     }
@@ -918,7 +932,8 @@ impl<T: VoxelTrait> VoxInterner<T> {
     pub fn deserialize_leaf(&mut self, index: u32, value: T) -> BlockId {
         debug_assert_ne!(value, T::default(), "Leaf value should not be default");
 
-        let hash = compute_leaf_hash_for_value(&value);
+        let fingerprint = compute_leaf_hash_for_value(&value);
+        let pattern_key = self.vacant_pattern_key(PATTERNS_TYPE_LEAF, fingerprint);
 
         let next_id = get_next_index_macro!(self);
         assert_eq!(next_id, index, "Invalid block id");
@@ -929,9 +944,12 @@ impl<T: VoxelTrait> VoxInterner<T> {
         let block_id = BlockId::new_leaf(index, generation);
 
         *self.values.get_mut(index) = value;
-        *self.hashes.get_mut(index) = hash;
+        *self.hashes.get_mut(index) = pattern_key;
 
-        self.patterns[PATTERNS_TYPE_LEAF].insert(hash, block_id);
+        self.patterns[PATTERNS_TYPE_LEAF].insert(pattern_key, block_id);
+        if pattern_key != fingerprint {
+            self.has_pattern_collisions[PATTERNS_TYPE_LEAF] = true;
+        }
 
         block_id
     }
@@ -944,22 +962,67 @@ impl<T: VoxelTrait> VoxInterner<T> {
         mask: u8,
         average: T,
     ) {
-        let hash = compute_branch_hash_for_children(&children, types, mask);
+        let fingerprint = compute_branch_hash_for_children(&children, types, mask);
+        let pattern_key = self.vacant_pattern_key(PATTERNS_TYPE_BRANCH, fingerprint);
 
         let index = block_id.index();
 
-        debug_assert_ne!(
-            hash, self.empty_branch_hash,
-            "Empty branch hash collision: {children:?}"
-        );
-
         *self.children.get_mut(index) = children;
         *self.values.get_mut(index) = average;
-        *self.hashes.get_mut(index) = hash;
+        *self.hashes.get_mut(index) = pattern_key;
 
-        self.patterns[PATTERNS_TYPE_BRANCH].insert(hash, block_id);
+        self.patterns[PATTERNS_TYPE_BRANCH].insert(pattern_key, block_id);
+        if pattern_key != fingerprint {
+            self.has_pattern_collisions[PATTERNS_TYPE_BRANCH] = true;
+        }
 
         self.inc_all_child_refs(&children);
+    }
+
+    #[inline]
+    fn vacant_pattern_key(&self, pattern_type: usize, fingerprint: u64) -> u64 {
+        let mut pattern_key = fingerprint;
+        while self.patterns[pattern_type].contains_key(&pattern_key) {
+            pattern_key = next_pattern_key(pattern_key);
+        }
+        pattern_key
+    }
+
+    /// Removes one logical open-addressed entry and closes the following probe
+    /// cluster. Closing the cluster is necessary because later colliding keys
+    /// must remain discoverable from their original fingerprints.
+    #[inline]
+    fn remove_pattern(&mut self, block_id: BlockId) {
+        let pattern_type = block_id.is_leaf() as usize;
+        let removed_key = *self.hashes.get(block_id.index());
+        let removed = self.patterns[pattern_type].remove(&removed_key);
+        debug_assert_eq!(removed, Some(block_id));
+
+        if !self.has_pattern_collisions[pattern_type] {
+            return;
+        }
+
+        let mut displaced = Vec::new();
+        let mut pattern_key = next_pattern_key(removed_key);
+        while let Some(displaced_id) = self.patterns[pattern_type].remove(&pattern_key) {
+            displaced.push(displaced_id);
+            pattern_key = next_pattern_key(pattern_key);
+        }
+
+        for displaced_id in displaced {
+            let fingerprint = if displaced_id.is_leaf() {
+                compute_leaf_hash_for_value(self.values.get(displaced_id.index()))
+            } else {
+                compute_branch_hash_for_children(
+                    self.children.get(displaced_id.index()),
+                    displaced_id.types(),
+                    displaced_id.mask(),
+                )
+            };
+            let pattern_key = self.vacant_pattern_key(pattern_type, fingerprint);
+            self.patterns[pattern_type].insert(pattern_key, displaced_id);
+            *self.hashes.get_mut(displaced_id.index()) = pattern_key;
+        }
     }
 
     #[inline(always)]
@@ -1133,5 +1196,79 @@ impl<T: VoxelTrait> VoxInterner<T> {
         }
 
         discovered_nodes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn colliding_leaf_fingerprints_preserve_identity_across_removal() {
+        let mut interner = VoxInterner::<i32>::with_memory_budget(4096);
+        let fingerprint = 0x1234_5678_9ABC_DEF0;
+
+        let first = interner.get_or_create_leaf_with_fingerprint(11, fingerprint);
+        let second = interner.get_or_create_leaf_with_fingerprint(22, fingerprint);
+        assert_ne!(first, second);
+        assert_eq!(*interner.get_value(&first), 11);
+        assert_eq!(*interner.get_value(&second), 22);
+        assert_eq!(
+            interner.get_or_create_leaf_with_fingerprint(11, fingerprint),
+            first
+        );
+
+        assert!(!interner.dec_ref(&first));
+        assert!(interner.dec_ref(&first));
+        assert_eq!(interner.get_or_create_leaf(22), second);
+        assert_eq!(interner.leaf_patterns().len(), 1);
+    }
+
+    #[test]
+    fn branch_fingerprint_collision_with_empty_and_peer_remains_exact() {
+        let mut interner = VoxInterner::<i32>::with_memory_budget(4096);
+        let first_leaf = interner.get_or_create_leaf(1);
+        let second_leaf = interner.get_or_create_leaf(2);
+        let mut first_children = EMPTY_CHILD;
+        first_children[0] = first_leaf;
+        let mut second_children = EMPTY_CHILD;
+        second_children[0] = second_leaf;
+        let fingerprint = interner.empty_branch_hash;
+
+        let first = interner.get_or_create_branch_with_fingerprint(
+            first_children,
+            0b0000_0001,
+            0b0000_0001,
+            fingerprint,
+        );
+        let second = interner.get_or_create_branch_with_fingerprint(
+            second_children,
+            0b0000_0001,
+            0b0000_0001,
+            fingerprint,
+        );
+        assert_ne!(first, BlockId::EMPTY);
+        assert_ne!(second, BlockId::EMPTY);
+        assert_ne!(first, second);
+
+        interner.inc_ref(&first_leaf);
+        assert_eq!(
+            interner.get_or_create_branch_with_fingerprint(
+                first_children,
+                0b0000_0001,
+                0b0000_0001,
+                fingerprint,
+            ),
+            first
+        );
+        assert!(!interner.dec_ref(&first));
+        assert!(interner.dec_ref(&first));
+
+        interner.inc_ref(&second_leaf);
+        assert_eq!(
+            interner.get_or_create_branch(second_children, 0b0000_0001, 0b0000_0001),
+            second
+        );
+        assert_eq!(interner.branch_patterns().len(), 2);
     }
 }
