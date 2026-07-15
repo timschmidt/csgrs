@@ -180,11 +180,11 @@ struct DemoScenesState {
 }
 
 const fn default_fillet_radius() -> f64 {
-    2.0
+    5.0
 }
 
 const fn default_chamfer_setback() -> f64 {
-    2.0
+    4.0
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

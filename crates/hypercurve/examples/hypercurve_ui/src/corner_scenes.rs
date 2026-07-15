@@ -53,7 +53,7 @@ impl CornerOperation {
 
     const fn amount_bounds(self) -> (f64, f64) {
         match self {
-            Self::Fillet => (0.25, 3.0),
+            Self::Fillet => (0.25, 6.0),
             Self::Chamfer => (0.25, 4.0),
         }
     }
@@ -123,11 +123,11 @@ fn hole_templates() -> [HoleTemplate; HOLE_COUNT] {
                 (-14, -1),
                 (-10, -5),
                 (8, -5),
-                (11, -1),
-                (7, 2),
-                (11, 5),
-                (-10, 5),
-                (-14, 2),
+                (12, -2),
+                (12, 6),
+                (8, 9),
+                (-10, 9),
+                (-14, 6),
             ],
             arc_center: (-10, -1),
             families_after_arc: [
@@ -141,7 +141,7 @@ fn hole_templates() -> [HoleTemplate; HOLE_COUNT] {
             ],
         },
         HoleTemplate {
-            origin: (50, 40),
+            origin: (55, 40),
             points: [
                 (-10, -6),
                 (-5, -11),
@@ -364,31 +364,78 @@ fn edit_all_corners(
     operation: CornerOperation,
     amount: Real,
 ) -> Result<CurvePath2, String> {
-    if source.curves().len() < 2 {
+    let curve_count = source.curves().len();
+    if curve_count < 2 {
         return Ok(source.clone());
     }
-    let mut corner_indices = Vec::new();
-    for vertex_index in 0..source.curves().len() {
+    let mut corner_witnesses = vec![None; curve_count];
+    for (vertex_index, witness) in corner_witnesses.iter_mut().enumerate() {
         if corner_orientation(source, vertex_index)?.is_some() {
-            corner_indices.push(vertex_index);
+            *witness = Some(corner_witness_for(
+                source,
+                vertex_index,
+                operation,
+                &amount,
+            )?);
         }
     }
-    let mut result = source.clone();
 
-    // Editing in descending source order keeps every not-yet-edited vertex at
-    // its original index. Recomputing each witness on the current path accounts
-    // for the neighboring end trim already applied to a retained curve.
-    for vertex_index in corner_indices.iter().rev() {
-        if *vertex_index != 0 {
-            let witness = corner_witness_for(&result, *vertex_index, operation, &amount)?;
-            result = apply_corner_edit(result, *vertex_index, operation, &witness)?;
-        }
+    // Trim every source curve once, using witnesses from the untouched path.
+    // This avoids both cascading geometry and the parameter renormalization
+    // that occurs when a retained curve is edited repeatedly.
+    let trimmed = source
+        .curves()
+        .iter()
+        .enumerate()
+        .map(|(curve_index, curve)| {
+            let domain = curve.parameter_domain();
+            let start = corner_witnesses[curve_index].as_ref().map_or_else(
+                || domain.start().clone(),
+                |witness| witness.next_parameter.clone(),
+            );
+            let next_vertex = (curve_index + 1) % curve_count;
+            let end = corner_witnesses[next_vertex].as_ref().map_or_else(
+                || domain.end().clone(),
+                |witness| witness.previous_parameter.clone(),
+            );
+            curve
+                .subcurve(start, end)
+                .map_err(|error| format!("curve {curve_index}: {error}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut connectors = Vec::with_capacity(curve_count);
+    for vertex_index in 0..curve_count {
+        let Some(witness) = &corner_witnesses[vertex_index] else {
+            connectors.push(None);
+            continue;
+        };
+        let previous_index = if vertex_index == 0 {
+            curve_count - 1
+        } else {
+            vertex_index - 1
+        };
+        let start = trimmed[previous_index].end().clone();
+        let end = trimmed[vertex_index].start().clone();
+        let connector = match operation {
+            CornerOperation::Fillet => {
+                CircularArc2::try_from_center(start, end, witness.center.clone(), witness.clockwise)
+                    .map(Curve2::from)
+                    .map_err(|error| format!("vertex {vertex_index}: {error}"))?
+            }
+            CornerOperation::Chamfer => {
+                line_curve(start, end).map_err(|error| format!("vertex {vertex_index}: {error}"))?
+            }
+        };
+        connectors.push(Some(connector));
     }
-    if corner_indices.first() == Some(&0) {
-        let seam_witness = corner_witness_for(&result, 0, operation, &amount)?;
-        result = apply_corner_edit(result, 0, operation, &seam_witness)?;
+
+    let mut result = Vec::with_capacity(curve_count + corner_witnesses.iter().flatten().count());
+    for (connector, curve) in connectors.into_iter().zip(trimmed) {
+        result.extend(connector);
+        result.push(curve);
     }
-    Ok(result)
+    CurvePath2::try_new(result).map_err(string_error)
 }
 
 fn corner_orientation(source: &CurvePath2, vertex_index: usize) -> Result<Option<bool>, String> {
@@ -446,32 +493,6 @@ fn endpoint_tangent(curve: &Curve2, at_start: bool) -> Result<(Real, Real), Stri
         .derivative_at_side(parameter, side)
         .map_err(string_error)?;
     Ok((tangent.dx().clone(), tangent.dy().clone()))
-}
-
-fn apply_corner_edit(
-    path: CurvePath2,
-    vertex_index: usize,
-    operation: CornerOperation,
-    witness: &CornerWitness,
-) -> Result<CurvePath2, String> {
-    match operation {
-        CornerOperation::Fillet => path
-            .fillet_vertex_by_parameters(
-                vertex_index,
-                witness.previous_parameter.clone(),
-                witness.next_parameter.clone(),
-                &witness.center,
-                witness.clockwise,
-            )
-            .map_err(|error| format!("vertex {vertex_index}: {error}")),
-        CornerOperation::Chamfer => path
-            .chamfer_vertex_by_parameters(
-                vertex_index,
-                witness.previous_parameter.clone(),
-                witness.next_parameter.clone(),
-            )
-            .map_err(|error| format!("vertex {vertex_index}: {error}")),
-    }
 }
 
 fn corner_witness_for(
@@ -909,6 +930,30 @@ mod tests {
                         source.curves().len() + corner_counts[boundary_index],
                         "{operation:?} should add one curve at every non-smooth corner"
                     );
+                    if operation == CornerOperation::Fillet {
+                        let radius_squared = &amount * &amount;
+                        assert_eq!(
+                            edited
+                                .curves()
+                                .iter()
+                                .filter(|curve| {
+                                    matches!(
+                                        curve.geometry(),
+                                        CurveGeometry2::CircularArc(arc)
+                                            if arc.radius_squared_ref() == &radius_squared
+                                    )
+                                })
+                                .count(),
+                            corner_counts[boundary_index],
+                            "every inserted fillet should retain the requested radius"
+                        );
+                        for vertex_index in 0..edited.curves().len() {
+                            assert!(
+                                corner_orientation(&edited, vertex_index).unwrap().is_none(),
+                                "fillet boundary {boundary_index} retained a corner at vertex {vertex_index}"
+                            );
+                        }
+                    }
                     for vertex_index in 0..source.curves().len() {
                         if corner_orientation(source, vertex_index).unwrap().is_none() {
                             continue;
