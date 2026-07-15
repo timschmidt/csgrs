@@ -19,49 +19,15 @@ report explicit uncertainty without quietly falling back to primitive floating p
 object-level facts, but use `hyperreal` values and certificates when scalar exactness
 matters.
 
-Core layers:
-
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and
-  computable real arithmetic.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector,
-  matrix, transform, and shared-scale algebra.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy,
-  escalation, and result provenance.
-
-Geometry and solver layers:
-
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curves, contours,
-  regions, offsets, and boolean-boundary work.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation,
-  Delaunay, and constrained Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh validation, topology,
-  and exact-aware boolean preflight.
-- [hyperbrep](https://github.com/timschmidt/hyperbrep): retained BREP topology,
-  planar surfaces, trim evidence, tessellation manifests, and mesh handoff reports.
-- [hypersdf](https://github.com/timschmidt/hypersdf): signed-distance and implicit-field
-  carriers with exact-aware sampling, classification, solver, mesh, and voxel handoffs.
-- [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
-  solver preparation, and candidate certification.
-- [csgrs](https://github.com/timschmidt/csgrs/tree/hyperreal): Multi-modal CAD kernel, owns CSG
-
-Domain and proposal layers:
-
-- [hyperpath](https://github.com/timschmidt/hyperpath): routing, toolpath, tangent,
-  clearance, and path-provenance carriers.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks and
-  manufacturing package evidence.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): exact-aware materials,
-  mass properties, contact, field, and simulation handoff reports.
-- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit MNA carriers,
-  residual replay, and coupled electrothermal reports.
-- [hyperparts](https://github.com/timschmidt/hyperparts): source-attributed part,
-  interface, process, and compatibility facts.
-- [hyperpack](https://github.com/timschmidt/hyperpack): exact-aware packing models and
-  feasibility replay.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): exact-aware voxel grid
-  frames, sparse-grid facts, and adapter manifests.
-- [hyperevolution](https://github.com/timschmidt/hyperevolution): exact-aware search,
-  fitness, archive, and replay-policy carriers.
+[hyperlattice](https://github.com/timschmidt/hyperlattice) builds linear-algebra
+carriers over these scalars, and [hyperlimit](https://github.com/timschmidt/hyperlimit)
+turns them into certified geometric decisions. Geometry owners such as
+[hypercurve](https://github.com/timschmidt/hypercurve),
+[hypertri](https://github.com/timschmidt/hypertri),
+[hypermesh](https://github.com/timschmidt/hypermesh), and
+[csgrs](https://github.com/timschmidt/csgrs/tree/hyperreal) build on those layers; the
+[remaining Hyper repositories](https://github.com/timschmidt?tab=repositories&q=hyper)
+cover solvers, representations, and engineering domains.
 
 ## Typical Real-Number Problems
 

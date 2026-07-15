@@ -502,6 +502,74 @@ mod tests {
     }
 
     #[test]
+    fn prepared_affine_det2_exact_word_filter_handles_unrelated_denominators() {
+        let a = [
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::new(Rational::fraction(2, 5).unwrap()),
+        ];
+        let b = [
+            Real::new(Rational::fraction(7, 11).unwrap()),
+            Real::new(Rational::fraction(-3, 7).unwrap()),
+        ];
+        let prepared = Real::prepare_affine_det2_exact_word_filter(
+            [&a[0], &a[1]],
+            [&b[0], &b[1]],
+        )
+        .expect("small exact rationals should fit the word filter");
+
+        for c in [
+            [Real::zero(), Real::zero()],
+            [Real::one(), Real::zero()],
+            [
+                Real::new(Rational::fraction(5, 13).unwrap()),
+                Real::new(Rational::fraction(17, 19).unwrap()),
+            ],
+            a.clone(),
+            b.clone(),
+        ] {
+            let c_refs = [&c[0], &c[1]];
+            assert_eq!(
+                prepared.sign(c_refs),
+                Some(exact_affine_det2_sign(
+                    [&a[0], &a[1]],
+                    [&b[0], &b[1]],
+                    c_refs,
+                )),
+            );
+        }
+
+        assert_eq!(prepared.sign([&Real::pi(), &Real::zero()]), None);
+    }
+
+    #[test]
+    fn prepared_affine_det2_exact_word_filter_matches_randomized_rationals() {
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        for _ in 0..20_000 {
+            let mut values = Vec::with_capacity(6);
+            for _ in 0..6 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 1001).unwrap() - 500;
+                let denominator = (state.rotate_left(19) % 97) + 1;
+                values.push(Real::new(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                ));
+            }
+            let a = [&values[0], &values[1]];
+            let b = [&values[2], &values[3]];
+            let c = [&values[4], &values[5]];
+            let prepared = Real::prepare_affine_det2_exact_word_filter(a, b)
+                .expect("small randomized rationals should fit the word filter");
+            assert_eq!(
+                prepared.sign(c),
+                Some(exact_affine_det2_sign(a, b, c)),
+                "values={values:?}",
+            );
+        }
+    }
+
+    #[test]
     fn certified_affine_det2_sign_matches_exact_randomized_determinants() {
         let mut state = 0x6a09_e667_f3bc_c909_u64;
         let mut certified = 0_u32;
@@ -647,6 +715,35 @@ mod tests {
                     [&c[0], &c[1], &c[2]],
                     [&d[0], &d[1], &d[2]],
                 )
+            );
+        }
+    }
+
+    #[test]
+    fn prepared_affine_det3_exact_word_filter_matches_randomized_rationals() {
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        for _ in 0..10_000 {
+            let mut values = Vec::with_capacity(12);
+            for _ in 0..12 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 101).unwrap() - 50;
+                let denominator = (state.rotate_left(23) % 23) + 1;
+                values.push(Real::new(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                ));
+            }
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            let d = [&values[9], &values[10], &values[11]];
+            let prepared = Real::prepare_affine_det3_exact_word_filter(a, b, c)
+                .expect("small randomized rationals should fit the word filter");
+            assert_eq!(
+                prepared.sign(d),
+                Some(exact_affine_det3_sign(a, b, c, d)),
+                "values={values:?}",
             );
         }
     }

@@ -11,6 +11,35 @@ pub struct PreparedAffineDet2Filter {
     b: [f64; 2],
 }
 
+/// Exact word-sized filter for repeated affine 2D determinant signs.
+///
+/// The fixed points are compiled into homogeneous integer line coefficients.
+/// Each exact-rational query point is converted to a homogeneous integer
+/// triple without GCD work, then evaluated with checked `i128` arithmetic.
+/// Values that do not fit return `None` for the arbitrary-precision fallback.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedAffineDet2ExactWordFilter {
+    line: [i128; 3],
+}
+
+impl PreparedAffineDet2ExactWordFilter {
+    /// Try to decide the exact determinant sign for query point `c`.
+    #[inline]
+    pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
+        let [cx, cy, cw] = Real::exact_rational_homogeneous_point2_i128(c)?;
+        let x_term = self.line[0].checked_mul(cx)?;
+        let y_term = self.line[1].checked_mul(cy)?;
+        let w_term = self.line[2].checked_mul(cw)?;
+        let value = x_term.checked_add(y_term)?.checked_add(w_term)?;
+        Some(match value.cmp(&0) {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        })
+    }
+}
+
 impl PreparedAffineDet2Filter {
     /// Try to certify the determinant sign for query point `c`.
     #[inline]
@@ -31,6 +60,34 @@ pub struct PreparedAffineDet3Filter {
     a: [f64; 3],
     b: [f64; 3],
     c: [f64; 3],
+}
+
+/// Exact word-sized filter for repeated affine 3D determinant signs.
+///
+/// Three fixed exact-rational points are compiled into homogeneous integer
+/// plane coefficients. Query evaluation uses checked `i128` arithmetic and
+/// returns `None` whenever conversion or an operation would overflow.
+#[derive(Clone, Copy, Debug)]
+#[doc(hidden)]
+pub struct PreparedAffineDet3ExactWordFilter {
+    plane: [i128; 4],
+}
+
+impl PreparedAffineDet3ExactWordFilter {
+    /// Try to decide the exact determinant sign for query point `d`.
+    #[inline]
+    pub fn sign(&self, d: [&Real; 3]) -> Option<RealSign> {
+        let point = Real::exact_rational_homogeneous_point3_i128(d)?;
+        let mut value = 0_i128;
+        for (coefficient, coordinate) in self.plane.into_iter().zip(point) {
+            value = value.checked_add(coefficient.checked_mul(coordinate)?)?;
+        }
+        Some(match value.cmp(&0) {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        })
+    }
 }
 
 impl PreparedAffineDet3Filter {
@@ -108,6 +165,76 @@ impl PreparedInsphere3dFilter {
 }
 
 impl Real {
+    /// Prepare an exact word-sized affine 2D determinant filter.
+    ///
+    /// This compiles the fixed points into the homogeneous line through them.
+    /// Rational coordinates may have unrelated denominators: each point is
+    /// converted independently to one common scale without GCD reduction.
+    /// Checked overflow preserves the existing arbitrary-precision fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det2_exact_word_filter(
+        a: [&Real; 2],
+        b: [&Real; 2],
+    ) -> Option<PreparedAffineDet2ExactWordFilter> {
+        let [ax, ay, aw] = Self::exact_rational_homogeneous_point2_i128(a)?;
+        let [bx, by, bw] = Self::exact_rational_homogeneous_point2_i128(b)?;
+        let x_coefficient = ay.checked_mul(bw)?.checked_sub(aw.checked_mul(by)?)?;
+        let y_coefficient = aw.checked_mul(bx)?.checked_sub(ax.checked_mul(bw)?)?;
+        let w_coefficient = ax.checked_mul(by)?.checked_sub(ay.checked_mul(bx)?)?;
+        Some(PreparedAffineDet2ExactWordFilter {
+            line: [x_coefficient, y_coefficient, w_coefficient],
+        })
+    }
+
+    /// Prepare an exact word-sized affine 3D determinant filter.
+    ///
+    /// Each fixed point is converted to a homogeneous integer vector using a
+    /// point-local common denominator. The resulting plane coefficients are
+    /// retained for repeated exact-rational queries, with checked overflow
+    /// falling through to the arbitrary-precision determinant.
+    #[inline]
+    #[doc(hidden)]
+    pub fn prepare_affine_det3_exact_word_filter(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+    ) -> Option<PreparedAffineDet3ExactWordFilter> {
+        let [ax, ay, az, aw] = Self::exact_rational_homogeneous_point3_i128(a)?;
+        let [bx, by, bz, bw] = Self::exact_rational_homogeneous_point3_i128(b)?;
+        let [cx, cy, cz, cw] = Self::exact_rational_homogeneous_point3_i128(c)?;
+        let x_coefficient = Self::checked_det3_i128([
+            [ay, az, aw],
+            [by, bz, bw],
+            [cy, cz, cw],
+        ])?
+        .checked_neg()?;
+        let y_coefficient = Self::checked_det3_i128([
+            [ax, az, aw],
+            [bx, bz, bw],
+            [cx, cz, cw],
+        ])?;
+        let z_coefficient = Self::checked_det3_i128([
+            [ax, ay, aw],
+            [bx, by, bw],
+            [cx, cy, cw],
+        ])?
+        .checked_neg()?;
+        let w_coefficient = Self::checked_det3_i128([
+            [ax, ay, az],
+            [bx, by, bz],
+            [cx, cy, cz],
+        ])?;
+        Some(PreparedAffineDet3ExactWordFilter {
+            plane: [
+                x_coefficient,
+                y_coefficient,
+                z_coefficient,
+                w_coefficient,
+            ],
+        })
+    }
+
     /// Try to certify the sign of `a*x + b*y + c*z + d` without constructing
     /// an exact expression tree.
     ///
@@ -157,6 +284,78 @@ impl Real {
             a: [ax, ay],
             b: [bx, by],
         })
+    }
+
+    #[inline]
+    fn exact_rational_homogeneous_point2_i128(point: [&Real; 2]) -> Option<[i128; 3]> {
+        let x = point[0].exact_rational_ref()?;
+        let y = point[1].exact_rational_ref()?;
+        let x_denominator = i128::try_from(x.denominator().to_u128()?).ok()?;
+        let y_denominator = i128::try_from(y.denominator().to_u128()?).ok()?;
+        let x_numerator = Self::exact_rational_numerator_i128(x)?;
+        let y_numerator = Self::exact_rational_numerator_i128(y)?;
+        Some([
+            x_numerator.checked_mul(y_denominator)?,
+            y_numerator.checked_mul(x_denominator)?,
+            x_denominator.checked_mul(y_denominator)?,
+        ])
+    }
+
+    #[inline]
+    fn exact_rational_homogeneous_point3_i128(point: [&Real; 3]) -> Option<[i128; 4]> {
+        let x = point[0].exact_rational_ref()?;
+        let y = point[1].exact_rational_ref()?;
+        let z = point[2].exact_rational_ref()?;
+        let x_denominator = i128::try_from(x.denominator().to_u128()?).ok()?;
+        let y_denominator = i128::try_from(y.denominator().to_u128()?).ok()?;
+        let z_denominator = i128::try_from(z.denominator().to_u128()?).ok()?;
+        let yz_denominator = y_denominator.checked_mul(z_denominator)?;
+        let xz_denominator = x_denominator.checked_mul(z_denominator)?;
+        let xy_denominator = x_denominator.checked_mul(y_denominator)?;
+        Some([
+            Self::exact_rational_numerator_i128(x)?.checked_mul(yz_denominator)?,
+            Self::exact_rational_numerator_i128(y)?.checked_mul(xz_denominator)?,
+            Self::exact_rational_numerator_i128(z)?.checked_mul(xy_denominator)?,
+            x_denominator.checked_mul(yz_denominator)?,
+        ])
+    }
+
+    #[inline]
+    fn exact_rational_numerator_i128(value: &Rational) -> Option<i128> {
+        let magnitude = i128::try_from(value.numerator().to_u128()?).ok()?;
+        match value.sign() {
+            Sign::Plus => Some(magnitude),
+            Sign::Minus => magnitude.checked_neg(),
+            Sign::NoSign => Some(0),
+        }
+    }
+
+    #[inline]
+    fn checked_det3_i128(rows: [[i128; 3]; 3]) -> Option<i128> {
+        let positive_a = rows[0][0]
+            .checked_mul(rows[1][1])?
+            .checked_mul(rows[2][2])?;
+        let positive_b = rows[0][1]
+            .checked_mul(rows[1][2])?
+            .checked_mul(rows[2][0])?;
+        let positive_c = rows[0][2]
+            .checked_mul(rows[1][0])?
+            .checked_mul(rows[2][1])?;
+        let negative_a = rows[0][2]
+            .checked_mul(rows[1][1])?
+            .checked_mul(rows[2][0])?;
+        let negative_b = rows[0][1]
+            .checked_mul(rows[1][0])?
+            .checked_mul(rows[2][2])?;
+        let negative_c = rows[0][0]
+            .checked_mul(rows[1][2])?
+            .checked_mul(rows[2][1])?;
+        positive_a
+            .checked_add(positive_b)?
+            .checked_add(positive_c)?
+            .checked_sub(negative_a)?
+            .checked_sub(negative_b)?
+            .checked_sub(negative_c)
     }
 
     /// Prepare a certified affine 3D determinant filter for fixed points `a`,
