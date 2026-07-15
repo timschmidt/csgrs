@@ -774,7 +774,12 @@ impl BezierParameter2 {
         Ok(Classification::Uncertain(UncertaintyReason::Ordering))
     }
 
-    pub(crate) fn cmp_by_refinement(
+    /// Compares parameters by refining overlapping algebraic isolators as needed.
+    ///
+    /// This first uses the retained intervals and exact equality evidence. When
+    /// distinct parameters still have overlapping bounds, it bisects their
+    /// singleton isolators until their order is certified.
+    pub fn cmp_by_refinement(
         &self,
         other: &Self,
         policy: &CurvePolicy,
@@ -886,17 +891,33 @@ enum RefinedParameter<'a> {
     Algebraic {
         parameter: &'a BezierAlgebraicParameter2,
         interval: BezierParameterInterval,
+        sturm_sequence: Vec<Vec<Real>>,
     },
 }
 
 impl<'a> RefinedParameter<'a> {
-    fn from_parameter(parameter: &'a BezierParameter2) -> Self {
+    fn from_parameter(
+        parameter: &'a BezierParameter2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Self>> {
         match parameter {
-            BezierParameter2::Exact(value) => Self::Exact(value.clone()),
-            BezierParameter2::Algebraic(parameter) => Self::Algebraic {
-                parameter,
-                interval: parameter.interval().clone(),
-            },
+            BezierParameter2::Exact(value) => {
+                Ok(Classification::Decided(Self::Exact(value.clone())))
+            }
+            BezierParameter2::Algebraic(parameter) => {
+                let sturm_sequence =
+                    match sturm_sequence(parameter.polynomial.coefficients(), policy)? {
+                        Classification::Decided(sequence) => sequence,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                Ok(Classification::Decided(Self::Algebraic {
+                    parameter,
+                    interval: parameter.interval().clone(),
+                    sturm_sequence,
+                }))
+            }
         }
     }
 
@@ -911,6 +932,7 @@ impl<'a> RefinedParameter<'a> {
         let Self::Algebraic {
             parameter,
             interval,
+            sturm_sequence,
         } = self
         else {
             return Ok(Classification::Decided(self));
@@ -929,7 +951,11 @@ impl<'a> RefinedParameter<'a> {
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let interval = match parameter.polynomial.root_count_in_interval(&left, policy)? {
+        let interval = match parameter.polynomial.root_count_in_interval_with_sequence(
+            &left,
+            &sturm_sequence,
+            policy,
+        )? {
             Classification::Decided(1) => left,
             Classification::Decided(0) => {
                 match BezierParameterInterval::try_new(midpoint, interval.end().clone(), policy)? {
@@ -949,6 +975,7 @@ impl<'a> RefinedParameter<'a> {
         Ok(Classification::Decided(Self::Algebraic {
             parameter,
             interval,
+            sturm_sequence,
         }))
     }
 }
@@ -960,8 +987,14 @@ fn compare_distinct_parameters(
 ) -> CurveResult<Classification<Ordering>> {
     const MAX_ORDERING_REFINEMENTS: usize = 64;
 
-    let mut first = RefinedParameter::from_parameter(first);
-    let mut second = RefinedParameter::from_parameter(second);
+    let mut first = match RefinedParameter::from_parameter(first, policy)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let mut second = match RefinedParameter::from_parameter(second, policy)? {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     for _ in 0..MAX_ORDERING_REFINEMENTS {
         let (first_start, first_end) = first.bounds();
         let (second_start, second_end) = second.bounds();
@@ -1024,6 +1057,10 @@ fn refine_algebraic_upper_gap(
     upper_bound: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Real>> {
+    let sequence = match sturm_sequence(parameter.polynomial.coefficients(), policy)? {
+        Classification::Decided(sequence) => sequence,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     let mut interval = parameter.interval.clone();
     loop {
         if compare_reals(interval.end(), upper_bound, policy) == Some(Ordering::Less) {
@@ -1045,7 +1082,10 @@ fn refine_algebraic_upper_gap(
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match parameter.polynomial.root_count_in_interval(&left, policy)? {
+        match parameter
+            .polynomial
+            .root_count_in_interval_with_sequence(&left, &sequence, policy)?
+        {
             Classification::Decided(1) => interval = left,
             Classification::Decided(0) => {
                 interval = match BezierParameterInterval::try_new(
@@ -1072,6 +1112,10 @@ fn refine_algebraic_lower_gap(
     lower_bound: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Real>> {
+    let sequence = match sturm_sequence(parameter.polynomial.coefficients(), policy)? {
+        Classification::Decided(sequence) => sequence,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     let mut interval = parameter.interval.clone();
     loop {
         if compare_reals(lower_bound, interval.start(), policy) == Some(Ordering::Less) {
@@ -1093,7 +1137,10 @@ fn refine_algebraic_lower_gap(
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match parameter.polynomial.root_count_in_interval(&left, policy)? {
+        match parameter
+            .polynomial
+            .root_count_in_interval_with_sequence(&left, &sequence, policy)?
+        {
             Classification::Decided(1) => interval = left,
             Classification::Decided(0) => {
                 interval = match BezierParameterInterval::try_new(

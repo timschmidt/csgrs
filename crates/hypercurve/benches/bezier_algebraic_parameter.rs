@@ -1,9 +1,11 @@
+use std::cmp::Ordering;
 use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurvePolicy, CurveResult, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, Classification, CurvePolicy, CurveResult, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -52,6 +54,31 @@ fn main() -> CurveResult<()> {
     println!(
         "bezier_algebraic_parameter_sturm: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
         elapsed / iterations
+    );
+
+    let irrational_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        vec![r(-1), r(0), r(2)],
+        &policy,
+    )?);
+    let irrational_interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
+    let irrational = BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+        irrational_polynomial,
+        irrational_interval,
+        &policy,
+    )?));
+    let close_rational = decided(BezierParameter2::exact(q(353_553, 500_000), &policy)?);
+    let refinement_iterations = 10_000_u32;
+    let started = Instant::now();
+    let mut ordered = 0_usize;
+    for _ in 0..refinement_iterations {
+        ordered += black_box(
+            decided(close_rational.cmp_by_refinement(&irrational, &policy)?) == Ordering::Less,
+        ) as usize;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_algebraic_parameter_refined_ordering: {refinement_iterations} iterations in {elapsed:?} ({:?}/iter), ordered={ordered}",
+        elapsed / refinement_iterations
     );
 
     // This is (B(t)-P) dot B'(t) for the cubic with controls

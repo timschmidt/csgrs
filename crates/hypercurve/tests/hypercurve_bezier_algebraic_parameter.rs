@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, Classification, CurveError, CurvePolicy,
-    Real,
+    Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -394,6 +394,36 @@ fn equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators() 
     assert_eq!(
         cubic.cmp_by_interval(&quadratic, &policy()).unwrap(),
         Classification::Decided(Ordering::Equal)
+    );
+}
+
+#[test]
+fn overlapping_distinct_parameters_compare_by_certified_refinement() {
+    let irrational = BezierParameter2::algebraic(isolate(
+        polynomial(vec![r(-1), r(0), r(2)]),
+        interval(q(2, 3), q(3, 4)),
+    ));
+    let close_rational = BezierParameter2::exact(q(353_553, 500_000), &policy())
+        .unwrap()
+        .map(|parameter| parameter);
+    let close_rational = match close_rational {
+        Classification::Decided(parameter) => parameter,
+        Classification::Uncertain(reason) => {
+            panic!("exact parameter unexpectedly uncertain: {reason:?}")
+        }
+    };
+
+    assert_eq!(
+        close_rational
+            .cmp_by_interval(&irrational, &policy())
+            .unwrap(),
+        Classification::Uncertain(UncertaintyReason::Ordering)
+    );
+    assert_eq!(
+        close_rational
+            .cmp_by_refinement(&irrational, &policy())
+            .unwrap(),
+        Classification::Decided(Ordering::Less)
     );
 }
 
