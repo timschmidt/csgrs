@@ -21,28 +21,6 @@ maps triangle indices back onto the original 3D vertices.
 
 ![Example CSG output](docs/csg.png)
 
-## Hyper Stack Links
-
-- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](../hypermesh/README.md): exact-aware indexed mesh validation,
-  topology, and 3D Boolean operations.
-- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
-- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
-
 ## Community
 [![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
 
@@ -682,6 +660,15 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 > TrueType Reference Manual. *Apple Developer Documentation*,
 > https://developer.apple.com/fonts/TrueType-Reference-Manual/.
+
+## Hyper Stack
+
+`csgrs` builds on [hyperreal](../hyperreal/README.md),
+[hyperlimit](../hyperlimit/README.md), [hyperlattice](../hyperlattice/README.md),
+[hypercurve](../hypercurve/README.md), [hypertri](../hypertri/README.md), and
+[hypermesh](../hypermesh/README.md). The
+[remaining Hyper repositories](https://github.com/timschmidt?tab=repositories&q=hyper)
+provide solver and engineering-domain layers.
 
 ## License
 
