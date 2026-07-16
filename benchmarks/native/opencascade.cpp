@@ -3,7 +3,9 @@
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
@@ -11,18 +13,29 @@
 #include <BRepGProp.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
+#include <BRepPrimAPI_MakeCone.hxx>
+#include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
+#include <BRepCheck_Analyzer.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Precision.hxx>
+#include <IntCurvesFace_ShapeIntersector.hxx>
+#include <StlAPI_Writer.hxx>
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
+#include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <gp_Ax1.hxx>
@@ -31,16 +44,20 @@
 #include <gp_GTrsf.hxx>
 #include <gp_Mat.hxx>
 #include <gp_Pnt.hxx>
+#include <gp_Lin.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
 #include <gp_XYZ.hxx>
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cmath>
+#include <filesystem>
 #include <limits>
 #include <numbers>
 #include <stdexcept>
+#include <vector>
 
 using csgrs_bench::Measurement;
 
@@ -141,6 +158,176 @@ static TopoDS_Shape centered_box(double width, double cx = 0.0, double cy = 0.0,
       .Shape();
 }
 
+static TopoDS_Shape centered_cuboid(double width, double length,
+                                    double height) {
+  return BRepPrimAPI_MakeBox(gp_Pnt(-width / 2.0, -length / 2.0,
+                                    -height / 2.0),
+                             width, length, height)
+      .Shape();
+}
+
+static TopoDS_Shape polyhedron_surface(
+    const std::vector<gp_Pnt> &points,
+    const std::vector<std::array<std::size_t, 3>> &triangles) {
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+  for (const auto &triangle : triangles) {
+    BRepBuilderAPI_MakePolygon wire;
+    wire.Add(points.at(triangle[0]));
+    wire.Add(points.at(triangle[1]));
+    wire.Add(points.at(triangle[2]));
+    wire.Close();
+    builder.Add(compound, BRepBuilderAPI_MakeFace(wire.Wire()).Face());
+  }
+  return compound;
+}
+
+static TopoDS_Shape octahedron(double radius) {
+  return polyhedron_surface(
+      {{radius, 0, 0}, {-radius, 0, 0}, {0, radius, 0}, {0, -radius, 0},
+       {0, 0, radius}, {0, 0, -radius}},
+      {{0, 2, 4}, {2, 1, 4}, {1, 3, 4}, {3, 0, 4},
+       {5, 2, 0}, {5, 1, 2}, {5, 3, 1}, {5, 0, 3}});
+}
+
+static TopoDS_Shape icosahedron(double radius) {
+  const double phi = (1.0 + std::sqrt(5.0)) / 2.0;
+  const double scale = radius / std::sqrt(1.0 + phi * phi);
+  const double a = scale;
+  const double b = phi * scale;
+  return polyhedron_surface(
+      {{-a, b, 0}, {a, b, 0}, {-a, -b, 0}, {a, -b, 0}, {0, -a, b},
+       {0, a, b}, {0, -a, -b}, {0, a, -b}, {b, 0, -a}, {b, 0, a},
+       {-b, 0, -a}, {-b, 0, a}},
+      {{0, 11, 5}, {0, 5, 1}, {0, 1, 7}, {0, 7, 10}, {0, 10, 11},
+       {1, 5, 9}, {5, 11, 4}, {11, 10, 2}, {10, 7, 6}, {7, 1, 8},
+       {3, 9, 4}, {3, 4, 2}, {3, 2, 6}, {3, 6, 8}, {3, 8, 9},
+       {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}});
+}
+
+static TopoDS_Shape distributed(
+    const TopoDS_Shape &source,
+    const std::vector<std::array<double, 3>> &offsets) {
+  BRep_Builder builder;
+  TopoDS_Compound compound;
+  builder.MakeCompound(compound);
+  for (const auto &offset : offsets) {
+    gp_Trsf translation;
+    translation.SetTranslation(gp_Vec(offset[0], offset[1], offset[2]));
+    builder.Add(compound,
+                BRepBuilderAPI_Transform(source, translation, Standard_True)
+                    .Shape());
+  }
+  return compound;
+}
+
+static std::size_t shape_count(const TopoDS_Shape &shape,
+                               TopAbs_ShapeEnum kind) {
+  TopTools_IndexedMapOfShape shapes;
+  TopExp::MapShapes(shape, kind, shapes);
+  return static_cast<std::size_t>(shapes.Extent());
+}
+
+static std::size_t face_normal_count(const TopoDS_Shape &shape) {
+  std::size_t count = 0;
+  for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
+       explorer.Next()) {
+    const TopoDS_Face face = TopoDS::Face(explorer.Current());
+    BRepAdaptor_Surface surface(face, Standard_True);
+    const Standard_Real u =
+        (surface.FirstUParameter() + surface.LastUParameter()) / 2.0;
+    const Standard_Real v =
+        (surface.FirstVParameter() + surface.LastVParameter()) / 2.0;
+    gp_Pnt point;
+    gp_Vec du;
+    gp_Vec dv;
+    surface.D1(u, v, point, du, dv);
+    if (du.Crossed(dv).SquareMagnitude() > 0.0) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+struct TriangulatedConnectivity {
+  std::size_t vertices = 0;
+  std::size_t adjacency_vertices = 0;
+};
+
+static TriangulatedConnectivity build_triangulated_connectivity(
+    const TopoDS_Shape &shape) {
+  std::vector<std::vector<std::size_t>> adjacency;
+  for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
+       explorer.Next()) {
+    TopLoc_Location location;
+    const Handle(Poly_Triangulation) mesh =
+        BRep_Tool::Triangulation(TopoDS::Face(explorer.Current()), location);
+    if (mesh.IsNull()) {
+      continue;
+    }
+    const std::size_t offset = adjacency.size();
+    adjacency.resize(offset + static_cast<std::size_t>(mesh->NbNodes()));
+    for (Standard_Integer index = 1; index <= mesh->NbTriangles(); ++index) {
+      Standard_Integer a;
+      Standard_Integer b;
+      Standard_Integer c;
+      mesh->Triangle(index).Get(a, b, c);
+      const std::array<std::size_t, 3> triangle{
+          offset + static_cast<std::size_t>(a - 1),
+          offset + static_cast<std::size_t>(b - 1),
+          offset + static_cast<std::size_t>(c - 1)};
+      for (const auto edge :
+           {std::array{triangle[0], triangle[1]},
+            std::array{triangle[1], triangle[2]},
+            std::array{triangle[2], triangle[0]}}) {
+        adjacency[edge[0]].push_back(edge[1]);
+        adjacency[edge[1]].push_back(edge[0]);
+      }
+    }
+  }
+  std::size_t populated = 0;
+  for (auto &neighbors : adjacency) {
+    std::sort(neighbors.begin(), neighbors.end());
+    neighbors.erase(std::unique(neighbors.begin(), neighbors.end()),
+                    neighbors.end());
+    populated += !neighbors.empty();
+  }
+  return {adjacency.size(), populated};
+}
+
+static std::size_t materialize_triangle_normals(const TopoDS_Shape &shape) {
+  std::vector<gp_Vec> normals;
+  normals.reserve(triangle_count(shape));
+  for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
+       explorer.Next()) {
+    TopLoc_Location location;
+    const Handle(Poly_Triangulation) mesh =
+        BRep_Tool::Triangulation(TopoDS::Face(explorer.Current()), location);
+    if (mesh.IsNull()) {
+      continue;
+    }
+    for (Standard_Integer index = 1; index <= mesh->NbTriangles(); ++index) {
+      Standard_Integer ia;
+      Standard_Integer ib;
+      Standard_Integer ic;
+      mesh->Triangle(index).Get(ia, ib, ic);
+      const gp_Pnt a =
+          mesh->Node(ia).Transformed(location.Transformation());
+      const gp_Pnt b =
+          mesh->Node(ib).Transformed(location.Transformation());
+      const gp_Pnt c =
+          mesh->Node(ic).Transformed(location.Transformation());
+      gp_Vec normal = gp_Vec(a, b).Crossed(gp_Vec(a, c));
+      if (normal.SquareMagnitude() > 0.0) {
+        normal.Normalize();
+        normals.push_back(normal);
+      }
+    }
+  }
+  return normals.size();
+}
+
 static TopoDS_Shape extruded_circle(double radius, double height,
                                     std::size_t segments) {
   BRepBuilderAPI_MakePolygon polygon;
@@ -176,6 +363,21 @@ int main() {
   harness.run("kernel", "construct_box", "unit", 64, [] {
     return measured(centered_box(2.0), 0);
   });
+  harness.run("kernel", "construct_cuboid", "2x4x6", 32, [] {
+    return measured(centered_cuboid(2.0, 4.0, 6.0), 0);
+  });
+  harness.run("kernel", "construct_cylinder", "r6_h20_s64", 8, [] {
+    return measured(BRepPrimAPI_MakeCylinder(6.0, 20.0).Shape(), 0);
+  });
+  harness.run("kernel", "construct_frustum", "r6_r2_h20_s64", 8, [] {
+    return measured(BRepPrimAPI_MakeCone(6.0, 2.0, 20.0).Shape(), 0);
+  });
+  harness.run("kernel", "construct_octahedron", "r10", 32, [] {
+    return measured(octahedron(10.0), 0);
+  });
+  harness.run("kernel", "construct_icosahedron", "r10", 16, [] {
+    return measured(icosahedron(10.0), 0);
+  });
   harness.run("kernel", "construct_sphere", "medium", 8, [] {
     return measured(BRepPrimAPI_MakeSphere(10.0).Shape(), 0);
   });
@@ -185,6 +387,19 @@ int main() {
   harness.run("precision", "construct_sphere", "high_resolution", 1, [] {
     return measured(BRepPrimAPI_MakeSphere(10.0).Shape(), 0, true,
                     kHighResolutionMesh);
+  });
+  harness.run("kernel", "construct_ellipsoid", "r10_6_4_s32x16", 4, [] {
+    gp_GTrsf scale;
+    scale.SetVectorialPart(
+        gp_Mat(10.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 4.0));
+    return measured(BRepBuilderAPI_GTransform(
+                        BRepPrimAPI_MakeSphere(1.0).Shape(), scale,
+                        Standard_True)
+                        .Shape(),
+                    0);
+  });
+  harness.run("kernel", "construct_torus", "r10_2_s32x16", 2, [] {
+    return measured(BRepPrimAPI_MakeTorus(10.0, 2.0).Shape(), 0);
   });
 
   const TopoDS_Shape transform_source = BRepPrimAPI_MakeSphere(10.0).Shape();
@@ -240,6 +455,27 @@ int main() {
     output.Reverse();
     return geometry_measured(output, 960);
   });
+  const TopoDS_Shape off_center = centered_box(2.0, 7.0, -3.0, 5.0);
+  harness.run("kernel", "center", "translated_box", 32, [&] {
+    Bnd_Box bounds;
+    BRepBndLib::Add(off_center, bounds, Standard_True);
+    Standard_Real xmin, ymin, zmin, xmax, ymax, zmax;
+    bounds.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    gp_Trsf translation;
+    translation.SetTranslation(gp_Vec(-(xmin + xmax) / 2.0,
+                                      -(ymin + ymax) / 2.0,
+                                      -(zmin + zmax) / 2.0));
+    return geometry_measured(
+        BRepBuilderAPI_Transform(off_center, translation, Standard_True).Shape(),
+        12);
+  });
+  harness.run("kernel", "scale_uniform", "sphere_medium", 8, [&] {
+    gp_Trsf scale;
+    scale.SetScale(gp_Pnt(0, 0, 0), 2.0);
+    return geometry_measured(
+        BRepBuilderAPI_Transform(transform_source, scale, Standard_True).Shape(),
+        960);
+  });
 
   const TopoDS_Shape boolean_left = BRepPrimAPI_MakeSphere(10.0).Shape();
   const TopoDS_Shape boolean_right = centered_box(14.0, 3.0, 2.0, 1.0);
@@ -261,6 +497,24 @@ int main() {
     const TopoDS_Shape right_only =
         boolean_shape<BRepAlgoAPI_Cut>(boolean_right, boolean_left);
     return measured(boolean_shape<BRepAlgoAPI_Fuse>(left_only, right_only), 132);
+  });
+
+  const TopoDS_Shape topology_left = centered_box(4.0);
+  const TopoDS_Shape topology_contained = centered_box(2.0);
+  const TopoDS_Shape topology_touching = centered_box(4.0, 4.0, 0.0, 0.0);
+  harness.run("kernel", "boolean_union", "disjoint_boxes", 8, [&] {
+    return measured(distributed(topology_left, {{0, 0, 0}, {10, 0, 0}}), 24);
+  });
+  harness.run("kernel", "boolean_difference", "contained_boxes", 1, [&] {
+    return measured(
+        boolean_shape<BRepAlgoAPI_Cut>(topology_left, topology_contained), 24);
+  });
+  harness.run("kernel", "boolean_union", "face_touching_boxes", 1, [&] {
+    return measured(
+        boolean_shape<BRepAlgoAPI_Fuse>(topology_left, topology_touching), 24);
+  });
+  harness.run("kernel", "boolean_intersection", "identical_boxes", 8, [&] {
+    return measured(topology_left, 24);
   });
 
   // Precision::Confusion() is 1e-7 in OCCT. A 1e-6 overlap is deliberately
@@ -290,11 +544,55 @@ int main() {
     return measured(extruded_circle(6.0, 20.0, 64), 64);
   });
 
+  const TopoDS_Shape distribution_source = centered_box(1.0);
+  harness.run("kernel", "distribute_linear", "box_8", 1, [&] {
+    std::vector<std::array<double, 3>> offsets;
+    for (std::size_t index = 0; index < 8; ++index) {
+      offsets.push_back({2.0 * static_cast<double>(index), 0.0, 0.0});
+    }
+    return measured(distributed(distribution_source, offsets), 12);
+  });
+  harness.run("kernel", "distribute_grid", "box_4x4", 1, [&] {
+    std::vector<std::array<double, 3>> offsets;
+    for (std::size_t row = 0; row < 4; ++row) {
+      for (std::size_t column = 0; column < 4; ++column) {
+        offsets.push_back({2.0 * static_cast<double>(column),
+                           2.0 * static_cast<double>(row), 0.0});
+      }
+    }
+    return measured(distributed(distribution_source, offsets), 12);
+  });
+  harness.run("kernel", "distribute_arc", "box_12_30_degree_steps", 1, [&] {
+    std::vector<std::array<double, 3>> offsets;
+    for (std::size_t index = 0; index < 12; ++index) {
+      const double angle = 30.0 * std::numbers::pi / 180.0 *
+                           static_cast<double>(index);
+      offsets.push_back({10.0 * std::cos(angle), 10.0 * std::sin(angle), 0.0});
+    }
+    return measured(distributed(distribution_source, offsets), 12);
+  });
+
   const TopoDS_Shape analysis_source = BRepPrimAPI_MakeSphere(10.0).Shape();
+  TopoDS_Shape analysis_mesh_source = analysis_source;
+  triangulate(analysis_mesh_source);
   harness.run("kernel", "triangulate", "sphere_medium", 16, [&] {
     TopoDS_Shape output = analysis_source;
     triangulate(output);
     return measured(output, 960, false);
+  });
+  harness.run("kernel", "subdivide", "sphere_medium_level1", 2, [&] {
+    TopoDS_Shape output = analysis_source;
+    triangulate(output, kHighResolutionMesh);
+    return measured(output, 960, false);
+  });
+  harness.run("kernel", "renormalize", "sphere_medium", 4, [&] {
+    TopoDS_Shape output = BRepBuilderAPI_Copy(analysis_mesh_source).Shape();
+    triangulate(output);
+    const std::size_t normals = materialize_triangle_normals(output);
+    return Measurement{960, normals, normals};
+  });
+  harness.run("kernel", "materialize_finite", "sphere_medium", 4, [&] {
+    return geometry_measured(BRepBuilderAPI_Copy(analysis_source).Shape(), 960);
   });
   harness.run("kernel", "bounding_box", "sphere_medium", 128, [&] {
     Bnd_Box bounds;
@@ -308,5 +606,96 @@ int main() {
     BRepGProp::VolumeProperties(analysis_source, properties);
     return Measurement{1, 10,
                        std::bit_cast<std::uint64_t>(properties.Mass())};
+  });
+  harness.run("kernel", "vertices", "sphere_medium", 32, [&] {
+    TopoDS_Shape output = analysis_source;
+    triangulate(output);
+    const std::size_t corners = triangle_count(output) * 3;
+    return Measurement{960, corners, corners};
+  });
+  harness.run("kernel", "graphics_buffers", "sphere_medium", 16, [&] {
+    TopoDS_Shape output = analysis_source;
+    triangulate(output);
+    const std::size_t corners = triangle_count(output) * 3;
+    return Measurement{960, corners, csgrs_bench::checksum(corners, corners)};
+  });
+  harness.run("kernel", "connectivity", "sphere_medium", 8, [&] {
+    const TriangulatedConnectivity topology =
+        build_triangulated_connectivity(analysis_mesh_source);
+    return Measurement{
+        960, topology.vertices,
+        csgrs_bench::checksum(topology.vertices, topology.adjacency_vertices)};
+  });
+  harness.run("kernel", "is_manifold", "sphere_medium", 32, [&] {
+    const bool valid = BRepCheck_Analyzer(analysis_source, Standard_True).IsValid();
+    return Measurement{960, 1, valid ? 1U : 0U};
+  });
+  harness.run("kernel", "contains_point", "sphere_two_queries", 8, [&] {
+    BRepClass3d_SolidClassifier classifier(analysis_source);
+    classifier.Perform(gp_Pnt(0, 0, 0), Precision::Confusion());
+    const bool inside = classifier.State() != TopAbs_OUT;
+    classifier.Perform(gp_Pnt(20, 0, 0), Precision::Confusion());
+    const bool outside = classifier.State() != TopAbs_OUT;
+    return Measurement{960, 2, static_cast<std::uint64_t>(inside) |
+                                   (static_cast<std::uint64_t>(outside) << 1U)};
+  });
+  harness.run("kernel", "ray_intersections", "sphere_diameter", 8, [&] {
+    IntCurvesFace_ShapeIntersector intersector;
+    intersector.Load(analysis_source, Precision::Confusion());
+    intersector.Perform(gp_Lin(gp_Pnt(-20, 0, 0), gp_Dir(1, 0, 0)), 0.0,
+                        40.0);
+    const std::size_t hits = static_cast<std::size_t>(intersector.NbPnt());
+    return Measurement{960, hits, hits};
+  });
+  harness.run("kernel", "polyline_intersections", "sphere_diameter", 8, [&] {
+    IntCurvesFace_ShapeIntersector intersector;
+    intersector.Load(analysis_source, Precision::Confusion());
+    intersector.Perform(gp_Lin(gp_Pnt(-20, 0, 0), gp_Dir(1, 0, 0)), 0.0,
+                        40.0);
+    const std::size_t hits = static_cast<std::size_t>(intersector.NbPnt());
+    return Measurement{960, hits, hits};
+  });
+  harness.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, [&] {
+    const TopoDS_Shape shape = centered_box(2.0);
+    std::vector<gp_Vec> normals;
+    for (TopExp_Explorer explorer(shape, TopAbs_FACE); explorer.More();
+         explorer.Next()) {
+      BRepAdaptor_Surface surface(TopoDS::Face(explorer.Current()), Standard_True);
+      const Standard_Real u =
+          (surface.FirstUParameter() + surface.LastUParameter()) / 2.0;
+      const Standard_Real v =
+          (surface.FirstVParameter() + surface.LastVParameter()) / 2.0;
+      gp_Pnt point;
+      gp_Vec du;
+      gp_Vec dv;
+      surface.D1(u, v, point, du, dv);
+      gp_Vec normal = du.Crossed(dv);
+      if (normal.SquareMagnitude() > 0.0) {
+        normal.Normalize();
+        normals.push_back(normal);
+      }
+    }
+    const auto adjacent = std::find_if(
+        normals.begin() + 1, normals.end(), [&](const gp_Vec &normal) {
+          return std::abs(normals.front().Dot(normal)) < 0.5;
+        });
+    if (adjacent == normals.end()) {
+      throw std::runtime_error("OCCT cube has no adjacent face pair");
+    }
+    const double angle = normals.front().Angle(*adjacent);
+    return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
+  });
+  harness.run("kernel", "stl_write", "sphere_medium", 8, [&] {
+    TopoDS_Shape output = analysis_mesh_source;
+    const std::filesystem::path path =
+        std::filesystem::temp_directory_path() / "csgrs-occt-benchmark.stl";
+    StlAPI_Writer writer;
+    writer.ASCIIMode() = Standard_False;
+    if (!writer.Write(output, path.string().c_str())) {
+      throw std::runtime_error("OCCT STL comparison workload failed");
+    }
+    const std::size_t size = std::filesystem::file_size(path);
+    std::filesystem::remove(path);
+    return Measurement{960, size, size};
   });
 }

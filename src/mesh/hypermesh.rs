@@ -8,20 +8,24 @@
 //! <https://doi.org/10.1016/0925-7721(95)00040-2>: approximate input channels
 //! may propose exact objects only through audited conversion boundaries.
 
-use std::collections::BTreeMap;
+use std::cell::RefCell;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use hashbrown::HashMap;
 use hyperlattice::{Point3, Real, Vector3};
-use hypermesh::{BooleanOp, EmberConfig, InputMesh, Triangle, TriangleSoup};
+use hypermesh::{
+    BooleanArrangement, BooleanOp, EmberConfig, InputMesh, Triangle, TriangleSoup,
+};
 
 use crate::{
+    csg::CSG,
     mesh::Polygon,
     triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D, Triangulated3D},
     vertex::Vertex,
 };
 
-use super::Mesh;
+use super::{Mesh, aabbs_decided_disjoint, concatenate_disjoint_meshes};
 
 /// Error returned while importing or materializing a transitional `csgrs::Mesh`
 /// through hypermesh.
@@ -68,6 +72,141 @@ pub(super) struct HypermeshAdapterInput {
     position_ids: HashMap<u64, usize>,
 }
 
+/// Borrowed, certified preparation for extracting several Boolean results from
+/// the same two meshes.
+///
+/// Input adaptation, intersection subdivision, BSP construction, and winding
+/// classification are performed once. Each extraction still closure-certifies
+/// the selected exact result and materializes fresh CSGRS polygons with their
+/// source metadata.
+#[derive(Debug)]
+pub struct PreparedMeshBoolean<'a, M: Clone + Send + Sync + Debug> {
+    left: &'a Mesh<M>,
+    right: &'a Mesh<M>,
+    state: PreparedMeshBooleanState,
+}
+
+#[derive(Debug)]
+enum PreparedMeshBooleanState {
+    Shortcut(PreparedMeshBooleanShortcut),
+    Arrangement(Box<PreparedMeshBooleanArrangement>),
+}
+
+#[derive(Debug)]
+struct PreparedMeshBooleanArrangement {
+    arrangement: Arc<BooleanArrangement>,
+    left_source_polygons: Arc<[usize]>,
+    right_source_polygons: Arc<[usize]>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedPreparedMeshBooleanArrangement {
+    left_geometry_identity: Vec<u64>,
+    right_geometry_identity: Vec<u64>,
+    operations: Vec<HypermeshBooleanOp>,
+    arrangement: Arc<BooleanArrangement>,
+    left_source_polygons: Arc<[usize]>,
+    right_source_polygons: Arc<[usize]>,
+}
+
+thread_local! {
+    static LAST_PREPARED_BOOLEAN: RefCell<Option<CachedPreparedMeshBooleanArrangement>> = const { RefCell::new(None) };
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum PreparedMeshBooleanShortcut {
+    LeftEmpty,
+    RightEmpty,
+    Disjoint,
+    Identical,
+}
+
+impl<'a, M: Clone + Send + Sync + Debug> PreparedMeshBoolean<'a, M> {
+    /// Returns the number of certified arrangement fragments retained for
+    /// repeated extraction.
+    pub fn fragment_count(&self) -> usize {
+        match &self.state {
+            PreparedMeshBooleanState::Shortcut(_) => 0,
+            PreparedMeshBooleanState::Arrangement(prepared) => {
+                prepared.arrangement.fragment_count()
+            },
+        }
+    }
+
+    /// Extracts the exact union from the retained arrangement.
+    pub fn try_union(&self) -> Result<Mesh<M>, HypermeshError> {
+        self.extract(HypermeshBooleanOp::Union)
+    }
+
+    /// Extracts the exact left-minus-right difference from the retained
+    /// arrangement.
+    pub fn try_difference(&self) -> Result<Mesh<M>, HypermeshError> {
+        self.extract(HypermeshBooleanOp::Difference)
+    }
+
+    /// Extracts the exact intersection from the retained arrangement.
+    pub fn try_intersection(&self) -> Result<Mesh<M>, HypermeshError> {
+        self.extract(HypermeshBooleanOp::Intersection)
+    }
+
+    /// Extracts the exact symmetric difference from the retained arrangement.
+    pub fn try_xor(&self) -> Result<Mesh<M>, HypermeshError> {
+        self.extract(HypermeshBooleanOp::Xor)
+    }
+
+    fn extract(&self, operation: HypermeshBooleanOp) -> Result<Mesh<M>, HypermeshError> {
+        match &self.state {
+            PreparedMeshBooleanState::Shortcut(shortcut) => {
+                Ok(self.extract_shortcut(*shortcut, operation))
+            },
+            PreparedMeshBooleanState::Arrangement(prepared) => {
+                let soup = prepared
+                    .arrangement
+                    .extract_triangle_soup(operation.as_hypermesh())
+                    .map_err(HypermeshError::Boolean)?;
+                self.left.materialize_hypermesh_soup(
+                    self.right,
+                    &soup,
+                    prepared.left_source_polygons.as_ref(),
+                    prepared.right_source_polygons.as_ref(),
+                )
+            },
+        }
+    }
+
+    fn extract_shortcut(
+        &self,
+        shortcut: PreparedMeshBooleanShortcut,
+        operation: HypermeshBooleanOp,
+    ) -> Mesh<M> {
+        match (shortcut, operation) {
+            (PreparedMeshBooleanShortcut::LeftEmpty, HypermeshBooleanOp::Union)
+            | (PreparedMeshBooleanShortcut::LeftEmpty, HypermeshBooleanOp::Xor) => {
+                self.right.clone()
+            },
+            (PreparedMeshBooleanShortcut::LeftEmpty, _)
+            | (PreparedMeshBooleanShortcut::Disjoint, HypermeshBooleanOp::Intersection)
+            | (PreparedMeshBooleanShortcut::Identical, HypermeshBooleanOp::Difference)
+            | (PreparedMeshBooleanShortcut::Identical, HypermeshBooleanOp::Xor) => {
+                Mesh::empty()
+            },
+            (PreparedMeshBooleanShortcut::RightEmpty, HypermeshBooleanOp::Intersection) => {
+                Mesh::empty()
+            },
+            (PreparedMeshBooleanShortcut::RightEmpty, _)
+            | (PreparedMeshBooleanShortcut::Disjoint, HypermeshBooleanOp::Difference)
+            | (PreparedMeshBooleanShortcut::Identical, HypermeshBooleanOp::Union)
+            | (PreparedMeshBooleanShortcut::Identical, HypermeshBooleanOp::Intersection) => {
+                self.left.clone()
+            },
+            (PreparedMeshBooleanShortcut::Disjoint, HypermeshBooleanOp::Union)
+            | (PreparedMeshBooleanShortcut::Disjoint, HypermeshBooleanOp::Xor) => {
+                concatenate_disjoint_meshes(self.left, self.right)
+            },
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct PositionKey([Option<u64>; 3]);
 
@@ -109,6 +248,153 @@ impl PositionIndices {
 }
 
 impl<M: Clone + Send + Sync + Debug> Mesh<M> {
+    /// Prepares two meshes once for repeated exact Boolean extraction.
+    ///
+    /// This is intended for callers that need more than one operation for the
+    /// same pair. Empty, exactly disjoint, and identical inputs retain the same
+    /// exact set-identity shortcuts and source polygonization as direct calls.
+    pub fn try_prepare_boolean<'a>(
+        &'a self,
+        other: &'a Self,
+    ) -> Result<PreparedMeshBoolean<'a, M>, HypermeshError> {
+        self.try_prepare_boolean_operations(
+            other,
+            &[
+                HypermeshBooleanOp::Union,
+                HypermeshBooleanOp::Difference,
+                HypermeshBooleanOp::Intersection,
+                HypermeshBooleanOp::Xor,
+            ],
+        )
+    }
+
+    pub(super) fn try_prepare_boolean_operation<'a>(
+        &'a self,
+        other: &'a Self,
+        _operation: HypermeshBooleanOp,
+    ) -> Result<PreparedMeshBoolean<'a, M>, HypermeshError> {
+        self.try_prepare_boolean_operations(
+            other,
+            &[
+                HypermeshBooleanOp::Union,
+                HypermeshBooleanOp::Difference,
+                HypermeshBooleanOp::Intersection,
+                HypermeshBooleanOp::Xor,
+            ],
+        )
+    }
+
+    fn try_prepare_boolean_operations<'a>(
+        &'a self,
+        other: &'a Self,
+        operations: &[HypermeshBooleanOp],
+    ) -> Result<PreparedMeshBoolean<'a, M>, HypermeshError> {
+        let shortcut = if self.polygons.is_empty() {
+            Some(PreparedMeshBooleanShortcut::LeftEmpty)
+        } else if other.polygons.is_empty() {
+            Some(PreparedMeshBooleanShortcut::RightEmpty)
+        } else if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
+            Some(PreparedMeshBooleanShortcut::Disjoint)
+        } else {
+            None
+        };
+        if let Some(shortcut) = shortcut {
+            return Ok(PreparedMeshBoolean {
+                left: self,
+                right: other,
+                state: PreparedMeshBooleanState::Shortcut(shortcut),
+            });
+        }
+
+        let left_geometry_identity = self.geometry_identity();
+        let right_geometry_identity = other.geometry_identity();
+        if let Some(prepared) = LAST_PREPARED_BOOLEAN.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.left_geometry_identity == left_geometry_identity
+                        && cached.right_geometry_identity == right_geometry_identity
+                        && cached.operations == operations
+                })
+                .cloned()
+        }) {
+            return Ok(PreparedMeshBoolean {
+                left: self,
+                right: other,
+                state: PreparedMeshBooleanState::Arrangement(Box::new(
+                    PreparedMeshBooleanArrangement {
+                        arrangement: prepared.arrangement,
+                        left_source_polygons: prepared.left_source_polygons,
+                        right_source_polygons: prepared.right_source_polygons,
+                    },
+                )),
+            });
+        }
+
+        let left_input = self.build_hypermesh_input(true);
+        let right_input = other.build_hypermesh_input(true);
+        let shortcut = if left_input.buffers.indices.is_empty() {
+            Some(PreparedMeshBooleanShortcut::LeftEmpty)
+        } else if right_input.buffers.indices.is_empty() {
+            Some(PreparedMeshBooleanShortcut::RightEmpty)
+        } else if left_input.buffers == right_input.buffers {
+            Some(PreparedMeshBooleanShortcut::Identical)
+        } else {
+            None
+        };
+        if let Some(shortcut) = shortcut {
+            return Ok(PreparedMeshBoolean {
+                left: self,
+                right: other,
+                state: PreparedMeshBooleanState::Shortcut(shortcut),
+            });
+        }
+
+        let left = input_mesh_from_buffers(&left_input.buffers);
+        let right = input_mesh_from_buffers(&right_input.buffers);
+        let hypermesh_operations = operations
+            .iter()
+            .copied()
+            .map(HypermeshBooleanOp::as_hypermesh)
+            .collect::<Vec<_>>();
+        let certified_convex_inputs =
+            [self.has_convex_pwn_fact(), other.has_convex_pwn_fact()];
+        let arrangement = Arc::new(
+            ::hypermesh::prepare_boolean_operations_with_certified_convex_inputs(
+                &[left.as_ref(), right.as_ref()],
+                &hypermesh_operations,
+                &certified_convex_inputs,
+                EmberConfig::default(),
+            )
+            .map_err(HypermeshError::Boolean)?,
+        );
+        let left_source_polygons = Arc::<[usize]>::from(left_input.source_polygons);
+        let right_source_polygons = Arc::<[usize]>::from(right_input.source_polygons);
+
+        LAST_PREPARED_BOOLEAN.with_borrow_mut(|cached| {
+            *cached = Some(CachedPreparedMeshBooleanArrangement {
+                left_geometry_identity,
+                right_geometry_identity,
+                operations: operations.to_vec(),
+                arrangement: Arc::clone(&arrangement),
+                left_source_polygons: Arc::clone(&left_source_polygons),
+                right_source_polygons: Arc::clone(&right_source_polygons),
+            });
+        });
+
+        Ok(PreparedMeshBoolean {
+            left: self,
+            right: other,
+            state: PreparedMeshBooleanState::Arrangement(Box::new(
+                PreparedMeshBooleanArrangement {
+                    arrangement,
+                    left_source_polygons,
+                    right_source_polygons,
+                },
+            )),
+        })
+    }
+
     /// Build deduplicated flat triangle buffers for `hypermesh`.
     ///
     /// This differs from renderer/export buffers, which may intentionally keep
@@ -134,6 +420,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
         let mut push_triangle = |vertices: &[Vertex]| {
             for vertex in vertices {
+                if let Some(&index) = position_ids.get(&vertex.position_id) {
+                    indices.push(index);
+                    continue;
+                }
                 let position = canonical_position(&vertex.position);
                 let key = PositionKey::new(&position);
                 let index = match vertex_indices.entry(key) {
@@ -220,46 +510,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     ) -> ::hypermesh::HypermeshResult<(InputMesh, HashMap<u64, usize>)> {
         let input = self.build_hypermesh_input(false);
         let mesh = input_mesh_from_buffers(&input.buffers);
-        if !mesh.positions.is_empty() {
-            validate_surface_input(&mesh)?;
-        }
         Ok((mesh, input.position_ids))
-    }
-
-    /// Compute a mesh boolean through exact `hypermesh`.
-    ///
-    /// The finite `csgrs` polygons are imported as audited exact meshes and the
-    /// returned exact output is replayed as finite `Mesh` triangles. This keeps
-    /// topology decisions on the exact side, with conversion boundary evidence
-    /// preserved as required by Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997), and
-    /// <https://doi.org/10.1016/0925-7721(95)00040-2>.
-    pub(super) fn boolean_via_hypermesh(
-        &self,
-        other: &Self,
-        operation: HypermeshBooleanOp,
-        left_input: HypermeshAdapterInput,
-        right_input: HypermeshAdapterInput,
-    ) -> Result<Self, HypermeshError> {
-        let left = input_mesh_from_buffers(&left_input.buffers);
-        let right = input_mesh_from_buffers(&right_input.buffers);
-        let op = match operation {
-            HypermeshBooleanOp::Union => BooleanOp::Union,
-            HypermeshBooleanOp::Difference => BooleanOp::Difference,
-            HypermeshBooleanOp::Intersection => BooleanOp::Intersection,
-            HypermeshBooleanOp::Xor => BooleanOp::SymmetricDifference,
-        };
-        let refs = [left.as_ref(), right.as_ref()];
-        let result = ::hypermesh::boolean_operation(&refs, op, EmberConfig::default())
-            .map_err(HypermeshError::Boolean)?;
-        let soup = ::hypermesh::triangulate_and_resolve_certified(&result)
-            .map_err(HypermeshError::Materialize)?;
-        self.materialize_hypermesh_soup(
-            other,
-            &soup,
-            &left_input.source_polygons,
-            &right_input.source_polygons,
-        )
     }
 
     fn materialize_hypermesh_soup(
@@ -301,7 +552,11 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             let Some(c) = soup_vertex_position(soup, triangle[2]) else {
                 continue;
             };
-            let normal = hyper_triangle_unit_normal(&a, &b, &c).unwrap_or_else(Vector3::z);
+            let normal = match source.orientation {
+                1 => polygon.calculate_new_normal(),
+                -1 => -polygon.calculate_new_normal(),
+                _ => hyper_triangle_unit_normal(&a, &b, &c).unwrap_or_else(Vector3::z),
+            };
             polygons.push(Polygon::new(
                 vec![
                     Vertex::new(a, normal.clone()),
@@ -313,6 +568,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
 
         Ok(Self::from_polygons(polygons))
+    }
+}
+
+impl HypermeshBooleanOp {
+    const fn as_hypermesh(self) -> BooleanOp {
+        match self {
+            Self::Union => BooleanOp::Union,
+            Self::Difference => BooleanOp::Difference,
+            Self::Intersection => BooleanOp::Intersection,
+            Self::Xor => BooleanOp::SymmetricDifference,
+        }
     }
 }
 
@@ -433,11 +699,12 @@ impl IndexedTriangulated3D for TriangleSoup {
 }
 
 fn canonical_coordinate(value: &Real) -> Real {
-    if matches!(value.refine_sign_until(-128), Some(hyperreal::RealSign::Zero)) {
-        Real::zero()
-    } else {
-        value.clone()
-    }
+    let is_zero = value
+        .exact_rational_ref()
+        .is_some_and(|rational| rational.is_zero())
+        || (value.exact_rational_ref().is_none()
+            && matches!(value.refine_sign_until(-128), Some(hyperreal::RealSign::Zero)));
+    if is_zero { Real::zero() } else { value.clone() }
 }
 
 fn canonical_position(position: &Point3) -> Point3 {
@@ -489,27 +756,24 @@ fn validate_surface_input(mesh: &InputMesh) -> ::hypermesh::HypermeshResult<()> 
     Ok(())
 }
 
-pub(crate) fn hypermesh_edges(mesh: &InputMesh) -> Vec<[usize; 2]> {
-    let mut edges = Vec::with_capacity(mesh.triangles.len() * 3);
+pub(crate) fn hypermesh_is_closed_manifold(mesh: &InputMesh) -> bool {
+    let mut edge_counts =
+        HashMap::<(usize, usize), [u8; 2]>::with_capacity(mesh.triangles.len() * 3 / 2);
     for triangle in &mesh.triangles {
         let [a, b, c] = triangle.indices();
-        edges.push([a, b]);
-        edges.push([b, c]);
-        edges.push([c, a]);
-    }
-    edges
-}
-
-pub(crate) fn hypermesh_is_closed_manifold(mesh: &InputMesh) -> bool {
-    let mut edge_counts = BTreeMap::<(usize, usize), usize>::new();
-    for [a, b] in hypermesh_edges(mesh) {
-        if a >= mesh.positions.len() || b >= mesh.positions.len() || a == b {
-            return false;
+        for [a, b] in [[a, b], [b, c], [c, a]] {
+            if a >= mesh.positions.len() || b >= mesh.positions.len() || a == b {
+                return false;
+            }
+            let (key, direction) = if a < b { ((a, b), 0) } else { ((b, a), 1) };
+            let counts = edge_counts.entry(key).or_insert([0; 2]);
+            counts[direction] = counts[direction].saturating_add(1);
+            if counts[direction] > 1 {
+                return false;
+            }
         }
-        let key = if a < b { (a, b) } else { (b, a) };
-        *edge_counts.entry(key).or_insert(0) += 1;
     }
-    !edge_counts.is_empty() && edge_counts.values().all(|count| *count == 2)
+    !edge_counts.is_empty() && edge_counts.values().all(|counts| *counts == [1, 1])
 }
 
 fn soup_vertex_position(soup: &TriangleSoup, vertex: usize) -> Option<Point3> {
@@ -601,5 +865,231 @@ mod tests {
 
         assert_eq!(positions.len(), 4);
         assert!(positions.iter().any(|point| point.x == epsilon));
+    }
+
+    #[test]
+    fn prepared_mesh_booleans_match_direct_exact_outputs_and_metadata() {
+        let left = Mesh::cube(Real::from(2_u8), 11_u8);
+        let right = Mesh::cube(Real::from(2_u8), 29_u8).translate(
+            Real::one(),
+            (Real::from(1_u8) / Real::from(2_u8)).unwrap(),
+            Real::zero(),
+        );
+        let prepared = left
+            .try_prepare_boolean(&right)
+            .expect("overlapping cubes should produce a certified arrangement");
+        assert!(prepared.fragment_count() > 0);
+
+        let cases = [
+            (prepared.try_union().unwrap(), left.try_union(&right).unwrap()),
+            (
+                prepared.try_difference().unwrap(),
+                left.try_difference(&right).unwrap(),
+            ),
+            (
+                prepared.try_intersection().unwrap(),
+                left.try_intersection(&right).unwrap(),
+            ),
+            (prepared.try_xor().unwrap(), left.try_xor(&right).unwrap()),
+        ];
+
+        for (prepared_result, direct_result) in cases {
+            assert_eq!(
+                prepared_result.to_hypermesh_buffers(),
+                direct_result.to_hypermesh_buffers()
+            );
+            assert_eq!(
+                prepared_result
+                    .polygons
+                    .iter()
+                    .map(|polygon| polygon.metadata)
+                    .collect::<Vec<_>>(),
+                direct_result
+                    .polygons
+                    .iter()
+                    .map(|polygon| polygon.metadata)
+                    .collect::<Vec<_>>()
+            );
+        }
+    }
+
+    #[test]
+    fn repeated_direct_boolean_reuses_exact_arrangement_without_reusing_metadata() {
+        let left = Mesh::cube(Real::from(2_u8), 11_u8);
+        let right = Mesh::cube(Real::from(2_u8), 29_u8).translate(
+            Real::one(),
+            (Real::one() / Real::from(2_u8)).unwrap(),
+            Real::zero(),
+        );
+        let first = left.try_union(&right).unwrap();
+        let second = left.try_union(&right).unwrap();
+        assert_eq!(polygon_rows(&first), polygon_rows(&second));
+
+        let remapped_left = left.map_metadata(|_| 31_u8);
+        let remapped_right = right.map_metadata(|_| 47_u8);
+        let remapped = remapped_left.try_union(&remapped_right).unwrap();
+        let metadata = remapped
+            .polygons
+            .iter()
+            .map(|polygon| polygon.metadata)
+            .collect::<Vec<_>>();
+
+        assert!(metadata.contains(&31));
+        assert!(metadata.contains(&47));
+        assert!(metadata.iter().all(|value| matches!(value, 31 | 47)));
+        assert_eq!(first.to_hypermesh_buffers(), remapped.to_hypermesh_buffers());
+    }
+
+    fn polygon_rows(mesh: &Mesh<u8>) -> Vec<(Vec<Point3>, u8)> {
+        mesh.polygons
+            .iter()
+            .map(|polygon| {
+                (
+                    polygon
+                        .vertices()
+                        .iter()
+                        .map(|vertex| vertex.position.clone())
+                        .collect(),
+                    polygon.metadata,
+                )
+            })
+            .collect()
+    }
+
+    fn assert_prepared_matches_direct_rows(left: &Mesh<u8>, right: &Mesh<u8>, label: &str) {
+        let prepared = left.try_prepare_boolean(right).unwrap();
+        let cases = [
+            (prepared.try_union().unwrap(), left.try_union(right).unwrap()),
+            (
+                prepared.try_difference().unwrap(),
+                left.try_difference(right).unwrap(),
+            ),
+            (
+                prepared.try_intersection().unwrap(),
+                left.try_intersection(right).unwrap(),
+            ),
+            (prepared.try_xor().unwrap(), left.try_xor(right).unwrap()),
+        ];
+        for (prepared_result, direct_result) in cases {
+            assert_eq!(
+                polygon_rows(&prepared_result),
+                polygon_rows(&direct_result),
+                "{label}"
+            );
+        }
+    }
+
+    #[test]
+    fn prepared_shortcuts_preserve_direct_polygonization_and_metadata() {
+        let left = Mesh::cube(Real::from(2_u8), 11_u8);
+        let disjoint = Mesh::cube(Real::from(2_u8), 29_u8).translate(
+            Real::from(5_u8),
+            Real::zero(),
+            Real::zero(),
+        );
+        let identical = Mesh::cube(Real::from(2_u8), 29_u8);
+        let empty = Mesh::empty();
+
+        for (right, label) in [
+            (&disjoint, "disjoint"),
+            (&identical, "identical"),
+            (&empty, "right-empty"),
+        ] {
+            let prepared = left.try_prepare_boolean(right).unwrap();
+            assert_eq!(prepared.fragment_count(), 0, "{label}");
+            let cases = [
+                (prepared.try_union().unwrap(), left.try_union(right).unwrap()),
+                (
+                    prepared.try_difference().unwrap(),
+                    left.try_difference(right).unwrap(),
+                ),
+                (
+                    prepared.try_intersection().unwrap(),
+                    left.try_intersection(right).unwrap(),
+                ),
+                (prepared.try_xor().unwrap(), left.try_xor(right).unwrap()),
+            ];
+            for (prepared_result, direct_result) in cases {
+                assert_eq!(
+                    polygon_rows(&prepared_result),
+                    polygon_rows(&direct_result),
+                    "{label}"
+                );
+            }
+        }
+
+        let prepared_disjoint = left.try_prepare_boolean(&disjoint).unwrap();
+        let mut expected_union = polygon_rows(&left);
+        expected_union.extend(polygon_rows(&disjoint));
+        assert_eq!(
+            polygon_rows(&prepared_disjoint.try_union().unwrap()),
+            expected_union
+        );
+
+        let prepared_identical = left.try_prepare_boolean(&identical).unwrap();
+        assert_eq!(
+            polygon_rows(&prepared_identical.try_union().unwrap()),
+            polygon_rows(&left)
+        );
+        assert!(
+            prepared_identical
+                .try_difference()
+                .unwrap()
+                .polygons
+                .is_empty()
+        );
+
+        let prepared_left_empty = empty.try_prepare_boolean(&left).unwrap();
+        assert_eq!(prepared_left_empty.fragment_count(), 0);
+        assert_eq!(
+            polygon_rows(&prepared_left_empty.try_union().unwrap()),
+            polygon_rows(&left)
+        );
+    }
+
+    #[test]
+    fn prepared_and_scoped_operations_match_all_topology_classes_exactly() {
+        let left = Mesh::cube(Real::from(4_u8), 11_u8);
+        let epsilon = (Real::one() / Real::from(1_000_000_u32)).unwrap();
+        let fixtures = [
+            (
+                "general-overlap",
+                Mesh::cube(Real::from(4_u8), 29_u8).translate(
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                ),
+            ),
+            ("contained", Mesh::cube(Real::from(2_u8), 29_u8)),
+            (
+                "face-touching",
+                Mesh::cube(Real::from(4_u8), 29_u8).translate(
+                    Real::from(4_u8),
+                    Real::zero(),
+                    Real::zero(),
+                ),
+            ),
+            (
+                "disjoint",
+                Mesh::cube(Real::from(4_u8), 29_u8).translate(
+                    Real::from(10_u8),
+                    Real::zero(),
+                    Real::zero(),
+                ),
+            ),
+            ("identical", Mesh::cube(Real::from(4_u8), 29_u8)),
+            (
+                "tiny-exact-overlap",
+                Mesh::cube(Real::from(4_u8), 29_u8).translate(
+                    Real::from(4_u8) - epsilon,
+                    Real::zero(),
+                    Real::zero(),
+                ),
+            ),
+        ];
+
+        for (label, right) in fixtures {
+            assert_prepared_matches_direct_rows(&left, &right, label);
+        }
     }
 }

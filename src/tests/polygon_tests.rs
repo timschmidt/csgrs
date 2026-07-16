@@ -176,6 +176,11 @@ fn mutable_vertex_access_refreshes_plane_and_bounds() {
         (),
     );
     let old_bounds = polygon.bounding_box();
+    let old_position_ids = polygon
+        .vertices()
+        .iter()
+        .map(|vertex| vertex.position_id)
+        .collect::<Vec<_>>();
 
     {
         let mut vertices = polygon.vertices_mut();
@@ -187,6 +192,13 @@ fn mutable_vertex_access_refreshes_plane_and_bounds() {
     assert_eq!(old_bounds.mins.z, Real::zero());
     assert_eq!(polygon.bounding_box().mins.z, r(2.0));
     assert_eq!(polygon.plane().point_a.z, r(2.0));
+    assert!(
+        polygon
+            .vertices()
+            .iter()
+            .zip(old_position_ids)
+            .all(|(vertex, old_id)| vertex.position_id != old_id)
+    );
 }
 
 // ------------------------------------------------------------

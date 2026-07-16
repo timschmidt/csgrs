@@ -23,6 +23,7 @@ Thumbs.db
 /result*
 
 # Generated output
+__pycache__/
 stl/
 outputs/
 target/

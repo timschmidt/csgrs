@@ -37,14 +37,21 @@ fn readme_referenced_png_baselines_exist() {
 }
 
 #[test]
-#[ignore = "expensive byte-for-byte README render regression; run with `cargo test --test readme_render_regression -- --ignored`"]
+#[ignore = "expensive byte-for-byte README render regression; run with `cargo test --all-features --test readme_render_regression -- --ignored`"]
 fn generated_readme_pngs_match_checked_in_baselines() {
     let repo = repo_root();
     let output_dir = fresh_output_dir(&repo);
 
     let status = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned()))
         .current_dir(&repo)
-        .args(["run", "--quiet", "--example", "readme_renders"])
+        .args([
+            "run",
+            "--quiet",
+            "--example",
+            "readme_renders",
+            "--features",
+            "mesh,sketch,image-io,truetype-text,metaballs,sdf,offset",
+        ])
         .env("README_RENDER_OUTPUT_DIR", &output_dir)
         .status()
         .expect("run readme_renders example");

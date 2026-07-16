@@ -3,12 +3,30 @@
 use hashbrown::HashMap;
 use hyperlattice::{Point3, Real, Vector3};
 use hyperreal::RealSign;
+use std::cell::RefCell;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_POSITION_ID: AtomicU64 = AtomicU64::new(1);
+const FINITE_POSITION_CACHE_CAPACITY: usize = 262_144;
+
+thread_local! {
+    static FINITE_POSITIONS: RefCell<HashMap<u64, [f64; 3]>> = RefCell::new(HashMap::new());
+}
 
 pub(crate) fn fresh_position_id() -> u64 {
     NEXT_POSITION_ID.fetch_add(1, Ordering::Relaxed)
+}
+
+pub(crate) fn cache_position_f64(position_id: u64, position: Option<[f64; 3]>) {
+    let Some(position) = position else {
+        return;
+    };
+    FINITE_POSITIONS.with_borrow_mut(|positions| {
+        if positions.len() == FINITE_POSITION_CACHE_CAPACITY {
+            positions.clear();
+        }
+        positions.insert(position_id, position);
+    });
 }
 
 /// A vertex of a polygon, holding position and normal.
@@ -52,9 +70,36 @@ impl Vertex {
         }
     }
 
+    pub(crate) fn refresh_position_identity(&mut self) {
+        self.position_id = fresh_position_id();
+        self.coordinate_ids = [
+            fresh_position_id(),
+            fresh_position_id(),
+            fresh_position_id(),
+        ];
+        self.ruled_line = None;
+    }
+
     pub(crate) fn with_normal(mut self, normal: Vector3) -> Self {
         self.normal = normal;
         self
+    }
+
+    /// Returns a retained primitive approximation of this position.
+    ///
+    /// Transform paths populate this view from the same affine map used for
+    /// the exact position. It is only an export/rendering convenience and is
+    /// never consumed by topology or predicates.
+    pub fn position_f64_lossy(&self) -> Option<[f64; 3]> {
+        FINITE_POSITIONS
+            .with_borrow(|positions| positions.get(&self.position_id).copied())
+            .or_else(|| {
+                Some([
+                    self.position.x.to_f64_lossy()?,
+                    self.position.y.to_f64_lossy()?,
+                    self.position.z.to_f64_lossy()?,
+                ])
+            })
     }
 
     pub(crate) const fn exclude_from_hull(mut self) -> Self {

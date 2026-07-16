@@ -34,12 +34,20 @@ find_package(OpenCASCADE QUIET COMPONENTS
   ModelingAlgorithms
 )
 if(OpenCASCADE_FOUND)
+  find_library(CSGRS_OCCT_STL_LIBRARY
+    NAMES TKDESTL TKSTL
+    HINTS ${OpenCASCADE_LIBRARY_DIR}
+  )
+  if(NOT CSGRS_OCCT_STL_LIBRARY)
+    message(FATAL_ERROR "OpenCascade STL writer library was not found")
+  endif()
   add_executable(csgrs_bench_occt opencascade.cpp)
   target_include_directories(csgrs_bench_occt PRIVATE ${OpenCASCADE_INCLUDE_DIR})
   target_link_libraries(csgrs_bench_occt PRIVATE
     ${OpenCASCADE_FoundationClasses_LIBRARIES}
     ${OpenCASCADE_ModelingData_LIBRARIES}
     ${OpenCASCADE_ModelingAlgorithms_LIBRARIES}
+    ${CSGRS_OCCT_STL_LIBRARY}
   )
   target_compile_options(csgrs_bench_occt PRIVATE -O3 -DNDEBUG)
 elseif(CSGRS_BENCH_REQUIRE_ALL)

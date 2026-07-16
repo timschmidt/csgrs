@@ -39,6 +39,60 @@ fn mesh_measurement(mesh: &Mesh<()>, work_units: usize) -> Measurement {
     )
 }
 
+fn direct_boolean_results(left: &Mesh<()>, right: &Mesh<()>, count: usize) -> Vec<Mesh<()>> {
+    let mut results = Vec::with_capacity(count);
+    if count >= 1 {
+        results.push(left.try_union(right).unwrap());
+    }
+    if count >= 2 {
+        results.push(left.try_difference(right).unwrap());
+    }
+    if count >= 3 {
+        results.push(left.try_intersection(right).unwrap());
+    }
+    if count >= 4 {
+        results.push(left.try_xor(right).unwrap());
+    }
+    results
+}
+
+fn prepared_boolean_results(
+    prepared: &csgrs::mesh::hypermesh::PreparedMeshBoolean<'_, ()>,
+    count: usize,
+) -> Vec<Mesh<()>> {
+    let mut results = Vec::with_capacity(count);
+    if count >= 1 {
+        results.push(prepared.try_union().unwrap());
+    }
+    if count >= 2 {
+        results.push(prepared.try_difference().unwrap());
+    }
+    if count >= 3 {
+        results.push(prepared.try_intersection().unwrap());
+    }
+    if count >= 4 {
+        results.push(prepared.try_xor().unwrap());
+    }
+    results
+}
+
+fn boolean_measurement(results: &[Mesh<()>]) -> Measurement {
+    let polygons = results
+        .iter()
+        .map(|result| result.polygons.len())
+        .sum::<usize>();
+    let corners = results
+        .iter()
+        .flat_map(|result| &result.polygons)
+        .map(|polygon| polygon.vertices().len())
+        .sum::<usize>();
+    Measurement::new(
+        results.len() as u64,
+        polygons as u64,
+        ((polygons as u64) << 32) ^ corners as u64,
+    )
+}
+
 fn profile_measurement(profile: &Profile, work_units: usize) -> Measurement {
     let contours = profile.material_contour_count() + profile.hole_contour_count();
     let wires = profile.wires().len();
@@ -68,6 +122,10 @@ fn square_section(z: i64, half_width: i64) -> Polygon<()> {
 }
 
 fn main() {
+    run();
+}
+
+fn run() {
     support::print_header();
     let config = Config::from_env();
 
@@ -336,16 +394,16 @@ fn main() {
     let distribution_source = Mesh::cube(Real::one(), ());
     config.run("feature", "mesh_distribution", "arc_linear_grid", 1, || {
         let arc = distribution_source.distribute_arc(
-            4,
-            Real::from(5_u8),
+            12,
+            Real::from(10_u8),
             Real::zero(),
-            Real::from(270_u16),
+            Real::from(330_u16),
         );
         let linear = distribution_source.distribute_linear(4, Vector3::x(), Real::from(3_u8));
         let grid =
             distribution_source.distribute_grid(2, 3, Real::from(3_u8), Real::from(3_u8));
         let polygons = arc.polygons.len() + linear.polygons.len() + grid.polygons.len();
-        Measurement::new(14, polygons as u64, polygons as u64)
+        Measurement::new(22, polygons as u64, polygons as u64)
     });
     config.run(
         "feature",
@@ -372,6 +430,14 @@ fn main() {
             vertices.index_to_position.len() as u64 ^ u64::from(manifold),
         )
     });
+    config.run("feature", "mesh_queries", "graphics_buffers", 8, || {
+        let graphics = black_box(&mesh).build_graphics_mesh();
+        Measurement::new(
+            mesh.polygons.len() as u64,
+            graphics.indices.len() as u64,
+            ((graphics.vertices.len() as u64) << 32) ^ graphics.indices.len() as u64,
+        )
+    });
     config.run("feature", "mesh_queries", "ray_mass_graphics", 2, || {
         let hits = mesh.ray_intersections(
             &Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
@@ -385,6 +451,33 @@ fn main() {
             mesh.polygons.len() as u64,
             graphics.indices.len() as u64,
             hits.len() as u64 ^ mass.mass.to_f64_lossy().unwrap_or_default().to_bits(),
+        )
+    });
+    config.run("feature", "mesh_queries", "ray_intersections", 4, || {
+        let hits = mesh.ray_intersections(
+            &Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
+            &Vector3::x(),
+        );
+        Measurement::new(
+            mesh.polygons.len() as u64,
+            hits.len() as u64,
+            hits.iter().fold(0_u64, |checksum, (_, distance)| {
+                checksum.rotate_left(7) ^ distance.to_f64_lossy().unwrap_or_default().to_bits()
+            }),
+        )
+    });
+    config.run("feature", "mesh_queries", "mass_properties", 4, || {
+        let report = mesh
+            .exact_mass_properties(Real::one())
+            .expect("closed sphere has mass properties");
+        Measurement::new(
+            mesh.polygons.len() as u64,
+            10,
+            report.mass.to_f64_lossy().unwrap_or_default().to_bits()
+                ^ report.center_of_mass.0[0]
+                    .to_f64_lossy()
+                    .unwrap_or_default()
+                    .to_bits(),
         )
     });
     config.run(
@@ -434,6 +527,90 @@ fn main() {
             .minkowski_sum(&Mesh::cube(Real::from(3_u8), ()), ());
         mesh_measurement(&sum, 16)
     });
+
+    let boolean_left = Mesh::cube(Real::from(4_u8), ());
+    let boolean_right =
+        Mesh::cube(Real::from(4_u8), ()).translate(Real::one(), Real::one(), Real::one());
+    config.run("feature", "mesh_boolean", "direct_four", 1, || {
+        boolean_measurement(&direct_boolean_results(&boolean_left, &boolean_right, 4))
+    });
+    config.run(
+        "feature",
+        "mesh_boolean",
+        "prepare_and_extract_four",
+        1,
+        || {
+            let prepared = boolean_left.try_prepare_boolean(&boolean_right).unwrap();
+            boolean_measurement(&prepared_boolean_results(&prepared, 4))
+        },
+    );
+    let prepared_boolean = boolean_left.try_prepare_boolean(&boolean_right).unwrap();
+    config.run("feature", "mesh_boolean", "extract_four_prebuilt", 1, || {
+        boolean_measurement(&prepared_boolean_results(&prepared_boolean, 4))
+    });
+
+    for count in 1..=4 {
+        let direct_case = format!("direct_{count}");
+        config.run("feature", "mesh_boolean_crossover", &direct_case, 1, || {
+            boolean_measurement(&direct_boolean_results(&boolean_left, &boolean_right, count))
+        });
+        let prepare_case = format!("prepare_extract_{count}");
+        config.run("feature", "mesh_boolean_crossover", &prepare_case, 1, || {
+            let prepared = boolean_left.try_prepare_boolean(&boolean_right).unwrap();
+            boolean_measurement(&prepared_boolean_results(&prepared, count))
+        });
+        let extract_case = format!("prebuilt_extract_{count}");
+        config.run("feature", "mesh_boolean_crossover", &extract_case, 1, || {
+            boolean_measurement(&prepared_boolean_results(&prepared_boolean, count))
+        });
+    }
+
+    let boolean_fixtures = [
+        (
+            "disjoint",
+            Mesh::cube(Real::from(4_u8), ()),
+            Mesh::cube(Real::from(4_u8), ()).translate(
+                Real::from(10_u8),
+                Real::zero(),
+                Real::zero(),
+            ),
+        ),
+        (
+            "identical",
+            Mesh::cube(Real::from(4_u8), ()),
+            Mesh::cube(Real::from(4_u8), ()),
+        ),
+        (
+            "contained",
+            Mesh::cube(Real::from(4_u8), ()),
+            Mesh::cube(Real::from(2_u8), ()),
+        ),
+        (
+            "face_touching",
+            Mesh::cube(Real::from(4_u8), ()),
+            Mesh::cube(Real::from(4_u8), ()).translate(
+                Real::from(4_u8),
+                Real::zero(),
+                Real::zero(),
+            ),
+        ),
+    ];
+    for (fixture, left, right) in &boolean_fixtures {
+        let prepared = left.try_prepare_boolean(right).unwrap();
+        let direct_case = format!("{fixture}_direct_four");
+        config.run("feature", "mesh_boolean_fixtures", &direct_case, 1, || {
+            boolean_measurement(&direct_boolean_results(left, right, 4))
+        });
+        let prepare_case = format!("{fixture}_prepare_extract_four");
+        config.run("feature", "mesh_boolean_fixtures", &prepare_case, 1, || {
+            let prepared = left.try_prepare_boolean(right).unwrap();
+            boolean_measurement(&prepared_boolean_results(&prepared, 4))
+        });
+        let extract_case = format!("{fixture}_prebuilt_extract_four");
+        config.run("feature", "mesh_boolean_fixtures", &extract_case, 1, || {
+            boolean_measurement(&prepared_boolean_results(&prepared, 4))
+        });
+    }
 
     let sdf_min = Point3::new(Real::from(-3_i8), Real::from(-3_i8), Real::from(-3_i8));
     let sdf_max = Point3::new(Real::from(3_u8), Real::from(3_u8), Real::from(3_u8));

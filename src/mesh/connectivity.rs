@@ -1,10 +1,10 @@
 //! Mesh connectivity helpers for exact vertex indexing and topology analysis.
 
 use crate::mesh::Mesh;
-use crate::mesh::hypermesh::hypermesh_edges;
 use crate::vertex::Vertex;
 use hashbrown::HashMap;
 use hyperlattice::Point3;
+use std::cell::RefCell;
 use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
@@ -28,6 +28,19 @@ pub struct VertexIndexMap {
     pub index_to_position: HashMap<usize, Point3>,
     position_id_to_index: HashMap<u64, usize>,
 }
+
+#[derive(Clone, Debug)]
+struct CachedConnectivity {
+    geometry_identity: Vec<u64>,
+    vertex_map: VertexIndexMap,
+    adjacency: HashMap<usize, Vec<usize>>,
+}
+
+thread_local! {
+    static CONNECTIVITY_FACTS: RefCell<Vec<CachedConnectivity>> = const { RefCell::new(Vec::new()) };
+}
+
+const CONNECTIVITY_FACT_CAPACITY: usize = 8;
 
 impl VertexIndexMap {
     /// Create a new exact vertex index map.
@@ -109,14 +122,15 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Build a proper vertex adjacency graph from the exact `hypermesh` adapter:
     ///
     /// ## **Vertex Matching Algorithm**
-    /// 1. **Exact Import**: `hypermesh` validates the current triangle stream
-    ///    as a boundary-allowed surface adapter
+    /// 1. **Exact Import**: the audited `hypermesh` adapter canonicalizes the
+    ///    current triangle stream without requiring Boolean-surface validation
     /// 2. **Global Indexing**: Each exact hypermesh input vertex keeps its
     ///    global index
     /// 3. **Edge Facts**: Triangle indices expose bidirectional connectivity
     ///    without primitive-coordinate matching
-    /// 4. **Manifold Validation**: Closed-manifold decisions use the same exact
-    ///    imported triangle stream
+    /// 4. **Shared Carrier**: Closed-manifold decisions use the same exact
+    ///    imported triangle stream, with their additional validation performed
+    ///    by [`Mesh::is_manifold`]
     ///
     /// Keeping adjacency on retained hypermesh edge facts avoids a second
     /// approximate topology model in `csgrs`. This follows Yap, "Towards Exact
@@ -128,6 +142,22 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///
     /// Returns (vertex_map, adjacency_graph) for robust mesh processing.
     pub fn build_connectivity(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
+        if let Some(cached) = CONNECTIVITY_FACTS.with_borrow(|facts| {
+            facts
+                .iter()
+                .rev()
+                .find(|fact| self.geometry_identity_matches(&fact.geometry_identity))
+                .cloned()
+        }) {
+            return (cached.vertex_map, cached.adjacency);
+        }
+
+        let (vertex_map, adjacency) = self.build_connectivity_uncached();
+        self.retain_connectivity(vertex_map.clone(), adjacency.clone());
+        (vertex_map, adjacency)
+    }
+
+    fn build_connectivity_uncached(&self) -> (VertexIndexMap, HashMap<usize, Vec<usize>>) {
         let mut vertex_map = VertexIndexMap::new();
         let mut adjacency: HashMap<usize, Vec<usize>> = HashMap::new();
 
@@ -140,8 +170,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             vertex_map.index_to_position.insert(index, point.clone());
         }
 
-        for [a, b] in hypermesh_edges(&mesh) {
-            add_adjacency_edge(&mut adjacency, a, b);
+        adjacency.reserve(mesh.positions.len());
+        for triangle in &mesh.triangles {
+            let [a, b, c] = triangle.indices();
+            for [a, b] in [[a, b], [b, c], [c, a]] {
+                add_adjacency_edge(&mut adjacency, a, b);
+            }
         }
 
         for (vertex_idx, neighbors) in adjacency.iter_mut() {
@@ -151,6 +185,35 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         (vertex_map, adjacency)
+    }
+
+    pub(super) fn cache_connectivity(&self) {
+        let (vertex_map, adjacency) = self.build_connectivity_uncached();
+        self.retain_connectivity(vertex_map, adjacency);
+    }
+
+    fn retain_connectivity(
+        &self,
+        vertex_map: VertexIndexMap,
+        adjacency: HashMap<usize, Vec<usize>>,
+    ) {
+        let geometry_identity = self.geometry_identity();
+        CONNECTIVITY_FACTS.with_borrow_mut(|facts| {
+            if let Some(index) = facts
+                .iter()
+                .position(|fact| fact.geometry_identity == geometry_identity)
+            {
+                facts.remove(index);
+            }
+            if facts.len() == CONNECTIVITY_FACT_CAPACITY {
+                facts.remove(0);
+            }
+            facts.push(CachedConnectivity {
+                geometry_identity,
+                vertex_map,
+                adjacency,
+            });
+        });
     }
 }
 

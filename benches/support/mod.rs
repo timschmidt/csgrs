@@ -3,14 +3,16 @@
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
-pub const CSV_HEADER: &str =
-    "engine,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum";
+pub const CSV_HEADER: &str = "engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum";
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Config {
     samples: usize,
     warmup: usize,
     iteration_scale: usize,
+    iterations_override: Option<usize>,
+    sample_offset: usize,
+    temperature: String,
 }
 
 impl Config {
@@ -19,6 +21,10 @@ impl Config {
             samples: env_usize("CSGRS_BENCH_SAMPLES", 10).max(1),
             warmup: env_usize("CSGRS_BENCH_WARMUP", 2),
             iteration_scale: env_usize("CSGRS_BENCH_SCALE", 1).max(1),
+            iterations_override: env_optional_usize("CSGRS_BENCH_ITERATIONS")
+                .map(|value| value.max(1)),
+            sample_offset: env_usize("CSGRS_BENCH_SAMPLE_OFFSET", 0),
+            temperature: benchmark_temperature(),
         }
     }
 
@@ -30,30 +36,45 @@ impl Config {
             return;
         }
 
-        let iterations = iterations.saturating_mul(self.iteration_scale).max(1);
-        for _ in 0..self.warmup {
-            for _ in 0..iterations {
-                black_box(f());
+        let iterations = self
+            .iterations_override
+            .unwrap_or_else(|| iterations.saturating_mul(self.iteration_scale).max(1));
+        let mut measure = || {
+            for _ in 0..self.warmup {
+                for _ in 0..iterations {
+                    black_box(f());
+                }
             }
+
+            for sample in 0..self.samples {
+                let start = Instant::now();
+                let mut measurement = Measurement::default();
+                for _ in 0..iterations {
+                    measurement = measurement.combine(black_box(f()));
+                }
+                emit(
+                    "csgrs",
+                    &self.temperature,
+                    suite,
+                    benchmark,
+                    case,
+                    self.sample_offset.saturating_add(sample),
+                    iterations,
+                    start.elapsed(),
+                    measurement,
+                );
+            }
+        };
+
+        #[cfg(feature = "dispatch-trace")]
+        {
+            hyperreal::dispatch_trace::reset();
+            hyperreal::dispatch_trace::with_recording(&mut measure);
+            print_dispatch_trace(suite, benchmark, case);
         }
 
-        for sample in 0..self.samples {
-            let start = Instant::now();
-            let mut measurement = Measurement::default();
-            for _ in 0..iterations {
-                measurement = measurement.combine(black_box(f()));
-            }
-            emit(
-                "csgrs",
-                suite,
-                benchmark,
-                case,
-                sample,
-                iterations,
-                start.elapsed(),
-                measurement,
-            );
-        }
+        #[cfg(not(feature = "dispatch-trace"))]
+        measure();
     }
 }
 
@@ -86,11 +107,42 @@ pub fn print_header() {
     println!("{CSV_HEADER}");
 }
 
+#[cfg(feature = "dispatch-trace")]
+fn print_dispatch_trace(suite: &str, benchmark: &str, case: &str) {
+    let trace = hyperreal::dispatch_trace::take_trace();
+    eprintln!("dispatch benchmark: {suite}/{benchmark}/{case}");
+    eprintln!("dispatch correlation: {:?}", trace.correlation_summary());
+    for summary in trace.operation_summaries() {
+        eprintln!(
+            "dispatch operation: {}/{}/{}",
+            summary.layer, summary.operation, summary.count
+        );
+    }
+    for summary in trace.dispatch {
+        eprintln!(
+            "dispatch path: {}/{}/{}/{}",
+            summary.layer, summary.operation, summary.path, summary.count
+        );
+    }
+}
+
 fn env_usize(name: &str, default: usize) -> usize {
     std::env::var(name)
         .ok()
         .and_then(|value| value.parse().ok())
         .unwrap_or(default)
+}
+
+fn env_optional_usize(name: &str) -> Option<usize> {
+    std::env::var(name).ok()?.parse().ok()
+}
+
+fn benchmark_temperature() -> String {
+    match std::env::var("CSGRS_BENCH_TEMPERATURE").as_deref() {
+        Ok("cold") => "cold".into(),
+        Ok("warm") | Err(_) => "warm".into(),
+        Ok(other) => panic!("CSGRS_BENCH_TEMPERATURE must be 'cold' or 'warm', got {other:?}"),
+    }
 }
 
 fn selected(suite: &str, benchmark: &str, case: &str) -> bool {
@@ -108,6 +160,7 @@ fn selected(suite: &str, benchmark: &str, case: &str) -> bool {
 #[allow(clippy::too_many_arguments)]
 fn emit(
     engine: &str,
+    temperature: &str,
     suite: &str,
     benchmark: &str,
     case: &str,
@@ -117,7 +170,7 @@ fn emit(
     measurement: Measurement,
 ) {
     println!(
-        "{engine},{suite},{benchmark},{case},{sample},{iterations},{},{},{},{}",
+        "{engine},{temperature},{suite},{benchmark},{case},{sample},{iterations},{},{},{},{}",
         elapsed.as_nanos(),
         measurement.work_units,
         measurement.output_size,
