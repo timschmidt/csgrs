@@ -290,6 +290,9 @@ fn bench_cell_classification(c: &mut Criterion) {
     c.bench_function("hypersdf sphere cell interval", |b| {
         b.iter(|| sphere.interval_cell(black_box(&min), black_box(&max)))
     });
+    c.bench_function("hypersdf sphere cell lipschitz", |b| {
+        b.iter(|| sphere.lipschitz_cell(black_box(&min), black_box(&max)))
+    });
     c.bench_function("hypersdf slab cell interval", |b| {
         b.iter(|| slab.interval_cell(black_box(&min), black_box(&max)))
     });

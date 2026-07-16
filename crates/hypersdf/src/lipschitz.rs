@@ -14,7 +14,7 @@ use hyperreal::Real;
 
 use crate::expr::SdfExpr;
 use crate::interval::{SdfInterval, interval_expr_cell};
-use crate::primitive::{SdfPrimitive, radius_squared_domain, squared_distance3};
+use crate::primitive::{SdfPrimitive, farthest_squared_distance3_to_aabb, radius_squared_domain};
 use crate::status::{SdfEvidenceStatus, SdfFreshness, SdfLipschitzStatus};
 
 /// Conservative local Lipschitz-bound report over a closed AABB/cell.
@@ -105,9 +105,11 @@ fn lipschitz_primitive_cell(
             radius_squared,
         } => match radius_squared_domain(radius_squared) {
             PredicateOutcome::Decided { value: true, .. } => {
-                let farthest = match farthest_squared_distance(center, min, max) {
-                    Some(value) => value,
-                    None => return unsupported(),
+                let farthest = match farthest_squared_distance3_to_aabb(center, min, max) {
+                    PredicateOutcome::Decided { value, .. } => value,
+                    PredicateOutcome::Unknown { needed, stage } => {
+                        return PredicateOutcome::unknown(needed, stage);
+                    }
                 };
                 match farthest.sqrt() {
                     Ok(distance) => decided(Real::from(2_i32) * &distance),
@@ -214,28 +216,6 @@ fn vector_norm(components: &[Real; 3]) -> PredicateOutcome<Real> {
 fn interval_abs_upper(interval: &SdfInterval) -> Option<Real> {
     let neg_lower = -&interval.lower;
     max_real(neg_lower, interval.upper.clone())
-}
-
-fn farthest_squared_distance(center: &Point3, min: &Point3, max: &Point3) -> Option<Real> {
-    let corners = corners(min, max);
-    let mut farthest = squared_distance3(center, &corners[0]);
-    for corner in &corners[1..] {
-        farthest = max_real(farthest, squared_distance3(center, corner))?;
-    }
-    Some(farthest)
-}
-
-fn corners(min: &Point3, max: &Point3) -> [Point3; 8] {
-    [
-        Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
-    ]
 }
 
 fn combine_lipschitz_pair<F>(

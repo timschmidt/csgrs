@@ -9,7 +9,7 @@
 use hyperlimit::{
     Aabb3Intersection, AabbSphereIntersection, Certainty, Escalation, PlaneAabbRelation, Point3,
     PredicateOutcome, classify_aabb3_intersection, classify_aabb3_sphere_intersection,
-    classify_plane_aabb3, classify_point_aabb3, classify_point_sphere3, compare_reals,
+    classify_plane_aabb3, classify_point_aabb3, compare_reals,
 };
 use std::cmp::Ordering;
 
@@ -32,10 +32,11 @@ use crate::lipschitz::{SdfLipschitzReport, lipschitz_expr_cell};
 use crate::mesh::SdfMeshPreviewReport;
 use crate::package::SdfHandoffPackage;
 use crate::primitive::SdfPrimitive;
-use crate::primitive::radius_squared_domain;
+use crate::primitive::{farthest_squared_distance3_to_aabb, radius_squared_domain};
 use crate::sampling::{
     SdfGridSamplingError, SdfGridSamplingReport, SdfPreviewGrid, SdfSamplingPrecision,
-    SdfSamplingReport, sample_expr_grid_preview, sample_expr_points_preview, scalar_expr_point,
+    SdfSamplingReport, choose_max, choose_min, sample_expr_grid_preview,
+    sample_expr_points_preview, scalar_expr_point,
 };
 use crate::shader::{SdfShaderExportReport, export_expr_glsl_preview};
 use crate::solver::{SdfProjectionProposal, SdfProjectionReplayReport};
@@ -130,8 +131,7 @@ impl PreparedSdf {
 
     /// Classify a point and return a report rather than a bare boolean.
     pub fn classify_point(&self, point: &Point3) -> SdfPointClassificationReport {
-        let outcome = classify_expr_point(&self.expr, point);
-        let scalar_value = scalar_expr_point(&self.expr, point);
+        let (outcome, scalar_value) = classify_expr_point_with_scalar(&self.expr, point);
         SdfPointClassificationReport {
             point: point.clone(),
             location: outcome.value().unwrap_or(SdfPointLocation::Unknown),
@@ -490,7 +490,10 @@ impl PreparedSdf {
     }
 }
 
-fn classify_expr_point(expr: &SdfExpr, point: &Point3) -> PredicateOutcome<SdfPointLocation> {
+fn classify_expr_point_with_scalar(
+    expr: &SdfExpr,
+    point: &Point3,
+) -> (PredicateOutcome<SdfPointLocation>, Option<hyperreal::Real>) {
     match expr {
         SdfExpr::Constant(_)
         | SdfExpr::Coordinate(_)
@@ -502,20 +505,39 @@ fn classify_expr_point(expr: &SdfExpr, point: &Point3) -> PredicateOutcome<SdfPo
         | SdfExpr::Sqrt(_)
         | SdfExpr::Sin(_)
         | SdfExpr::Cos(_)
-        | SdfExpr::Tan(_) => classify_scalar_expr_point(expr, point),
-        SdfExpr::Primitive(primitive) => primitive.classify_point(point),
-        SdfExpr::Union(left, right) => combine_point_union(
-            classify_expr_point(left, point),
-            classify_expr_point(right, point),
-        ),
-        SdfExpr::Intersection(left, right) => combine_point_intersection(
-            classify_expr_point(left, point),
-            classify_expr_point(right, point),
-        ),
-        SdfExpr::Complement(inner) => map_point_complement(classify_expr_point(inner, point)),
-        SdfExpr::Offset { .. } => classify_scalar_expr_point(expr, point),
+        | SdfExpr::Tan(_)
+        | SdfExpr::Offset { .. } => classify_scalar_expr_point_with_value(expr, point),
+        SdfExpr::Primitive(primitive) => {
+            let scalar = primitive.scalar_value(point);
+            (classify_scalar_value(scalar.as_ref()), scalar)
+        }
+        SdfExpr::Union(left, right) => {
+            let (left_outcome, left_scalar) = classify_expr_point_with_scalar(left, point);
+            let (right_outcome, right_scalar) = classify_expr_point_with_scalar(right, point);
+            let scalar = match (left_scalar, right_scalar) {
+                (Some(left), Some(right)) => choose_min(left, right),
+                _ => None,
+            };
+            (combine_point_union(left_outcome, right_outcome), scalar)
+        }
+        SdfExpr::Intersection(left, right) => {
+            let (left_outcome, left_scalar) = classify_expr_point_with_scalar(left, point);
+            let (right_outcome, right_scalar) = classify_expr_point_with_scalar(right, point);
+            let scalar = match (left_scalar, right_scalar) {
+                (Some(left), Some(right)) => choose_max(left, right),
+                _ => None,
+            };
+            (
+                combine_point_intersection(left_outcome, right_outcome),
+                scalar,
+            )
+        }
+        SdfExpr::Complement(inner) => {
+            let (outcome, scalar) = classify_expr_point_with_scalar(inner, point);
+            (map_point_complement(outcome), scalar.map(|value| -&value))
+        }
         SdfExpr::Transform { child, transform } => {
-            classify_expr_point(child, &transform.inverse_point(point))
+            classify_expr_point_with_scalar(child, &transform.inverse_point(point))
         }
     }
 }
@@ -557,17 +579,22 @@ fn classify_expr_cell(
     }
 }
 
-fn classify_scalar_expr_point(
+fn classify_scalar_expr_point_with_value(
     expr: &SdfExpr,
     point: &Point3,
-) -> PredicateOutcome<SdfPointLocation> {
-    let Some(value) = scalar_expr_point(expr, point) else {
+) -> (PredicateOutcome<SdfPointLocation>, Option<hyperreal::Real>) {
+    let value = scalar_expr_point(expr, point);
+    (classify_scalar_value(value.as_ref()), value)
+}
+
+fn classify_scalar_value(value: Option<&hyperreal::Real>) -> PredicateOutcome<SdfPointLocation> {
+    let Some(value) = value else {
         return PredicateOutcome::unknown(
             hyperlimit::RefinementNeed::Unsupported,
             Escalation::Undecided,
         );
     };
-    match compare_reals(&value, &hyperreal::Real::zero()) {
+    match compare_reals(value, &hyperreal::Real::zero()) {
         PredicateOutcome::Decided {
             value,
             certainty,
@@ -726,32 +753,28 @@ fn map_sphere_aabb(
                 PredicateOutcome::decided(SdfCellLocation::Boundary, certainty, stage)
             }
             AabbSphereIntersection::Overlapping => {
-                let corners = corners(min, max);
-                let mut boundary = false;
-                for corner in &corners {
-                    match classify_point_sphere3(center, radius_squared, corner) {
-                        PredicateOutcome::Decided { value, .. } => match value {
-                            hyperlimit::SpherePointLocation::Inside => {}
-                            hyperlimit::SpherePointLocation::On => boundary = true,
-                            hyperlimit::SpherePointLocation::Outside => {
-                                return PredicateOutcome::decided(
-                                    SdfCellLocation::Boundary,
-                                    certainty,
-                                    stage,
-                                );
-                            }
-                        },
-                        PredicateOutcome::Unknown { needed, stage } => {
-                            return PredicateOutcome::unknown(needed, stage);
-                        }
+                let farthest = match farthest_squared_distance3_to_aabb(center, min, max) {
+                    PredicateOutcome::Decided { value, .. } => value,
+                    PredicateOutcome::Unknown { needed, stage } => {
+                        return PredicateOutcome::unknown(needed, stage);
+                    }
+                };
+                match compare_reals(&farthest, radius_squared) {
+                    PredicateOutcome::Decided {
+                        value: Ordering::Less,
+                        ..
+                    } => PredicateOutcome::decided(
+                        SdfCellLocation::ConservativeInside,
+                        certainty,
+                        stage,
+                    ),
+                    PredicateOutcome::Decided { .. } => {
+                        PredicateOutcome::decided(SdfCellLocation::Boundary, certainty, stage)
+                    }
+                    PredicateOutcome::Unknown { needed, stage } => {
+                        PredicateOutcome::unknown(needed, stage)
                     }
                 }
-                let location = if boundary {
-                    SdfCellLocation::Boundary
-                } else {
-                    SdfCellLocation::ConservativeInside
-                };
-                PredicateOutcome::decided(location, certainty, stage)
             }
         },
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
@@ -778,8 +801,11 @@ fn map_aabb_aabb(
                 PredicateOutcome::decided(SdfCellLocation::Boundary, certainty, stage)
             }
             Aabb3Intersection::Overlapping => {
-                let corners = corners(cell_min, cell_max);
-                for corner in &corners {
+                // For an axis-aligned cell, the two opposite endpoint corners
+                // collectively cover both endpoints of every coordinate. If
+                // both are strictly inside the shape AABB, every mixed corner
+                // and therefore the full cell is inside as well.
+                for corner in [cell_min, cell_max] {
                     match classify_point_aabb3(shape_min, shape_max, corner) {
                         PredicateOutcome::Decided { value, .. } => {
                             if value != hyperlimit::Aabb3PointLocation::Inside {
@@ -952,19 +978,6 @@ fn map_cell_complement(
         } => PredicateOutcome::decided(value.complemented(), certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
-}
-
-fn corners(min: &Point3, max: &Point3) -> [Point3; 8] {
-    [
-        Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
-    ]
 }
 
 fn merge_certainty(left: Certainty, right: Certainty) -> Certainty {

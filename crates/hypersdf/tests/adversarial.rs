@@ -141,6 +141,68 @@ proptest! {
     }
 
     #[test]
+    fn generated_linear_interval_matches_all_corners(
+        ax in -10_i32..=10,
+        ay in -10_i32..=10,
+        az in -10_i32..=10,
+        offset in -20_i32..=20,
+        x0 in -20_i32..=20,
+        x1 in -20_i32..=20,
+        y0 in -20_i32..=20,
+        y1 in -20_i32..=20,
+        z0 in -20_i32..=20,
+        z1 in -20_i32..=20,
+    ) {
+        let sdf = prepare(SdfExpr::linear(Vector3([r(ax), r(ay), r(az)]), r(offset)));
+        let interval = sdf
+            .interval_cell(&p(x0, y0, z0), &p(x1, y1, z1))
+            .interval
+            .expect("exact linear interval");
+        let mut values = Vec::with_capacity(8);
+        for x in [x0, x1] {
+            for y in [y0, y1] {
+                for z in [z0, z1] {
+                    values.push(ax * x + ay * y + az * z + offset);
+                }
+            }
+        }
+        let expected_lower = *values.iter().min().expect("corners");
+        let expected_upper = *values.iter().max().expect("corners");
+        prop_assert_eq!(interval.lower, r(expected_lower));
+        prop_assert_eq!(interval.upper, r(expected_upper));
+    }
+
+    #[test]
+    fn generated_sheared_affine_interval_matches_world_corners(
+        x0 in -20_i32..=20,
+        x1 in -20_i32..=20,
+        y0 in -20_i32..=20,
+        y1 in -20_i32..=20,
+        z0 in -20_i32..=20,
+        z1 in -20_i32..=20,
+    ) {
+        let shear_xy = Matrix4([
+            [r(1), r(1), r(0), r(0)],
+            [r(0), r(1), r(0), r(0)],
+            [r(0), r(0), r(1), r(0)],
+            [r(0), r(0), r(0), r(1)],
+        ]);
+        let sdf = prepare(
+            SdfExpr::x()
+                .affine_transform(shear_xy)
+                .expect("invertible shear"),
+        );
+        let interval = sdf
+            .interval_cell(&p(x0, y0, z0), &p(x1, y1, z1))
+            .interval
+            .expect("exact affine interval");
+        let expected_lower = x0.min(x1) - y0.max(y1);
+        let expected_upper = x0.max(x1) - y0.min(y1);
+        prop_assert_eq!(interval.lower, r(expected_lower));
+        prop_assert_eq!(interval.upper, r(expected_upper));
+    }
+
+    #[test]
     fn generated_axis_slab_matches_absolute_z_threshold(x in -100_i32..=100, y in -100_i32..=100, z in -100_i32..=100, half_width in 0_i32..=50) {
         let slab = prepare(SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(half_width)));
         let expected = if z.abs() < half_width {

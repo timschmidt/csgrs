@@ -6,9 +6,9 @@
 //! predicates such as point-plane, point-sphere, and AABB/sphere classifiers.
 
 use hyperlimit::{
-    Aabb3PointLocation, Escalation, Plane3, PlaneSide, Point3, PredicateOutcome, RefinementNeed,
-    SpherePointLocation, classify_point_aabb3, classify_point_plane, classify_point_sphere3,
-    compare_reals,
+    Aabb3PointLocation, Certainty, Escalation, Plane3, PlaneSide, Point3, PredicateOutcome,
+    RefinementNeed, SpherePointLocation, classify_point_aabb3, classify_point_plane,
+    classify_point_sphere3, compare_reals,
 };
 use hyperreal::Real;
 use std::cmp::Ordering;
@@ -652,6 +652,43 @@ pub(crate) fn squared_distance3(a: &Point3, b: &Point3) -> Real {
     let dy2 = &dy * &dy;
     let dz2 = &dz * &dz;
     &(&dx2 + &dy2) + &dz2
+}
+
+/// Return the exact maximum squared distance from `center` to an AABB.
+///
+/// Squared Euclidean distance is separable, so the farthest corner contribution
+/// is the larger squared endpoint offset on each axis. This is equivalent to
+/// enumerating all eight corners but avoids constructing them and repeating
+/// the other two axis terms for every corner.
+pub(crate) fn farthest_squared_distance3_to_aabb(
+    center: &Point3,
+    min: &Point3,
+    max: &Point3,
+) -> PredicateOutcome<Real> {
+    let centers = [&center.x, &center.y, &center.z];
+    let lower_endpoints = [&min.x, &min.y, &min.z];
+    let upper_endpoints = [&max.x, &max.y, &max.z];
+    let mut distance_squared = Real::zero();
+
+    for axis in 0..3 {
+        let lower_delta = lower_endpoints[axis] - centers[axis];
+        let upper_delta = upper_endpoints[axis] - centers[axis];
+        let lower_squared = &lower_delta * &lower_delta;
+        let upper_squared = &upper_delta * &upper_delta;
+        let farthest = match compare_reals(&lower_squared, &upper_squared) {
+            PredicateOutcome::Decided {
+                value: Ordering::Less,
+                ..
+            } => upper_squared,
+            PredicateOutcome::Decided { .. } => lower_squared,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        };
+        distance_squared = &distance_squared + &farthest;
+    }
+
+    PredicateOutcome::decided(distance_squared, Certainty::Exact, Escalation::Exact)
 }
 
 fn squared_distance_to_aabb(point: &Point3, min: &Point3, max: &Point3) -> Option<Real> {

@@ -4,8 +4,9 @@
 //! into expanded scalar expressions. A translation or affine frame can be
 //! replayed by transforming the
 //! exact query point or cell before invoking the child predicate, preserving
-//! the child's certified topology route. General affine AABB replay maps all
-//! eight corners through the inverse frame with exact `Real` endpoints.
+//! the child's certified topology route. General affine AABB replay uses
+//! Arvo's per-axis interval accumulation, retaining exact `Real` endpoints
+//! without materializing and transforming all eight corners.
 
 use core::cmp::Ordering;
 
@@ -172,26 +173,31 @@ fn transform_point(matrix: &Matrix4, point: &Point3) -> Point3 {
 }
 
 fn transformed_aabb(matrix: &Matrix4, min: &Point3, max: &Point3) -> Option<(Point3, Point3)> {
-    let corners = [
-        Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
-    ];
-    let mut lower = transform_point(matrix, &corners[0]);
+    let (lower_x, upper_x) = transformed_axis_interval(matrix, 0, min, max)?;
+    let (lower_y, upper_y) = transformed_axis_interval(matrix, 1, min, max)?;
+    let (lower_z, upper_z) = transformed_axis_interval(matrix, 2, min, max)?;
+    Some((
+        Point3::new(lower_x, lower_y, lower_z),
+        Point3::new(upper_x, upper_y, upper_z),
+    ))
+}
+
+fn transformed_axis_interval(
+    matrix: &Matrix4,
+    row: usize,
+    min: &Point3,
+    max: &Point3,
+) -> Option<(Real, Real)> {
+    let lower_endpoints = [&min.x, &min.y, &min.z];
+    let upper_endpoints = [&max.x, &max.y, &max.z];
+    let mut lower = matrix.0[row][3].clone();
     let mut upper = lower.clone();
-    for corner in &corners[1..] {
-        let transformed = transform_point(matrix, corner);
-        lower.x = min_real(lower.x, transformed.x.clone())?;
-        lower.y = min_real(lower.y, transformed.y.clone())?;
-        lower.z = min_real(lower.z, transformed.z.clone())?;
-        upper.x = max_real(upper.x, transformed.x.clone())?;
-        upper.y = max_real(upper.y, transformed.y.clone())?;
-        upper.z = max_real(upper.z, transformed.z)?;
+
+    for axis in 0..3 {
+        let from_lower = &matrix.0[row][axis] * lower_endpoints[axis];
+        let from_upper = &matrix.0[row][axis] * upper_endpoints[axis];
+        lower = &lower + &min_real(from_lower.clone(), from_upper.clone())?;
+        upper = &upper + &max_real(from_lower, from_upper)?;
     }
     Some((lower, upper))
 }

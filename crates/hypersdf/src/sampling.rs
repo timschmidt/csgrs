@@ -132,26 +132,24 @@ impl SdfPreviewGrid {
     /// Return all exact grid points in z-major, then y, then x-fast order.
     pub fn points(&self) -> Result<Vec<Point3>, SdfGridSamplingError> {
         let mut points = Vec::with_capacity(self.point_count()?);
-        for z in 0..self.dimensions[2] {
-            for y in 0..self.dimensions[1] {
-                for x in 0..self.dimensions[0] {
-                    points.push(self.point(x, y, z));
+        let xs = axis_coordinates(&self.origin.x, &self.step.x, self.dimensions[0]);
+        let ys = axis_coordinates(&self.origin.y, &self.step.y, self.dimensions[1]);
+        let zs = axis_coordinates(&self.origin.z, &self.step.z, self.dimensions[2]);
+        for z in &zs {
+            for y in &ys {
+                for x in &xs {
+                    points.push(Point3::new(x.clone(), y.clone(), z.clone()));
                 }
             }
         }
         Ok(points)
     }
+}
 
-    fn point(&self, x: u32, y: u32, z: u32) -> Point3 {
-        let x = Real::from(x);
-        let y = Real::from(y);
-        let z = Real::from(z);
-        Point3::new(
-            &self.origin.x + &(&self.step.x * &x),
-            &self.origin.y + &(&self.step.y * &y),
-            &self.origin.z + &(&self.step.z * &z),
-        )
-    }
+fn axis_coordinates(origin: &Real, step: &Real, count: u32) -> Vec<Real> {
+    (0..count)
+        .map(|index| origin + &(step * &Real::from(index)))
+        .collect()
 }
 
 /// Input validation error for preview-grid sampling.
@@ -330,7 +328,7 @@ pub(crate) fn scalar_expr_point(expr: &SdfExpr, point: &Point3) -> Option<Real> 
     }
 }
 
-fn choose_min(left: Real, right: Real) -> Option<Real> {
+pub(crate) fn choose_min(left: Real, right: Real) -> Option<Real> {
     match compare_reals(&left, &right) {
         PredicateOutcome::Decided {
             value: Ordering::Greater,
@@ -341,7 +339,7 @@ fn choose_min(left: Real, right: Real) -> Option<Real> {
     }
 }
 
-fn choose_max(left: Real, right: Real) -> Option<Real> {
+pub(crate) fn choose_max(left: Real, right: Real) -> Option<Real> {
     match compare_reals(&left, &right) {
         PredicateOutcome::Decided {
             value: Ordering::Less,

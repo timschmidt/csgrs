@@ -95,6 +95,14 @@ gradient, interval, preview, and handoff APIs. Batch reports currently use scala
 replay but include dispatch and cache-payoff metadata so future vectorized or parallel
 evaluators can preserve the same report contract.
 
+Point reports carry the scalar produced during classification instead of evaluating the
+expression a second time. Exact affine intervals use per-axis interval accumulation,
+sphere/AABB bounds use separable squared-distance extrema, and regular preview grids
+reuse each exact axis coordinate across the other two dimensions. These are arithmetic
+schedule changes only; classification evidence and preview/topology boundaries are
+unchanged. Reproducible measurements and the reference-by-reference audit are recorded
+in [`PERFORMANCE.md`](PERFORMANCE.md).
+
 Cell classification uses stronger primitive routes where available, including exact
 AABB, plane, sphere, and interval predicates. Exact grid preview points are generated
 from origin, step, and integer indices before lossy lowering. Mesh extraction uses
@@ -264,6 +272,7 @@ cargo clippy --all-targets --locked -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
 cargo bench --bench classification
 cargo test --locked --features hypervoxel-adapter
+cargo test --locked --all-features
 ```
 
 ## References
@@ -271,7 +280,7 @@ cargo test --locked --features hypervoxel-adapter
 Implementation comments describe local invariants and evidence boundaries; the
 algorithmic and numerical background is consolidated here.
 
-- Gibson, Sarah F. F. "Constrained Elastic Surface Nets: Generating Smooth Surfaces from Binary Segmented Data." *Medical Image Computing and Computer-Assisted Intervention*, 1998, pp. 888-898, https://doi.org/10.1007/BFb0056308.
+- Gibson, Sarah F. F. "Constrained Elastic Surface Nets: Generating Smooth Surfaces from Binary Segmented Data." *Medical Image Computing and Computer-Assisted Intervention*, 1998, pp. 888-898, https://doi.org/10.1007/BFb0056277.
 - Arvo, James. "Transforming Axis-Aligned Bounding Boxes." *Graphics Gems*, Academic Press, 1990, pp. 548-550.
 - Hart, John C. "Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces." *The Visual Computer*, vol. 12, no. 10, 1996, pp. 527-545, https://doi.org/10.1007/s003710050084.
 - Ju, Tao, et al. "Dual Contouring of Hermite Data." *Proceedings of SIGGRAPH 2002*, 2002, pp. 339-346, https://doi.org/10.1145/566570.566586.

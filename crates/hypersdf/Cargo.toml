@@ -28,4 +28,5 @@ harness = false
 
 [features]
 default = []
+dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 hypervoxel-adapter = ["dep:hypervoxel"]

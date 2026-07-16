@@ -17,8 +17,9 @@ use hyperreal::Real;
 
 use crate::expr::{SdfCoordinate, SdfExpr};
 use crate::primitive::{
-    SdfPrimitive, capsule_domain, cylinder_domain, half_width_domain, radial_squared,
-    radius_squared_domain, rounded_aabb_domain, squared_distance3, torus_domain,
+    SdfPrimitive, capsule_domain, cylinder_domain, farthest_squared_distance3_to_aabb,
+    half_width_domain, radial_squared, radius_squared_domain, rounded_aabb_domain,
+    squared_distance3, torus_domain,
 };
 use crate::status::{SdfEvidenceStatus, SdfFreshness, SdfMetricStatus};
 
@@ -154,20 +155,11 @@ fn linear_interval(
     min: &Point3,
     max: &Point3,
 ) -> PredicateOutcome<SdfInterval> {
-    let corners = corners(min, max);
-    let mut lower = linear_value(coefficients, offset, &corners[0]);
-    let mut upper = lower.clone();
-    for corner in &corners[1..] {
-        let value = linear_value(coefficients, offset, corner);
-        lower = match min_real(lower, value.clone()) {
-            Ok(value) => value,
-            Err(outcome) => return outcome,
-        };
-        upper = match max_real(upper, value) {
-            Ok(value) => value,
-            Err(outcome) => return outcome,
-        };
-    }
+    let coefficients = [&coefficients.0[0], &coefficients.0[1], &coefficients.0[2]];
+    let (lower, upper) = match affine_interval(coefficients, offset, min, max) {
+        Ok(interval) => interval,
+        Err(outcome) => return outcome,
+    };
     PredicateOutcome::decided(
         SdfInterval {
             lower,
@@ -279,20 +271,11 @@ fn plane_interval(
     min: &Point3,
     max: &Point3,
 ) -> PredicateOutcome<SdfInterval> {
-    let corners = corners(min, max);
-    let mut lower = plane_value(plane, &corners[0]);
-    let mut upper = lower.clone();
-    for corner in &corners[1..] {
-        let value = plane_value(plane, corner);
-        lower = match min_real(lower, value.clone()) {
-            Ok(value) => value,
-            Err(outcome) => return outcome,
-        };
-        upper = match max_real(upper, value) {
-            Ok(value) => value,
-            Err(outcome) => return outcome,
-        };
-    }
+    let coefficients = [&plane.normal.x, &plane.normal.y, &plane.normal.z];
+    let (lower, upper) = match affine_interval(coefficients, &plane.offset, min, max) {
+        Ok(interval) => interval,
+        Err(outcome) => return outcome,
+    };
     PredicateOutcome::decided(
         SdfInterval {
             lower,
@@ -316,15 +299,12 @@ fn sphere_interval(
     };
     let lower = &squared_distance3(center, &closest) - radius_squared;
 
-    let corners = corners(min, max);
-    let mut farthest = squared_distance3(center, &corners[0]);
-    for corner in &corners[1..] {
-        let distance = squared_distance3(center, corner);
-        farthest = match max_real(farthest, distance) {
-            Ok(value) => value,
-            Err(outcome) => return outcome,
-        };
-    }
+    let farthest = match farthest_squared_distance3_to_aabb(center, min, max) {
+        PredicateOutcome::Decided { value, .. } => value,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return PredicateOutcome::unknown(needed, stage);
+        }
+    };
     let upper = &farthest - radius_squared;
     PredicateOutcome::decided(
         SdfInterval {
@@ -544,11 +524,20 @@ fn cylinder_radial_interval(
 ) -> Result<SdfInterval, PredicateOutcome<SdfInterval>> {
     let closest = closest_point_in_radial_aabb(axis, center, min, max)?;
     let lower = &radial_squared(axis, center, &closest) - radius_squared_value;
-    let corners = corners(min, max);
-    let mut farthest = radial_squared(axis, center, &corners[0]);
-    for corner in &corners[1..] {
-        farthest = max_real(farthest, radial_squared(axis, center, corner))?;
-    }
+    let farthest = match axis {
+        SdfCoordinate::X => {
+            &farthest_axis_squared(&center.y, &min.y, &max.y)?
+                + &farthest_axis_squared(&center.z, &min.z, &max.z)?
+        }
+        SdfCoordinate::Y => {
+            &farthest_axis_squared(&center.x, &min.x, &max.x)?
+                + &farthest_axis_squared(&center.z, &min.z, &max.z)?
+        }
+        SdfCoordinate::Z => {
+            &farthest_axis_squared(&center.x, &min.x, &max.x)?
+                + &farthest_axis_squared(&center.y, &min.y, &max.y)?
+        }
+    };
     Ok(SdfInterval {
         lower,
         upper: &farthest - radius_squared_value,
@@ -929,14 +918,13 @@ fn squared_distance_to_aabb_interval(
     cell_max: &Point3,
 ) -> Result<SdfInterval, PredicateOutcome<SdfInterval>> {
     let lower = squared_aabb_gap(shape_min, shape_max, cell_min, cell_max)?;
-    let corners = corners(cell_min, cell_max);
-    let mut upper = squared_distance_to_aabb_point(&corners[0], shape_min, shape_max)?;
-    for corner in &corners[1..] {
-        upper = max_real(
-            upper,
-            squared_distance_to_aabb_point(corner, shape_min, shape_max)?,
-        )?;
-    }
+    let dx =
+        farthest_interval_distance_squared(&cell_min.x, &cell_max.x, &shape_min.x, &shape_max.x)?;
+    let dy =
+        farthest_interval_distance_squared(&cell_min.y, &cell_max.y, &shape_min.y, &shape_max.y)?;
+    let dz =
+        farthest_interval_distance_squared(&cell_min.z, &cell_max.z, &shape_min.z, &shape_max.z)?;
+    let upper = &(&dx + &dy) + &dz;
     Ok(SdfInterval {
         lower,
         upper,
@@ -986,13 +974,35 @@ fn interval_gap_squared(
     Ok(&gap * &gap)
 }
 
-fn squared_distance_to_aabb_point(
-    point: &Point3,
-    min: &Point3,
-    max: &Point3,
+fn farthest_interval_distance_squared(
+    interval_min: &Real,
+    interval_max: &Real,
+    min: &Real,
+    max: &Real,
 ) -> Result<Real, PredicateOutcome<SdfInterval>> {
-    let closest = closest_point_in_aabb(point, min, max)?;
-    Ok(squared_distance3(point, &closest))
+    let from_min = squared_distance_to_interval_point(interval_min, min, max)?;
+    let from_max = squared_distance_to_interval_point(interval_max, min, max)?;
+    max_real(from_min, from_max)
+}
+
+fn squared_distance_to_interval_point(
+    point: &Real,
+    min: &Real,
+    max: &Real,
+) -> Result<Real, PredicateOutcome<SdfInterval>> {
+    let closest = clamp_real(point, min, max)?;
+    let delta = point - &closest;
+    Ok(&delta * &delta)
+}
+
+fn farthest_axis_squared(
+    point: &Real,
+    min: &Real,
+    max: &Real,
+) -> Result<Real, PredicateOutcome<SdfInterval>> {
+    let min_delta = point - min;
+    let max_delta = point - max;
+    max_real(&min_delta * &min_delta, &max_delta * &max_delta)
 }
 
 fn closest_point_in_radial_aabb(
@@ -1081,29 +1091,22 @@ fn max_real(left: Real, right: Real) -> Result<Real, PredicateOutcome<SdfInterva
     }
 }
 
-fn plane_value(plane: &hyperlimit::Plane3, point: &Point3) -> Real {
-    let nx = &plane.normal.x * &point.x;
-    let ny = &plane.normal.y * &point.y;
-    let nz = &plane.normal.z * &point.z;
-    &(&(&nx + &ny) + &nz) + &plane.offset
-}
+fn affine_interval(
+    coefficients: [&Real; 3],
+    offset: &Real,
+    min: &Point3,
+    max: &Point3,
+) -> Result<(Real, Real), PredicateOutcome<SdfInterval>> {
+    let lower_endpoints = [&min.x, &min.y, &min.z];
+    let upper_endpoints = [&max.x, &max.y, &max.z];
+    let mut lower = offset.clone();
+    let mut upper = offset.clone();
 
-fn linear_value(coefficients: &hyperlattice::Vector3, offset: &Real, point: &Point3) -> Real {
-    let x = &coefficients.0[0] * &point.x;
-    let y = &coefficients.0[1] * &point.y;
-    let z = &coefficients.0[2] * &point.z;
-    &(&(&x + &y) + &z) + offset
-}
-
-fn corners(min: &Point3, max: &Point3) -> [Point3; 8] {
-    [
-        Point3::new(min.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), min.z.clone()),
-        Point3::new(min.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), min.y.clone(), max.z.clone()),
-        Point3::new(min.x.clone(), max.y.clone(), max.z.clone()),
-        Point3::new(max.x.clone(), max.y.clone(), max.z.clone()),
-    ]
+    for axis in 0..3 {
+        let from_lower = coefficients[axis] * lower_endpoints[axis];
+        let from_upper = coefficients[axis] * upper_endpoints[axis];
+        lower = &lower + &min_real(from_lower.clone(), from_upper.clone())?;
+        upper = &upper + &max_real(from_lower, from_upper)?;
+    }
+    Ok((lower, upper))
 }
