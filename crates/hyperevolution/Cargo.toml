@@ -9,6 +9,10 @@ repository = "https://github.com/timschmidt/hyperevolution"
 keywords = ["evolution", "optimization", "search", "hyperreal", "simulation"]
 categories = ["algorithms", "science", "simulation"]
 
+[features]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace"]
+
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path line. For release, comment it and uncomment the crates.io line.

@@ -108,17 +108,16 @@ impl FitnessValue {
         match (self, other) {
             (Self::Scalar(left), Self::Scalar(right)) => compare_real(left, right, direction),
             (Self::Lexicographic(left), Self::Lexicographic(right)) => {
+                if left.len() != right.len() {
+                    return FitnessComparison::Unknown;
+                }
                 for (left, right) in left.iter().zip(right) {
                     let comparison = compare_real(left, right, direction);
                     if comparison != FitnessComparison::Equal {
                         return comparison;
                     }
                 }
-                match left.len().cmp(&right.len()) {
-                    Ordering::Equal => FitnessComparison::Equal,
-                    Ordering::Less => FitnessComparison::Worse,
-                    Ordering::Greater => FitnessComparison::Better,
-                }
+                FitnessComparison::Equal
             }
             (Self::Interval(left), Self::Interval(right)) => match left.compare(right, direction) {
                 FitnessIntervalComparison::Better => FitnessComparison::Better,
@@ -194,34 +193,29 @@ impl FitnessInterval {
             return FitnessIntervalComparison::Equal;
         }
 
+        // These are the only two cross-interval orderings needed below. Keep
+        // them because the overlap/unknown cases otherwise repeat both exact
+        // endpoint comparisons after the strict-separation checks fail.
+        let lower_against_upper = self.lower.partial_cmp(&other.upper);
+        let upper_against_lower = self.upper.partial_cmp(&other.lower);
         match direction {
             FitnessDirection::Minimize => {
-                if matches!(self.upper.partial_cmp(&other.lower), Some(Ordering::Less)) {
+                if matches!(upper_against_lower, Some(Ordering::Less)) {
                     FitnessIntervalComparison::Better
-                } else if matches!(
-                    self.lower.partial_cmp(&other.upper),
-                    Some(Ordering::Greater)
-                ) {
+                } else if matches!(lower_against_upper, Some(Ordering::Greater)) {
                     FitnessIntervalComparison::Worse
-                } else if self.upper.partial_cmp(&other.lower).is_none()
-                    || self.lower.partial_cmp(&other.upper).is_none()
-                {
+                } else if upper_against_lower.is_none() || lower_against_upper.is_none() {
                     FitnessIntervalComparison::Unknown
                 } else {
                     FitnessIntervalComparison::Overlapping
                 }
             }
             FitnessDirection::Maximize => {
-                if matches!(
-                    self.lower.partial_cmp(&other.upper),
-                    Some(Ordering::Greater)
-                ) {
+                if matches!(lower_against_upper, Some(Ordering::Greater)) {
                     FitnessIntervalComparison::Better
-                } else if matches!(self.upper.partial_cmp(&other.lower), Some(Ordering::Less)) {
+                } else if matches!(upper_against_lower, Some(Ordering::Less)) {
                     FitnessIntervalComparison::Worse
-                } else if self.lower.partial_cmp(&other.upper).is_none()
-                    || self.upper.partial_cmp(&other.lower).is_none()
-                {
+                } else if lower_against_upper.is_none() || upper_against_lower.is_none() {
                     FitnessIntervalComparison::Unknown
                 } else {
                     FitnessIntervalComparison::Overlapping

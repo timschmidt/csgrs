@@ -99,21 +99,25 @@ impl GpRealExpr {
     /// Validates arity and bloat limits before evaluation.
     pub fn validate(&self, limits: GpValidationLimits) -> GpValidationReport {
         let mut issues = Vec::new();
-        let depth = self.depth();
-        let nodes = self.node_count();
+        let (depth, nodes) = self.collect_validation_metrics(limits.input_arity, &mut issues);
         if depth > limits.max_depth {
-            issues.push(GpValidationIssue::DepthExceeded {
-                depth,
-                max_depth: limits.max_depth,
-            });
+            issues.insert(
+                0,
+                GpValidationIssue::DepthExceeded {
+                    depth,
+                    max_depth: limits.max_depth,
+                },
+            );
         }
         if nodes > limits.max_nodes {
-            issues.push(GpValidationIssue::NodeBudgetExceeded {
-                nodes,
-                max_nodes: limits.max_nodes,
-            });
+            issues.insert(
+                usize::from(depth > limits.max_depth),
+                GpValidationIssue::NodeBudgetExceeded {
+                    nodes,
+                    max_nodes: limits.max_nodes,
+                },
+            );
         }
-        self.collect_validation_issues(limits.input_arity, &mut issues);
         GpValidationReport {
             depth,
             nodes,
@@ -123,18 +127,21 @@ impl GpRealExpr {
 
     /// Evaluates a validated GP expression over exact inputs.
     pub fn eval(&self, inputs: &[Real]) -> Result<Real, GpValidationIssue> {
+        self.eval_with(&|index| inputs.get(index).cloned())
+    }
+
+    fn eval_with(&self, input: &impl Fn(usize) -> Option<Real>) -> Result<Real, GpValidationIssue> {
         match self {
             Self::Constant(value) => Ok((**value).clone()),
-            Self::Input(index) => inputs
-                .get(*index)
-                .cloned()
-                .ok_or(GpValidationIssue::MissingInput { input: *index }),
-            Self::Add(left, right) => Ok(left.eval(inputs)? + right.eval(inputs)?),
-            Self::Sub(left, right) => Ok(left.eval(inputs)? - right.eval(inputs)?),
-            Self::Mul(left, right) => Ok(left.eval(inputs)? * right.eval(inputs)?),
-            Self::Div(left, right) => (left.eval(inputs)? / right.eval(inputs)?)
+            Self::Input(index) => {
+                input(*index).ok_or(GpValidationIssue::MissingInput { input: *index })
+            }
+            Self::Add(left, right) => Ok(left.eval_with(input)? + right.eval_with(input)?),
+            Self::Sub(left, right) => Ok(left.eval_with(input)? - right.eval_with(input)?),
+            Self::Mul(left, right) => Ok(left.eval_with(input)? * right.eval_with(input)?),
+            Self::Div(left, right) => (left.eval_with(input)? / right.eval_with(input)?)
                 .map_err(|_| GpValidationIssue::UnsupportedDivision),
-            Self::Neg(value) => Ok(-value.eval(inputs)?),
+            Self::Neg(value) => Ok(-value.eval_with(input)?),
         }
     }
 
@@ -162,13 +169,17 @@ impl GpRealExpr {
         }
     }
 
-    fn collect_validation_issues(&self, arity: usize, issues: &mut Vec<GpValidationIssue>) {
+    fn collect_validation_metrics(
+        &self,
+        arity: usize,
+        issues: &mut Vec<GpValidationIssue>,
+    ) -> (usize, usize) {
         match self {
             Self::Input(index) if *index >= arity => {
                 issues.push(GpValidationIssue::InputOutOfBounds {
                     input: *index,
                     arity,
-                })
+                });
             }
             Self::Div(_, right)
                 if matches!(
@@ -182,19 +193,23 @@ impl GpRealExpr {
             }
             _ => {}
         }
-        for child in self.children() {
-            child.collect_validation_issues(arity, issues);
-        }
-    }
-
-    fn children(&self) -> Vec<&GpRealExpr> {
         match self {
+            Self::Constant(_) | Self::Input(_) => (1, 1),
+            Self::Neg(value) => {
+                let (depth, nodes) = value.collect_validation_metrics(arity, issues);
+                (1 + depth, 1 + nodes)
+            }
             Self::Add(left, right)
             | Self::Sub(left, right)
             | Self::Mul(left, right)
-            | Self::Div(left, right) => vec![left, right],
-            Self::Neg(value) => vec![value],
-            Self::Constant(_) | Self::Input(_) => Vec::new(),
+            | Self::Div(left, right) => {
+                let (left_depth, left_nodes) = left.collect_validation_metrics(arity, issues);
+                let (right_depth, right_nodes) = right.collect_validation_metrics(arity, issues);
+                (
+                    1 + left_depth.max(right_depth),
+                    1 + left_nodes + right_nodes,
+                )
+            }
         }
     }
 
@@ -216,23 +231,8 @@ pub fn eval_gp_batch(
     expressions: &[GpRealExpr],
     inputs: &HashMap<usize, Real>,
 ) -> Vec<Result<Real, GpValidationIssue>> {
-    let dense_inputs = dense_input_vector(inputs);
     expressions
         .iter()
-        .map(|expression| expression.eval(&dense_inputs))
+        .map(|expression| expression.eval_with(&|index| inputs.get(&index).cloned()))
         .collect()
-}
-
-fn dense_input_vector(inputs: &HashMap<usize, Real>) -> Vec<Real> {
-    let len = inputs
-        .keys()
-        .copied()
-        .max()
-        .map(|index| index + 1)
-        .unwrap_or(0);
-    let mut values = vec![Real::zero(); len];
-    for (index, value) in inputs {
-        values[*index] = value.clone();
-    }
-    values
 }

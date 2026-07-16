@@ -93,6 +93,11 @@ pub enum SelectionError {
     CandidateReportCountMismatch,
     /// The selection set was empty.
     EmptyPopulation,
+    /// A fitness report did not name the candidate at the same aligned index.
+    CandidateReportIdMismatch {
+        /// Misaligned index.
+        index: usize,
+    },
     /// A tournament index was outside the candidate slice.
     TournamentIndexOutOfBounds {
         /// Bad index.
@@ -349,21 +354,31 @@ where
 
     for _ in 0..policy.max_steps {
         let mut selected: Option<(Candidate, FitnessReport)> = None;
-        for neighbor in one_step_neighbors(&current, &policy.step) {
-            if recent_contains(&recent, &neighbor.genome) {
-                continue;
-            }
-            let report = evaluate(&neighbor);
-            evaluations += 1;
-            if !is_acceptable_neighbor(&current_report, &report, direction, policy) {
-                continue;
-            }
-            match policy.strategy {
-                HillClimbStrategy::FirstImprovement => {
+        match policy.strategy {
+            HillClimbStrategy::FirstImprovement => {
+                for neighbor in first_step_neighbors(&current, &policy.step) {
+                    if recent_contains(&recent, &neighbor.genome) {
+                        continue;
+                    }
+                    let report = evaluate(&neighbor);
+                    evaluations += 1;
+                    if !is_acceptable_neighbor(&current_report, &report, direction, policy) {
+                        continue;
+                    }
                     selected = Some((neighbor, report));
                     break;
                 }
-                HillClimbStrategy::BestImprovement => {
+            }
+            HillClimbStrategy::BestImprovement => {
+                for neighbor in one_step_neighbors(&current, &policy.step) {
+                    if recent_contains(&recent, &neighbor.genome) {
+                        continue;
+                    }
+                    let report = evaluate(&neighbor);
+                    evaluations += 1;
+                    if !is_acceptable_neighbor(&current_report, &report, direction, policy) {
+                        continue;
+                    }
                     let replace = selected
                         .as_ref()
                         .map(|(_, selected_report)| {
@@ -425,7 +440,10 @@ pub fn classify_simulated_annealing_neighbor(
     policy: &SimulatedAnnealingPolicy,
     direction: FitnessDirection,
 ) -> AnnealingAcceptance {
-    if policy.initial_temperature <= Real::zero() || policy.cooling_ratio <= Real::zero() {
+    if policy.initial_temperature <= Real::zero()
+        || policy.cooling_ratio <= Real::zero()
+        || policy.cooling_ratio > Real::one()
+    {
         return AnnealingAcceptance::InvalidSchedule;
     }
     if neighbor.replay != ReplayStatus::Accepted {
@@ -606,6 +624,35 @@ impl FitnessReport {
     }
 }
 
+fn first_step_neighbors<'a>(
+    candidate: &'a Candidate,
+    step: &'a Real,
+) -> impl Iterator<Item = Candidate> + 'a {
+    candidate
+        .genome
+        .genes
+        .iter()
+        .enumerate()
+        .flat_map(move |(gene_index, _)| {
+            [("minus", -step.clone()), ("plus", step.clone())]
+                .into_iter()
+                .map(move |(label, signed_step)| {
+                    let mut genome = candidate.genome.clone();
+                    genome.genes[gene_index] = genome.genes[gene_index].clone() + signed_step;
+                    let id = CandidateId::new(format!(
+                        "{}:hill:{gene_index}:{label}",
+                        candidate.id.as_str()
+                    ))
+                    .expect("generated hill-climb id is non-empty");
+                    Candidate {
+                        id,
+                        genome,
+                        replay_policy: candidate.replay_policy.clone(),
+                    }
+                })
+        })
+}
+
 fn one_step_neighbors(candidate: &Candidate, step: &Real) -> Vec<Candidate> {
     let mut neighbors = Vec::with_capacity(candidate.genome.genes.len() * 2);
     for (gene_index, _) in candidate.genome.genes.iter().enumerate() {
@@ -693,6 +740,9 @@ where
             });
         }
         inspected += 1;
+        if reports[index].candidate != candidates[index].id {
+            return Err(SelectionError::CandidateReportIdMismatch { index });
+        }
         if reports[index].replay != ReplayStatus::Accepted {
             continue;
         }

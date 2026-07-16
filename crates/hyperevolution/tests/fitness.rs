@@ -7,11 +7,12 @@ use hyperevolution::{
     Real, ReplayHook, ReplayPolicy, ReplayStatus, SelectionError, SimulatedAnnealingPolicy,
     SurrogateDecision, SurrogateScreenReport, SurrogateStage, VariationError,
     classify_simulated_annealing_neighbor, crossover_one_point, domain_replay_manifest,
-    evaluate_candidate_with_oracle, exact_structural_diversity, hill_climb_exact,
+    eval_gp_batch, evaluate_candidate_with_oracle, exact_structural_diversity, hill_climb_exact,
     mutate_exact_delta, select_exact_best, select_tournament_by_indices,
     surrogate_allows_archive_promotion,
 };
 use proptest::prelude::*;
+use std::collections::HashMap;
 
 fn id(value: &str) -> CandidateId {
     CandidateId::new(value).unwrap()
@@ -77,6 +78,12 @@ fn exact_scalar_and_lexicographic_fitness_compare_without_float_surrogates() {
     assert_eq!(
         left.compare_total(&right, FitnessDirection::Minimize),
         FitnessComparison::Better
+    );
+
+    let different_arity = FitnessValue::Lexicographic(vec![Real::from(1)]);
+    assert_eq!(
+        left.compare_total(&different_arity, FitnessDirection::Minimize),
+        FitnessComparison::Unknown
     );
 }
 
@@ -195,6 +202,25 @@ fn exact_hill_climb_rejects_uncertified_neighbors() {
 }
 
 #[test]
+fn first_improvement_does_not_evaluate_the_unvisited_neighborhood_tail() {
+    let policy = HillClimbPolicy::first_improvement(Real::from(1), 1);
+    let mut calls = 0_usize;
+    let report = hill_climb_exact(
+        candidate("wide", vec![Real::from(4); 32]),
+        &policy,
+        FitnessDirection::Minimize,
+        |candidate| {
+            calls += 1;
+            square_fitness(candidate)
+        },
+    );
+
+    assert_eq!(report.accepted_steps, 1);
+    assert_eq!(report.evaluations, 2);
+    assert_eq!(calls, 2);
+}
+
+#[test]
 fn simulated_annealing_acceptance_keeps_worse_moves_report_bearing() {
     let policy = SimulatedAnnealingPolicy {
         initial_temperature: Real::from(10),
@@ -246,6 +272,20 @@ fn simulated_annealing_acceptance_keeps_worse_moves_report_bearing() {
         ),
         AnnealingAcceptance::InvalidSchedule
     );
+
+    let heating = SimulatedAnnealingPolicy {
+        initial_temperature: Real::from(10),
+        cooling_ratio: Real::from(2),
+    };
+    assert_eq!(
+        classify_simulated_annealing_neighbor(
+            &current,
+            &better,
+            &heating,
+            FitnessDirection::Minimize
+        ),
+        AnnealingAcceptance::InvalidSchedule
+    );
 }
 
 #[test]
@@ -278,6 +318,13 @@ fn exact_selection_uses_replay_gated_fitness_without_float_fallback() {
             index: 9,
             candidate_count: 3
         }
+    );
+
+    let mut misaligned = reports.clone();
+    misaligned[0].candidate = id("not-a");
+    assert_eq!(
+        select_exact_best(&candidates, &misaligned, FitnessDirection::Minimize).unwrap_err(),
+        SelectionError::CandidateReportIdMismatch { index: 0 }
     );
 }
 
@@ -386,6 +433,19 @@ fn gp_real_expr_evaluates_exactly_after_validation() {
     assert_eq!(
         expression.eval(&[Real::from(3), Real::from(4)]).unwrap(),
         Real::from(20)
+    );
+}
+
+#[test]
+fn gp_batch_keeps_sparse_inputs_missing_instead_of_filling_zero() {
+    let expressions = [GpRealExpr::Input(0), GpRealExpr::Input(1)];
+    let inputs = HashMap::from([(0, Real::from(7))]);
+    let results = eval_gp_batch(&expressions, &inputs);
+
+    assert_eq!(results[0], Ok(Real::from(7)));
+    assert_eq!(
+        results[1],
+        Err(GpValidationIssue::MissingInput { input: 1 })
     );
 }
 

@@ -166,4 +166,61 @@ fn main() {
         "exact_lexicographic_interval_hill_evolution_gp_and_oracle_fitness: {iterations} iterations in {elapsed:?} ({:?}/iter), better={better}, interval_better={interval_better}, hill_steps={hill_steps}, selected={selected}, variation_genes={variation_genes}, distinct_pairs={distinct_pairs}, gp_nodes={gp_nodes}, oracle_promoted={oracle_promoted}",
         elapsed / iterations
     );
+
+    let started = Instant::now();
+    let mut interval_checksum = 0_usize;
+    let interval_overlap = FitnessInterval::new(Real::from(2), Real::from(6));
+    for _ in 0..iterations {
+        interval_checksum ^= black_box(&interval_left)
+            .compare(black_box(&interval_overlap), FitnessDirection::Minimize)
+            as usize;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "interval_comparison: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={interval_checksum}",
+        elapsed / iterations
+    );
+
+    let started = Instant::now();
+    let mut gp_checksum = 0_usize;
+    for _ in 0..iterations {
+        let report = black_box(&gp_expr).validate(gp_limits);
+        gp_checksum ^= report.nodes;
+        gp_checksum ^= report.depth;
+        gp_checksum ^= report.issues.len();
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "gp_validation: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={gp_checksum}",
+        elapsed / iterations
+    );
+
+    let wide_start = Candidate {
+        id: CandidateId::new("wide-hill").unwrap(),
+        genome: Genome {
+            genes: vec![Real::from(4); 32],
+        },
+        replay_policy: hill_start.replay_policy,
+    };
+    let first_policy = HillClimbPolicy::first_improvement(Real::from(1), 1);
+    let hill_iterations = 10_000_u32;
+    let started = Instant::now();
+    let mut wide_hill_checksum = 0_usize;
+    for _ in 0..hill_iterations {
+        let report = hill_climb_exact(
+            black_box(wide_start.clone()),
+            &first_policy,
+            FitnessDirection::Minimize,
+            |candidate| {
+                let x = candidate.genome.genes[0].clone();
+                FitnessReport::scalar(candidate.id.clone(), x.clone() * x, ReplayStatus::Accepted)
+            },
+        );
+        wide_hill_checksum ^= report.evaluations;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "wide_first_improvement: {hill_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={wide_hill_checksum}",
+        elapsed / hill_iterations
+    );
 }

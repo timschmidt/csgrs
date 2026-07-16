@@ -102,6 +102,10 @@ typed GP expressions, black-box/surrogate reports, and domain replay manifests.
 Large optimizer families and probabilistic proposal engines are intentionally
 outside the current implementation.
 
+Selection rejects candidate/report ID misalignment, sparse GP inputs remain
+missing rather than becoming zero, and multiplicative annealing cooling ratios
+must lie in `(0, 1]`.
+
 ## References
 
 - Yap, [*Towards Exact Geometric
@@ -137,3 +141,5 @@ cargo test --all-targets
 cargo clippy --all-targets -- -D warnings
 cargo bench --bench fitness
 ```
+
+See [PERFORMANCE.md](PERFORMANCE.md) for the benchmark and per-reference audit.
