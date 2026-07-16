@@ -75,12 +75,18 @@ substitution, substitution-class candidate propagation, substitution-class affin
 elimination, univariate quadratic helpers, and Sturm root isolation handle small exact
 cases before a generic nonlinear loop is needed.
 
-Future backend work should exploit the same records: skip structural zeros, reuse
-prepared Jacobians, route affine blocks to exact/direct solvers, and report when a dense
-or sparse numeric adapter has crossed a lossy boundary. Levenberg-Marquardt is a named
+Sparse backends exploit the same records: they skip certified structural zeros,
+reuse symbolic rows for exact elimination and replay, and offer an opt-in symmetric
+minimum-degree Bareiss solve for high-fill input orderings. Its report retains both
+permutations, restores source variable order, and exactly replays the original system.
+Levenberg-Marquardt is a named
 lossy route through the current dense damped normal-equation proposal step. Powell
-hybrid, dogleg, BFGS, and SQP remain named proposal choices that are reported as
-unsupported rather than silently mapped to a different implementation.
+hybrid and dogleg use the dense trust-region proposal, BFGS retains a dense inverse-
+Hessian approximation, and SQP uses the documented equality least-squares relaxation.
+All remain proposal-only routes whose outputs require exact replay or certification.
+
+The complete reference-to-implementation audit, retained benchmark results, and
+architecture boundaries are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Current Status
 

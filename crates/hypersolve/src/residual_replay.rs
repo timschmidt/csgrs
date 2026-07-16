@@ -377,14 +377,44 @@ fn replay_prepared_sparse_rows(
     candidate: &[Real],
     min_precision: i32,
 ) -> Result<SparseResidualReplayReport, SparseResidualReplayError> {
-    let mut residuals = vec![Real::zero(); prepared.row_count];
-    for (row_index, row_terms) in prepared.row_terms.iter().enumerate() {
-        for (column, coefficient) in row_terms {
+    replay_assembled_sparse_rows(
+        prepared.row_count,
+        prepared.column_count,
+        &prepared.row_terms,
+        &prepared.rhs,
+        candidate,
+        min_precision,
+    )
+}
+
+/// Replay row-wise terms that another exact preparation stage has already
+/// validated and accumulated.
+pub(crate) fn replay_assembled_sparse_rows(
+    row_count: usize,
+    column_count: usize,
+    row_terms: &[Vec<(usize, Real)>],
+    rhs: &[Real],
+    candidate: &[Real],
+    min_precision: i32,
+) -> Result<SparseResidualReplayReport, SparseResidualReplayError> {
+    if row_terms.len() != row_count || rhs.len() != row_count || candidate.len() != column_count {
+        return Err(SparseResidualReplayError::DimensionMismatch);
+    }
+
+    let mut residuals = vec![Real::zero(); row_count];
+    for (row_index, terms) in row_terms.iter().enumerate() {
+        for (column, coefficient) in terms {
+            if *column >= column_count {
+                return Err(SparseResidualReplayError::TermOutOfBounds {
+                    row: row_index,
+                    column: *column,
+                });
+            }
             residuals[row_index] =
                 residuals[row_index].clone() + (coefficient * &candidate[*column]);
         }
     }
-    for (residual, rhs) in residuals.iter_mut().zip(&prepared.rhs) {
+    for (residual, rhs) in residuals.iter_mut().zip(rhs) {
         *residual = residual.clone() - rhs;
     }
 

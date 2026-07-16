@@ -13,10 +13,11 @@ use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::residual_replay::{
     DenseResidualReplayReport, SparseResidualReplayError, SparseResidualReplayReport,
-    SparseResidualTerm, replay_dense_linear_residuals, replay_sparse_linear_residuals,
+    SparseResidualTerm, replay_assembled_sparse_rows, replay_dense_linear_residuals,
+    replay_sparse_linear_residuals,
 };
 use crate::sparse_pattern::{
-    SparsePatternError, SymbolicSparseFactorizationReport,
+    SparsePatternEntryStatus, SparsePatternError, SymbolicSparseFactorizationReport,
     analyze_sparse_bareiss_elimination_pattern,
 };
 
@@ -179,8 +180,31 @@ pub struct SparsePatternPreservingBareissSolveReport {
     pub upper_rows: Vec<Vec<SparseResidualTerm>>,
     /// Exact solution vector.
     pub solution: Vec<Real>,
-    /// Exact replay against the original sparse representation.
+    /// Exact replay against the exactly accumulated original sparse terms.
     pub sparse_residual_replay: SparseResidualReplayReport,
+}
+
+/// Exact sparse Bareiss solve report using a deterministic minimum-degree
+/// symmetric row/column permutation.
+///
+/// The permutation changes only the elimination schedule. The returned
+/// solution is restored to source-column order and replayed against the
+/// original sparse system, so ordering remains outside the proof boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SparseMinimumDegreeBareissSolveReport {
+    /// Certified symbolic pattern of the source matrix.
+    pub source_symbolic_pattern: SymbolicSparseFactorizationReport,
+    /// Permuted index to source index mapping.
+    pub permuted_to_source: Vec<usize>,
+    /// Source index to permuted index mapping.
+    pub source_to_permuted: Vec<usize>,
+    /// Exact sparse solve report for the permuted system.
+    pub permuted_solve: SparsePatternPreservingBareissSolveReport,
+    /// Exact solution restored to source-column order.
+    pub solution: Vec<Real>,
+    /// Exact residual replay against the source-order terms and right-hand
+    /// side.
+    pub source_residual_replay: SparseResidualReplayReport,
 }
 
 /// Computes an exact determinant with Bareiss fraction-free elimination.
@@ -269,12 +293,13 @@ pub fn determinant_bareiss(
     })
 }
 
-/// Solves a square dense linear system exactly with Bareiss determinants.
+/// Solves a square dense linear system by fraction-free Bareiss elimination.
 ///
-/// The implementation uses Bareiss determinants inside Cramer's rule. That is
-/// intentionally conservative: it gives callers a compact exact solve surface
-/// while keeping production sparse or iterative solving outside this module.
-/// The returned candidate is immediately replayed through
+/// The coefficient matrix and right-hand side are eliminated together, so one
+/// augmented fraction-free pass constructs the upper-triangular system. The
+/// previous determinant/Cramer construction remains a fallback when the
+/// current exact scalar package cannot represent an intermediate augmented
+/// division. The returned candidate is immediately replayed through
 /// [`crate::replay_dense_linear_residuals`] so the report carries both the
 /// construction evidence and the exact `A*x-b` proof.
 pub fn solve_dense_linear_system_bareiss(
@@ -286,6 +311,117 @@ pub fn solve_dense_linear_system_bareiss(
         return Err(BareissError::DimensionMismatch);
     }
 
+    let n = matrix.len();
+    let mut work = matrix.to_vec();
+    let mut rhs_work = rhs.to_vec();
+    let mut swaps = 0;
+    let mut pivots = Vec::with_capacity(n.saturating_sub(1));
+    let mut previous_pivot = Real::one();
+
+    for pivot in 0..n.saturating_sub(1) {
+        let Some(pivot_row) = select_pivot_row(&work, pivot, min_precision)? else {
+            return Err(BareissError::Singular {
+                pivot: n.saturating_sub(1),
+            });
+        };
+        if pivot_row != pivot {
+            work.swap(pivot_row, pivot);
+            rhs_work.swap(pivot_row, pivot);
+            swaps += 1;
+        }
+
+        let pivot_value = work[pivot][pivot].clone();
+        let pivot_work_row = work[pivot].clone();
+        let pivot_rhs = rhs_work[pivot].clone();
+        pivots.push(BareissPivot {
+            pivot,
+            row: pivot_row,
+            value: pivot_value.clone(),
+        });
+
+        for row in (pivot + 1)..n {
+            let eliminand = work[row][pivot].clone();
+            for column in (pivot + 1)..n {
+                let numerator = pivot_value.clone() * work[row][column].clone()
+                    - eliminand.clone() * pivot_work_row[column].clone();
+                work[row][column] = (numerator / previous_pivot.clone())
+                    .map_err(|_| BareissError::UnsupportedDivision { pivot })?;
+            }
+            let numerator =
+                pivot_value.clone() * rhs_work[row].clone() - eliminand * pivot_rhs.clone();
+            rhs_work[row] = match numerator / previous_pivot.clone() {
+                Ok(value) => value,
+                Err(_) => {
+                    return solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision);
+                }
+            };
+            work[row][pivot] = Real::zero();
+        }
+        previous_pivot = pivot_value;
+    }
+
+    let mut determinant_value = if n == 0 {
+        Real::one()
+    } else {
+        work[n - 1][n - 1].clone()
+    };
+    if swaps % 2 == 1 {
+        determinant_value = -determinant_value;
+    }
+    match certified_sign(&determinant_value, min_precision)? {
+        RealSign::Zero => {
+            return Err(BareissError::Singular {
+                pivot: n.saturating_sub(1),
+            });
+        }
+        RealSign::Negative | RealSign::Positive => {}
+    }
+    let determinant = BareissDeterminantReport {
+        determinant: determinant_value,
+        swaps,
+        pivots,
+    };
+
+    let mut solution = vec![Real::zero(); n];
+    for row in (0..n).rev() {
+        let trailing_sum = ((row + 1)..n).fold(Real::zero(), |sum, column| {
+            sum + work[row][column].clone() * solution[column].clone()
+        });
+        solution[row] = match (rhs_work[row].clone() - trailing_sum) / work[row][row].clone() {
+            Ok(value) => value,
+            Err(_) => {
+                return solve_dense_linear_system_bareiss_cramer(matrix, rhs, min_precision);
+            }
+        };
+    }
+    let numerators = solution
+        .iter()
+        .map(|value| value.clone() * determinant.determinant.clone())
+        .collect::<Vec<_>>();
+
+    let residual_replay = replay_dense_linear_residuals(matrix, rhs, &solution, min_precision)
+        .map_err(|error| match error {
+            crate::residual_replay::DenseResidualReplayError::DimensionMismatch => {
+                BareissError::DimensionMismatch
+            }
+            crate::residual_replay::DenseResidualReplayError::UnknownResidual => {
+                BareissError::UnknownResidual
+            }
+        })?;
+
+    Ok(BareissSolveReport {
+        solution,
+        determinant,
+        numerators,
+        residual_replay,
+    })
+}
+
+fn solve_dense_linear_system_bareiss_cramer(
+    matrix: &[Vec<Real>],
+    rhs: &[Real],
+    min_precision: i32,
+) -> Result<BareissSolveReport, BareissError> {
     let determinant = determinant_bareiss(matrix, min_precision)?;
     match certified_sign(&determinant.determinant, min_precision)? {
         RealSign::Zero => {
@@ -407,7 +543,29 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
         return Err(SparseBareissError::UncertifiedPattern);
     }
 
-    let mut rows = accumulate_sparse_rows(row_count, column_count, terms, min_precision)?;
+    // The symbolic phase has already accumulated duplicate coordinates and
+    // certified every active entry. Reuse that exact work for the numeric
+    // phase instead of rebuilding and re-certifying the same sparse rows.
+    let mut rows = vec![BTreeMap::<usize, Real>::new(); row_count];
+    for entry in &symbolic_pattern.entries {
+        match entry.status {
+            SparsePatternEntryStatus::CertifiedNonzero => {
+                rows[entry.row].insert(entry.column, entry.value.clone());
+            }
+            SparsePatternEntryStatus::CertifiedZero => {}
+            SparsePatternEntryStatus::UnknownSign => {
+                unreachable!("a fully certified symbolic pattern cannot contain an unknown entry")
+            }
+        }
+    }
+    let proof_rows = rows
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|(column, coefficient)| (*column, coefficient.clone()))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
     let mut rhs_work = rhs.to_vec();
     let mut previous_pivot = Real::one();
     let mut pivots = Vec::with_capacity(row_count.saturating_sub(1));
@@ -480,10 +638,10 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
     }
 
     let solution = sparse_back_substitution(&rows, &rhs_work, min_precision)?;
-    let sparse_residual_replay = replay_sparse_linear_residuals(
+    let sparse_residual_replay = replay_assembled_sparse_rows(
         row_count,
         column_count,
-        terms,
+        &proof_rows,
         rhs,
         &solution,
         min_precision,
@@ -518,6 +676,134 @@ pub fn solve_sparse_linear_system_bareiss_pattern_preserving(
     })
 }
 
+/// Solves a square sparse system after a deterministic symmetric
+/// minimum-degree permutation.
+///
+/// The ordering graph is the symmetrized certified-nonzero pattern. At each
+/// step the active vertex with the smallest degree is eliminated, ties are
+/// resolved by source index, and its active neighbors are connected to model
+/// fill. Rows, columns, and the right-hand side are permuted together. This is
+/// an opt-in fill-reducing schedule for sparse systems; the ordinary
+/// pattern-preserving entry point retains authored ordering.
+pub fn solve_sparse_linear_system_bareiss_minimum_degree(
+    row_count: usize,
+    column_count: usize,
+    terms: &[SparseResidualTerm],
+    rhs: &[Real],
+    min_precision: i32,
+) -> Result<SparseMinimumDegreeBareissSolveReport, SparseBareissError> {
+    if row_count != column_count || rhs.len() != row_count {
+        return Err(SparseBareissError::DimensionMismatch);
+    }
+    let source_symbolic_pattern =
+        analyze_sparse_bareiss_elimination_pattern(row_count, column_count, terms, min_precision)
+            .map_err(SparseBareissError::Pattern)?;
+    if !source_symbolic_pattern.fully_certified_pattern() {
+        return Err(SparseBareissError::UncertifiedPattern);
+    }
+
+    let permuted_to_source = minimum_degree_symmetric_permutation(
+        row_count,
+        source_symbolic_pattern
+            .entries
+            .iter()
+            .filter(|entry| entry.status == SparsePatternEntryStatus::CertifiedNonzero)
+            .map(|entry| (entry.row, entry.column)),
+    );
+    let mut source_to_permuted = vec![0; row_count];
+    for (permuted, source) in permuted_to_source.iter().copied().enumerate() {
+        source_to_permuted[source] = permuted;
+    }
+
+    let permuted_terms = terms
+        .iter()
+        .map(|term| SparseResidualTerm {
+            row: source_to_permuted[term.row],
+            column: source_to_permuted[term.column],
+            coefficient: term.coefficient.clone(),
+        })
+        .collect::<Vec<_>>();
+    let permuted_rhs = permuted_to_source
+        .iter()
+        .map(|source| rhs[*source].clone())
+        .collect::<Vec<_>>();
+    let permuted_solve = solve_sparse_linear_system_bareiss_pattern_preserving(
+        row_count,
+        column_count,
+        &permuted_terms,
+        &permuted_rhs,
+        min_precision,
+    )?;
+
+    let mut solution = vec![Real::zero(); column_count];
+    for (permuted, source) in permuted_to_source.iter().copied().enumerate() {
+        solution[source] = permuted_solve.solution[permuted].clone();
+    }
+    let source_residual_replay = replay_sparse_linear_residuals(
+        row_count,
+        column_count,
+        terms,
+        rhs,
+        &solution,
+        min_precision,
+    )
+    .map_err(SparseBareissError::SparseReplay)?;
+
+    Ok(SparseMinimumDegreeBareissSolveReport {
+        source_symbolic_pattern,
+        permuted_to_source,
+        source_to_permuted,
+        permuted_solve,
+        solution,
+        source_residual_replay,
+    })
+}
+
+fn minimum_degree_symmetric_permutation(
+    order: usize,
+    positions: impl IntoIterator<Item = (usize, usize)>,
+) -> Vec<usize> {
+    let mut adjacency = vec![BTreeSet::new(); order];
+    for (row, column) in positions {
+        if row != column {
+            adjacency[row].insert(column);
+            adjacency[column].insert(row);
+        }
+    }
+
+    let mut active = vec![true; order];
+    let mut permutation = Vec::with_capacity(order);
+    for _ in 0..order {
+        let selected = (0..order)
+            .filter(|index| active[*index])
+            .min_by_key(|index| {
+                (
+                    adjacency[*index]
+                        .iter()
+                        .filter(|neighbor| active[**neighbor])
+                        .count(),
+                    *index,
+                )
+            })
+            .expect("one active vertex remains per ordering step");
+        let neighbors = adjacency[selected]
+            .iter()
+            .copied()
+            .filter(|neighbor| active[*neighbor])
+            .collect::<Vec<_>>();
+        for (offset, left) in neighbors.iter().copied().enumerate() {
+            adjacency[left].remove(&selected);
+            for right in neighbors.iter().copied().skip(offset + 1) {
+                adjacency[left].insert(right);
+                adjacency[right].insert(left);
+            }
+        }
+        active[selected] = false;
+        permutation.push(selected);
+    }
+    permutation
+}
+
 fn select_pivot_row(
     matrix: &[Vec<Real>],
     pivot: usize,
@@ -538,39 +824,6 @@ fn select_pivot_row(
     } else {
         Ok(None)
     }
-}
-
-fn accumulate_sparse_rows(
-    row_count: usize,
-    column_count: usize,
-    terms: &[SparseResidualTerm],
-    min_precision: i32,
-) -> Result<Vec<BTreeMap<usize, Real>>, SparseBareissError> {
-    let mut rows = vec![BTreeMap::<usize, Real>::new(); row_count];
-    for term in terms {
-        if term.row >= row_count || term.column >= column_count {
-            return Err(SparseBareissError::TermOutOfBounds {
-                row: term.row,
-                column: term.column,
-            });
-        }
-        rows[term.row]
-            .entry(term.column)
-            .and_modify(|value| *value = value.clone() + term.coefficient.clone())
-            .or_insert_with(|| term.coefficient.clone());
-    }
-    for row in &mut rows {
-        let mut zero_columns = Vec::new();
-        for (column, value) in row.iter() {
-            if is_certified_zero(value, min_precision)? {
-                zero_columns.push(*column);
-            }
-        }
-        for column in zero_columns {
-            row.remove(&column);
-        }
-    }
-    Ok(rows)
 }
 
 fn select_sparse_pivot_row(
@@ -673,6 +926,39 @@ mod tests {
         Real::from(value)
     }
 
+    fn arrowhead_system(order: usize) -> (Vec<SparseResidualTerm>, Vec<Real>) {
+        let mut terms = Vec::with_capacity(order.saturating_mul(3));
+        terms.push(SparseResidualTerm {
+            row: 0,
+            column: 0,
+            coefficient: real(order as i64 + 1),
+        });
+        for index in 1..order {
+            terms.extend([
+                SparseResidualTerm {
+                    row: 0,
+                    column: index,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: index,
+                    column: 0,
+                    coefficient: real(1),
+                },
+                SparseResidualTerm {
+                    row: index,
+                    column: index,
+                    coefficient: real(2),
+                },
+            ]);
+        }
+        let mut rhs = vec![real(3); order];
+        if order > 0 {
+            rhs[0] = real((2 * order) as i64);
+        }
+        (terms, rhs)
+    }
+
     #[test]
     fn bareiss_determinant_reports_swaps_and_exact_value() {
         let report =
@@ -696,6 +982,31 @@ mod tests {
         assert_eq!(report.solution, vec![real(2), real(1)]);
         assert_eq!(report.determinant.determinant, real(-3));
         assert_eq!(report.numerators, vec![real(-6), real(-3)]);
+        assert!(report.residual_replay.accepted);
+        assert_eq!(
+            report,
+            solve_dense_linear_system_bareiss_cramer(
+                &[vec![real(2), real(1)], vec![real(1), real(-1)]],
+                &[real(5), real(1)],
+                -64,
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn bareiss_solve_swaps_augmented_rhs_with_the_pivot_row() {
+        let report = solve_dense_linear_system_bareiss(
+            &[vec![real(0), real(2)], vec![real(3), real(4)]],
+            &[real(4), real(11)],
+            -64,
+        )
+        .unwrap();
+
+        assert_eq!(report.solution, vec![real(1), real(2)]);
+        assert_eq!(report.determinant.determinant, real(-6));
+        assert_eq!(report.numerators, vec![real(-6), real(-12)]);
+        assert_eq!(report.determinant.swaps, 1);
         assert!(report.residual_replay.accepted);
     }
 
@@ -768,36 +1079,52 @@ mod tests {
 
     #[test]
     fn sparse_pattern_preserving_bareiss_tracks_fill_and_replays_solution() {
+        let terms = vec![
+            SparseResidualTerm {
+                row: 0,
+                column: 0,
+                coefficient: real(1),
+            },
+            SparseResidualTerm {
+                row: 0,
+                column: 0,
+                coefficient: real(1),
+            },
+            SparseResidualTerm {
+                row: 0,
+                column: 2,
+                coefficient: real(1),
+            },
+            SparseResidualTerm {
+                row: 1,
+                column: 0,
+                coefficient: real(1),
+            },
+            SparseResidualTerm {
+                row: 1,
+                column: 1,
+                coefficient: real(1),
+            },
+            SparseResidualTerm {
+                row: 2,
+                column: 0,
+                coefficient: real(1),
+            },
+            SparseResidualTerm {
+                row: 2,
+                column: 0,
+                coefficient: real(-1),
+            },
+            SparseResidualTerm {
+                row: 2,
+                column: 2,
+                coefficient: real(3),
+            },
+        ];
         let report = solve_sparse_linear_system_bareiss_pattern_preserving(
             3,
             3,
-            &[
-                SparseResidualTerm {
-                    row: 0,
-                    column: 0,
-                    coefficient: real(2),
-                },
-                SparseResidualTerm {
-                    row: 0,
-                    column: 2,
-                    coefficient: real(1),
-                },
-                SparseResidualTerm {
-                    row: 1,
-                    column: 0,
-                    coefficient: real(1),
-                },
-                SparseResidualTerm {
-                    row: 1,
-                    column: 1,
-                    coefficient: real(1),
-                },
-                SparseResidualTerm {
-                    row: 2,
-                    column: 2,
-                    coefficient: real(3),
-                },
-            ],
+            &terms,
             &[real(4), real(3), real(6)],
             -64,
         )
@@ -807,6 +1134,18 @@ mod tests {
         assert!(report.fill_in_positions.contains(&(1, 2)));
         assert!(report.symbolic_pattern.fill_in_positions.contains(&(1, 2)));
         assert!(report.sparse_residual_replay.accepted);
+        assert_eq!(
+            report.sparse_residual_replay,
+            replay_sparse_linear_residuals(
+                3,
+                3,
+                &terms,
+                &[real(4), real(3), real(6)],
+                &report.solution,
+                -64,
+            )
+            .unwrap()
+        );
         assert_eq!(report.upper_rows.len(), 3);
     }
 
@@ -841,6 +1180,36 @@ mod tests {
             )
             .unwrap_err(),
             SparseBareissError::UncertifiedPattern
+        );
+    }
+
+    #[test]
+    fn minimum_degree_sparse_bareiss_reduces_arrowhead_fill_and_replays_source_order() {
+        let order = 8;
+        let (terms, rhs) = arrowhead_system(order);
+        let authored =
+            solve_sparse_linear_system_bareiss_pattern_preserving(order, order, &terms, &rhs, -64)
+                .unwrap();
+        let reordered =
+            solve_sparse_linear_system_bareiss_minimum_degree(order, order, &terms, &rhs, -64)
+                .unwrap();
+
+        assert!(
+            reordered
+                .permuted_to_source
+                .iter()
+                .position(|source| *source == 0)
+                .is_some_and(|position| position >= order - 2)
+        );
+        assert_eq!(reordered.solution, vec![real(1); order]);
+        assert!(reordered.source_residual_replay.accepted);
+        assert_eq!(
+            reordered.source_residual_replay,
+            replay_sparse_linear_residuals(order, order, &terms, &rhs, &reordered.solution, -64)
+                .unwrap()
+        );
+        assert!(
+            reordered.permuted_solve.fill_in_positions.len() < authored.fill_in_positions.len()
         );
     }
 
@@ -925,6 +1294,39 @@ mod tests {
             ).unwrap();
 
             prop_assert_eq!(report.solution, vec![real(x), real(y)]);
+            prop_assert!(report.residual_replay.accepted);
+        }
+
+        #[test]
+        fn generated_nonsingular_two_by_two_systems_solve_and_replay_exactly(
+            a in -8_i16..=8,
+            b in -8_i16..=8,
+            c in -8_i16..=8,
+            d in -8_i16..=8,
+            x in -16_i16..=16,
+            y in -16_i16..=16,
+        ) {
+            let a = i64::from(a);
+            let b = i64::from(b);
+            let c = i64::from(c);
+            let d = i64::from(d);
+            let x = i64::from(x);
+            let y = i64::from(y);
+            let determinant = a * d - b * c;
+            prop_assume!(determinant != 0);
+
+            let report = solve_dense_linear_system_bareiss(
+                &[vec![real(a), real(b)], vec![real(c), real(d)]],
+                &[real(a * x + b * y), real(c * x + d * y)],
+                -64,
+            ).unwrap();
+
+            prop_assert_eq!(report.solution, vec![real(x), real(y)]);
+            prop_assert_eq!(report.determinant.determinant, real(determinant));
+            prop_assert_eq!(
+                report.numerators,
+                vec![real(determinant * x), real(determinant * y)]
+            );
             prop_assert!(report.residual_replay.accepted);
         }
 

@@ -186,7 +186,7 @@ pub fn analyze_sparse_bareiss_elimination_pattern(
         let row_swap = if selected_row == pivot {
             None
         } else {
-            swap_active_rows(&mut active, pivot, selected_row, row_count);
+            swap_active_rows(&mut active, pivot, selected_row);
             Some((pivot, selected_row))
         };
         let pivot_status = entry_status
@@ -248,21 +248,23 @@ fn classify_entry(value: &Real, min_precision: i32) -> SparsePatternEntryStatus 
     }
 }
 
-fn swap_active_rows(
-    active: &mut BTreeSet<(usize, usize)>,
-    left: usize,
-    right: usize,
-    column_count: usize,
-) {
-    for column in 0..column_count {
-        let left_present = active.remove(&(left, column));
-        let right_present = active.remove(&(right, column));
-        if left_present {
-            active.insert((right, column));
-        }
-        if right_present {
-            active.insert((left, column));
-        }
+fn swap_active_rows(active: &mut BTreeSet<(usize, usize)>, left: usize, right: usize) {
+    let left_positions = active
+        .range((left, 0)..=(left, usize::MAX))
+        .copied()
+        .collect::<Vec<_>>();
+    let right_positions = active
+        .range((right, 0)..=(right, usize::MAX))
+        .copied()
+        .collect::<Vec<_>>();
+    for position in left_positions.iter().chain(&right_positions) {
+        active.remove(position);
+    }
+    for (_, column) in left_positions {
+        active.insert((right, column));
+    }
+    for (_, column) in right_positions {
+        active.insert((left, column));
     }
 }
 
@@ -348,6 +350,35 @@ mod tests {
             )
             .unwrap_err(),
             SparsePatternError::TermOutOfBounds { row: 1, column: 0 }
+        );
+    }
+
+    #[test]
+    fn sparse_pattern_row_swaps_touch_only_active_cyclic_entries() {
+        let order = 8_usize;
+        let terms = (0..order)
+            .map(|row| SparseResidualTerm {
+                row,
+                column: (row + 1) % order,
+                coefficient: real(1),
+            })
+            .collect::<Vec<_>>();
+
+        let report = analyze_sparse_bareiss_elimination_pattern(order, order, &terms, -64).unwrap();
+
+        assert!(report.fully_certified_pattern());
+        assert!(report.fill_in_positions.is_empty());
+        assert_eq!(
+            report
+                .steps
+                .iter()
+                .filter(|step| step.row_swap.is_some())
+                .count(),
+            order - 1
+        );
+        assert_eq!(
+            report.final_pattern,
+            (0..order).map(|index| (index, index)).collect::<Vec<_>>()
         );
     }
 

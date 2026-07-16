@@ -39,6 +39,7 @@ use hypersolve::{
     search_failed_constraint_single_removals, sketch_compatibility_fixtures,
     solve_damped_least_squares, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
+    solve_sparse_linear_system_bareiss_minimum_degree,
     solve_sparse_linear_system_bareiss_pattern_preserving, squared_distance_equation,
     subdivide_bernstein_univariate_polynomial_interval_roots,
     subresultant_chain_univariate_polynomials, substitute_bezier_power_basis,
@@ -4027,6 +4028,34 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let dense_bareiss_order = 8_usize;
+    let dense_bareiss_matrix = (0..dense_bareiss_order)
+        .map(|row| {
+            (0..dense_bareiss_order)
+                .map(|column| {
+                    if row == column {
+                        r(4)
+                    } else if row.abs_diff(column) == 1 {
+                        r(-1)
+                    } else {
+                        r(0)
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let dense_bareiss_rhs = (0..dense_bareiss_order)
+        .map(|row| {
+            if row == 0 || row + 1 == dense_bareiss_order {
+                r(3)
+            } else {
+                r(2)
+            }
+        })
+        .collect::<Vec<_>>();
+    c.bench_function("solve_dense_linear_system_bareiss_tridiagonal_8", |b| {
+        b.iter(|| solve_dense_linear_system_bareiss(&dense_bareiss_matrix, &dense_bareiss_rhs, -64))
+    });
     c.bench_function("solve_sparse_linear_system_bareiss", |b| {
         b.iter(|| {
             solve_sparse_linear_system_bareiss(
@@ -4099,6 +4128,112 @@ fn certification(c: &mut Criterion) {
             })
         },
     );
+    let arrowhead_order = 32_usize;
+    let mut arrowhead_terms = Vec::with_capacity(arrowhead_order * 3);
+    arrowhead_terms.push(SparseResidualTerm {
+        row: 0,
+        column: 0,
+        coefficient: r(arrowhead_order as i64 + 1),
+    });
+    for index in 1..arrowhead_order {
+        arrowhead_terms.extend([
+            SparseResidualTerm {
+                row: 0,
+                column: index,
+                coefficient: r(1),
+            },
+            SparseResidualTerm {
+                row: index,
+                column: 0,
+                coefficient: r(1),
+            },
+            SparseResidualTerm {
+                row: index,
+                column: index,
+                coefficient: r(2),
+            },
+        ]);
+    }
+    let mut arrowhead_rhs = vec![r(3); arrowhead_order];
+    arrowhead_rhs[0] = r((2 * arrowhead_order) as i64);
+    c.bench_function("sparse_bareiss_arrowhead_32/authored_order", |b| {
+        b.iter(|| {
+            solve_sparse_linear_system_bareiss_pattern_preserving(
+                arrowhead_order,
+                arrowhead_order,
+                &arrowhead_terms,
+                &arrowhead_rhs,
+                -64,
+            )
+        })
+    });
+    c.bench_function("sparse_bareiss_arrowhead_32/minimum_degree", |b| {
+        b.iter(|| {
+            solve_sparse_linear_system_bareiss_minimum_degree(
+                arrowhead_order,
+                arrowhead_order,
+                &arrowhead_terms,
+                &arrowhead_rhs,
+                -64,
+            )
+        })
+    });
+    let tridiagonal_order = 32_usize;
+    let tridiagonal_terms = (0..tridiagonal_order)
+        .flat_map(|row| {
+            let mut terms = vec![SparseResidualTerm {
+                row,
+                column: row,
+                coefficient: r(4),
+            }];
+            if row > 0 {
+                terms.push(SparseResidualTerm {
+                    row,
+                    column: row - 1,
+                    coefficient: r(-1),
+                });
+            }
+            if row + 1 < tridiagonal_order {
+                terms.push(SparseResidualTerm {
+                    row,
+                    column: row + 1,
+                    coefficient: r(-1),
+                });
+            }
+            terms
+        })
+        .collect::<Vec<_>>();
+    let tridiagonal_rhs = (0..tridiagonal_order)
+        .map(|row| {
+            if row == 0 || row + 1 == tridiagonal_order {
+                r(3)
+            } else {
+                r(2)
+            }
+        })
+        .collect::<Vec<_>>();
+    c.bench_function("sparse_bareiss_tridiagonal_32/authored_order", |b| {
+        b.iter(|| {
+            solve_sparse_linear_system_bareiss_pattern_preserving(
+                tridiagonal_order,
+                tridiagonal_order,
+                &tridiagonal_terms,
+                &tridiagonal_rhs,
+                -64,
+            )
+        })
+    });
+    c.bench_function("sparse_bareiss_tridiagonal_32/minimum_degree", |b| {
+        b.iter(|| {
+            solve_sparse_linear_system_bareiss_minimum_degree(
+                tridiagonal_order,
+                tridiagonal_order,
+                &tridiagonal_terms,
+                &tridiagonal_rhs,
+                -64,
+            )
+        })
+    });
     c.bench_function("analyze_sparse_bareiss_elimination_pattern", |b| {
         b.iter(|| {
             analyze_sparse_bareiss_elimination_pattern(
@@ -4135,8 +4270,32 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    let sparse_cyclic_order = 64_usize;
+    let sparse_cyclic_terms = (0..sparse_cyclic_order)
+        .map(|row| SparseResidualTerm {
+            row,
+            column: (row + 1) % sparse_cyclic_order,
+            coefficient: r(1),
+        })
+        .collect::<Vec<_>>();
+    c.bench_function("analyze_sparse_bareiss_cyclic_row_swaps_64", |b| {
+        b.iter(|| {
+            analyze_sparse_bareiss_elimination_pattern(
+                sparse_cyclic_order,
+                sparse_cyclic_order,
+                &sparse_cyclic_terms,
+                -64,
+            )
+        })
+    });
     c.bench_function("resultant_univariate_polynomials", |b| {
         b.iter(|| resultant_univariate_polynomials(&[r(-1), r(0), r(1)], &[r(-2), r(1)], -64))
+    });
+    let mut degree_64_polynomial = vec![r(0); 65];
+    degree_64_polynomial[0] = r(-1);
+    degree_64_polynomial[64] = r(1);
+    c.bench_function("resultant_constant_degree_64", |b| {
+        b.iter(|| resultant_univariate_polynomials(&degree_64_polynomial, &[r(2)], -64))
     });
     c.bench_function("subresultant_chain_univariate_polynomials", |b| {
         b.iter(|| {
@@ -4389,19 +4548,6 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
-    let represented_roots = represent_univariate_algebraic_roots(
-        &prepared_quadratic,
-        hypersolve::RootIsolationConfig::default(),
-    );
-    c.bench_function("compare_algebraic_root_representations", |b| {
-        b.iter(|| {
-            compare_algebraic_root_representations(
-                &represented_roots[0].roots[0],
-                &represented_roots[0].roots[1],
-                hyperlimit::PredicatePolicy,
-            )
-        })
-    });
     let sqrt_two = AlgebraicRootRepresentation {
         constraint_index: 0,
         symbol: SymbolId(0),
@@ -4424,6 +4570,15 @@ fn certification(c: &mut Criterion) {
         polynomial_coefficients: vec![r(-3), Real::zero(), Real::one()],
         ..sqrt_two.clone()
     };
+    c.bench_function("compare_algebraic_root_representations", |b| {
+        b.iter(|| {
+            compare_algebraic_root_representations(
+                &sqrt_two,
+                &sqrt_three,
+                hyperlimit::PredicatePolicy,
+            )
+        })
+    });
     c.bench_function(
         "compare_algebraic_root_representations_with_refinement",
         |b| {

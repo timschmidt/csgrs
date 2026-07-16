@@ -553,8 +553,16 @@ fn sylvester_matrix(left: &[Real], right: &[Real]) -> Vec<Vec<Real>> {
 
 fn real_pow(value: &Real, exponent: usize) -> Real {
     let mut result = Real::one();
-    for _ in 0..exponent {
-        result *= value.clone();
+    let mut base = value.clone();
+    let mut remaining = exponent;
+    while remaining > 0 {
+        if remaining & 1 == 1 {
+            result *= base.clone();
+        }
+        remaining >>= 1;
+        if remaining > 0 {
+            base = base.clone() * base;
+        }
     }
     result
 }
@@ -605,6 +613,19 @@ mod tests {
             resultant_univariate_polynomials(&[Real::zero()], &[real(-3), real(1)], -64).unwrap();
         assert_eq!(report.left_degree, 0);
         assert_eq!(report.resultant, Real::zero());
+        assert!(report.determinant.is_none());
+    }
+
+    #[test]
+    fn constant_resultant_uses_exact_binary_power_for_high_degree() {
+        let mut polynomial = vec![Real::zero(); 65];
+        polynomial[0] = real(-1);
+        polynomial[64] = Real::one();
+        let report = resultant_univariate_polynomials(&polynomial, &[real(2)], -64).unwrap();
+        let expected = (0..64).fold(Real::one(), |value, _| value * real(2));
+
+        assert_eq!(report.resultant, expected);
+        assert_eq!(report.left_degree, 64);
         assert!(report.determinant.is_none());
     }
 
