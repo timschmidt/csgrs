@@ -31,6 +31,35 @@ fn finite_rotation_z(angle: Real) -> Option<Matrix4> {
     Some(Matrix4::rotation_z(angle))
 }
 
+pub(crate) fn finite_reflection(plane: &Plane) -> Option<Matrix4> {
+    let normal = plane.normal();
+    let len = normal.magnitude().ok()?;
+    let n = normal.normalize_checked().ok()?;
+    let w = (plane.offset() / len).ok()?;
+    let [nx, ny, nz] = n.0;
+    let two = Real::from(2_u8);
+    let zero = Real::zero();
+    let one = Real::one();
+    Some(Matrix4::from_row_major([
+        one.clone() - two.clone() * nx.clone() * nx.clone(),
+        -two.clone() * nx.clone() * ny.clone(),
+        -two.clone() * nx.clone() * nz.clone(),
+        two.clone() * w.clone() * nx.clone(),
+        -two.clone() * ny.clone() * nx.clone(),
+        one.clone() - two.clone() * ny.clone() * ny.clone(),
+        -two.clone() * ny.clone() * nz.clone(),
+        two.clone() * w.clone() * ny.clone(),
+        -two.clone() * nz.clone() * nx,
+        -two.clone() * nz.clone() * ny,
+        one.clone() - two.clone() * nz.clone() * nz.clone(),
+        two * w * nz,
+        zero.clone(),
+        zero.clone(),
+        zero,
+        one,
+    ]))
+}
+
 fn real_from_usize(value: usize) -> Option<Real> {
     Some(Real::from(u64::try_from(value).ok()?))
 }
@@ -54,6 +83,19 @@ pub trait CSG: Sized + Clone {
     fn inverse(&self) -> Self;
     fn bounding_box(&self) -> Aabb;
     fn invalidate_bounding_box(&mut self);
+
+    /// Combine copies produced by a distribution operation.
+    ///
+    /// Representations may override this internal customization point when
+    /// they can certify a cheaper equivalent to a sequence of pairwise
+    /// Booleans.
+    #[doc(hidden)]
+    fn union_distributed(copies: Vec<Self>) -> Self {
+        copies
+            .into_iter()
+            .reduce(|acc, csg| acc.union(&csg))
+            .expect("distribution always produces at least one copy")
+    }
 
     /// Returns a new Self translated by vector.
     ///
@@ -201,43 +243,9 @@ pub trait CSG: Sized + Clone {
     ///
     /// Returns a new Self whose geometry is mirrored accordingly.
     fn mirror(&self, plane: Plane) -> Self {
-        let normal = plane.normal();
-        let Some(len) = normal.magnitude().ok() else {
+        let Some(mirror_mat) = finite_reflection(&plane) else {
             return self.clone();
         };
-        let Some(n) = normal.normalize_checked().ok() else {
-            // Degenerate or hostile plane: leave geometry unchanged.
-            return self.clone();
-        };
-        // Adjusted offset = w / ||n||
-        let Some(w) = (plane.offset() / len).ok() else {
-            return self.clone();
-        };
-
-        // Direct Householder reflection for `n . p == w`:
-        // p' = (I - 2 n n^T) p + 2 w n.
-        let [nx, ny, nz] = n.0;
-        let two = Real::from(2_u8);
-        let zero = Real::zero();
-        let one = Real::one();
-        let mirror_mat = Matrix4::from_row_major([
-            one.clone() - two.clone() * nx.clone() * nx.clone(),
-            -two.clone() * nx.clone() * ny.clone(),
-            -two.clone() * nx.clone() * nz.clone(),
-            two.clone() * w.clone() * nx.clone(),
-            -two.clone() * ny.clone() * nx.clone(),
-            one.clone() - two.clone() * ny.clone() * ny.clone(),
-            -two.clone() * ny.clone() * nz.clone(),
-            two.clone() * w.clone() * ny.clone(),
-            -two.clone() * nz.clone() * nx,
-            -two.clone() * nz.clone() * ny,
-            one.clone() - two.clone() * nz.clone() * nz.clone(),
-            two * w * nz,
-            zero.clone(),
-            zero.clone(),
-            zero,
-            one,
-        ]);
 
         // Apply to all polygons
         self.transform(&mirror_mat).inverse()
@@ -263,7 +271,7 @@ pub trait CSG: Sized + Clone {
         let end_rad = end_angle_deg.to_radians();
         let sweep = end_rad - start_rad.clone();
 
-        (0..count)
+        let copies = (0..count)
             .map(|i| {
                 let t = if count == 1 {
                     real_half()
@@ -293,8 +301,8 @@ pub trait CSG: Sized + Clone {
                 let mat = rot * trans;
                 self.transform(&mat)
             })
-            .reduce(|acc, csg| acc.union(&csg))
-            .unwrap()
+            .collect();
+        Self::union_distributed(copies)
     }
 
     /// Distribute Self `count` times along a straight line (vector),
@@ -314,7 +322,7 @@ pub trait CSG: Sized + Clone {
             return self.clone();
         };
 
-        (0..count)
+        let copies = (0..count)
             .map(|i| {
                 let Some(step_index) = real_from_usize(i) else {
                     return self.clone();
@@ -325,8 +333,8 @@ pub trait CSG: Sized + Clone {
                 };
                 self.transform(&trans)
             })
-            .reduce(|acc, csg| acc.union(&csg))
-            .unwrap()
+            .collect();
+        Self::union_distributed(copies)
     }
 
     /// Distribute Self in a grid of `rows x cols`, with spacing dx, dy in XY plane.
@@ -340,7 +348,7 @@ pub trait CSG: Sized + Clone {
         let step_x = Vector3::new([dx, Real::zero(), Real::zero()]);
         let step_y = Vector3::new([Real::zero(), dy, Real::zero()]);
 
-        (0..rows)
+        let copies = (0..rows)
             .flat_map(|r| {
                 let step_x = step_x.clone();
                 let step_y = step_y.clone();
@@ -358,8 +366,8 @@ pub trait CSG: Sized + Clone {
                     self.transform(&trans)
                 })
             })
-            .reduce(|acc, csg| acc.union(&csg))
-            .unwrap()
+            .collect();
+        Self::union_distributed(copies)
     }
 }
 
@@ -387,5 +395,24 @@ mod tests {
 
         let rotated = cube.rotate(Real::from(0), Real::from(0), Real::from(90));
         assert_eq!(rotated.polygons.len(), cube.polygons.len());
+    }
+
+    #[test]
+    fn arbitrary_angle_arc_distribution_unions_disjoint_mesh_copies() {
+        let cube = Mesh::cube(Real::one(), ());
+        for (start, end) in [(0_u16, 330_u16), (7_u16, 313_u16)] {
+            let distributed =
+                cube.distribute_arc(12, Real::from(10), Real::from(start), Real::from(end));
+
+            assert_eq!(distributed.polygons.len(), 12 * cube.polygons.len());
+        }
+    }
+
+    #[test]
+    fn distribution_still_booleans_copies_that_are_not_disjoint() {
+        let cube = Mesh::cube(Real::one(), ());
+        let distributed = cube.distribute_linear(2, Vector3::x(), Real::zero());
+
+        assert_eq!(distributed.polygons.len(), cube.polygons.len());
     }
 }

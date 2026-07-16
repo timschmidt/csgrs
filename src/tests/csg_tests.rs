@@ -878,6 +878,23 @@ fn test_csg_exact_mass_properties_use_hyperphysics_report() {
 }
 
 #[test]
+fn exact_mass_properties_cache_is_invalidated_by_public_vertex_edits() {
+    let mut cube: Mesh<()> = Mesh::cube(r(2.0), ()).center();
+    let before = cube.exact_mass_properties(r(1.0)).unwrap();
+
+    for polygon in &mut cube.polygons {
+        for vertex in polygon.vertices_mut().iter_mut() {
+            vertex.position.x += Real::one();
+        }
+    }
+
+    let after = cube.exact_mass_properties(r(1.0)).unwrap();
+    assert_eq!(before.center_of_mass[0], Real::zero());
+    assert_eq!(after.center_of_mass[0], Real::one());
+    assert_eq!(after.volume, before.volume);
+}
+
+#[test]
 #[cfg(feature = "stl-io")]
 fn test_csg_stl_round_trip() -> Result<(), Box<dyn std::error::Error>> {
     let cube: Mesh<()> = Mesh::cube(r(2.0), ());

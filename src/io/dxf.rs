@@ -5,11 +5,30 @@ use crate::mesh::Mesh;
 use crate::mesh::Polygon;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
+use chrono::{DateTime, Local, Utc};
 use dxf::Drawing;
 use dxf::entities::{Entity, EntityType, Face3D};
 use hyperlattice::{Point3, Real, Vector3};
 use std::fmt::Debug;
 use std::io::Cursor;
+
+// `Drawing::new()` initializes its creation and update dates from the wall
+// clock. Besides making otherwise identical exports differ, the decimal DXF
+// representation of those dates can change length from one second to the next.
+// Use a documented sentinel so `to_dxf` is reproducible.
+const DXF_EXPORT_TIMESTAMP_SECONDS: i64 = 946_728_000; // 2000-01-01 12:00:00 UTC
+
+fn reproducible_drawing() -> Drawing {
+    let mut drawing = Drawing::new();
+    let timestamp = DateTime::<Utc>::from_timestamp(DXF_EXPORT_TIMESTAMP_SECONDS, 0)
+        .expect("the fixed DXF export timestamp is valid");
+    let local_timestamp = timestamp.with_timezone(&Local);
+    drawing.header.creation_date = local_timestamp;
+    drawing.header.update_date = local_timestamp;
+    drawing.header.creation_date_universal = timestamp;
+    drawing.header.update_date_universal = timestamp;
+    drawing
+}
 
 fn real(value: f64, field: &'static str) -> Result<Real, IoError> {
     Real::try_from(value).map_err(|error| {
@@ -201,7 +220,7 @@ fn point_from_wcs(point: dxf::Point) -> Result<Point3, IoError> {
 
 /// Export triangles as DXF `3DFACE` entities.
 pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, IoError> {
-    let mut drawing = Drawing::new();
+    let mut drawing = reproducible_drawing();
     let mut failure = None;
     shape.visit_triangles(|triangle| {
         if failure.is_some() {
@@ -295,6 +314,21 @@ mod tests {
         let bytes = cube.to_dxf().unwrap();
         let imported = Mesh::from_dxf(&bytes, ()).unwrap();
         assert_eq!(imported.polygons.len(), 12);
+    }
+
+    #[test]
+    fn face_export_is_reproducible() {
+        let cube = Mesh::<()>::cube(Real::one(), ());
+        let first = cube.to_dxf().unwrap();
+        let second = cube.to_dxf().unwrap();
+        assert_eq!(first, second);
+
+        let drawing = reproducible_drawing();
+        assert_eq!(
+            drawing.header.creation_date.timestamp(),
+            DXF_EXPORT_TIMESTAMP_SECONDS
+        );
+        assert_eq!(drawing.header.update_date, drawing.header.creation_date);
     }
 
     #[test]

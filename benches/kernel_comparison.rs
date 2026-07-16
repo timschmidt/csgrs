@@ -2,7 +2,7 @@
 
 mod support;
 
-use std::hint::black_box;
+use std::{hint::black_box, num::NonZeroU32};
 
 use csgrs::{
     Real,
@@ -10,7 +10,7 @@ use csgrs::{
     mesh::{Mesh, plane::Plane},
     sketch::Profile,
 };
-use hyperlattice::{Matrix4, Vector3};
+use hyperlattice::{Matrix4, Point3, Vector3};
 use support::{Config, Measurement};
 
 fn measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
@@ -28,15 +28,36 @@ fn measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
 }
 
 fn geometry_measurement(mesh: &Mesh<()>, input_facets: usize) -> Measurement {
+    fn coordinate_fingerprint(coordinate: &Real) -> u64 {
+        // `Real` may rebuild an equivalent symbolic approximation graph when a
+        // transformed mesh is cloned. Hashing every raw f64 mantissa bit would
+        // then make a harmless sub-nanometre approximation difference look like
+        // nondeterministic geometry. Quantize only at this benchmark/export
+        // boundary; all geometric construction and predicates remain exact.
+        const UNITS_PER_COORDINATE: f64 = 1_000_000_000.0;
+        coordinate
+            .to_f64_lossy()
+            .filter(|value| value.is_finite())
+            .map(|value| (value * UNITS_PER_COORDINATE).round() as i64 as u64)
+            .unwrap_or_default()
+    }
+
     let facets = facet_count(mesh);
     let mut corners = 0_usize;
     let mut checksum = facets as u64;
     for polygon in &mesh.polygons {
         for vertex in polygon.vertices() {
             corners += 1;
-            for coordinate in [&vertex.position.x, &vertex.position.y, &vertex.position.z] {
-                checksum = checksum.rotate_left(7)
-                    ^ coordinate.to_f64_lossy().unwrap_or_default().to_bits();
+            if let Some(position) = vertex.position_f64_lossy() {
+                for coordinate in position {
+                    checksum = checksum.rotate_left(7)
+                        ^ ((coordinate * 1_000_000_000.0).round() as i64 as u64);
+                }
+            } else {
+                for coordinate in [&vertex.position.x, &vertex.position.y, &vertex.position.z]
+                {
+                    checksum = checksum.rotate_left(7) ^ coordinate_fingerprint(coordinate);
+                }
             }
         }
     }
@@ -51,27 +72,6 @@ fn facet_count(mesh: &Mesh<()>) -> usize {
 }
 
 fn main() {
-    #[cfg(feature = "dispatch-trace")]
-    {
-        hyperreal::dispatch_trace::reset();
-        hyperreal::dispatch_trace::with_recording(run);
-        let trace = hyperreal::dispatch_trace::take_trace();
-        eprintln!("dispatch correlation: {:?}", trace.correlation_summary());
-        for summary in trace.operation_summaries() {
-            eprintln!(
-                "dispatch operation: {}/{}/{}",
-                summary.layer, summary.operation, summary.count
-            );
-        }
-        for summary in trace.dispatch {
-            eprintln!(
-                "dispatch path: {}/{}/{}/{}",
-                summary.layer, summary.operation, summary.path, summary.count
-            );
-        }
-    }
-
-    #[cfg(not(feature = "dispatch-trace"))]
     run();
 }
 
@@ -83,6 +83,35 @@ fn run() {
         let mesh = black_box(Mesh::cube(Real::from(2_u8), ()));
         measurement(&mesh, 0)
     });
+    config.run("kernel", "construct_cuboid", "2x4x6", 32, || {
+        let mesh = black_box(Mesh::cuboid(
+            Real::from(2_u8),
+            Real::from(4_u8),
+            Real::from(6_u8),
+            (),
+        ));
+        measurement(&mesh, 0)
+    });
+    config.run("kernel", "construct_cylinder", "r6_h20_s64", 8, || {
+        let mesh = black_box(Mesh::cylinder(Real::from(6_u8), Real::from(20_u8), 64, ()));
+        measurement(&mesh, 0)
+    });
+    config.run("kernel", "construct_frustum", "r6_r2_h20_s64", 8, || {
+        let mesh = black_box(Mesh::frustum(
+            Real::from(6_u8),
+            Real::from(2_u8),
+            Real::from(20_u8),
+            64,
+            (),
+        ));
+        measurement(&mesh, 0)
+    });
+    config.run("kernel", "construct_octahedron", "r10", 32, || {
+        measurement(&black_box(Mesh::octahedron(Real::from(10_u8), ())), 0)
+    });
+    config.run("kernel", "construct_icosahedron", "r10", 16, || {
+        measurement(&black_box(Mesh::icosahedron(Real::from(10_u8), ())), 0)
+    });
 
     for (case, segments, stacks, iterations) in [("medium", 32, 16, 8), ("large", 64, 32, 2)] {
         config.run("kernel", "construct_sphere", case, iterations, || {
@@ -93,6 +122,25 @@ fn run() {
     config.run("precision", "construct_sphere", "high_resolution", 1, || {
         let mesh = black_box(Mesh::sphere(Real::from(10_u8), 128, 64, ()));
         measurement(&mesh, 0)
+    });
+    config.run("kernel", "construct_ellipsoid", "r10_6_4_s32x16", 4, || {
+        measurement(
+            &black_box(Mesh::ellipsoid(
+                Real::from(10_u8),
+                Real::from(6_u8),
+                Real::from(4_u8),
+                32,
+                16,
+                (),
+            )),
+            0,
+        )
+    });
+    config.run("kernel", "construct_torus", "r10_2_s32x16", 2, || {
+        measurement(
+            &black_box(Mesh::torus(Real::from(10_u8), Real::from(2_u8), 32, 16, ())),
+            0,
+        )
     });
 
     let transform_source = Mesh::sphere(Real::from(10_u8), 32, 16, ());
@@ -156,6 +204,24 @@ fn run() {
         let mesh = black_box(&transform_source).inverse();
         geometry_measurement(&mesh, transform_input)
     });
+    let off_center = Mesh::cube(Real::from(2_u8), ()).translate(
+        Real::from(7_u8),
+        Real::from(-3_i8),
+        Real::from(5_u8),
+    );
+    config.run("kernel", "center", "translated_box", 32, || {
+        geometry_measurement(&black_box(&off_center).center(), 12)
+    });
+    config.run("kernel", "scale_uniform", "sphere_medium", 8, || {
+        geometry_measurement(
+            &black_box(&transform_source).scale(
+                Real::from(2_u8),
+                Real::from(2_u8),
+                Real::from(2_u8),
+            ),
+            transform_input,
+        )
+    });
 
     // Keep exact Boolean samples practical enough for repeated measurements.
     // Higher tessellation stress remains covered by construction/analysis cases.
@@ -172,23 +238,74 @@ fn run() {
             .expect("comparison union must remain valid");
         measurement(&mesh, boolean_input)
     });
+    #[cfg(feature = "dispatch-trace")]
+    black_box(boolean_left.try_difference(&boolean_right).unwrap());
     config.run("kernel", "boolean_difference", "sphere_box", 1, || {
         let mesh = black_box(&boolean_left)
             .try_difference(black_box(&boolean_right))
             .expect("comparison difference must remain valid");
         measurement(&mesh, boolean_input)
     });
+    #[cfg(feature = "dispatch-trace")]
+    black_box(boolean_left.try_intersection(&boolean_right).unwrap());
     config.run("kernel", "boolean_intersection", "sphere_box", 1, || {
         let mesh = black_box(&boolean_left)
             .try_intersection(black_box(&boolean_right))
             .expect("comparison intersection must remain valid");
         measurement(&mesh, boolean_input)
     });
+    #[cfg(feature = "dispatch-trace")]
+    black_box(boolean_left.try_xor(&boolean_right).unwrap());
     config.run("kernel", "boolean_xor", "sphere_box", 1, || {
         let mesh = black_box(&boolean_left)
             .try_xor(black_box(&boolean_right))
             .expect("comparison xor must remain valid");
         measurement(&mesh, boolean_input)
+    });
+
+    let topology_left = Mesh::cube(Real::from(4_u8), ());
+    let topology_disjoint = Mesh::cube(Real::from(4_u8), ()).translate(
+        Real::from(10_u8),
+        Real::zero(),
+        Real::zero(),
+    );
+    let topology_contained = Mesh::cube(Real::from(2_u8), ());
+    let topology_touching = Mesh::cube(Real::from(4_u8), ()).translate(
+        Real::from(4_u8),
+        Real::zero(),
+        Real::zero(),
+    );
+    config.run("kernel", "boolean_union", "disjoint_boxes", 8, || {
+        measurement(
+            &black_box(&topology_left)
+                .try_union(black_box(&topology_disjoint))
+                .unwrap(),
+            24,
+        )
+    });
+    config.run("kernel", "boolean_difference", "contained_boxes", 1, || {
+        measurement(
+            &black_box(&topology_left)
+                .try_difference(black_box(&topology_contained))
+                .unwrap(),
+            24,
+        )
+    });
+    config.run("kernel", "boolean_union", "face_touching_boxes", 1, || {
+        measurement(
+            &black_box(&topology_left)
+                .try_union(black_box(&topology_touching))
+                .unwrap(),
+            24,
+        )
+    });
+    config.run("kernel", "boolean_intersection", "identical_boxes", 8, || {
+        measurement(
+            &black_box(&topology_left)
+                .try_intersection(black_box(&topology_left))
+                .unwrap(),
+            24,
+        )
     });
 
     // An exact rational overlap ten times larger than OCCT's documented
@@ -222,10 +339,66 @@ fn run() {
         measurement(&mesh, 64)
     });
 
+    let distribution_source = Mesh::cube(Real::one(), ());
+    config.run("kernel", "distribute_linear", "box_8", 1, || {
+        measurement(
+            &black_box(&distribution_source).distribute_linear(
+                8,
+                Vector3::x(),
+                Real::from(2_u8),
+            ),
+            12,
+        )
+    });
+    config.run("kernel", "distribute_grid", "box_4x4", 1, || {
+        measurement(
+            &black_box(&distribution_source).distribute_grid(
+                4,
+                4,
+                Real::from(2_u8),
+                Real::from(2_u8),
+            ),
+            12,
+        )
+    });
+    config.run(
+        "kernel",
+        "distribute_arc",
+        "box_12_30_degree_steps",
+        1,
+        || {
+            measurement(
+                &black_box(&distribution_source).distribute_arc(
+                    12,
+                    Real::from(10_u8),
+                    Real::zero(),
+                    Real::from(330_u16),
+                ),
+                12,
+            )
+        },
+    );
+
     let analysis_source = Mesh::sphere(Real::from(10_u8), 32, 16, ());
     config.run("kernel", "triangulate", "sphere_medium", 16, || {
         let mesh = black_box(&analysis_source).triangulate();
         measurement(&mesh, facet_count(&analysis_source))
+    });
+    config.run("kernel", "subdivide", "sphere_medium_level1", 2, || {
+        let mesh =
+            black_box(&analysis_source).subdivide_triangles(NonZeroU32::new(1).unwrap());
+        measurement(&mesh, facet_count(&analysis_source))
+    });
+    config.run("kernel", "renormalize", "sphere_medium", 4, || {
+        let mut mesh = black_box(&analysis_source).clone();
+        mesh.renormalize();
+        geometry_measurement(&mesh, facet_count(&analysis_source))
+    });
+    config.run("kernel", "materialize_finite", "sphere_medium", 4, || {
+        let mesh = black_box(&analysis_source)
+            .materialize_finite_output()
+            .expect("comparison sphere is finite");
+        geometry_measurement(&mesh, facet_count(&analysis_source))
     });
     config.run("kernel", "bounding_box", "sphere_medium", 128, || {
         let bounds = black_box(&analysis_source).bounding_box();
@@ -239,6 +412,88 @@ fn run() {
         let checksum = mass.to_f64_lossy().unwrap_or_default().to_bits()
             ^ center.x.to_f64_lossy().unwrap_or_default().to_bits();
         Measurement::new(facet_count(&analysis_source) as u64, 10, checksum)
+    });
+    config.run("kernel", "vertices", "sphere_medium", 32, || {
+        let vertices = black_box(&analysis_source).vertices();
+        Measurement::new(
+            facet_count(&analysis_source) as u64,
+            vertices.len() as u64,
+            vertices.len() as u64,
+        )
+    });
+    config.run("kernel", "graphics_buffers", "sphere_medium", 16, || {
+        let graphics = black_box(&analysis_source).build_graphics_mesh();
+        Measurement::new(
+            facet_count(&analysis_source) as u64,
+            graphics.indices.len() as u64,
+            (graphics.vertices.len() as u64).rotate_left(17) ^ graphics.indices.len() as u64,
+        )
+    });
+    config.run("kernel", "connectivity", "sphere_medium", 8, || {
+        let (vertices, adjacency) = black_box(&analysis_source).build_connectivity();
+        Measurement::new(
+            facet_count(&analysis_source) as u64,
+            vertices.vertex_count() as u64,
+            (vertices.vertex_count() as u64).rotate_left(17) ^ adjacency.len() as u64,
+        )
+    });
+    config.run("kernel", "is_manifold", "sphere_medium", 32, || {
+        let manifold = black_box(&analysis_source).is_manifold();
+        Measurement::new(facet_count(&analysis_source) as u64, 1, u64::from(manifold))
+    });
+    config.run("kernel", "contains_point", "sphere_two_queries", 8, || {
+        let inside = black_box(&analysis_source).contains_vertex(&Point3::origin());
+        let outside = black_box(&analysis_source).contains_vertex(&Point3::new(
+            Real::from(20_u8),
+            Real::zero(),
+            Real::zero(),
+        ));
+        Measurement::new(
+            facet_count(&analysis_source) as u64,
+            2,
+            u64::from(inside) | (u64::from(outside) << 1),
+        )
+    });
+    config.run("kernel", "ray_intersections", "sphere_diameter", 8, || {
+        let hits = black_box(&analysis_source).ray_intersections(
+            &Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
+            &Vector3::x(),
+        );
+        Measurement::new(
+            facet_count(&analysis_source) as u64,
+            hits.len() as u64,
+            hits.len() as u64,
+        )
+    });
+    config.run(
+        "kernel",
+        "polyline_intersections",
+        "sphere_diameter",
+        8,
+        || {
+            let hits = black_box(&analysis_source).intersect_polyline(&[
+                Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
+                Point3::new(Real::from(20_i8), Real::zero(), Real::zero()),
+            ]);
+            Measurement::new(
+                facet_count(&analysis_source) as u64,
+                hits.len() as u64,
+                hits.len() as u64,
+            )
+        },
+    );
+    config.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, || {
+        let box_mesh = Mesh::cube(Real::from(2_u8), ());
+        let first = &box_mesh.polygons[0];
+        let second = box_mesh
+            .polygons
+            .iter()
+            .find(|polygon| {
+                first.plane().normal().dot(&polygon.plane().normal()) == Real::zero()
+            })
+            .expect("cube has an adjacent orthogonal face");
+        let angle = Mesh::dihedral_angle(first, second);
+        Measurement::new(12, 1, angle.to_f64_lossy().unwrap_or_default().to_bits())
     });
 
     config.run("kernel", "stl_write", "sphere_medium", 8, || {

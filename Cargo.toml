@@ -92,7 +92,7 @@ hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
 hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
 hypermesh = { version = "0.1.0", path = "../hypermesh" }
 hyperphysics = { version = "0.3.0", path = "../hyperphysics" }
-hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false, features = ["cached-f64-approx"] }
 hypersdf = { version = "0.2.0", path = "../hypersdf", optional = true }
 hypertri = { version = "0.4.0", path = "../hypertri", default-features = false, features = ["earcut"] }
 # bevy mesh conversion
@@ -113,6 +113,7 @@ base64 = { version = "0.22", optional = true }
 #doc-image-embed = "0.2" # fork of https://crates.io/crates/embed-doc-image - should be upstreamed.
 
 # io/load
+chrono = { version = "0.4", optional = true }
 dxf = { version = "0.6", optional = true }
 stl_io = { version = "0.8", optional = true }
 image = { version = "0.25", optional = true }
@@ -174,6 +175,7 @@ svg-io = [
 ]
 dxf-io = [
   "sketch",
+  "chrono",
   "dxf",
 ]
 obj-io = [

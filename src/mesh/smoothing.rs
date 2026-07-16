@@ -28,7 +28,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Manifold Preservation**: Ensures mesh topology is maintained
     /// - **Feature Detection**: Can preserve sharp features based on neighbor count
     ///
-    /// Vertex lookup reuses [`VertexIndexMap`](crate::mesh::connectivity::VertexIndexMap),
+    /// Vertex lookup reuses [`VertexIndexMap`],
     /// whose matching predicate requires exact equality after promotion through
     /// `hyperlattice::Vector3` and `Real`. This keeps the discrete
     /// Laplacian's adjacency relation stable before applying the uniform

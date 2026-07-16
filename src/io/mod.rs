@@ -120,13 +120,19 @@ pub(crate) fn finite_f32(
     format: &'static str,
     field: &'static str,
 ) -> Result<f32, IoError> {
-    value.to_f32_lossy().filter(|value| value.is_finite()).ok_or(
-        IoError::UnrepresentableCoordinate {
+    // Reuse hyperreal's cached f64 boundary view, which is shared by render,
+    // bounds, and checksum paths. Computing a separate f32 refinement for the
+    // same exact scalar is substantially more expensive and provides no extra
+    // topology information at this explicitly lossy IO boundary.
+    value
+        .to_f64_lossy()
+        .map(|value| value as f32)
+        .filter(|value| value.is_finite())
+        .ok_or(IoError::UnrepresentableCoordinate {
             format,
             field,
             target: "f32",
-        },
-    )
+        })
 }
 
 #[cfg(any(feature = "obj-io", feature = "ply-io", feature = "stl-io"))]

@@ -26,6 +26,28 @@ fn test_cube_basics() {
 }
 
 #[test]
+fn mesh_bounds_union_cached_polygon_endpoints() {
+    let mut polygons = Mesh::cube(r(2.0), ()).polygons;
+    polygons.extend(
+        Mesh::cube(r(2.0), ())
+            .translate(r(10.0), r(-4.0), r(3.0))
+            .polygons,
+    );
+    for polygon in polygons.iter().step_by(2) {
+        polygon.bounding_box();
+    }
+    let mesh = Mesh::from_polygons(polygons);
+
+    let bounds = mesh.bounding_box();
+
+    assert_eq!(bounds.mins, p3(0.0, -4.0, 0.0));
+    assert_eq!(bounds.maxs, p3(12.0, 2.0, 5.0));
+    for (index, polygon) in mesh.polygons.iter().enumerate() {
+        assert_eq!(polygon.has_cached_bounding_box(), index % 2 == 0);
+    }
+}
+
+#[test]
 fn test_cube_intersection() {
     let cube1: Mesh<()> = Mesh::cube(r(2.0), ());
     let cube2: Mesh<()> = Mesh::cube(r(2.0), ()).translate(r(1.0), r(0.0), r(0.0));

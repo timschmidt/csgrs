@@ -287,11 +287,25 @@ let union_result = cube.try_union(&sphere)?;
 let difference_result = cube.try_difference(&sphere)?;
 let intersection_result = cylinder.try_intersection(&sphere)?;
 let xor_result = cylinder.try_xor(&sphere)?;
+
+// When several results are needed for the same pair, retain one certified
+// arrangement and reuse its exact subdivision and winding evidence.
+let prepared = cube.try_prepare_boolean(&sphere)?;
+let union_result = prepared.try_union()?;
+let difference_result = prepared.try_difference()?;
+let intersection_result = prepared.try_intersection()?;
+let xor_result = prepared.try_xor()?;
 ```
 
 `Mesh<M>` and `Profile` provide typed `try_union`, `try_difference`,
 `try_intersection`, and `try_xor` methods. Compatibility methods on
 `csgrs::csg::CSG` panic if certification reports an error or uncertainty.
+All mesh Boolean methods use the same prepared pipeline. Direct methods request
+one operation and retain its operation-specific pruning, while
+`Mesh::try_prepare_boolean` retains all four for build-once/extract-many use.
+Its borrow ties the preparation to the source meshes, every general extraction
+remains closure-certified by HyperMesh, and exact empty/disjoint/identical
+shortcuts preserve source metadata and polygonization.
 
 ### Transformations
 
@@ -506,6 +520,14 @@ and memory usage:
 - minimize allocation and cloning, and
 - retain exact facts, bounds, and topology for reuse across operations.
 
+The retained reference-guided measurements and replay commands are recorded in
+[PERFORMANCE.md](PERFORMANCE.md). In particular, renderer buffers stream from
+certified polygon triangulation without materializing a throwaway triangle
+`Mesh`, and indexed exporters reserve from known topology bounds.
+Repeated mesh Booleans can retain one borrowed certified arrangement through
+`Mesh::try_prepare_boolean`, while ray queries stream borrowed triangle vertices
+without materializing temporary triangle records.
+
 ## Todo
 
 This historical investigation backlog is retained with the restored README
@@ -644,6 +666,27 @@ for Polygon
 > [Floating Point Visually Explained](https://fabiensanglard.net/floating_point_visually_explained/)
 
 > [Fast calculation of the distance to cubic Bezier curves on the GPU](https://blog.pkh.me/p/46-fast-calculation-of-the-distance-to-cubic-bezier-curves-on-the-gpu.html)
+
+### Reference-guided design boundaries
+
+- Patrikalakis, Maekawa, and Cho motivate keeping curve/surface representation,
+  intersection classification, distance queries, and presentation artifacts as
+  separate layers. `csgrs` therefore reuses certified polygon triangulation
+  directly when lowering to graphics buffers instead of rebuilding derived mesh
+  topology solely for export.
+- Both Shewchuk references motivate adaptive, sign-correct predicates. Local
+  topology decisions route through `hyperlimit`, `hypertri`, and exact `Real`
+  comparisons; primitive floating-point values are not compared with a global
+  epsilon to decide connectivity, winding, clipping, or triangulation.
+- Sanglard's explanation makes the scale-dependent spacing of IEEE floating
+  point explicit. Primitive floats remain audited input/output samples, while
+  exact binary promotion or retained source values back topology-affecting
+  decisions.
+- The cubic Bezier GPU distance article is useful for finite rendering and
+  nearest-point query work, but its polynomial/root-selection path is not used
+  as a Boolean or topology certificate. `csgrs` currently exposes no public
+  cubic-distance query for which adopting that approximation would be an API
+  improvement.
 
 ## License
 

@@ -9,7 +9,10 @@ This suite provides two complementary optimization anchors:
 
 Every runner emits the same CSV schema. Raw samples are intentionally retained;
 `summarize.py` validates them and reports median nanoseconds per operation plus
-the ratio to csgrs.
+the ratio to csgrs. Full native runs also enforce that every `kernel` and
+`precision` workload has exactly one implementation in each of the three
+engines. See [the cross-kernel coverage matrix](CROSS_KERNEL_COVERAGE.md) for
+the portable API boundary and explicitly excluded nonportable surfaces.
 
 ## Run
 
@@ -25,6 +28,16 @@ For a one-sample build and corpus check:
 ```sh
 benchmarks/run.sh --quick
 ```
+
+To record cold and warm cross-kernel results together:
+
+```sh
+benchmarks/run.sh --cold-warm
+```
+
+Cold samples launch each runner in a fresh process, disable warmups, and force
+one operation per case. Warm samples retain the normal warmup and iteration
+settings. Input construction remains outside the timed region in both modes.
 
 To exercise only csgrs on a host without the native kernels:
 
@@ -44,6 +57,10 @@ The runners share these environment variables:
 | `CSGRS_BENCH_SAMPLES` | 10 | Independently timed samples per case |
 | `CSGRS_BENCH_WARMUP` | 2 | Untimed warmup batches per case |
 | `CSGRS_BENCH_SCALE` | 1 | Multiplier for iterations within each sample |
+| `CSGRS_BENCH_ITERATIONS` | unset | Override iterations per sample; the cold runner sets this to 1 |
+| `CSGRS_BENCH_SAMPLE_OFFSET` | 0 | First emitted sample number |
+| `CSGRS_BENCH_TEMPERATURE` | `warm` | CSV temperature label: `cold` or `warm` |
+| `CSGRS_BENCH_COLD_SAMPLES` | 5 | Fresh-process samples used by `--cold-warm` |
 | `CSGRS_BENCH_FILTER` | unset | Comma-separated substrings matched against `suite/benchmark/case` |
 
 For example, this runs only Boolean cases with five samples:
@@ -115,9 +132,10 @@ polygon kernels because exact topology dominates runtime; larger 32×16 and
 The `precision` suite adds a 128×64 sphere and the thin-overlap Boolean to make
 exact/tight behavior visible independently of ordinary throughput cases.
 
-OCCT does not emit the `stl_write` row because its stable public writer API is
-file-oriented, whereas the csgrs and CGAL cases measure in-memory serialization.
-Including filesystem effects would make that row misleading.
+OCCT's stable STL writer is file-oriented. Its `stl_write` row therefore
+includes temporary-file I/O, while the csgrs and CGAL rows use in-memory
+serialization. The row remains useful as an end-to-end public API comparison,
+but serialization-only conclusions should account for that boundary difference.
 
 ## Coverage
 
@@ -149,6 +167,9 @@ CGAL/OCCT versions, and relevant environment values with any published result.
 Do not compare a `--quick` run to a full run.
 
 `checksum` is a repeatability guard within one engine and case; it is not a
-cross-kernel geometry hash. `summarize.py` rejects changing checksums across
+cross-kernel geometry hash. Transform-coordinate fingerprints are quantized to
+one-billionth of a model unit at the primitive export boundary so equivalent
+symbolic `Real` graphs do not differ only because of adaptive f64 approximation
+state. `summarize.py` rejects changing checksums across
 samples. Output-size differences across engines should be reviewed before
 attributing a speed ratio solely to implementation quality.

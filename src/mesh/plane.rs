@@ -81,8 +81,6 @@ use crate::mesh::Polygon;
 use crate::vertex::Vertex;
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
 use hyperreal::RealSign;
-use std::cmp::Ordering;
-
 /// Classification of a polygon or point whose hyperreal orientation determinant
 /// is exact zero, or whose boundary coordinates cannot be promoted.
 pub const COPLANAR: i8 = 0;
@@ -116,16 +114,6 @@ fn newell_hreal_normal(points: &[Vector3]) -> Vector3 {
 
 fn hreal_is_exact_zero(value: &Real) -> bool {
     matches!(value.refine_sign_until(-128), Some(RealSign::Zero))
-}
-
-fn hreal_cmp(lhs: &Real, rhs: &Real) -> Ordering {
-    hyperlimit::compare_reals(lhs, rhs)
-        .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
-            Some(RealSign::Positive) => Ordering::Greater,
-            Some(RealSign::Negative) => Ordering::Less,
-            Some(RealSign::Zero) | None => Ordering::Equal,
-        })
 }
 
 fn hlimit_point3(point: &Point3) -> hyperlimit::Point3 {
@@ -171,19 +159,14 @@ impl Plane {
         true
     }
 
-    /// Tries to pick three vertices that span the largest area triangle
-    /// (maximally well-spaced) and returns a plane defined by them.
-    /// Care is taken to preserve the original winding of the vertices.
+    /// Picks the first certified non-collinear ordered vertex triple and
+    /// returns the plane it defines.
     ///
-    /// Candidate chord lengths and line-area metrics are evaluated as
-    /// `hyperlattice::Vector3` expressions, then the winning
-    /// support vertices are projected back to the current mesh boundary type.
-    /// This follows Yap's exact-geometric-computation separation between
-    /// primitive input coordinates and exact-aware topology predicates
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-    ///
-    /// Cost: O(n^2)
-    /// A lower cost option may be a grid sub-sampled farthest pair search
+    /// Exact arithmetic does not need a maximally separated support triple for
+    /// numerical conditioning. Ordinary polygons therefore take the first
+    /// three vertices in O(1); polygons with redundant leading vertices fall
+    /// back to an ordered triple search. The candidate is oriented against
+    /// Newell's exact area normal.
     pub fn from_vertices(vertices: &[Vertex]) -> Plane {
         let n = vertices.len();
         let reference_plane = Plane {
@@ -193,75 +176,48 @@ impl Plane {
         };
         if n == 3 {
             return reference_plane;
-        } // Plane is already optimal
+        }
 
-        let hpoints = vertices
+        let mut selected = None;
+        'triples: for i in 0..n - 2 {
+            for j in i + 1..n - 1 {
+                for k in j + 1..n {
+                    let candidate = Plane {
+                        point_a: vertices[i].position.clone(),
+                        point_b: vertices[j].position.clone(),
+                        point_c: vertices[k].position.clone(),
+                    };
+                    let Some(normal) = candidate.unscaled_hreal_normal() else {
+                        continue;
+                    };
+                    if normal.0.iter().any(|component| {
+                        matches!(
+                            component.refine_sign_until(-128),
+                            Some(RealSign::Positive | RealSign::Negative)
+                        )
+                    }) {
+                        selected = Some((candidate, normal));
+                        break 'triples;
+                    }
+                }
+            }
+        }
+        let Some((mut plane, normal)) = selected else {
+            return reference_plane;
+        };
+        let points = vertices
             .iter()
             .map(|vertex| vertex.position.to_vector())
             .collect::<Vec<_>>();
-
-        // longest chord (i0,i1)
-        let Some((i0, i1, _)) = (0..n)
-            .flat_map(|i| (i + 1..n).map(move |j| (i, j)))
-            .map(|(i, j)| {
-                let d2 = hpoints[i].squared_distance(&hpoints[j]);
-                (i, j, d2)
-            })
-            .max_by(|a, b| hreal_cmp(&a.2, &b.2))
-        else {
-            return reference_plane;
-        };
-
-        let p0 = vertices[i0].position.clone();
-        let p1 = vertices[i1].position.clone();
-        let hdir = &hpoints[i1] - &hpoints[i0];
-        let hdir2 = hdir.dot(&hdir);
-        if hreal_is_exact_zero(&hdir2) {
-            return reference_plane; // everything exactly coincident
+        if matches!(
+            normal
+                .dot(&newell_hreal_normal(&points))
+                .refine_sign_until(-128),
+            Some(RealSign::Negative)
+        ) {
+            plane.flip();
         }
-
-        // vertex farthest from the line  p0-p1  → i2
-        let Some((i2, max_area2)) = vertices
-            .iter()
-            .enumerate()
-            .filter(|(idx, _)| *idx != i0 && *idx != i1)
-            .map(|(idx, _)| {
-                let offset = &hpoints[idx] - &hpoints[i0];
-                let area = offset.cross(&hdir);
-                let a2 = area.dot(&area); // ∝ area²
-                (idx, a2)
-            })
-            .max_by(|a, b| hreal_cmp(&a.1, &b.1))
-        else {
-            return reference_plane;
-        };
-
-        let i2 = if !hreal_is_exact_zero(&max_area2) {
-            i2
-        } else {
-            return reference_plane; // all vertices exactly collinear
-        };
-        let p2 = vertices[i2].position.clone();
-
-        // build plane, then orient it to match original winding
-        let mut plane_hq = Plane {
-            point_a: p0,
-            point_b: p1,
-            point_c: p2,
-        };
-
-        // Construct the reference normal for the original polygon using Newell's Method.
-        let reference_normal = newell_hreal_normal(&hpoints);
-        let should_flip = plane_hq
-            .unit_hreal_normal()
-            .map(|plane_normal| plane_normal.dot(&reference_normal))
-            .and_then(|dot| dot.refine_sign_until(-128))
-            .is_some_and(|sign| matches!(sign, RealSign::Negative));
-
-        if should_flip {
-            plane_hq.flip(); // flip in-place to agree with winding
-        }
-        plane_hq
+        plane
     }
 
     /// Build a new `Plane` from a (not-necessarily-unit) normal **n**

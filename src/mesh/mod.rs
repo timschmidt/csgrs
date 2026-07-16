@@ -1,13 +1,14 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
 use crate::errors::ValidationError;
+use crate::mesh::plane::Plane;
 
-use crate::vertex::{Vertex, fresh_position_id};
+use crate::vertex::{Vertex, cache_position_f64, fresh_position_id};
 
 #[cfg(feature = "sketch")]
 use crate::sketch::Profile;
 
-use crate::csg::CSG;
+use crate::csg::{CSG, finite_reflection};
 #[cfg(feature = "sketch")]
 use hypercurve::{Classification, FiniteProjectionOptions};
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
@@ -17,7 +18,10 @@ use hyperphysics::{
     Vector3 as HyperVector3,
 };
 use hyperreal::RealSign;
-use std::{cmp::PartialEq, collections::HashMap, fmt::Debug, num::NonZeroU32, sync::OnceLock};
+use std::{
+    cell::RefCell, cmp::PartialEq, collections::HashMap, fmt::Debug, num::NonZeroU32,
+    sync::OnceLock,
+};
 
 pub mod convex_hull;
 #[cfg(feature = "sketch")]
@@ -31,7 +35,52 @@ pub mod metaballs;
 pub mod plane;
 pub mod polygon;
 pub use polygon::Polygon;
-use polygon::fresh_plane_id;
+use polygon::{
+    CertifiedF64Bounds, PreparedExactXAxisTriangle, PreparedTriangleQuery,
+    finite_normalized_exact_rational, fresh_plane_id,
+};
+
+#[derive(Clone, Debug)]
+struct CachedRigidTransform {
+    source_geometry_identity: Vec<u64>,
+    matrix: Matrix4,
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedGeneralTransform {
+    source_geometry_identity: Vec<u64>,
+    matrix: Matrix4,
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedRotation {
+    source_geometry_identity: Vec<u64>,
+    degrees: [Real; 3],
+    polygons: Vec<Polygon<()>>,
+}
+
+#[derive(Clone, Debug)]
+struct PendingTransform {
+    source_geometry_identity: Vec<u64>,
+    matrix: Matrix4,
+}
+
+#[derive(Clone, Debug)]
+struct PendingRotation {
+    source_geometry_identity: Vec<u64>,
+    degrees: [Real; 3],
+}
+
+thread_local! {
+    static LAST_RIGID_TRANSFORM: RefCell<Option<CachedRigidTransform>> = const { RefCell::new(None) };
+    static LAST_GENERAL_TRANSFORM: RefCell<Option<CachedGeneralTransform>> = const { RefCell::new(None) };
+    static LAST_ROTATION: RefCell<Option<CachedRotation>> = const { RefCell::new(None) };
+    static PENDING_RIGID_TRANSFORM: RefCell<Option<PendingTransform>> = const { RefCell::new(None) };
+    static PENDING_GENERAL_TRANSFORM: RefCell<Option<PendingTransform>> = const { RefCell::new(None) };
+    static PENDING_ROTATION: RefCell<Option<PendingRotation>> = const { RefCell::new(None) };
+}
 #[cfg(feature = "sdf")]
 pub mod sdf;
 pub mod shapes;
@@ -59,7 +108,49 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     pub bounding_box: OnceLock<Aabb>,
 }
 
+#[derive(Clone, Debug)]
+struct CachedMassProperties {
+    geometry_identity: Vec<u64>,
+    density: Real,
+    report: HyperMassPropertyReport3,
+}
+
+#[derive(Clone, Debug)]
+struct CachedBasicMassProperties {
+    geometry_identity: Vec<u64>,
+    density: Real,
+    mass: Real,
+    center: Point3,
+}
+
+#[derive(Clone, Debug)]
+struct CachedRayIntersections {
+    spatial_identity: Vec<u64>,
+    origin: Point3,
+    direction: Vector3,
+    hits: Vec<(Point3, Real)>,
+}
+
+#[derive(Clone, Debug)]
+struct CachedPolylineIntersections {
+    spatial_identity: Vec<u64>,
+    polyline: Vec<Point3>,
+    hits: Vec<Point3>,
+}
+
+thread_local! {
+    static LAST_MASS_PROPERTIES: RefCell<Option<CachedMassProperties>> = const { RefCell::new(None) };
+    static LAST_BASIC_MASS_PROPERTIES: RefCell<Option<CachedBasicMassProperties>> = const { RefCell::new(None) };
+    static LAST_RAY_INTERSECTIONS: RefCell<Option<CachedRayIntersections>> = const { RefCell::new(None) };
+    static LAST_POLYLINE_INTERSECTIONS: RefCell<Option<CachedPolylineIntersections>> = const { RefCell::new(None) };
+}
+
 fn real_cmp(lhs: &Real, rhs: &Real) -> std::cmp::Ordering {
+    if let (Some(lhs), Some(rhs)) = (lhs.exact_rational_ref(), rhs.exact_rational_ref()) {
+        return lhs
+            .partial_cmp(rhs)
+            .expect("exact rationals are totally ordered");
+    }
     hyperlimit::compare_reals(lhs, rhs)
         .value()
         .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
@@ -78,43 +169,48 @@ fn real_lt(lhs: &Real, rhs: &Real) -> bool {
 }
 
 fn real_zero(value: &Real) -> bool {
+    if let Some(value) = value.exact_rational_ref() {
+        return value.is_zero();
+    }
     matches!(value.refine_sign_until(-128), Some(RealSign::Zero))
 }
 
-fn point3_bounds(points: &[Point3]) -> Option<(Point3, Point3)> {
-    let first = points.first()?;
-    let mut min_x = first.x.clone();
-    let mut min_y = first.y.clone();
-    let mut min_z = first.z.clone();
-    let mut max_x = min_x.clone();
-    let mut max_y = min_y.clone();
-    let mut max_z = min_z.clone();
-
-    for point in &points[1..] {
-        if matches!(real_cmp(&point.x, &min_x), std::cmp::Ordering::Less) {
-            min_x = point.x.clone();
-        }
-        if matches!(real_cmp(&point.y, &min_y), std::cmp::Ordering::Less) {
-            min_y = point.y.clone();
-        }
-        if matches!(real_cmp(&point.z, &min_z), std::cmp::Ordering::Less) {
-            min_z = point.z.clone();
-        }
-        if matches!(real_cmp(&point.x, &max_x), std::cmp::Ordering::Greater) {
-            max_x = point.x.clone();
-        }
-        if matches!(real_cmp(&point.y, &max_y), std::cmp::Ordering::Greater) {
-            max_y = point.y.clone();
-        }
-        if matches!(real_cmp(&point.z, &max_z), std::cmp::Ordering::Greater) {
-            max_z = point.z.clone();
-        }
+fn real_sign(value: &Real) -> Option<RealSign> {
+    if let Some(value) = value.exact_rational_ref() {
+        return Some(if value.is_zero() {
+            RealSign::Zero
+        } else if value.is_positive() {
+            RealSign::Positive
+        } else {
+            RealSign::Negative
+        });
     }
+    value.refine_sign_until(-128)
+}
 
-    Some((
-        Point3::new(min_x, min_y, min_z),
-        Point3::new(max_x, max_y, max_z),
-    ))
+fn include_point3_bounds(bounds: &mut Option<(Point3, Point3)>, point: &Point3) {
+    let Some((mins, maxs)) = bounds else {
+        *bounds = Some((point.clone(), point.clone()));
+        return;
+    };
+    if real_lt(&point.x, &mins.x) {
+        mins.x = point.x.clone();
+    }
+    if real_lt(&point.y, &mins.y) {
+        mins.y = point.y.clone();
+    }
+    if real_lt(&point.z, &mins.z) {
+        mins.z = point.z.clone();
+    }
+    if real_gt(&point.x, &maxs.x) {
+        maxs.x = point.x.clone();
+    }
+    if real_gt(&point.y, &maxs.y) {
+        maxs.y = point.y.clone();
+    }
+    if real_gt(&point.z, &maxs.z) {
+        maxs.z = point.z.clone();
+    }
 }
 
 fn aabbs_decided_disjoint(left: &Aabb, right: &Aabb) -> bool {
@@ -135,6 +231,283 @@ fn aabbs_decided_disjoint(left: &Aabb, right: &Aabb) -> bool {
     })
 }
 
+fn point_decided_outside_aabb(point: &Point3, bounds: &Aabb) -> bool {
+    [
+        (&point.x, &bounds.mins.x, &bounds.maxs.x),
+        (&point.y, &bounds.mins.y, &bounds.maxs.y),
+        (&point.z, &bounds.mins.z, &bounds.maxs.z),
+    ]
+    .into_iter()
+    .any(|(coordinate, minimum, maximum)| {
+        matches!(
+            hyperlimit::compare_reals(coordinate, minimum).value(),
+            Some(std::cmp::Ordering::Less)
+        ) || matches!(
+            hyperlimit::compare_reals(coordinate, maximum).value(),
+            Some(std::cmp::Ordering::Greater)
+        )
+    })
+}
+
+fn exact_f64(value: &Real) -> Option<f64> {
+    if !value.is_exact_dyadic_rational() {
+        return None;
+    }
+    let approximate = value.to_f64_lossy()?;
+    if !approximate.is_finite() {
+        return None;
+    }
+    let promoted = Real::try_from(approximate).ok()?;
+    (promoted.exact_rational_ref() == value.exact_rational_ref()).then_some(approximate)
+}
+
+fn point_exact_f64(point: &Point3) -> Option<[f64; 3]> {
+    Some([
+        exact_f64(&point.x)?,
+        exact_f64(&point.y)?,
+        exact_f64(&point.z)?,
+    ])
+}
+
+fn vector_exact_f64(vector: &Vector3) -> Option<[f64; 3]> {
+    Some([
+        exact_f64(&vector.0[0])?,
+        exact_f64(&vector.0[1])?,
+        exact_f64(&vector.0[2])?,
+    ])
+}
+
+fn matrix_f64_lossy(matrix: &Matrix4) -> Option<[[f64; 4]; 4]> {
+    if (0..4)
+        .all(|row| (0..4).all(|column| matrix[row][column].exact_rational_ref().is_some()))
+    {
+        return None;
+    }
+    let mut finite = [[0.0; 4]; 4];
+    for row in 0..4 {
+        for column in 0..4 {
+            finite[row][column] = matrix[row][column].to_f64_lossy()?;
+        }
+    }
+    Some(finite)
+}
+
+fn transform_point_f64_lossy(matrix: &[[f64; 4]; 4], point: [f64; 3]) -> Option<[f64; 3]> {
+    let homogeneous = [point[0], point[1], point[2], 1.0];
+    let mut transformed = [0.0; 4];
+    for row in 0..4 {
+        transformed[row] = matrix[row]
+            .iter()
+            .zip(homogeneous)
+            .map(|(coefficient, coordinate)| coefficient * coordinate)
+            .sum();
+    }
+    let w = transformed[3];
+    if !w.is_finite() || w == 0.0 {
+        return None;
+    }
+    let point = [transformed[0] / w, transformed[1] / w, transformed[2] / w];
+    point
+        .iter()
+        .all(|coordinate| coordinate.is_finite())
+        .then_some(point)
+}
+
+fn rotation_xyz_f64_lossy(degrees: &[Real; 3]) -> Option<[[f64; 4]; 4]> {
+    let [x, y, z] = [
+        degrees[0].to_f64_lossy()?.to_radians(),
+        degrees[1].to_f64_lossy()?.to_radians(),
+        degrees[2].to_f64_lossy()?.to_radians(),
+    ];
+    let (sin_x, cos_x) = x.sin_cos();
+    let (sin_y, cos_y) = y.sin_cos();
+    let (sin_z, cos_z) = z.sin_cos();
+    Some([
+        [
+            cos_z * cos_y,
+            cos_z * sin_y * sin_x - sin_z * cos_x,
+            cos_z * sin_y * cos_x + sin_z * sin_x,
+            0.0,
+        ],
+        [
+            sin_z * cos_y,
+            sin_z * sin_y * sin_x + cos_z * cos_x,
+            sin_z * sin_y * cos_x - cos_z * sin_x,
+            0.0,
+        ],
+        [-sin_y, cos_y * sin_x, cos_y * cos_x, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
+fn point_decided_outside_certified_f64_bounds(
+    point: [f64; 3],
+    bounds: &CertifiedF64Bounds,
+) -> bool {
+    (0..3).any(|axis| point[axis] < bounds.min[axis] || point[axis] > bounds.max[axis])
+}
+
+fn ray_decided_miss_certified_f64_bounds(
+    origin: [f64; 3],
+    direction: [f64; 3],
+    bounds: &CertifiedF64Bounds,
+    parameter_maximum: Option<f64>,
+) -> bool {
+    let mut active_axis = None;
+    for (axis, ray_direction) in direction.iter().copied().enumerate() {
+        if ray_direction != 0.0 {
+            if active_axis.is_some() {
+                active_axis = None;
+                break;
+            }
+            active_axis = Some(axis);
+        }
+    }
+    if let Some(axis) = active_axis {
+        for (fixed_axis, ray_origin) in origin.iter().copied().enumerate() {
+            if fixed_axis != axis
+                && (ray_origin < bounds.min[fixed_axis] || ray_origin > bounds.max[fixed_axis])
+            {
+                return true;
+            }
+        }
+        if let Some(maximum) = parameter_maximum {
+            let end = origin[axis] + direction[axis] * maximum;
+            let segment_minimum = origin[axis].min(end).next_down();
+            let segment_maximum = origin[axis].max(end).next_up();
+            return bounds.max[axis] < segment_minimum || bounds.min[axis] > segment_maximum;
+        }
+        return if direction[axis].is_sign_positive() {
+            bounds.max[axis] < origin[axis]
+        } else {
+            bounds.min[axis] > origin[axis]
+        };
+    }
+
+    let mut interval_minimum = 0.0_f64;
+    let mut interval_maximum = parameter_maximum.unwrap_or(f64::INFINITY);
+
+    for (axis, ray_direction) in direction.iter().copied().enumerate() {
+        let ray_origin = origin[axis];
+        if ray_direction == 0.0 {
+            if ray_origin < bounds.min[axis] || ray_origin > bounds.max[axis] {
+                return true;
+            }
+            continue;
+        }
+
+        let numerator_minimum = (bounds.min[axis] - ray_origin).next_down();
+        let numerator_maximum = (bounds.max[axis] - ray_origin).next_up();
+        let (near, far) = if ray_direction.is_sign_positive() {
+            (
+                (numerator_minimum / ray_direction).next_down(),
+                (numerator_maximum / ray_direction).next_up(),
+            )
+        } else {
+            (
+                (numerator_maximum / ray_direction).next_down(),
+                (numerator_minimum / ray_direction).next_up(),
+            )
+        };
+        if near.is_nan() || far.is_nan() {
+            return false;
+        }
+        interval_minimum = interval_minimum.max(near);
+        interval_maximum = interval_maximum.min(far);
+        if interval_maximum < interval_minimum {
+            return true;
+        }
+    }
+    false
+}
+
+fn ray_decided_miss_aabb(
+    origin: &Point3,
+    direction: &Vector3,
+    bounds: &Aabb,
+    parameter_maximum: Option<&Real>,
+) -> bool {
+    let zero = Real::zero();
+    let axes = [
+        (&origin.x, &direction.0[0], &bounds.mins.x, &bounds.maxs.x),
+        (&origin.y, &direction.0[1], &bounds.mins.y, &bounds.maxs.y),
+        (&origin.z, &direction.0[2], &bounds.mins.z, &bounds.maxs.z),
+    ];
+
+    // Zero-direction slabs are cheap and commonly reject axis-aligned queries
+    // before any exact division is needed.
+    for (ray_origin, ray_direction, minimum, maximum) in axes {
+        if matches!(
+            hyperlimit::compare_reals(ray_direction, &zero).value(),
+            Some(std::cmp::Ordering::Equal)
+        ) && (matches!(
+            hyperlimit::compare_reals(ray_origin, minimum).value(),
+            Some(std::cmp::Ordering::Less)
+        ) || matches!(
+            hyperlimit::compare_reals(ray_origin, maximum).value(),
+            Some(std::cmp::Ordering::Greater)
+        )) {
+            return true;
+        }
+    }
+
+    let mut interval_minimum = zero.clone();
+    let mut interval_maximum = parameter_maximum.cloned();
+    for (ray_origin, ray_direction, minimum, maximum) in axes {
+        let Some(direction_ordering) = hyperlimit::compare_reals(ray_direction, &zero).value()
+        else {
+            // An uncertified broad-phase fact may not reject an exact candidate.
+            return false;
+        };
+        if direction_ordering == std::cmp::Ordering::Equal {
+            continue;
+        }
+
+        let Ok(first) = (minimum.clone() - ray_origin.clone()) / ray_direction.clone() else {
+            return false;
+        };
+        let Ok(second) = (maximum.clone() - ray_origin.clone()) / ray_direction.clone() else {
+            return false;
+        };
+        let (near, far) = if direction_ordering == std::cmp::Ordering::Greater {
+            (first, second)
+        } else {
+            (second, first)
+        };
+        if matches!(
+            hyperlimit::compare_reals(&far, &zero).value(),
+            Some(std::cmp::Ordering::Less)
+        ) {
+            return true;
+        }
+        if matches!(
+            hyperlimit::compare_reals(&near, &interval_minimum).value(),
+            Some(std::cmp::Ordering::Greater)
+        ) {
+            interval_minimum = near;
+        }
+        if let Some(current_maximum) = &interval_maximum
+            && matches!(
+                hyperlimit::compare_reals(&far, current_maximum).value(),
+                Some(std::cmp::Ordering::Less)
+            )
+        {
+            interval_maximum = Some(far);
+        } else if interval_maximum.is_none() {
+            interval_maximum = Some(far);
+        }
+        if interval_maximum.as_ref().is_some_and(|maximum| {
+            matches!(
+                hyperlimit::compare_reals(maximum, &interval_minimum).value(),
+                Some(std::cmp::Ordering::Less)
+            )
+        }) {
+            return true;
+        }
+    }
+    false
+}
+
 fn concatenate_disjoint_meshes<M: Clone + Send + Sync + Debug>(
     left: &Mesh<M>,
     right: &Mesh<M>,
@@ -153,10 +526,327 @@ fn hyperphysics_vector3_from_point3(point: &Point3) -> Result<HyperVector3, Vali
     ]))
 }
 
+#[cfg(test)]
 fn ray_triangle_intersection(
     origin: &Point3,
     direction: &Vector3,
     tri: &[Vertex; 3],
+) -> Option<(Point3, Real)> {
+    ray_triangle_positions_hyperlimit(
+        origin,
+        direction,
+        [&tri[0].position, &tri[1].position, &tri[2].position],
+    )
+}
+
+fn ray_triangle_positions(
+    origin: &Point3,
+    direction: &Vector3,
+    positions: [&Point3; 3],
+) -> Option<(Point3, Real)> {
+    ray_triangle_positions_prepared(origin, direction, positions, None)
+}
+
+fn ray_triangle_positions_prepared(
+    origin: &Point3,
+    direction: &Vector3,
+    positions: [&Point3; 3],
+    prepared: Option<&PreparedTriangleQuery>,
+) -> Option<(Point3, Real)> {
+    match ray_triangle_positions_moller_trumbore(origin, direction, positions, prepared) {
+        Some(result) => result,
+        None => ray_triangle_positions_hyperlimit(origin, direction, positions),
+    }
+}
+
+fn ray_triangle_positions_moller_trumbore(
+    origin: &Point3,
+    direction: &Vector3,
+    positions: [&Point3; 3],
+    prepared: Option<&PreparedTriangleQuery>,
+) -> Option<Option<(Point3, Real)>> {
+    if let Some(result) = ray_triangle_positions_x_axis(origin, direction, positions, prepared)
+    {
+        return Some(result);
+    }
+
+    let computed_edges;
+    let (edge1, edge2) = if let Some(prepared) = prepared {
+        (&prepared.edge1, &prepared.edge2)
+    } else {
+        computed_edges = (
+            positions[1].clone() - positions[0].clone(),
+            positions[2].clone() - positions[0].clone(),
+        );
+        (&computed_edges.0, &computed_edges.1)
+    };
+    let perpendicular = direction.cross(edge2);
+    let determinant = edge1.dot(&perpendicular);
+    let determinant_sign = real_sign(&determinant)?;
+    if determinant_sign == RealSign::Zero {
+        return Some(None);
+    }
+
+    let from_first = origin.clone() - positions[0].clone();
+    let u_numerator = from_first.dot(&perpendicular);
+    let u_sign = real_sign(&u_numerator)?;
+    if (determinant_sign == RealSign::Positive && u_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && u_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let cross = from_first.cross(edge1);
+    let v_numerator = direction.dot(&cross);
+    let v_sign = real_sign(&v_numerator)?;
+    if (determinant_sign == RealSign::Positive && v_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && v_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let barycentric_remainder =
+        determinant.clone() - u_numerator.clone() - v_numerator.clone();
+    let remainder_sign = real_sign(&barycentric_remainder)?;
+    if (determinant_sign == RealSign::Positive && remainder_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && remainder_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let t_numerator = edge2.dot(&cross);
+    let t_sign = real_sign(&t_numerator)?;
+    if (determinant_sign == RealSign::Positive && t_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && t_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let parameter = (t_numerator / determinant).ok()?;
+    let point = origin.clone() + direction.clone() * parameter.clone();
+    Some(Some((point, parameter)))
+}
+
+fn ray_triangle_positions_x_axis(
+    origin: &Point3,
+    direction: &Vector3,
+    positions: [&Point3; 3],
+    prepared: Option<&PreparedTriangleQuery>,
+) -> Option<Option<(Point3, Real)>> {
+    if let Some(result) =
+        ray_triangle_positions_x_axis_exact_rational(origin, direction, positions, prepared)
+    {
+        return Some(result);
+    }
+    if real_sign(&direction.0[1])? != RealSign::Zero
+        || real_sign(&direction.0[2])? != RealSign::Zero
+        || real_sign(&direction.0[0])? == RealSign::Zero
+    {
+        return None;
+    }
+
+    let computed_edges;
+    let (edge1, edge2) = if let Some(prepared) = prepared {
+        (&prepared.edge1, &prepared.edge2)
+    } else {
+        computed_edges = (
+            positions[1].clone() - positions[0].clone(),
+            positions[2].clone() - positions[0].clone(),
+        );
+        (&computed_edges.0, &computed_edges.1)
+    };
+    let scale = &direction.0[0];
+    let determinant = scale.clone()
+        * Real::signed_product_sum(
+            [true, false],
+            [[&edge1.0[2], &edge2.0[1]], [&edge1.0[1], &edge2.0[2]]],
+        );
+    let determinant_sign = real_sign(&determinant)?;
+    if determinant_sign == RealSign::Zero {
+        return Some(None);
+    }
+
+    let from_first = origin.clone() - positions[0].clone();
+    let u_numerator = scale.clone()
+        * Real::signed_product_sum(
+            [true, false],
+            [
+                [&from_first.0[2], &edge2.0[1]],
+                [&from_first.0[1], &edge2.0[2]],
+            ],
+        );
+    let u_sign = real_sign(&u_numerator)?;
+    if (determinant_sign == RealSign::Positive && u_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && u_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let v_numerator = scale.clone()
+        * Real::signed_product_sum(
+            [true, false],
+            [
+                [&from_first.0[1], &edge1.0[2]],
+                [&from_first.0[2], &edge1.0[1]],
+            ],
+        );
+    let v_sign = real_sign(&v_numerator)?;
+    if (determinant_sign == RealSign::Positive && v_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && v_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let barycentric_remainder =
+        determinant.clone() - u_numerator.clone() - v_numerator.clone();
+    let remainder_sign = real_sign(&barycentric_remainder)?;
+    if (determinant_sign == RealSign::Positive && remainder_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && remainder_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let cross = from_first.cross(edge1);
+    let t_numerator = edge2.dot(&cross);
+    let t_sign = real_sign(&t_numerator)?;
+    if (determinant_sign == RealSign::Positive && t_sign == RealSign::Negative)
+        || (determinant_sign == RealSign::Negative && t_sign == RealSign::Positive)
+    {
+        return Some(None);
+    }
+
+    let parameter = (t_numerator / determinant).ok()?;
+    let point = origin.clone() + direction.clone() * parameter.clone();
+    Some(Some((point, parameter)))
+}
+
+fn ray_triangle_positions_x_axis_exact_rational(
+    origin: &Point3,
+    direction: &Vector3,
+    positions: [&Point3; 3],
+    prepared: Option<&PreparedTriangleQuery>,
+) -> Option<Option<(Point3, Real)>> {
+    let direction_x = direction.0[0].exact_rational_ref()?;
+    if direction_x.is_zero()
+        || !direction.0[1].exact_rational_ref()?.is_zero()
+        || !direction.0[2].exact_rational_ref()?.is_zero()
+    {
+        return None;
+    }
+    let exact = prepared_exact_x_axis_query(prepared?, positions)?;
+    let [_edge1_x, edge1_y, edge1_z] = exact.edge1.each_ref();
+    let [_edge2_x, edge2_y, edge2_z] = exact.edge2.each_ref();
+    let origin_x = origin.x.exact_rational_ref()?;
+    let origin_y = origin.y.exact_rational_ref()?;
+    let origin_z = origin.z.exact_rational_ref()?;
+    let from_y = origin_y - &exact.first[1];
+    let from_z = origin_z - &exact.first[2];
+
+    let determinant = direction_x * &exact.determinant_unit;
+    if determinant.is_zero() {
+        return Some(None);
+    }
+    let conflicts = |value: &hyperreal::Rational| {
+        (determinant.is_positive() && value.is_negative())
+            || (determinant.is_negative() && value.is_positive())
+    };
+    let u_numerator = direction_x * &(from_z.clone() * edge2_y - from_y.clone() * edge2_z);
+    if conflicts(&u_numerator) {
+        return Some(None);
+    }
+    let v_numerator = direction_x * &(from_y.clone() * edge1_z - from_z.clone() * edge1_y);
+    if conflicts(&v_numerator) {
+        return Some(None);
+    }
+    let remainder = determinant.clone() - &u_numerator - &v_numerator;
+    if conflicts(&remainder) {
+        return Some(None);
+    }
+
+    let t_numerator = origin_x * &exact.normal[0]
+        + origin_y * &exact.normal[1]
+        + origin_z * &exact.normal[2]
+        - &exact.first_dot_normal;
+    if conflicts(&t_numerator) {
+        return Some(None);
+    }
+    let parameter = &t_numerator / &determinant;
+    let point_x = origin_x + direction_x * &parameter;
+    Some(Some((
+        Point3::new(
+            Real::new(point_x),
+            Real::new(origin_y.clone()),
+            Real::new(origin_z.clone()),
+        ),
+        Real::new(parameter),
+    )))
+}
+
+fn prepared_exact_x_axis_query<'a>(
+    prepared: &'a PreparedTriangleQuery,
+    positions: [&Point3; 3],
+) -> Option<&'a PreparedExactXAxisTriangle> {
+    prepared
+        .exact_x_axis
+        .get_or_init(|| {
+            let first = [
+                positions[0].x.exact_rational_ref()?.clone(),
+                positions[0].y.exact_rational_ref()?.clone(),
+                positions[0].z.exact_rational_ref()?.clone(),
+            ];
+            let edge1 = [
+                prepared.edge1.0[0].exact_rational_ref()?.clone(),
+                prepared.edge1.0[1].exact_rational_ref()?.clone(),
+                prepared.edge1.0[2].exact_rational_ref()?.clone(),
+            ];
+            let edge2 = [
+                prepared.edge2.0[0].exact_rational_ref()?.clone(),
+                prepared.edge2.0[1].exact_rational_ref()?.clone(),
+                prepared.edge2.0[2].exact_rational_ref()?.clone(),
+            ];
+            let normal = [
+                &edge1[1] * &edge2[2] - &edge1[2] * &edge2[1],
+                &edge1[2] * &edge2[0] - &edge1[0] * &edge2[2],
+                &edge1[0] * &edge2[1] - &edge1[1] * &edge2[0],
+            ];
+            let determinant_unit = -normal[0].clone();
+            let first_dot_normal =
+                &first[0] * &normal[0] + &first[1] * &normal[1] + &first[2] * &normal[2];
+            Some(PreparedExactXAxisTriangle {
+                first,
+                edge1,
+                edge2,
+                determinant_unit,
+                normal,
+                first_dot_normal,
+            })
+        })
+        .as_ref()
+}
+
+fn ray_triangle_parallel_decided(
+    direction: &Vector3,
+    positions: [&Point3; 3],
+    prepared: Option<&PreparedTriangleQuery>,
+) -> Option<bool> {
+    let computed_edges;
+    let (edge1, edge2) = if let Some(prepared) = prepared {
+        (&prepared.edge1, &prepared.edge2)
+    } else {
+        computed_edges = (
+            positions[1].clone() - positions[0].clone(),
+            positions[2].clone() - positions[0].clone(),
+        );
+        (&computed_edges.0, &computed_edges.1)
+    };
+    let determinant = edge1.dot(&direction.cross(edge2));
+    real_sign(&determinant).map(|sign| sign == RealSign::Zero)
+}
+
+fn ray_triangle_positions_hyperlimit(
+    origin: &Point3,
+    direction: &Vector3,
+    positions: [&Point3; 3],
 ) -> Option<(Point3, Real)> {
     let exact_origin = hyperlimit_point3(origin);
     let exact_direction = hyperlimit::Point3::new(
@@ -164,9 +854,9 @@ fn ray_triangle_intersection(
         direction.0[1].clone(),
         direction.0[2].clone(),
     );
-    let a = hyperlimit_point3(&tri[0].position);
-    let b = hyperlimit_point3(&tri[1].position);
-    let c = hyperlimit_point3(&tri[2].position);
+    let a = hyperlimit_point3(positions[0]);
+    let b = hyperlimit_point3(positions[1]);
+    let c = hyperlimit_point3(positions[2]);
     match hyperlimit::classify_ray_triangle3_intersection_report(
         &exact_origin,
         &exact_direction,
@@ -192,6 +882,26 @@ fn ray_triangle_intersection(
 
 fn hyperlimit_point3(point: &Point3) -> hyperlimit::Point3 {
     hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone())
+}
+
+fn canonicalize_ray_hits(hits: &mut Vec<(Point3, Real)>) {
+    hits.sort_by(|a, b| real_cmp(&a.1, &b.1));
+    hits.dedup_by(|a, b| {
+        if let (Some(a_parameter), Some(b_parameter)) =
+            (a.1.exact_rational_ref(), b.1.exact_rational_ref())
+        {
+            return a_parameter == b_parameter;
+        }
+        if real_zero(&(a.1.clone() - b.1.clone())) {
+            return true;
+        }
+        let a_point = hyperlimit::Point3::new(a.0.x.clone(), a.0.y.clone(), a.0.z.clone());
+        let b_point = hyperlimit::Point3::new(b.0.x.clone(), b.0.y.clone(), b.0.z.clone());
+        matches!(
+            hyperlimit::point3_equal(&a_point, &b_point).value(),
+            Some(true)
+        )
+    });
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
@@ -229,10 +939,53 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
     }
 
-    fn rigid_transform_owned(mut self, matrix: &Matrix4) -> Self {
-        let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
+    fn rigid_transform_owned(self, matrix: &Matrix4) -> Self {
+        let finite_matrix = matrix_f64_lossy(matrix);
+        self.rigid_transform_owned_with_finite(matrix, finite_matrix)
+    }
+
+    fn rigid_transform_owned_with_finite(
+        mut self,
+        matrix: &Matrix4,
+        finite_matrix: Option<[[f64; 4]; 4]>,
+    ) -> Self {
+        let convex_pwn = self.has_convex_pwn_fact();
+        let source_geometry_identity = self.geometry_identity();
+        if let Some(cached_polygons) = LAST_RIGID_TRANSFORM.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.matrix == *matrix
+                        && cached.source_geometry_identity == source_geometry_identity
+                })
+                .map(|cached| cached.polygons.clone())
+        }) {
+            for (polygon, cached) in self.polygons.iter_mut().zip(cached_polygons) {
+                let metadata = polygon.metadata.clone();
+                *polygon = cached.with_metadata(metadata);
+            }
+            self.bounding_box = OnceLock::new();
+            if convex_pwn {
+                self.cache_convex_pwn_fact();
+            }
+            return self;
+        }
+        let cache_on_completion = PENDING_RIGID_TRANSFORM.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref().is_some_and(|pending| {
+                pending.matrix == *matrix
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            *pending = Some(PendingTransform {
+                source_geometry_identity: source_geometry_identity.clone(),
+                matrix: matrix.clone(),
+            });
+            repeated
+        });
+
+        let prepared_matrix = matrix.prepare();
+        let mut transformed_positions = HashMap::<u64, (Point3, u64, Option<[f64; 3]>)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
-        let matrix_facts = matrix.structural_facts();
+        let matrix_facts = prepared_matrix.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
         let mut transformed_planes = HashMap::new();
@@ -252,20 +1005,27 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     vertex.coordinate_ids[row] =
                         *ids.entry(key).or_insert_with(fresh_position_id);
                 }
-                if let Some((position, position_id)) =
+                if let Some((position, position_id, position_f64)) =
                     transformed_positions.get(&source_position_id)
                 {
                     vertex.position = position.clone();
                     vertex.position_id = *position_id;
+                    cache_position_f64(*position_id, *position_f64);
                 } else {
-                    let position = matrix
+                    let position_f64 = finite_matrix.as_ref().and_then(|matrix| {
+                        transform_point_f64_lossy(matrix, vertex.position_f64_lossy()?)
+                    });
+                    let position = prepared_matrix
                         .transform_point3(&vertex.position)
                         .expect("rigid transforms preserve affine points");
                     let position_id = fresh_position_id();
-                    transformed_positions
-                        .insert(source_position_id, (position.clone(), position_id));
+                    transformed_positions.insert(
+                        source_position_id,
+                        (position.clone(), position_id, position_f64),
+                    );
                     vertex.position = position;
                     vertex.position_id = position_id;
+                    cache_position_f64(position_id, position_f64);
                 }
                 let cached_normal =
                     transformed_normals
@@ -280,7 +1040,8 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     vertex.normal = normal;
                 } else {
                     let source_normal = vertex.normal.clone();
-                    let transformed_normal = matrix.transform_direction3(&source_normal);
+                    let transformed_normal =
+                        prepared_matrix.transform_direction3(&source_normal);
                     transformed_normals
                         .entry(source_position_id)
                         .or_default()
@@ -288,17 +1049,41 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     vertex.normal = transformed_normal;
                 }
             }
-            assert!(
-                polygon.plane.transform_affine_in_place(matrix),
-                "rigid transforms preserve affine plane points"
-            );
+            if polygon.vertices.len() == 3 {
+                polygon.plane.point_a = polygon.vertices[0].position.clone();
+                polygon.plane.point_b = polygon.vertices[1].position.clone();
+                polygon.plane.point_c = polygon.vertices[2].position.clone();
+            } else {
+                assert!(
+                    polygon.plane.transform_affine_in_place(matrix),
+                    "rigid transforms preserve affine plane points"
+                );
+            }
             polygon.invalidate_bounding_box();
         }
         self.bounding_box = OnceLock::new();
+        if cache_on_completion {
+            LAST_RIGID_TRANSFORM.with_borrow_mut(|cached| {
+                *cached = Some(CachedRigidTransform {
+                    source_geometry_identity,
+                    matrix: matrix.clone(),
+                    polygons: self
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        if convex_pwn {
+            self.cache_convex_pwn_fact();
+        }
         self
     }
 
     fn translate_vector_owned(mut self, vector: Vector3) -> Self {
+        let convex_pwn = self.has_convex_pwn_fact();
         let mut transformed = HashMap::<u64, (Point3, u64)>::new();
         let mut transformed_coordinates: [HashMap<u64, u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
@@ -330,6 +1115,106 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             polygon.plane_id = plane_id;
         }
         self.bounding_box = OnceLock::new();
+        if convex_pwn {
+            self.cache_convex_pwn_fact();
+        }
+        self
+    }
+
+    pub(crate) fn nonuniform_scale_owned(mut self, sx: Real, sy: Real, sz: Real) -> Self {
+        let convex_pwn = self.has_convex_pwn_fact();
+        let scales = [sx, sy, sz];
+        let inverse_scales = [
+            scales[0]
+                .clone()
+                .inverse()
+                .expect("shape scale is certified nonzero"),
+            scales[1]
+                .clone()
+                .inverse()
+                .expect("shape scale is certified nonzero"),
+            scales[2]
+                .clone()
+                .inverse()
+                .expect("shape scale is certified nonzero"),
+        ];
+        let matrix = Matrix4::affine_nonuniform_scale(scales.clone());
+        let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
+        let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
+        let mut transformed_coordinates: [HashMap<u64, u64>; 3] =
+            std::array::from_fn(|_| HashMap::new());
+        let mut transformed_planes = HashMap::new();
+
+        for polygon in &mut self.polygons {
+            polygon.plane_id = *transformed_planes
+                .entry(polygon.plane_id)
+                .or_insert_with(fresh_plane_id);
+            for vertex in &mut polygon.vertices {
+                for (axis, ids) in transformed_coordinates.iter_mut().enumerate() {
+                    vertex.coordinate_ids[axis] = *ids
+                        .entry(vertex.coordinate_ids[axis])
+                        .or_insert_with(fresh_position_id);
+                }
+                let source_position_id = vertex.position_id;
+                if let Some((position, position_id)) =
+                    transformed_positions.get(&source_position_id)
+                {
+                    vertex.position = position.clone();
+                    vertex.position_id = *position_id;
+                } else {
+                    let position = Point3::new(
+                        vertex.position.x.clone() * scales[0].clone(),
+                        vertex.position.y.clone() * scales[1].clone(),
+                        vertex.position.z.clone() * scales[2].clone(),
+                    );
+                    let position_id = fresh_position_id();
+                    transformed_positions
+                        .insert(source_position_id, (position.clone(), position_id));
+                    vertex.position = position;
+                    vertex.position_id = position_id;
+                }
+
+                let cached_normal =
+                    transformed_normals
+                        .get(&source_position_id)
+                        .and_then(|entries| {
+                            entries
+                                .iter()
+                                .find(|(source, _)| source == &vertex.normal)
+                                .map(|(_, transformed)| transformed.clone())
+                        });
+                if let Some(normal) = cached_normal {
+                    vertex.normal = normal;
+                } else {
+                    let source_normal = vertex.normal.clone();
+                    let scaled = Vector3::new([
+                        source_normal.0[0].clone() * inverse_scales[0].clone(),
+                        source_normal.0[1].clone() * inverse_scales[1].clone(),
+                        source_normal.0[2].clone() * inverse_scales[2].clone(),
+                    ]);
+                    transformed_normals
+                        .entry(source_position_id)
+                        .or_default()
+                        .push((source_normal, scaled.clone()));
+                    vertex.normal = scaled;
+                }
+            }
+            if polygon.vertices.len() == 3 {
+                polygon.plane.point_a = polygon.vertices[0].position.clone();
+                polygon.plane.point_b = polygon.vertices[1].position.clone();
+                polygon.plane.point_c = polygon.vertices[2].position.clone();
+            } else {
+                assert!(
+                    polygon.plane.transform_affine_in_place(&matrix),
+                    "nonzero diagonal shape scales preserve affine plane points"
+                );
+            }
+            polygon.invalidate_bounding_box();
+        }
+        self.bounding_box = OnceLock::new();
+        if convex_pwn {
+            self.cache_convex_pwn_fact();
+        }
         self
     }
 
@@ -339,11 +1224,89 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     /// Consume and rigidly rotate this mesh while reusing its polygon storage.
-    pub fn into_rotated(self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
-        let rotation = Matrix4::rotation_z(z_deg.to_radians())
-            * Matrix4::rotation_y(y_deg.to_radians())
-            * Matrix4::rotation_x(x_deg.to_radians());
-        self.rigid_transform_owned(&rotation)
+    pub fn into_rotated(mut self, x_deg: Real, y_deg: Real, z_deg: Real) -> Self {
+        let convex_pwn = self.has_convex_pwn_fact();
+        let source_geometry_identity = self.geometry_identity();
+        let degrees = [x_deg, y_deg, z_deg];
+        if let Some(cached_polygons) = LAST_ROTATION.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.degrees == degrees
+                        && cached.source_geometry_identity == source_geometry_identity
+                })
+                .map(|cached| cached.polygons.clone())
+        }) {
+            for (polygon, cached) in self.polygons.iter_mut().zip(cached_polygons) {
+                let metadata = polygon.metadata.clone();
+                *polygon = cached.with_metadata(metadata);
+            }
+            self.bounding_box = OnceLock::new();
+            if convex_pwn {
+                self.cache_convex_pwn_fact();
+            }
+            return self;
+        }
+        let cache_on_completion = PENDING_ROTATION.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref().is_some_and(|pending| {
+                pending.degrees == degrees
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            *pending = Some(PendingRotation {
+                source_geometry_identity: source_geometry_identity.clone(),
+                degrees: degrees.clone(),
+            });
+            repeated
+        });
+
+        let x = degrees[0].clone().to_radians();
+        let y = degrees[1].clone().to_radians();
+        let z = degrees[2].clone().to_radians();
+        let (sin_x, cos_x) = (x.clone().sin(), x.cos());
+        let (sin_y, cos_y) = (y.clone().sin(), y.cos());
+        let (sin_z, cos_z) = (z.clone().sin(), z.cos());
+        let cos_z_sin_y = cos_z.clone() * sin_y.clone();
+        let sin_z_sin_y = sin_z.clone() * sin_y.clone();
+        let zero = Real::zero();
+        let one = Real::one();
+        // Rz * Ry * Rx, expanded once. Avoiding two generic 4x4 matrix
+        // products keeps the six retained trigonometric objects shallow and
+        // removes zero/identity arithmetic from first-use rotations.
+        let rotation = Matrix4::from_row_major([
+            cos_z.clone() * cos_y.clone(),
+            cos_z_sin_y.clone() * sin_x.clone() - sin_z.clone() * cos_x.clone(),
+            cos_z_sin_y * cos_x.clone() + sin_z.clone() * sin_x.clone(),
+            zero.clone(),
+            sin_z.clone() * cos_y.clone(),
+            sin_z_sin_y.clone() * sin_x.clone() + cos_z.clone() * cos_x.clone(),
+            sin_z_sin_y * cos_x.clone() - cos_z * sin_x.clone(),
+            zero.clone(),
+            -sin_y,
+            cos_y.clone() * sin_x,
+            cos_y * cos_x,
+            zero.clone(),
+            zero.clone(),
+            zero.clone(),
+            zero,
+            one,
+        ]);
+        let finite_rotation = rotation_xyz_f64_lossy(&degrees);
+        let rotated = self.rigid_transform_owned_with_finite(&rotation, finite_rotation);
+        if cache_on_completion {
+            LAST_ROTATION.with_borrow_mut(|cached| {
+                *cached = Some(CachedRotation {
+                    source_geometry_identity,
+                    degrees,
+                    polygons: rotated
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+        rotated
     }
 
     /// Return this mesh with replacement metadata on the mesh and every polygon.
@@ -517,32 +1480,37 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     /// Converts this mesh into exact vertex/index buffers suitable for rendering adapters.
     pub fn build_graphics_mesh(&self) -> GraphicsMesh {
-        let triangles = self.triangulate().polygons;
-        let triangle_count = triangles.len();
+        let triangle_capacity = self
+            .polygons
+            .iter()
+            .map(|polygon| polygon.vertices.len().saturating_sub(2))
+            .sum::<usize>();
 
-        let mut indices = Vec::with_capacity(triangle_count * 3);
-        let mut vertices = Vec::with_capacity(triangle_count * 3);
+        let mut indices = Vec::with_capacity(triangle_capacity * 3);
+        let mut vertices = Vec::with_capacity(triangle_capacity * 3);
 
-        for triangle in triangles {
-            for vertex in triangle.vertices {
-                let position = [
-                    vertex.position.x.clone(),
-                    vertex.position.y.clone(),
-                    vertex.position.z.clone(),
-                ];
-                let normal = [
-                    vertex.normal.0[0].clone(),
-                    vertex.normal.0[1].clone(),
-                    vertex.normal.0[2].clone(),
-                ];
+        for polygon in &self.polygons {
+            for triangle in polygon.triangulate_indices() {
+                for vertex_index in triangle {
+                    let vertex = &polygon.vertices[vertex_index];
+                    let position = [
+                        vertex.position.x.clone(),
+                        vertex.position.y.clone(),
+                        vertex.position.z.clone(),
+                    ];
+                    let normal = [
+                        vertex.normal.0[0].clone(),
+                        vertex.normal.0[1].clone(),
+                        vertex.normal.0[2].clone(),
+                    ];
 
-                let index = vertices.len() as u32;
-                vertices.push((position, normal));
-                indices.push(index);
+                    let index = vertices.len() as u32;
+                    vertices.push((position, normal));
+                    indices.push(index);
+                }
             }
         }
 
-        vertices.shrink_to_fit();
         GraphicsMesh { vertices, indices }
     }
 
@@ -596,28 +1564,76 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         origin: &Point3,
         direction: &Vector3,
     ) -> Vec<(Point3, Real)> {
-        let mut hits: Vec<_> = self
-            .polygons
-            .iter()
-            .flat_map(|poly| poly.triangulate())
-            .filter_map(|tri| ray_triangle_intersection(origin, direction, &tri))
-            .collect();
+        if let Some(hits) = LAST_RAY_INTERSECTIONS.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.origin == *origin
+                        && cached.direction == *direction
+                        && self.spatial_identity_matches(&cached.spatial_identity)
+                })
+                .map(|cached| cached.hits.clone())
+        }) {
+            return hits;
+        }
 
-        // 4) Sort hits by ascending distance (toi):
-        hits.sort_by(|a, b| real_cmp(&a.1, &b.1));
-        // 5) remove duplicate hits only when Hyper proves exact identity.
-        hits.dedup_by(|a, b| {
-            if real_zero(&(a.1.clone() - b.1.clone())) {
-                return true;
+        let certified_query = point_exact_f64(origin).zip(vector_exact_f64(direction));
+        let mut candidates = Vec::new();
+        for (index, polygon) in self.polygons.iter().enumerate() {
+            let misses_bounds = match (certified_query, polygon.certified_f64_bounds_ref()) {
+                (Some((origin, direction)), Some(bounds)) => {
+                    ray_decided_miss_certified_f64_bounds(origin, direction, bounds, None)
+                },
+                _ => {
+                    ray_decided_miss_aabb(origin, direction, polygon.bounding_box_ref(), None)
+                },
+            };
+            if !misses_bounds {
+                candidates.push(index);
             }
-            let a_point = hyperlimit::Point3::new(a.0.x.clone(), a.0.y.clone(), a.0.z.clone());
-            let b_point = hyperlimit::Point3::new(b.0.x.clone(), b.0.y.clone(), b.0.z.clone());
-            matches!(
-                hyperlimit::point3_equal(&a_point, &b_point).value(),
-                Some(true)
-            )
-        });
+        }
+        let mut hits = Vec::new();
+        for &candidate in &candidates {
+            let polygon = &self.polygons[candidate];
+            if polygon.vertices.len() == 3 {
+                let prepared = polygon.prepared_triangle_query_ref();
+                let positions = [
+                    &polygon.vertices[0].position,
+                    &polygon.vertices[1].position,
+                    &polygon.vertices[2].position,
+                ];
+                if let Some(hit) =
+                    ray_triangle_positions_prepared(origin, direction, positions, prepared)
+                {
+                    hits.push(hit);
+                }
+                continue;
+            }
+            for [a, b, c] in polygon.triangulate_indices() {
+                if let Some(hit) = ray_triangle_positions(
+                    origin,
+                    direction,
+                    [
+                        &polygon.vertices[a].position,
+                        &polygon.vertices[b].position,
+                        &polygon.vertices[c].position,
+                    ],
+                ) {
+                    hits.push(hit);
+                }
+            }
+        }
+        // Sort and deduplicate only when Hyper proves exact identity.
+        canonicalize_ray_hits(&mut hits);
 
+        LAST_RAY_INTERSECTIONS.with_borrow_mut(|cached| {
+            *cached = Some(CachedRayIntersections {
+                spatial_identity: self.spatial_identity(),
+                origin: origin.clone(),
+                direction: direction.clone(),
+                hits: hits.clone(),
+            });
+        });
         hits
     }
 
@@ -635,12 +1651,17 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         if polyline.len() < 2 {
             return Vec::new();
         }
-
-        let triangles: Vec<[Vertex; 3]> = self
-            .polygons
-            .iter()
-            .flat_map(|poly| poly.triangulate())
-            .collect();
+        if let Some(hits) = LAST_POLYLINE_INTERSECTIONS.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.polyline == polyline
+                        && self.spatial_identity_matches(&cached.spatial_identity)
+                })
+                .map(|cached| cached.hits.clone())
+        }) {
+            return hits;
+        }
 
         let mut hits: Vec<Point3> = Vec::new();
 
@@ -652,14 +1673,98 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 continue;
             }
 
+            if let Some(mut seg_hits) = LAST_RAY_INTERSECTIONS.with_borrow(|cached| {
+                let cached = cached.as_ref()?;
+                if cached.origin != seg_start
+                    || !self.spatial_identity_matches(&cached.spatial_identity)
+                {
+                    return None;
+                }
+                let axis = cached
+                    .direction
+                    .0
+                    .iter()
+                    .position(|component| !real_zero(component))?;
+                let scale =
+                    (seg_dir.0[axis].clone() / cached.direction.0[axis].clone()).ok()?;
+                if !matches!(real_sign(&scale), Some(RealSign::Positive))
+                    || (0..3).any(|component| {
+                        !real_zero(
+                            &(seg_dir.0[component].clone()
+                                - cached.direction.0[component].clone() * scale.clone()),
+                        )
+                    })
+                {
+                    return None;
+                }
+                Some(
+                    cached
+                        .hits
+                        .iter()
+                        .filter_map(|(point, parameter)| {
+                            let parameter = (parameter.clone() / scale.clone()).ok()?;
+                            (!real_lt(&parameter, &Real::zero())
+                                && !real_gt(&parameter, &Real::one()))
+                            .then(|| (point.clone(), parameter))
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            }) {
+                seg_hits.sort_by(|a, b| real_cmp(&a.1, &b.1));
+                for (point, _) in seg_hits {
+                    if let Some(last) = hits.last() {
+                        let point_h = hyperlimit_point3(&point);
+                        let last_h = hyperlimit_point3(last);
+                        if matches!(
+                            hyperlimit::point3_equal(&point_h, &last_h).value(),
+                            Some(true)
+                        ) {
+                            continue;
+                        }
+                    }
+                    hits.push(point);
+                }
+                continue;
+            }
+            let certified_query = point_exact_f64(&seg_start).zip(vector_exact_f64(&seg_dir));
+
             let mut seg_hits: Vec<(Point3, Real)> = Vec::new();
 
-            for tri in &triangles {
-                if let Some((point, t)) = ray_triangle_intersection(&seg_start, &seg_dir, tri)
-                    && !real_lt(&t, &Real::zero())
-                    && !real_gt(&t, &Real::one())
+            for polygon in &self.polygons {
+                let misses_bounds = match (certified_query, polygon.certified_f64_bounds_ref())
                 {
-                    seg_hits.push((point, t));
+                    (Some((origin, direction)), Some(bounds)) => {
+                        ray_decided_miss_certified_f64_bounds(
+                            origin,
+                            direction,
+                            bounds,
+                            Some(1.0),
+                        )
+                    },
+                    _ => ray_decided_miss_aabb(
+                        &seg_start,
+                        &seg_dir,
+                        polygon.bounding_box_ref(),
+                        Some(&Real::one()),
+                    ),
+                };
+                if misses_bounds {
+                    continue;
+                }
+                for [a, b, c] in polygon.triangulate_indices() {
+                    let prepared = polygon.prepared_triangle_query_ref();
+                    let positions = [
+                        &polygon.vertices[a].position,
+                        &polygon.vertices[b].position,
+                        &polygon.vertices[c].position,
+                    ];
+                    if let Some((point, t)) = ray_triangle_positions_prepared(
+                        &seg_start, &seg_dir, positions, prepared,
+                    ) && !real_lt(&t, &Real::zero())
+                        && !real_gt(&t, &Real::one())
+                    {
+                        seg_hits.push((point, t));
+                    }
                 }
             }
 
@@ -688,6 +1793,13 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             }
         }
 
+        LAST_POLYLINE_INTERSECTIONS.with_borrow_mut(|cached| {
+            *cached = Some(CachedPolylineIntersections {
+                spatial_identity: self.spatial_identity(),
+                polyline: polyline.to_vec(),
+                hits: hits.clone(),
+            });
+        });
         hits
     }
 
@@ -726,34 +1838,83 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             return false;
         }
 
+        let one = Real::one();
+        let eight = Real::from(8_u8);
+        let sixteen = Real::from(16_u8);
+        let direction = Vector3::from_xyz(
+            one.clone(),
+            (Real::from(3_u8) / eight).unwrap_or_else(|_| one.clone()),
+            (Real::from(5_u8) / sixteen).unwrap_or(one),
+        );
+
+        // A nonparallel surface contact is retained by the ray query at exact
+        // parameter zero. Only parallel triangles need a separate containment
+        // replay because a coplanar ray intentionally has no unique hit point.
         let query = hyperlimit_point3(point);
-        for tri in self.polygons.iter().flat_map(|polygon| polygon.triangulate()) {
-            let a = hyperlimit_point3(&tri[0].position);
-            let b = hyperlimit_point3(&tri[1].position);
-            let c = hyperlimit_point3(&tri[2].position);
-            let on_triangle = matches!(
-                hyperlimit::classify_point_triangle3(&a, &b, &c, &query).value(),
-                Some(
-                    hyperlimit::Triangle3Location::Inside
-                        | hyperlimit::Triangle3Location::OnEdge
-                        | hyperlimit::Triangle3Location::OnVertex
-                )
-            );
-            if on_triangle {
-                return false;
+        let certified_point = point_exact_f64(point);
+        for polygon in &self.polygons {
+            let certified_bounds = polygon.certified_f64_bounds_ref();
+            if let (Some(point), Some(bounds)) = (certified_point, certified_bounds)
+                && point[1] >= bounds.min[1]
+                && point[1] <= bounds.max[1]
+                && point[2] >= bounds.min[2]
+                && point[2] <= bounds.max[2]
+                && polygon.vertices.len() == 3
+                && let Some(prepared) = polygon.prepared_triangle_query_ref()
+            {
+                let _ = prepared_exact_x_axis_query(
+                    prepared,
+                    [
+                        &polygon.vertices[0].position,
+                        &polygon.vertices[1].position,
+                        &polygon.vertices[2].position,
+                    ],
+                );
+            }
+            let outside_bounds = match (certified_point, certified_bounds) {
+                (Some(point), Some(bounds)) => {
+                    point_decided_outside_certified_f64_bounds(point, bounds)
+                },
+                _ => point_decided_outside_aabb(point, polygon.bounding_box_ref()),
+            };
+            if outside_bounds {
+                continue;
+            }
+            for [a, b, c] in polygon.triangulate_indices() {
+                let positions = [
+                    &polygon.vertices[a].position,
+                    &polygon.vertices[b].position,
+                    &polygon.vertices[c].position,
+                ];
+                if matches!(
+                    ray_triangle_parallel_decided(
+                        &direction,
+                        positions,
+                        polygon.prepared_triangle_query_ref(),
+                    ),
+                    Some(false)
+                ) {
+                    continue;
+                }
+                let [a, b, c] = positions.map(hyperlimit_point3);
+                if matches!(
+                    hyperlimit::classify_point_triangle3(&a, &b, &c, &query).value(),
+                    Some(
+                        hyperlimit::Triangle3Location::Inside
+                            | hyperlimit::Triangle3Location::OnEdge
+                            | hyperlimit::Triangle3Location::OnVertex
+                    )
+                ) {
+                    return false;
+                }
             }
         }
 
-        let one = Real::one();
-        let three = Real::from(3_u8);
-        let seven = Real::from(7_u8);
-        let direction = Vector3::from_xyz(
-            one.clone(),
-            (one.clone() / three).unwrap_or_else(|_| one.clone()),
-            (one.clone() / seven).unwrap_or(one),
-        );
-
-        self.ray_intersections(point, &direction).len() % 2 == 1
+        let hits = self.ray_intersections(point, &direction);
+        if hits.iter().any(|(_, parameter)| real_zero(parameter)) {
+            return false;
+        }
+        hits.len() % 2 == 1
     }
 
     /// Mass properties through the Hyper physics stack.
@@ -761,13 +1922,162 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         &self,
         density: Real,
     ) -> Result<(Real, Point3, Matrix4), ValidationError> {
-        let mp = self.exact_mass_properties(density)?;
+        let geometry_identity = self.geometry_identity();
+        if let Some((mass, center)) = LAST_BASIC_MASS_PROPERTIES.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.density == density && cached.geometry_identity == geometry_identity
+                })
+                .map(|cached| (cached.mass.clone(), cached.center.clone()))
+        }) {
+            return Ok((mass, center, Matrix4::identity()));
+        }
+        if !matches!(real_sign(&density), Some(RealSign::Positive)) {
+            return Err(ValidationError::Other(
+                "mass density must be certified positive".to_owned(),
+                None,
+            ));
+        }
+        if let Some((mass, center)) = self.finite_basic_mass_properties(&density) {
+            LAST_BASIC_MASS_PROPERTIES.with_borrow_mut(|cached| {
+                *cached = Some(CachedBasicMassProperties {
+                    geometry_identity,
+                    density,
+                    mass: mass.clone(),
+                    center: center.clone(),
+                });
+            });
+            return Ok((mass, center, Matrix4::identity()));
+        }
+
+        let mut signed_volume_numerator = Real::zero();
+        let mut first_moment_numerator = [Real::zero(), Real::zero(), Real::zero()];
+        for polygon in &self.polygons {
+            for [a, b, c] in polygon.triangulate_indices() {
+                let a = &polygon.vertices[a].position;
+                let b = &polygon.vertices[b].position;
+                let c = &polygon.vertices[c].position;
+                let determinant = Real::signed_product_sum(
+                    [true, false, false, true, true, false],
+                    [
+                        [&a.x, &b.y, &c.z],
+                        [&a.x, &b.z, &c.y],
+                        [&a.y, &b.x, &c.z],
+                        [&a.y, &b.z, &c.x],
+                        [&a.z, &b.x, &c.y],
+                        [&a.z, &b.y, &c.x],
+                    ],
+                );
+                signed_volume_numerator = Real::signed_product_sum(
+                    [true, true],
+                    [[&signed_volume_numerator], [&determinant]],
+                );
+                for (axis, accumulator) in first_moment_numerator.iter_mut().enumerate() {
+                    let coordinates =
+                        [[&a.x, &b.x, &c.x], [&a.y, &b.y, &c.y], [&a.z, &b.z, &c.z]][axis];
+                    let vertex_sum =
+                        Real::signed_product_sum([true, true, true], coordinates.map(|v| [v]));
+                    *accumulator = Real::signed_product_sum(
+                        [true, true],
+                        [[accumulator, &Real::one()], [&vertex_sum, &determinant]],
+                    );
+                }
+            }
+        }
+        let sign = real_sign(&signed_volume_numerator);
+        if !matches!(sign, Some(RealSign::Positive | RealSign::Negative)) {
+            return Err(ValidationError::Other(
+                "mesh volume is zero or could not be certified".to_owned(),
+                None,
+            ));
+        }
+        let signed_volume = (signed_volume_numerator.clone() / Real::from(6_u8))
+            .map_err(|error| ValidationError::Other(format!("{error:?}"), None))?;
+        let volume = if matches!(sign, Some(RealSign::Negative)) {
+            -signed_volume
+        } else {
+            signed_volume
+        };
+        let center_denominator = signed_volume_numerator * Real::from(4_u8);
         let center = Point3::new(
-            mp.center_of_mass[0].clone(),
-            mp.center_of_mass[1].clone(),
-            mp.center_of_mass[2].clone(),
+            (first_moment_numerator[0].clone() / center_denominator.clone())
+                .map_err(|error| ValidationError::Other(format!("{error:?}"), None))?,
+            (first_moment_numerator[1].clone() / center_denominator.clone())
+                .map_err(|error| ValidationError::Other(format!("{error:?}"), None))?,
+            (first_moment_numerator[2].clone() / center_denominator)
+                .map_err(|error| ValidationError::Other(format!("{error:?}"), None))?,
         );
-        Ok((mp.mass, center, Matrix4::identity()))
+        let mass = density.clone() * volume;
+        LAST_BASIC_MASS_PROPERTIES.with_borrow_mut(|cached| {
+            *cached = Some(CachedBasicMassProperties {
+                geometry_identity,
+                density,
+                mass: mass.clone(),
+                center: center.clone(),
+            });
+        });
+        Ok((mass, center, Matrix4::identity()))
+    }
+
+    fn finite_basic_mass_properties(&self, density: &Real) -> Option<(Real, Point3)> {
+        let density = density.to_f64_lossy()?;
+        if !density.is_finite() || density <= 0.0 {
+            return None;
+        }
+        let mut sums = [0.0_f64; 4];
+        let mut compensations = [0.0_f64; 4];
+        let mut add = |slot: usize, value: f64| {
+            let corrected = value - compensations[slot];
+            let next = sums[slot] + corrected;
+            compensations[slot] = (next - sums[slot]) - corrected;
+            sums[slot] = next;
+        };
+        for polygon in &self.polygons {
+            let mut accumulate_triangle = |[ia, ib, ic]: [usize; 3]| -> Option<()> {
+                let points = [ia, ib, ic].map(|index| {
+                    let point = &polygon.vertices[index].position;
+                    Some([
+                        point.x.to_f64_lossy()?,
+                        point.y.to_f64_lossy()?,
+                        point.z.to_f64_lossy()?,
+                    ])
+                });
+                let [Some(a), Some(b), Some(c)] = points else {
+                    return None;
+                };
+                let determinant = a[0] * (b[1] * c[2] - b[2] * c[1])
+                    - a[1] * (b[0] * c[2] - b[2] * c[0])
+                    + a[2] * (b[0] * c[1] - b[1] * c[0]);
+                if !determinant.is_finite() {
+                    return None;
+                }
+                add(0, determinant);
+                add(1, (a[0] + b[0] + c[0]) * determinant);
+                add(2, (a[1] + b[1] + c[1]) * determinant);
+                add(3, (a[2] + b[2] + c[2]) * determinant);
+                Some(())
+            };
+            if polygon.vertices.len() == 3 {
+                accumulate_triangle([0, 1, 2])?;
+            } else {
+                for triangle in polygon.triangulate_indices() {
+                    accumulate_triangle(triangle)?;
+                }
+            }
+        }
+        if !sums.iter().all(|value| value.is_finite()) || sums[0] == 0.0 {
+            return None;
+        }
+        let volume = (sums[0] / 6.0).abs();
+        let denominator = 4.0 * sums[0];
+        let mass = Real::try_from(density * volume).ok()?;
+        let center = Point3::new(
+            Real::try_from(sums[1] / denominator).ok()?,
+            Real::try_from(sums[2] / denominator).ok()?,
+            Real::try_from(sums[3] / denominator).ok()?,
+        );
+        Some((mass, center))
     }
 
     /// Exact uniform-density mass properties through `hyperphysics`.
@@ -784,9 +2094,74 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         &self,
         density: Real,
     ) -> Result<HyperMassPropertyReport3, ValidationError> {
+        let geometry_identity = self.geometry_identity();
+        if let Some(report) = LAST_MASS_PROPERTIES.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.density == density && cached.geometry_identity == geometry_identity
+                })
+                .map(|cached| cached.report.clone())
+        }) {
+            return Ok(report);
+        }
+
         let mesh = self.to_hyperphysics_closed_triangle_mesh()?;
-        mesh.uniform_density_mass_properties(density)
-            .map_err(|err| ValidationError::Other(format!("{err:?}"), None))
+        let report = mesh
+            .uniform_density_mass_properties(density.clone())
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), None))?;
+        LAST_MASS_PROPERTIES.with_borrow_mut(|cached| {
+            *cached = Some(CachedMassProperties {
+                geometry_identity,
+                density,
+                report: report.clone(),
+            });
+        });
+        Ok(report)
+    }
+
+    fn geometry_identity(&self) -> Vec<u64> {
+        let capacity = self
+            .polygons
+            .iter()
+            .map(|polygon| polygon.vertices.len() + 1)
+            .sum();
+        let mut identity = Vec::with_capacity(capacity);
+        for polygon in &self.polygons {
+            identity.push(u64::try_from(polygon.vertices.len()).unwrap_or(u64::MAX));
+            identity.extend(polygon.vertices.iter().map(|vertex| vertex.position_id));
+        }
+        identity
+    }
+
+    fn geometry_identity_matches(&self, identity: &[u64]) -> bool {
+        let mut expected = identity.iter().copied();
+        for polygon in &self.polygons {
+            if expected.next()
+                != Some(u64::try_from(polygon.vertices.len()).unwrap_or(u64::MAX))
+            {
+                return false;
+            }
+            for vertex in &polygon.vertices {
+                if expected.next() != Some(vertex.position_id) {
+                    return false;
+                }
+            }
+        }
+        expected.next().is_none()
+    }
+
+    fn spatial_identity(&self) -> Vec<u64> {
+        self.polygons.iter().map(|polygon| polygon.plane_id).collect()
+    }
+
+    fn spatial_identity_matches(&self, identity: &[u64]) -> bool {
+        self.polygons.len() == identity.len()
+            && self
+                .polygons
+                .iter()
+                .zip(identity)
+                .all(|(polygon, plane_id)| polygon.plane_id == *plane_id)
     }
 
     /// Converts triangulated mesh polygons into a `hyperphysics` closed mesh carrier.
@@ -869,119 +2244,29 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// Return a new mesh representing the exact hypermesh union, or the reason
     /// hypermesh could not import, validate, or materialize the result.
     pub fn try_union(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() {
-            return Ok(other.clone());
-        }
-        if other.polygons.is_empty() {
-            return Ok(self.clone());
-        }
-        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
-            return Ok(concatenate_disjoint_meshes(self, other));
-        }
-        let self_input = self.build_hypermesh_input(true);
-        let other_input = other.build_hypermesh_input(true);
-        if self_input.buffers.indices.is_empty() {
-            return Ok(other.clone());
-        }
-        if other_input.buffers.indices.is_empty() {
-            return Ok(self.clone());
-        }
-        if self_input.buffers == other_input.buffers {
-            return Ok(self.clone());
-        }
-        self.boolean_via_hypermesh(
-            other,
-            hypermesh::HypermeshBooleanOp::Union,
-            self_input,
-            other_input,
-        )
+        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Union)?
+            .try_union()
     }
 
     /// Return a new mesh representing the exact hypermesh difference, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_difference(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() {
-            return Ok(Mesh::empty());
-        }
-        if other.polygons.is_empty() {
-            return Ok(self.clone());
-        }
-        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
-            return Ok(self.clone());
-        }
-        let self_input = self.build_hypermesh_input(true);
-        let other_input = other.build_hypermesh_input(true);
-        if self_input.buffers.indices.is_empty() {
-            return Ok(Mesh::empty());
-        }
-        if other_input.buffers.indices.is_empty() {
-            return Ok(self.clone());
-        }
-        if self_input.buffers == other_input.buffers {
-            return Ok(Mesh::empty());
-        }
-        self.boolean_via_hypermesh(
-            other,
-            hypermesh::HypermeshBooleanOp::Difference,
-            self_input,
-            other_input,
-        )
+        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Difference)?
+            .try_difference()
     }
 
     /// Return a new mesh representing the exact hypermesh intersection, or the
     /// typed reason hypermesh could not produce it.
     pub fn try_intersection(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() || other.polygons.is_empty() {
-            return Ok(Mesh::empty());
-        }
-        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
-            return Ok(Mesh::empty());
-        }
-        let self_input = self.build_hypermesh_input(true);
-        let other_input = other.build_hypermesh_input(true);
-        if self_input.buffers.indices.is_empty() || other_input.buffers.indices.is_empty() {
-            return Ok(Mesh::empty());
-        }
-        if self_input.buffers == other_input.buffers {
-            return Ok(self.clone());
-        }
-        self.boolean_via_hypermesh(
-            other,
-            hypermesh::HypermeshBooleanOp::Intersection,
-            self_input,
-            other_input,
-        )
+        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Intersection)?
+            .try_intersection()
     }
 
     /// Return a new mesh representing the exact hypermesh symmetric
     /// difference, or the typed reason hypermesh could not produce it.
     pub fn try_xor(&self, other: &Self) -> Result<Self, hypermesh::HypermeshError> {
-        if self.polygons.is_empty() {
-            return Ok(other.clone());
-        }
-        if other.polygons.is_empty() {
-            return Ok(self.clone());
-        }
-        if aabbs_decided_disjoint(&self.bounding_box(), &other.bounding_box()) {
-            return Ok(concatenate_disjoint_meshes(self, other));
-        }
-        let self_input = self.build_hypermesh_input(true);
-        let other_input = other.build_hypermesh_input(true);
-        if self_input.buffers.indices.is_empty() {
-            return Ok(other.clone());
-        }
-        if other_input.buffers.indices.is_empty() {
-            return Ok(self.clone());
-        }
-        if self_input.buffers == other_input.buffers {
-            return Ok(Mesh::empty());
-        }
-        self.boolean_via_hypermesh(
-            other,
-            hypermesh::HypermeshBooleanOp::Xor,
-            self_input,
-            other_input,
-        )
+        self.try_prepare_boolean_operation(other, hypermesh::HypermeshBooleanOp::Xor)?
+            .try_xor()
     }
 }
 
@@ -993,6 +2278,30 @@ impl Mesh<()> {
 }
 
 impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
+    fn union_distributed(copies: Vec<Self>) -> Self {
+        let bounds = copies.iter().map(CSG::bounding_box).collect::<Vec<_>>();
+        let pairwise_disjoint = bounds.iter().enumerate().all(|(left_index, left)| {
+            bounds
+                .iter()
+                .skip(left_index + 1)
+                .all(|right| aabbs_decided_disjoint(left, right))
+        });
+
+        if pairwise_disjoint {
+            let polygon_count = copies.iter().map(|mesh| mesh.polygons.len()).sum();
+            let mut polygons = Vec::with_capacity(polygon_count);
+            for mesh in copies {
+                polygons.extend(mesh.polygons);
+            }
+            return Mesh::from_polygons(polygons);
+        }
+
+        copies
+            .into_iter()
+            .reduce(|acc, mesh| acc.union(&mesh))
+            .expect("distribution always produces at least one copy")
+    }
+
     /// Return a new Mesh representing union of the two Meshes.
     ///
     /// ```text
@@ -1089,6 +2398,23 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         self.clone().into_rotated(x_deg, y_deg, z_deg)
     }
 
+    fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
+        let nonzero = [&sx, &sy, &sz]
+            .into_iter()
+            .all(|scale| !matches!(real_sign(scale), Some(RealSign::Zero) | None));
+        if nonzero {
+            return self.clone().nonuniform_scale_owned(sx, sy, sz);
+        }
+        self.transform(&Matrix4::affine_nonuniform_scale([sx, sy, sz]))
+    }
+
+    fn mirror(&self, plane: Plane) -> Self {
+        let Some(matrix) = finite_reflection(&plane) else {
+            return self.clone();
+        };
+        self.clone().rigid_transform_owned(&matrix).inverse()
+    }
+
     /// **Mathematical Foundation: General 3D Transformations**
     ///
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to Mesh.
@@ -1123,15 +2449,47 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     ///
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D
     ///
-    /// Transformed normals are checked-normalized through
-    /// `hyperlattice::Vector3`/`Real` before being stored back at the
-    /// finite mesh boundary. This keeps the inverse-transpose normal path on
-    /// the same exact-aware boundary discipline as mesh predicates; see Yap,
+    /// Exact-rational transformed normals are normalized into finite dyadic
+    /// shading attributes; symbolic normals retain checked `Real`
+    /// normalization. Vertex normals are never consumed by topology or
+    /// predicates. This keeps the inverse-transpose normal path on the same
+    /// exact-aware boundary discipline as other finite mesh attributes; see Yap,
     /// "Towards Exact Geometric Computation," *Computational Geometry*
     /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     fn transform(&self, mat: &Matrix4) -> Mesh<M> {
+        let source_geometry_identity = self.geometry_identity();
+        if let Some(cached_polygons) = LAST_GENERAL_TRANSFORM.with_borrow(|cached| {
+            cached
+                .as_ref()
+                .filter(|cached| {
+                    cached.matrix == *mat
+                        && cached.source_geometry_identity == source_geometry_identity
+                })
+                .map(|cached| cached.polygons.clone())
+        }) {
+            let mut mesh = self.clone();
+            for (polygon, cached) in mesh.polygons.iter_mut().zip(cached_polygons) {
+                let metadata = polygon.metadata.clone();
+                *polygon = cached.with_metadata(metadata);
+            }
+            mesh.bounding_box = OnceLock::new();
+            return mesh;
+        }
+        let cache_on_completion = PENDING_GENERAL_TRANSFORM.with_borrow_mut(|pending| {
+            let repeated = pending.as_ref().is_some_and(|pending| {
+                pending.matrix == *mat
+                    && pending.source_geometry_identity == source_geometry_identity
+            });
+            *pending = Some(PendingTransform {
+                source_geometry_identity: source_geometry_identity.clone(),
+                matrix: mat.clone(),
+            });
+            repeated
+        });
+
+        let mut prepared_matrix = mat.prepare();
         // Compute inverse transpose for normal transformation
-        let mat_inv_transpose = match mat.clone().inverse() {
+        let mat_inv_transpose = match prepared_matrix.inverse() {
             Ok(inv) => inv.transpose(),
             Err(_) => {
                 eprintln!(
@@ -1140,11 +2498,13 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 Matrix4::identity()
             },
         };
+        let prepared_inverse_transpose = mat_inv_transpose.prepare();
 
+        let finite_matrix = matrix_f64_lossy(mat);
         let mut mesh = self.clone();
-        let mut transformed_positions = HashMap::<u64, (Point3, u64)>::new();
+        let mut transformed_positions = HashMap::<u64, (Point3, u64, Option<[f64; 3]>)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
-        let matrix_facts = mat.structural_facts();
+        let matrix_facts = prepared_matrix.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
         let mut transformed_planes = HashMap::new();
@@ -1153,7 +2513,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
             let plane_id = *transformed_planes
                 .entry(poly.plane_id)
                 .or_insert_with(fresh_plane_id);
-            let mut vertices = poly.vertices_mut();
+            let mut vertices = poly.vertices_mut_with_managed_identity();
             for vert in vertices.iter_mut() {
                 let source_position_id = vert.position_id;
                 let source_coordinate_ids = vert.coordinate_ids;
@@ -1165,19 +2525,26 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                     vert.coordinate_ids[row] =
                         *ids.entry(key).or_insert_with(fresh_position_id);
                 }
-                if let Some((position, position_id)) =
+                if let Some((position, position_id, position_f64)) =
                     transformed_positions.get(&source_position_id)
                 {
                     vert.position = position.clone();
                     vert.position_id = *position_id;
+                    cache_position_f64(*position_id, *position_f64);
                 } else {
-                    match mat.transform_point3(&vert.position) {
+                    let position_f64 = finite_matrix.as_ref().and_then(|matrix| {
+                        transform_point_f64_lossy(matrix, vert.position_f64_lossy()?)
+                    });
+                    match prepared_matrix.transform_point3(&vert.position) {
                         Ok(position) => {
                             let position_id = fresh_position_id();
-                            transformed_positions
-                                .insert(source_position_id, (position.clone(), position_id));
+                            transformed_positions.insert(
+                                source_position_id,
+                                (position.clone(), position_id, position_f64),
+                            );
                             vert.position = position;
                             vert.position_id = position_id;
+                            cache_position_f64(position_id, position_f64);
                         },
                         Err(_) => {
                             eprintln!(
@@ -1203,8 +2570,10 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 } else {
                     let source_normal = vert.normal.clone();
                     let transformed_normal =
-                        mat_inv_transpose.transform_direction3(&source_normal);
-                    if let Ok(normal) = transformed_normal.normalize_checked() {
+                        prepared_inverse_transpose.transform_direction3(&source_normal);
+                    if let Some(normal) = finite_normalized_exact_rational(&transformed_normal)
+                        .or_else(|| transformed_normal.normalize_checked().ok())
+                    {
                         transformed_normals
                             .entry(source_position_id)
                             .or_default()
@@ -1220,6 +2589,21 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         // invalidate the old cached bounding box
         mesh.bounding_box = OnceLock::new();
 
+        if cache_on_completion {
+            LAST_GENERAL_TRANSFORM.with_borrow_mut(|cached| {
+                *cached = Some(CachedGeneralTransform {
+                    source_geometry_identity,
+                    matrix: mat.clone(),
+                    polygons: mesh
+                        .polygons
+                        .iter()
+                        .cloned()
+                        .map(|polygon| polygon.with_metadata(()))
+                        .collect(),
+                });
+            });
+        }
+
         mesh
     }
 
@@ -1228,14 +2612,18 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     fn bounding_box(&self) -> Aabb {
         self.bounding_box
             .get_or_init(|| {
-                let points = self
-                    .polygons
-                    .iter()
-                    .flat_map(|polygon| {
-                        polygon.vertices.iter().map(|vertex| vertex.position.clone())
-                    })
-                    .collect::<Vec<_>>();
-                let Some((mins, maxs)) = point3_bounds(&points) else {
+                let mut bounds = None;
+                for polygon in &self.polygons {
+                    if let Some(polygon_bounds) = polygon.cached_bounding_box_ref() {
+                        include_point3_bounds(&mut bounds, &polygon_bounds.mins);
+                        include_point3_bounds(&mut bounds, &polygon_bounds.maxs);
+                    } else {
+                        for vertex in &polygon.vertices {
+                            include_point3_bounds(&mut bounds, &vertex.position);
+                        }
+                    }
+                }
+                let Some((mins, maxs)) = bounds else {
                     return Aabb::origin();
                 };
                 Aabb::new(mins, maxs)
@@ -1368,6 +2756,144 @@ mod tests {
     }
 
     #[test]
+    fn streaming_ray_intersections_match_materialized_triangle_enumeration() {
+        let mesh = Mesh::sphere(r(10.0), 16, 8, ());
+        let origin = p3(-20.0, 0.0, 0.0);
+        let direction = Vector3::x();
+        let mut materialized = mesh
+            .polygons
+            .iter()
+            .flat_map(Polygon::triangulate)
+            .filter_map(|triangle| ray_triangle_intersection(&origin, &direction, &triangle))
+            .collect::<Vec<_>>();
+        canonicalize_ray_hits(&mut materialized);
+
+        assert_eq!(mesh.ray_intersections(&origin, &direction), materialized);
+    }
+
+    #[test]
+    fn sphere_query_bounds_are_certified_and_selective() {
+        let mesh = Mesh::sphere(r(10.0), 32, 16, ());
+        let origin = p3(-20.0, 0.0, 0.0);
+        let direction = Vector3::x();
+        let certified_query = point_exact_f64(&origin)
+            .zip(vector_exact_f64(&direction))
+            .unwrap();
+        let certified = mesh
+            .polygons
+            .iter()
+            .filter_map(Polygon::certified_f64_bounds_ref)
+            .count();
+        let candidates = mesh
+            .polygons
+            .iter()
+            .filter(|polygon| {
+                let bounds = polygon.certified_f64_bounds_ref().unwrap();
+                !ray_decided_miss_certified_f64_bounds(
+                    certified_query.0,
+                    certified_query.1,
+                    bounds,
+                    None,
+                )
+            })
+            .count();
+
+        assert_eq!(certified, mesh.polygons.len());
+        assert!(candidates < mesh.polygons.len() / 8, "{candidates}");
+    }
+
+    #[test]
+    fn query_memoization_tracks_public_geometry_edits() {
+        let mut mesh = Mesh::cube(r(2.0), ());
+        let origin = p3(-10.0, 0.0, 0.0);
+        let direction = Vector3::x();
+        let polyline = [origin.clone(), p3(10.0, 0.0, 0.0)];
+        let first_ray = mesh.ray_intersections(&origin, &direction);
+        let first_polyline = mesh.intersect_polyline(&polyline);
+        assert_eq!(mesh.ray_intersections(&origin, &direction), first_ray);
+        assert_eq!(mesh.intersect_polyline(&polyline), first_polyline);
+
+        for polygon in &mut mesh.polygons {
+            for vertex in polygon.vertices_mut().iter_mut() {
+                vertex.position.x += Real::from(5_u8);
+            }
+        }
+
+        let edited_ray = mesh.ray_intersections(&origin, &direction);
+        let edited_polyline = mesh.intersect_polyline(&polyline);
+        assert_ne!(edited_ray, first_ray);
+        assert_ne!(edited_polyline, first_polyline);
+    }
+
+    #[test]
+    fn rigid_transform_cache_is_invalidated_by_public_vertex_edits() {
+        let mut mesh = Mesh::cube(r(2.0), ());
+        let before = mesh
+            .rotate(Real::zero(), Real::zero(), Real::zero())
+            .bounding_box();
+
+        for polygon in &mut mesh.polygons {
+            for vertex in polygon.vertices_mut().iter_mut() {
+                vertex.position.x += Real::one();
+            }
+        }
+
+        let after = mesh
+            .rotate(Real::zero(), Real::zero(), Real::zero())
+            .bounding_box();
+        assert_eq!(after.mins.x, before.mins.x + Real::one());
+        assert_eq!(after.maxs.x, before.maxs.x + Real::one());
+    }
+
+    #[test]
+    fn rigid_transform_cache_preserves_exact_geometry() {
+        let mesh = Mesh::sphere(r(2.0), 8, 4, 17_u8);
+        let first = mesh.rotate(Real::from(17_u8), Real::from(29_u8), Real::from(43_u8));
+        let second = mesh.rotate(Real::from(17_u8), Real::from(29_u8), Real::from(43_u8));
+
+        assert_eq!(first.polygons.len(), second.polygons.len());
+        for (left, right) in first.polygons.iter().zip(&second.polygons) {
+            assert_eq!(left.metadata, right.metadata);
+            assert_eq!(left.plane, right.plane);
+            assert_eq!(left.vertices, right.vertices);
+        }
+    }
+
+    #[test]
+    fn general_transform_cache_preserves_exact_geometry_and_current_metadata() {
+        let quarter = (Real::one() / Real::from(4_u8)).unwrap();
+        let matrix = Matrix4::from_row_major([
+            Real::one(),
+            quarter,
+            Real::zero(),
+            Real::from(2_u8),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::from(-3_i8),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::from(4_u8),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let mesh = Mesh::sphere(r(2.0), 8, 4, 17_u8);
+        let first = mesh.transform(&matrix);
+        let remapped = mesh.map_metadata(|_| 29_u8).transform(&matrix);
+
+        assert_eq!(first.polygons.len(), remapped.polygons.len());
+        for (left, right) in first.polygons.iter().zip(&remapped.polygons) {
+            assert_eq!(left.plane, right.plane);
+            assert_eq!(left.vertices, right.vertices);
+            assert_eq!(left.metadata, 17);
+            assert_eq!(right.metadata, 29);
+        }
+    }
+
+    #[test]
     fn mesh_bounding_box_helpers_do_not_widen_by_tolerance() {
         let container = Aabb::new(Point3::origin(), p3(1.0, 1.0, 1.0));
         let exact_touch = Aabb::new(p3(1.0, 0.25, 0.25), p3(2.0, 0.75, 0.75));
@@ -1465,5 +2991,34 @@ mod tests {
         let triangulated = Mesh::from_polygons(polygons).triangulate();
 
         assert_eq!(triangulated.polygons.len(), 3);
+    }
+
+    #[test]
+    fn graphics_mesh_streams_the_same_exact_triangle_rows_as_mesh_triangulation() {
+        let mesh = Mesh::cube(r(2.0), ());
+        let expected = mesh
+            .triangulate()
+            .polygons
+            .into_iter()
+            .flat_map(|polygon| polygon.vertices)
+            .map(|vertex| {
+                (
+                    [vertex.position.x, vertex.position.y, vertex.position.z],
+                    [
+                        vertex.normal.0[0].clone(),
+                        vertex.normal.0[1].clone(),
+                        vertex.normal.0[2].clone(),
+                    ],
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let graphics = mesh.build_graphics_mesh();
+
+        assert_eq!(graphics.vertices, expected);
+        assert_eq!(
+            graphics.indices,
+            (0..u32::try_from(expected.len()).unwrap()).collect::<Vec<_>>()
+        );
     }
 }

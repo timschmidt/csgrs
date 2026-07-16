@@ -48,9 +48,8 @@ impl MetaBall {
 
     /// **Mathematical Foundation**: Metaball influence function I(p) = r²/|p-c|².
     ///
-    /// This public method is an f64 reporting boundary. Internally, radius,
-    /// distance, denominator, and division are evaluated as `Real`
-    /// through [`MetaBall::influence_hreal`], following Yap's exact-geometric-
+    /// Radius, distance, denominator, and division are evaluated as `Real`
+    /// through the internal `influence_hreal` sampler, following Yap's exact-geometric-
     /// computation boundary split (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     /// The implicit-field model follows Blinn, "A Generalization of Algebraic
     /// Surface Drawing," *ACM Transactions on Graphics* 1(3), 1982

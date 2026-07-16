@@ -26,7 +26,7 @@ without digging through a large demo binary.
 cargo run --example basic_shapes
 cargo run --example boolean_operations
 cargo run --example extrude
-cargo run --example readme_renders
+cargo run --example readme_renders --features mesh,sketch,image-io,truetype-text,metaballs,sdf,offset
 ```
 
 Most geometry examples write output under `stl/examples/`. The README render

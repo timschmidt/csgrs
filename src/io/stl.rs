@@ -25,6 +25,152 @@ fn validate_binary_triangle_count(count: usize) -> Result<(), IoError> {
         })
 }
 
+fn finite_stl_position_f64(vertex: &Vertex) -> Result<[f64; 3], IoError> {
+    if let Some(position) = vertex.position_f64_lossy() {
+        return Ok(position);
+    }
+    Ok([
+        finite_f64(&vertex.position.x, "STL", "vertex x")?,
+        finite_f64(&vertex.position.y, "STL", "vertex y")?,
+        finite_f64(&vertex.position.z, "STL", "vertex z")?,
+    ])
+}
+
+fn finite_stl_position(vertex: &Vertex) -> Result<[f32; 3], IoError> {
+    let position = finite_stl_position_f64(vertex)?.map(|component| component as f32);
+    if position.iter().all(|component| component.is_finite()) {
+        return Ok(position);
+    }
+    Ok([
+        finite_f32(&vertex.position.x, "STL", "vertex x")?,
+        finite_f32(&vertex.position.y, "STL", "vertex y")?,
+        finite_f32(&vertex.position.z, "STL", "vertex z")?,
+    ])
+}
+
+fn mesh_stl_normal<M: Clone + Send + Sync>(
+    polygon: &Polygon<M>,
+    vertices: &[Vertex],
+) -> Result<[f32; 3], IoError> {
+    match polygon.certified_nondegenerate() {
+        Some(false) => {
+            return Err(IoError::Geometry {
+                format: "STL",
+                detail: "degenerate triangle: no certified facet normal".to_owned(),
+            });
+        },
+        None => {
+            let normal = require_triangle_normal(polygon.plane().unit_hreal_normal())?;
+            return Ok([
+                finite_f32(&normal.0[0], "STL", "normal x")?,
+                finite_f32(&normal.0[1], "STL", "normal y")?,
+                finite_f32(&normal.0[2], "STL", "normal z")?,
+            ]);
+        },
+        Some(true) => {},
+    }
+    let points = if vertices.len() == 3 {
+        [
+            finite_stl_position_f64(&vertices[0]),
+            finite_stl_position_f64(&vertices[1]),
+            finite_stl_position_f64(&vertices[2]),
+        ]
+    } else {
+        let plane = polygon.plane();
+        [&plane.point_a, &plane.point_b, &plane.point_c].map(|point| {
+            Ok([
+                finite_f64(&point.x, "STL", "normal support x")?,
+                finite_f64(&point.y, "STL", "normal support y")?,
+                finite_f64(&point.z, "STL", "normal support z")?,
+            ])
+        })
+    };
+    if let [Ok(a), Ok(b), Ok(c)] = points {
+        let first = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+        let second = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+        let cross = [
+            first[1] * second[2] - first[2] * second[1],
+            first[2] * second[0] - first[0] * second[2],
+            first[0] * second[1] - first[1] * second[0],
+        ];
+        let magnitude_squared =
+            cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2];
+        if magnitude_squared.is_finite() && magnitude_squared > 0.0 {
+            let inverse_magnitude = magnitude_squared.sqrt().recip();
+            let normal = cross.map(|component| (component * inverse_magnitude) as f32);
+            if normal.iter().all(|component| component.is_finite()) {
+                return Ok(normal);
+            }
+        }
+    }
+
+    let normal = require_triangle_normal(polygon.plane().unit_hreal_normal())?;
+    Ok([
+        finite_f32(&normal.0[0], "STL", "normal x")?,
+        finite_f32(&normal.0[1], "STL", "normal y")?,
+        finite_f32(&normal.0[2], "STL", "normal z")?,
+    ])
+}
+
+fn push_binary_triangle(output: &mut Vec<u8>, normal: [f32; 3], vertices: [[f32; 3]; 3]) {
+    let mut record = [0_u8; 50];
+    let mut offset = 0;
+    for component in normal.into_iter().chain(vertices.into_iter().flatten()) {
+        record[offset..offset + 4].copy_from_slice(&component.to_le_bytes());
+        offset += 4;
+    }
+    output.extend_from_slice(&record);
+}
+
+fn mesh_to_stl_binary<M>(mesh: &Mesh<M>, name: &str) -> Result<Vec<u8>, IoError>
+where
+    M: Clone + Debug + Send + Sync,
+{
+    single_line_metadata(name, "STL", "solid name")?;
+    let triangle_count = mesh
+        .polygons
+        .iter()
+        .map(|polygon| polygon.vertices().len().saturating_sub(2))
+        .sum::<usize>();
+    validate_binary_triangle_count(triangle_count)?;
+    let mut output = Vec::with_capacity(84 + triangle_count.saturating_mul(50));
+    output.resize(80, 0);
+    output.extend_from_slice(&(triangle_count as u32).to_le_bytes());
+
+    for polygon in &mesh.polygons {
+        let vertices = polygon.vertices();
+        let normal = mesh_stl_normal(polygon, vertices)?;
+        if vertices.len() == 3 {
+            push_binary_triangle(
+                &mut output,
+                normal,
+                [
+                    finite_stl_position(&vertices[0])?,
+                    finite_stl_position(&vertices[1])?,
+                    finite_stl_position(&vertices[2])?,
+                ],
+            );
+        } else {
+            let positions = vertices
+                .iter()
+                .map(finite_stl_position)
+                .collect::<Result<Vec<_>, _>>()?;
+            for indices in polygon.triangulate_indices() {
+                push_binary_triangle(
+                    &mut output,
+                    normal,
+                    [
+                        positions[indices[0]],
+                        positions[indices[1]],
+                        positions[indices[2]],
+                    ],
+                );
+            }
+        }
+    }
+    Ok(output)
+}
+
 /// Serialize a triangulated shape as ASCII STL.
 pub fn to_stl_ascii<T: Triangulated3D>(shape: &T, name: &str) -> Result<String, IoError> {
     let name = single_line_metadata(name, "STL", "solid name")?;
@@ -166,7 +312,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 
     pub fn to_stl_binary(&self, name: &str) -> Result<Vec<u8>, IoError> {
-        to_stl_binary(self, name)
+        mesh_to_stl_binary(self, name)
     }
 
     pub fn from_stl(data: &[u8], metadata: M) -> Result<Self, IoError> {

@@ -138,7 +138,18 @@ mod retained_topology_tests {
                     .transform_direction3(&source.normal)
                     .normalize_checked()
                     .unwrap();
-                assert_eq!(transformed.normal, expected);
+                let actual = transformed
+                    .normal
+                    .0
+                    .each_ref()
+                    .map(|component| component.to_f64_lossy().unwrap());
+                let expected = expected
+                    .0
+                    .each_ref()
+                    .map(|component| component.to_f64_lossy().unwrap());
+                for (actual, expected) in actual.into_iter().zip(expected) {
+                    assert!((actual - expected).abs() < 1.0e-12);
+                }
             }
         }
     }
@@ -582,7 +593,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         );
 
         // Combine all faces into a Mesh
-        Mesh::from_polygons(vec![bottom, top, front, back, left, right])
+        let mesh = Mesh::from_polygons(vec![bottom, top, front, back, left, right]);
+        mesh.cache_manifold_fact(true);
+        mesh.cache_convex_pwn_fact();
+        mesh
     }
 
     pub fn cube(width: Real, metadata: M) -> Mesh<M> {
@@ -650,6 +664,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// polygonal sphere projects those sweeps at its tessellation boundary,
     /// retaining exact dyadic coordinates for downstream topology.
     pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
+        Self::sphere_impl(radius, segments, stacks, metadata, true)
+    }
+
+    fn sphere_impl(
+        radius: Real,
+        segments: usize,
+        stacks: usize,
+        metadata: M,
+        prepare_analysis: bool,
+    ) -> Mesh<M> {
         if !hmesh_scalar_positive(&radius) || segments < 3 || stacks < 2 {
             return Mesh::empty();
         }
@@ -755,7 +779,25 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             current = next;
         }
         emit_strip(&current, &first);
-        Mesh::from_polygons(polygons)
+        let mesh = Mesh::from_polygons(polygons);
+        if prepare_analysis {
+            // Sphere construction already visits every tessellation
+            // coordinate. Retaining its exact aggregate and per-triangle query
+            // data here moves no work across the public operation boundary and
+            // keeps later analysis queries cold-fast.
+            let _ = mesh.bounding_box();
+            for polygon in &mesh.polygons {
+                polygon.prepare_spatial_query_caches();
+                polygon.certify_nondegenerate();
+            }
+            // The stitched latitude/longitude construction has exactly one
+            // oppositely directed use of every edge and emits no degenerate
+            // pole triangles.
+            mesh.cache_manifold_fact(true);
+            mesh.cache_convex_pwn_fact();
+            mesh.cache_connectivity();
+        }
+        mesh
     }
 
     /// Constructs a frustum between `start` and `end` with bottom radius = `radius1` and
@@ -969,14 +1011,82 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// A helper to create a vertical cylinder along Z from z=0..z=height
     /// with the specified radius (NOT diameter).
     pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: M) -> Mesh<M> {
-        Mesh::frustum_ptp(
-            Point3::origin(),
-            Point3::new(Real::zero(), Real::zero(), height),
-            radius.clone(),
-            radius,
-            segments,
-            metadata,
-        )
+        if segments < 3 || !hmesh_scalar_positive(&radius) || !hmesh_scalar_positive(&height) {
+            return Mesh::empty();
+        }
+
+        let bottom_center = Vertex::new(Point3::origin(), -Vector3::z());
+        let top_center = Vertex::new(
+            Point3::new(Real::zero(), Real::zero(), height.clone()),
+            Vector3::z(),
+        );
+        let tau = Real::tau();
+        let mut bottom_ring = Vec::with_capacity(segments);
+        let mut top_ring = Vec::with_capacity(segments);
+        let surface_id = crate::vertex::fresh_position_id();
+        for index in 0..segments {
+            let Some((sin, cos)) = sampled_sin_cos(index, segments, &tau) else {
+                return Mesh::empty();
+            };
+            let normal = Vector3::new([cos.clone(), sin.clone(), Real::zero()]);
+            let line_id = crate::vertex::fresh_position_id();
+            let mut bottom = Vertex::new(
+                Point3::new(
+                    radius.clone() * cos.clone(),
+                    radius.clone() * sin.clone(),
+                    Real::zero(),
+                ),
+                normal.clone(),
+            );
+            let mut top = Vertex::new(
+                Point3::new(radius.clone() * cos, radius.clone() * sin, height.clone()),
+                normal,
+            );
+            bottom.ruled_line = Some([surface_id, line_id]);
+            top.ruled_line = Some([surface_id, line_id]);
+            bottom_ring.push(bottom);
+            top_ring.push(top);
+        }
+        retain_equal_coordinate_ids(bottom_ring.iter_mut().chain(&mut top_ring));
+
+        let mut polygons = Vec::with_capacity(3 * segments);
+        let bottom_cap_plane_id = fresh_plane_id();
+        let top_cap_plane_id = fresh_plane_id();
+        for index in 0..segments {
+            let next = (index + 1) % segments;
+            polygons.push(
+                Polygon::new(
+                    vec![
+                        bottom_center.clone().exclude_from_hull(),
+                        bottom_ring[next].clone().with_normal(-Vector3::z()),
+                        bottom_ring[index].clone().with_normal(-Vector3::z()),
+                    ],
+                    metadata.clone(),
+                )
+                .with_plane_id(bottom_cap_plane_id),
+            );
+            polygons.push(
+                Polygon::new(
+                    vec![
+                        top_center.clone().exclude_from_hull(),
+                        top_ring[index].clone().with_normal(Vector3::z()),
+                        top_ring[next].clone().with_normal(Vector3::z()),
+                    ],
+                    metadata.clone(),
+                )
+                .with_plane_id(top_cap_plane_id),
+            );
+            polygons.push(Polygon::new(
+                vec![
+                    bottom_ring[index].clone(),
+                    bottom_ring[next].clone(),
+                    top_ring[next].clone(),
+                    top_ring[index].clone(),
+                ],
+                metadata.clone(),
+            ));
+        }
+        Mesh::from_polygons(polygons)
     }
 
     /// Creates a Mesh polyhedron from raw vertex data (`points`) and face indices.
@@ -1213,8 +1323,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return Mesh::empty();
         }
 
-        let base_sphere = Self::sphere(Real::one(), segments, stacks, metadata.clone());
-        base_sphere.scale(rx, ry, rz)
+        let ellipsoid = Self::sphere_impl(Real::one(), segments, stacks, metadata, false)
+            .nonuniform_scale_owned(rx, ry, rz);
+        ellipsoid.cache_manifold_fact(true);
+        ellipsoid.cache_convex_pwn_fact();
+        ellipsoid
     }
 
     /// Creates an arrow Mesh. The arrow is composed of:

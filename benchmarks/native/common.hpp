@@ -7,6 +7,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -35,6 +36,18 @@ inline std::size_t env_size(const char *name, std::size_t fallback) {
   return input >> value ? value : fallback;
 }
 
+inline std::string env_temperature() {
+  const char *raw = std::getenv("CSGRS_BENCH_TEMPERATURE");
+  if (raw == nullptr || std::string_view(raw) == "warm") {
+    return "warm";
+  }
+  if (std::string_view(raw) == "cold") {
+    return "cold";
+  }
+  throw std::runtime_error(
+      "CSGRS_BENCH_TEMPERATURE must be 'cold' or 'warm'");
+}
+
 inline bool selected(std::string_view suite, std::string_view benchmark,
                      std::string_view benchmark_case) {
   const char *raw = std::getenv("CSGRS_BENCH_FILTER");
@@ -60,8 +73,11 @@ public:
       : engine_(std::move(engine)),
         samples_(std::max<std::size_t>(1, env_size("CSGRS_BENCH_SAMPLES", 10))),
         warmup_(env_size("CSGRS_BENCH_WARMUP", 2)),
-        scale_(std::max<std::size_t>(1, env_size("CSGRS_BENCH_SCALE", 1))) {
-    std::cout << "engine,suite,benchmark,case,sample,iterations,elapsed_ns,"
+        scale_(std::max<std::size_t>(1, env_size("CSGRS_BENCH_SCALE", 1))),
+        iterations_override_(env_size("CSGRS_BENCH_ITERATIONS", 0)),
+        sample_offset_(env_size("CSGRS_BENCH_SAMPLE_OFFSET", 0)),
+        temperature_(env_temperature()) {
+    std::cout << "engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,"
                  "work_units,output_size,checksum\n";
   }
 
@@ -72,8 +88,10 @@ public:
     if (!selected(suite, benchmark, benchmark_case)) {
       return;
     }
-    const std::size_t iterations =
-        std::max<std::size_t>(1, base_iterations * scale_);
+    const std::size_t iterations = iterations_override_ == 0
+                                       ? std::max<std::size_t>(
+                                             1, base_iterations * scale_)
+                                       : iterations_override_;
     volatile std::uint64_t sink = 0;
     for (std::size_t warmup = 0; warmup < warmup_; ++warmup) {
       for (std::size_t iteration = 0; iteration < iterations; ++iteration) {
@@ -90,10 +108,11 @@ public:
                                std::chrono::steady_clock::now() - start)
                                .count();
       sink = sink ^ aggregate.checksum;
-      std::cout << engine_ << ',' << suite << ',' << benchmark << ','
-                << benchmark_case << ',' << sample << ',' << iterations << ','
-                << elapsed << ',' << aggregate.work_units << ','
-                << aggregate.output_size << ',' << aggregate.checksum << '\n';
+      std::cout << engine_ << ',' << temperature_ << ',' << suite << ','
+                << benchmark << ',' << benchmark_case << ','
+                << sample_offset_ + sample << ',' << iterations << ',' << elapsed
+                << ',' << aggregate.work_units << ',' << aggregate.output_size
+                << ',' << aggregate.checksum << '\n';
     }
     (void)sink;
   }
@@ -103,6 +122,9 @@ private:
   std::size_t samples_;
   std::size_t warmup_;
   std::size_t scale_;
+  std::size_t iterations_override_;
+  std::size_t sample_offset_;
+  std::string temperature_;
 };
 
 inline std::uint64_t checksum(std::size_t facets, std::size_t corners) {

@@ -39,11 +39,22 @@ impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Mesh<M> {
 
 impl<M: Clone + Send + Sync + std::fmt::Debug> IndexedTriangulated3D for Mesh<M> {
     fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
-        let mut positions = Vec::new();
-        let mut normals = Vec::new();
-        let mut faces = Vec::new();
-        let mut position_indices = HashMap::<u64, usize>::new();
-        let mut plane_normals = HashMap::<u64, Vec<(Vector3, usize)>>::new();
+        let position_capacity = self
+            .polygons
+            .iter()
+            .map(|polygon| polygon.vertices().len())
+            .sum();
+        let triangle_capacity = self
+            .polygons
+            .iter()
+            .map(|polygon| polygon.vertices().len().saturating_sub(2))
+            .sum();
+        let mut positions = Vec::with_capacity(position_capacity);
+        let mut normals = Vec::with_capacity(self.polygons.len());
+        let mut faces = Vec::with_capacity(triangle_capacity);
+        let mut position_indices = HashMap::<u64, usize>::with_capacity(position_capacity);
+        let mut plane_normals =
+            HashMap::<u64, Vec<(Vector3, usize)>>::with_capacity(self.polygons.len());
 
         for polygon in &self.polygons {
             let triangles = polygon.triangulate_indices();
