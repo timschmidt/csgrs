@@ -1,5 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlattice::{Matrix3, Matrix4, Real, Vector3, Vector4, sqrt};
+use std::hint::black_box;
 
 fn r(value: i32) -> Real {
     value.into()
@@ -43,6 +44,20 @@ fn bench_regression_sentinels(c: &mut Criterion) {
             [frac(5, 8), frac(17, 16), frac(19, 8)],
         ]);
         b.iter(|| matrix.clone().inverse_checked().unwrap())
+    });
+
+    c.bench_function("sentinel/matrix3/sparse_mask_product", |b| {
+        let left = Matrix3::new([
+            [frac(2, 3), frac(3, 5), r(0)],
+            [r(0), frac(5, 7), frac(7, 11)],
+            [r(0), r(0), frac(11, 13)],
+        ]);
+        let right = Matrix3::new([
+            [frac(13, 17), r(0), r(0)],
+            [frac(17, 19), frac(19, 23), r(0)],
+            [r(0), frac(23, 29), frac(29, 31)],
+        ]);
+        b.iter(|| black_box(black_box(&left) * black_box(&right)))
     });
 
     c.bench_function("sentinel/matrix3/prepared_inverse_fractional", |b| {
@@ -114,6 +129,32 @@ fn bench_regression_sentinels(c: &mut Criterion) {
                 .div_matrix_checked(divisor.clone())
                 .unwrap()
         })
+    });
+
+    c.bench_function("sentinel/matrix4/determinant_fractional", |b| {
+        let matrix = Matrix4::new([
+            [frac(11, 10), frac(2, 10), frac(3, 10), frac(4, 10)],
+            [frac(5, 10), frac(17, 10), frac(7, 10), frac(-8, 10)],
+            [frac(9, 10), frac(-10, 10), frac(23, 10), frac(12, 10)],
+            [frac(-13, 10), frac(14, 10), frac(-15, 10), frac(19, 10)],
+        ]);
+        b.iter(|| black_box(black_box(&matrix).determinant()))
+    });
+
+    c.bench_function("sentinel/matrix4/sparse_mask_product", |b| {
+        let left = Matrix4::new([
+            [frac(2, 3), frac(3, 5), r(0), r(0)],
+            [r(0), frac(5, 7), frac(7, 11), r(0)],
+            [r(0), r(0), frac(11, 13), frac(13, 17)],
+            [r(0), r(0), r(0), frac(17, 19)],
+        ]);
+        let right = Matrix4::new([
+            [frac(19, 23), r(0), r(0), r(0)],
+            [frac(23, 29), frac(29, 31), r(0), r(0)],
+            [r(0), frac(31, 37), frac(37, 41), r(0)],
+            [r(0), r(0), frac(41, 43), frac(43, 47)],
+        ]);
+        b.iter(|| black_box(black_box(&left) * black_box(&right)))
     });
 
     c.bench_function("sentinel/matrix4/prepared_division_fractional", |b| {

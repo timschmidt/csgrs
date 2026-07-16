@@ -899,6 +899,18 @@ fn matrix4_inverse_and_determinant_handle_general_integer_matrix() {
 }
 
 #[test]
+fn matrix4_dense_fractional_determinant_uses_exact_value() {
+    let matrix = Matrix4::new([
+        [frac(11, 10), frac(2, 10), frac(3, 10), frac(4, 10)],
+        [frac(5, 10), frac(17, 10), frac(7, 10), frac(-8, 10)],
+        [frac(9, 10), frac(-10, 10), frac(23, 10), frac(12, 10)],
+        [frac(-13, 10), frac(14, 10), frac(-15, 10), frac(19, 10)],
+    ]);
+
+    assert_eq!(matrix.determinant(), frac(75_933, 5_000));
+}
+
+#[test]
 fn matrix4_negative_power_matches_repeated_inverse_product() {
     let matrix = Matrix4::new([
         [r(2), r(0), r(1), r(0)],

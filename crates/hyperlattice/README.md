@@ -77,6 +77,9 @@ Benchmarks track scalar, vector, matrix, prepared-cache, and dispatch-trace beha
 shortcuts can be accepted only when they help the target surface without destabilizing
 nearby Hyper predicate paths.
 
+The paper-by-paper implementation map, accepted/rejected experiments, and reproducible
+measurements are recorded in [`PERFORMANCE.md`](./PERFORMANCE.md).
+
 ## Current Status
 
 Implemented today:

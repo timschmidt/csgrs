@@ -1104,6 +1104,14 @@ fn matrix4_exact_rational_kind(matrix: &[[Real; 4]; 4]) -> ExactRationalKind {
 }
 
 #[inline]
+fn matrix4_is_dense_exact_rational(matrix: &[[Real; 4]; 4]) -> bool {
+    matrix
+        .iter()
+        .flatten()
+        .all(|value| value.exact_rational_ref().is_some() && !value.definitely_zero())
+}
+
+#[inline]
 fn matrix_exact_rational_kind<const N: usize>(matrix: &[[Real; N]; N]) -> ExactRationalKind {
     let mut kind = ExactRationalKind::ExactDyadicRational;
     for row in matrix {
@@ -1489,6 +1497,38 @@ impl<'a> PreparedMatrix4<'a> {
             "prepared-matrix4-transform-point-vector"
         );
         self.transform_vec4_handle().transform_point_vector(rhs)
+    }
+
+    /// Transforms one 3D affine point using the retained matrix facts.
+    pub fn transform_point3(&self, point: &Point3) -> BlasResult<Point3> {
+        let transformed = self.transform_point_vector(&Vector4::new([
+            point.x.clone(),
+            point.y.clone(),
+            point.z.clone(),
+            Real::one(),
+        ]));
+        let [x, y, z, w] = transformed.0;
+        if w.definitely_one() {
+            return Ok(Point3::new(x, y, z));
+        }
+        let inv_w = w.inverse()?;
+        Ok(Point3::new(
+            x.mul_cached(&inv_w),
+            y.mul_cached(&inv_w),
+            z.mul_cached(&inv_w),
+        ))
+    }
+
+    /// Transforms one 3D homogeneous direction using retained matrix facts.
+    pub fn transform_direction3(&self, direction: &Vector3) -> Vector3 {
+        let transformed = self.transform_direction_vector(&Vector4::new([
+            direction.0[0].clone(),
+            direction.0[1].clone(),
+            direction.0[2].clone(),
+            Real::zero(),
+        ]));
+        let [x, y, z, _w] = transformed.0;
+        Vector3::new([x, y, z])
     }
 
     /// Transforms a batch of caller-certified homogeneous points (`w = 1`) using
@@ -12774,11 +12814,17 @@ fn determinant4(m: &[[Real; 4]; 4]) -> Real {
     // The six-minor formula shares the same division-free rationale as 3x3.
     // It is also reused by the cofactor inverse path, so determinant and
     // inverse stay aligned with the trace counters used for regression checks.
-    // fraction-free elimination/Gauss-Jordan alternatives remain useful for larger or purely
-    // integer systems, but on this 4x4 public API the traced bottleneck was
-    // rational canonicalization inside dot products, not the minor schedule.
-    let (s, c) = matrix4_factors(m);
-    determinant4_from_factors(&s, &c)
+    // Fraction-free elimination/Gauss-Jordan alternatives remain useful for
+    // larger or purely integer systems, but this 4x4 public API can retain the
+    // division-free minor schedule and skip repeated rational discovery when
+    // all sixteen entries certify the dense exact-rational path.
+    if matrix4_is_dense_exact_rational(m) {
+        let (s, c) = matrix4_factors_dense_exact_known_rational(m);
+        determinant4_from_factors_known_rational(&s, &c)
+    } else {
+        let (s, c) = matrix4_factors(m);
+        determinant4_from_factors(&s, &c)
+    }
 }
 
 #[inline]
