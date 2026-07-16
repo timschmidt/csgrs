@@ -1,8 +1,9 @@
 //! Prepared query helpers for semantic sparse voxel grids.
 
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 use hyperlimit::{Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection};
+use rustc_hash::FxHashSet;
 
 use crate::{
     AggregateCertainty, ExactAabb3, FreshnessStatus, GridAabbHandoff, OccupancyState,
@@ -379,8 +380,9 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
             });
         }
 
-        let mut seen = BTreeSet::new();
+        let mut seen = FxHashSet::default();
         let mut queue = VecDeque::new();
+        let mut exact_distance_band_ready = exact_cell_ready(seed_cell);
         seen.insert(seed);
         distances.insert(seed, 0);
         queue.push_back((seed, 0_u32));
@@ -393,22 +395,16 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
                 if !seen.insert(neighbor) {
                     continue;
                 }
-                if self.storage.get(neighbor)?.occupancy == OccupancyState::Empty {
+                let cell = self.storage.get(neighbor)?;
+                if cell.occupancy == OccupancyState::Empty {
                     continue;
                 }
+                exact_distance_band_ready &= exact_cell_ready(cell);
                 let next_distance = distance.saturating_add(1);
                 distances.insert(neighbor, next_distance);
                 queue.push_back((neighbor, next_distance));
             }
         }
-
-        let exact_distance_band_ready = distances
-            .keys()
-            .copied()
-            .map(|address| self.storage.get(address))
-            .collect::<crate::HypervoxelResult<Vec<_>>>()?
-            .into_iter()
-            .all(exact_cell_ready);
 
         let has_reached_cells = !distances.is_empty();
 

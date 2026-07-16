@@ -5,8 +5,6 @@
 //! the result is an exact combinatorial field. Continuous SDF export remains a
 //! separately named lossy or certified adapter.
 
-use std::collections::BTreeMap;
-
 use crate::{OccupancyState, QueryRegion, SparseVoxelGrid, VoxelAddress};
 
 /// Exact integer distance sample for one voxel address.
@@ -83,22 +81,32 @@ pub fn sample_manhattan_distance_field(
         .map(|(address, _)| *address)
         .collect::<Vec<_>>();
     let distances = exact_manhattan_transform(&occupied, &region)?;
-    let mut samples = BTreeMap::new();
-    let mut distance_index = 0;
-    for z in region.min[2]..=region.max[2] {
+    let dimensions = if distances.is_empty() {
+        [0; 3]
+    } else {
+        [
+            usize::try_from(region.max[0] - region.min[0] + 1)
+                .map_err(|_| crate::HypervoxelError::AddressOverflow)?,
+            usize::try_from(region.max[1] - region.min[1] + 1)
+                .map_err(|_| crate::HypervoxelError::AddressOverflow)?,
+            usize::try_from(region.max[2] - region.min[2] + 1)
+                .map_err(|_| crate::HypervoxelError::AddressOverflow)?,
+        ]
+    };
+    let mut samples = Vec::with_capacity(distances.len());
+    // VoxelAddress derives lexicographic order over [x, y, z]. Emit that order
+    // directly instead of rebuilding it through an ordered map.
+    for x in region.min[0]..=region.max[0] {
         for y in region.min[1]..=region.max[1] {
-            for x in region.min[0]..=region.max[0] {
+            for z in region.min[2]..=region.max[2] {
                 let address = VoxelAddress::new(region.depth, [x, y, z])?;
-                let occupied_here = grid.get(address)?.occupancy != OccupancyState::Empty;
-                samples.insert(
+                let distance_index = transform_index([x, y, z], &region, dimensions);
+                let manhattan_distance = distances[distance_index];
+                samples.push(DistanceSample {
                     address,
-                    DistanceSample {
-                        address,
-                        manhattan_distance: distances[distance_index],
-                        occupied: occupied_here,
-                    },
-                );
-                distance_index += 1;
+                    manhattan_distance,
+                    occupied: manhattan_distance == Some(0),
+                });
             }
         }
     }
@@ -113,7 +121,7 @@ pub fn sample_manhattan_distance_field(
         region,
         source_cells,
         has_distance_source,
-        samples: samples.into_values().collect(),
+        samples,
         exact_address_distance_ready,
     })
 }
@@ -254,6 +262,7 @@ fn exact_distance_source_ready(occupancy: OccupancyState) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{GridFrame, MaterialRegionId, VoxelCell};
 
     #[test]
     fn separable_transform_matches_all_pairs_with_sources_outside_region() {
@@ -283,6 +292,39 @@ mod tests {
                     index += 1;
                 }
             }
+        }
+    }
+
+    #[test]
+    fn distance_preview_preserves_address_order_and_exact_occupancy() {
+        let mut grid = SparseVoxelGrid::new(GridFrame::builder().depth(2).build().unwrap());
+        for xyz in [[0, 1, 0], [1, 0, 1]] {
+            grid.set(
+                VoxelAddress::new(2, xyz).unwrap(),
+                VoxelCell::material(MaterialRegionId(1)),
+            )
+            .unwrap();
+        }
+        let preview = sample_manhattan_distance_field(
+            &grid,
+            QueryRegion {
+                min: [0, 0, 0],
+                max: [1, 1, 1],
+                depth: 2,
+            },
+        )
+        .unwrap();
+
+        assert!(
+            preview
+                .samples
+                .windows(2)
+                .all(|pair| pair[0].address < pair[1].address)
+        );
+        for sample in &preview.samples {
+            let stored = grid.get(sample.address).unwrap().occupancy != OccupancyState::Empty;
+            assert_eq!(sample.occupied, stored);
+            assert_eq!(sample.manhattan_distance == Some(0), stored);
         }
     }
 }

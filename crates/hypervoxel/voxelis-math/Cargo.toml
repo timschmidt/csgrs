@@ -17,3 +17,7 @@ tracy-client = { workspace = true, optional = true }
 [features]
 default = []
 tracy = ["dep:tracy-client"]
+
+[[bench]]
+name = "overlap_audit"
+harness = false

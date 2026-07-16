@@ -1,6 +1,6 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
-    AddressRay, AggregateCertainty, AxisPermutationTransform, CertifiedFieldInterval,
+    AddressRay, AggregateCertainty, AxisPermutationTransform, CellBounds, CertifiedFieldInterval,
     CertifiedTensorInterval, CertifiedVectorInterval, ChunkPagedSparseGrid, ChunkShape,
     ExactAffineTransform, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId,
     FieldSampleRecord, FreshnessStatus, GridFrame, GridSource, HypervoxelError, MaterialRegionId,
@@ -388,6 +388,20 @@ fn address_ray_trace_stops_at_grid_boundary_or_step_limit() {
     assert!(limited.exact_address_trace_ready);
     assert!(!limited.stopped_at_boundary);
     assert!(limited.stopped_at_step_limit);
+
+    assert_eq!(
+        trace_address_ray(AddressRay {
+            start: VoxelAddress {
+                depth: 3,
+                xyz: [8, 0, 0],
+            },
+            axis: 0,
+            direction: 1,
+            max_steps: 1,
+        })
+        .unwrap_err(),
+        HypervoxelError::AddressOverflow
+    );
 }
 
 #[test]
@@ -409,6 +423,12 @@ fn signed_axis_transform_maps_bounds_without_float_matrices() {
     let mapped = transform.map_bounds(&bounds).unwrap();
     assert_eq!(mapped.min, [r(12), r(18), r(33)]);
     assert_eq!(mapped.max, [r(13), r(19), r(34)]);
+
+    let reversed = CellBounds {
+        min: bounds.max,
+        max: bounds.min,
+    };
+    assert_eq!(transform.map_bounds(&reversed).unwrap(), mapped);
 }
 
 #[test]

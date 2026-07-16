@@ -46,6 +46,7 @@ proptest = "1.7.0"
 
 [features]
 default = []
+dispatch-trace = ["hyperreal/dispatch-trace"]
 hypermesh-adapter = ["dep:hypermesh"]
 legacy-voxelis = ["dep:voxelis", "dep:glam"]
 

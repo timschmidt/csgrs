@@ -151,9 +151,16 @@ pub fn trace_address_ray(ray: AddressRay) -> HypervoxelResult<AddressRayTrace> {
     if ray.axis >= 3 || !matches!(ray.direction, -1 | 1) {
         return Err(HypervoxelError::AddressOverflow);
     }
-    let cells = 1_u64 << ray.start.depth;
-    let mut addresses = Vec::new();
-    let mut current = ray.start;
+    let start = VoxelAddress::new(ray.start.depth, ray.start.xyz)?;
+    let cells = 1_u64 << start.depth;
+    let cells_to_boundary = if ray.direction < 0 {
+        start.xyz[ray.axis] + 1
+    } else {
+        cells - start.xyz[ray.axis]
+    };
+    let visited_capacity = ray.max_steps.saturating_add(1).min(cells_to_boundary) as usize;
+    let mut addresses = Vec::with_capacity(visited_capacity);
+    let mut current = start;
     let mut stopped_at_boundary = false;
     let mut stopped_at_step_limit = false;
     for step in 0..=ray.max_steps {

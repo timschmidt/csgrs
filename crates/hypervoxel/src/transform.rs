@@ -91,25 +91,25 @@ impl AxisPermutationTransform {
         ]
     }
 
-    /// Maps exact cell bounds to an exact AABB by transforming all corners.
+    /// Maps exact cell bounds to an exact AABB from their two opposed corners.
     pub fn map_bounds(&self, bounds: &CellBounds) -> HypervoxelResult<ExactAabb3> {
-        let mut corners = bounds
-            .corners()
-            .into_iter()
-            .map(|point| self.map_point(&point));
-        let first = corners
-            .next()
-            .expect("cell bounds always provide eight corners");
-        let mut min = first.clone();
-        let mut max = first;
-        for corner in corners {
-            for axis in 0..3 {
-                if certified_cmp(&corner[axis], &min[axis], "transform min")? == Ordering::Less {
-                    min[axis] = corner[axis].clone();
-                }
-                if certified_cmp(&corner[axis], &max[axis], "transform max")? == Ordering::Greater {
-                    max[axis] = corner[axis].clone();
-                }
+        let mut min = self.translation.clone();
+        let mut max = self.translation.clone();
+        for output_axis in 0..3 {
+            let axis = self.axes[output_axis];
+            let first = &bounds.min[axis.source_axis];
+            let second = &bounds.max[axis.source_axis];
+            let (source_min, source_max) =
+                match certified_cmp(first, second, "transform source bounds")? {
+                    Ordering::Less | Ordering::Equal => (first, second),
+                    Ordering::Greater => (second, first),
+                };
+            if axis.sign < 0 {
+                min[output_axis] = self.translation[output_axis].clone() - source_max;
+                max[output_axis] = self.translation[output_axis].clone() - source_min;
+            } else {
+                min[output_axis] = self.translation[output_axis].clone() + source_min;
+                max[output_axis] = self.translation[output_axis].clone() + source_max;
             }
         }
         Ok(ExactAabb3 { min, max })

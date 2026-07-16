@@ -193,6 +193,50 @@ cargo bench -p hypervoxel --bench grid_frame
 ```
 
 Benchmark methodology and results are in [`docs/benches.md`](docs/benches.md).
+The root crate's reference-audit measurements and retained changes are in
+[`PERFORMANCE.md`](PERFORMANCE.md).
+
+The optional `dispatch-trace` feature forwards `hyperreal`'s exact-dispatch
+instrumentation. Its integration test requires representative rational
+voxelization to produce no approximation or unknown-fact events.
+
+## Reference-Guided Design
+
+The references define algorithm choices and exactness boundaries; listing a
+paper does not imply that every algorithm in it is implemented:
+
+- Yap supplies the exact-geometric-computation rule: combinatorial voxel and
+  mesh decisions use certified predicates, while previews remain named as
+  lossy or non-topological.
+- Moore, Kearfott, and Cloud motivate certified intervals for occupancy,
+  fields, transformed bounds, and unresolved boundary evidence.
+- Rosenfeld and Pfaltz's sequential picture operations motivate exact
+  six-neighbor components; their distance-functions paper motivates the
+  separable integer Manhattan transform and source-aware readiness report.
+- Bresenham motivates integer address-segment stepping. Amanatides and Woo
+  motivate bounded grid-ray traversal, while the API deliberately distinguishes
+  this address traversal from a continuous geometric ray predicate.
+- Bentley and Ottmann motivate separating candidate reporting from exact
+  intersection decisions. Kay and Kajiya motivate retained AABB hierarchy and
+  page evidence as broad-phase acceleration rather than object truth.
+- Möller's triangle-triangle test and Möller–Trumbore ray-triangle test provide
+  fast proposal structures; Guigue and Devillers motivates the accepted exact
+  path based on orientation/determinant signs without fragile constructed
+  floating-point intersections.
+- Lorensen and Cline motivate explicit sampled isosurface adapters. Marching
+  Cubes is not used to certify source topology; exact voxel shells instead come
+  from replayed exposed lattice faces.
+- Kämpe, Sintorn, and Assarsson motivate bottom-up SVO-DAG interning and replay
+  of shared subtrees rather than inferring geometry from compression.
+- Botsch and coauthors motivate indexed vertex/edge/face vocabularies, manifold
+  incidence audits, and distinct exact and preview mesh handoffs.
+- Lysenko motivates greedy coplanar face patches, whose compressed cover is
+  expanded and compared with the exact shell before becoming ready.
+- Arvo supplies the per-axis affine AABB transform used instead of transforming
+  eight corners.
+- ISO 10303-242 motivates explicit product/process provenance, coordinate
+  systems, versioned artifacts, and domain handoff manifests. The crate does
+  not claim that its voxel formats are STEP AP242 encodings.
 
 ## References
 

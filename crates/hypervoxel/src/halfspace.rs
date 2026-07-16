@@ -6,7 +6,7 @@
 //! predicate remains proof-producing and explicit rather than treating
 //! triangle epsilon tests as truth.
 
-use hyperlimit::{PlaneSide, PredicateOutcome};
+use hyperlimit::{PredicateOutcome, Sign};
 use hyperreal::{Real, RealSign};
 
 use crate::{
@@ -111,20 +111,14 @@ pub fn classify_cell_against_halfspace(
     halfspace: &ExactHalfSpace,
 ) -> HypervoxelResult<VoxelHalfSpaceClassifier> {
     let bounds = address.bounds(frame)?;
-    let mut inside_count = 0_usize;
-    let mut outside_count = 0_usize;
-    for corner in bounds.corners() {
-        match decide(hyperlimit::classify_point_plane(
-            &point3(&corner),
-            &halfspace.predicate_plane(),
-        ))? {
-            PlaneSide::Below | PlaneSide::On => inside_count += 1,
-            PlaneSide::Above => outside_count += 1,
-        }
-    }
-    Ok(match (inside_count, outside_count) {
-        (8, 0) => VoxelHalfSpaceClassifier::Inside,
-        (0, 8) => VoxelHalfSpaceClassifier::Outside,
+    let report = decide(hyperlimit::classify_plane_aabb3_report(
+        &halfspace.predicate_plane(),
+        &point3(&bounds.min),
+        &point3(&bounds.max),
+    ))?;
+    Ok(match (report.lower_sign, report.upper_sign) {
+        (_, Sign::Negative | Sign::Zero) => VoxelHalfSpaceClassifier::Inside,
+        (Sign::Positive, _) => VoxelHalfSpaceClassifier::Outside,
         _ => VoxelHalfSpaceClassifier::Boundary,
     })
 }

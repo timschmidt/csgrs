@@ -14,9 +14,10 @@
 //! payload readiness, unknown/lossy blockers, and aggregate facts instead of
 //! asking callers to trust a compressed layout name.
 
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 use hyperlimit::{PredicateOutcome, classify_aabb3_intersection};
+use rustc_hash::FxHashSet;
 
 use crate::query::voxel_neighbors6;
 use crate::{
@@ -514,7 +515,7 @@ impl ChunkPagedSparseGrid {
             });
         }
 
-        let mut seen = BTreeSet::new();
+        let mut seen = FxHashSet::default();
         let mut reached = BTreeMap::new();
         let mut queue = VecDeque::new();
         let mut neighbor_edges = 0_usize;
@@ -608,7 +609,7 @@ impl ChunkPagedSparseGrid {
             });
         }
 
-        let mut seen = BTreeSet::new();
+        let mut seen = FxHashSet::default();
         let mut distances = BTreeMap::new();
         let mut reached = BTreeMap::new();
         let mut queue = VecDeque::new();

@@ -9,12 +9,11 @@
 //! predicates. The indexed vertex/triangle vocabulary uses exact grid-lattice
 //! coordinates rather than display vertices.
 
-use std::collections::BTreeMap;
-
 use crate::{
     ExactSurfaceFaceKey, ExactSurfaceVertex, ExactVoxelFace, ExactVoxelSurfaceTopologyReport,
     VoxelFaceSide, audit_exact_voxel_surface_topology,
 };
+use rustc_hash::FxHashMap;
 
 /// One exact indexed triangle emitted from a voxel face.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -90,7 +89,7 @@ pub fn exact_voxel_surface_triangle_mesh_from_faces(
         .iter()
         .enumerate()
         .map(|(index, vertex)| (*vertex, index as u32))
-        .collect::<BTreeMap<_, _>>();
+        .collect::<FxHashMap<_, _>>();
     let mut triangles = Vec::with_capacity(faces.len() * 2);
     for face in faces {
         let key = ExactSurfaceFaceKey {

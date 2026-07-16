@@ -328,7 +328,7 @@ pub fn extract_exposed_faces(
 pub fn extract_exposed_faces_with_report(
     grid: &SparseVoxelGrid,
 ) -> crate::HypervoxelResult<ExactFaceExtractionReport> {
-    let mut faces = Vec::new();
+    let mut faces = Vec::with_capacity(grid.len());
     let mut skipped_unknown_cells = 0_usize;
     let mut skipped_lossy_cells = 0_usize;
     let mut unknown_neighbor_sides = 0_usize;
@@ -345,6 +345,7 @@ pub fn extract_exposed_faces_with_report(
             skipped_lossy_cells += 1;
             continue;
         }
+        let mut cell_bounds = None;
         for side in [
             VoxelFaceSide::XNeg,
             VoxelFaceSide::XPos,
@@ -354,19 +355,25 @@ pub fn extract_exposed_faces_with_report(
             VoxelFaceSide::ZPos,
         ] {
             let Some(neighbor) = neighbor_address(*address, side) else {
+                if cell_bounds.is_none() {
+                    cell_bounds = Some(address.bounds(grid.frame())?);
+                }
                 faces.push(ExactVoxelFace {
                     address: *address,
                     side,
-                    cell_bounds: address.bounds(grid.frame())?,
+                    cell_bounds: cell_bounds.clone().expect("bounds initialized"),
                 });
                 continue;
             };
             match grid.get(neighbor)?.occupancy {
                 OccupancyState::Empty => {
+                    if cell_bounds.is_none() {
+                        cell_bounds = Some(address.bounds(grid.frame())?);
+                    }
                     faces.push(ExactVoxelFace {
                         address: *address,
                         side,
-                        cell_bounds: address.bounds(grid.frame())?,
+                        cell_bounds: cell_bounds.clone().expect("bounds initialized"),
                     });
                 }
                 OccupancyState::Unknown => unknown_neighbor_sides += 1,
