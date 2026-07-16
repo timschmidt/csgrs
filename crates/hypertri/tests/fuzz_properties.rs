@@ -61,6 +61,32 @@ proptest! {
     })]
 
     #[test]
+    fn fuzz_spatial_delaunay_remains_exact_and_index_preserving(
+        coordinates in prop::collection::vec((-30i32..30, -30i32..30), 5..20),
+    ) {
+        let mut unique = coordinates.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        prop_assume!(unique.len() == coordinates.len());
+
+        let points = coordinates
+            .into_iter()
+            .map(|(x, y)| p(x, y))
+            .collect::<Vec<_>>();
+        let triangulation = hypertri::cdt::delaunay_spatial(&points).unwrap();
+
+        triangulation.validate().unwrap();
+        prop_assert_eq!(triangulation.points(), points.as_slice());
+        prop_assert!(
+            triangulation
+                .triangles()
+                .iter()
+                .flatten()
+                .all(|&index| index < points.len())
+        );
+    }
+
+    #[test]
     fn fuzz_exact_earcut_l_shapes_keep_index_topology(
         x in -100i32..100,
         y in -100i32..100,

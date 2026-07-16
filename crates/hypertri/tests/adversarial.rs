@@ -491,6 +491,33 @@ fn f64_delaunay_lifts_larger_point_set_to_exact_path() {
 
 #[test]
 #[cfg(all(feature = "f64-interop", feature = "cdt"))]
+fn f64_spatial_delaunay_lifts_and_preserves_input_indices() {
+    let points = [
+        [0.0, 0.0],
+        [7.0, 1.0],
+        [2.0, 6.0],
+        [9.0, 8.0],
+        [4.0, 3.0],
+        [1.0, 9.0],
+        [8.0, 4.0],
+        [5.0, 10.0],
+        [11.0, 2.0],
+    ];
+
+    let triangulation = hypertri::f64::delaunay_spatial(&points).unwrap();
+
+    triangulation.validate().unwrap();
+    assert!(
+        triangulation
+            .triangles()
+            .iter()
+            .flatten()
+            .all(|&index| index < points.len())
+    );
+}
+
+#[test]
+#[cfg(all(feature = "f64-interop", feature = "cdt"))]
 fn f64_cdt_returns_inserted_intersection_point() {
     let points = [[0.0, 0.0], [2.0, 2.0], [0.0, 2.0], [2.0, 0.0]];
     let constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];

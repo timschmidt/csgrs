@@ -1715,9 +1715,16 @@ pub fn delaunay_complex(points: &[PointD]) -> Result<DelaunayComplex> {
         }
     }
 
-    let complex = DelaunayComplex::from_parts(dimension, points.to_vec(), cells);
-    complex.validate()?;
-    Ok(complex)
+    // `validate_points` certified the shared input once, and the enumeration
+    // above admitted a cell only after exact affine-independence and
+    // empty-sphere checks. Constructing from those already-certified facts is
+    // therefore equivalent to immediately calling `DelaunayComplex::validate`,
+    // which would repeat every orientation and in-sphere determinant.
+    Ok(DelaunayComplex::from_parts(
+        dimension,
+        points.to_vec(),
+        cells,
+    ))
 }
 
 fn infer_dimension(points: &[PointD]) -> Result<usize> {

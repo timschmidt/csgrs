@@ -125,6 +125,25 @@ fn bench_exact_triangulation(c: &mut Criterion) {
         b.iter(|| hypertri::cdt::delaunay(&located_delaunay_points).unwrap())
     });
 
+    let scattered_delaunay_points = (0..400_usize)
+        .map(|position| located_delaunay_points[(position * 37) % 400].clone())
+        .collect::<Vec<_>>();
+    c.bench_function("exact_delaunay_400_scattered_insertions", |b| {
+        b.iter(|| hypertri::cdt::delaunay(&scattered_delaunay_points).unwrap())
+    });
+    c.bench_function("exact_delaunay_spatial_400_located_input", |b| {
+        b.iter(|| hypertri::cdt::delaunay_spatial(&located_delaunay_points).unwrap())
+    });
+    c.bench_function("exact_delaunay_spatial_400_scattered_input", |b| {
+        b.iter(|| hypertri::cdt::delaunay_spatial(&scattered_delaunay_points).unwrap())
+    });
+    c.bench_function("exact_delaunay_64_located_insertions", |b| {
+        b.iter(|| hypertri::cdt::delaunay(&located_delaunay_points[..64]).unwrap())
+    });
+    c.bench_function("exact_delaunay_spatial_64_located_input", |b| {
+        b.iter(|| hypertri::cdt::delaunay_spatial(&located_delaunay_points[..64]).unwrap())
+    });
+
     let shared_denominator_polygon = hypertri::PolygonInput::new(
         vec![
             p(q(0, 3), q(0, 3)),

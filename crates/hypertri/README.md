@@ -37,6 +37,9 @@ APIs.
 - `EarcutReport` and `EarcutDiagnostics` expose polygon triangulation diagnostics.
 - `DelaunayTriangulation` and `ConstrainedDelaunayTriangulation` describe 2D Delaunay
   outputs and protected constraint edges.
+- `cdt::delaunay_spatial` and `f64::delaunay_spatial` provide an opt-in,
+  deterministic BRIO-style insertion schedule for large unordered batches while
+  retaining caller point indices.
 - `PointD`, `Simplex`, and `DelaunayComplex` provide the small exhaustive
   D-dimensional semantic oracle; insertion and bistellar-flip report types retain the
   exact facts behind each proposed rewrite.
@@ -64,6 +67,9 @@ turn consistency, exact-rational summaries, duplicate/collinear facts, bounding 
 convex/reflex caches, constraint-subsegment provenance, and diagnostics counters. These
 facts reject candidates and guide runtime selection, but never substitute a floating
 point branch for an exact topology decision.
+
+Measured optimization results and the reference-by-reference implementation audit are
+recorded in [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## Current Status
 
@@ -152,17 +158,24 @@ fn main() -> hypertri::Result<()> {
     ];
 
     let delaunay = cdt::delaunay(&points)?;
+    let spatial = cdt::delaunay_spatial(&points)?;
     let constrained = cdt::constrained_delaunay(
         &points,
         &[Constraint::new(0, 1), Constraint::new(1, 2)],
     )?;
     delaunay.validate()?;
+    spatial.validate()?;
     constrained.validate()?;
     Ok(())
 }
 ```
 
 See [`examples/cdt.rs`](examples/cdt.rs) for the compiling example.
+
+`delaunay` preserves the historical caller-order insertion schedule.
+`delaunay_spatial` uses biased randomized rounds with exact median spatial
+ordering; it can select a different valid diagonal on cocircular inputs because
+the Delaunay triangulation is then non-unique.
 
 With `nd`, build and validate a small D-dimensional exact oracle complex:
 
@@ -213,6 +226,10 @@ cargo bench --bench exact --features all-algorithms
 - Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
   Gaussian Elimination." *Mathematics of Computation* 22.103 (1968): 565-578.
   [doi:10.1090/S0025-5718-1968-0226829-0](https://doi.org/10.1090/S0025-5718-1968-0226829-0)
+- Amenta, Nina, Sunghee Choi, and Günter Rote. "Incremental Constructions con
+  BRIO." *Proceedings of the Nineteenth Annual Symposium on Computational
+  Geometry* (2003): 211-219.
+  [doi:10.1145/777792.777824](https://doi.org/10.1145/777792.777824)
 - Boehm, Hans-J., Robert Cartwright, Mark Riggle, and Michael J. O'Donnell.
   "Exact Real Arithmetic: A Case Study in Higher Order Programming." *LFP '86*
   (1986): 162-173.
@@ -258,7 +275,7 @@ cargo bench --bench exact --features all-algorithms
   [doi:10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721%2895%2900040-2)
 - Implementation lineage and comparison projects:
   [Mapbox Earcut](https://github.com/mapbox/earcut),
-  [earcutr](https://github.com/donbright/earcutr),
+  [earcutr](https://github.com/frewsxcv/earcutr),
   [Spade](https://github.com/Stoeoef/spade), and the
   [CGAL triangulation packages](https://doc.cgal.org/latest/Manual/packages.html#PkgTriangulations).
 

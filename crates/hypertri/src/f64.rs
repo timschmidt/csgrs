@@ -29,6 +29,15 @@ pub fn delaunay(points: &[[f64; 2]]) -> Result<DelaunayTriangulation> {
     crate::cdt::delaunay(&exact)
 }
 
+/// Triangulate finite `f64` points with the BRIO-style batch schedule after
+/// exact dyadic lifting. See [`crate::cdt::delaunay_spatial`] for tie behavior.
+#[cfg(feature = "cdt")]
+pub fn delaunay_spatial(points: &[[f64; 2]]) -> Result<DelaunayTriangulation> {
+    validate_f64_vertices(points)?;
+    let exact = lift_vertices(points)?;
+    crate::cdt::delaunay_spatial(&exact)
+}
+
 /// Triangulate finite `f64` points with constraints after exact dyadic lifting.
 #[cfg(feature = "cdt")]
 pub fn constrained_delaunay(

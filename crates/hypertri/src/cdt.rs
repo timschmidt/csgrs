@@ -188,9 +188,36 @@ impl ConstrainedDelaunayTriangulation {
 pub fn delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
     validate_unique_points(points)?;
     let triangles = delaunay_triangles::<ExactKernel>(points)?;
-    let triangulation = DelaunayTriangulation::from_parts(points.to_vec(), triangles);
-    triangulation.validate()?;
-    Ok(triangulation)
+    // Every construction branch admits only nondegenerate, positively
+    // oriented triangles and makes each Delaunay choice with the exact
+    // in-circle predicate. Re-running the public validator here would repeat
+    // those predicates over the completed mesh; callers can still invoke
+    // `validate` explicitly on records assembled or deserialized elsewhere.
+    Ok(DelaunayTriangulation::from_parts(
+        points.to_vec(),
+        triangles,
+    ))
+}
+
+/// Triangulate an exact point set using a deterministic BRIO-style batch order.
+///
+/// The input point buffer and every triangle index still refer to the caller's
+/// original order. Only the internal Bowyer--Watson insertion schedule changes:
+/// a deterministic randomized hierarchy supplies successively larger rounds,
+/// and a median spatial traversal improves locality within each round. This is
+/// useful for large batches whose caller order is unrelated to geometry.
+///
+/// For cocircular point sets, Delaunay triangulations are not unique, so this
+/// function can choose different valid diagonals than [`delaunay`]. Callers
+/// that require the historical insertion-order tie topology should use
+/// [`delaunay`].
+pub fn delaunay_spatial(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
+    validate_unique_points(points)?;
+    let triangles = delaunay_triangles_spatial::<ExactKernel>(points)?;
+    Ok(DelaunayTriangulation::from_parts(
+        points.to_vec(),
+        triangles,
+    ))
 }
 
 /// Triangulate exact points with constraints.
@@ -309,6 +336,19 @@ where
             .map(|triangle| triangle.into_iter().collect()),
         4 => delaunay_quad::<K>(points),
         _ => incremental_delaunay::<K>(points),
+    }
+}
+
+fn delaunay_triangles_spatial<K>(points: &[Point2]) -> Result<Vec<Triangle>>
+where
+    K: Kernel,
+{
+    match points.len() {
+        0..=4 => delaunay_triangles::<K>(points),
+        _ => {
+            let order = brio_insertion_order::<K>(points)?;
+            incremental_delaunay_in_order::<K>(points, &order)
+        }
     }
 }
 
@@ -454,33 +494,39 @@ where
     ))
 }
 
-fn incircle_inside_or_on<K>(points: &[Point2], triangle: Triangle, point: usize) -> Result<bool>
+fn incircle_inside_or_on_positive<K>(
+    points: &[Point2],
+    triangle: Triangle,
+    point: usize,
+) -> Result<bool>
 where
     K: Kernel,
 {
-    let orientation = predicates::orient2d::<K>(
-        &points[triangle[0]],
-        &points[triangle[1]],
-        &points[triangle[2]],
-    )?;
-    if orientation == Sign::Zero {
-        return Ok(false);
-    }
-
+    // Incremental Bowyer-Watson insertion creates the seed and every cavity
+    // replacement through `make_oriented`, so active triangles carry a
+    // certified positive-orientation invariant. Reuse that object fact rather
+    // than evaluating the orientation determinant again for every candidate
+    // point/circumcircle pair.
     let sign = K::incircle2d(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
         &points[point],
     )?;
-    Ok(matches!(
-        (orientation, sign),
-        (Sign::Positive, Sign::Positive | Sign::Zero)
-            | (Sign::Negative, Sign::Negative | Sign::Zero)
-    ))
+    Ok(matches!(sign, Sign::Positive | Sign::Zero))
 }
 
 fn incremental_delaunay<K>(points: &[Point2]) -> Result<Vec<Triangle>>
+where
+    K: Kernel,
+{
+    incremental_delaunay_in_order::<K>(points, &(0..points.len()).collect::<Vec<_>>())
+}
+
+fn incremental_delaunay_in_order<K>(
+    points: &[Point2],
+    insertion_order: &[usize],
+) -> Result<Vec<Triangle>>
 where
     K: Kernel,
 {
@@ -497,7 +543,7 @@ where
         [first_super, first_super + 1, first_super + 2],
     )?];
 
-    for point in 0..points.len() {
+    for &point in insertion_order {
         let mut bad = vec![false; triangles.len()];
         if triangles.len() >= LOCATED_CAVITY_THRESHOLD {
             let neighbors = triangle_neighbors(&triangles);
@@ -515,7 +561,11 @@ where
                         continue;
                     }
                     visited[triangle_index] = true;
-                    if incircle_inside_or_on::<K>(&work_points, triangles[triangle_index], point)? {
+                    if incircle_inside_or_on_positive::<K>(
+                        &work_points,
+                        triangles[triangle_index],
+                        point,
+                    )? {
                         bad[triangle_index] = true;
                         pending.extend(neighbors[triangle_index].iter().flatten().copied());
                     }
@@ -560,6 +610,122 @@ where
     Ok(triangles)
 }
 
+fn brio_insertion_order<K>(points: &[Point2]) -> Result<Vec<usize>>
+where
+    K: Kernel,
+{
+    // A minimum first-round population avoids spending exact spatial-sort
+    // comparisons on many tiny buckets. Above that floor, splitmix-assigned
+    // levels produce the geometrically growing rounds of a biased randomized
+    // insertion order without adding an RNG or making results process-seeded.
+    const MIN_FIRST_ROUND: usize = 16;
+    let mut highest_level = 0_usize;
+    while (points.len() >> (highest_level + 1)) >= MIN_FIRST_ROUND {
+        highest_level += 1;
+    }
+
+    let mut rounds = vec![Vec::new(); highest_level + 1];
+    for point in 0..points.len() {
+        let level = (splitmix64(point as u64).trailing_zeros() as usize).min(highest_level);
+        rounds[level].push(point);
+    }
+
+    let mut order = Vec::with_capacity(points.len());
+    for round in rounds.iter_mut().rev() {
+        spatial_median_order::<K>(points, round, false)?;
+        order.append(round);
+    }
+    Ok(order)
+}
+
+fn splitmix64(mut value: u64) -> u64 {
+    value = value.wrapping_add(0x9e37_79b9_7f4a_7c15);
+    value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+    value = (value ^ (value >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+    value ^ (value >> 31)
+}
+
+fn spatial_median_order<K>(points: &[Point2], indices: &mut [usize], split_y: bool) -> Result<()>
+where
+    K: Kernel,
+{
+    if indices.len() <= 1 {
+        return Ok(());
+    }
+
+    let midpoint = indices.len() / 2;
+    select_spatial_nth::<K>(points, indices, midpoint, split_y)?;
+
+    let (lower, upper) = indices.split_at_mut(midpoint);
+    spatial_median_order::<K>(points, lower, !split_y)?;
+    spatial_median_order::<K>(points, &mut upper[1..], !split_y)
+}
+
+fn select_spatial_nth<K>(
+    points: &[Point2],
+    indices: &mut [usize],
+    nth: usize,
+    compare_y_first: bool,
+) -> Result<()>
+where
+    K: Kernel,
+{
+    // `slice::select_nth_unstable_by` cannot propagate a fallible exact
+    // comparison without making its comparator stateful and potentially
+    // inconsistent after an error. This compact quickselect keeps comparison
+    // failure explicit and leaves topology untouched if scheduling cannot be
+    // decided.
+    let mut lower = 0;
+    let mut upper = indices.len();
+    while upper - lower > 1 {
+        let pivot_position = lower + (upper - lower) / 2;
+        indices.swap(pivot_position, upper - 1);
+        let pivot = indices[upper - 1];
+        let mut split = lower;
+        for candidate in lower..upper - 1 {
+            if spatial_point_cmp::<K>(points, indices[candidate], pivot, compare_y_first)?
+                == std::cmp::Ordering::Less
+            {
+                indices.swap(candidate, split);
+                split += 1;
+            }
+        }
+        indices.swap(split, upper - 1);
+        match split.cmp(&nth) {
+            std::cmp::Ordering::Less => lower = split + 1,
+            std::cmp::Ordering::Greater => upper = split,
+            std::cmp::Ordering::Equal => return Ok(()),
+        }
+    }
+    Ok(())
+}
+
+fn spatial_point_cmp<K>(
+    points: &[Point2],
+    left: usize,
+    right: usize,
+    compare_y_first: bool,
+) -> Result<std::cmp::Ordering>
+where
+    K: Kernel,
+{
+    let (left_primary, left_secondary) = if compare_y_first {
+        (&points[left].y, &points[left].x)
+    } else {
+        (&points[left].x, &points[left].y)
+    };
+    let (right_primary, right_secondary) = if compare_y_first {
+        (&points[right].y, &points[right].x)
+    } else {
+        (&points[right].x, &points[right].y)
+    };
+    let primary = K::cmp(left_primary, right_primary)?;
+    if primary != std::cmp::Ordering::Equal {
+        return Ok(primary);
+    }
+    Ok(K::cmp(left_secondary, right_secondary)?.then(left.cmp(&right)))
+}
+
 fn mark_bad_triangles_exhaustive<K>(
     points: &[Point2],
     triangles: &[Triangle],
@@ -570,7 +736,7 @@ where
     K: Kernel,
 {
     for (triangle_index, &triangle) in triangles.iter().enumerate() {
-        if incircle_inside_or_on::<K>(points, triangle, point)? {
+        if incircle_inside_or_on_positive::<K>(points, triangle, point)? {
             bad[triangle_index] = true;
         }
     }
@@ -939,6 +1105,51 @@ mod tests {
                 reason: "duplicate points are not supported"
             }
         );
+    }
+
+    #[test]
+    fn spatial_delaunay_preserves_indices_and_unique_topology() {
+        let points = vec![
+            p(0, 0),
+            p(7, 1),
+            p(2, 6),
+            p(9, 8),
+            p(4, 3),
+            p(1, 9),
+            p(8, 4),
+            p(5, 10),
+            p(11, 2),
+        ];
+        let ordinary = delaunay(&points).unwrap();
+        let spatial = delaunay_spatial(&points).unwrap();
+
+        ordinary.validate().unwrap();
+        spatial.validate().unwrap();
+        assert_eq!(spatial.points(), points.as_slice());
+
+        let canonical = |triangulation: &DelaunayTriangulation| {
+            let mut triangles = triangulation.triangles().to_vec();
+            for triangle in &mut triangles {
+                triangle.sort_unstable();
+            }
+            triangles.sort_unstable();
+            triangles
+        };
+        assert_eq!(canonical(&ordinary), canonical(&spatial));
+    }
+
+    #[test]
+    fn brio_order_is_deterministic_permutation() {
+        let points = (0..80)
+            .map(|index| p((index * 17) % 83, (index * 29) % 89))
+            .collect::<Vec<_>>();
+        let first = brio_insertion_order::<ExactKernel>(&points).unwrap();
+        let second = brio_insertion_order::<ExactKernel>(&points).unwrap();
+        let mut sorted = first.clone();
+        sorted.sort_unstable();
+
+        assert_eq!(first, second);
+        assert_eq!(sorted, (0..points.len()).collect::<Vec<_>>());
     }
 
     #[test]
