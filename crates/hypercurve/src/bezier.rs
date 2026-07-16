@@ -713,14 +713,29 @@ impl QuadraticBezier2 {
 
     /// Evaluates the curve at affine parameter `t`.
     ///
-    /// This uses one step of de Casteljau subdivision instead of expanding the
-    /// Bernstein polynomial. Keeping the affine construction visible gives
-    /// later exact predicates an obvious place to reuse structural facts about
-    /// `t`, endpoint grids, and shared denominator schedules.
+    /// Exact-rational parameters use the quadratic polynomial in Horner form,
+    /// reducing multiplication count without introducing an approximate
+    /// adapter. Other parameters retain the affine de Casteljau expression
+    /// graph used by downstream exact predicates.
     pub fn point_at(&self, t: Real) -> Point2 {
-        let left = self.start.lerp(&self.control, t.clone());
-        let right = self.control.lerp(&self.end, t.clone());
-        left.lerp(&right, t)
+        if t.exact_rational_ref().is_none() {
+            let one_minus_t = Real::one() - &t;
+            let left = self
+                .start
+                .lerp_with_weights(&self.control, &one_minus_t, &t);
+            let right = self.control.lerp_with_weights(&self.end, &one_minus_t, &t);
+            return left.lerp_with_weights(&right, &one_minus_t, &t);
+        }
+
+        let two = Real::from(2);
+        let x_linear = (self.control.x() - self.start.x()) * &two;
+        let x_quadratic = self.start.x() - self.control.x() * &two + self.end.x();
+        let y_linear = (self.control.y() - self.start.y()) * &two;
+        let y_quadratic = self.start.y() - self.control.y() * &two + self.end.y();
+        Point2::new(
+            self.start.x() + (x_linear + x_quadratic * &t) * &t,
+            self.start.y() + (y_linear + y_quadratic * &t) * &t,
+        )
     }
 
     /// Classifies whether `point` equals this curve at parameter `t`.
@@ -888,16 +903,42 @@ impl CubicBezier2 {
 
     /// Evaluates the curve at affine parameter `t`.
     ///
-    /// The nested de Casteljau construction keeps subdivision exact over
-    /// [`Real`] inputs and avoids introducing an approximate polynomial adapter
-    /// into the topology layer.
+    /// Exact-rational parameters evaluate shared Bernstein weights across both
+    /// coordinates. Other parameters retain the de Casteljau expression graph
+    /// used by downstream exact predicates. Both paths remain exact over
+    /// [`Real`] inputs.
     pub fn point_at(&self, t: Real) -> Point2 {
-        let p01 = self.start.lerp(&self.control1, t.clone());
-        let p12 = self.control1.lerp(&self.control2, t.clone());
-        let p23 = self.control2.lerp(&self.end, t.clone());
-        let p012 = p01.lerp(&p12, t.clone());
-        let p123 = p12.lerp(&p23, t.clone());
-        p012.lerp(&p123, t)
+        if t.exact_rational_ref().is_none() {
+            let one_minus_t = Real::one() - &t;
+            let p01 = self
+                .start
+                .lerp_with_weights(&self.control1, &one_minus_t, &t);
+            let p12 = self
+                .control1
+                .lerp_with_weights(&self.control2, &one_minus_t, &t);
+            let p23 = self.control2.lerp_with_weights(&self.end, &one_minus_t, &t);
+            let p012 = p01.lerp_with_weights(&p12, &one_minus_t, &t);
+            let p123 = p12.lerp_with_weights(&p23, &one_minus_t, &t);
+            return p012.lerp_with_weights(&p123, &one_minus_t, &t);
+        }
+
+        let one_minus_t = Real::one() - &t;
+        let one_minus_t_squared = &one_minus_t * &one_minus_t;
+        let t_squared = &t * &t;
+        let start_weight = &one_minus_t_squared * &one_minus_t;
+        let control1_weight = (&one_minus_t_squared * &t) * Real::from(3);
+        let control2_weight = (&one_minus_t * &t_squared) * Real::from(3);
+        let end_weight = &t_squared * &t;
+        Point2::new(
+            self.start.x() * &start_weight
+                + self.control1.x() * &control1_weight
+                + self.control2.x() * &control2_weight
+                + self.end.x() * &end_weight,
+            self.start.y() * &start_weight
+                + self.control1.y() * &control1_weight
+                + self.control2.y() * &control2_weight
+                + self.end.y() * &end_weight,
+        )
     }
 
     /// Classifies whether `point` equals this curve at parameter `t`.

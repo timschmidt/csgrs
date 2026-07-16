@@ -72,9 +72,15 @@ impl Point2 {
     /// Linearly interpolates between two points.
     pub fn lerp(&self, other: &Self, t: Real) -> Self {
         let one_minus_t = Real::one() - &t;
+        self.lerp_with_weights(other, &one_minus_t, &t)
+    }
+
+    /// Interpolates with caller-provided affine weights that are shared by one
+    /// de Casteljau level or triangle.
+    pub(crate) fn lerp_with_weights(&self, other: &Self, one_minus_t: &Real, t: &Real) -> Self {
         Self::new(
-            (&self.x * &one_minus_t) + (&other.x * &t),
-            (&self.y * &one_minus_t) + (&other.y * &t),
+            (&self.x * one_minus_t) + (&other.x * t),
+            (&self.y * one_minus_t) + (&other.y * t),
         )
     }
 

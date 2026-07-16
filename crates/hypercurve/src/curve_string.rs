@@ -1,8 +1,12 @@
 //! Ordered open curve strings.
 
 use std::cmp::Ordering;
+use std::collections::BTreeSet;
+use std::iter::Copied;
+use std::ops::Range;
+use std::slice;
 
-use hyperreal::{Real, RealSign};
+use hyperreal::{Rational, Real, RealSign};
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
@@ -8962,12 +8966,18 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
         .saturating_sub(second_decided_segment_box_count);
     let mut skipped_aabb_pair_count = 0_usize;
     let mut tested_pair_count = 0_usize;
+    let x_overlap_schedule =
+        curve_string_x_overlap_schedule(first_segment_boxes, second_segment_boxes);
+    if let Some(schedule) = &x_overlap_schedule {
+        skipped_aabb_pair_count = candidate_pair_count - schedule.candidate_pair_count();
+    }
 
     for (a_segment_index, a_segment) in first.segments.iter().enumerate() {
-        for (b_segment_index, b_segment) in second.segments.iter().enumerate() {
-            // This is the same conservative broad phase used by the public
-            // curve-string query. An ordered sweep could prune more candidates;
-            // this flat scan instead lets prepared callers reuse segment boxes.
+        for b_segment_index in x_overlap_schedule.as_ref().map_or_else(
+            || CurveStringXOverlapCandidates::All(0..second.segments.len()),
+            |schedule| schedule.candidates_for(a_segment_index),
+        ) {
+            let b_segment = &second.segments[b_segment_index];
             if let (Some(Some(a_box)), Some(Some(b_box))) = (
                 first_segment_boxes.get(a_segment_index),
                 second_segment_boxes.get(b_segment_index),
@@ -9022,6 +9032,234 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs_with_report(
             blocker: None,
         },
     })
+}
+
+const CURVE_STRING_X_SWEEP_PRECISION: i32 = -32;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+enum CurveStringXEventKind {
+    FirstStart,
+    SecondStart,
+    FirstEnd,
+    SecondEnd,
+}
+
+#[derive(Clone, Debug)]
+struct CurveStringXEvent {
+    coordinate: Rational,
+    kind: CurveStringXEventKind,
+    segment_index: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct CurveStringXOverlapSchedule {
+    candidates: Vec<Vec<usize>>,
+    candidate_pair_count: usize,
+}
+
+impl CurveStringXOverlapSchedule {
+    pub(crate) const fn candidate_pair_count(&self) -> usize {
+        self.candidate_pair_count
+    }
+
+    pub(crate) fn candidates_for(&self, first_index: usize) -> CurveStringXOverlapCandidates<'_> {
+        CurveStringXOverlapCandidates::Scheduled(self.candidates[first_index].iter().copied())
+    }
+}
+
+pub(crate) enum CurveStringXOverlapCandidates<'a> {
+    All(Range<usize>),
+    Scheduled(Copied<slice::Iter<'a, usize>>),
+}
+
+impl Iterator for CurveStringXOverlapCandidates<'_> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::All(indices) => indices.next(),
+            Self::Scheduled(indices) => indices.next(),
+        }
+    }
+}
+
+pub(crate) fn curve_string_x_overlap_schedule(
+    first_boxes: &[Option<Aabb2>],
+    second_boxes: &[Option<Aabb2>],
+) -> Option<CurveStringXOverlapSchedule> {
+    const MINIMUM_FLAT_PAIR_COUNT: usize = 4_096;
+
+    let flat_pair_count = first_boxes.len().saturating_mul(second_boxes.len());
+    if flat_pair_count < MINIMUM_FLAT_PAIR_COUNT {
+        return None;
+    }
+    let first_boxes = first_boxes
+        .iter()
+        .map(Option::as_ref)
+        .collect::<Option<Vec<_>>>()?;
+    let second_boxes = second_boxes
+        .iter()
+        .map(Option::as_ref)
+        .collect::<Option<Vec<_>>>()?;
+    if sampled_exact_rational_x_overlap_is_dense(&first_boxes, &second_boxes) {
+        return None;
+    }
+    let mut events = Vec::with_capacity(2 * (first_boxes.len() + second_boxes.len()));
+
+    let mut push_events = |boxes: &[&Aabb2], start_kind, end_kind| -> Option<()> {
+        for (segment_index, bbox) in boxes.iter().enumerate() {
+            let [minimum, maximum] = conservative_x_interval(bbox)?;
+            events.push(CurveStringXEvent {
+                coordinate: minimum,
+                kind: start_kind,
+                segment_index,
+            });
+            events.push(CurveStringXEvent {
+                coordinate: maximum,
+                kind: end_kind,
+                segment_index,
+            });
+        }
+        Some(())
+    };
+    push_events(
+        &first_boxes,
+        CurveStringXEventKind::FirstStart,
+        CurveStringXEventKind::FirstEnd,
+    )?;
+    push_events(
+        &second_boxes,
+        CurveStringXEventKind::SecondStart,
+        CurveStringXEventKind::SecondEnd,
+    )?;
+
+    // Starts precede ends at an equal coordinate so endpoint contact remains
+    // a candidate. Source indices break remaining ties deterministically.
+    events.sort_by(|left, right| {
+        left.coordinate
+            .partial_cmp(&right.coordinate)
+            .expect("rational sweep endpoints are totally ordered")
+            .then_with(|| left.kind.cmp(&right.kind))
+            .then_with(|| left.segment_index.cmp(&right.segment_index))
+    });
+
+    let dense_pair_limit = flat_pair_count / 2;
+    let mut active_first_count = 0_usize;
+    let mut active_second_count = 0_usize;
+    let mut candidate_pair_count = 0_usize;
+    for event in &events {
+        match event.kind {
+            CurveStringXEventKind::FirstStart => {
+                candidate_pair_count += active_second_count;
+                active_first_count += 1;
+            }
+            CurveStringXEventKind::SecondStart => {
+                candidate_pair_count += active_first_count;
+                active_second_count += 1;
+            }
+            CurveStringXEventKind::FirstEnd => {
+                active_first_count -= 1;
+            }
+            CurveStringXEventKind::SecondEnd => {
+                active_second_count -= 1;
+            }
+        }
+        if candidate_pair_count > dense_pair_limit {
+            return None;
+        }
+    }
+
+    let mut active_first = BTreeSet::new();
+    let mut active_second = BTreeSet::new();
+    let mut candidates = vec![Vec::new(); first_boxes.len()];
+    for event in events {
+        match event.kind {
+            CurveStringXEventKind::FirstStart => {
+                candidates[event.segment_index].extend(active_second.iter().copied());
+                active_first.insert(event.segment_index);
+            }
+            CurveStringXEventKind::SecondStart => {
+                for &first_index in &active_first {
+                    candidates[first_index].push(event.segment_index);
+                }
+                active_second.insert(event.segment_index);
+            }
+            CurveStringXEventKind::FirstEnd => {
+                active_first.remove(&event.segment_index);
+            }
+            CurveStringXEventKind::SecondEnd => {
+                active_second.remove(&event.segment_index);
+            }
+        }
+    }
+
+    let mut materialized_candidate_pair_count = 0;
+    for row in &mut candidates {
+        row.sort_unstable();
+        row.dedup();
+        materialized_candidate_pair_count += row.len();
+    }
+    debug_assert_eq!(candidate_pair_count, materialized_candidate_pair_count);
+    Some(CurveStringXOverlapSchedule {
+        candidates,
+        candidate_pair_count,
+    })
+}
+
+fn conservative_x_interval(bbox: &Aabb2) -> Option<[Rational; 2]> {
+    Some([
+        bbox.min_x()
+            .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)?[0]
+            .clone(),
+        bbox.max_x()
+            .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)?[1]
+            .clone(),
+    ])
+}
+
+fn sampled_exact_rational_x_overlap_is_dense(first: &[&Aabb2], second: &[&Aabb2]) -> bool {
+    const SAMPLE_COUNT: usize = 8;
+
+    fn indices(len: usize) -> Vec<usize> {
+        let count = len.min(SAMPLE_COUNT);
+        match count {
+            0 => Vec::new(),
+            1 => vec![0],
+            _ => (0..count)
+                .map(|index| index * (len - 1) / (count - 1))
+                .collect(),
+        }
+    }
+
+    let first_indices = indices(first.len());
+    let second_indices = indices(second.len());
+    let sampled_pair_count = first_indices.len() * second_indices.len();
+    if sampled_pair_count == 0 {
+        return false;
+    }
+    let mut overlap_count = 0_usize;
+    for first_index in first_indices {
+        let (Some(first_minimum), Some(first_maximum)) = (
+            first[first_index].min_x().exact_rational_ref(),
+            first[first_index].max_x().exact_rational_ref(),
+        ) else {
+            return false;
+        };
+        for &second_index in &second_indices {
+            let (Some(second_minimum), Some(second_maximum)) = (
+                second[second_index].min_x().exact_rational_ref(),
+                second[second_index].max_x().exact_rational_ref(),
+            ) else {
+                return false;
+            };
+            overlap_count +=
+                usize::from(first_minimum <= second_maximum && second_minimum <= first_maximum);
+        }
+    }
+    // This sample chooses only between the sweep and the authoritative flat
+    // scan. A false dense result can cost an optimization opportunity but
+    // cannot reject a geometric candidate or change topology.
+    overlap_count * 2 > sampled_pair_count
 }
 
 pub(crate) fn decided_segment_box_count(segment_boxes: &[Option<Aabb2>]) -> usize {

@@ -45,6 +45,10 @@ name = "intersection"
 harness = false
 
 [[bench]]
+name = "intersection_sweep"
+harness = false
+
+[[bench]]
 name = "bezier_algebraic_parameter"
 harness = false
 
@@ -62,6 +66,10 @@ harness = false
 
 [[bench]]
 name = "bezier_split_materialization"
+harness = false
+
+[[bench]]
+name = "bezier_evaluation"
 harness = false
 
 [[bench]]

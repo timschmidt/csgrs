@@ -4760,6 +4760,49 @@ fn prepared_curve_string_intersections_match_plain_sparse_scan() {
 }
 
 #[test]
+fn large_sparse_sweep_keeps_equal_x_endpoint_contact_and_source_order() {
+    let first = sparse_zigzag(64);
+    let mut second_points = (0..=64)
+        .map(|index| p(index * 3, 100 + index % 2))
+        .collect::<Vec<_>>();
+    second_points.push(p(64 * 3, 0));
+    let second = CurveString2::try_new(
+        second_points
+            .windows(2)
+            .map(|pair| {
+                Segment2::Line(LineSeg2::try_new(pair[0].clone(), pair[1].clone()).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap();
+    let policy = policy();
+
+    let direct = first
+        .intersect_curve_string_with_report(&second, &policy)
+        .unwrap();
+    let prepared_first = first.prepare_topology_queries(&policy);
+    let prepared_second = second.prepare_topology_queries(&policy);
+    let prepared = prepared_first
+        .intersect_prepared_curve_string_with_report(&prepared_second, &policy)
+        .unwrap();
+
+    assert_eq!(direct.report().candidate_pair_count(), 64 * 65);
+    assert_eq!(direct.report().tested_pair_count(), 1);
+    assert_eq!(direct.intersections().len(), 1);
+    assert_eq!(direct.intersections()[0].a_segment_index, 63);
+    assert_eq!(direct.intersections()[0].b_segment_index, 64);
+    assert_eq!(prepared.intersections(), direct.intersections());
+    assert_eq!(
+        prepared.report().skipped_aabb_pair_count(),
+        direct.report().skipped_aabb_pair_count()
+    );
+    assert_eq!(
+        prepared.report().tested_pair_count(),
+        direct.report().tested_pair_count()
+    );
+}
+
+#[test]
 fn prepared_curve_string_intersections_preserve_line_arc_hits() {
     let line_curve = CurveString2::try_new(vec![line_segment(1, -2, 1, 2)]).unwrap();
     let arc_curve = CurveString2::try_new(vec![Segment2::Arc(

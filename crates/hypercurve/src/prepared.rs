@@ -8,7 +8,10 @@
 //! while preserving certified predicates for topology branches.
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
-use crate::curve_string::{curve_string_intersection_relation_counts, decided_segment_box_count};
+use crate::curve_string::{
+    CurveStringXOverlapCandidates, curve_string_intersection_relation_counts,
+    curve_string_x_overlap_schedule, decided_segment_box_count,
+};
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::region_events::RegionIntersectionWorkload;
 use crate::{
@@ -340,7 +343,8 @@ impl<'a> PreparedSegment2<'a> {
 /// topology queries. The cache never decides a contact on its own: it skips only
 /// decided disjoint boxes and keeps exact line/arc intersections authoritative.
 /// This mirrors the candidate-pruning role described by sweep-line scheduling,
-/// while retaining the current flat pair enumeration.
+/// using an adaptive conservative x-interval sweep for sufficiently large,
+/// sampled-sparse batches and the flat scan for small or dense workloads.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedCurveStringView2<'a> {
     curve: &'a CurveString2,
@@ -354,10 +358,9 @@ impl<'a> PreparedCurveStringView2<'a> {
     /// Builds a prepared borrowed curve string.
     pub fn from_curve_string(curve: &'a CurveString2, policy: &CurvePolicy) -> Self {
         // Structural-dispatch note: this preparation pass already visits every
-        // segment. It is the natural place to retain facts such as all-line,
-        // all-axis-aligned, monotone parameter ranges, or certified disjoint
-        // interval buckets so later intersection queries can choose sweep-line
-        // or grid-index paths instead of the current flat candidate scan.
+        // segment. The cached boxes feed the adaptive x-interval sweep directly;
+        // richer facts such as all-line, all-axis-aligned, or monotone parameter
+        // ranges can still support future narrow-phase dispatch.
         let segment_boxes = decided_segment_boxes(curve.segments(), policy);
         let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
         let facts = crate::facts::curve_string_facts(
@@ -1377,13 +1380,18 @@ fn intersect_prepared_segment_pairs_with_cached_aabbs(
     let candidate_pair_count = first_prepared_segments.len() * second_prepared_segments.len();
     let mut skipped_aabb_pair_count = 0_usize;
     let mut tested_pair_count = 0_usize;
+    let x_overlap_schedule =
+        curve_string_x_overlap_schedule(first_segment_boxes, second_segment_boxes);
+    if let Some(schedule) = &x_overlap_schedule {
+        skipped_aabb_pair_count = candidate_pair_count - schedule.candidate_pair_count();
+    }
 
     for (a_segment_index, a_segment) in first_prepared_segments.iter().enumerate() {
-        for (b_segment_index, b_segment) in second_prepared_segments.iter().enumerate() {
-            // Prepared pair batches use the same conservative broad phase as
-            // ordinary curve strings. The flat scan keeps exact segment
-            // relations authoritative until a later index can consume retained
-            // all-line, axis, and monotonicity facts.
+        for b_segment_index in x_overlap_schedule.as_ref().map_or_else(
+            || CurveStringXOverlapCandidates::All(0..second_prepared_segments.len()),
+            |schedule| schedule.candidates_for(a_segment_index),
+        ) {
+            let b_segment = &second_prepared_segments[b_segment_index];
             if let (Some(Some(a_box)), Some(Some(b_box))) = (
                 first_segment_boxes.get(a_segment_index),
                 second_segment_boxes.get(b_segment_index),

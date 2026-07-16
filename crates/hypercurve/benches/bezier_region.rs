@@ -154,6 +154,32 @@ fn main() -> CurveResult<()> {
         elapsed / moment_iterations
     );
 
+    let prefix_parameter = q(3, 4);
+    let started = Instant::now();
+    for _ in 0..moment_iterations {
+        black_box(decided(
+            black_box(&moment_curve)
+                .prefix_area_moments_contribution(prefix_parameter.clone(), &policy)?,
+        ));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "cubic_bezier_prefix_area_moments: {moment_iterations} iterations in {elapsed:?} ({:?}/iter)",
+        elapsed / moment_iterations
+    );
+
+    let started = Instant::now();
+    for _ in 0..moment_iterations {
+        black_box(decided(
+            black_box(&moment_curve).prefix_length_bounds(prefix_parameter.clone(), &policy)?,
+        ));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "cubic_bezier_prefix_length_bounds: {moment_iterations} iterations in {elapsed:?} ({:?}/iter)",
+        elapsed / moment_iterations
+    );
+
     let first_region = square_region(0, 0, 4, 4)?;
     let second_region = square_region(2, 0, 6, 4)?;
     let region_boolean_iterations = 1_000_u32;

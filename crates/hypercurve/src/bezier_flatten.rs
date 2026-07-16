@@ -139,14 +139,7 @@ impl FlattenableBezier for QuadraticBezier2 {
     }
 
     fn split_half(&self) -> Result<(Self, Self), UncertaintyReason> {
-        let half = half()?;
-        let p01 = self.start().lerp(self.control(), half.clone());
-        let p12 = self.control().lerp(self.end(), half);
-        let mid = midpoint_point(&p01, &p12)?;
-        Ok((
-            QuadraticBezier2::new(self.start().clone(), p01, mid.clone()),
-            QuadraticBezier2::new(mid, p12, self.end().clone()),
-        ))
+        Ok(self.split_at_exact(half()?))
     }
 }
 
@@ -164,17 +157,7 @@ impl FlattenableBezier for CubicBezier2 {
     }
 
     fn split_half(&self) -> Result<(Self, Self), UncertaintyReason> {
-        let half = half()?;
-        let p01 = self.start().lerp(self.control1(), half.clone());
-        let p12 = self.control1().lerp(self.control2(), half.clone());
-        let p23 = self.control2().lerp(self.end(), half);
-        let p012 = midpoint_point(&p01, &p12)?;
-        let p123 = midpoint_point(&p12, &p23)?;
-        let mid = midpoint_point(&p012, &p123)?;
-        Ok((
-            CubicBezier2::new(self.start().clone(), p01, p012, mid.clone()),
-            CubicBezier2::new(mid, p123, p23, self.end().clone()),
-        ))
+        Ok(self.split_at_exact(half()?))
     }
 }
 
@@ -294,10 +277,6 @@ fn squared_distance_within(
         Some(Ordering::Greater) => Ok(false),
         None => Err(UncertaintyReason::Ordering),
     }
-}
-
-fn midpoint_point(first: &Point2, second: &Point2) -> Result<Point2, UncertaintyReason> {
-    Ok(first.lerp(second, half()?))
 }
 
 fn half() -> Result<Real, UncertaintyReason> {

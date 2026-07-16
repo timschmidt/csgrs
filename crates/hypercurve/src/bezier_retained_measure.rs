@@ -141,7 +141,7 @@ impl BezierRetainedEndpointEnvelope2 {
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
         }
-        accumulator.finish(policy)
+        accumulator.finish()
     }
 
     /// Constructs an endpoint envelope for one retained boundary loop.
@@ -151,7 +151,7 @@ impl BezierRetainedEndpointEnvelope2 {
     ) -> Classification<Self> {
         let mut accumulator = EndpointEnvelopeAccumulator::default();
         match accumulator.include_loop(boundary_loop, policy) {
-            Classification::Decided(()) => accumulator.finish(policy),
+            Classification::Decided(()) => accumulator.finish(),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
     }
@@ -198,10 +198,7 @@ struct EndpointInterval {
 
 #[derive(Default)]
 struct EndpointEnvelopeAccumulator {
-    min_x: Option<Real>,
-    min_y: Option<Real>,
-    max_x: Option<Real>,
-    max_y: Option<Real>,
+    envelope: Option<Aabb2>,
     native_endpoint_count: usize,
     algebraic_endpoint_count: usize,
     endpoint_source_kinds: Vec<BezierRetainedEnvelopeSourceKind>,
@@ -403,7 +400,7 @@ fn retained_algebraic_source_extrema_bounds(
         }
     }
 
-    match accumulator.finish(policy) {
+    match accumulator.finish() {
         Classification::Decided(envelope) => Classification::Decided(Some(envelope.envelope)),
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
@@ -655,15 +652,21 @@ impl EndpointEnvelopeAccumulator {
         endpoint: EndpointInterval,
         policy: &CurvePolicy,
     ) -> Classification<()> {
-        if self
-            .include_coordinate(&endpoint.x.lower, &endpoint.x.upper, Axis::X, policy)
-            .is_none()
-            || self
-                .include_coordinate(&endpoint.y.lower, &endpoint.y.upper, Axis::Y, policy)
-                .is_none()
-        {
-            return Classification::Uncertain(UncertaintyReason::Ordering);
-        }
+        let min = Point2::new(endpoint.x.lower, endpoint.y.lower);
+        let max = Point2::new(endpoint.x.upper, endpoint.y.upper);
+        let endpoint_envelope = match Aabb2::from_points([&min, &max], policy) {
+            Classification::Decided(envelope) => envelope,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        self.envelope = match self.envelope.take() {
+            Some(envelope) => match envelope.union(&endpoint_envelope, policy) {
+                Classification::Decided(envelope) => Some(envelope),
+                Classification::Uncertain(reason) => {
+                    return Classification::Uncertain(reason);
+                }
+            },
+            None => Some(endpoint_envelope),
+        };
         match endpoint.kind {
             BezierRetainedEnvelopeSourceKind::Native => self.native_endpoint_count += 1,
             BezierRetainedEnvelopeSourceKind::Algebraic => self.algebraic_endpoint_count += 1,
@@ -672,49 +675,9 @@ impl EndpointEnvelopeAccumulator {
         Classification::Decided(())
     }
 
-    fn include_coordinate(
-        &mut self,
-        lower: &Real,
-        upper: &Real,
-        axis: Axis,
-        policy: &CurvePolicy,
-    ) -> Option<()> {
-        if compare_reals(lower, upper, policy)? == std::cmp::Ordering::Greater {
-            return None;
-        }
-        let (min, max) = match axis {
-            Axis::X => (&mut self.min_x, &mut self.max_x),
-            Axis::Y => (&mut self.min_y, &mut self.max_y),
-        };
-        match (min.as_mut(), max.as_mut()) {
-            (Some(min), Some(max)) => {
-                if compare_reals(lower, min, policy)? == std::cmp::Ordering::Less {
-                    *min = lower.clone();
-                }
-                if compare_reals(upper, max, policy)? == std::cmp::Ordering::Greater {
-                    *max = upper.clone();
-                }
-            }
-            (None, None) => {
-                *min = Some(lower.clone());
-                *max = Some(upper.clone());
-            }
-            _ => return None,
-        }
-        Some(())
-    }
-
-    fn finish(self, policy: &CurvePolicy) -> Classification<BezierRetainedEndpointEnvelope2> {
-        let (Some(min_x), Some(min_y), Some(max_x), Some(max_y)) =
-            (self.min_x, self.min_y, self.max_x, self.max_y)
-        else {
+    fn finish(self) -> Classification<BezierRetainedEndpointEnvelope2> {
+        let Some(envelope) = self.envelope else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        let min = Point2::new(min_x, min_y);
-        let max = Point2::new(max_x, max_y);
-        let envelope = match Aabb2::from_points([&min, &max], policy) {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         Classification::Decided(BezierRetainedEndpointEnvelope2 {
             envelope,
@@ -723,12 +686,6 @@ impl EndpointEnvelopeAccumulator {
             endpoint_source_kinds: self.endpoint_source_kinds,
         })
     }
-}
-
-#[derive(Clone, Copy)]
-enum Axis {
-    X,
-    Y,
 }
 
 fn native_endpoint_interval(point: &Point2) -> EndpointInterval {

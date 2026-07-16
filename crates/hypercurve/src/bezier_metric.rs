@@ -535,6 +535,7 @@ fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point
         return Err(CurveError::InvalidBezierRange);
     }
 
+    let one_minus_t = Real::one() - &t;
     let mut levels = vec![controls.to_vec()];
     while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
         let Some(previous) = levels.last() else {
@@ -542,7 +543,7 @@ fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point
         };
         let next = previous
             .windows(2)
-            .map(|pair| pair[0].lerp(&pair[1], t.clone()))
+            .map(|pair| pair[0].lerp_with_weights(&pair[1], &one_minus_t, &t))
             .collect::<Vec<_>>();
         levels.push(next);
     }

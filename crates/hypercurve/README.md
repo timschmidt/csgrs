@@ -249,6 +249,9 @@ degree elevations do not fall through to an unresolved resultant. Benchmarks tra
 and retained spline decomposition, cached general-rational evaluation, path-pair
 preparation/candidate filtering, and ordinary, prepared, and mixed-prepared paths.
 
+The complete reference-to-implementation audit, retained benchmark results, and
+rejected optimization experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+
 ## Current Status
 
 Implemented today:

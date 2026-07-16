@@ -647,9 +647,14 @@ impl QuadraticBezier2 {
 
     /// Splits this quadratic at one represented parameter.
     pub fn split_at_exact(&self, t: Real) -> (QuadraticBezier2, QuadraticBezier2) {
-        let p01 = self.start().lerp(self.control(), t.clone());
-        let p12 = self.control().lerp(self.end(), t.clone());
-        let p012 = p01.lerp(&p12, t);
+        let one_minus_t = Real::one() - &t;
+        let p01 = self
+            .start()
+            .lerp_with_weights(self.control(), &one_minus_t, &t);
+        let p12 = self
+            .control()
+            .lerp_with_weights(self.end(), &one_minus_t, &t);
+        let p012 = p01.lerp_with_weights(&p12, &one_minus_t, &t);
         (
             QuadraticBezier2::new(self.start().clone(), p01, p012.clone()),
             QuadraticBezier2::new(p012, p12, self.end().clone()),
@@ -718,12 +723,19 @@ impl CubicBezier2 {
 
     /// Splits this cubic at one represented parameter.
     pub fn split_at_exact(&self, t: Real) -> (CubicBezier2, CubicBezier2) {
-        let p01 = self.start().lerp(self.control1(), t.clone());
-        let p12 = self.control1().lerp(self.control2(), t.clone());
-        let p23 = self.control2().lerp(self.end(), t.clone());
-        let p012 = p01.lerp(&p12, t.clone());
-        let p123 = p12.lerp(&p23, t.clone());
-        let p0123 = p012.lerp(&p123, t);
+        let one_minus_t = Real::one() - &t;
+        let p01 = self
+            .start()
+            .lerp_with_weights(self.control1(), &one_minus_t, &t);
+        let p12 = self
+            .control1()
+            .lerp_with_weights(self.control2(), &one_minus_t, &t);
+        let p23 = self
+            .control2()
+            .lerp_with_weights(self.end(), &one_minus_t, &t);
+        let p012 = p01.lerp_with_weights(&p12, &one_minus_t, &t);
+        let p123 = p12.lerp_with_weights(&p23, &one_minus_t, &t);
+        let p0123 = p012.lerp_with_weights(&p123, &one_minus_t, &t);
         (
             CubicBezier2::new(self.start().clone(), p01, p012, p0123.clone()),
             CubicBezier2::new(p0123, p123, p23, self.end().clone()),

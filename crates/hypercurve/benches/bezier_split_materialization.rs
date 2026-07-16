@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierAlgebraicParameter2, BezierFlatteningOptions, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, CubicBezier2, CurvePolicy, CurveResult, Point2,
-    Real,
+    RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -46,6 +46,35 @@ fn main() -> CurveResult<()> {
     println!(
         "bezier_split_materialization_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
         elapsed / iterations
+    );
+
+    let flattening_options = BezierFlatteningOptions::try_new(q(1, 10), 16, &policy)?;
+    let flatten_iterations = 10_000_u32;
+    let started = Instant::now();
+    let mut flattened_total = 0_usize;
+    for _ in 0..flatten_iterations {
+        let flattened = decided(curve.flatten_certified(&flattening_options, &policy));
+        flattened_total += black_box(flattened.points().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_flatten_materialization_cubic: {flatten_iterations} iterations in {elapsed:?} ({:?}/iter), total={flattened_total}",
+        elapsed / flatten_iterations
+    );
+
+    let rational_curve =
+        RationalQuadraticBezier2::try_new(p(0, 0), p(4, 8), p(8, 0), r(1), r(2), r(1))?;
+    let rational_iterations = 25_000_u32;
+    let started = Instant::now();
+    let mut rational_total = 0_usize;
+    for _ in 0..rational_iterations {
+        let materialization = decided(rational_curve.split_at_parameters(&parameters, &policy)?);
+        rational_total += black_box(materialization.fragments().len());
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "bezier_split_materialization_rational_quadratic: {rational_iterations} iterations in {elapsed:?} ({:?}/iter), total={rational_total}",
+        elapsed / rational_iterations
     );
 
     let linear_algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
