@@ -370,6 +370,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "real_matmul_6",
                 description: "Computes a 6x6 matrix multiply over symbolic `Real` values.",
             },
+            BenchDoc {
+                name: "real_sum_refs_64_symbolic",
+                description: "Constructs an arbitrary-length sum of 64 borrowed symbolic square roots.",
+            },
+            BenchDoc {
+                name: "real_sum_refs_64_symbolic_to_f64",
+                description: "Constructs and approximates the same arbitrary-length symbolic sum.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -1023,6 +1031,9 @@ fn bench_dense_algebra(c: &mut Criterion) {
     let real_right: Vec<_> = (37..=72)
         .map(|n| Real::e() * real(n, (n as u64 % 5) + 2))
         .collect();
+    let symbolic_sum: Vec<_> = (2..=65)
+        .map(|n| Real::from(n).sqrt().expect("positive radicand"))
+        .collect();
 
     group.bench_function("rational_dot_64", |b| {
         b.iter(|| {
@@ -1045,6 +1056,15 @@ fn bench_dense_algebra(c: &mut Criterion) {
     });
     group.bench_function("real_matmul_6", |b| {
         b.iter(|| black_box(real_matmul_6(black_box(&real_left), black_box(&real_right))))
+    });
+    group.bench_function("real_sum_refs_64_symbolic", |b| {
+        b.iter(|| black_box(Real::sum_refs(black_box(symbolic_sum.iter()))))
+    });
+    group.bench_function("real_sum_refs_64_symbolic_to_f64", |b| {
+        b.iter(|| {
+            let sum = Real::sum_refs(black_box(symbolic_sum.iter()));
+            black_box(sum.to_f64_lossy())
+        })
     });
 
     group.finish();

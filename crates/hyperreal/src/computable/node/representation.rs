@@ -398,7 +398,7 @@ pub(crate) mod unsigned {
 static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(3, 2).unwrap());
 static NEAR_LARGE_RATIONAL_TRIG_THRESHOLD: LazyLock<Rational> =
-    LazyLock::new(|| Rational::fraction(79, 20).unwrap());
+    LazyLock::new(|| Rational::fraction(7, 2).unwrap());
 static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 8).unwrap());
 static THREE_HALVES_RATIONAL: LazyLock<Rational> =

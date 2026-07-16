@@ -1,9 +1,15 @@
 static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());
+static FOUR_FIFTHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(4, 5).unwrap());
 static FOUR_THIRDS_RATIONAL: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(4, 3).unwrap());
 static SEVEN_FOURTHS_RATIONAL: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 4).unwrap());
 static TWO_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(2));
+static SEVEN_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(7, 2).unwrap());
+static THIRTY_NINE_TENTHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(39, 10).unwrap());
 static SEVENTY_NINE_TWENTIETHS_RATIONAL: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(79, 20).unwrap());
 static FOUR_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(4));
@@ -17,6 +23,10 @@ static SEVENTEEN_HALVES_RATIONAL: LazyLock<Rational> =
 static QUARTER_PI_TAN_RESIDUAL_THRESHOLD: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(128));
 static NEG_FOUR_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(-4));
 static NEG_FOUR_BIGINT: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(-4));
+static NEG_SEVEN_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(-7, 2).unwrap());
+static NEG_THIRTY_NINE_TENTHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(-39, 10).unwrap());
 static NEG_SEVENTY_NINE_TWENTIETHS_RATIONAL: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(-79, 20).unwrap());
 static NEG_TWENTY_SEVEN_FIFTHS_RATIONAL: LazyLock<Rational> =

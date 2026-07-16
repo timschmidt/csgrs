@@ -12,1002 +12,1002 @@ Latest run sampled 20000 deterministic cases. The table below intentionally merg
 | 2 | 260.352 us | `computable` | `generated_tan_p96` | `generated[1071] -3 177/200` |
 | 3 | 259.542 us | `computable` | `generated_tan_p96` | `generated[1296] -3 71/91` |
 | 4 | 254.603 us | `computable` | `generated_tan_p96` | `generated[11391] 3 29/36` |
-| 5 | 250.393 us | `computable` | `generated_tan_p96` | `generated[12186] -1 189/299` |
-| 6 | 250.303 us | `computable` | `generated_tan_p96` | `generated[1011] 2 58/181` |
-| 7 | 248.133 us | `computable` | `generated_tan_p96` | `generated[321] 1 214/231` |
-| 8 | 245.733 us | `computable` | `generated_tan_p96` | `generated[13836] -3 73/131` |
-| 9 | 245.713 us | `computable` | `generated_tan_p96` | `generated[13911] -2 134/427` |
-| 10 | 244.504 us | `computable` | `generated_tan_p96` | `generated[8976] 1 71/73` |
-| 11 | 243.993 us | `computable` | `generated_tan_p96` | `generated[11691] 1 431/439` |
-| 12 | 242.743 us | `computable` | `generated_tan_p96` | `generated[15081] 1 205/259` |
-| 13 | 240.113 us | `computable` | `generated_tan_p96` | `generated[14136] -1 79/106` |
-| 14 | 239.633 us | `computable` | `generated_tan_p96` | `generated[18351] -1 303/403` |
-| 15 | 239.543 us | `computable` | `generated_tan_p96` | `generated[14241] -1 353/533` |
-| 16 | 239.363 us | `computable` | `generated_tan_p96` | `generated[816] 1 8/15` |
-| 17 | 239.343 us | `computable` | `generated_tan_p96` | `generated[16611] 1 47/58` |
-| 18 | 237.573 us | `computable` | `generated_tan_p96` | `generated[13881] 1 78/127` |
-| 19 | 236.224 us | `computable` | `generated_tan_p96` | `generated[9891] -1 281/314` |
-| 20 | 235.753 us | `computable` | `generated_tan_p96` | `generated[3036] 1 361/378` |
-| 21 | 235.694 us | `computable` | `generated_tan_p96` | `generated[651] 1 210/337` |
-| 22 | 234.794 us | `computable` | `generated_tan_p96` | `generated[2016] 1 101/141` |
-| 23 | 233.534 us | `computable` | `generated_tan_p96` | `generated[1041] -3 125/281` |
-| 24 | 233.154 us | `computable` | `generated_tan_p96` | `generated[486] 1 53/71` |
-| 25 | 232.144 us | `computable` | `generated_tan_p96` | `generated[14076] -1 457/480` |
-| 26 | 232.124 us | `computable` | `generated_tan_p96` | `generated[13941] -2 105/346` |
-| 27 | 230.284 us | `computable` | `generated_tan_p96` | `generated[1851] 2 15/88` |
-| 28 | 228.455 us | `computable` | `generated_tan_p96` | `generated[14046] 1 310/561` |
-| 29 | 227.714 us | `computable` | `generated_tan_p96` | `generated[10026] -1 41/64` |
-| 30 | 227.664 us | `computable` | `generated_tan_p96` | `generated[17466] 2 14/75` |
-| 31 | 225.235 us | `computable` | `generated_tan_p96` | `generated[13716] 1 314/455` |
-| 32 | 224.985 us | `computable` | `generated_tan_p96` | `generated[8811] 2 47/239` |
-| 33 | 223.885 us | `computable` | `generated_tan_p96` | `generated[14751] 2 56/153` |
-| 34 | 223.005 us | `computable` | `generated_tan_p96` | `generated[1671] -1 381/574` |
-| 35 | 222.875 us | `computable` | `generated_tan_p96` | `generated[18246] -1 187/188` |
-| 36 | 222.624 us | `computable` | `generated_tan_p96` | `generated[14001] -2 47/184` |
-| 37 | 222.074 us | `computable` | `generated_tan_p96` | `generated[11361] 2 34/111` |
-| 38 | 221.485 us | `computable` | `generated_tan_p96` | `generated[13251] 3 162/215` |
-| 39 | 221.285 us | `computable` | `generated_tan_p96` | `generated[1701] -1 271/493` |
-| 40 | 221.265 us | `computable` | `generated_tan_p96` | `generated[13746] 2 106/187` |
-| 41 | 220.005 us | `computable` | `generated_tan_p96` | `generated[15111] 3 121/178` |
-| 42 | 219.755 us | `computable` | `generated_tan_p96` | `generated[11001] 1 167/308` |
-| 43 | 219.635 us | `computable` | `generated_tan_p96` | `generated[14106] -1 347/399` |
-| 44 | 219.254 us | `computable` | `generated_tan_p96` | `generated[10506] 2 24/149` |
-| 45 | 217.635 us | `computable` | `generated_tan_p96` | `generated[10671] 1 171/202` |
-| 46 | 217.475 us | `computable` | `generated_tan_p96` | `generated[846] 2 57/103` |
-| 47 | 217.325 us | `computable` | `generated_tan_p96` | `generated[13551] 1 158/201` |
-| 48 | 214.805 us | `computable` | `generated_tan_p96` | `generated[1371] -2 92/387` |
-| 49 | 214.445 us | `computable` | `generated_tan_p96` | `generated[8646] 2 17/31` |
-| 50 | 213.355 us | `computable` | `generated_tan_p96` | `generated[1176] 2 61/415` |
-| 51 | 212.846 us | `computable` | `generated_tan_p96` | `generated[156] 2 19/89` |
-| 52 | 212.556 us | `computable` | `generated_tan_p96` | `generated[13971] -2 76/265` |
-| 53 | 212.416 us | `computable` | `generated_tan_p96` | `generated[14166] -1 127/237` |
-| 54 | 212.275 us | `computable` | `generated_tan_p96` | `generated[276] -841/851` |
-| 55 | 211.665 us | `computable` | `generated_tan_p96` | `generated[1431] -2 34/225` |
-| 56 | 211.536 us | `computable` | `generated_tan_p96` | `generated[14061] -1 1/2` |
-| 57 | 211.185 us | `computable` | `generated_tan_p96` | `generated[1536] -1 75/88` |
-| 58 | 211.005 us | `computable` | `generated_tan_p96` | `generated[10386] -442/473` |
-| 59 | 210.665 us | `computable` | `generated_tan_p96` | `generated[17991] -2 9/14` |
-| 60 | 209.955 us | `computable` | `generated_tan_p96` | `generated[2901] 3 147/244` |
-| 61 | 209.915 us | `computable` | `tan_p96` | `rational[25]=2` |
-| 62 | 209.836 us | `computable` | `generated_tan_p96` | `generated[8331] -266/269` |
-| 63 | 209.765 us | `computable` | `generated_tan_p96` | `generated[13806] -3 21/212` |
-| 64 | 209.665 us | `computable` | `generated_tan_p96` | `generated[516] 3 78/203` |
-| 65 | 209.656 us | `computable` | `generated_tan_p96` | `generated[7446] 1 79/87` |
-| 66 | 209.126 us | `computable` | `generated_tan_p96` | `generated[17661] 3 41/136` |
-| 67 | 208.926 us | `computable` | `generated_tan_p96` | `generated[11196] 2 157/280` |
-| 68 | 208.876 us | `computable` | `generated_tan_p96` | `generated[1596] -1 155/278` |
-| 69 | 208.815 us | `computable` | `tan_p96` | `rational[26]=2` |
-| 70 | 208.055 us | `computable` | `generated_tan_p96` | `generated[1341] 2 1/78` |
-| 71 | 207.986 us | `computable` | `generated_tan_p96` | `generated[1566] -1 265/359` |
-| 72 | 206.776 us | `computable` | `generated_tan_p96` | `generated[13221] 2 3/37` |
-| 73 | 206.446 us | `computable` | `generated_tan_p96` | `generated[1491] -1 13/21` |
-| 74 | 206.445 us | `computable` | `generated_tan_p96` | `generated[18156] -2 86/431` |
-| 75 | 205.406 us | `computable` | `generated_tan_p96` | `generated[18276] -1 77/107` |
-| 76 | 204.496 us | `computable` | `generated_tan_p96` | `generated[18021] -2 214/297` |
-| 77 | 204.386 us | `computable` | `generated_tan_p96` | `generated[14211] 1 154/307` |
-| 78 | 204.335 us | `computable` | `generated_tan_p96` | `generated[14031] -2 18/103` |
-| 79 | 203.976 us | `computable` | `generated_tan_p96` | `generated[1506] 1 472/521` |
-| 80 | 202.986 us | `computable` | `generated_tan_p96` | `generated[5676] -1 215/229` |
-| 81 | 202.976 us | `computable` | `generated_tan_p96` | `generated[16326] -1 218/387` |
-| 82 | 202.546 us | `computable` | `generated_tan_p96` | `generated[8631] -621/725` |
-| 83 | 202.396 us | `computable` | `generated_tan_p96` | `generated[14916] 2 1/206` |
-| 84 | 201.986 us | `computable` | `generated_tan_p96` | `generated[5781] -1 331/444` |
-| 85 | 201.926 us | `computable` | `generated_tan_p96` | `generated[6] -51/53` |
-| 86 | 201.806 us | `computable` | `generated_tan_p96` | `generated[5751] -1 21/25` |
-| 87 | 201.626 us | `computable` | `generated_tan_p96` | `generated[16686] -78/103` |
-| 88 | 201.476 us | `computable` | `generated_tan_p96` | `generated[11856] 1 143/164` |
-| 89 | 201.416 us | `computable` | `generated_tan_p96` | `generated[8196] -98/101` |
-| 90 | 201.346 us | `computable` | `generated_tan_p96` | `generated[5316] -3 125/204` |
-| 91 | 200.987 us | `computable` | `generated_tan_p96` | `generated[411] -981/985` |
-| 92 | 200.776 us | `computable` | `generated_tan_p96` | `generated[10116] -162/205` |
-| 93 | 200.156 us | `computable` | `generated_tan_p96` | `generated[18576] -13/14` |
-| 94 | 200.046 us | `computable` | `generated_tan_p96` | `generated[10431] 422/425` |
-| 95 | 199.916 us | `computable` | `tan_p96` | `e` |
-| 96 | 199.866 us | `computable` | `generated_tan_p96` | `generated[291] 127/156` |
-| 97 | 199.686 us | `computable` | `generated_tan_p96` | `generated[21] 12 3/22` |
-| 98 | 199.466 us | `computable` | `generated_tan_p96` | `generated[3756] -1 123/214` |
-| 99 | 199.446 us | `computable` | `generated_tan_p96` | `generated[5706] -1 105/148` |
-| 100 | 199.056 us | `computable` | `generated_tan_p96` | `generated[14586] 3 11/100` |
-| 101 | 199.036 us | `computable` | `generated_tan_p96` | `generated[15066] -631/798` |
-| 102 | 198.367 us | `computable` | `generated_tan_p96` | `generated[17961] 1 350/459` |
-| 103 | 197.726 us | `computable` | `generated_tan_p96` | `generated[14631] -134/159` |
-| 104 | 197.457 us | `computable` | `generated_tan_p96` | `generated[3591] -1 14/15` |
-| 105 | 197.247 us | `computable` | `generated_tan_p96` | `generated[8541] 805/968` |
-| 106 | 197.107 us | `computable` | `generated_tan_p96` | `generated[16701] 9/10` |
-| 107 | 196.836 us | `computable` | `generated_tan_p96` | `generated[141] -701/717` |
-| 108 | 196.646 us | `computable` | `generated_tan_p96` | `generated[3621] -1 40/49` |
-| 109 | 196.456 us | `computable` | `generated_tan_p96` | `generated[10101] 371/372` |
-| 110 | 196.356 us | `computable` | `generated_tan_p96` | `generated[1941] 382/421` |
-| 111 | 196.326 us | `computable` | `generated_tan_p96` | `generated[13581] 2 89/107` |
-| 112 | 196.297 us | `computable` | `generated_tan_p96` | `generated[5916] -1 337/578` |
-| 113 | 196.246 us | `computable` | `generated_tan_p96` | `generated[5811] -1 221/363` |
-| 114 | 195.476 us | `computable` | `generated_tan_p96` | `generated[1881] 54 4/7` |
-| 115 | 195.456 us | `computable` | `generated_tan_p96` | `generated[771] -52 12/13` |
-| 116 | 195.377 us | `computable` | `generated_tan_p96` | `generated[6261] 1 137/145` |
-| 117 | 195.137 us | `computable` | `generated_tan_p96` | `generated[10866] 3 31/58` |
-| 118 | 195.136 us | `computable` | `generated_tan_p96` | `generated[17631] 2 1/353` |
-| 119 | 195.067 us | `computable` | `generated_tan_p96` | `generated[8496] -481/591` |
-| 120 | 195.037 us | `computable` | `generated_tan_p96` | `generated[17091] -366/407` |
-| 121 | 194.217 us | `computable` | `generated_tan_p96` | `generated[17226] -218/237` |
-| 122 | 194.147 us | `computable` | `generated_tan_p96` | `generated[8796] -285/389` |
-| 123 | 193.987 us | `computable` | `generated_tan_p96` | `generated[1926] -331/384` |
-| 124 | 193.867 us | `computable` | `generated_tan_p96` | `generated[636] -137/219` |
-| 125 | 193.746 us | `computable` | `generated_tan_p96` | `generated[3366] 1 357/484` |
-| 126 | 193.737 us | `computable` | `generated_tan_p96` | `generated[3726] -1 356/509` |
-| 127 | 193.517 us | `computable` | `generated_tan_p96` | `generated[8376] 754/915` |
-| 128 | 193.497 us | `computable` | `generated_tan_p96` | `generated[10686] -177/220` |
-| 129 | 193.387 us | `computable` | `generated_tan_p96` | `generated[336] -459/689` |
-| 130 | 193.167 us | `computable` | `generated_tan_p96` | `generated[951] 229/262` |
-| 131 | 192.816 us | `computable` | `generated_tan_p96` | `generated[8481] 3 24/133` |
-| 132 | 192.657 us | `computable` | `generated_tan_p96` | `generated[1116] 509/577` |
-| 133 | 192.646 us | `computable` | `generated_tan_p96` | `generated[18831] 3 3/8` |
-| 134 | 192.616 us | `computable` | `generated_tan_p96` | `generated[3651] -1 130/213` |
-| 135 | 192.326 us | `computable` | `generated_tan_p96` | `generated[4896] 1 246/341` |
-| 136 | 192.287 us | `computable` | `generated_tan_p96` | `generated[786] 407/471` |
-| 137 | 192.197 us | `computable` | `generated_tan_p96` | `generated[10656] -38/39` |
-| 138 | 192.087 us | `computable` | `generated_tan_p96` | `generated[8931] -355/456` |
-| 139 | 191.807 us | `computable` | `generated_tan_p96` | `generated[10161] -1 293/582` |
-| 140 | 191.766 us | `computable` | `generated_tan_p96` | `generated[17421] -63/92` |
-| 141 | 191.597 us | `computable` | `generated_tan_p96` | `generated[4731] 1 31/36` |
-| 142 | 191.567 us | `computable` | `generated_tan_p96` | `generated[7536] -3 5/48` |
-| 143 | 191.407 us | `computable` | `generated_tan_p96` | `generated[10266] 793/797` |
-| 144 | 191.387 us | `computable` | `generated_tan_p96` | `generated[606] -739/957` |
-| 145 | 191.307 us | `computable` | `generated_tan_p96` | `generated[3426] -2 66/161` |
-| 146 | 191.287 us | `computable` | `generated_tan_p96` | `generated[306] -65/77` |
-| 147 | 191.247 us | `computable` | `generated_tan_p96` | `generated[12711] -158/169` |
-| 148 | 191.227 us | `computable` | `generated_tan_p96` | `generated[10821] -671/794` |
-| 149 | 191.227 us | `computable` | `generated_tan_p96` | `generated[2181] 1 99/194` |
-| 150 | 190.997 us | `computable` | `generated_tan_p96` | `generated[3396] -2 161/403` |
-| 151 | 190.997 us | `computable` | `generated_tan_p96` | `generated[351] 4 6/25` |
-| 152 | 190.827 us | `computable` | `generated_tan_p96` | `generated[14901] -682/745` |
-| 153 | 190.817 us | `computable` | `generated_tan_p96` | `generated[16371] 681/764` |
-| 154 | 190.777 us | `computable` | `generated_tan_p96` | `generated[14721] 19/26` |
-| 155 | 190.427 us | `computable` | `generated_tan_p96` | `generated[201] -319/555` |
-| 156 | 190.297 us | `computable` | `generated_tan_p96` | `generated[6426] 1 15/22` |
-| 157 | 190.257 us | `computable` | `generated_tan_p96` | `generated[3201] 1 359/431` |
-| 158 | 190.217 us | `computable` | `generated_tan_p96` | `generated[5226] 1 242/447` |
-| 159 | 189.907 us | `computable` | `generated_tan_p96` | `generated[16536] 732/817` |
-| 160 | 189.887 us | `computable` | `generated_tan_p96` | `generated[10521] -582/607` |
-| 161 | 189.517 us | `computable` | `generated_tan_p96` | `generated[681] 2 113/128` |
-| 162 | 189.417 us | `computable` | `generated_tan_p96` | `generated[8661] -215/322` |
-| 163 | 189.287 us | `computable` | `generated_tan_p96` | `generated[11091] -14 41/65` |
-| 164 | 189.167 us | `computable` | `generated_tan_p96` | `generated[11721] -2 111/179` |
-| 165 | 189.027 us | `computable` | `generated_tan_p96` | `generated[2061] -471/518` |
-| 166 | 188.957 us | `computable` | `generated_tan_p96` | `generated[3696] 1 353/590` |
-| 167 | 188.937 us | `computable` | `tan_p96` | `rational[36]=-340282366920938463463374607431768211456` |
-| 168 | 188.867 us | `computable` | `generated_tan_p96` | `generated[10791] -862/875` |
-| 169 | 188.597 us | `computable` | `generated_tan_p96` | `generated[8211] 703/862` |
-| 170 | 188.577 us | `computable` | `generated_tan_p96` | `generated[17256] -227/289` |
-| 171 | 188.397 us | `computable` | `generated_tan_p96` | `generated[3531] 1 355/537` |
-| 172 | 188.317 us | `computable` | `generated_tan_p96` | `generated[12726] 3 52/137` |
-| 173 | 188.177 us | `computable` | `generated_tan_p96` | `generated[11121] -760/981` |
-| 174 | 187.947 us | `computable` | `generated_tan_p96` | `generated[16641] 11 16/35` |
-| 175 | 187.897 us | `computable` | `generated_tan_p96` | `generated[471] -599/823` |
-| 176 | 187.567 us | `computable` | `generated_tan_p96` | `generated[11751] -2 193/277` |
-| 177 | 187.477 us | `computable` | `tan_p96` | `rational[32]=-4294967296` |
-| 178 | 186.977 us | `computable` | `generated_tan_p96` | `generated[6591] 1 133/251` |
-| 179 | 186.857 us | `computable` | `generated_tan_p96` | `generated[13011] -721/863` |
-| 180 | 186.807 us | `computable` | `generated_tan_p96` | `generated[17136] 2 83/97` |
-| 181 | 186.787 us | `computable` | `generated_tan_p96` | `generated[5256] 2 74/183` |
-| 182 | 186.617 us | `computable` | `generated_tan_p96` | `generated[621] 178/209` |
-| 183 | 186.597 us | `computable` | `generated_tan_p96` | `generated[15051] 273/340` |
-| 184 | 186.527 us | `computable` | `generated_tan_p96` | `generated[14886] 222/287` |
-| 185 | 186.447 us | `computable` | `generated_tan_p96` | `generated[14766] -542/611` |
-| 186 | 186.127 us | `computable` | `tan_p96` | `rational[35]=-340282366920938463463374607431768211456` |
-| 187 | 186.017 us | `computable` | `generated_tan_p96` | `generated[1776] 713/789` |
-| 188 | 185.907 us | `computable` | `generated_tan_p96` | `generated[2706] 2 93/272` |
-| 189 | 185.617 us | `computable` | `generated_tan_p96` | `generated[17121] -541/733` |
-| 190 | 185.257 us | `computable` | `generated_tan_p96` | `generated[17031] 885/976` |
-| 191 | 185.238 us | `computable` | `generated_tan_p96` | `generated[441] -395/452` |
-| 192 | 185.057 us | `computable` | `generated_tan_p96` | `generated[10986] -620/847` |
-| 193 | 184.947 us | `computable` | `generated_tan_p96` | `generated[15036] -274/293` |
-| 194 | 184.897 us | `computable` | `tan_p96` | `rational[6]=-7/10` |
-| 195 | 184.767 us | `computable` | `generated_tan_p96` | `generated[1401] -2 7/34` |
-| 196 | 184.588 us | `computable` | `tan_p96` | `rational[23]=-1` |
-| 197 | 184.497 us | `computable` | `generated_tan_p96` | `generated[5061] 1 122/197` |
-| 198 | 184.428 us | `computable` | `generated_tan_p96` | `generated[16551] -86/139` |
-| 199 | 184.317 us | `computable` | `generated_tan_p96` | `generated[14496] -262/343` |
-| 200 | 184.277 us | `computable` | `generated_tan_p96` | `generated[3861] 1 351/643` |
-| 201 | 184.107 us | `computable` | `generated_tan_p96` | `generated[8961] -173/277` |
-| 202 | 183.967 us | `computable` | `generated_tan_p96` | `generated[4761] 3 106/207` |
-| 203 | 183.288 us | `computable` | `generated_tan_p96` | `generated[6906] -87/128` |
-| 204 | 182.758 us | `computable` | `generated_tan_p96` | `generated[10836] 1 169/255` |
-| 205 | 182.588 us | `computable` | `generated_tan_p96` | `generated[3291] -3 18/47` |
-| 206 | 182.517 us | `computable` | `generated_tan_p96` | `generated[6951] 2 125/276` |
-| 207 | 182.348 us | `computable` | `generated_tan_p96` | `generated[10251] -302/339` |
-| 208 | 182.298 us | `computable` | `generated_tan_p96` | `generated[11136] 335/442` |
-| 209 | 181.838 us | `computable` | `generated_tan_p96` | `generated[801] -497/929` |
-| 210 | 181.508 us | `computable` | `generated_tan_p96` | `generated[18051] -2 185/216` |
-| 211 | 181.488 us | `computable` | `generated_tan_p96` | `generated[876] 4 17/57` |
-| 212 | 181.207 us | `computable` | `generated_tan_p96` | `generated[16986] -401/599` |
-| 213 | 181.117 us | `computable` | `generated_tan_p96` | `generated[10416] -251/392` |
-| 214 | 181.047 us | `computable` | `generated_tan_p96` | `generated[14316] 591/829` |
-| 215 | 180.948 us | `computable` | `generated_tan_p96` | `generated[11301] 386/495` |
-| 216 | 180.447 us | `computable` | `generated_tan_p96` | `generated[4401] 2 5/13` |
-| 217 | 180.087 us | `computable` | `generated_tan_p96` | `generated[2991] -547` |
-| 218 | 179.927 us | `computable` | `generated_tan_p96` | `generated[18066] 239/337` |
-| 219 | 179.848 us | `computable` | `generated_tan_p96` | `generated[1236] -2 20/23` |
-| 220 | 179.587 us | `computable` | `generated_tan_p96` | `generated[126] 29/37` |
-| 221 | 179.558 us | `computable` | `generated_tan_p96` | `generated[246] 1 35/932` |
-| 222 | 179.077 us | `computable` | `generated_tan_p96` | `generated[5421] 2 93/419` |
-| 223 | 178.668 us | `computable` | `generated_tan_p96` | `generated[11151] -569/900` |
-| 224 | 178.108 us | `computable` | `generated_tan_p96` | `generated[16671] 592/951` |
-| 225 | 178.058 us | `computable` | `generated_tan_p96` | `generated[11031] 2 212/227` |
-| 226 | 178.037 us | `computable` | `generated_tan_p96` | `generated[5616] -2 44/391` |
-| 227 | 177.858 us | `computable` | `generated_tan_p96` | `generated[18561] 631/833` |
-| 228 | 177.808 us | `computable` | `generated_tan_p96` | `generated[51] 145/192` |
-| 229 | 177.758 us | `computable` | `generated_tan_p96` | `generated[18636] 109/132` |
-| 230 | 177.668 us | `computable` | `generated_tan_p96` | `generated[10971] 284/389` |
-| 231 | 177.488 us | `computable` | `generated_tan_p96` | `generated[13341] -619/969` |
-| 232 | 177.168 us | `computable` | `generated_tan_p96` | `generated[456] 61/73` |
-| 233 | 177.088 us | `computable` | `generated_tan_p96` | `generated[16956] -74/85` |
-| 234 | 176.658 us | `computable` | `generated_tan_p96` | `generated[1086] 159/329` |
-| 235 | 176.468 us | `computable` | `generated_tan_p96` | `generated[10341] 2 79/96` |
-| 236 | 176.068 us | `computable` | `generated_tan_p96` | `generated[11286] -19 6/37` |
-| 237 | 176.058 us | `computable` | `generated_tan_p96` | `generated[5646] -2 3/62` |
-| 238 | 175.998 us | `computable` | `generated_tan_p96` | `generated[17586] -579/973` |
-| 239 | 175.498 us | `computable` | `generated_tan_p96` | `generated[8226] -201/323` |
-| 240 | 175.478 us | `computable` | `generated_tan_p96` | `generated[13776] -2 262/293` |
-| 241 | 175.168 us | `computable` | `generated_tan_p96` | `generated[16506] 541/898` |
-| 242 | 175.138 us | `computable` | `generated_tan_p96` | `generated[2871] 2 38/325` |
-| 243 | 175.008 us | `computable` | `generated_tan_p96` | `generated[8466] -1` |
-| 244 | 174.888 us | `computable` | `tan_p96` | `rational[24]=-1` |
-| 245 | 174.828 us | `computable` | `generated_tan_p96` | `generated[36] -185/251` |
-| 246 | 174.528 us | `computable` | `generated_tan_p96` | `generated[17151] -175/326` |
-| 247 | 174.498 us | `computable` | `generated_tan_p96` | `generated[14616] 26 8/19` |
-| 248 | 174.468 us | `computable` | `generated_tan_p96` | `generated[16341] 98/169` |
-| 249 | 174.308 us | `computable` | `generated_tan_p96` | `generated[11316] -518/953` |
-| 250 | 174.188 us | `computable` | `generated_tan_p96` | `generated[11016] -429/766` |
-| 251 | 174.058 us | `computable` | `generated_tan_p96` | `generated[17406] 137/231` |
-| 252 | 174.048 us | `computable` | `generated_tan_p96` | `generated[1791] -191/250` |
-| 253 | 173.968 us | `computable` | `generated_tan_p96` | `generated[12906] -65/108` |
-| 254 | 173.948 us | `computable` | `generated_tan_p96` | `generated[10716] -340/579` |
-| 255 | 173.838 us | `computable` | `generated_tan_p96` | `generated[16656] -1 10/493` |
-| 256 | 173.728 us | `computable` | `generated_tan_p96` | `generated[3516] -2 45/79` |
-| 257 | 173.618 us | `computable` | `generated_tan_p96` | `generated[16521] -1 4/359` |
-| 258 | 173.238 us | `computable` | `generated_tan_p96` | `generated[3141] 408/593` |
-| 259 | 173.088 us | `computable` | `generated_tan_p96` | `generated[13416] 3 27/134` |
-| 260 | 173.088 us | `computable` | `generated_tan_p96` | `generated[14736] -1 41/692` |
-| 261 | 172.898 us | `computable` | `generated_tan_p96` | `generated[6096] 2 47/92` |
-| 262 | 172.779 us | `computable` | `generated_tan_p96` | `generated[10071] 551/825` |
-| 263 | 172.678 us | `computable` | `generated_tan_p96` | `generated[666] -119/265` |
-| 264 | 172.649 us | `computable` | `generated_tan_p96` | `generated[11061] 5 127/146` |
-| 265 | 172.618 us | `computable` | `generated_tan_p96` | `generated[14331] -1 23/290` |
-| 266 | 172.068 us | `computable` | `generated_tan_p96` | `generated[1911] 573/923` |
-| 267 | 171.878 us | `computable` | `generated_tan_p96` | `generated[13446] -5 15/187` |
-| 268 | 171.798 us | `computable` | `generated_tan_p96` | `generated[14151] 135/194` |
-| 269 | 171.229 us | `computable` | `generated_tan_p96` | `generated[14931] -491/664` |
-| 270 | 171.219 us | `computable` | `generated_tan_p96` | `generated[936] -9 43/66` |
-| 271 | 171.138 us | `computable` | `generated_tan_p96` | `generated[9906] 125/193` |
-| 272 | 171.028 us | `computable` | `generated_tan_p96` | `generated[2961] -9` |
-| 273 | 170.958 us | `computable` | `generated_tan_p96` | `generated[1746] 3/5` |
-| 274 | 170.919 us | `computable` | `generated_tan_p96` | `generated[8301] -1 104/619` |
-| 275 | 170.909 us | `computable` | `generated_tan_p96` | `generated[4566] 2 3/47` |
-| 276 | 170.838 us | `computable` | `generated_tan_p96` | `generated[17451] -439/839` |
-| 277 | 170.488 us | `computable` | `generated_tan_p96` | `generated[171] -85/106` |
-| 278 | 170.468 us | `computable` | `generated_tan_p96` | `generated[501] -204/371` |
-| 279 | 170.458 us | `computable` | `generated_tan_p96` | `generated[10596] 895/903` |
-| 280 | 170.398 us | `computable` | `generated_tan_p96` | `generated[8436] -1 110/753` |
-| 281 | 170.368 us | `computable` | `generated_tan_p96` | `generated[14871] -1 47/826` |
-| 282 | 170.158 us | `computable` | `generated_tan_p96` | `generated[8361] -341/457` |
-| 283 | 170.058 us | `computable` | `generated_tan_p96` | `generated[1416] 105/191` |
-| 284 | 169.938 us | `computable` | `generated_tan_p96` | `generated[2226] -420/571` |
-| 285 | 169.908 us | `computable` | `generated_tan_p96` | `generated[14796] -351/530` |
-| 286 | 169.798 us | `computable` | `generated_tan_p96` | `generated[8946] 1 12/373` |
-| 287 | 169.609 us | `computable` | `generated_tan_p96` | `generated[18531] 220/457` |
-| 288 | 168.869 us | `computable` | `generated_tan_p96` | `generated[3561] -2 1/114` |
-| 289 | 168.689 us | `computable` | `generated_tan_p96` | `generated[13146] -861/997` |
-| 290 | 168.659 us | `computable` | `generated_tan_p96` | `generated[1206] -2 249/334` |
-| 291 | 168.528 us | `computable` | `generated_tan_p96` | `generated[66] -179/421` |
-| 292 | 168.488 us | `computable` | `generated_tan_p96` | `generated[14646] 63/85` |
-| 293 | 168.388 us | `computable` | `generated_tan_p96` | `generated[13851] 1 40/589` |
-| 294 | 168.249 us | `computable` | `generated_tan_p96` | `generated[10641] 182/283` |
-| 295 | 168.159 us | `computable` | `generated_tan_p96` | `generated[14661] -211/396` |
-| 296 | 168.138 us | `computable` | `generated_tan_p96` | `generated[1446] 611/683` |
-| 297 | 168.058 us | `computable` | `generated_tan_p96` | `generated[18666] 5 15/17` |
-| 298 | 167.978 us | `computable` | `generated_tan_p96` | `generated[3066] 3 13/99` |
-| 299 | 167.958 us | `computable` | `generated_tan_p96` | `generated[8181] 512/943` |
-| 300 | 167.919 us | `computable` | `generated_tan_p96` | `generated[15441] 2 189/284` |
-| 301 | 167.848 us | `computable` | `generated_tan_p96` | `generated[10236] 301/439` |
-| 302 | 167.828 us | `computable` | `generated_tan_p96` | `generated[14346] 1 1/22` |
-| 303 | 167.639 us | `computable` | `generated_tan_p96` | `generated[2331] -751/786` |
-| 304 | 167.428 us | `computable` | `generated_tan_p96` | `generated[7311] 3 67/301` |
-| 305 | 167.359 us | `computable` | `generated_tan_p96` | `generated[11181] -6/13` |
-| 306 | 167.338 us | `computable` | `generated_tan_p96` | `generated[5286] -3 73/285` |
-| 307 | 167.289 us | `computable` | `generated_tan_p96` | `generated[14811] 186/247` |
-| 308 | 167.238 us | `computable` | `generated_tan_p96` | `generated[10476] 131/230` |
-| 309 | 166.838 us | `computable` | `generated_tan_p96` | `generated[18696] 491/967` |
-| 310 | 166.828 us | `computable` | `generated_tan_p96` | `generated[216] 48 1/2` |
-| 311 | 166.818 us | `computable` | `generated_tan_p96` | `generated[2466] -891/920` |
-| 312 | 166.518 us | `computable` | `generated_tan_p96` | `generated[16716] -121/331` |
-| 313 | 166.429 us | `computable` | `generated_tan_p96` | `generated[8451] 1 9/107` |
-| 314 | 166.369 us | `computable` | `generated_tan_p96` | `generated[5451] -2 201/338` |
-| 315 | 166.279 us | `computable` | `generated_tan_p96` | `generated[1611] 331/368` |
-| 316 | 166.228 us | `computable` | `generated_tan_p96` | `generated[18681] -1 95/509` |
-| 317 | 166.218 us | `computable` | `generated_tan_p96` | `generated[18951] -1 107/777` |
-| 318 | 166.109 us | `computable` | `generated_tan_p96` | `generated[2541] 2 148/219` |
-| 319 | 166.019 us | `computable` | `generated_tan_p96` | `generated[4656] -941/989` |
-| 320 | 165.828 us | `computable` | `generated_tan_p96` | `generated[17061] -1 28/895` |
-| 321 | 165.768 us | `computable` | `generated_tan_p96` | `generated[8391] -75/188` |
-| 322 | 165.638 us | `computable` | `generated_tan_p96` | `generated[831] -153/424` |
-| 323 | 165.589 us | `computable` | `generated_tan_p96` | `generated[13206] -479/835` |
-| 324 | 165.519 us | `computable` | `generated_tan_p96` | `generated[15006] 1 13/480` |
-| 325 | 165.469 us | `computable` | `generated_tan_p96` | `generated[18606] -82/213` |
-| 326 | 165.459 us | `computable` | `asinh_p128` | `mid` |
-| 327 | 165.418 us | `computable` | `generated_tan_p96` | `generated[1956] -140/303` |
-| 328 | 165.399 us | `computable` | `generated_tan_p96` | `generated[8286] 1 20/161` |
-| 329 | 165.388 us | `computable` | `generated_tan_p96` | `generated[2001] -1 173/680` |
-| 330 | 165.358 us | `computable` | `generated_tan_p96` | `generated[2196] -611/652` |
-| 331 | 165.329 us | `computable` | `generated_tan_p96` | `generated[5091] 2 203/313` |
-| 332 | 165.228 us | `computable` | `generated_tan_p96` | `generated[696] -83/357` |
-| 333 | 164.858 us | `computable` | `generated_tan_p96` | `generated[12201] 2 1/59` |
-| 334 | 164.738 us | `computable` | `generated_tan_p96` | `generated[14286] 40/91` |
-| 335 | 164.619 us | `computable` | `generated_tan_p96` | `generated[966] -223/491` |
-| 336 | 164.279 us | `computable` | `generated_tan_p96` | `generated[13821] 219/335` |
-| 337 | 164.178 us | `computable` | `generated_tan_p96` | `generated[8526] -29/51` |
-| 338 | 163.919 us | `computable` | `generated_tan_p96` | `generated[2631] -120/139` |
-| 339 | 163.838 us | `computable` | `generated_tan_p96` | `generated[17571] 65/103` |
-| 340 | 163.809 us | `computable` | `generated_tan_p96` | `generated[14601] -1 35/558` |
-| 341 | 163.679 us | `computable` | `generated_tan_p96` | `generated[11616] -4 35/143` |
-| 342 | 163.569 us | `computable` | `generated_tan_p96` | `generated[17016] -15/37` |
-| 343 | 163.478 us | `computable` | `generated_tan_p96` | `generated[3261] -3 20/269` |
-| 344 | 163.429 us | `computable` | `generated_tan_p96` | `generated[8166] -1 98/485` |
-| 345 | 163.248 us | `computable` | `generated_tan_p96` | `generated[9996] -1 397/529` |
-| 346 | 163.159 us | `computable` | `tan_p96` | `rational[21]=1/2` |
-| 347 | 163.058 us | `computable` | `generated_tan_p96` | `generated[531] -217/661` |
-| 348 | 163.049 us | `computable` | `generated_tan_p96` | `generated[5736] -62/67` |
-| 349 | 162.869 us | `computable` | `generated_tan_p96` | `generated[18711] -413/428` |
-| 350 | 162.719 us | `computable` | `generated_tan_p96` | `generated[921] 267/605` |
-| 351 | 162.639 us | `computable` | `generated_tan_p96` | `generated[11346] -3/8` |
-| 352 | 162.569 us | `computable` | `generated_tan_p96` | `generated[5481] -2 172/257` |
-| 353 | 162.189 us | `computable` | `generated_tan_p96` | `generated[1101] -4 110/119` |
-| 354 | 162.159 us | `computable` | `generated_tan_p96` | `generated[366] -67/152` |
-| 355 | 162.149 us | `computable` | `generated_tan_p96` | `generated[11631] 488/601` |
-| 356 | 162.099 us | `computable` | `generated_tan_p96` | `generated[2316] 153/328` |
-| 357 | 162.038 us | `computable` | `generated_tan_p96` | `generated[17241] 223/409` |
-| 358 | 162.028 us | `computable` | `generated_tan_p96` | `generated[7386] 448/597` |
-| 359 | 161.989 us | `computable` | `generated_tan_p96` | `generated[13041] -265/391` |
-| 360 | 161.839 us | `computable` | `generated_tan_p96` | `generated[2976] 119/180` |
-| 361 | 161.809 us | `computable` | `generated_tan_p96` | `generated[1161] -34/159` |
-| 362 | 161.788 us | `computable` | `generated_tan_p96` | `generated[16626] -1 60/287` |
-| 363 | 161.519 us | `computable` | `generated_tan_p96` | `generated[8121] 1 11/54` |
-| 364 | 161.219 us | `computable` | `generated_tan_p96` | `generated[13326] 285/511` |
-| 365 | 161.169 us | `computable` | `tan_p96` | `rational[22]=1/2` |
-| 366 | 161.079 us | `computable` | `generated_tan_p96` | `generated[756] 9/23` |
-| 367 | 160.939 us | `computable` | `generated_tan_p96` | `generated[13986] 163/241` |
-| 368 | 160.919 us | `computable` | `generated_tan_p96` | `generated[6711] -851/924` |
-| 369 | 160.839 us | `computable` | `generated_tan_p96` | `generated[6576] -9/10` |
-| 370 | 160.619 us | `computable` | `generated_tan_p96` | `generated[17076] 43/89` |
-| 371 | 160.579 us | `computable` | `tan_p96` | `rational[9]=1000000000000000000000000000000` |
-| 372 | 160.539 us | `computable` | `generated_tan_p96` | `generated[4866] 198/211` |
-| 373 | 160.499 us | `computable` | `generated_tan_p96` | `generated[2271] 433/474` |
-| 374 | 160.499 us | `computable` | `generated_tan_p96` | `generated[6021] 753/793` |
-| 375 | 160.369 us | `computable` | `generated_tan_p96` | `generated[3126] -5 4/45` |
-| 376 | 160.319 us | `computable` | `generated_tan_p96` | `generated[18366] 389/861` |
-| 377 | 160.318 us | `computable` | `generated_tan_p96` | `generated[4251] -521/587` |
-| 378 | 160.299 us | `computable` | `generated_tan_p96` | `generated[2496] -700/839` |
-| 379 | 160.259 us | `computable` | `generated_tan_p96` | `generated[11676] -75/326` |
-| 380 | 160.179 us | `computable` | `generated_tan_p96` | `generated[11421] -4 55/57` |
-| 381 | 160.139 us | `computable` | `generated_tan_p96` | `generated[13671] -6 49/78` |
-| 382 | 160.019 us | `computable` | `tan_p96` | `rational[31]=-4294967296` |
-| 383 | 159.989 us | `computable` | `generated_tan_p96` | `generated[5541] -3 1/5` |
-| 384 | 159.859 us | `computable` | `generated_tan_p96` | `generated[14706] -1 151/773` |
-| 385 | 159.829 us | `computable` | `generated_tan_p96` | `generated[2361] -112/141` |
-| 386 | 159.779 us | `computable` | `generated_tan_p96` | `generated[18441] -133/160` |
-| 387 | 159.739 us | `computable` | `generated_tan_p96` | `generated[2031] -1 63/599` |
-| 388 | 159.729 us | `computable` | `generated_tan_p96` | `generated[10806] 233/336` |
-| 389 | 159.639 us | `computable` | `generated_tan_p96` | `generated[2106] 163/179` |
-| 390 | 159.559 us | `computable` | `generated_tan_p96` | `generated[6351] 855/899` |
-| 391 | 159.549 us | `computable` | `generated_tan_p96` | `generated[6441] -571/656` |
-| 392 | 159.489 us | `computable` | `generated_tan_p96` | `generated[4686] -375/454` |
-| 393 | 159.450 us | `computable` | `generated_tan_p96` | `generated[12816] -1 8/99` |
-| 394 | 159.349 us | `computable` | `generated_tan_p96` | `generated[4386] -661/721` |
-| 395 | 159.329 us | `computable` | `generated_tan_p96` | `generated[5691] 217/229` |
-| 396 | 159.279 us | `computable` | `generated_tan_p96` | `generated[14571] -1 145/639` |
-| 397 | 159.010 us | `computable` | `generated_tan_p96` | `generated[5526] 300/317` |
-| 398 | 158.999 us | `computable` | `generated_tan_p96` | `generated[10926] 83 1/12` |
-| 399 | 158.939 us | `computable` | `generated_tan_p96` | `generated[13536] -377/941` |
-| 400 | 158.889 us | `computable` | `generated_tan_p96` | `generated[2376] 3 37/166` |
-| 401 | 158.839 us | `computable` | `generated_tan_p96` | `generated[14961] -300/583` |
-| 402 | 158.699 us | `computable` | `generated_tan_p96` | `generated[15936] 2 24/443` |
-| 403 | 158.609 us | `computable` | `generated_tan_p96` | `generated[11256] -7 37/59` |
-| 404 | 158.609 us | `computable` | `generated_tan_p96` | `generated[3981] -241/319` |
-| 405 | 158.589 us | `computable` | `generated_tan_p96` | `generated[17166] 6 67/113` |
-| 406 | 158.580 us | `computable` | `generated_tan_p96` | `generated[10176] 5 5/43` |
-| 407 | 158.329 us | `computable` | `generated_tan_p96` | `generated[4116] -127/151` |
-| 408 | 158.029 us | `computable` | `generated_tan_p96` | `generated[10461] -1 195/769` |
-| 409 | 157.999 us | `computable` | `generated_tan_p96` | `generated[4701] 115/123` |
-| 410 | 157.929 us | `computable` | `generated_tan_p96` | `generated[18036] 287/755` |
-| 411 | 157.799 us | `computable` | `generated_tan_p96` | `generated[6186] 134/141` |
-| 412 | 157.779 us | `computable` | `generated_tan_p96` | `generated[5511] -2 13/16` |
-| 413 | 157.730 us | `computable` | `generated_tan_p96` | `generated[17481] -124/379` |
-| 414 | 157.619 us | `computable` | `generated_tan_p96` | `generated[5361] 549/581` |
-| 415 | 157.559 us | `computable` | `generated_tan_p96` | `generated[5856] 351/370` |
-| 416 | 157.379 us | `computable` | `generated_tan_p96` | `generated[14556] 120/181` |
-| 417 | 157.379 us | `computable` | `generated_tan_p96` | `generated[6306] -431/522` |
-| 418 | 157.370 us | `computable` | `generated_tan_p96` | `generated[17616] -97/223` |
-| 419 | 157.249 us | `computable` | `generated_tan_p96` | `generated[2661] -649/892` |
-| 420 | 157.229 us | `computable` | `generated_tan_p96` | `generated[14826] -160/449` |
-| 421 | 157.219 us | `computable` | `generated_tan_p96` | `generated[6516] 453/476` |
-| 422 | 157.210 us | `computable` | `tan_p96` | `rational[10]=-1000000000000000000000000000000` |
-| 423 | 157.149 us | `computable` | `generated_tan_p96` | `generated[12786] 845/972` |
-| 424 | 157.100 us | `computable` | `generated_tan_p96` | `generated[1866] -1 167/546` |
-| 425 | 156.969 us | `computable` | `generated_tan_p96` | `generated[111] -1 47/399` |
-| 426 | 156.830 us | `computable` | `generated_tan_p96` | `generated[10221] -1 73/420` |
-| 427 | 156.799 us | `computable` | `generated_tan_p96` | `generated[6741] -220/281` |
-| 428 | 156.729 us | `computable` | `generated_tan_p96` | `generated[18126] 1 87/128` |
-| 429 | 156.549 us | `computable` | `generated_tan_p96` | `generated[13356] 1 23/215` |
-| 430 | 156.509 us | `computable` | `generated_tan_p96` | `generated[13026] 1 25/162` |
-| 431 | 156.370 us | `computable` | `generated_tan_p96` | `generated[13236] -144/377` |
-| 432 | 156.320 us | `computable` | `generated_tan_p96` | `generated[10956] -811/928` |
-| 433 | 156.299 us | `computable` | `generated_tan_p96` | `generated[4851] -699/961` |
-| 434 | 155.849 us | `computable` | `generated_tan_p96` | `generated[4206] 32/35` |
-| 435 | 155.589 us | `computable` | `generated_tan_p96` | `generated[11046] -238/685` |
-| 436 | 155.529 us | `computable` | `generated_tan_p96` | `generated[3156] -9 5/27` |
-| 437 | 155.320 us | `computable` | `generated_tan_p96` | `generated[6876] -800/977` |
-| 438 | 155.149 us | `computable` | `generated_tan_p96` | `generated[14676] 1 15/427` |
-| 439 | 154.999 us | `computable` | `generated_tan_p96` | `generated[741] -9 33/94` |
-| 440 | 154.910 us | `computable` | `generated_tan_p96` | `generated[10281] -37/86` |
-| 441 | 154.829 us | `computable` | `generated_tan_p96` | `generated[6891] 295/438` |
-| 442 | 154.530 us | `computable` | `generated_tan_p96` | `generated[4041] 141/157` |
-| 443 | 154.419 us | `computable` | `generated_tan_p96` | `generated[8241] 1 113/781` |
-| 444 | 154.369 us | `computable` | `generated_tan_p96` | `generated[2526] -509/758` |
-| 445 | 154.240 us | `computable` | `generated_tan_p96` | `generated[8556] -3/13` |
-| 446 | 153.909 us | `computable` | `generated_tan_p96` | `generated[10146] 29/124` |
-| 447 | 153.840 us | `computable` | `generated_tan_p96` | `generated[4371] 243/263` |
-| 448 | 153.769 us | `computable` | `generated_tan_p96` | `generated[14481] 107/147` |
-| 449 | 153.739 us | `computable` | `generated_tan_p96` | `generated[3966] 17/22` |
-| 450 | 153.700 us | `computable` | `generated_tan_p96` | `generated[5196] 83/88` |
-| 451 | 153.590 us | `computable` | `generated_tan_p96` | `generated[3186] -61/194` |
-| 452 | 153.570 us | `computable` | `generated_tan_p96` | `generated[3021] -356/917` |
-| 453 | 153.569 us | `computable` | `generated_tan_p96` | `generated[16566] 1 187/736` |
-| 454 | 153.409 us | `computable` | `generated_tan_p96` | `generated[18546] -1 89/375` |
-| 455 | 153.390 us | `computable` | `generated_tan_p96` | `generated[14181] 1 36/695` |
-| 456 | 153.139 us | `computable` | `generated_tan_p96` | `generated[3231] 2 281/350` |
-| 457 | 153.119 us | `computable` | `generated_tan_p96` | `generated[16356] -1 6/17` |
-| 458 | 153.049 us | `computable` | `generated_tan_p96` | `generated[13956] 149/402` |
-| 459 | 152.949 us | `computable` | `generated_tan_p96` | `generated[3876] 45/52` |
-| 460 | 152.899 us | `computable` | `generated_tan_p96` | `generated[10206] 3/7` |
-| 461 | 152.619 us | `computable` | `generated_tan_p96` | `generated[11211] -187/738` |
-| 462 | 152.569 us | `computable` | `generated_tan_p96` | `generated[4131] 714/911` |
-| 463 | 152.520 us | `computable` | `generated_tan_p96` | `generated[10086] -1 67/286` |
-| 464 | 152.480 us | `computable` | `generated_tan_p96` | `generated[18396] 29/39` |
-| 465 | 152.290 us | `computable` | `generated_tan_p96` | `generated[14301] -1 19/53` |
-| 466 | 152.199 us | `computable` | `generated_tan_p96` | `generated[10356] -1 79/554` |
-| 467 | 151.869 us | `computable` | `generated_tan_p96` | `generated[6786] 2 180/223` |
-| 468 | 151.770 us | `computable` | `generated_tan_p96` | `generated[2826] -598/945` |
-| 469 | 151.690 us | `computable` | `generated_tan_p96` | `generated[6606] -520/709` |
-| 470 | 151.620 us | `computable` | `generated_tan_p96` | `generated[11841] -5 2/17` |
-| 471 | 151.619 us | `computable` | `generated_tan_p96` | `generated[14196] -1 17/156` |
-| 472 | 151.589 us | `computable` | `generated_tan_p96` | `generated[17181] -159/571` |
-| 473 | 151.549 us | `computable` | `generated_tan_p96` | `generated[3711] 13/17` |
-| 474 | 151.490 us | `computable` | `generated_tan_p96` | `generated[7011] -8 14/57` |
-| 475 | 151.430 us | `computable` | `generated_tan_p96` | `generated[81] 1 37/879` |
-| 476 | 151.410 us | `computable` | `generated_tan_p96` | `generated[10041] 60/151` |
-| 477 | 151.400 us | `computable` | `generated_tan_p96` | `generated[4716] -559/827` |
-| 478 | 151.190 us | `computable` | `generated_tan_p96` | `generated[14841] 1 28/907` |
-| 479 | 151.090 us | `computable` | `generated_tan_p96` | `generated[3351] -9 10/13` |
-| 480 | 150.980 us | `computable` | `generated_tan_p96` | `generated[2091] -280/437` |
-| 481 | 150.910 us | `computable` | `generated_tan_p96` | `generated[591] 165/499` |
-| 482 | 150.899 us | `computable` | `generated_tan_p96` | `generated[4296] 765/964` |
-| 483 | 150.840 us | `computable` | `generated_tan_p96` | `generated[3171] 1 87/512` |
-| 484 | 150.759 us | `computable` | `generated_tan_p96` | `generated[996] -15/53` |
-| 485 | 150.690 us | `computable` | `generated_tan_p96` | `generated[2151] 102/275` |
-| 486 | 150.299 us | `computable` | `generated_tan_p96` | `generated[6291] 7 25/64` |
-| 487 | 150.139 us | `computable` | `generated_tan_p96` | `generated[10491] -1 85/688` |
-| 488 | 150.030 us | `computable` | `generated_tan_p96` | `generated[1896] -1 19/155` |
-| 489 | 149.700 us | `computable` | `generated_tan_p96` | `generated[6471] -76/115` |
-| 490 | 149.670 us | `computable` | `asin_p96` | `mid` |
-| 491 | 149.660 us | `computable` | `generated_tan_p96` | `generated[1806] 1 49/177` |
-| 492 | 149.649 us | `computable` | `generated_tan_p96` | `generated[4581] -419/693` |
-| 493 | 149.579 us | `computable` | `generated_tan_p96` | `generated[8136] -1 104/283` |
-| 494 | 149.520 us | `computable` | `generated_tan_p96` | `generated[6036] -151/254` |
-| 495 | 149.370 us | `computable` | `generated_tan_p96` | `generated[14511] 1 32/801` |
-| 496 | 149.190 us | `computable` | `generated_tan_p96` | `generated[10626] -1 91/822` |
-| 497 | 149.149 us | `computable` | `generated_tan_p96` | `generated[2391] -123/208` |
-| 498 | 149.130 us | `computable` | `generated_tan_p96` | `generated[13191] 1 48/377` |
-| 499 | 149.069 us | `computable` | `generated_tan_p96` | `generated[9876] 309/853` |
-| 500 | 148.950 us | `computable` | `generated_tan_p96` | `generated[2076] 39/61` |
-| 501 | 148.879 us | `computable` | `generated_tan_p96` | `generated[16596] -1 46/131` |
-| 502 | 148.800 us | `computable` | `generated_tan_p96` | `generated[231] -64/237` |
-| 503 | 148.790 us | `computable` | `generated_tan_p96` | `generated[13686] 1 21/268` |
-| 504 | 148.729 us | `computable` | `generated_tan_p96` | `generated[11271] 65/192` |
-| 505 | 148.530 us | `computable` | `generated_tan_p96` | `generated[2691] -458/811` |
-| 506 | 148.520 us | `computable` | `generated_tan_p96` | `generated[3801] 612/805` |
-| 507 | 148.490 us | `computable` | `generated_tan_p96` | `generated[1326] -15 3/10` |
-| 508 | 148.260 us | `computable` | `tan_p96` | `rational[8]=-3 16/113` |
-| 509 | 148.239 us | `computable` | `generated_tan_p96` | `generated[11226] 4 112/199` |
-| 510 | 148.220 us | `computable` | `generated_tan_p96` | `generated[4881] -127/220` |
-| 511 | 148.190 us | `computable` | `generated_tan_p96` | `generated[14016] 1 19/321` |
-| 512 | 148.070 us | `computable` | `generated_tan_p96` | `generated[3006] 1 89/459` |
-| 513 | 148.059 us | `computable` | `generated_atan_p96` | `generated[17394] -2 12/295` |
-| 514 | 148.049 us | `computable` | `tan_p96` | `huge_pi_plus_offset` |
-| 515 | 148.040 us | `computable` | `generated_tan_p96` | `generated[12216] -1 268/517` |
-| 516 | 148.030 us | `computable` | `generated_tan_p96` | `generated[1581] 471/817` |
-| 517 | 147.980 us | `computable` | `generated_tan_p96` | `generated[261] 21/131` |
-| 518 | 147.920 us | `computable` | `generated_tan_p96` | `generated[6156] 613/927` |
-| 519 | 147.870 us | `computable` | `generated_tan_p96` | `generated[14121] 349/857` |
-| 520 | 147.840 us | `computable` | `generated_tan_p96` | `generated[1251] 41/79` |
-| 521 | 147.830 us | `computable` | `generated_tan_p96` | `generated[3306] 27/38` |
-| 522 | 147.750 us | `computable` | `generated_tan_p96` | `generated[4281] -15/23` |
-| 523 | 147.699 us | `computable` | `generated_tan_p96` | `generated[15096] -440/717` |
-| 524 | 147.589 us | `computable` | `generated_tan_p96` | `generated[10311] 80/177` |
-| 525 | 147.480 us | `computable` | `generated_tan_p96` | `generated[10746] -149/498` |
-| 526 | 147.230 us | `computable` | `generated_tan_p96` | `generated[10401] 653/931` |
-| 527 | 147.020 us | `computable` | `asinh_p128` | `large_negative` |
-| 528 | 146.990 us | `computable` | `generated_tan_p96` | `generated[1656] -51/116` |
-| 529 | 146.950 us | `computable` | `generated_tan_p96` | `generated[17601] 1 41/217` |
-| 530 | 146.950 us | `computable` | `generated_tan_p96` | `generated[18081] -3 7/45` |
-| 531 | 146.790 us | `computable` | `generated_tan_p96` | `generated[10131] 1 90/221` |
-| 532 | 146.730 us | `computable` | `generated_tan_p96` | `generated[3636] 561/752` |
-| 533 | 146.730 us | `computable` | `generated_tan_p96` | `generated[7416] 1 41/172` |
-| 534 | 146.600 us | `computable` | `generated_tan_p96` | `generated[12696] 1 27/109` |
-| 535 | 146.280 us | `computable` | `generated_tan_p96` | `generated[6771] -469/762` |
-| 536 | 146.140 us | `computable` | `generated_tan_p96` | `generated[3906] 12 5/23` |
-| 537 | 146.140 us | `computable` | `generated_tan_p96` | `generated[5121] -4 51/232` |
-| 538 | 146.130 us | `computable` | `generated_tan_p96` | `generated[13101] -37/155` |
-| 539 | 145.930 us | `computable` | `tan_p96` | `rational[5]=7/10` |
-| 540 | 145.890 us | `computable` | `generated_tan_p96` | `generated[1971] 1 194/761` |
-| 541 | 145.580 us | `computable` | `generated_tan_p96` | `generated[12891] 2 67/95` |
-| 542 | 145.470 us | `computable` | `generated_tan_p96` | `generated[6321] 166/245` |
-| 543 | 145.320 us | `computable` | `generated_tan_p96` | `generated[861] -115/767` |
-| 544 | 145.280 us | `computable` | `generated_atan_p96` | `generated[609] -2 18/251` |
-| 545 | 145.200 us | `computable` | `generated_tan_p96` | `generated[15126] -83/212` |
-| 546 | 145.120 us | `computable` | `generated_tan_p96` | `generated[18231] 529/727` |
-| 547 | 144.950 us | `computable` | `generated_tan_p96` | `generated[4416] -47/64` |
-| 548 | 144.920 us | `computable` | `generated_tan_p96` | `generated[14991] -109/502` |
-| 549 | 144.840 us | `computable` | `generated_tan_p96` | `generated[2811] 306/487` |
-| 550 | 144.820 us | `computable` | `generated_tan_p96` | `generated[5661] 115/192` |
-| 551 | 144.761 us | `computable` | `tan_p96` | `rational[27]=-256` |
-| 552 | 144.730 us | `computable` | `generated_tan_p96` | `generated[17106] 1 8/25` |
-| 553 | 144.720 us | `computable` | `generated_tan_p96` | `generated[17436] 1 28/127` |
-| 554 | 144.700 us | `computable` | `generated_tan_p96` | `generated[13791] 247/751` |
-| 555 | 144.660 us | `computable` | `generated_tan_p96` | `generated[2211] 4 32/113` |
-| 556 | 144.430 us | `computable` | `generated_tan_p96` | `generated[2601] 16 56/57` |
-| 557 | 144.280 us | `computable` | `generated_tan_p96` | `generated[2736] 4 64/191` |
-| 558 | 144.181 us | `computable` | `generated_tan_p96` | `generated[4746] -184/373` |
-| 559 | 144.150 us | `computable` | `asinh_p128` | `large` |
-| 560 | 144.120 us | `computable` | `generated_tan_p96` | `generated[186] 6 3/97` |
-| 561 | 143.950 us | `computable` | `generated_tan_p96` | `generated[7056] 346/491` |
-| 562 | 143.810 us | `computable` | `generated_tan_p96` | `generated[17646] -197/811` |
-| 563 | 143.730 us | `computable` | `generated_tan_p96` | `generated[5826] 511/821` |
-| 564 | 143.640 us | `computable` | `tan_p96` | `rational[28]=-256` |
-| 565 | 143.630 us | `computable` | `tan_p96` | `rational[1]=1` |
-| 566 | 143.540 us | `computable` | `generated_tan_p96` | `generated[16011] 388/739` |
-| 567 | 143.400 us | `computable` | `generated_tan_p96` | `generated[5871] -1 1/201` |
-| 568 | 143.360 us | `computable` | `acosh_p128` | `large` |
-| 569 | 143.320 us | `computable` | `generated_tan_p96` | `generated[2646] 255/434` |
-| 570 | 143.180 us | `computable` | `generated_tan_p96` | `generated[10881] -289/632` |
-| 571 | 143.180 us | `computable` | `generated_tan_p96` | `generated[5991] 281/437` |
-| 572 | 143.140 us | `computable` | `generated_tan_p96` | `generated[1761] -1 51/331` |
-| 573 | 143.060 us | `computable` | `generated_tan_p96` | `generated[2256] -229/490` |
-| 574 | 143.030 us | `computable` | `generated_atan_p96` | `generated[579] -2 47/332` |
-| 575 | 142.880 us | `computable` | `generated_cos_p96` | `generated[155] 3 26/27` |
-| 576 | 142.870 us | `computable` | `generated_tan_p96` | `generated[4146] -95/186` |
-| 577 | 142.600 us | `computable` | `generated_tan_p96` | `generated[18651] -1 41/118` |
-| 578 | 142.521 us | `computable` | `generated_tan_p96` | `generated[5496] 409/715` |
-| 579 | 142.350 us | `computable` | `generated_tan_p96` | `generated[6141] -1 13/469` |
-| 580 | 142.320 us | `computable` | `generated_tan_p96` | `generated[10446] -60/311` |
-| 581 | 142.240 us | `computable` | `generated_tan_p96` | `generated[10326] -1 189/635` |
-| 582 | 142.221 us | `computable` | `generated_tan_p96` | `generated[2856] -407/864` |
-| 583 | 142.130 us | `computable` | `generated_tan_p96` | `generated[2301] -1 25/289` |
-| 584 | 142.070 us | `computable` | `generated_tan_p96` | `generated[14781] 7 49/72` |
-| 585 | 141.931 us | `computable` | `generated_tan_p96` | `generated[17541] 67/298` |
-| 586 | 141.880 us | `computable` | `generated_tan_p96` | `generated[3846] -101/185` |
-| 587 | 141.880 us | `computable` | `generated_tan_p96` | `generated[6936] -418/815` |
-| 588 | 141.860 us | `computable` | `generated_atan_p96` | `generated[1884] 2 5/298` |
-| 589 | 141.751 us | `computable` | `generated_tan_p96` | `generated[4071] 4 7/19` |
-| 590 | 141.750 us | `computable` | `generated_tan_p96` | `generated[6621] 3 13/34` |
-| 591 | 141.710 us | `computable` | `generated_tan_p96` | `generated[6336] -80/147` |
-| 592 | 141.690 us | `computable` | `generated_tan_p96` | `generated[10911] -98/551` |
-| 593 | 141.621 us | `computable` | `generated_tan_p96` | `generated[11646] -6 22/31` |
-| 594 | 141.600 us | `computable` | `generated_tan_p96` | `generated[2556] -318/677` |
-| 595 | 141.460 us | `computable` | `generated_tan_p96` | `generated[12306] -106/137` |
-| 596 | 140.740 us | `computable` | `generated_tan_p96` | `generated[8316] 4 13/20` |
-| 597 | 140.730 us | `computable` | `generated_tan_p96` | `generated[6726] 244/385` |
-| 598 | 140.670 us | `computable` | `generated_tan_p96` | `generated[18261] 1 37/323` |
-| 599 | 140.490 us | `computable` | `generated_tan_p96` | `generated[6546] -1 31/871` |
-| 600 | 140.481 us | `computable` | `generated_tan_p96` | `generated[1716] 331/951` |
-| 601 | 140.451 us | `computable` | `generated_tan_p96` | `generated[1056] 127/739` |
-| 602 | 140.450 us | `computable` | `generated_tan_p96` | `generated[6006] -1 7/335` |
-| 603 | 140.231 us | `computable` | `generated_atan_p96` | `generated[6909] -2 1/19` |
-| 604 | 140.190 us | `computable` | `generated_tan_p96` | `generated[14541] -1 17/48` |
-| 605 | 140.021 us | `computable` | `generated_tan_p96` | `generated[16311] 299/926` |
-| 606 | 139.980 us | `computable` | `generated_tan_p96` | `generated[4596] 4 30/77` |
-| 607 | 139.881 us | `computable` | `generated_tan_p96` | `generated[11736] 157/816` |
-| 608 | 139.710 us | `computable` | `generated_tan_p96` | `generated[2166] -1 69/733` |
-| 609 | 139.591 us | `computable` | `generated_tan_p96` | `generated[15861] -3 6/7` |
-| 610 | 139.490 us | `computable` | `generated_tan_p96` | `generated[12546] -1 60/623` |
-| 611 | 139.241 us | `computable` | `generated_atan_p96` | `generated[549] -2 76/413` |
-| 612 | 139.180 us | `computable` | `generated_tan_p96` | `generated[426] 57/223` |
-| 613 | 138.881 us | `computable` | `generated_tan_p96` | `generated[3051] -15/76` |
-| 614 | 138.710 us | `computable` | `generated_tan_p96` | `generated[2481] 68/127` |
-| 615 | 138.671 us | `computable` | `generated_tan_p96` | `generated[1146] 1 51/124` |
-| 616 | 138.671 us | `computable` | `tan_p96` | `rational[7]=3 16/113` |
-| 617 | 138.631 us | `computable` | `generated_tan_p96` | `generated[6276] -1 19/603` |
-| 618 | 138.611 us | `computable` | `generated_tan_p96` | `generated[6561] 193/332` |
-| 619 | 138.610 us | `computable` | `generated_tan_p96` | `generated[6411] -1 25/737` |
-| 620 | 138.200 us | `computable` | `generated_tan_p96` | `generated[5166] 307/609` |
-| 621 | 137.931 us | `computable` | `generated_tan_p96` | `generated[13521] 1 44/483` |
-| 622 | 137.771 us | `computable` | `generated_tan_p96` | `generated[10851] -480/713` |
-| 623 | 137.651 us | `computable` | `generated_atan_p96` | `generated[11064] -2 49/437` |
-| 624 | 137.591 us | `computable` | `acos_p96` | `mid` |
-| 625 | 137.420 us | `computable` | `generated_tan_p96` | `generated[3936] 472/939` |
-| 626 | 137.251 us | `computable` | `generated_tan_p96` | `generated[11601] 27/62` |
-| 627 | 137.221 us | `computable` | `generated_tan_p96` | `generated[5211] -7/17` |
-| 628 | 137.200 us | `computable` | `generated_tan_p96` | `generated[2721] -267/730` |
-| 629 | 137.121 us | `computable` | `generated_tan_p96` | `generated[12921] 6 51/109` |
-| 630 | 137.081 us | `computable` | `generated_tan_p96` | `generated[4101] 523/992` |
-| 631 | 136.970 us | `computable` | `generated_tan_p96` | `generated[4911] -317/799` |
-| 632 | 136.931 us | `computable` | `generated_tan_p96` | `generated[17721] -6 59/110` |
-| 633 | 136.890 us | `computable` | `generated_tan_p96` | `generated[10581] -40/89` |
-| 634 | 136.711 us | `computable` | `generated_tan_p96` | `generated[1626] -1 45/197` |
-| 635 | 136.561 us | `computable` | `generated_tan_p96` | `generated[4221] -1 11/167` |
-| 636 | 136.500 us | `computable` | `generated_tan_p96` | `generated[4236] 2 125/129` |
-| 637 | 136.391 us | `computable` | `generated_tan_p96` | `generated[3996] 1 11/111` |
-| 638 | 136.351 us | `computable` | `generated_tan_p96` | `generated[5331] 179/331` |
-| 639 | 136.330 us | `computable` | `tan_p96` | `rational[2]=-1` |
-| 640 | 136.231 us | `computable` | `generated_tan_p96` | `generated[4086] -1 19/267` |
-| 641 | 136.210 us | `computable` | `generated_tan_p96` | `generated[10941] 93/470` |
-| 642 | 136.120 us | `computable` | `generated_tan_p96` | `generated[10296] 1 67/179` |
-| 643 | 135.831 us | `computable` | `generated_tan_p96` | `generated[7341] -3 89/110` |
-| 644 | 135.791 us | `computable` | `generated_tan_p96` | `generated[11331] 1 163/414` |
-| 645 | 135.790 us | `computable` | `generated_tan_p96` | `generated[4926] 2 129/130` |
-| 646 | 135.751 us | `computable` | `generated_tan_p96` | `generated[3111] 217/674` |
-| 647 | 135.660 us | `computable` | `generated_tan_p96` | `generated[5931] 4 8/13` |
-| 648 | 135.650 us | `computable` | `generated_tan_p96` | `generated[4611] -19/51` |
-| 649 | 135.541 us | `computable` | `generated_atan_p96` | `generated[11094] -2 5/89` |
-| 650 | 135.541 us | `computable` | `generated_tan_p96` | `generated[13611] -3 179/240` |
-| 651 | 135.431 us | `computable` | `generated_tan_p96` | `generated[1986] 17/74` |
-| 652 | 135.410 us | `computable` | `generated_tan_p96` | `generated[6396] 142/279` |
-| 653 | 135.400 us | `computable` | `generated_tan_p96` | `generated[4356] -1 25/401` |
-| 654 | 135.371 us | `computable` | `generated_tan_p96` | `generated[7581] 1 121/569` |
-| 655 | 135.310 us | `computable` | `generated_tan_p96` | `generated[3816] -1 13/133` |
-| 656 | 135.091 us | `computable` | `generated_tan_p96` | `generated[1836] -1 277/627` |
-| 657 | 134.960 us | `computable` | `generated_tan_p96` | `generated[10011] 169/987` |
-| 658 | 134.930 us | `computable` | `generated_cos_p96` | `generated[2015] 3 37/44` |
-| 659 | 134.800 us | `computable` | `generated_tan_p96` | `generated[15636] 3 231/256` |
-| 660 | 134.731 us | `computable` | `generated_tan_p96` | `generated[13461] 29/129` |
-| 661 | 134.671 us | `computable` | `generated_tan_p96` | `generated[17931] 1 13/90` |
-| 662 | 134.641 us | `computable` | `generated_tan_p96` | `generated[3681] -1 5/33` |
-| 663 | 134.451 us | `computable` | `generated_tan_p96` | `generated[6501] -189/494` |
-| 664 | 134.401 us | `computable` | `generated_tan_p96` | `generated[981] 1 206/443` |
-| 665 | 134.180 us | `computable` | `generated_tan_p96` | `generated[9861] -1 391/395` |
-| 666 | 134.001 us | `computable` | `generated_tan_p96` | `generated[6381] -1 135/818` |
-| 667 | 133.960 us | `computable` | `generated_tan_p96` | `generated[1461] -2 5/144` |
-| 668 | 133.860 us | `computable` | `generated_tan_p96` | `generated[17871] 118/351` |
-| 669 | 133.840 us | `computable` | `generated_tan_p96` | `generated[3501] 1 83/618` |
-| 670 | 133.701 us | `computable` | `generated_tan_p96` | `generated[4161] 1 15/166` |
-| 671 | 133.661 us | `computable` | `generated_tan_p96` | `generated[16491] -1 57/220` |
-| 672 | 133.581 us | `computable` | `generated_tan_p96` | `generated[14946] 4 104/125` |
-| 673 | 133.530 us | `computable` | `generated_tan_p96` | `generated[3666] 1 81/671` |
-| 674 | 133.361 us | `computable` | `generated_tan_p96` | `generated[6801] -278/681` |
-| 675 | 133.361 us | `computable` | `generated_tan_p96` | `generated[8421] 41/295` |
-| 676 | 133.351 us | `computable` | `generated_tan_p96` | `generated[10701] 4 80/121` |
-| 677 | 133.341 us | `computable` | `generated_atan_p96` | `generated[16584] 119/244` |
-| 678 | 133.170 us | `computable` | `generated_tan_p96` | `generated[17511] -57/677` |
-| 679 | 132.951 us | `computable` | `generated_tan_p96` | `generated[3771] 421/886` |
-| 680 | 132.931 us | `computable` | `generated_tan_p96` | `generated[4326] 1 73/883` |
-| 681 | 132.861 us | `computable` | `generated_tan_p96` | `generated[13701] -163/497` |
-| 682 | 132.831 us | `computable` | `generated_tan_p96` | `generated[3441] 319/780` |
-| 683 | 132.811 us | `computable` | `generated_atan_p96` | `generated[8169] -91/194` |
-| 684 | 132.801 us | `computable` | `generated_tan_p96` | `generated[18426] 1 24/233` |
-| 685 | 132.721 us | `computable` | `generated_sin_p96` | `generated[484] 3 8/9` |
-| 686 | 132.710 us | `computable` | `generated_tan_p96` | `generated[3831] 1 79/724` |
-| 687 | 132.560 us | `computable` | `generated_tan_p96` | `generated[13896] -2/23` |
-| 688 | 132.521 us | `computable` | `generated_tan_p96` | `generated[2421] -178/543` |
-| 689 | 132.511 us | `computable` | `generated_tan_p96` | `generated[2136] -1 179/814` |
-| 690 | 132.351 us | `computable` | `tan_p96` | `rational[34]=-18446744073709551616` |
-| 691 | 132.281 us | `computable` | `generated_tan_p96` | `generated[5346] -4 18/41` |
-| 692 | 132.221 us | `computable` | `generated_tan_p96` | `generated[1551] 140/449` |
-| 693 | 132.001 us | `computable` | `generated_tan_p96` | `generated[396] -77/527` |
-| 694 | 131.981 us | `computable` | `ln_abs_plus_one_p96` | `near_half_pi_minus_2^-40` |
-| 695 | 131.890 us | `computable` | `generated_tan_p96` | `generated[6981] 4 88/195` |
-| 696 | 131.641 us | `computable` | `generated_tan_p96` | `generated[16161] -1 161/167` |
-| 697 | 131.601 us | `computable` | `generated_tan_p96` | `generated[17856] -3 127/244` |
-| 698 | 131.581 us | `computable` | `generated_tan_p96` | `generated[17691] -4 146/191` |
-| 699 | 131.511 us | `computable` | `generated_atan_p96` | `generated[2034] -443/890` |
-| 700 | 131.501 us | `computable` | `generated_tan_p96` | `generated[12681] -1 66/757` |
-| 701 | 131.281 us | `computable` | `generated_tan_p96` | `generated[18591] 1 35/376` |
-| 702 | 131.220 us | `computable` | `generated_tan_p96` | `generated[3606] 370/833` |
-| 703 | 131.201 us | `computable` | `generated_tan_p96` | `generated[4836] 205/503` |
-| 704 | 131.171 us | `computable` | `generated_tan_p96` | `generated[12801] -59/433` |
-| 705 | 131.001 us | `computable` | `generated_tan_p96` | `generated[14091] 79/469` |
-| 706 | 130.981 us | `computable` | `generated_tan_p96` | `generated[13926] 107/885` |
-| 707 | 130.921 us | `computable` | `generated_tan_p96` | `generated[5076] -133/426` |
-| 708 | 130.731 us | `computable` | `generated_atan_p96` | `generated[17364] -2 41/376` |
-| 709 | 130.721 us | `computable` | `generated_tan_p96` | `generated[5961] 371/955` |
-| 710 | 130.601 us | `computable` | `generated_tan_p96` | `generated[6111] -1 123/550` |
-| 711 | 130.491 us | `computable` | `generated_tan_p96` | `generated[3336] 1 17/113` |
-| 712 | 130.431 us | `computable` | `generated_tan_p96` | `generated[7146] 3 175/248` |
-| 713 | 130.341 us | `computable` | `generated_tan_p96` | `generated[14226] 6/25` |
-| 714 | 130.291 us | `computable` | `generated_tan_p96` | `generated[7566] -3 24/37` |
-| 715 | 130.201 us | `computable` | `generated_atan_p96` | `generated[13119] -2 89/372` |
-| 716 | 129.951 us | `computable` | `generated_atan_p96` | `generated[10359] -414/845` |
-| 717 | 129.911 us | `computable` | `generated_tan_p96` | `generated[4191] -1 22/107` |
-| 718 | 129.861 us | `computable` | `generated_tan_p96` | `generated[6246] -1 43/228` |
-| 719 | 129.831 us | `computable` | `generated_sin_p96` | `generated[10054] -3 171/173` |
-| 720 | 129.621 us | `computable` | `generated_tan_p96` | `generated[4056] -1 148/615` |
-| 721 | 129.591 us | `computable` | `generated_tan_p96` | `generated[10056] -1 177/367` |
-| 722 | 129.581 us | `computable` | `generated_tan_p96` | `generated[6456] 4 56/117` |
-| 723 | 129.421 us | `computable` | `generated_atan_p96` | `generated[8469] -151/321` |
-| 724 | 129.211 us | `computable` | `generated_tan_p96` | `generated[6681] 119 5/8` |
-| 725 | 129.011 us | `computable` | `generated_tan_p96` | `generated[6231] 91/226` |
-| 726 | 128.961 us | `computable` | `generated_tan_p96` | `generated[1731] -1 161/412` |
-| 727 | 128.941 us | `computable` | `generated_tan_p96` | `generated[15411] 1 201/365` |
-| 728 | 128.921 us | `computable` | `generated_atan_p96` | `generated[10059] -325/658` |
-| 729 | 128.891 us | `computable` | `tan_p96` | `rational[33]=-18446744073709551616` |
-| 730 | 128.871 us | `computable` | `generated_tan_p96` | `generated[5796] 160/451` |
-| 731 | 128.831 us | `computable` | `generated_tan_p96` | `generated[17706] 185/649` |
-| 732 | 128.701 us | `computable` | `generated_tan_p96` | `generated[3486] -2 37/80` |
-| 733 | 128.681 us | `computable` | `generated_atan_p96` | `generated[16494] -335/731` |
-| 734 | 128.621 us | `computable` | `generated_tan_p96` | `generated[17946] -286` |
-| 735 | 128.381 us | `computable` | `generated_tan_p96` | `generated[2841] 1 13/58` |
-| 736 | 128.231 us | `computable` | `generated_tan_p96` | `generated[891] 38/343` |
-| 737 | 128.182 us | `computable` | `generated_tan_p96` | `generated[1386] 229/845` |
-| 738 | 127.931 us | `computable` | `generated_tan_p96` | `generated[11586] -3 9/16` |
-| 739 | 127.921 us | `computable` | `generated_tan_p96` | `generated[1641] 1 198/655` |
-| 740 | 127.842 us | `computable` | `generated_tan_p96` | `generated[16086] -3 10/19` |
-| 741 | 127.681 us | `computable` | `generated_tan_p96` | `generated[16266] -1 146/183` |
-| 742 | 127.612 us | `computable` | `generated_tan_p96` | `generated[12051] -1 93/116` |
-| 743 | 127.502 us | `computable` | `generated_tan_p96` | `generated[16191] -1 212/253` |
-| 744 | 127.391 us | `computable` | `generated_tan_p96` | `generated[7761] -1 80/83` |
-| 745 | 127.371 us | `computable` | `generated_tan_p96` | `generated[3276] 268/727` |
-| 746 | 127.222 us | `computable` | `generated_tan_p96` | `generated[4311] -139/425` |
-| 747 | 127.142 us | `computable` | `generated_tan_p96` | `generated[2946] 166/621` |
-| 748 | 127.131 us | `computable` | `generated_tan_p96` | `generated[6966] -227/734` |
-| 749 | 127.091 us | `computable` | `generated_tan_p96` | `generated[7836] -1 306/379` |
-| 750 | 127.051 us | `computable` | `generated_tan_p96` | `generated[6201] -100/307` |
-| 751 | 127.031 us | `computable` | `generated_tan_p96` | `generated[18321] -1 413/484` |
-| 752 | 126.972 us | `computable` | `generated_tan_p96` | `generated[2886] -8/29` |
-| 753 | 126.902 us | `computable` | `generated_tan_p96` | `generated[9711] 129/400` |
-| 754 | 126.901 us | `computable` | `generated_tan_p96` | `generated[18621] -1 315/671` |
-| 755 | 126.791 us | `computable` | `generated_tan_p96` | `generated[15966] -2 87/181` |
-| 756 | 126.721 us | `computable` | `generated_tan_p96` | `generated[8406] 1 37/278` |
-| 757 | 126.651 us | `computable` | `generated_tan_p96` | `generated[11976] -1 73/84` |
-| 758 | 126.571 us | `computable` | `generated_tan_p96` | `generated[1026] -16/205` |
-| 759 | 126.422 us | `computable` | `generated_tan_p96` | `generated[12081] -1 262/383` |
-| 760 | 126.331 us | `computable` | `generated_tan_p96` | `generated[15471] 4 136/203` |
-| 761 | 126.321 us | `computable` | `generated_atan_p96` | `generated[594] 192/395` |
-| 762 | 126.261 us | `computable` | `generated_tan_p96` | `generated[18486] -1 103/179` |
-| 763 | 126.202 us | `computable` | `generated_tan_p96` | `generated[16296] -1 82/117` |
-| 764 | 126.162 us | `computable` | `generated_tan_p96` | `generated[13731] -135/913` |
-| 765 | 126.042 us | `computable` | `generated_atan_p96` | `generated[11274] 138/289` |
-| 766 | 126.032 us | `computable` | `generated_tan_p96` | `generated[4671] 77/225` |
-| 767 | 125.881 us | `computable` | `generated_tan_p96` | `generated[7806] -1 104/115` |
-| 768 | 125.791 us | `computable` | `generated_tan_p96` | `generated[2676] 1 93/353` |
-| 769 | 125.702 us | `computable` | `generated_tan_p96` | `generated[10191] -1 61/167` |
-| 770 | 125.681 us | `computable` | `generated_tan_p96` | `generated[11376] -136/791` |
-| 771 | 125.511 us | `computable` | `generated_atan_p96` | `generated[8934] -2 79/206` |
-| 772 | 125.361 us | `computable` | `generated_atan_p96` | `generated[13764] 2 23/126` |
-| 773 | 125.281 us | `computable` | `generated_tan_p96` | `generated[8571] 1 109/887` |
-| 774 | 125.281 us | `computable` | `generated_tan_p96` | `generated[9921] -1 171/233` |
-| 775 | 124.952 us | `computable` | `generated_tan_p96` | `generated[16221] -1 51/86` |
-| 776 | 124.791 us | `computable` | `generated_tan_p96` | `generated[5631] 269/849` |
-| 777 | 124.691 us | `computable` | `generated_tan_p96` | `generated[9726] -2 124/261` |
-| 778 | 124.672 us | `computable` | `generated_tan_p96` | `generated[3456] -2 103/241` |
-| 779 | 124.511 us | `computable` | `generated_tan_p96` | `generated[7866] -1 98/149` |
-| 780 | 124.501 us | `computable` | `generated_tan_p96` | `generated[18381] -1 193/322` |
-| 781 | 124.381 us | `computable` | `generated_tan_p96` | `generated[9006] 3 134/211` |
-| 782 | 124.321 us | `computable` | `generated_tan_p96` | `generated[11076] -47/604` |
-| 783 | 124.071 us | `computable` | `generated_tan_p96` | `generated[5976] -1 9/32` |
-| 784 | 123.722 us | `computable` | `generated_tan_p96` | `generated[15021] 82/421` |
-| 785 | 123.682 us | `computable` | `generated_atan_p96` | `generated[8964] -2 2/5` |
-| 786 | 123.632 us | `computable` | `generated_tan_p96` | `generated[11166] 1 165/361` |
-| 787 | 123.612 us | `computable` | `generated_tan_p96` | `generated[561] -13/290` |
-| 788 | 123.501 us | `computable` | `generated_tan_p96` | `generated[7671] -2 42/163` |
-| 789 | 123.381 us | `computable` | `generated_tan_p96` | `generated[9696] -2 17/38` |
-| 790 | 123.251 us | `computable` | `generated_tan_p96` | `generated[4776] -177/665` |
-| 791 | 123.202 us | `computable` | `generated_tan_p96` | `generated[8271] -1 107/350` |
-| 792 | 123.182 us | `computable` | `generated_tan_p96` | `generated[14271] -1 243/452` |
-| 793 | 123.112 us | `computable` | `generated_tan_p96` | `generated[17376] 83/543` |
-| 794 | 123.081 us | `computable` | `generated_tan_p96` | `generated[8256] -5/121` |
-| 795 | 123.032 us | `computable` | `generated_tan_p96` | `generated[16746] 7/25` |
-| 796 | 122.962 us | `computable` | `generated_sin_p96` | `generated[13909] 3 166/233` |
-| 797 | 122.732 us | `computable` | `generated_tan_p96` | `generated[16431] -1 167/301` |
-| 798 | 122.512 us | `computable` | `generated_tan_p96` | `generated[6666] -138/547` |
-| 799 | 122.492 us | `computable` | `generated_tan_p96` | `generated[7971] -1 104/171` |
-| 800 | 122.491 us | `computable` | `generated_tan_p96` | `generated[18006] 24/209` |
-| 801 | 122.462 us | `computable` | `generated_atan_p96` | `generated[13209] -2 2/129` |
-| 802 | 122.361 us | `computable` | `generated_atan_p96` | `generated[14604] -374/849` |
-| 803 | 122.351 us | `computable` | `generated_tan_p96` | `generated[2586] -127/596` |
-| 804 | 122.232 us | `computable` | `generated_tan_p96` | `generated[13431] -23/363` |
-| 805 | 122.191 us | `computable` | `generated_tan_p96` | `generated[13386] 1 318/349` |
-| 806 | 122.171 us | `computable` | `generated_tan_p96` | `generated[3921] -1 142/481` |
-| 807 | 121.851 us | `computable` | `generated_tan_p96` | `generated[4011] -25/119` |
-| 808 | 121.792 us | `computable` | `generated_tan_p96` | `generated[12111] -1 76/151` |
-| 809 | 121.722 us | `computable` | `generated_atan_p96` | `generated[16314] 2 39/110` |
-| 810 | 121.622 us | `computable` | `generated_tan_p96` | `generated[8106] -1 318/647` |
-| 811 | 121.552 us | `computable` | `generated_atan_p96` | `generated[14784] 2 46/363` |
-| 812 | 121.372 us | `computable` | `generated_tan_p96` | `generated[17301] 2 111/247` |
-| 813 | 121.361 us | `computable` | `generated_tan_p96` | `generated[1221] 89/396` |
-| 814 | 121.152 us | `computable` | `generated_tan_p96` | `generated[9501] 2 18/37` |
-| 815 | 121.082 us | `computable` | `generated_atan_p96` | `generated[4599] 2 1/89` |
-| 816 | 121.072 us | `computable` | `generated_tan_p96` | `generated[17796] 1 176/203` |
-| 817 | 121.052 us | `computable` | `generated_tan_p96` | `generated[14856] 31/368` |
-| 818 | 121.051 us | `computable` | `generated_tan_p96` | `generated[2121] -1/4` |
-| 819 | 120.872 us | `computable` | `generated_tan_p96` | `generated[1476] 1 100/301` |
-| 820 | 120.821 us | `computable` | `generated_tan_p96` | `generated[2511] 1 19/60` |
-| 821 | 120.791 us | `computable` | `generated_atan_p96` | `generated[1824] 219/460` |
-| 822 | 120.782 us | `computable` | `generated_atan_p96` | `generated[189] 2 7/97` |
-| 823 | 120.742 us | `computable` | `generated_tan_p96` | `generated[5241] -43/181` |
-| 824 | 120.732 us | `computable` | `generated_sin_p96` | `generated[1759] -3 117/137` |
-| 825 | 120.712 us | `computable` | `generated_tan_p96` | `generated[5946] -1 227/497` |
-| 826 | 120.672 us | `computable` | `generated_tan_p96` | `generated[12021] 1 427/545` |
-| 827 | 120.372 us | `computable` | `generated_tan_p96` | `generated[7611] 1 393/488` |
-| 828 | 120.362 us | `computable` | `generated_tan_p96` | `generated[16971] 3 80/141` |
-| 829 | 120.201 us | `computable` | `generated_tan_p96` | `generated[15456] -21/106` |
-| 830 | 120.172 us | `computable` | `generated_tan_p96` | `generated[5001] 64/139` |
-| 831 | 120.092 us | `computable` | `generated_tan_p96` | `generated[6216] 1 46/153` |
-| 832 | 119.832 us | `computable` | `generated_tan_p96` | `generated[18411] -1 83/241` |
-| 833 | 119.812 us | `computable` | `generated_tan_p96` | `generated[2436] 229 1/4` |
-| 834 | 119.742 us | `computable` | `generated_tan_p96` | `generated[9141] 1 94/115` |
-| 835 | 119.631 us | `computable` | `generated_atan_p96` | `generated[18009] 2 11/26` |
-| 836 | 119.362 us | `computable` | `generated_tan_p96` | `generated[9306] 1 140/199` |
-| 837 | 119.261 us | `computable` | `generated_tan_p96` | `generated[15246] 1 203/312` |
-| 838 | 119.232 us | `computable` | `generated_tan_p96` | `generated[18291] 1 346/565` |
-| 839 | 119.222 us | `computable` | `generated_tan_p96` | `generated[2781] 115/568` |
-| 840 | 119.042 us | `computable` | `generated_tan_p96` | `generated[18456] 1 172/309` |
-| 841 | 118.902 us | `computable` | `generated_tan_p96` | `generated[6066] 40/173` |
-| 842 | 118.802 us | `computable` | `generated_atan_p96` | `generated[7359] 28/57` |
-| 843 | 118.722 us | `computable` | `generated_tan_p96` | `generated[6081] -1 233/631` |
-| 844 | 118.692 us | `computable` | `generated_atan_p96` | `generated[12924] 2 31/100` |
-| 845 | 118.662 us | `computable` | `generated_tan_p96` | `generated[5466] 109/398` |
-| 846 | 118.601 us | `computable` | `generated_tan_p96` | `generated[15606] 2 134/337` |
-| 847 | 118.551 us | `computable` | `generated_atan_p96` | `generated[14619] 2 101/310` |
-| 848 | 118.501 us | `computable` | `generated_tan_p96` | `generated[11106] 144/523` |
-| 849 | 118.432 us | `computable` | `generated_tan_p96` | `generated[7941] 1 389/594` |
-| 850 | 118.372 us | `computable` | `generated_tan_p96` | `generated[7776] 1 391/541` |
-| 851 | 118.302 us | `computable` | `generated_atan_p96` | `generated[264] 47/114` |
-| 852 | 118.182 us | `computable` | `generated_tan_p96` | `generated[16101] 1 15/16` |
-| 853 | 118.022 us | `computable` | `generated_tan_p96` | `generated[8346] 563/996` |
-| 854 | 117.942 us | `computable` | `generated_atan_p96` | `generated[14304] -285/662` |
-| 855 | 117.872 us | `computable` | `generated_tan_p96` | `generated[7026] 155/572` |
-| 856 | 117.792 us | `computable` | `generated_tan_p96` | `generated[12366] 1 29/56` |
-| 857 | 117.602 us | `computable` | `generated_tan_p96` | `generated[7641] -2 113/407` |
-| 858 | 117.592 us | `computable` | `generated_tan_p96` | `generated[4941] -63/359` |
-| 859 | 117.462 us | `computable` | `generated_tan_p96` | `generated[4026] -1 43/116` |
-| 860 | 117.332 us | `computable` | `generated_tan_p96` | `generated[18216] -2 28/269` |
-| 861 | 117.312 us | `computable` | `generated_tan_p96` | `generated[9471] 1 278/451` |
-| 862 | 117.092 us | `computable` | `generated_tan_p96` | `generated[5886] 1 234/659` |
-| 863 | 117.072 us | `computable` | `generated_tan_p96` | `generated[13056] 2 79/243` |
-| 864 | 117.042 us | `computable` | `generated_atan_p96` | `generated[8424] 130/293` |
-| 865 | 117.032 us | `computable` | `generated_atan_p96` | `generated[8514] 2 3/7` |
-| 866 | 116.932 us | `computable` | `generated_atan_p96` | `generated[4794] -2 28/417` |
-| 867 | 116.912 us | `computable` | `generated_tan_p96` | `generated[7701] -2 11/49` |
-| 868 | 116.862 us | `computable` | `generated_tan_p96` | `generated[16776] 1 92/169` |
-| 869 | 116.852 us | `computable` | `generated_tan_p96` | `generated[9561] -3 73/208` |
-| 870 | 116.832 us | `computable` | `generated_tan_p96` | `generated[18186] -2 57/350` |
-| 871 | 116.812 us | `computable` | `generated_tan_p96` | `generated[1521] 1/11` |
-| 872 | 116.622 us | `computable` | `generated_tan_p96` | `generated[6051] 1 29/89` |
-| 873 | 116.612 us | `computable` | `generated_tan_p96` | `generated[5406] -82/479` |
-| 874 | 116.522 us | `computable` | `generated_tan_p96` | `generated[1311] 1 202/549` |
-| 875 | 116.382 us | `computable` | `generated_cos_p96` | `generated[13940] -3 41/83` |
-| 876 | 116.352 us | `computable` | `generated_tan_p96` | `generated[15831] -3 37/114` |
-| 877 | 116.312 us | `computable` | `ln_abs_plus_one_p96` | `rational[24]=-1` |
-| 878 | 116.252 us | `computable` | `generated_tan_p96` | `generated[11406] 11/142` |
-| 879 | 116.232 us | `computable` | `generated_atan_p96` | `generated[17169] 2 39/101` |
-| 880 | 116.162 us | `computable` | `generated_tan_p96` | `generated[9636] 1 23/42` |
-| 881 | 116.152 us | `computable` | `generated_tan_p96` | `generated[16056] -2 87/119` |
-| 882 | 115.912 us | `computable` | `generated_tan_p96` | `generated[18936] 20/319` |
-| 883 | 115.862 us | `computable` | `generated_tan_p96` | `generated[5841] -1 37/94` |
-| 884 | 115.802 us | `computable` | `generated_tan_p96` | `generated[11886] -2 65/411` |
-| 885 | 115.612 us | `computable` | `generated_tan_p96` | `generated[14256] 209/991` |
-| 886 | 115.502 us | `computable` | `generated_tan_p96` | `generated[18876] -362/481` |
-| 887 | 115.362 us | `computable` | `generated_tan_p96` | `generated[9666] 2 125/423` |
-| 888 | 115.362 us | `computable` | `ln_abs_plus_one_p96` | `rational[23]=-1` |
-| 889 | 115.352 us | `computable` | `generated_tan_p96` | `generated[3741] 230/967` |
-| 890 | 115.212 us | `computable` | `generated_atan_p96` | `generated[24] 2 83/335` |
-| 891 | 115.092 us | `computable` | `generated_tan_p96` | `generated[13131] 43/539` |
-| 892 | 115.062 us | `computable` | `generated_tan_p96` | `generated[17046] -1/23` |
-| 893 | 114.992 us | `computable` | `generated_cos_p96` | `generated[11195] 3 95/183` |
-| 894 | 114.982 us | `computable` | `generated_atan_p96` | `generated[18864] 2 133/314` |
-| 895 | 114.952 us | `computable` | `generated_tan_p96` | `generated[15996] -2 145/281` |
-| 896 | 114.872 us | `computable` | `generated_sin_p96` | `generated[16549] -3 11/14` |
-| 897 | 114.682 us | `computable` | `generated_sin_p96` | `generated[17629] 3 28/53` |
-| 898 | 114.672 us | `computable` | `generated_tan_p96` | `generated[11706] -34/897` |
-| 899 | 114.572 us | `computable` | `generated_tan_p96` | `generated[6921] 1 43/119` |
-| 900 | 114.482 us | `computable` | `generated_tan_p96` | `generated[4431] 6 19/101` |
-| 901 | 114.443 us | `computable` | `generated_tan_p96` | `generated[7371] -4 91/139` |
-| 902 | 114.372 us | `computable` | `generated_cos_p96` | `generated[845] 3 20/53` |
-| 903 | 114.273 us | `computable` | `generated_tan_p96` | `generated[5721] 1 118/303` |
-| 904 | 114.222 us | `computable` | `generated_tan_p96` | `generated[7731] -2 13/82` |
-| 905 | 114.213 us | `computable` | `generated_tan_p96` | `generated[11916] -2 6/55` |
-| 906 | 113.933 us | `computable` | `generated_tan_p96` | `generated[15771] 2 79/390` |
-| 907 | 113.882 us | `computable` | `generated_tan_p96` | `generated[2346] 1 97/247` |
-| 908 | 113.862 us | `computable` | `generated_tan_p96` | `generated[9756] -2 19/36` |
-| 909 | 113.762 us | `computable` | `generated_tan_p96` | `generated[5586] 2 19/236` |
-| 910 | 113.703 us | `computable` | `generated_tan_p96` | `generated[17211] 16/245` |
-| 911 | 113.592 us | `computable` | `generated_sin_p96` | `generated[18544] -3 67/181` |
-| 912 | 113.582 us | `computable` | `generated_tan_p96` | `generated[5301] 167/743` |
-| 913 | 113.452 us | `computable` | `generated_tan_p96` | `generated[3576] 179/914` |
-| 914 | 113.273 us | `computable` | `generated_tan_p96` | `generated[3786] -1 136/347` |
-| 915 | 113.142 us | `computable` | `generated_tan_p96` | `generated[16131] -2 17/415` |
-| 916 | 113.112 us | `computable` | `generated_tan_p96` | `generated[6861] 104/519` |
-| 917 | 112.892 us | `computable` | `generated_atan_p96` | `generated[10209] 2 124/253` |
-| 918 | 112.802 us | `computable` | `generated_tan_p96` | `generated[7116] 2 10/47` |
-| 919 | 112.563 us | `computable` | `generated_tan_p96` | `generated[11436] 246/629` |
-| 920 | 112.553 us | `computable` | `generated_tan_p96` | `generated[6831] -29/200` |
-| 921 | 112.552 us | `computable` | `generated_atan_p96` | `generated[1719] 2 12/49` |
-| 922 | 112.502 us | `computable` | `generated_cos_p96` | `generated[11720] 3 205/261` |
-| 923 | 112.472 us | `computable` | `generated_atan_p96` | `generated[429] 333/737` |
-| 924 | 112.392 us | `computable` | `generated_tan_p96` | `generated[11946] -2 7/249` |
-| 925 | 112.192 us | `computable` | `generated_atan_p96` | `generated[6129] 2 37/302` |
-| 926 | 111.842 us | `computable` | `generated_tan_p96` | `generated[14691] -4/63` |
-| 927 | 111.812 us | `computable` | `generated_tan_p96` | `generated[6366] -49/360` |
-| 928 | 111.762 us | `computable` | `generated_tan_p96` | `generated[9831] -2 25/476` |
-| 929 | 111.352 us | `computable` | `generated_atan_p96` | `generated[17199] -2 198/323` |
-| 930 | 111.302 us | `computable` | `generated_atan_p96` | `generated[10929] -2 59/101` |
-| 931 | 111.192 us | `computable` | `generated_atan_p96` | `generated[4434] 2 15/98` |
-| 932 | 111.123 us | `computable` | `generated_tan_p96` | `generated[16026] -2 29/50` |
-| 933 | 111.112 us | `computable` | `generated_tan_p96` | `generated[2751] -76/649` |
-| 934 | 111.072 us | `computable` | `generated_atan_p96` | `generated[6879] -2 39/271` |
-| 935 | 111.022 us | `computable` | `generated_sin_p96` | `generated[14299] -3 119/177` |
-| 936 | 110.832 us | `computable` | `generated_tan_p96` | `generated[3216] -114/889` |
-| 937 | 110.813 us | `computable` | `generated_tan_p96` | `generated[10776] 14/139` |
-| 938 | 110.622 us | `computable` | `generated_tan_p96` | `generated[16446] 2 11/21` |
-| 939 | 110.603 us | `computable` | `generated_tan_p96` | `generated[17976] -95/917` |
-| 940 | 110.542 us | `computable` | `generated_atan_p96` | `generated[10899] -2 103/192` |
-| 941 | 110.403 us | `computable` | `generated_tan_p96` | `generated[15156] -58/555` |
-| 942 | 110.282 us | `computable` | `generated_tan_p96` | `generated[8586] 23/87` |
-| 943 | 110.152 us | `computable` | `generated_tan_p96` | `generated[3891] -1 126/281` |
-| 944 | 110.042 us | `computable` | `generated_tan_p96` | `generated[18861] 23 13/23` |
-| 945 | 109.992 us | `computable` | `generated_atan_p96` | `generated[12069] 2 23/108` |
-| 946 | 109.952 us | `computable` | `generated_sin_p96` | `generated[1984] -3 11/28` |
-| 947 | 109.872 us | `computable` | `generated_atan_p96` | `generated[14739] -514/983` |
-| 948 | 109.702 us | `computable` | `generated_tan_p96` | `generated[11526] 2 47/386` |
-| 949 | 109.202 us | `computable` | `generated_tan_p96` | `generated[3411] 128/861` |
-| 950 | 109.083 us | `computable` | `generated_atan_p96` | `generated[384] -2 233/360` |
-| 951 | 109.053 us | `computable` | `generated_tan_p96` | `generated[96] 3/85` |
-| 952 | 108.622 us | `computable` | `generated_atan_p96` | `generated[3114] 436/965` |
-| 953 | 108.422 us | `computable` | `generated_atan_p96` | `generated[1434] -265/516` |
-| 954 | 108.402 us | `computable` | `generated_atan_p96` | `generated[6849] -2 17/88` |
-| 955 | 108.372 us | `computable` | `generated_tan_p96` | `generated[4956] 5 74/179` |
-| 956 | 108.362 us | `computable` | `generated_atan_p96` | `generated[2694] -2 29/105` |
-| 957 | 108.193 us | `computable` | `generated_tan_p96` | `generated[15801] -3 22/309` |
-| 958 | 108.122 us | `computable` | `generated_tan_p96` | `generated[11556] -3 74/305` |
-| 959 | 108.092 us | `computable` | `generated_tan_p96` | `generated[5136] 58/345` |
-| 960 | 107.902 us | `computable` | `generated_tan_p96` | `generated[17391] -205 1/4` |
-| 961 | 107.883 us | `computable` | `generated_tan_p96` | `generated[2286] -38/409` |
-| 962 | 107.792 us | `computable` | `generated_atan_p96` | `generated[11109] 33/74` |
-| 963 | 107.502 us | `computable` | `generated_atan_p96` | `generated[1659] 168/407` |
-| 964 | 107.393 us | `computable` | `generated_atan_p96` | `generated[17229] -2 169/242` |
-| 965 | 107.363 us | `computable` | `generated_sin_p96` | `generated[1534] -3 223/246` |
-| 966 | 107.333 us | `computable` | `generated_tan_p96` | `generated[4341] 13/86` |
-| 967 | 107.273 us | `computable` | `generated_tan_p96` | `generated[2616] 64/515` |
-| 968 | 107.123 us | `computable` | `generated_tan_p96` | `generated[726] 25/633` |
-| 969 | 107.033 us | `computable` | `generated_tan_p96` | `generated[7401] -7 25/29` |
-| 970 | 106.893 us | `computable` | `generated_tan_p96` | `generated[7281] 2 15/382` |
-| 971 | 106.863 us | `computable` | `generated_atan_p96` | `generated[5109] 2 14/65` |
-| 972 | 106.773 us | `computable` | `generated_atan_p96` | `generated[6819] -2 97/433` |
-| 973 | 106.722 us | `computable` | `generated_atan_p96` | `generated[3414] 2 37/155` |
-| 974 | 106.693 us | `computable` | `generated_atan_p96` | `generated[3054] 27/65` |
-| 975 | 106.633 us | `computable` | `generated_atan_p96` | `generated[18849] -334/853` |
-| 976 | 106.463 us | `computable` | `generated_tan_p96` | `generated[11661] 1 159/520` |
-| 977 | 106.452 us | `computable` | `generated_cos_p96` | `generated[13745] 3 56/277` |
-| 978 | 106.413 us | `computable` | `generated_atan_p96` | `generated[17004] 2 211/351` |
-| 979 | 106.363 us | `computable` | `generated_cos_p96` | `generated[15605] 3 1/16` |
-| 980 | 106.353 us | `computable` | `generated_atan_p96` | `generated[10959] -2 2/3` |
-| 981 | 106.092 us | `computable` | `generated_tan_p96` | `generated[5106] -25/257` |
-| 982 | 105.872 us | `computable` | `generated_atan_p96` | `generated[2604] -2 1/3` |
-| 983 | 105.752 us | `computable` | `generated_tan_p96` | `generated[13761] 7/104` |
-| 984 | 105.733 us | `computable` | `generated_tan_p96` | `generated[6756] 1 131/304` |
-| 985 | 105.712 us | `computable` | `generated_tan_p96` | `generated[9531] -3 21/289` |
-| 986 | 105.703 us | `computable` | `generated_tan_p96` | `generated[5901] -11/120` |
-| 987 | 105.653 us | `computable` | `generated_tan_p96` | `generated[16866] 834/923` |
-| 988 | 105.632 us | `computable` | `generated_tan_p96` | `generated[2916] -25/702` |
-| 989 | 105.483 us | `computable` | `generated_cos_p96` | `generated[8810] 3 13/71` |
-| 990 | 105.453 us | `computable` | `generated_atan_p96` | `generated[2664] -2 29/93` |
-| 991 | 105.413 us | `computable` | `generated_tan_p96` | `generated[5766] 129/983` |
-| 992 | 105.293 us | `computable` | `generated_atan_p96` | `generated[17874] 455/993` |
-| 993 | 105.223 us | `computable` | `generated_tan_p96` | `generated[9786] -2 2/3` |
-| 994 | 105.093 us | `computable` | `generated_cos_p96` | `generated[5450] -3 227/241` |
-| 995 | 105.043 us | `computable` | `generated_atan_p96` | `generated[14859] 250/659` |
-| 996 | 104.852 us | `computable` | `generated_sin_p96` | `generated[1174] 3 82/221` |
-| 997 | 104.843 us | `computable` | `generated_tan_p96` | `generated[15276] 3 13/231` |
-| 998 | 104.813 us | `computable` | `generated_sin_p96` | `generated[10024] -3 119/254` |
-| 999 | 104.792 us | `computable` | `generated_cos_p96` | `generated[17300] 3 41/75` |
-| 1000 | 104.623 us | `computable` | `generated_sin_p96` | `generated[8254] -3 1/4` |
+| 5 | 251.393 us | `computable` | `generated_tan_p96` | `generated[3756] -1 123/214` |
+| 6 | 250.393 us | `computable` | `generated_tan_p96` | `generated[12186] -1 189/299` |
+| 7 | 250.303 us | `computable` | `generated_tan_p96` | `generated[1011] 2 58/181` |
+| 8 | 248.133 us | `computable` | `generated_tan_p96` | `generated[321] 1 214/231` |
+| 9 | 247.793 us | `computable` | `generated_tan_p96` | `generated[5916] -1 337/578` |
+| 10 | 247.313 us | `computable` | `generated_tan_p96` | `generated[2016] 1 101/141` |
+| 11 | 245.733 us | `computable` | `generated_tan_p96` | `generated[13836] -3 73/131` |
+| 12 | 245.713 us | `computable` | `generated_tan_p96` | `generated[13911] -2 134/427` |
+| 13 | 244.504 us | `computable` | `generated_tan_p96` | `generated[8976] 1 71/73` |
+| 14 | 243.993 us | `computable` | `generated_tan_p96` | `generated[11691] 1 431/439` |
+| 15 | 243.343 us | `computable` | `generated_tan_p96` | `generated[4401] 2 5/13` |
+| 16 | 242.743 us | `computable` | `generated_tan_p96` | `generated[15081] 1 205/259` |
+| 17 | 242.493 us | `computable` | `generated_tan_p96` | `generated[5676] -1 215/229` |
+| 18 | 242.424 us | `computable` | `generated_tan_p96` | `generated[6426] 1 15/22` |
+| 19 | 240.113 us | `computable` | `generated_tan_p96` | `generated[14136] -1 79/106` |
+| 20 | 239.633 us | `computable` | `generated_tan_p96` | `generated[18351] -1 303/403` |
+| 21 | 239.543 us | `computable` | `generated_tan_p96` | `generated[14241] -1 353/533` |
+| 22 | 239.363 us | `computable` | `generated_tan_p96` | `generated[816] 1 8/15` |
+| 23 | 239.343 us | `computable` | `generated_tan_p96` | `generated[16611] 1 47/58` |
+| 24 | 238.864 us | `computable` | `generated_tan_p96` | `generated[5706] -1 105/148` |
+| 25 | 237.573 us | `computable` | `generated_tan_p96` | `generated[13881] 1 78/127` |
+| 26 | 237.204 us | `computable` | `generated_tan_p96` | `generated[5811] -1 221/363` |
+| 27 | 237.104 us | `computable` | `generated_tan_p96` | `generated[3651] -1 130/213` |
+| 28 | 237.064 us | `computable` | `generated_tan_p96` | `generated[3861] 1 351/643` |
+| 29 | 236.673 us | `computable` | `generated_tan_p96` | `generated[6261] 1 137/145` |
+| 30 | 236.224 us | `computable` | `generated_tan_p96` | `generated[9891] -1 281/314` |
+| 31 | 235.753 us | `computable` | `generated_tan_p96` | `generated[3036] 1 361/378` |
+| 32 | 235.694 us | `computable` | `generated_tan_p96` | `generated[651] 1 210/337` |
+| 33 | 234.734 us | `computable` | `generated_tan_p96` | `generated[4731] 1 31/36` |
+| 34 | 233.534 us | `computable` | `generated_tan_p96` | `generated[1041] -3 125/281` |
+| 35 | 233.154 us | `computable` | `generated_tan_p96` | `generated[486] 1 53/71` |
+| 36 | 233.144 us | `computable` | `generated_tan_p96` | `generated[3726] -1 356/509` |
+| 37 | 232.524 us | `computable` | `generated_tan_p96` | `generated[5751] -1 21/25` |
+| 38 | 232.144 us | `computable` | `generated_tan_p96` | `generated[14076] -1 457/480` |
+| 39 | 232.124 us | `computable` | `generated_tan_p96` | `generated[13941] -2 105/346` |
+| 40 | 231.434 us | `computable` | `generated_tan_p96` | `generated[6951] 2 125/276` |
+| 41 | 230.284 us | `computable` | `generated_tan_p96` | `generated[1851] 2 15/88` |
+| 42 | 229.234 us | `computable` | `generated_tan_p96` | `generated[5256] 2 74/183` |
+| 43 | 228.455 us | `computable` | `generated_tan_p96` | `generated[14046] 1 310/561` |
+| 44 | 228.204 us | `computable` | `generated_tan_p96` | `generated[5061] 1 122/197` |
+| 45 | 227.714 us | `computable` | `generated_tan_p96` | `generated[10026] -1 41/64` |
+| 46 | 227.664 us | `computable` | `generated_tan_p96` | `generated[17466] 2 14/75` |
+| 47 | 225.244 us | `computable` | `generated_tan_p96` | `generated[5616] -2 44/391` |
+| 48 | 225.235 us | `computable` | `generated_tan_p96` | `generated[13716] 1 314/455` |
+| 49 | 224.985 us | `computable` | `generated_tan_p96` | `generated[8811] 2 47/239` |
+| 50 | 223.885 us | `computable` | `generated_tan_p96` | `generated[14751] 2 56/153` |
+| 51 | 223.025 us | `computable` | `generated_tan_p96` | `generated[7311] 3 67/301` |
+| 52 | 223.005 us | `computable` | `generated_tan_p96` | `generated[1671] -1 381/574` |
+| 53 | 222.875 us | `computable` | `generated_tan_p96` | `generated[18246] -1 187/188` |
+| 54 | 222.854 us | `computable` | `generated_tan_p96` | `generated[5586] 2 19/236` |
+| 55 | 222.624 us | `computable` | `generated_tan_p96` | `generated[14001] -2 47/184` |
+| 56 | 222.074 us | `computable` | `generated_tan_p96` | `generated[11361] 2 34/111` |
+| 57 | 221.485 us | `computable` | `generated_tan_p96` | `generated[13251] 3 162/215` |
+| 58 | 221.285 us | `computable` | `generated_tan_p96` | `generated[1701] -1 271/493` |
+| 59 | 221.265 us | `computable` | `generated_tan_p96` | `generated[13746] 2 106/187` |
+| 60 | 220.005 us | `computable` | `generated_tan_p96` | `generated[15111] 3 121/178` |
+| 61 | 219.755 us | `computable` | `generated_tan_p96` | `generated[11001] 1 167/308` |
+| 62 | 219.635 us | `computable` | `generated_tan_p96` | `generated[14106] -1 347/399` |
+| 63 | 219.254 us | `computable` | `generated_tan_p96` | `generated[10506] 2 24/149` |
+| 64 | 218.485 us | `computable` | `generated_tan_p96` | `generated[6096] 2 47/92` |
+| 65 | 218.395 us | `computable` | `generated_tan_p96` | `generated[5781] -1 331/444` |
+| 66 | 218.375 us | `computable` | `generated_tan_p96` | `generated[3456] -2 103/241` |
+| 67 | 217.825 us | `computable` | `generated_tan_p96` | `generated[7281] 2 15/382` |
+| 68 | 217.635 us | `computable` | `generated_tan_p96` | `generated[10671] 1 171/202` |
+| 69 | 217.475 us | `computable` | `generated_tan_p96` | `generated[846] 2 57/103` |
+| 70 | 217.325 us | `computable` | `generated_tan_p96` | `generated[13551] 1 158/201` |
+| 71 | 216.325 us | `computable` | `generated_tan_p96` | `generated[5226] 1 242/447` |
+| 72 | 214.805 us | `computable` | `generated_tan_p96` | `generated[1371] -2 92/387` |
+| 73 | 214.525 us | `computable` | `generated_tan_p96` | `generated[5481] -2 172/257` |
+| 74 | 214.445 us | `computable` | `generated_tan_p96` | `generated[8646] 2 17/31` |
+| 75 | 213.355 us | `computable` | `generated_tan_p96` | `generated[1176] 2 61/415` |
+| 76 | 213.015 us | `computable` | `generated_tan_p96` | `generated[3696] 1 353/590` |
+| 77 | 212.846 us | `computable` | `generated_tan_p96` | `generated[156] 2 19/89` |
+| 78 | 212.556 us | `computable` | `generated_tan_p96` | `generated[13971] -2 76/265` |
+| 79 | 212.416 us | `computable` | `generated_tan_p96` | `generated[14166] -1 127/237` |
+| 80 | 212.275 us | `computable` | `generated_tan_p96` | `generated[276] -841/851` |
+| 81 | 211.665 us | `computable` | `generated_tan_p96` | `generated[1431] -2 34/225` |
+| 82 | 211.536 us | `computable` | `generated_tan_p96` | `generated[14061] -1 1/2` |
+| 83 | 211.185 us | `computable` | `generated_tan_p96` | `generated[1536] -1 75/88` |
+| 84 | 211.005 us | `computable` | `generated_tan_p96` | `generated[10386] -442/473` |
+| 85 | 210.665 us | `computable` | `generated_tan_p96` | `generated[17991] -2 9/14` |
+| 86 | 209.955 us | `computable` | `generated_tan_p96` | `generated[2901] 3 147/244` |
+| 87 | 209.915 us | `computable` | `tan_p96` | `rational[25]=2` |
+| 88 | 209.836 us | `computable` | `generated_tan_p96` | `generated[8331] -266/269` |
+| 89 | 209.765 us | `computable` | `generated_tan_p96` | `generated[13806] -3 21/212` |
+| 90 | 209.665 us | `computable` | `generated_tan_p96` | `generated[516] 3 78/203` |
+| 91 | 209.656 us | `computable` | `generated_tan_p96` | `generated[7446] 1 79/87` |
+| 92 | 209.455 us | `computable` | `generated_tan_p96` | `generated[6441] -571/656` |
+| 93 | 209.126 us | `computable` | `generated_tan_p96` | `generated[17661] 3 41/136` |
+| 94 | 208.926 us | `computable` | `generated_tan_p96` | `generated[11196] 2 157/280` |
+| 95 | 208.876 us | `computable` | `generated_tan_p96` | `generated[1596] -1 155/278` |
+| 96 | 208.815 us | `computable` | `tan_p96` | `rational[26]=2` |
+| 97 | 208.055 us | `computable` | `generated_tan_p96` | `generated[1341] 2 1/78` |
+| 98 | 207.986 us | `computable` | `generated_tan_p96` | `generated[1566] -1 265/359` |
+| 99 | 206.776 us | `computable` | `generated_tan_p96` | `generated[13221] 2 3/37` |
+| 100 | 206.446 us | `computable` | `generated_tan_p96` | `generated[1491] -1 13/21` |
+| 101 | 206.445 us | `computable` | `generated_tan_p96` | `generated[18156] -2 86/431` |
+| 102 | 205.985 us | `computable` | `generated_tan_p96` | `generated[5286] -3 73/285` |
+| 103 | 205.646 us | `computable` | `generated_tan_p96` | `generated[3486] -2 37/80` |
+| 104 | 205.406 us | `computable` | `generated_tan_p96` | `generated[18276] -1 77/107` |
+| 105 | 205.346 us | `computable` | `generated_tan_p96` | `generated[5646] -2 3/62` |
+| 106 | 205.226 us | `computable` | `generated_tan_p96` | `generated[5451] -2 201/338` |
+| 107 | 205.026 us | `computable` | `generated_tan_p96` | `generated[5541] -3 1/5` |
+| 108 | 204.496 us | `computable` | `generated_tan_p96` | `generated[18021] -2 214/297` |
+| 109 | 204.386 us | `computable` | `generated_tan_p96` | `generated[14211] 1 154/307` |
+| 110 | 204.335 us | `computable` | `generated_tan_p96` | `generated[14031] -2 18/103` |
+| 111 | 204.046 us | `computable` | `generated_tan_p96` | `generated[7836] -1 306/379` |
+| 112 | 203.976 us | `computable` | `generated_tan_p96` | `generated[1506] 1 472/521` |
+| 113 | 203.816 us | `computable` | `generated_tan_p96` | `generated[7641] -2 113/407` |
+| 114 | 202.976 us | `computable` | `generated_tan_p96` | `generated[16326] -1 218/387` |
+| 115 | 202.546 us | `computable` | `generated_tan_p96` | `generated[8631] -621/725` |
+| 116 | 202.396 us | `computable` | `generated_tan_p96` | `generated[14916] 2 1/206` |
+| 117 | 201.966 us | `computable` | `generated_tan_p96` | `generated[5421] 2 93/419` |
+| 118 | 201.926 us | `computable` | `generated_tan_p96` | `generated[6] -51/53` |
+| 119 | 201.626 us | `computable` | `generated_tan_p96` | `generated[16686] -78/103` |
+| 120 | 201.476 us | `computable` | `generated_tan_p96` | `generated[11856] 1 143/164` |
+| 121 | 201.416 us | `computable` | `generated_tan_p96` | `generated[8196] -98/101` |
+| 122 | 201.346 us | `computable` | `generated_tan_p96` | `generated[5316] -3 125/204` |
+| 123 | 201.126 us | `computable` | `generated_tan_p96` | `generated[6876] -800/977` |
+| 124 | 200.987 us | `computable` | `generated_tan_p96` | `generated[411] -981/985` |
+| 125 | 200.776 us | `computable` | `generated_tan_p96` | `generated[10116] -162/205` |
+| 126 | 200.306 us | `computable` | `generated_tan_p96` | `generated[4386] -661/721` |
+| 127 | 200.216 us | `computable` | `generated_tan_p96` | `generated[6516] 453/476` |
+| 128 | 200.156 us | `computable` | `generated_tan_p96` | `generated[18576] -13/14` |
+| 129 | 200.046 us | `computable` | `generated_tan_p96` | `generated[10431] 422/425` |
+| 130 | 200.006 us | `computable` | `generated_tan_p96` | `generated[5511] -2 13/16` |
+| 131 | 199.916 us | `computable` | `tan_p96` | `e` |
+| 132 | 199.866 us | `computable` | `generated_tan_p96` | `generated[291] 127/156` |
+| 133 | 199.686 us | `computable` | `generated_tan_p96` | `generated[21] 12 3/22` |
+| 134 | 199.316 us | `computable` | `generated_tan_p96` | `generated[2061] -471/518` |
+| 135 | 199.056 us | `computable` | `generated_tan_p96` | `generated[14586] 3 11/100` |
+| 136 | 199.036 us | `computable` | `generated_tan_p96` | `generated[15066] -631/798` |
+| 137 | 198.486 us | `computable` | `generated_tan_p96` | `generated[6186] 134/141` |
+| 138 | 198.367 us | `computable` | `generated_tan_p96` | `generated[17961] 1 350/459` |
+| 139 | 198.226 us | `computable` | `generated_tan_p96` | `generated[6786] 2 180/223` |
+| 140 | 198.147 us | `computable` | `generated_tan_p96` | `generated[5736] -62/67` |
+| 141 | 197.726 us | `computable` | `generated_tan_p96` | `generated[14631] -134/159` |
+| 142 | 197.457 us | `computable` | `generated_tan_p96` | `generated[3591] -1 14/15` |
+| 143 | 197.247 us | `computable` | `generated_tan_p96` | `generated[8541] 805/968` |
+| 144 | 197.137 us | `computable` | `generated_tan_p96` | `generated[6711] -851/924` |
+| 145 | 197.107 us | `computable` | `generated_tan_p96` | `generated[16701] 9/10` |
+| 146 | 196.837 us | `computable` | `generated_tan_p96` | `generated[4521] -89/95` |
+| 147 | 196.836 us | `computable` | `generated_tan_p96` | `generated[141] -701/717` |
+| 148 | 196.767 us | `computable` | `generated_tan_p96` | `generated[3981] -241/319` |
+| 149 | 196.657 us | `computable` | `generated_tan_p96` | `generated[4686] -375/454` |
+| 150 | 196.646 us | `computable` | `generated_tan_p96` | `generated[3621] -1 40/49` |
+| 151 | 196.456 us | `computable` | `generated_tan_p96` | `generated[10101] 371/372` |
+| 152 | 196.376 us | `computable` | `generated_tan_p96` | `generated[7476] -2 45/59` |
+| 153 | 196.356 us | `computable` | `generated_tan_p96` | `generated[1941] 382/421` |
+| 154 | 196.326 us | `computable` | `generated_tan_p96` | `generated[13581] 2 89/107` |
+| 155 | 195.827 us | `computable` | `generated_tan_p96` | `generated[5031] 447/475` |
+| 156 | 195.476 us | `computable` | `generated_tan_p96` | `generated[1881] 54 4/7` |
+| 157 | 195.456 us | `computable` | `generated_tan_p96` | `generated[771] -52 12/13` |
+| 158 | 195.347 us | `computable` | `generated_tan_p96` | `generated[5016] -38 2/17` |
+| 159 | 195.157 us | `computable` | `generated_tan_p96` | `generated[5091] 2 203/313` |
+| 160 | 195.137 us | `computable` | `generated_tan_p96` | `generated[10866] 3 31/58` |
+| 161 | 195.136 us | `computable` | `generated_tan_p96` | `generated[17631] 2 1/353` |
+| 162 | 195.067 us | `computable` | `generated_tan_p96` | `generated[8496] -481/591` |
+| 163 | 195.037 us | `computable` | `generated_tan_p96` | `generated[17091] -366/407` |
+| 164 | 194.537 us | `computable` | `generated_tan_p96` | `generated[3966] 17/22` |
+| 165 | 194.217 us | `computable` | `generated_tan_p96` | `generated[17226] -218/237` |
+| 166 | 194.147 us | `computable` | `generated_tan_p96` | `generated[8796] -285/389` |
+| 167 | 194.067 us | `computable` | `generated_tan_p96` | `generated[4656] -941/989` |
+| 168 | 193.987 us | `computable` | `generated_tan_p96` | `generated[1926] -331/384` |
+| 169 | 193.867 us | `computable` | `generated_tan_p96` | `generated[636] -137/219` |
+| 170 | 193.776 us | `computable` | `generated_tan_p96` | `generated[7386] 448/597` |
+| 171 | 193.746 us | `computable` | `generated_tan_p96` | `generated[3366] 1 357/484` |
+| 172 | 193.517 us | `computable` | `generated_tan_p96` | `generated[8376] 754/915` |
+| 173 | 193.497 us | `computable` | `generated_tan_p96` | `generated[10686] -177/220` |
+| 174 | 193.427 us | `computable` | `generated_tan_p96` | `generated[4116] -127/151` |
+| 175 | 193.387 us | `computable` | `generated_tan_p96` | `generated[336] -459/689` |
+| 176 | 193.167 us | `computable` | `generated_tan_p96` | `generated[951] 229/262` |
+| 177 | 192.816 us | `computable` | `generated_tan_p96` | `generated[8481] 3 24/133` |
+| 178 | 192.677 us | `computable` | `generated_tan_p96` | `generated[4566] 2 3/47` |
+| 179 | 192.657 us | `computable` | `generated_tan_p96` | `generated[1116] 509/577` |
+| 180 | 192.646 us | `computable` | `generated_tan_p96` | `generated[18831] 3 3/8` |
+| 181 | 192.456 us | `computable` | `generated_tan_p96` | `generated[6351] 855/899` |
+| 182 | 192.387 us | `computable` | `generated_tan_p96` | `generated[4896] 1 246/341` |
+| 183 | 192.287 us | `computable` | `generated_tan_p96` | `generated[786] 407/471` |
+| 184 | 192.197 us | `computable` | `generated_tan_p96` | `generated[10656] -38/39` |
+| 185 | 192.087 us | `computable` | `generated_tan_p96` | `generated[8931] -355/456` |
+| 186 | 191.807 us | `computable` | `generated_tan_p96` | `generated[10161] -1 293/582` |
+| 187 | 191.766 us | `computable` | `generated_tan_p96` | `generated[17421] -63/92` |
+| 188 | 191.567 us | `computable` | `generated_tan_p96` | `generated[7536] -3 5/48` |
+| 189 | 191.426 us | `computable` | `generated_tan_p96` | `generated[306] -65/77` |
+| 190 | 191.426 us | `computable` | `generated_tan_p96` | `generated[5196] 83/88` |
+| 191 | 191.407 us | `computable` | `generated_tan_p96` | `generated[10266] 793/797` |
+| 192 | 191.387 us | `computable` | `generated_tan_p96` | `generated[606] -739/957` |
+| 193 | 191.307 us | `computable` | `generated_tan_p96` | `generated[3426] -2 66/161` |
+| 194 | 191.247 us | `computable` | `generated_tan_p96` | `generated[12711] -158/169` |
+| 195 | 191.227 us | `computable` | `generated_tan_p96` | `generated[10821] -671/794` |
+| 196 | 191.227 us | `computable` | `generated_tan_p96` | `generated[2181] 1 99/194` |
+| 197 | 190.997 us | `computable` | `generated_tan_p96` | `generated[3396] -2 161/403` |
+| 198 | 190.997 us | `computable` | `generated_tan_p96` | `generated[351] 4 6/25` |
+| 199 | 190.887 us | `computable` | `generated_tan_p96` | `generated[3261] -3 20/269` |
+| 200 | 190.827 us | `computable` | `generated_tan_p96` | `generated[14901] -682/745` |
+| 201 | 190.817 us | `computable` | `generated_tan_p96` | `generated[16371] 681/764` |
+| 202 | 190.777 us | `computable` | `generated_tan_p96` | `generated[14721] 19/26` |
+| 203 | 190.677 us | `computable` | `generated_tan_p96` | `generated[7221] 397/544` |
+| 204 | 190.606 us | `computable` | `generated_tan_p96` | `generated[4281] -15/23` |
+| 205 | 190.427 us | `computable` | `generated_tan_p96` | `generated[201] -319/555` |
+| 206 | 190.257 us | `computable` | `generated_tan_p96` | `generated[3201] 1 359/431` |
+| 207 | 189.907 us | `computable` | `generated_tan_p96` | `generated[16536] 732/817` |
+| 208 | 189.887 us | `computable` | `generated_tan_p96` | `generated[10521] -582/607` |
+| 209 | 189.657 us | `computable` | `generated_tan_p96` | `generated[7011] -8 14/57` |
+| 210 | 189.587 us | `computable` | `generated_tan_p96` | `generated[4551] -305/387` |
+| 211 | 189.517 us | `computable` | `generated_tan_p96` | `generated[681] 2 113/128` |
+| 212 | 189.417 us | `computable` | `generated_tan_p96` | `generated[8661] -215/322` |
+| 213 | 189.287 us | `computable` | `generated_tan_p96` | `generated[11091] -14 41/65` |
+| 214 | 189.167 us | `computable` | `generated_tan_p96` | `generated[11721] -2 111/179` |
+| 215 | 188.937 us | `computable` | `tan_p96` | `rational[36]=-340282366920938463463374607431768211456` |
+| 216 | 188.867 us | `computable` | `generated_tan_p96` | `generated[10791] -862/875` |
+| 217 | 188.837 us | `computable` | `generated_tan_p96` | `generated[3801] 612/805` |
+| 218 | 188.597 us | `computable` | `generated_tan_p96` | `generated[8211] 703/862` |
+| 219 | 188.577 us | `computable` | `generated_tan_p96` | `generated[17256] -227/289` |
+| 220 | 188.577 us | `computable` | `generated_tan_p96` | `generated[4716] -559/827` |
+| 221 | 188.397 us | `computable` | `generated_tan_p96` | `generated[3531] 1 355/537` |
+| 222 | 188.327 us | `computable` | `generated_tan_p96` | `generated[6741] -220/281` |
+| 223 | 188.317 us | `computable` | `generated_tan_p96` | `generated[12726] 3 52/137` |
+| 224 | 188.177 us | `computable` | `generated_tan_p96` | `generated[11121] -760/981` |
+| 225 | 187.947 us | `computable` | `generated_tan_p96` | `generated[16641] 11 16/35` |
+| 226 | 187.897 us | `computable` | `generated_tan_p96` | `generated[471] -599/823` |
+| 227 | 187.667 us | `computable` | `generated_tan_p96` | `generated[4131] 714/911` |
+| 228 | 187.567 us | `computable` | `generated_tan_p96` | `generated[11751] -2 193/277` |
+| 229 | 187.477 us | `computable` | `tan_p96` | `rational[32]=-4294967296` |
+| 230 | 187.317 us | `computable` | `generated_tan_p96` | `generated[6471] -76/115` |
+| 231 | 186.977 us | `computable` | `generated_tan_p96` | `generated[6591] 1 133/251` |
+| 232 | 186.857 us | `computable` | `generated_tan_p96` | `generated[13011] -721/863` |
+| 233 | 186.807 us | `computable` | `generated_tan_p96` | `generated[17136] 2 83/97` |
+| 234 | 186.617 us | `computable` | `generated_tan_p96` | `generated[621] 178/209` |
+| 235 | 186.597 us | `computable` | `generated_tan_p96` | `generated[15051] 273/340` |
+| 236 | 186.527 us | `computable` | `generated_tan_p96` | `generated[14886] 222/287` |
+| 237 | 186.447 us | `computable` | `generated_tan_p96` | `generated[14766] -542/611` |
+| 238 | 186.127 us | `computable` | `tan_p96` | `rational[35]=-340282366920938463463374607431768211456` |
+| 239 | 186.017 us | `computable` | `generated_tan_p96` | `generated[1776] 713/789` |
+| 240 | 186.007 us | `computable` | `generated_tan_p96` | `generated[6306] -431/522` |
+| 241 | 185.907 us | `computable` | `generated_tan_p96` | `generated[2706] 2 93/272` |
+| 242 | 185.677 us | `computable` | `generated_tan_p96` | `generated[4701] 115/123` |
+| 243 | 185.647 us | `computable` | `generated_tan_p96` | `generated[4041] 141/157` |
+| 244 | 185.617 us | `computable` | `generated_tan_p96` | `generated[17121] -541/733` |
+| 245 | 185.327 us | `computable` | `generated_tan_p96` | `generated[3876] 45/52` |
+| 246 | 185.257 us | `computable` | `generated_tan_p96` | `generated[17031] 885/976` |
+| 247 | 185.238 us | `computable` | `generated_tan_p96` | `generated[441] -395/452` |
+| 248 | 185.057 us | `computable` | `generated_tan_p96` | `generated[10986] -620/847` |
+| 249 | 185.007 us | `computable` | `generated_tan_p96` | `generated[4371] 243/263` |
+| 250 | 184.947 us | `computable` | `generated_tan_p96` | `generated[15036] -274/293` |
+| 251 | 184.897 us | `computable` | `tan_p96` | `rational[6]=-7/10` |
+| 252 | 184.798 us | `computable` | `generated_tan_p96` | `generated[5361] 549/581` |
+| 253 | 184.767 us | `computable` | `generated_tan_p96` | `generated[1401] -2 7/34` |
+| 254 | 184.588 us | `computable` | `tan_p96` | `rational[23]=-1` |
+| 255 | 184.428 us | `computable` | `generated_tan_p96` | `generated[16551] -86/139` |
+| 256 | 184.407 us | `computable` | `generated_tan_p96` | `generated[4296] 765/964` |
+| 257 | 184.317 us | `computable` | `generated_tan_p96` | `generated[14496] -262/343` |
+| 258 | 184.107 us | `computable` | `generated_tan_p96` | `generated[8961] -173/277` |
+| 259 | 184.008 us | `computable` | `generated_tan_p96` | `generated[4851] -699/961` |
+| 260 | 183.967 us | `computable` | `generated_tan_p96` | `generated[4761] 3 106/207` |
+| 261 | 183.937 us | `computable` | `generated_tan_p96` | `generated[6036] -151/254` |
+| 262 | 183.657 us | `computable` | `generated_tan_p96` | `generated[6906] -87/128` |
+| 263 | 183.488 us | `computable` | `generated_tan_p96` | `generated[3711] 13/17` |
+| 264 | 182.758 us | `computable` | `generated_tan_p96` | `generated[10836] 1 169/255` |
+| 265 | 182.588 us | `computable` | `generated_tan_p96` | `generated[3291] -3 18/47` |
+| 266 | 182.498 us | `computable` | `generated_tan_p96` | `generated[7506] -2 241/273` |
+| 267 | 182.348 us | `computable` | `generated_tan_p96` | `generated[10251] -302/339` |
+| 268 | 182.298 us | `computable` | `generated_tan_p96` | `generated[11136] 335/442` |
+| 269 | 182.268 us | `computable` | `generated_tan_p96` | `generated[5121] -4 51/232` |
+| 270 | 181.838 us | `computable` | `generated_tan_p96` | `generated[801] -497/929` |
+| 271 | 181.508 us | `computable` | `generated_tan_p96` | `generated[18051] -2 185/216` |
+| 272 | 181.488 us | `computable` | `generated_tan_p96` | `generated[876] 4 17/57` |
+| 273 | 181.207 us | `computable` | `generated_tan_p96` | `generated[16986] -401/599` |
+| 274 | 181.117 us | `computable` | `generated_tan_p96` | `generated[10416] -251/392` |
+| 275 | 181.047 us | `computable` | `generated_tan_p96` | `generated[14316] 591/829` |
+| 276 | 180.948 us | `computable` | `generated_tan_p96` | `generated[11301] 386/495` |
+| 277 | 180.878 us | `computable` | `generated_tan_p96` | `generated[5691] 217/229` |
+| 278 | 180.388 us | `computable` | `generated_tan_p96` | `generated[6021] 753/793` |
+| 279 | 180.138 us | `computable` | `generated_tan_p96` | `generated[6771] -469/762` |
+| 280 | 180.138 us | `computable` | `generated_tan_p96` | `generated[6891] 295/438` |
+| 281 | 180.087 us | `computable` | `generated_tan_p96` | `generated[2991] -547` |
+| 282 | 179.927 us | `computable` | `generated_tan_p96` | `generated[18066] 239/337` |
+| 283 | 179.848 us | `computable` | `generated_tan_p96` | `generated[1236] -2 20/23` |
+| 284 | 179.697 us | `computable` | `generated_tan_p96` | `generated[6936] -418/815` |
+| 285 | 179.587 us | `computable` | `generated_tan_p96` | `generated[126] 29/37` |
+| 286 | 179.558 us | `computable` | `generated_tan_p96` | `generated[246] 1 35/932` |
+| 287 | 179.268 us | `computable` | `generated_tan_p96` | `generated[6561] 193/332` |
+| 288 | 178.918 us | `computable` | `generated_tan_p96` | `generated[5571] -8 1/14` |
+| 289 | 178.897 us | `computable` | `generated_tan_p96` | `generated[3906] 12 5/23` |
+| 290 | 178.847 us | `computable` | `generated_tan_p96` | `generated[4866] 198/211` |
+| 291 | 178.668 us | `computable` | `generated_tan_p96` | `generated[11151] -569/900` |
+| 292 | 178.258 us | `computable` | `generated_tan_p96` | `generated[4881] -127/220` |
+| 293 | 178.108 us | `computable` | `generated_tan_p96` | `generated[16671] 592/951` |
+| 294 | 178.058 us | `computable` | `generated_tan_p96` | `generated[11031] 2 212/227` |
+| 295 | 177.858 us | `computable` | `generated_tan_p96` | `generated[18561] 631/833` |
+| 296 | 177.808 us | `computable` | `generated_tan_p96` | `generated[51] 145/192` |
+| 297 | 177.788 us | `computable` | `generated_tan_p96` | `generated[6621] 3 13/34` |
+| 298 | 177.758 us | `computable` | `generated_tan_p96` | `generated[18636] 109/132` |
+| 299 | 177.668 us | `computable` | `generated_tan_p96` | `generated[10971] 284/389` |
+| 300 | 177.518 us | `computable` | `generated_tan_p96` | `generated[7851] 410/837` |
+| 301 | 177.488 us | `computable` | `generated_tan_p96` | `generated[13341] -619/969` |
+| 302 | 177.188 us | `computable` | `generated_tan_p96` | `generated[5526] 300/317` |
+| 303 | 177.168 us | `computable` | `generated_tan_p96` | `generated[456] 61/73` |
+| 304 | 177.088 us | `computable` | `generated_tan_p96` | `generated[16956] -74/85` |
+| 305 | 176.997 us | `computable` | `generated_tan_p96` | `generated[4101] 523/992` |
+| 306 | 176.658 us | `computable` | `generated_tan_p96` | `generated[1086] 159/329` |
+| 307 | 176.528 us | `computable` | `generated_tan_p96` | `generated[4536] 147/158` |
+| 308 | 176.518 us | `computable` | `generated_tan_p96` | `generated[3846] -101/185` |
+| 309 | 176.518 us | `computable` | `generated_tan_p96` | `generated[4416] -47/64` |
+| 310 | 176.468 us | `computable` | `generated_tan_p96` | `generated[10341] 2 79/96` |
+| 311 | 176.378 us | `computable` | `generated_tan_p96` | `generated[6171] -3/4` |
+| 312 | 176.068 us | `computable` | `generated_tan_p96` | `generated[11286] -19 6/37` |
+| 313 | 175.998 us | `computable` | `generated_tan_p96` | `generated[17586] -579/973` |
+| 314 | 175.498 us | `computable` | `generated_tan_p96` | `generated[8226] -201/323` |
+| 315 | 175.478 us | `computable` | `generated_tan_p96` | `generated[13776] -2 262/293` |
+| 316 | 175.168 us | `computable` | `generated_tan_p96` | `generated[16506] 541/898` |
+| 317 | 175.138 us | `computable` | `generated_tan_p96` | `generated[2871] 2 38/325` |
+| 318 | 175.008 us | `computable` | `generated_tan_p96` | `generated[8466] -1` |
+| 319 | 174.888 us | `computable` | `tan_p96` | `rational[24]=-1` |
+| 320 | 174.828 us | `computable` | `generated_tan_p96` | `generated[36] -185/251` |
+| 321 | 174.728 us | `computable` | `generated_tan_p96` | `generated[6276] -1 19/603` |
+| 322 | 174.528 us | `computable` | `generated_tan_p96` | `generated[17151] -175/326` |
+| 323 | 174.518 us | `computable` | `generated_tan_p96` | `generated[3816] -1 13/133` |
+| 324 | 174.498 us | `computable` | `generated_tan_p96` | `generated[14616] 26 8/19` |
+| 325 | 174.478 us | `computable` | `generated_tan_p96` | `generated[4356] -1 25/401` |
+| 326 | 174.468 us | `computable` | `generated_tan_p96` | `generated[16341] 98/169` |
+| 327 | 174.308 us | `computable` | `generated_tan_p96` | `generated[11316] -518/953` |
+| 328 | 174.188 us | `computable` | `generated_tan_p96` | `generated[11016] -429/766` |
+| 329 | 174.058 us | `computable` | `generated_tan_p96` | `generated[17406] 137/231` |
+| 330 | 174.048 us | `computable` | `generated_tan_p96` | `generated[1791] -191/250` |
+| 331 | 173.968 us | `computable` | `generated_tan_p96` | `generated[12906] -65/108` |
+| 332 | 173.948 us | `computable` | `generated_tan_p96` | `generated[10716] -340/579` |
+| 333 | 173.838 us | `computable` | `generated_tan_p96` | `generated[16656] -1 10/493` |
+| 334 | 173.738 us | `computable` | `generated_tan_p96` | `generated[6156] 613/927` |
+| 335 | 173.728 us | `computable` | `generated_tan_p96` | `generated[3516] -2 45/79` |
+| 336 | 173.618 us | `computable` | `generated_tan_p96` | `generated[16521] -1 4/359` |
+| 337 | 173.608 us | `computable` | `generated_tan_p96` | `generated[5871] -1 1/201` |
+| 338 | 173.548 us | `computable` | `generated_tan_p96` | `generated[7551] 499/650` |
+| 339 | 173.458 us | `computable` | `generated_tan_p96` | `generated[6291] 7 25/64` |
+| 340 | 173.238 us | `computable` | `generated_tan_p96` | `generated[3141] 408/593` |
+| 341 | 173.148 us | `computable` | `generated_tan_p96` | `generated[6321] 166/245` |
+| 342 | 173.088 us | `computable` | `generated_tan_p96` | `generated[13416] 3 27/134` |
+| 343 | 173.088 us | `computable` | `generated_tan_p96` | `generated[14736] -1 41/692` |
+| 344 | 173.048 us | `computable` | `generated_tan_p96` | `generated[6336] -80/147` |
+| 345 | 172.938 us | `computable` | `generated_tan_p96` | `generated[4086] -1 19/267` |
+| 346 | 172.879 us | `computable` | `generated_tan_p96` | `generated[4746] -184/373` |
+| 347 | 172.779 us | `computable` | `generated_tan_p96` | `generated[10071] 551/825` |
+| 348 | 172.678 us | `computable` | `generated_tan_p96` | `generated[666] -119/265` |
+| 349 | 172.668 us | `computable` | `generated_tan_p96` | `generated[4251] -521/587` |
+| 350 | 172.649 us | `computable` | `generated_tan_p96` | `generated[11061] 5 127/146` |
+| 351 | 172.618 us | `computable` | `generated_tan_p96` | `generated[14331] -1 23/290` |
+| 352 | 172.218 us | `computable` | `generated_tan_p96` | `generated[4311] -139/425` |
+| 353 | 172.068 us | `computable` | `generated_tan_p96` | `generated[1911] 573/923` |
+| 354 | 171.978 us | `computable` | `generated_tan_p96` | `generated[6381] -1 135/818` |
+| 355 | 171.878 us | `computable` | `generated_tan_p96` | `generated[13446] -5 15/187` |
+| 356 | 171.798 us | `computable` | `generated_tan_p96` | `generated[14151] 135/194` |
+| 357 | 171.718 us | `computable` | `generated_tan_p96` | `generated[6726] 244/385` |
+| 358 | 171.518 us | `computable` | `generated_tan_p96` | `generated[5826] 511/821` |
+| 359 | 171.229 us | `computable` | `generated_tan_p96` | `generated[14931] -491/664` |
+| 360 | 171.228 us | `computable` | `generated_tan_p96` | `generated[6546] -1 31/871` |
+| 361 | 171.219 us | `computable` | `generated_tan_p96` | `generated[936] -9 43/66` |
+| 362 | 171.158 us | `computable` | `generated_tan_p96` | `generated[6801] -278/681` |
+| 363 | 171.138 us | `computable` | `generated_tan_p96` | `generated[9906] 125/193` |
+| 364 | 171.028 us | `computable` | `generated_tan_p96` | `generated[2961] -9` |
+| 365 | 170.958 us | `computable` | `generated_tan_p96` | `generated[1746] 3/5` |
+| 366 | 170.919 us | `computable` | `generated_tan_p96` | `generated[8301] -1 104/619` |
+| 367 | 170.838 us | `computable` | `generated_tan_p96` | `generated[17451] -439/839` |
+| 368 | 170.569 us | `computable` | `generated_tan_p96` | `generated[3951] -1 2/25` |
+| 369 | 170.488 us | `computable` | `generated_tan_p96` | `generated[171] -85/106` |
+| 370 | 170.468 us | `computable` | `generated_tan_p96` | `generated[501] -204/371` |
+| 371 | 170.458 us | `computable` | `generated_tan_p96` | `generated[10596] 895/903` |
+| 372 | 170.448 us | `computable` | `generated_tan_p96` | `generated[5211] -7/17` |
+| 373 | 170.419 us | `computable` | `generated_tan_p96` | `generated[6006] -1 7/335` |
+| 374 | 170.398 us | `computable` | `generated_tan_p96` | `generated[8436] -1 110/753` |
+| 375 | 170.368 us | `computable` | `generated_tan_p96` | `generated[14871] -1 47/826` |
+| 376 | 170.158 us | `computable` | `generated_tan_p96` | `generated[8361] -341/457` |
+| 377 | 170.119 us | `computable` | `generated_tan_p96` | `generated[4146] -95/186` |
+| 378 | 170.058 us | `computable` | `generated_tan_p96` | `generated[1416] 105/191` |
+| 379 | 169.998 us | `computable` | `generated_tan_p96` | `generated[6411] -1 25/737` |
+| 380 | 169.938 us | `computable` | `generated_tan_p96` | `generated[2226] -420/571` |
+| 381 | 169.908 us | `computable` | `generated_tan_p96` | `generated[14796] -351/530` |
+| 382 | 169.798 us | `computable` | `generated_tan_p96` | `generated[8946] 1 12/373` |
+| 383 | 169.609 us | `computable` | `generated_tan_p96` | `generated[18531] 220/457` |
+| 384 | 169.338 us | `computable` | `generated_tan_p96` | `generated[5496] 409/715` |
+| 385 | 168.869 us | `computable` | `generated_tan_p96` | `generated[3561] -2 1/114` |
+| 386 | 168.798 us | `computable` | `generated_tan_p96` | `generated[3771] 421/886` |
+| 387 | 168.689 us | `computable` | `generated_tan_p96` | `generated[13146] -861/997` |
+| 388 | 168.659 us | `computable` | `generated_tan_p96` | `generated[1206] -2 249/334` |
+| 389 | 168.619 us | `computable` | `generated_tan_p96` | `generated[3471] 170/233` |
+| 390 | 168.528 us | `computable` | `generated_tan_p96` | `generated[66] -179/421` |
+| 391 | 168.488 us | `computable` | `generated_tan_p96` | `generated[14646] 63/85` |
+| 392 | 168.479 us | `computable` | `generated_tan_p96` | `generated[5166] 307/609` |
+| 393 | 168.388 us | `computable` | `generated_tan_p96` | `generated[13851] 1 40/589` |
+| 394 | 168.249 us | `computable` | `generated_tan_p96` | `generated[10641] 182/283` |
+| 395 | 168.159 us | `computable` | `generated_tan_p96` | `generated[14661] -211/396` |
+| 396 | 168.148 us | `computable` | `generated_tan_p96` | `generated[6396] 142/279` |
+| 397 | 168.138 us | `computable` | `generated_tan_p96` | `generated[1446] 611/683` |
+| 398 | 168.058 us | `computable` | `generated_tan_p96` | `generated[18666] 5 15/17` |
+| 399 | 167.978 us | `computable` | `generated_tan_p96` | `generated[3066] 3 13/99` |
+| 400 | 167.958 us | `computable` | `generated_tan_p96` | `generated[8181] 512/943` |
+| 401 | 167.919 us | `computable` | `generated_tan_p96` | `generated[15441] 2 189/284` |
+| 402 | 167.848 us | `computable` | `generated_tan_p96` | `generated[10236] 301/439` |
+| 403 | 167.828 us | `computable` | `generated_tan_p96` | `generated[14346] 1 1/22` |
+| 404 | 167.769 us | `computable` | `generated_tan_p96` | `generated[5991] 281/437` |
+| 405 | 167.639 us | `computable` | `generated_tan_p96` | `generated[2331] -751/786` |
+| 406 | 167.359 us | `computable` | `generated_tan_p96` | `generated[11181] -6/13` |
+| 407 | 167.289 us | `computable` | `generated_tan_p96` | `generated[14811] 186/247` |
+| 408 | 167.238 us | `computable` | `generated_tan_p96` | `generated[10476] 131/230` |
+| 409 | 167.088 us | `computable` | `generated_tan_p96` | `generated[4581] -419/693` |
+| 410 | 166.838 us | `computable` | `generated_tan_p96` | `generated[18696] 491/967` |
+| 411 | 166.828 us | `computable` | `generated_tan_p96` | `generated[216] 48 1/2` |
+| 412 | 166.818 us | `computable` | `generated_tan_p96` | `generated[2466] -891/920` |
+| 413 | 166.549 us | `computable` | `generated_tan_p96` | `generated[5046] -457/933` |
+| 414 | 166.518 us | `computable` | `generated_tan_p96` | `generated[16716] -121/331` |
+| 415 | 166.429 us | `computable` | `generated_tan_p96` | `generated[8451] 1 9/107` |
+| 416 | 166.279 us | `computable` | `generated_tan_p96` | `generated[1611] 331/368` |
+| 417 | 166.228 us | `computable` | `generated_tan_p96` | `generated[18681] -1 95/509` |
+| 418 | 166.218 us | `computable` | `generated_tan_p96` | `generated[18951] -1 107/777` |
+| 419 | 166.109 us | `computable` | `generated_tan_p96` | `generated[2541] 2 148/219` |
+| 420 | 165.828 us | `computable` | `generated_tan_p96` | `generated[17061] -1 28/895` |
+| 421 | 165.768 us | `computable` | `generated_tan_p96` | `generated[8391] -75/188` |
+| 422 | 165.638 us | `computable` | `generated_tan_p96` | `generated[831] -153/424` |
+| 423 | 165.599 us | `computable` | `generated_tan_p96` | `generated[6201] -100/307` |
+| 424 | 165.589 us | `computable` | `generated_tan_p96` | `generated[13206] -479/835` |
+| 425 | 165.519 us | `computable` | `generated_tan_p96` | `generated[15006] 1 13/480` |
+| 426 | 165.469 us | `computable` | `generated_tan_p96` | `generated[18606] -82/213` |
+| 427 | 165.459 us | `computable` | `asinh_p128` | `mid` |
+| 428 | 165.418 us | `computable` | `generated_tan_p96` | `generated[1956] -140/303` |
+| 429 | 165.399 us | `computable` | `generated_tan_p96` | `generated[8286] 1 20/161` |
+| 430 | 165.388 us | `computable` | `generated_tan_p96` | `generated[2001] -1 173/680` |
+| 431 | 165.358 us | `computable` | `generated_tan_p96` | `generated[2196] -611/652` |
+| 432 | 165.228 us | `computable` | `generated_tan_p96` | `generated[696] -83/357` |
+| 433 | 165.218 us | `computable` | `generated_tan_p96` | `generated[3666] 1 81/671` |
+| 434 | 165.079 us | `computable` | `generated_tan_p96` | `generated[4056] -1 148/615` |
+| 435 | 165.039 us | `computable` | `generated_tan_p96` | `generated[6636] -329/628` |
+| 436 | 164.919 us | `computable` | `generated_tan_p96` | `generated[6456] 4 56/117` |
+| 437 | 164.858 us | `computable` | `generated_tan_p96` | `generated[12201] 2 1/59` |
+| 438 | 164.849 us | `computable` | `generated_tan_p96` | `generated[6111] -1 123/550` |
+| 439 | 164.809 us | `computable` | `generated_tan_p96` | `generated[6141] -1 13/469` |
+| 440 | 164.738 us | `computable` | `generated_tan_p96` | `generated[14286] 40/91` |
+| 441 | 164.619 us | `computable` | `generated_tan_p96` | `generated[966] -223/491` |
+| 442 | 164.388 us | `computable` | `generated_tan_p96` | `generated[4161] 1 15/166` |
+| 443 | 164.309 us | `computable` | `generated_tan_p96` | `generated[3831] 1 79/724` |
+| 444 | 164.288 us | `computable` | `generated_tan_p96` | `generated[6576] -9/10` |
+| 445 | 164.279 us | `computable` | `generated_tan_p96` | `generated[13821] 219/335` |
+| 446 | 164.178 us | `computable` | `generated_tan_p96` | `generated[8526] -29/51` |
+| 447 | 163.919 us | `computable` | `generated_tan_p96` | `generated[2631] -120/139` |
+| 448 | 163.838 us | `computable` | `generated_tan_p96` | `generated[17571] 65/103` |
+| 449 | 163.809 us | `computable` | `generated_tan_p96` | `generated[14601] -1 35/558` |
+| 450 | 163.679 us | `computable` | `generated_tan_p96` | `generated[11616] -4 35/143` |
+| 451 | 163.639 us | `computable` | `generated_tan_p96` | `generated[4446] -279/559` |
+| 452 | 163.589 us | `computable` | `generated_tan_p96` | `generated[8901] -901/993` |
+| 453 | 163.569 us | `computable` | `generated_tan_p96` | `generated[17016] -15/37` |
+| 454 | 163.429 us | `computable` | `generated_tan_p96` | `generated[8166] -1 98/485` |
+| 455 | 163.248 us | `computable` | `generated_tan_p96` | `generated[9996] -1 397/529` |
+| 456 | 163.219 us | `computable` | `generated_tan_p96` | `generated[11841] -5 2/17` |
+| 457 | 163.159 us | `computable` | `tan_p96` | `rational[21]=1/2` |
+| 458 | 163.148 us | `computable` | `generated_tan_p96` | `generated[3681] -1 5/33` |
+| 459 | 163.058 us | `computable` | `generated_tan_p96` | `generated[531] -217/661` |
+| 460 | 162.918 us | `computable` | `generated_tan_p96` | `generated[6501] -189/494` |
+| 461 | 162.869 us | `computable` | `generated_tan_p96` | `generated[18711] -413/428` |
+| 462 | 162.719 us | `computable` | `generated_tan_p96` | `generated[921] 267/605` |
+| 463 | 162.639 us | `computable` | `generated_tan_p96` | `generated[11346] -3/8` |
+| 464 | 162.578 us | `computable` | `generated_tan_p96` | `generated[3936] 472/939` |
+| 465 | 162.189 us | `computable` | `generated_tan_p96` | `generated[1101] -4 110/119` |
+| 466 | 162.159 us | `computable` | `generated_tan_p96` | `generated[366] -67/152` |
+| 467 | 162.149 us | `computable` | `generated_tan_p96` | `generated[11631] 488/601` |
+| 468 | 162.099 us | `computable` | `generated_tan_p96` | `generated[2316] 153/328` |
+| 469 | 162.038 us | `computable` | `generated_tan_p96` | `generated[17241] 223/409` |
+| 470 | 161.989 us | `computable` | `generated_tan_p96` | `generated[13041] -265/391` |
+| 471 | 161.949 us | `computable` | `generated_tan_p96` | `generated[4776] -177/665` |
+| 472 | 161.839 us | `computable` | `generated_tan_p96` | `generated[2976] 119/180` |
+| 473 | 161.809 us | `computable` | `generated_tan_p96` | `generated[1161] -34/159` |
+| 474 | 161.798 us | `computable` | `generated_tan_p96` | `generated[7521] 308/731` |
+| 475 | 161.789 us | `computable` | `generated_tan_p96` | `generated[7266] -316/921` |
+| 476 | 161.788 us | `computable` | `generated_tan_p96` | `generated[16626] -1 60/287` |
+| 477 | 161.519 us | `computable` | `generated_tan_p96` | `generated[8121] 1 11/54` |
+| 478 | 161.219 us | `computable` | `generated_tan_p96` | `generated[13326] 285/511` |
+| 479 | 161.169 us | `computable` | `tan_p96` | `rational[22]=1/2` |
+| 480 | 161.079 us | `computable` | `generated_tan_p96` | `generated[756] 9/23` |
+| 481 | 160.939 us | `computable` | `generated_tan_p96` | `generated[13986] 163/241` |
+| 482 | 160.759 us | `computable` | `generated_tan_p96` | `generated[12051] -1 93/116` |
+| 483 | 160.619 us | `computable` | `generated_tan_p96` | `generated[17076] 43/89` |
+| 484 | 160.619 us | `computable` | `generated_tan_p96` | `generated[5331] 179/331` |
+| 485 | 160.579 us | `computable` | `tan_p96` | `rational[9]=1000000000000000000000000000000` |
+| 486 | 160.499 us | `computable` | `generated_tan_p96` | `generated[2271] 433/474` |
+| 487 | 160.369 us | `computable` | `generated_tan_p96` | `generated[3126] -5 4/45` |
+| 488 | 160.319 us | `computable` | `generated_tan_p96` | `generated[18366] 389/861` |
+| 489 | 160.299 us | `computable` | `generated_tan_p96` | `generated[2496] -700/839` |
+| 490 | 160.289 us | `computable` | `generated_tan_p96` | `generated[5241] -43/181` |
+| 491 | 160.269 us | `computable` | `generated_tan_p96` | `generated[5346] -4 18/41` |
+| 492 | 160.259 us | `computable` | `generated_tan_p96` | `generated[11676] -75/326` |
+| 493 | 160.179 us | `computable` | `generated_tan_p96` | `generated[11421] -4 55/57` |
+| 494 | 160.139 us | `computable` | `generated_tan_p96` | `generated[13671] -6 49/78` |
+| 495 | 160.050 us | `computable` | `generated_tan_p96` | `generated[5661] 115/192` |
+| 496 | 160.019 us | `computable` | `tan_p96` | `rational[31]=-4294967296` |
+| 497 | 159.939 us | `computable` | `generated_tan_p96` | `generated[11961] 590/707` |
+| 498 | 159.889 us | `computable` | `generated_tan_p96` | `generated[6981] 4 88/195` |
+| 499 | 159.859 us | `computable` | `generated_tan_p96` | `generated[14706] -1 151/773` |
+| 500 | 159.829 us | `computable` | `generated_tan_p96` | `generated[2361] -112/141` |
+| 501 | 159.779 us | `computable` | `generated_tan_p96` | `generated[18441] -133/160` |
+| 502 | 159.739 us | `computable` | `generated_tan_p96` | `generated[2031] -1 63/599` |
+| 503 | 159.729 us | `computable` | `generated_tan_p96` | `generated[10806] 233/336` |
+| 504 | 159.639 us | `computable` | `generated_tan_p96` | `generated[2106] 163/179` |
+| 505 | 159.459 us | `computable` | `generated_tan_p96` | `generated[4596] 4 30/77` |
+| 506 | 159.450 us | `computable` | `generated_tan_p96` | `generated[12816] -1 8/99` |
+| 507 | 159.440 us | `computable` | `generated_tan_p96` | `generated[4206] 32/35` |
+| 508 | 159.279 us | `computable` | `generated_tan_p96` | `generated[14571] -1 145/639` |
+| 509 | 158.999 us | `computable` | `generated_tan_p96` | `generated[10926] 83 1/12` |
+| 510 | 158.939 us | `computable` | `generated_tan_p96` | `generated[13536] -377/941` |
+| 511 | 158.889 us | `computable` | `generated_tan_p96` | `generated[2376] 3 37/166` |
+| 512 | 158.839 us | `computable` | `generated_tan_p96` | `generated[14961] -300/583` |
+| 513 | 158.799 us | `computable` | `generated_tan_p96` | `generated[8991] -164/375` |
+| 514 | 158.699 us | `computable` | `generated_tan_p96` | `generated[15936] 2 24/443` |
+| 515 | 158.699 us | `computable` | `generated_tan_p96` | `generated[5631] 269/849` |
+| 516 | 158.609 us | `computable` | `generated_tan_p96` | `generated[11256] -7 37/59` |
+| 517 | 158.589 us | `computable` | `generated_tan_p96` | `generated[17166] 6 67/113` |
+| 518 | 158.580 us | `computable` | `generated_tan_p96` | `generated[10176] 5 5/43` |
+| 519 | 158.489 us | `computable` | `generated_tan_p96` | `generated[4326] 1 73/883` |
+| 520 | 158.029 us | `computable` | `generated_tan_p96` | `generated[10461] -1 195/769` |
+| 521 | 157.929 us | `computable` | `generated_tan_p96` | `generated[18036] 287/755` |
+| 522 | 157.730 us | `computable` | `generated_tan_p96` | `generated[17481] -124/379` |
+| 523 | 157.559 us | `computable` | `generated_tan_p96` | `generated[5856] 351/370` |
+| 524 | 157.379 us | `computable` | `generated_tan_p96` | `generated[14556] 120/181` |
+| 525 | 157.370 us | `computable` | `generated_tan_p96` | `generated[17616] -97/223` |
+| 526 | 157.249 us | `computable` | `generated_tan_p96` | `generated[2661] -649/892` |
+| 527 | 157.229 us | `computable` | `generated_tan_p96` | `generated[14826] -160/449` |
+| 528 | 157.210 us | `computable` | `tan_p96` | `rational[10]=-1000000000000000000000000000000` |
+| 529 | 157.149 us | `computable` | `generated_tan_p96` | `generated[12786] 845/972` |
+| 530 | 157.100 us | `computable` | `generated_tan_p96` | `generated[1866] -1 167/546` |
+| 531 | 156.969 us | `computable` | `generated_tan_p96` | `generated[111] -1 47/399` |
+| 532 | 156.830 us | `computable` | `generated_tan_p96` | `generated[10221] -1 73/420` |
+| 533 | 156.729 us | `computable` | `generated_tan_p96` | `generated[18126] 1 87/128` |
+| 534 | 156.549 us | `computable` | `generated_tan_p96` | `generated[13356] 1 23/215` |
+| 535 | 156.540 us | `computable` | `generated_tan_p96` | `generated[7056] 346/491` |
+| 536 | 156.509 us | `computable` | `generated_tan_p96` | `generated[13026] 1 25/162` |
+| 537 | 156.370 us | `computable` | `generated_tan_p96` | `generated[13236] -144/377` |
+| 538 | 156.320 us | `computable` | `generated_tan_p96` | `generated[10956] -811/928` |
+| 539 | 155.619 us | `computable` | `generated_tan_p96` | `generated[3921] -1 142/481` |
+| 540 | 155.589 us | `computable` | `generated_tan_p96` | `generated[11046] -238/685` |
+| 541 | 155.529 us | `computable` | `generated_tan_p96` | `generated[3156] -9 5/27` |
+| 542 | 155.230 us | `computable` | `generated_tan_p96` | `generated[7296] -25/168` |
+| 543 | 155.149 us | `computable` | `generated_tan_p96` | `generated[14676] 1 15/427` |
+| 544 | 155.010 us | `computable` | `generated_tan_p96` | `generated[7071] -558/949` |
+| 545 | 154.999 us | `computable` | `generated_tan_p96` | `generated[741] -9 33/94` |
+| 546 | 154.910 us | `computable` | `generated_tan_p96` | `generated[10281] -37/86` |
+| 547 | 154.759 us | `computable` | `generated_tan_p96` | `generated[3996] 1 11/111` |
+| 548 | 154.439 us | `computable` | `generated_tan_p96` | `generated[6231] 91/226` |
+| 549 | 154.419 us | `computable` | `generated_tan_p96` | `generated[8241] 1 113/781` |
+| 550 | 154.369 us | `computable` | `generated_tan_p96` | `generated[2526] -509/758` |
+| 551 | 154.369 us | `computable` | `generated_tan_p96` | `generated[4611] -19/51` |
+| 552 | 154.240 us | `computable` | `generated_tan_p96` | `generated[8556] -3/13` |
+| 553 | 154.090 us | `computable` | `generated_tan_p96` | `generated[11976] -1 73/84` |
+| 554 | 153.909 us | `computable` | `generated_tan_p96` | `generated[10146] 29/124` |
+| 555 | 153.769 us | `computable` | `generated_tan_p96` | `generated[14481] 107/147` |
+| 556 | 153.610 us | `computable` | `generated_tan_p96` | `generated[6606] -520/709` |
+| 557 | 153.590 us | `computable` | `generated_tan_p96` | `generated[3186] -61/194` |
+| 558 | 153.570 us | `computable` | `generated_tan_p96` | `generated[3021] -356/917` |
+| 559 | 153.569 us | `computable` | `generated_tan_p96` | `generated[16566] 1 187/736` |
+| 560 | 153.409 us | `computable` | `generated_tan_p96` | `generated[18546] -1 89/375` |
+| 561 | 153.390 us | `computable` | `generated_tan_p96` | `generated[14181] 1 36/695` |
+| 562 | 153.190 us | `computable` | `generated_tan_p96` | `generated[7356] 257/678` |
+| 563 | 153.139 us | `computable` | `generated_tan_p96` | `generated[3231] 2 281/350` |
+| 564 | 153.119 us | `computable` | `generated_tan_p96` | `generated[16356] -1 6/17` |
+| 565 | 153.080 us | `computable` | `generated_tan_p96` | `generated[5466] 109/398` |
+| 566 | 153.049 us | `computable` | `generated_tan_p96` | `generated[13956] 149/402` |
+| 567 | 152.899 us | `computable` | `generated_tan_p96` | `generated[10206] 3/7` |
+| 568 | 152.869 us | `computable` | `generated_tan_p96` | `generated[4491] -1 7/117` |
+| 569 | 152.810 us | `computable` | `generated_tan_p96` | `generated[6921] 1 43/119` |
+| 570 | 152.619 us | `computable` | `generated_tan_p96` | `generated[11211] -187/738` |
+| 571 | 152.619 us | `computable` | `generated_tan_p96` | `generated[6966] -227/734` |
+| 572 | 152.520 us | `computable` | `generated_tan_p96` | `generated[10086] -1 67/286` |
+| 573 | 152.480 us | `computable` | `generated_tan_p96` | `generated[18396] 29/39` |
+| 574 | 152.480 us | `computable` | `generated_tan_p96` | `generated[4191] -1 22/107` |
+| 575 | 152.290 us | `computable` | `generated_tan_p96` | `generated[14301] -1 19/53` |
+| 576 | 152.229 us | `computable` | `generated_tan_p96` | `generated[4011] -25/119` |
+| 577 | 152.199 us | `computable` | `generated_tan_p96` | `generated[10356] -1 79/554` |
+| 578 | 152.189 us | `computable` | `generated_tan_p96` | `generated[6681] 119 5/8` |
+| 579 | 152.020 us | `computable` | `generated_tan_p96` | `generated[3441] 319/780` |
+| 580 | 151.770 us | `computable` | `generated_tan_p96` | `generated[2826] -598/945` |
+| 581 | 151.619 us | `computable` | `generated_tan_p96` | `generated[14196] -1 17/156` |
+| 582 | 151.589 us | `computable` | `generated_tan_p96` | `generated[17181] -159/571` |
+| 583 | 151.430 us | `computable` | `generated_tan_p96` | `generated[81] 1 37/879` |
+| 584 | 151.410 us | `computable` | `generated_tan_p96` | `generated[10041] 60/151` |
+| 585 | 151.310 us | `computable` | `generated_tan_p96` | `generated[17826] 2 23/25` |
+| 586 | 151.190 us | `computable` | `generated_tan_p96` | `generated[14841] 1 28/907` |
+| 587 | 151.090 us | `computable` | `generated_tan_p96` | `generated[3351] -9 10/13` |
+| 588 | 150.980 us | `computable` | `generated_tan_p96` | `generated[2091] -280/437` |
+| 589 | 150.910 us | `computable` | `generated_tan_p96` | `generated[591] 165/499` |
+| 590 | 150.840 us | `computable` | `generated_tan_p96` | `generated[3171] 1 87/512` |
+| 591 | 150.830 us | `computable` | `generated_tan_p96` | `generated[18186] -2 57/350` |
+| 592 | 150.780 us | `computable` | `generated_tan_p96` | `generated[5796] 160/451` |
+| 593 | 150.759 us | `computable` | `generated_tan_p96` | `generated[996] -15/53` |
+| 594 | 150.690 us | `computable` | `generated_tan_p96` | `generated[2151] 102/275` |
+| 595 | 150.530 us | `computable` | `generated_tan_p96` | `generated[6246] -1 43/228` |
+| 596 | 150.140 us | `computable` | `generated_tan_p96` | `generated[5406] -82/479` |
+| 597 | 150.139 us | `computable` | `generated_tan_p96` | `generated[10491] -1 85/688` |
+| 598 | 150.030 us | `computable` | `generated_tan_p96` | `generated[1896] -1 19/155` |
+| 599 | 150.010 us | `computable` | `generated_tan_p96` | `generated[8826] -379/697` |
+| 600 | 149.670 us | `computable` | `asin_p96` | `mid` |
+| 601 | 149.660 us | `computable` | `generated_tan_p96` | `generated[1806] 1 49/177` |
+| 602 | 149.579 us | `computable` | `generated_tan_p96` | `generated[8136] -1 104/283` |
+| 603 | 149.570 us | `computable` | `generated_tan_p96` | `generated[5076] -133/426` |
+| 604 | 149.370 us | `computable` | `generated_tan_p96` | `generated[14511] 1 32/801` |
+| 605 | 149.190 us | `computable` | `generated_tan_p96` | `generated[10626] -1 91/822` |
+| 606 | 149.149 us | `computable` | `generated_tan_p96` | `generated[2391] -123/208` |
+| 607 | 149.130 us | `computable` | `generated_tan_p96` | `generated[13191] 1 48/377` |
+| 608 | 149.069 us | `computable` | `generated_tan_p96` | `generated[9876] 309/853` |
+| 609 | 148.950 us | `computable` | `generated_tan_p96` | `generated[2076] 39/61` |
+| 610 | 148.879 us | `computable` | `generated_tan_p96` | `generated[16596] -1 46/131` |
+| 611 | 148.800 us | `computable` | `generated_tan_p96` | `generated[231] -64/237` |
+| 612 | 148.790 us | `computable` | `generated_tan_p96` | `generated[13686] 1 21/268` |
+| 613 | 148.729 us | `computable` | `generated_tan_p96` | `generated[11271] 65/192` |
+| 614 | 148.530 us | `computable` | `generated_tan_p96` | `generated[2691] -458/811` |
+| 615 | 148.490 us | `computable` | `generated_tan_p96` | `generated[1326] -15 3/10` |
+| 616 | 148.260 us | `computable` | `tan_p96` | `rational[8]=-3 16/113` |
+| 617 | 148.239 us | `computable` | `generated_tan_p96` | `generated[11226] 4 112/199` |
+| 618 | 148.190 us | `computable` | `generated_tan_p96` | `generated[14016] 1 19/321` |
+| 619 | 148.070 us | `computable` | `generated_tan_p96` | `generated[3006] 1 89/459` |
+| 620 | 148.059 us | `computable` | `generated_atan_p96` | `generated[17394] -2 12/295` |
+| 621 | 148.049 us | `computable` | `tan_p96` | `huge_pi_plus_offset` |
+| 622 | 148.040 us | `computable` | `generated_tan_p96` | `generated[12216] -1 268/517` |
+| 623 | 148.030 us | `computable` | `generated_tan_p96` | `generated[1581] 471/817` |
+| 624 | 147.980 us | `computable` | `generated_tan_p96` | `generated[261] 21/131` |
+| 625 | 147.870 us | `computable` | `generated_tan_p96` | `generated[14121] 349/857` |
+| 626 | 147.840 us | `computable` | `generated_tan_p96` | `generated[1251] 41/79` |
+| 627 | 147.830 us | `computable` | `generated_tan_p96` | `generated[3306] 27/38` |
+| 628 | 147.780 us | `computable` | `generated_tan_p96` | `generated[5001] 64/139` |
+| 629 | 147.699 us | `computable` | `generated_tan_p96` | `generated[15096] -440/717` |
+| 630 | 147.589 us | `computable` | `generated_tan_p96` | `generated[10311] 80/177` |
+| 631 | 147.480 us | `computable` | `generated_tan_p96` | `generated[10746] -149/498` |
+| 632 | 147.230 us | `computable` | `generated_tan_p96` | `generated[10401] 653/931` |
+| 633 | 147.230 us | `computable` | `generated_tan_p96` | `generated[5931] 4 8/13` |
+| 634 | 147.060 us | `computable` | `generated_tan_p96` | `generated[4836] 205/503` |
+| 635 | 147.020 us | `computable` | `asinh_p128` | `large_negative` |
+| 636 | 146.990 us | `computable` | `generated_tan_p96` | `generated[1656] -51/116` |
+| 637 | 146.979 us | `computable` | `generated_tan_p96` | `generated[7416] 1 41/172` |
+| 638 | 146.970 us | `computable` | `generated_tan_p96` | `generated[6666] -138/547` |
+| 639 | 146.950 us | `computable` | `generated_tan_p96` | `generated[17601] 1 41/217` |
+| 640 | 146.950 us | `computable` | `generated_tan_p96` | `generated[18081] -3 7/45` |
+| 641 | 146.820 us | `computable` | `generated_tan_p96` | `generated[12021] 1 427/545` |
+| 642 | 146.790 us | `computable` | `generated_tan_p96` | `generated[10131] 1 90/221` |
+| 643 | 146.780 us | `computable` | `generated_tan_p96` | `generated[7251] 1 125/463` |
+| 644 | 146.730 us | `computable` | `generated_tan_p96` | `generated[3636] 561/752` |
+| 645 | 146.600 us | `computable` | `generated_tan_p96` | `generated[12696] 1 27/109` |
+| 646 | 146.130 us | `computable` | `generated_tan_p96` | `generated[13101] -37/155` |
+| 647 | 145.930 us | `computable` | `tan_p96` | `rational[5]=7/10` |
+| 648 | 145.920 us | `computable` | `generated_tan_p96` | `generated[6861] 104/519` |
+| 649 | 145.890 us | `computable` | `generated_tan_p96` | `generated[1971] 1 194/761` |
+| 650 | 145.770 us | `computable` | `generated_tan_p96` | `generated[7656] 168/865` |
+| 651 | 145.750 us | `computable` | `generated_cos_p96` | `generated[2015] 3 37/44` |
+| 652 | 145.640 us | `computable` | `generated_tan_p96` | `generated[5961] 371/955` |
+| 653 | 145.580 us | `computable` | `generated_tan_p96` | `generated[12891] 2 67/95` |
+| 654 | 145.420 us | `computable` | `generated_tan_p96` | `generated[7026] 155/572` |
+| 655 | 145.320 us | `computable` | `generated_tan_p96` | `generated[861] -115/767` |
+| 656 | 145.280 us | `computable` | `generated_atan_p96` | `generated[609] -2 18/251` |
+| 657 | 145.200 us | `computable` | `generated_tan_p96` | `generated[15126] -83/212` |
+| 658 | 145.120 us | `computable` | `generated_tan_p96` | `generated[18231] 529/727` |
+| 659 | 145.000 us | `computable` | `generated_tan_p96` | `generated[4671] 77/225` |
+| 660 | 144.920 us | `computable` | `generated_tan_p96` | `generated[14991] -109/502` |
+| 661 | 144.860 us | `computable` | `generated_tan_p96` | `generated[6081] -1 233/631` |
+| 662 | 144.840 us | `computable` | `generated_tan_p96` | `generated[2811] 306/487` |
+| 663 | 144.761 us | `computable` | `tan_p96` | `rational[27]=-256` |
+| 664 | 144.730 us | `computable` | `generated_tan_p96` | `generated[17106] 1 8/25` |
+| 665 | 144.720 us | `computable` | `generated_tan_p96` | `generated[17436] 1 28/127` |
+| 666 | 144.700 us | `computable` | `generated_tan_p96` | `generated[13791] 247/751` |
+| 667 | 144.660 us | `computable` | `generated_tan_p96` | `generated[2211] 4 32/113` |
+| 668 | 144.430 us | `computable` | `generated_tan_p96` | `generated[2601] 16 56/57` |
+| 669 | 144.280 us | `computable` | `generated_tan_p96` | `generated[2736] 4 64/191` |
+| 670 | 144.240 us | `computable` | `generated_atan_p96` | `generated[4794] -2 28/417` |
+| 671 | 144.150 us | `computable` | `asinh_p128` | `large` |
+| 672 | 144.120 us | `computable` | `generated_tan_p96` | `generated[186] 6 3/97` |
+| 673 | 143.810 us | `computable` | `generated_tan_p96` | `generated[17646] -197/811` |
+| 674 | 143.640 us | `computable` | `tan_p96` | `rational[28]=-256` |
+| 675 | 143.630 us | `computable` | `tan_p96` | `rational[1]=1` |
+| 676 | 143.540 us | `computable` | `generated_tan_p96` | `generated[16011] 388/739` |
+| 677 | 143.360 us | `computable` | `acosh_p128` | `large` |
+| 678 | 143.320 us | `computable` | `generated_tan_p96` | `generated[2646] 255/434` |
+| 679 | 143.180 us | `computable` | `generated_tan_p96` | `generated[10881] -289/632` |
+| 680 | 143.140 us | `computable` | `generated_tan_p96` | `generated[1761] -1 51/331` |
+| 681 | 143.060 us | `computable` | `generated_tan_p96` | `generated[2256] -229/490` |
+| 682 | 143.030 us | `computable` | `generated_atan_p96` | `generated[579] -2 47/332` |
+| 683 | 143.010 us | `computable` | `generated_atan_p96` | `generated[6879] -2 39/271` |
+| 684 | 142.910 us | `computable` | `generated_tan_p96` | `generated[6051] 1 29/89` |
+| 685 | 142.880 us | `computable` | `generated_cos_p96` | `generated[155] 3 26/27` |
+| 686 | 142.610 us | `computable` | `generated_tan_p96` | `generated[4236] 2 125/129` |
+| 687 | 142.600 us | `computable` | `generated_tan_p96` | `generated[18651] -1 41/118` |
+| 688 | 142.320 us | `computable` | `generated_tan_p96` | `generated[10446] -60/311` |
+| 689 | 142.240 us | `computable` | `generated_tan_p96` | `generated[10326] -1 189/635` |
+| 690 | 142.221 us | `computable` | `generated_tan_p96` | `generated[2856] -407/864` |
+| 691 | 142.130 us | `computable` | `generated_tan_p96` | `generated[2301] -1 25/289` |
+| 692 | 142.090 us | `computable` | `generated_atan_p96` | `generated[2034] -443/890` |
+| 693 | 142.070 us | `computable` | `generated_tan_p96` | `generated[14781] 7 49/72` |
+| 694 | 141.931 us | `computable` | `generated_tan_p96` | `generated[17541] 67/298` |
+| 695 | 141.860 us | `computable` | `generated_atan_p96` | `generated[1884] 2 5/298` |
+| 696 | 141.751 us | `computable` | `generated_tan_p96` | `generated[4071] 4 7/19` |
+| 697 | 141.690 us | `computable` | `generated_tan_p96` | `generated[10911] -98/551` |
+| 698 | 141.621 us | `computable` | `generated_tan_p96` | `generated[11646] -6 22/31` |
+| 699 | 141.620 us | `computable` | `generated_tan_p96` | `generated[3276] 268/727` |
+| 700 | 141.600 us | `computable` | `generated_tan_p96` | `generated[2556] -318/677` |
+| 701 | 141.460 us | `computable` | `generated_tan_p96` | `generated[12306] -106/137` |
+| 702 | 140.911 us | `computable` | `generated_tan_p96` | `generated[4926] 2 129/130` |
+| 703 | 140.740 us | `computable` | `generated_tan_p96` | `generated[8316] 4 13/20` |
+| 704 | 140.720 us | `computable` | `generated_tan_p96` | `generated[5976] -1 9/32` |
+| 705 | 140.670 us | `computable` | `generated_tan_p96` | `generated[18261] 1 37/323` |
+| 706 | 140.620 us | `computable` | `generated_atan_p96` | `generated[6909] -2 1/19` |
+| 707 | 140.481 us | `computable` | `generated_tan_p96` | `generated[1716] 331/951` |
+| 708 | 140.451 us | `computable` | `generated_tan_p96` | `generated[1056] 127/739` |
+| 709 | 140.410 us | `computable` | `generated_tan_p96` | `generated[6831] -29/200` |
+| 710 | 140.360 us | `computable` | `generated_tan_p96` | `generated[4221] -1 11/167` |
+| 711 | 140.190 us | `computable` | `generated_tan_p96` | `generated[14541] -1 17/48` |
+| 712 | 140.021 us | `computable` | `generated_tan_p96` | `generated[16311] 299/926` |
+| 713 | 139.881 us | `computable` | `generated_tan_p96` | `generated[11736] 157/816` |
+| 714 | 139.740 us | `computable` | `generated_tan_p96` | `generated[7971] -1 104/171` |
+| 715 | 139.710 us | `computable` | `generated_tan_p96` | `generated[2166] -1 69/733` |
+| 716 | 139.591 us | `computable` | `generated_tan_p96` | `generated[15861] -3 6/7` |
+| 717 | 139.490 us | `computable` | `generated_tan_p96` | `generated[12546] -1 60/623` |
+| 718 | 139.320 us | `computable` | `generated_tan_p96` | `generated[5556] 1 34/79` |
+| 719 | 139.241 us | `computable` | `generated_atan_p96` | `generated[549] -2 76/413` |
+| 720 | 139.180 us | `computable` | `generated_tan_p96` | `generated[426] 57/223` |
+| 721 | 138.881 us | `computable` | `generated_tan_p96` | `generated[3051] -15/76` |
+| 722 | 138.710 us | `computable` | `generated_tan_p96` | `generated[2481] 68/127` |
+| 723 | 138.671 us | `computable` | `generated_tan_p96` | `generated[1146] 1 51/124` |
+| 724 | 138.671 us | `computable` | `tan_p96` | `rational[7]=3 16/113` |
+| 725 | 138.151 us | `computable` | `generated_atan_p96` | `generated[7359] 28/57` |
+| 726 | 138.011 us | `computable` | `generated_tan_p96` | `generated[7491] 117/812` |
+| 727 | 137.940 us | `computable` | `generated_tan_p96` | `generated[6216] 1 46/153` |
+| 728 | 137.931 us | `computable` | `generated_tan_p96` | `generated[13521] 1 44/483` |
+| 729 | 137.771 us | `computable` | `generated_tan_p96` | `generated[10851] -480/713` |
+| 730 | 137.651 us | `computable` | `generated_atan_p96` | `generated[11064] -2 49/437` |
+| 731 | 137.591 us | `computable` | `acos_p96` | `mid` |
+| 732 | 137.410 us | `computable` | `generated_atan_p96` | `generated[6849] -2 17/88` |
+| 733 | 137.251 us | `computable` | `generated_tan_p96` | `generated[11601] 27/62` |
+| 734 | 137.210 us | `computable` | `generated_tan_p96` | `generated[15996] -2 145/281` |
+| 735 | 137.200 us | `computable` | `generated_tan_p96` | `generated[2721] -267/730` |
+| 736 | 137.121 us | `computable` | `generated_tan_p96` | `generated[12921] 6 51/109` |
+| 737 | 137.060 us | `computable` | `generated_tan_p96` | `generated[6066] 40/173` |
+| 738 | 137.021 us | `computable` | `generated_cos_p96` | `generated[5450] -3 227/241` |
+| 739 | 136.970 us | `computable` | `generated_tan_p96` | `generated[4911] -317/799` |
+| 740 | 136.931 us | `computable` | `generated_tan_p96` | `generated[17721] -6 59/110` |
+| 741 | 136.890 us | `computable` | `generated_tan_p96` | `generated[10581] -40/89` |
+| 742 | 136.711 us | `computable` | `generated_tan_p96` | `generated[1626] -1 45/197` |
+| 743 | 136.401 us | `computable` | `generated_tan_p96` | `generated[3501] 1 83/618` |
+| 744 | 136.330 us | `computable` | `tan_p96` | `rational[2]=-1` |
+| 745 | 136.210 us | `computable` | `generated_tan_p96` | `generated[10941] 93/470` |
+| 746 | 136.181 us | `computable` | `generated_tan_p96` | `generated[16131] -2 17/415` |
+| 747 | 136.120 us | `computable` | `generated_tan_p96` | `generated[10296] 1 67/179` |
+| 748 | 135.831 us | `computable` | `generated_tan_p96` | `generated[7341] -3 89/110` |
+| 749 | 135.791 us | `computable` | `generated_tan_p96` | `generated[11331] 1 163/414` |
+| 750 | 135.751 us | `computable` | `generated_tan_p96` | `generated[3111] 217/674` |
+| 751 | 135.541 us | `computable` | `generated_atan_p96` | `generated[11094] -2 5/89` |
+| 752 | 135.541 us | `computable` | `generated_tan_p96` | `generated[13611] -3 179/240` |
+| 753 | 135.511 us | `computable` | `generated_tan_p96` | `generated[8856] -47/154` |
+| 754 | 135.431 us | `computable` | `generated_tan_p96` | `generated[1986] 17/74` |
+| 755 | 135.371 us | `computable` | `generated_tan_p96` | `generated[7581] 1 121/569` |
+| 756 | 135.291 us | `computable` | `generated_tan_p96` | `generated[5106] -25/257` |
+| 757 | 135.130 us | `computable` | `generated_tan_p96` | `generated[4506] 103/397` |
+| 758 | 135.091 us | `computable` | `generated_tan_p96` | `generated[1836] -1 277/627` |
+| 759 | 135.091 us | `computable` | `generated_tan_p96` | `generated[3786] -1 136/347` |
+| 760 | 134.960 us | `computable` | `generated_tan_p96` | `generated[10011] 169/987` |
+| 761 | 134.800 us | `computable` | `generated_tan_p96` | `generated[15636] 3 231/256` |
+| 762 | 134.731 us | `computable` | `generated_tan_p96` | `generated[13461] 29/129` |
+| 763 | 134.671 us | `computable` | `generated_tan_p96` | `generated[17931] 1 13/90` |
+| 764 | 134.401 us | `computable` | `generated_tan_p96` | `generated[981] 1 206/443` |
+| 765 | 134.281 us | `computable` | `generated_tan_p96` | `generated[5301] 167/743` |
+| 766 | 134.231 us | `computable` | `generated_tan_p96` | `generated[8061] -14/15` |
+| 767 | 134.180 us | `computable` | `generated_tan_p96` | `generated[9861] -1 391/395` |
+| 768 | 134.161 us | `computable` | `generated_tan_p96` | `generated[3891] -1 126/281` |
+| 769 | 133.960 us | `computable` | `generated_tan_p96` | `generated[1461] -2 5/144` |
+| 770 | 133.860 us | `computable` | `generated_tan_p96` | `generated[17871] 118/351` |
+| 771 | 133.661 us | `computable` | `generated_tan_p96` | `generated[16491] -1 57/220` |
+| 772 | 133.581 us | `computable` | `generated_tan_p96` | `generated[14946] 4 104/125` |
+| 773 | 133.361 us | `computable` | `generated_tan_p96` | `generated[8421] 41/295` |
+| 774 | 133.351 us | `computable` | `generated_tan_p96` | `generated[10701] 4 80/121` |
+| 775 | 133.341 us | `computable` | `generated_atan_p96` | `generated[16584] 119/244` |
+| 776 | 133.170 us | `computable` | `generated_tan_p96` | `generated[17511] -57/677` |
+| 777 | 132.861 us | `computable` | `generated_tan_p96` | `generated[13701] -163/497` |
+| 778 | 132.811 us | `computable` | `generated_atan_p96` | `generated[8169] -91/194` |
+| 779 | 132.801 us | `computable` | `generated_tan_p96` | `generated[18426] 1 24/233` |
+| 780 | 132.721 us | `computable` | `generated_sin_p96` | `generated[484] 3 8/9` |
+| 781 | 132.560 us | `computable` | `generated_tan_p96` | `generated[13896] -2/23` |
+| 782 | 132.551 us | `computable` | `generated_tan_p96` | `generated[8841] 4 42/79` |
+| 783 | 132.541 us | `computable` | `generated_tan_p96` | `generated[5841] -1 37/94` |
+| 784 | 132.521 us | `computable` | `generated_tan_p96` | `generated[2421] -178/543` |
+| 785 | 132.511 us | `computable` | `generated_tan_p96` | `generated[2136] -1 179/814` |
+| 786 | 132.351 us | `computable` | `tan_p96` | `rational[34]=-18446744073709551616` |
+| 787 | 132.221 us | `computable` | `generated_tan_p96` | `generated[1551] 140/449` |
+| 788 | 132.191 us | `computable` | `generated_tan_p96` | `generated[5766] 129/983` |
+| 789 | 132.141 us | `computable` | `generated_tan_p96` | `generated[5886] 1 234/659` |
+| 790 | 132.091 us | `computable` | `generated_atan_p96` | `generated[4599] 2 1/89` |
+| 791 | 132.020 us | `computable` | `generated_tan_p96` | `generated[6756] 1 131/304` |
+| 792 | 132.001 us | `computable` | `generated_tan_p96` | `generated[396] -77/527` |
+| 793 | 131.981 us | `computable` | `ln_abs_plus_one_p96` | `near_half_pi_minus_2^-40` |
+| 794 | 131.931 us | `computable` | `generated_tan_p96` | `generated[5946] -1 227/497` |
+| 795 | 131.811 us | `computable` | `generated_atan_p96` | `generated[5109] 2 14/65` |
+| 796 | 131.641 us | `computable` | `generated_tan_p96` | `generated[16161] -1 161/167` |
+| 797 | 131.611 us | `computable` | `generated_tan_p96` | `generated[4431] 6 19/101` |
+| 798 | 131.601 us | `computable` | `generated_tan_p96` | `generated[17856] -3 127/244` |
+| 799 | 131.581 us | `computable` | `generated_tan_p96` | `generated[17691] -4 146/191` |
+| 800 | 131.571 us | `computable` | `generated_tan_p96` | `generated[6366] -49/360` |
+| 801 | 131.501 us | `computable` | `generated_tan_p96` | `generated[12681] -1 66/757` |
+| 802 | 131.281 us | `computable` | `generated_tan_p96` | `generated[18591] 1 35/376` |
+| 803 | 131.220 us | `computable` | `generated_tan_p96` | `generated[3606] 370/833` |
+| 804 | 131.171 us | `computable` | `generated_tan_p96` | `generated[12801] -59/433` |
+| 805 | 131.001 us | `computable` | `generated_tan_p96` | `generated[14091] 79/469` |
+| 806 | 130.981 us | `computable` | `generated_tan_p96` | `generated[13926] 107/885` |
+| 807 | 130.881 us | `computable` | `generated_tan_p96` | `generated[7371] -4 91/139` |
+| 808 | 130.802 us | `computable` | `generated_tan_p96` | `generated[8916] 97/227` |
+| 809 | 130.731 us | `computable` | `generated_atan_p96` | `generated[17364] -2 41/376` |
+| 810 | 130.491 us | `computable` | `generated_tan_p96` | `generated[3336] 1 17/113` |
+| 811 | 130.431 us | `computable` | `generated_tan_p96` | `generated[7146] 3 175/248` |
+| 812 | 130.341 us | `computable` | `generated_tan_p96` | `generated[14226] 6/25` |
+| 813 | 130.291 us | `computable` | `generated_tan_p96` | `generated[7566] -3 24/37` |
+| 814 | 130.201 us | `computable` | `generated_atan_p96` | `generated[13119] -2 89/372` |
+| 815 | 130.171 us | `computable` | `generated_tan_p96` | `generated[4341] 13/86` |
+| 816 | 129.951 us | `computable` | `generated_atan_p96` | `generated[10359] -414/845` |
+| 817 | 129.881 us | `computable` | `generated_atan_p96` | `generated[6819] -2 97/433` |
+| 818 | 129.831 us | `computable` | `generated_sin_p96` | `generated[10054] -3 171/173` |
+| 819 | 129.671 us | `computable` | `generated_cos_p96` | `generated[5675] -3 11/12` |
+| 820 | 129.591 us | `computable` | `generated_tan_p96` | `generated[10056] -1 177/367` |
+| 821 | 129.421 us | `computable` | `generated_atan_p96` | `generated[8469] -151/321` |
+| 822 | 129.401 us | `computable` | `generated_tan_p96` | `generated[4476] -44/239` |
+| 823 | 129.091 us | `computable` | `generated_tan_p96` | `generated[4941] -63/359` |
+| 824 | 128.961 us | `computable` | `generated_tan_p96` | `generated[1731] -1 161/412` |
+| 825 | 128.941 us | `computable` | `generated_tan_p96` | `generated[15411] 1 201/365` |
+| 826 | 128.921 us | `computable` | `generated_atan_p96` | `generated[10059] -325/658` |
+| 827 | 128.891 us | `computable` | `tan_p96` | `rational[33]=-18446744073709551616` |
+| 828 | 128.831 us | `computable` | `generated_tan_p96` | `generated[17706] 185/649` |
+| 829 | 128.702 us | `computable` | `generated_atan_p96` | `generated[189] 2 7/97` |
+| 830 | 128.681 us | `computable` | `generated_atan_p96` | `generated[16494] -335/731` |
+| 831 | 128.621 us | `computable` | `generated_tan_p96` | `generated[17946] -286` |
+| 832 | 128.411 us | `computable` | `generated_tan_p96` | `generated[7761] -1 80/83` |
+| 833 | 128.381 us | `computable` | `generated_tan_p96` | `generated[2841] 1 13/58` |
+| 834 | 128.231 us | `computable` | `generated_tan_p96` | `generated[891] 38/343` |
+| 835 | 128.182 us | `computable` | `generated_tan_p96` | `generated[1386] 229/845` |
+| 836 | 128.111 us | `computable` | `generated_tan_p96` | `generated[4971] 5/49` |
+| 837 | 127.931 us | `computable` | `generated_tan_p96` | `generated[11586] -3 9/16` |
+| 838 | 127.921 us | `computable` | `generated_tan_p96` | `generated[1641] 1 198/655` |
+| 839 | 127.911 us | `computable` | `generated_tan_p96` | `generated[4461] 40 4/5` |
+| 840 | 127.842 us | `computable` | `generated_tan_p96` | `generated[16086] -3 10/19` |
+| 841 | 127.681 us | `computable` | `generated_tan_p96` | `generated[16266] -1 146/183` |
+| 842 | 127.502 us | `computable` | `generated_tan_p96` | `generated[16191] -1 212/253` |
+| 843 | 127.331 us | `computable` | `generated_tan_p96` | `generated[7806] -1 104/115` |
+| 844 | 127.142 us | `computable` | `generated_tan_p96` | `generated[2946] 166/621` |
+| 845 | 127.031 us | `computable` | `generated_tan_p96` | `generated[18321] -1 413/484` |
+| 846 | 126.972 us | `computable` | `generated_tan_p96` | `generated[2886] -8/29` |
+| 847 | 126.902 us | `computable` | `generated_tan_p96` | `generated[9711] 129/400` |
+| 848 | 126.901 us | `computable` | `generated_tan_p96` | `generated[18621] -1 315/671` |
+| 849 | 126.822 us | `computable` | `generated_atan_p96` | `generated[7269] -97/215` |
+| 850 | 126.791 us | `computable` | `generated_tan_p96` | `generated[15966] -2 87/181` |
+| 851 | 126.721 us | `computable` | `generated_tan_p96` | `generated[8406] 1 37/278` |
+| 852 | 126.681 us | `computable` | `generated_atan_p96` | `generated[6129] 2 37/302` |
+| 853 | 126.651 us | `computable` | `generated_tan_p96` | `generated[3741] 230/967` |
+| 854 | 126.571 us | `computable` | `generated_tan_p96` | `generated[1026] -16/205` |
+| 855 | 126.422 us | `computable` | `generated_tan_p96` | `generated[12081] -1 262/383` |
+| 856 | 126.331 us | `computable` | `generated_tan_p96` | `generated[15471] 4 136/203` |
+| 857 | 126.321 us | `computable` | `generated_atan_p96` | `generated[594] 192/395` |
+| 858 | 126.261 us | `computable` | `generated_tan_p96` | `generated[18486] -1 103/179` |
+| 859 | 126.202 us | `computable` | `generated_tan_p96` | `generated[16296] -1 82/117` |
+| 860 | 126.162 us | `computable` | `generated_tan_p96` | `generated[13731] -135/913` |
+| 861 | 126.042 us | `computable` | `generated_atan_p96` | `generated[11274] 138/289` |
+| 862 | 125.791 us | `computable` | `generated_tan_p96` | `generated[2676] 1 93/353` |
+| 863 | 125.702 us | `computable` | `generated_tan_p96` | `generated[10191] -1 61/167` |
+| 864 | 125.681 us | `computable` | `generated_tan_p96` | `generated[11376] -136/791` |
+| 865 | 125.571 us | `computable` | `generated_cos_p96` | `generated[7475] 3 177/257` |
+| 866 | 125.511 us | `computable` | `generated_atan_p96` | `generated[8934] -2 79/206` |
+| 867 | 125.361 us | `computable` | `generated_atan_p96` | `generated[13764] 2 23/126` |
+| 868 | 125.331 us | `computable` | `generated_tan_p96` | `generated[17796] 1 176/203` |
+| 869 | 125.281 us | `computable` | `generated_tan_p96` | `generated[8571] 1 109/887` |
+| 870 | 125.281 us | `computable` | `generated_tan_p96` | `generated[9921] -1 171/233` |
+| 871 | 124.952 us | `computable` | `generated_tan_p96` | `generated[16221] -1 51/86` |
+| 872 | 124.691 us | `computable` | `generated_tan_p96` | `generated[9726] -2 124/261` |
+| 873 | 124.622 us | `computable` | `generated_tan_p96` | `generated[7866] -1 98/149` |
+| 874 | 124.611 us | `computable` | `generated_tan_p96` | `generated[16431] -1 167/301` |
+| 875 | 124.512 us | `computable` | `generated_tan_p96` | `generated[5901] -11/120` |
+| 876 | 124.501 us | `computable` | `generated_tan_p96` | `generated[18381] -1 193/322` |
+| 877 | 124.391 us | `computable` | `generated_tan_p96` | `generated[5721] 1 118/303` |
+| 878 | 124.381 us | `computable` | `generated_tan_p96` | `generated[9006] 3 134/211` |
+| 879 | 124.321 us | `computable` | `generated_tan_p96` | `generated[11076] -47/604` |
+| 880 | 124.281 us | `computable` | `generated_sin_p96` | `generated[7279] 3 69/188` |
+| 881 | 123.842 us | `computable` | `generated_atan_p96` | `generated[6279] -403/894` |
+| 882 | 123.722 us | `computable` | `generated_tan_p96` | `generated[15021] 82/421` |
+| 883 | 123.682 us | `computable` | `generated_atan_p96` | `generated[8964] -2 2/5` |
+| 884 | 123.632 us | `computable` | `generated_tan_p96` | `generated[11166] 1 165/361` |
+| 885 | 123.612 us | `computable` | `generated_tan_p96` | `generated[561] -13/290` |
+| 886 | 123.501 us | `computable` | `generated_tan_p96` | `generated[7671] -2 42/163` |
+| 887 | 123.381 us | `computable` | `generated_tan_p96` | `generated[9696] -2 17/38` |
+| 888 | 123.202 us | `computable` | `generated_tan_p96` | `generated[8271] -1 107/350` |
+| 889 | 123.182 us | `computable` | `generated_tan_p96` | `generated[14271] -1 243/452` |
+| 890 | 123.112 us | `computable` | `generated_tan_p96` | `generated[17376] 83/543` |
+| 891 | 123.081 us | `computable` | `generated_tan_p96` | `generated[8256] -5/121` |
+| 892 | 123.032 us | `computable` | `generated_tan_p96` | `generated[16746] 7/25` |
+| 893 | 123.022 us | `computable` | `generated_tan_p96` | `generated[5601] 13/155` |
+| 894 | 122.962 us | `computable` | `generated_sin_p96` | `generated[13909] 3 166/233` |
+| 895 | 122.491 us | `computable` | `generated_tan_p96` | `generated[18006] 24/209` |
+| 896 | 122.462 us | `computable` | `generated_atan_p96` | `generated[13209] -2 2/129` |
+| 897 | 122.361 us | `computable` | `generated_atan_p96` | `generated[14604] -374/849` |
+| 898 | 122.351 us | `computable` | `generated_tan_p96` | `generated[2586] -127/596` |
+| 899 | 122.232 us | `computable` | `generated_tan_p96` | `generated[13431] -23/363` |
+| 900 | 122.191 us | `computable` | `generated_tan_p96` | `generated[13386] 1 318/349` |
+| 901 | 122.122 us | `computable` | `generated_atan_p96` | `generated[5679] -45/104` |
+| 902 | 121.902 us | `computable` | `generated_atan_p96` | `generated[4434] 2 15/98` |
+| 903 | 121.792 us | `computable` | `generated_tan_p96` | `generated[12111] -1 76/151` |
+| 904 | 121.722 us | `computable` | `generated_atan_p96` | `generated[16314] 2 39/110` |
+| 905 | 121.622 us | `computable` | `generated_tan_p96` | `generated[8106] -1 318/647` |
+| 906 | 121.552 us | `computable` | `generated_atan_p96` | `generated[14784] 2 46/363` |
+| 907 | 121.542 us | `computable` | `generated_tan_p96` | `generated[7611] 1 393/488` |
+| 908 | 121.492 us | `computable` | `generated_tan_p96` | `generated[6996] -36/653` |
+| 909 | 121.372 us | `computable` | `generated_tan_p96` | `generated[17301] 2 111/247` |
+| 910 | 121.361 us | `computable` | `generated_tan_p96` | `generated[1221] 89/396` |
+| 911 | 121.152 us | `computable` | `generated_tan_p96` | `generated[9501] 2 18/37` |
+| 912 | 121.052 us | `computable` | `generated_tan_p96` | `generated[14856] 31/368` |
+| 913 | 121.051 us | `computable` | `generated_tan_p96` | `generated[2121] -1/4` |
+| 914 | 120.872 us | `computable` | `generated_tan_p96` | `generated[1476] 1 100/301` |
+| 915 | 120.832 us | `computable` | `generated_tan_p96` | `generated[18456] 1 172/309` |
+| 916 | 120.821 us | `computable` | `generated_tan_p96` | `generated[2511] 1 19/60` |
+| 917 | 120.791 us | `computable` | `generated_atan_p96` | `generated[1824] 219/460` |
+| 918 | 120.732 us | `computable` | `generated_sin_p96` | `generated[1759] -3 117/137` |
+| 919 | 120.562 us | `computable` | `generated_cos_p96` | `generated[6950] 3 67/179` |
+| 920 | 120.362 us | `computable` | `generated_tan_p96` | `generated[16971] 3 80/141` |
+| 921 | 120.292 us | `computable` | `generated_tan_p96` | `generated[9141] 1 94/115` |
+| 922 | 120.201 us | `computable` | `generated_tan_p96` | `generated[15456] -21/106` |
+| 923 | 119.952 us | `computable` | `generated_tan_p96` | `generated[5136] 58/345` |
+| 924 | 119.832 us | `computable` | `generated_tan_p96` | `generated[18411] -1 83/241` |
+| 925 | 119.812 us | `computable` | `generated_tan_p96` | `generated[2436] 229 1/4` |
+| 926 | 119.631 us | `computable` | `generated_atan_p96` | `generated[18009] 2 11/26` |
+| 927 | 119.362 us | `computable` | `generated_tan_p96` | `generated[9306] 1 140/199` |
+| 928 | 119.261 us | `computable` | `generated_tan_p96` | `generated[15246] 1 203/312` |
+| 929 | 119.232 us | `computable` | `generated_tan_p96` | `generated[18291] 1 346/565` |
+| 930 | 119.222 us | `computable` | `generated_tan_p96` | `generated[2781] 115/568` |
+| 931 | 118.801 us | `computable` | `generated_cos_p96` | `generated[5090] 3 1/2` |
+| 932 | 118.692 us | `computable` | `generated_atan_p96` | `generated[12924] 2 31/100` |
+| 933 | 118.652 us | `computable` | `generated_tan_p96` | `generated[7941] 1 389/594` |
+| 934 | 118.601 us | `computable` | `generated_tan_p96` | `generated[15606] 2 134/337` |
+| 935 | 118.551 us | `computable` | `generated_atan_p96` | `generated[14619] 2 101/310` |
+| 936 | 118.501 us | `computable` | `generated_tan_p96` | `generated[11106] 144/523` |
+| 937 | 118.382 us | `computable` | `generated_tan_p96` | `generated[12741] -63/85` |
+| 938 | 118.372 us | `computable` | `generated_tan_p96` | `generated[7776] 1 391/541` |
+| 939 | 118.302 us | `computable` | `generated_atan_p96` | `generated[264] 47/114` |
+| 940 | 118.212 us | `computable` | `generated_tan_p96` | `generated[6696] 53/466` |
+| 941 | 118.202 us | `computable` | `generated_tan_p96` | `generated[16776] 1 92/169` |
+| 942 | 118.182 us | `computable` | `generated_tan_p96` | `generated[16101] 1 15/16` |
+| 943 | 118.022 us | `computable` | `generated_tan_p96` | `generated[8346] 563/996` |
+| 944 | 117.992 us | `computable` | `generated_tan_p96` | `generated[4641] -37/531` |
+| 945 | 117.942 us | `computable` | `generated_atan_p96` | `generated[14304] -285/662` |
+| 946 | 117.861 us | `computable` | `generated_atan_p96` | `generated[8844] 2 37/449` |
+| 947 | 117.792 us | `computable` | `generated_tan_p96` | `generated[12366] 1 29/56` |
+| 948 | 117.692 us | `computable` | `generated_tan_p96` | `generated[7701] -2 11/49` |
+| 949 | 117.572 us | `computable` | `generated_tan_p96` | `generated[9471] 1 278/451` |
+| 950 | 117.462 us | `computable` | `generated_tan_p96` | `generated[4026] -1 43/116` |
+| 951 | 117.382 us | `computable` | `generated_tan_p96` | `generated[11556] -3 74/305` |
+| 952 | 117.332 us | `computable` | `generated_tan_p96` | `generated[18216] -2 28/269` |
+| 953 | 117.182 us | `computable` | `generated_tan_p96` | `generated[13311] -15 15/53` |
+| 954 | 117.122 us | `computable` | `generated_atan_p96` | `generated[4659] -2 156/283` |
+| 955 | 117.072 us | `computable` | `generated_tan_p96` | `generated[13056] 2 79/243` |
+| 956 | 117.042 us | `computable` | `generated_atan_p96` | `generated[8424] 130/293` |
+| 957 | 117.032 us | `computable` | `generated_atan_p96` | `generated[8514] 2 3/7` |
+| 958 | 116.922 us | `computable` | `generated_tan_p96` | `generated[9636] 1 23/42` |
+| 959 | 116.852 us | `computable` | `generated_tan_p96` | `generated[9561] -3 73/208` |
+| 960 | 116.812 us | `computable` | `generated_tan_p96` | `generated[1521] 1/11` |
+| 961 | 116.662 us | `computable` | `generated_sin_p96` | `generated[5584] 3 1/139` |
+| 962 | 116.522 us | `computable` | `generated_tan_p96` | `generated[1311] 1 202/549` |
+| 963 | 116.382 us | `computable` | `generated_cos_p96` | `generated[13940] -3 41/83` |
+| 964 | 116.352 us | `computable` | `generated_tan_p96` | `generated[15831] -3 37/114` |
+| 965 | 116.312 us | `computable` | `generated_atan_p96` | `generated[2604] -2 1/3` |
+| 966 | 116.312 us | `computable` | `ln_abs_plus_one_p96` | `rational[24]=-1` |
+| 967 | 116.252 us | `computable` | `generated_tan_p96` | `generated[11406] 11/142` |
+| 968 | 116.232 us | `computable` | `generated_atan_p96` | `generated[17169] 2 39/101` |
+| 969 | 116.152 us | `computable` | `generated_tan_p96` | `generated[16056] -2 87/119` |
+| 970 | 116.052 us | `computable` | `generated_atan_p96` | `generated[5964] 2 92/249` |
+| 971 | 115.972 us | `computable` | `generated_tan_p96` | `generated[7326] 2/23` |
+| 972 | 115.912 us | `computable` | `generated_tan_p96` | `generated[18936] 20/319` |
+| 973 | 115.802 us | `computable` | `generated_tan_p96` | `generated[11886] -2 65/411` |
+| 974 | 115.612 us | `computable` | `generated_tan_p96` | `generated[14256] 209/991` |
+| 975 | 115.592 us | `computable` | `generated_atan_p96` | `generated[5739] 157/358` |
+| 976 | 115.592 us | `computable` | `generated_sin_p96` | `generated[7474] 5 15/32` |
+| 977 | 115.502 us | `computable` | `generated_tan_p96` | `generated[18876] -362/481` |
+| 978 | 115.482 us | `computable` | `generated_tan_p96` | `generated[8046] 652/809` |
+| 979 | 115.442 us | `computable` | `generated_cos_p96` | `generated[5900] -3 15/23` |
+| 980 | 115.432 us | `computable` | `generated_tan_p96` | `generated[5391] 1 12/25` |
+| 981 | 115.362 us | `computable` | `generated_tan_p96` | `generated[9666] 2 125/423` |
+| 982 | 115.362 us | `computable` | `ln_abs_plus_one_p96` | `rational[23]=-1` |
+| 983 | 115.252 us | `computable` | `generated_atan_p96` | `generated[5979] -314/707` |
+| 984 | 115.212 us | `computable` | `generated_atan_p96` | `generated[24] 2 83/335` |
+| 985 | 115.092 us | `computable` | `generated_tan_p96` | `generated[13131] 43/539` |
+| 986 | 115.092 us | `computable` | `generated_tan_p96` | `generated[7731] -2 13/82` |
+| 987 | 115.062 us | `computable` | `generated_tan_p96` | `generated[17046] -1/23` |
+| 988 | 114.992 us | `computable` | `generated_cos_p96` | `generated[11195] 3 95/183` |
+| 989 | 114.982 us | `computable` | `generated_atan_p96` | `generated[18864] 2 133/314` |
+| 990 | 114.973 us | `computable` | `generated_sin_p96` | `generated[5779] -3 171/250` |
+| 991 | 114.872 us | `computable` | `generated_sin_p96` | `generated[16549] -3 11/14` |
+| 992 | 114.682 us | `computable` | `generated_sin_p96` | `generated[17629] 3 28/53` |
+| 993 | 114.672 us | `computable` | `generated_tan_p96` | `generated[11706] -34/897` |
+| 994 | 114.472 us | `computable` | `generated_atan_p96` | `generated[7029] 374/863` |
+| 995 | 114.372 us | `computable` | `generated_cos_p96` | `generated[845] 3 20/53` |
+| 996 | 114.213 us | `computable` | `generated_tan_p96` | `generated[11916] -2 6/55` |
+| 997 | 113.933 us | `computable` | `generated_tan_p96` | `generated[15771] 2 79/390` |
+| 998 | 113.882 us | `computable` | `generated_tan_p96` | `generated[2346] 1 97/247` |
+| 999 | 113.862 us | `computable` | `generated_tan_p96` | `generated[9756] -2 19/36` |
+| 1000 | 113.802 us | `computable` | `generated_tan_p96` | `generated[16026] -2 29/50` |
 
 ## Query Hints
 

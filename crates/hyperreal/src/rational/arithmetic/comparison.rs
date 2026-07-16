@@ -10,10 +10,25 @@ impl PartialEq for Rational {
         } else if let Some(ordering) = compare_word_magnitudes(self, other) {
             crate::trace_dispatch!("rational", "comparison", "word-sized");
             ordering.is_eq()
+        } else if self.msd_exact() != other.msd_exact() {
+            crate::trace_dispatch!("rational", "comparison", "magnitude-bits");
+            false
         } else {
             crate::trace_dispatch!("rational", "comparison", "biguint-cross-product");
             &self.numerator * &other.denominator == &other.numerator * &self.denominator
         }
+    }
+}
+
+impl Eq for Rational {}
+
+impl std::hash::Hash for Rational {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // Rational construction maintains a reduced canonical numerator and
+        // denominator, so value equality implies identical stored fields.
+        self.sign.hash(state);
+        self.numerator.hash(state);
+        self.denominator.hash(state);
     }
 }
 
@@ -43,6 +58,17 @@ impl PartialOrd for Rational {
             }
         } else if let Some(ordering) = compare_word_magnitudes(self, other) {
             crate::trace_dispatch!("rational", "comparison", "word-sized");
+            match self.sign {
+                Plus => Some(ordering),
+                Minus => Some(ordering.reverse()),
+                NoSign => unreachable!(),
+            }
+        } else if let (Some(left_msd), Some(right_msd)) =
+            (self.msd_exact(), other.msd_exact())
+            && left_msd != right_msd
+        {
+            crate::trace_dispatch!("rational", "comparison", "magnitude-bits");
+            let ordering = left_msd.cmp(&right_msd);
             match self.sign {
                 Plus => Some(ordering),
                 Minus => Some(ordering.reverse()),

@@ -228,6 +228,19 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
         let reduced = atan_rational_small(signal, &residual, work_precision);
         return scale(anchor + reduced, -extra);
     }
+    if r <= FOUR_FIFTHS_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "atan", "two-thirds-anchor-shared");
+        // atan(2/3) = pi/4 - atan(1/5). This adds a table-reduction point
+        // without a new transcendental constant: both terms already have
+        // shared caches for the Machin pi path. On [1/2, 4/5] the exact
+        // subtraction residual is at most 1/8 instead of the unit anchor's
+        // 1/3, substantially shortening the medium-precision Taylor series.
+        let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);
+        let atan_inv5 = Computable::atan_inv5_constant().approx_signal(signal, work_precision);
+        let residual = atan_anchor_residual(r, 2, 3);
+        let reduced = atan_rational_small(signal, &residual, work_precision);
+        return scale(quarter_pi - atan_inv5 + reduced, -extra);
+    }
     if r <= TWO_RATIONAL.deref() {
         crate::trace_dispatch!("computable_approx", "atan", "unit-anchor-pi-quarter");
         let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);

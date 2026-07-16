@@ -1002,6 +1002,14 @@ fn collect_rows(filters: &[String]) -> BTreeMap<String, hyperreal::dispatch_trac
     trace_row(
         &mut rows,
         filters,
+        "computable/promoted_library_slow/tan_generated_17496_pos_3_190_219",
+        || {
+            black_box(computable(mixed_rational(3, 190, 219)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
         "computable/promoted_library_slow/tan_generated_13446_neg_5_15_187",
         || {
             black_box(computable(mixed_rational(-5, 15, 187)).tan().approx(-96));

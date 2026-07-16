@@ -3,32 +3,31 @@
 
 Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.
 
-<!-- promoted_slow_score_nanos: 3719 -->
-<!-- promoted_slow_previous_score_nanos: 3719 -->
+<!-- promoted_slow_score_nanos: 42130 -->
+<!-- promoted_slow_previous_score_nanos: 42130 -->
 <!-- promoted_slow_score_delta_nanos: 0 -->
 
 | Metric | Value |
 | --- | ---: |
 | Cases scored | 100 |
-| Average score | 3.719 us |
+| Average score | 42.130 us |
 | Delta | 0 ns |
 | Delta derivative | 0 ns |
 
 | Rank | Current Time | Operation | Input |
 | ---: | ---: | --- | --- |
-| 1 | 11.579 us | `generated_tan_p96` | `generated[1071] -3 177/200` |
-| 2 | 10.909 us | `generated_tan_p96` | `generated[17496] 3 190/219` |
-| 3 | 10.619 us | `generated_tan_p96` | `generated[18246] -1 187/188` |
-| 4 | 10.209 us | `generated_tan_p96` | `generated[18276] -1 77/107` |
-| 5 | 9.989 us | `generated_tan_p96` | `generated[12186] -1 189/299` |
-| 6 | 9.980 us | `generated_tan_p96` | `generated[321] 1 214/231` |
-| 7 | 9.679 us | `generated_tan_p96` | `generated[486] 1 53/71` |
-| 8 | 7.809 us | `generated_tan_p96` | `generated[6906] -87/128` |
-| 9 | 7.599 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
-| 10 | 7.469 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
+| 1 | 124.912 us | `generated_tan_p96` | `generated[18246] -1 187/188` |
+| 2 | 121.632 us | `generated_tan_p96` | `generated[3756] -1 123/214` |
+| 3 | 119.792 us | `generated_tan_p96` | `generated[18276] -1 77/107` |
+| 4 | 119.632 us | `generated_tan_p96` | `generated[12186] -1 189/299` |
+| 5 | 117.492 us | `generated_tan_p96` | `generated[321] 1 214/231` |
+| 6 | 116.232 us | `generated_tan_p96` | `generated[486] 1 53/71` |
+| 7 | 89.564 us | `generated_tan_p96` | `generated[6906] -87/128` |
+| 8 | 89.124 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
+| 9 | 88.044 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
+| 10 | 86.444 us | `generated_tan_p96` | `generated[18666] 5 15/17` |
 
 <!-- END promoted_slow_offender_score -->
-
 
 <!-- BEGIN numerical_micro -->
 ## `numerical_micro`
@@ -300,6 +299,8 @@ Small dense algebra kernels that stress repeated exact and symbolic operations.
 | `dense_algebra/rational_matmul_8` | 246.717 us | 245.381 us - 248.305 us | Computes an 8x8 rational matrix multiply. |
 | `dense_algebra/real_dot_36` | 27.549 us | 27.319 us - 27.810 us | Computes a 36-element dot product over symbolic `Real` values. |
 | `dense_algebra/real_matmul_6` | 153.585 us | 152.575 us - 154.869 us | Computes a 6x6 matrix multiply over symbolic `Real` values. |
+| `dense_algebra/real_sum_refs_64_symbolic` | 14.197 us | 14.148 us - 14.249 us | Constructs an arbitrary-length sum of 64 borrowed symbolic square roots. |
+| `dense_algebra/real_sum_refs_64_symbolic_to_f64` | 118.929 us | 118.793 us - 119.076 us | Constructs and approximates the same arbitrary-length symbolic sum. |
 
 ### `exact_transcendental_special_forms`
 
@@ -604,45 +605,45 @@ Gaussian tail helpers and exact/finite scientific special-function forms added f
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_normal_scientific_substrate/erfc_zero` | 62.84 ns | 62.63 ns - 63.09 ns | Takes the exact erfc(0) exit. |
-| `real_normal_scientific_substrate/erfcx_tail` | 2.945 us | 2.920 us - 2.972 us | Builds scaled erfc in a positive tail. |
-| `real_normal_scientific_substrate/normal_sf_tail` | 326.03 ns | 325.07 ns - 327.08 ns | Builds standard-normal upper-tail probability. |
-| `real_normal_scientific_substrate/pnorm_upper_tail` | 334.78 ns | 332.41 ns - 337.41 ns | Builds the upper-tail alias. |
-| `real_normal_scientific_substrate/log_pnorm_tail` | 289.79 ns | 288.50 ns - 291.57 ns | Builds lower log-CDF tail form. |
-| `real_normal_scientific_substrate/log_pnorm_zero` | 178.09 ns | 176.78 ns - 179.54 ns | Takes the exact log-CDF value at zero. |
-| `real_normal_scientific_substrate/log_normal_sf_tail` | 303.87 ns | 302.23 ns - 305.69 ns | Builds upper log-survival tail form. |
-| `real_normal_scientific_substrate/log_normal_sf_zero` | 182.34 ns | 179.47 ns - 185.45 ns | Takes the exact log-survival value at zero. |
-| `real_normal_scientific_substrate/log_dnorm_large` | 136.33 ns | 134.63 ns - 138.23 ns | Builds analytic log-density at a large input. |
-| `real_normal_scientific_substrate/normal_interval_narrow` | 1.689 us | 1.671 us - 1.710 us | Builds a narrow interval mass without spelling pnorm subtraction. |
-| `real_normal_scientific_substrate/erfinv_mid` | 2.333 us | 2.309 us - 2.361 us | Builds inverse error function through qnorm transform. |
-| `real_normal_scientific_substrate/erfcinv_tail` | 3.458 us | 3.431 us - 3.487 us | Builds inverse complementary error function through tail qnorm transform. |
-| `real_normal_scientific_substrate/qnorm_upper_tail` | 1.568 us | 1.562 us - 1.574 us | Builds inverse survival quantile. |
-| `real_normal_scientific_substrate/normal_pdf_parametric` | 1.881 us | 1.874 us - 1.889 us | Standardizes exactly before density construction. |
-| `real_normal_scientific_substrate/normal_survival_parametric` | 835.58 ns | 831.53 ns - 840.18 ns | Standardizes exactly before upper-tail construction. |
-| `real_normal_scientific_substrate/normal_mills_tail` | 3.701 us | 3.675 us - 3.739 us | Builds Mills ratio through erfcx identity. |
-| `real_normal_scientific_substrate/normal_mills_zero` | 165.41 ns | 164.66 ns - 166.27 ns | Takes the exact Mills ratio value at zero. |
-| `real_normal_scientific_substrate/normal_hazard_tail` | 4.984 us | 4.955 us - 5.015 us | Builds reciprocal Mills hazard. |
-| `real_normal_scientific_substrate/normal_hazard_zero` | 166.33 ns | 165.57 ns - 167.18 ns | Takes the exact hazard value at zero. |
-| `real_normal_scientific_substrate/normal_inverse_mills_zero` | 165.59 ns | 164.64 ns - 166.72 ns | Takes the exact lower inverse Mills value at zero. |
-| `real_normal_scientific_substrate/hermite_8` | 2.693 us | 2.674 us - 2.713 us | Builds an exact probabilists' Hermite polynomial. |
-| `real_normal_scientific_substrate/dnorm_derivative_4` | 2.338 us | 2.319 us - 2.360 us | Combines exact Hermite polynomial with normal density. |
-| `real_normal_scientific_substrate/standard_normal_moment_12` | 197.82 ns | 196.06 ns - 199.75 ns | Uses double-factorial closed form. |
-| `real_normal_scientific_substrate/normal_interval_moment_3` | 7.229 us | 6.155 us - 9.313 us | Uses interval mass and density-boundary recurrence. |
-| `real_normal_scientific_substrate/truncated_normal_mean` | 2.574 us | 2.560 us - 2.590 us | Builds truncated-normal mean from stable interval mass. |
-| `real_normal_scientific_substrate/gamma_integer` | 342.80 ns | 341.16 ns - 344.60 ns | Uses exact integer gamma closed form. |
-| `real_normal_scientific_substrate/gamma_half_integer` | 554.04 ns | 549.75 ns - 558.87 ns | Uses exact half-integer gamma closed form. |
-| `real_normal_scientific_substrate/lgamma_half_integer` | 1.927 us | 1.909 us - 1.951 us | Logs the absolute half-integer gamma value. |
-| `real_normal_scientific_substrate/beta_integer` | 433.16 ns | 431.13 ns - 436.33 ns | Builds integer beta through an exact factorial ratio. |
-| `real_normal_scientific_substrate/ln_beta_half_integer` | 3.815 us | 3.794 us - 3.840 us | Builds log beta through lgamma sum. |
-| `real_normal_scientific_substrate/regularized_beta_mid` | 2.482 us | 2.473 us - 2.492 us | Uses finite positive-integer beta binomial tail. |
-| `real_normal_scientific_substrate/regularized_beta_uniform` | 302.34 ns | 301.59 ns - 303.14 ns | Takes the exact I_x(1, 1) identity. |
-| `real_normal_scientific_substrate/regularized_beta_left_unity` | 585.60 ns | 581.29 ns - 590.79 ns | Reduces I_x(1, b) to one complement power. |
-| `real_normal_scientific_substrate/regularized_beta_q_mid` | 1.695 us | 1.685 us - 1.705 us | Uses finite positive-integer beta upper-tail form. |
-| `real_normal_scientific_substrate/regularized_beta_q_uniform` | 277.85 ns | 276.81 ns - 279.12 ns | Takes the exact upper-tail I_x(1, 1) complement. |
-| `real_normal_scientific_substrate/regularized_beta_q_left_unity` | 504.99 ns | 501.53 ns - 509.79 ns | Reduces the upper beta tail for a = 1 to one power. |
-| `real_normal_scientific_substrate/regularized_gamma_p_half` | 4.027 us | 3.404 us - 5.256 us | Uses half-integer incomplete-gamma recurrence. |
-| `real_normal_scientific_substrate/regularized_gamma_q_integer` | 2.437 us | 2.414 us - 2.464 us | Uses integer incomplete-gamma recurrence. |
-| `real_normal_scientific_substrate/chi_square_sf` | 5.334 us | 5.309 us - 5.362 us | Wraps regularized upper gamma for chi-square upper tail. |
+| `real_normal_scientific_substrate/erfc_zero` | 62.23 ns | 62.05 ns - 62.45 ns | Takes the exact erfc(0) exit. |
+| `real_normal_scientific_substrate/erfcx_tail` | 2.859 us | 2.846 us - 2.875 us | Builds scaled erfc in a positive tail. |
+| `real_normal_scientific_substrate/normal_sf_tail` | 328.21 ns | 326.95 ns - 329.64 ns | Builds standard-normal upper-tail probability. |
+| `real_normal_scientific_substrate/pnorm_upper_tail` | 327.94 ns | 326.77 ns - 329.21 ns | Builds the upper-tail alias. |
+| `real_normal_scientific_substrate/log_pnorm_tail` | 294.34 ns | 293.80 ns - 294.87 ns | Builds lower log-CDF tail form. |
+| `real_normal_scientific_substrate/log_pnorm_zero` | 173.38 ns | 172.84 ns - 173.96 ns | Takes the exact log-CDF value at zero. |
+| `real_normal_scientific_substrate/log_normal_sf_tail` | 304.77 ns | 304.01 ns - 305.53 ns | Builds upper log-survival tail form. |
+| `real_normal_scientific_substrate/log_normal_sf_zero` | 176.97 ns | 175.25 ns - 179.01 ns | Takes the exact log-survival value at zero. |
+| `real_normal_scientific_substrate/log_dnorm_large` | 130.70 ns | 130.37 ns - 131.09 ns | Builds analytic log-density at a large input. |
+| `real_normal_scientific_substrate/normal_interval_narrow` | 1.637 us | 1.629 us - 1.646 us | Builds a narrow interval mass without spelling pnorm subtraction. |
+| `real_normal_scientific_substrate/erfinv_mid` | 2.299 us | 2.288 us - 2.311 us | Builds inverse error function through qnorm transform. |
+| `real_normal_scientific_substrate/erfcinv_tail` | 3.406 us | 3.380 us - 3.436 us | Builds inverse complementary error function through tail qnorm transform. |
+| `real_normal_scientific_substrate/qnorm_upper_tail` | 1.576 us | 1.571 us - 1.581 us | Builds inverse survival quantile. |
+| `real_normal_scientific_substrate/normal_pdf_parametric` | 1.915 us | 1.905 us - 1.927 us | Standardizes exactly before density construction. |
+| `real_normal_scientific_substrate/normal_survival_parametric` | 819.84 ns | 817.14 ns - 822.86 ns | Standardizes exactly before upper-tail construction. |
+| `real_normal_scientific_substrate/normal_mills_tail` | 4.983 us | 3.853 us - 7.202 us | Builds Mills ratio through erfcx identity. |
+| `real_normal_scientific_substrate/normal_mills_zero` | 164.82 ns | 162.87 ns - 167.16 ns | Takes the exact Mills ratio value at zero. |
+| `real_normal_scientific_substrate/normal_hazard_tail` | 5.029 us | 4.992 us - 5.072 us | Builds reciprocal Mills hazard. |
+| `real_normal_scientific_substrate/normal_hazard_zero` | 161.89 ns | 160.60 ns - 163.43 ns | Takes the exact hazard value at zero. |
+| `real_normal_scientific_substrate/normal_inverse_mills_zero` | 160.31 ns | 158.10 ns - 164.35 ns | Takes the exact lower inverse Mills value at zero. |
+| `real_normal_scientific_substrate/hermite_8` | 2.610 us | 2.603 us - 2.617 us | Builds an exact probabilists' Hermite polynomial. |
+| `real_normal_scientific_substrate/dnorm_derivative_4` | 2.262 us | 2.249 us - 2.278 us | Combines exact Hermite polynomial with normal density. |
+| `real_normal_scientific_substrate/standard_normal_moment_12` | 193.04 ns | 192.04 ns - 194.28 ns | Uses double-factorial closed form. |
+| `real_normal_scientific_substrate/normal_interval_moment_3` | 5.881 us | 5.854 us - 5.912 us | Uses interval mass and density-boundary recurrence. |
+| `real_normal_scientific_substrate/truncated_normal_mean` | 2.583 us | 2.570 us - 2.598 us | Builds truncated-normal mean from stable interval mass. |
+| `real_normal_scientific_substrate/gamma_integer` | 337.25 ns | 334.73 ns - 340.31 ns | Uses exact integer gamma closed form. |
+| `real_normal_scientific_substrate/gamma_half_integer` | 549.56 ns | 546.83 ns - 553.03 ns | Uses exact half-integer gamma closed form. |
+| `real_normal_scientific_substrate/lgamma_half_integer` | 1.865 us | 1.850 us - 1.881 us | Logs the absolute half-integer gamma value. |
+| `real_normal_scientific_substrate/beta_integer` | 427.38 ns | 426.16 ns - 428.87 ns | Builds integer beta through an exact factorial ratio. |
+| `real_normal_scientific_substrate/ln_beta_half_integer` | 3.783 us | 3.767 us - 3.800 us | Builds log beta through lgamma sum. |
+| `real_normal_scientific_substrate/regularized_beta_mid` | 2.600 us | 2.584 us - 2.619 us | Uses finite positive-integer beta binomial tail. |
+| `real_normal_scientific_substrate/regularized_beta_uniform` | 298.46 ns | 297.40 ns - 299.64 ns | Takes the exact I_x(1, 1) identity. |
+| `real_normal_scientific_substrate/regularized_beta_left_unity` | 569.22 ns | 566.20 ns - 572.94 ns | Reduces I_x(1, b) to one complement power. |
+| `real_normal_scientific_substrate/regularized_beta_q_mid` | 1.602 us | 1.594 us - 1.612 us | Uses finite positive-integer beta upper-tail form. |
+| `real_normal_scientific_substrate/regularized_beta_q_uniform` | 273.56 ns | 271.49 ns - 275.96 ns | Takes the exact upper-tail I_x(1, 1) complement. |
+| `real_normal_scientific_substrate/regularized_beta_q_left_unity` | 503.54 ns | 499.99 ns - 507.36 ns | Reduces the upper beta tail for a = 1 to one power. |
+| `real_normal_scientific_substrate/regularized_gamma_p_half` | 4.288 us | 3.341 us - 6.169 us | Uses half-integer incomplete-gamma recurrence. |
+| `real_normal_scientific_substrate/regularized_gamma_q_integer` | 2.510 us | 2.463 us - 2.565 us | Uses integer incomplete-gamma recurrence. |
+| `real_normal_scientific_substrate/chi_square_sf` | 5.260 us | 5.235 us - 5.289 us | Wraps regularized upper gamma for chi-square upper tail. |
 
 ### `simple_new_function_surface`
 
@@ -703,7 +704,11 @@ Cold approximation of asin, acos, and atan near exact values, zero, endpoints, a
 | `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | 343.09 ns | 333.84 ns - 353.78 ns | Approximates atan(1e-12), stressing direct tiny atan setup. |
 | `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 6.634 us | 6.582 us - 6.705 us | Approximates asin(7/10), a generic in-domain value. |
 | `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 6.083 us | 6.002 us - 6.177 us | Approximates acos(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 3.334 us | 3.323 us - 3.344 us | Approximates atan(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 2.082 us | 2.043 us - 2.117 us | Approximates atan(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p96` | 9.506 us | 9.126 us - 10.037 us | Approximates atan at 11/20, 3/5, 7/10, and 4/5, covering the two-thirds table-reduction interval. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p32` | 4.945 us | 4.873 us - 5.027 us | Repeats the two-thirds table-reduction interval sweep at 32-bit precision. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_sweep_p256` | 20.419 us | 20.231 us - 20.688 us | Repeats the two-thirds table-reduction interval sweep at 256-bit precision. |
+| `inverse_trig_adversarial_approx/atan_two_thirds_anchor_upper_edge_p96` | 2.665 us | 2.621 us - 2.711 us | Approximates atan(4/5), guarding the upper edge of the two-thirds table-reduction interval against a local regression. |
 | `inverse_trig_adversarial_approx/asin_near_one_p96` | 2.535 us | 2.531 us - 2.538 us | Approximates asin(0.999999), stressing endpoint transforms. |
 | `inverse_trig_adversarial_approx/acos_near_one_p96` | 1.895 us | 1.881 us - 1.910 us | Approximates acos(0.999999), stressing endpoint transforms. |
 | `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 2.693 us | 2.656 us - 2.751 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |

@@ -563,6 +563,9 @@ They are listed here in MLA style for easy citation.
 - Brent, Richard P., and Paul Zimmermann.
   "[Modern Computer Arithmetic](https://doi.org/10.1017/CBO9780511921698)."
   Cambridge University Press, 2010.
+- Johansson, Fredrik. "[Efficient Implementation of Elementary Functions in
+  the Medium-Precision Range](https://doi.org/10.48550/arXiv.1410.7176)."
+  *2015 IEEE 22nd Symposium on Computer Arithmetic*, IEEE, 2015, pp. 83-89.
 - Middeke, Johannes, David J. Jeffrey, and Christoph Koutschan.
   "[Common Factors in Fraction-Free Matrix
   Decompositions](https://doi.org/10.1007/s11786-020-00495-9)."

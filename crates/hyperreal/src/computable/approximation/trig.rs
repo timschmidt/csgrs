@@ -115,6 +115,23 @@ fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> Big
 }
 
 fn fixed_small_large_rational_half_pi_multiple(r: &Rational) -> Option<BigInt> {
+    let msd = r.msd_exact();
+
+    // For |r| in [7/2, 39/10], the nearest half-pi multiple is exactly +/-2.
+    // The interval lies strictly between 3*pi/4 and 5*pi/4. It covers the
+    // historical promoted tangent tail immediately below the old 79/20
+    // deferred-reduction boundary, while retaining an exact sector certificate.
+    if msd == Some(1) {
+        if r >= SEVEN_HALVES_RATIONAL.deref() && r <= THIRTY_NINE_TENTHS_RATIONAL.deref() {
+            crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-2");
+            return Some(BigInt::from(2));
+        }
+        if r <= NEG_SEVEN_HALVES_RATIONAL.deref() && r >= NEG_THIRTY_NINE_TENTHS_RATIONAL.deref() {
+            crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-neg2");
+            return Some(BigInt::from(-2));
+        }
+    }
+
     // For |r| in [79/20, 4], the nearest half-pi multiple is exactly +/-3.
     // This catches tan rows just below the large-rational threshold while
     // staying above 5*pi/4.
@@ -130,7 +147,7 @@ fn fixed_small_large_rational_half_pi_multiple(r: &Rational) -> Option<BigInt> {
     // For |r| in [4, 27/5], the nearest half-pi multiple is exactly +/-3.
     // The upper bound is kept conservatively below 7*pi/4, so the shortcut
     // remains a cheap certificate rather than a fresh pi-dependent comparison.
-    if r.msd_exact() != Some(2) {
+    if msd != Some(2) {
         return None;
     }
     if r >= FOUR_RATIONAL.deref() && r <= TWENTY_SEVEN_FIFTHS_RATIONAL.deref() {

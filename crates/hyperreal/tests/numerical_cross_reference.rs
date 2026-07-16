@@ -234,6 +234,28 @@ fn tangent_preserves_odd_symmetry_across_medium_reduction() {
 }
 
 #[test]
+fn tangent_matches_reference_across_certified_two_half_pi_interval() {
+    for (numerator, denominator) in [
+        (-39_i64, 10_u64),
+        (-847, 219),
+        (-7, 2),
+        (7, 2),
+        (847, 219),
+        (39, 10),
+    ] {
+        let x = numerator as f64 / denominator as f64;
+        let actual = Computable::rational(Rational::fraction(numerator, denominator).unwrap())
+            .tan()
+            .approx(-32);
+        let expected = (x.tan() * 2.0_f64.powi(32)).round() as i64;
+        assert!(
+            (&actual - expected).abs() <= 1.into(),
+            "tan({numerator}/{denominator}) fixed-point mismatch: {actual} != {expected}"
+        );
+    }
+}
+
+#[test]
 fn real_atan_is_stable_after_sibling_inverse_trig_calls() {
     for numerator in [-1, 1] {
         let value = rational(numerator, 4);

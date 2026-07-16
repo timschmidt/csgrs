@@ -134,6 +134,22 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
                 description: "Approximates atan(7/10), a generic in-domain value.",
             },
             BenchDoc {
+                name: "atan_two_thirds_anchor_sweep_p96",
+                description: "Approximates atan at 11/20, 3/5, 7/10, and 4/5, covering the two-thirds table-reduction interval.",
+            },
+            BenchDoc {
+                name: "atan_two_thirds_anchor_sweep_p32",
+                description: "Repeats the two-thirds table-reduction interval sweep at 32-bit precision.",
+            },
+            BenchDoc {
+                name: "atan_two_thirds_anchor_sweep_p256",
+                description: "Repeats the two-thirds table-reduction interval sweep at 256-bit precision.",
+            },
+            BenchDoc {
+                name: "atan_two_thirds_anchor_upper_edge_p96",
+                description: "Approximates atan(4/5), guarding the upper edge of the two-thirds table-reduction interval against a local regression.",
+            },
+            BenchDoc {
                 name: "asin_near_one_p96",
                 description: "Approximates asin(0.999999), stressing endpoint transforms.",
             },
@@ -1023,6 +1039,12 @@ fn bench_inverse_trig_adversarial(c: &mut Criterion) {
     let zero = computable(Rational::zero());
     let tiny_input = computable(tiny());
     let mid_input = computable(rational(7, 10));
+    let two_thirds_anchor_sweep = [
+        computable(rational(11, 20)),
+        computable(rational(3, 5)),
+        computable(rational(7, 10)),
+        computable(rational(4, 5)),
+    ];
     let near_one_input = computable(near_one());
     let near_minus_one_input = computable(near_one().neg());
     let large_input = computable(Rational::new(8));
@@ -1084,6 +1106,34 @@ fn bench_inverse_trig_adversarial(c: &mut Criterion) {
         &mut group,
         "atan_mid_positive_p96",
         mid_input,
+        p,
+        Computable::atan,
+    );
+    bench_approx_sweep(
+        &mut group,
+        "atan_two_thirds_anchor_sweep_p96",
+        &two_thirds_anchor_sweep,
+        p,
+        Computable::atan,
+    );
+    bench_approx_sweep(
+        &mut group,
+        "atan_two_thirds_anchor_sweep_p32",
+        &two_thirds_anchor_sweep,
+        -32,
+        Computable::atan,
+    );
+    bench_approx_sweep(
+        &mut group,
+        "atan_two_thirds_anchor_sweep_p256",
+        &two_thirds_anchor_sweep,
+        -256,
+        Computable::atan,
+    );
+    bench_approx(
+        &mut group,
+        "atan_two_thirds_anchor_upper_edge_p96",
+        computable(rational(4, 5)),
         p,
         Computable::atan,
     );
