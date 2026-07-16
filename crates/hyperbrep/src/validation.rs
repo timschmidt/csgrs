@@ -310,7 +310,8 @@ impl BrepFaceValidationReport {
         if !uv_bounds.exact_uv_bounds_ready {
             blockers.push(BrepFaceValidationBlocker::UvBoundsNotReady);
         }
-        let geometry = shell.geometry_validation_report(face);
+        let geometry =
+            BrepGeometryValidationReport::from_shell_face_with_trim_set(shell, face, &trim_set);
         if !geometry.geometry_ready {
             blockers.push(BrepFaceValidationBlocker::GeometryNotReady);
         }
@@ -363,6 +364,15 @@ impl BrepGeometryValidationReport {
     /// point/plane relations remain explicit blockers. Full pcurve image
     /// equality and adjacent-face curve agreement remain future reports.
     pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
+        let trim_set = shell.trim_set_report(face);
+        Self::from_shell_face_with_trim_set(shell, face, &trim_set)
+    }
+
+    fn from_shell_face_with_trim_set(
+        shell: &BrepShell,
+        face: BrepFaceId,
+        trim_set: &BrepFaceTrimSetReport,
+    ) -> Self {
         let Some(face_record) = shell.faces.iter().find(|candidate| candidate.id == face) else {
             return Self::blocked(
                 face,
@@ -427,7 +437,6 @@ impl BrepGeometryValidationReport {
             blockers.push(BrepGeometryValidationBlocker::SurfaceNotReady);
         }
 
-        let trim_set = shell.trim_set_report(face);
         if !trim_set.trim_set_ready {
             blockers.push(BrepGeometryValidationBlocker::TrimSetNotReady);
         }

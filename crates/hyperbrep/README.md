@@ -138,6 +138,9 @@ control nets amortize repeated work. The curve and pcurve cache carriers use
 `Rc` and `OnceCell`, so they are currently intended for thread-local ownership,
 not shared cross-thread mutation.
 
+The measured reference audit, retained evidence-reuse changes, and benchmark
+protocol are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+
 Current limitations are explicit: general analytic surfaces and frames,
 geometric equality across differently partitioned pcurves, curved trim-edge
 reconstruction, BREP booleans and sewing, periodic NURBS, and full STEP/IGES

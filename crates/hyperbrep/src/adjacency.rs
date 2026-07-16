@@ -8,9 +8,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{PlaneSide, PredicateOutcome};
 
-use crate::surface::BrepSurfaceKind;
+use crate::surface::{BrepSurface, BrepSurfaceId, BrepSurfaceKind};
 use crate::topology::{
-    BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFaceId, BrepLoopId, BrepShell,
+    BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFace, BrepFaceId, BrepLoopId, BrepShell,
+    BrepVertex, BrepVertexId,
 };
 
 /// Explicit blocker for adjacent-face edge agreement.
@@ -114,6 +115,21 @@ impl BrepShellEdgeAgreementReport {
             .iter()
             .map(|edge| (edge.id, *edge))
             .collect::<BTreeMap<_, _>>();
+        let vertex_by_id = shell
+            .vertices
+            .iter()
+            .map(|vertex| (vertex.id, vertex))
+            .collect::<BTreeMap<_, _>>();
+        let face_by_id = shell
+            .faces
+            .iter()
+            .map(|face| (face.id, face))
+            .collect::<BTreeMap<_, _>>();
+        let surface_by_id = shell
+            .surfaces
+            .iter()
+            .map(|surface| (surface.id, surface))
+            .collect::<BTreeMap<_, _>>();
         let mut uses_by_edge = BTreeMap::<BrepEdgeId, Vec<RawEdgeUse>>::new();
         for face in &shell.faces {
             for face_loop in face.loops() {
@@ -140,10 +156,12 @@ impl BrepShellEdgeAgreementReport {
             .into_iter()
             .map(|edge_id| {
                 BrepEdgeAgreementReport::from_parts(
-                    shell,
                     edge_id,
                     edge_by_id.get(&edge_id).copied(),
                     uses_by_edge.remove(&edge_id).unwrap_or_default(),
+                    &vertex_by_id,
+                    &face_by_id,
+                    &surface_by_id,
                 )
             })
             .collect::<Vec<_>>();
@@ -202,10 +220,12 @@ impl BrepShellEdgeAgreementReport {
 
 impl BrepEdgeAgreementReport {
     fn from_parts(
-        shell: &BrepShell,
         edge_id: BrepEdgeId,
         edge: Option<BrepEdge>,
         raw_uses: Vec<RawEdgeUse>,
+        vertex_by_id: &BTreeMap<BrepVertexId, &BrepVertex>,
+        face_by_id: &BTreeMap<BrepFaceId, &BrepFace>,
+        surface_by_id: &BTreeMap<BrepSurfaceId, &BrepSurface>,
     ) -> Self {
         let mut blockers = BTreeSet::new();
         let Some(edge) = edge else {
@@ -215,11 +235,6 @@ impl BrepEdgeAgreementReport {
         if edge.is_degenerate() {
             blockers.insert(BrepEdgeAgreementBlocker::DegenerateEdge);
         }
-        let vertex_by_id = shell
-            .vertices
-            .iter()
-            .map(|vertex| (vertex.id, vertex))
-            .collect::<BTreeMap<_, _>>();
         let endpoints = match (vertex_by_id.get(&edge.start), vertex_by_id.get(&edge.end)) {
             (Some(start), Some(end)) => Some((start, end)),
             _ => {
@@ -227,17 +242,6 @@ impl BrepEdgeAgreementReport {
                 None
             }
         };
-        let face_by_id = shell
-            .faces
-            .iter()
-            .map(|face| (face.id, face))
-            .collect::<BTreeMap<_, _>>();
-        let surface_by_id = shell
-            .surfaces
-            .iter()
-            .map(|surface| (surface.id, surface))
-            .collect::<BTreeMap<_, _>>();
-
         let mut uses = Vec::with_capacity(raw_uses.len());
         for raw_use in &raw_uses {
             let mut endpoints_on_surface = false;

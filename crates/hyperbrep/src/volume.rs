@@ -10,7 +10,9 @@ use std::collections::BTreeMap;
 
 use hyperreal::Real;
 
+use crate::report::BrepShellClosureReport;
 use crate::topology::{BrepEdge, BrepEdgeOrientation, BrepShell, BrepVertexId};
+use crate::validation::BrepFaceValidationReport;
 
 /// Orientation inferred from exact signed shell volume.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -89,6 +91,14 @@ impl BrepShellVolumeReport {
             .iter()
             .map(|face| shell.face_validation_report(face.id, None))
             .collect::<Vec<_>>();
+        Self::from_shell_with_evidence(shell, &closure, &face_reports)
+    }
+
+    pub(crate) fn from_shell_with_evidence(
+        shell: &BrepShell,
+        closure: &BrepShellClosureReport,
+        face_reports: &[BrepFaceValidationReport],
+    ) -> Self {
         let ready_face_count = face_reports
             .iter()
             .filter(|face| face.exact_face_ready)

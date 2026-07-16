@@ -131,6 +131,58 @@ fn planar_ring(edge_count: usize) -> BrepShell {
     }
 }
 
+fn planar_many_loop_face(loop_count: usize) -> BrepShell {
+    let mut vertices = Vec::with_capacity(loop_count * 4);
+    let mut edges = Vec::with_capacity(loop_count * 4);
+    let mut loops = Vec::with_capacity(loop_count);
+    for loop_index in 0..loop_count {
+        let first_vertex = loop_index * 4;
+        let first_edge = loop_index * 4;
+        let x = (loop_index * 3) as i32;
+        for (offset, point) in [p(x, 0, 0), p(x + 1, 0, 0), p(x + 1, 1, 0), p(x, 1, 0)]
+            .into_iter()
+            .enumerate()
+        {
+            vertices.push(BrepVertex::new(
+                BrepVertexId((first_vertex + offset) as u64),
+                point,
+            ));
+            edges.push(BrepEdge::new(
+                BrepEdgeId((first_edge + offset) as u64),
+                BrepVertexId((first_vertex + offset) as u64),
+                BrepVertexId((first_vertex + (offset + 1) % 4) as u64),
+            ));
+        }
+        loops.push(BrepLoop::new(
+            BrepLoopId(loop_index as u64),
+            (0..4)
+                .map(|offset| {
+                    BrepCoedge::new(
+                        BrepEdgeId((first_edge + offset) as u64),
+                        BrepEdgeOrientation::Forward,
+                    )
+                })
+                .collect(),
+        ));
+    }
+    let outer = loops.remove(0);
+    BrepShell {
+        vertices,
+        edges,
+        surfaces: vec![BrepSurface::plane(
+            BrepSurfaceId(0),
+            Plane3::new(p(0, 0, 1), r(0)),
+            BrepSurfaceSource::ExactConstruction,
+        )],
+        faces: vec![BrepFace::with_inner(
+            BrepFaceId(0),
+            BrepSurfaceId(0),
+            outer,
+            loops,
+        )],
+    }
+}
+
 fn cube_shell() -> BrepShell {
     use BrepEdgeOrientation::{Forward as F, Reversed as R};
     BrepShell {
@@ -293,6 +345,10 @@ fn bench_shell_audit(c: &mut Criterion) {
     });
     c.bench_function("hyperbrep trim-loop topology report", |b| {
         b.iter(|| trim_shell.trim_set_report(BrepFaceId(0)))
+    });
+    let many_loop_shell = planar_many_loop_face(128);
+    c.bench_function("hyperbrep 128-loop trim-set report", |b| {
+        b.iter(|| many_loop_shell.trim_set_report(BrepFaceId(0)))
     });
     c.bench_function("hyperbrep exact face bounds report", |b| {
         b.iter(|| trim_shell.face_bounds_report(BrepFaceId(0)))

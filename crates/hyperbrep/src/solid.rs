@@ -89,7 +89,7 @@ impl BrepSolidReadinessReport {
             .map(|face| shell.face_validation_report(face.id, None))
             .collect::<Vec<_>>();
         let construction = construction.map(|manifest| manifest.report(shell));
-        let volume = shell.shell_volume_report();
+        let volume = BrepShellVolumeReport::from_shell_with_evidence(shell, &shell_closure, &faces);
         let ready_face_count = faces.iter().filter(|face| face.exact_face_ready).count();
         let blocked_face_count = faces.len().saturating_sub(ready_face_count);
         let closed_shell_ready = shell_closure.exact_shell_ready;

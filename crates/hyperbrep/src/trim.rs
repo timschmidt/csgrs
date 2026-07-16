@@ -10,7 +10,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::surface::BrepSurfaceId;
 use crate::topology::{
-    BrepEdge, BrepEdgeOrientation, BrepFaceId, BrepLoop, BrepLoopId, BrepShell, BrepVertexId,
+    BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFaceId, BrepLoop, BrepLoopId, BrepShell,
+    BrepVertexId,
 };
 
 /// Role of a trim loop on a face.
@@ -110,26 +111,23 @@ impl BrepTrimLoopReport {
         role: BrepTrimLoopRole,
         trim_loop: &BrepLoop,
     ) -> Self {
-        let edge_by_id = shell
-            .edges
-            .iter()
-            .map(|edge| (edge.id, *edge))
-            .collect::<BTreeMap<_, _>>();
-        let vertex_ids = shell
-            .vertices
-            .iter()
-            .map(|vertex| vertex.id)
-            .collect::<BTreeSet<_>>();
-        let surface_replay_ready = shell
-            .surfaces
-            .iter()
-            .find(|candidate| candidate.id == surface)
-            .map(|candidate| candidate.facts().exact_replay_ready)
+        let lookup = TrimShellLookup::new(shell);
+        Self::from_shell_loop_with_lookup(face, surface, role, trim_loop, &lookup)
+    }
+
+    fn from_shell_loop_with_lookup(
+        face: BrepFaceId,
+        surface: BrepSurfaceId,
+        role: BrepTrimLoopRole,
+        trim_loop: &BrepLoop,
+        lookup: &TrimShellLookup,
+    ) -> Self {
+        let surface_replay_ready = lookup
+            .surface_replay_ready
+            .get(&surface)
+            .copied()
             .unwrap_or(false);
-        let surface_missing = !shell
-            .surfaces
-            .iter()
-            .any(|candidate| candidate.id == surface);
+        let surface_missing = !lookup.surface_replay_ready.contains_key(&surface);
 
         let mut missing_edge_count = 0;
         let mut degenerate_edge_count = 0;
@@ -137,7 +135,7 @@ impl BrepTrimLoopReport {
         let mut endpoints = Vec::with_capacity(trim_loop.coedges.len());
 
         for coedge in &trim_loop.coedges {
-            let Some(edge) = edge_by_id.get(&coedge.edge) else {
+            let Some(edge) = lookup.edge_by_id.get(&coedge.edge) else {
                 missing_edge_count += 1;
                 endpoints.push(None);
                 continue;
@@ -145,8 +143,8 @@ impl BrepTrimLoopReport {
             if edge.is_degenerate() {
                 degenerate_edge_count += 1;
             }
-            let missing_start = !vertex_ids.contains(&edge.start);
-            let missing_end = !vertex_ids.contains(&edge.end);
+            let missing_start = !lookup.vertex_ids.contains(&edge.start);
+            let missing_end = !lookup.vertex_ids.contains(&edge.end);
             if missing_start || missing_end {
                 missing_vertex_count += 1;
             }
@@ -232,21 +230,22 @@ impl BrepFaceTrimSetReport {
             };
         };
 
+        let lookup = TrimShellLookup::new(shell);
         let mut loops = Vec::with_capacity(1 + face_record.inner.len());
-        loops.push(BrepTrimLoopReport::from_shell_loop(
-            shell,
+        loops.push(BrepTrimLoopReport::from_shell_loop_with_lookup(
             face_record.id,
             face_record.surface,
             BrepTrimLoopRole::Outer,
             &face_record.outer,
+            &lookup,
         ));
         loops.extend(face_record.inner.iter().map(|trim_loop| {
-            BrepTrimLoopReport::from_shell_loop(
-                shell,
+            BrepTrimLoopReport::from_shell_loop_with_lookup(
                 face_record.id,
                 face_record.surface,
                 BrepTrimLoopRole::Inner,
                 trim_loop,
+                &lookup,
             )
         }));
 
@@ -272,6 +271,26 @@ impl BrepFaceTrimSetReport {
             inner_ready_count,
             blocked_loop_count,
             trim_set_ready,
+        }
+    }
+}
+
+struct TrimShellLookup {
+    edge_by_id: BTreeMap<BrepEdgeId, BrepEdge>,
+    vertex_ids: BTreeSet<BrepVertexId>,
+    surface_replay_ready: BTreeMap<BrepSurfaceId, bool>,
+}
+
+impl TrimShellLookup {
+    fn new(shell: &BrepShell) -> Self {
+        Self {
+            edge_by_id: shell.edges.iter().map(|edge| (edge.id, *edge)).collect(),
+            vertex_ids: shell.vertices.iter().map(|vertex| vertex.id).collect(),
+            surface_replay_ready: shell
+                .surfaces
+                .iter()
+                .map(|surface| (surface.id, surface.facts().exact_replay_ready))
+                .collect(),
         }
     }
 }
