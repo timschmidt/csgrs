@@ -1338,6 +1338,20 @@ pub fn check_trace_clearance(
         };
     }
 
+    let axis_gap = axis_aligned_gap(first.swept.centerline(), second.swept.centerline(), policy);
+    if let Some(gap) = axis_gap.as_ref()
+        && real_sign(gap) == Some(hyperreal::RealSign::Positive)
+    {
+        return trace_clearance_from_axis_gap(
+            first,
+            second,
+            required_clearance,
+            gap.clone(),
+            Some(SegmentIntersection::Disjoint),
+            policy,
+        );
+    }
+
     let centerline = classify_segment_intersection_with_facts(
         first.swept.centerline().start(),
         first.swept.centerline().end(),
@@ -1364,28 +1378,44 @@ pub fn check_trace_clearance(
         };
     }
 
-    match axis_aligned_gap(first.swept.centerline(), second.swept.centerline(), policy) {
-        Some(gap) => {
-            let doubled_gap = gap.clone() * Real::from(2);
-            let required = first.swept.width().clone()
-                + second.swept.width().clone()
-                + required_clearance.clone() * Real::from(2);
-            let status = match compare_reals_with_policy(&doubled_gap, &required, policy).value() {
-                Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
-                Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
-                None => ClearanceStatus::Unknown,
-            };
-            TraceClearanceReport {
-                status,
-                centerline_intersection: centerline,
-                axis_gap: Some(gap),
-            }
-        }
+    match axis_gap {
+        Some(gap) => trace_clearance_from_axis_gap(
+            first,
+            second,
+            required_clearance,
+            gap,
+            centerline,
+            policy,
+        ),
         None => TraceClearanceReport {
             status: ClearanceStatus::Unknown,
             centerline_intersection: centerline,
             axis_gap: None,
         },
+    }
+}
+
+fn trace_clearance_from_axis_gap(
+    first: &PcbTrace,
+    second: &PcbTrace,
+    required_clearance: &Real,
+    gap: Real,
+    centerline_intersection: Option<SegmentIntersection>,
+    policy: PredicatePolicy,
+) -> TraceClearanceReport {
+    let doubled_gap = gap.clone() * Real::from(2);
+    let required = first.swept.width().clone()
+        + second.swept.width().clone()
+        + required_clearance.clone() * Real::from(2);
+    let status = match compare_reals_with_policy(&doubled_gap, &required, policy).value() {
+        Some(Ordering::Less) => ClearanceStatus::ClearanceViolation,
+        Some(Ordering::Equal | Ordering::Greater) => ClearanceStatus::CertifiedClear,
+        None => ClearanceStatus::Unknown,
+    };
+    TraceClearanceReport {
+        status,
+        centerline_intersection,
+        axis_gap: Some(gap),
     }
 }
 

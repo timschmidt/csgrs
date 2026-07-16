@@ -51,7 +51,9 @@ before downstream crates accept the path as ready.
 Path coordinates, widths, distances, offsets, and timing values use `Real`. `SourceGrid`
 converts fixed-grid source tokens directly to rationals, so KiCad, Gerber, Excellon,
 Specctra, and G-code imports do not pass through primitive floats just to become exact
-again. Clearance, tangency, length, skew, area, and containment reports return certified
+again. Explicit decimal tokens can be lifted with
+`PathProvenance::real_from_decimal_token` under the same rule. Clearance, tangency,
+length, skew, area, and containment reports return certified
 status or explicit failure/unknown rather than manufacturing a tolerance decision.
 
 Numerical explosion is controlled by keeping source grids, construction stamps, tangent
@@ -89,6 +91,9 @@ Implemented today:
 
 Known limits: general path search, full curved offset trimming, freeform CAM pockets,
 and autorouting are not complete.
+
+See [the reference and performance audit](PERFORMANCE.md) for the complete
+source mapping, retained benchmark result, rejected trials, and validation evidence.
 
 ## Installation
 
@@ -188,9 +193,11 @@ G1 chain certification helpers.
   Jerk Limited Trajectory Generation and Quintic Spline Interpolation."
   *International Journal of Machine Tools and Manufacture* 41.9 (2001):
   1323-1345. https://doi.org/10.1016/S0890-6955(01)00002-5.
-- Ucamco. *Gerber Layer Format Specification*.
-- KiCad Project. *KiCad PCB File Format / S-expression Board Format*.
-- Cadence Design Systems. *SPECCTRA Design Language Reference*.
+- Ucamco. [*Gerber Layer Format Specification*](https://www.ucamco.com/en/gerber/downloads).
+- KiCad Project. [*KiCad PCB File Format / S-expression Board
+  Format*](https://dev-docs.kicad.org/en/file-formats/sexpr-pcb/index.html).
+- Cadence Design Systems. [*SPECCTRA Design Language
+  Reference*](https://cdn.hackaday.io/files/1666717130852064/specctra.pdf).
 
 ## Development
 
@@ -198,6 +205,7 @@ Useful local checks:
 
 ```sh
 cargo test
+cargo test --all-features --all-targets
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps

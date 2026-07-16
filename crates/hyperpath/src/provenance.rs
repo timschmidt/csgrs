@@ -178,4 +178,15 @@ impl PathProvenance {
         let grid = self.grid?;
         grid.real_from_units(units)
     }
+
+    /// Lift an explicit decimal source token directly to an exact `Real`.
+    ///
+    /// KiCad board coordinates and many controller formats carry decimal text
+    /// rather than an implicit integer grid. Parsing that text through
+    /// HyperReal preserves its exact rational value and avoids an `f64`
+    /// round-trip at the interchange boundary. The provenance packet remains
+    /// available to the caller for attachment to the constructed path object.
+    pub fn real_from_decimal_token(self, token: &str) -> Option<Real> {
+        token.parse().ok()
+    }
 }

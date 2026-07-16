@@ -1,4 +1,4 @@
-use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, compare_reals_with_policy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
     BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
@@ -204,6 +204,26 @@ fn provenance_lifts_fixed_grid_tokens_exactly_and_tracks_units() {
     assert!(millimeter.shares_grid_with(millimeter));
     assert!(!millimeter.shares_grid_with(inch));
     assert!(!millimeter.shares_grid_with(unspecified));
+}
+
+#[test]
+fn provenance_lifts_decimal_source_tokens_without_float_round_trip() {
+    let provenance = PathProvenance::fixed_grid_with_unit(
+        PathSourceFormat::KiCad,
+        1_000_000,
+        SourceLengthUnit::Millimeter,
+    )
+    .unwrap();
+
+    assert_eq!(
+        provenance.real_from_decimal_token("12.345"),
+        Some(rq(2469, 200))
+    );
+    assert_eq!(
+        provenance.real_from_decimal_token("-0.000001"),
+        Some(rq(-1, 1_000_000))
+    );
+    assert_eq!(provenance.real_from_decimal_token("not-a-coordinate"), None);
 }
 
 #[test]
@@ -10041,6 +10061,7 @@ proptest! {
             prop_assert_eq!(report.status, ClearanceStatus::NoShortViolation);
         } else {
             prop_assert_eq!(report.axis_gap, Some(r(i64::from(gap))));
+            prop_assert_eq!(report.centerline_intersection, Some(SegmentIntersection::Disjoint));
         }
     }
 
