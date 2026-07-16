@@ -194,6 +194,36 @@ fn companion_stamp_combines_exact_conductance_and_history_source() {
 }
 
 #[test]
+fn duplicate_mna_unknowns_are_rejected_before_assembly() {
+    let node = net("n");
+    assert_eq!(
+        LinearMnaSystem::from_stamps(vec![node.clone(), node], &[]).unwrap_err(),
+        CircuitError::DuplicateUnknown
+    );
+
+    let stamps = vec![
+        LinearStamp::VoltageSource {
+            component: component("v1"),
+            branch: branch("shared"),
+            pos: None,
+            neg: None,
+            voltage: Real::from(1),
+        },
+        LinearStamp::VoltageSource {
+            component: component("v2"),
+            branch: branch("shared"),
+            pos: None,
+            neg: None,
+            voltage: Real::from(2),
+        },
+    ];
+    assert_eq!(
+        LinearMnaSystem::from_stamps(Vec::new(), &stamps).unwrap_err(),
+        CircuitError::DuplicateUnknown
+    );
+}
+
+#[test]
 fn coupling_ports_keep_circuit_and_physics_handles_explicit() {
     let electrical = PhysicalElectricalPort {
         handle: "trace-current".into(),
@@ -315,5 +345,78 @@ proptest! {
 
         prop_assert_eq!(report.adjusted_resistance, Real::from(resistance));
         prop_assert_eq!(report.joule_heating, Real::from(current * current * resistance));
+    }
+
+    #[test]
+    fn generated_mna_stamps_match_kcl_reference(
+        conductance in -20_i32..20,
+        current in -20_i32..20,
+        voltage in -20_i32..20,
+        transconductance in -20_i32..20,
+        companion_conductance in -20_i32..20,
+        history_current in -20_i32..20,
+    ) {
+        let a = net("a");
+        let b = net("b");
+        let c = net("c");
+        let stamps = vec![
+            LinearStamp::Conductance {
+                component: component("g"),
+                part: None,
+                pos: Some(a.clone()),
+                neg: Some(b.clone()),
+                conductance: Real::from(conductance),
+            },
+            LinearStamp::CurrentSource {
+                component: component("i"),
+                pos: Some(b.clone()),
+                neg: Some(c.clone()),
+                current: Real::from(current),
+            },
+            LinearStamp::VoltageSource {
+                component: component("v"),
+                branch: branch("iv"),
+                pos: Some(a.clone()),
+                neg: None,
+                voltage: Real::from(voltage),
+            },
+            LinearStamp::Vccs {
+                component: component("gm"),
+                pos: Some(c.clone()),
+                neg: Some(b.clone()),
+                ctrl_pos: Some(a.clone()),
+                ctrl_neg: None,
+                transconductance: Real::from(transconductance),
+            },
+            LinearStamp::Companion {
+                component: component("companion"),
+                pos: Some(c.clone()),
+                neg: None,
+                conductance: Real::from(companion_conductance),
+                history_current: Real::from(history_current),
+            },
+        ];
+
+        let system = LinearMnaSystem::from_stamps(vec![a, b, c], &stamps).unwrap();
+        let g = Real::from(conductance);
+        let gm = Real::from(transconductance);
+        let gc = Real::from(companion_conductance);
+        let zero = Real::zero();
+        let one = Real::one();
+        let expected_matrix = vec![
+            vec![g.clone(), -g.clone(), zero.clone(), one.clone()],
+            vec![-g.clone() - &gm, g.clone(), zero.clone(), zero.clone()],
+            vec![gm, zero.clone(), gc, zero.clone()],
+            vec![one, zero.clone(), zero.clone(), zero],
+        ];
+        let expected_rhs = vec![
+            Real::zero(),
+            Real::from(-current),
+            Real::from(current - history_current),
+            Real::from(voltage),
+        ];
+
+        prop_assert_eq!(system.matrix, expected_matrix);
+        prop_assert_eq!(system.rhs, expected_rhs);
     }
 }

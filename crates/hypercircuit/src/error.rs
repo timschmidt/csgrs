@@ -10,6 +10,8 @@ pub enum CircuitError {
     EmptyIdentifier,
     /// A stamp referenced an unknown net.
     MissingNet,
+    /// A net-voltage or branch-current unknown was declared more than once.
+    DuplicateUnknown,
     /// A replay candidate had the wrong length.
     CandidateLengthMismatch,
     /// A replay residual sign could not be certified.

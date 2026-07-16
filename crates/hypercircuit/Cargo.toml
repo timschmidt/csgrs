@@ -9,6 +9,10 @@ repository = "https://github.com/timschmidt/hypercircuit"
 keywords = ["circuits", "mna", "simulation", "hyperreal", "electronics"]
 categories = ["science", "simulation", "mathematics"]
 
+[features]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace"]
+
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.

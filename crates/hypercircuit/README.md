@@ -96,6 +96,10 @@ and switch report carriers; electrothermal RC reports; and `hypersolve`
 coupling handoff. Full diode/MOSFET laws, Newton iteration, sparse matrices,
 time integration, and field solvers are not yet implemented here.
 
+Duplicate net-voltage and branch-current unknowns are rejected before assembly.
+See [the reference and performance audit](PERFORMANCE.md) for the source-by-source
+mapping, retained benchmark results, rejected trials, and validation evidence.
+
 ## References
 
 - Ho, Ruehli, and Brennan, [*The Modified Nodal Approach to Network

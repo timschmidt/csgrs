@@ -109,17 +109,33 @@ pub struct ResidualReplayReport {
 impl LinearMnaSystem {
     /// Builds a dense exact MNA system from known non-ground nets and stamps.
     pub fn from_stamps(nets: Vec<NetId>, stamps: &[LinearStamp]) -> CircuitResult<Self> {
-        let mut unknowns: Vec<MnaUnknown> =
-            nets.iter().cloned().map(MnaUnknown::NetVoltage).collect();
+        let branch_count = stamps
+            .iter()
+            .filter(|stamp| matches!(stamp, LinearStamp::VoltageSource { .. }))
+            .count();
+        let mut unknowns = Vec::with_capacity(nets.len() + branch_count);
+        unknowns.extend(nets.into_iter().map(MnaUnknown::NetVoltage));
         for stamp in stamps {
             if let LinearStamp::VoltageSource { branch, .. } = stamp {
                 unknowns.push(MnaUnknown::BranchCurrent(branch.clone()));
             }
         }
 
-        let mut index = BTreeMap::new();
+        let mut net_indices = BTreeMap::new();
+        let mut branch_indices = BTreeMap::new();
         for (slot, unknown) in unknowns.iter().enumerate() {
-            index.insert(unknown.clone(), slot);
+            match unknown {
+                MnaUnknown::NetVoltage(net) => {
+                    if net_indices.insert(net, slot).is_some() {
+                        return Err(CircuitError::DuplicateUnknown);
+                    }
+                }
+                MnaUnknown::BranchCurrent(branch) => {
+                    if branch_indices.insert(branch, slot).is_some() {
+                        return Err(CircuitError::DuplicateUnknown);
+                    }
+                }
+            }
         }
 
         let n = unknowns.len();
@@ -133,17 +149,30 @@ impl LinearMnaSystem {
                     neg,
                     conductance,
                     ..
-                } => stamp_conductance(&mut matrix, &index, pos, neg, conductance)?,
+                } => {
+                    let (pos, neg) = net_pair(&net_indices, pos, neg)?;
+                    stamp_conductance(&mut matrix, pos, neg, conductance);
+                }
                 LinearStamp::CurrentSource {
                     pos, neg, current, ..
-                } => stamp_current(&mut rhs, &index, pos, neg, current)?,
+                } => {
+                    let (pos, neg) = net_pair(&net_indices, pos, neg)?;
+                    stamp_current(&mut rhs, pos, neg, current);
+                }
                 LinearStamp::VoltageSource {
                     branch,
                     pos,
                     neg,
                     voltage,
                     ..
-                } => stamp_voltage(&mut matrix, &mut rhs, &index, branch, pos, neg, voltage)?,
+                } => {
+                    let (pos, neg) = net_pair(&net_indices, pos, neg)?;
+                    let branch = branch_indices
+                        .get(branch)
+                        .copied()
+                        .ok_or(CircuitError::MissingNet)?;
+                    stamp_voltage(&mut matrix, &mut rhs, branch, pos, neg, voltage);
+                }
                 LinearStamp::Vccs {
                     pos,
                     neg,
@@ -151,15 +180,11 @@ impl LinearMnaSystem {
                     ctrl_neg,
                     transconductance,
                     ..
-                } => stamp_vccs(
-                    &mut matrix,
-                    &index,
-                    pos,
-                    neg,
-                    ctrl_pos,
-                    ctrl_neg,
-                    transconductance,
-                )?,
+                } => {
+                    let (pos, neg) = net_pair(&net_indices, pos, neg)?;
+                    let (ctrl_pos, ctrl_neg) = net_pair(&net_indices, ctrl_pos, ctrl_neg)?;
+                    stamp_vccs(&mut matrix, pos, neg, ctrl_pos, ctrl_neg, transconductance);
+                }
                 LinearStamp::Companion {
                     pos,
                     neg,
@@ -167,8 +192,9 @@ impl LinearMnaSystem {
                     history_current,
                     ..
                 } => {
-                    stamp_conductance(&mut matrix, &index, pos, neg, conductance)?;
-                    stamp_current(&mut rhs, &index, pos, neg, history_current)?;
+                    let (pos, neg) = net_pair(&net_indices, pos, neg)?;
+                    stamp_conductance(&mut matrix, pos, neg, conductance);
+                    stamp_current(&mut rhs, pos, neg, history_current);
                 }
             }
         }
@@ -201,108 +227,84 @@ impl LinearMnaSystem {
     }
 }
 
-fn net_index(
-    index: &BTreeMap<MnaUnknown, usize>,
-    net: &Option<NetId>,
-) -> CircuitResult<Option<usize>> {
+fn net_index(index: &BTreeMap<&NetId, usize>, net: &Option<NetId>) -> CircuitResult<Option<usize>> {
     net.as_ref()
-        .map(|net| {
-            index
-                .get(&MnaUnknown::NetVoltage(net.clone()))
-                .copied()
-                .ok_or(CircuitError::MissingNet)
-        })
+        .map(|net| index.get(net).copied().ok_or(CircuitError::MissingNet))
         .transpose()
+}
+
+fn net_pair(
+    index: &BTreeMap<&NetId, usize>,
+    pos: &Option<NetId>,
+    neg: &Option<NetId>,
+) -> CircuitResult<(Option<usize>, Option<usize>)> {
+    Ok((net_index(index, pos)?, net_index(index, neg)?))
 }
 
 fn stamp_conductance(
     matrix: &mut [Vec<Real>],
-    index: &BTreeMap<MnaUnknown, usize>,
-    pos: &Option<NetId>,
-    neg: &Option<NetId>,
+    pos: Option<usize>,
+    neg: Option<usize>,
     conductance: &Real,
-) -> CircuitResult<()> {
-    let p = net_index(index, pos)?;
-    let n = net_index(index, neg)?;
-    if let Some(p) = p {
+) {
+    if let Some(p) = pos {
         matrix[p][p] = matrix[p][p].clone() + conductance;
     }
-    if let Some(n) = n {
+    if let Some(n) = neg {
         matrix[n][n] = matrix[n][n].clone() + conductance;
     }
-    if let (Some(p), Some(n)) = (p, n) {
+    if let (Some(p), Some(n)) = (pos, neg) {
         matrix[p][n] = matrix[p][n].clone() - conductance;
         matrix[n][p] = matrix[n][p].clone() - conductance;
     }
-    Ok(())
 }
 
-fn stamp_current(
-    rhs: &mut [Real],
-    index: &BTreeMap<MnaUnknown, usize>,
-    pos: &Option<NetId>,
-    neg: &Option<NetId>,
-    current: &Real,
-) -> CircuitResult<()> {
-    if let Some(p) = net_index(index, pos)? {
+fn stamp_current(rhs: &mut [Real], pos: Option<usize>, neg: Option<usize>, current: &Real) {
+    if let Some(p) = pos {
         rhs[p] = rhs[p].clone() - current;
     }
-    if let Some(n) = net_index(index, neg)? {
+    if let Some(n) = neg {
         rhs[n] = rhs[n].clone() + current;
     }
-    Ok(())
 }
 
 fn stamp_voltage(
     matrix: &mut [Vec<Real>],
     rhs: &mut [Real],
-    index: &BTreeMap<MnaUnknown, usize>,
-    branch: &BranchId,
-    pos: &Option<NetId>,
-    neg: &Option<NetId>,
+    branch: usize,
+    pos: Option<usize>,
+    neg: Option<usize>,
     voltage: &Real,
-) -> CircuitResult<()> {
-    let branch_index = index
-        .get(&MnaUnknown::BranchCurrent(branch.clone()))
-        .copied()
-        .ok_or(CircuitError::MissingNet)?;
-    if let Some(p) = net_index(index, pos)? {
-        matrix[p][branch_index] = matrix[p][branch_index].clone() + Real::one();
-        matrix[branch_index][p] = matrix[branch_index][p].clone() + Real::one();
+) {
+    if let Some(p) = pos {
+        matrix[p][branch] = matrix[p][branch].clone() + Real::one();
+        matrix[branch][p] = matrix[branch][p].clone() + Real::one();
     }
-    if let Some(n) = net_index(index, neg)? {
-        matrix[n][branch_index] = matrix[n][branch_index].clone() - Real::one();
-        matrix[branch_index][n] = matrix[branch_index][n].clone() - Real::one();
+    if let Some(n) = neg {
+        matrix[n][branch] = matrix[n][branch].clone() - Real::one();
+        matrix[branch][n] = matrix[branch][n].clone() - Real::one();
     }
-    rhs[branch_index] = rhs[branch_index].clone() + voltage;
-    Ok(())
+    rhs[branch] = rhs[branch].clone() + voltage;
 }
 
 fn stamp_vccs(
     matrix: &mut [Vec<Real>],
-    index: &BTreeMap<MnaUnknown, usize>,
-    pos: &Option<NetId>,
-    neg: &Option<NetId>,
-    ctrl_pos: &Option<NetId>,
-    ctrl_neg: &Option<NetId>,
+    pos: Option<usize>,
+    neg: Option<usize>,
+    ctrl_pos: Option<usize>,
+    ctrl_neg: Option<usize>,
     transconductance: &Real,
-) -> CircuitResult<()> {
-    let p = net_index(index, pos)?;
-    let n = net_index(index, neg)?;
-    let cp = net_index(index, ctrl_pos)?;
-    let cn = net_index(index, ctrl_neg)?;
-
-    if let (Some(row), Some(col)) = (p, cp) {
+) {
+    if let (Some(row), Some(col)) = (pos, ctrl_pos) {
         matrix[row][col] = matrix[row][col].clone() + transconductance;
     }
-    if let (Some(row), Some(col)) = (p, cn) {
+    if let (Some(row), Some(col)) = (pos, ctrl_neg) {
         matrix[row][col] = matrix[row][col].clone() - transconductance;
     }
-    if let (Some(row), Some(col)) = (n, cp) {
+    if let (Some(row), Some(col)) = (neg, ctrl_pos) {
         matrix[row][col] = matrix[row][col].clone() - transconductance;
     }
-    if let (Some(row), Some(col)) = (n, cn) {
+    if let (Some(row), Some(col)) = (neg, ctrl_neg) {
         matrix[row][col] = matrix[row][col].clone() + transconductance;
     }
-    Ok(())
 }

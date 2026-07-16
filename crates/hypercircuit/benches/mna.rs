@@ -51,6 +51,41 @@ fn main() {
         elapsed / iterations
     );
 
+    let multi_nodes = (0..16)
+        .map(|index| NetId::new(format!("n{index}")).unwrap())
+        .collect::<Vec<_>>();
+    let mut multi_stamps = Vec::new();
+    for index in 0..15 {
+        multi_stamps.push(LinearStamp::Conductance {
+            component: ComponentId::new(format!("r{index}")).unwrap(),
+            part: None,
+            pos: Some(multi_nodes[index].clone()),
+            neg: Some(multi_nodes[index + 1].clone()),
+            conductance: Real::from(index as i32 + 1),
+        });
+        multi_stamps.push(LinearStamp::Companion {
+            component: ComponentId::new(format!("c{index}")).unwrap(),
+            pos: Some(multi_nodes[index].clone()),
+            neg: None,
+            conductance: Real::from(index as i32 + 2),
+            history_current: Real::from(index as i32),
+        });
+    }
+    let multi_iterations = 20_000_u32;
+    let started = Instant::now();
+    let mut multi_checksum = 0_usize;
+    for _ in 0..multi_iterations {
+        let system =
+            LinearMnaSystem::from_stamps(multi_nodes.clone(), black_box(&multi_stamps)).unwrap();
+        multi_checksum ^= system.matrix.len();
+        multi_checksum ^= system.unknowns.len();
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "multi_node_assembly: {multi_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={multi_checksum}",
+        elapsed / multi_iterations
+    );
+
     let circuit = Circuit::new(
         CircuitId::new("bench").unwrap(),
         TransientPolicy::Static,
