@@ -1,0 +1,77 @@
+# HyperGraphics performance and reference audit
+
+This audit covers every source in the README reference section. Criterion timings
+were collected from an optimized local build on 2026-07-15 and are comparative,
+not portable latency guarantees.
+
+## Retained results
+
+| Path | Baseline | Retained | Result |
+|---|---:|---:|---:|
+| repeated triangle orientation | 279 ns | 122 ns prepared | about 56% faster |
+| exact 201-line-per-axis grid construction | 133 us | 123 us | 8.2% faster |
+
+The prepared orientation package owns HyperLimit's oriented plane, determinant
+filter, and exact fallback facts, so it does not borrow the mesh and can be reused by
+hover, picking, and clipping consumers. The one-shot API remains unchanged. Grid
+construction now computes each exact coordinate once and reuses it for the vertical
+and horizontal line with the same coordinate while preserving vertex order.
+
+An optional `dispatch-trace` test uses a rational point only `1/10^12` away from a
+plane whose coordinates are of order `10^6`. Classification remains decided with
+predicate activity and no approximation or unknown-fact events.
+
+## OpenGL 3.3 Core Specification
+
+The backend retains the specified interleaved `xyz rgb` layout, 24-byte stride,
+attribute offsets, column-major matrix upload, signed draw count, and shader version
+directives. The audit added checked conversion to OpenGL's signed vertex-count field,
+explicit buffer/VAO/program destruction, and cleanup on every partially constructed
+shader or object failure path. Viewport dimensions and perspective parameters are
+validated before they can create infinities or undefined screen transforms.
+
+## WebGL specifications
+
+Desktop GLSL 330, GLSL ES 300, and GLSL ES 100 remain separate sources selected from
+the context's shading-language string. WebGL resource handles continue to be used only
+through the owning `glow::Context`; consuming destruction makes that ownership boundary
+explicit. No sampled render value is promoted to geometric evidence.
+
+## `glow`
+
+The local `glow` 0.16 source confirms that native objects are integer names while the
+web backend uses context-managed keys/DOM handles. The wrappers therefore keep their
+existing unsafe current-context contract rather than inventing a second context owner.
+The manual `Send`/`Sync` declarations were reviewed but not changed: every operation is
+unsafe and requires the caller to make the owning context current and serialize access,
+matching `glow::Context`'s own cross-thread type contract. Explicit `destroy` methods
+address lifetime cleanup without storing or guessing a context in `Drop`.
+
+## nalgebra documentation
+
+Projection matrices remain nalgebra column-major slices, which can be passed directly
+to `uniform_matrix_4_f32_slice` with transpose disabled. The camera uses
+`Perspective3`, quaternion rotation, and homogeneous translation in their documented
+roles. A cache for `Matrix4::try_inverse` was implemented and benchmarked because
+nalgebra recommends specialized/reused projection inverses; in this complete path the
+atomic cache lookup increased repeated unprojection time by 21.2% (2.64 to 2.95 us),
+so the cache was removed.
+
+## Shewchuk, adaptive robust predicates
+
+One-shot orientation delegates to HyperLimit's exact/adaptive `orient3d` ladder.
+Repeated fixed-triangle queries now use `PreparedOrientedPlane3`, which retains the
+certified determinant filter and exact fallback representation. The public wrapper
+maps the same signed outcome and certainty into `TriangleOrientation`; tests compare
+prepared and direct answers on both sides and on the plane.
+
+## Considered but not retained
+
+- Caching the general 4x4 inverse regressed the measured end-to-end unprojection path
+  and was fully reverted.
+- Exact-to-`f64` exports measured about 50 us for 600 vertices, but the cost is the
+  required HyperReal lowering. Bypassing it with primitive-float geometry would break
+  the crate's evidence boundary and was not attempted.
+- Interleaving vertical and horizontal grid output could avoid the coordinate vector,
+  but would change observable vertex order. The retained coordinate cache preserves
+  order and still improves construction.

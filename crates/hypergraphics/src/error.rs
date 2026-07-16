@@ -24,6 +24,21 @@ pub enum Error {
         /// Name of the rejected value.
         value: &'static str,
     },
+    /// A viewport dimension is zero or negative.
+    NonPositiveViewportExtent {
+        /// Name of the rejected dimension.
+        value: &'static str,
+    },
+    /// A camera parameter cannot form a valid perspective projection.
+    InvalidCameraParameter {
+        /// Name of the rejected parameter.
+        value: &'static str,
+    },
+    /// A mesh has more vertices than OpenGL's signed draw-count field accepts.
+    VertexCountOverflow {
+        /// Rejected vertex count.
+        count: usize,
+    },
     /// The requested triangle index does not exist in a triangle mesh.
     TriangleIndexOutOfBounds {
         /// Requested triangle index.
@@ -55,6 +70,15 @@ impl fmt::Display for Error {
             }
             Self::F32Overflow { value } => {
                 write!(f, "{value} could not be represented as finite f32")
+            }
+            Self::NonPositiveViewportExtent { value } => {
+                write!(f, "viewport {value} must be positive")
+            }
+            Self::InvalidCameraParameter { value } => {
+                write!(f, "camera {value} is outside its valid projection domain")
+            }
+            Self::VertexCountOverflow { count } => {
+                write!(f, "vertex count {count} exceeds the OpenGL draw limit")
             }
             Self::TriangleIndexOutOfBounds {
                 index,

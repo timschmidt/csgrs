@@ -58,27 +58,28 @@ pub fn grid_mesh(half_steps: i32, step: Real, color: Color3) -> ExactMesh {
     let mut mesh = ExactMesh::new(Primitive::Lines, Vec::with_capacity(vertex_capacity));
     let z = Real::zero();
     let extent = Real::from(half_steps) * step.clone();
+    let coordinates = (-half_steps..=half_steps)
+        .map(|index| Real::from(index) * step.clone())
+        .collect::<Vec<_>>();
 
-    for i in -half_steps..=half_steps {
-        let x = Real::from(i) * step.clone();
+    for x in &coordinates {
         mesh.push(ExactVertex::new(
             Point3::new(x.clone(), -extent.clone(), z.clone()),
             color,
         ));
         mesh.push(ExactVertex::new(
-            Point3::new(x, extent.clone(), z.clone()),
+            Point3::new(x.clone(), extent.clone(), z.clone()),
             color,
         ));
     }
 
-    for i in -half_steps..=half_steps {
-        let y = Real::from(i) * step.clone();
+    for y in &coordinates {
         mesh.push(ExactVertex::new(
             Point3::new(-extent.clone(), y.clone(), z.clone()),
             color,
         ));
         mesh.push(ExactVertex::new(
-            Point3::new(extent.clone(), y, z.clone()),
+            Point3::new(extent.clone(), y.clone(), z.clone()),
             color,
         ));
     }

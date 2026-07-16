@@ -37,6 +37,8 @@ fn main() -> hypergraphics::Result<()> {
   geometry. Polygon triangulation is delegated to `hypertri`.
 - `ExactMesh::triangle_orientation_against` evaluates a robust `hyperlimit`
   orientation predicate against one triangle.
+- `ExactMesh::prepare_triangle_orientation` retains one triangle's exact
+  oriented-plane filter for repeated picking and side queries.
 - `ExactCamera`, `Viewport`, and `Projection64` provide orbit-camera projection
   and screen/world conversion.
 - `GpuColoredMesh` and `UnlitProgram` upload and draw the exported `xyz rgb`
@@ -47,6 +49,11 @@ APIs. `Projection64`, `RenderVertex64`, and the flat-buffer export methods are
 lossy presentation boundaries and must not be used as topology certificates.
 The backend's methods are `unsafe` because callers must keep the owning graphics
 context current and observe its thread-affinity rules.
+GPU meshes and programs expose consuming, context-bound `destroy` methods so GL
+objects can be released while their owning context is current.
+
+Criterion results and the reference-by-reference implementation audit are in
+[`PERFORMANCE.md`](PERFORMANCE.md).
 
 The renderer originated in CopperForge's `render3d` module, which credits the
 MIT-licensed `alumina-interface` project by Timothy Schmidt. This crate retains
@@ -64,5 +71,15 @@ decisions into the Hyper stack.
 
 Hyper stack: [hyperreal](https://github.com/timschmidt/hyperreal) ·
 [hyperlattice](https://github.com/timschmidt/hyperlattice) ·
-[hyperlimit](https://github.com/timschmidt/liminal) ·
-[hypertri](https://github.com/timschmidt/hypertriangulate)
+[hyperlimit](https://github.com/timschmidt/hyperlimit) ·
+[hypertri](https://github.com/timschmidt/hypertri)
+
+## Development
+
+```sh
+cargo fmt --all -- --check
+cargo test --all-targets --all-features
+cargo clippy --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
+cargo bench --bench graphics
+```

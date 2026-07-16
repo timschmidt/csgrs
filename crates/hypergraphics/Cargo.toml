@@ -10,6 +10,10 @@ readme = "README.md"
 keywords = ["graphics", "renderer", "hyperreal", "geometry", "opengl"]
 categories = ["graphics", "rendering", "mathematics"]
 
+[features]
+default = []
+dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
+
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
@@ -25,6 +29,13 @@ hypertri = { path = "../hypertri", default-features = false, features = ["earcut
 bytemuck = "1.23"
 glow = "0.16"
 nalgebra = "0.34"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "graphics"
+harness = false
 
 # Keep transitive Hyper crates unified while using sibling path dependencies.
 [patch.crates-io]

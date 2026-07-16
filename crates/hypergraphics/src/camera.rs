@@ -31,6 +31,12 @@ impl Viewport {
                 return Err(Error::NonFinitePrimitive { value: name });
             }
         }
+        if width <= 0.0 {
+            return Err(Error::NonPositiveViewportExtent { value: "width" });
+        }
+        if height <= 0.0 {
+            return Err(Error::NonPositiveViewportExtent { value: "height" });
+        }
         Ok(Self {
             min_x,
             min_y,
@@ -41,7 +47,7 @@ impl Viewport {
 
     /// Return the viewport aspect ratio.
     pub fn aspect(self) -> f64 {
-        (self.width / self.height.max(1.0)).max(0.01)
+        self.width / self.height
     }
 
     /// Return the viewport center.
@@ -161,6 +167,18 @@ impl ExactCamera {
         let fov_y = real_to_f64(&self.fov_y, "camera fov_y")?;
         let near = real_to_f64(&self.near, "camera near")?;
         let far = real_to_f64(&self.far, "camera far")?;
+        if zoom <= 0.0 {
+            return Err(Error::InvalidCameraParameter { value: "zoom" });
+        }
+        if !(0.0 < fov_y && fov_y < std::f64::consts::PI) {
+            return Err(Error::InvalidCameraParameter { value: "fov_y" });
+        }
+        if near <= 0.0 {
+            return Err(Error::InvalidCameraParameter { value: "near" });
+        }
+        if far <= near {
+            return Err(Error::InvalidCameraParameter { value: "far" });
+        }
         let target = self
             .target
             .to_f64_array_lossy()
@@ -264,5 +282,27 @@ mod tests {
             .unwrap();
         assert!(screen.x.is_finite());
         assert!(screen.y.is_finite());
+    }
+
+    #[test]
+    fn viewport_and_camera_reject_invalid_projection_domains() {
+        assert!(matches!(
+            Viewport::new(0.0, 0.0, 0.0, 600.0),
+            Err(Error::NonPositiveViewportExtent { value: "width" })
+        ));
+        assert!(matches!(
+            Viewport::new(0.0, 0.0, 800.0, -1.0),
+            Err(Error::NonPositiveViewportExtent { value: "height" })
+        ));
+
+        let viewport = Viewport::new(0.0, 0.0, 800.0, 600.0).unwrap();
+        let camera = ExactCamera {
+            near: Real::zero(),
+            ..ExactCamera::default()
+        };
+        assert!(matches!(
+            camera.projection64(viewport),
+            Err(Error::InvalidCameraParameter { value: "near" })
+        ));
     }
 }

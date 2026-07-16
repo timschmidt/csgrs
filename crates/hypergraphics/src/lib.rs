@@ -20,7 +20,8 @@ pub mod scene;
 pub use camera::{ExactCamera, Projection64, ScreenPoint, Viewport};
 pub use error::{Error, Result};
 pub use geometry::{
-    Color3, ExactMesh, ExactVertex, Primitive, RenderVertex64, TriangleOrientation,
+    Color3, ExactMesh, ExactVertex, PreparedTriangleOrientation, Primitive, RenderVertex64,
+    TriangleOrientation,
 };
 pub use hyperlattice::{Point2, Point3, Vector2, Vector3};
 pub use hyperreal::{Rational, Real};

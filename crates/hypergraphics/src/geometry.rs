@@ -1,7 +1,7 @@
 //! Hyperreal-owned mesh geometry and explicit render exports.
 
 use hyperlattice::Point3;
-use hyperlimit::{Certainty, PredicateOutcome, Sign, orient3d};
+use hyperlimit::{Certainty, PlaneSide, PredicateOutcome, PreparedOrientedPlane3, Sign, orient3d};
 
 use crate::error::{Error, Result};
 
@@ -119,6 +119,50 @@ impl TriangleOrientation {
             PredicateOutcome::Unknown { .. } => Self::Unknown,
         }
     }
+
+    fn from_plane_outcome(outcome: PredicateOutcome<PlaneSide>) -> Self {
+        match outcome {
+            PredicateOutcome::Decided {
+                value: PlaneSide::Below,
+                certainty,
+                ..
+            } => Self::Negative(certainty),
+            PredicateOutcome::Decided {
+                value: PlaneSide::On,
+                certainty,
+                ..
+            } => Self::Coplanar(certainty),
+            PredicateOutcome::Decided {
+                value: PlaneSide::Above,
+                certainty,
+                ..
+            } => Self::Positive(certainty),
+            PredicateOutcome::Unknown { .. } => Self::Unknown,
+        }
+    }
+}
+
+/// Reusable exact orientation classifier for one mesh triangle.
+///
+/// The owned oriented-plane package retains HyperLimit's certified determinant
+/// filter and exact fallback facts. It is useful for repeated picking or side
+/// queries against a stable triangle without borrowing the source mesh.
+#[derive(Clone, Debug)]
+pub struct PreparedTriangleOrientation {
+    plane: PreparedOrientedPlane3,
+}
+
+impl PreparedTriangleOrientation {
+    fn new(a: &Point3, b: &Point3, c: &Point3) -> Self {
+        Self {
+            plane: PreparedOrientedPlane3::new(a, b, c),
+        }
+    }
+
+    /// Classify a query point against the retained oriented triangle plane.
+    pub fn classify_point(&self, point: &Point3) -> TriangleOrientation {
+        TriangleOrientation::from_plane_outcome(self.plane.classify_point(point))
+    }
 }
 
 /// Hyperreal-owned colored mesh.
@@ -235,6 +279,29 @@ impl ExactMesh {
         let c = &self.vertices[base + 2].position;
         Ok(TriangleOrientation::from_outcome(orient3d(a, b, c, point)))
     }
+
+    /// Prepare one triangle's exact orientation predicate for repeated queries.
+    pub fn prepare_triangle_orientation(
+        &self,
+        triangle_index: usize,
+    ) -> Result<PreparedTriangleOrientation> {
+        if self.primitive != Primitive::Triangles {
+            return Err(Error::RequiresTriangles);
+        }
+        let triangle_count = self.triangle_count();
+        if triangle_index >= triangle_count {
+            return Err(Error::TriangleIndexOutOfBounds {
+                index: triangle_index,
+                triangle_count,
+            });
+        }
+        let base = triangle_index * 3;
+        Ok(PreparedTriangleOrientation::new(
+            &self.vertices[base].position,
+            &self.vertices[base + 1].position,
+            &self.vertices[base + 2].position,
+        ))
+    }
 }
 
 #[cfg(test)]
@@ -275,5 +342,13 @@ mod tests {
             mesh.triangle_orientation_against(0, &p(0, 0, 1)).unwrap(),
             TriangleOrientation::Positive(_) | TriangleOrientation::Negative(_)
         ));
+
+        let prepared = mesh.prepare_triangle_orientation(0).unwrap();
+        for query in [p(0, 0, 1), p(0, 0, -1), p(0, 0, 0)] {
+            assert_eq!(
+                prepared.classify_point(&query),
+                mesh.triangle_orientation_against(0, &query).unwrap()
+            );
+        }
     }
 }

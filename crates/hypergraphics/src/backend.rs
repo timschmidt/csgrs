@@ -74,7 +74,13 @@ impl GpuColoredMesh {
     pub unsafe fn new(gl: &Context, primitive: Primitive) -> Result<Self> {
         unsafe {
             let vao = gl.create_vertex_array().map_err(Error::Backend)?;
-            let vbo = gl.create_buffer().map_err(Error::Backend)?;
+            let vbo = match gl.create_buffer() {
+                Ok(vbo) => vbo,
+                Err(error) => {
+                    gl.delete_vertex_array(vao);
+                    return Err(Error::Backend(error));
+                }
+            };
             gl.bind_vertex_array(Some(vao));
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
             gl.enable_vertex_attrib_array(0);
@@ -101,7 +107,12 @@ impl GpuColoredMesh {
         gl: &Context,
         vertices: &[RenderVertex64],
     ) -> Result<()> {
-        let mut packed = Vec::with_capacity(vertices.len() * 6);
+        let vertex_count = vertex_count_i32(vertices.len())?;
+        let mut packed = Vec::with_capacity(vertices.len().checked_mul(6).ok_or(
+            Error::VertexCountOverflow {
+                count: vertices.len(),
+            },
+        )?);
         for vertex in vertices {
             for value in vertex.position {
                 packed.push(f64_to_f32(value, "vertex position")?);
@@ -116,7 +127,7 @@ impl GpuColoredMesh {
                 glow::STATIC_DRAW,
             );
         }
-        self.vertex_count = vertices.len() as i32;
+        self.vertex_count = vertex_count;
         Ok(())
     }
 
@@ -126,7 +137,12 @@ impl GpuColoredMesh {
     ///
     /// `gl` must be the context that owns this mesh's objects.
     pub unsafe fn upload_exact_mesh(&mut self, gl: &Context, mesh: &ExactMesh) -> Result<()> {
-        let mut packed = Vec::with_capacity(mesh.vertex_count() * 6);
+        let vertex_count = vertex_count_i32(mesh.vertex_count())?;
+        let mut packed = Vec::with_capacity(mesh.vertex_count().checked_mul(6).ok_or(
+            Error::VertexCountOverflow {
+                count: mesh.vertex_count(),
+            },
+        )?);
         for vertex in mesh.vertices() {
             let position =
                 vertex
@@ -149,7 +165,7 @@ impl GpuColoredMesh {
                 glow::STATIC_DRAW,
             );
         }
-        self.vertex_count = mesh.vertex_count() as i32;
+        self.vertex_count = vertex_count;
         Ok(())
     }
 
@@ -165,6 +181,19 @@ impl GpuColoredMesh {
         unsafe {
             gl.bind_vertex_array(Some(self.vao));
             gl.draw_arrays(self.primitive.to_glow(), 0, self.vertex_count);
+        }
+    }
+
+    /// Delete this mesh's GPU objects through their owning context.
+    ///
+    /// # Safety
+    ///
+    /// `gl` must be the context that owns this mesh's objects, and the objects
+    /// must not already have been deleted through another API.
+    pub unsafe fn destroy(self, gl: &Context) {
+        unsafe {
+            gl.delete_buffer(self.vbo);
+            gl.delete_vertex_array(self.vao);
         }
     }
 }
@@ -192,12 +221,14 @@ impl UnlitProgram {
         unsafe {
             let (vs_src, fs_src) = unlit_shader_sources(gl);
             let prog = compile(gl, vs_src, fs_src)?;
-            let u_mvp = gl
-                .get_uniform_location(prog, "u_mvp")
-                .ok_or_else(|| Error::Backend("unlit shader missing u_mvp".to_string()))?;
-            let u_alpha = gl
-                .get_uniform_location(prog, "u_alpha")
-                .ok_or_else(|| Error::Backend("unlit shader missing u_alpha".to_string()))?;
+            let Some(u_mvp) = gl.get_uniform_location(prog, "u_mvp") else {
+                gl.delete_program(prog);
+                return Err(Error::Backend("unlit shader missing u_mvp".to_string()));
+            };
+            let Some(u_alpha) = gl.get_uniform_location(prog, "u_alpha") else {
+                gl.delete_program(prog);
+                return Err(Error::Backend("unlit shader missing u_alpha".to_string()));
+            };
             Ok(Self {
                 prog,
                 u_mvp,
@@ -234,6 +265,16 @@ impl UnlitProgram {
             gl.uniform_1_f32(Some(&self.u_alpha), alpha);
         }
         Ok(())
+    }
+
+    /// Delete this shader program through its owning context.
+    ///
+    /// # Safety
+    ///
+    /// `gl` must be the context that owns this program, and the program must
+    /// not already have been deleted through another API.
+    pub unsafe fn destroy(self, gl: &Context) {
+        unsafe { gl.delete_program(self.prog) }
     }
 }
 
@@ -301,8 +342,21 @@ unsafe fn compile(gl: &Context, vs_src: &str, fs_src: &str) -> Result<glow::Prog
             Ok(shader)
         };
         let vs = make(glow::VERTEX_SHADER, vs_src)?;
-        let fs = make(glow::FRAGMENT_SHADER, fs_src)?;
-        let prog = gl.create_program().map_err(Error::Backend)?;
+        let fs = match make(glow::FRAGMENT_SHADER, fs_src) {
+            Ok(fs) => fs,
+            Err(error) => {
+                gl.delete_shader(vs);
+                return Err(error);
+            }
+        };
+        let prog = match gl.create_program() {
+            Ok(prog) => prog,
+            Err(error) => {
+                gl.delete_shader(vs);
+                gl.delete_shader(fs);
+                return Err(Error::Backend(error));
+            }
+        };
         gl.attach_shader(prog, vs);
         gl.attach_shader(prog, fs);
         gl.link_program(prog);
@@ -326,6 +380,10 @@ fn f64_to_f32(value: f64, name: &'static str) -> Result<f32> {
         return Err(Error::F32Overflow { value: name });
     }
     Ok(narrowed)
+}
+
+fn vertex_count_i32(count: usize) -> Result<i32> {
+    i32::try_from(count).map_err(|_| Error::VertexCountOverflow { count })
 }
 
 #[cfg(test)]
@@ -357,6 +415,17 @@ mod tests {
             FS_UNLIT_ES100,
         ] {
             assert!(source.starts_with("#version"));
+        }
+    }
+
+    #[test]
+    fn vertex_count_rejects_values_outside_glsizei() {
+        assert_eq!(vertex_count_i32(i32::MAX as usize).unwrap(), i32::MAX);
+        if usize::BITS > 32 {
+            assert!(matches!(
+                vertex_count_i32(i32::MAX as usize + 1),
+                Err(Error::VertexCountOverflow { .. })
+            ));
         }
     }
 }
