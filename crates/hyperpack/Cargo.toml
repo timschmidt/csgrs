@@ -9,6 +9,10 @@ repository = "https://github.com/timschmidt/hyperpack"
 keywords = ["packing", "optimization", "geometry", "hyperreal", "cad"]
 categories = ["algorithms", "mathematics", "science"]
 
+[features]
+default = []
+dispatch-trace = ["hyperreal/dispatch-trace"]
+
 [dependencies]
 # Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
 # Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
@@ -19,4 +23,8 @@ proptest = "1.7.0"
 
 [[bench]]
 name = "feasibility"
+harness = false
+
+[[bench]]
+name = "replay_micro"
 harness = false

@@ -1,5 +1,7 @@
 //! Packing models, placements, and proposal reports.
 
+use std::collections::BTreeMap;
+
 use hyperreal::{Real, RealSign};
 
 use crate::{PackError, PackResult};
@@ -149,4 +151,19 @@ impl AxisBox3 {
     pub fn volume(&self) -> Real {
         &self.x * &self.y * &self.z
     }
+}
+
+#[inline]
+pub(crate) fn unique_item_map<T, F>(items: &[T], mut item_id: F) -> PackResult<BTreeMap<ItemId, &T>>
+where
+    F: FnMut(&T) -> ItemId,
+{
+    let item_map = items
+        .iter()
+        .map(|item| (item_id(item), item))
+        .collect::<BTreeMap<_, _>>();
+    if item_map.len() != items.len() {
+        return Err(PackError::DuplicateItem);
+    }
+    Ok(item_map)
 }

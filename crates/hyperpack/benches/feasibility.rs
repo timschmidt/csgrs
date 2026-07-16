@@ -148,7 +148,10 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    let iterations = 1_000_u32;
+    // Custom benchmark binaries also run under `cargo test --all-targets`.
+    // One debug pass is enough for that smoke check; release bench runs retain
+    // enough work for aggregate timing.
+    let iterations = if cfg!(debug_assertions) { 1 } else { 10 };
     let started = Instant::now();
     let mut checks = 0_usize;
     let mut waste_seen = 0_usize;

@@ -14,7 +14,7 @@ use std::collections::BTreeMap;
 
 use hyperreal::{Real, RealSign};
 
-use crate::{Item3, ItemId, PackError, PackResult, Placement3};
+use crate::{Item3, ItemId, PackError, PackResult, Placement3, model::unique_item_map};
 
 /// Support policy applied to 3D cuboid placements.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -171,10 +171,7 @@ pub fn verify_support_3d(
         return Err(PackError::InvalidSupportRatio);
     }
 
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &Item3>>();
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let mut evidence = Vec::new();
     let mut facts = Vec::new();
     let mut exact_comparisons = 0_usize;
@@ -293,10 +290,7 @@ pub fn verify_direct_stack_load_3d(
     weights: &[ItemWeight3],
     limits: &[LoadLimit3],
 ) -> PackResult<LoadReport3> {
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &Item3>>();
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let weight_map = weights
         .iter()
         .map(|weight| (weight.item.clone(), weight.weight.clone()))
@@ -305,6 +299,12 @@ pub fn verify_direct_stack_load_3d(
         .iter()
         .map(|limit| (limit.item.clone(), limit.max_supported_weight.clone()))
         .collect::<BTreeMap<ItemId, Real>>();
+    if weight_map.len() != weights.len() {
+        return Err(PackError::DuplicateItemWeight);
+    }
+    if limit_map.len() != limits.len() {
+        return Err(PackError::DuplicateLoadLimit);
+    }
     let mut exact_comparisons = 0_usize;
     let mut facts = Vec::new();
     let mut evidence = Vec::new();

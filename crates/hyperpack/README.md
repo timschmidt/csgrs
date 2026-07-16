@@ -77,6 +77,10 @@ Verification reports retain exact objective values, item accounting, check
 counts, and human-readable evidence. Orientation, clearance, support, load,
 multi-bin, and domain handoff checks have separate reports so a geometric pass
 cannot accidentally imply that an unmodeled policy also passed.
+Declared item identifiers must be unique; replay returns
+`PackError::DuplicateItem` instead of silently choosing one of two conflicting
+item definitions. Multi-bin and direct-load replay apply the same rule to bin
+IDs, weight evidence, and load limits.
 
 ## Proposal and Search Algorithms
 
@@ -144,8 +148,46 @@ cargo test --locked
 cargo check --benches --locked
 cargo clippy --all-targets --locked -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
+cargo test --all-features --test dispatch_trace
 cargo bench --bench feasibility
+cargo bench --bench replay_micro
 ```
+
+The optional `dispatch-trace` feature forwards `hyperreal`'s exact-dispatch
+instrumentation. The targeted integration test verifies that representative
+rational replay and pair-bound workloads request neither approximation nor an
+unknown-fact fallback. Benchmark baselines, retained changes, and rejected
+experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
+
+## Reference-Guided Design
+
+The references are used as design constraints rather than as a claim that every
+algorithm in each source is implemented:
+
+- Yap motivates the proposal/replay boundary, certified sign decisions, and
+  explicit `Unknown` outcomes.
+- Dyckhoff's typology motivates separate stock, sheet, cuboid, and multi-bin
+  carriers instead of one ambiguous packing interface.
+- Martello and Toth, and Martello–Pisinger–Vigo, motivate exact capacity and
+  incompatibility bounds plus limit-bearing branch-and-bound for small 3D
+  instances.
+- Lodi–Martello–Vigo motivates keeping constructive 3D heuristics subordinate
+  to exact replay and combining them with bounded tabu improvement.
+- Crainic–Perboli–Tadei motivates the extreme-point proposal surface and its
+  retained candidate-point trace.
+- Jylänki motivates the explicit shelf, skyline, MaxRects, and guillotine 2D
+  families and their alternative scoring rules.
+- Iori and coauthors motivate keeping 2D problem structure, no-overlap model
+  exports, necessary bounds, and proof status explicit for future exact solver
+  adapters.
+- Bortfeldt and Wäscher motivate separate orientation, clearance, support,
+  load, assignment, cost, and domain-handoff reports for practical container
+  constraints.
+- Glover motivates explicit tenure and evaluation budgets in tabu search.
+- Wolpert and Macready motivate problem-specific deterministic portfolios,
+  with no heuristic presented as universally best.
+- Hoos and Stützle motivate seeded multistart, bounded neighborhoods, explicit
+  termination status, and reproducible local-search traces.
 
 ## References
 

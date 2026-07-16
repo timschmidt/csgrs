@@ -12,7 +12,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::{
     Bin3, FeasibilityStatus, Item3, ItemId, PackError, PackResult, PackingVerification3,
-    Placement3, verify_packing_3d,
+    Placement3, model::unique_item_map, verify_packing_3d,
 };
 
 /// Stable bin id for a multi-bin packing proposal.
@@ -134,10 +134,10 @@ pub fn verify_multi_bin_packing_3d(
         .iter()
         .map(|bin| (bin.id.clone(), bin))
         .collect::<BTreeMap<BinId, &BinInstance3>>();
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &Item3>>();
+    if bin_map.len() != bins.len() {
+        return Err(PackError::DuplicateBin);
+    }
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let mut by_bin = BTreeMap::<BinId, Vec<Placement3>>::new();
     let mut counts = BTreeMap::<ItemId, usize>::new();
     let mut facts = Vec::new();

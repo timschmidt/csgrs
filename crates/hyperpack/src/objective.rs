@@ -6,12 +6,12 @@
 //! comparisons expose certified evidence or explicit uncertainty instead of
 //! relying on primitive-float tolerances.
 
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
-
 use hyperreal::{Real, RealSign};
+use std::cmp::Ordering;
 
-use crate::{Bin3, Item3, ItemId, PackError, PackResult, PackingVerification3, Placement3};
+use crate::{
+    Bin3, Item3, PackError, PackResult, PackingVerification3, Placement3, model::unique_item_map,
+};
 
 /// Exact used-height objective report for a 3D packing proposal.
 #[derive(Clone, Debug, PartialEq)]
@@ -76,10 +76,7 @@ pub fn height_objective_3d(
     items: &[Item3],
     placements: &[Placement3],
 ) -> PackResult<HeightObjective3> {
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &Item3>>();
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let mut used_height = None::<Real>;
     let mut exact_comparisons = 0_usize;
     let mut unknown_comparisons = 0_usize;

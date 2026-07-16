@@ -281,6 +281,7 @@ pub fn pair_incompatibilities_3d(bin: &Bin3, items: &[Item3]) -> PairIncompatibi
                 match leq(&(left_extent.clone() + right_extent.clone()), bin_extent) {
                     Some(true) => {
                         has_separating_axis = true;
+                        break;
                     }
                     Some(false) => {}
                     None => has_unknown_axis = true,
@@ -353,7 +354,10 @@ pub fn pair_incompatibilities_2d(
                 (&left.size.y, &right.size.y, &bin.size.y),
             ] {
                 match leq(&(left_extent.clone() + right_extent.clone()), bin_extent) {
-                    Some(true) => has_separating_axis = true,
+                    Some(true) => {
+                        has_separating_axis = true;
+                        break;
+                    }
                     Some(false) => {}
                     None => has_unknown_axis = true,
                 }

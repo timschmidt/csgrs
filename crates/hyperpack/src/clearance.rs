@@ -6,11 +6,12 @@
 //! margin. Separation uses exact interval comparisons, and uncertified
 //! comparisons become explicit unknowns rather than tolerance decisions.
 
-use std::collections::BTreeMap;
-
 use hyperreal::{Real, RealSign};
 
-use crate::{Item3, ItemId, PackError, PackResult, Placement3, SheetItem2, SheetPlacement2};
+use crate::{
+    Item3, ItemId, PackError, PackResult, Placement3, SheetItem2, SheetPlacement2,
+    model::unique_item_map,
+};
 
 /// Overall status for clearance replay.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -107,10 +108,16 @@ pub fn verify_clearance_2d(
         return Err(PackError::NegativeClearance);
     }
 
-    let item_map = items
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
+    let placement_items = placements
         .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &SheetItem2>>();
+        .map(|placement| {
+            item_map
+                .get(&placement.item)
+                .copied()
+                .ok_or(PackError::MissingItem)
+        })
+        .collect::<PackResult<Vec<_>>>()?;
     let mut pairs = Vec::new();
     let mut facts = Vec::new();
     let mut status = ClearanceStatus2::Satisfied;
@@ -120,9 +127,13 @@ pub fn verify_clearance_2d(
         for right_index in (left_index + 1)..placements.len() {
             let left = &placements[left_index];
             let right = &placements[right_index];
-            let left_item = item_map.get(&left.item).ok_or(PackError::MissingItem)?;
-            let right_item = item_map.get(&right.item).ok_or(PackError::MissingItem)?;
-            let gap = separating_gap_2d(left_item, left, right_item, right, &mut exact_comparisons);
+            let gap = separating_gap_2d(
+                placement_items[left_index],
+                left,
+                placement_items[right_index],
+                right,
+                &mut exact_comparisons,
+            );
             let satisfied = gap.as_ref().and_then(|gap| {
                 exact_comparisons += 1;
                 leq(&required_clearance, gap)
@@ -182,10 +193,16 @@ pub fn verify_clearance_3d(
         return Err(PackError::NegativeClearance);
     }
 
-    let item_map = items
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
+    let placement_items = placements
         .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &Item3>>();
+        .map(|placement| {
+            item_map
+                .get(&placement.item)
+                .copied()
+                .ok_or(PackError::MissingItem)
+        })
+        .collect::<PackResult<Vec<_>>>()?;
     let mut pairs = Vec::new();
     let mut facts = Vec::new();
     let mut status = ClearanceStatus3::Satisfied;
@@ -195,9 +212,13 @@ pub fn verify_clearance_3d(
         for right_index in (left_index + 1)..placements.len() {
             let left = &placements[left_index];
             let right = &placements[right_index];
-            let left_item = item_map.get(&left.item).ok_or(PackError::MissingItem)?;
-            let right_item = item_map.get(&right.item).ok_or(PackError::MissingItem)?;
-            let gap = separating_gap(left_item, left, right_item, right, &mut exact_comparisons);
+            let gap = separating_gap(
+                placement_items[left_index],
+                left,
+                placement_items[right_index],
+                right,
+                &mut exact_comparisons,
+            );
             let satisfied = gap.as_ref().and_then(|gap| {
                 exact_comparisons += 1;
                 leq(&required_clearance, gap)

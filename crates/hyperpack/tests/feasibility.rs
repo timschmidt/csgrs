@@ -162,6 +162,43 @@ fn oriented_placement3(
 }
 
 #[test]
+fn declared_item_ids_must_be_unique_in_every_dimension() {
+    let id = ItemId::new("duplicate").unwrap();
+
+    let stock_bin = StockBin1::new(r(10)).unwrap();
+    let stock_items = [stock_item("duplicate", 2), stock_item("duplicate", 3)];
+    assert_eq!(
+        verify_packing_1d(&stock_bin, &stock_items, &[]).unwrap_err(),
+        PackError::DuplicateItem
+    );
+
+    let sheet_bin = SheetBin2::new(Rect2::new(r(10), r(10)).unwrap());
+    let sheet_items = [sheet_item("duplicate", 2, 2), sheet_item("duplicate", 3, 3)];
+    assert_eq!(
+        verify_packing_2d(&sheet_bin, &sheet_items, &[]).unwrap_err(),
+        PackError::DuplicateItem
+    );
+
+    let bin = Bin3 {
+        size: AxisBox3::new(r(10), r(10), r(10)).unwrap(),
+    };
+    let items = [
+        Item3 {
+            id: id.clone(),
+            size: AxisBox3::new(r(2), r(2), r(2)).unwrap(),
+        },
+        Item3 {
+            id,
+            size: AxisBox3::new(r(3), r(3), r(3)).unwrap(),
+        },
+    ];
+    assert_eq!(
+        verify_packing_3d(&bin, &items, &[]).unwrap_err(),
+        PackError::DuplicateItem
+    );
+}
+
+#[test]
 fn exact_1d_verification_accepts_contained_non_overlapping_intervals() {
     let bin = StockBin1::new(r(10)).unwrap();
     let items = [stock_item("a", 4), stock_item("b", 6)];
@@ -1320,6 +1357,29 @@ fn direct_stack_load_reports_missing_weight_and_negative_input() {
 }
 
 #[test]
+fn direct_stack_load_rejects_conflicting_keyed_evidence() {
+    let items = [item("base", 4, 4, 1)];
+    let placements = [placement("base", 0, 0, 0)];
+    let duplicate_weights = [
+        ItemWeight3::new(ItemId::new("base").unwrap(), r(1)).unwrap(),
+        ItemWeight3::new(ItemId::new("base").unwrap(), r(2)).unwrap(),
+    ];
+    let duplicate_limits = [
+        LoadLimit3::new(ItemId::new("base").unwrap(), r(1)).unwrap(),
+        LoadLimit3::new(ItemId::new("base").unwrap(), r(2)).unwrap(),
+    ];
+
+    assert_eq!(
+        verify_direct_stack_load_3d(&items, &placements, &duplicate_weights, &[]).unwrap_err(),
+        PackError::DuplicateItemWeight
+    );
+    assert_eq!(
+        verify_direct_stack_load_3d(&items, &placements, &[], &duplicate_limits).unwrap_err(),
+        PackError::DuplicateLoadLimit
+    );
+}
+
+#[test]
 fn cuboid_first_fit_decreasing_volume_places_at_first_exact_corner() {
     let bin = Bin3 {
         size: AxisBox3::new(r(6), r(4), r(2)).unwrap(),
@@ -1874,6 +1934,15 @@ fn multi_bin_replay_reports_duplicates_unplaced_and_missing_bins() {
         )
         .unwrap_err(),
         PackError::MissingBin
+    );
+    assert_eq!(
+        verify_multi_bin_packing_3d(
+            &[bin_instance("a", 2, 2, 1, 3), bin_instance("a", 3, 3, 1, 4),],
+            &items,
+            &[]
+        )
+        .unwrap_err(),
+        PackError::DuplicateBin
     );
 }
 

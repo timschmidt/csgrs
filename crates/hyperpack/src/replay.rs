@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 
 use hyperreal::{Real, RealSign};
 
-use crate::{Bin3, Item3, ItemId, PackError, PackResult, Placement3};
+use crate::{Bin3, Item3, ItemId, PackError, PackResult, Placement3, model::unique_item_map};
 
 /// Replay status for a proposed packing.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -70,18 +70,18 @@ pub struct PackingVerification3 {
 impl FeasibilityReplay3 {
     /// Replays placements against exact bin containment and pairwise no-overlap.
     pub fn replay(bin: &Bin3, items: &[Item3], placements: &[Placement3]) -> PackResult<Self> {
-        let item_map = items
-            .iter()
-            .map(|item| (item.id.clone(), item))
-            .collect::<BTreeMap<ItemId, &Item3>>();
+        let item_map = unique_item_map(items, |item| item.id.clone())?;
         let mut facts = Vec::new();
         let mut containment_checks = 0;
         let mut no_overlap_checks = 0;
+        let mut placement_items = Vec::with_capacity(placements.len());
 
         for placement in placements {
             let item = item_map
                 .get(&placement.item)
+                .copied()
                 .ok_or(PackError::MissingItem)?;
+            placement_items.push(item);
             containment_checks += 1;
             match contains(bin, item, placement) {
                 Some(true) => {}
@@ -109,10 +109,13 @@ impl FeasibilityReplay3 {
             for right_index in (left_index + 1)..placements.len() {
                 let left = &placements[left_index];
                 let right = &placements[right_index];
-                let left_item = item_map.get(&left.item).ok_or(PackError::MissingItem)?;
-                let right_item = item_map.get(&right.item).ok_or(PackError::MissingItem)?;
                 no_overlap_checks += 1;
-                match disjoint(left_item, left, right_item, right) {
+                match disjoint(
+                    placement_items[left_index],
+                    left,
+                    placement_items[right_index],
+                    right,
+                ) {
                     Some(true) => {}
                     Some(false) => {
                         facts.push(format!(

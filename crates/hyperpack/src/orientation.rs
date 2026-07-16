@@ -11,7 +11,7 @@ use hyperreal::Real;
 
 use crate::{
     AxisBox3, Bin3, FeasibilityStatus, Item3, ItemId, PackError, PackResult, PackingVerification3,
-    Placement3, verify_packing_3d,
+    Placement3, model::unique_item_map, verify_packing_3d,
 };
 
 /// Six exact axis permutations for an axis-aligned cuboid.
@@ -145,10 +145,7 @@ pub fn verify_oriented_packing_3d(
     items: &[OrientedItem3],
     placements: &[OrientedPlacement3],
 ) -> PackResult<OrientedPackingVerification3> {
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &OrientedItem3>>();
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let mut orientation = OrientationValidationReport3 {
         checked_placements: 0,
         checked_items: items.len(),

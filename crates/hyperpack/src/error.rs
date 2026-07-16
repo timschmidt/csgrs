@@ -16,6 +16,14 @@ pub enum PackError {
     NegativeLoadValue,
     /// A requested clearance was certified negative.
     NegativeClearance,
+    /// More than one declared item used the same stable id.
+    DuplicateItem,
+    /// More than one declared bin used the same stable id.
+    DuplicateBin,
+    /// More than one weight claim was supplied for an item.
+    DuplicateItemWeight,
+    /// More than one load limit was supplied for an item.
+    DuplicateLoadLimit,
     /// A placement referenced an unknown item.
     MissingItem,
     /// A placement referenced an unknown bin.

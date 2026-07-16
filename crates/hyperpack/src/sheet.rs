@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 
 use hyperreal::{Real, RealSign};
 
-use crate::{FeasibilityStatus, ItemId, PackError, PackResult};
+use crate::{FeasibilityStatus, ItemId, PackError, PackResult, model::unique_item_map};
 
 /// Exact two-dimensional rectangle size.
 #[derive(Clone, Debug, PartialEq)]
@@ -213,19 +213,19 @@ pub fn verify_packing_2d(
     items: &[SheetItem2],
     placements: &[SheetPlacement2],
 ) -> PackResult<SheetVerification2> {
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &SheetItem2>>();
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let mut facts = Vec::new();
     let mut containment_checks = 0_usize;
     let mut no_overlap_checks = 0_usize;
     let mut status = FeasibilityStatus::Feasible;
+    let mut placement_items = Vec::with_capacity(placements.len());
 
     for placement in placements {
         let item = item_map
             .get(&placement.item)
+            .copied()
             .ok_or(PackError::MissingItem)?;
+        placement_items.push(item);
         containment_checks += 1;
         match contains(bin, item, placement) {
             Some(true) => {}
@@ -246,10 +246,13 @@ pub fn verify_packing_2d(
             for right_index in (left_index + 1)..placements.len() {
                 let left = &placements[left_index];
                 let right = &placements[right_index];
-                let left_item = item_map.get(&left.item).ok_or(PackError::MissingItem)?;
-                let right_item = item_map.get(&right.item).ok_or(PackError::MissingItem)?;
                 no_overlap_checks += 1;
-                match disjoint(left_item, left, right_item, right) {
+                match disjoint(
+                    placement_items[left_index],
+                    left,
+                    placement_items[right_index],
+                    right,
+                ) {
                     Some(true) => {}
                     Some(false) => {
                         facts.push(format!(
@@ -332,10 +335,7 @@ pub fn verify_oriented_packing_2d(
     items: &[OrientedSheetItem2],
     placements: &[OrientedSheetPlacement2],
 ) -> PackResult<OrientedSheetVerification2> {
-    let item_map = items
-        .iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<ItemId, &OrientedSheetItem2>>();
+    let item_map = unique_item_map(items, |item| item.id.clone())?;
     let mut orientation = OrientationValidationReport2 {
         checked_placements: 0,
         checked_items: items.len(),
